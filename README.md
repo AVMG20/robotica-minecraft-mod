@@ -15,6 +15,15 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew runGameTestServer  # headless server + game tests (also proves server safety)
 ```
 
+### Without a local Java: Docker
+
+```sh
+scripts/docker-build.sh                    # jar in build/libs/
+scripts/docker-build.sh runGameTestServer  # headless game tests
+```
+
+The first run takes a few minutes; downloads are cached in the `robotica-gradle` Docker volume. Starting the game client still needs Java on your machine (or use the jar in a normal launcher).
+
 ## Testing in game
 
 Every player gets the Robotica Codex on first join. Operators see a Creative Lab page in it (all items, age kits, charge, spawn mobs, weather), and can use:
