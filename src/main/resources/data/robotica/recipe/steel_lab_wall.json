@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:white_concrete"
+    },
+    "B": {
+      "tag": "c:plates/iron"
+    }
+  },
+  "result": {
+    "id": "robotica:steel_lab_wall",
+    "count": 8
+  }
+}

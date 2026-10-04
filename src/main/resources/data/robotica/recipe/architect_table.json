@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PBP",
+    "MIT",
+    "GGG"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    },
+    "T": {
+      "item": "minecraft:crafting_table"
+    },
+    "G": {
+      "item": "robotica:copper_gear"
+    }
+  },
+  "result": {
+    "id": "robotica:architect_table",
+    "count": 1
+  }
+}

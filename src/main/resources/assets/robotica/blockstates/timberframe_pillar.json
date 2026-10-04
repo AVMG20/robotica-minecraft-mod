@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "robotica:block/timberframe_pillar"
+    },
+    "axis=z": {
+      "model": "robotica:block/timberframe_pillar_horizontal",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "robotica:block/timberframe_pillar_horizontal",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

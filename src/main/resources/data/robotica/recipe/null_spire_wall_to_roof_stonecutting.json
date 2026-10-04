@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "robotica:null_spire_wall"
+  },
+  "result": {
+    "id": "robotica:null_spire_roof",
+    "count": 1
+  }
+}

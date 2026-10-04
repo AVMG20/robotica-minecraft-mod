@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:clay_ball",
+    "#c:nuggets/iron",
+    "#c:nuggets/gold"
+  ]
+}

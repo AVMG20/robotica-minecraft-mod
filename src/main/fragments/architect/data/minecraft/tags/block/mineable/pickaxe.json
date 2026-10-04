@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:architect_table",
+    "robotica:timberframe_window",
+    "robotica:copper_works_wall",
+    "robotica:copper_works_floor",
+    "robotica:copper_works_roof",
+    "robotica:copper_works_pillar",
+    "robotica:copper_works_window",
+    "robotica:copper_works_light",
+    "robotica:steel_lab_wall",
+    "robotica:steel_lab_floor",
+    "robotica:steel_lab_roof",
+    "robotica:steel_lab_pillar",
+    "robotica:steel_lab_window",
+    "robotica:steel_lab_light",
+    "robotica:null_spire_wall",
+    "robotica:null_spire_floor",
+    "robotica:null_spire_roof",
+    "robotica:null_spire_pillar",
+    "robotica:null_spire_window",
+    "robotica:null_spire_light"
+  ]
+}

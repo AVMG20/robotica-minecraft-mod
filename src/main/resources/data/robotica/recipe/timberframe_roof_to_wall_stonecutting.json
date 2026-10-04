@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "robotica:timberframe_roof"
+  },
+  "result": {
+    "id": "robotica:timberframe_wall",
+    "count": 1
+  }
+}

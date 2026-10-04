@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:cobblestones/normal"
+    },
+    "B": {
+      "tag": "c:ingots/copper"
+    }
+  },
+  "result": {
+    "id": "robotica:copper_works_wall",
+    "count": 8
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "robotica:block/timberframe_pillar_top",
+    "side": "robotica:block/timberframe_pillar",
+    "particle": "robotica:block/timberframe_pillar"
+  }
+}

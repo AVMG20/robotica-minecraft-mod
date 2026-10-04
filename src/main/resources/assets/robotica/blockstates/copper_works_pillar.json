@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "robotica:block/copper_works_pillar"
+    },
+    "axis=z": {
+      "model": "robotica:block/copper_works_pillar_horizontal",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "robotica:block/copper_works_pillar_horizontal",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

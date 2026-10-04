@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "tag": "minecraft:logs"
+    },
+    "B": {
+      "tag": "c:dyes/white"
+    }
+  },
+  "result": {
+    "id": "robotica:timberframe_pillar",
+    "count": 8
+  }
+}

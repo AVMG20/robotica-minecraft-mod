@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "robotica:copper_works_wall"
+  },
+  "result": {
+    "id": "robotica:copper_works_pillar",
+    "count": 1
+  }
+}
