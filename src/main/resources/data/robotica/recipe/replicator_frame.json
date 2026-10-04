@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "POP",
+    "ORO",
+    "POP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "O": {
+      "tag": "c:obsidians"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:replicator_frame",
+    "count": 4
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "robotica:item/essence_vial"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "robotica:essence_fill": 0.01
+      },
+      "model": "robotica:item/essence_vial_partial"
+    },
+    {
+      "predicate": {
+        "robotica:essence_fill": 1.0
+      },
+      "model": "robotica:item/essence_vial_full"
+    }
+  ]
+}

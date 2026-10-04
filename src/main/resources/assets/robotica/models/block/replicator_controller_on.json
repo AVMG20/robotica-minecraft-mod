@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "robotica:block/replicator_controller_top",
+    "side": "robotica:block/replicator_controller_side",
+    "front": "robotica:block/replicator_controller_front_on",
+    "particle": "robotica:block/replicator_controller_side"
+  }
+}
