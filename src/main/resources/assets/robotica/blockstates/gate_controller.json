@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "active=false,facing=north": {
+      "model": "robotica:block/gate_controller"
+    },
+    "active=false,facing=east": {
+      "model": "robotica:block/gate_controller",
+      "y": 90
+    },
+    "active=false,facing=south": {
+      "model": "robotica:block/gate_controller",
+      "y": 180
+    },
+    "active=false,facing=west": {
+      "model": "robotica:block/gate_controller",
+      "y": 270
+    },
+    "active=true,facing=north": {
+      "model": "robotica:block/gate_controller_on"
+    },
+    "active=true,facing=east": {
+      "model": "robotica:block/gate_controller_on",
+      "y": 90
+    },
+    "active=true,facing=south": {
+      "model": "robotica:block/gate_controller_on",
+      "y": 180
+    },
+    "active=true,facing=west": {
+      "model": "robotica:block/gate_controller_on",
+      "y": 270
+    }
+  }
+}

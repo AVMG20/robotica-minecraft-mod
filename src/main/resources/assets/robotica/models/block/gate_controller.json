@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "robotica:block/gate_controller_top",
+    "side": "robotica:block/gate_controller_side",
+    "front": "robotica:block/gate_controller_front",
+    "particle": "robotica:block/gate_controller_side"
+  }
+}

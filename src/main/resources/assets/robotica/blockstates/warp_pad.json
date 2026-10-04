@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "rift=false": {
+      "model": "robotica:block/warp_pad"
+    },
+    "rift=true": {
+      "model": "robotica:block/warp_pad_rift"
+    }
+  }
+}

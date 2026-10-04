@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "robotica:block/gate_portal_x"
+    },
+    "axis=z": {
+      "model": "robotica:block/gate_portal_x",
+      "y": 90
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:tool_upgrade_kit_3"
+  },
+  "base": {
+    "item": "robotica:recall_remote"
+  },
+  "addition": {
+    "item": "robotica:quantum_circuit"
+  },
+  "result": {
+    "id": "robotica:rift_remote",
+    "count": 1
+  }
+}
