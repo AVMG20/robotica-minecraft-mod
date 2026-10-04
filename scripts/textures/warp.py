@@ -1,6 +1,6 @@
 """Warp module textures: ender teal / purple tech look on dark plating.
 Run: python3 scripts/textures/warp.py
-Writes block textures (pad, gate frame, controller, animated gate portal) and item sprites (rift upgrade, remotes, linking card).
+Writes block textures (pad, Portal Projector parts, animated portal vortex and rim) and item sprites (rift upgrade, remotes, linking card).
 Block models, blockstates, loot and recipes come from scripts/data/warp_data.py.
 """
 import json
@@ -84,90 +84,106 @@ def rift_stud():
     return c.rows()
 
 
-# ---- Gate ----
+# ---- Portal Projector (registry id gate_controller) ----
+# The side texture is one profile of the whole body: row r covers block height pixels [15 - r, 16 - r], so every
+# element of the model reads its own rows (uv v = 16 - top .. 16 - bottom).
 
-def frame_tex():
+def projector_side():
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'd').bevel(0, 0, 16, 16, 'm', 'k')
-    c.rect(2, 2, 12, 12, 'D').frame(2, 2, 12, 12, 'k')
-    c.rect(3, 7, 10, 2, 'k').rect(4, 7, 8, 1, 'p').rect(4, 8, 8, 1, 'q')
-    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
-        c.set(x, y, 'M')
-    c.set(7, 7, 'P').set(8, 7, 'P')
+    c.rect(0, 0, 16, 16, 'd')
+    c.rect(0, 13, 16, 3, 'D')                                   # base plate, y 0-2
+    for x in (1, 6, 10, 14):
+        c.set(x, 14, 'M')
+    c.rect(0, 12, 16, 1, 'k')                                   # groove between base and neck, y 3
+    c.rect(0, 8, 16, 4, 'd')                                    # neck, y 4-7
+    c.rect(0, 9, 16, 2, 'k').rect(1, 9, 14, 1, 'e').rect(1, 10, 14, 1, 'T')   # glow groove, y 5-6
+    c.rect(0, 7, 16, 1, 'k')                                    # groove between neck and head, y 8
+    c.rect(0, 5, 16, 2, 'D').rect(0, 6, 16, 1, 'm')             # head, y 9-10
+    c.rect(0, 4, 16, 1, 'M')                                    # head lip, y 11
+    for x in (2, 7, 12):
+        c.set(x, 5, 'k')
     return c.rows()
 
 
-def controller_side():
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'd').bevel(0, 0, 16, 16, 'm', 'k')
-    c.rect(2, 2, 12, 12, 'D').frame(2, 2, 12, 12, 'k')
-    for y in (4, 6, 9, 11):
-        c.rect(4, y, 8, 1, 'k')
-    c.rect(4, 7, 8, 1, 'e')
-    return c.rows()
-
-
-def controller_top():
+def projector_top():
     c = Canvas()
     plate(c, 0, 0, 16, 16)
-    ring(c, 7.5, 7.5, 3.0, 4.2, 'p')
-    c.rect(6, 6, 4, 4, 'k').rect(7, 7, 2, 2, 'e')
-    rivets(c)
+    c.frame(2, 2, 12, 12, 'k')
+    ring(c, 7.5, 7.5, 4.4, 5.6, 'D')
+    rivets(c, 'M', 1)
     return c.rows()
 
 
-def controller_front(on):
+def projector_lens(on):
+    """Lens disc seen from above (and its 1 pixel rim): bright teal rings when lit, dim purple glass when idle."""
+    c = Canvas()
+    if on:
+        c.rect(0, 0, 16, 16, 'E')
+        ring(c, 7.5, 7.5, 0, 6.8, 'E')
+        ring(c, 7.5, 7.5, 0, 4.6, 'W')
+        ring(c, 7.5, 7.5, 0, 2.2, 'W')
+        ring(c, 7.5, 7.5, 3.2, 4.2, 'Y')
+    else:
+        c.rect(0, 0, 16, 16, 'q')
+        ring(c, 7.5, 7.5, 3.2, 6.8, 'p')
+        ring(c, 7.5, 7.5, 0, 2.6, 'P')
+    return c.rows()
+
+
+def projector_fin(on):
+    """Front prow: dark plate with a vertical emitter slit."""
     c = Canvas()
     c.rect(0, 0, 16, 16, 'd').bevel(0, 0, 16, 16, 'm', 'k')
-    c.rect(2, 2, 12, 12, 'k')
+    c.rect(6, 2, 4, 12, 'k')
+    c.rect(7, 3, 2, 10, 'W' if on else 'q')
     if on:
-        c.rect(3, 3, 10, 10, 'e')
-        ring(c, 7.5, 7.5, 2.0, 4.6, 'E')
-        c.rect(6, 6, 4, 4, 'W')
-        c.frame(3, 3, 10, 10, 'T')
-    else:
-        c.rect(3, 3, 10, 10, 'q')
-        ring(c, 7.5, 7.5, 2.0, 4.6, 'p')
-        c.rect(6, 6, 4, 4, 'k').rect(7, 7, 2, 2, 'm')
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
-        c.set(x, y, 'M')
+        c.rect(7, 4, 2, 8, 'Y')
     return c.rows()
 
 
-# ---- Animated portal ----
+# ---- Animated portal (32x32 frames) ----
 
-FRAMES = 16
-PORTAL_PALETTE = {
-    '0': '#2A1850B4', '1': '#4A2C88BC', '2': '#6A3FB0C4', '3': '#3A7FB8CC',
-    '4': '#2E8F7FD0', '5': '#5AD6BED8', '6': '#A884F0E0', '7': '#D8FBFFEA',
+FRAMES = 24
+VORTEX_PALETTE = {
+    '0': '#1A0B3AB8', '1': '#2A1458BE', '2': '#3F2090C4', '3': '#5A2FA8C8', '4': '#4A55B8CC', '5': '#2E7FB8D0',
+    '6': '#2EA6B4D4', '7': '#2EC9B0D8', '8': '#5AE0C6E0', '9': '#A0F4E4E8', 'a': '#D8FBFFEE', 'b': '#FFFFFFF4',
 }
+BAYER = ((0, 8, 2, 10), (12, 4, 14, 6), (3, 11, 1, 9), (15, 7, 13, 5))
 
 
-def portal_frames():
-    """Swirl made of three spiral arms; phase over the strip is a whole period so the loop is seamless."""
+def vortex_frames():
+    """Two counter turning spiral systems around a bright core. A full loop turns every term by a whole period, so it is seamless."""
     rows = []
+    size = 32
     for f in range(FRAMES):
         phase = 2 * math.pi * f / FRAMES
-        for y in range(16):
+        for y in range(size):
             row = ''
-            for x in range(16):
-                dx, dy = x - 7.5, y - 7.5
+            for x in range(size):
+                dx, dy = (x - 15.5) / 16.0, (y - 15.5) / 16.0
                 r = math.hypot(dx, dy)
                 theta = math.atan2(dy, dx)
-                v = 0.5 + 0.5 * math.sin(3 * theta + 0.55 * r - phase)
-                w = 0.5 + 0.5 * math.sin(2 * theta - 0.35 * r + phase + 1.3)
-                s = 0.62 * v + 0.38 * w
-                level = int(min(7, max(0, s * 8)))
-                row += str(level)
+                arms = 0.5 + 0.5 * math.sin(3 * theta + 9.0 * r - phase)
+                swirl = 0.5 + 0.5 * math.sin(2 * theta - 5.0 * r + 2 * phase + 1.3)
+                core = max(0.0, 1.0 - r * 1.6) ** 1.5
+                glow = 0.45 * arms + 0.30 * swirl + 0.55 * core
+                glow *= 0.78 + 0.22 * (1.0 - r)
+                glow += (BAYER[y % 4][x % 4] / 16.0 - 0.5) * 0.07
+                level = int(min(11, max(0, glow * 12)))
+                row += '0123456789ab'[level]
             rows.append(row)
     return rows
 
 
 def write_portal():
-    rows = portal_frames()
-    path = ASSETS / 'textures/block/gate_portal.png'
-    write_png(path, rows, PORTAL_PALETTE, size=None)
-    (path.parent / 'gate_portal.png.mcmeta').write_text(json.dumps({'animation': {'frametime': 2, 'interpolate': True}}, indent=2) + '\n')
+    base = ASSETS / 'textures/block'
+    write_png(base / 'portal_vortex.png', vortex_frames(), VORTEX_PALETTE, size=None)
+    (base / 'portal_vortex.png.mcmeta').write_text(json.dumps({'animation': {'frametime': 2, 'interpolate': True}}, indent=2) + '\n')
+    rim = Canvas()
+    rim.rect(0, 0, 16, 16, 'W')
+    for x, y in ((3, 4), (9, 7), (12, 11), (5, 12)):
+        rim.set(x, y, 'Y')
+    write_png(base / 'portal_rim.png', rim.rows(), P)
 
 
 # ---- Items ----
@@ -244,11 +260,12 @@ def main():
     write_block('warp_pad_rift_side', pad_side(True), P)
     write_block('warp_pad_base', pad_base(), P)
     write_block('warp_pad_rift_stud', rift_stud(), P)
-    write_block('gate_frame', frame_tex(), P)
-    write_block('gate_controller_side', controller_side(), P)
-    write_block('gate_controller_top', controller_top(), P)
-    write_block('gate_controller_front', controller_front(False), P)
-    write_block('gate_controller_front_on', controller_front(True), P)
+    write_block('projector_side', projector_side(), P)
+    write_block('projector_top', projector_top(), P)
+    write_block('projector_lens', projector_lens(False), P)
+    write_block('projector_lens_on', projector_lens(True), P)
+    write_block('projector_fin', projector_fin(False), P)
+    write_block('projector_fin_on', projector_fin(True), P)
     write_portal()
     write_item('rift_upgrade', rift_upgrade(), P)
     write_item('recall_remote', remote(False), P)

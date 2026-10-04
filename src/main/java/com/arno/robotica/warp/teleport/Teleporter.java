@@ -1,7 +1,6 @@
 package com.arno.robotica.warp.teleport;
 
 import com.arno.robotica.core.CoreSounds;
-import com.arno.robotica.warp.WarpRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -53,8 +52,7 @@ public final class Teleporter {
     public static boolean isPassable(BlockGetter level, BlockPos pos, BlockState state) {
         if (!state.getCollisionShape(level, pos).isEmpty() || !state.getFluidState().isEmpty()) return false;
         return !(state.is(BlockTags.FIRE) || state.is(Blocks.COBWEB) || state.is(Blocks.POWDER_SNOW) || state.is(Blocks.SWEET_BERRY_BUSH)
-                || state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY)
-                || state.is(WarpRegistry.GATE_PORTAL.get()));
+                || state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY));
     }
 
     private static boolean isStandable(BlockGetter level, BlockPos pos, BlockState state) {

@@ -3,7 +3,7 @@ package com.arno.robotica.warp.item;
 import com.arno.robotica.warp.WarpComponents;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.WarpTravel;
-import com.arno.robotica.warp.gate.GateControllerBlockEntity;
+import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
@@ -21,8 +21,8 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * Links two Gate Controllers: sneak-right-click the first, then the second. Sneak-right-click in the air forgets
- * the first one. The linking itself is {@link GateControllerBlockEntity#link}.
+ * Links two Portal Projectors: sneak-right-click the first, then the second. Sneak-right-click in the air forgets
+ * the first one. The linking itself is {@link PortalProjectorBlockEntity#setLinked}.
  */
 public class LinkingCardItem extends Item {
     public LinkingCardItem(Properties props) {

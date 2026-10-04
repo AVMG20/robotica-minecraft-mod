@@ -259,13 +259,12 @@
         },
         {
           "title": "Going home",
-          "text": "Sneak-right-click a pad with a Recall Remote to bind it. Hold right-click for three seconds to go home. Getting hit cancels it.\n\nPortal Gates (Age 4) are walk-through portals between two linked gates, in any dimension.",
+          "text": "Sneak-right-click a pad with a Recall Remote to bind it. Hold right-click for three seconds to go home. Getting hit cancels it.\n\nPortal Projectors (Age 4) project a glowing portal above themselves. Link two with a Linking Card and step into the portal to arrive at the other one, in any dimension.",
           "items": [
             "robotica:recall_remote",
             "robotica:rift_remote",
             "robotica:linking_card",
-            "robotica:gate_controller",
-            "robotica:gate_frame"
+            "robotica:gate_controller"
           ]
         }
       ]

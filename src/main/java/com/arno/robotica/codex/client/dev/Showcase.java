@@ -10,10 +10,13 @@ import com.arno.robotica.gear.GearComponents;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.replicator.logic.Essence;
+import com.arno.robotica.warp.gate.GateLinks;
+import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
@@ -269,17 +272,25 @@ public final class Showcase {
         step(100, () -> {});
         shot("08_replicator");
 
-        // Scene 5: portal gate frame.
+        // Scene 5: two linked, powered Portal Projectors (the portal is drawn by the block entity renderer) and a warp pad.
         step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
-            for (int x = 0; x < 4; x++) for (int y = 0; y < 5; y++) {
-                boolean edge = x == 0 || x == 3 || y == 0 || y == 4;
-                if (edge) level.setBlock(new BlockPos(20 + x, Y + y, 40), block("gate_frame").defaultBlockState(), 3);
+            BlockPos a = new BlockPos(20, Y, 40), b = new BlockPos(25, Y, 40);
+            setFacing(level, a, block("gate_controller"), Direction.SOUTH);
+            setFacing(level, b, block("gate_controller"), Direction.SOUTH);
+            GlobalPos ga = GlobalPos.of(level.dimension(), a), gb = GlobalPos.of(level.dimension(), b);
+            GateLinks.get(level.getServer()).link(ga, gb);
+            for (BlockPos pos : new BlockPos[]{a, b}) {
+                if (level.getBlockEntity(pos) instanceof PortalProjectorBlockEntity be) {
+                    be.setLinked(pos.equals(a) ? gb : ga);
+                    be.energy.setEnergy(be.energy.getMaxEnergyStored());
+                    be.evaluate(level);
+                }
             }
-            level.setBlock(new BlockPos(21, Y, 40), block("gate_controller").defaultBlockState(), 3);
-            setFacing(level, new BlockPos(26, Y, 40), block("warp_pad"), Direction.SOUTH);
+            setFacing(level, new BlockPos(29, Y, 40), block("warp_pad"), Direction.SOUTH);
         }));
-        camera(23, Y + 3, 47, 180, 10);
+        camera(22.5, Y + 3, 47, 180, 8);
+        step(60, () -> {});
         shot("09_gate_and_pad");
 
         // Scene 6: drill HUD and area outline.

@@ -2,25 +2,25 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "FCF",
+    "ONO",
     "EAE",
-    "FNF"
+    "NCN"
   ],
   "key": {
-    "F": {
-      "item": "robotica:gate_frame"
-    },
-    "C": {
-      "item": "robotica:null_circuit"
+    "O": {
+      "tag": "c:obsidians"
     },
     "N": {
       "item": "robotica:null_casing"
     },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
     "A": {
       "item": "robotica:antigrav_core"
     },
-    "E": {
-      "tag": "c:ender_pearls"
+    "C": {
+      "item": "robotica:null_circuit"
     }
   },
   "result": {

@@ -2,10 +2,8 @@ package com.arno.robotica.warp;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.RoboticaTab;
-import com.arno.robotica.warp.gate.GateControllerBlock;
-import com.arno.robotica.warp.gate.GateControllerBlockEntity;
-import com.arno.robotica.warp.gate.GateFrameBlock;
-import com.arno.robotica.warp.gate.GatePortalBlock;
+import com.arno.robotica.warp.gate.PortalProjectorBlock;
+import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.item.LinkingCardItem;
 import com.arno.robotica.warp.item.RemoteItem;
 import com.arno.robotica.warp.item.RiftUpgradeItem;
@@ -42,19 +40,12 @@ public final class WarpRegistry {
     public static final DeferredBlock<WarpPadBlock> WARP_PAD = BLOCKS.registerBlock("warp_pad", WarpPadBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).strength(3.0F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> 7).pushReaction(PushReaction.BLOCK));
-    public static final DeferredBlock<GateFrameBlock> GATE_FRAME = BLOCKS.registerBlock("gate_frame", GateFrameBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.METAL)
-                    .requiresCorrectToolForDrops().pushReaction(PushReaction.BLOCK));
-    public static final DeferredBlock<GateControllerBlock> GATE_CONTROLLER = BLOCKS.registerBlock("gate_controller", GateControllerBlock::new,
+    public static final DeferredBlock<PortalProjectorBlock> GATE_CONTROLLER = BLOCKS.registerBlock("gate_controller", PortalProjectorBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.AMETHYST)
-                    .requiresCorrectToolForDrops().lightLevel(s -> s.getValue(GateControllerBlock.ACTIVE) ? 12 : 3).pushReaction(PushReaction.BLOCK));
-    public static final DeferredBlock<GatePortalBlock> GATE_PORTAL = BLOCKS.registerBlock("gate_portal", GatePortalBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).noCollission().noOcclusion().strength(-1.0F, 3_600_000.0F)
-                    .sound(SoundType.GLASS).lightLevel(s -> 11).noLootTable().pushReaction(PushReaction.BLOCK));
+                    .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> s.getValue(PortalProjectorBlock.ACTIVE) ? 15 : 6).pushReaction(PushReaction.BLOCK));
 
     // ---- Items ----
     public static final DeferredItem<BlockItem> WARP_PAD_ITEM = ITEMS.registerSimpleBlockItem(WARP_PAD);
-    public static final DeferredItem<BlockItem> GATE_FRAME_ITEM = ITEMS.registerSimpleBlockItem(GATE_FRAME);
     public static final DeferredItem<BlockItem> GATE_CONTROLLER_ITEM = ITEMS.registerSimpleBlockItem(GATE_CONTROLLER);
     public static final DeferredItem<RiftUpgradeItem> RIFT_UPGRADE = ITEMS.registerItem("rift_upgrade",
             p -> new RiftUpgradeItem(p.rarity(Rarity.RARE)));
@@ -68,8 +59,8 @@ public final class WarpRegistry {
     // ---- Block entities ----
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WarpPadBlockEntity>> WARP_PAD_BE =
             BLOCK_ENTITIES.register("warp_pad", () -> BlockEntityType.Builder.of(WarpPadBlockEntity::new, WARP_PAD.get()).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GateControllerBlockEntity>> GATE_CONTROLLER_BE =
-            BLOCK_ENTITIES.register("gate_controller", () -> BlockEntityType.Builder.of(GateControllerBlockEntity::new, GATE_CONTROLLER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PortalProjectorBlockEntity>> GATE_CONTROLLER_BE =
+            BLOCK_ENTITIES.register("gate_controller", () -> BlockEntityType.Builder.of(PortalProjectorBlockEntity::new, GATE_CONTROLLER.get()).build(null));
 
     // ---- Menus ----
     public static final DeferredHolder<MenuType<?>, MenuType<PadMenu>> PAD_MENU =
@@ -89,7 +80,6 @@ public final class WarpRegistry {
         RoboticaTab.add(WARP_PAD_ITEM);
         RoboticaTab.add(RIFT_UPGRADE);
         RoboticaTab.add(RIFT_REMOTE);
-        RoboticaTab.add(GATE_FRAME_ITEM);
         RoboticaTab.add(GATE_CONTROLLER_ITEM);
         RoboticaTab.add(LINKING_CARD);
     }
