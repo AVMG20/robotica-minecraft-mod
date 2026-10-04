@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PRP",
+    "CMC",
+    "PRP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "M": {
+      "item": "robotica:clockwork_mechanism"
+    }
+  },
+  "result": {
+    "id": "robotica:electric_motor",
+    "count": 1
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NRN",
+    "RMR",
+    "NRN"
+  ],
+  "key": {
+    "N": {
+      "item": "minecraft:netherite_scrap"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    },
+    "M": {
+      "item": "robotica:magma_core"
+    }
+  },
+  "result": {
+    "id": "robotica:blazing_casing",
+    "count": 2
+  }
+}

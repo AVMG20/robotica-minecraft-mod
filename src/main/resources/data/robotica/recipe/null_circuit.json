@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "QEQ",
+    "ENE",
+    "QEQ"
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "N": {
+      "tag": "c:nether_stars"
+    }
+  },
+  "result": {
+    "id": "robotica:null_circuit",
+    "count": 2
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "CCC",
+    "CGC",
+    "CCC"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:ingots/copper"
+    },
+    "G": {
+      "item": "robotica:copper_gear"
+    }
+  },
+  "result": {
+    "id": "robotica:mainspring",
+    "count": 1
+  }
+}

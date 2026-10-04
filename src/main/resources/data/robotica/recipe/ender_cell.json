@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ERE",
+    "NCN",
+    "ERE"
+  ],
+  "key": {
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "R": {
+      "item": "robotica:redstone_cell"
+    },
+    "N": {
+      "item": "robotica:null_casing"
+    },
+    "C": {
+      "item": "robotica:null_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:ender_cell",
+    "count": 1
+  }
+}

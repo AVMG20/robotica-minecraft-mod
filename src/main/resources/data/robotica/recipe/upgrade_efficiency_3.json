@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AXB",
+    "GCG",
+    "BRA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:ingots/gold"
+    },
+    "B": {
+      "tag": "c:ingots/gold"
+    },
+    "X": {
+      "item": "robotica:quantum_circuit"
+    },
+    "G": {
+      "tag": "c:rods/blaze"
+    },
+    "C": {
+      "item": "robotica:upgrade_efficiency_2"
+    },
+    "R": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_efficiency_3",
+    "count": 1
+  }
+}

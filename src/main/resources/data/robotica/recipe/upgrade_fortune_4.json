@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AXB",
+    "GCG",
+    "BRA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:storage_blocks/lapis"
+    },
+    "B": {
+      "tag": "c:gems/diamond"
+    },
+    "X": {
+      "item": "robotica:null_circuit"
+    },
+    "G": {
+      "item": "minecraft:shulker_shell"
+    },
+    "C": {
+      "item": "robotica:upgrade_fortune_3"
+    },
+    "R": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_fortune_4",
+    "count": 1
+  }
+}

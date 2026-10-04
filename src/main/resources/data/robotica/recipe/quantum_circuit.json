@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "BNB",
+    "ABA"
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "B": {
+      "tag": "c:rods/blaze"
+    },
+    "N": {
+      "tag": "c:ingots/netherite"
+    }
+  },
+  "result": {
+    "id": "robotica:quantum_circuit",
+    "count": 1
+  }
+}

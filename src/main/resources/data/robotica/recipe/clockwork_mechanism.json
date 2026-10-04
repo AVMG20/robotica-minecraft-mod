@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PGP",
+    "GSG",
+    "PGP"
+  ],
+  "key": {
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "G": {
+      "item": "robotica:copper_gear"
+    },
+    "S": {
+      "tag": "c:cobblestones"
+    }
+  },
+  "result": {
+    "id": "robotica:clockwork_mechanism",
+    "count": 1
+  }
+}

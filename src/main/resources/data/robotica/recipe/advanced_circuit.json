@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BGB",
+    "QDQ",
+    "BGB"
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "G": {
+      "tag": "c:ingots/gold"
+    },
+    "Q": {
+      "tag": "c:gems/quartz"
+    },
+    "D": {
+      "tag": "c:gems/diamond"
+    }
+  },
+  "result": {
+    "id": "robotica:advanced_circuit",
+    "count": 1
+  }
+}

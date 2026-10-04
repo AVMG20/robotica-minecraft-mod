@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AXB",
+    "GCG",
+    "BRA"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:sugar"
+    },
+    "B": {
+      "tag": "c:dusts/redstone"
+    },
+    "X": {
+      "item": "robotica:advanced_circuit"
+    },
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "C": {
+      "item": "robotica:upgrade_speed_1"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_speed_2",
+    "count": 1
+  }
+}

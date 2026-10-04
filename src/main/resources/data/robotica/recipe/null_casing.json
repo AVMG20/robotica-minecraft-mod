@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SBS",
+    "BAB",
+    "SBS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:shulker_shell"
+    },
+    "B": {
+      "item": "robotica:blazing_casing"
+    },
+    "A": {
+      "item": "robotica:antigrav_core"
+    }
+  },
+  "result": {
+    "id": "robotica:null_casing",
+    "count": 2
+  }
+}

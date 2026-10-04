@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "OCO",
+    "CDC",
+    "OCO"
+  ],
+  "key": {
+    "O": {
+      "tag": "c:obsidians"
+    },
+    "C": {
+      "item": "robotica:iron_casing"
+    },
+    "D": {
+      "tag": "c:gems/diamond"
+    }
+  },
+  "result": {
+    "id": "robotica:reinforced_casing",
+    "count": 1
+  }
+}

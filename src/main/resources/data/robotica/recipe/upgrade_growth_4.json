@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AXB",
+    "GCG",
+    "BRA"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:bone_block"
+    },
+    "B": {
+      "item": "minecraft:bone_block"
+    },
+    "X": {
+      "item": "robotica:null_circuit"
+    },
+    "G": {
+      "item": "minecraft:shulker_shell"
+    },
+    "C": {
+      "item": "robotica:upgrade_growth_3"
+    },
+    "R": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_growth_4",
+    "count": 1
+  }
+}

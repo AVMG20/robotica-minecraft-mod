@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SMS",
+    "MNM",
+    "SMS"
+  ],
+  "key": {
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "M": {
+      "item": "minecraft:magma_block"
+    },
+    "N": {
+      "tag": "c:ingots/netherite"
+    }
+  },
+  "result": {
+    "id": "robotica:magma_core",
+    "count": 1
+  }
+}

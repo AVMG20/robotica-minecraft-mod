@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PBP",
+    "SQS",
+    "PBP"
+  ],
+  "key": {
+    "P": {
+      "item": "minecraft:prismarine_crystals"
+    },
+    "B": {
+      "item": "minecraft:blaze_powder"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:plasma_actuator",
+    "count": 1
+  }
+}

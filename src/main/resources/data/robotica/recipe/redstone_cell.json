@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "RCR",
+    "RAR",
+    " X "
+  ],
+  "key": {
+    "R": {
+      "tag": "c:storage_blocks/redstone"
+    },
+    "C": {
+      "item": "robotica:copper_cell"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:redstone_cell",
+    "count": 1
+  }
+}

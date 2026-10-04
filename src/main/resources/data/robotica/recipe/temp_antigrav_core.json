@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "CNC",
+    "PCP"
+  ],
+  "key": {
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "C": {
+      "item": "minecraft:end_crystal"
+    },
+    "N": {
+      "tag": "c:nether_stars"
+    }
+  },
+  "result": {
+    "id": "robotica:antigrav_core",
+    "count": 1
+  }
+}
