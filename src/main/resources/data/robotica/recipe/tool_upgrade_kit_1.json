@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PCP",
+    "BIB",
+    "PCP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:tool_upgrade_kit_1",
+    "count": 1
+  }
+}

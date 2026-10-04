@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:tool_upgrade_kit_2"
+  },
+  "base": {
+    "item": "robotica:bore_drill"
+  },
+  "addition": {
+    "item": "robotica:servo_core"
+  },
+  "result": {
+    "id": "robotica:servo_drill",
+    "count": 1
+  }
+}

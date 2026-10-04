@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:tool_upgrade_kit_1"
+  },
+  "base": {
+    "item": "robotica:gearblade"
+  },
+  "addition": {
+    "item": "robotica:electric_motor"
+  },
+  "result": {
+    "id": "robotica:shock_baton",
+    "count": 1
+  }
+}
