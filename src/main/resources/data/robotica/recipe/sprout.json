@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:wooden_chassis"
+    },
+    {
+      "item": "robotica:clockwork_mechanism"
+    },
+    {
+      "item": "minecraft:stone_hoe"
+    }
+  ],
+  "result": {
+    "id": "robotica:sprout",
+    "count": 1
+  }
+}

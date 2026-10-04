@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BMB",
+    "PIP"
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:farm_kit_mk2",
+    "count": 1
+  }
+}

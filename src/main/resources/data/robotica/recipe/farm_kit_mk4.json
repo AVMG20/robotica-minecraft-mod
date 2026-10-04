@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CPC",
+    "NEN"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "N": {
+      "item": "robotica:null_casing"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    }
+  },
+  "result": {
+    "id": "robotica:farm_kit_mk4",
+    "count": 1
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:iron_casing"
+    },
+    {
+      "item": "robotica:electric_motor"
+    },
+    {
+      "item": "minecraft:iron_pickaxe"
+    },
+    {
+      "item": "robotica:basic_circuit"
+    }
+  ],
+  "result": {
+    "id": "robotica:excavator",
+    "count": 1
+  }
+}
