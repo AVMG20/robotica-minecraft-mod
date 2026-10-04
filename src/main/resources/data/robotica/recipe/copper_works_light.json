@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:cobblestones/normal"
+    },
+    "B": {
+      "item": "minecraft:redstone_lamp"
+    }
+  },
+  "result": {
+    "id": "robotica:copper_works_light",
+    "count": 8
+  }
+}

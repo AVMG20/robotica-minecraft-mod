@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "#c:ingots/copper",
+    "#c:plates/copper",
+    "#c:gems/quartz",
+    "minecraft:clay"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_column_horizontal",
+  "textures": {
+    "end": "robotica:block/steel_lab_pillar_top",
+    "side": "robotica:block/steel_lab_pillar",
+    "particle": "robotica:block/steel_lab_pillar"
+  }
+}

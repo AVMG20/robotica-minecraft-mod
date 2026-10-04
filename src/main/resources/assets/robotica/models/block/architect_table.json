@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "robotica:block/architect_table_top",
+    "side": "robotica:block/architect_table_side",
+    "bottom": "robotica:block/architect_table_bottom",
+    "particle": "robotica:block/architect_table_side"
+  }
+}

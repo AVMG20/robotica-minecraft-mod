@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:glass_blocks"
+    },
+    "B": {
+      "tag": "c:plates/iron"
+    }
+  },
+  "result": {
+    "id": "robotica:steel_lab_window",
+    "count": 8
+  }
+}

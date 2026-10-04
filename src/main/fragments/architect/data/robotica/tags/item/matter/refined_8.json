@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "#c:ingots/iron",
+    "#c:ingots/gold",
+    "#c:plates/iron",
+    "#c:plates/gold",
+    "minecraft:bricks"
+  ]
+}

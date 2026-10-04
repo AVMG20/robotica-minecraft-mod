@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:timberframe_wall",
+    "robotica:timberframe_floor",
+    "robotica:timberframe_roof",
+    "robotica:timberframe_pillar",
+    "robotica:timberframe_light"
+  ]
+}

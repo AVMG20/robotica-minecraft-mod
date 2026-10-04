@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "robotica:block/copper_works_pillar_top",
+    "side": "robotica:block/copper_works_pillar",
+    "particle": "robotica:block/copper_works_pillar"
+  }
+}

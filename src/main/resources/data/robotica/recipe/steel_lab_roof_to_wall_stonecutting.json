@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "robotica:steel_lab_roof"
+  },
+  "result": {
+    "id": "robotica:steel_lab_wall",
+    "count": 1
+  }
+}
