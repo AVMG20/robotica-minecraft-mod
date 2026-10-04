@@ -173,6 +173,15 @@ Mid-high tier, slow, powerful.
 - Mode "Spawn": spawns the real mob in front of the controller instead (for your own mob grinders), max 8 nearby, then waits.
 - Never duplicates boss drops, nether stars or anything in the blacklist tag.
 
+## Warp (module `warp`)
+
+Getting home and travelling between bases. All teleports run on the server, cost FE, and work for every player on a server.
+- Warp Pad (Age 2 parts, FE buffer 1M): a block you name in a small GUI. Pads belong to their owner; the owner can mark a pad public so friends can use it. Stand on a pad and right-click it to open the destination list. Cost: 5,000 FE + 20 FE per block of distance, taken from the departure pad. Same dimension only, until the pad gets a Rift Upgrade (Age 3 parts + Magma Core) that unlocks cross-dimension travel for a flat 100,000 FE.
+- Recall Remote (Age 1, 400k FE): sneak-right-click a Warp Pad to bind it. Hold right-click for 3 seconds (any damage cancels) to teleport to that pad. 20,000 FE, 30 s cooldown, same dimension. Smithing upgrade to Rift Remote (Age 3) works across dimensions for 150,000 FE.
+- Portal Gate (Age 4): 4 wide × 5 tall frame of Gate Frame blocks with a Gate Controller in the bottom middle. Link two gates with a Linking Card (sneak-right-click controller A, then B). While powered (500 FE/t idle), the inside fills with a swirling portal block; players, mobs and items that walk in arrive at the other gate (10,000 FE per entity). Gates work across dimensions.
+- The pad registry is a `SavedData` on the overworld, so pads keep working when their chunk is unloaded (the destination chunk is loaded on arrival).
+- Safety: never teleport into solid blocks, look for the nearest safe 2-high spot within 3 blocks, otherwise refuse with a message and refund the FE.
+
 ## Later (not in this build)
 
 Guard Drone, Wingman, Mole, Courier, Survey Rig, Exo-Frame armor, bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.

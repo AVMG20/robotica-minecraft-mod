@@ -7,6 +7,7 @@ import com.arno.robotica.core.client.CoreClient;
 import com.arno.robotica.gear.client.GearClient;
 import com.arno.robotica.power.client.PowerClient;
 import com.arno.robotica.replicator.client.ReplicatorClient;
+import com.arno.robotica.warp.client.WarpClient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -27,5 +28,6 @@ public class RoboticaClient {
         GearClient.init(modBus, container);
         ArchitectClient.init(modBus, container);
         ReplicatorClient.init(modBus, container);
+        WarpClient.init(modBus, container);
     }
 }
