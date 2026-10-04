@@ -154,4 +154,29 @@ public class PowerGameTests {
             helper.assertTrue(stored % 400 == 0, "Charge rate is 400 FE/t, has " + stored);
         });
     }
+
+    /** Furnace-like neighbours (block entity, no FE) are recorded at scan time and never cause rescans. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void nonEndpointNeighbourDoesNotRescan(GameTestHelper helper) {
+        BlockPos conduit = new BlockPos(1, 1, 1);
+        BlockPos furnace = new BlockPos(2, 1, 1);
+        helper.setBlock(conduit, PowerRegistry.COPPER_CONDUIT.get().defaultBlockState());
+        helper.setBlock(furnace, net.minecraft.world.level.block.Blocks.FURNACE);
+        helper.succeedWhen(() -> {
+            var level = helper.getLevel();
+            BlockPos abs = helper.absolutePos(conduit);
+            helper.assertTrue(com.arno.robotica.power.conduit.ConduitManager.networkSize(level, abs) == 1, "network should be built");
+            helper.assertTrue(!com.arno.robotica.power.conduit.ConduitManager.endpointsDirty(level, abs), "freshly scanned");
+            for (int i = 0; i < 5; i++) {
+                com.arno.robotica.power.conduit.ConduitManager.neighborChanged(level, abs, helper.absolutePos(furnace),
+                        net.minecraft.world.level.block.Blocks.FURNACE);
+            }
+            helper.assertTrue(!com.arno.robotica.power.conduit.ConduitManager.endpointsDirty(level, abs),
+                    "repeat updates from a known non-endpoint must not trigger a rescan");
+            // A block entity that was not there at scan time still triggers one.
+            com.arno.robotica.power.conduit.ConduitManager.neighborChanged(level, abs, helper.absolutePos(new BlockPos(1, 2, 1)),
+                    net.minecraft.world.level.block.Blocks.CHEST);
+            helper.assertTrue(com.arno.robotica.power.conduit.ConduitManager.endpointsDirty(level, abs), "an unknown block entity marks the network dirty");
+        });
+    }
 }

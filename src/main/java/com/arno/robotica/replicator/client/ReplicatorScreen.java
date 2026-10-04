@@ -57,7 +57,8 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
                 drawText(g, Component.translatable("gui.robotica.replicator.status.formed"), x + 62, y + 32, GOOD);
             } else {
                 drawText(g, Component.translatable("gui.robotica.replicator.pause." + pause.name().toLowerCase()), x + 62, y + 32,
-                        pause == Pause.NO_ENERGY || pause == Pause.NO_VIAL ? BAD : WARN);
+                        pause == Pause.NO_ENERGY || pause == Pause.NO_VIAL || pause == Pause.NEEDS_MAGMA_CORE
+                                || pause == Pause.NEEDS_ANTIGRAV_CORE ? BAD : WARN);
             }
         } else {
             drawText(g, Component.translatable(menu.structure().translationKey()), x + 62, y + 32, BAD);
@@ -70,6 +71,7 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
         drawText(g, Component.translatable("gui.robotica.replicator.vial"), x + 38, y + 41, TEXT);
         drawText(g, Component.translatable("gui.robotica.replicator.boost"), x + 36, y + 71, TEXT);
         drawText(g, Component.translatable("gui.robotica.upgrades"), x + 124, y + 8, TEXT);
+        drawText(g, Component.translatable("gui.robotica.replicator.catalyst"), x + 152, y + 39, TEXT);
         if (menu.looting() > 0) {
             drawText(g, Component.translatable("gui.robotica.replicator.looting", menu.looting()), x + 124, y + 76, TEXT);
         }

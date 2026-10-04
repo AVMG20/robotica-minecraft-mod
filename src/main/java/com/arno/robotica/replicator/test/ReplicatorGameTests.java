@@ -255,6 +255,65 @@ public class ReplicatorGameTests {
         });
     }
 
+    /** Age 3 mobs (blaze) wait for a Magma Core in the catalyst slot, Age 4 mobs (shulker) for an Antigrav Core. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void catalystGatesLadderMobs(GameTestHelper helper) {
+        helper.assertTrue(Essence.requiredTier(EntityType.ZOMBIE) == 0, "zombies need no catalyst");
+        helper.assertTrue(Essence.requiredTier(EntityType.BLAZE) == 3 && Essence.requiredTier(EntityType.GHAST) == 3
+                && Essence.requiredTier(EntityType.WITHER_SKELETON) == 3 && Essence.requiredTier(EntityType.ENDERMAN) == 3, "tier 3 mobs");
+        helper.assertTrue(Essence.requiredTier(EntityType.SHULKER) == 4, "shulkers are tier 4");
+        buildShell(helper, true);
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        be.vial.setStackInSlot(0, Essence.completeVial(EntityType.BLAZE));
+        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 3).get()));
+        be.boost.setStackInSlot(0, new ItemStack(CoreItems.PLASMA_ACTUATOR.get()));
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        helper.assertTrue(be.catalyst.insertItem(0, new ItemStack(Items.DIRT), true).getCount() == 1, "only cores fit the catalyst slot");
+
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(be.cycles() == 0, "a blaze must not be copied without a Magma Core");
+            helper.assertTrue(be.pause() == ReplicatorControllerBlockEntity.Pause.NEEDS_MAGMA_CORE, "pause is " + be.pause());
+            be.catalyst.setStackInSlot(0, new ItemStack(CoreItems.MAGMA_CORE.get()));
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(be.cycles() >= 1, "with the core installed a cycle finishes");
+            helper.assertTrue(!be.catalyst.getStackInSlot(0).isEmpty(), "the core is not consumed");
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void shulkerNeedsAntigravCore(GameTestHelper helper) {
+        buildShell(helper, true);
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        be.vial.setStackInSlot(0, Essence.completeVial(EntityType.SHULKER));
+        be.catalyst.setStackInSlot(0, new ItemStack(CoreItems.MAGMA_CORE.get()));
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(be.catalystTier() == 3, "magma core is tier 3");
+            helper.assertTrue(be.pause() == ReplicatorControllerBlockEntity.Pause.NEEDS_ANTIGRAV_CORE, "pause is " + be.pause());
+        });
+    }
+
+    /** The cycle progress survives a save and load (chunk reload): activeType is rebuilt from the vial. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void progressSurvivesReload(GameTestHelper helper) {
+        buildShell(helper, true);
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        be.vial.setStackInSlot(0, Essence.completeVial(EntityType.ZOMBIE));
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        int[] before = new int[1];
+        helper.runAfterDelay(30, () -> {
+            before[0] = be.progress();
+            helper.assertTrue(before[0] > 10, "the machine should be working, progress " + before[0]);
+            net.minecraft.nbt.CompoundTag tag = be.saveWithFullMetadata(helper.getLevel().registryAccess());
+            be.loadWithComponents(tag, helper.getLevel().registryAccess());
+        });
+        helper.runAfterDelay(35, () -> {
+            helper.assertTrue(be.progress() >= before[0], "progress must not reset after a reload, was " + before[0] + " now " + be.progress());
+            helper.succeed();
+        });
+    }
+
     // ---- spawn ----
 
     /** Spawn mode puts the mob next to the controller; at the cap of 8 it waits. */

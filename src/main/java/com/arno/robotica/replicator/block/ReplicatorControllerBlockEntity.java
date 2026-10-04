@@ -53,7 +53,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Brain of the Mob Replicator. One vial slot, one boost slot, three upgrade slots, an 18 slot output and a 1M FE buffer.
+ * Brain of the Mob Replicator. One vial slot, one boost slot, one catalyst slot, three upgrade slots, an 18 slot output and a 1M FE buffer.
  * Every cycle it either rolls the vial mob's loot table into the output (Harvest) or spawns the mob (Spawn).
  * Ticks on the server only.
  */
@@ -81,7 +81,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
 
     /** Why the machine is not progressing right now (shown in the GUI). */
     public enum Pause {
-        NONE, NOT_FORMED, NO_VIAL, NO_ENERGY, OUTPUT_FULL, SPAWN_CAP, NO_SPACE, PEACEFUL, SPAWN_DISABLED;
+        NONE, NOT_FORMED, NO_VIAL, NO_ENERGY, OUTPUT_FULL, SPAWN_CAP, NO_SPACE, PEACEFUL, SPAWN_DISABLED, NEEDS_MAGMA_CORE, NEEDS_ANTIGRAV_CORE;
 
         public static Pause byId(int id) {
             return id >= 0 && id < values().length ? values()[id] : NONE;
@@ -128,6 +128,26 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         };
     }
 
+    /** Catalyst slot: a Magma Core (Age 3 mobs) or Antigrav Core (Age 4 mobs). Never consumed. */
+    public static ItemStackHandler newCatalystHandler(Runnable onChanged) {
+        return new ItemStackHandler(1) {
+            @Override
+            public boolean isItemValid(int slot, ItemStack stack) {
+                return stack.is(CoreItems.MAGMA_CORE.get()) || stack.is(CoreItems.ANTIGRAV_CORE.get());
+            }
+
+            @Override
+            public int getSlotLimit(int slot) {
+                return 1;
+            }
+
+            @Override
+            protected void onContentsChanged(int slot) {
+                onChanged.run();
+            }
+        };
+    }
+
     public static Upgrades newUpgrades(Runnable onChanged) {
         return new Upgrades(UPGRADE_SLOTS, Set.of(UpgradeKind.SPEED, UpgradeKind.FORTUNE, UpgradeKind.EFFICIENCY), onChanged) {
             @Override
@@ -142,6 +162,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
 
     public final ItemStackHandler vial = newVialHandler(this::setChangedAndSync);
     public final ItemStackHandler boost = newBoostHandler(this::setChanged);
+    public final ItemStackHandler catalyst = newCatalystHandler(this::setChanged);
     public final Upgrades upgrades = newUpgrades(this::setChanged);
     public final ItemStackHandler output = new ItemStackHandler(OUTPUT_SLOTS) {
         @Override
@@ -257,6 +278,14 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         return Math.min(MAX_SPEED_LEVEL, upgrades.level(UpgradeKind.SPEED));
     }
 
+    /** Tier of the installed catalyst core: 0 none, 3 Magma Core, 4 Antigrav Core. */
+    public int catalystTier() {
+        ItemStack stack = catalyst.getStackInSlot(0);
+        if (stack.is(CoreItems.ANTIGRAV_CORE.get())) return 4;
+        if (stack.is(CoreItems.MAGMA_CORE.get())) return 3;
+        return 0;
+    }
+
     public boolean hasBoost() {
         return boost.getStackInSlot(0).is(CoreItems.PLASMA_ACTUATOR.get());
     }
@@ -343,7 +372,10 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
                 activeType = type;
                 progress = 0;
             }
-            if (!pending.isEmpty() && !flushPending()) {
+            int required = Essence.requiredTier(type);
+            if (required > catalystTier()) {
+                nextPause = required >= 4 ? Pause.NEEDS_ANTIGRAV_CORE : Pause.NEEDS_MAGMA_CORE;
+            } else if (!pending.isEmpty() && !flushPending()) {
                 nextPause = Pause.OUTPUT_FULL;
             } else if (progress >= needed) {
                 // Harvest always finishes at once. Spawn mode may be waiting for room, so it retries once a second.
@@ -460,6 +492,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     public void dropContents(Level level, BlockPos pos) {
         drop(level, pos, vial);
         drop(level, pos, boost);
+        drop(level, pos, catalyst);
         drop(level, pos, upgrades);
         drop(level, pos, output);
         for (ItemStack stack : pending) {
@@ -496,6 +529,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         super.saveAdditional(tag, registries);
         tag.put("vial", vial.serializeNBT(registries));
         tag.put("boost", boost.serializeNBT(registries));
+        tag.put("catalyst", catalyst.serializeNBT(registries));
         tag.put("upgrades", upgrades.serializeNBT(registries));
         tag.put("output", output.serializeNBT(registries));
         tag.put("energy", energy.serializeNBT(registries));
@@ -514,6 +548,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         super.loadAdditional(tag, registries);
         if (tag.contains("vial")) vial.deserializeNBT(registries, tag.getCompound("vial"));
         if (tag.contains("boost")) boost.deserializeNBT(registries, tag.getCompound("boost"));
+        if (tag.contains("catalyst")) catalyst.deserializeNBT(registries, tag.getCompound("catalyst"));
         if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
         if (tag.contains("output")) {
             output.deserializeNBT(registries, tag.getCompound("output"));
@@ -522,6 +557,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         }
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         if (tag.contains("progress")) progress = tag.getInt("progress");
+        // activeType is transient: restore it from the vial, or the first tick after a reload would reset the progress.
+        if (tag.contains("vial")) activeType = boundType();
         if (tag.contains("xp")) xpStored = tag.getInt("xp");
         if (tag.contains("mode")) mode = Mode.byId(tag.getInt("mode"));
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");

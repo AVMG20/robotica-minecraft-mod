@@ -47,8 +47,8 @@ public final class AutomationConfig {
             FARM_GROWTH[i] = b.comment("Mk" + mk + " growth multiplier (growth cards add 0.5 per level).")
                     .defineInRange("farmGrowthMk" + mk, DEF_GROWTH[i], 1.0, 50.0);
         }
-        GROWTH_TICKS_PER_COLUMN = b.comment("Extra random ticks per second per area column for each +1.0 of growth multiplier.")
-                .defineInRange("growthTicksPerColumn", 0.05, 0.0, 5.0);
+        GROWTH_TICKS_PER_COLUMN = b.comment("Extra random ticks per second per area column for each +1.0 of growth multiplier. Vanilla gives a block 3/4096 random ticks per game tick = 0.0146 per second, so the default makes a x1.5 multiplier really mean x1.5.")
+                .defineInRange("growthTicksPerColumn", 0.0146, 0.0, 5.0);
         EXCAVATOR_SIZE = b.comment("Excavator base square side without range cards (range cards give 16/32/48/64).")
                 .defineInRange("excavatorSize", 8, 1, 64);
         EXCAVATOR_INTERVAL = b.comment("Excavator ticks per block.")
@@ -95,7 +95,7 @@ public final class AutomationConfig {
     }
 
     public static double growthTicksPerColumn() {
-        return SPEC.isLoaded() ? GROWTH_TICKS_PER_COLUMN.get() : 0.05;
+        return SPEC.isLoaded() ? GROWTH_TICKS_PER_COLUMN.get() : 0.0146;
     }
 
     public static int excavatorSize() {

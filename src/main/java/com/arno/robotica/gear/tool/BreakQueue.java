@@ -90,6 +90,7 @@ public final class BreakQueue {
         List<BlockPos> all = new ArrayList<>(targets);
         all.add(origin);
         for (BlockPos p : all) {
+            if (!level.isLoaded(p) || !level.isLoaded(p.below())) continue;
             BlockState s = level.getBlockState(p);
             if (s.is(net.minecraft.tags.BlockTags.LOGS) && level.getBlockState(p.below()).is(net.minecraft.tags.BlockTags.DIRT)) {
                 spots.add(new ReplantSpot(p.immutable(), s.getBlock()));
@@ -114,6 +115,12 @@ public final class BreakQueue {
                     break;
                 }
                 BlockPos pos = queue.peekFirst();
+                // Check the chunk first: getBlockState on an unloaded position would force-load or generate it.
+                if (!level.isLoaded(pos)) {
+                    queue.pollFirst();
+                    consumed++;
+                    continue;
+                }
                 BlockState state = level.getBlockState(pos);
                 if (!tool.canAfford(held, state)) {
                     queue.clear();
@@ -121,7 +128,7 @@ public final class BreakQueue {
                 }
                 queue.pollFirst();
                 consumed++;
-                if (!level.isLoaded(pos) || state.isAir() || state.getBlock() instanceof LiquidBlock
+                if (state.isAir() || state.getBlock() instanceof LiquidBlock
                         || state.getDestroySpeed(level, pos) < 0 || !level.mayInteract(player, pos)
                         || pos.distSqr(player.blockPosition()) > 48 * 48) {
                     continue;
@@ -169,6 +176,7 @@ public final class BreakQueue {
 
     private static void replant(ServerPlayer player, ServerLevel level, List<ReplantSpot> spots) {
         for (ReplantSpot spot : spots) {
+            if (!level.isLoaded(spot.pos())) continue;
             if (!level.getBlockState(spot.pos()).isAir()) continue;
             ItemStack sapling = findSapling(player, spot.log());
             if (sapling.isEmpty() || !(sapling.getItem() instanceof BlockItem blockItem)) continue;

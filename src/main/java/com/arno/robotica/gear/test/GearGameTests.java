@@ -301,4 +301,36 @@ public class GearGameTests {
         BreakQueue.clear(player.getUUID());
         helper.succeed();
     }
+
+    @GameTest(template = "empty")
+    public static void enchantSwapKeepsPlayerEnchantments(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var lookup = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+        var silk = lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH);
+        var fortune = lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FORTUNE);
+        GearToolItem tool = GearItems.MAGMA_DRILL.get();
+        ItemStack drill = new ItemStack(tool);
+        // Player applied Fortune I on an anvil; the swap wants Fortune II in fortune mode.
+        drill.enchant(fortune, 1);
+        ToolSettings.setEnchantMode(drill, ToolSettings.ENCHANT_FORTUNE);
+        ToolSettings.syncEnchantments(drill, tool, level.registryAccess());
+        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 2, "fortune mode should top up to level 2");
+        ToolSettings.setEnchantMode(drill, ToolSettings.ENCHANT_SILK);
+        ToolSettings.syncEnchantments(drill, tool, level.registryAccess());
+        helper.assertTrue(drill.getEnchantmentLevel(silk) == 1, "silk mode should add silk touch");
+        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 1, "the player's Fortune I must survive, got " + drill.getEnchantmentLevel(fortune));
+        ToolSettings.setEnchantMode(drill, ToolSettings.ENCHANT_NONE);
+        ToolSettings.syncEnchantments(drill, tool, level.registryAccess());
+        helper.assertTrue(drill.getEnchantmentLevel(silk) == 0, "injected silk touch should be removed");
+        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 1, "the player's Fortune I must survive the none mode");
+        // A player-applied Silk Touch stays when the swap switches away from silk.
+        ItemStack other = new ItemStack(tool);
+        other.enchant(silk, 1);
+        ToolSettings.setEnchantMode(other, ToolSettings.ENCHANT_SILK);
+        ToolSettings.syncEnchantments(other, tool, level.registryAccess());
+        ToolSettings.setEnchantMode(other, ToolSettings.ENCHANT_NONE);
+        ToolSettings.syncEnchantments(other, tool, level.registryAccess());
+        helper.assertTrue(other.getEnchantmentLevel(silk) == 1, "the player's Silk Touch must survive");
+        helper.succeed();
+    }
 }

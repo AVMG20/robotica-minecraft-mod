@@ -33,6 +33,19 @@ public final class Essence {
     /** Items the replicator never puts in its output. */
     public static final TagKey<Item> OUTPUT_BLACKLIST = TagKey.create(Registries.ITEM, Robotica.id("replicator_output_blacklist"));
 
+    /** Mobs whose loot feeds Age 3 of the ladder (blaze rods, ender pearls, ghast tears...): need a Magma Core or better. */
+    public static final TagKey<EntityType<?>> TIER3 = TagKey.create(Registries.ENTITY_TYPE, Robotica.id("replicator_tier3"));
+    /** Mobs whose loot feeds Age 4 (shulker shells): need an Antigrav Core. */
+    public static final TagKey<EntityType<?>> TIER4 = TagKey.create(Registries.ENTITY_TYPE, Robotica.id("replicator_tier4"));
+
+    /** Catalyst tier a mob type needs: 0 none, 3 Magma Core, 4 Antigrav Core (the higher core also covers tier 3). */
+    public static int requiredTier(EntityType<?> type) {
+        if (type == EntityType.SHULKER || type.is(TIER4)) return 4;
+        if (type == EntityType.BLAZE || type == EntityType.ENDERMAN || type == EntityType.GUARDIAN || type == EntityType.GHAST
+                || type == EntityType.WITHER_SKELETON || type == EntityType.PIGLIN_BRUTE || type.is(TIER3)) return 3;
+        return 0;
+    }
+
     public enum Result {
         /** First sample: the vial is now bound to the mob type. */
         BOUND(true),

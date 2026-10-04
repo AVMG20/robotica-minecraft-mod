@@ -9,11 +9,19 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -97,6 +105,16 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
         return Math.max(1, base / Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
     }
 
+    /**
+     * Speed multiplier that actually shortens the action interval. Once the interval is floored at 1 tick (Mk4 with
+     * speed cards) a bigger card multiplier gains nothing, so it must not be paid for either.
+     */
+    public int effectiveSpeedMultiplier() {
+        int base = Math.max(1, CoreConfig.scaleInterval(AutomationConfig.farmInterval(tier())));
+        int actual = actionInterval();
+        return Math.max(1, base / Math.max(1, actual));
+    }
+
     public double growthMultiplier() {
         return AutomationConfig.farmGrowth(tier()) + Upgrades.growthBonus(upgrades.level(UpgradeKind.GROWTH));
     }
@@ -111,13 +129,13 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
         }
         if (target == null) scan(sl);
         if (target == null) return energy.getEnergyStored() <= 0 ? Status.NO_ENERGY : Status.IDLE;
-        if (!energy.consume(scaledDrain(baseFePerTick()))) return Status.NO_ENERGY;
+        if (!energy.consume(scaledDrain(baseFePerTick(), effectiveSpeedMultiplier()))) return Status.NO_ENERGY;
         progress++;
         if (progress >= actionInterval()) {
             progress = 0;
             BlockPos t = target;
             target = null;
-            if (!act(sl, t)) scanWait = 0;
+            if (!sl.isLoaded(t) || !act(sl, t)) scanWait = 0;
         }
         return Status.WORKING;
     }
@@ -188,6 +206,42 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
 
     // ---- item pickup ----
 
+    /** Items older than this are only taken when they are natural leaf decay products. */
+    private static final int MAX_ITEM_AGE = 200;
+    private static final int MAX_NATURAL_AGE = 1200;
+
+    /** Saplings, seeds, apples and sticks: what decaying leaves and plants drop on their own near the bot's trees. */
+    protected boolean isNaturalDecayDrop(ItemStack stack) {
+        return stack.is(ItemTags.SAPLINGS) || stack.is(Items.APPLE) || stack.is(Items.STICK) || stack.is(Items.WHEAT_SEEDS)
+                || stack.is(Items.BEETROOT_SEEDS) || stack.is(Items.MELON_SEEDS) || stack.is(Items.PUMPKIN_SEEDS)
+                || stack.is(Items.TORCHFLOWER_SEEDS) || stack.is(Items.PITCHER_POD) || SproutBlockEntity.isFarmSeed(stack);
+    }
+
+    /**
+     * Whether the vacuum may take this item entity: never something a player threw or that is reserved for a player,
+     * never old piles (death piles, chest contents), and only natural decay drops past the first few seconds.
+     */
+    private boolean mayVacuum(ServerLevel sl, ItemEntity entity) {
+        if (entity.getOwner() instanceof Player || entity.getTarget() != null) return false;
+        ItemStack stack = entity.getItem();
+        int age = entity.getAge();
+        if (age < 0 || age > MAX_NATURAL_AGE) return false;
+        if (age > MAX_ITEM_AGE && !isNaturalDecayDrop(stack)) return false;
+        return pickupAllowed(sl, entity);
+    }
+
+    /** Posts the pickup event with the owner's fake player so protection mods can veto. */
+    private boolean pickupAllowed(ServerLevel sl, ItemEntity entity) {
+        try {
+            FakePlayer fake = FakePlayerFactory.get(sl, fakeProfile());
+            ItemEntityPickupEvent.Pre event = new ItemEntityPickupEvent.Pre(fake, entity);
+            NeoForge.EVENT_BUS.post(event);
+            return event.canPickup() != TriState.FALSE;
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
     private void pickupDrops(ServerLevel sl) {
         if (hasPendingOutput()) return;
         AABB box = areaBox().inflate(0, 3, 0);
@@ -196,7 +250,7 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
         for (ItemEntity entity : items) {
             if (taken >= MAX_PICKUP) break;
             ItemStack stack = entity.getItem();
-            if (stack.isEmpty() || !canAcceptFully(stack)) continue;
+            if (stack.isEmpty() || !mayVacuum(sl, entity) || !canAcceptFully(stack)) continue;
             output(stack);
             entity.discard();
             taken++;

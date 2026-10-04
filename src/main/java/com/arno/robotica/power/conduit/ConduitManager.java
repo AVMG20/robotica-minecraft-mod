@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
@@ -73,7 +74,10 @@ public final class ConduitManager {
         if (network != null) invalidate(d, network);
     }
 
-    /** A block next to a conduit changed. Ignored unless it can add or remove an endpoint. */
+    /**
+     * A block next to a conduit changed. Ignored unless it can add or remove an endpoint: known endpoints and known
+     * non-endpoint block entities (furnaces, chests) only trigger a rescan when their FE capability appears.
+     */
     public static void neighborChanged(ServerLevel level, BlockPos conduit, BlockPos from, Block neighbourBlock) {
         LevelData d = DATA.get(level);
         if (d == null) return;
@@ -84,6 +88,10 @@ public final class ConduitManager {
             if (network.knowsEndpoint(fromKey, neighbourBlock)) return;
         } else if (!(neighbourBlock instanceof EntityBlock)) {
             return;
+        } else if (network.knowsNonEndpoint(fromKey, neighbourBlock)) {
+            // Same non-endpoint as at the last scan: only rescan if it gained the FE capability since.
+            Direction side = Direction.fromDelta(conduit.getX() - from.getX(), conduit.getY() - from.getY(), conduit.getZ() - from.getZ());
+            if (side == null || level.getCapability(Capabilities.EnergyStorage.BLOCK, from, side) == null) return;
         }
         network.endpointsDirty = true;
     }
@@ -154,5 +162,13 @@ public final class ConduitManager {
         if (d == null) return 0;
         ConduitNetwork network = d.byPos.get(pos.asLong());
         return network == null ? 0 : network.members.size();
+    }
+
+    /** Test helper: whether the network at pos is waiting for an endpoint rescan. */
+    public static boolean endpointsDirty(ServerLevel level, BlockPos pos) {
+        LevelData d = DATA.get(level);
+        if (d == null) return false;
+        ConduitNetwork network = d.byPos.get(pos.asLong());
+        return network != null && network.endpointsDirty;
     }
 }
