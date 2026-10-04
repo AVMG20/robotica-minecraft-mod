@@ -134,7 +134,6 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `null_spire_wall` |  |  |  |  |  |  | 0.12 |  | cobblestone 1 | 1 |
 | `null_spire_window` |  |  |  |  |  |  | 0.12 |  | glass 1 | 1.1 |
 | `null_spire_pillar` |  |  |  |  |  |  | 0.12 |  | obsidian 1 | 2.5 |
-| `gate_frame` | 66.5 | 88 | 22 | 42 | 3.5 | 0.75 |  | 0.06 | blaze_rod 2, end_crystal 0.25, quartz 6, shulker_shell 0.25, obsidian 2.5, prismarine_crystals 1, blaze_powder 0.5, magma_block 0.25, planks 8, cobblestone 10 | 305.8 |
 | `null_circuit` | 96 | 64 | 48 | 96 | 8 | 2 | 2 | 0.5 | blaze_rod 8, quartz 16 | 616 |
 | `linking_card` | 96 | 64 | 48 | 96 | 8 | 2 | 3 | 0.5 | blaze_rod 8, quartz 16, paper 2 | 624.2 |
 | `antigrav_core` [temp] boss core | 400 | 704 | 176 | 320 | 24 | 4 |  | 1 | end_crystal 4, blaze_rod 16, prismarine_crystals 16, quartz 48, blaze_powder 8, planks 64, cobblestone 80 | 2198.4 |
@@ -145,8 +144,8 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `upgrade_range_4` | 887 | 986 | 301 | 587 | 50 | 11 | 8 | 1 | blaze_rod 34, quartz 86, shulker_shell 4, end_crystal 2, obsidian 28, prismarine_crystals 8, blaze_powder 4, magma_block 3, lapis 10, planks 80, cobblestone 100 | 4202.2 |
 | `upgrade_fortune_4` | 880 | 984 | 300 | 584 | 57 | 11 | 2 | 1 | blaze_rod 34, quartz 86, shulker_shell 4, end_crystal 2, obsidian 28, lapis 54, prismarine_crystals 8, blaze_powder 4, magma_block 3, planks 80, cobblestone 100 | 4234.2 |
 | `ender_cell` | 1260 | 1512 | 416 | 892 | 68 | 14 | 6 | 1.5 | blaze_rod 40, quartz 116, end_crystal 4, shulker_shell 4, obsidian 40, prismarine_crystals 16, blaze_powder 8, magma_block 4, planks 128, cobblestone 160 | 5799.2 |
-| `gate_controller` | 1290 | 1824 | 488 | 920 | 74 | 15 | 4 | 2.25 | blaze_rod 48, end_crystal 7, quartz 136, prismarine_crystals 28, shulker_shell 3, obsidian 26, blaze_powder 14, planks 160, magma_block 3, cobblestone 200 | 6490.6 |
 | `farm_kit_mk4` | 1348 | 1712 | 492 | 944 | 78 | 17 | 5 | 2 | blaze_rod 52, quartz 140, end_crystal 4, shulker_shell 4, prismarine_crystals 20, obsidian 32, blaze_powder 10, magma_block 4, planks 144, cobblestone 180 | 6618.2 |
 | `tool_upgrade_kit_4` | 2006 | 2412 | 696 | 1351 | 113 | 24 | 4 | 2 | blaze_rod 72, quartz 198, end_crystal 4, obsidian 56, shulker_shell 4, prismarine_crystals 24, blaze_powder 12, magma_block 6, planks 200, cobblestone 250 | 9312.2 |
+| `gate_controller` | 2080 | 2880 | 752 | 1424 | 116 | 24 | 4 | 3 | blaze_rod 72, end_crystal 10, quartz 208, shulker_shell 6, prismarine_crystals 40, obsidian 50, blaze_powder 20, planks 256, magma_block 6, cobblestone 320 | 10143.8 |
 | `null_lance` smithing | 2480 | 3196 | 888 | 1703 | 140 | 28 | 4 | 3 | blaze_rod 88, quartz 250, end_crystal 8, prismarine_crystals 40, obsidian 60, shulker_shell 4, blaze_powder 20, planks 272, magma_block 6, cobblestone 340 | 11718 |
 | `null_drill` smithing | 3535 | 4606 | 1235 | 2375 | 198 | 38 | 4 | 3 | blaze_rod 116, quartz 344, end_crystal 8, prismarine_crystals 44, obsidian 88, shulker_shell 4, blaze_powder 22, magma_block 10, planks 396, cobblestone 495 | 16137.1 |

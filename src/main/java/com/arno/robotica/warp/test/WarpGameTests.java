@@ -253,7 +253,7 @@ public class WarpGameTests {
             double thin = facing.getAxis() == Direction.Axis.Z ? box.getZsize() : box.getXsize();
             helper.assertTrue(Math.abs(wide - 2.0) < 1e-9, facing + ": the portal is 2 wide along its plane, " + wide);
             helper.assertTrue(thin < 1.5, facing + ": the portal is thin along the facing, " + thin);
-            helper.assertTrue(box.getYsize() >= 3.0 && box.getYsize() <= 3.6, facing + ": the portal is about 3 tall");
+            helper.assertTrue(box.getYsize() >= 2.7 && box.getYsize() <= 3.6, facing + ": the portal is about 3 tall");
             helper.assertTrue(box.contains(c), facing + ": the centre is inside");
             helper.assertTrue(box.minY > 64 + PortalGeometry.TOP, facing + ": the volume floats above the projector top");
             // a pig standing on the ground beside the projector is under the volume

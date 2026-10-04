@@ -104,7 +104,7 @@ AGE = {
     3: ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'magma_core', 'accumulator_3', 'tool_upgrade_kit_3',
         'magma_drill', 'arc_blade', 'rift_upgrade', 'rift_remote', 'upgrade_*_3'],
     4: ['null_casing', 'null_circuit', 'ender_cell', 'antigrav_core', 'tool_upgrade_kit_4', 'null_drill',
-        'null_lance', 'farm_kit_mk4', 'gate_frame', 'gate_controller', 'linking_card', 'null_spire_*', 'upgrade_*_4'],
+        'null_lance', 'farm_kit_mk4', 'gate_controller', 'linking_card', 'null_spire_*', 'upgrade_*_4'],
 }
 # upgrade_silk_1 and upgrade_void_1 are special: silk is Age 2, void is Age 1 (void matches upgrade_*_1 above)
 

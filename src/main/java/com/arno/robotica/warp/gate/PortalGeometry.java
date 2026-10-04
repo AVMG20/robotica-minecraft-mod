@@ -25,8 +25,11 @@ public final class PortalGeometry {
     public static final double CENTER_ABOVE_TOP = GAP + HEIGHT / 2.0;
     /** Half thickness of the trigger volume along the facing axis. */
     public static final double HALF_THICKNESS = 0.6;
-    /** The trigger volume reaches this far below the visible portal, so a walker beside the projector is caught too. */
-    public static final double REACH_BELOW = 0.5;
+    /**
+     * Negative: the trigger volume starts 0.2 above the visible portal's bottom edge (1.95 above the floor), so a player
+     * walking past on the ground (head at 1.8) is never pulled in. Step onto the projector or jump into the portal to travel.
+     */
+    public static final double REACH_BELOW = -0.2;
     /** Safe arrival spots start this many blocks in front of the projector (outside its own trigger volume). */
     public static final int ARRIVAL_DISTANCE = 2;
     public static final int ARRIVAL_TRIES = 3;
