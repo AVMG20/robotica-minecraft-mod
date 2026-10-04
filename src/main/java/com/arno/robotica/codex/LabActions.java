@@ -85,20 +85,40 @@ public final class LabActions {
         }
     }
 
+    /** Stacks a single give or kit may drop on the floor once the inventory is full. */
+    public static final int MAX_DROPPED_STACKS = 4;
+
     public static void give(ServerPlayer player, String id, int count) {
+        int[] budget = {MAX_DROPPED_STACKS};
+        int refused = give(player, id, count, budget);
+        if (refused > 0) say(player, "Inventory full, " + refused + " items were not given.");
+    }
+
+    /** Gives items; when the inventory is full at most {@code dropBudget[0]} stacks are dropped. Returns the items not given. */
+    private static int give(ServerPlayer player, String id, int count, int[] dropBudget) {
         ResourceLocation key = ResourceLocation.tryParse(id.contains(":") ? id : Robotica.MODID + ":" + id);
         if (key == null || !BuiltInRegistries.ITEM.containsKey(key)) {
             say(player, "No such item: " + id);
-            return;
+            return 0;
         }
         Item item = BuiltInRegistries.ITEM.get(key);
         int remaining = Math.max(1, Math.min(count, 64 * 36));
+        int refused = 0;
         while (remaining > 0) {
             int n = Math.min(remaining, item.getDefaultMaxStackSize());
             ItemStack stack = new ItemStack(item, n);
-            if (!player.getInventory().add(stack)) player.drop(stack, false);
+            if (!player.getInventory().add(stack)) {
+                if (dropBudget[0] > 0) {
+                    dropBudget[0]--;
+                    player.drop(stack, false);
+                } else {
+                    refused += stack.getCount() + (remaining - n);
+                    break;
+                }
+            }
             remaining -= n;
         }
+        return refused;
     }
 
     public static void giveKit(ServerPlayer player, int age) {
@@ -107,15 +127,18 @@ public final class LabActions {
             return;
         }
         int given = 0;
+        int refused = 0;
+        int[] budget = {MAX_DROPPED_STACKS};
         for (Map.Entry<String, Integer> e : KITS.get(age).entrySet()) {
             ResourceLocation key = ResourceLocation.tryParse(e.getKey().contains(":") ? e.getKey() : Robotica.MODID + ":" + e.getKey());
             if (key != null && BuiltInRegistries.ITEM.containsKey(key)) {
-                give(player, key.toString(), e.getValue());
+                refused += give(player, key.toString(), e.getValue(), budget);
                 given++;
             }
         }
         chargeInventory(player);
         say(player, "Age " + age + " kit: " + given + " item types, energy items charged.");
+        if (refused > 0) say(player, "Inventory full, " + refused + " items were not given. Make room and run it again.");
     }
 
     /** Fills every FE item in the player's inventory. Returns how many were charged. */
@@ -167,6 +190,10 @@ public final class LabActions {
             return;
         }
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(key);
+        if (!type.canSummon()) {
+            say(player, "Can not spawn " + key + " (not summonable)");
+            return;
+        }
         BlockPos pos = player.blockPosition().relative(player.getDirection(), 3);
         Entity e = type.spawn(player.serverLevel(), pos, MobSpawnType.COMMAND);
         if (e == null) say(player, "Could not spawn " + key);

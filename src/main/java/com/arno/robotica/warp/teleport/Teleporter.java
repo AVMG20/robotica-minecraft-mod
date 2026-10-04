@@ -3,6 +3,10 @@ package com.arno.robotica.warp.teleport;
 import com.arno.robotica.warp.WarpRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.status.ChunkType;
+import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -91,6 +95,29 @@ public final class Teleporter {
                 level.getChunk(cx, cz);
             }
         }
+    }
+
+    /** True when the chunk is loaded or already fully generated on disk (never generates anything). */
+    public static boolean isGenerated(ServerLevel level, int chunkX, int chunkZ) {
+        if (level.getChunkSource().hasChunk(chunkX, chunkZ)) return true;
+        try {
+            CompoundTag tag = level.getChunkSource().chunkMap.read(new ChunkPos(chunkX, chunkZ)).join().orElse(null);
+            return tag != null && ChunkSerializer.getChunkTypeFromTag(tag) == ChunkType.LEVELCHUNK;
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    /** True when every chunk {@link #loadAround} would touch exists already, so loading them generates nothing. */
+    public static boolean aroundGenerated(ServerLevel level, BlockPos center) {
+        int minX = (center.getX() - SAFE_RADIUS) >> 4, maxX = (center.getX() + SAFE_RADIUS) >> 4;
+        int minZ = (center.getZ() - SAFE_RADIUS) >> 4, maxZ = (center.getZ() + SAFE_RADIUS) >> 4;
+        for (int cx = minX; cx <= maxX; cx++) {
+            for (int cz = minZ; cz <= maxZ; cz++) {
+                if (!isGenerated(level, cx, cz)) return false;
+            }
+        }
+        return true;
     }
 
     /** Loads the destination chunks and returns the safe spot near {@code center}, honouring the world border. */

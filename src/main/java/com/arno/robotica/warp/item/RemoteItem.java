@@ -8,6 +8,7 @@ import com.arno.robotica.warp.WarpConfig;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.WarpTravel;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
+import com.arno.robotica.warp.teleport.WarpCooldowns;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -108,6 +109,7 @@ public class RemoteItem extends Item implements EnergyItem {
         if (player.isShiftKeyDown()) return InteractionResultHolder.pass(stack);
         boolean unusable = !stack.has(WarpComponents.BOUND_PAD.get())
                 || player.getCooldowns().isOnCooldown(this)
+                || (player instanceof ServerPlayer sp && cooldownLeft(sp, this) > 0)
                 || (!player.getAbilities().instabuild && !ItemEnergy.has(stack, sameDimensionCost()));
         if (unusable) {
             if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) WarpTravel.explainRemote(serverPlayer, stack, this);
@@ -171,11 +173,29 @@ public class RemoteItem extends Item implements EnergyItem {
         ItemEnergy.appendTooltip(stack, tooltip);
     }
 
-    /** Both remotes share the cooldown: a player may not hop between them to skip the wait. */
+    /** Both remotes share the cooldown: a player may not hop between them to skip the wait. Also persisted per UUID. */
     public static void startCooldown(Player player) {
         int ticks = WarpConfig.remoteCooldownTicks();
         if (ticks <= 0) return;
         player.getCooldowns().addCooldown(WarpRegistry.RECALL_REMOTE.get(), ticks);
         player.getCooldowns().addCooldown(WarpRegistry.RIFT_REMOTE.get(), ticks);
+        if (player instanceof ServerPlayer serverPlayer) {
+            WarpCooldowns.get(serverPlayer.server).startRemote(serverPlayer.getUUID(), serverPlayer.serverLevel().getGameTime(), ticks);
+        }
+    }
+
+    /** Ticks of remote cooldown left: the larger of the item cooldown and the persisted one (which survives relog and death). */
+    public static int cooldownLeft(ServerPlayer player, RemoteItem remote) {
+        int persisted = WarpCooldowns.get(player.server).remoteRemaining(player.getUUID(), player.serverLevel().getGameTime());
+        int item = player.getCooldowns().isOnCooldown(remote) ? 1 : 0;
+        return Math.max(persisted, item);
+    }
+
+    /** Puts the persisted remaining time back on the item cooldown (login, respawn). */
+    public static void restoreCooldown(ServerPlayer player) {
+        int left = WarpCooldowns.get(player.server).remoteRemaining(player.getUUID(), player.serverLevel().getGameTime());
+        if (left <= 0) return;
+        player.getCooldowns().addCooldown(WarpRegistry.RECALL_REMOTE.get(), left);
+        player.getCooldowns().addCooldown(WarpRegistry.RIFT_REMOTE.get(), left);
     }
 }

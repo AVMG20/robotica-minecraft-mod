@@ -123,7 +123,7 @@ public final class WarpTravel {
         if (departure == null) return false;
         WarpPads pads = WarpPads.get(server);
 
-        int wait = WarpCooldowns.padRemaining(player.getUUID(), level.getGameTime());
+        int wait = WarpCooldowns.get(server).padRemaining(player.getUUID(), level.getGameTime());
         if (wait > 0) {
             message(player, Component.translatable("message.robotica.warp.cooldown", (wait + 19) / 20));
             return false;
@@ -177,7 +177,7 @@ public final class WarpTravel {
             return false;
         }
         Teleporter.arriveEffects(destLevel, spot.get(), false);
-        WarpCooldowns.startPad(player.getUUID(), destLevel.getGameTime(), WarpConfig.padTravelCooldown());
+        WarpCooldowns.get(server).startPad(player.getUUID(), destLevel.getGameTime(), WarpConfig.padTravelCooldown());
         message(player, Component.translatable("message.robotica.warp.arrived", dest.name(), Fmt.energy(cost)));
         return true;
     }
@@ -200,7 +200,7 @@ public final class WarpTravel {
     public static void explainRemote(ServerPlayer player, ItemStack stack, RemoteItem remote) {
         if (!stack.has(WarpComponents.BOUND_PAD.get())) {
             message(player, Component.translatable("message.robotica.warp.remote_unbound"));
-        } else if (player.getCooldowns().isOnCooldown(remote)) {
+        } else if (RemoteItem.cooldownLeft(player, remote) > 0) {
             message(player, Component.translatable("message.robotica.warp.remote_cooldown"));
         } else {
             message(player, Component.translatable("message.robotica.warp.remote_no_energy", Fmt.energy(remote.sameDimensionCost()),
@@ -217,7 +217,7 @@ public final class WarpTravel {
             message(player, Component.translatable("message.robotica.warp.remote_unbound"));
             return false;
         }
-        if (player.getCooldowns().isOnCooldown(remote)) {
+        if (RemoteItem.cooldownLeft(player, remote) > 0) {
             message(player, Component.translatable("message.robotica.warp.remote_cooldown"));
             return false;
         }
@@ -274,9 +274,31 @@ public final class WarpTravel {
 
     // ---- Gate linking ----
 
-    /** Sneak-right-click of a Linking Card on a Gate Controller: first click stores it, second click links both. */
+    /** Furthest the player may stand from the clicked controller when linking. */
+    public static final double LINK_REACH = 8.0;
+
+    /**
+     * Sneak-right-click of a Linking Card on a Gate Controller: first click stores it, second click links both. Both
+     * controllers must be usable by the player (owner, op level 2 or owner's team); an unowned gate is claimed by the
+     * player who links it.
+     */
     public static void linkingCardUsed(ServerPlayer player, ItemStack card, GlobalPos clicked) {
         MinecraftServer server = player.server;
+        ServerLevel clickedLevel = server.getLevel(clicked.dimension());
+        if (clickedLevel == null || player.level() != clickedLevel
+                || player.distanceToSqr(Vec3.atCenterOf(clicked.pos())) > LINK_REACH * LINK_REACH) {
+            message(player, Component.translatable("message.robotica.warp.card_too_far"));
+            return;
+        }
+        if (!(clickedLevel.getBlockEntity(clicked.pos()) instanceof GateControllerBlockEntity second)) {
+            card.remove(WarpComponents.LINK_SOURCE.get());
+            message(player, Component.translatable("message.robotica.warp.card_lost"));
+            return;
+        }
+        if (!second.canUse(player)) {
+            message(player, Component.translatable("message.robotica.warp.card_not_owner", second.ownerName()));
+            return;
+        }
         GlobalPos source = card.get(WarpComponents.LINK_SOURCE.get());
         if (source == null) {
             card.set(WarpComponents.LINK_SOURCE.get(), clicked);
@@ -289,19 +311,25 @@ public final class WarpTravel {
             return;
         }
         ServerLevel sourceLevel = server.getLevel(source.dimension());
-        ServerLevel clickedLevel = server.getLevel(clicked.dimension());
-        if (sourceLevel == null || clickedLevel == null) {
+        if (sourceLevel == null) {
             card.remove(WarpComponents.LINK_SOURCE.get());
             message(player, Component.translatable("message.robotica.warp.card_lost"));
             return;
         }
         sourceLevel.getChunk(source.pos());
-        if (!(sourceLevel.getBlockEntity(source.pos()) instanceof GateControllerBlockEntity first)
-                || !(clickedLevel.getBlockEntity(clicked.pos()) instanceof GateControllerBlockEntity second)) {
+        if (!(sourceLevel.getBlockEntity(source.pos()) instanceof GateControllerBlockEntity first)) {
             card.remove(WarpComponents.LINK_SOURCE.get());
             message(player, Component.translatable("message.robotica.warp.card_lost"));
             return;
         }
+        if (!first.canUse(player)) {
+            // the card may have been filled by somebody else or the gate changed hands since
+            card.remove(WarpComponents.LINK_SOURCE.get());
+            message(player, Component.translatable("message.robotica.warp.card_not_owner", first.ownerName()));
+            return;
+        }
+        first.claimIfUnowned(player);
+        second.claimIfUnowned(player);
         GateLinks.get(server).link(source, clicked);
         first.setLinked(clicked);
         second.setLinked(source);

@@ -1,6 +1,7 @@
 package com.arno.robotica.warp.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.warp.WarpComponents;
 import com.arno.robotica.warp.WarpConfig;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.WarpTravel;
@@ -15,6 +16,7 @@ import com.arno.robotica.warp.pad.WarpPadBlock;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import com.arno.robotica.warp.pad.WarpPads;
 import com.arno.robotica.warp.teleport.Teleporter;
+import com.arno.robotica.warp.teleport.WarpCooldowns;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
@@ -402,17 +404,23 @@ public class WarpGameTests {
         GateLinks.get(helper.getLevel().getServer()).link(posA, posB);
         int cost = WarpConfig.gateEntityCost();
         Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(1, 1, -1));
+        int[] energyBefore = new int[1];
 
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(a.isActive() && portalFilled(helper, cornerA), "gate A opens"))
                 .thenExecute(() -> {
-                    int before = a.energy.getEnergyStored();
-                    a.onEntityEnter(pig);
+                    // touching the portal only queues the pig: nothing moves inside entityInside, the next tick does it
+                    energyBefore[0] = a.energy.getEnergyStored();
+                    a.queueEntity(pig);
+                    helper.assertTrue(helper.relativeVec(pig.position()).x < 5, "queueing does not move the entity");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(helper.relativeVec(pig.position()).x > 9, "the queued pig is sent on the next tick"))
+                .thenExecute(() -> {
                     Vec3 rel = helper.relativeVec(pig.position());
                     // gate B faces SOUTH (controller facing on the portal axis), arrival is in front of its left column
                     helper.assertTrue(rel.x > 9 && rel.x < 13 && rel.z > 1.4 && rel.z < 2.6, "the pig left through gate B, it is at " + rel);
                     helper.assertTrue(Math.abs(rel.y - 1.0) < 0.6 || Math.abs(rel.y - 2.0) < 0.6, "the pig stands on the floor in front of gate B, y=" + rel.y);
-                    helper.assertTrue(a.energy.getEnergyStored() <= before - cost, "the departure gate paid " + cost + " FE");
+                    helper.assertTrue(a.energy.getEnergyStored() <= energyBefore[0] - cost, "the departure gate paid " + cost + " FE");
                     helper.assertTrue(GateControllerBlockEntity.readyAt(pig, helper.getLevel().getGameTime()) > helper.getLevel().getGameTime(),
                             "the pig has a cooldown");
                     helper.assertTrue(pig.getYRot() == Direction.SOUTH.toYRot(), "the pig faces out of the gate");
@@ -425,6 +433,116 @@ public class WarpGameTests {
                     helper.setBlock(cornerB.offset(2, 0, 0), Blocks.AIR);
                 })
                 .thenSucceed();
+    }
+
+    // ---- Gate ownership, status refresh, pushing ----
+
+    private static GateControllerBlockEntity controllerAt(GameTestHelper helper, BlockPos rel) {
+        helper.setBlock(rel, WarpRegistry.GATE_CONTROLLER.get().defaultBlockState());
+        return (GateControllerBlockEntity) helper.getBlockEntity(rel);
+    }
+
+    @SuppressWarnings("removal")
+    @GameTest(template = "empty")
+    public static void gateOwnershipAndLinking(GameTestHelper helper) {
+        BlockPos relA = new BlockPos(0, 1, 0);
+        BlockPos relB = new BlockPos(2, 1, 2);
+        GateControllerBlockEntity a = controllerAt(helper, relA);
+        GateControllerBlockEntity b = controllerAt(helper, relB);
+        var owner = helper.makeMockServerPlayerInLevel();
+        var stranger = helper.makeMockServerPlayerInLevel();
+        helper.assertTrue(!owner.getUUID().equals(stranger.getUUID()), "two different players");
+        helper.assertTrue(a.canUse(stranger), "an unowned gate may be used by anybody (first linker claims it)");
+        a.setOwner(owner);
+        helper.assertTrue(a.canUse(owner) && !a.canUse(stranger), "only the owner uses an owned gate");
+        helper.assertTrue(a.ownerName().equals(owner.getGameProfile().getName()), "owner name stored");
+
+        var provider = helper.getLevel().registryAccess();
+        GateControllerBlockEntity copy = (GateControllerBlockEntity) helper.getBlockEntity(relB);
+        copy.loadWithComponents(a.saveWithoutMetadata(provider), provider);
+        helper.assertTrue(owner.getUUID().equals(copy.owner()), "owner survives saving");
+        copy.loadWithComponents(new CompoundTag(), provider);
+        helper.assertTrue(copy.owner() == null, "old gates load without an owner");
+
+        GlobalPos posA = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(relA));
+        GlobalPos posB = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(relB));
+        GateLinks links = GateLinks.get(helper.getLevel().getServer());
+        var card = new net.minecraft.world.item.ItemStack(WarpRegistry.LINKING_CARD.get());
+        stranger.setPos(Vec3.atCenterOf(helper.absolutePos(relA)));
+        WarpTravel.linkingCardUsed(stranger, card, posA);
+        helper.assertTrue(card.get(WarpComponents.LINK_SOURCE.get()) == null, "a stranger can not even store an owned gate");
+        owner.setPos(Vec3.atCenterOf(helper.absolutePos(relA)).add(40, 0, 0));
+        WarpTravel.linkingCardUsed(owner, card, posA);
+        helper.assertTrue(card.get(WarpComponents.LINK_SOURCE.get()) == null, "linking from far away is refused");
+        owner.setPos(Vec3.atCenterOf(helper.absolutePos(relA)));
+        WarpTravel.linkingCardUsed(owner, card, posA);
+        helper.assertTrue(posA.equals(card.get(WarpComponents.LINK_SOURCE.get())), "the owner stores the first gate");
+        WarpTravel.linkingCardUsed(owner, card, posB);
+        helper.assertTrue(posB.equals(links.partner(posA)) && posA.equals(links.partner(posB)), "the owner links both gates");
+        helper.assertTrue(owner.getUUID().equals(b.owner()), "the unowned second gate was claimed by the linker");
+        links.unlink(posA);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void gateBlocksResistPistons(GameTestHelper helper) {
+        for (var block : List.of(WarpRegistry.GATE_FRAME.get(), WarpRegistry.GATE_CONTROLLER.get(), WarpRegistry.GATE_PORTAL.get(), WarpRegistry.WARP_PAD.get())) {
+            helper.assertTrue(block.defaultBlockState().getPistonPushReaction() == net.minecraft.world.level.material.PushReaction.BLOCK,
+                    block + " must not be moved by pistons");
+        }
+        helper.succeed();
+    }
+
+    @SuppressWarnings("removal")
+    @GameTest(template = "empty")
+    public static void statusRefreshDoesNotSpendEnergy(GameTestHelper helper) {
+        GateControllerBlockEntity gate = controllerAt(helper, new BlockPos(1, 1, 1));
+        gate.energy.setEnergy(100_000);
+        gate.refresh(helper.getLevel());
+        helper.assertTrue(gate.energy.getEnergyStored() == 100_000, "a status refresh is free");
+        helper.succeed();
+    }
+
+    // ---- Names and cooldowns ----
+
+    @SuppressWarnings("removal")
+    @GameTest(template = "empty")
+    public static void ownerNameResolvesByUuid(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayerInLevel();
+        var server = helper.getLevel().getServer();
+        String name = WarpPads.currentName(server, player.getUUID(), "OldName");
+        helper.assertTrue(name.equals("OldName") || name.equals(player.getGameProfile().getName()), "a known owner resolves to a current name: " + name);
+        helper.assertTrue(WarpPads.currentName(server, UUID.randomUUID(), "Stored").equals("Stored"), "unknown owner falls back to the stored name");
+        helper.assertTrue(WarpPads.currentName(server, null, "Stored").equals("Stored"), "no owner falls back to the stored name");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void cooldownsSurviveSavingAndOnlyExpireByTime(GameTestHelper helper) {
+        UUID id = UUID.randomUUID();
+        WarpCooldowns data = new WarpCooldowns();
+        data.startPad(id, 1000, 40);
+        data.startRemote(id, 1000, 600);
+        helper.assertTrue(data.padRemaining(id, 1010) == 30, "pad cooldown counts down");
+        var provider = helper.getLevel().registryAccess();
+        WarpCooldowns loaded = WarpCooldowns.FACTORY.deserializer().apply(data.save(new CompoundTag(), provider), provider);
+        helper.assertTrue(loaded.padRemaining(id, 1010) == 30, "pad cooldown survives a restart (and so a relog)");
+        helper.assertTrue(loaded.remoteRemaining(id, 1100) == 500, "remote cooldown survives too");
+        loaded.prune(1020);
+        helper.assertTrue(loaded.padRemaining(id, 1020) == 20 || loaded.padRemaining(id, 1020) == 0, "pruning only drops expired entries");
+        helper.assertTrue(loaded.remoteRemaining(id, 1020) == 580, "an unexpired entry is kept");
+        loaded.prune(2000);
+        helper.assertTrue(loaded.size() == 0, "expired entries are pruned by time");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void unloadedGateChunksAreNotGenerated(GameTestHelper helper) {
+        // far away from anything the test world ever generates
+        helper.assertTrue(!Teleporter.isGenerated(helper.getLevel(), 1_000_000, 1_000_000), "an ungenerated chunk is reported as such");
+        BlockPos abs = helper.absolutePos(BlockPos.ZERO);
+        helper.assertTrue(Teleporter.isGenerated(helper.getLevel(), abs.getX() >> 4, abs.getZ() >> 4), "a loaded chunk is generated");
+        helper.succeed();
     }
 
     @GameTest(template = "empty")

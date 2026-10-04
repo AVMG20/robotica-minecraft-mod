@@ -15,6 +15,8 @@ import com.arno.robotica.architect.style.Role;
 import com.arno.robotica.core.RoboticaTab;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.inventory.MenuType;
@@ -51,6 +53,10 @@ public final class ArchitectRegistry {
     /** Matter stored in the table, kept when the table is picked up. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Matter>> MATTER_COMPONENT =
             COMPONENTS.registerComponentType("architect_matter", b -> b.persistent(Matter.CODEC).networkSynchronized(Matter.STREAM_CODEC));
+
+    /** Queue, plot records, build cursor and settings of the table, kept when the table is picked up (energy is not). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> BUILD_STATE_COMPONENT =
+            COMPONENTS.registerComponentType("architect_build", b -> b.persistent(CompoundTag.CODEC).networkSynchronized(ByteBufCodecs.COMPOUND_TAG));
 
     public static final DeferredBlock<ArchitectTableBlock> ARCHITECT_TABLE = BLOCKS.registerBlock("architect_table", ArchitectTableBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops());

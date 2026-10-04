@@ -135,6 +135,14 @@ public class WarpPadBlockEntity extends SyncedBlockEntity {
             existing = null;
             setChanged();
         }
+        if (owner != null) {
+            // the registry (refreshed on login) is newer than this block entity's copy: never write the stale name back
+            String current = WarpPads.currentName(serverLevel.getServer(), owner, existing != null ? existing.ownerName() : ownerName);
+            if (!current.equals(ownerName)) {
+                ownerName = current;
+                setChanged();
+            }
+        }
         PadRecord rec = buildRecord();
         if (!rec.equals(existing)) pads.put(rec);
         return rec;

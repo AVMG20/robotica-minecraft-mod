@@ -1,6 +1,7 @@
 package com.arno.robotica.warp.pad;
 
 import com.arno.robotica.warp.WarpRegistry;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -10,6 +11,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.scores.PlayerTeam;
@@ -23,6 +25,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -136,9 +139,14 @@ public class WarpPads extends SavedData {
 
     /** Pads the user may use, sorted by name. {@code teamOf} maps a player name to a team name (or null). */
     public List<PadRecord> usableBy(UUID user, @Nullable String userTeam, Function<String, String> teamOf) {
+        return usableByRecord(user, userTeam, rec -> teamOf.apply(rec.ownerName()));
+    }
+
+    /** Like {@link #usableBy(UUID, String, Function)}, but the owner's team is looked up per record (so the name can be resolved by UUID). */
+    public List<PadRecord> usableByRecord(UUID user, @Nullable String userTeam, Function<PadRecord, String> ownerTeamOf) {
         List<PadRecord> out = new ArrayList<>();
         for (PadRecord rec : pads.values()) {
-            String ownerTeam = rec.owner() == null ? null : teamOf.apply(rec.ownerName());
+            String ownerTeam = rec.owner() == null ? null : ownerTeamOf.apply(rec);
             if (canUse(rec, user, userTeam, ownerTeam)) out.add(rec);
         }
         out.sort(Comparator.comparing(PadRecord::name, String.CASE_INSENSITIVE_ORDER));
@@ -153,14 +161,35 @@ public class WarpPads extends SavedData {
         return team == null ? null : team.getName();
     }
 
+    /**
+     * The owner's current name: the online player first, then the server's profile cache (both by UUID), else the stored
+     * fallback. Stored names go stale when a player renames; scoreboard teams are keyed by the current name.
+     */
+    public static String currentName(MinecraftServer server, @Nullable UUID owner, String fallback) {
+        if (owner == null) return fallback;
+        ServerPlayer online = server.getPlayerList().getPlayer(owner);
+        if (online != null) return online.getGameProfile().getName();
+        GameProfileCache cache = server.getProfileCache();
+        if (cache != null) {
+            Optional<GameProfile> profile = cache.get(owner);
+            if (profile.isPresent() && !profile.get().getName().isEmpty()) return profile.get().getName();
+        }
+        return fallback;
+    }
+
+    @Nullable
+    public static String ownerTeam(MinecraftServer server, PadRecord rec) {
+        return rec.owner() == null ? null : teamOfName(server, currentName(server, rec.owner(), rec.ownerName()));
+    }
+
     public static boolean canUse(MinecraftServer server, PadRecord rec, ServerPlayer player) {
         Team userTeam = player.getTeam();
-        String ownerTeam = rec.owner() == null ? null : teamOfName(server, rec.ownerName());
+        String ownerTeam = ownerTeam(server, rec);
         return canUse(rec, player.getUUID(), userTeam == null ? null : userTeam.getName(), ownerTeam);
     }
 
     public List<PadRecord> usableBy(MinecraftServer server, ServerPlayer player) {
         Team userTeam = player.getTeam();
-        return usableBy(player.getUUID(), userTeam == null ? null : userTeam.getName(), name -> teamOfName(server, name));
+        return usableByRecord(player.getUUID(), userTeam == null ? null : userTeam.getName(), rec -> ownerTeam(server, rec));
     }
 }

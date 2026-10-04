@@ -44,10 +44,10 @@ public final class WarpRegistry {
                     .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> 7).pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<GateFrameBlock> GATE_FRAME = BLOCKS.registerBlock("gate_frame", GateFrameBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.NETHERITE_BLOCK)
-                    .requiresCorrectToolForDrops());
+                    .requiresCorrectToolForDrops().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<GateControllerBlock> GATE_CONTROLLER = BLOCKS.registerBlock("gate_controller", GateControllerBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.NETHERITE_BLOCK)
-                    .requiresCorrectToolForDrops().lightLevel(s -> s.getValue(GateControllerBlock.ACTIVE) ? 12 : 3));
+                    .requiresCorrectToolForDrops().lightLevel(s -> s.getValue(GateControllerBlock.ACTIVE) ? 12 : 3).pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<GatePortalBlock> GATE_PORTAL = BLOCKS.registerBlock("gate_portal", GatePortalBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).noCollission().noOcclusion().strength(-1.0F, 3_600_000.0F)
                     .sound(SoundType.GLASS).lightLevel(s -> 11).noLootTable().pushReaction(PushReaction.BLOCK));

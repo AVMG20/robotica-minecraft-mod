@@ -1,9 +1,11 @@
 package com.arno.robotica.architect.plan;
 
 import com.arno.robotica.architect.ArchitectRegistry;
+import com.arno.robotica.architect.matter.Matter;
 import com.arno.robotica.architect.style.BuildStyle;
 import com.arno.robotica.architect.style.Role;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.StairBlock;
@@ -48,6 +50,36 @@ public record Piece(Kind kind, Role role, Direction.Axis axis, Direction facing,
     /** True for pieces that run on a tick later in the same layer (liquids settle after the floor around them exists). */
     public boolean isLiquid() {
         return kind == Kind.FIXED && fixed != null && !fixed.getFluidState().isEmpty();
+    }
+
+    /** Fixed surcharge on top of the crafting value of a vanilla piece (rustic). */
+    public static final int FIXED_SURCHARGE = 1;
+    /** Price of a fixed piece nobody priced: expensive on purpose, so a new piece can never become a free source of materials. */
+    private static final Matter UNPRICED = new Matter(0, 16, 0);
+
+    /**
+     * What one block of this piece costs. Style pieces pay the style's price, vanilla pieces pay their real crafting value in
+     * matter plus a small surcharge, so building and breaking them again never yields more than was paid.
+     */
+    public Matter cost(BuildStyle style) {
+        return switch (kind) {
+            case AIR -> Matter.ZERO;
+            case STYLE, STAIRS -> style.cost;
+            case FIXED -> fixedCost(fixed);
+        };
+    }
+
+    /** Planks, cobblestone and dirt are worth 1 rustic each. */
+    static Matter fixedCost(BlockState state) {
+        Block block = state.getBlock();
+        int rustic;
+        if (block == Blocks.CRAFTING_TABLE) rustic = 4;              // 4 planks
+        else if (block == Blocks.FURNACE) rustic = 8;                // 8 cobblestone
+        else if (block == Blocks.CHEST) rustic = 8;                  // 8 planks
+        else if (block == Blocks.BARREL) rustic = 7;                 // 6 planks + 2 slabs
+        else if (block == Blocks.FARMLAND) rustic = 1;               // a dirt block
+        else return UNPRICED;
+        return new Matter(rustic + FIXED_SURCHARGE, 0, 0);
     }
 
     public BlockState resolve(BuildStyle style) {

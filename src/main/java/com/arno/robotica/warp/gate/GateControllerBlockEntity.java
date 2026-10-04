@@ -4,6 +4,7 @@ import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.warp.WarpConfig;
 import com.arno.robotica.warp.WarpRegistry;
+import com.arno.robotica.warp.pad.WarpPads;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
@@ -13,13 +14,19 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * The brain of a Portal Gate. Every {@link #CHECK_INTERVAL} ticks it checks the frame, reads its link from
@@ -38,6 +45,14 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
     @Nullable
     private GateShape shape;
     private int timer = (int) (Math.random() * CHECK_INTERVAL);
+    @Nullable
+    private UUID owner;
+    private String ownerName = "";
+    /** Entities that touched the portal since the last tick. Drained at the top of every server tick, never inside a packet handler. */
+    private final Set<Entity> pending = new LinkedHashSet<>();
+    public static final int MAX_PENDING = 64;
+    /** Cooldown after a failed attempt that is expensive to repeat (no energy, no spot, broken partner). */
+    public static final int FAIL_COOLDOWN = 200;
 
     public GateControllerBlockEntity(BlockPos pos, BlockState state) {
         super(WarpRegistry.GATE_CONTROLLER_BE.get(), pos, state);
@@ -58,6 +73,36 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
 
     public boolean isActive() {
         return getBlockState().hasProperty(GateControllerBlock.ACTIVE) && getBlockState().getValue(GateControllerBlock.ACTIVE);
+    }
+
+    @Nullable
+    public UUID owner() {
+        return owner;
+    }
+
+    public String ownerName() {
+        return ownerName;
+    }
+
+    /** Called when a player (or null for dispensers and commands) places the controller. */
+    public void setOwner(@Nullable Player placer) {
+        owner = placer == null ? null : placer.getUUID();
+        ownerName = placer == null ? "" : placer.getGameProfile().getName();
+        setChanged();
+    }
+
+    /** Owner, operators (level 2) and members of the owner's team may link the gate. Gates without an owner are free to claim. */
+    public boolean canUse(Player player) {
+        if (owner == null || owner.equals(player.getUUID()) || player.hasPermissions(2)) return true;
+        if (!(level instanceof ServerLevel serverLevel) || player.getTeam() == null) return false;
+        String current = WarpPads.currentName(serverLevel.getServer(), owner, ownerName);
+        String ownerTeam = WarpPads.teamOfName(serverLevel.getServer(), current);
+        return ownerTeam != null && ownerTeam.equals(player.getTeam().getName());
+    }
+
+    /** First linker claims a gate that has no owner yet. */
+    public void claimIfUnowned(Player player) {
+        if (owner == null) setOwner(player);
     }
 
     public GlobalPos globalPos() {
@@ -97,13 +142,15 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
     // ---- Tick ----
 
     public void serverTick(ServerLevel serverLevel) {
+        drainPending(serverLevel);
         if (++timer < CHECK_INTERVAL) return;
         timer = 0;
         evaluate(serverLevel);
     }
 
-    /** Checks frame, link and power, then opens or closes the portal. */
-    public void evaluate(ServerLevel serverLevel) {
+    /** Re-reads frame and link without paying anything or touching the portal (right-click status). Returns the previous shape. */
+    @Nullable
+    public GateShape refresh(ServerLevel serverLevel) {
         Optional<GateShape> found = findShape();
         GateShape previous = shape;
         shape = found.orElse(null);
@@ -113,6 +160,12 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
             linked = partner;
             setChanged();
         }
+        return previous;
+    }
+
+    /** Checks frame, link and power, then opens or closes the portal. Only the server tick calls this: it pays the idle FE. */
+    public void evaluate(ServerLevel serverLevel) {
+        GateShape previous = refresh(serverLevel);
 
         boolean wasActive = isActive();
         boolean nowActive = shape != null && linked != null && energy.consume(WarpConfig.gateIdleCost() * CHECK_INTERVAL);
@@ -172,14 +225,40 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
         entity.getPersistentData().putLong(COOLDOWN_KEY, now + ticks);
     }
 
-    /** An entity touched the portal. Sends it to the linked gate when it may travel and the gate can pay. */
+    /** True when the entity may try the gate right now (cheap: a cooldown and a flag, no block access). */
+    public boolean wouldAccept(Entity entity, long now) {
+        return isActive() && shape != null && now >= readyAt(entity, now);
+    }
+
+    /**
+     * An entity touched the portal (called from {@code entityInside}, possibly inside a packet handler). Only remembers
+     * the entity; {@link #drainPending} does the transit at the start of the next block entity tick.
+     */
+    public void queueEntity(Entity entity) {
+        if (!(level instanceof ServerLevel serverLevel) || !wouldAccept(entity, serverLevel.getGameTime())) return;
+        if (pending.size() < MAX_PENDING) pending.add(entity);
+    }
+
+    private void drainPending(ServerLevel serverLevel) {
+        if (pending.isEmpty()) return;
+        List<Entity> batch = new ArrayList<>(pending);
+        pending.clear();
+        for (Entity entity : batch) {
+            if (entity.isRemoved() || entity.level() != serverLevel) continue;
+            onEntityEnter(entity);
+        }
+    }
+
+    /** Sends the entity to the linked gate when it may travel and the gate can pay. */
     public void onEntityEnter(Entity entity) {
         if (!(level instanceof ServerLevel serverLevel) || !isActive() || shape == null) return;
         long now = serverLevel.getGameTime();
-        if (now < readyAt(entity, now)) return;
+        if (now < readyAt(entity, now)) return; // cooldown first, before any shape or chunk work
         GateTransit.Result result = GateTransit.send(this, entity);
         if (result != GateTransit.Result.SENT) {
-            setCooldown(entity, now, 40);
+            boolean expensive = result == GateTransit.Result.NO_ENERGY || result == GateTransit.Result.NO_SPOT
+                    || result == GateTransit.Result.PARTNER_BROKEN || result == GateTransit.Result.NOT_GENERATED;
+            setCooldown(entity, now, expensive ? FAIL_COOLDOWN : 40);
             if (entity instanceof ServerPlayer player && result.messageKey() != null) {
                 player.displayClientMessage(net.minecraft.network.chat.Component.translatable(result.messageKey()), true);
             }
@@ -192,6 +271,8 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.put("energy", energy.serializeNBT(registries));
+        if (owner != null) tag.putUUID("owner", owner);
+        tag.putString("ownerName", ownerName);
         if (linked != null) {
             tag.put("linked", GlobalPos.CODEC.encodeStart(NbtOps.INSTANCE, linked).getOrThrow());
         }
@@ -201,6 +282,8 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        owner = tag.hasUUID("owner") ? tag.getUUID("owner") : null;
+        ownerName = tag.getString("ownerName");
         linked = tag.contains("linked") ? GlobalPos.CODEC.parse(NbtOps.INSTANCE, tag.get("linked")).result().orElse(null) : null;
     }
 }

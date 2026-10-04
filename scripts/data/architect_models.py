@@ -34,7 +34,7 @@ def tex(name):
 def loot(name, copy_matter=False):
     entry = {'type': 'minecraft:item', 'name': f'robotica:{name}'}
     if copy_matter:
-        entry['functions'] = [{'function': 'minecraft:copy_components', 'source': 'block_entity', 'include': ['robotica:architect_matter']}]
+        entry['functions'] = [{'function': 'minecraft:copy_components', 'source': 'block_entity', 'include': ['robotica:architect_matter', 'robotica:architect_build']}]
     write(DATA / 'loot_table/blocks' / f'{name}.json', {
         'type': 'minecraft:block',
         'pools': [{'rolls': 1.0, 'bonus_rolls': 0.0, 'entries': [entry], 'conditions': [{'condition': 'minecraft:survives_explosion'}]}],
