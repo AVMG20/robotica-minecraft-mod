@@ -43,10 +43,10 @@ public final class WarpRegistry {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).strength(3.0F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> 7).pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<GateFrameBlock> GATE_FRAME = BLOCKS.registerBlock("gate_frame", GateFrameBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.NETHERITE_BLOCK)
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<GateControllerBlock> GATE_CONTROLLER = BLOCKS.registerBlock("gate_controller", GateControllerBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.NETHERITE_BLOCK)
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(5.0F, 12.0F).sound(SoundType.AMETHYST)
                     .requiresCorrectToolForDrops().lightLevel(s -> s.getValue(GateControllerBlock.ACTIVE) ? 12 : 3).pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<GatePortalBlock> GATE_PORTAL = BLOCKS.registerBlock("gate_portal", GatePortalBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).noCollission().noOcclusion().strength(-1.0F, 3_600_000.0F)

@@ -17,6 +17,7 @@ public final class RoboticaCore {
 
     public static void init(IEventBus modBus, ModContainer container) {
         CoreComponents.REGISTER.register(modBus);
+        CoreSounds.REGISTER.register(modBus);
         CoreItems.ITEMS.register(modBus);
         RoboticaTab.TABS.register(modBus);
         CoreItems.addToTab();

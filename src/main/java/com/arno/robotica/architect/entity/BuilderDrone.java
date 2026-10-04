@@ -1,9 +1,11 @@
 package com.arno.robotica.architect.entity;
 
 import com.arno.robotica.architect.block.ArchitectTableBlockEntity;
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -53,6 +55,9 @@ public class BuilderDrone extends Entity {
         } else if (++idleTicks > 40) {
             discard();
             return;
+        }
+        if (building && tickCount % 50 == 0) {
+            CoreSounds.play(this, CoreSounds.DRONE_BUZZ, SoundSource.NEUTRAL, 0.5F, 1.0F);
         }
         Vec3 goal = building && target != null ? target : Vec3.atCenterOf(home).add(0, 1.6, 0);
         Vec3 to = goal.subtract(position());

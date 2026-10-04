@@ -1,5 +1,6 @@
 package com.arno.robotica.power.block;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.power.PowerConfig;
@@ -11,6 +12,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -61,6 +63,8 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
 
     private final IItemHandler automation = new ItemAccess(slot, (s, stack) -> canCharge(stack), (s, stack) -> isDone(stack));
 
+    private boolean wasCharging;
+
     public ChargerBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.CHARGER_BE.get(), pos, state);
     }
@@ -80,6 +84,12 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
                 setChanged();
             }
         }
+        if (charging) {
+            if (CoreSounds.due(level, pos, 80)) CoreSounds.play(level, pos, CoreSounds.CHARGER_HUM, SoundSource.BLOCKS, 0.5F, 1.0F);
+        } else if (wasCharging && !stack.isEmpty() && isDone(stack)) {
+            CoreSounds.play(level, pos, CoreSounds.CHARGE_COMPLETE, SoundSource.BLOCKS, 0.7F, 1.0F);
+        }
+        wasCharging = charging;
         setLit(charging);
     }
 

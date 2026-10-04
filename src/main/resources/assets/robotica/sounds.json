@@ -1,0 +1,1295 @@
+{
+  "crank_wind": {
+    "subtitle": "subtitles.robotica.crank_wind",
+    "sounds": [
+      {
+        "name": "minecraft:random/click",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/chain/step1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/chain/step2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/chain/step3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/copper/step1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/copper/step2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "crank_full": {
+    "subtitle": "subtitles.robotica.crank_full",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:note/iron_xylophone",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "spring_insert": {
+    "subtitle": "subtitles.robotica.spring_insert",
+    "sounds": [
+      {
+        "name": "minecraft:block/chain/break1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/chain/break2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:random/click",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "spring_remove": {
+    "subtitle": "subtitles.robotica.spring_remove",
+    "sounds": [
+      {
+        "name": "minecraft:block/chain/break3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/chain/break4",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:random/click",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "machine_start": {
+    "subtitle": "subtitles.robotica.machine_start",
+    "sounds": [
+      {
+        "name": "minecraft:tile/piston/out",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/iron_trapdoor/open1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/iron_trapdoor/open2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "machine_stop": {
+    "subtitle": "subtitles.robotica.machine_stop",
+    "sounds": [
+      {
+        "name": "minecraft:tile/piston/in",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:block/iron_trapdoor/close1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/iron_trapdoor/close2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "generator_burn": {
+    "subtitle": "subtitles.robotica.generator_burn",
+    "sounds": [
+      {
+        "name": "minecraft:block/furnace/fire_crackle1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle3",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle4",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle5",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "press_stamp": {
+    "subtitle": "subtitles.robotica.press_stamp",
+    "sounds": [
+      {
+        "name": "minecraft:random/anvil_land",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:tile/piston/in",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/copper_bulb/toggle",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "charger_hum": {
+    "subtitle": "subtitles.robotica.charger_hum",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "type": "file",
+        "volume": 0.15,
+        "pitch": 1.8
+      },
+      {
+        "name": "minecraft:block/amethyst/shimmer",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "charge_complete": {
+    "subtitle": "subtitles.robotica.charge_complete",
+    "sounds": [
+      {
+        "name": "minecraft:note/pling",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "robot_beep": {
+    "subtitle": "subtitles.robotica.robot_beep",
+    "sounds": [
+      {
+        "name": "minecraft:note/bit",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.8,
+        "weight": 3
+      },
+      {
+        "name": "minecraft:note/pling",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 2.0
+      }
+    ]
+  },
+  "robot_beep_low": {
+    "subtitle": "subtitles.robotica.robot_beep_low",
+    "sounds": [
+      {
+        "name": "minecraft:note/bit",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:note/bit",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "robot_error": {
+    "subtitle": "subtitles.robotica.robot_error",
+    "sounds": [
+      {
+        "name": "minecraft:note/bit",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:note/bit",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:random/click",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "upgrade_install": {
+    "subtitle": "subtitles.robotica.upgrade_install",
+    "sounds": [
+      {
+        "name": "minecraft:random/anvil_use",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/copper/break1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/copper/break2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:note/iron_xylophone",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.7
+      }
+    ]
+  },
+  "stumpy_chop": {
+    "subtitle": "subtitles.robotica.stumpy_chop",
+    "sounds": [
+      {
+        "name": "minecraft:item/axe/strip1",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:item/axe/strip2",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:item/axe/strip3",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:item/axe/strip4",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:dig/wood1",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:dig/wood2",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:dig/wood3",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "saw_whir": {
+    "subtitle": "subtitles.robotica.saw_whir",
+    "sounds": [
+      {
+        "name": "minecraft:block/grindstone/grindstone1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "sprout_snip": {
+    "subtitle": "subtitles.robotica.sprout_snip",
+    "sounds": [
+      {
+        "name": "minecraft:block/beehive/shear",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:mob/sheep/shear",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "excavator_dig": {
+    "subtitle": "subtitles.robotica.excavator_dig",
+    "sounds": [
+      {
+        "name": "minecraft:dig/stone1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:dig/stone2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:dig/stone3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:dig/stone4",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/deepslate/break1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/deepslate/break2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:dig/gravel1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:dig/gravel2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "drill_grind": {
+    "subtitle": "subtitles.robotica.drill_grind",
+    "sounds": [
+      {
+        "name": "minecraft:block/grindstone/grindstone1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone3",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "tool_mode": {
+    "subtitle": "subtitles.robotica.tool_mode",
+    "sounds": [
+      {
+        "name": "minecraft:ui/loom/select_pattern1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:ui/loom/select_pattern2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:ui/loom/select_pattern3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:random/click",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/copper_bulb/toggle",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "area_break": {
+    "subtitle": "subtitles.robotica.area_break",
+    "sounds": [
+      {
+        "name": "minecraft:block/deepslate/break1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/deepslate/break2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/deepslate/break3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:dig/gravel1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:dig/gravel2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/copper/break1",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/copper/break2",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "chainsaw_rev": {
+    "subtitle": "subtitles.robotica.chainsaw_rev",
+    "sounds": [
+      {
+        "name": "minecraft:block/grindstone/grindstone1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:mob/bee/loop1",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "shock_zap": {
+    "subtitle": "subtitles.robotica.shock_zap",
+    "sounds": [
+      {
+        "name": "minecraft:random/fizz",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.8
+      },
+      {
+        "name": "minecraft:mob/bee/sting",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:item/trident/thunder1",
+        "type": "file",
+        "volume": 0.15,
+        "pitch": 2.0
+      }
+    ]
+  },
+  "rivet_shot": {
+    "subtitle": "subtitles.robotica.rivet_shot",
+    "sounds": [
+      {
+        "name": "minecraft:item/crossbow/shoot1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:item/crossbow/shoot2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:item/crossbow/shoot3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/chain/step1",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "rivet_empty": {
+    "subtitle": "subtitles.robotica.rivet_empty",
+    "sounds": [
+      {
+        "name": "minecraft:random/click",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/chain/step2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "arc_strike": {
+    "subtitle": "subtitles.robotica.arc_strike",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.8
+      },
+      {
+        "name": "minecraft:item/trident/thunder2",
+        "type": "file",
+        "volume": 0.15,
+        "pitch": 1.9
+      },
+      {
+        "name": "minecraft:random/fizz",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "lance_charge": {
+    "subtitle": "subtitles.robotica.lance_charge",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/power1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/beacon/power2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "lance_ready": {
+    "subtitle": "subtitles.robotica.lance_ready",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/power1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/beacon/power2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/beacon/power3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "lance_fire": {
+    "subtitle": "subtitles.robotica.lance_fire",
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/sonic_boom1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:mob/warden/sonic_boom2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:mob/warden/sonic_boom3",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:mob/warden/sonic_boom4",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "replicator_form": {
+    "subtitle": "subtitles.robotica.replicator_form",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "replicator_unform": {
+    "subtitle": "subtitles.robotica.replicator_unform",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "replicator_hum": {
+    "subtitle": "subtitles.robotica.replicator_hum",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/ambient1",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/ambient2",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/ambient3",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "replicator_cycle": {
+    "subtitle": "subtitles.robotica.replicator_cycle",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      }
+    ]
+  },
+  "replicator_spawn": {
+    "subtitle": "subtitles.robotica.replicator_spawn",
+    "sounds": [
+      {
+        "name": "minecraft:entity.evoker.prepare_summon",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate4",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "essence_sample": {
+    "subtitle": "subtitles.robotica.essence_sample",
+    "sounds": [
+      {
+        "name": "minecraft:item/bottle/fill1",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:item/bottle/fill2",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:item/bottle/fill3",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:item/bottle/fill4",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:mob/slime/small1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:mob/slime/small2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:mob/slime/small3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "essence_complete": {
+    "subtitle": "subtitles.robotica.essence_complete",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/power2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:item/bottle/fill_dragonbreath1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "architect_place": {
+    "subtitle": "subtitles.robotica.architect_place",
+    "sounds": [
+      {
+        "name": "minecraft:block/scaffold/place1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/scaffold/place2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/scaffold/place3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/scaffold/place4",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/copper_bulb/place1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/copper_bulb/place2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "architect_done": {
+    "subtitle": "subtitles.robotica.architect_done",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:note/bell",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "drone_buzz": {
+    "subtitle": "subtitles.robotica.drone_buzz",
+    "sounds": [
+      {
+        "name": "minecraft:mob/bee/loop1",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:mob/bee/loop2",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:mob/bee/loop3",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:mob/bee/loop4",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:mob/bee/loop5",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "matter_absorb": {
+    "subtitle": "subtitles.robotica.matter_absorb",
+    "sounds": [
+      {
+        "name": "minecraft:random/pop",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:random/pop",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "warp_start": {
+    "subtitle": "subtitles.robotica.warp_start",
+    "sounds": [
+      {
+        "name": "minecraft:portal/trigger",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "warp_charge": {
+    "subtitle": "subtitles.robotica.warp_charge",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.55,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "type": "file",
+        "volume": 0.55,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "type": "file",
+        "volume": 0.55,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate4",
+        "type": "file",
+        "volume": 0.55,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "warp_bind": {
+    "subtitle": "subtitles.robotica.warp_bind",
+    "sounds": [
+      {
+        "name": "minecraft:block/enchantment_table/enchant1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/enchantment_table/enchant2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/enchantment_table/enchant3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "warp_link": {
+    "subtitle": "subtitles.robotica.warp_link",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "warp_rift": {
+    "subtitle": "subtitles.robotica.warp_rift",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:mob/endermen/portal",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "teleport_depart": {
+    "subtitle": "subtitles.robotica.teleport_depart",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:mob/endermen/portal2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/chorus_flower/grow1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "teleport_arrive": {
+    "subtitle": "subtitles.robotica.teleport_arrive",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:mob/endermen/portal",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/chorus_flower/grow2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.7
+      }
+    ]
+  },
+  "teleport_quiet_depart": {
+    "subtitle": "subtitles.robotica.teleport_quiet_depart",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/chorus_flower/grow3",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "teleport_quiet_arrive": {
+    "subtitle": "subtitles.robotica.teleport_quiet_arrive",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal2",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/chorus_flower/grow4",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "gate_open": {
+    "subtitle": "subtitles.robotica.gate_open",
+    "sounds": [
+      {
+        "name": "minecraft:block/end_portal/eyeplace1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/end_portal/eyeplace2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/end_portal/eyeplace3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/beacon/activate",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "gate_close": {
+    "subtitle": "subtitles.robotica.gate_close",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/end_portal/eyeplace1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/end_portal/eyeplace2",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ]
+  },
+  "gate_ambient": {
+    "subtitle": "subtitles.robotica.gate_ambient",
+    "sounds": [
+      {
+        "name": "minecraft:portal/portal",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.0
+      }
+    ]
+  }
+}

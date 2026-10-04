@@ -1,6 +1,7 @@
 package com.arno.robotica.power.block;
 
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.power.PowerConfig;
@@ -12,6 +13,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -75,6 +77,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         if (burnTime > 0 && energy.getSpace() >= gen) {
             energy.generate(gen);
             burnTime--;
+            if (CoreSounds.due(level, pos, 50)) CoreSounds.play(level, pos, CoreSounds.GENERATOR_BURN, SoundSource.BLOCKS, 0.5F, 1.0F);
             if (burnTime == 0) setChanged();
         }
         setLit(burnTime > 0);

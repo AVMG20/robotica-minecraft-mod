@@ -1,6 +1,7 @@
 package com.arno.robotica.power.block;
 
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
@@ -14,6 +15,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -112,6 +114,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
                 progress++;
                 if (progress >= needed) {
                     finish(recipe);
+                    CoreSounds.play(level, pos, CoreSounds.PRESS_STAMP, SoundSource.BLOCKS, 0.8F, 0.9F + level.random.nextFloat() * 0.2F);
                     progress = 0;
                 }
             }

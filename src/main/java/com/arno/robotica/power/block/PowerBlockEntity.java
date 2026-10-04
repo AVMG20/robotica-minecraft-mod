@@ -1,8 +1,10 @@
 package com.arno.robotica.power.block;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -34,12 +36,21 @@ public abstract class PowerBlockEntity extends SyncedBlockEntity {
         }
     }
 
-    /** Sets the LIT property if the block has one and the value changed (client update only, no neighbour updates). */
+    /** Minimum ticks between two start/stop sounds of one machine, so a machine that flickers on and off stays quiet. */
+    private static final int WORK_SOUND_GAP = 40;
+    private long lastWorkSound = Long.MIN_VALUE / 2;
+
+    /** Sets the LIT property if the block has one and the value changed (client update only, no neighbour updates). Plays the start or stop sound on a change. */
     protected void setLit(boolean lit) {
         if (level == null || level.isClientSide) return;
         BlockState state = getBlockState();
         if (state.hasProperty(BlockStateProperties.LIT) && state.getValue(BlockStateProperties.LIT) != lit) {
             level.setBlock(worldPosition, state.setValue(BlockStateProperties.LIT, lit), Block.UPDATE_CLIENTS);
+            long now = level.getGameTime();
+            if (now - lastWorkSound >= WORK_SOUND_GAP) {
+                lastWorkSound = now;
+                CoreSounds.play(level, worldPosition, lit ? CoreSounds.MACHINE_START : CoreSounds.MACHINE_STOP, SoundSource.BLOCKS, 0.6F, 1.0F);
+            }
         }
     }
 }

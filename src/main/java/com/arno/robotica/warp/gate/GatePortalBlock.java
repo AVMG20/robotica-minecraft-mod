@@ -1,11 +1,11 @@
 package com.arno.robotica.warp.gate;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.warp.WarpRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -106,7 +106,7 @@ public class GatePortalBlock extends Block {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (random.nextInt(100) == 0) {
-            level.playLocalSound(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, SoundEvents.PORTAL_AMBIENT, SoundSource.BLOCKS,
+            level.playLocalSound(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, CoreSounds.GATE_AMBIENT.get(), SoundSource.BLOCKS,
                     0.4F, random.nextFloat() * 0.4F + 0.8F, false);
         }
         for (int i = 0; i < 2; i++) {

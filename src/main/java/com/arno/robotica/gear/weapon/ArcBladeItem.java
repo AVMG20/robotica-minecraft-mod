@@ -2,7 +2,7 @@ package com.arno.robotica.gear.weapon;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,7 +40,7 @@ public class ArcBladeItem extends EnergyWeaponItem {
             arc(level, from, next.getBoundingBox().getCenter());
             from = next.getBoundingBox().getCenter();
         }
-        level.playSound(null, target.blockPosition(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.4F, 1.6F);
+        CoreSounds.play(level, target.blockPosition(), CoreSounds.ARC_STRIKE, SoundSource.PLAYERS, 0.8F, 1.0F);
         return true;
     }
 

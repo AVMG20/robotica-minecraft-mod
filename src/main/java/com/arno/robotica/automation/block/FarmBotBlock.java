@@ -1,12 +1,12 @@
 package com.arno.robotica.automation.block;
 
 import com.arno.robotica.automation.AutomationContent;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.automation.entity.FarmBotBlockEntity;
 import com.arno.robotica.automation.item.FarmKitItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -87,7 +87,7 @@ public abstract class FarmBotBlock extends AreaWorkerBlock {
             level.setBlock(pos, state.setValue(TIER, kit.tier()), Block.UPDATE_ALL);
             if (level.getBlockEntity(pos) instanceof FarmBotBlockEntity bot) bot.onTierChanged();
             if (!player.getAbilities().instabuild) stack.shrink(1);
-            level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.6F, 1.4F);
+            CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
             player.displayClientMessage(Component.translatable("message.robotica.kit_applied", kit.tier()), true);
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);

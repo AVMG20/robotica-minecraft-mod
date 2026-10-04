@@ -2,10 +2,10 @@ package com.arno.robotica.automation.entity;
 
 import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.AutomationContent;
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.BlockItem;
@@ -166,9 +166,10 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         for (ItemStack drop : Block.getDrops(state, sl, pos, null, null, new ItemStack(Items.STONE_HOE))) Drops.merge(drops, drop);
         if (block instanceof SweetBerryBushBlock) {
             sl.setBlock(pos, state.setValue(SweetBerryBushBlock.AGE, 1), Block.UPDATE_CLIENTS);
-            sl.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + sl.random.nextFloat() * 0.4F);
+            workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
         } else {
             sl.levelEvent(2001, pos, Block.getId(state));
+            workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
             ItemStack seed = block.getCloneItemStack(sl, pos, state);
             boolean paid = !seed.isEmpty() && (Drops.takeOne(drops, seed.getItem()) || takeFromBuffer(seed.getItem()));
             sl.setBlock(pos, paid ? freshState(state) : Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
@@ -202,7 +203,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         BlockState crop = ((BlockItem) buffer.getStackInSlot(slot).getItem()).getBlock().defaultBlockState();
         sl.setBlock(plantPos, crop, Block.UPDATE_ALL);
         buffer.extractItem(slot, 1, false);
-        sl.playSound(null, plantPos, SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 0.8F, 1.0F);
+        workSound(sl, plantPos, () -> SoundEvents.CROP_PLANTED, 0.8F, 1.0F);
         return true;
     }
 
@@ -212,7 +213,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         if (!mayBreak(sl, pos, sl.getBlockState(pos))) return false;
         if (!aboveState.isAir()) sl.setBlock(above, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         sl.setBlock(pos, Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7), Block.UPDATE_ALL);
-        sl.playSound(null, pos, SoundEvents.HOE_TILL, SoundSource.BLOCKS, 1.0F, 1.0F);
+        workSound(sl, pos, () -> SoundEvents.HOE_TILL, 0.8F, 1.0F);
         plant(sl, above);
         return true;
     }

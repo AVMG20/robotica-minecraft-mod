@@ -1,5 +1,7 @@
 package com.arno.robotica.power.block;
 
+import com.arno.robotica.core.CoreSounds;
+import net.minecraft.sounds.SoundSource;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.power.PowerConfig;
@@ -59,6 +61,9 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
                 receivedThisTick = used + accepted;
                 ItemEnergy.addInternal(stack, accepted);
                 setChanged();
+                if (ItemEnergy.get(stack) >= ItemEnergy.capacity(stack)) {
+                    CoreSounds.play(level, worldPosition, CoreSounds.CRANK_FULL, SoundSource.BLOCKS, 0.6F, 1.0F);
+                }
             }
             return accepted;
         }

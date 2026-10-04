@@ -1,5 +1,6 @@
 package com.arno.robotica.warp.pad;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.WarpTravel;
 import com.arno.robotica.warp.item.RiftUpgradeItem;
@@ -8,7 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
@@ -115,7 +115,7 @@ public class WarpPadBlock extends Block implements EntityBlock {
         level.setBlock(pos, state.setValue(RIFT, true), Block.UPDATE_ALL);
         pad.ensureRegistered();
         if (!player.getAbilities().instabuild) stack.shrink(1);
-        level.playSound(null, pos, SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.BLOCKS, 1.0F, 1.2F);
+        CoreSounds.play(level, pos, CoreSounds.WARP_RIFT, SoundSource.BLOCKS, 1.0F, 1.0F);
         WarpTravel.message(serverPlayer, Component.translatable("message.robotica.warp.rift_done", pad.padName()));
         return ItemInteractionResult.CONSUME;
     }

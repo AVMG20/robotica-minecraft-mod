@@ -1,11 +1,11 @@
 package com.arno.robotica.replicator.item;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.replicator.logic.Essence;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -64,10 +64,10 @@ public class EssenceVialItem extends Item {
 
         level.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY(0.6), target.getZ(), 6, 0.25, 0.4, 0.25, 0.02);
         if (result == Essence.Result.COMPLETED) {
-            level.playSound(null, target.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.0F, 1.4F);
+            CoreSounds.play(level, target.blockPosition(), CoreSounds.ESSENCE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
             player.displayClientMessage(Component.translatable("message.robotica.vial_complete", type.getDescription()).withStyle(ChatFormatting.GREEN), true);
         } else {
-            level.playSound(null, target.blockPosition(), SoundEvents.BOTTLE_FILL, SoundSource.PLAYERS, 1.0F, 0.7F + level.random.nextFloat() * 0.3F);
+            CoreSounds.play(level, target.blockPosition(), CoreSounds.ESSENCE_SAMPLE, SoundSource.PLAYERS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
             player.displayClientMessage(Component.translatable("message.robotica.vial_sampled", type.getDescription(),
                     Essence.samples(single), Essence.SAMPLES_REQUIRED), true);
         }

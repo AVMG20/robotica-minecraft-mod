@@ -1,7 +1,9 @@
 package com.arno.robotica.gear.tool;
 
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 
 /** Server side handling of the client requests (keybinds, toggle screen). Everything is validated against the held item. */
@@ -24,12 +26,18 @@ public final class GearActions {
         }
     }
 
+    /** UI-like click of the tool, heard by nearby players too. Player triggered, so no extra rate limit is needed. */
+    private static void click(ServerPlayer player, float pitch) {
+        CoreSounds.play(player, CoreSounds.TOOL_MODE, SoundSource.PLAYERS, 0.5F, pitch);
+    }
+
     public static void cycleMode(ServerPlayer player, ItemStack stack, GearToolItem tool, int direction) {
         int n = tool.spec.modes.size();
         if (n <= 1) return;
         int index = tool.spec.modes.indexOf(tool.mode(stack));
         AreaMode next = tool.spec.modes.get(Math.floorMod(index + (direction >= 0 ? 1 : -1), n));
         stack.set(com.arno.robotica.gear.GearComponents.MODE.get(), next);
+        click(player, direction >= 0 ? 1.1F : 0.9F);
         player.displayClientMessage(Component.translatable("tooltip.robotica.gear.mode", next.displayName()), true);
     }
 
@@ -38,6 +46,7 @@ public final class GearActions {
         int next = ToolSettings.nextEnchantMode(ToolSettings.enchantMode(stack));
         ToolSettings.setEnchantMode(stack, next);
         ToolSettings.syncEnchantments(stack, tool, player.level().registryAccess());
+        click(player, 1.0F);
         String key = switch (next) {
             case ToolSettings.ENCHANT_FORTUNE -> "gear.robotica.enchant.fortune";
             case ToolSettings.ENCHANT_SILK -> "gear.robotica.enchant.silk";
@@ -51,6 +60,7 @@ public final class GearActions {
         if (kind == null || !tool.spec.toggles.contains(kind)) return;
         boolean on = !ToolSettings.has(stack, kind);
         ToolSettings.set(stack, kind, on);
+        click(player, on ? 1.2F : 0.85F);
         player.displayClientMessage(Component.translatable("gear.robotica.toggle.changed", kind.displayName(),
                 Component.translatable(on ? "gear.robotica.on" : "gear.robotica.off")), true);
     }

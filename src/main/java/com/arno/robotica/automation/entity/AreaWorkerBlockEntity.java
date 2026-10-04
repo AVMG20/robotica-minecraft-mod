@@ -3,6 +3,7 @@ package com.arno.robotica.automation.entity;
 import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.menu.AreaWorkerMenu;
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
@@ -17,6 +18,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -41,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Shared base of every area worker (Stumpy, Sprout, Excavator): battery slot, FE buffer that also accepts FE from
@@ -98,6 +102,10 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     private Status status = Status.IDLE;
     protected long age;
     private boolean firstTick = true;
+    private static final int BEEP_GAP = 200;
+    private long lastWorking;
+    private long lastBeep = -BEEP_GAP;
+    private long lastWorkSound = -20;
     private final int upgradeSlots;
 
     protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds, int upgradeSlots) {
@@ -245,10 +253,36 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         if (!pending.isEmpty()) flushPending(sl);
         Status next = pending.isEmpty() ? work(sl) : Status.OUTPUT_FULL;
         if (next != Status.WORKING && age % 5 == 0) energy.consume(1);
+        if (next == Status.WORKING) lastWorking = age;
         if (next != status) {
+            announce(sl, status, next);
             status = next;
             setChanged();
         }
+    }
+
+    /** Robot chatter on status changes: a beep when it starts after a long rest, a buzz when it stalls. Rate limited. */
+    private void announce(ServerLevel sl, Status from, Status to) {
+        boolean stalled = to == Status.NO_ENERGY || to == Status.OUTPUT_FULL;
+        if (to == Status.WORKING && age - lastWorking > BEEP_GAP && age - lastBeep > BEEP_GAP) {
+            lastBeep = age;
+            CoreSounds.play(sl, worldPosition, CoreSounds.ROBOT_BEEP, SoundSource.NEUTRAL, 0.7F, 1.0F);
+        } else if (stalled && from != Status.NO_ENERGY && from != Status.OUTPUT_FULL && age - lastBeep > BEEP_GAP) {
+            lastBeep = age;
+            CoreSounds.play(sl, worldPosition, CoreSounds.ROBOT_ERROR, SoundSource.NEUTRAL, 0.7F, 1.0F);
+        }
+    }
+
+    /** Plays a work sound at most once a second per robot (several actions can finish within a second with speed cards). */
+    protected void workSound(ServerLevel sl, BlockPos at, Supplier<SoundEvent> sound, float volume, float pitch) {
+        if (age - lastWorkSound < 20) return;
+        lastWorkSound = age;
+        CoreSounds.play(sl, at, sound, SoundSource.NEUTRAL, volume, pitch);
+    }
+
+    /** Powers-down beep for a robot that has finished its job for good (the excavator reaching bedrock). */
+    protected void finishedSound(ServerLevel sl) {
+        CoreSounds.play(sl, worldPosition, CoreSounds.ROBOT_BEEP_LOW, SoundSource.NEUTRAL, 0.7F, 1.0F);
     }
 
     private void pullBattery() {

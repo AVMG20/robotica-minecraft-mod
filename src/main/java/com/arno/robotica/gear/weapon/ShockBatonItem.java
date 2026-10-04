@@ -2,7 +2,7 @@ package com.arno.robotica.gear.weapon;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -23,7 +23,7 @@ public class ShockBatonItem extends EnergyWeaponItem {
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1), attacker);
             if (attacker.level() instanceof ServerLevel level) {
                 level.sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY(0.5), target.getZ(), 8, 0.3, 0.4, 0.3, 0.1);
-                level.playSound(null, target.blockPosition(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.3F, 2.0F);
+                CoreSounds.play(level, target.blockPosition(), CoreSounds.SHOCK_ZAP, SoundSource.PLAYERS, 0.7F, 1.0F);
             }
         }
         return true;

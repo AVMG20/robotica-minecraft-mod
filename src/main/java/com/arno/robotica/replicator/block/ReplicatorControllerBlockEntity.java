@@ -1,6 +1,7 @@
 package com.arno.robotica.replicator.block;
 
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.item.CoreItems;
@@ -23,7 +24,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.Difficulty;
@@ -187,6 +187,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     private Pause pause = Pause.NOT_FORMED;
     private boolean revalidate = true;
     private int age;
+    private int lastCycleSound = -20;
     @Nullable
     private EntityType<?> activeType;
 
@@ -339,7 +340,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         boolean wasFormed = status.formed();
         status = now;
         if (wasFormed != now.formed()) {
-            level.playSound(null, pos, now.formed() ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 1.0F, 1.2F);
+            CoreSounds.play(level, pos, now.formed() ? CoreSounds.REPLICATOR_FORM : CoreSounds.REPLICATOR_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
         if (state.getValue(ReplicatorControllerBlock.FORMED) != now.formed()) {
             BlockState next = state.setValue(ReplicatorControllerBlock.FORMED, now.formed());
@@ -401,7 +402,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         pause = nextPause;
         setWorking(level, pos, state, working);
         if (working && age % 80 == 0) {
-            level.playSound(null, pos, SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 0.6F, 1.4F);
+            CoreSounds.play(level, pos, CoreSounds.REPLICATOR_HUM, SoundSource.BLOCKS, 0.8F, 1.0F);
         }
     }
 
@@ -416,7 +417,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (mode == Mode.SPAWN) {
             Pause blocked = spawn(level, pos, state, type);
             if (blocked != Pause.NONE) return blocked;
-            level.playSound(null, pos, SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.BLOCKS, 0.8F, 1.2F);
+            cycleSound(level, pos, CoreSounds.REPLICATOR_SPAWN);
         } else {
             Harvest.Result result = Harvest.roll(level, type, pos.relative(state.getValue(ReplicatorControllerBlock.FACING).getOpposite()),
                     owner, lootingLevel());
@@ -427,11 +428,18 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
                 }
                 if (ReplicatorConfig.harvestXp()) xpStored = Math.min(MAX_XP, xpStored + result.xp());
             }
-            level.playSound(null, pos, SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.BLOCKS, 0.9F, 1.1F);
+            cycleSound(level, pos, CoreSounds.REPLICATOR_CYCLE);
         }
         cycles++;
         setChangedAndSync();
         return Pause.NONE;
+    }
+
+    /** Cycle sound, at most once a second even when speed upgrades finish cycles faster. */
+    private void cycleSound(ServerLevel level, BlockPos pos, java.util.function.Supplier<net.minecraft.sounds.SoundEvent> sound) {
+        if (age - lastCycleSound < 20) return;
+        lastCycleSound = age;
+        CoreSounds.play(level, pos, sound, SoundSource.BLOCKS, 0.9F, 1.0F);
     }
 
     /** Moves leftovers into the output. True when nothing is left. */

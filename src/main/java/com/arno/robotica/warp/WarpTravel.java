@@ -1,5 +1,6 @@
 package com.arno.robotica.warp;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.warp.gate.GateControllerBlockEntity;
@@ -21,7 +22,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
@@ -192,7 +192,7 @@ public final class WarpTravel {
             return;
         }
         remote.set(WarpComponents.BOUND_PAD.get(), new WarpComponents.BoundPad(rec.id(), rec.name()));
-        player.level().playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8F, 1.4F);
+        CoreSounds.play(player, CoreSounds.WARP_BIND, SoundSource.PLAYERS, 0.8F, 1.0F);
         message(player, Component.translatable("message.robotica.warp.remote_bound", rec.name()));
     }
 
@@ -302,7 +302,7 @@ public final class WarpTravel {
         GlobalPos source = card.get(WarpComponents.LINK_SOURCE.get());
         if (source == null) {
             card.set(WarpComponents.LINK_SOURCE.get(), clicked);
-            player.level().playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
+            CoreSounds.play(player, CoreSounds.WARP_BIND, SoundSource.PLAYERS, 0.8F, 0.85F);
             message(player, Component.translatable("message.robotica.warp.card_stored", clicked.pos().getX(), clicked.pos().getY(), clicked.pos().getZ()));
             return;
         }
@@ -334,7 +334,7 @@ public final class WarpTravel {
         first.setLinked(clicked);
         second.setLinked(source);
         card.remove(WarpComponents.LINK_SOURCE.get());
-        player.level().playSound(null, player.blockPosition(), SoundEvents.RESPAWN_ANCHOR_SET_SPAWN, SoundSource.PLAYERS, 0.8F, 1.0F);
+        CoreSounds.play(player, CoreSounds.WARP_LINK, SoundSource.PLAYERS, 0.8F, 1.0F);
         message(player, Component.translatable("message.robotica.warp.card_linked"));
     }
 }

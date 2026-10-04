@@ -2,13 +2,13 @@ package com.arno.robotica.automation.entity;
 
 import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.AutomationContent;
+import com.arno.robotica.core.CoreSounds;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
@@ -68,6 +68,11 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
     }
 
     @Override
+    protected void onWorkTick(ServerLevel sl) {
+        if (CoreSounds.due(sl, worldPosition, 50)) CoreSounds.play(sl, worldPosition, CoreSounds.SAW_WHIR, SoundSource.NEUTRAL, 0.5F, 1.0F);
+    }
+
+    @Override
     protected void onScanWrapped() {
         if (++wraps % 8 == 0) ignored.clear();
     }
@@ -115,7 +120,7 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
             for (ItemStack drop : Block.getDrops(state, sl, p, sl.getBlockEntity(p), null, tool)) Drops.merge(drops, drop);
             sl.removeBlock(p, false);
         }
-        sl.playSound(null, start, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1.0F, 0.9F);
+        workSound(sl, start, CoreSounds.STUMPY_CHOP, 1.0F, 0.9F + sl.random.nextFloat() * 0.2F);
         for (ItemStack drop : drops) output(drop);
         replant(sl, tree, BuiltInRegistries.BLOCK.getKey(startState.getBlock()).getPath());
         return true;

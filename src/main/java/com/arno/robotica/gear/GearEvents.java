@@ -1,6 +1,7 @@
 package com.arno.robotica.gear;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.tool.AreaBreaker;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.BreakQueue;
@@ -11,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -31,8 +33,11 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /** Server side hooks of the gear module: area breaking, drop handling, break speed, empty weapon damage, cleanup. */
 @EventBusSubscriber(modid = Robotica.MODID)
@@ -63,6 +68,22 @@ public final class GearEvents {
         List<BlockPos> targets = AreaBreaker.collect(level, player, stack, tool, origin, face);
         if (targets.isEmpty() && !(tool.activeMode(stack, player) == AreaMode.TREE && tool.toggleActive(stack, ToggleKind.REPLANT))) return;
         BreakQueue.start(player, level, tool, stack, origin, targets);
+        if (!targets.isEmpty()) areaSound(player, level, tool, origin);
+    }
+
+    private static final Map<UUID, Long> LAST_AREA_SOUND = new HashMap<>();
+
+    /** Crunch (or chainsaw rev) once per area break, at most every half second per player. */
+    private static void areaSound(ServerPlayer player, ServerLevel level, GearToolItem tool, BlockPos origin) {
+        long now = level.getGameTime();
+        Long last = LAST_AREA_SOUND.get(player.getUUID());
+        if (last != null && now - last < 10) return;
+        LAST_AREA_SOUND.put(player.getUUID(), now);
+        if (tool == GearItems.CHAINSAW.get()) {
+            CoreSounds.play(level, origin, CoreSounds.CHAINSAW_REV, SoundSource.PLAYERS, 0.8F, 1.0F);
+        } else {
+            CoreSounds.play(level, origin, CoreSounds.AREA_BREAK, SoundSource.PLAYERS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
+        }
     }
 
     /** Redirects drops of Robotica tools: void filter, auto-smelt, auto-pickup (in that order). */
@@ -141,10 +162,12 @@ public final class GearEvents {
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         BreakQueue.clear(event.getEntity().getUUID());
+        LAST_AREA_SOUND.remove(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         BreakQueue.clearAll();
+        LAST_AREA_SOUND.clear();
     }
 }

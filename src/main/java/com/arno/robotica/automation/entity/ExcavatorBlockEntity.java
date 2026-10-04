@@ -4,6 +4,7 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.AutomationContent;
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
 import net.minecraft.core.BlockPos;
@@ -125,6 +126,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
         if (progress < actionInterval()) {
             if (energy.getEnergyStored() < cost) return Status.NO_ENERGY;
             progress++;
+            if (CoreSounds.due(sl, worldPosition, 60)) CoreSounds.play(sl, worldPosition, CoreSounds.DRILL_GRIND, SoundSource.NEUTRAL, 0.6F, 1.0F);
             if (progress < actionInterval()) return Status.WORKING;
         }
         if (!energy.consume(cost)) return Status.NO_ENERGY;
@@ -152,6 +154,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
         for (int n = 0; n < SKIP_PER_TICK; n++) {
             if (cursorLayer >= layers) {
                 done = true;
+                finishedSound(sl);
                 setChangedAndSync();
                 return;
             }
@@ -191,7 +194,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
         if (kind == 2) {
             if (state.getBlock() instanceof LiquidBlock) {
                 sl.setBlock(pos, Blocks.COBBLESTONE.defaultBlockState(), Block.UPDATE_ALL);
-                sl.playSound(null, pos, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.3F, 1.2F);
+                workSound(sl, pos, () -> SoundEvents.LAVA_EXTINGUISH, 0.3F, 1.2F);
             }
             return;
         }
@@ -208,6 +211,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
         }
         List<ItemStack> drops = Block.getDrops(state, sl, pos, null, null, tool(sl));
         sl.levelEvent(2001, pos, Block.getId(state));
+        workSound(sl, pos, CoreSounds.EXCAVATOR_DIG, 0.7F, 0.9F + sl.random.nextFloat() * 0.2F);
         sl.setBlock(pos, plug ? Blocks.COBBLESTONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         boolean voiding = upgrades.level(UpgradeKind.VOID) > 0;
         for (ItemStack drop : drops) {

@@ -98,7 +98,7 @@ public final class ArchitectRegistry {
             case TIMBERFRAME -> SoundType.WOOD;
             case COPPER_WORKS -> SoundType.COPPER;
             case STEEL_LAB -> SoundType.METAL;
-            case NULL_SPIRE -> SoundType.DEEPSLATE_TILES;
+            case NULL_SPIRE -> role == Role.LIGHT ? SoundType.AMETHYST : SoundType.DEEPSLATE_TILES;
         };
         BlockBehaviour.Properties p = BlockBehaviour.Properties.of().mapColor(color).strength(2.0F, 6.0F).sound(sound);
         if (role == Role.WINDOW) {

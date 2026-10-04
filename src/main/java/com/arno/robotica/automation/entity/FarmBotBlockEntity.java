@@ -131,6 +131,7 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
         if (target == null) return energy.getEnergyStored() <= 0 ? Status.NO_ENERGY : Status.IDLE;
         if (!energy.consume(scaledDrain(baseFePerTick(), effectiveSpeedMultiplier()))) return Status.NO_ENERGY;
         progress++;
+        onWorkTick(sl);
         if (progress >= actionInterval()) {
             progress = 0;
             BlockPos t = target;
@@ -175,6 +176,10 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
     }
 
     protected void onScanWrapped() {
+    }
+
+    /** Called every tick the bot spends on a target (before the action itself); used for the ambient work sound. */
+    protected void onWorkTick(ServerLevel sl) {
     }
 
     // ---- growth boost ----

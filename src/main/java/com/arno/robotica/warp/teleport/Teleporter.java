@@ -1,5 +1,6 @@
 package com.arno.robotica.warp.teleport;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.warp.WarpRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -9,7 +10,6 @@ import net.minecraft.world.level.chunk.status.ChunkType;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
@@ -158,13 +158,13 @@ public final class Teleporter {
     /** Ender sound and particles around an entity position. */
     public static void departEffects(ServerLevel level, Vec3 pos, boolean quiet) {
         level.sendParticles(ParticleTypes.PORTAL, pos.x, pos.y + 1.0, pos.z, 40, 0.3, 0.8, 0.3, 0.2);
-        level.playSound(null, pos.x, pos.y, pos.z, quiet ? SoundEvents.PORTAL_TRAVEL : SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS,
-                quiet ? 0.25F : 1.0F, quiet ? 1.2F : 1.0F);
+        CoreSounds.play(level, pos.x, pos.y, pos.z, quiet ? CoreSounds.TELEPORT_QUIET_DEPART : CoreSounds.TELEPORT_DEPART, SoundSource.PLAYERS,
+                1.0F, 1.0F);
     }
 
     public static void arriveEffects(ServerLevel level, Vec3 pos, boolean quiet) {
         level.sendParticles(ParticleTypes.REVERSE_PORTAL, pos.x, pos.y + 1.0, pos.z, 40, 0.3, 0.8, 0.3, 0.1);
-        level.playSound(null, pos.x, pos.y, pos.z, quiet ? SoundEvents.PORTAL_TRAVEL : SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS,
-                quiet ? 0.25F : 1.0F, quiet ? 1.4F : 1.2F);
+        CoreSounds.play(level, pos.x, pos.y, pos.z, quiet ? CoreSounds.TELEPORT_QUIET_ARRIVE : CoreSounds.TELEPORT_ARRIVE, SoundSource.PLAYERS,
+                1.0F, 1.0F);
     }
 }

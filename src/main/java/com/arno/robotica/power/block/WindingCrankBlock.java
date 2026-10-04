@@ -1,5 +1,6 @@
 package com.arno.robotica.power.block;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.power.PowerConfig;
@@ -7,7 +8,6 @@ import com.arno.robotica.power.PowerRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -81,7 +81,7 @@ public class WindingCrankBlock extends PowerBlock {
                     ItemStack one = stack.copyWithCount(1);
                     crank.spring.setStackInSlot(0, one);
                     stack.consume(1, player);
-                    level.playSound(null, pos, SoundEvents.CHAIN_PLACE, SoundSource.BLOCKS, 0.8F, 1.0F);
+                    CoreSounds.play(level, pos, CoreSounds.SPRING_INSERT, SoundSource.BLOCKS, 0.8F, 1.0F);
                 }
                 return ItemInteractionResult.sidedSuccess(level.isClientSide);
             }
@@ -100,7 +100,7 @@ public class WindingCrankBlock extends PowerBlock {
             if (crank.hasSpring()) {
                 ItemStack out = crank.spring.getStackInSlot(0).copy();
                 crank.spring.setStackInSlot(0, ItemStack.EMPTY);
-                level.playSound(null, pos, SoundEvents.CHAIN_BREAK, SoundSource.BLOCKS, 0.6F, 1.2F);
+                CoreSounds.play(level, pos, CoreSounds.SPRING_REMOVE, SoundSource.BLOCKS, 0.7F, 1.0F);
                 player.getInventory().placeItemBackInInventory(out);
             }
             return InteractionResult.CONSUME;
@@ -120,11 +120,12 @@ public class WindingCrankBlock extends PowerBlock {
         int capacity = ItemEnergy.capacity(spring);
         if (added > 0) {
             float fraction = capacity <= 0 ? 0 : (float) stored / capacity;
-            level.playSound(null, pos, SoundEvents.COMPARATOR_CLICK, SoundSource.BLOCKS, 0.7F, 0.5F + 1.0F * fraction);
-            level.playSound(null, pos, SoundEvents.CHAIN_STEP, SoundSource.BLOCKS, 0.5F, 0.8F + 0.6F * fraction);
+            // Ratchet clicks rise in pitch as the spring tightens; a chime when it reaches full.
+            CoreSounds.play(level, pos, CoreSounds.CRANK_WIND, SoundSource.BLOCKS, 0.8F, 0.6F + 1.0F * fraction);
+            if (stored >= capacity) CoreSounds.play(level, pos, CoreSounds.CRANK_FULL, SoundSource.BLOCKS, 0.7F, 1.0F);
             level.setBlock(pos, state.setValue(ROTATION, (state.getValue(ROTATION) + 1) & 3), Block.UPDATE_CLIENTS);
         } else {
-            level.playSound(null, pos, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 0.5F, 1.4F);
+            CoreSounds.play(level, pos, CoreSounds.CRANK_FULL, SoundSource.BLOCKS, 0.4F, 1.2F);
         }
         int percent = capacity <= 0 ? 0 : (int) (100L * stored / capacity);
         player.displayClientMessage(Component.translatable(added > 0 ? "message.robotica.crank_wound" : "message.robotica.crank_full",

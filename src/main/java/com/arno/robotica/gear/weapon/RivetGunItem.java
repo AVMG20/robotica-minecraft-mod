@@ -1,6 +1,6 @@
 package com.arno.robotica.gear.weapon;
 
-import net.minecraft.sounds.SoundEvents;
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -28,7 +28,8 @@ public class RivetGunItem extends EnergyWeaponItem {
         ItemStack gun = player.getItemInHand(hand);
         if (!hasCharge(gun) && !player.getAbilities().instabuild) {
             if (!level.isClientSide) {
-                level.playSound(null, player.blockPosition(), SoundEvents.DISPENSER_FAIL, SoundSource.PLAYERS, 0.6F, 1.4F);
+                CoreSounds.play(level, player.blockPosition(), CoreSounds.RIVET_EMPTY, SoundSource.PLAYERS, 0.6F, 1.0F);
+                player.getCooldowns().addCooldown(this, 8);
             }
             return InteractionResultHolder.fail(gun);
         }
@@ -40,7 +41,7 @@ public class RivetGunItem extends EnergyWeaponItem {
             rivet.setBaseDamage(DAMAGE / VELOCITY + 0.05);
             rivet.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, VELOCITY, 0.5F);
             level.addFreshEntity(rivet);
-            level.playSound(null, player.blockPosition(), SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 0.8F, 1.7F);
+            CoreSounds.play(level, player.blockPosition(), CoreSounds.RIVET_SHOT, SoundSource.PLAYERS, 0.8F, 0.95F + level.random.nextFloat() * 0.1F);
             player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
         }
         player.swing(hand);

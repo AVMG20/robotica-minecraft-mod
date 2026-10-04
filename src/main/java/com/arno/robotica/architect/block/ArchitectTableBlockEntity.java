@@ -12,6 +12,7 @@ import com.arno.robotica.architect.plan.ModuleType;
 import com.arno.robotica.architect.plan.PlotRecord;
 import com.arno.robotica.architect.plan.Plots;
 import com.arno.robotica.architect.style.BuildStyle;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.item.CoreItems;
@@ -30,7 +31,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
@@ -201,10 +201,14 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         rustic = Math.min(ArchitectConfig.matterCap(), rustic + Math.max(0, amount));
     }
 
+    private long lastPlaceSound = Long.MIN_VALUE / 2;
+    private long lastAbsorbSound = Long.MIN_VALUE / 2;
+
     /** Turns input slot content into matter, a few slots per call. */
     private void convertMatter() {
         int cap = ArchitectConfig.matterCap();
         int budgetSlots = 4;
+        boolean absorbed = false;
         for (int slot = 0; slot < INPUT_SLOTS && budgetSlots > 0; slot++) {
             ItemStack stack = input.getStackInSlot(slot);
             if (stack.isEmpty()) continue;
@@ -220,7 +224,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             refined += v.refined() * fit;
             exotic += v.exotic() * fit;
             budgetSlots--;
+            absorbed = true;
             setChanged();
+        }
+        if (absorbed && level != null && level.getGameTime() - lastAbsorbSound >= 20) {
+            lastAbsorbSound = level.getGameTime();
+            CoreSounds.play(level, worldPosition, CoreSounds.MATTER_ABSORB, SoundSource.BLOCKS, 0.6F, 1.0F);
         }
     }
 
@@ -484,7 +493,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         opsJob = null;
         ops = List.of();
         budget = 0;
-        level.playSound(null, worldPosition, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1.0F, 1.2F);
+        CoreSounds.play(level, worldPosition, CoreSounds.ARCHITECT_DONE, SoundSource.BLOCKS, 1.0F, 1.0F);
         setChanged();
     }
 
@@ -567,8 +576,10 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (speed <= 2 || (placedCount & 3) == 0) {
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5, 3, 0.3, 0.3, 0.3, 0.02);
         }
-        if ((placedCount & 3) == 0) {
-            level.playSound(null, target, SoundEvents.COPPER_PLACE, SoundSource.BLOCKS, 0.5F, 1.0F + level.random.nextFloat() * 0.3F);
+        long now = level.getGameTime();
+        if ((placedCount & 3) == 0 && now - lastPlaceSound >= 8) {
+            lastPlaceSound = now;
+            CoreSounds.play(level, target, CoreSounds.ARCHITECT_PLACE, SoundSource.BLOCKS, 0.6F, 0.9F + level.random.nextFloat() * 0.3F);
         }
         if (ArchitectConfig.builderDrones()) {
             if (drone == null || drone.isRemoved()) {

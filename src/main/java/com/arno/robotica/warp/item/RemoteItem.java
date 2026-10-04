@@ -1,5 +1,6 @@
 package com.arno.robotica.warp.item;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.util.Fmt;
@@ -15,7 +16,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -116,6 +116,7 @@ public class RemoteItem extends Item implements EnergyItem {
             return InteractionResultHolder.fail(stack);
         }
         player.startUsingItem(hand);
+        CoreSounds.play(player, CoreSounds.WARP_START, SoundSource.PLAYERS, 0.8F, 1.0F);
         return InteractionResultHolder.consume(stack);
     }
 
@@ -145,7 +146,7 @@ public class RemoteItem extends Item implements EnergyItem {
         }
         if (elapsed % 6 == 0) {
             float pitch = 0.6F + 1.2F * elapsed / CHARGE_TICKS;
-            serverLevel.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8F, pitch);
+            CoreSounds.play(serverLevel, user.getX(), user.getY(), user.getZ(), CoreSounds.WARP_CHARGE, SoundSource.PLAYERS, 0.8F, pitch);
         }
     }
 

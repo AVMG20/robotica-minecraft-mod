@@ -4,7 +4,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -58,8 +58,10 @@ public class NullLanceItem extends EnergyWeaponItem {
     public void onUseTick(Level level, LivingEntity user, ItemStack stack, int remaining) {
         if (level.isClientSide) return;
         int charged = getUseDuration(stack, user) - remaining;
-        if (charged == CHARGE_TICKS) {
-            level.playSound(null, user.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.0F, 1.6F);
+        if (charged == 1) {
+            CoreSounds.play(level, user.blockPosition(), CoreSounds.LANCE_CHARGE, SoundSource.PLAYERS, 0.7F, 1.0F);
+        } else if (charged == CHARGE_TICKS) {
+            CoreSounds.play(level, user.blockPosition(), CoreSounds.LANCE_READY, SoundSource.PLAYERS, 0.8F, 1.0F);
         } else if (charged > 0 && charged < CHARGE_TICKS && charged % 4 == 0 && level instanceof ServerLevel server) {
             Vec3 tip = user.getEyePosition().add(user.getLookAngle().scale(1.2));
             server.sendParticles(ParticleTypes.PORTAL, tip.x, tip.y - 0.2, tip.z, 4, 0.2, 0.2, 0.2, 0.1);
@@ -98,7 +100,7 @@ public class NullLanceItem extends EnergyWeaponItem {
             level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0.0);
             if (((int) (d * 2)) % 4 == 0) level.sendParticles(ParticleTypes.PORTAL, p.x, p.y, p.z, 2, 0.15, 0.15, 0.15, 0.2);
         }
-        level.playSound(null, shooter.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8F, 1.4F);
+        CoreSounds.play(level, shooter.blockPosition(), CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 0.9F, 1.0F);
         return hits;
     }
 }

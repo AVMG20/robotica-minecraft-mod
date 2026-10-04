@@ -1,5 +1,7 @@
 package com.arno.robotica.warp.gate;
 
+import com.arno.robotica.core.CoreSounds;
+import net.minecraft.sounds.SoundSource;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.warp.WarpConfig;
@@ -163,6 +165,8 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
         return previous;
     }
 
+    private long lastGateSound = Long.MIN_VALUE / 2;
+
     /** Checks frame, link and power, then opens or closes the portal. Only the server tick calls this: it pays the idle FE. */
     public void evaluate(ServerLevel serverLevel) {
         GateShape previous = refresh(serverLevel);
@@ -175,6 +179,11 @@ public class GateControllerBlockEntity extends SyncedBlockEntity {
             removePortal(serverLevel, previous != null ? previous : shape);
         }
         if (nowActive != wasActive) {
+            long now = serverLevel.getGameTime();
+            if (now - lastGateSound >= 40) {
+                lastGateSound = now;
+                CoreSounds.play(serverLevel, worldPosition, nowActive ? CoreSounds.GATE_OPEN : CoreSounds.GATE_CLOSE, SoundSource.BLOCKS, 1.0F, 1.0F);
+            }
             serverLevel.setBlock(worldPosition, getBlockState().setValue(GateControllerBlock.ACTIVE, nowActive), Block.UPDATE_ALL);
         }
     }
