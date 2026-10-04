@@ -138,9 +138,44 @@ Weapons:
 
 Weapon upgrade path through smithing: Gearblade → Shock Baton → Arc Blade. Rivet Gun → Null Lance.
 
+## Base builder (module `architect`)
+
+The player never crafts building blocks one by one. The Architect Table turns cheap bulk materials into **matter**, then fabricates Robotica building blocks out of matter + FE while it builds.
+
+Matter grades (stored as numbers in the table, shown as three bars):
+- Rustic matter: cobblestone/stone/deepslate/dirt/sand/gravel 1, planks 1, logs 4, cobbled anything 1.
+- Refined matter: copper ingot 4, iron ingot 8, gold ingot 8, glass 2, bricks 2, quartz 4, clay ball 1.
+- Exotic matter: obsidian 4, amethyst shard 4, prismarine crystals 4, glowstone dust 2, diamond 32, ender pearl 16.
+Any item handler can feed the input slot (hoppers, RS exporters, Thermal servos).
+
+Block styles, each a family of 6 roles (wall, floor, roof, pillar/trim, window, light):
+| Style | Age | Matter per block | Look |
+|---|---|---|---|
+| Timberframe | 0 | 2 rustic | oak beams, plaster, lanterns |
+| Copper Works | 1 | 2 rustic + 1 refined | riveted copper plates, bolted floor, amber lamps |
+| Steel Lab | 2 | 1 rustic + 2 refined + small exotic | white steel panels, grated floor, framed glass, cyan light strips |
+| Null Spire | 4 | 2 refined + 2 exotic | dark glossy panels, glowing teal seams, energy glass |
+Higher styles need the matching age part in the table's style slot to unlock (Iron Casing, Reinforced Casing, Null Casing). All 24 blocks also have normal crafting recipes (8 bulk blocks + 1 tier material → 8), so players can repair or extend by hand.
+
+Architect Table (Age 1, FE buffer 200k): 27-slot material input, style slot, 5×5 plot grid centred on the table's plot (each plot 9×9×6). The GUI shows the grid; click a plot, pick a module, confirm. Builds one block per N ticks (base 4 ticks, speed cards apply), 50 FE + matter per block. Optional "clear terrain" removes blocks in the footprint (no block entities, no unbreakables) and turns them into rustic matter. Missing matter pauses the build and the GUI says which grade is short.
+
+Modules (procedural, built bottom-up, doors open automatically toward neighbouring modules): Corridor, Hall, Workshop, Storage Room, Machine Hall, Greenhouse (glass roof, farmland), Hangar (open roof pad), Stairwell (second floor later).
+
+Builder drones: purely visual for now, a small flying entity that flies from the table to each placed block. Optional; the table works without them.
+
+## Mob replicator (module `replicator`)
+
+Mid-high tier, slow, powerful.
+- Essence Vial (Age 2, consumable): right-click a hostile mob to take a sample (deals 2 damage, 3 s cooldown). The first sample binds the vial to that mob type. 8 samples completes it. Boss mobs and anything in `robotica:replicator_blacklist` cannot be sampled.
+- Mob Replicator: 3×3×3 multiblock. Replicator Controller in the middle of one face, the rest Replicator Frame and Replicator Glass (at least 1 glass). The controller checks the structure every 40 ticks.
+- Insert a complete vial, feed FE (base 256 FE/t). One cycle takes 1,200 ticks (1 min) at Age 2 speed. Speed cards (max level 3) and Plasma Actuator in the boost slot (×2) speed it up. Fortune cards act as Looting.
+- Mode "Harvest" (default): rolls the mob's loot table as if a player killed it and puts drops in an 18-slot internal output. No entity is ever added to the world. A translucent hologram of the mob spins inside the frame and flashes on each cycle.
+- Mode "Spawn": spawns the real mob in front of the controller instead (for your own mob grinders), max 8 nearby, then waits.
+- Never duplicates boss drops, nether stars or anything in the blacklist tag.
+
 ## Later (not in this build)
 
-Guard Drone, Wingman, Mole, Builder Drone + Planning Table, Courier, Survey Rig, Exo-Frame armor, bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.
+Guard Drone, Wingman, Mole, Courier, Survey Rig, Exo-Frame armor, bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.
 
 ## Engineering rules (all modules)
 

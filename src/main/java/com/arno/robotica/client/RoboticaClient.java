@@ -1,10 +1,12 @@
 package com.arno.robotica.client;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.architect.client.ArchitectClient;
 import com.arno.robotica.automation.client.AutomationClient;
 import com.arno.robotica.core.client.CoreClient;
 import com.arno.robotica.gear.client.GearClient;
 import com.arno.robotica.power.client.PowerClient;
+import com.arno.robotica.replicator.client.ReplicatorClient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -23,5 +25,7 @@ public class RoboticaClient {
         PowerClient.init(modBus, container);
         AutomationClient.init(modBus, container);
         GearClient.init(modBus, container);
+        ArchitectClient.init(modBus, container);
+        ReplicatorClient.init(modBus, container);
     }
 }

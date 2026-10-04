@@ -1,9 +1,11 @@
 package com.arno.robotica;
 
+import com.arno.robotica.architect.ArchitectModule;
 import com.arno.robotica.automation.AutomationModule;
 import com.arno.robotica.core.RoboticaCore;
 import com.arno.robotica.gear.GearModule;
 import com.arno.robotica.power.PowerModule;
+import com.arno.robotica.replicator.ReplicatorModule;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -26,6 +28,8 @@ public class Robotica {
         PowerModule.init(modBus, container);
         AutomationModule.init(modBus, container);
         GearModule.init(modBus, container);
+        ArchitectModule.init(modBus, container);
+        ReplicatorModule.init(modBus, container);
     }
 
     public static ResourceLocation id(String path) {
