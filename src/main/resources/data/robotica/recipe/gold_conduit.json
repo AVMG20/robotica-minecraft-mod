@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GGG",
+    "CCC"
+  ],
+  "key": {
+    "G": {
+      "tag": "c:ingots/gold"
+    },
+    "C": {
+      "item": "robotica:copper_conduit"
+    }
+  },
+  "result": {
+    "id": "robotica:gold_conduit",
+    "count": 3
+  }
+}

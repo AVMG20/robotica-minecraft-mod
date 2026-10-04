@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SQS",
+    "QAQ",
+    "SQS"
+  ],
+  "key": {
+    "S": {
+      "item": "robotica:solar_panel_mk1"
+    },
+    "Q": {
+      "tag": "c:gems/quartz"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:solar_panel_mk2",
+    "count": 1
+  }
+}

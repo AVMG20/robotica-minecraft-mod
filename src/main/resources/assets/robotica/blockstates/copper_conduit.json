@@ -1,0 +1,115 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "robotica:block/copper_conduit_core"
+      }
+    },
+    {
+      "when": {
+        "north": "conduit|block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_arm"
+      }
+    },
+    {
+      "when": {
+        "north": "block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_port"
+      }
+    },
+    {
+      "when": {
+        "east": "conduit|block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_arm",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_port",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "conduit|block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_arm",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_port",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "conduit|block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_arm",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_port",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "up": "conduit|block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_arm",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_port",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "down": "conduit|block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_arm",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "down": "block"
+      },
+      "apply": {
+        "model": "robotica:block/copper_conduit_port",
+        "x": 90
+      }
+    }
+  ]
+}

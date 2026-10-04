@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " S ",
+    "CGC",
+    "BBB"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "C": {
+      "tag": "c:ingots/copper"
+    },
+    "G": {
+      "item": "robotica:copper_gear"
+    },
+    "B": {
+      "tag": "c:cobblestones"
+    }
+  },
+  "result": {
+    "id": "robotica:winding_crank",
+    "count": 1
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    "GSG",
+    "PMP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "G": {
+      "item": "robotica:copper_gear"
+    },
+    "S": {
+      "item": "minecraft:piston"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    }
+  },
+  "result": {
+    "id": "robotica:metal_press",
+    "count": 1
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "robotica:block/power_machine_top",
+    "side": "robotica:block/power_machine_side",
+    "front": "robotica:block/metal_press_front",
+    "particle": "robotica:block/power_machine_side"
+  }
+}
