@@ -1,0 +1,531 @@
+package com.arno.robotica.codex.client;
+
+import com.arno.robotica.Robotica;
+import com.arno.robotica.codex.CodexModule;
+import com.arno.robotica.codex.LabActionPayload;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.SmithingRecipe;
+import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.io.Reader;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Two-page technical manual. Left page: chapter list. Right page: chapter text, item icons
+ * (click one to see its recipe; click recipe ingredients to follow the ladder down).
+ * Operators also get the Creative Lab: an item grid (click = 1, shift-click = stack) and test actions.
+ * Content: assets/robotica/codex/chapters.json (resource pack overridable).
+ */
+public class CodexScreen extends Screen {
+    private static final int W = 320, H = 210, PAGE_W = 140;
+    private static final int COVER = 0xFF23292B, TRIM = 0xFFC87533, PAPER = 0xFFE9EDEA, GRID = 0xFFDCE3E0;
+    private static final int INK = 0xFF1E2A2A, HEAD = 0xFFA4521C, MUTED = 0xFF5D6B67, LINK = 0xFF0F7488, SLOT = 0xFFC9D2CE;
+
+    private record Page(String title, String text, List<ItemStack> items) {}
+    private record Chapter(String title, ItemStack icon, List<Page> pages) {}
+
+    private final List<Chapter> chapters = new ArrayList<>();
+    private int chapter = 0, page = 0, subPage = 0, labScroll = 0;
+    private boolean lab = false;
+    private ItemStack recipeItem = ItemStack.EMPTY;
+    private final Deque<ItemStack> recipeHistory = new ArrayDeque<>();
+    private int left, top;
+
+    public CodexScreen() {
+        super(Component.translatable("item.robotica.codex"));
+        loadChapters();
+    }
+
+    private void loadChapters() {
+        try {
+            Optional<Resource> res = net.minecraft.client.Minecraft.getInstance().getResourceManager()
+                    .getResource(Robotica.id("codex/chapters.json"));
+            if (res.isEmpty()) return;
+            try (Reader reader = res.get().openAsReader()) {
+                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+                for (JsonElement ce : root.getAsJsonArray("chapters")) {
+                    JsonObject c = ce.getAsJsonObject();
+                    List<Page> pages = new ArrayList<>();
+                    for (JsonElement pe : c.getAsJsonArray("pages")) {
+                        JsonObject p = pe.getAsJsonObject();
+                        List<ItemStack> items = new ArrayList<>();
+                        if (p.has("items")) {
+                            for (JsonElement ie : p.getAsJsonArray("items")) {
+                                ItemStack s = stackOf(ie.getAsString());
+                                if (!s.isEmpty()) items.add(s);
+                            }
+                        }
+                        pages.add(new Page(p.has("title") ? p.get("title").getAsString() : "", p.get("text").getAsString(), items));
+                    }
+                    chapters.add(new Chapter(c.get("title").getAsString(), stackOf(c.get("icon").getAsString()), pages));
+                }
+            }
+        } catch (Exception e) {
+            Robotica.LOGGER.error("Could not read Robotica codex", e);
+        }
+    }
+
+    private static ItemStack stackOf(String id) {
+        ResourceLocation key = ResourceLocation.tryParse(id);
+        if (key == null || !BuiltInRegistries.ITEM.containsKey(key)) return ItemStack.EMPTY;
+        return new ItemStack(BuiltInRegistries.ITEM.get(key));
+    }
+
+    private boolean labAllowed() {
+        return minecraft != null && minecraft.player != null && CodexModule.canUseLab(minecraft.player);
+    }
+
+    @Override
+    protected void init() {
+        left = (width - W) / 2;
+        top = (height - H) / 2;
+        rebuild();
+    }
+
+    private void rebuild() {
+        clearWidgets();
+        int rx = left + W / 2 + 8;
+        if (lab) {
+            String[][] actions = {
+                    {"Kit: Age 0", "kit", "0"}, {"Kit: Age 1", "kit", "1"}, {"Kit: Age 2", "kit", "2"}, {"Kit: Age 3", "kit", "3"},
+                    {"Kit: Age 4", "kit", "4"}, {"Charge inventory", "charge", ""}, {"Charge looked-at block", "charge_target", ""},
+                    {"Set day", "day", ""}, {"Clear weather", "clear_weather", ""}, {"Heal + feed", "heal", ""},
+                    {"Kill hostiles (48)", "kill_hostiles", ""}, {"Spawn zombie", "spawn", "minecraft:zombie"},
+                    {"Spawn skeleton", "spawn", "minecraft:skeleton"}, {"Toggle creative", "gamemode", ""}};
+            for (int i = 0; i < actions.length; i++) {
+                String[] a = actions[i];
+                int bx = rx + (i % 2) * 71, by = top + 28 + (i / 2) * 22;
+                addRenderableWidget(Button.builder(Component.literal(a[0]), b -> sendLab(a[1], a[2], a[1].equals("kit") ? Integer.parseInt(a[2]) : 1))
+                        .bounds(bx, by, 69, 20).build());
+            }
+            addRenderableWidget(Button.builder(Component.literal("Back to the manual"), b -> {
+                lab = false;
+                rebuild();
+            }).bounds(rx, top + H - 24, PAGE_W, 16).build());
+            return;
+        }
+        int ny = top + H - 24;
+        addRenderableWidget(Button.builder(Component.literal("<"), b -> turn(-1)).bounds(rx, ny, 20, 16).build());
+        addRenderableWidget(Button.builder(Component.literal(">"), b -> turn(1)).bounds(rx + PAGE_W - 20, ny, 20, 16).build());
+        if (!recipeItem.isEmpty()) {
+            addRenderableWidget(Button.builder(Component.literal("Back"), b -> back()).bounds(rx + PAGE_W / 2 - 20, ny, 40, 16).build());
+        }
+    }
+
+    private void sendLab(String action, String arg, int count) {
+        PacketDistributor.sendToServer(new LabActionPayload(action, arg, count));
+    }
+
+    private void turn(int dir) {
+        if (chapters.isEmpty()) return;
+        recipeItem = ItemStack.EMPTY;
+        recipeHistory.clear();
+        int subs = subPageCount();
+        Chapter c = chapters.get(chapter);
+        if (dir > 0) {
+            if (subPage + 1 < subs) subPage++;
+            else if (page + 1 < c.pages().size()) { page++; subPage = 0; }
+            else if (chapter + 1 < chapters.size()) { chapter++; page = 0; subPage = 0; }
+        } else {
+            if (subPage > 0) subPage--;
+            else if (page > 0) { page--; subPage = 0; }
+            else if (chapter > 0) { chapter--; page = chapters.get(chapter).pages().size() - 1; subPage = 0; }
+        }
+        rebuild();
+    }
+
+    private void back() {
+        recipeItem = recipeHistory.isEmpty() ? ItemStack.EMPTY : recipeHistory.pop();
+        rebuild();
+    }
+
+    private void showRecipe(ItemStack stack) {
+        if (!recipeItem.isEmpty()) recipeHistory.push(recipeItem);
+        recipeItem = stack.copyWithCount(1);
+        rebuild();
+    }
+
+    // ---------------------------------------------------------------- rendering
+
+    @Override
+    public void render(GuiGraphics g, int mx, int my, float pt) {
+        super.render(g, mx, my, pt);
+        drawBook(g);
+        ItemStack hovered = lab ? renderLab(g, mx, my) : renderManual(g, mx, my);
+        if (!lab) renderChapterList(g, mx, my);
+        if (!hovered.isEmpty()) g.renderTooltip(font, hovered, mx, my);
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics g, int mx, int my, float pt) {
+        renderTransparentBackground(g);
+    }
+
+    private void drawBook(GuiGraphics g) {
+        g.fill(left - 6, top - 6, left + W + 6, top + H + 6, COVER);
+        g.fill(left - 6, top - 6, left + 2, top + 2, TRIM);
+        g.fill(left + W - 2, top - 6, left + W + 6, top + 2, TRIM);
+        g.fill(left - 6, top + H - 2, left + 2, top + H + 6, TRIM);
+        g.fill(left + W - 2, top + H - 2, left + W + 6, top + H + 6, TRIM);
+        g.fill(left, top, left + W, top + H, PAPER);
+        for (int x = left + 8; x < left + W; x += 8) g.fill(x, top, x + 1, top + H, GRID);
+        for (int y = top + 8; y < top + H; y += 8) g.fill(left, y, left + W, y + 1, GRID);
+        g.fill(left + W / 2 - 1, top, left + W / 2 + 1, top + H, COVER);
+    }
+
+    private void renderChapterList(GuiGraphics g, int mx, int my) {
+        int x = left + 10, y = top + 10;
+        g.drawString(font, Component.literal("ROBOTICA CODEX").withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
+        y += 16;
+        for (int i = 0; i < chapters.size(); i++) {
+            Chapter c = chapters.get(i);
+            boolean active = !lab && i == chapter && recipeItem.isEmpty();
+            boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + 16;
+            if (active || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + 15, active ? SLOT : GRID);
+            g.renderItem(c.icon(), x, y - 1);
+            g.drawString(font, c.title(), x + 20, y + 3, active ? HEAD : INK, false);
+            y += 16;
+        }
+        if (labAllowed()) {
+            y += 4;
+            boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + 16;
+            if (lab || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + 15, lab ? SLOT : GRID);
+            g.drawString(font, Component.literal("Creative Lab (OP)"), x + 20, y + 3, 0xFFB8860B, false);
+        }
+    }
+
+    private int listY(int index) {
+        return top + 26 + index * 16;
+    }
+
+    private List<FormattedCharSequence> wrappedText() {
+        if (chapters.isEmpty()) return List.of();
+        Page p = chapters.get(chapter).pages().get(page);
+        List<FormattedCharSequence> lines = new ArrayList<>();
+        for (String para : p.text().split("\n")) {
+            if (para.isBlank()) { lines.add(FormattedCharSequence.EMPTY); continue; }
+            lines.addAll(font.split(FormattedText.of(para), PAGE_W - 4));
+        }
+        return lines;
+    }
+
+    private int linesPerSubPage() {
+        Page p = chapters.get(chapter).pages().get(page);
+        int textTop = 24 + (p.items().isEmpty() ? 0 : 22);
+        return (H - textTop - 30) / 10;
+    }
+
+    private int subPageCount() {
+        if (chapters.isEmpty()) return 1;
+        return Math.max(1, (wrappedText().size() + linesPerSubPage() - 1) / linesPerSubPage());
+    }
+
+    private ItemStack renderManual(GuiGraphics g, int mx, int my) {
+        int x = left + W / 2 + 10, y = top + 10;
+        if (chapters.isEmpty()) {
+            g.drawString(font, "Codex content missing.", x, y, INK, false);
+            return ItemStack.EMPTY;
+        }
+        if (!recipeItem.isEmpty()) return renderRecipe(g, x, y, mx, my);
+        Page p = chapters.get(chapter).pages().get(page);
+        ItemStack hovered = ItemStack.EMPTY;
+        g.drawString(font, Component.literal(p.title().isEmpty() ? chapters.get(chapter).title() : p.title()).withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
+        y += 14;
+        if (!p.items().isEmpty()) {
+            int ix = x;
+            for (ItemStack s : p.items()) {
+                if (ix + 18 > x + PAGE_W) break;
+                g.fill(ix, y, ix + 18, y + 18, SLOT);
+                g.renderItem(s, ix + 1, y + 1);
+                if (mx >= ix && mx < ix + 18 && my >= y && my < y + 18) hovered = s;
+                ix += 20;
+            }
+            y += 22;
+        }
+        List<FormattedCharSequence> lines = wrappedText();
+        int per = linesPerSubPage();
+        for (int i = subPage * per; i < Math.min(lines.size(), (subPage + 1) * per); i++) {
+            g.drawString(font, lines.get(i), x, y, INK, false);
+            y += 10;
+        }
+        String counter = (page + 1) + "/" + chapters.get(chapter).pages().size() + (subPageCount() > 1 ? " (" + (subPage + 1) + "/" + subPageCount() + ")" : "");
+        g.drawCenteredString(font, Component.literal(counter).withStyle(s -> s.withColor(MUTED)), x + PAGE_W / 2, top + H - 20, MUTED);
+        if (!hovered.isEmpty()) {
+            g.drawString(font, Component.literal("Click an item to see its recipe"), x, top + H - 36, MUTED, false);
+        }
+        return hovered;
+    }
+
+    // ---------------------------------------------------------------- recipes
+
+    private List<RecipeHolder<?>> recipesFor(ItemStack stack) {
+        List<RecipeHolder<?>> out = new ArrayList<>();
+        if (minecraft == null || minecraft.level == null) return out;
+        RegistryAccess access = minecraft.level.registryAccess();
+        for (RecipeHolder<?> holder : minecraft.level.getRecipeManager().getRecipes()) {
+            try {
+                if (ItemStack.isSameItem(holder.value().getResultItem(access), stack)) out.add(holder);
+            } catch (RuntimeException ignored) {
+            }
+        }
+        out.sort((a, b) -> a.id().toString().compareTo(b.id().toString()));
+        return out;
+    }
+
+    private ItemStack renderRecipe(GuiGraphics g, int x, int y, int mx, int my) {
+        ItemStack hovered = ItemStack.EMPTY;
+        g.drawString(font, recipeItem.getHoverName().copy().withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
+        y += 16;
+        List<RecipeHolder<?>> recipes = recipesFor(recipeItem);
+        if (recipes.isEmpty()) {
+            for (FormattedCharSequence line : font.split(FormattedText.of("No recipe. This item drops from a boss or is found in the world."), PAGE_W - 4)) {
+                g.drawString(font, line, x, y, INK, false);
+                y += 10;
+            }
+            return ItemStack.EMPTY;
+        }
+        int index = (int) ((Util.getMillis() / 3000) % recipes.size());
+        Recipe<?> recipe = recipes.get(index).value();
+        int tick = (int) (Util.getMillis() / 1000);
+        List<Ingredient> ingredients = new ArrayList<>();
+        int gw = 3;
+        if (recipe instanceof ShapedRecipe shaped) {
+            gw = shaped.getWidth();
+            ingredients.addAll(shaped.getIngredients());
+        } else if (recipe instanceof SmithingRecipe smithing) {
+            gw = 3;
+            ingredients.add(findSmithing(smithing, 0));
+            ingredients.add(findSmithing(smithing, 1));
+            ingredients.add(findSmithing(smithing, 2));
+        } else {
+            ingredients.addAll(recipe.getIngredients());
+        }
+        String kind = recipe instanceof SmithingRecipe ? "Smithing table" :
+                BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()) == null ? "" : BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()).getPath().replace('_', ' ');
+        g.drawString(font, Component.literal(kind + (recipes.size() > 1 ? "  (" + (index + 1) + "/" + recipes.size() + ")" : "")), x, y, MUTED, false);
+        y += 12;
+        int gx = x + 4, gy = y;
+        for (int i = 0; i < Math.max(ingredients.size(), 1); i++) {
+            int sx = gx + (i % gw) * 19, sy = gy + (i / gw) * 19;
+            g.fill(sx, sy, sx + 18, sy + 18, SLOT);
+            if (i >= ingredients.size()) continue;
+            ItemStack[] options = ingredients.get(i).getItems();
+            if (options.length == 0) continue;
+            ItemStack s = options[tick % options.length];
+            g.renderItem(s, sx + 1, sy + 1);
+            if (mx >= sx && mx < sx + 18 && my >= sy && my < sy + 18) hovered = s;
+        }
+        int rows = (ingredients.size() + gw - 1) / gw;
+        int ax = gx + gw * 19 + 6, ay = gy + Math.max(0, rows - 1) * 19 / 2 + 5;
+        g.drawString(font, "->", ax, ay, INK, false);
+        ItemStack result = recipe.getResultItem(minecraft.level.registryAccess());
+        g.fill(ax + 18, ay - 5, ax + 36, ay + 13, SLOT);
+        g.renderItem(result, ax + 19, ay - 4);
+        g.renderItemDecorations(font, result, ax + 19, ay - 4);
+        int ty = gy + Math.max(rows, 1) * 19 + 8;
+        for (FormattedCharSequence line : font.split(FormattedText.of("Click an ingredient to see how it is made."), PAGE_W - 4)) {
+            g.drawString(font, line, x, ty, MUTED, false);
+            ty += 10;
+        }
+        return hovered;
+    }
+
+    /** SmithingTransformRecipe keeps its ingredients package-private; probe Robotica and vanilla items instead. */
+    private Ingredient findSmithing(SmithingRecipe recipe, int slot) {
+        List<ItemStack> matches = new ArrayList<>();
+        for (Item item : BuiltInRegistries.ITEM) {
+            ItemStack s = new ItemStack(item);
+            boolean ok = switch (slot) {
+                case 0 -> recipe.isTemplateIngredient(s);
+                case 1 -> recipe.isBaseIngredient(s);
+                default -> recipe.isAdditionIngredient(s);
+            };
+            if (ok) matches.add(s);
+            if (matches.size() >= 8) break;
+        }
+        return matches.isEmpty() ? Ingredient.EMPTY : Ingredient.of(matches.stream());
+    }
+
+    // ---------------------------------------------------------------- creative lab
+
+    private List<Item> labItems() {
+        List<Item> items = new ArrayList<>();
+        for (Item item : BuiltInRegistries.ITEM) {
+            if (BuiltInRegistries.ITEM.getKey(item).getNamespace().equals(Robotica.MODID)) items.add(item);
+        }
+        return items;
+    }
+
+    private static final int LAB_COLS = 7;
+
+    private int labX() {
+        return left + 12;
+    }
+
+    private int labY() {
+        return top + 24;
+    }
+
+    private int labRows() {
+        return Math.max(1, (top + H - 16 - labY()) / 18);
+    }
+
+    private ItemStack renderLab(GuiGraphics g, int mx, int my) {
+        int rx = left + W / 2 + 10;
+        g.drawString(font, Component.literal("Test actions").withStyle(ChatFormatting.BOLD), rx, top + 10, 0xFFB8860B, false);
+        g.drawString(font, Component.literal("Creative Lab").withStyle(ChatFormatting.BOLD), left + 10, top + 10, 0xFFB8860B, false);
+        List<Item> items = labItems();
+        int gx = labX(), gy = labY();
+        int cols = LAB_COLS, visibleRows = labRows();
+        int maxScroll = Math.max(0, (items.size() + cols - 1) / cols - visibleRows);
+        labScroll = Math.min(labScroll, maxScroll);
+        g.drawString(font, Component.literal("Click: 1  Shift: stack  Wheel: scroll"), gx, top + H - 12, MUTED, false);
+        ItemStack hovered = ItemStack.EMPTY;
+        for (int i = labScroll * cols; i < Math.min(items.size(), (labScroll + visibleRows) * cols); i++) {
+            int slot = i - labScroll * cols;
+            int sx = gx + (slot % cols) * 18, sy = gy + (slot / cols) * 18;
+            g.fill(sx, sy, sx + 17, sy + 17, SLOT);
+            ItemStack s = new ItemStack(items.get(i));
+            g.renderItem(s, sx, sy);
+            if (mx >= sx && mx < sx + 17 && my >= sy && my < sy + 17) hovered = s;
+        }
+        return hovered;
+    }
+
+    // ---------------------------------------------------------------- input
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
+        if (super.mouseClicked(mx, my, button)) return true;
+        int x = left + 10;
+        for (int i = 0; i < chapters.size() && !lab; i++) {
+            int y = listY(i);
+            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + 16) {
+                lab = false;
+                chapter = i;
+                page = 0;
+                subPage = 0;
+                recipeItem = ItemStack.EMPTY;
+                recipeHistory.clear();
+                rebuild();
+                return true;
+            }
+        }
+        if (labAllowed() && !lab) {
+            int y = listY(chapters.size()) + 4;
+            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + 16) {
+                lab = true;
+                rebuild();
+                return true;
+            }
+        }
+        if (lab) {
+            List<Item> items = labItems();
+            int gx = labX(), gy = labY(), cols = LAB_COLS;
+            int visibleRows = labRows();
+            int col = (int) Math.floor((mx - gx) / 18), row = (int) Math.floor((my - gy) / 18);
+            if (col >= 0 && col < cols && row >= 0 && row < visibleRows) {
+                int i = (labScroll + row) * cols + col;
+                if (i < items.size()) {
+                    Item item = items.get(i);
+                    sendLab("give", BuiltInRegistries.ITEM.getKey(item).toString(), hasShiftDown() ? item.getDefaultMaxStackSize() : 1);
+                    return true;
+                }
+            }
+            return false;
+        }
+        // Item icons on a manual page, or ingredients in the recipe view.
+        ItemStack clicked = hoveredManualItem((int) mx, (int) my);
+        if (!clicked.isEmpty()) {
+            showRecipe(clicked);
+            return true;
+        }
+        return false;
+    }
+
+    private ItemStack hoveredManualItem(int mx, int my) {
+        if (chapters.isEmpty() || minecraft == null) return ItemStack.EMPTY;
+        GuiGraphicsProbe probe = new GuiGraphicsProbe();
+        if (!recipeItem.isEmpty()) return probe.recipeHit(mx, my);
+        Page p = chapters.get(chapter).pages().get(page);
+        int x = left + W / 2 + 10, y = top + 24;
+        int ix = x;
+        for (ItemStack s : p.items()) {
+            if (ix + 18 > x + PAGE_W) break;
+            if (mx >= ix && mx < ix + 18 && my >= y && my < y + 18) return s;
+            ix += 20;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /** Recomputes the recipe grid layout to find the clicked ingredient (same math as renderRecipe). */
+    private class GuiGraphicsProbe {
+        ItemStack recipeHit(int mx, int my) {
+            List<RecipeHolder<?>> recipes = recipesFor(recipeItem);
+            if (recipes.isEmpty()) return ItemStack.EMPTY;
+            Recipe<?> recipe = recipes.get((int) ((Util.getMillis() / 3000) % recipes.size())).value();
+            List<Ingredient> ingredients = new ArrayList<>();
+            int gw = 3;
+            if (recipe instanceof ShapedRecipe shaped) {
+                gw = shaped.getWidth();
+                ingredients.addAll(shaped.getIngredients());
+            } else if (recipe instanceof SmithingRecipe smithing) {
+                ingredients.add(findSmithing(smithing, 0));
+                ingredients.add(findSmithing(smithing, 1));
+                ingredients.add(findSmithing(smithing, 2));
+            } else {
+                ingredients.addAll(recipe.getIngredients());
+            }
+            int gx = left + W / 2 + 14, gy = top + 10 + 16 + 12;
+            int tick = (int) (Util.getMillis() / 1000);
+            for (int i = 0; i < ingredients.size(); i++) {
+                int sx = gx + (i % gw) * 19, sy = gy + (i / gw) * 19;
+                if (mx >= sx && mx < sx + 18 && my >= sy && my < sy + 18) {
+                    ItemStack[] options = ingredients.get(i).getItems();
+                    return options.length == 0 ? ItemStack.EMPTY : options[tick % options.length];
+                }
+            }
+            return ItemStack.EMPTY;
+        }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
+        if (lab) {
+            labScroll = Math.max(0, labScroll - (int) Math.signum(scrollY));
+            return true;
+        }
+        turn(scrollY < 0 ? 1 : -1);
+        return true;
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+}

@@ -3,6 +3,7 @@ package com.arno.robotica.client;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.architect.client.ArchitectClient;
 import com.arno.robotica.automation.client.AutomationClient;
+import com.arno.robotica.codex.client.CodexClient;
 import com.arno.robotica.core.client.CoreClient;
 import com.arno.robotica.gear.client.GearClient;
 import com.arno.robotica.power.client.PowerClient;
@@ -23,6 +24,7 @@ public class RoboticaClient {
     public RoboticaClient(IEventBus modBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         CoreClient.init(modBus, container);
+        CodexClient.init(modBus, container);
         PowerClient.init(modBus, container);
         AutomationClient.init(modBus, container);
         GearClient.init(modBus, container);

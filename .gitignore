@@ -42,3 +42,5 @@ repo/
 ### Robotica ###
 run/
 robotica-audit/
+
+.claude/

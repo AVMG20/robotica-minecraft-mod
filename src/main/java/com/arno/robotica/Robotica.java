@@ -2,6 +2,7 @@ package com.arno.robotica;
 
 import com.arno.robotica.architect.ArchitectModule;
 import com.arno.robotica.automation.AutomationModule;
+import com.arno.robotica.codex.CodexModule;
 import com.arno.robotica.core.RoboticaCore;
 import com.arno.robotica.gear.GearModule;
 import com.arno.robotica.power.PowerModule;
@@ -26,6 +27,7 @@ public class Robotica {
 
     public Robotica(IEventBus modBus, ModContainer container) {
         RoboticaCore.init(modBus, container);
+        CodexModule.init(modBus, container);
         PowerModule.init(modBus, container);
         AutomationModule.init(modBus, container);
         GearModule.init(modBus, container);

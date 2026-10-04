@@ -1,0 +1,272 @@
+{
+  "chapters": [
+    {
+      "title": "Getting started",
+      "icon": "robotica:codex",
+      "pages": [
+        {
+          "title": "Welcome, tinker",
+          "text": "Robotica is about robots that do the boring work, so you can explore, fight and build.\n\nYou start in the stone age. Copper, wood and cobblestone are enough for your first robot. No iron needed.\n\nEvery item in this book has a recipe: click its icon to see it, then click the ingredients to follow the chain down.",
+          "items": [
+            "robotica:copper_gear",
+            "robotica:clockwork_mechanism",
+            "robotica:wooden_chassis",
+            "robotica:mainspring"
+          ]
+        },
+        {
+          "title": "Your first day",
+          "text": "1. Mine copper. A vein gives plenty.\n2. Craft Copper Gears, then a Clockwork Mechanism and a Wooden Chassis.\n3. Build a Winding Crank and a Mainspring. Put the spring in the crank and right-click until it is wound.\n4. Build Stumpy, place it near some saplings, give it the Mainspring.\n\nStumpy now chops, replants and collects for about two hours of work.",
+          "items": [
+            "robotica:winding_crank",
+            "robotica:mainspring",
+            "robotica:stumpy",
+            "robotica:supply_crate"
+          ]
+        },
+        {
+          "title": "Batteries",
+          "text": "Robots carry a cell. A Mainspring lasts about 2 hours of work, a Copper Cell 8, a Redstone Cell 24 and an Ender Cell 72.\n\nA robot with nothing to do barely drains. Once you have power, cables and Chargers keep everything topped up.",
+          "items": [
+            "robotica:mainspring",
+            "robotica:copper_cell",
+            "robotica:redstone_cell",
+            "robotica:ender_cell"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Ages and parts",
+      "icon": "robotica:iron_casing",
+      "pages": [
+        {
+          "title": "Five ages",
+          "text": "Age 0 Clockwork: wood, stone, copper.\nAge 1 Wired: iron, redstone, gold.\nAge 2 Servo: diamonds, obsidian, quartz and a Servo Core.\nAge 3 Deep: netherite, blaze rods and a Magma Core.\nAge 4 Antigrav: ender pearls, nether stars and an Antigrav Core.\n\nCores will drop from bosses. Until the bosses arrive they have an expensive recipe."
+        },
+        {
+          "title": "The parts ladder",
+          "text": "Robotica machines are built from parts, and each age's parts are built from the age before. A Reinforced Casing eats four Iron Casings, which eat eight iron each.\n\nStarting something is cheap. Making it great costs a lot. Plan your iron.",
+          "items": [
+            "robotica:iron_casing",
+            "robotica:reinforced_casing",
+            "robotica:blazing_casing",
+            "robotica:null_casing"
+          ]
+        },
+        {
+          "title": "Circuits and motors",
+          "text": "Circuits and motors follow the same ladder. Iron Plates come from a Tinker's Hammer (two ingots per plate) or a Metal Press (one ingot per plate). Plates from other mods work too.",
+          "items": [
+            "robotica:iron_plate",
+            "robotica:basic_circuit",
+            "robotica:advanced_circuit",
+            "robotica:quantum_circuit",
+            "robotica:electric_motor",
+            "robotica:servo_actuator"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Power",
+      "icon": "robotica:combustion_generator",
+      "pages": [
+        {
+          "title": "Making FE",
+          "text": "Robotica uses Forge Energy (FE), the same power as Thermal, Mekanism and most tech mods. Their generators can power your robots and Robotica generators can power their machines.\n\nCombustion Generator: burns fuel, 40 FE/t.\nSolar Panel: 8 FE/t by day, Mk2 32 FE/t.",
+          "items": [
+            "robotica:combustion_generator",
+            "robotica:solar_panel",
+            "robotica:solar_panel_mk2"
+          ]
+        },
+        {
+          "title": "Moving and storing FE",
+          "text": "Conduits carry FE between blocks. Copper moves 256 FE/t, Gold 1,024 FE/t.\n\nAccumulators store it and output on their front face. They keep their charge when broken.\n\nThe Charger fills cells and tools.",
+          "items": [
+            "robotica:copper_conduit",
+            "robotica:gold_conduit",
+            "robotica:accumulator",
+            "robotica:charger"
+          ]
+        },
+        {
+          "title": "Metal Press",
+          "text": "Turns one ingot into one plate. Twice as efficient as the hammer, and it takes speed upgrades.",
+          "items": [
+            "robotica:metal_press",
+            "robotica:iron_plate",
+            "robotica:copper_plate",
+            "robotica:gold_plate"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Robots and farms",
+      "icon": "robotica:stumpy",
+      "pages": [
+        {
+          "title": "Stumpy and Sprout",
+          "text": "Stumpy fells whole trees, replants and picks up drops. Sprout harvests and replants crops.\n\nBoth push their output into a chest, Supply Crate, or a Refined Storage or AE2 interface next to them.",
+          "items": [
+            "robotica:stumpy",
+            "robotica:sprout",
+            "robotica:supply_crate"
+          ]
+        },
+        {
+          "title": "Farm tiers",
+          "text": "Right-click a placed farm bot with a Farm Kit to upgrade it in place.\n\nMk1: 9x9, slow, +50% growth.\nMk2: 13x13, faster, double growth.\nMk3: 17x17, fast, triple growth.\nMk4: 25x25, the whole area every pulse, five times growth.",
+          "items": [
+            "robotica:farm_kit_mk2",
+            "robotica:farm_kit_mk3",
+            "robotica:farm_kit_mk4"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Excavator",
+      "icon": "robotica:excavator",
+      "pages": [
+        {
+          "title": "Digging a real hole",
+          "text": "The Excavator mines everything below it down to bedrock. It starts small and slow: 8x8, one block every two seconds.\n\nIt seals fluids as it goes, skips chests and other block entities, and never touches bedrock.",
+          "items": [
+            "robotica:excavator"
+          ]
+        },
+        {
+          "title": "Upgrade cards",
+          "text": "Cards go in upgrade slots of machines and robots.\n\nRange: 16, 32, 48, 64 square.\nSpeed: 2x, 4x, 10x, 20x.\nEfficiency: less energy per block.\nFortune (Age 2+) and Silk Touch.\nVoid: deletes cobblestone and other junk.\n\nEach level is crafted from the level below plus that age's parts.",
+          "items": [
+            "robotica:upgrade_range_1",
+            "robotica:upgrade_speed_1",
+            "robotica:upgrade_efficiency_1",
+            "robotica:upgrade_fortune_2",
+            "robotica:upgrade_silk_1",
+            "robotica:upgrade_void_1"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Tools",
+      "icon": "robotica:bore_drill",
+      "pages": [
+        {
+          "title": "Mining tools",
+          "text": "Tinker's Hammer (Age 0): 3x3, slower than a pickaxe.\nBore Drill (Age 1): 3x3 on FE.\nServo Drill (Age 2): 5x5 and vein mining.\nMagma Drill (Age 3): 3x3x3, 9x9, auto-smelt.\nNull Drill (Age 4): up to 12x12x12.\n\nFE tools never break. Empty, they mine like a wooden pickaxe.",
+          "items": [
+            "robotica:tinkers_hammer",
+            "robotica:bore_drill",
+            "robotica:servo_drill",
+            "robotica:magma_drill",
+            "robotica:null_drill"
+          ]
+        },
+        {
+          "title": "Controls",
+          "text": "V: cycle mode. Sneak + scroll does the same.\nHold sneak: always mine one block.\nB: swap Silk Touch and Fortune.\nG: settings for the tool in your hand (keep floor, auto-pickup, void filter, auto-smelt, light placer).\n\nAn outline shows what will break before you swing."
+        },
+        {
+          "title": "Trees",
+          "text": "The Felling Axe (Age 0) and Chainsaw (Age 1) cut a whole tree at once. The axe pays with durability per log, the chainsaw with FE.",
+          "items": [
+            "robotica:felling_axe",
+            "robotica:chainsaw"
+          ]
+        },
+        {
+          "title": "Upgrading tools",
+          "text": "Tools upgrade at a smithing table: an Upgrade Kit as template, the old tool, and that age's core. Energy and settings carry over.",
+          "items": [
+            "robotica:tool_upgrade_kit_2",
+            "robotica:tool_upgrade_kit_3",
+            "robotica:tool_upgrade_kit_4"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Weapons",
+      "icon": "robotica:shock_baton",
+      "pages": [
+        {
+          "title": "Arsenal",
+          "text": "Gearblade (Age 0): a fast copper sword.\nShock Baton (Age 1): slows what it hits.\nRivet Gun (Age 2): rapid fire, no ammo, FE per shot.\nArc Blade (Age 3): lightning jumps to three nearby monsters.\nNull Lance (Age 4): hold to charge, then a beam through everything in a line.",
+          "items": [
+            "robotica:gearblade",
+            "robotica:shock_baton",
+            "robotica:rivet_gun",
+            "robotica:arc_blade",
+            "robotica:null_lance"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Base builder",
+      "icon": "robotica:architect_table",
+      "pages": [
+        {
+          "title": "Architect Table",
+          "text": "Feed the table cobblestone, wood, glass, ingots or gems. It turns them into matter: rustic, refined and exotic.\n\nPick a plot on the grid, pick a room, and the table builds it out of Robotica blocks it fabricates from matter and FE. You never craft the blocks one by one.",
+          "items": [
+            "robotica:architect_table"
+          ]
+        },
+        {
+          "title": "Styles",
+          "text": "Timberframe (Age 0) costs only rustic matter. Copper Works (Age 1), Steel Lab (Age 2) and Null Spire (Age 4) cost more and look better.\n\nEvery building block also has a normal recipe, so you can repair or extend a room by hand."
+        }
+      ]
+    },
+    {
+      "title": "Mob replicator",
+      "icon": "robotica:replicator_controller",
+      "pages": [
+        {
+          "title": "Capturing essence",
+          "text": "Right-click a hostile mob with an Essence Vial to take a sample. Eight samples of the same mob fill the vial.\n\nBosses cannot be sampled.",
+          "items": [
+            "robotica:essence_vial"
+          ]
+        },
+        {
+          "title": "The replicator",
+          "text": "Build a 3x3x3 frame with the Replicator Controller in the middle of one side and at least one Replicator Glass. Insert a full vial and power it.\n\nHarvest mode drops loot into the controller as if you killed the mob. Spawn mode makes the real mob for your own grinder. It is slow and hungry: about one cycle a minute.",
+          "items": [
+            "robotica:replicator_controller",
+            "robotica:replicator_frame",
+            "robotica:replicator_glass"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Warp",
+      "icon": "robotica:warp_pad",
+      "pages": [
+        {
+          "title": "Warp Pads",
+          "text": "Name a Warp Pad, stand on it and right-click to travel to any pad you own or that a friend made public. FE cost grows with distance. A Rift Upgrade lets a pad jump between dimensions.",
+          "items": [
+            "robotica:warp_pad"
+          ]
+        },
+        {
+          "title": "Going home",
+          "text": "Sneak-right-click a pad with a Recall Remote to bind it. Hold right-click for three seconds to go home. Getting hit cancels it.\n\nPortal Gates (Age 4) are walk-through portals between two linked gates, in any dimension.",
+          "items": [
+            "robotica:recall_remote",
+            "robotica:gate_controller",
+            "robotica:gate_frame"
+          ]
+        }
+      ]
+    }
+  ]
+}

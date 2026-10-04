@@ -1,0 +1,6 @@
+{
+  "item.robotica.codex": "Robotica Codex",
+  "tooltip.robotica.codex": "Right-click to read. Click any item in it to see its recipe.",
+  "robotica.configuration.giveCodexOnFirstJoin": "Give Codex on first join",
+  "robotica.configuration.creativeLabEnabled": "Creative Lab for operators"
+}
