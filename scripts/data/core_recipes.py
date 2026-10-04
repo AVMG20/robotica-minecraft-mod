@@ -45,7 +45,8 @@ shaped('temp_servo_core', ['DSD', 'SAS', 'DSD'], {'D': DIAMOND, 'S': 'servo_actu
 shaped('blazing_casing', ['NRN', 'RMR', 'NRN'], {'N': 'minecraft:netherite_scrap', 'R': 'reinforced_casing', 'M': 'magma_core'}, count=2)
 shaped('quantum_circuit', ['ABA', 'BNB', 'ABA'], {'A': 'advanced_circuit', 'B': '#c:rods/blaze', 'N': '#c:ingots/netherite'})
 shaped('plasma_actuator', ['PBP', 'SQS', 'PBP'], {'P': 'minecraft:prismarine_crystals', 'B': 'minecraft:blaze_powder', 'S': 'servo_actuator', 'Q': 'quantum_circuit'})
-shaped('temp_magma_core', ['SMS', 'MNM', 'SMS'], {'S': 'servo_actuator', 'M': 'minecraft:magma_block', 'N': '#c:ingots/netherite'}, result='magma_core')
+# temp boss recipe: must clearly cost more than the Servo Core (4 actuators), so it also needs 2 quantum circuits
+shaped('temp_magma_core', ['SQS', 'MNM', 'SQS'], {'S': 'servo_actuator', 'Q': 'quantum_circuit', 'M': 'minecraft:magma_block', 'N': '#c:ingots/netherite'}, result='magma_core')
 # Age 4
 shaped('null_casing', ['SBS', 'BAB', 'SBS'], {'S': 'minecraft:shulker_shell', 'B': 'blazing_casing', 'A': 'antigrav_core'}, count=2)
 shaped('null_circuit', ['QEQ', 'ENE', 'QEQ'], {'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'N': '#c:nether_stars'}, count=2)

@@ -145,10 +145,10 @@ def main():
         'P': '#c:plates/iron', 'E': '#c:ender_pearls', 'I': 'iron_casing', 'C': 'copper_cell', 'B': 'basic_circuit'}, category='equipment')
     smithing('rift_remote', 'tool_upgrade_kit_3', 'recall_remote', 'quantum_circuit', 'rift_remote')
     shaped('gate_frame', ['OPO', 'PNP', 'OPO'], {
-        'O': '#c:obsidians', 'P': '#c:plates/iron', 'N': 'null_casing'}, count=4)
-    shaped('gate_controller', ['FCF', 'NAN', 'FEF'], {
+        'O': '#c:obsidians', 'P': '#c:plates/iron', 'N': 'null_casing'}, count=8)
+    shaped('gate_controller', ['FCF', 'EAE', 'FNF'], {
         'F': 'gate_frame', 'C': 'null_circuit', 'N': 'null_casing', 'A': 'antigrav_core', 'E': '#c:ender_pearls'})
-    shaped('linking_card', ['NEN', 'PPP'], {'N': 'null_circuit', 'E': '#c:ender_pearls', 'P': 'minecraft:paper'})
+    shaped('linking_card', [' N ', 'PEP'], {'N': 'null_circuit', 'E': '#c:ender_pearls', 'P': 'minecraft:paper'})
     print('warp data written')
 
 

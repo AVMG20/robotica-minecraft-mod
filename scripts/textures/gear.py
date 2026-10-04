@@ -39,13 +39,16 @@ def handle(c, x0=2, y0=13, x1=9, y1=6, dark='w', light='W'):
 
 
 def hammer(p):
+    """Mallet: a fat block head with steel end caps on a diagonal handle (reads as a hammer, not a pick)."""
     c = Canvas()
-    handle(c, 2, 14, 10, 6)
-    # head across the end of the handle
-    line(c, 7, 2, 13, 8, 'm', 3)
-    line(c, 7, 1, 12, 6, 'M', 1)
-    line(c, 8, 4, 13, 9, 'n', 1)
-    c.rect(10, 4, 2, 2, 'a')
+    handle(c, 2, 14, 8, 8)
+    # head: copper core between two steel caps
+    c.rect(6, 1, 6, 7, 'm')
+    c.rect(6, 1, 6, 1, 'M').rect(6, 7, 6, 1, 'n')
+    c.rect(3, 2, 3, 5, 'g').rect(12, 2, 3, 5, 'g')
+    c.rect(3, 2, 3, 1, 'G').rect(12, 2, 3, 1, 'G')
+    c.rect(3, 6, 3, 1, 's').rect(12, 6, 3, 1, 's')
+    c.rect(8, 3, 2, 3, 'n').set(8, 3, 'a').set(8, 4, 'a')
     c.outline('k')
     return c.rows()
 
@@ -59,36 +62,81 @@ def stamp(c, x0, y0, x1, y1, ch, size):
 
 
 def axe(p):
+    """Felling axe: a flared blade on one side of the handle top, steel cutting edge, small poll spike on the other."""
     c = Canvas()
     handle(c, 2, 14, 10, 6)
-    # wedge shaped blade: wide cutting edge on the right, tapering into the handle top
-    for y in range(1, 9):
-        for x in range(7, 15):
-            reach = 14 - abs(y - 4.5) * 1.1
-            if x <= reach and x >= 7 + abs(y - 4.5) * 0.4 and abs(y - 4.5) <= 3.6:
-                c.set(x, y, 'm')
-    for x in range(8, 14):
-        c.set(x, 1 if c.get(x, 1) != '.' else 2, 'M')
-    c.set(13, 4, 'M').set(14, 4, 'G').set(14, 5, 'G')
-    for x in range(8, 13):
-        c.set(x, 8 if c.get(x, 8) != '.' else 7, 'n')
-    c.set(9, 4, 'a')
+    cx, cy = 9.0, 7.0                     # where the handle meets the head
+    r2 = 2 ** 0.5
+    for y in range(16):
+        for x in range(16):
+            u = ((cx - x) + (cy - y)) / r2          # outwards along the blade (up-left)
+            v = ((x - cx) + (cy - y)) / r2          # along the handle (up-right)
+            half = 1.3 + 0.55 * max(u, 0)           # flare towards the edge
+            if -2.2 <= u <= 6.6 and abs(v - 0.8) <= half:
+                if u > 6.6 - 1.4 * (1 - min(1.0, (half - abs(v - 0.8)) / 1.2)) + 0.3:
+                    continue                          # rounded cutting edge
+                ch = 'm'
+                if u > 5.2:
+                    ch = 'G'
+                elif v - 0.8 > half - 1.0:
+                    ch = 'M'
+                elif v - 0.8 < -half + 1.0:
+                    ch = 'n'
+                if u < -0.6:
+                    ch = 'g' if v - 0.8 >= 0 else 's'  # poll: steel spike
+                c.set(x, y, ch)
+    c.set(8, 5, 'a').set(7, 6, 'a')
     c.outline('k')
     return c.rows()
 
 
-def drill(p):
+def drill(tier=1):
+    """Pistol-grip hand drill drawn on a 45 degree axis (tip up-right, like every handheld tool).
+    The silhouette grows with the tier: 1 plain, 2 battery pack + longer bit, 3 vents + burning bit, 4 floating crystal."""
     c = Canvas()
-    handle(c, 2, 14, 7, 9, 'n', 'm')
-    # motor housing: a fat block along the diagonal
-    stamp(c, 6, 10, 9, 7, 'm', 4)
-    stamp(c, 6, 10, 9, 7, 'M', 1)
-    line(c, 6, 13, 12, 7, 'n', 1)
-    c.set(8, 10, 'a').set(9, 9, 'A').set(7, 11, 'a')
-    # chuck and bit
-    stamp(c, 12, 5, 13, 4, 'G', 2)
-    stamp(c, 13, 4, 14, 2, 'g', 2)
-    c.set(14, 1, 'G').set(15, 0, 'Y')
+    cx, cy = 5.6, 9.6
+    r2 = 2 ** 0.5
+    bit_len = 8.4 if tier == 1 else 10.2
+    for y in range(16):
+        for x in range(16):
+            u = ((x - cx) - (y - cy)) / r2        # along the barrel, up-right is positive
+            w = ((x - cx) + (y - cy)) / r2        # across, down-right is positive
+            ch = None
+            if -4.6 <= u <= 2.4 and -2.5 <= w <= 2.1:                       # motor housing
+                ch = 'm'
+                if w < -1.3:
+                    ch = 'M'
+                elif w > 1.0:
+                    ch = 'n'
+                if u < -3.4:
+                    ch = 'n'
+                if -1.4 <= u <= 0.2 and -0.7 <= w <= 0.5:
+                    ch = 'a'                                                # status window
+                if -1.4 <= u <= -0.6 and -0.7 <= w <= -0.1:
+                    ch = 'A'
+            elif -3.0 <= u <= -0.6 and 2.1 < w <= 5.1:                      # pistol grip
+                ch = 'w' if u > -1.8 else 'W'
+                ch = 'n' if u > -1.8 else 'm'
+            elif tier >= 2 and -3.6 <= u <= 0.2 and 5.1 < w <= 6.9:         # battery pack
+                ch = 'n'
+                if -3.0 <= u <= -0.6 and w <= 6.2:
+                    ch = 'A' if tier != 3 else 'a'
+            elif 2.4 < u <= 4.4 and -1.5 <= w <= 0.9:                       # chuck
+                ch = 'G' if w < -0.3 else 'g'
+            elif 4.4 < u <= bit_len and abs(w + 0.3) <= (0.9 if u < 6.8 else 0.5):   # bit
+                ch = 'G' if int(u * 1.2) % 2 == 0 else 's'
+            if ch:
+                c.set(x, y, ch)
+    if tier == 3:
+        for u, w in ((-3.0, -3.3), (-0.8, -3.3), (1.2, -3.3)):               # exhaust spikes
+            x, y = round(cx + (u + w) / r2), round(cy + (w - u) / r2)
+            c.set(x, y, 'a')
+        for u in (9.4, 10.0):
+            c.set(round(cx + (u - 0.3) / r2), round(cy + (-0.3 - u) / r2), 'A')
+    if tier == 4:
+        for dx, dy, ch in ((0, 0, 'A'), (-1, 0, 'M'), (1, 0, 'M'), (0, -1, 'M'), (0, 1, 'm')):
+            c.set(7 + dx, 3 + dy, ch)                                       # floating crystal
+        c.set(3, 5, 'a').set(10, 5, 'a').set(2, 12, 'a').set(14, 11, 'a')
     c.outline('k')
     return c.rows()
 
@@ -186,11 +234,11 @@ def kit(level, p):
 def main():
     write_item('tinkers_hammer', hammer(None), pal(COPPER), handheld=True)
     write_item('felling_axe', axe(None), pal(COPPER), handheld=True)
-    write_item('bore_drill', drill(None), pal(STEEL, {'m': '#C87533', 'M': '#E8A060', 'n': '#8A4A22'}), handheld=True)
+    write_item('bore_drill', drill(1), pal(STEEL, {'m': '#C87533', 'M': '#E8A060', 'n': '#8A4A22'}), handheld=True)
     write_item('chainsaw', chainsaw(None), pal(STEEL), handheld=True)
-    write_item('servo_drill', drill(None), pal(SERVO), handheld=True)
-    write_item('magma_drill', drill(None), pal(MAGMA), handheld=True)
-    write_item('null_drill', drill(None), pal(NULL), handheld=True)
+    write_item('servo_drill', drill(2), pal(SERVO), handheld=True)
+    write_item('magma_drill', drill(3), pal(MAGMA), handheld=True)
+    write_item('null_drill', drill(4), pal(NULL), handheld=True)
     write_item('gearblade', gearblade(None), pal(COPPER), handheld=True)
     write_item('shock_baton', baton(None), pal(STEEL), handheld=True)
     write_item('rivet_gun', rivet_gun(None), pal(SERVO), handheld=True)
