@@ -23,6 +23,7 @@
   "tooltip.robotica.gate_controller_build": "Frame: 4 wide, 5 tall, controller in the bottom middle. Link two gates with a Linking Card",
   "gui.robotica.warp.destinations": "Warp Destinations",
   "gui.robotica.warp.from": "From: %s",
+  "gui.robotica.warp.none": "No other pads yet. Build a second Warp Pad.",
   "gui.robotica.warp.by": "by %s",
   "gui.robotica.warp.name": "Pad name",
   "gui.robotica.warp.name_hint": "Pad name",

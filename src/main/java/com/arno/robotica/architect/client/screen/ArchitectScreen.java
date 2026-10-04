@@ -8,6 +8,7 @@ import com.arno.robotica.architect.plan.ModuleType;
 import com.arno.robotica.architect.plan.PlotRecord;
 import com.arno.robotica.architect.plan.Plots;
 import com.arno.robotica.architect.style.BuildStyle;
+import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import net.minecraft.ChatFormatting;
@@ -36,7 +37,9 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     private static final int LIST_Y = 22;
     private static final int ROW = 12;
     private static final int RIGHT_X = 180;
-    private static final int QUEUE_Y = 102;
+    private static final int QUEUE_Y = 105;
+    private static final int ACTION_Y = 136;
+    private static final int STYLE_Y = 116;
 
     private static final int[] MODULE_COLORS = {0xFF8A8F98, 0xFFC9A66B, 0xFFD27A3A, 0xFF7A5A3A, 0xFF4F8FB8, 0xFF5FA85F, 0xFFB05AC0, 0xFFD0D0A0};
     private static final int[] STYLE_COLORS = {0xFF8B5E34, 0xFFC87533, 0xFFE6EEF0, 0xFF2E8F7F};
@@ -63,28 +66,25 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     protected void init() {
         super.init();
         planButtons.clear();
-        planTab = addRenderableWidget(Button.builder(Component.translatable("gui.robotica.architect_tab_plan"), b -> menu.tab = 0)
-                .bounds(leftPos + 186, topPos + 4, 46, 12).build());
-        storageTab = addRenderableWidget(Button.builder(Component.translatable("gui.robotica.architect_tab_storage"), b -> menu.tab = 1)
-                .bounds(leftPos + 234, topPos + 4, 46, 12).build());
+        planTab = addRenderableWidget(new FitButton(leftPos + 186, topPos + 4, 46, 12, Component.translatable("gui.robotica.architect_tab_plan"), b -> menu.tab = 0));
+        storageTab = addRenderableWidget(new FitButton(leftPos + 234, topPos + 4, 46, 12, Component.translatable("gui.robotica.architect_tab_storage"), b -> menu.tab = 1));
         for (BuildStyle style : BuildStyle.values()) {
-            Button b = addRenderableWidget(Button.builder(Component.literal(style.name().substring(0, 1)), btn -> send(ArchitectTableBlockEntity.ACTION_STYLE, style.ordinal(), 0))
-                    .bounds(leftPos + 8 + 22 * style.ordinal(), topPos + 112, 20, 12)
-                    .tooltip(Tooltip.create(Component.translatable(style.langKey()))).build());
+            Button b = addRenderableWidget(new FitButton(leftPos + 8 + 22 * style.ordinal(), topPos + STYLE_Y, 20, 12,
+                    Component.literal(style.name().substring(0, 1)), btn -> send(ArchitectTableBlockEntity.ACTION_STYLE, style.ordinal(), 0),
+                    Component.translatable(style.langKey())));
             styleButtons[style.ordinal()] = b;
             planButtons.add(b);
         }
-        clearButton = addRenderableWidget(Button.builder(Component.empty(), b -> send(ArchitectTableBlockEntity.ACTION_CLEAR, menu.clearTerrain() ? 0 : 1, 0))
-                .bounds(leftPos + 8, topPos + 128, 80, 12)
-                .tooltip(Tooltip.create(Component.translatable("gui.robotica.architect_clear_tip"))).build());
-        queueButton = addRenderableWidget(Button.builder(Component.translatable("gui.robotica.architect_queue"), b -> {
+        clearButton = addRenderableWidget(new FitButton(leftPos + 8, topPos + ACTION_Y, 80, 14, Component.empty(),
+                b -> send(ArchitectTableBlockEntity.ACTION_CLEAR, menu.clearTerrain() ? 0 : 1, 0), Component.translatable("gui.robotica.architect_clear_tip")));
+        queueButton = addRenderableWidget(new FitButton(leftPos + LIST_X, topPos + ACTION_Y, 76, 14, Component.translatable("gui.robotica.architect_queue"), b -> {
             if (selectedPlot >= 0) send(ArchitectTableBlockEntity.ACTION_QUEUE, selectedPlot, selectedModule.id());
-        }).bounds(leftPos + LIST_X, topPos + 128, 76, 12).build());
-        forgetButton = addRenderableWidget(Button.builder(Component.translatable("gui.robotica.architect_forget"), b -> {
+        }));
+        forgetButton = addRenderableWidget(new FitButton(leftPos + RIGHT_X, topPos + ACTION_Y, 46, 14, Component.translatable("gui.robotica.architect_forget"), b -> {
             if (selectedPlot >= 0) send(ArchitectTableBlockEntity.ACTION_FORGET, selectedPlot, 0);
-        }).bounds(leftPos + RIGHT_X, topPos + 128, 46, 12).tooltip(Tooltip.create(Component.translatable("gui.robotica.architect_forget_tip"))).build());
-        cancelButton = addRenderableWidget(Button.builder(Component.translatable("gui.robotica.architect_cancel"), b -> send(ArchitectTableBlockEntity.ACTION_CANCEL, -1, 0))
-                .bounds(leftPos + RIGHT_X + 48, topPos + 128, 52, 12).build());
+        }, Component.translatable("gui.robotica.architect_forget_tip")));
+        cancelButton = addRenderableWidget(new FitButton(leftPos + RIGHT_X + 48, topPos + ACTION_Y, 52, 14, Component.translatable("gui.robotica.architect_cancel"),
+                b -> send(ArchitectTableBlockEntity.ACTION_CANCEL, -1, 0)));
         planButtons.add(clearButton);
         planButtons.add(queueButton);
         planButtons.add(forgetButton);
@@ -125,8 +125,8 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-        g.drawString(font, title, titleLabelX, titleLabelY, 0x404040, false);
-        g.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+        drawFitted(g, font, title, titleLabelX, titleLabelY, 170, TEXT, -1, false, 1.0F);
+        drawFitted(g, font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 120, TEXT, -1, false, 1.0F);
     }
 
     @Override
@@ -149,33 +149,38 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         Matter.Grade[] grades = Matter.Grade.values();
         for (int i = 0; i < 3; i++) {
             int value = menu.matter(grades[i]);
-            text(g, Component.translatable(grades[i].langKey()), RIGHT_X, 22 + i * 12 + 1, 0xFF404040);
+            text(g, Component.translatable(grades[i].langKey()), RIGHT_X, 22 + i * 12 + 1, 40);
             drawBar(g, x + 44, y + i * 12, 56, 9, (float) value / cap, MATTER_COLORS[i], Fmt.compact(value));
             if (inside(mouseX, mouseY, x + 44, y + i * 12, 56, 9)) {
                 hoverTooltip = List.of(Component.translatable(grades[i].langKey()), Component.literal(value + " / " + cap).withStyle(ChatFormatting.GRAY));
             }
         }
         int ey = 58;
-        text(g, Component.translatable("gui.robotica.architect_energy"), RIGHT_X, ey + 1, 0xFF404040);
+        text(g, Component.translatable("gui.robotica.architect_energy"), RIGHT_X, ey + 1, 40);
         drawBar(g, x + 44, topPos + ey, 56, 9, menu.capacity() <= 0 ? 0 : (float) menu.energy() / menu.capacity(), ENERGY, Fmt.compact(menu.energy()));
         if (inside(mouseX, mouseY, x + 44, topPos + ey, 56, 9)) {
             hoverTooltip = List.of(Component.literal(Fmt.energy(menu.energy()) + " / " + Fmt.energy(menu.capacity())));
         }
         int status = menu.status();
-        boolean problem = status >= ArchitectTableBlockEntity.ST_NO_RUSTIC;
-        g.drawWordWrap(font, Component.translatable("gui.robotica.architect_status_" + status), leftPos + RIGHT_X, topPos + 71, 100, problem ? 0xFFB02020 : 0xFF206020);
+        Tone tone = status == ArchitectTableBlockEntity.ST_BUILDING ? Tone.GOOD
+                : status >= ArchitectTableBlockEntity.ST_NO_RUSTIC && status != ArchitectTableBlockEntity.ST_UNLOADED ? Tone.BAD : Tone.WARN;
+        drawStatus(g, Component.translatable("gui.robotica.architect_status_" + status), leftPos + RIGHT_X, topPos + 72, 100, 2, tone);
     }
 
-    /** Text relative to the GUI corner. */
-    private void text(GuiGraphics g, Component text, int x, int y, int color) {
-        g.drawString(font, text, leftPos + x, topPos + y, color, false);
+    /** Label relative to the GUI corner, fitted into maxWidth. */
+    private void text(GuiGraphics g, Component text, int x, int y, int maxWidth) {
+        drawFitted(g, font, text, leftPos + x, topPos + y, maxWidth, TEXT, -1, false, 1.0F);
     }
 
+    /** Matter / energy bar: framed, gradient fill, the value drawn in the bar. */
     private void drawBar(GuiGraphics g, int x, int y, int w, int h, float fraction, int color, String text) {
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, SLOT_DARK);
+        drawInset(g, x, y, w, h);
         g.fill(x, y, x + w, y + h, 0xFF2B2B2B);
-        g.fill(x, y, x + Math.round(w * Math.max(0, Math.min(1, fraction))), y + h, color);
-        g.drawString(font, text, x + 2, y + 1, 0xFFFFFFFF, true);
+        int filled = Math.round(w * Math.max(0, Math.min(1, fraction)));
+        if (filled > 0) {
+            g.fillGradient(x, y, x + filled, y + h, blend(color, 0xFFFFFFFF, 0.3F), blend(color, 0xFF000000, 0.2F));
+        }
+        g.drawString(font, text, x + 3, y + 1, 0xFFFFFFFF, true);
     }
 
     private static boolean inside(int mx, int my, int x, int y, int w, int h) {
@@ -215,9 +220,9 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             if (hover) hoverTooltip = plotTooltip(plot);
         }
         Matter c = menu.selectedStyle().cost;
-        text(g, Component.translatable("gui.robotica.architect_cost", c.rustic(), c.refined(), c.exotic()), LIST_X, 115, 0xFF404040);
+        text(g, Component.translatable("gui.robotica.architect_cost", c.rustic(), c.refined(), c.exotic()), LIST_X + 2, 121, 80);
         text(g, selectedPlot < 0 ? Component.translatable("gui.robotica.architect_no_plot")
-                : Component.translatable("gui.robotica.architect_plot", Plots.px(selectedPlot), Plots.pz(selectedPlot)), GRID_X, 105, 0xFF404040);
+                : Component.translatable("gui.robotica.architect_plot", Plots.px(selectedPlot), Plots.pz(selectedPlot)), GRID_X, 106, 80);
 
         for (ModuleType type : ModuleType.values()) {
             int x = leftPos + LIST_X;
@@ -229,7 +234,11 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             g.drawString(font, Component.translatable(type.langKey()), x + 6, y + 2, selected ? 0xFFFFFFFF : 0xFFD8D8D8, false);
         }
 
-        text(g, Component.translatable("gui.robotica.architect_queue_title", menu.queueSize()), RIGHT_X, 92, 0xFF404040);
+        text(g, Component.translatable("gui.robotica.architect_queue_title", menu.queueSize()), RIGHT_X, 94, 60);
+        if (menu.queueSize() > 3) {
+            Component more = Component.translatable("gui.robotica.architect_more", menu.queueSize() - 3);
+            drawFitted(g, font, more, leftPos + RIGHT_X + 100, topPos + 94, 40, TEXT_MUTED, 1, false, 1.0F);
+        }
         int shown = 0;
         for (int i = 0; i < 6; i++) {
             int[] e = menu.queueEntry(i);
@@ -239,15 +248,13 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             ModuleType type = ModuleType.byId(e[1]);
             Component name = Component.translatable(type.langKey());
             String line = (i + 1) + ". " + name.getString() + " " + Plots.px(e[0]) + "," + Plots.pz(e[0]) + (e[2] == 1 ? " *" : "");
-            int y = QUEUE_Y + i * 9 + 1;
-            text(g, Component.literal(i == 0 ? line + " " + Math.round(menu.progress() * 100) + "%" : line), RIGHT_X, y, i == 0 ? 0xFF206020 : 0xFF404040);
+            int y = QUEUE_Y + i * 9;
+            Component entry = Component.literal(i == 0 ? line + " " + Math.round(menu.progress() * 100) + "%" : line);
+            drawFitted(g, font, entry, leftPos + RIGHT_X, topPos + y, 88, i == 0 ? Tone.GOOD.textColor() : TEXT, -1, false, 1.0F);
             int bx = leftPos + RIGHT_X + 90;
             boolean hover = inside(mouseX, mouseY, bx, topPos + y - 1, 10, 9);
             g.drawString(font, "x", bx + 2, topPos + y, hover ? 0xFFFF5555 : 0xFF802020, false);
             if (hover) hoverTooltip = List.of(Component.translatable("gui.robotica.architect_cancel_one"));
-        }
-        if (menu.queueSize() > 3) {
-            text(g, Component.translatable("gui.robotica.architect_more", menu.queueSize() - 3), RIGHT_X, QUEUE_Y + 27, 0xFF606060);
         }
     }
 
@@ -275,10 +282,10 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     // ---------------------------------------------------------------- storage tab
 
     private void drawStorage(GuiGraphics g) {
-        text(g, Component.translatable("gui.robotica.architect_input"), 8, 13, 0xFF404040);
-        text(g, Component.translatable("gui.robotica.architect_casing"), ArchitectMenu.STYLE_X + 22, ArchitectMenu.STYLE_Y + 5, 0xFF404040);
-        text(g, Component.translatable("gui.robotica.architect_upgrades"), ArchitectMenu.UPGRADE_X + 42, ArchitectMenu.UPGRADE_Y + 5, 0xFF404040);
-        text(g, Component.translatable("gui.robotica.architect_storage_hint"), 8, 114, 0xFF606060);
+        text(g, Component.translatable("gui.robotica.architect_input"), 8, 19, 160);
+        text(g, Component.translatable("gui.robotica.architect_casing"), ArchitectMenu.STYLE_X + 22, ArchitectMenu.STYLE_Y + 5, 50);
+        text(g, Component.translatable("gui.robotica.architect_upgrades"), ArchitectMenu.UPGRADE_X + 42, ArchitectMenu.UPGRADE_Y + 5, 60);
+        g.drawWordWrap(font, Component.translatable("gui.robotica.architect_storage_hint"), leftPos + 8, topPos + 124, 272, TEXT_MUTED);
     }
 
     // ---------------------------------------------------------------- input
@@ -302,7 +309,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
                 return true;
             }
             for (int i = 0; i < 3 && menu.queueEntry(i) != null; i++) {
-                if (inside(mx, my, leftPos + RIGHT_X + 90, topPos + QUEUE_Y + i * 9, 10, 9)) {
+                if (inside(mx, my, leftPos + RIGHT_X + 90, topPos + QUEUE_Y + i * 9 - 1, 10, 9)) {
                     send(ArchitectTableBlockEntity.ACTION_CANCEL, i, 0);
                     click();
                     return true;

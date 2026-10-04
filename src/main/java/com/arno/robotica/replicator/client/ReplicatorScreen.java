@@ -1,5 +1,6 @@
 package com.arno.robotica.replicator.client;
 
+import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.replicator.ReplicatorModePayload;
@@ -14,26 +15,26 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /** GUI of the Replicator Controller: energy, progress, formed status with reason, mode button, slots. */
 public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
-    private static final int TEXT = 0xFF404040;
-    private static final int GOOD = 0xFF1E7A3A;
-    private static final int BAD = 0xFFB02A20;
-    private static final int WARN = 0xFF9A5A00;
-
     private Button modeButton;
 
     public ReplicatorScreen(ReplicatorMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
         this.imageHeight = ReplicatorMenu.IMAGE_HEIGHT;
-        this.inventoryLabelY = this.imageHeight - 94;
+        this.inventoryLabelY = this.imageHeight - 93;
+    }
+
+    @Override
+    protected int titleMaxWidth() {
+        return 108;
     }
 
     @Override
     protected void init() {
         super.init();
-        modeButton = addRenderableWidget(Button.builder(modeLabel(menu.mode()), b -> {
+        modeButton = addRenderableWidget(new FitButton(leftPos + 64, topPos + 71, 66, 13, modeLabel(menu.mode()), b -> {
             Mode next = menu.mode().next();
             PacketDistributor.sendToServer(new ReplicatorModePayload(menu.pos(), next.ordinal()));
-        }).bounds(leftPos + 62, topPos + 58, 66, 16).build());
+        }, Component.translatable("gui.robotica.replicator.mode_tip")));
     }
 
     private static Component modeLabel(Mode mode) {
@@ -48,33 +49,33 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 15, y + 17, 12, 56, menu.energy(), menu.capacity());
-        drawProgress(g, x + 62, y + 20, 66, 8, menu.progress());
+        drawEnergyBar(g, x + 12, y + 18, 14, 46, menu.energy(), menu.capacity(), true,
+                Component.translatable("gui.robotica.replicator.cost", Fmt.energy(menu.energyPerTick())).withStyle(net.minecraft.ChatFormatting.GRAY));
+        drawProgress(g, x + 64, y + 20, 66, 8, menu.progress());
 
         if (menu.formed()) {
             Pause pause = menu.pause();
             if (pause == Pause.NONE) {
-                drawText(g, Component.translatable("gui.robotica.replicator.status.formed"), x + 62, y + 32, GOOD);
+                drawStatus(g, Component.translatable("gui.robotica.replicator.status.formed"), x + 64, y + 32, 66, 2, Tone.GOOD);
             } else {
-                drawText(g, Component.translatable("gui.robotica.replicator.pause." + pause.name().toLowerCase()), x + 62, y + 32,
-                        pause == Pause.NO_ENERGY || pause == Pause.NO_VIAL || pause == Pause.NEEDS_MAGMA_CORE
-                                || pause == Pause.NEEDS_ANTIGRAV_CORE ? BAD : WARN);
+                boolean bad = pause == Pause.NO_ENERGY || pause == Pause.NO_VIAL || pause == Pause.NEEDS_MAGMA_CORE
+                        || pause == Pause.NEEDS_ANTIGRAV_CORE;
+                drawStatus(g, Component.translatable("gui.robotica.replicator.pause." + pause.name().toLowerCase()), x + 64, y + 32, 66, 2,
+                        bad ? Tone.BAD : Tone.WARN);
             }
         } else {
-            drawText(g, Component.translatable(menu.structure().translationKey()), x + 62, y + 32, BAD);
+            drawStatus(g, Component.translatable(menu.structure().translationKey()), x + 64, y + 32, 66, 2, Tone.BAD);
         }
-        int ticks = menu.cycleTicks();
-        drawText(g, Component.translatable("gui.robotica.replicator.cycle", Fmt.duration(ticks), menu.speedMultiplier()),
-                x + 62, y + 43, TEXT);
-        drawText(g, Component.translatable("gui.robotica.replicator.cost", Fmt.energy(menu.energyPerTick())), x + 62, y + 76, TEXT);
+        drawLabel(g, Component.translatable("gui.robotica.replicator.cycle", Fmt.duration(menu.cycleTicks()), menu.speedMultiplier()), x + 64, y + 52, 66);
+        drawLabel(g, Component.translatable("gui.robotica.replicator.cost", Fmt.energy(menu.energyPerTick())), x + 64, y + 61, 66);
 
-        drawText(g, Component.translatable("gui.robotica.replicator.vial"), x + 38, y + 41, TEXT);
-        drawText(g, Component.translatable("gui.robotica.replicator.boost"), x + 36, y + 71, TEXT);
-        drawText(g, Component.translatable("gui.robotica.upgrades"), x + 124, y + 8, TEXT);
-        drawText(g, Component.translatable("gui.robotica.replicator.catalyst"), x + 152, y + 39, TEXT);
+        drawLabelCentered(g, Component.translatable("gui.robotica.replicator.vial"), x + 46, y + 38, 34);
+        drawLabelCentered(g, Component.translatable("gui.robotica.replicator.boost"), x + 46, y + 66, 34);
+        drawLabelRight(g, Component.translatable("gui.robotica.upgrades"), x + 170, y + 8, 48);
+        drawLabelRight(g, Component.translatable("gui.robotica.replicator.catalyst"), x + 170, y + 39, 18);
         if (menu.looting() > 0) {
-            drawText(g, Component.translatable("gui.robotica.replicator.looting", menu.looting()), x + 124, y + 76, TEXT);
+            drawLabelRight(g, Component.translatable("gui.robotica.replicator.looting", menu.looting()), x + 170, y + 77, 50);
         }
-        drawText(g, Component.translatable("gui.robotica.replicator.output"), x + 8, y + 79, TEXT);
+        drawLabel(g, Component.translatable("gui.robotica.replicator.output"), x + 8, y + 77, 60);
     }
 }

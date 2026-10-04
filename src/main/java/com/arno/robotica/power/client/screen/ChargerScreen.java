@@ -16,14 +16,22 @@ public class ChargerScreen extends MachineScreen<ChargerMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 15, y + 17, 12, 56, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 12, y + 17, 14, 44, menu.energy(), menu.capacity());
         ItemStack stack = menu.chargedItem();
         IEnergyStorage item = stack.isEmpty() ? null : stack.getCapability(Capabilities.EnergyStorage.ITEM);
         long stored = item == null ? 0 : item.getEnergyStored();
         long capacity = item == null ? 0 : item.getMaxEnergyStored();
-        drawEnergyBar(g, x + 149, y + 17, 12, 56, stored, capacity);
-        if (item == null && !stack.isEmpty()) {
-            drawText(g, Component.translatable("gui.robotica.not_chargeable"), x + 40, y + 62, 0xFF804040);
+        drawEnergyBar(g, x + 150, y + 17, 14, 44, stored, capacity);
+        if (stack.isEmpty()) {
+            drawStatusCentered(g, Component.translatable("gui.robotica.status.idle"), x + 88, y + 24, 110, Tone.WARN);
+        } else if (item == null) {
+            drawStatusCentered(g, Component.translatable("gui.robotica.not_chargeable"), x + 88, y + 24, 110, Tone.BAD);
+        } else if (stored >= capacity) {
+            drawStatusCentered(g, Component.translatable("gui.robotica.charged"), x + 88, y + 24, 110, Tone.WARN);
+        } else if (menu.energy() <= 0) {
+            drawStatusCentered(g, Component.translatable("gui.robotica.status.no_energy"), x + 88, y + 24, 110, Tone.BAD);
+        } else {
+            drawStatusCentered(g, Component.translatable("gui.robotica.charging"), x + 88, y + 24, 110, Tone.GOOD);
         }
     }
 }

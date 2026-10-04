@@ -4,6 +4,7 @@ import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
 import com.arno.robotica.automation.menu.AreaWorkerMenu;
 import com.arno.robotica.core.client.MachineScreen;
 import net.minecraft.client.gui.GuiGraphics;
+import com.arno.robotica.core.client.FitButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -15,17 +16,19 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
 
     public AreaWorkerScreen(AreaWorkerMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
+        this.imageHeight = 176;
         this.inventoryLabelY = 83;
     }
 
     @Override
     protected void init() {
         super.init();
-        areaButton = addRenderableWidget(Button.builder(Component.empty(), b -> press(AreaWorkerMenu.BUTTON_SHOW_AREA))
-                .bounds(leftPos + 48, topPos + 16, 62, 16).build());
+        areaButton = addRenderableWidget(new FitButton(leftPos + 48, topPos + 18, 64, 16, Component.empty(),
+                b -> press(AreaWorkerMenu.BUTTON_SHOW_AREA), Component.translatable("gui.robotica.area_tip")));
+        leavesButton = null;
         if (menu.be.hasLeavesToggle()) {
-            leavesButton = addRenderableWidget(Button.builder(Component.empty(), b -> press(AreaWorkerMenu.BUTTON_LEAVES))
-                    .bounds(leftPos + 48, topPos + 34, 62, 16).build());
+            leavesButton = addRenderableWidget(new FitButton(leftPos + 48, topPos + 36, 64, 16, Component.empty(),
+                    b -> press(AreaWorkerMenu.BUTTON_LEAVES), Component.translatable("gui.robotica.leaves_tip")));
         }
         updateButtons();
     }
@@ -58,25 +61,33 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     }
 
     @Override
+    protected int titleMaxWidth() {
+        return 100;
+    }
+
+    @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 8, y + 18, 10, 52, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 9, y + 18, 12, 44, menu.energy(), menu.capacity());
         AreaWorkerBlockEntity.Status status = menu.status();
-        int color = switch (status) {
-            case WORKING -> 0xFF2E7D32;
-            case NO_ENERGY -> 0xFFB71C1C;
-            case OUTPUT_FULL -> 0xFFB26A00;
-            case IDLE -> 0xFF404040;
+        Tone tone = switch (status) {
+            case WORKING -> Tone.GOOD;
+            case NO_ENERGY -> Tone.BAD;
+            case OUTPUT_FULL, IDLE -> Tone.WARN;
         };
-        drawText(g, Component.translatable("gui.robotica.status." + status.name().toLowerCase(java.util.Locale.ROOT)), x + 26, y + 74, color);
         int size = menu.size();
         Component info = isFarmBot()
                 ? Component.translatable("gui.robotica.tier_area", menu.be.tier(), size, size)
                 : Component.translatable("gui.robotica.area", size, size);
-        drawText(g, info, x + imageWidth - 8 - font.width(info), y + 6, 0xFF404040);
+        drawLabelRight(g, info, x + imageWidth - 8, y + 6, 64);
+        Component statusText = Component.translatable("gui.robotica.status." + status.name().toLowerCase(java.util.Locale.ROOT));
+        int depthW = 0;
+        Component depth = null;
         if (menu.extra() != 0) {
-            Component depth = Component.translatable("gui.robotica.depth", menu.extra());
-            drawText(g, depth, x + imageWidth - 8 - font.width(depth), y + 74, 0xFF404040);
+            depth = Component.translatable("gui.robotica.depth", menu.extra());
+            depthW = font.width(depth);
+            drawLabelRight(g, depth, x + imageWidth - 8, y + 74, 70);
         }
+        drawStatus(g, statusText, x + 9, y + 74, imageWidth - 16 - depthW - 8, 1, tone);
     }
 
     private boolean isFarmBot() {

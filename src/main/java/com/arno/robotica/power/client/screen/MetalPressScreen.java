@@ -12,9 +12,21 @@ public class MetalPressScreen extends MachineScreen<MetalPressMenu> {
     }
 
     @Override
+    protected int titleMaxWidth() {
+        return 108;
+    }
+
+    @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 15, y + 17, 12, 56, menu.energy(), menu.capacity());
-        drawProgress(g, x + 68, y + 40, 32, 8, menu.progress());
-        drawText(g, Component.translatable("gui.robotica.upgrades"), x + 124, y + 8, 0xFF404040);
+        drawEnergyBar(g, x + 12, y + 17, 14, 44, menu.energy(), menu.capacity());
+        drawArrow(g, x + 74, y + 37, menu.progress());
+        if (menu.progress() > 0) {
+            drawStatusCentered(g, Component.translatable("gui.robotica.status.working"), x + 85, y + 58, 80, Tone.GOOD);
+        } else if (menu.energy() <= 0) {
+            drawStatusCentered(g, Component.translatable("gui.robotica.status.no_energy"), x + 85, y + 58, 80, Tone.BAD);
+        } else {
+            drawStatusCentered(g, Component.translatable("gui.robotica.status.idle"), x + 85, y + 58, 80, Tone.WARN);
+        }
+        drawLabelCentered(g, Component.translatable("gui.robotica.upgrades"), x + 142, y + 8, 48);
     }
 }
