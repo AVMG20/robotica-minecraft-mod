@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RAR",
+    "ZCZ",
+    "RDR"
+  ],
+  "key": {
+    "R": {
+      "item": "robotica:reinforced_casing"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "Z": {
+      "item": "robotica:servo_actuator"
+    },
+    "C": {
+      "item": "robotica:servo_core"
+    },
+    "D": {
+      "tag": "c:gems/diamond"
+    }
+  },
+  "result": {
+    "id": "robotica:replicator_controller",
+    "count": 1
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GQG",
+    "QFQ",
+    "GQG"
+  ],
+  "key": {
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "Q": {
+      "tag": "c:gems/quartz"
+    },
+    "F": {
+      "item": "robotica:replicator_frame"
+    }
+  },
+  "result": {
+    "id": "robotica:replicator_glass",
+    "count": 4
+  }
+}
