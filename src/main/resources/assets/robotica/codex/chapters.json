@@ -77,7 +77,7 @@
           "text": "Robotica uses Forge Energy (FE), the same power as Thermal, Mekanism and most tech mods. Their generators can power your robots and Robotica generators can power their machines.\n\nCombustion Generator: burns fuel, 40 FE/t.\nSolar Panel: 8 FE/t by day, Mk2 32 FE/t.",
           "items": [
             "robotica:combustion_generator",
-            "robotica:solar_panel",
+            "robotica:solar_panel_mk1",
             "robotica:solar_panel_mk2"
           ]
         },
@@ -87,7 +87,7 @@
           "items": [
             "robotica:copper_conduit",
             "robotica:gold_conduit",
-            "robotica:accumulator",
+            "robotica:accumulator_1",
             "robotica:charger"
           ]
         },
