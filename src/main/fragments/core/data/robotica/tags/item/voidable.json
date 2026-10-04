@@ -9,8 +9,6 @@
     "minecraft:tuff",
     "minecraft:diorite",
     "minecraft:andesite",
-    "minecraft:granite",
-    "minecraft:stone",
-    "minecraft:deepslate"
+    "minecraft:granite"
   ]
 }

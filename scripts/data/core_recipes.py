@@ -39,7 +39,7 @@ shaped('copper_cell', ['CPC', 'RBR', 'CPC'], {'C': COPPER, 'P': IRON_PLATE, 'R':
 shaped('reinforced_casing', ['OCO', 'CDC', 'OCO'], {'O': '#c:obsidians', 'C': 'iron_casing', 'D': DIAMOND})
 shaped('advanced_circuit', ['BGB', 'QDQ', 'BGB'], {'B': 'basic_circuit', 'G': GOLD, 'Q': '#c:gems/quartz', 'D': DIAMOND})
 shaped('servo_actuator', ['GPG', 'MAM', 'GPG'], {'G': GOLD, 'P': IRON_PLATE, 'M': 'electric_motor', 'A': 'advanced_circuit'})
-shaped('redstone_cell', ['RCR', 'RAR', ' X '], {'R': '#c:storage_blocks/redstone', 'C': 'copper_cell', 'A': 'advanced_circuit', 'X': 'reinforced_casing'}, category='equipment')
+shaped('redstone_cell', ['RCR', 'RAR', 'CX '], {'R': '#c:storage_blocks/redstone', 'C': 'copper_cell', 'A': 'advanced_circuit', 'X': 'reinforced_casing'}, category='equipment')
 shaped('temp_servo_core', ['DSD', 'SAS', 'DSD'], {'D': DIAMOND, 'S': 'servo_actuator', 'A': 'advanced_circuit'}, result='servo_core')
 # Age 3
 shaped('blazing_casing', ['NRN', 'RMR', 'NRN'], {'N': 'minecraft:netherite_scrap', 'R': 'reinforced_casing', 'M': 'magma_core'}, count=2)
