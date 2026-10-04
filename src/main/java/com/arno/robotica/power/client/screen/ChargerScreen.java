@@ -5,6 +5,7 @@ import com.arno.robotica.power.menu.ChargerMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -16,12 +17,12 @@ public class ChargerScreen extends MachineScreen<ChargerMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 12, y + 17, 14, 44, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 12, y + 17, 14, 52, menu.energy(), menu.capacity());
         ItemStack stack = menu.chargedItem();
         IEnergyStorage item = stack.isEmpty() ? null : stack.getCapability(Capabilities.EnergyStorage.ITEM);
         long stored = item == null ? 0 : item.getEnergyStored();
         long capacity = item == null ? 0 : item.getMaxEnergyStored();
-        drawEnergyBar(g, x + 150, y + 17, 14, 44, stored, capacity);
+        drawEnergyBar(g, x + 150, y + 17, 14, 52, stored, capacity);
         if (stack.isEmpty()) {
             drawStatusCentered(g, Component.translatable("gui.robotica.status.idle"), x + 88, y + 24, 110, Tone.WARN);
         } else if (item == null) {
@@ -33,5 +34,15 @@ public class ChargerScreen extends MachineScreen<ChargerMenu> {
         } else {
             drawStatusCentered(g, Component.translatable("gui.robotica.charging"), x + 88, y + 24, 110, Tone.GOOD);
         }
+    }
+
+    @Override
+    protected ItemStack ghostIcon(Slot slot) {
+        return icon("copper_cell");
+    }
+
+    @Override
+    protected Component slotHint(Slot slot) {
+        return Component.translatable("gui.robotica.slot_item");
     }
 }

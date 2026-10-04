@@ -1,9 +1,11 @@
 package com.arno.robotica.core.client;
 
+import com.arno.robotica.Robotica;
 import com.arno.robotica.core.util.Fmt;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -11,6 +13,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -65,6 +68,8 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
     private final List<int[]> energyBars = new ArrayList<>();
     private final List<long[]> energyValues = new ArrayList<>();
     private final List<Component> energyExtra = new ArrayList<>();
+    private final List<int[]> tipRects = new ArrayList<>();
+    private final List<List<Component>> tipLines = new ArrayList<>();
 
     protected MachineScreen(M menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -78,11 +83,53 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
         energyBars.clear();
         energyValues.clear();
         energyExtra.clear();
+        tipRects.clear();
+        tipLines.clear();
         drawPanel(g, leftPos, topPos, imageWidth, imageHeight);
         for (Slot slot : menu.slots) {
+            if (!slot.isActive()) continue;
             drawSlot(g, leftPos + slot.x - 1, topPos + slot.y - 1);
+            if (!slot.hasItem() && isMachineSlot(slot)) {
+                ItemStack ghost = ghostIcon(slot);
+                if (!ghost.isEmpty()) drawGhost(g, ghost, leftPos + slot.x, topPos + slot.y);
+            }
         }
         renderMachine(g, leftPos, topPos, mouseX, mouseY);
+    }
+
+    /** True for machine slots, false for the player's inventory. */
+    protected static boolean isMachineSlot(Slot slot) {
+        return !(slot.container instanceof Inventory);
+    }
+
+    /** Faint icon shown in an empty slot to say what goes in it. Return {@link ItemStack#EMPTY} for none. */
+    protected ItemStack ghostIcon(Slot slot) {
+        return ItemStack.EMPTY;
+    }
+
+    /** Tooltip of an empty slot (name of what goes in it), or null. */
+    protected Component slotHint(Slot slot) {
+        return null;
+    }
+
+    /** A Robotica item by registry name, for ghost icons. */
+    protected static ItemStack icon(String name) {
+        return new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id(name)));
+    }
+
+    /** Draws the item faded, like a ghost, at slot position x/y. */
+    public static void drawGhost(GuiGraphics g, ItemStack stack, int x, int y) {
+        g.renderItem(stack, x, y);
+        g.pose().pushPose();
+        g.pose().translate(0, 0, 200);
+        g.fill(x, y, x + 16, y + 16, 0xB88B8B8B);
+        g.pose().popPose();
+    }
+
+    /** Hover tooltip for a rectangle (absolute coordinates). Call from renderMachine. */
+    protected void addTooltip(int x, int y, int w, int h, Component... lines) {
+        tipRects.add(new int[]{x, y, w, h});
+        tipLines.add(List.of(lines));
     }
 
     /** Draw machine-specific parts. x/y are the GUI's top-left corner. */
@@ -104,6 +151,16 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
         renderTooltip(g, mouseX, mouseY);
+        if (hoveredSlot != null && !hoveredSlot.hasItem() && isMachineSlot(hoveredSlot) && menu.getCarried().isEmpty()) {
+            Component hint = slotHint(hoveredSlot);
+            if (hint != null) g.renderTooltip(font, font.split(hint, 200), mouseX, mouseY);
+        }
+        for (int i = 0; i < tipRects.size(); i++) {
+            int[] r = tipRects.get(i);
+            if (mouseX >= r[0] && mouseX < r[0] + r[2] && mouseY >= r[1] && mouseY < r[1] + r[3]) {
+                g.renderComponentTooltip(font, tipLines.get(i), mouseX, mouseY);
+            }
+        }
         for (int i = 0; i < energyBars.size(); i++) {
             int[] r = energyBars.get(i);
             if (mouseX >= r[0] && mouseX < r[0] + r[2] && mouseY >= r[1] && mouseY < r[1] + r[3]) {
@@ -143,7 +200,7 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
 
     /** Vertical energy bar, 1 px dark frame, gradient fill from the bottom, FE readout below it and a hover tooltip. */
     protected void drawEnergyBar(GuiGraphics g, int x, int y, int w, int h, long stored, long capacity) {
-        drawEnergyBar(g, x, y, w, h, stored, capacity, true, null);
+        drawEnergyBar(g, x, y, w, h, stored, capacity, false, null);
     }
 
     /** As above; {@code extra} is a second tooltip line (for example the FE/t), {@code readout} draws the compact FE value below. */
@@ -175,14 +232,16 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
         return Long.toString(fe);
     }
 
-    /** Horizontal energy bar with "stored / capacity FE" drawn inside (use a height of at least 10). */
+    /** Horizontal energy bar; the exact "stored / capacity FE" is in its hover tooltip. */
     protected void drawEnergyBarWide(GuiGraphics g, int x, int y, int w, int h, long stored, long capacity) {
         drawInset(g, x, y, w, h);
         g.fill(x, y, x + w, y + h, ENERGY_DARK);
         int filled = capacity <= 0 ? 0 : (int) Math.min(w, Math.round((double) w * stored / capacity));
         if (filled > 0) g.fillGradient(x, y, x + filled, y + h, ENERGY_TOP, ENERGY_BOTTOM);
-        Component text = Component.literal(Fmt.energy(stored) + " / " + Fmt.energy(capacity));
-        drawFitted(g, font, text, x + w / 2, y + (h - 8) / 2 + 1, w - 6, 0xFFFFFFFF, 0, true, 1.0F);
+        for (int i = 1; i < 4; i++) g.fill(x + w * i / 4, y + h - Math.max(2, h / 3), x + w * i / 4 + 1, y + h, 0x66000000);
+        energyBars.add(new int[]{x, y, w, h});
+        energyValues.add(new long[]{stored, capacity});
+        energyExtra.add(null);
     }
 
     /** Horizontal progress bar (0..1), framed, gradient fill. */
