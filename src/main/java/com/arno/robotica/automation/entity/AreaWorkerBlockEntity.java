@@ -1,0 +1,497 @@
+package com.arno.robotica.automation.entity;
+
+import com.arno.robotica.automation.AutomationConfig;
+import com.arno.robotica.automation.menu.AreaWorkerMenu;
+import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.block.SyncedBlockEntity;
+import com.arno.robotica.core.energy.EnergyUtil;
+import com.arno.robotica.core.energy.MachineEnergyStorage;
+import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.Upgrades;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * Shared base of every area worker (Stumpy, Sprout, Excavator): battery slot, FE buffer that also accepts FE from
+ * cables, upgrade slots, 9-slot buffer, output into adjacent item handlers, idle drain, owner and "show area" flag.
+ * Subclasses implement {@link #work} which runs every server tick and returns the resulting status.
+ */
+public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements MenuProvider {
+    public enum Status {
+        IDLE, WORKING, NO_ENERGY, OUTPUT_FULL;
+
+        public static Status byOrdinal(int i) {
+            Status[] v = values();
+            return v[Math.max(0, Math.min(v.length - 1, i))];
+        }
+    }
+
+    public static final int BUFFER_SLOTS = 9;
+    /** Max FE pulled from the battery item per call. */
+    private static final int MAX_PULL = 1000;
+    private static final UUID FALLBACK_OWNER = new UUID(0L, 0xB07L);
+
+    public final MachineEnergyStorage energy;
+    /** Any FE item that can extract (cells, Mainspring). */
+    public final ItemStackHandler battery = new ItemStackHandler(1) {
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return canUseAsBattery(stack);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 1;
+        }
+
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+        }
+    };
+    public final Upgrades upgrades;
+    public final ItemStackHandler buffer = new ItemStackHandler(BUFFER_SLOTS) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+        }
+    };
+    /** Item and capability view of the buffer for pipes and hoppers: extract anything, insert only wanted items. */
+    public final IItemHandler externalBuffer = new ExternalBuffer();
+
+    private final List<ItemStack> pending = new ArrayList<>();
+    @Nullable
+    private UUID owner;
+    private boolean showArea;
+    protected int areaSize = 1;
+    private Status status = Status.IDLE;
+    protected long age;
+    private boolean firstTick = true;
+    private final int upgradeSlots;
+
+    protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds, int upgradeSlots) {
+        super(type, pos, state);
+        this.upgradeSlots = upgradeSlots;
+        this.energy = new MachineEnergyStorage(AutomationConfig.energyBuffer(), 1000, 0, this::setChanged);
+        this.upgrades = new Upgrades(upgradeSlots, kinds, this::onUpgradesChanged);
+    }
+
+    // ---- subclass hooks ----
+
+    /** Runs every server tick when there is no pending output. Must return the status; consumes its own energy. */
+    protected abstract Status work(ServerLevel level);
+
+    /** Recomputes {@link #areaSize} (and anything cached) from tier and upgrades. */
+    protected abstract void recalc();
+
+    /** Lowest and highest world Y (inclusive-exclusive) of the work area. */
+    protected abstract int areaMinY();
+
+    protected abstract int areaMaxY();
+
+    /** How many of this item the worker keeps in its buffer instead of passing it on. 0 = none. */
+    protected int keepAmount(ItemStack stack) {
+        return 0;
+    }
+
+    protected void saveExtra(CompoundTag tag, HolderLookup.Provider registries) {
+    }
+
+    protected void loadExtra(CompoundTag tag, HolderLookup.Provider registries) {
+    }
+
+    protected void saveClientExtra(CompoundTag tag) {
+    }
+
+    protected void loadClientExtra(CompoundTag tag) {
+    }
+
+    public abstract String blockKey();
+
+    /** Extra number shown in the GUI info line (excavator depth). 0 = none. */
+    public int guiExtra() {
+        return 0;
+    }
+
+    public boolean hasLeavesToggle() {
+        return false;
+    }
+
+    public boolean leavesEnabled() {
+        return false;
+    }
+
+    public void toggleLeaves() {
+    }
+
+    public int tier() {
+        return 1;
+    }
+
+    // ---- common state ----
+
+    public Status status() {
+        return status;
+    }
+
+    public int areaSize() {
+        return areaSize;
+    }
+
+    public boolean showArea() {
+        return showArea;
+    }
+
+    public void toggleShowArea() {
+        showArea = !showArea;
+        setChangedAndSync();
+    }
+
+    @Nullable
+    public UUID owner() {
+        return owner;
+    }
+
+    public void setOwner(@Nullable UUID uuid) {
+        this.owner = uuid;
+        setChanged();
+    }
+
+    public int upgradeSlotCount() {
+        return upgradeSlots;
+    }
+
+    public int level(UpgradeKind kind) {
+        return upgrades.level(kind);
+    }
+
+    /** Horizontal min corner (inclusive) of the square area. */
+    public int areaMinX() {
+        return worldPosition.getX() - areaSize / 2;
+    }
+
+    public int areaMinZ() {
+        return worldPosition.getZ() - areaSize / 2;
+    }
+
+    public AABB areaBox() {
+        int minX = areaMinX();
+        int minZ = areaMinZ();
+        return new AABB(minX, areaMinY(), minZ, minX + areaSize, areaMaxY(), minZ + areaSize);
+    }
+
+    public boolean inArea(BlockPos pos) {
+        int minX = areaMinX();
+        int minZ = areaMinZ();
+        return pos.getX() >= minX && pos.getX() < minX + areaSize && pos.getZ() >= minZ && pos.getZ() < minZ + areaSize;
+    }
+
+    protected void onUpgradesChanged() {
+        if (level != null && !level.isClientSide) {
+            recalc();
+            setChangedAndSync();
+        } else {
+            setChanged();
+        }
+    }
+
+    public static boolean canUseAsBattery(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        IEnergyStorage cap = stack.getCapability(Capabilities.EnergyStorage.ITEM);
+        return cap != null && cap.canExtract();
+    }
+
+    // ---- tick ----
+
+    public final void serverTick(ServerLevel sl) {
+        if (firstTick) {
+            firstTick = false;
+            recalc();
+        }
+        age++;
+        pullBattery();
+        if ((age + worldPosition.asLong()) % 10 == 0) flushBuffer(sl);
+        if (!pending.isEmpty()) flushPending(sl);
+        Status next = pending.isEmpty() ? work(sl) : Status.OUTPUT_FULL;
+        if (next != Status.WORKING && age % 5 == 0) energy.consume(1);
+        if (next != status) {
+            status = next;
+            setChanged();
+        }
+    }
+
+    private void pullBattery() {
+        ItemStack stack = battery.getStackInSlot(0);
+        if (stack.isEmpty() || energy.getSpace() <= 0) return;
+        if (energy.getEnergyStored() > energy.getMaxEnergyStored() / 4 && age % 4 != 0) return;
+        if (EnergyUtil.dischargeItem(stack, energy, MAX_PULL) > 0) setChanged();
+    }
+
+    /** Energy per tick while working, before multipliers: base * speed multiplier * (speed/efficiency energy factor). */
+    protected int scaledDrain(int baseFePerTick) {
+        int speed = upgrades.level(UpgradeKind.SPEED);
+        int eff = upgrades.level(UpgradeKind.EFFICIENCY);
+        double value = CoreConfig.scaleEnergy(baseFePerTick) * Upgrades.speedMultiplier(speed) * Upgrades.energyMultiplier(speed, eff);
+        return (int) Math.max(baseFePerTick == 0 ? 0 : 1, Math.round(value));
+    }
+
+    // ---- output routing ----
+
+    /** Offers a stack to adjacent inventories, then the buffer; whatever does not fit waits in the pending queue. */
+    public void output(ItemStack stack) {
+        if (stack.isEmpty() || !(level instanceof ServerLevel sl)) return;
+        stack = stack.copy();
+        int keep = keepAmount(stack);
+        if (keep > 0) {
+            int toKeep = Math.min(stack.getCount(), keep - countInBuffer(stack));
+            if (toKeep > 0) {
+                ItemStack left = ItemHandlerHelper.insertItem(buffer, stack.copyWithCount(toKeep), false);
+                stack.shrink(toKeep - left.getCount());
+            }
+        }
+        if (stack.isEmpty()) return;
+        stack = insertNeighbours(sl, stack, false);
+        if (stack.isEmpty()) return;
+        stack = ItemHandlerHelper.insertItem(buffer, stack, false);
+        if (!stack.isEmpty()) {
+            pending.add(stack);
+            setChanged();
+        }
+    }
+
+    /** True when the whole stack would fit into neighbours plus buffer right now. */
+    public boolean canAcceptFully(ItemStack stack) {
+        if (!(level instanceof ServerLevel sl)) return false;
+        ItemStack left = insertNeighbours(sl, stack.copy(), true);
+        if (left.isEmpty()) return true;
+        return ItemHandlerHelper.insertItem(buffer, left, true).isEmpty();
+    }
+
+    public boolean hasPendingOutput() {
+        return !pending.isEmpty();
+    }
+
+    private int countInBuffer(ItemStack stack) {
+        int n = 0;
+        for (int i = 0; i < buffer.getSlots(); i++) {
+            ItemStack s = buffer.getStackInSlot(i);
+            if (ItemStack.isSameItemSameComponents(s, stack)) n += s.getCount();
+        }
+        return n;
+    }
+
+    private ItemStack insertNeighbours(ServerLevel sl, ItemStack stack, boolean simulate) {
+        for (Direction dir : Direction.values()) {
+            if (stack.isEmpty()) break;
+            IItemHandler handler = sl.getCapability(Capabilities.ItemHandler.BLOCK, worldPosition.relative(dir), dir.getOpposite());
+            if (handler == null) continue;
+            stack = ItemHandlerHelper.insertItem(handler, stack, simulate);
+        }
+        return stack;
+    }
+
+    private void flushPending(ServerLevel sl) {
+        boolean changed = false;
+        for (int i = 0; i < pending.size(); i++) {
+            ItemStack stack = insertNeighbours(sl, pending.get(i), false);
+            if (!stack.isEmpty()) stack = ItemHandlerHelper.insertItem(buffer, stack, false);
+            if (stack.isEmpty()) {
+                pending.remove(i--);
+                changed = true;
+            } else {
+                pending.set(i, stack);
+            }
+        }
+        if (changed) setChanged();
+    }
+
+    /** Moves buffer contents (except the reserved amount per item) into adjacent inventories. */
+    private void flushBuffer(ServerLevel sl) {
+        List<ItemStack> reserveItems = new ArrayList<>();
+        List<Integer> reserveLeft = new ArrayList<>();
+        for (int i = 0; i < buffer.getSlots(); i++) {
+            ItemStack stack = buffer.getStackInSlot(i);
+            if (stack.isEmpty()) continue;
+            int reserved = 0;
+            int keep = keepAmount(stack);
+            if (keep > 0) {
+                int idx = -1;
+                for (int k = 0; k < reserveItems.size(); k++) {
+                    if (ItemStack.isSameItemSameComponents(reserveItems.get(k), stack)) {
+                        idx = k;
+                        break;
+                    }
+                }
+                if (idx < 0) {
+                    reserveItems.add(stack.copy());
+                    reserveLeft.add(keep);
+                    idx = reserveItems.size() - 1;
+                }
+                reserved = Math.min(stack.getCount(), reserveLeft.get(idx));
+                reserveLeft.set(idx, reserveLeft.get(idx) - reserved);
+            }
+            int pushable = stack.getCount() - reserved;
+            if (pushable <= 0) continue;
+            ItemStack left = insertNeighbours(sl, stack.copyWithCount(pushable), false);
+            int moved = pushable - left.getCount();
+            if (moved > 0) buffer.extractItem(i, moved, false);
+        }
+    }
+
+    // ---- block break protection ----
+
+    protected GameProfile fakeProfile() {
+        return new GameProfile(owner != null ? owner : FALLBACK_OWNER, "[Robotica]");
+    }
+
+    /** Fires a break event as the owner's fake player so claim and protection mods can veto. */
+    protected boolean mayBreak(ServerLevel sl, BlockPos pos, BlockState state) {
+        try {
+            FakePlayer fake = FakePlayerFactory.get(sl, fakeProfile());
+            BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(sl, pos, state, fake);
+            NeoForge.EVENT_BUS.post(event);
+            return !event.isCanceled();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    // ---- items on removal ----
+
+    public void dropContents() {
+        if (level == null) return;
+        for (int i = 0; i < battery.getSlots(); i++) Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), battery.getStackInSlot(i));
+        for (int i = 0; i < upgrades.getSlots(); i++) Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), upgrades.getStackInSlot(i));
+        for (int i = 0; i < buffer.getSlots(); i++) Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), buffer.getStackInSlot(i));
+        for (ItemStack stack : pending) Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), stack);
+        pending.clear();
+    }
+
+    // ---- menu ----
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable(blockKey());
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
+        return new AreaWorkerMenu(id, inv, this);
+    }
+
+    // ---- persistence ----
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.put("energy", energy.serializeNBT(registries));
+        tag.put("battery", battery.serializeNBT(registries));
+        tag.put("upgrades", upgrades.serializeNBT(registries));
+        tag.put("buffer", buffer.serializeNBT(registries));
+        ListTag list = new ListTag();
+        for (ItemStack stack : pending) list.add(stack.save(registries));
+        tag.put("pending", list);
+        if (owner != null) tag.putUUID("owner", owner);
+        tag.putBoolean("showArea", showArea);
+        saveExtra(tag, registries);
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
+        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
+        if (tag.contains("buffer")) buffer.deserializeNBT(registries, tag.getCompound("buffer"));
+        if (tag.contains("pending")) {
+            pending.clear();
+            for (Tag t : tag.getList("pending", Tag.TAG_COMPOUND)) {
+                ItemStack.parse(registries, t).ifPresent(pending::add);
+            }
+        }
+        if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
+        if (tag.contains("showArea")) showArea = tag.getBoolean("showArea");
+        if (tag.contains("areaSize")) {
+            // client update tag
+            areaSize = tag.getInt("areaSize");
+            loadClientExtra(tag);
+        } else {
+            loadExtra(tag, registries);
+            recalc();
+        }
+    }
+
+    @Override
+    protected void saveClientData(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putBoolean("showArea", showArea);
+        tag.putInt("areaSize", areaSize);
+        saveClientExtra(tag);
+    }
+
+    // ---- external item view ----
+
+    private final class ExternalBuffer implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return buffer.getSlots();
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return buffer.getStackInSlot(slot);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (keepAmount(stack) <= 0) return stack;
+            return buffer.insertItem(slot, stack, simulate);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return buffer.extractItem(slot, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return buffer.getSlotLimit(slot);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return keepAmount(stack) > 0 && buffer.isItemValid(slot, stack);
+        }
+    }
+}

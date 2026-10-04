@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "robotica:block/supply_crate_top",
+    "side": "robotica:block/supply_crate_side"
+  }
+}
