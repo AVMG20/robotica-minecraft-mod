@@ -29,7 +29,7 @@
   "gui.robotica.area": "%sx%s",
   "gui.robotica.depth": "Depth y=%s",
   "robotica.configuration.automation": "Automation",
-  "robotica.configuration.energyBuffer": "Worker energy buffer",
+  "robotica.configuration.energyBuffer": "Energy buffer (FE)",
   "robotica.configuration.stumpyFePerTick": "Stumpy FE per tick",
   "robotica.configuration.sproutFePerTick": "Sprout FE per tick",
   "robotica.configuration.maxLogsPerTree": "Max logs per tree",

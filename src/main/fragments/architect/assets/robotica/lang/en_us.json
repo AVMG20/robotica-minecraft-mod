@@ -86,7 +86,7 @@
   "robotica.configuration.architect_table": "Architect Table",
   "robotica.configuration.baseInterval": "Ticks per block",
   "robotica.configuration.fePerBlock": "FE per block",
-  "robotica.configuration.energyBuffer": "Buffer (FE)",
+  "robotica.configuration.energyBuffer": "Energy buffer (FE)",
   "robotica.configuration.energyReceive": "Max input (FE/t)",
   "robotica.configuration.matterCap": "Matter cap per grade",
   "robotica.configuration.maxQueue": "Max queued builds",
