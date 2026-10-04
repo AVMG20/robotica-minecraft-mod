@@ -1,0 +1,10 @@
+{
+  "type": "robotica:pressing",
+  "ingredient": {
+    "tag": "c:ingots/copper"
+  },
+  "result": {
+    "id": "robotica:copper_plate",
+    "count": 1
+  }
+}

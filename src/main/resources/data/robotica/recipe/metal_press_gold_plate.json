@@ -1,0 +1,10 @@
+{
+  "type": "robotica:pressing",
+  "ingredient": {
+    "tag": "c:ingots/gold"
+  },
+  "result": {
+    "id": "robotica:gold_plate",
+    "count": 1
+  }
+}

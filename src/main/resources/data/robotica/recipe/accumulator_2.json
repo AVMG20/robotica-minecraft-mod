@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RCR",
+    "AXA",
+    "RCR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:storage_blocks/redstone"
+    },
+    "C": {
+      "item": "robotica:advanced_circuit"
+    },
+    "A": {
+      "item": "robotica:accumulator_1"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:accumulator_2",
+    "count": 1
+  }
+}

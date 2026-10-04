@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:combustion_generator",
+    "robotica:solar_panel_mk1",
+    "robotica:solar_panel_mk2",
+    "robotica:accumulator_1",
+    "robotica:accumulator_2",
+    "robotica:accumulator_3",
+    "robotica:copper_conduit",
+    "robotica:gold_conduit",
+    "robotica:charger",
+    "robotica:metal_press"
+  ]
+}

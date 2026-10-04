@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "robotica:block/accumulator_3_top",
+    "side": "robotica:block/accumulator_3_side",
+    "front": "robotica:block/accumulator_3_front",
+    "particle": "robotica:block/accumulator_3_side"
+  }
+}
