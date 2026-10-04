@@ -260,9 +260,14 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
 
     /** Energy per tick while working, before multipliers: base * speed multiplier * (speed/efficiency energy factor). */
     protected int scaledDrain(int baseFePerTick) {
+        return scaledDrain(baseFePerTick, Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
+    }
+
+    /** Same, with the speed multiplier that is really in effect (callers whose interval is floored pass less than the card gives). */
+    protected int scaledDrain(int baseFePerTick, int effectiveSpeedMultiplier) {
         int speed = upgrades.level(UpgradeKind.SPEED);
         int eff = upgrades.level(UpgradeKind.EFFICIENCY);
-        double value = CoreConfig.scaleEnergy(baseFePerTick) * Upgrades.speedMultiplier(speed) * Upgrades.energyMultiplier(speed, eff);
+        double value = CoreConfig.scaleEnergy(baseFePerTick) * effectiveSpeedMultiplier * Upgrades.energyMultiplier(speed, eff);
         return (int) Math.max(baseFePerTick == 0 ? 0 : 1, Math.round(value));
     }
 

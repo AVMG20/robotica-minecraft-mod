@@ -12,7 +12,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.automation.entity.FarmBotBlockEntity;
+import java.util.function.Consumer;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
@@ -137,5 +145,83 @@ public class AutomationGameTests {
         helper.getBlockState(bot).useItemOn(mk3, helper.getLevel(), player, InteractionHand.MAIN_HAND, hit);
         helper.assertTrue(helper.getBlockState(bot).getValue(FarmBotBlock.TIER) == 3, "Mk3 kit should upgrade a Mk2 bot");
         helper.succeed();
+    }
+
+    /** Fluids and blocks the BreakEvent vetoes must be left alone, and the cursor must still move on. */
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void excavatorHonoursBreakEventVeto(GameTestHelper helper) {
+        BlockPos machine = new BlockPos(1, 2, 1);
+        BlockPos stone = new BlockPos(1, 1, 1);
+        BlockPos lava = new BlockPos(0, 1, 1);
+        BlockPos freeStone = new BlockPos(2, 1, 1);
+        helper.setBlock(stone, Blocks.STONE);
+        helper.setBlock(freeStone, Blocks.STONE);
+        helper.setBlock(lava, Blocks.LAVA);
+        helper.setBlock(machine, AutomationContent.EXCAVATOR.get());
+        BlockPos absStone = helper.absolutePos(stone);
+        BlockPos absLava = helper.absolutePos(lava);
+        Consumer<BlockEvent.BreakEvent> veto = event -> {
+            if (event.getPos().equals(absStone) || event.getPos().equals(absLava)) event.setCanceled(true);
+        };
+        NeoForge.EVENT_BUS.addListener(veto);
+        ExcavatorBlockEntity excavator = helper.getBlockEntity(machine);
+        excavator.setSizeOverride(3);
+        excavator.battery.setStackInSlot(0, chargedCell());
+        helper.runAfterDelay(200, () -> {
+            NeoForge.EVENT_BUS.unregister(veto);
+            helper.assertBlockNotPresent(Blocks.STONE, freeStone);
+            helper.assertBlockPresent(Blocks.STONE, stone);
+            helper.assertBlockPresent(Blocks.LAVA, lava);
+            helper.succeed();
+        });
+    }
+
+    /** Mk4 with a Speed IV card is already at the 1 tick floor: it must not pay x20 for nothing. */
+    @GameTest(template = "empty")
+    public static void flooredSpeedDoesNotRaiseDrain(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 1);
+        helper.setBlock(bot, AutomationContent.STUMPY.get().defaultBlockState().setValue(FarmBotBlock.TIER, 4));
+        FarmBotBlockEntity be = helper.getBlockEntity(bot);
+        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 4).get()));
+        helper.assertTrue(be.actionInterval() == 1, "Mk4 interval is floored at 1, is " + be.actionInterval());
+        helper.assertTrue(be.effectiveSpeedMultiplier() == 1, "floored interval gains nothing, multiplier " + be.effectiveSpeedMultiplier());
+        helper.setBlock(bot, AutomationContent.STUMPY.get());
+        FarmBotBlockEntity mk1 = helper.getBlockEntity(bot);
+        mk1.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 4).get()));
+        helper.assertTrue(mk1.effectiveSpeedMultiplier() == 20, "Mk1 40 -> 2 ticks is a real x20, got " + mk1.effectiveSpeedMultiplier());
+        helper.succeed();
+    }
+
+    /** The vacuum leaves a player's thrown items alone and obeys the pickup event veto. */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void vacuumSkipsPlayerItemsAndHonoursVeto(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 1);
+        helper.setBlock(bot, AutomationContent.STUMPY.get());
+        StumpyBlockEntity stumpy = helper.getBlockEntity(bot);
+        stumpy.battery.setStackInSlot(0, chargedCell());
+        net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        var level = helper.getLevel();
+        Vec3 at = Vec3.atCenterOf(helper.absolutePos(new BlockPos(2, 1, 2)));
+        ItemEntity thrown = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.OAK_SAPLING, 3));
+        thrown.setThrower(player);
+        ItemEntity vetoed = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.APPLE, 2));
+        ItemEntity natural = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.STICK, 4));
+        level.addFreshEntity(thrown);
+        level.addFreshEntity(vetoed);
+        level.addFreshEntity(natural);
+        Consumer<ItemEntityPickupEvent.Pre> veto = event -> {
+            if (event.getItemEntity() == vetoed) event.setCanPickup(TriState.FALSE);
+        };
+        NeoForge.EVENT_BUS.addListener(veto);
+        helper.succeedWhen(() -> {
+            int sticks = 0;
+            for (int i = 0; i < stumpy.buffer.getSlots(); i++) {
+                if (stumpy.buffer.getStackInSlot(i).is(Items.STICK)) sticks += stumpy.buffer.getStackInSlot(i).getCount();
+            }
+            helper.assertTrue(sticks == 4, "natural sticks should be collected, got " + sticks);
+            NeoForge.EVENT_BUS.unregister(veto);
+            helper.assertTrue(thrown.isAlive(), "an item thrown by a player must stay");
+            helper.assertTrue(vetoed.isAlive(), "a vetoed pickup must stay");
+        });
     }
 }

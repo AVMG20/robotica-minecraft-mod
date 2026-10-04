@@ -17,7 +17,7 @@ import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Menu of the Replicator Controller. Slots: 0 vial, 1 boost, 2-4 upgrades, 5-22 output (take only), then the player inventory.
+ * Menu of the Replicator Controller. Slots: 0 vial, 1 boost, 2-4 upgrades, 5-22 output (take only), 23 catalyst, then the player inventory.
  */
 public class ReplicatorMenu extends MachineMenu {
     public static final int IMAGE_HEIGHT = 218;
@@ -36,16 +36,17 @@ public class ReplicatorMenu extends MachineMenu {
     /** Client side. */
     public ReplicatorMenu(int id, Inventory inv, BlockPos pos) {
         this(id, inv, pos, ReplicatorControllerBlockEntity.newVialHandler(() -> {}), ReplicatorControllerBlockEntity.newBoostHandler(() -> {}),
-                ReplicatorControllerBlockEntity.newUpgrades(() -> {}), new ItemStackHandler(ReplicatorControllerBlockEntity.OUTPUT_SLOTS), null);
+                ReplicatorControllerBlockEntity.newUpgrades(() -> {}), new ItemStackHandler(ReplicatorControllerBlockEntity.OUTPUT_SLOTS),
+                ReplicatorControllerBlockEntity.newCatalystHandler(() -> {}), null);
     }
 
     /** Server side. */
     public ReplicatorMenu(int id, Inventory inv, ReplicatorControllerBlockEntity be) {
-        this(id, inv, be.getBlockPos(), be.vial, be.boost, be.upgrades, be.output, be);
+        this(id, inv, be.getBlockPos(), be.vial, be.boost, be.upgrades, be.output, be.catalyst, be);
     }
 
     private ReplicatorMenu(int id, Inventory inv, BlockPos pos, IItemHandler vial, IItemHandler boost, IItemHandler upgrades,
-                           IItemHandler output, @Nullable ReplicatorControllerBlockEntity be) {
+                           IItemHandler output, IItemHandler catalyst, @Nullable ReplicatorControllerBlockEntity be) {
         super(ReplicatorRegistry.REPLICATOR_MENU.get(), id);
         this.pos = pos;
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
@@ -64,6 +65,7 @@ public class ReplicatorMenu extends MachineMenu {
                 });
             }
         }
+        addSlot(new SlotItemHandler(catalyst, 0, 154, 20));
         addPlayerInventory(inv, 8, PLAYER_Y);
         energyIndex = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());

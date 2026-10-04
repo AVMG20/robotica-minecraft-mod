@@ -27,4 +27,11 @@ public final class GearComponents {
     /** 0 = none, 1 = fortune, 2 = silk touch. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ENCHANT_MODE =
             REGISTER.registerComponentType("gear_enchant_mode", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
+
+    /**
+     * Silk Touch / Fortune levels the swap itself put on the stack: bit 0 = Silk Touch, bits 1+ = Fortune level.
+     * Only these are ever removed again, so enchantments the player applied survive.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> INJECTED_ENCHANTS =
+            REGISTER.registerComponentType("gear_injected_enchants", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 }

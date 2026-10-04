@@ -45,7 +45,9 @@ public final class ToolSettings {
 
     /**
      * Makes the real enchantments on the stack match the swap state, so vanilla loot (and every other mod) just sees
-     * Silk Touch or Fortune on the tool. Only touches the stack when something changed.
+     * Silk Touch or Fortune on the tool. Only the levels the swap injected itself (remembered in a data component) are
+     * ever removed: Silk Touch or Fortune the player applied through an anvil or enchanting table stays, and the swap
+     * only tops the level up to what it wants. Only touches the stack when something changed.
      */
     public static void syncEnchantments(ItemStack stack, GearToolItem tool, HolderLookup.Provider registries) {
         if (tool.spec.fortuneLevel <= 0) return;
@@ -55,10 +57,23 @@ public final class ToolSettings {
         int mode = enchantMode(stack);
         int wantSilk = mode == ENCHANT_SILK ? 1 : 0;
         int wantFortune = mode == ENCHANT_FORTUNE ? tool.spec.fortuneLevel : 0;
-        if (stack.getEnchantmentLevel(silk) == wantSilk && stack.getEnchantmentLevel(fortune) == wantFortune) return;
-        EnchantmentHelper.updateEnchantments(stack, m -> {
-            m.set(silk, wantSilk);
-            m.set(fortune, wantFortune);
-        });
+        int injected = stack.getOrDefault(GearComponents.INJECTED_ENCHANTS.get(), 0);
+        int curSilk = stack.getEnchantmentLevel(silk);
+        int curFortune = stack.getEnchantmentLevel(fortune);
+        int baseSilk = Math.max(0, curSilk - (injected & 1));
+        int baseFortune = Math.max(0, curFortune - (injected >> 1));
+        int targetSilk = Math.max(baseSilk, wantSilk);
+        int targetFortune = Math.max(baseFortune, wantFortune);
+        int newInjected = (targetSilk > baseSilk ? 1 : 0) | ((targetFortune - baseFortune) << 1);
+        if (targetSilk != curSilk || targetFortune != curFortune) {
+            EnchantmentHelper.updateEnchantments(stack, m -> {
+                if (targetSilk != curSilk) m.set(silk, targetSilk);
+                if (targetFortune != curFortune) m.set(fortune, targetFortune);
+            });
+        }
+        if (newInjected != injected) {
+            if (newInjected == 0) stack.remove(GearComponents.INJECTED_ENCHANTS.get());
+            else stack.set(GearComponents.INJECTED_ENCHANTS.get(), newInjected);
+        }
     }
 }

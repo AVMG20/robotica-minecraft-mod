@@ -177,14 +177,17 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     /** 0 = skip, 1 = mine, 2 = plug fluid. */
     private int classify(ServerLevel sl, BlockPos pos, BlockState state) {
         if (state.isAir()) return 0;
-        if (state.getBlock() instanceof LiquidBlock) return 2;
+        if (state.getBlock() instanceof LiquidBlock) return mayBreak(sl, pos, state) ? 2 : 0;
         if (state.getDestroySpeed(sl, pos) < 0 || state.hasBlockEntity() || sl.getBlockEntity(pos) != null) return 0;
         return mayBreak(sl, pos, state) ? 1 : 0;
     }
 
     private void dig(ServerLevel sl, BlockPos pos, int kind) {
-        BlockState state = sl.getBlockState(pos);
         cursorIdx++;
+        // The world can change while the machine waits: re-check loaded state and the protection event.
+        if (!sl.isLoaded(pos)) return;
+        BlockState state = sl.getBlockState(pos);
+        if (!mayBreak(sl, pos, state)) return;
         if (kind == 2) {
             if (state.getBlock() instanceof LiquidBlock) {
                 sl.setBlock(pos, Blocks.COBBLESTONE.defaultBlockState(), Block.UPDATE_ALL);

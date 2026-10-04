@@ -114,6 +114,8 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
     }
 
     private static boolean nearWater(ServerLevel sl, BlockPos pos) {
+        // The 9x2x9 box can reach into neighbouring chunks: probing an unloaded one would force-load it.
+        if (!sl.hasChunksAt(pos.offset(-4, 0, -4), pos.offset(4, 1, 4))) return false;
         for (BlockPos p : BlockPos.betweenClosed(pos.offset(-4, 0, -4), pos.offset(4, 1, 4))) {
             if (sl.getFluidState(p).is(FluidTags.WATER)) return true;
         }

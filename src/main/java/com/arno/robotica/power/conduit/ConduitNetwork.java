@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -43,7 +44,19 @@ final class ConduitNetwork {
     private final List<Endpoint> endpoints = new ArrayList<>();
     /** Block seen at every endpoint position, so neighbour updates that change nothing relevant are ignored. */
     private final Long2ObjectMap<Block> endpointBlocks = new Long2ObjectOpenHashMap<>();
+    /**
+     * Block entities next to a member that expose no FE capability on the touching face (furnaces, chests...). Their
+     * neighbour updates (lit toggles, inventory changes) cannot change the endpoint list, so they must not trigger rescans.
+     */
+    private final Long2ObjectMap<Block> nonEndpointBlocks = new Long2ObjectOpenHashMap<>();
     private int rotation;
+    /** Per-tick scratch: receivers that currently accept energy. */
+    private IEnergyStorage[] receivers = new IEnergyStorage[8];
+    private long[] receiverPos = new long[8];
+
+    boolean knowsNonEndpoint(long pos, Block block) {
+        return nonEndpointBlocks.get(pos) == block;
+    }
 
     boolean knowsEndpoint(long pos, Block block) {
         return endpointBlocks.get(pos) == block;
@@ -62,6 +75,7 @@ final class ConduitNetwork {
         endpointsDirty = false;
         endpoints.clear();
         endpointBlocks.clear();
+        nonEndpointBlocks.clear();
         Set<EndpointKey> seen = new HashSet<>();
         for (int i = 0; i < members.size(); i++) {
             long memberLong = members.getLong(i);
@@ -82,6 +96,11 @@ final class ConduitNetwork {
                                 BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, level, neighbour, dir.getOpposite())));
                         endpointBlocks.put(neighbour.asLong(), level.getBlockState(neighbour).getBlock());
                     }
+                } else if (level.isLoaded(neighbour)) {
+                    Block block = level.getBlockState(neighbour).getBlock();
+                    if (block instanceof EntityBlock && !endpointBlocks.containsKey(neighbour.asLong())) {
+                        nonEndpointBlocks.put(neighbour.asLong(), block);
+                    }
                 }
                 updated = updated.setValue(ConduitBlock.CONN.get(dir), conn);
             }
@@ -89,32 +108,56 @@ final class ConduitNetwork {
         }
     }
 
-    /** The only per-tick work of a network. Cheap when nothing can move. */
+    /**
+     * The only per-tick work of a network. The receivers that currently accept energy are collected once per tick, so
+     * the transfer loop is O(sources + receivers) in the common case and stops as soon as the rate budget is used.
+     */
     void tick() {
         int n = endpoints.size();
         if (n < 2) return;
-        int remaining = lowest.rate();
-        int start = rotation++ % n;
-        for (int i = 0; i < n && remaining > 0; i++) {
-            Endpoint source = endpoints.get((i + start) % n);
-            IEnergyStorage from = source.storage();
-            if (from == null || !from.canExtract()) continue;
-            int available = from.extractEnergy(remaining, true);
-            if (available <= 0) continue;
-            for (int j = 0; j < n && available > 0 && remaining > 0; j++) {
-                Endpoint target = endpoints.get((j + start) % n);
-                if (target.pos == source.pos) continue;
-                IEnergyStorage to = target.storage();
-                if (to == null || !to.canReceive()) continue;
-                int accepted = to.receiveEnergy(available, true);
-                if (accepted <= 0) continue;
-                int extracted = from.extractEnergy(accepted, false);
-                if (extracted <= 0) break;
-                int inserted = to.receiveEnergy(extracted, false);
-                if (inserted < extracted) from.receiveEnergy(extracted - inserted, false);
-                available -= inserted;
-                remaining -= inserted;
+        int count = 0;
+        if (receivers.length < n) {
+            receivers = new IEnergyStorage[n];
+            receiverPos = new long[n];
+        }
+        for (int i = 0; i < n; i++) {
+            Endpoint endpoint = endpoints.get(i);
+            IEnergyStorage to = endpoint.storage();
+            if (to == null || !to.canReceive() || to.receiveEnergy(1, true) <= 0) continue;
+            receivers[count] = to;
+            receiverPos[count] = endpoint.pos;
+            count++;
+        }
+        try {
+            if (count == 0) return;
+            int remaining = lowest.rate();
+            int start = rotation++ % n;
+            for (int i = 0; i < n && remaining > 0; i++) {
+                Endpoint source = endpoints.get((i + start) % n);
+                IEnergyStorage from = source.storage();
+                if (from == null || !from.canExtract()) continue;
+                int available = from.extractEnergy(remaining, true);
+                if (available <= 0) continue;
+                for (int j = 0; j < count && available > 0 && remaining > 0; j++) {
+                    int k = (j + start) % count;
+                    IEnergyStorage to = receivers[k];
+                    if (to == null || receiverPos[k] == source.pos) continue;
+                    int accepted = to.receiveEnergy(available, true);
+                    if (accepted <= 0) {
+                        receivers[k] = null;
+                        continue;
+                    }
+                    int extracted = from.extractEnergy(accepted, false);
+                    if (extracted <= 0) break;
+                    int inserted = to.receiveEnergy(extracted, false);
+                    if (inserted < extracted) from.receiveEnergy(extracted - inserted, false);
+                    if (accepted < available || inserted < extracted) receivers[k] = null; // full for this tick
+                    available -= inserted;
+                    remaining -= inserted;
+                }
             }
+        } finally {
+            for (int i = 0; i < count; i++) receivers[i] = null;
         }
     }
 }
