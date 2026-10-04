@@ -213,7 +213,7 @@
       "pages": [
         {
           "title": "Architect Table",
-          "text": "Feed the table cobblestone, wood, glass, ingots or gems. It turns them into matter: rustic, refined and exotic.\n\nPick a plot on the grid, pick a room, and the table builds it out of Robotica blocks it fabricates from matter and FE. You never craft the blocks one by one.",
+          "text": "Feed the table cobblestone, wood, glass, ingots or gems. It turns them into matter: rustic, refined and exotic.\n\nPick a plot on the grid, pick a room, and the table builds it out of Robotica blocks it fabricates from matter and FE. You never craft the blocks one by one. The Greenhouse leaves a glowing marker in the floor: pour water there yourself.",
           "items": [
             "robotica:architect_table"
           ]
@@ -237,7 +237,7 @@
         },
         {
           "title": "The replicator",
-          "text": "Build a 3x3x3 frame with the Replicator Controller in the middle of one side and at least one Replicator Glass. Insert a full vial and power it.\n\nHarvest mode drops loot into the controller as if you killed the mob. Spawn mode makes the real mob for your own grinder. It is slow and hungry: about one cycle a minute.",
+          "text": "Build a 3x3x3 frame with the Replicator Controller in the middle of one side and at least one Replicator Glass. Insert a full vial and power it.\n\nHarvest mode drops loot into the controller as if you killed the mob. Spawn mode makes the real mob for your own grinder. It is slow and hungry: about one cycle a minute.\n\nStronger mobs need a core in the Core slot: blazes, endermen, guardians, ghasts and wither skeletons need a Magma Core, shulkers an Antigrav Core. The core is never used up.",
           "items": [
             "robotica:replicator_controller",
             "robotica:replicator_frame",
