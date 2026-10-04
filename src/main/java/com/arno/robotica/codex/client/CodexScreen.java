@@ -193,6 +193,28 @@ public class CodexScreen extends Screen {
         rebuild();
     }
 
+    /** Dev hooks for the screenshot showcase. */
+    public void devSelect(int chapterIndex) {
+        if (chapterIndex < 0 || chapterIndex >= chapters.size()) return;
+        lab = false;
+        chapter = chapterIndex;
+        page = 0;
+        subPage = 0;
+        recipeItem = ItemStack.EMPTY;
+        recipeHistory.clear();
+        rebuild();
+    }
+
+    public void devShowRecipe(ItemStack stack) {
+        lab = false;
+        showRecipe(stack);
+    }
+
+    public void devLab() {
+        lab = true;
+        rebuild();
+    }
+
     private void showRecipe(ItemStack stack) {
         if (!recipeItem.isEmpty()) recipeHistory.push(recipeItem);
         recipeItem = stack.copyWithCount(1);

@@ -58,6 +58,14 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // Dev only: opens a flat world, screenshots every block, GUI and the Codex into run-showcase/screenshots, then quits.
+        showcase {
+            client()
+            gameDirectory = project.file('run-showcase')
+            systemProperty 'robotica.showcase', 'true'
+            programArguments.addAll '--width', '1280', '--height', '800'
+        }
+
         server {
             server()
             programArgument '--nogui'
