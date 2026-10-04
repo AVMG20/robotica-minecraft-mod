@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:warp_pad",
+    "robotica:gate_frame",
+    "robotica:gate_controller"
+  ]
+}

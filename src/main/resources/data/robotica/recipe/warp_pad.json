@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "EAE",
+    "GRG",
+    "PPP"
+  ],
+  "key": {
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    }
+  },
+  "result": {
+    "id": "robotica:warp_pad",
+    "count": 1
+  }
+}

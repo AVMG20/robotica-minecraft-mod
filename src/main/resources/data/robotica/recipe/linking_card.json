@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NEN",
+    "PPP"
+  ],
+  "key": {
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    }
+  },
+  "result": {
+    "id": "robotica:linking_card",
+    "count": 1
+  }
+}

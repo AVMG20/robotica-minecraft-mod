@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BQB",
+    "EME",
+    " P "
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:blazing_casing"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "M": {
+      "item": "robotica:magma_core"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    }
+  },
+  "result": {
+    "id": "robotica:rift_upgrade",
+    "count": 1
+  }
+}

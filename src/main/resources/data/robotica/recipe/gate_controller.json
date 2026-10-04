@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FCF",
+    "NAN",
+    "FEF"
+  ],
+  "key": {
+    "F": {
+      "item": "robotica:gate_frame"
+    },
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "N": {
+      "item": "robotica:null_casing"
+    },
+    "A": {
+      "item": "robotica:antigrav_core"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    }
+  },
+  "result": {
+    "id": "robotica:gate_controller",
+    "count": 1
+  }
+}
