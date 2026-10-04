@@ -266,6 +266,79 @@ public class ArchitectGameTests {
         helper.succeed();
     }
 
+    // ---------------------------------------------------------------- audit fixes
+
+    /** Vanilla pieces cost their real matter value: no free anvils, no free water or crops. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void fixedPiecesAreNotFree(GameTestHelper helper) {
+        Set<net.minecraft.world.level.block.Block> allowed = Set.of(Blocks.CRAFTING_TABLE, Blocks.FURNACE, Blocks.CHEST, Blocks.BARREL, Blocks.FARMLAND);
+        for (ModuleType type : ModuleType.values()) {
+            for (BlockOp op : type.generate(0)) {
+                Piece piece = op.piece();
+                if (piece.kind() != Piece.Kind.FIXED) continue;
+                helper.assertTrue(allowed.contains(piece.fixed().getBlock()), type + " places a free " + piece.fixed().getBlock());
+                Matter cost = piece.cost(BuildStyle.TIMBERFRAME);
+                helper.assertTrue(cost.rustic() + cost.refined() + cost.exotic() >= 2, type + " " + piece.fixed().getBlock() + " is too cheap: " + cost);
+            }
+        }
+        helper.assertTrue(Piece.fixed(Blocks.CHEST.defaultBlockState()).cost(BuildStyle.TIMBERFRAME).rustic() >= 8, "a chest costs at least its 8 planks");
+        helper.assertTrue(Piece.WALL.cost(BuildStyle.COPPER_WORKS).equals(BuildStyle.COPPER_WORKS.cost), "style pieces pay the style price");
+        helper.assertTrue(Piece.AIR.cost(BuildStyle.TIMBERFRAME).isZero(), "clearing is free");
+        helper.succeed();
+    }
+
+    /** The table never builds outside the world border; a skipped block costs nothing and does not stall the build. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void buildSkipsBlocksOutsideTheWorldBorder(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var border = level.getWorldBorder();
+        BlockPos inside = helper.absolutePos(new BlockPos(1, 1, 1));
+        BlockPos outside = inside.offset(100, 0, 0);
+        double oldSize = border.getSize();
+        double oldX = border.getCenterX(), oldZ = border.getCenterZ();
+        var player = helper.makeMockPlayer(GameType.SURVIVAL);
+        try {
+            border.setCenter(inside.getX() + 0.5, inside.getZ() + 0.5);
+            border.setSize(20);
+            helper.assertTrue(ArchitectTableBlockEntity.mayBuildAt(level, inside, player), "inside the border is fine");
+            helper.assertTrue(!ArchitectTableBlockEntity.mayBuildAt(level, outside, player), "outside the border is refused");
+        } finally {
+            border.setSize(oldSize);
+            border.setCenter(oldX, oldZ);
+        }
+        helper.succeed();
+    }
+
+    /** Queue, plots and settings come back after the table was picked up and placed again. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void buildStateSurvivesPickingUpTheTable(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, false);
+        helper.assertTrue(table.handleAction(null, ArchitectTableBlockEntity.ACTION_QUEUE, 3, ModuleType.HALL.id()) == null, "queue a hall");
+        helper.assertTrue(table.handleAction(null, ArchitectTableBlockEntity.ACTION_CLEAR, 1, 0) == null, "toggle clear terrain");
+        int grid0 = table.gridWord(0), grid1 = table.gridWord(1);
+        ItemStack stack = new ItemStack(ArchitectRegistry.ARCHITECT_TABLE_ITEM.get());
+        stack.applyComponents(table.collectComponents());
+        helper.assertTrue(stack.has(ArchitectRegistry.BUILD_STATE_COMPONENT.get()), "the item carries the build state");
+
+        // same spot: everything is back
+        helper.setBlock(HIGH, Blocks.AIR);
+        helper.setBlock(HIGH, ArchitectRegistry.ARCHITECT_TABLE.get().defaultBlockState());
+        ArchitectTableBlockEntity same = (ArchitectTableBlockEntity) helper.getBlockEntity(HIGH);
+        same.applyComponentsFromItemStack(stack);
+        helper.assertTrue(same.queueSize() == 1, "queue restored on the same spot");
+        helper.assertTrue(same.gridWord(0) == grid0 && same.gridWord(1) == grid1, "plots restored on the same spot");
+        helper.assertTrue(same.clearTerrain(), "settings restored");
+        helper.assertTrue(same.energy.getEnergyStored() == 0, "a new table starts without energy");
+
+        // another spot: a job that never started is still pending
+        BlockPos elsewhere = HIGH.offset(20, 0, 0);
+        helper.setBlock(elsewhere, ArchitectRegistry.ARCHITECT_TABLE.get().defaultBlockState());
+        ArchitectTableBlockEntity moved = (ArchitectTableBlockEntity) helper.getBlockEntity(elsewhere);
+        moved.applyComponentsFromItemStack(stack);
+        helper.assertTrue(moved.queueSize() == 1, "unstarted work moves with the table");
+        helper.succeed();
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private static ArchitectTableBlockEntity preparedTable(GameTestHelper helper, boolean clear) {

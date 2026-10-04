@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
@@ -24,6 +25,7 @@ public final class GateTransit {
         PARTNER_BROKEN("message.robotica.warp.gate_partner_broken"),
         NO_SPOT("message.robotica.warp.no_safe_spot"),
         NO_ENERGY("message.robotica.warp.gate_no_energy"),
+        NOT_GENERATED("message.robotica.warp.gate_not_generated"),
         CANCELLED(null);
 
         private final String messageKey;
@@ -48,7 +50,14 @@ public final class GateTransit {
         if (destLevel == null) return Result.PARTNER_BROKEN;
         if (destLevel != level && !entity.canChangeDimensions(level, destLevel)) return Result.NOT_ALLOWED;
 
-        destLevel.getChunk(target.pos());
+        // cheapest checks first: a gate that can not pay refuses before any chunk or block work happens
+        int cost = WarpConfig.gateEntityCost();
+        if (from.energy.getEnergyStored() < cost) return Result.NO_ENERGY;
+
+        // never generate terrain on the main thread for a gate trip
+        ChunkPos partnerChunk = new ChunkPos(target.pos());
+        if (!Teleporter.isGenerated(destLevel, partnerChunk.x, partnerChunk.z)) return Result.NOT_GENERATED;
+        destLevel.getChunk(partnerChunk.x, partnerChunk.z);
         BlockEntity be = destLevel.getBlockEntity(target.pos());
         if (!(be instanceof GateControllerBlockEntity partner)) {
             GateLinks.get(level.getServer()).unlink(from.globalPos());
@@ -60,10 +69,14 @@ public final class GateTransit {
         GateShape ds = partnerShape.get();
 
         Direction front = partner.front(ds);
+        BlockPos arrivalCenter = ds.inner(0, 0);
+        if (!Teleporter.aroundGenerated(destLevel, arrivalCenter.relative(front)) || !Teleporter.aroundGenerated(destLevel, arrivalCenter.relative(front.getOpposite()))) {
+            return Result.NOT_GENERATED;
+        }
         Vec3 spot = null;
         Direction out = front;
         for (Direction candidate : new Direction[]{front, front.getOpposite()}) {
-            BlockPos cell = ds.inner(0, 0).relative(candidate);
+            BlockPos cell = arrivalCenter.relative(candidate);
             Optional<Vec3> found = Teleporter.prepareArrival(destLevel, cell);
             if (found.isPresent()) {
                 spot = found.get();
@@ -72,9 +85,6 @@ public final class GateTransit {
             }
         }
         if (spot == null) return Result.NO_SPOT;
-
-        int cost = WarpConfig.gateEntityCost();
-        if (from.energy.getEnergyStored() < cost) return Result.NO_ENERGY;
 
         Vec3 origin = entity.position();
         Teleporter.departEffects(level, origin, true);

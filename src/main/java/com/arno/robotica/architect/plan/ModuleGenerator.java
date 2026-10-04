@@ -1,7 +1,6 @@
 package com.arno.robotica.architect.plan;
 
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FarmBlock;
@@ -158,13 +157,10 @@ final class ModuleGenerator {
     private static void workshop(Grid g, int mask) {
         floor(g);
         walls(g, 4, true);
-        // Stations in the four corners, clear of the doorways.
+        // Basic stations in the corners, clear of the doorways. Anvils, grindstones, smithing tables and blast furnaces are
+        // not built: their materials (31 iron for an anvil) are worth far more than a module block, so the player crafts them.
         g.set(1, 1, 1, Piece.fixed(Blocks.CRAFTING_TABLE.defaultBlockState()));
         g.set(2, 1, 1, Piece.fixed(facing(Blocks.FURNACE, Direction.SOUTH)));
-        g.set(7, 1, 1, Piece.fixed(Blocks.SMITHING_TABLE.defaultBlockState()));
-        g.set(6, 1, 1, Piece.fixed(facing(Blocks.BLAST_FURNACE, Direction.SOUTH)));
-        g.set(1, 1, 7, Piece.fixed(Blocks.GRINDSTONE.defaultBlockState()));
-        g.set(2, 1, 7, Piece.fixed(Blocks.ANVIL.defaultBlockState().setValue(AnvilBlock.FACING, Direction.NORTH)));
         g.set(7, 1, 7, Piece.fixed(facing(Blocks.CHEST, Direction.WEST)));
         g.set(6, 1, 7, Piece.fixed(Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP)));
         interior(g, 4);
@@ -218,19 +214,14 @@ final class ModuleGenerator {
 
     private static void greenhouse(Grid g, int mask) {
         floor(g);
-        // Beds along the north and south walls, a water source in the middle of each.
+        // Beds along the north and south walls. Seeds and water are not free: the beds are bare farmland, and a marker block
+        // in the floor in the middle of each bed shows where the player puts a water source and sows the seeds.
         BlockState farmland = Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7);
         for (int x = 1; x < S - 1; x++) {
-            for (int z : new int[]{1, 2, 6, 7}) {
-                g.set(x, 0, z, Piece.fixed(farmland));
-                boolean outer = z == 1 || z == 7;
-                g.set(x, 1, z, Piece.fixed((outer ? Blocks.CARROTS : Blocks.WHEAT).defaultBlockState()));
-            }
+            for (int z : new int[]{1, 2, 6, 7}) g.set(x, 0, z, Piece.fixed(farmland));
         }
-        g.set(4, 0, 1, Piece.fixed(Blocks.WATER.defaultBlockState()));
-        g.set(4, 0, 7, Piece.fixed(Blocks.WATER.defaultBlockState()));
-        g.set(4, 1, 1, null);
-        g.set(4, 1, 7, null);
+        g.set(4, 0, 1, Piece.LIGHT);
+        g.set(4, 0, 7, Piece.LIGHT);
         // Low solid wall, glass above, glass roof in a frame.
         for (int x = 0; x < S; x++) {
             for (int z = 0; z < S; z++) {

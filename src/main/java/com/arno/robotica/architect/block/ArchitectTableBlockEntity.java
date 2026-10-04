@@ -26,7 +26,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
@@ -52,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -154,8 +158,22 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (owner == null || owner.equals(player.getUUID()) || player.hasPermissions(2)) return true;
         Team mine = player.getTeam();
         if (mine == null || level == null) return false;
-        Team theirs = level.getScoreboard().getPlayersTeam(ownerName);
+        Team theirs = level.getScoreboard().getPlayersTeam(currentOwnerName());
         return theirs != null && mine.isAlliedTo(theirs);
+    }
+
+    /** The owner's current name: online player first, then the profile cache (both by UUID), else the stored name. */
+    private String currentOwnerName() {
+        if (owner == null || !(level instanceof ServerLevel serverLevel)) return ownerName;
+        MinecraftServer server = serverLevel.getServer();
+        ServerPlayer online = server.getPlayerList().getPlayer(owner);
+        if (online != null) return online.getGameProfile().getName();
+        GameProfileCache cache = server.getProfileCache();
+        if (cache != null) {
+            Optional<GameProfile> profile = cache.get(owner);
+            if (profile.isPresent() && !profile.get().getName().isEmpty()) return profile.get().getName();
+        }
+        return ownerName;
     }
 
     // ---------------------------------------------------------------- matter
@@ -483,6 +501,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         BlockState desired = op.piece().resolve(job.style);
         BlockState current = level.getBlockState(target);
         if (current == desired || (desired.isAir() && current.isAir())) return STEP_SKIPPED;
+        // spawn protection, world border and other no-build areas: skip the block, spend nothing, never stall the queue
+        if (!mayBuildAt(level, target, fakePlayer(level))) return STEP_SKIPPED;
 
         boolean replaceable = current.isAir() || current.canBeReplaced() || ArchitectRegistry.isBuildingBlock(current)
                 || current.getBlock() instanceof LiquidBlock;
@@ -493,7 +513,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         }
         Matter cost = Matter.ZERO;
         if (!desired.isAir()) {
-            cost = job.style.cost;
+            cost = op.piece().cost(job.style);
             if (rustic < cost.rustic()) return ST_NO_RUSTIC;
             if (refined < cost.refined()) return ST_NO_REFINED;
             if (exotic < cost.exotic()) return ST_NO_EXOTIC;
@@ -527,6 +547,13 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         exotic -= cost.exotic();
         energy.consume(energyCost);
         return STEP_DONE;
+    }
+
+    /** False inside vanilla spawn protection, outside the world border, or where the player may not interact. */
+    public static boolean mayBuildAt(ServerLevel level, BlockPos target, Player player) {
+        if (!level.getWorldBorder().isWithinBounds(target)) return false;
+        if (level.getServer().isUnderSpawnProtection(level, target, player)) return false;
+        return level.mayInteract(player, target);
     }
 
     private FakePlayer fakePlayer(ServerLevel level) {
@@ -585,6 +612,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         if (!matter().isZero()) components.set(ArchitectRegistry.MATTER_COMPONENT.get(), matter());
+        if (hasBuildState()) components.set(ArchitectRegistry.BUILD_STATE_COMPONENT.get(), buildStateTag());
     }
 
     @Override
@@ -592,6 +620,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         super.applyImplicitComponents(input);
         Matter m = input.get(ArchitectRegistry.MATTER_COMPONENT.get());
         if (m != null) setMatter(m);
+        CompoundTag build = input.get(ArchitectRegistry.BUILD_STATE_COMPONENT.get());
+        if (build != null) applyBuildState(build);
     }
 
     @Override
@@ -608,12 +638,76 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         tag.putString("owner_name", ownerName);
         tag.putInt("selected_style", selectedStyle.ordinal());
         tag.putBoolean("clear_terrain", clearTerrain);
+        writeBuild(tag);
+    }
+
+    private void writeBuild(CompoundTag tag) {
         ListTag plotList = new ListTag();
         for (int i = 0; i < plots.length; i++) if (plots[i] != null) plotList.add(plots[i].save(i));
         tag.put("plots", plotList);
         ListTag jobs = new ListTag();
         for (BuildJob job : queue) jobs.add(job.save());
         tag.put("queue", jobs);
+    }
+
+    private boolean hasBuildState() {
+        if (!queue.isEmpty()) return true;
+        for (PlotRecord rec : plots) if (rec != null) return true;
+        return false;
+    }
+
+    /** Build state for the item (picking the table up): plots, queue, cursor, settings and where it was standing. */
+    private CompoundTag buildStateTag() {
+        CompoundTag tag = new CompoundTag();
+        writeBuild(tag);
+        tag.putInt("selected_style", selectedStyle.ordinal());
+        tag.putBoolean("clear_terrain", clearTerrain);
+        tag.putLong("origin", worldPosition.asLong());
+        if (level != null) tag.putString("dim", level.dimension().location().toString());
+        return tag;
+    }
+
+    /**
+     * Restores the build state of a picked up table. Built modules stand where the table stood, so on any other spot
+     * only the work that has not left a trace yet survives: finished plots are forgotten and the job that was running
+     * starts over.
+     */
+    private void applyBuildState(CompoundTag tag) {
+        readBuild(tag);
+        selectedStyle = BuildStyle.byOrdinal(tag.getInt("selected_style"));
+        clearTerrain = tag.getBoolean("clear_terrain");
+        boolean sameSpot = tag.contains("origin") && tag.getLong("origin") == worldPosition.asLong()
+                && (level == null || !tag.contains("dim") || tag.getString("dim").equals(level.dimension().location().toString()));
+        if (!sameSpot) relocate();
+        opsJob = null;
+        setChanged();
+    }
+
+    private void relocate() {
+        for (int i = 0; i < plots.length; i++) {
+            if (plots[i] != null && plots[i].status == PlotRecord.BUILT) plots[i] = null;
+        }
+        queue.removeIf(job -> {
+            PlotRecord rec = plots[job.plot];
+            if (rec == null || job.patch) {
+                if (rec != null) plots[job.plot] = null;
+                return true;
+            }
+            if (job.started) {
+                job.started = false;
+                job.cursor = 0;
+                rec.status = PlotRecord.QUEUED;
+                rec.mask = 0;
+            }
+            return false;
+        });
+        for (int i = 0; i < plots.length; i++) {
+            if (plots[i] != null) {
+                boolean queued = false;
+                for (BuildJob job : queue) if (job.plot == i) queued = true;
+                if (!queued) plots[i] = null;
+            }
+        }
     }
 
     @Override
@@ -630,6 +724,11 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         ownerName = tag.getString("owner_name");
         selectedStyle = BuildStyle.byOrdinal(tag.getInt("selected_style"));
         clearTerrain = tag.getBoolean("clear_terrain");
+        readBuild(tag);
+        opsJob = null;
+    }
+
+    private void readBuild(CompoundTag tag) {
         java.util.Arrays.fill(plots, null);
         for (Tag t : tag.getList("plots", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) t;
@@ -641,6 +740,5 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             BuildJob job = BuildJob.load((CompoundTag) t);
             if (job != null && plots[job.plot] != null) queue.add(job);
         }
-        opsJob = null;
     }
 }

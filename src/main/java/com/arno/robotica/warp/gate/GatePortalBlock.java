@@ -84,7 +84,7 @@ public class GatePortalBlock extends Block {
             serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             return;
         }
-        if (controller.shape() != null && controller.shape().isInner(pos)) controller.onEntityEnter(entity);
+        if (controller.shape() != null && controller.shape().isInner(pos)) controller.queueEntity(entity);
     }
 
     /** Walks down to the bottom row, then along the width to find the controller. */

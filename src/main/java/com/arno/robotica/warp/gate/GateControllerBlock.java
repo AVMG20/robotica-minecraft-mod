@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -82,13 +83,21 @@ public class GateControllerBlock extends Block implements EntityBlock {
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (level.getBlockEntity(pos) instanceof GateControllerBlockEntity gate && level instanceof ServerLevel serverLevel) {
-            gate.evaluate(serverLevel);
+            gate.refresh(serverLevel); // status only, never pays idle FE
             String key = gate.shape() == null ? "message.robotica.warp.gate_status_unformed"
                     : gate.linked() == null ? "message.robotica.warp.gate_status_unlinked"
                     : gate.isActive() ? "message.robotica.warp.gate_status_open" : "message.robotica.warp.gate_status_unpowered";
             player.displayClientMessage(Component.translatable(key, Fmt.energy(gate.energy.getEnergyStored()), Fmt.energy(gate.energy.getMaxEnergyStored())), true);
         }
         return InteractionResult.CONSUME;
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof GateControllerBlockEntity gate) {
+            gate.setOwner(placer instanceof Player player ? player : null);
+        }
     }
 
     @Override

@@ -11,10 +11,9 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-/** Server side hooks of the warp module: remote charge interruption, owner name refresh, cooldown cleanup. */
+/** Server side hooks of the warp module: remote charge interruption, owner name refresh, cooldown pruning. */
 @EventBusSubscriber(modid = Robotica.MODID)
 public final class WarpEvents {
     private WarpEvents() {}
@@ -34,22 +33,19 @@ public final class WarpEvents {
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             WarpPads.get(player.server).refreshOwnerName(player.getUUID(), player.getGameProfile().getName());
+            // the vanilla item cooldown does not survive a relog: restore it from the persisted ready-at time
+            RemoteItem.restoreCooldown(player);
         }
     }
 
     @SubscribeEvent
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        WarpCooldowns.clear(event.getEntity().getUUID());
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) RemoteItem.restoreCooldown(player);
     }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         long time = event.getServer().overworld().getGameTime();
-        if (time % 1200 == 0) WarpCooldowns.prune(time);
-    }
-
-    @SubscribeEvent
-    public static void onServerStopped(ServerStoppedEvent event) {
-        WarpCooldowns.clearAll();
+        if (time % 1200 == 0) WarpCooldowns.get(event.getServer()).prune(time);
     }
 }

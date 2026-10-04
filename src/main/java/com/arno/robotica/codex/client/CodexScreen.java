@@ -32,7 +32,9 @@ import java.io.Reader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -56,6 +58,15 @@ public class CodexScreen extends Screen {
     private final Deque<ItemStack> recipeHistory = new ArrayDeque<>();
     private int left, top;
 
+    // Caches (rebuilt per screen; layout caches are cleared in init, which also runs on resize)
+    private Map<Item, List<RecipeHolder<?>>> recipeCache;
+    private final Map<ResourceLocation, List<Ingredient>> smithingCache = new HashMap<>();
+    private final Map<Long, List<FormattedCharSequence>> wrapCache = new HashMap<>();
+    private List<Item> labItemList = List.of();
+    /** Animation values computed once per frame, so what is drawn and what a click hits always agree. */
+    private int frameTick = 0;
+    private long frameRecipeSlot = 0;
+
     public CodexScreen() {
         super(Component.translatable("item.robotica.codex"));
         loadChapters();
@@ -69,25 +80,40 @@ public class CodexScreen extends Screen {
             try (Reader reader = res.get().openAsReader()) {
                 JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
                 for (JsonElement ce : root.getAsJsonArray("chapters")) {
-                    JsonObject c = ce.getAsJsonObject();
-                    List<Page> pages = new ArrayList<>();
-                    for (JsonElement pe : c.getAsJsonArray("pages")) {
-                        JsonObject p = pe.getAsJsonObject();
-                        List<ItemStack> items = new ArrayList<>();
-                        if (p.has("items")) {
-                            for (JsonElement ie : p.getAsJsonArray("items")) {
-                                ItemStack s = stackOf(ie.getAsString());
-                                if (!s.isEmpty()) items.add(s);
-                            }
-                        }
-                        pages.add(new Page(p.has("title") ? p.get("title").getAsString() : "", p.get("text").getAsString(), items));
+                    try {
+                        Chapter chapter = readChapter(ce.getAsJsonObject());
+                        if (chapter != null) chapters.add(chapter);
+                    } catch (RuntimeException e) {
+                        Robotica.LOGGER.error("Skipping a broken codex chapter", e);
                     }
-                    chapters.add(new Chapter(c.get("title").getAsString(), stackOf(c.get("icon").getAsString()), pages));
                 }
             }
         } catch (Exception e) {
             Robotica.LOGGER.error("Could not read Robotica codex", e);
         }
+    }
+
+    /** Returns null for a chapter without pages. A page without text gets an empty text, so it never takes the rest down. */
+    private static Chapter readChapter(JsonObject c) {
+        List<Page> pages = new ArrayList<>();
+        if (c.has("pages")) {
+            for (JsonElement pe : c.getAsJsonArray("pages")) {
+                JsonObject p = pe.getAsJsonObject();
+                List<ItemStack> items = new ArrayList<>();
+                if (p.has("items")) {
+                    for (JsonElement ie : p.getAsJsonArray("items")) {
+                        ItemStack s = stackOf(ie.getAsString());
+                        if (!s.isEmpty()) items.add(s);
+                    }
+                }
+                pages.add(new Page(p.has("title") ? p.get("title").getAsString() : "",
+                        p.has("text") ? p.get("text").getAsString() : "", items));
+            }
+        }
+        if (pages.isEmpty()) return null;
+        String title = c.has("title") ? c.get("title").getAsString() : "?";
+        ItemStack icon = c.has("icon") ? stackOf(c.get("icon").getAsString()) : ItemStack.EMPTY;
+        return new Chapter(title, icon, pages);
     }
 
     private static ItemStack stackOf(String id) {
@@ -104,6 +130,9 @@ public class CodexScreen extends Screen {
     protected void init() {
         left = (width - W) / 2;
         top = (height - H) / 2;
+        wrapCache.clear();
+        labItemList = buildLabItems();
+        chapter = Math.min(chapter, Math.max(0, chapters.size() - 1));
         rebuild();
     }
 
@@ -175,6 +204,9 @@ public class CodexScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         super.render(g, mx, my, pt);
+        long now = Util.getMillis();
+        frameTick = (int) (now / 1000);
+        frameRecipeSlot = now / 3000;
         drawBook(g);
         ItemStack hovered = lab ? renderLab(g, mx, my) : renderManual(g, mx, my);
         if (!lab) renderChapterList(g, mx, my);
@@ -225,13 +257,15 @@ public class CodexScreen extends Screen {
 
     private List<FormattedCharSequence> wrappedText() {
         if (chapters.isEmpty()) return List.of();
-        Page p = chapters.get(chapter).pages().get(page);
-        List<FormattedCharSequence> lines = new ArrayList<>();
-        for (String para : p.text().split("\n")) {
-            if (para.isBlank()) { lines.add(FormattedCharSequence.EMPTY); continue; }
-            lines.addAll(font.split(FormattedText.of(para), PAGE_W - 4));
-        }
-        return lines;
+        return wrapCache.computeIfAbsent(((long) chapter << 32) | page, key -> {
+            Page p = chapters.get(chapter).pages().get(page);
+            List<FormattedCharSequence> lines = new ArrayList<>();
+            for (String para : p.text().split("\n")) {
+                if (para.isBlank()) { lines.add(FormattedCharSequence.EMPTY); continue; }
+                lines.addAll(font.split(FormattedText.of(para), PAGE_W - 4));
+            }
+            return lines;
+        });
     }
 
     private int linesPerSubPage() {
@@ -283,18 +317,35 @@ public class CodexScreen extends Screen {
 
     // ---------------------------------------------------------------- recipes
 
+    /** All recipes by result item, built once per screen (the recipe manager never changes while the codex is open). */
     private List<RecipeHolder<?>> recipesFor(ItemStack stack) {
-        List<RecipeHolder<?>> out = new ArrayList<>();
-        if (minecraft == null || minecraft.level == null) return out;
-        RegistryAccess access = minecraft.level.registryAccess();
-        for (RecipeHolder<?> holder : minecraft.level.getRecipeManager().getRecipes()) {
-            try {
-                if (ItemStack.isSameItem(holder.value().getResultItem(access), stack)) out.add(holder);
-            } catch (RuntimeException ignored) {
+        if (minecraft == null || minecraft.level == null) return List.of();
+        if (recipeCache == null) {
+            recipeCache = new HashMap<>();
+            RegistryAccess access = minecraft.level.registryAccess();
+            for (RecipeHolder<?> holder : minecraft.level.getRecipeManager().getRecipes()) {
+                try {
+                    recipeCache.computeIfAbsent(holder.value().getResultItem(access).getItem(), i -> new ArrayList<>()).add(holder);
+                } catch (RuntimeException ignored) {
+                }
             }
+            for (List<RecipeHolder<?>> list : recipeCache.values()) list.sort((a, b) -> a.id().toString().compareTo(b.id().toString()));
         }
-        out.sort((a, b) -> a.id().toString().compareTo(b.id().toString()));
-        return out;
+        return recipeCache.getOrDefault(stack.getItem(), List.of());
+    }
+
+    private int gridWidth(Recipe<?> recipe) {
+        return recipe instanceof ShapedRecipe shaped ? shaped.getWidth() : 3;
+    }
+
+    private List<Ingredient> ingredientsOf(RecipeHolder<?> holder) {
+        Recipe<?> recipe = holder.value();
+        if (recipe instanceof ShapedRecipe shaped) return shaped.getIngredients();
+        if (recipe instanceof SmithingRecipe smithing) {
+            return smithingCache.computeIfAbsent(holder.id(), id ->
+                    List.of(findSmithing(smithing, 0), findSmithing(smithing, 1), findSmithing(smithing, 2)));
+        }
+        return recipe.getIngredients();
     }
 
     private ItemStack renderRecipe(GuiGraphics g, int x, int y, int mx, int my) {
@@ -309,22 +360,11 @@ public class CodexScreen extends Screen {
             }
             return ItemStack.EMPTY;
         }
-        int index = (int) ((Util.getMillis() / 3000) % recipes.size());
+        int index = (int) (frameRecipeSlot % recipes.size());
         Recipe<?> recipe = recipes.get(index).value();
-        int tick = (int) (Util.getMillis() / 1000);
-        List<Ingredient> ingredients = new ArrayList<>();
-        int gw = 3;
-        if (recipe instanceof ShapedRecipe shaped) {
-            gw = shaped.getWidth();
-            ingredients.addAll(shaped.getIngredients());
-        } else if (recipe instanceof SmithingRecipe smithing) {
-            gw = 3;
-            ingredients.add(findSmithing(smithing, 0));
-            ingredients.add(findSmithing(smithing, 1));
-            ingredients.add(findSmithing(smithing, 2));
-        } else {
-            ingredients.addAll(recipe.getIngredients());
-        }
+        int tick = frameTick;
+        List<Ingredient> ingredients = ingredientsOf(recipes.get(index));
+        int gw = gridWidth(recipe);
         String kind = recipe instanceof SmithingRecipe ? "Smithing table" :
                 BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()) == null ? "" : BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()).getPath().replace('_', ' ');
         g.drawString(font, Component.literal(kind + (recipes.size() > 1 ? "  (" + (index + 1) + "/" + recipes.size() + ")" : "")), x, y, MUTED, false);
@@ -374,6 +414,10 @@ public class CodexScreen extends Screen {
     // ---------------------------------------------------------------- creative lab
 
     private List<Item> labItems() {
+        return labItemList;
+    }
+
+    private static List<Item> buildLabItems() {
         List<Item> items = new ArrayList<>();
         for (Item item : BuiltInRegistries.ITEM) {
             if (BuiltInRegistries.ITEM.getKey(item).getNamespace().equals(Robotica.MODID)) items.add(item);
@@ -488,21 +532,11 @@ public class CodexScreen extends Screen {
         ItemStack recipeHit(int mx, int my) {
             List<RecipeHolder<?>> recipes = recipesFor(recipeItem);
             if (recipes.isEmpty()) return ItemStack.EMPTY;
-            Recipe<?> recipe = recipes.get((int) ((Util.getMillis() / 3000) % recipes.size())).value();
-            List<Ingredient> ingredients = new ArrayList<>();
-            int gw = 3;
-            if (recipe instanceof ShapedRecipe shaped) {
-                gw = shaped.getWidth();
-                ingredients.addAll(shaped.getIngredients());
-            } else if (recipe instanceof SmithingRecipe smithing) {
-                ingredients.add(findSmithing(smithing, 0));
-                ingredients.add(findSmithing(smithing, 1));
-                ingredients.add(findSmithing(smithing, 2));
-            } else {
-                ingredients.addAll(recipe.getIngredients());
-            }
+            RecipeHolder<?> holder = recipes.get((int) (frameRecipeSlot % recipes.size()));
+            List<Ingredient> ingredients = ingredientsOf(holder);
+            int gw = gridWidth(holder.value());
             int gx = left + W / 2 + 14, gy = top + 10 + 16 + 12;
-            int tick = (int) (Util.getMillis() / 1000);
+            int tick = frameTick;
             for (int i = 0; i < ingredients.size(); i++) {
                 int sx = gx + (i % gw) * 19, sy = gy + (i / gw) * 19;
                 if (mx >= sx && mx < sx + 18 && my >= sy && my < sy + 18) {

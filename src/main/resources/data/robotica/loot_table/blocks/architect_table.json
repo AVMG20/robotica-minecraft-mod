@@ -13,7 +13,8 @@
               "function": "minecraft:copy_components",
               "source": "block_entity",
               "include": [
-                "robotica:architect_matter"
+                "robotica:architect_matter",
+                "robotica:architect_build"
               ]
             }
           ]
