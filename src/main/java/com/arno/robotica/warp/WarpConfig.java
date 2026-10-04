@@ -52,13 +52,13 @@ public final class WarpConfig {
                 .defineInRange("remoteCooldownSeconds", 30, 0, 3_600);
         b.pop();
         b.push("warp_gate");
-        GATE_BUFFER = b.comment("FE buffer of a Gate Controller.")
+        GATE_BUFFER = b.comment("FE buffer of a Portal Projector.")
                 .defineInRange("gateBuffer", 4_000_000, 1_000, 2_000_000_000);
-        GATE_MAX_RECEIVE = b.comment("FE per tick a Gate Controller accepts from cables and other mods.")
+        GATE_MAX_RECEIVE = b.comment("FE per tick a Portal Projector accepts from cables and other mods.")
                 .defineInRange("gateMaxReceive", 50_000, 1, 1_000_000_000);
-        GATE_IDLE_COST = b.comment("FE per tick an open gate uses while it holds its portal.")
+        GATE_IDLE_COST = b.comment("FE per tick a Portal Projector uses while it projects its portal.")
                 .defineInRange("gateIdleCost", 200, 0, 1_000_000);
-        GATE_ENTITY_COST = b.comment("FE per entity that travels through a gate, taken from the departure gate.")
+        GATE_ENTITY_COST = b.comment("FE per entity that travels through a gate, taken from the departure projector.")
                 .defineInRange("gateEntityCost", 10_000, 0, 100_000_000);
         GATE_ENTITY_COOLDOWN = b.comment("Ticks an entity can not use a gate again after it travelled (stops ping-pong).")
                 .defineInRange("gateEntityCooldown", 60, 5, 72_000);

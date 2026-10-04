@@ -3,6 +3,7 @@ package com.arno.robotica.warp.client;
 import com.arno.robotica.warp.WarpRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /** Client-only entry point of the warp module. Called from RoboticaClient. */
@@ -11,6 +12,8 @@ public final class WarpClient {
 
     public static void init(IEventBus modBus, ModContainer container) {
         modBus.addListener(WarpClient::registerScreens);
+        modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
+                event -> event.registerBlockEntityRenderer(WarpRegistry.GATE_CONTROLLER_BE.get(), PortalProjectorRenderer::new));
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {

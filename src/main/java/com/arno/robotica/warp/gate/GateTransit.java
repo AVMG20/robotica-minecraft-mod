@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-/** Sends one entity from a gate to its linked gate: checks, safe spot, payment, move, effects, cooldown. */
+/** Sends one entity from a projector to its linked projector: checks, safe spot, payment, move, effects, cooldown. */
 public final class GateTransit {
     private GateTransit() {}
 
@@ -40,9 +40,9 @@ public final class GateTransit {
         }
     }
 
-    /** Sends the entity through the gate. Nothing is paid unless the entity arrives. */
-    public static Result send(GateControllerBlockEntity from, Entity entity) {
-        if (!(from.getLevel() instanceof ServerLevel level) || from.shape() == null) return Result.NOT_ALLOWED;
+    /** Sends the entity through the portal. Nothing is paid unless the entity arrives. */
+    public static Result send(PortalProjectorBlockEntity from, Entity entity) {
+        if (!(from.getLevel() instanceof ServerLevel level)) return Result.NOT_ALLOWED;
         if (!Teleporter.canTeleport(entity)) return Result.NOT_ALLOWED;
         GlobalPos target = from.linked();
         if (target == null) return Result.NO_PARTNER;
@@ -50,49 +50,43 @@ public final class GateTransit {
         if (destLevel == null) return Result.PARTNER_BROKEN;
         if (destLevel != level && !entity.canChangeDimensions(level, destLevel)) return Result.NOT_ALLOWED;
 
-        // cheapest checks first: a gate that can not pay refuses before any chunk or block work happens
+        // cheapest checks first: a projector that can not pay refuses before any chunk or block work happens
         int cost = WarpConfig.gateEntityCost();
         if (from.energy.getEnergyStored() < cost) return Result.NO_ENERGY;
 
-        // never generate terrain on the main thread for a gate trip
+        // never generate terrain on the main thread for a portal trip
         ChunkPos partnerChunk = new ChunkPos(target.pos());
         if (!Teleporter.isGenerated(destLevel, partnerChunk.x, partnerChunk.z)) return Result.NOT_GENERATED;
         destLevel.getChunk(partnerChunk.x, partnerChunk.z);
         BlockEntity be = destLevel.getBlockEntity(target.pos());
-        if (!(be instanceof GateControllerBlockEntity partner)) {
+        if (!(be instanceof PortalProjectorBlockEntity partner)) {
             GateLinks.get(level.getServer()).unlink(from.globalPos());
             from.setLinked(null);
             return Result.PARTNER_BROKEN;
         }
-        Optional<GateShape> partnerShape = partner.findShape();
-        if (partnerShape.isEmpty()) return Result.PARTNER_BROKEN;
-        GateShape ds = partnerShape.get();
 
-        Direction front = partner.front(ds);
-        BlockPos arrivalCenter = ds.inner(0, 0);
-        if (!Teleporter.aroundGenerated(destLevel, arrivalCenter.relative(front)) || !Teleporter.aroundGenerated(destLevel, arrivalCenter.relative(front.getOpposite()))) {
-            return Result.NOT_GENERATED;
-        }
+        // arrival: in front of the partner's portal, outside its own trigger volume, facing out
+        Direction front = partner.front();
         Vec3 spot = null;
-        Direction out = front;
-        for (Direction candidate : new Direction[]{front, front.getOpposite()}) {
-            BlockPos cell = arrivalCenter.relative(candidate);
-            Optional<Vec3> found = Teleporter.prepareArrival(destLevel, cell);
-            if (found.isPresent()) {
-                spot = found.get();
-                out = candidate;
-                break;
+        boolean ungenerated = false;
+        for (int i = 0; i < PortalGeometry.ARRIVAL_TRIES && spot == null; i++) {
+            BlockPos cell = target.pos().relative(front, PortalGeometry.ARRIVAL_DISTANCE + i);
+            if (!Teleporter.aroundGenerated(destLevel, cell)) {
+                ungenerated = true;
+                continue;
             }
+            Optional<Vec3> found = Teleporter.prepareArrival(destLevel, cell);
+            if (found.isPresent() && !PortalGeometry.inColumn(target.pos(), front, found.get())) spot = found.get();
         }
-        if (spot == null) return Result.NO_SPOT;
+        if (spot == null) return ungenerated ? Result.NOT_GENERATED : Result.NO_SPOT;
 
         Vec3 origin = entity.position();
         Teleporter.departEffects(level, origin, true);
         float pitch = entity.getXRot();
-        Entity moved = Teleporter.teleport(entity, destLevel, spot, out.toYRot(), pitch);
+        Entity moved = Teleporter.teleport(entity, destLevel, spot, front.toYRot(), pitch);
         if (moved == null) return Result.CANCELLED;
         from.energy.consume(cost);
-        GateControllerBlockEntity.setCooldown(moved, destLevel.getGameTime(), WarpConfig.gateEntityCooldown());
+        PortalProjectorBlockEntity.setCooldown(moved, destLevel.getGameTime(), WarpConfig.gateEntityCooldown());
         Teleporter.arriveEffects(destLevel, spot, true);
         return Result.SENT;
     }

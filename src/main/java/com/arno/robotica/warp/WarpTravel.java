@@ -3,7 +3,7 @@ package com.arno.robotica.warp;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.util.Fmt;
-import com.arno.robotica.warp.gate.GateControllerBlockEntity;
+import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.gate.GateLinks;
 import com.arno.robotica.warp.item.RemoteItem;
 import com.arno.robotica.warp.menu.DestinationEntry;
@@ -278,8 +278,8 @@ public final class WarpTravel {
     public static final double LINK_REACH = 8.0;
 
     /**
-     * Sneak-right-click of a Linking Card on a Gate Controller: first click stores it, second click links both. Both
-     * controllers must be usable by the player (owner, op level 2 or owner's team); an unowned gate is claimed by the
+     * Sneak-right-click of a Linking Card on a Portal Projector: first click stores it, second click links both. Both
+     * projectors must be usable by the player (owner, op level 2 or owner's team); an unowned gate is claimed by the
      * player who links it.
      */
     public static void linkingCardUsed(ServerPlayer player, ItemStack card, GlobalPos clicked) {
@@ -290,7 +290,7 @@ public final class WarpTravel {
             message(player, Component.translatable("message.robotica.warp.card_too_far"));
             return;
         }
-        if (!(clickedLevel.getBlockEntity(clicked.pos()) instanceof GateControllerBlockEntity second)) {
+        if (!(clickedLevel.getBlockEntity(clicked.pos()) instanceof PortalProjectorBlockEntity second)) {
             card.remove(WarpComponents.LINK_SOURCE.get());
             message(player, Component.translatable("message.robotica.warp.card_lost"));
             return;
@@ -317,7 +317,7 @@ public final class WarpTravel {
             return;
         }
         sourceLevel.getChunk(source.pos());
-        if (!(sourceLevel.getBlockEntity(source.pos()) instanceof GateControllerBlockEntity first)) {
+        if (!(sourceLevel.getBlockEntity(source.pos()) instanceof PortalProjectorBlockEntity first)) {
             card.remove(WarpComponents.LINK_SOURCE.get());
             message(player, Component.translatable("message.robotica.warp.card_lost"));
             return;

@@ -5,11 +5,10 @@ import com.arno.robotica.warp.WarpComponents;
 import com.arno.robotica.warp.WarpConfig;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.WarpTravel;
-import com.arno.robotica.warp.gate.GateControllerBlock;
-import com.arno.robotica.warp.gate.GateControllerBlockEntity;
+import com.arno.robotica.warp.gate.PortalProjectorBlock;
+import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.gate.GateLinks;
-import com.arno.robotica.warp.gate.GatePortalBlock;
-import com.arno.robotica.warp.gate.GateShape;
+import com.arno.robotica.warp.gate.PortalGeometry;
 import com.arno.robotica.warp.pad.PadRecord;
 import com.arno.robotica.warp.pad.WarpCosts;
 import com.arno.robotica.warp.pad.WarpPadBlock;
@@ -30,6 +29,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -240,98 +240,38 @@ public class WarpGameTests {
         helper.succeed();
     }
 
-    // ---- Gate shape ----
-
-    private static Set<BlockPos> perfectFrame(Direction.Axis axis, BlockPos corner, int controllerIndex, Set<BlockPos> open) {
-        Set<BlockPos> frame = new HashSet<>();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 5; j++) {
-                BlockPos p = axis == Direction.Axis.X ? corner.offset(i, j, 0) : corner.offset(0, j, i);
-                boolean edge = i == 0 || i == 3 || j == 0 || j == 4;
-                if (edge && !(i == controllerIndex && j == 0)) frame.add(p);
-                else if (!edge) open.add(p);
-            }
-        }
-        return frame;
-    }
-
-    private static GateShape.Probe probe(Set<BlockPos> frame, Set<BlockPos> open) {
-        return new GateShape.Probe() {
-            @Override
-            public boolean isFrame(BlockPos pos) {
-                return frame.contains(pos);
-            }
-
-            @Override
-            public boolean isOpen(BlockPos pos) {
-                return open.contains(pos);
-            }
-        };
-    }
+    // ---- Portal geometry ----
 
     @GameTest(template = "empty")
-    public static void gateShapeValidation(GameTestHelper helper) {
-        BlockPos corner = new BlockPos(10, 64, 10);
-        for (Direction.Axis axis : new Direction.Axis[]{Direction.Axis.X, Direction.Axis.Z}) {
-            for (int index = 1; index <= 2; index++) {
-                Set<BlockPos> open = new HashSet<>();
-                Set<BlockPos> frame = perfectFrame(axis, corner, index, open);
-                BlockPos controller = axis == Direction.Axis.X ? corner.offset(index, 0, 0) : corner.offset(0, 0, index);
-                helper.assertTrue(open.size() == 6 && frame.size() == 13, "4x5 frame has 13 frame blocks and a 2x3 opening");
-                Optional<GateShape> found = GateShape.find(probe(frame, open), controller, null);
-                helper.assertTrue(found.isPresent(), "valid frame along " + axis + " with controller " + index + " is found");
-                helper.assertTrue(found.get().axis() == axis && found.get().controllerIndex() == index && found.get().corner().equals(corner),
-                        "shape knows axis, controller index and corner");
-                helper.assertTrue(new HashSet<>(found.get().innerPositions()).equals(open), "inner positions are the 2x3 opening");
-
-                // one frame block missing
-                for (BlockPos missing : new HashSet<>(frame)) {
-                    Set<BlockPos> broken = new HashSet<>(frame);
-                    broken.remove(missing);
-                    helper.assertTrue(GateShape.find(probe(broken, open), controller, null).isEmpty(), "missing frame block " + missing + " is detected");
-                }
-                // blocked opening
-                for (BlockPos blocked : new HashSet<>(open)) {
-                    Set<BlockPos> smaller = new HashSet<>(open);
-                    smaller.remove(blocked);
-                    helper.assertTrue(GateShape.find(probe(frame, smaller), controller, null).isEmpty(), "blocked opening cell " + blocked + " is detected");
-                }
-            }
+    public static void portalVolumeMatchesTheProjectedEllipse(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(100, 64, 100);
+        Vec3 c = PortalGeometry.center(pos);
+        helper.assertTrue(Math.abs(c.y - (64 + PortalGeometry.TOP + 2.5)) < 1e-9, "the portal centre is 2.5 blocks above the projector top");
+        for (Direction facing : new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST}) {
+            AABB box = PortalGeometry.triggerBox(pos, facing);
+            double wide = facing.getAxis() == Direction.Axis.Z ? box.getXsize() : box.getZsize();
+            double thin = facing.getAxis() == Direction.Axis.Z ? box.getZsize() : box.getXsize();
+            helper.assertTrue(Math.abs(wide - 2.0) < 1e-9, facing + ": the portal is 2 wide along its plane, " + wide);
+            helper.assertTrue(thin < 1.5, facing + ": the portal is thin along the facing, " + thin);
+            helper.assertTrue(box.getYsize() >= 3.0 && box.getYsize() <= 3.6, facing + ": the portal is about 3 tall");
+            helper.assertTrue(box.contains(c), facing + ": the centre is inside");
+            helper.assertTrue(box.minY > 64 + PortalGeometry.TOP, facing + ": the volume floats above the projector top");
+            // a pig standing on the ground beside the projector is under the volume
+            AABB pig = new AABB(c.x - 0.45, 64, c.z - 0.45, c.x + 0.45, 64.9, c.z + 0.45).move(facing.getStepZ() != 0 ? 1.0 : 0.0, 0, facing.getStepX() != 0 ? 1.0 : 0.0);
+            helper.assertTrue(!box.intersects(pig), facing + ": a pig on the ground does not touch the portal");
+            helper.assertTrue(PortalGeometry.inColumn(pos, facing, new Vec3(c.x, 64, c.z)), facing + ": the projector cell is in the column");
+            helper.assertTrue(!PortalGeometry.inColumn(pos, facing, new Vec3(c.x + facing.getStepX() * 2.0, 64, c.z + facing.getStepZ() * 2.0)),
+                    facing + ": two blocks in front is outside the column (arrival spot)");
         }
-        // controller in a corner or in the top row is not a gate
-        Set<BlockPos> open = new HashSet<>();
-        Set<BlockPos> frame = perfectFrame(Direction.Axis.X, corner, 1, open);
-        frame.add(corner.offset(1, 0, 0));
-        helper.assertTrue(GateShape.find(probe(frame, open), corner, null).isEmpty(), "controller in the corner is rejected");
-        helper.assertTrue(GateShape.find(probe(frame, open), corner.offset(1, 4, 0), null).isEmpty(), "controller in the top row is rejected");
-        // 3 wide frame is not valid
-        Set<BlockPos> narrow = new HashSet<>();
-        for (int i = 0; i < 3; i++) for (int j = 0; j < 5; j++) if (i == 0 || i == 2 || j == 0 || j == 4) narrow.add(corner.offset(i, j, 0));
-        narrow.remove(corner.offset(1, 0, 0));
-        Set<BlockPos> narrowOpen = new HashSet<>();
-        for (int j = 1; j < 4; j++) narrowOpen.add(corner.offset(1, j, 0));
-        helper.assertTrue(GateShape.find(probe(narrow, narrowOpen), corner.offset(1, 0, 0), null).isEmpty(), "a 3 wide frame is rejected");
         helper.succeed();
     }
 
-    // ---- Real gate in a level ----
+    // ---- Real projectors in a level ----
 
-    /** Gate along X with its frame corner at the given test position. */
-    private static GateControllerBlockEntity buildGate(GameTestHelper helper, BlockPos corner, int controllerIndex) {
-        BlockState frame = WarpRegistry.GATE_FRAME.get().defaultBlockState();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 5; j++) {
-                boolean edge = i == 0 || i == 3 || j == 0 || j == 4;
-                if (!edge) continue;
-                BlockPos p = corner.offset(i, j, 0);
-                if (i == controllerIndex && j == 0) {
-                    helper.setBlock(p, WarpRegistry.GATE_CONTROLLER.get().defaultBlockState().setValue(GateControllerBlock.FACING, Direction.SOUTH));
-                } else {
-                    helper.setBlock(p, frame);
-                }
-            }
-        }
-        GateControllerBlockEntity be = (GateControllerBlockEntity) helper.getBlockEntity(corner.offset(controllerIndex, 0, 0));
+    /** Places a projector at the test position, powers it and returns its block entity. */
+    private static PortalProjectorBlockEntity buildProjector(GameTestHelper helper, BlockPos rel, Direction facing) {
+        helper.setBlock(rel, WarpRegistry.GATE_CONTROLLER.get().defaultBlockState().setValue(PortalProjectorBlock.FACING, facing));
+        PortalProjectorBlockEntity be = (PortalProjectorBlockEntity) helper.getBlockEntity(rel);
         be.energy.setEnergy(2_000_000);
         return be;
     }
@@ -344,111 +284,103 @@ public class WarpGameTests {
         }
     }
 
-    private static boolean portalFilled(GameTestHelper helper, BlockPos corner) {
-        for (int i = 1; i <= 2; i++) {
-            for (int j = 1; j <= 3; j++) {
-                if (!helper.getBlockState(corner.offset(i, j, 0)).is(WarpRegistry.GATE_PORTAL.get())) return false;
-            }
-        }
-        return true;
-    }
-
-    /** Gates are bigger than the 3x3x3 template, so the gate tests run alone in their own batches. */
-    @GameTest(template = "empty", timeoutTicks = 200, batch = "warpGateOpen")
-    public static void gateOpensAndClosesWithItsFrame(GameTestHelper helper) {
-        clearArea(helper, -1, 4, 0, 7, 0, 2);
-        BlockPos corner = new BlockPos(0, 1, 1);
-        GateControllerBlockEntity gate = buildGate(helper, corner, 1);
-        GlobalPos self = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(corner.offset(1, 0, 0)));
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void projectorActivatesWithLinkAndPower(GameTestHelper helper) {
+        BlockPos rel = new BlockPos(1, 1, 1);
+        PortalProjectorBlockEntity gate = buildProjector(helper, rel, Direction.SOUTH);
+        GlobalPos self = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(rel));
         GlobalPos far = GlobalPos.of(Level.NETHER, new BlockPos(5, 70, 5));
         GateLinks links = GateLinks.get(helper.getLevel().getServer());
+        helper.assertTrue(helper.getBlockState(rel).getLightEmission() == 6, "an idle projector glows at level 6");
 
         helper.startSequence()
-                .thenExecuteAfter(25, () -> helper.assertTrue(!portalFilled(helper, corner), "an unlinked gate stays closed"))
+                .thenExecuteAfter(25, () -> helper.assertTrue(!gate.isActive(), "an unlinked projector stays idle"))
                 .thenExecute(() -> {
                     links.link(self, far);
                     helper.assertTrue(links.partner(self).equals(far) && links.partner(far).equals(self), "links work both ways");
                 })
-                .thenWaitUntil(() -> helper.assertTrue(portalFilled(helper, corner), "a linked, powered gate fills its opening"))
+                .thenWaitUntil(() -> helper.assertTrue(gate.isActive(), "a linked, powered projector projects its portal"))
                 .thenExecute(() -> {
-                    BlockState portal = helper.getBlockState(corner.offset(1, 1, 0));
-                    helper.assertTrue(portal.getValue(GatePortalBlock.AXIS) == Direction.Axis.X, "portal axis follows the frame");
-                    helper.assertTrue(gate.isActive() && gate.shape() != null, "controller reports active");
-                    helper.assertTrue(gate.energy.getEnergyStored() < 2_000_000, "an open gate uses energy");
+                    BlockState state = helper.getBlockState(rel);
+                    helper.assertTrue(state.getValue(PortalProjectorBlock.ACTIVE) && state.getLightEmission() == 15, "active projectors emit light level 15");
+                    helper.assertTrue(state.getValue(PortalProjectorBlock.FACING) == Direction.SOUTH, "facing is kept");
+                    helper.assertTrue(gate.energy.getEnergyStored() < 2_000_000, "an active projector uses energy");
                     gate.energy.setEnergy(0);
                 })
-                .thenWaitUntil(() -> helper.assertTrue(!portalFilled(helper, corner) && !gate.isActive(), "without energy the portal closes"))
+                .thenWaitUntil(() -> helper.assertTrue(!gate.isActive(), "without energy the portal goes out"))
                 .thenExecute(() -> gate.energy.setEnergy(2_000_000))
-                .thenWaitUntil(() -> helper.assertTrue(portalFilled(helper, corner), "power brings the portal back"))
-                .thenExecute(() -> helper.setBlock(corner.offset(0, 2, 0), Blocks.AIR))
-                .thenWaitUntil(() -> helper.assertTrue(helper.getBlockState(corner.offset(1, 2, 0)).isAir()
-                        && helper.getBlockState(corner.offset(2, 3, 0)).isAir(), "breaking a frame block removes the portal"))
-                .thenExecute(() -> helper.setBlock(corner.offset(1, 0, 0), Blocks.AIR))
-                .thenExecute(() -> helper.assertTrue(links.partner(self) == null && links.partner(far) == null, "breaking the controller drops the link"))
+                .thenWaitUntil(() -> helper.assertTrue(gate.isActive(), "power brings the portal back"))
+                .thenExecute(() -> helper.setBlock(rel, Blocks.AIR))
+                .thenExecute(() -> helper.assertTrue(links.partner(self) == null && links.partner(far) == null, "breaking the projector drops the link"))
                 .thenSucceed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 300, batch = "warpGateTransit")
-    public static void gateSendsEntitiesToItsPartner(GameTestHelper helper) {
-        // floor under both gates and the space in front of them
-        clearArea(helper, -2, 14, 1, 7, -3, 5);
+    /** Two projectors 9 blocks apart on a stone floor; a pig floating in the first portal arrives in front of the second. */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void projectorSendsEntitiesInItsPortalToItsPartner(GameTestHelper helper) {
+        clearArea(helper, -2, 14, 1, 8, -3, 6);
         for (int x = -2; x <= 14; x++) {
-            for (int z = -3; z <= 5; z++) helper.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+            for (int z = -3; z <= 6; z++) helper.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
         }
-        BlockPos cornerA = new BlockPos(0, 1, 1);
-        BlockPos cornerB = new BlockPos(9, 1, 1);
-        GateControllerBlockEntity a = buildGate(helper, cornerA, 1);
-        GateControllerBlockEntity b = buildGate(helper, cornerB, 2);
-        GlobalPos posA = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(cornerA.offset(1, 0, 0)));
-        GlobalPos posB = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(cornerB.offset(2, 0, 0)));
+        BlockPos relA = new BlockPos(1, 1, 1);
+        BlockPos relB = new BlockPos(10, 1, 1);
+        PortalProjectorBlockEntity a = buildProjector(helper, relA, Direction.SOUTH);
+        PortalProjectorBlockEntity b = buildProjector(helper, relB, Direction.SOUTH);
+        GlobalPos posA = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(relA));
+        GlobalPos posB = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(relB));
         GateLinks.get(helper.getLevel().getServer()).link(posA, posB);
         int cost = WarpConfig.gateEntityCost();
+        Pig floor = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(3, 1, -1));
         Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(1, 1, -1));
+        pig.setNoGravity(true);
         int[] energyBefore = new int[1];
 
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(a.isActive() && portalFilled(helper, cornerA), "gate A opens"))
+                .thenWaitUntil(() -> helper.assertTrue(a.isActive() && b.isActive(), "both projectors project their portals"))
                 .thenExecute(() -> {
-                    // touching the portal only queues the pig: nothing moves inside entityInside, the next tick does it
+                    helper.assertTrue(!a.entitiesInPortal(helper.getLevel()).contains(pig), "nothing is inside the portal yet");
+                    // lift the pig into the portal: its centre is 2.5 blocks above the projector top
+                    Vec3 centre = PortalGeometry.center(helper.absolutePos(relA));
+                    pig.setPos(centre.x, centre.y - 0.45, centre.z);
+                    helper.assertTrue(a.entitiesInPortal(helper.getLevel()).contains(pig), "the portal AABB query finds the pig");
+                    helper.assertTrue(!a.entitiesInPortal(helper.getLevel()).contains(floor), "a pig on the floor is not in the portal");
                     energyBefore[0] = a.energy.getEnergyStored();
-                    a.queueEntity(pig);
-                    helper.assertTrue(helper.relativeVec(pig.position()).x < 5, "queueing does not move the entity");
                 })
-                .thenWaitUntil(() -> helper.assertTrue(helper.relativeVec(pig.position()).x > 9, "the queued pig is sent on the next tick"))
+                .thenWaitUntil(() -> helper.assertTrue(helper.relativeVec(pig.position()).x > 8, "the pig in the portal is sent by the server tick"))
                 .thenExecute(() -> {
                     Vec3 rel = helper.relativeVec(pig.position());
-                    // gate B faces SOUTH (controller facing on the portal axis), arrival is in front of its left column
-                    helper.assertTrue(rel.x > 9 && rel.x < 13 && rel.z > 1.4 && rel.z < 2.6, "the pig left through gate B, it is at " + rel);
-                    helper.assertTrue(Math.abs(rel.y - 1.0) < 0.6 || Math.abs(rel.y - 2.0) < 0.6, "the pig stands on the floor in front of gate B, y=" + rel.y);
-                    helper.assertTrue(a.energy.getEnergyStored() <= energyBefore[0] - cost, "the departure gate paid " + cost + " FE");
-                    helper.assertTrue(GateControllerBlockEntity.readyAt(pig, helper.getLevel().getGameTime()) > helper.getLevel().getGameTime(),
+                    // projector B faces SOUTH: arrival is two or more blocks in front of it, on the floor
+                    helper.assertTrue(rel.x > 9.9 && rel.x < 11.1 && rel.z > 3.4 && rel.z < 5.6, "the pig arrived in front of projector B, it is at " + rel);
+                    helper.assertTrue(Math.abs(rel.y - 1.0) < 0.6, "the pig stands on the floor in front of projector B, y=" + rel.y);
+                    helper.assertTrue(a.energy.getEnergyStored() <= energyBefore[0] - cost, "the departure projector paid " + cost + " FE");
+                    helper.assertTrue(PortalProjectorBlockEntity.readyAt(pig, helper.getLevel().getGameTime()) > helper.getLevel().getGameTime(),
                             "the pig has a cooldown");
-                    helper.assertTrue(pig.getYRot() == Direction.SOUTH.toYRot(), "the pig faces out of the gate");
-                    // entering gate B right away does nothing (cooldown), and B has no partner energy trouble
+                    helper.assertTrue(pig.getYRot() == Direction.SOUTH.toYRot(), "the pig faces out of the portal");
                     b.onEntityEnter(pig);
                     helper.assertTrue(helper.relativeVec(pig.position()).x > 9, "the cooldown stops the pig from bouncing back");
+                    helper.assertTrue(b.entitiesInPortal(helper.getLevel()).isEmpty(), "the arrival spot is outside the portal volume");
                 })
                 .thenExecute(() -> {
-                    helper.setBlock(cornerA.offset(1, 0, 0), Blocks.AIR);
-                    helper.setBlock(cornerB.offset(2, 0, 0), Blocks.AIR);
+                    helper.setBlock(relA, Blocks.AIR);
+                    helper.setBlock(relB, Blocks.AIR);
                 })
                 .thenSucceed();
     }
 
     // ---- Gate ownership, status refresh, pushing ----
 
-    private static GateControllerBlockEntity controllerAt(GameTestHelper helper, BlockPos rel) {
+    private static PortalProjectorBlockEntity controllerAt(GameTestHelper helper, BlockPos rel) {
         helper.setBlock(rel, WarpRegistry.GATE_CONTROLLER.get().defaultBlockState());
-        return (GateControllerBlockEntity) helper.getBlockEntity(rel);
+        return (PortalProjectorBlockEntity) helper.getBlockEntity(rel);
     }
 
     @SuppressWarnings("removal")
     @GameTest(template = "empty")
-    public static void gateOwnershipAndLinking(GameTestHelper helper) {
+    public static void projectorOwnershipAndLinking(GameTestHelper helper) {
         BlockPos relA = new BlockPos(0, 1, 0);
         BlockPos relB = new BlockPos(2, 1, 2);
-        GateControllerBlockEntity a = controllerAt(helper, relA);
-        GateControllerBlockEntity b = controllerAt(helper, relB);
+        PortalProjectorBlockEntity a = controllerAt(helper, relA);
+        PortalProjectorBlockEntity b = controllerAt(helper, relB);
         var owner = helper.makeMockServerPlayerInLevel();
         var stranger = helper.makeMockServerPlayerInLevel();
         helper.assertTrue(!owner.getUUID().equals(stranger.getUUID()), "two different players");
@@ -458,7 +390,7 @@ public class WarpGameTests {
         helper.assertTrue(a.ownerName().equals(owner.getGameProfile().getName()), "owner name stored");
 
         var provider = helper.getLevel().registryAccess();
-        GateControllerBlockEntity copy = (GateControllerBlockEntity) helper.getBlockEntity(relB);
+        PortalProjectorBlockEntity copy = (PortalProjectorBlockEntity) helper.getBlockEntity(relB);
         copy.loadWithComponents(a.saveWithoutMetadata(provider), provider);
         helper.assertTrue(owner.getUUID().equals(copy.owner()), "owner survives saving");
         copy.loadWithComponents(new CompoundTag(), provider);
@@ -485,8 +417,8 @@ public class WarpGameTests {
     }
 
     @GameTest(template = "empty")
-    public static void gateBlocksResistPistons(GameTestHelper helper) {
-        for (var block : List.of(WarpRegistry.GATE_FRAME.get(), WarpRegistry.GATE_CONTROLLER.get(), WarpRegistry.GATE_PORTAL.get(), WarpRegistry.WARP_PAD.get())) {
+    public static void projectorAndPadResistPistons(GameTestHelper helper) {
+        for (var block : List.of(WarpRegistry.GATE_CONTROLLER.get(), WarpRegistry.WARP_PAD.get())) {
             helper.assertTrue(block.defaultBlockState().getPistonPushReaction() == net.minecraft.world.level.material.PushReaction.BLOCK,
                     block + " must not be moved by pistons");
         }
@@ -496,7 +428,7 @@ public class WarpGameTests {
     @SuppressWarnings("removal")
     @GameTest(template = "empty")
     public static void statusRefreshDoesNotSpendEnergy(GameTestHelper helper) {
-        GateControllerBlockEntity gate = controllerAt(helper, new BlockPos(1, 1, 1));
+        PortalProjectorBlockEntity gate = controllerAt(helper, new BlockPos(1, 1, 1));
         gate.energy.setEnergy(100_000);
         gate.refresh(helper.getLevel());
         helper.assertTrue(gate.energy.getEnergyStored() == 100_000, "a status refresh is free");

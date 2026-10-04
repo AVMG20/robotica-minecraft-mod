@@ -54,7 +54,7 @@ public final class LabActions {
                     Map.entry("upgrade_speed_3", 2), Map.entry("upgrade_fortune_3", 1)),
             Map.ofEntries(Map.entry("null_casing", 8), Map.entry("null_circuit", 4), Map.entry("ender_cell", 2),
                     Map.entry("antigrav_core", 2), Map.entry("tool_upgrade_kit_4", 1), Map.entry("null_drill", 1), Map.entry("null_lance", 1), Map.entry("farm_kit_mk4", 2),
-                    Map.entry("gate_controller", 2), Map.entry("linking_card", 1), Map.entry("gate_frame", 32), Map.entry("upgrade_speed_4", 2)));
+                    Map.entry("gate_controller", 2), Map.entry("linking_card", 1), Map.entry("upgrade_speed_4", 2)));
 
     public static void run(ServerPlayer player, String action, String arg, int count) {
         ServerLevel level = player.serverLevel();

@@ -1,7 +1,6 @@
 {
   "replace": false,
   "values": [
-    "robotica:gate_frame",
     "robotica:gate_controller"
   ]
 }
