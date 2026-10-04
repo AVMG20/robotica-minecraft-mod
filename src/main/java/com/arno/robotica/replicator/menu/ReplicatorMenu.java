@@ -50,8 +50,8 @@ public class ReplicatorMenu extends MachineMenu {
         super(ReplicatorRegistry.REPLICATOR_MENU.get(), id);
         this.pos = pos;
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
-        addSlot(new SlotItemHandler(vial, 0, 38, 22));
-        addSlot(new SlotItemHandler(boost, 0, 38, 52));
+        addSlot(new SlotItemHandler(vial, 0, 38, 20));
+        addSlot(new SlotItemHandler(boost, 0, 38, 48));
         for (int i = 0; i < ReplicatorControllerBlockEntity.UPGRADE_SLOTS; i++) {
             addSlot(new SlotItemHandler(upgrades, i, 134, 20 + i * 18));
         }

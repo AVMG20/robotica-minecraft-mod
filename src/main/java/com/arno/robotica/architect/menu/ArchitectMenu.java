@@ -27,15 +27,15 @@ import java.util.function.IntSupplier;
  */
 public class ArchitectMenu extends MachineMenu {
     public static final int WIDTH = 288;
-    public static final int HEIGHT = 234;
+    public static final int HEIGHT = 246;
     public static final int INV_X = 63;
-    public static final int INV_Y = 152;
+    public static final int INV_Y = 164;
     public static final int INPUT_X = 8;
-    public static final int INPUT_Y = 24;
+    public static final int INPUT_Y = 30;
     public static final int STYLE_X = 8;
-    public static final int STYLE_Y = 92;
-    public static final int UPGRADE_X = 62;
-    public static final int UPGRADE_Y = 92;
+    public static final int STYLE_Y = 98;
+    public static final int UPGRADE_X = 84;
+    public static final int UPGRADE_Y = 98;
 
     /** Client side: 0 = plan, 1 = storage. */
     public int tab;

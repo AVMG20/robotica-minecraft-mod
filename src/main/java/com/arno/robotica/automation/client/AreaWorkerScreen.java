@@ -2,30 +2,37 @@ package com.arno.robotica.automation.client;
 
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
 import com.arno.robotica.automation.menu.AreaWorkerMenu;
+import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-/** GUI of Stumpy, Sprout and the Excavator. */
+import java.util.Locale;
+
+/** GUI of Stumpy, Sprout and the Excavator: battery, upgrades, buffer, two icon toggles, a status dot. */
 public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
-    private Button areaButton;
-    private Button leavesButton;
+    private IconButton areaButton;
+    private IconButton leavesButton;
 
     public AreaWorkerScreen(AreaWorkerMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
+        this.imageHeight = 176;
         this.inventoryLabelY = 83;
     }
 
     @Override
     protected void init() {
         super.init();
-        areaButton = addRenderableWidget(Button.builder(Component.empty(), b -> press(AreaWorkerMenu.BUTTON_SHOW_AREA))
-                .bounds(leftPos + 48, topPos + 16, 62, 16).build());
+        areaButton = addRenderableWidget(new IconButton(leftPos + 52, topPos + 17, 20, new ItemStack(Items.SPYGLASS), true,
+                b -> press(AreaWorkerMenu.BUTTON_SHOW_AREA)));
+        leavesButton = null;
         if (menu.be.hasLeavesToggle()) {
-            leavesButton = addRenderableWidget(Button.builder(Component.empty(), b -> press(AreaWorkerMenu.BUTTON_LEAVES))
-                    .bounds(leftPos + 48, topPos + 34, 62, 16).build());
+            leavesButton = addRenderableWidget(new IconButton(leftPos + 76, topPos + 17, 20, new ItemStack(Items.OAK_LEAVES), true,
+                    b -> press(AreaWorkerMenu.BUTTON_LEAVES)));
         }
         updateButtons();
     }
@@ -37,9 +44,11 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     }
 
     private void updateButtons() {
-        areaButton.setMessage(Component.translatable(menu.showArea() ? "gui.robotica.area_on" : "gui.robotica.area_off"));
+        areaButton.setOn(menu.showArea());
+        areaButton.hint(Component.translatable(menu.showArea() ? "gui.robotica.area_on" : "gui.robotica.area_off"));
         if (leavesButton != null) {
-            leavesButton.setMessage(Component.translatable(menu.leaves() ? "gui.robotica.leaves_on" : "gui.robotica.leaves_off"));
+            leavesButton.setOn(menu.leaves());
+            leavesButton.hint(Component.translatable(menu.leaves() ? "gui.robotica.leaves_on" : "gui.robotica.leaves_off"));
         }
     }
 
@@ -50,32 +59,44 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     }
 
     @Override
-    protected void renderTooltip(GuiGraphics g, int mouseX, int mouseY) {
-        super.renderTooltip(g, mouseX, mouseY);
-        if (hoveredSlot != null && !hoveredSlot.hasItem() && hoveredSlot.index <= menu.be.upgradeSlotCount()) {
-            g.renderTooltip(font, Component.translatable(hoveredSlot.index == 0 ? "gui.robotica.slot_battery" : "gui.robotica.slot_upgrade"), mouseX, mouseY);
-        }
+    protected ItemStack ghostIcon(Slot slot) {
+        if (slot.index == 0) return icon("copper_cell");
+        if (slot.index <= menu.be.upgradeSlotCount()) return icon("upgrade_speed_1");
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    protected Component slotHint(Slot slot) {
+        if (slot.index == 0) return Component.translatable("gui.robotica.slot_battery");
+        if (slot.index <= menu.be.upgradeSlotCount()) return Component.translatable("gui.robotica.slot_upgrade");
+        return null;
+    }
+
+    @Override
+    protected int titleMaxWidth() {
+        return 100;
     }
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 8, y + 18, 10, 52, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 9, y + 18, 12, 52, menu.energy(), menu.capacity());
         AreaWorkerBlockEntity.Status status = menu.status();
-        int color = switch (status) {
-            case WORKING -> 0xFF2E7D32;
-            case NO_ENERGY -> 0xFFB71C1C;
-            case OUTPUT_FULL -> 0xFFB26A00;
-            case IDLE -> 0xFF404040;
+        Tone tone = switch (status) {
+            case WORKING -> Tone.GOOD;
+            case NO_ENERGY -> Tone.BAD;
+            case OUTPUT_FULL, IDLE -> Tone.WARN;
         };
-        drawText(g, Component.translatable("gui.robotica.status." + status.name().toLowerCase(java.util.Locale.ROOT)), x + 26, y + 74, color);
         int size = menu.size();
-        Component info = isFarmBot()
+        Component info = Component.translatable("gui.robotica.area", size, size);
+        drawLabelRight(g, info, x + imageWidth - 8, y + 6, 40);
+        Component tierTip = isFarmBot()
                 ? Component.translatable("gui.robotica.tier_area", menu.be.tier(), size, size)
                 : Component.translatable("gui.robotica.area", size, size);
-        drawText(g, info, x + imageWidth - 8 - font.width(info), y + 6, 0xFF404040);
+        addTooltip(x + imageWidth - 50, y + 4, 44, 11, tierTip);
+        Component statusText = Component.translatable("gui.robotica.status." + status.name().toLowerCase(Locale.ROOT));
+        drawStatus(g, statusText, x + 9, y + 74, 90, 1, tone);
         if (menu.extra() != 0) {
-            Component depth = Component.translatable("gui.robotica.depth", menu.extra());
-            drawText(g, depth, x + imageWidth - 8 - font.width(depth), y + 74, 0xFF404040);
+            drawLabelRight(g, Component.translatable("gui.robotica.depth", menu.extra()), x + imageWidth - 8, y + 74, 60);
         }
     }
 

@@ -32,7 +32,7 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-        g.drawString(font, Component.translatable("gui.robotica.warp.from", menu.padName()), titleLabelX, titleLabelY, 0x404040, false);
+        drawFitted(g, font, Component.translatable("gui.robotica.warp.from", menu.padName()), titleLabelX, titleLabelY, imageWidth - 16, TEXT, -1, false, 1.0F);
     }
 
     private int maxScroll() {
@@ -52,6 +52,9 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
         List<DestinationEntry> entries = menu.entries();
         int hover = rowAt(mouseX, mouseY);
         int energy = menu.energy();
+        if (entries.isEmpty()) {
+            drawLabelCentered(g, Component.translatable("gui.robotica.warp.none"), x + imageWidth / 2, y + LIST_Y + 44, LIST_W);
+        }
         for (int r = 0; r < ROWS; r++) {
             int index = scroll + r;
             if (index >= entries.size()) break;
@@ -61,15 +64,16 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
             boolean affordable = e.available() && energy >= e.cost();
             g.fill(rx, ry, rx + LIST_W, ry + ROW_H - 2, SLOT_DARK);
             g.fill(rx + 1, ry + 1, rx + LIST_W - 1, ry + ROW_H - 3, index == hover && e.available() ? 0xFFA6B8BE : SLOT);
-            drawText(g, Component.literal(e.name()), rx + 5, ry + 4, e.available() ? 0xFF202020 : 0xFF606060);
-            drawText(g, Component.translatable("gui.robotica.warp.by", e.ownerName()), rx + 5, ry + 13, 0xFF404040);
-
             String where = e.distance() < 0 ? prettyDimension(e.dimension().location()) : e.distance() + " m";
             int whereW = font.width(where);
-            drawText(g, Component.literal(where), rx + LIST_W - 5 - whereW, ry + 4, 0xFF303030);
             Component cost = e.available() ? Component.literal(Fmt.energy(e.cost())) : Component.translatable("gui.robotica.warp.needs_rift");
             int costColor = !e.available() ? 0xFF6A3FB0 : affordable ? 0xFF1B6E7A : 0xFFB03030;
-            drawText(g, cost, rx + LIST_W - 5 - font.width(cost), ry + 13, costColor);
+            int right = Math.max(whereW, font.width(cost));
+            int leftW = LIST_W - 10 - right - 8;
+            drawFitted(g, font, Component.literal(e.name()), rx + 5, ry + 4, leftW, e.available() ? 0xFF202020 : 0xFF606060, -1, false, 1.0F);
+            drawFitted(g, font, Component.translatable("gui.robotica.warp.by", e.ownerName()), rx + 5, ry + 13, leftW, TEXT, -1, false, 1.0F);
+            drawFitted(g, font, Component.literal(where), rx + LIST_W - 5, ry + 4, 100, 0xFF303030, 1, false, 1.0F);
+            drawFitted(g, font, cost, rx + LIST_W - 5, ry + 13, 100, costColor, 1, false, 1.0F);
         }
         if (entries.size() > ROWS) {
             int trackH = ROWS * ROW_H - 2;
@@ -78,7 +82,7 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
             g.fill(x + LIST_X + LIST_W + 1, y + LIST_Y, x + LIST_X + LIST_W + 4, y + LIST_Y + trackH, SLOT_DARK);
             g.fill(x + LIST_X + LIST_W + 1, barY, x + LIST_X + LIST_W + 4, barY + barH, ENERGY);
         }
-        drawText(g, Component.translatable("gui.robotica.warp.pad_energy", Fmt.energy(energy), Fmt.energy(menu.capacity())), x + 8, y + LIST_Y + ROWS * ROW_H + 6, 0xFF1B4A52);
+        drawEnergyBarWide(g, x + 8, y + LIST_Y + ROWS * ROW_H + 6, LIST_W, 11, energy, menu.capacity());
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.arno.robotica.gear.client;
 
+import com.arno.robotica.core.client.FitButton;
+import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.gear.tool.GearActions;
 import com.arno.robotica.gear.tool.GearToolItem;
 import com.arno.robotica.gear.tool.ToggleKind;
@@ -25,6 +27,7 @@ public class ToggleScreen extends Screen {
     private record Row(Button button, Supplier<Component> label) {}
 
     private final List<Row> rows = new ArrayList<>();
+    private int panelX, panelY, panelW, panelH;
 
     public ToggleScreen() {
         super(Component.translatable("gear.robotica.screen.title"));
@@ -60,16 +63,19 @@ public class ToggleScreen extends Screen {
             actions.add(() -> GearKeys.send(GearActions.TOGGLE, kind.ordinal()));
         }
         int total = labels.size() * (HEIGHT + GAP) - GAP;
-        int x = (width - WIDTH) / 2;
-        int y = (height - total) / 2;
+        panelW = WIDTH + 24;
+        panelH = 30 + total + 12 + HEIGHT + 12;
+        panelX = (width - panelW) / 2;
+        panelY = (height - panelH) / 2;
+        int x = panelX + 12;
+        int y = panelY + 26;
         for (int i = 0; i < labels.size(); i++) {
             Runnable action = actions.get(i);
-            Button b = Button.builder(labels.get(i).get(), btn -> action.run()).bounds(x, y + i * (HEIGHT + GAP), WIDTH, HEIGHT).build();
+            Button b = new FitButton(x, y + i * (HEIGHT + GAP), WIDTH, HEIGHT, labels.get(i).get(), btn -> action.run());
             addRenderableWidget(b);
             rows.add(new Row(b, labels.get(i)));
         }
-        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, btn -> onClose())
-                .bounds(x, y + total + 12, WIDTH, HEIGHT).build());
+        addRenderableWidget(new FitButton(x, y + total + 12, WIDTH, HEIGHT, CommonComponents.GUI_DONE, btn -> onClose()));
     }
 
     private static Component enchantName(int mode) {
@@ -90,9 +96,10 @@ public class ToggleScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(font, title, width / 2, Math.max(8, height / 2 - (rows.size() * (HEIGHT + GAP)) / 2 - 22), 0xFFFFFF);
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.renderBackground(graphics, mouseX, mouseY, partialTick);
+        MachineScreen.drawPanel(graphics, panelX, panelY, panelW, panelH);
+        MachineScreen.drawFitted(graphics, font, title, width / 2, panelY + 10, panelW - 16, MachineScreen.TEXT, 0, false, 1.0F);
     }
 
     @Override

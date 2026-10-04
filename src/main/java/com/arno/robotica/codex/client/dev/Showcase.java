@@ -1,17 +1,24 @@
 package com.arno.robotica.codex.client.dev;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.architect.block.ArchitectTableBlockEntity;
+import com.arno.robotica.architect.matter.Matter;
+import com.arno.robotica.architect.menu.ArchitectMenu;
 import com.arno.robotica.architect.plan.BlockOp;
 import com.arno.robotica.architect.plan.ModuleType;
 import com.arno.robotica.architect.style.BuildStyle;
 import com.arno.robotica.codex.client.CodexScreen;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.gear.GearComponents;
+import com.arno.robotica.gear.client.ToggleScreen;
 import com.arno.robotica.gear.tool.AreaMode;
+import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.replicator.logic.Essence;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -40,7 +47,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +91,8 @@ public final class Showcase {
         if (!inWorld) {
             if (mc.player != null && mc.level != null && mc.getSingleplayerServer() != null && mc.screen == null) {
                 inWorld = true;
+                mc.options.tutorialStep = TutorialSteps.NONE;
+                mc.getTutorial().setStep(TutorialSteps.NONE);
                 buildPlan();
                 wait = 60;
             }
@@ -103,6 +114,9 @@ public final class Showcase {
 
     private static void createWorld() {
         Minecraft mc = mc();
+        mc.options.tutorialStep = TutorialSteps.NONE;
+        mc.options.pauseOnLostFocus = false;
+        mc.getTutorial().setStep(TutorialSteps.NONE);
         GameRules rules = new GameRules();
         rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
         rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
@@ -164,6 +178,39 @@ public final class Showcase {
 
     private static Block block(String name) {
         return BuiltInRegistries.BLOCK.get(Robotica.id(name));
+    }
+
+    /** Puts some state into a machine before its GUI is opened, so the screenshot shows something. */
+    private static void prepare(String name, BlockPos pos, ServerPlayer sp) {
+        ServerLevel level = sp.serverLevel();
+        var energy = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, null);
+        IItemHandler items = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+        switch (name) {
+            case "combustion_generator" -> {
+                if (items != null) items.insertItem(0, new ItemStack(Items.COAL, 16), false);
+                if (energy != null) energy.receiveEnergy(30_000, false);
+            }
+            case "charger" -> {
+                if (energy != null) energy.receiveEnergy(200_000, false);
+                if (items != null) items.insertItem(0, new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("magma_drill"))), false);
+            }
+            case "metal_press" -> {
+                if (energy != null) energy.receiveEnergy(20_000, false);
+                if (items != null) items.insertItem(0, new ItemStack(Items.IRON_INGOT, 8), false);
+            }
+            case "architect_table" -> {
+                if (level.getBlockEntity(pos) instanceof ArchitectTableBlockEntity table) {
+                    table.setMatter(new Matter(320, 140, 36));
+                    for (int plot : new int[]{7, 8, 13, 17}) table.handleAction(sp, ArchitectTableBlockEntity.ACTION_QUEUE, plot, ModuleType.values()[plot % 5].id());
+                }
+            }
+            case "stumpy", "sprout", "excavator" -> {
+                if (energy != null) energy.receiveEnergy(40_000, false);
+            }
+            default -> {
+                if (energy != null) energy.receiveEnergy(20_000, false);
+            }
+        }
     }
 
     private static void buildPlan() {
@@ -307,18 +354,85 @@ public final class Showcase {
             final String name = BuiltInRegistries.BLOCK.getKey(blocks.get(i)).getPath();
             step(10, () -> server(sp -> {
                 if (!(sp.serverLevel().getBlockEntity(pos) instanceof MenuProvider)) return;
+                prepare(name, pos, sp);
                 sp.teleportTo(sp.serverLevel(), pos.getX() + 0.5, Y, pos.getZ() + 2.5, 180, 30);
                 sp.setShiftKeyDown(false);
                 sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
                         new BlockHitResult(Vec3.atCenterOf(pos), Direction.SOUTH, pos, false));
             }));
-            step(15, () -> {
+            step(25, () -> {
                 if (mc().screen != null) Screenshot.grab(mc().gameDirectory, String.format("gui_%02d_%s.png", idx, name), mc().getMainRenderTarget(), m -> {});
             });
+            if (name.equals("architect_table")) {
+                step(5, () -> {
+                    if (mc().screen instanceof AbstractContainerScreen<?> screen && screen.getMenu() instanceof ArchitectMenu m) m.tab = 1;
+                });
+                step(10, () -> Screenshot.grab(mc().gameDirectory, "gui_15b_architect_storage.png", mc().getMainRenderTarget(), m -> {}));
+            }
             step(5, () -> {
                 if (mc().player != null && mc().screen != null) mc().player.closeContainer();
             });
         }
+
+        // Warp pads: owner GUI (sneak, empty hand) and the destination list (standing on a pad, another pad exists).
+        final BlockPos padA = new BlockPos(0, Y, 60);
+        final BlockPos padB = new BlockPos(10, Y, 60);
+        step(10, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            for (BlockPos p : new BlockPos[]{padA, padB}) {
+                setFacing(level, p, block("warp_pad"), Direction.SOUTH);
+                if (level.getBlockEntity(p) instanceof WarpPadBlockEntity pad) {
+                    pad.initPlacement(sp);
+                    pad.ensureRegistered();
+                    pad.energy.receiveEnergy(40_000, false);
+                }
+            }
+            if (level.getBlockEntity(padB) instanceof WarpPadBlockEntity pad) pad.rename("Mining Outpost");
+        }));
+        step(20, () -> server(sp -> {
+            sp.teleportTo(sp.serverLevel(), padA.getX() + 0.5, Y, padA.getZ() + 2.5, 180, 30);
+            sp.setShiftKeyDown(true);
+            sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(padA), Direction.SOUTH, padA, false));
+        }));
+        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_90_warp_pad_owner.png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> {
+            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+        });
+        step(10, () -> server(sp -> {
+            sp.setShiftKeyDown(false);
+            sp.teleportTo(sp.serverLevel(), padA.getX() + 0.5, Y + 0.5, padA.getZ() + 0.5, 180, 30);
+        }));
+        step(10, () -> server(sp -> sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(padA), Direction.UP, padA, false))));
+        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_91_warp_destinations.png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> {
+            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+        });
+
+        // The formed replicator from scene 4.
+        step(10, () -> server(sp -> {
+            sp.teleportTo(sp.serverLevel(), 1.5, Y, 45.5, 180, 30);
+            sp.setShiftKeyDown(false);
+            BlockPos ctrl = new BlockPos(1, Y + 1, 42);
+            sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(ctrl), Direction.SOUTH, ctrl, false));
+        }));
+        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_92_replicator_formed.png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> {
+            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+        });
+
+        // Gear tool settings screen (opened client side, like the G key does).
+        step(10, () -> server(sp -> {
+            ItemStack drill = new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("magma_drill")));
+            ItemEnergy.fill(drill);
+            sp.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        }));
+        step(20, () -> mc().setScreen(new ToggleScreen()));
+        step(15, () -> Screenshot.grab(mc().gameDirectory, "gui_93_gear_settings.png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> mc().setScreen(null));
+        step(10, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
 
         // Codex pages and lab.
         step(20, () -> mc().setScreen(new CodexScreen()));
@@ -331,10 +445,12 @@ public final class Showcase {
         shot("codex_04_lab");
 
         // Item sheet.
-        step(20, () -> mc().setScreen(new IconSheetScreen(0)));
-        shot("items_1");
-        step(20, () -> mc().setScreen(new IconSheetScreen(1)));
-        shot("items_2");
+        int sheetPages = IconSheetScreen.pageCount(mc().getWindow().getGuiScaledWidth(), mc().getWindow().getGuiScaledHeight());
+        for (int p = 0; p < sheetPages; p++) {
+            final int pageIndex = p;
+            step(20, () -> mc().setScreen(new IconSheetScreen(pageIndex)));
+            shot("items_" + (p + 1));
+        }
         step(20, () -> mc().setScreen(null));
         step(40, () -> {
             Robotica.LOGGER.info("Robotica showcase finished.");

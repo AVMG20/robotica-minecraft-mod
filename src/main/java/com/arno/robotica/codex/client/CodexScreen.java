@@ -141,28 +141,32 @@ public class CodexScreen extends Screen {
         int rx = left + W / 2 + 8;
         if (lab) {
             String[][] actions = {
-                    {"Kit: Age 0", "kit", "0"}, {"Kit: Age 1", "kit", "1"}, {"Kit: Age 2", "kit", "2"}, {"Kit: Age 3", "kit", "3"},
-                    {"Kit: Age 4", "kit", "4"}, {"Charge inventory", "charge", ""}, {"Charge looked-at block", "charge_target", ""},
-                    {"Set day", "day", ""}, {"Clear weather", "clear_weather", ""}, {"Heal + feed", "heal", ""},
-                    {"Kill hostiles (48)", "kill_hostiles", ""}, {"Spawn zombie", "spawn", "minecraft:zombie"},
-                    {"Spawn skeleton", "spawn", "minecraft:skeleton"}, {"Toggle creative", "gamemode", ""}};
+                    {"Kit: Age 0", "kit", "0", "Give the starter kit of age 0"}, {"Kit: Age 1", "kit", "1", "Give the starter kit of age 1"},
+                    {"Kit: Age 2", "kit", "2", "Give the starter kit of age 2"}, {"Kit: Age 3", "kit", "3", "Give the starter kit of age 3"},
+                    {"Kit: Age 4", "kit", "4", "Give the starter kit of age 4"}, {"Charge items", "charge", "", "Fill every energy item in your inventory"},
+                    {"Charge target", "charge_target", "", "Fill the block you are looking at"}, {"Set day", "day", "", "Set the time to day"},
+                    {"Clear weather", "clear_weather", "", "Stop rain and thunder"}, {"Heal + feed", "heal", "", "Restore health and hunger"},
+                    {"Kill hostiles", "kill_hostiles", "", "Kill hostile mobs within 48 blocks"}, {"Spawn zombie", "spawn", "minecraft:zombie", "Spawn a zombie in front of you"},
+                    {"Spawn skeleton", "spawn", "minecraft:skeleton", "Spawn a skeleton in front of you"}, {"Creative mode", "gamemode", "", "Toggle creative mode"}};
             for (int i = 0; i < actions.length; i++) {
                 String[] a = actions[i];
                 int bx = rx + (i % 2) * 71, by = top + 28 + (i / 2) * 22;
-                addRenderableWidget(Button.builder(Component.literal(a[0]), b -> sendLab(a[1], a[2], a[1].equals("kit") ? Integer.parseInt(a[2]) : 1))
-                        .bounds(bx, by, 69, 20).build());
+                addRenderableWidget(new BookButton(bx, by, 69, 20, Component.literal(a[0]),
+                        b -> sendLab(a[1], a[2], a[1].equals("kit") ? Integer.parseInt(a[2]) : 1), Component.literal(a[3])));
             }
-            addRenderableWidget(Button.builder(Component.literal("Back to the manual"), b -> {
+            addRenderableWidget(new BookButton(rx, top + H - 24, PAGE_W, 16, Component.literal("Back to the manual"), b -> {
                 lab = false;
                 rebuild();
-            }).bounds(rx, top + H - 24, PAGE_W, 16).build());
+            }, BookButton.Kind.LABEL));
             return;
         }
         int ny = top + H - 24;
-        addRenderableWidget(Button.builder(Component.literal("<"), b -> turn(-1)).bounds(rx, ny, 20, 16).build());
-        addRenderableWidget(Button.builder(Component.literal(">"), b -> turn(1)).bounds(rx + PAGE_W - 20, ny, 20, 16).build());
+        BookButton prev = addRenderableWidget(new BookButton(rx, ny, 22, 16, Component.literal("Previous page"), b -> turn(-1), BookButton.Kind.PREV));
+        BookButton next = addRenderableWidget(new BookButton(rx + PAGE_W - 22, ny, 22, 16, Component.literal("Next page"), b -> turn(1), BookButton.Kind.NEXT));
+        prev.active = !chapters.isEmpty() && (subPage > 0 || page > 0 || chapter > 0);
+        next.active = !chapters.isEmpty() && (subPage + 1 < subPageCount() || page + 1 < chapters.get(chapter).pages().size() || chapter + 1 < chapters.size());
         if (!recipeItem.isEmpty()) {
-            addRenderableWidget(Button.builder(Component.literal("Back"), b -> back()).bounds(rx + PAGE_W / 2 - 20, ny, 40, 16).build());
+            addRenderableWidget(new BookButton(rx + PAGE_W / 2 - 22, ny, 44, 16, Component.literal("Back"), b -> back(), BookButton.Kind.LABEL));
         }
     }
 
@@ -225,11 +229,10 @@ public class CodexScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        super.render(g, mx, my, pt);
         long now = Util.getMillis();
         frameTick = (int) (now / 1000);
         frameRecipeSlot = now / 3000;
-        drawBook(g);
+        super.render(g, mx, my, pt); // draws the book (renderBackground) first, then the buttons on top of it
         ItemStack hovered = lab ? renderLab(g, mx, my) : renderManual(g, mx, my);
         if (!lab) renderChapterList(g, mx, my);
         if (!hovered.isEmpty()) g.renderTooltip(font, hovered, mx, my);
@@ -238,6 +241,7 @@ public class CodexScreen extends Screen {
     @Override
     public void renderBackground(GuiGraphics g, int mx, int my, float pt) {
         renderTransparentBackground(g);
+        drawBook(g);
     }
 
     private void drawBook(GuiGraphics g) {
@@ -249,6 +253,14 @@ public class CodexScreen extends Screen {
         g.fill(left, top, left + W, top + H, PAPER);
         for (int x = left + 8; x < left + W; x += 8) g.fill(x, top, x + 1, top + H, GRID);
         for (int y = top + 8; y < top + H; y += 8) g.fill(left, y, left + W, y + 1, GRID);
+        // page edges and the shaded spine
+        g.fill(left, top, left + W, top + 1, 0xFFB9C4C0);
+        g.fill(left, top + H - 1, left + W, top + H, 0xFFB9C4C0);
+        for (int i = 0; i < 6; i++) {
+            int shade = (6 - i) * 0x07;
+            g.fill(left + W / 2 - 2 - i, top, left + W / 2 - 1 - i, top + H, shade << 24);
+            g.fill(left + W / 2 + 1 + i, top, left + W / 2 + 2 + i, top + H, shade << 24);
+        }
         g.fill(left + W / 2 - 1, top, left + W / 2 + 1, top + H, COVER);
     }
 
@@ -470,7 +482,7 @@ public class CodexScreen extends Screen {
         int cols = LAB_COLS, visibleRows = labRows();
         int maxScroll = Math.max(0, (items.size() + cols - 1) / cols - visibleRows);
         labScroll = Math.min(labScroll, maxScroll);
-        g.drawString(font, Component.literal("Click: 1  Shift: stack  Wheel: scroll"), gx, top + H - 12, MUTED, false);
+        com.arno.robotica.core.client.MachineScreen.drawFitted(g, font, Component.literal("Click: 1  Shift: stack  Wheel: scroll"), gx, top + H - 12, PAGE_W - 6, MUTED, -1, false, 1.0F);
         ItemStack hovered = ItemStack.EMPTY;
         for (int i = labScroll * cols; i < Math.min(items.size(), (labScroll + visibleRows) * cols); i++) {
             int slot = i - labScroll * cols;
