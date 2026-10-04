@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:tool_upgrade_kit_4"
+  },
+  "base": {
+    "item": "robotica:rivet_gun"
+  },
+  "addition": {
+    "item": "robotica:antigrav_core"
+  },
+  "result": {
+    "id": "robotica:null_lance",
+    "count": 1
+  }
+}

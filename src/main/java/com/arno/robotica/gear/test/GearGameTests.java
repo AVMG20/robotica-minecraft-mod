@@ -1,0 +1,304 @@
+package com.arno.robotica.gear.test;
+
+import com.arno.robotica.Robotica;
+import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.core.item.CoreItems;
+import com.arno.robotica.gear.GearComponents;
+import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.gear.GearItems;
+import com.arno.robotica.gear.tool.AreaMode;
+import com.arno.robotica.gear.tool.AreaShape;
+import com.arno.robotica.gear.tool.BreakQueue;
+import com.arno.robotica.gear.tool.GearToolItem;
+import com.arno.robotica.gear.tool.ToggleKind;
+import com.arno.robotica.gear.tool.ToolSettings;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+@GameTestHolder(Robotica.MODID)
+@PrefixGameTestTemplate(false)
+public class GearGameTests {
+
+    private static Set<BlockPos> set(List<BlockPos> list) {
+        return new HashSet<>(list);
+    }
+
+    @GameTest(template = "empty")
+    public static void areaShapeMath(GameTestHelper helper) {
+        BlockPos o = new BlockPos(10, 20, 30);
+        int feet = 100; // far above: keep floor is bounded by the origin row
+
+        List<BlockPos> up3 = AreaShape.positions(o, Direction.UP, AreaMode.AREA_3, feet, false);
+        helper.assertTrue(up3.size() == 9, "3x3 on top face should have 9 blocks, got " + up3.size());
+        helper.assertTrue(up3.get(0).equals(o), "origin should come first");
+        for (BlockPos p : up3) {
+            helper.assertTrue(p.getY() == 20 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getZ() - 30) <= 1, "3x3 up block off plane: " + p);
+        }
+
+        List<BlockPos> north3 = AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3, feet, false);
+        helper.assertTrue(north3.size() == 9, "3x3 on north face should have 9 blocks");
+        for (BlockPos p : north3) {
+            helper.assertTrue(p.getZ() == 30 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getY() - 20) <= 1, "3x3 north block off plane: " + p);
+        }
+
+        List<BlockPos> east3 = AreaShape.positions(o, Direction.EAST, AreaMode.AREA_3, feet, false);
+        for (BlockPos p : east3) {
+            helper.assertTrue(p.getX() == 10 && Math.abs(p.getZ() - 30) <= 1 && Math.abs(p.getY() - 20) <= 1, "3x3 east block off plane: " + p);
+        }
+
+        // 3x3x3 from the north face goes south (into the block, away from the player), centred in x and y.
+        List<BlockPos> cubeNorth = AreaShape.positions(o, Direction.NORTH, AreaMode.CUBE_3, feet, false);
+        helper.assertTrue(cubeNorth.size() == 27, "3x3x3 should have 27 blocks");
+        for (BlockPos p : cubeNorth) {
+            helper.assertTrue(p.getZ() >= 30 && p.getZ() <= 32 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getY() - 20) <= 1, "cube north off: " + p);
+        }
+        helper.assertTrue(set(cubeNorth).size() == 27, "cube positions must be unique");
+
+        List<BlockPos> cubeUp = AreaShape.positions(o, Direction.UP, AreaMode.CUBE_3, feet, false);
+        for (BlockPos p : cubeUp) {
+            helper.assertTrue(p.getY() <= 20 && p.getY() >= 18 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getZ() - 30) <= 1, "cube up off: " + p);
+        }
+        List<BlockPos> cubeDown = AreaShape.positions(o, Direction.DOWN, AreaMode.CUBE_3, feet, false);
+        for (BlockPos p : cubeDown) {
+            helper.assertTrue(p.getY() >= 20 && p.getY() <= 22, "cube down should extend up: " + p);
+        }
+        List<BlockPos> cubeWest = AreaShape.positions(o, Direction.WEST, AreaMode.CUBE_3, feet, false);
+        for (BlockPos p : cubeWest) {
+            helper.assertTrue(p.getX() >= 10 && p.getX() <= 12, "cube west should extend east: " + p);
+        }
+
+        // Even sizes extend one further in the positive direction.
+        List<BlockPos> big = AreaShape.positions(o, Direction.UP, AreaMode.AREA_12, feet, false);
+        helper.assertTrue(big.size() == 144, "12x12 should have 144 blocks");
+        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+        for (BlockPos p : big) {
+            minX = Math.min(minX, p.getX());
+            maxX = Math.max(maxX, p.getX());
+        }
+        helper.assertTrue(minX == 5 && maxX == 16, "12 wide should span -5..+6, got " + minX + ".." + maxX);
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.CUBE_12, feet, false).size() == 1728, "12x12x12 should have 1728 blocks");
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.AREA_5, feet, false).size() == 25, "5x5 should have 25 blocks");
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.CUBE_5, feet, false).size() == 125, "5x5x5 should have 125 blocks");
+
+        // Keep floor: nothing below min(origin Y, feet Y).
+        List<BlockPos> floorOnWall = AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3, 20, true);
+        helper.assertTrue(floorOnWall.size() == 6, "keep floor on a wall at feet height should drop the bottom row, got " + floorOnWall.size());
+        for (BlockPos p : floorOnWall) helper.assertTrue(p.getY() >= 20, "below the floor: " + p);
+        List<BlockPos> floorCube = AreaShape.positions(o, Direction.NORTH, AreaMode.CUBE_3, 20, true);
+        helper.assertTrue(floorCube.size() == 18, "keep floor on a cube should have 18 blocks, got " + floorCube.size());
+        // Feet below the origin: the origin row is the limit, so digging a wall from above the feet keeps everything above feet.
+        List<BlockPos> feetLow = AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3, 19, true);
+        helper.assertTrue(feetLow.size() == 9, "feet one below origin keeps the whole 3x3, got " + feetLow.size());
+        // Mining straight down never gets filtered: the whole plane is at the origin height.
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.AREA_3, 25, true).size() == 9, "flat plane stays complete");
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.SINGLE, feet, true).equals(List.of(o)), "single is just the origin");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void handPlateRecipeDamagesHammer(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        record Case(String recipe, ItemStack ingot, ItemStack plate) {}
+        List<Case> cases = List.of(
+                new Case("iron_plate_from_hammer", new ItemStack(Items.IRON_INGOT), new ItemStack(CoreItems.IRON_PLATE.get())),
+                new Case("copper_plate_from_hammer", new ItemStack(Items.COPPER_INGOT), new ItemStack(CoreItems.COPPER_PLATE.get())),
+                new Case("gold_plate_from_hammer", new ItemStack(Items.GOLD_INGOT), new ItemStack(CoreItems.GOLD_PLATE.get())));
+        for (Case c : cases) {
+            Optional<RecipeHolder<?>> byKey = level.getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath(Robotica.MODID, c.recipe));
+            helper.assertTrue(byKey.isPresent(), "missing recipe " + c.recipe);
+            ItemStack hammer = new ItemStack(GearItems.TINKERS_HAMMER.get());
+            CraftingInput input = CraftingInput.of(3, 1, List.of(hammer, c.ingot.copy(), c.ingot.copy()));
+            Optional<RecipeHolder<CraftingRecipe>> match = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
+            helper.assertTrue(match.isPresent() && match.get().id().getPath().equals(c.recipe), c.recipe + " should match hammer + 2 ingots");
+            ItemStack result = match.get().value().assemble(input, level.registryAccess());
+            helper.assertTrue(result.is(c.plate.getItem()) && result.getCount() == 1, c.recipe + " should give 1 plate");
+            NonNullList<ItemStack> left = match.get().value().getRemainingItems(input);
+            helper.assertTrue(left.get(0).is(GearItems.TINKERS_HAMMER.get()) && left.get(0).getDamageValue() == 1,
+                    c.recipe + " should leave the hammer with 1 damage");
+            helper.assertTrue(left.get(1).isEmpty() && left.get(2).isEmpty(), "ingots are consumed");
+        }
+        ItemStack worn = new ItemStack(GearItems.TINKERS_HAMMER.get());
+        worn.setDamageValue(worn.getMaxDamage() - 1);
+        helper.assertTrue(worn.getItem().getCraftingRemainingItem(worn).isEmpty(), "a used up hammer should break in the grid");
+        helper.succeed();
+    }
+
+    private static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos at) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.setGameMode(GameType.SURVIVAL);
+        player.moveTo(at.getX() + 0.5, at.getY() + 3, at.getZ() + 0.5);
+        return player;
+    }
+
+    @GameTest(template = "empty")
+    public static void drillAreaConsumesEnergyPerBlock(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos center = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, center);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) level.setBlock(center.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
+        }
+        level.setBlock(center.offset(2, 0, 0), Blocks.STONE.defaultBlockState(), 3);
+        ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
+        ItemEnergy.fill(drill);
+        drill.set(GearComponents.MODE.get(), AreaMode.AREA_3);
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        int before = ItemEnergy.get(player.getMainHandItem());
+        int perBlock = GearConfig.fe(GearConfig.BORE_DRILL_COST, 40);
+        helper.assertTrue(player.gameMode.destroyBlock(center), "origin block should break");
+        int broken = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (level.getBlockState(center.offset(dx, 0, dz)).isAir()) broken++;
+            }
+        }
+        helper.assertTrue(broken == 9, "3x3 should be gone, broken=" + broken);
+        helper.assertTrue(level.getBlockState(center.offset(2, 0, 0)).is(Blocks.STONE), "block outside the area must stay");
+        int used = before - ItemEnergy.get(player.getMainHandItem());
+        helper.assertTrue(used == 9 * perBlock, "should use 9 x " + perBlock + " FE, used " + used);
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void bigAreaRunsThroughQueueAndStopsWhenEmpty(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos center = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, center);
+        for (int dx = -4; dx <= 4; dx++) {
+            for (int dz = -4; dz <= 4; dz++) level.setBlock(center.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
+        }
+        ItemStack drill = new ItemStack(GearItems.MAGMA_DRILL.get());
+        int perBlock = GearConfig.fe(GearConfig.MAGMA_DRILL_COST, 60);
+        // Enough energy for 40 blocks only.
+        ItemEnergy.set(drill, perBlock * 40);
+        drill.set(GearComponents.MODE.get(), AreaMode.AREA_9);
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        helper.assertTrue(player.gameMode.destroyBlock(center), "origin block should break");
+        helper.assertTrue(BreakQueue.queued(player.getUUID()) > 0, "81 blocks should be queued, not broken at once");
+        for (int i = 0; i < 4; i++) BreakQueue.tick(helper.getLevel().getServer());
+        int left = 0;
+        for (int dx = -4; dx <= 4; dx++) {
+            for (int dz = -4; dz <= 4; dz++) {
+                if (!level.getBlockState(center.offset(dx, 0, dz)).isAir()) left++;
+            }
+        }
+        helper.assertTrue(BreakQueue.queued(player.getUUID()) == 0, "queue should be drained or cleared");
+        helper.assertTrue(left == 81 - 40, "an empty drill must stop after 40 blocks, " + left + " left");
+        helper.assertTrue(ItemEnergy.get(player.getMainHandItem()) == 0, "all energy should be used");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void emptyAndSneakingToolsMineSingleBlocks(GameTestHelper helper) {
+        BlockPos at = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, at);
+        ItemStack drill = new ItemStack(GearItems.SERVO_DRILL.get());
+        drill.set(GearComponents.MODE.get(), AreaMode.AREA_5);
+        GearToolItem tool = (GearToolItem) drill.getItem();
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "empty tool has no area mode");
+        ItemEnergy.fill(drill);
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.AREA_5, "charged tool uses its mode");
+        player.setShiftKeyDown(true);
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "sneaking always mines 1x1");
+        player.setShiftKeyDown(false);
+        drill.set(GearComponents.MODE.get(), AreaMode.CUBE_12);
+        helper.assertTrue(tool.mode(drill) == AreaMode.SINGLE, "a mode the tool does not have falls back to the first mode");
+        helper.assertTrue(tool.getDestroySpeed(new ItemStack(GearItems.SERVO_DRILL.get()), Blocks.STONE.defaultBlockState()) == GearToolItem.EMPTY_SPEED,
+                "empty drill mines at wooden speed");
+        helper.assertTrue(tool.getDestroySpeed(drill, Blocks.STONE.defaultBlockState()) > GearToolItem.EMPTY_SPEED, "charged drill is faster");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void chainsawFellsTreeAndChargesPerLog(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos base = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, base);
+        for (int i = 0; i < 5; i++) level.setBlock(base.above(i), Blocks.OAK_LOG.defaultBlockState(), 3);
+        level.setBlock(base.above(5), Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, false), 3);
+        level.setBlock(base.above(4).east(), Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, false), 3);
+        ItemStack saw = new ItemStack(GearItems.CHAINSAW.get());
+        ItemEnergy.fill(saw);
+        player.setItemInHand(InteractionHand.MAIN_HAND, saw);
+        int before = ItemEnergy.get(player.getMainHandItem());
+        helper.assertTrue(player.gameMode.destroyBlock(base), "origin log should break");
+        for (int i = 0; i < 5; i++) helper.assertTrue(level.getBlockState(base.above(i)).isAir(), "log " + i + " should be felled");
+        helper.assertTrue(level.getBlockState(base.above(5)).is(Blocks.OAK_LEAVES), "leaves stay unless the toggle is on");
+        int used = before - ItemEnergy.get(player.getMainHandItem());
+        helper.assertTrue(used == 5 * GearConfig.fe(GearConfig.CHAINSAW_COST, 30), "5 logs should cost 5 x 30 FE, used " + used);
+        // A log pile without natural leaves is not a tree: only the hit log breaks.
+        BlockPos pile = base.offset(3, 0, 0);
+        for (int i = 0; i < 3; i++) level.setBlock(pile.above(i), Blocks.OAK_LOG.defaultBlockState(), 3);
+        helper.assertTrue(player.gameMode.destroyBlock(pile), "pile log should break");
+        helper.assertTrue(level.getBlockState(pile.above()).is(Blocks.OAK_LOG), "log buildings must survive");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void servoVeinMinesConnectedOre(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos base = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, base);
+        for (int i = 0; i < 6; i++) level.setBlock(base.offset(i, i % 2, 0), Blocks.IRON_ORE.defaultBlockState(), 3);
+        level.setBlock(base.offset(0, 0, 5), Blocks.IRON_ORE.defaultBlockState(), 3);
+        ItemStack drill = new ItemStack(GearItems.SERVO_DRILL.get());
+        ItemEnergy.fill(drill);
+        drill.set(GearComponents.MODE.get(), AreaMode.VEIN);
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        helper.assertTrue(player.gameMode.destroyBlock(base), "origin ore should break");
+        for (int i = 0; i < 6; i++) helper.assertTrue(level.getBlockState(base.offset(i, i % 2, 0)).isAir(), "vein block " + i + " should be mined");
+        helper.assertTrue(level.getBlockState(base.offset(0, 0, 5)).is(Blocks.IRON_ORE), "a separate ore must stay");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void dropsGoToInventoryOrVoid(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, pos);
+        ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
+        ItemEnergy.fill(drill);
+        ToolSettings.set(drill, ToggleKind.AUTO_PICKUP, true);
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+        helper.assertTrue(player.gameMode.destroyBlock(pos), "stone should break");
+        helper.assertTrue(player.getInventory().countItem(Items.COBBLESTONE) == 1, "auto-pickup should put the cobblestone in the inventory");
+        helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3)).isEmpty(), "nothing should drop on the ground");
+        ToolSettings.set(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
+        level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+        helper.assertTrue(player.gameMode.destroyBlock(pos), "stone should break again");
+        helper.assertTrue(player.getInventory().countItem(Items.COBBLESTONE) == 1, "void filter should delete the second cobblestone");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PIP",
+    "PMP",
+    " B "
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:bore_drill",
+    "count": 1
+  }
+}

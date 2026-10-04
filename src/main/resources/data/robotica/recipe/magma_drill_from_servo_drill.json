@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:tool_upgrade_kit_3"
+  },
+  "base": {
+    "item": "robotica:servo_drill"
+  },
+  "addition": {
+    "item": "robotica:magma_core"
+  },
+  "result": {
+    "id": "robotica:magma_drill",
+    "count": 1
+  }
+}

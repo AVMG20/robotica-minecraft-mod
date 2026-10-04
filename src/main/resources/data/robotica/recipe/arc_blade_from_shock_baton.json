@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:tool_upgrade_kit_3"
+  },
+  "base": {
+    "item": "robotica:shock_baton"
+  },
+  "addition": {
+    "item": "robotica:magma_core"
+  },
+  "result": {
+    "id": "robotica:arc_blade",
+    "count": 1
+  }
+}

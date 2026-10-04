@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PPP",
+    "SAR",
+    " P "
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:rivet_gun",
+    "count": 1
+  }
+}
