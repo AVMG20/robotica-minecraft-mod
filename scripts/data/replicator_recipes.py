@@ -27,9 +27,9 @@ def shaped(name, pattern, key, count=1, category='misc'):
 IRON_PLATE, QUARTZ, DIAMOND = '#c:plates/iron', '#c:gems/quartz', '#c:gems/diamond'
 GLASS, OBSIDIAN = '#c:glass_blocks', '#c:obsidians'
 
-# Age 2: vial = glass bottle + advanced circuit + quartz + slime
+# Age 2: vial = glass bottle + basic circuit + quartz + slime (a sample item, not a machine part)
 shaped('essence_vial', [' A ', 'QBQ', ' S '],
-       {'A': 'advanced_circuit', 'Q': QUARTZ, 'B': 'minecraft:glass_bottle', 'S': 'minecraft:slime_ball'})
+       {'A': 'basic_circuit', 'Q': QUARTZ, 'B': 'minecraft:glass_bottle', 'S': 'minecraft:slime_ball'})
 # 4 frames per reinforced casing
 shaped('replicator_frame', ['POP', 'ORO', 'POP'],
        {'P': IRON_PLATE, 'O': OBSIDIAN, 'R': 'reinforced_casing'}, count=4)

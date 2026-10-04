@@ -2,13 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "SMS",
+    "SQS",
     "MNM",
-    "SMS"
+    "SQS"
   ],
   "key": {
     "S": {
       "item": "robotica:servo_actuator"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
     },
     "M": {
       "item": "minecraft:magma_block"

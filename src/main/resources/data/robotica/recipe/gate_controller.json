@@ -3,8 +3,8 @@
   "category": "misc",
   "pattern": [
     "FCF",
-    "NAN",
-    "FEF"
+    "EAE",
+    "FNF"
   ],
   "key": {
     "F": {

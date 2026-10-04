@@ -53,7 +53,7 @@ Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate
 - Blazing Casing: 4 reinforced casing + 4 netherite scrap + 1 magma core → 2
 - Quantum Circuit: 4 advanced circuit + 4 blaze rod + 1 netherite ingot → 1
 - Plasma Actuator: 2 servo actuator + 4 prismarine crystals + 2 blaze powder + 1 quantum circuit → 1
-- Magma Core: boss drop (temp: 4 servo actuator + 4 magma block + 1 netherite ingot)
+- Magma Core: boss drop (temp: 4 servo actuator + 2 quantum circuit + 2 magma block + 1 netherite ingot)
 
 ### Age 4 parts
 - Null Casing: 4 blazing casing + 4 shulker shell + 1 antigrav core → 2
@@ -97,7 +97,7 @@ Area workers are block entities, never mobs. All of them: battery slot (cell or 
 - Farm tiers via Mk kits used on the placed bot: Mk2 (Age 1 parts) 13×13, every 20 ticks, growth ×2; Mk3 (Age 2) 17×17, 5 ticks, ×3; Mk4 (Age 4) 25×25, 1 tick, ×5. Range cards add +2 radius per level on top.
 - Growth boost is applied as extra random ticks on crops/saplings in the area (cheap: N random positions per second, not every block).
 - Supply Crate (Age 0): 27 slots, plain inventory with item capability.
-- Excavator (Age 1, starts cheap): mines a real hole below itself. Base 8×8 area, 1 block / 40 ticks, 40 FE per block, stops at bedrock and leaves fluids alone (replaces fluid source blocks with cobblestone as it goes, so no flooding). Upgrades: range 16/32/48/64 square (level 1-4), speed, efficiency, fortune, silk, void. Never breaks blocks with an unbreakable hardness or block entities. Area outline shown client side when you look at the machine.
+- Excavator (Age 1, starts cheap: Iron Casing + Clockwork Mechanism + iron pickaxe + Basic Circuit): mines a real hole below itself. Base 8×8 area, 1 block / 40 ticks, 40 FE per block, stops at bedrock and leaves fluids alone (replaces fluid source blocks with cobblestone as it goes, so no flooding). Upgrades: range 16/32/48/64 square (level 1-4), speed, efficiency, fortune, silk, void. Never breaks blocks with an unbreakable hardness or block entities. Area outline shown client side when you look at the machine.
 
 ## Tools and weapons (module `gear`)
 
@@ -157,7 +157,7 @@ Block styles, each a family of 6 roles (wall, floor, roof, pillar/trim, window, 
 | Null Spire | 4 | 2 refined + 2 exotic | dark glossy panels, glowing teal seams, energy glass |
 Higher styles need the matching age part in the table's style slot to unlock (Iron Casing, Reinforced Casing, Null Casing). All 24 blocks also have normal crafting recipes (8 bulk blocks + 1 tier material → 8), so players can repair or extend by hand.
 
-Architect Table (Age 1, FE buffer 200k): 27-slot material input, style slot, 5×5 plot grid centred on the table's plot (each plot 9×9×6). The GUI shows the grid; click a plot, pick a module, confirm. Builds one block per N ticks (base 4 ticks, speed cards apply), 50 FE + matter per block. Optional "clear terrain" removes blocks in the footprint (no block entities, no unbreakables) and turns them into rustic matter. Missing matter pauses the build and the GUI says which grade is short.
+Architect Table (Age 1, FE buffer 200k, built from a Clockwork Mechanism rather than a motor so it stays a cheap starter): 27-slot material input, style slot, 5×5 plot grid centred on the table's plot (each plot 9×9×6). The GUI shows the grid; click a plot, pick a module, confirm. Builds one block per N ticks (base 4 ticks, speed cards apply), 50 FE + matter per block. Optional "clear terrain" removes blocks in the footprint (no block entities, no unbreakables) and turns them into rustic matter. Missing matter pauses the build and the GUI says which grade is short.
 
 Modules (procedural, built bottom-up, doors open automatically toward neighbouring modules): Corridor, Hall, Workshop, Storage Room, Machine Hall, Greenhouse (glass roof, farmland), Hangar (open roof pad), Stairwell (second floor later).
 
@@ -166,9 +166,9 @@ Builder drones: purely visual for now, a small flying entity that flies from the
 ## Mob replicator (module `replicator`)
 
 Mid-high tier, slow, powerful.
-- Essence Vial (Age 2, consumable): right-click a hostile mob to take a sample (deals 2 damage, 3 s cooldown). The first sample binds the vial to that mob type. 8 samples completes it. Boss mobs and anything in `robotica:replicator_blacklist` cannot be sampled.
+- Essence Vial (Age 2, consumable; a sample item, so it uses a Basic Circuit instead of an Advanced one): right-click a hostile mob to take a sample (deals 2 damage, 3 s cooldown). The first sample binds the vial to that mob type. 8 samples completes it. Boss mobs and anything in `robotica:replicator_blacklist` cannot be sampled.
 - Mob Replicator: 3×3×3 multiblock. Replicator Controller in the middle of one face, the rest Replicator Frame and Replicator Glass (at least 1 glass). The controller checks the structure every 40 ticks.
-- Insert a complete vial, feed FE (base 256 FE/t). One cycle takes 1,200 ticks (1 min) at Age 2 speed. Speed cards (max level 3) and Plasma Actuator in the boost slot (×2) speed it up. Fortune cards act as Looting.
+- Insert a complete vial, feed FE (base 160 FE/t). One cycle takes 1,200 ticks (1 min) at Age 2 speed. Speed cards (max level 3) and Plasma Actuator in the boost slot (×2) speed it up. Fortune cards act as Looting.
 - Mode "Harvest" (default): rolls the mob's loot table as if a player killed it and puts drops in an 18-slot internal output. No entity is ever added to the world. A translucent hologram of the mob spins inside the frame and flashes on each cycle.
 - Mode "Spawn": spawns the real mob in front of the controller instead (for your own mob grinders), max 8 nearby, then waits.
 - Never duplicates boss drops, nether stars or anything in the blacklist tag.
@@ -179,7 +179,7 @@ Mid-high tier, slow, powerful.
 Getting home and travelling between bases. All teleports run on the server, cost FE, and work for every player on a server.
 - Warp Pad (Age 2 parts, FE buffer 1M): a block you name in a small GUI. Pads belong to their owner; the owner can mark a pad public so friends can use it. Stand on a pad and right-click it to open the destination list. Cost: 5,000 FE + 20 FE per block of distance, taken from the departure pad. Same dimension only, until the pad gets a Rift Upgrade (Age 3 parts + Magma Core) that unlocks cross-dimension travel for a flat 100,000 FE.
 - Recall Remote (Age 1, 400k FE): sneak-right-click a Warp Pad to bind it. Hold right-click for 3 seconds (any damage cancels) to teleport to that pad. 20,000 FE, 30 s cooldown, same dimension. Smithing upgrade to Rift Remote (Age 3) works across dimensions for 150,000 FE.
-- Portal Gate (Age 4): 4 wide × 5 tall frame of Gate Frame blocks with a Gate Controller in the bottom middle. Link two gates with a Linking Card (sneak-right-click controller A, then B). While powered (500 FE/t idle), the inside fills with a swirling portal block; players, mobs and items that walk in arrive at the other gate (10,000 FE per entity). Gates work across dimensions.
+- Portal Gate (Age 4): 4 wide × 5 tall frame of Gate Frame blocks with a Gate Controller in the bottom middle. Link two gates with a Linking Card (one Null Circuit) (sneak-right-click controller A, then B). While powered (200 FE/t idle), the inside fills with a swirling portal block; players, mobs and items that walk in arrive at the other gate (10,000 FE per entity). Gates work across dimensions.
 - The pad registry is a `SavedData` on the overworld, so pads keep working when their chunk is unloaded (the destination chunk is loaded on arrival).
 - Safety: never teleport into solid blocks, look for the nearest safe 2-high spot within 3 blocks, otherwise refuse with a message and refund the FE.
 
@@ -197,3 +197,17 @@ Guard Drone, Wingman, Mole, Courier, Survey Rig, Exo-Frame armor, bosses, Magma 
 6. Textures are generated by `scripts/textures/<module>.py` using `scripts/pixelart.py`. GUIs are drawn with `GuiGraphics.fill` through the core `MachineScreen` helpers, no GUI textures.
 7. Block entities tick only on the server (`level.isClientSide` check in the ticker factory). Sync to client only what rendering needs.
 8. Performance: area scans are spread over ticks (cursor-based), never full-area scans every tick.
+
+## Balance notes
+
+Raw-material costs of every item are in `docs/COSTS.md` (regenerate with `python3 scripts/cost_report.py`; iron-equivalent "IE" = iron 1, copper 0.4, redstone 0.4, gold 3, diamond 10, ender pearl 8, netherite 60, nether star 80).
+
+Checked and fine: Age 0 uses no iron (Stumpy and Sprout 25 copper, Tinker's Hammer 9, Felling Axe 6). Each ladder step costs 4-9x the one before (kits 37 / 340 / 2.7k / 9.3k IE, upgrade cards 13 / 120 / 1.1k / 4.2k IE, accumulators 28 / 220 / 1.7k, solar 12 / 102, Mk farm kits 46 / 259 / 6.6k). No Age 3/4 item undercuts its Age 2 counterpart except where listed below.
+
+Changes in the balance pass:
+- Magma Core temp recipe was cheaper than the Servo Core (483 vs 505 IE). It now also takes 2 Quantum Circuits (about 1,040 IE), so every boss core costs more than the one before. Blazing and Null Casings consume that core, so Age 3-4 parts rose by roughly a third.
+- Excavator: Electric Motor replaced by a Clockwork Mechanism (39 to 26 IE, now cheaper than the Bore Drill at 40). Architect Table: same swap (43 to 30 IE). Both stay Age 1 and still need iron, but are starters.
+- Essence Vial: Advanced Circuit replaced by a Basic Circuit (54 to 12 IE). It is a consumable sample item, not a machine part.
+- Gate Frame recipe yields 8 instead of 4, Gate Controller uses 1 Null Casing instead of 2, Linking Card uses 1 Null Circuit instead of 2. A gate (14 frames plus controller) is now about 11k IE instead of about 17k, in line with 3-4x per age (Null Drill is about 16k IE).
+- Config `replicatorEnergyPerTick` 256 to 160 (4 Combustion Generators instead of 6.4, or 5 Solar Mk2, for an Age 2 machine). Config `gateIdleCost` 500 to 200 (two open gates at 400 FE/t are 10 generators, endgame level).
+- Left alone on purpose: Combustion Generator 40 FE/t (about 64k FE per coal), Metal Press 20 FE/t, Stumpy 4 FE/t, Sprout 3 FE/t, Excavator about 1 FE/t at base speed (40 FE per block per 40 ticks), Architect Table 12.5 FE/t, drills 40-80 FE per block against 400k-32M FE buffers, Null Lance 20k FE per shot against 16M FE. No Age 0-1 machine needs more than 1 generator to run. Rift Remote cost stays 150,000 FE because a game test pins it (it holds 400k FE, so 2 trips per charge).

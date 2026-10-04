@@ -26,7 +26,7 @@ public final class ReplicatorConfig {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("replicator_controller");
         ENERGY_PER_TICK = b.comment("Base FE/t while working (before speed and efficiency cards).")
-                .defineInRange("replicatorEnergyPerTick", 256, 0, 10_000_000);
+                .defineInRange("replicatorEnergyPerTick", 160, 0, 10_000_000);
         CYCLE_TICKS = b.comment("Ticks per cycle at base speed (1200 = one minute).")
                 .defineInRange("replicatorCycleTicks", 1_200, 1, 1_000_000);
         ENERGY_BUFFER = b.comment("Internal FE buffer.")

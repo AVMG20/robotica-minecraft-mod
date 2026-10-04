@@ -72,9 +72,10 @@ def glass_frame(c, light, mid, dark, rivet=None, muntin=True):
 
 
 def sparkle(c, ch='v', alt='V'):
-    for ox, oy in ((3, 3), (9, 3), (3, 9), (9, 9)):
-        c.set(ox, oy, ch).set(ox + 1, oy, ch).set(ox, oy + 1, ch)
-        c.set(ox + 2, oy + 2, alt)
+    """Clean glass glints: one long and one short diagonal stroke per pane (5x5 panes), like vanilla glass."""
+    for ox, oy in ((2, 2), (9, 2), (2, 9), (9, 9)):
+        c.set(ox, oy + 2, ch).set(ox + 1, oy + 1, ch).set(ox + 2, oy, ch)
+        c.set(ox + 3, oy + 4, alt).set(ox + 4, oy + 3, alt)
 
 
 def disc(c, r_outer, rings, cx=7.5, cy=7.5, outside=None):
@@ -380,11 +381,7 @@ def steel_pillar_end():
 def steel_window():
     c = Canvas()
     glass_frame(c, '1', '2', '4')
-    # cyan tint corners
-    for ox, oy in ((2, 2), (11, 2), (2, 11), (11, 11)):
-        c.set(ox, oy, 'V')
     sparkle(c, 'v', 'g')
-    c.rect(3, 3, 1, 1, 'g')
     for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
         c.set(x, y, '4')
     return c.rows()

@@ -57,7 +57,7 @@ public final class WarpConfig {
         GATE_MAX_RECEIVE = b.comment("FE per tick a Gate Controller accepts from cables and other mods.")
                 .defineInRange("gateMaxReceive", 50_000, 1, 1_000_000_000);
         GATE_IDLE_COST = b.comment("FE per tick an open gate uses while it holds its portal.")
-                .defineInRange("gateIdleCost", 500, 0, 1_000_000);
+                .defineInRange("gateIdleCost", 200, 0, 1_000_000);
         GATE_ENTITY_COST = b.comment("FE per entity that travels through a gate, taken from the departure gate.")
                 .defineInRange("gateEntityCost", 10_000, 0, 100_000_000);
         GATE_ENTITY_COOLDOWN = b.comment("Ticks an entity can not use a gate again after it travelled (stops ping-pong).")

@@ -187,29 +187,53 @@ def rift_upgrade():
 
 
 def remote(rift):
+    """Hand-held transmitter: light slate body with a dark screen, d-pad, round buttons and an angled antenna with signal arcs."""
     glow, bright, dim = ('P', 'Q', 'q') if rift else ('E', 'W', 'T')
     c = Canvas()
-    c.rect(5, 5, 6, 10, 'd').bevel(5, 5, 6, 10, 'm', 'k')
-    c.frame(5, 5, 6, 10, 'k')
-    c.rect(6, 6, 4, 4, 'k').rect(7, 7, 2, 2, glow).set(7, 7, bright)  # screen
-    c.set(6, 12, glow).set(9, 12, 'M').set(6, 13, 'M').set(9, 13, glow)  # buttons
-    c.rect(7, 2, 2, 3, 'm').frame(7, 2, 2, 3, 'k')  # antenna
-    c.set(7, 1, glow).set(8, 1, glow).set(7, 0, bright).set(8, 0, bright)
+    c.rect(2, 5, 10, 10, 'm').bevel(2, 5, 10, 10, 'M', 'd')
+    # screen: dark glass showing a pad ring (recall) or a swirl (rift)
+    c.rect(3, 6, 8, 4, 'k').rect(4, 7, 6, 2, dim)
     if rift:
-        c.set(4, 8, 'P').set(11, 8, 'P').set(4, 9, 'p').set(11, 9, 'p')
+        for x, y in ((4, 7), (5, 7), (6, 7), (7, 8), (8, 8), (9, 8), (5, 8)):
+            c.set(x, y, glow)
+        c.set(6, 8, bright).set(8, 7, bright)
+    else:
+        for x, y in ((4, 7), (5, 7), (8, 7), (9, 7), (4, 8), (5, 8), (8, 8), (9, 8)):
+            c.set(x, y, glow)
+        c.set(6, 7, bright).set(7, 8, bright)
+    # buttons: d-pad on the left, two round buttons on the right
+    c.set(4, 12, 'W').set(5, 11, 'W').set(5, 12, 'd').set(5, 13, 'W').set(6, 12, 'W')
+    c.set(8, 11, glow).set(9, 11, glow).set(9, 13, bright if rift else glow).set(8, 13, 'M').set(10, 12, 'M')
+    # antenna with a glowing tip and signal arcs
+    for x, y in ((9, 4), (10, 3), (11, 2)):
+        c.set(x, y, 'M')
+    c.set(12, 1, bright).set(12, 0, glow).set(13, 1, glow)
+    c.set(14, 0, glow).set(14, 2, glow).set(15, 1, dim if not rift else 'P')
+    if rift:
+        for y in (8, 9):
+            c.set(1, y, 'P').set(12, y, 'P')                         # rift fins
+    c.outline('k')
     return c.rows()
 
 
 def linking_card():
+    """Key card: purple stripe, a chain link (two interlocked rounded loops) and a contact bar."""
     c = Canvas()
-    c.rect(1, 3, 14, 10, 'D').bevel(1, 3, 14, 10, 'M', 'k')
-    c.frame(1, 3, 14, 10, 'k')
-    c.rect(2, 4, 12, 1, 'p')
-    for cx in (4, 11):
-        c.rect(cx - 1, 7, 3, 3, 'k').rect(cx, 8, 1, 1, 'E')
-    c.rect(6, 8, 4, 1, 'e')
-    c.set(5, 8, 'e').set(10, 8, 'e')
-    c.rect(2, 11, 8, 1, 'm')
+    c.rect(0, 3, 16, 10, 'D').bevel(0, 3, 16, 10, 'M', 'k')
+    c.frame(0, 3, 16, 10, 'k')
+    c.rect(1, 4, 14, 1, 'P').rect(1, 5, 14, 1, 'p')
+    left, right = 'E', 'P'
+    for x in range(4, 8):
+        c.set(x, 7, left).set(x, 11, left)
+    for y in range(8, 11):
+        c.set(3, y, left).set(8, y, left)
+    for x in range(8, 12):
+        c.set(x, 7, right).set(x, 11, right)
+    for y in range(8, 11):
+        c.set(7, y, right).set(12, y, right)
+    c.set(7, 7, left).set(8, 7, right).set(7, 11, right).set(8, 11, left)    # weave
+    c.set(8, 9, 'W').set(7, 9, 'W')
+    c.rect(2, 12, 12, 1, 'm')
     return c.rows()
 
 

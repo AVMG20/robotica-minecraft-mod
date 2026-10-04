@@ -30,9 +30,9 @@ def stonecutting(name, source, result):
 
 IRON_PLATE = '#c:plates/iron'
 
-# Age 1: casing + circuit + motor + crafting table, gears for the drafting arm
+# Age 1: casing + circuit + clockwork mechanism + crafting table, gears for the drafting arm
 shaped('architect_table', ['PBP', 'MIT', 'GGG'],
-       {'P': IRON_PLATE, 'B': 'basic_circuit', 'M': 'electric_motor', 'I': 'iron_casing', 'T': 'minecraft:crafting_table', 'G': 'copper_gear'},
+       {'P': IRON_PLATE, 'B': 'basic_circuit', 'M': 'clockwork_mechanism', 'I': 'iron_casing', 'T': 'minecraft:crafting_table', 'G': 'copper_gear'},
        category='misc')
 
 # (bulk, centre) per style and role. Every pair is unique, 8 bulk around 1 centre gives 8 blocks.
