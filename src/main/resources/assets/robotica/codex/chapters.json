@@ -262,6 +262,8 @@
           "text": "Sneak-right-click a pad with a Recall Remote to bind it. Hold right-click for three seconds to go home. Getting hit cancels it.\n\nPortal Gates (Age 4) are walk-through portals between two linked gates, in any dimension.",
           "items": [
             "robotica:recall_remote",
+            "robotica:rift_remote",
+            "robotica:linking_card",
             "robotica:gate_controller",
             "robotica:gate_frame"
           ]
