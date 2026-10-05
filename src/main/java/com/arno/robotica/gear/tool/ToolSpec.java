@@ -18,6 +18,12 @@ public final class ToolSpec {
     public final float speed;
     public final List<TagKey<Block>> tags;
     public final List<AreaMode> modes;
+    /** Mode of a new tool: the reason you crafted it (3x3 for drills and the hammer, whole tree for axes). */
+    public final AreaMode defaultMode;
+    /** Tree tools: also clear the natural leaves of a felled tree. */
+    public final boolean cutsLeaves;
+    /** Tree tools: plant a sapling from the inventory where the trunk stood. */
+    public final boolean replants;
     /** 0 = durability based (vanilla damage), otherwise FE capacity. */
     public final int energyCapacity;
     public final IntSupplier costPerBlock;
@@ -34,6 +40,9 @@ public final class ToolSpec {
         this.speed = b.speed;
         this.tags = List.copyOf(b.tags);
         this.modes = List.copyOf(b.modes);
+        this.defaultMode = b.defaultMode != null && b.modes.contains(b.defaultMode) ? b.defaultMode : b.modes.get(0);
+        this.cutsLeaves = b.cutsLeaves;
+        this.replants = b.replants;
         this.energyCapacity = b.energyCapacity;
         this.costPerBlock = b.cost;
         this.maxLogs = b.maxLogs;
@@ -49,6 +58,11 @@ public final class ToolSpec {
 
     public boolean hasMode(AreaMode mode) {
         return modes.contains(mode);
+    }
+
+    /** True when the tool has more than plain 1x1 mining (an area, vein or tree mode). */
+    public boolean hasAreaModes() {
+        return modes.size() > 1 || modes.get(0) != AreaMode.SINGLE;
     }
 
     public boolean isAxe() {
@@ -74,6 +88,9 @@ public final class ToolSpec {
         private final float speed;
         private final List<TagKey<Block>> tags = new ArrayList<>();
         private final List<AreaMode> modes = new ArrayList<>(List.of(AreaMode.SINGLE));
+        private AreaMode defaultMode;
+        private boolean cutsLeaves;
+        private boolean replants;
         private int energyCapacity;
         private IntSupplier cost = () -> 0;
         private int maxLogs = 64;
@@ -96,6 +113,21 @@ public final class ToolSpec {
         public Builder modes(AreaMode... m) {
             modes.clear();
             modes.addAll(List.of(m));
+            return this;
+        }
+
+        public Builder defaultMode(AreaMode m) {
+            this.defaultMode = m;
+            return this;
+        }
+
+        public Builder cutsLeaves() {
+            this.cutsLeaves = true;
+            return this;
+        }
+
+        public Builder replants() {
+            this.replants = true;
             return this;
         }
 

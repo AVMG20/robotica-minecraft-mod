@@ -69,6 +69,24 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem {
         return ItemEnergy.BAR_COLOR;
     }
 
+    /** Melee FE weapons (tag minecraft:enchantable/weapon) take Sharpness, Fire Aspect and friends; never Unbreaking or Mending. */
+    @Override
+    public boolean isEnchantable(ItemStack stack) {
+        return stack.is(net.minecraft.tags.ItemTags.WEAPON_ENCHANTABLE);
+    }
+
+    @Override
+    public int getEnchantmentValue() {
+        return 12;
+    }
+
+    @Override
+    public boolean supportsEnchantment(ItemStack stack, net.minecraft.core.Holder<net.minecraft.world.item.enchantment.Enchantment> enchantment) {
+        if (enchantment.is(net.minecraft.world.item.enchantment.Enchantments.MENDING)
+                || enchantment.is(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING)) return false;
+        return super.supportsEnchantment(stack, enchantment);
+    }
+
     @Override
     public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
         return !player.isCreative();

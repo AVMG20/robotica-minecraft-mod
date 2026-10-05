@@ -1,6 +1,12 @@
 package com.arno.robotica.gear.tool;
 
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.core.item.HasDetails;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
@@ -32,7 +38,7 @@ import java.util.List;
  * Hammer, axes and drills. Durability tools (Age 0) use vanilla damage, FE tools (see {@link GearEnergyToolItem}) drain
  * energy per block and never break. A depleted FE tool mines like a wooden tool and has no area mode.
  */
-public class GearToolItem extends Item {
+public class GearToolItem extends Item implements HasDetails {
     /** Mining speed of a wooden tool, used by depleted FE tools. */
     public static final float EMPTY_SPEED = 2.0F;
 
@@ -68,16 +74,27 @@ public class GearToolItem extends Item {
         return super.isCorrectToolForDrops(stack, state);
     }
 
-    /** FE this block costs. Leaves are free so a tree felling does not drain extra. */
-    public int cost(BlockState state) {
+    /** FE this block costs with this tool stack. Leaves are free; Unbreaking lowers the cost (III: 40%). */
+    public int cost(ItemStack stack, BlockState state) {
         if (!spec.isEnergy() || state.is(BlockTags.LEAVES)) return 0;
-        return spec.costPerBlock.getAsInt();
+        int base = spec.costPerBlock.getAsInt();
+        int unbreaking = unbreakingLevel(stack);
+        if (unbreaking <= 0 || base <= 0) return base;
+        return Math.max(1, (int) Math.ceil(base / (1.0 + 0.5 * unbreaking)));
+    }
+
+    /** Unbreaking level from the stack's enchantments, without a registry lookup (works on both sides). */
+    public static int unbreakingLevel(ItemStack stack) {
+        for (var entry : stack.getTagEnchantments().entrySet()) {
+            if (entry.getKey().is(Enchantments.UNBREAKING)) return entry.getIntValue();
+        }
+        return 0;
     }
 
     /** Whether the tool can pay for breaking another block (extras of an area break only). */
     public boolean canAfford(ItemStack stack, BlockState state) {
         if (stack.isEmpty()) return false;
-        if (spec.isEnergy()) return ItemEnergy.get(stack) >= cost(state);
+        if (spec.isEnergy()) return ItemEnergy.get(stack) >= cost(stack, state);
         return stack.getMaxDamage() - stack.getDamageValue() > 1;
     }
 
@@ -85,7 +102,7 @@ public class GearToolItem extends Item {
     public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity miner) {
         if (level.isClientSide || state.getDestroySpeed(level, pos) == 0.0F) return true;
         if (spec.isEnergy()) {
-            ItemEnergy.drain(stack, cost(state));
+            ItemEnergy.drain(stack, cost(stack, state));
         } else {
             stack.hurtAndBreak(1, miner, EquipmentSlot.MAINHAND);
         }
@@ -102,10 +119,10 @@ public class GearToolItem extends Item {
         return true;
     }
 
-    /** The stored mode, or the first mode of the tool when unset or no longer allowed. */
+    /** The stored mode, or the tool's default mode when unset or no longer allowed. */
     public AreaMode mode(ItemStack stack) {
         AreaMode m = stack.get(com.arno.robotica.gear.GearComponents.MODE.get());
-        return m != null && spec.hasMode(m) ? m : spec.modes.get(0);
+        return m != null && spec.hasMode(m) ? m : spec.defaultMode;
     }
 
     /** Mode that applies right now: sneaking or an empty tool always means single blocks. Server enforces this. */
@@ -118,26 +135,28 @@ public class GearToolItem extends Item {
         return spec.toggles.contains(kind) && ToolSettings.has(stack, kind);
     }
 
+    // ---- enchanting: Robotica tools take the normal mining enchantments (tag minecraft:enchantable/mining) ----
+
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        Player player = context.getPlayer();
-        ItemStack tool = context.getItemInHand();
-        if (player == null || !toggleActive(tool, ToggleKind.LIGHT_PLACER)) return InteractionResult.PASS;
-        ItemStack torch = findTorch(player);
-        if (torch.isEmpty()) return InteractionResult.PASS;
-        BlockHitResult hit = new BlockHitResult(context.getClickLocation(), context.getClickedFace(), context.getClickedPos(), context.isInside());
-        return torch.useOn(new UseOnContext(context.getLevel(), player, context.getHand(), torch, hit));
+    public boolean isEnchantable(ItemStack stack) {
+        return true;
     }
 
-    private static ItemStack findTorch(Player player) {
-        Inventory inv = player.getInventory();
-        for (ItemStack s : inv.offhand) {
-            if (s.is(Items.TORCH)) return s;
-        }
-        for (ItemStack s : inv.items) {
-            if (s.is(Items.TORCH)) return s;
-        }
-        return ItemStack.EMPTY;
+    @Override
+    public int getEnchantmentValue() {
+        return switch (spec.age) {
+            case 0 -> 15;
+            case 1 -> 14;
+            case 2 -> 10;
+            default -> 15;
+        };
+    }
+
+    /** FE tools never wear out, so Mending would do nothing: it is not offered. Unbreaking lowers the FE per block. */
+    @Override
+    public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
+        if (spec.isEnergy() && enchantment.is(Enchantments.MENDING)) return false;
+        return super.supportsEnchantment(stack, enchantment);
     }
 
     @Override
@@ -146,20 +165,15 @@ public class GearToolItem extends Item {
             RegistryAccess access = server.registryAccess();
             ToolSettings.syncEnchantments(stack, this, access);
         }
+        // A drill smithed from a worn hammer inherits its damage value; FE tools have no durability, so drop it.
+        if (!level.isClientSide && spec.isEnergy() && stack.has(DataComponents.DAMAGE)) stack.remove(DataComponents.DAMAGE);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.robotica.age", spec.age, Component.translatable("age.robotica." + spec.age))
                 .withStyle(ChatFormatting.DARK_GRAY));
-        if (spec.modes.size() > 1 || spec.modes.get(0) != AreaMode.SINGLE) {
-            tooltip.add(Component.translatable("tooltip.robotica.gear.mode", mode(stack).displayName()).withStyle(ChatFormatting.GRAY));
-        }
-        for (ToggleKind kind : ToggleKind.values()) {
-            if (toggleActive(stack, kind) && kind != ToggleKind.KEEP_FLOOR) {
-                tooltip.add(Component.literal("+ ").append(kind.displayName()).withStyle(ChatFormatting.DARK_AQUA));
-            }
-        }
+        if (spec.hasAreaModes()) tooltip.add(modeStrip(mode(stack)));
         if (spec.fortuneLevel > 0) {
             int em = ToolSettings.enchantMode(stack);
             if (em != ToolSettings.ENCHANT_NONE) {
@@ -168,6 +182,48 @@ public class GearToolItem extends Item {
             }
         }
         if (spec.isEnergy()) ItemEnergy.appendTooltip(stack, tooltip);
-        tooltip.add(Component.translatable("tooltip.robotica.gear.keys").withStyle(ChatFormatting.DARK_GRAY));
+    }
+
+    /** "Mode: 1x1 [3x3] 5x5 Vein" with the current mode highlighted. Shared by the tooltip and the HUD. */
+    public Component modeStrip(AreaMode current) {
+        MutableComponent line = Component.translatable("gear.robotica.mode_label").withStyle(ChatFormatting.GRAY);
+        for (AreaMode m : spec.modes) {
+            line.append(" ");
+            if (m == current) {
+                line.append(Component.literal("[").append(m.displayName()).append("]").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+            } else {
+                line.append(m.displayName().copy().withStyle(ChatFormatting.DARK_GRAY));
+            }
+        }
+        return line;
+    }
+
+    @Override
+    public void appendDetails(ItemStack stack, TooltipContext ctx, List<Component> lines) {
+        lines.add(HasDetails.line("tooltip.robotica.gear.what." + BuiltInRegistries.ITEM.getKey(this).getPath()));
+        if (spec.isEnergy()) {
+            lines.add(HasDetails.line("tooltip.robotica.gear.fe_per_block", spec.costPerBlock.getAsInt()));
+        }
+        if (spec.modes.size() > 1) {
+            lines.add(Component.translatable("tooltip.robotica.gear.key_mode", HasDetails.key("key.robotica.gear.cycle_mode")).withStyle(ChatFormatting.GRAY));
+            lines.add(HasDetails.line("tooltip.robotica.gear.sneak_single"));
+        }
+        if (spec.fortuneLevel > 0) {
+            lines.add(Component.translatable("tooltip.robotica.gear.key_enchant", HasDetails.key("key.robotica.gear.swap_enchant")).withStyle(ChatFormatting.GRAY));
+        }
+        if (!spec.toggles.isEmpty()) {
+            MutableComponent on = Component.empty();
+            boolean first = true;
+            for (ToggleKind kind : ToggleKind.values()) {
+                if (!spec.toggles.contains(kind)) continue;
+                if (!first) on.append(", ");
+                first = false;
+                on.append(kind.displayName().copy().withStyle(ToolSettings.has(stack, kind) ? ChatFormatting.DARK_AQUA : ChatFormatting.DARK_GRAY));
+            }
+            lines.add(Component.translatable("tooltip.robotica.gear.key_settings", HasDetails.key("key.robotica.gear.open_toggles"), on)
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        if (spec.slowArea) lines.add(HasDetails.line("tooltip.robotica.gear.slow_area"));
+        lines.add(HasDetails.line("tooltip.robotica.gear.enchantable"));
     }
 }

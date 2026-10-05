@@ -9,6 +9,7 @@ import com.arno.robotica.gear.GearItems;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.AreaShape;
 import com.arno.robotica.gear.tool.BreakQueue;
+import com.arno.robotica.gear.tool.GearActions;
 import com.arno.robotica.gear.tool.GearToolItem;
 import com.arno.robotica.gear.tool.ToggleKind;
 import com.arno.robotica.gear.tool.ToolSettings;
@@ -229,7 +230,7 @@ public class GearGameTests {
         helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "sneaking always mines 1x1");
         player.setShiftKeyDown(false);
         drill.set(GearComponents.MODE.get(), AreaMode.CUBE_12);
-        helper.assertTrue(tool.mode(drill) == AreaMode.SINGLE, "a mode the tool does not have falls back to the first mode");
+        helper.assertTrue(tool.mode(drill) == AreaMode.AREA_3, "a mode the tool does not have falls back to the default mode");
         helper.assertTrue(tool.getDestroySpeed(new ItemStack(GearItems.SERVO_DRILL.get()), Blocks.STONE.defaultBlockState()) == GearToolItem.EMPTY_SPEED,
                 "empty drill mines at wooden speed");
         helper.assertTrue(tool.getDestroySpeed(drill, Blocks.STONE.defaultBlockState()) > GearToolItem.EMPTY_SPEED, "charged drill is faster");
@@ -251,7 +252,8 @@ public class GearGameTests {
         int before = ItemEnergy.get(player.getMainHandItem());
         helper.assertTrue(player.gameMode.destroyBlock(base), "origin log should break");
         for (int i = 0; i < 5; i++) helper.assertTrue(level.getBlockState(base.above(i)).isAir(), "log " + i + " should be felled");
-        helper.assertTrue(level.getBlockState(base.above(5)).is(Blocks.OAK_LEAVES), "leaves stay unless the toggle is on");
+        helper.assertTrue(level.getBlockState(base.above(5)).isAir() && level.getBlockState(base.above(4).east()).isAir(),
+                "the chainsaw clears the natural leaves of the tree");
         int used = before - ItemEnergy.get(player.getMainHandItem());
         helper.assertTrue(used == 5 * GearConfig.fe(GearConfig.CHAINSAW_COST, 30), "5 logs should cost 5 x 30 FE, used " + used);
         // A log pile without natural leaves is not a tree: only the hit log breaks.
@@ -331,6 +333,97 @@ public class GearGameTests {
         ToolSettings.setEnchantMode(other, ToolSettings.ENCHANT_NONE);
         ToolSettings.syncEnchantments(other, tool, level.registryAccess());
         helper.assertTrue(other.getEnchantmentLevel(silk) == 1, "the player's Silk Touch must survive");
+        helper.succeed();
+    }
+
+    /** Every area tool offers plain 1x1 as a normal mode, starts in its signature mode, and V cycles through all of them. */
+    @GameTest(template = "empty")
+    public static void modesDefaultsAndCycling(GameTestHelper helper) {
+        BlockPos at = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, at);
+        for (var item : List.of(GearItems.TINKERS_HAMMER, GearItems.FELLING_AXE, GearItems.BORE_DRILL, GearItems.CHAINSAW,
+                GearItems.SERVO_DRILL, GearItems.MAGMA_DRILL, GearItems.NULL_DRILL)) {
+            GearToolItem tool = item.get();
+            helper.assertTrue(tool.spec.hasMode(AreaMode.SINGLE), tool + " must offer 1x1 as a mode");
+            ItemStack stack = new ItemStack(tool);
+            AreaMode expected = tool.spec.isAxe() ? AreaMode.TREE : AreaMode.AREA_3;
+            helper.assertTrue(tool.mode(stack) == expected, tool + " should start in " + expected + ", got " + tool.mode(stack));
+            helper.assertTrue(ToolSettings.has(stack, ToggleKind.AUTO_PICKUP) == tool.spec.toggles.contains(ToggleKind.AUTO_PICKUP),
+                    tool + ": auto-pickup is on by default");
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            java.util.Set<AreaMode> seen = new java.util.HashSet<>();
+            for (int i = 0; i < tool.spec.modes.size(); i++) {
+                GearActions.apply(player, GearActions.CYCLE_MODE, 1);
+                seen.add(tool.mode(player.getMainHandItem()));
+            }
+            helper.assertTrue(seen.size() == tool.spec.modes.size(), tool + ": V must reach every mode, saw " + seen);
+            helper.assertTrue(tool.mode(player.getMainHandItem()) == expected, tool + ": a full cycle comes back to the start");
+            GearActions.apply(player, GearActions.CYCLE_MODE, -1);
+            int back = tool.spec.modes.indexOf(tool.mode(player.getMainHandItem()));
+            helper.assertTrue(back == Math.floorMod(tool.spec.modes.indexOf(expected) - 1, tool.spec.modes.size()), tool + ": sneak+V goes back");
+        }
+        // A forged payload for a toggle the tool does not have is ignored.
+        ItemStack axe = new ItemStack(GearItems.FELLING_AXE.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, axe);
+        int before = ToolSettings.flags(player.getMainHandItem());
+        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.AUTO_SMELT.ordinal());
+        GearActions.apply(player, GearActions.TOGGLE, 99);
+        helper.assertTrue(ToolSettings.flags(player.getMainHandItem()) == before, "invalid toggles must change nothing");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    /** The Felling Axe in 1x1 mode takes one log; in tree mode it fells the tree and replants from the inventory. */
+    @GameTest(template = "empty")
+    public static void fellingAxeSingleAndReplant(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos base = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, base);
+        level.setBlock(base.below(), Blocks.DIRT.defaultBlockState(), 3);
+        for (int i = 0; i < 4; i++) level.setBlock(base.above(i), Blocks.OAK_LOG.defaultBlockState(), 3);
+        level.setBlock(base.above(2).east(), Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, false), 3);
+        ItemStack axe = new ItemStack(GearItems.FELLING_AXE.get());
+        axe.set(GearComponents.MODE.get(), AreaMode.SINGLE);
+        player.setItemInHand(InteractionHand.MAIN_HAND, axe);
+        helper.assertTrue(player.gameMode.destroyBlock(base.above(3)), "top log breaks");
+        helper.assertTrue(level.getBlockState(base.above(2)).is(Blocks.OAK_LOG), "1x1 mode takes only one log");
+        player.getMainHandItem().set(GearComponents.MODE.get(), AreaMode.TREE);
+        player.getInventory().add(new ItemStack(Items.OAK_SAPLING, 2));
+        helper.assertTrue(player.gameMode.destroyBlock(base), "bottom log breaks");
+        for (int i = 1; i < 3; i++) helper.assertTrue(level.getBlockState(base.above(i)).isAir(), "log " + i + " felled");
+        BreakQueue.tick(level.getServer());
+        helper.assertTrue(level.getBlockState(base).is(Blocks.OAK_SAPLING), "a sapling is planted where the trunk stood, found " + level.getBlockState(base));
+        helper.assertTrue(player.getInventory().countItem(Items.OAK_SAPLING) >= 1, "one sapling was used");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    /** Unbreaking on an FE tool lowers the FE per block (III: 40 %); Mending is not offered for FE tools. */
+    @GameTest(template = "empty")
+    public static void unbreakingSavesEnergy(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var lookup = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+        GearToolItem tool = GearItems.BORE_DRILL.get();
+        ItemStack drill = new ItemStack(tool);
+        int base = tool.cost(drill, Blocks.STONE.defaultBlockState());
+        drill.enchant(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING), 3);
+        int cheaper = tool.cost(drill, Blocks.STONE.defaultBlockState());
+        helper.assertTrue(cheaper == (int) Math.ceil(base / 2.5), "Unbreaking III should cost 40%: " + base + " -> " + cheaper);
+        helper.assertTrue(!drill.supportsEnchantment(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.MENDING)), "no Mending on FE tools");
+        helper.assertTrue(drill.supportsEnchantment(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.EFFICIENCY)), "Efficiency works");
+        helper.assertTrue(new ItemStack(GearItems.TINKERS_HAMMER.get()).supportsEnchantment(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.MENDING)),
+                "the hammer has durability, so Mending works");
+        helper.assertTrue(new ItemStack(tool).isEnchantable(), "drills go on an enchanting table");
+        helper.succeed();
+    }
+
+    /** The FE tools come from the Age 0 tools at a smithing table: hammer to Bore Drill, felling axe to Chainsaw. */
+    @GameTest(template = "empty")
+    public static void ageOneToolsAreSmithingUpgrades(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        for (String id : List.of("bore_drill_from_tinkers_hammer", "chainsaw_from_felling_axe", "shock_baton_from_gearblade")) {
+            helper.assertTrue(level.getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath(Robotica.MODID, id)).isPresent(), "missing " + id);
+        }
         helper.succeed();
     }
 }

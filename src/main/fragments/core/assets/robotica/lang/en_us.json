@@ -80,5 +80,6 @@
   "item.robotica.upgrade_growth_4": "Growth Upgrade IV",
   "tooltip.robotica.upgrade.growth.4": "+200% crop and sapling growth in the area",
   "item.robotica.upgrade_void_1": "Void Filter Upgrade",
-  "tooltip.robotica.upgrade.void.1": "Deletes cobblestone, dirt, gravel and other junk"
+  "tooltip.robotica.upgrade.void.1": "Deletes cobblestone, dirt, gravel and other junk",
+  "tooltip.robotica.hold_shift": "Hold %s for details"
 }

@@ -84,7 +84,7 @@ public final class BreakQueue {
 
     private static List<ReplantSpot> planReplant(ServerLevel level, ServerPlayer player, GearToolItem tool, ItemStack stack,
                                                  BlockPos origin, List<BlockPos> targets) {
-        if (!tool.toggleActive(stack, ToggleKind.REPLANT)) return List.of();
+        if (!tool.spec.replants) return List.of();
         if (tool.activeMode(stack, player) != AreaMode.TREE) return List.of();
         List<ReplantSpot> spots = new ArrayList<>();
         List<BlockPos> all = new ArrayList<>(targets);
@@ -163,7 +163,9 @@ public final class BreakQueue {
                     continue;
                 }
                 if (!job.blocks.isEmpty()) {
+                    BlockPos first = job.blocks.peekFirst();
                     budget -= Math.max(1, breakBlocks(player, level, job.tool, job.blocks, budget));
+                    if (level.getGameTime() % 4 == 0 && level.isLoaded(first)) GearSounds.debris(level, first, job.blocks.size());
                 }
                 if (job.blocks.isEmpty()) {
                     replant(player, level, job.replant);

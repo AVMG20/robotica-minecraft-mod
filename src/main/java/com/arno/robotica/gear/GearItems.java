@@ -45,54 +45,54 @@ public final class GearItems {
     // Age 0
     public static final DeferredItem<HammerItem> TINKERS_HAMMER = tool("tinkers_hammer",
             ToolSpec.builder(Tiers.STONE, 5.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
-                    .modes(AreaMode.SINGLE, AreaMode.AREA_3)
+                    .modes(AreaMode.SINGLE, AreaMode.AREA_3).defaultMode(AreaMode.AREA_3)
                     .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).slowArea().age(0).build(),
             p -> p.durability(600), 5.0F, -3.0F, HammerItem::new);
 
     public static final DeferredItem<GearToolItem> FELLING_AXE = tool("felling_axe",
             ToolSpec.builder(Tiers.STONE, 5.0F).tags(BlockTags.MINEABLE_WITH_AXE)
-                    .modes(AreaMode.TREE).maxLogs(64)
+                    .modes(AreaMode.TREE, AreaMode.SINGLE).maxLogs(64).replants()
                     .toggles(ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(0).build(),
             p -> p.durability(500), 6.0F, -3.1F, GearToolItem::new);
 
     // Age 1
     public static final DeferredItem<GearEnergyToolItem> BORE_DRILL = tool("bore_drill",
             ToolSpec.builder(Tiers.IRON, 8.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
-                    .modes(AreaMode.SINGLE, AreaMode.AREA_3)
+                    .modes(AreaMode.SINGLE, AreaMode.AREA_3).defaultMode(AreaMode.AREA_3)
                     .energy(400_000, () -> GearConfig.fe(GearConfig.BORE_DRILL_COST, 40))
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.LIGHT_PLACER).age(1).build(),
+                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(1).build(),
             p -> p, 3.0F, -2.8F, GearEnergyToolItem::new);
 
     public static final DeferredItem<GearEnergyToolItem> CHAINSAW = tool("chainsaw",
             ToolSpec.builder(Tiers.IRON, 9.0F).tags(BlockTags.MINEABLE_WITH_AXE)
-                    .modes(AreaMode.TREE).maxLogs(256)
+                    .modes(AreaMode.TREE, AreaMode.SINGLE).maxLogs(256).cutsLeaves().replants()
                     .energy(400_000, () -> GearConfig.fe(GearConfig.CHAINSAW_COST, 30))
-                    .toggles(ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.LEAVES, ToggleKind.REPLANT).age(1).build(),
+                    .toggles(ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(1).build(),
             p -> p, 6.0F, -3.0F, GearEnergyToolItem::new);
 
     // Age 2
     public static final DeferredItem<GearEnergyToolItem> SERVO_DRILL = tool("servo_drill",
             ToolSpec.builder(Tiers.DIAMOND, 10.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
-                    .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.VEIN)
+                    .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.VEIN).defaultMode(AreaMode.AREA_3)
                     .energy(2_000_000, () -> GearConfig.fe(GearConfig.SERVO_DRILL_COST, 50)).fortune(1)
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.LIGHT_PLACER).age(2).build(),
+                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(2).build(),
             p -> p.rarity(Rarity.UNCOMMON), 3.5F, -2.8F, GearEnergyToolItem::new);
 
     // Age 3
     public static final DeferredItem<GearEnergyToolItem> MAGMA_DRILL = tool("magma_drill",
             ToolSpec.builder(Tiers.DIAMOND, 12.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
-                    .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.VEIN, AreaMode.CUBE_3, AreaMode.AREA_9)
+                    .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9, AreaMode.VEIN).defaultMode(AreaMode.AREA_3)
                     .energy(8_000_000, () -> GearConfig.fe(GearConfig.MAGMA_DRILL_COST, 60)).fortune(2)
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.AUTO_SMELT, ToggleKind.LIGHT_PLACER).age(3).build(),
+                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.AUTO_SMELT).age(3).build(),
             p -> p.rarity(Rarity.RARE).fireResistant(), 4.0F, -2.8F, GearEnergyToolItem::new);
 
     // Age 4
     public static final DeferredItem<GearEnergyToolItem> NULL_DRILL = tool("null_drill",
             ToolSpec.builder(Tiers.NETHERITE, 15.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
-                    .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.VEIN, AreaMode.CUBE_3, AreaMode.AREA_9,
-                            AreaMode.CUBE_5, AreaMode.AREA_12, AreaMode.CUBE_12)
+                    .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9,
+                            AreaMode.CUBE_5, AreaMode.AREA_12, AreaMode.CUBE_12, AreaMode.VEIN).defaultMode(AreaMode.AREA_3)
                     .energy(32_000_000, () -> GearConfig.fe(GearConfig.NULL_DRILL_COST, 80)).fortune(3)
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.AUTO_SMELT, ToggleKind.LIGHT_PLACER).age(4).build(),
+                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.AUTO_SMELT).age(4).build(),
             p -> p.rarity(Rarity.EPIC).fireResistant(), 5.0F, -2.8F, GearEnergyToolItem::new);
 
     // Weapons
