@@ -40,6 +40,7 @@
       "robotica:blazing_casing",
       "robotica:quantum_circuit",
       "robotica:plasma_actuator",
+      "robotica:storage_expansion_mk3",
       "robotica:temp_magma_core",
       "robotica:accumulator_3",
       "robotica:tool_upgrade_kit_3",

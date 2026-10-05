@@ -38,6 +38,7 @@
   "rewards": {
     "recipes": [
       "robotica:servo_actuator",
+      "robotica:storage_expansion_mk2",
       "robotica:redstone_cell",
       "robotica:temp_servo_core",
       "robotica:solar_panel_mk2",

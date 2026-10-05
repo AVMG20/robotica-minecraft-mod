@@ -47,6 +47,8 @@
       "robotica:farm_kit_mk2",
       "robotica:warp_pad",
       "robotica:recall_remote",
+      "robotica:storage_terminal",
+      "robotica:storage_expansion_mk1",
       "robotica:sentry_drone",
       "robotica:courier_drone",
       "robotica:courier_remote",
