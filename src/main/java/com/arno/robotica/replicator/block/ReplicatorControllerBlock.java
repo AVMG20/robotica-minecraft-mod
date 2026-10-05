@@ -115,6 +115,24 @@ public class ReplicatorControllerBlock extends Block implements EntityBlock {
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
+        // Upgrade cards and the plasma boost go straight in too.
+        if (level.getBlockEntity(pos) instanceof ReplicatorControllerBlockEntity be) {
+            boolean put = false;
+            if (stack.getItem() instanceof com.arno.robotica.core.upgrade.UpgradeCardItem) {
+                put = be.upgrades.insertOne(stack, level.isClientSide);
+            } else if (stack.is(com.arno.robotica.core.item.CoreItems.PLASMA_ACTUATOR.get()) && be.boost.getStackInSlot(0).isEmpty()) {
+                if (!level.isClientSide) be.boost.setStackInSlot(0, stack.copyWithCount(1));
+                put = true;
+            }
+            if (put) {
+                if (!level.isClientSide) {
+                    stack.consume(1, player);
+                    com.arno.robotica.core.CoreSounds.play(level, pos, com.arno.robotica.core.CoreSounds.UPGRADE_INSTALL,
+                            net.minecraft.sounds.SoundSource.BLOCKS, 0.8F, 1.0F);
+                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            }
+        }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 

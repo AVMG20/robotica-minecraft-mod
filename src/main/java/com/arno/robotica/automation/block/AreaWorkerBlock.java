@@ -74,7 +74,7 @@ public abstract class AreaWorkerBlock extends BaseEntityBlock {
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
         if (stack.getItem() instanceof UpgradeCardItem card) {
-            if (worker.upgrades.insertOne(stack)) {
+            if (worker.upgrades.insertOne(stack, level.isClientSide)) {
                 if (!level.isClientSide) {
                     stack.consume(1, player);
                     CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);

@@ -128,6 +128,11 @@ public class Upgrades extends ItemStackHandler {
      * the caller removes the card. Used by right-click quick insert.
      */
     public boolean insertOne(ItemStack stack) {
+        return insertOne(stack, false);
+    }
+
+    /** Same as {@link #insertOne(ItemStack)}; with {@code simulate} only checks (call that on the client). */
+    public boolean insertOne(ItemStack stack, boolean simulate) {
         if (!(stack.getItem() instanceof UpgradeCardItem)) return false;
         for (int pass = 0; pass < 2; pass++) {
             for (int i = 0; i < getSlots(); i++) {
@@ -135,7 +140,7 @@ public class Upgrades extends ItemStackHandler {
                 boolean sameKind = !in.isEmpty() && ItemStack.isSameItemSameComponents(in, stack);
                 if (pass == 0 ? !sameKind : !in.isEmpty()) continue;
                 if (insertItem(i, stack.copyWithCount(1), true).isEmpty()) {
-                    insertItem(i, stack.copyWithCount(1), false);
+                    if (!simulate) insertItem(i, stack.copyWithCount(1), false);
                     return true;
                 }
             }
