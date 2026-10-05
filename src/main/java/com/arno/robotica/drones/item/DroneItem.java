@@ -5,6 +5,7 @@ import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.DronesRegistry;
+import com.arno.robotica.drones.entity.CourierRoute;
 import com.arno.robotica.drones.entity.DroneBase;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,7 +50,11 @@ public class DroneItem extends Item implements EnergyItem {
 
     @Override
     public int getEnergyCapacity(ItemStack stack) {
-        return kind == DronesRegistry.Kind.MINING ? DronesConfig.miningBuffer(tier) : DronesConfig.sentryBuffer(tier);
+        return switch (kind) {
+            case MINING -> DronesConfig.miningBuffer(tier);
+            case SENTRY -> DronesConfig.sentryBuffer(tier);
+            case COURIER -> DronesConfig.courierBuffer(tier);
+        };
     }
 
     @Override
@@ -73,7 +78,11 @@ public class DroneItem extends Item implements EnergyItem {
     }
 
     private EntityType<? extends DroneBase> entityType() {
-        return kind == DronesRegistry.Kind.MINING ? DronesRegistry.MINING_DRONE_ENTITY.get() : DronesRegistry.SENTRY_DRONE_ENTITY.get();
+        return switch (kind) {
+            case MINING -> DronesRegistry.MINING_DRONE_ENTITY.get();
+            case SENTRY -> DronesRegistry.SENTRY_DRONE_ENTITY.get();
+            case COURIER -> DronesRegistry.COURIER_DRONE_ENTITY.get();
+        };
     }
 
     @Override
@@ -81,6 +90,17 @@ public class DroneItem extends Item implements EnergyItem {
         Level level = context.getLevel();
         if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.SUCCESS;
         Player player = context.getPlayer();
+        if (kind == DronesRegistry.Kind.COURIER && player != null && player.isShiftKeyDown()) {
+            // Linking: sneak-click a source inventory, then a target inventory. The routes travel inside the item.
+            ItemStack held = context.getItemInHand();
+            CompoundTag state = held.getOrDefault(DronesRegistry.DRONE_STATE.get(), new CompoundTag()).copy();
+            List<CourierRoute> routes = CourierRoute.loadList(state);
+            Component msg = CourierRoute.click(state, routes, serverLevel, context.getClickedPos(), context.getClickedFace());
+            CourierRoute.saveList(state, routes);
+            held.set(DronesRegistry.DRONE_STATE.get(), state);
+            player.displayClientMessage(msg, true);
+            return InteractionResult.CONSUME;
+        }
         Direction face = context.getClickedFace();
         BlockPos pos = context.getClickedPos().relative(face);
         double x = pos.getX() + 0.5;
@@ -112,6 +132,10 @@ public class DroneItem extends Item implements EnergyItem {
         tooltip.add(Component.translatable("tooltip.robotica.drone." + kind.name().toLowerCase(java.util.Locale.ROOT)).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.drone.pickup").withStyle(ChatFormatting.DARK_GRAY));
         CompoundTag state = stack.get(DronesRegistry.DRONE_STATE.get());
+        if (kind == DronesRegistry.Kind.COURIER) {
+            tooltip.add(Component.translatable("tooltip.robotica.drone.courier_link").withStyle(ChatFormatting.DARK_GRAY));
+            if (state != null) tooltip.add(Component.literal(CourierRoute.loadList(state).size() + " / " + CourierRoute.MAX_ROUTES).withStyle(ChatFormatting.DARK_AQUA));
+        }
         if (state != null && state.contains("Storage")) {
             int items = 0;
             for (var tag : state.getCompound("Storage").getList("Items", 10)) {

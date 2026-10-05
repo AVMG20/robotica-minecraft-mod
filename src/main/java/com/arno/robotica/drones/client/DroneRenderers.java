@@ -1,6 +1,7 @@
 package com.arno.robotica.drones.client;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.drones.entity.CourierDrone;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.drones.entity.MiningDrone;
 import com.arno.robotica.drones.entity.SentryDrone;
@@ -52,5 +53,9 @@ public final class DroneRenderers {
 
     public static Renderer<SentryDrone, SentryDroneModel> sentry(EntityRendererProvider.Context ctx) {
         return new Renderer<>(ctx, new SentryDroneModel(ctx.bakeLayer(SentryDroneModel.LAYER)), "sentry_drone", 0.25F);
+    }
+
+    public static Renderer<CourierDrone, CourierDroneModel> courier(EntityRendererProvider.Context ctx) {
+        return new Renderer<>(ctx, new CourierDroneModel(ctx.bakeLayer(CourierDroneModel.LAYER)), "courier_drone", 0.25F);
     }
 }

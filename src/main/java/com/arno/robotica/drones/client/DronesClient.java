@@ -1,6 +1,7 @@
 package com.arno.robotica.drones.client;
 
 import com.arno.robotica.drones.DronesRegistry;
+import com.arno.robotica.drones.client.screen.CourierDroneScreen;
 import com.arno.robotica.drones.client.screen.MiningDroneScreen;
 import com.arno.robotica.drones.client.screen.SentryDroneScreen;
 import com.arno.robotica.drones.net.DroneCommandPayload;
@@ -38,16 +39,19 @@ public final class DronesClient {
     private static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(DronesRegistry.MINING_MENU.get(), MiningDroneScreen::new);
         event.register(DronesRegistry.SENTRY_MENU.get(), SentryDroneScreen::new);
+        event.register(DronesRegistry.COURIER_MENU.get(), CourierDroneScreen::new);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(DronesRegistry.MINING_DRONE_ENTITY.get(), DroneRenderers::mining);
         event.registerEntityRenderer(DronesRegistry.SENTRY_DRONE_ENTITY.get(), DroneRenderers::sentry);
+        event.registerEntityRenderer(DronesRegistry.COURIER_DRONE_ENTITY.get(), DroneRenderers::courier);
     }
 
     private static void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(MiningDroneModel.LAYER, MiningDroneModel::createLayer);
         event.registerLayerDefinition(SentryDroneModel.LAYER, SentryDroneModel::createLayer);
+        event.registerLayerDefinition(CourierDroneModel.LAYER, CourierDroneModel::createLayer);
     }
 
     private static void onClientTick(ClientTickEvent.Post event) {

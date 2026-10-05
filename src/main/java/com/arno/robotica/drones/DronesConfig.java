@@ -28,6 +28,12 @@ public final class DronesConfig {
     private static final ModConfigSpec.IntValue SENTRY_BUFFER_MK2;
     private static final ModConfigSpec.IntValue SENTRY_HEALTH;
 
+    private static final ModConfigSpec.IntValue COURIER_FE_PER_TRIP;
+    private static final ModConfigSpec.IntValue COURIER_BUFFER;
+    private static final ModConfigSpec.IntValue COURIER_BUFFER_MK2;
+    private static final ModConfigSpec.IntValue COURIER_MAX_ROUTE;
+    private static final ModConfigSpec.IntValue COURIER_HEALTH;
+
     private static final ModConfigSpec.IntValue LOW_ENERGY_PERCENT;
     private static final ModConfigSpec.DoubleValue MK2_SPEED;
     private static final ModConfigSpec.DoubleValue MK2_DAMAGE;
@@ -55,6 +61,14 @@ public final class DronesConfig {
         SENTRY_BUFFER = b.comment("Internal FE buffer of the Sentry Drone.").defineInRange("sentryBuffer", 400_000, 1_000, 100_000_000);
         SENTRY_BUFFER_MK2 = b.comment("Internal FE buffer of the Sentry Drone Mk2.").defineInRange("sentryBufferMk2", 1_600_000, 1_000, 100_000_000);
         SENTRY_HEALTH = b.comment("Hit points of the Sentry Drone.").defineInRange("sentryHealth", 30, 1, 1000);
+        b.pop();
+        b.push("courier_drone");
+        COURIER_FE_PER_TRIP = b.comment("FE per trip (one pick-up and delivery).").defineInRange("courierFePerTrip", 100, 0, 1_000_000);
+        COURIER_BUFFER = b.comment("Internal FE buffer of the Courier Drone.").defineInRange("courierBuffer", 300_000, 1_000, 100_000_000);
+        COURIER_BUFFER_MK2 = b.comment("Internal FE buffer of the Courier Drone Mk2.").defineInRange("courierBufferMk2", 1_200_000, 1_000, 100_000_000);
+        COURIER_MAX_ROUTE = b.comment("Longest route (distance between source and target) in blocks, before range cards.")
+                .defineInRange("courierMaxRoute", 64, 4, 1024);
+        COURIER_HEALTH = b.comment("Hit points of the Courier Drone.").defineInRange("courierHealth", 20, 1, 1000);
         b.pop();
         b.push("both");
         LOW_ENERGY_PERCENT = b.comment("A drone stops working and returns when its energy falls below this percentage.")
@@ -89,6 +103,11 @@ public final class DronesConfig {
     public static int sentryRange() { return i(SENTRY_RANGE); }
     public static int sentryBuffer(int tier) { return tier >= 2 ? i(SENTRY_BUFFER_MK2) : i(SENTRY_BUFFER); }
     public static int sentryHealth(int tier) { return Math.round(i(SENTRY_HEALTH) * (tier >= 2 ? 1.5F : 1.0F)); }
+
+    public static int courierFePerTrip() { return i(COURIER_FE_PER_TRIP); }
+    public static int courierBuffer(int tier) { return tier >= 2 ? i(COURIER_BUFFER_MK2) : i(COURIER_BUFFER); }
+    public static int courierMaxRoute() { return i(COURIER_MAX_ROUTE); }
+    public static int courierHealth(int tier) { return Math.round(i(COURIER_HEALTH) * (tier >= 2 ? 1.5F : 1.0F)); }
 
     public static int lowEnergyPercent() { return i(LOW_ENERGY_PERCENT); }
     public static double mk2Speed() { return d(MK2_SPEED); }

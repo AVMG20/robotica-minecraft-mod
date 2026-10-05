@@ -47,5 +47,8 @@ shaped('courier_drone', [' H ', 'BIM', ' R '],
        {'H': 'minecraft:hopper', 'B': 'basic_circuit', 'I': 'iron_casing', 'M': 'electric_motor', 'R': 'minecraft:redstone'})
 # Mk2: smithing keeps the data components of the base (energy, inventory, settings)
 smithing('mining_drone_mk2', 'advanced_circuit', 'mining_drone', 'servo_actuator', 'mining_drone_mk2')
+# Courier Remote: a circuit and a little redstone in an iron shell
+shaped('courier_remote', [' R ', 'ICI'], {'R': 'minecraft:redstone', 'I': IRON, 'C': 'basic_circuit'})
+smithing('courier_drone_mk2', 'advanced_circuit', 'courier_drone', 'servo_actuator', 'courier_drone_mk2')
 smithing('sentry_drone_mk2', 'advanced_circuit', 'sentry_drone', 'servo_actuator', 'sentry_drone_mk2')
 print('drone recipes written to', OUT)

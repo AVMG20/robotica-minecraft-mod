@@ -281,6 +281,66 @@ def sentry_icon():
     return draw
 
 
+COURIER1 = {
+    '1': '#B7C6CE', '2': '#8FA4AF', '3': '#677B86', '4': '#44555E',      # blue steel body
+    'a': '#F2D27A', 'b': '#D4A73A', 'c': '#8A6A1E', 'k': '#1E1A1A',      # brass trim
+    'r': '#D4A73A', 'R': '#F2D27A',
+    'y': '#FFB21E', 'Y': '#FFD76A', 'z': '#FFF3C4',                      # amber sensor
+}
+COURIER2 = dict(COURIER1)
+COURIER2.update({
+    '1': '#6B7B84', '2': '#4B5A62', '3': '#36424A', '4': '#232C31',
+    'a': '#FFE08A', 'b': '#F0B030', 'c': '#9A6A10',
+})
+
+
+def courier_sheet(tier):
+    c = Canvas(64)
+    g = Canvas(64)
+    # body 8x4x8 at (0,0)
+    f = box(c, 0, 0, 8, 4, 8)
+    for name in ('west', 'east'):
+        block(c, f[name], 2, 1, 4, 2, '3')
+        put(c, f[name], 3, 1, 'a')
+    block(c, f['north'], 1, 1, 6, 2, '3')
+    for dx, dy in ((1, 1), (6, 1), (1, 6), (6, 6)):
+        put(c, f['top'], dx, dy, 'R')
+    # cargo bay 6x3x6 at (0,14): amber stripes, a hatch on the bottom
+    f = box(c, 0, 14, 6, 3, 6, ('b', 'c', 'c', 'k'))
+    for name in ('west', 'east', 'north', 'south'):
+        block(c, f[name], 0, 1, 6, 1, 'a')
+    block(c, f['bottom'], 1, 1, 4, 4, 'k')
+    block(c, f['bottom'], 2, 2, 2, 2, '4')
+    # sensor 3x2x1 at (32,0): amber lens
+    f = box(c, 32, 0, 3, 2, 1, ('4', 'c', 'c', 'k'))
+    block(c, f['north'], 0, 0, 3, 2, 'k')
+    block(c, f['north'], 0, 0, 3, 1, 'Y')
+    put(c, f['north'], 1, 0, 'z')
+    block(g, f['north'], 0, 0, 3, 1, 'Y')
+    put(g, f['north'], 1, 0, 'z')
+    # posts 2x3x2 at (32,8)
+    box(c, 32, 8, 2, 3, 2, ('a', 'b', 'c', 'k'))
+    # rotors 6x1x6 at (0,26): plus shaped blade
+    f = box(c, 0, 26, 6, 1, 6, ('a', 'b', 'c', 'k'))
+    for name in ('top', 'bottom'):
+        x, y, rw, rh = f[name]
+        c.rect(x, y, rw, rh, '.')
+        c.rect(x, y + 2, rw, 2, 'b')
+        c.rect(x + 2, y, 2, rh, 'b')
+        c.rect(x + 2, y + 2, 2, 2, 'c')
+        c.rect(x, y + 2, rw, 1, 'a')
+    return c, g
+
+
+def courier_icon(c):
+    c.rect(2, 3, 4, 1, 'b').rect(10, 3, 4, 1, 'b').set(3, 3, 'a').set(11, 3, 'a')
+    c.rect(3, 4, 2, 2, 'c').rect(11, 4, 2, 2, 'c')
+    c.rect(4, 6, 8, 4, '2').rect(4, 6, 8, 1, '1').rect(4, 9, 8, 1, '3')
+    c.rect(6, 7, 4, 2, 'k').rect(6, 7, 4, 1, 'Y').set(7, 7, 'z')
+    c.rect(5, 10, 6, 3, 'b').rect(5, 10, 6, 1, 'a').rect(5, 12, 6, 1, 'c')
+    c.set(7, 11, 'k').set(8, 11, 'k')
+
+
 def main():
     ENTITY.mkdir(parents=True, exist_ok=True)
     for tier, pal_m, pal_s, suffix in ((1, MK1, SENTRY1, ''), (2, MK2, SENTRY2, '_mk2')):
@@ -293,6 +353,19 @@ def main():
         if tier == 1:
             write_png(ENTITY / 'sentry_drone_glow.png', g.rows(), pal_s, 64)
 
+    for pal, suffix in ((COURIER1, ''), (COURIER2, '_mk2')):
+        c, g = courier_sheet(1 if not suffix else 2)
+        write_png(ENTITY / f'courier_drone{suffix}.png', c.rows(), pal, 64)
+        if not suffix:
+            write_png(ENTITY / 'courier_drone_glow.png', g.rows(), pal, 64)
+        write_item(f'courier_drone{suffix}', icon(courier_icon).rows(), pal)
+    remote = Canvas(16)
+    remote.rect(5, 2, 6, 11, 'c').rect(5, 2, 6, 1, 'a').rect(5, 12, 6, 1, 'k')
+    remote.rect(6, 3, 4, 3, 'k').rect(7, 4, 2, 1, 'Y').set(7, 4, 'z')
+    remote.rect(6, 7, 1, 1, 'r').rect(8, 7, 1, 1, 'y').rect(6, 9, 1, 1, 'y').rect(8, 9, 1, 1, 'r')
+    remote.rect(7, 0, 2, 2, 'b').set(7, 0, 'a')
+    remote.outline('k')
+    write_item('courier_remote', remote.rows(), COURIER1)
     p1 = dict(MK1)
     p1.update({'k': '#1E1A1A'})
     write_item('mining_drone', icon(mining_icon(MK1, '2', '1', '3')).rows(), MK1)

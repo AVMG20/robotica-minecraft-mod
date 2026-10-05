@@ -28,11 +28,13 @@ public final class DronesModule {
     private static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(DronesRegistry.MINING_DRONE_ENTITY.get(), MiningDrone.createAttributes().build());
         event.put(DronesRegistry.SENTRY_DRONE_ENTITY.get(), SentryDrone.createAttributes().build());
+        event.put(DronesRegistry.COURIER_DRONE_ENTITY.get(), com.arno.robotica.drones.entity.CourierDrone.createAttributes().build());
     }
 
     /** FE can be pushed into a deployed drone (receive only). The loot stays inside until the drone returns. */
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.MINING_DRONE_ENTITY.get(), (drone, side) -> drone.energyStorage());
         event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.SENTRY_DRONE_ENTITY.get(), (drone, side) -> drone.energyStorage());
+        event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.COURIER_DRONE_ENTITY.get(), (drone, side) -> drone.energyStorage());
     }
 }
