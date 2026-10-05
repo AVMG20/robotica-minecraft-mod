@@ -47,7 +47,7 @@ public final class PowerConfig {
                 .defineInRange("solarMk2", 32, 1, 1_000_000);
         b.pop();
         b.push("tesla");
-        int[] rates = {1_000, 4_000, 16_000, 64_000, 256_000};
+        int[] rates = {4_000, 16_000, 64_000, 256_000, 1_000_000};
         int[] ranges = {8, 12, 16, 24, 32};
         for (int i = 0; i < 5; i++) {
             TESLA_RATE[i] = b.comment("Tesla Coil " + (i + 1) + ": FE/t the coil sends in total, split over its links.")
