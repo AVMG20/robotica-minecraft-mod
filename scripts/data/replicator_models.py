@@ -29,8 +29,23 @@ def loot(name):
 
 
 # ---------- frame and glass ----------
-write(ASSETS / 'models/block/replicator_frame.json', {
-    'parent': 'minecraft:block/cube_all', 'textures': {'all': tex('replicator_frame')}})
+GLOW = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+DIRS = ('down', 'up', 'north', 'south', 'west', 'east')
+
+
+def glow_cube(faces, glow):
+    """Cube with face -> texture and a coplanar full-bright overlay (face -> texture)."""
+    textures = {f'f_{d}': tex(t) for d, t in faces.items()}
+    textures.update({f'g_{d}': tex(t) for d, t in glow.items()})
+    textures['particle'] = tex(faces['south'])
+    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures, 'elements': [
+        {'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {d: {'texture': f'#f_{d}', 'cullface': d} for d in faces}},
+        {'from': [0, 0, 0], 'to': [16, 16, 16], 'shade': False,
+         'faces': {d: {'texture': f'#g_{d}', 'cullface': d, 'neoforge_data': GLOW} for d in glow}}]}
+
+
+write(ASSETS / 'models/block/replicator_frame.json', glow_cube({d: 'replicator_frame' for d in DIRS},
+                                                               {d: 'replicator_frame_glow' for d in DIRS}))
 write(ASSETS / 'blockstates/replicator_frame.json', {'variants': {'': {'model': 'robotica:block/replicator_frame'}}})
 write(ASSETS / 'models/item/replicator_frame.json', {'parent': 'robotica:block/replicator_frame'})
 loot('replicator_frame')
@@ -44,11 +59,11 @@ loot('replicator_glass')
 
 # ---------- controller: three faces (not formed / formed / working), six facings ----------
 for state in ('off', 'formed', 'on'):
-    write(ASSETS / f'models/block/replicator_controller_{state}.json', {
-        'parent': 'minecraft:block/orientable',
-        'textures': {'top': tex('replicator_controller_top'), 'side': tex('replicator_controller_side'),
-                     'front': tex(f'replicator_controller_front_{state}'), 'particle': tex('replicator_controller_side')},
-    })
+    faces = {'north': f'replicator_controller_front_{state}', 'up': 'replicator_controller_top',
+             'down': 'replicator_controller_top', 'south': 'replicator_controller_side',
+             'west': 'replicator_controller_side', 'east': 'replicator_controller_side'}
+    write(ASSETS / f'models/block/replicator_controller_{state}.json',
+          glow_cube(faces, {'north': f'replicator_controller_front_{state}_glow'}))
 
 # model north faces -z; y turns it around the vertical axis, x 270 turns the front up and x 90 down
 ROTATION = {'north': {}, 'east': {'y': 90}, 'south': {'y': 180}, 'west': {'y': 270}, 'up': {'x': 270}, 'down': {'x': 90}}

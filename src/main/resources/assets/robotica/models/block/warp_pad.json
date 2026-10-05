@@ -1,8 +1,11 @@
 {
   "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
   "textures": {
     "top": "robotica:block/warp_pad_top",
     "side": "robotica:block/warp_pad_side",
+    "top_glow": "robotica:block/warp_pad_top_glow",
+    "side_glow": "robotica:block/warp_pad_side_glow",
     "base": "robotica:block/warp_pad_base",
     "particle": "robotica:block/warp_pad_side"
   },
@@ -60,6 +63,85 @@
             16,
             8
           ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        8,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#top_glow",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "north": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "south": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
         }
       }
     }

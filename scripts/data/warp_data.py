@@ -37,7 +37,14 @@ def pad_model(rift):
             'east': face('side', side_uv), 'west': face('side', side_uv),
         },
     }]
+    glow = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+    elements.append({
+        'from': [0, 0, 0], 'to': [16, 8, 16], 'shade': False,
+        'faces': dict({'up': face('top_glow', neoforge_data=glow)},
+                      **{d: face('side_glow', side_uv, neoforge_data=glow) for d in ('north', 'south', 'east', 'west')}),
+    })
     textures = {'top': f'robotica:block/{prefix}_top', 'side': f'robotica:block/{prefix}_side',
+                'top_glow': f'robotica:block/{prefix}_top_glow', 'side_glow': f'robotica:block/{prefix}_side_glow',
                 'base': 'robotica:block/warp_pad_base', 'particle': f'robotica:block/{prefix}_side'}
     if rift:
         textures['stud'] = 'robotica:block/warp_pad_rift_stud'
@@ -46,7 +53,7 @@ def pad_model(rift):
                 'from': [x, 8, z], 'to': [x + 2, 10, z + 2],
                 'faces': {d: face('stud', [0, 0, 16, 16]) for d in ('up', 'north', 'south', 'east', 'west')},
             })
-    return {'parent': 'minecraft:block/block', 'textures': textures, 'elements': elements}
+    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures, 'elements': elements}
 
 
 def box(x0, y0, z0, x1, y1, z1, faces, rotate=False, extra=None):
@@ -76,6 +83,10 @@ def projector_model(on):
     for (a, b, y0, y1) in ((2.5, 13.5, 0, 3), (4, 12, 3, 8), (3, 13, 8, 11)):
         elements.append(box(a, y0, a, b, y1, b, side_faces(y0, y1)))
         elements.append(box(a, y0, a, b, y1 + 0.02, b, side_faces(y0, y1), rotate=True))
+    if on:   # the neck's glow groove lights up
+        neck = {d: face('side_glow', [0, 8, 16, 13], **glow) for d in ('north', 'south', 'east', 'west')}
+        elements.append(dict(box(4, 3, 4, 12, 8, 12, neck), shade=False))
+        elements.append(dict(box(4, 3, 4, 12, 8.02, 12, neck, rotate=True), shade=False))
     # lens: emissive
     lens_faces = {d: face(lens_tex, [0, 0, 16, 16], **glow) for d in ('north', 'south', 'east', 'west', 'up')}
     elements.append(box(5, 11, 5, 11, 12, 11, lens_faces))
@@ -86,8 +97,9 @@ def projector_model(on):
     textures = {'side': 'robotica:block/projector_side', 'top': 'robotica:block/projector_top',
                 'lens': 'robotica:block/projector_lens', 'lens_on': 'robotica:block/projector_lens_on',
                 'fin': 'robotica:block/projector_fin', 'fin_on': 'robotica:block/projector_fin_on',
+                'side_glow': 'robotica:block/projector_side_glow',
                 'particle': 'robotica:block/projector_side'}
-    return {'parent': 'minecraft:block/block', 'textures': textures, 'elements': elements}
+    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures, 'elements': elements}
 
 
 def loot(name):

@@ -1,5 +1,6 @@
 {
   "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
   "textures": {
     "side": "robotica:block/projector_side",
     "top": "robotica:block/projector_top",
@@ -7,6 +8,7 @@
     "lens_on": "robotica:block/projector_lens_on",
     "fin": "robotica:block/projector_fin",
     "fin_on": "robotica:block/projector_fin_on",
+    "side_glow": "robotica:block/projector_side_glow",
     "particle": "robotica:block/projector_side"
   },
   "elements": [
@@ -444,6 +446,149 @@
         "axis": "y",
         "angle": 45
       }
+    },
+    {
+      "from": [
+        4,
+        3,
+        4
+      ],
+      "to": [
+        12,
+        8,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "south": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "east": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "west": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        4,
+        3,
+        4
+      ],
+      "to": [
+        12,
+        8.02,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "south": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "east": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        },
+        "west": {
+          "texture": "#side_glow",
+          "uv": [
+            0,
+            8,
+            16,
+            13
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          3,
+          8
+        ],
+        "axis": "y",
+        "angle": 45
+      },
+      "shade": false
     },
     {
       "from": [

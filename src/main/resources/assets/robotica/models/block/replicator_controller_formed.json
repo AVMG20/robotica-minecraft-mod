@@ -1,9 +1,78 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
   "textures": {
-    "top": "robotica:block/replicator_controller_top",
-    "side": "robotica:block/replicator_controller_side",
-    "front": "robotica:block/replicator_controller_front_formed",
+    "f_north": "robotica:block/replicator_controller_front_formed",
+    "f_up": "robotica:block/replicator_controller_top",
+    "f_down": "robotica:block/replicator_controller_top",
+    "f_south": "robotica:block/replicator_controller_side",
+    "f_west": "robotica:block/replicator_controller_side",
+    "f_east": "robotica:block/replicator_controller_side",
+    "g_north": "robotica:block/replicator_controller_front_formed_glow",
     "particle": "robotica:block/replicator_controller_side"
-  }
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#f_north",
+          "cullface": "north"
+        },
+        "up": {
+          "texture": "#f_up",
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#f_down",
+          "cullface": "down"
+        },
+        "south": {
+          "texture": "#f_south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#f_west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#f_east",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#g_north",
+          "cullface": "north",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      }
+    }
+  ]
 }

@@ -9,7 +9,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, PALETTE, Canvas, write_block, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, PALETTE, Canvas, write_anim, write_block, write_item, write_png  # noqa: E402
 
 P = dict(PALETTE)
 P.update({
@@ -20,9 +20,12 @@ P.update({
 })
 
 
-def plate(c, x, y, w, h):
-    """Dark bevelled plate with light top/left and black bottom/right edge."""
-    c.rect(x, y, w, h, 'd').bevel(x, y, w, h, 'm', 'k')
+P.update({'g': '#323746', 'G': '#262A36'})
+
+
+def plate(c, x, y, w, h, seed=0):
+    """Dark bevelled plate with light top/left and black bottom/right edge, faint brushed grain."""
+    c.plate(x, y, w, h, 'kGdmM', seed, grain='Gg', density=0.25)
 
 
 def rivets(c, ch='M', inset=2):
@@ -31,47 +34,71 @@ def rivets(c, ch='M', inset=2):
 
 
 def ring(c, cx, cy, r_in, r_out, ch):
-    for y in range(16):
-        for x in range(16):
-            r = math.hypot(x - cx, y - cy)
-            if r_in <= r <= r_out:
-                c.set(x, y, ch)
+    c.ring(cx, cy, r_in, r_out, ch)
 
 
 # ---- Warp Pad ----
 
 def pad_top(rift):
-    glow, bright, dim = ('P', 'Q', 'q') if rift else ('E', 'W', 'T')
+    """Landing ring on dark plating: the ring channels are dim here, the overlay lights them."""
+    dim = 'q' if rift else 'T'
     c = Canvas()
-    plate(c, 0, 0, 16, 16)
-    c.frame(1, 1, 14, 14, 'D')
-    ring(c, 7.5, 7.5, 5.4, 6.6, glow)
-    ring(c, 7.5, 7.5, 3.2, 4.0, dim)
+    plate(c, 0, 0, 16, 16, 1)
+    c.rect(1, 1, 14, 14, 'd').frame(1, 1, 14, 14, 'k')
+    c.rect(1, 1, 14, 1, 'D').rect(1, 1, 1, 14, 'D')
+    ring(c, 7.5, 7.5, 4.9, 6.7, 'k')
+    ring(c, 7.5, 7.5, 5.4, 6.3, dim)
+    ring(c, 7.5, 7.5, 2.3, 3.7, 'D')
+    ring(c, 7.5, 7.5, 2.8, 3.3, dim)
+    c.disc(7.5, 7.5, 1.6, 'k')
     for x, y in ((7, 0), (8, 0), (7, 15), (8, 15), (0, 7), (0, 8), (15, 7), (15, 8)):
-        c.set(x, y, glow)
-    c.rect(6, 6, 4, 4, bright)
-    c.rect(7, 7, 2, 2, 'W' if not rift else 'Q')
-    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
-        c.set(x, y, glow)
+        c.set(x, y, dim)
+    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+        c.rivet(x, y, 'kGdmM')
     return c.rows()
+
+
+def pad_top_glow(rift, frame_no):
+    """Pulsing ring: a bright arc chases around the outer ring, the core breathes."""
+    glow, bright, dim = ('p', 'Q', 'P') if rift else ('e', 'W', 'E')
+    c = Canvas()
+    pts = [(x, y) for y in range(16) for x in range(16) if 5.4 <= math.hypot(x - 7.5, y - 7.5) <= 6.3]
+    pts.sort(key=lambda p: math.atan2(p[1] - 7.5, p[0] - 7.5))
+    for i, (x, y) in enumerate(pts):
+        k = (i - frame_no * 2) % len(pts)
+        c.set(x, y, bright if k < 3 else dim if k < 8 else glow)
+    inner = [(x, y) for y in range(16) for x in range(16) if 2.8 <= math.hypot(x - 7.5, y - 7.5) <= 3.3]
+    for x, y in inner:
+        c.set(x, y, dim if frame_no % 8 < 4 else glow)
+    c.disc(7.5, 7.5, 1.0, bright if frame_no % 8 < 4 else dim)
+    for x, y in ((7, 0), (8, 0), (7, 15), (8, 15), (0, 7), (0, 8), (15, 7), (15, 8)):
+        c.set(x, y, dim)
+    return c
 
 
 def pad_side(rift):
-    """Rows 0-2: base band (shown at the bottom of the block), rows 3-7: upper band with a glow strip."""
-    glow = 'P' if rift else 'E'
+    """Rows 0-7 show (the pad is 8 px tall): lit lip, glow channel (dim; the overlay lights it), base band with bolts."""
+    dim = 'q' if rift else 'T'
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'd')
-    c.rect(0, 0, 16, 3, 'D').rect(0, 2, 16, 1, 'k')
-    for x in (2, 6, 10, 14):
-        c.set(x, 1, 'M')
-    c.rect(0, 3, 16, 5, 'd').rect(0, 3, 16, 1, 'm')
-    c.rect(1, 5, 14, 2, 'k').rect(2, 5, 12, 1, glow).rect(2, 6, 12, 1, 'T' if not rift else 'q')
+    plate(c, 0, 0, 16, 16, 2)
+    c.rect(0, 0, 16, 1, 'M').rect(0, 1, 16, 1, 'm')
+    c.rect(0, 2, 16, 3, 'k').rect(1, 3, 14, 1, dim)
+    c.rect(0, 5, 16, 1, 'm').rect(0, 6, 16, 1, 'd').rect(0, 7, 16, 1, 'k')
+    for x in (2, 7, 12):
+        c.set(x, 6, 'M')
     return c.rows()
+
+
+def pad_side_glow(rift):
+    c = Canvas()
+    c.rect(1, 3, 14, 1, 'P' if rift else 'E')
+    c.set(4, 3, 'Q' if rift else 'W').set(11, 3, 'Q' if rift else 'W')
+    return c
 
 
 def pad_base():
     c = Canvas()
-    plate(c, 0, 0, 16, 16)
+    plate(c, 0, 0, 16, 16, 3)
     c.rect(3, 3, 10, 10, 'D').frame(3, 3, 10, 10, 'k')
     rivets(c)
     return c.rows()
@@ -90,27 +117,40 @@ def rift_stud():
 
 def projector_side():
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'd')
-    c.rect(0, 13, 16, 3, 'D')                                   # base plate, y 0-2
+    plate(c, 0, 0, 16, 16, 4)
+    c.rect(0, 13, 16, 3, 'D').rect(0, 13, 16, 1, 'm').rect(0, 15, 16, 1, 'k')   # base plate, y 0-2
     for x in (1, 6, 10, 14):
         c.set(x, 14, 'M')
     c.rect(0, 12, 16, 1, 'k')                                   # groove between base and neck, y 3
-    c.rect(0, 8, 16, 4, 'd')                                    # neck, y 4-7
+    c.rect(0, 8, 16, 4, 'd').rect(0, 8, 16, 1, 'D')             # neck, y 4-7
     c.rect(0, 9, 16, 2, 'k').rect(1, 9, 14, 1, 'e').rect(1, 10, 14, 1, 'T')   # glow groove, y 5-6
+    for x in (3, 8, 13):
+        c.set(x, 9, 'E')
     c.rect(0, 7, 16, 1, 'k')                                    # groove between neck and head, y 8
-    c.rect(0, 5, 16, 2, 'D').rect(0, 6, 16, 1, 'm')             # head, y 9-10
+    c.rect(0, 5, 16, 2, 'D').rect(0, 5, 16, 1, 'm')             # head, y 9-10
     c.rect(0, 4, 16, 1, 'M')                                    # head lip, y 11
     for x in (2, 7, 12):
-        c.set(x, 5, 'k')
+        c.set(x, 6, 'k').set(x + 1, 6, 'm')
     return c.rows()
+
+
+def projector_side_glow():
+    """The neck's glow groove, lit while the portal is open."""
+    c = Canvas()
+    c.rect(1, 9, 14, 1, 'E').rect(1, 10, 14, 1, 'e')
+    for x in (3, 8, 13):
+        c.set(x, 9, 'W')
+    return c
 
 
 def projector_top():
     c = Canvas()
-    plate(c, 0, 0, 16, 16)
+    plate(c, 0, 0, 16, 16, 5)
     c.frame(2, 2, 12, 12, 'k')
     ring(c, 7.5, 7.5, 4.4, 5.6, 'D')
-    rivets(c, 'M', 1)
+    ring(c, 7.5, 7.5, 4.4, 4.9, 'k')
+    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
+        c.rivet(x, y, 'kGdmM')
     return c.rows()
 
 
@@ -258,10 +298,14 @@ def main():
     write_block('warp_pad_rift_top', pad_top(True), P)
     write_block('warp_pad_side', pad_side(False), P)
     write_block('warp_pad_rift_side', pad_side(True), P)
+    for rift, name in ((False, 'warp_pad'), (True, 'warp_pad_rift')):
+        write_anim('block', f'{name}_top_glow', [pad_top_glow(rift, i) for i in range(16)], P, frametime=2)
+        write_block(f'{name}_side_glow', pad_side_glow(rift).rows(), P)
     write_block('warp_pad_base', pad_base(), P)
     write_block('warp_pad_rift_stud', rift_stud(), P)
     write_block('projector_side', projector_side(), P)
     write_block('projector_top', projector_top(), P)
+    write_block('projector_side_glow', projector_side_glow().rows(), P)
     write_block('projector_lens', projector_lens(False), P)
     write_block('projector_lens_on', projector_lens(True), P)
     write_block('projector_fin', projector_fin(False), P)

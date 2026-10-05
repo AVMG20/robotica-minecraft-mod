@@ -62,45 +62,81 @@ def facing_variants(model_for, extra=()):
 
 
 # ---------- orientable machines (generator, press, charger) ----------
-for name in ('combustion_generator', 'metal_press', 'charger'):
-    for suffix in ('', '_on'):
-        block_model(f'{name}{suffix}', {
-            'parent': 'minecraft:block/orientable',
-            'textures': {'top': tex('power_machine_top'), 'side': tex('power_machine_side'),
-                         'front': tex(f'{name}_front{suffix}'), 'particle': tex('power_machine_side')},
-        })
+# One cube with per-machine top, shared sides and bottom, plus a coplanar full-bright overlay for the glowing parts
+# when lit (fire, die seam, coil). Front faces north; the blockstate turns it.
+GLOW = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+DIRS = ('down', 'up', 'north', 'south', 'west', 'east')
+
+
+def machine_model(textures, glow=None):
+    """textures: face -> texture name; glow: face -> overlay texture name (drawn full bright)."""
+    tex_vars = {f: tex(t) for f, t in textures.items()}
+    tex_vars['particle'] = tex(textures['south'])
+    elements = [{'from': [0, 0, 0], 'to': [16, 16, 16],
+                 'faces': {d: {'texture': '#' + d, 'cullface': d} for d in DIRS}}]
+    if glow:
+        for f, t in glow.items():
+            tex_vars['glow_' + f] = tex(t)
+        elements.append({'from': [0, 0, 0], 'to': [16, 16, 16], 'shade': False,
+                         'faces': {d: {'texture': '#glow_' + d, 'cullface': d, 'neoforge_data': GLOW} for d in glow}})
+    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': tex_vars, 'elements': elements}
+
+
+MACHINES = {
+    # name: (top off, top on, glow on top when lit)
+    'combustion_generator': ('combustion_generator_top', 'combustion_generator_top_on', None),
+    'metal_press': ('metal_press_top', 'metal_press_top', None),
+    'charger': ('charger_top', 'charger_top_on', 'charger_top_glow'),
+}
+for name, (top, top_on, top_glow) in MACHINES.items():
+    for lit in (False, True):
+        faces = {'north': f'{name}_front' + ('_on' if lit else ''), 'up': top_on if lit else top,
+                 'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
+                 'east': 'power_machine_side'}
+        glow = None
+        if lit:
+            glow = {'north': f'{name}_front_glow'}
+            if top_glow:
+                glow['up'] = top_glow
+        block_model(name + ('_on' if lit else ''), machine_model(faces, glow))
     blockstate(name, {'variants': facing_variants(lambda c, n=name: n + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
     item_model(name, f'robotica:block/{name}')
     loot(name)
 
-# ---------- accumulators ----------
+# ---------- accumulators: the charge gauge glows always ----------
 for tier in (1, 2, 3):
     name = f'accumulator_{tier}'
-    block_model(name, {
-        'parent': 'minecraft:block/orientable',
-        'textures': {'top': tex(f'{name}_top'), 'side': tex(f'{name}_side'), 'front': tex(f'{name}_front'),
-                     'particle': tex(f'{name}_side')},
-    })
+    faces = {'north': f'{name}_front', 'up': f'{name}_top', 'down': 'power_machine_bottom',
+             'south': f'{name}_side', 'west': f'{name}_side', 'east': f'{name}_side'}
+    glow = {'north': 'accumulator_front_glow', 'south': 'accumulator_side_glow', 'west': 'accumulator_side_glow',
+            'east': 'accumulator_side_glow'}
+    block_model(name, machine_model(faces, glow))
     blockstate(name, {'variants': facing_variants(lambda c, n=name: n)})
     item_model(name, f'robotica:block/{name}')
     loot(name, copy_energy=True)
 
-# ---------- solar panels ----------
+# ---------- solar panels: a 6 px slab, cells catch a faint glow ----------
 for mk in (1, 2):
     name = f'solar_panel_mk{mk}'
+    side_uv = [0, 0, 16, 6]
     block_model(name, {
         'parent': 'minecraft:block/block',
-        'textures': {'top': tex(f'{name}_top'), 'side': tex(f'{name}_side'), 'particle': tex(f'{name}_side')},
+        'render_type': 'minecraft:cutout',
+        'textures': {'top': tex(f'{name}_top'), 'side': tex(f'{name}_side'), 'bottom': tex('power_machine_bottom'),
+                     'glow': tex(f'{name}_glow'), 'particle': tex(f'{name}_side')},
         'elements': [{
             'from': [0, 0, 0], 'to': [16, 6, 16],
             'faces': {
-                'down': {'texture': '#side', 'cullface': 'down'},
+                'down': {'texture': '#bottom', 'cullface': 'down'},
                 'up': {'texture': '#top'},
-                'north': {'texture': '#side', 'uv': [0, 0, 16, 6], 'cullface': 'north'},
-                'south': {'texture': '#side', 'uv': [0, 0, 16, 6], 'cullface': 'south'},
-                'west': {'texture': '#side', 'uv': [0, 0, 16, 6], 'cullface': 'west'},
-                'east': {'texture': '#side', 'uv': [0, 0, 16, 6], 'cullface': 'east'},
+                'north': {'texture': '#side', 'uv': side_uv, 'cullface': 'north'},
+                'south': {'texture': '#side', 'uv': side_uv, 'cullface': 'south'},
+                'west': {'texture': '#side', 'uv': side_uv, 'cullface': 'west'},
+                'east': {'texture': '#side', 'uv': side_uv, 'cullface': 'east'},
             },
+        }, {
+            'from': [0, 0, 0], 'to': [16, 6, 16], 'shade': False,
+            'faces': {'up': {'texture': '#glow', 'neoforge_data': {'block_light': 9, 'sky_light': 9, 'ambient_occlusion': False}}},
         }],
     })
     blockstate(name, {'variants': {'': {'model': f'robotica:block/{name}'}}})
