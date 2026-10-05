@@ -228,13 +228,13 @@ public class PowerGameTests {
         helper.setBlock(new BlockPos(1, 0, 1), Blocks.IRON_BLOCK);
         TeslaCoilBlockEntity small = coil(helper, new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_1.get());
         BlockPos at = small.getBlockPos();
-        helper.assertTrue(TeslaNetwork.toggle(small, at.east(9), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "9 blocks is out of range");
-        helper.assertTrue(TeslaNetwork.toggle(small, at.east(8), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "8 blocks is in range (air there)");
+        helper.assertTrue(TeslaNetwork.toggle(small, at.above(9), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "9 blocks is out of range");
+        helper.assertTrue(TeslaNetwork.toggle(small, at.above(8), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "8 blocks is in range (air there; straight up, away from other tests)");
         helper.assertTrue(TeslaNetwork.toggle(small, at.below(), Direction.UP) == TeslaNetwork.LinkResult.OWN_SUPPORT, "not the block it sits on");
         helper.setBlock(new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_5.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
         TeslaCoilBlockEntity big = (TeslaCoilBlockEntity) helper.getBlockEntity(new BlockPos(1, 1, 1));
-        helper.assertTrue(TeslaNetwork.toggle(big, at.east(20), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "Tier V reaches 20 blocks");
-        helper.assertTrue(TeslaNetwork.toggle(big, at.east(33), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "but not 33");
+        helper.assertTrue(TeslaNetwork.toggle(big, at.above(20), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "Tier V reaches 20 blocks");
+        helper.assertTrue(TeslaNetwork.toggle(big, at.above(33), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "but not 33");
         helper.succeed();
     }
 
@@ -254,6 +254,36 @@ public class PowerGameTests {
         helper.assertTrue(coil.linkCount() == 0, "no links left");
         helper.runAfterDelay(20, () -> {
             helper.assertTrue(charger.energy.getEnergyStored() == 0, "an unlinked charger gets nothing");
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Loops create no energy: coil A on an Accumulator feeds relay B, B feeds relay C, C feeds A again (a cycle) and the
+     * very Accumulator A sits on (through a relay, since a direct link is refused). Energy only ever shrinks by the hop
+     * losses, a machine on the loop still gets its share, and nothing recurses forever.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void teslaLoopsCreateNoEnergy(GameTestHelper helper) {
+        int start = 500_000;
+        AccumulatorBlockEntity source = accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, start);
+        TeslaCoilBlockEntity a = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        helper.setBlock(new BlockPos(2, 1, 0), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity b = coil(helper, new BlockPos(2, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        helper.setBlock(new BlockPos(2, 1, 2), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity c = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
+        AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(0, 1, 2), Direction.NORTH, 0);
+        helper.assertTrue(TeslaNetwork.toggle(a, source.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.OWN_SUPPORT, "no direct self link");
+        helper.assertTrue(TeslaNetwork.toggle(a, b.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "A -> B");
+        helper.assertTrue(TeslaNetwork.toggle(b, c.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "B -> C");
+        helper.assertTrue(TeslaNetwork.toggle(c, a.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "C -> A closes a cycle");
+        helper.assertTrue(TeslaNetwork.toggle(c, source.getBlockPos(), Direction.SOUTH) == TeslaNetwork.LinkResult.LINKED, "C -> A's own Accumulator");
+        helper.assertTrue(TeslaNetwork.toggle(b, sink.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "B -> a machine");
+        helper.runAfterDelay(60, () -> {
+            long total = (long) source.energy.getEnergyStored() + sink.energy.getEnergyStored();
+            helper.assertTrue(sink.energy.getEnergyStored() > 0, "the machine on the loop gets energy");
+            helper.assertTrue(total < start, "the loop only loses energy: " + total + " of " + start);
+            helper.assertTrue(a.isRoot() && !b.isRoot() && !c.isRoot(), "only A sends");
             helper.succeed();
         });
     }

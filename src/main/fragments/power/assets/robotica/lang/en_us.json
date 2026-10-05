@@ -101,6 +101,7 @@
   "gui.robotica.tesla_range": "Range %s",
   "gui.robotica.tesla_links_tip": "Links in use. Machines and other coils each take one",
   "gui.robotica.tesla_sending": "Sending %s FE/t",
+  "gui.robotica.tesla_max": "max %s FE/t",
   "gui.robotica.tesla_no_links": "No links: use a Tesla Linker",
   "gui.robotica.tesla_source": "Sending from the block below",
   "gui.robotica.tesla_relay": "Relaying from another coil",
