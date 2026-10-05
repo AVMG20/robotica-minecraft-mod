@@ -76,8 +76,8 @@ public final class MachineInfoCollector {
         } else if (be instanceof CombustionGeneratorBlockEntity generator) {
             info.status = generator.burnTime() > 0 ? "working" : "idle";
         } else if (be instanceof com.arno.robotica.power.tesla.TeslaCoilBlockEntity coil) {
+            // No "Mk" line: the block name already says the tier (Tesla Coil I-V).
             info.status = coil.isActive() ? "working" : "idle";
-            info.tier = coil.tier().number();
         } else if (be instanceof SolarPanelBlockEntity solar) {
             info.status = solar.isGenerating() ? "working" : "idle";
         } else if (be instanceof ArchitectTableBlockEntity table) {
