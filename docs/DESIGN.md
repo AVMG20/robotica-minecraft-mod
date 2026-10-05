@@ -25,6 +25,8 @@ Source of truth for implementation. NeoForge 1.21.1, Java 21, mod id `robotica`,
 
 The Servo Core drops from the Scrap Colossus (module `boss`, see Bosses). It keeps a pricier fallback recipe (`temp_servo_core`) for Peaceful worlds and servers that turn the Rusted Foundry off. The Magma and Antigrav Cores keep their temporary expensive recipe (marked `temp_` in the file name) until their bosses exist.
 
+- Fairness rules: the Colossus only takes damage caused by a living attacker (no suffocation, cactus, drowning or dispenser cheese), it throws scrap at targets it can't reach in melee, its loot is locked to the killer for 2 minutes (or until they log off), and an altar that is cooling down can't be mined.
+
 ## Balance system: component ladder
 
 Every age has three intermediate parts: a casing, a mechanism (moving part) and a circuit. Each age's parts consume several parts of the age before, so cost multiplies roughly 3-4x per age. Final items (machines, tools, robots, upgrade cards) are built from these parts, never mostly from raw materials.
