@@ -12,13 +12,10 @@ FRAG = ROOT / 'src/main/fragments/architect'
 STYLES = ['timberframe', 'copper_works', 'steel_lab', 'null_spire']
 ROLES = ['wall', 'floor', 'roof', 'pillar', 'window', 'light']
 
-STYLE_NAMES = {'timberframe': 'Timberframe', 'copper_works': 'Copper Works', 'steel_lab': 'Steel Lab', 'null_spire': 'Null Spire'}
-ROLE_NAMES = {
-    'timberframe': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Beam', 'window': 'Window', 'light': 'Light Panel'},
-    'copper_works': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Amber Panel'},
-    'steel_lab': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Light Panel'},
-    'null_spire': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Energy Glass', 'light': 'Glow Panel'},
-}
+# Registry ids are historic (timberframe_* ... null_spire_*) and stay; the names follow the looks.
+STYLE_NAMES = {'timberframe': 'Clean Stone', 'copper_works': 'Smooth Panel', 'steel_lab': 'Detailed Stone', 'null_spire': 'Tech Stone'}
+ROLE_NAME = {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Light'}
+ROLE_NAMES = {style: ROLE_NAME for style in STYLES}
 
 
 def write(path, obj):
@@ -117,11 +114,10 @@ simple_block('architect_table', 'architect_table')
 loot('architect_table', copy_matter=True)
 
 # ---------- tags ----------
-axe = [f'robotica:timberframe_{r}' for r in ('wall', 'floor', 'roof', 'pillar', 'light')]
-pickaxe = ['robotica:architect_table', 'robotica:timberframe_window']
-for style in STYLES[1:]:
+pickaxe = ['robotica:architect_table']
+for style in STYLES:
     pickaxe += [f'robotica:{style}_{r}' for r in ROLES]
-write(FRAG / 'data/minecraft/tags/block/mineable/axe.json', {'replace': False, 'values': axe})
+(FRAG / 'data/minecraft/tags/block/mineable/axe.json').unlink(missing_ok=True)  # every style is stone now
 write(FRAG / 'data/minecraft/tags/block/mineable/pickaxe.json', {'replace': False, 'values': pickaxe})
 
 # Matter values. Tag robotica:matter/<grade>_<value> lists items worth <value> of that grade each (see MatterTable).
@@ -209,7 +205,7 @@ lang.update({
     'message.robotica.architect_last_door': 'Every building keeps at least one door',
     'tooltip.robotica.architect_table': 'Builds 9x9 buildings from matter, from %s FE per block',
     'tooltip.robotica.architect_table_matter': 'Feed it cobble, wood, ingots and more. Runs on a wound Mainspring or any FE source',
-    'tooltip.robotica.architect_table_styles': 'Casing in the style slot unlocks styles: Iron Copper Works, Reinforced Steel Lab, Null Null Spire',
+    'tooltip.robotica.architect_table_styles': 'A casing unlocks more styles: Iron for Smooth Panel, Reinforced for Detailed Stone, Null for Tech Stone',
     'tooltip.robotica.matter_value': 'Matter: %s',
     'robotica.configuration.architect_table': 'Architect Table',
     'robotica.configuration.baseInterval': 'Ticks per block',

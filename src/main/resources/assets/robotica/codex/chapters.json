@@ -373,7 +373,7 @@
         },
         {
           "title": "Styles",
-          "text": "Timberframe works from the start and costs only rustic matter. Copper Works, Steel Lab and Null Spire need an Iron, Reinforced or Null Casing in the casing slot and cost more.\n\nEvery building block also has a normal recipe, so you can repair or extend a building by hand.",
+          "text": "Clean Stone works from the start and costs only rustic matter. Smooth Panel, Detailed Stone and Tech Stone need an Iron, Reinforced or Null Casing in the casing slot and cost more.\n\nEvery building block also has a normal recipe, so you can repair or extend a building by hand.",
           "items": [
             "robotica:copper_works_wall",
             "robotica:steel_lab_wall",

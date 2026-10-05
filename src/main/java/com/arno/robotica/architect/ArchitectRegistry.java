@@ -89,16 +89,15 @@ public final class ArchitectRegistry {
 
     private static BlockBehaviour.Properties properties(BuildStyle style, Role role) {
         MapColor color = switch (style) {
-            case TIMBERFRAME -> role == Role.PILLAR || role == Role.FLOOR ? MapColor.WOOD : MapColor.TERRACOTTA_WHITE;
-            case COPPER_WORKS -> MapColor.COLOR_ORANGE;
-            case STEEL_LAB -> MapColor.SNOW;
-            case NULL_SPIRE -> MapColor.COLOR_BLACK;
+            case TIMBERFRAME, STEEL_LAB -> role == Role.ROOF ? MapColor.STONE : MapColor.SAND;
+            case COPPER_WORKS -> role == Role.ROOF ? MapColor.STONE : MapColor.QUARTZ;
+            case NULL_SPIRE -> role == Role.ROOF ? MapColor.STONE : MapColor.SNOW;
         };
         SoundType sound = switch (style) {
-            case TIMBERFRAME -> SoundType.WOOD;
-            case COPPER_WORKS -> SoundType.COPPER;
-            case STEEL_LAB -> SoundType.METAL;
-            case NULL_SPIRE -> role == Role.LIGHT ? SoundType.AMETHYST : SoundType.DEEPSLATE_TILES;
+            case TIMBERFRAME -> SoundType.STONE;
+            case COPPER_WORKS -> SoundType.CALCITE;
+            case STEEL_LAB -> SoundType.STONE;
+            case NULL_SPIRE -> role == Role.LIGHT ? SoundType.AMETHYST : SoundType.POLISHED_DEEPSLATE;
         };
         BlockBehaviour.Properties p = BlockBehaviour.Properties.of().mapColor(color).strength(2.0F, 6.0F).sound(sound);
         if (role == Role.WINDOW) {

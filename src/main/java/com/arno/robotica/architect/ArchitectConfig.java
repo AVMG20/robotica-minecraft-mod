@@ -25,8 +25,8 @@ public final class ArchitectConfig {
         b.push("architect_table");
         BASE_INTERVAL = b.comment("Ticks per placed block at no speed upgrade (speed cards divide it).")
                 .defineInRange("baseInterval", 4, 1, 200);
-        FE_PER_BLOCK = b.comment("Base FE per placed block. Styles scale it: Timberframe 50 %, Copper Works 100 %, Steel Lab 200 %,",
-                        "Null Spire 400 %; speed and efficiency cards apply on top.")
+        FE_PER_BLOCK = b.comment("Base FE per placed block. Styles scale it: Clean Stone 50 %, Smooth Panel 100 %, Detailed Stone 200 %,",
+                        "Tech Stone 400 %; speed and efficiency cards apply on top.")
                 .defineInRange("fePerBlock", 20, 0, 1_000_000);
         ENERGY_BUFFER = b.comment("Internal FE buffer.")
                 .defineInRange("energyBuffer", 200_000, 1_000, 100_000_000);

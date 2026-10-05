@@ -2,7 +2,12 @@
   "replace": false,
   "values": [
     "robotica:architect_table",
+    "robotica:timberframe_wall",
+    "robotica:timberframe_floor",
+    "robotica:timberframe_roof",
+    "robotica:timberframe_pillar",
     "robotica:timberframe_window",
+    "robotica:timberframe_light",
     "robotica:copper_works_wall",
     "robotica:copper_works_floor",
     "robotica:copper_works_roof",
