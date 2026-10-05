@@ -18,6 +18,7 @@ public final class AutomationConfig {
     public static final ModConfigSpec.IntValue ENERGY_BUFFER;
     public static final ModConfigSpec.IntValue STUMPY_FE_PER_TICK;
     public static final ModConfigSpec.IntValue STUMPY_FE_PER_LOG;
+    public static final ModConfigSpec.IntValue STUMPY_TICKS_PER_LOG;
     public static final ModConfigSpec.IntValue SPROUT_FE_PER_TICK;
     public static final ModConfigSpec.IntValue SPROUT_FE_PER_HARVEST;
     public static final ModConfigSpec.IntValue MAX_LOGS;
@@ -46,6 +47,8 @@ public final class AutomationConfig {
                 .defineInRange("stumpyFePerTick", 4, 0, 10_000);
         STUMPY_FE_PER_LOG = b.comment("FE per log Stumpy fells, paid when the tree comes down (before efficiency cards). A tree never costs more than the internal buffer.")
                 .defineInRange("stumpyFePerLog", 250, 0, 100_000);
+        STUMPY_TICKS_PER_LOG = b.comment("Rest after a tree, in ticks per log felled (speed cards shorten it). Stumpy's area is one block smaller on each side than Sprout's.")
+                .defineInRange("stumpyTicksPerLog", 10, 0, 1_200);
         SPROUT_FE_PER_TICK = b.comment("FE per tick while Sprout works (before upgrade multipliers).")
                 .defineInRange("sproutFePerTick", 3, 0, 10_000);
         SPROUT_FE_PER_HARVEST = b.comment("FE per crop Sprout harvests (before efficiency cards). Without it the crop waits.")
@@ -98,6 +101,10 @@ public final class AutomationConfig {
 
     public static int energyBuffer() {
         return SPEC.isLoaded() ? ENERGY_BUFFER.get() : 20_000;
+    }
+
+    public static int stumpyTicksPerLog() {
+        return SPEC.isLoaded() ? STUMPY_TICKS_PER_LOG.get() : 10;
     }
 
     public static int stumpyFePerLog() {

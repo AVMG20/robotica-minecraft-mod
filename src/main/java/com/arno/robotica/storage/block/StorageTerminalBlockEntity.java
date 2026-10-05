@@ -38,9 +38,9 @@ import java.util.List;
  * Big sorted chest with a crafting grid. {@link #items} is a plain slot inventory of up to {@link #MAX_SLOTS} slots;
  * {@link #BASE_SLOTS} are always there, each Storage Expansion in the three expansion slots adds more.
  *
- * <p>Power rule: the terminal uses a little FE (idle drain plus a bit per expansion). Without power the expansion
- * slots stop taking NEW items (only the first {@link #BASE_SLOTS} slots do), but everything stored can always be taken
- * out and the GUI, search and crafting keep working. Nothing is ever locked away.
+ * <p>Power rule: the terminal uses a little FE (idle drain plus a bit per expansion). Without power it takes no new
+ * items, but everything stored can always be taken out and the GUI, search and crafting keep working. Nothing is ever
+ * locked away.
  */
 public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvider {
     public static final int BASE_SLOTS = 81;
@@ -142,9 +142,9 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
         return n;
     }
 
-    /** Slots that take new items right now: everything with power, only the base without. */
+    /** Slots that take new items right now: all of them with power, none without. */
     public int activeCapacity() {
-        return powered ? capacity() : BASE_SLOTS;
+        return powered ? capacity() : 0;
     }
 
     public boolean isPowered() {
@@ -348,6 +348,11 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
                 level.updateNeighbourForOutputSignal(pos, state.getBlock());
             }
         }
+    }
+
+    /** Runs the power check now instead of on the next period (game tests). */
+    public void updatePowerNow() {
+        if (level != null) updatePower(level, worldPosition, getBlockState());
     }
 
     private void updatePower(Level level, BlockPos pos, BlockState state) {

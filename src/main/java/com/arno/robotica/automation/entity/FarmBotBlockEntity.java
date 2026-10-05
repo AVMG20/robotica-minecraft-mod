@@ -50,6 +50,8 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
     protected int scanCost;
     private int scanWait;
     private int progress;
+    /** Ticks of rest left after a big action (Stumpy after a tree). Transient. */
+    protected int rest;
     private double growthCarry;
 
     protected FarmBotBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -57,6 +59,11 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
     }
 
     // ---- subclass hooks ----
+
+    /** Work radius before range cards. */
+    protected int baseRadius() {
+        return AutomationConfig.farmRadius(tier());
+    }
 
     /** Energy per tick while working, config value. */
     protected abstract int baseFePerTick();
@@ -93,7 +100,7 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
 
     @Override
     protected void recalc() {
-        int radius = AutomationConfig.farmRadius(tier()) + 2 * upgrades.level(UpgradeKind.RANGE);
+        int radius = baseRadius() + 2 * upgrades.level(UpgradeKind.RANGE);
         areaSize = 2 * radius + 1;
         scanCursor = 0;
         target = null;
@@ -133,6 +140,10 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
         if (energy.getEnergyStored() > 0) {
             if (age % 20 == 0) growthBoost(sl);
             if (age % 60 == 30) pickupDrops(sl);
+        }
+        if (rest > 0) {
+            rest--;
+            return Status.WORKING;
         }
         if (target == null) scan(sl);
         if (target == null) return energy.getEnergyStored() <= 0 ? Status.NO_ENERGY : Status.IDLE;

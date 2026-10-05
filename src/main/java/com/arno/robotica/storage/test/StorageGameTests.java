@@ -31,7 +31,15 @@ import java.util.List;
 public class StorageGameTests {
     private static final BlockPos POS = new BlockPos(1, 1, 1);
 
+    /** A powered terminal (without power it takes no new items). */
     private static StorageTerminalBlockEntity place(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = placeUnpowered(helper);
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        be.updatePowerNow();
+        return be;
+    }
+
+    private static StorageTerminalBlockEntity placeUnpowered(GameTestHelper helper) {
         helper.setBlock(POS, StorageContent.TERMINAL.get());
         return helper.getBlockEntity(POS);
     }
@@ -70,7 +78,7 @@ public class StorageGameTests {
 
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void capacityGrowsWithExpansions(GameTestHelper helper) {
-        StorageTerminalBlockEntity be = place(helper);
+        StorageTerminalBlockEntity be = placeUnpowered(helper);
         helper.assertTrue(be.capacity() == 81, "base 81, got " + be.capacity());
         be.upgrades.setStackInSlot(0, new ItemStack(StorageContent.EXPANSION_MK1.get()));
         helper.assertTrue(be.capacity() == 162, "Mk1 adds 81, got " + be.capacity());
@@ -81,10 +89,12 @@ public class StorageGameTests {
         helper.assertTrue(be.capacity() == 648, "everything is 648, got " + be.capacity());
         helper.assertTrue(be.expansionCount() == 3, "3 expansions");
         IItemHandler handler = be.access();
-        // without power the expansion slots take no new items
+        // without power nothing new goes in, but stored items still come out
         helper.assertTrue(!be.isPowered(), "no power yet");
         helper.assertTrue(handler.insertItem(100, new ItemStack(Items.DIRT), true).getCount() == 1, "slot 100 refuses without power");
-        helper.assertTrue(handler.insertItem(5, new ItemStack(Items.DIRT), true).isEmpty(), "base slots still work");
+        helper.assertTrue(handler.insertItem(5, new ItemStack(Items.DIRT), true).getCount() == 1, "base slots refuse too");
+        be.items.setStackInSlot(5, new ItemStack(Items.DIRT, 3));
+        helper.assertTrue(handler.extractItem(5, 3, true).getCount() == 3, "taking out works without power");
         be.energy.setEnergy(be.energy.getMaxEnergyStored());
         helper.succeedWhen(() -> {
             helper.assertTrue(be.isPowered(), "powered once it has energy");
@@ -273,5 +283,33 @@ public class StorageGameTests {
             menu.broadcastChanges();
             helper.assertTrue(menu.viewStack(0).is(Items.DIAMOND) && menu.viewStack(0).getCount() == 3, "the view shows the hopper's diamonds");
         });
+    }
+
+    /** JEI transfer: the grid fills from the terminal, then the player; shift fills as many crafts as possible. */
+    @GameTest(template = "empty")
+    public static void fillGridForRecipe(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.getInventory().clearContent();
+        StorageMenu menu = new StorageMenu(1, player.getInventory(), be);
+        be.insert(new ItemStack(Items.OAK_PLANKS, 10), false);
+        player.getInventory().add(new ItemStack(Items.STICK, 1));
+        menu.getSlot(StorageMenu.GRID_START + 8).set(new ItemStack(Items.DIRT, 2));
+        // a wooden pickaxe: 3 planks on top, 2 sticks down the middle; birch or oak planks are both fine
+        List<ItemStack> planks = List.of(new ItemStack(Items.BIRCH_PLANKS), new ItemStack(Items.OAK_PLANKS));
+        List<ItemStack> stick = List.of(new ItemStack(Items.STICK));
+        List<List<ItemStack>> recipe = List.of(planks, planks, planks, List.of(), stick, List.of(), List.of(), stick, List.of());
+        menu.fillGrid(recipe, false);
+        helper.assertTrue(be.craft.get(0).is(Items.OAK_PLANKS) && be.craft.get(0).getCount() == 1, "one plank per slot");
+        helper.assertTrue(be.craft.get(4).is(Items.STICK) && be.craft.get(7).isEmpty(), "only one stick was there");
+        helper.assertTrue(total(be, Items.DIRT) == 2, "what was in the grid went back to the terminal");
+        helper.assertTrue(total(be, Items.OAK_PLANKS) == 7, "3 planks taken, got " + total(be, Items.OAK_PLANKS));
+        be.insert(new ItemStack(Items.STICK, 9), false);
+        menu.fillGrid(recipe, true);
+        helper.assertTrue(menu.resultItem().is(Items.WOODEN_PICKAXE), "full recipe now, got " + menu.resultItem());
+        helper.assertTrue(be.craft.get(0).getCount() == 3 && be.craft.get(4).getCount() == 3, "shift: 10 planks make 3 crafts, got "
+                + be.craft.get(0).getCount() + " / " + be.craft.get(4).getCount());
+        helper.assertTrue(total(be, Items.OAK_PLANKS) == 1, "the last plank stays stored");
+        helper.succeed();
     }
 }

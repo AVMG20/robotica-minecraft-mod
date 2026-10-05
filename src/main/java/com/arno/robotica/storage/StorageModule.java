@@ -21,6 +21,7 @@ public final class StorageModule {
         container.registerConfig(ModConfig.Type.SERVER, StorageConfig.SPEC, "robotica-storage-server.toml");
         modBus.addListener(StorageModule::registerCapabilities);
         modBus.addListener(RegisterPayloadHandlersEvent.class, StorageViewPayload::register);
+        modBus.addListener(RegisterPayloadHandlersEvent.class, com.arno.robotica.storage.net.StorageCraftPayload::register);
 
         RoboticaTab.add(StorageContent.TERMINAL_ITEM);
         StorageContent.EXPANSIONS.forEach(RoboticaTab::add);

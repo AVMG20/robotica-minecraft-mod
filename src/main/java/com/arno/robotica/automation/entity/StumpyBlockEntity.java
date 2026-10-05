@@ -36,6 +36,12 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
         return "block.robotica.stumpy";
     }
 
+    /** One block less on each side than Sprout (Mk1 7x7): trees are worth more than a crop. */
+    @Override
+    protected int baseRadius() {
+        return Math.max(2, super.baseRadius() - 1);
+    }
+
     @Override
     protected int baseFePerTick() {
         return AutomationConfig.stumpyFe();
@@ -107,6 +113,7 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
             for (ItemStack drop : Block.getDrops(state, sl, p, sl.getBlockEntity(p), null, tool)) Drops.merge(drops, drop);
             sl.removeBlock(p, false);
         }
+        rest = felled * AutomationConfig.stumpyTicksPerLog() / Math.max(1, effectiveSpeedMultiplier());
         workSound(sl, start, CoreSounds.STUMPY_CHOP, 1.0F, 0.9F + sl.random.nextFloat() * 0.2F);
         for (ItemStack drop : drops) output(drop);
         replant(sl, tree, BuiltInRegistries.BLOCK.getKey(startState.getBlock()).getPath());

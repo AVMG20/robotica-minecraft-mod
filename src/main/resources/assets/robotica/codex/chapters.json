@@ -169,7 +169,7 @@
         },
         {
           "title": "Farm tiers",
-          "text": "Right-click a placed robot with a Farm Kit to upgrade it.\n\nMk1: 9x9. Mk2: 13x13, faster. Mk3: 17x17. Mk4: 25x25, the whole area every pulse.\n\nEach Mk also takes one more speed, range and growth card.",
+          "text": "Right-click a placed robot with a Farm Kit to upgrade it.\n\nMk1: 9x9 (Stumpy one block less on each side). Mk2: 13x13, faster. Mk3: 17x17. Mk4: 25x25, the whole area every pulse.\n\nEach Mk also takes one more speed, range and growth card.",
           "items": [
             "robotica:farm_kit_mk2",
             "robotica:farm_kit_mk3",
@@ -491,7 +491,7 @@
         },
         {
           "title": "Expansions and power",
-          "text": "Three expansion slots take one Storage Expansion each: Mk1 +81 slots, Mk2 +162, Mk3 +324, up to 648 in all. Each Mk is built from the one before.\n\nThe terminal uses a little FE (2 per tick, +1 per expansion): feed it from any cable or put a cell in the battery slot. Without power only the first 81 slots take new items; taking items out, search and crafting always work.",
+          "text": "Three expansion slots take one Storage Expansion each: Mk1 +81 slots, Mk2 +162, Mk3 +324, up to 648 in all. Each Mk is built from the one before.\n\nThe terminal uses a little FE (2 per tick, +1 per expansion): feed it from any cable or put a cell in the battery slot. Without power nothing new goes in; taking items out, search and crafting always work.",
           "items": [
             "robotica:storage_expansion_mk1",
             "robotica:storage_expansion_mk2",

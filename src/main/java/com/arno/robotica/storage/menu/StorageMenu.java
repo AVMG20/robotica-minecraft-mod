@@ -259,6 +259,72 @@ public class StorageMenu extends MachineMenu {
         result.setItem(0, out);
     }
 
+    /**
+     * Fills the grid for a recipe (JEI transfer): what is in the grid goes back first, then each slot takes the first
+     * accepted item it can find, from the terminal and then the player's inventory. {@code max} fills as many crafts as
+     * the items allow (one stack at most), otherwise one craft. Missing items just leave their slot empty. Server only.
+     */
+    public void fillGrid(List<List<ItemStack>> wanted, boolean max) {
+        if (be == null || wanted.size() > 9) return;
+        for (int i = 0; i < 9; i++) {
+            ItemStack old = grid.removeItemNoUpdate(i);
+            if (old.isEmpty()) continue;
+            intoTerminalThenPlayer(old);
+            if (!old.isEmpty()) player.drop(old, false);
+        }
+        List<ItemStack> items = grid.getItems();
+        for (int i = 0; i < wanted.size(); i++) {
+            for (ItemStack option : wanted.get(i)) {
+                ItemStack got = take(option, 1);
+                if (!got.isEmpty()) {
+                    items.set(i, got);
+                    break;
+                }
+            }
+        }
+        // Shift: add one more craft at a time while every filled slot can grow, so the slots stay even.
+        while (max) {
+            ItemStack[] round = new ItemStack[9];
+            boolean any = false, complete = true;
+            for (int i = 0; i < 9 && complete; i++) {
+                ItemStack in = items.get(i);
+                if (in.isEmpty()) continue;
+                any = true;
+                round[i] = in.getCount() < in.getMaxStackSize() ? take(in, 1) : ItemStack.EMPTY;
+                complete = !round[i].isEmpty();
+            }
+            complete &= any;
+            for (int i = 0; i < 9; i++) {
+                if (round[i] == null || round[i].isEmpty()) continue;
+                if (complete) {
+                    items.get(i).grow(1);
+                } else {
+                    intoTerminalThenPlayer(round[i]);
+                    if (!round[i].isEmpty()) player.drop(round[i], false);
+                }
+            }
+            if (!complete) break;
+        }
+        grid.setChanged();
+        viewDirty = true;
+    }
+
+    /** Up to {@code amount} of the item, from the terminal first, then from the player's inventory. */
+    private ItemStack take(ItemStack template, int amount) {
+        ItemStack got = be.extract(template, amount);
+        int need = Math.min(amount, template.getMaxStackSize()) - got.getCount();
+        Inventory inv = player.getInventory();
+        for (int i = 0; i < inv.items.size() && need > 0; i++) {
+            ItemStack in = inv.items.get(i);
+            if (in.isEmpty() || !ItemStack.isSameItemSameComponents(in, template)) continue;
+            ItemStack part = in.split(need);
+            need -= part.getCount();
+            if (got.isEmpty()) got = part;
+            else got.grow(part.getCount());
+        }
+        return got;
+    }
+
     /** The persistent 3 x 3 grid of the block entity (a throwaway one on the client). */
     private final class Grid implements CraftingContainer {
         private final NonNullList<ItemStack> list;

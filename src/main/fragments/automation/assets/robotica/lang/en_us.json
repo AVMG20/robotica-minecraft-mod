@@ -30,6 +30,7 @@
   "robotica.configuration.energyBuffer": "Energy buffer (FE)",
   "robotica.configuration.stumpyFePerTick": "Stumpy FE per tick",
   "robotica.configuration.stumpyFePerLog": "Stumpy FE per log",
+  "robotica.configuration.stumpyTicksPerLog": "Stumpy rest per log (ticks)",
   "robotica.configuration.sproutFePerTick": "Sprout FE per tick",
   "robotica.configuration.sproutFePerHarvest": "Sprout FE per harvest",
   "robotica.configuration.maxLogsPerTree": "Max logs per tree",

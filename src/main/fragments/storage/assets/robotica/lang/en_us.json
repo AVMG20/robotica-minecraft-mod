@@ -25,7 +25,7 @@
   "gui.robotica.storage.no_power": "No power",
   "gui.robotica.storage.slots": "Slots %s / %s",
   "gui.robotica.storage.drain": "Uses %s FE/t",
-  "gui.robotica.storage.no_power_hint": "Without power only the first %s slots take new items. Taking items out, search and crafting still work.",
+  "gui.robotica.storage.no_power_hint": "No power: nothing new goes in. Taking items out and crafting still work.",
   "robotica.configuration.storage": "Storage Terminal",
   "robotica.configuration.idleFePerTick": "Idle FE per tick",
   "robotica.configuration.fePerExpansion": "Extra FE per tick per expansion",

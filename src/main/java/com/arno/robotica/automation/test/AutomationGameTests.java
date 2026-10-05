@@ -180,7 +180,7 @@ public class AutomationGameTests {
         helper.getBlockState(bot).useItemOn(mk2, helper.getLevel(), player, InteractionHand.MAIN_HAND, hit);
         helper.assertTrue(helper.getBlockState(bot).getValue(FarmBotBlock.TIER) == 2, "Mk2 kit should upgrade to Mk2");
         StumpyBlockEntity stumpy = helper.getBlockEntity(bot);
-        helper.assertTrue(stumpy.areaSize() == 13, "Mk2 area is 13x13, is " + stumpy.areaSize());
+        helper.assertTrue(stumpy.areaSize() == 11, "Stumpy Mk2 area is 11x11 (one less per side than Sprout), is " + stumpy.areaSize());
         helper.getBlockState(bot).useItemOn(mk3, helper.getLevel(), player, InteractionHand.MAIN_HAND, hit);
         helper.assertTrue(helper.getBlockState(bot).getValue(FarmBotBlock.TIER) == 3, "Mk3 kit should upgrade a Mk2 bot");
         helper.succeed();
