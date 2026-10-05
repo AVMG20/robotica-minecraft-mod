@@ -16,6 +16,15 @@ A NeoForge 1.21.1 mod about robots, drones, farms, machines, power tools and pow
 
 New players get the Robotica Codex on first join. Its "Next steps" page and the Robotica advancement tab guide you through the ages.
 
+## Optional integrations
+
+Robotica runs without any of these. If they are installed it picks them up.
+
+- **JEI** (19.x): a Metal Press recipe category (input, output, time and FE), the Metal Press as its catalyst, and info pages for the Servo, Magma and Antigrav Cores, the Essence Vial, the Mainspring and every upgrade card (stacking rules). The Codex keeps its own recipe browser.
+- **Jade** (15.x): on any Robotica machine it shows status (working, idle, no energy), progress, Mk tier, owner, the Winding Crank's spring charge and the Survey Rig's ores left, next to Jade's own FE bar. On drones it shows an energy bar, mode, tier and owner. The data is built on the server, so it works on dedicated servers.
+
+The dev client, showcase and server runs include both (`optionalMods` in `build.gradle`); the game test server leaves them out. Code is in `src/main/java/com/arno/robotica/compat`; a block entity can describe itself to Jade by implementing `compat.InfoSource`.
+
 ## Develop
 
 Needs Java 21 (`brew install openjdk@21`).
