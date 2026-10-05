@@ -90,6 +90,9 @@ enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<Blo
     }
 
     private static boolean isRobotica(BlockEntity be) {
-        return be != null && Robotica.MODID.equals(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(be.getType()).getNamespace());
+        if (be == null) return false;
+        // Another mod's block entity type may be unregistered: getKey is null then.
+        ResourceLocation key = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(be.getType());
+        return key != null && Robotica.MODID.equals(key.getNamespace());
     }
 }

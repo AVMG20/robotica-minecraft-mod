@@ -44,7 +44,7 @@
   "tooltip.robotica.redstone_cell.details": "In your inventory it recharges the FE tool in your hand.\nRight-click a robot with it to swap batteries. Refill it in a Charger.",
   "tooltip.robotica.ender_cell.details": "In your inventory it recharges the FE tool in your hand.\nRight-click a robot with it to swap batteries. Refill it in a Charger.",
   "tooltip.robotica.copper_gear.details": "The first part of almost everything. Open the Codex (it came with you) for the next steps.",
-  "tooltip.robotica.servo_core.details": "Will drop from a boss. Until then it has an expensive recipe.",
+  "tooltip.robotica.servo_core.details": "Dropped by the Scrap Colossus (Signal Flare on a Colossus Altar).\nA pricier recipe stays for Peaceful worlds.",
   "tooltip.robotica.magma_core.details": "Will drop from a boss. Until then it has an expensive recipe.",
   "tooltip.robotica.antigrav_core.details": "Will drop from a boss. Until then it has an expensive recipe.",
   "item.robotica.upgrade_speed": "Speed Upgrade",

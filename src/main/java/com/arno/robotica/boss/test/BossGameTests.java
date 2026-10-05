@@ -5,6 +5,8 @@ import com.arno.robotica.boss.BossConfig;
 import com.arno.robotica.boss.BossRegistry;
 import com.arno.robotica.boss.block.ColossusAltarBlock;
 import com.arno.robotica.boss.block.ColossusAltarBlockEntity;
+import com.arno.robotica.boss.BossLoot;
+import com.arno.robotica.boss.entity.ScrapChunk;
 import com.arno.robotica.boss.entity.ScrapColossus;
 import com.arno.robotica.boss.entity.ScrapDrone;
 import com.arno.robotica.boss.world.RustedFoundryPiece;
@@ -16,7 +18,13 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSources;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
@@ -28,6 +36,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
+import java.util.UUID;
 
 /** Headless tests of the boss module: {@code ./gradlew runGameTestServer}. */
 @GameTestHolder(Robotica.MODID)
@@ -54,8 +63,17 @@ public class BossGameTests {
         ServerLevel level = helper.getLevel();
         AABB area = new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(40);
         List<Entity> leftovers = level.getEntitiesOfClass(Entity.class, area,
-                e -> e instanceof ScrapColossus || e instanceof ScrapDrone || e instanceof ItemEntity);
+                e -> e instanceof ScrapColossus || e instanceof ScrapDrone || e instanceof ItemEntity || e instanceof Husk
+                        || e instanceof ScrapChunk);
         leftovers.forEach(Entity::discard);
+    }
+
+    /** A husk that stands still and never burns: a target or attacker for tests. */
+    private static Husk dummy(GameTestHelper helper, BlockPos pos) {
+        Husk husk = helper.spawn(EntityType.HUSK, pos);
+        husk.setNoAi(true);
+        husk.setPersistenceRequired();
+        return husk;
     }
 
     /** A flare at the altar wakes one Colossus on top, sets the cooldown, and the altar refuses while it lives or cools down. */
@@ -104,9 +122,11 @@ public class BossGameTests {
     @GameTest(template = "boss_arena", batch = "bossPhase", timeoutTicks = 200)
     public static void phaseTwoAtHalfHealth(GameTestHelper helper) {
         ScrapColossus boss = colossus(helper);
+        // Only attacks with a living attacker hurt it; indirect magic also ignores armour, so the numbers stay exact.
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
         helper.runAfterDelay(2, () -> {
             helper.assertTrue(!boss.isPhaseTwo(), "a fresh Colossus starts in phase 1");
-            boss.hurt(helper.getLevel().damageSources().magic(), boss.getMaxHealth() * 0.55F);
+            boss.hurt(helper.getLevel().damageSources().indirectMagic(attacker, attacker), boss.getMaxHealth() * 0.55F);
         });
         helper.runAfterDelay(30, () -> {
             helper.assertTrue(boss.isPhaseTwo(), "below half health is phase 2");
@@ -114,7 +134,7 @@ public class BossGameTests {
             int drones = boss.minions().size();
             helper.assertTrue(drones >= 1 && drones <= BossConfig.minionCap(), "phase 2 calls drones up to the cap, has " + drones);
             float before = boss.getHealth();
-            boss.hurt(helper.getLevel().damageSources().magic(), 10.0F);
+            boss.hurt(helper.getLevel().damageSources().indirectMagic(attacker, attacker), 10.0F);
             float taken = before - boss.getHealth();
             helper.assertTrue(Math.abs(taken - 20.0F) < 0.01F, "an exposed core takes double damage, took " + taken);
             cleanup(helper);
@@ -155,5 +175,117 @@ public class BossGameTests {
             cleanup(helper);
             helper.succeed();
         });
+    }
+
+    /**
+     * Boss in a hole: buried in stone, it takes no suffocation damage, and no other damage without a living attacker
+     * (cactus, drowning, poison, unowned TNT). Attacks still hurt. A trap can never farm Servo Cores.
+     */
+    @GameTest(template = "boss_arena", batch = "bossTrap", timeoutTicks = 200)
+    public static void colossusIgnoresTrapDamage(GameTestHelper helper) {
+        ScrapColossus boss = colossus(helper);
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = helper.getLevel().damageSources();
+        helper.runAfterDelay(2, () -> {
+            helper.assertTrue(!boss.hurt(damage.cactus(), 5.0F), "cactus does nothing");
+            helper.assertTrue(!boss.hurt(damage.drown(), 5.0F), "drowning does nothing");
+            helper.assertTrue(!boss.hurt(damage.magic(), 5.0F), "poison and other unowned magic does nothing");
+            helper.assertTrue(!boss.hurt(damage.explosion(null, null), 5.0F), "unowned TNT does nothing");
+            helper.assertTrue(!boss.hurt(damage.inWall(), 5.0F), "suffocation does nothing");
+            helper.assertTrue(boss.getHealth() == boss.getMaxHealth(), "still at full health");
+            // bury it
+            for (int x = 3; x <= 5; x++) {
+                for (int y = 1; y <= 4; y++) {
+                    for (int z = 3; z <= 5; z++) helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                }
+            }
+        });
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(boss.isAlive() && boss.isInWall(), "the Colossus is stuck in the stone");
+            helper.assertTrue(boss.getHealth() == boss.getMaxHealth(), "buried for 3 s and not a scratch, has " + boss.getHealth());
+            helper.assertTrue(boss.hurt(damage.mobAttack(attacker), 5.0F), "a real attack still hurts");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * No safe spot at 3-6 blocks: a target it cannot reach in melee gets scrap thrown at it after a few seconds, also when
+     * it stands closer than the normal 6 block throwing range.
+     */
+    @GameTest(template = "boss_arena", batch = "bossReach", timeoutTicks = 200)
+    public static void colossusThrowsAtUnreachableTargets(GameTestHelper helper) {
+        ScrapColossus boss = colossus(helper);
+        boss.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+        Husk target = dummy(helper, new BlockPos(0, 1, 0));
+        double dist = Math.sqrt(boss.distanceToSqr(target));
+        helper.assertTrue(dist > 3.0 && dist < 6.0, "the target stands in the old blind spot, " + dist);
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(target);
+            helper.assertTrue(!boss.canThrowAt(target), "no scrap right away at close range");
+        });
+        helper.runAfterDelay(2 + ScrapColossus.OUT_OF_REACH_TICKS + 10, () -> {
+            helper.assertTrue(boss.getTarget() == target, "still on the same target");
+            helper.assertTrue(boss.canThrowAt(target), "an unreachable close target gets scrap");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** A cooling altar cannot be mined (breaking and replacing it would skip the cooldown); a ready one can. */
+    @GameTest(template = "boss_arena", batch = "bossAltarMine", timeoutTicks = 100)
+    public static void coolingAltarCannotBeMined(GameTestHelper helper) {
+        floor(helper);
+        helper.setBlock(CENTRE, BossRegistry.COLOSSUS_ALTAR.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos altarPos = helper.absolutePos(CENTRE);
+        ColossusAltarBlock.Result result = ColossusAltarBlock.awaken(level, altarPos, null);
+        helper.assertTrue(result == ColossusAltarBlock.Result.SPAWNED, "woke the Colossus, got " + result);
+        cleanup(helper);
+
+        ServerPlayer miner = helper.makeMockServerPlayerInLevel();
+        miner.setGameMode(GameType.SURVIVAL);
+        miner.moveTo(altarPos.getX() + 0.5, altarPos.getY() + 1.0, altarPos.getZ() + 2.5);
+        var state = level.getBlockState(altarPos);
+        helper.assertTrue(state.getDestroyProgress(miner, level, altarPos) == 0.0F, "no mining progress while it cools down");
+        miner.gameMode.destroyBlock(altarPos);
+        helper.assertTrue(level.getBlockState(altarPos).is(BossRegistry.COLOSSUS_ALTAR.get()), "a forced break is refused too");
+
+        ((ColossusAltarBlockEntity) level.getBlockEntity(altarPos)).resetCooldown();
+        level.setBlock(altarPos, level.getBlockState(altarPos).setValue(ColossusAltarBlock.READY, true), 3);
+        helper.assertTrue(level.getBlockState(altarPos).getDestroyProgress(miner, level, altarPos) > 0.0F, "a ready altar can be mined");
+        miner.gameMode.destroyBlock(altarPos);
+        helper.assertTrue(level.getBlockState(altarPos).isAir(), "and broken");
+        cleanup(helper);
+        helper.succeed();
+    }
+
+    /**
+     * Loot locked to the killer is released after the lock time or as soon as the killer is offline, so it never sits
+     * there for nobody until it despawns.
+     */
+    @GameTest(template = "boss_arena", batch = "bossLootLock", timeoutTicks = 100)
+    public static void lockedLootIsReleased(GameTestHelper helper) {
+        floor(helper);
+        ServerLevel level = helper.getLevel();
+        ServerPlayer killer = helper.makeMockServerPlayerInLevel();
+        long now = level.getGameTime();
+        BlockPos at = helper.absolutePos(CENTRE.above());
+        ItemEntity mine = new ItemEntity(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(CoreItems.SERVO_CORE.get()));
+        ItemEntity offline = new ItemEntity(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(CoreItems.SERVO_CORE.get()));
+        ItemEntity expired = new ItemEntity(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(CoreItems.SERVO_CORE.get()));
+        BossLoot.lock(mine, killer.getUUID(), now);
+        BossLoot.lock(offline, UUID.randomUUID(), now);
+        BossLoot.lock(expired, killer.getUUID(), now - BossLoot.LOCK_TICKS);
+        for (ItemEntity item : List.of(mine, offline, expired)) {
+            item.setNeverPickUp();
+            level.addFreshEntity(item);
+        }
+        BossLoot.releaseDue(level.getServer());
+        helper.assertTrue(killer.getUUID().equals(mine.getTarget()), "the online killer keeps the lock");
+        helper.assertTrue(offline.getTarget() == null, "a logged out killer's loot is free");
+        helper.assertTrue(expired.getTarget() == null, "after the lock time the loot is free");
+        cleanup(helper);
+        helper.succeed();
     }
 }

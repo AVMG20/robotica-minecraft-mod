@@ -69,7 +69,7 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
 
         int rate = menu.rate();
         drawLabel(g, Component.translatable("gui.robotica.tesla_sending", Fmt.compact(rate)), x + 8, y + 44, 110);
-        drawLabelRight(g, Component.literal("max " + Fmt.compact(menu.maxIo()) + " FE/t"), x + 168, y + 44, 56);
+        drawLabelRight(g, Component.translatable("gui.robotica.tesla_max", Fmt.compact(menu.maxIo())), x + 168, y + 44, 56);
 
         Tone tone;
         Component status;

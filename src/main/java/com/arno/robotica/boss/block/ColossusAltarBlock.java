@@ -27,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.FireworkExplosion;
 import net.minecraft.world.item.component.Fireworks;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -34,6 +35,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
@@ -163,6 +165,28 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
         rocket.set(DataComponents.FIREWORKS, new Fireworks(2, List.of(new FireworkExplosion(FireworkExplosion.Shape.LARGE_BALL,
                 IntList.of(0xE8742A, 0xC9302A), IntList.of(0xFFD080), true, false))));
         level.addFreshEntity(new FireworkRocketEntity(level, x, y + 3.5, z, rocket));
+    }
+
+    /**
+     * A cooling altar cannot be mined: breaking and placing it again would skip the cooldown. Creative players still can.
+     */
+    @Override
+    protected float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
+        if (!state.getValue(READY) && !player.getAbilities().instabuild) return 0.0F;
+        return super.getDestroyProgress(state, player, level, pos);
+    }
+
+    /** Also covers area tools and other paths that break the block without mining progress. */
+    @Override
+    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+        if (!state.getValue(READY) && !player.getAbilities().instabuild) {
+            if (!level.isClientSide) {
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
+                tell(player, Component.translatable("message.robotica.boss.cooling_unbreakable"));
+            }
+            return false;
+        }
+        return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
     }
 
     @Override

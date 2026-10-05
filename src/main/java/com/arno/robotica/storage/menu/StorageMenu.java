@@ -56,6 +56,12 @@ public class StorageMenu extends MachineMenu {
     public static final int BATTERY = EXPANSION_END;
     public static final int PLAYER_START = BATTERY + 1;
     public static final int PLAYER_END = PLAYER_START + 36;
+    /**
+     * Changes that did not come from this menu (hoppers, pipes, another player) rebuild the picture at most this often,
+     * so a terminal fed every tick does not sort its whole inventory every tick for every viewer. Own clicks and view
+     * changes rebuild right away. A stale picture is harmless: clicks are resolved against the real inventory.
+     */
+    public static final int EXTERNAL_REFRESH_TICKS = 4;
 
     // Layout (relative to the GUI corner), shared with the screen.
     public static final int VIEW_X = 8, VIEW_Y = 18;
@@ -79,6 +85,7 @@ public class StorageMenu extends MachineMenu {
     private int viewTotal;
     private boolean viewDirty = true;
     private int viewVersion = -1;
+    private long lastRefresh = -EXTERNAL_REFRESH_TICKS;
     private int seenGridVersion = -1;
 
     private final int idxEnergy, idxEnergyMax, idxUsed, idxCapacity, idxPowered, idxViewTotal, idxDrain;
@@ -192,6 +199,7 @@ public class StorageMenu extends MachineMenu {
         if (be == null) return;
         viewDirty = false;
         viewVersion = be.version();
+        if (be.getLevel() != null) lastRefresh = be.getLevel().getGameTime();
         List<ItemStack> list = StorageView.build(be.snapshot(), filter, sort);
         viewTotal = list.size();
         int maxScroll = Math.max(0, (viewTotal + COLS - 1) / COLS - ROWS);
@@ -209,7 +217,12 @@ public class StorageMenu extends MachineMenu {
 
     private void refreshIfStale() {
         if (be == null) return;
-        if (viewDirty || viewVersion != be.version()) refreshView();
+        if (viewDirty) {
+            refreshView();
+        } else if (viewVersion != be.version()) {
+            long now = be.getLevel() != null ? be.getLevel().getGameTime() : 0L;
+            if (now - lastRefresh >= EXTERNAL_REFRESH_TICKS) refreshView();
+        }
         if (seenGridVersion != be.gridVersion()) updateResult();
     }
 
@@ -332,11 +345,16 @@ public class StorageMenu extends MachineMenu {
     public void clicked(int slotId, int button, ClickType type, Player player) {
         if (slotId >= VIEW_START && slotId < VIEW_END && type != ClickType.QUICK_CRAFT) {
             // View slots are a picture: handled against the real inventory, on the server only.
-            if (be != null && player instanceof ServerPlayer) clickView(slotId - VIEW_START, button, type, player);
+            if (be != null && player instanceof ServerPlayer) {
+                clickView(slotId - VIEW_START, button, type, player);
+                viewDirty = true;
+            }
             return;
         }
         if (be != null && seenGridVersion != be.gridVersion()) updateResult();
         super.clicked(slotId, button, type, player);
+        // the player's own click may have moved items in or out: show it right away
+        if (be != null) viewDirty = true;
     }
 
     private void clickView(int index, int button, ClickType type, Player player) {

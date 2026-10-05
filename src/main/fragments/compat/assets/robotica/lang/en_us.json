@@ -2,7 +2,7 @@
   "jei.robotica.category.pressing": "Metal Press",
   "jei.robotica.pressing.time": "%s s",
   "jei.robotica.pressing.energy": "%s FE (%s FE/t)",
-  "jei.robotica.info.servo_core": "Dropped by Robotica bosses. Opens the Servo Age: the parts and machines that need a Servo Core are built from it.",
+  "jei.robotica.info.servo_core": "Dropped by the Scrap Colossus: use a Signal Flare on a Colossus Altar (in Rusted Foundry ruins, or crafted). Opens the Servo Age: the parts and machines that need a Servo Core are built from it. A pricier fallback recipe exists for Peaceful worlds.",
   "jei.robotica.info.magma_core": "Dropped by Robotica bosses. Put it in the Replicator's catalyst slot to copy blazes, endermen, guardians, ghasts and other tier 3 mobs, or in a Survey Rig's core slot to take ancient debris. It is never used up.",
   "jei.robotica.info.antigrav_core": "Dropped by Robotica bosses. Put it in the Replicator's catalyst slot to copy shulkers. It is never used up and opens the Antigrav Age parts.",
   "jei.robotica.info.essence_vial": "Right-click a hostile mob to take a sample (2 damage, 3 second cooldown). The first sample binds the vial to that mob type. Eight samples fill it. Put the full vial in a Replicator. Bosses cannot be sampled.",
@@ -17,7 +17,6 @@
   "jei.robotica.info.upgrade.stackable": "Cards of this kind stack in one upgrade slot: each card adds one step, up to %s. The machine says how many it takes.",
   "jei.robotica.info.upgrade.single": "Only one card of this kind fits in a machine.",
   "jei.robotica.info.upgrade.rules": "Right-click a machine or robot with the card, or put it in an upgrade slot. Machines only take the kinds they have a use for.",
-
   "jade.robotica.status": "Status: %s",
   "jade.robotica.tier": "Mk %s",
   "jade.robotica.progress": "%s%%",

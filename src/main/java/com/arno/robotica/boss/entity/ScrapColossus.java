@@ -63,7 +63,8 @@ import java.util.Optional;
  * half health it enters phase 2 once: it calls up to three Scrap Drones and starts to overheat every 20 s. While it
  * overheats it stands still for 4 s venting steam with its furnace core open and takes double damage.
  *
- * <p>Never breaks blocks. Drops a Servo Core (loot table), and the killer gets the loot (see BossEvents).
+ * <p>Never breaks blocks and only takes damage from attackers (no trap farming). Drops a Servo Core (loot table), and the
+ * killer gets the loot (see BossModule#onDrops and BossLoot).
  */
 public class ScrapColossus extends Monster {
     public static final float BASE_HEALTH = 300.0F;
@@ -77,6 +78,8 @@ public class ScrapColossus extends Monster {
     public static final int THROW_RECOVER = 10;
     public static final int OVERHEAT_TICKS = 80;
     public static final int OVERHEAT_INTERVAL = 400;
+    /** Ticks the target must stay out of melee reach before scrap also flies at close range (pillars, pits, walls). */
+    public static final int OUT_OF_REACH_TICKS = 60;
 
     /** What the Colossus is doing, synced to clients for the animation. */
     public enum Action {
@@ -99,6 +102,8 @@ public class ScrapColossus extends Monster {
     private int throwCooldown = 40;
     private int overheatCooldown = OVERHEAT_INTERVAL;
     private boolean minionsCalled;
+    /** Ticks the current target has been out of melee reach. Server only, not saved. */
+    private int outOfReachTicks;
     @Nullable
     private BlockPos altarPos;
 
@@ -236,6 +241,9 @@ public class ScrapColossus extends Monster {
         if (slamCooldown > 0) slamCooldown--;
         if (throwCooldown > 0) throwCooldown--;
         if (!isPhaseTwo() && getHealth() <= getMaxHealth() * 0.5F) enterPhaseTwo();
+        LivingEntity target = getTarget();
+        if (target != null && target.isAlive() && !isWithinMeleeAttackRange(target)) outOfReachTicks++;
+        else outOfReachTicks = 0;
         if (isOverheating()) {
             getNavigation().stop();
             setDeltaMovement(0.0, getDeltaMovement().y, 0.0);
@@ -376,10 +384,32 @@ public class ScrapColossus extends Monster {
     public boolean doHurtTarget(Entity target) {
         boolean hit = super.doHurtTarget(target);
         if (hit) {
+            outOfReachTicks = 0;
             target.push(0.0, 0.35, 0.0);
             playSound(SoundEvents.IRON_GOLEM_ATTACK, 1.5F, 0.7F);
         }
         return hit;
+    }
+
+    /**
+     * Only attacks hurt it: damage that no living attacker caused (suffocation, cactus, drowning, falling anvils, unowned
+     * TNT or dispenser arrows, lightning, poison) does nothing, so it cannot be farmed in a trap. /kill and the void still
+     * work.
+     */
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        if (super.isInvulnerableTo(source)) return true;
+        return !(source.getEntity() instanceof LivingEntity) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
+    }
+
+    /**
+     * Scrap goes at targets 6 to 28 blocks away, and at targets from 3 blocks on that it has not been able to reach in
+     * melee for {@value #OUT_OF_REACH_TICKS} ticks: no safe spot on a pillar, across a pit or behind a wall gap.
+     */
+    public boolean canThrowAt(LivingEntity target) {
+        double d = distanceToSqr(target);
+        if (d >= 28.0 * 28.0 || !hasLineOfSight(target)) return false;
+        return d > 36.0 || (d > 9.0 && outOfReachTicks >= OUT_OF_REACH_TICKS);
     }
 
     /** Double damage while the core is exposed: the counterplay window. */
@@ -575,8 +605,7 @@ public class ScrapColossus extends Monster {
         public boolean canUse() {
             LivingEntity target = getTarget();
             if (throwCooldown > 0 || isOverheating() || action() != Action.IDLE || target == null || !target.isAlive()) return false;
-            double d = distanceToSqr(target);
-            return d > 36.0 && d < 28.0 * 28.0 && hasLineOfSight(target);
+            return canThrowAt(target);
         }
 
         @Override
