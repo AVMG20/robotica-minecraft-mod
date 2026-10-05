@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "natural=false,ready=false": {
+      "model": "robotica:block/colossus_altar_cold"
+    },
+    "natural=false,ready=true": {
+      "model": "robotica:block/colossus_altar"
+    },
+    "natural=true,ready=false": {
+      "model": "robotica:block/colossus_altar_cold"
+    },
+    "natural=true,ready=true": {
+      "model": "robotica:block/colossus_altar"
+    }
+  }
+}

@@ -15,7 +15,8 @@ Last updated 2026-10-05. Main builds, `./gradlew runGameTestServer` passes 101/1
 | Architect | Architect Table: 9x9 building shells on a plot grid, 4 styles, doors where buildings touch |
 | Replicator | Essence Vial, 3x3x3 Mob Replicator, harvest/spawn modes |
 | Warp | Warp Pads, Rift Upgrade, Recall/Rift Remote, Portal Projector |
-| Codex | Guide book, 36-step advancement guide, OP Creative Lab, `/robotica` commands |
+| Codex | Guide book, 38-step advancement guide, OP Creative Lab, `/robotica` commands |
+| Boss | Scrap Colossus (Servo Core source), Scrap Drones, Signal Flare, Colossus Altar, Rusted Foundry ruins |
 
 ## Next
 
@@ -27,7 +28,7 @@ Last updated 2026-10-05. Main builds, `./gradlew runGameTestServer` passes 101/1
    - Tiers by link count: 4, 8, 12, 16, 32, each more expensive.
    - Linking tool: click a coil, then a machine. The clicked face is the side power enters.
    - Remove Copper/Gold Conduits once this works.
-3. **Bosses**, Scrap Colossus first. Boss cores then replace the temporary core recipes.
+3. **Bosses:** the Scrap Colossus is in (play-test the fight: slam timing, scrap lob arc, overheat window, drone pathing, foundry placement). Next: a Magma Core boss and an Antigrav Core boss to replace the last temporary core recipes.
 4. **Art leftovers:** redraw the warp remotes, linking card, rift upgrade, sentry and courier drone icons.
 5. **Compat:** JEI/EMI and Jade plugins, Refined Storage API for the Architect Table, Create rotation for the Winding Crank.
 6. **Multiplayer test** on a dedicated server with friends.

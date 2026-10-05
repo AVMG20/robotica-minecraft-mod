@@ -8,13 +8,13 @@
   ],
   "key": {
     "D": {
-      "tag": "c:gems/diamond"
+      "tag": "c:storage_blocks/diamond"
     },
     "S": {
       "item": "robotica:servo_actuator"
     },
     "A": {
-      "item": "robotica:advanced_circuit"
+      "item": "robotica:reinforced_casing"
     }
   },
   "result": {

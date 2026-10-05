@@ -145,8 +145,20 @@
       "age": 2
     },
     {
-      "id": "robotica:guide/servo_core",
+      "id": "robotica:guide/foundry",
       "parent": "robotica:guide/age2",
+      "icon": "robotica:signal_flare",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/colossus",
+      "parent": "robotica:guide/foundry",
+      "icon": "robotica:colossus_altar",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/servo_core",
+      "parent": "robotica:guide/colossus",
       "icon": "robotica:servo_core",
       "age": 2
     },

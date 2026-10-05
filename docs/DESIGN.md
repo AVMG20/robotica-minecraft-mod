@@ -23,7 +23,7 @@ Source of truth for implementation. NeoForge 1.21.1, Java 21, mod id `robotica`,
 | 3 | Deep | Magma Core (+ Swarm, Tide later) | netherite scrap, blaze, prismarine |
 | 4 | Antigrav | Antigrav Core | ender pearls, nether star, shulker shell |
 
-Bosses are not implemented yet. Until they are, each core has a temporary expensive crafting recipe (marked `temp_` in the file name).
+The Servo Core drops from the Scrap Colossus (module `boss`, see Bosses). It keeps a pricier fallback recipe (`temp_servo_core`) for Peaceful worlds and servers that turn the Rusted Foundry off. The Magma and Antigrav Cores keep their temporary expensive recipe (marked `temp_` in the file name) until their bosses exist.
 
 ## Balance system: component ladder
 
@@ -50,7 +50,7 @@ Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate
 - Advanced Circuit: 4 basic circuit + 2 gold ingot + 2 quartz + 1 diamond → 1
 - Servo Actuator: 2 electric motor + 4 gold ingot + 2 iron plate + 1 advanced circuit → 1
 - Redstone Cell (6,912,000 FE): 2 copper cell + 4 redstone block + 1 reinforced casing + 1 advanced circuit
-- Servo Core: boss drop (temp recipe: 4 diamond + 4 servo actuator + 1 advanced circuit)
+- Servo Core: Scrap Colossus drop (fallback recipe: 4 diamond blocks + 4 servo actuator + 1 reinforced casing, about 830 IE)
 
 ### Age 3 parts
 - Blazing Casing: 4 reinforced casing + 4 netherite scrap + 1 magma core → 2
@@ -207,9 +207,21 @@ Getting home and travelling between bases. All teleports run on the server, cost
 - The pad registry is a `SavedData` on the overworld, so pads keep working when their chunk is unloaded (the destination chunk is loaded on arrival).
 - Safety: never teleport into solid blocks, look for the nearest safe 2-high spot within 3 blocks, otherwise refuse with a message and refund the FE.
 
+## Bosses (module `boss`)
+
+- Scrap Colossus: a 3 block tall, 2 wide rusted copper robot (300 HP, armor 10, toughness 4, full knockback resistance), boss bar for every player tracking it. Never breaks blocks, whatever `mobGriefing` says. Stays within 20 blocks of its altar.
+- Attacks, all telegraphed: ground slam (1 s wind-up with raised arms, then a shockwave that hurts 14 and throws back everything on the ground within 5 blocks; jumping dodges it), a lobbed chunk of scrap (8 damage) at targets 6-28 blocks away, plain punches (10).
+- Phase 2 below half health, once: up to 3 Scrap Drones (small flying minions, fall apart after 90 s or when the Colossus is gone) and an overheat every 20 s: it stands still for 4 s venting steam with its furnace hatch open and takes double damage.
+- Drops: 1 Servo Core always, copper and iron ingots, raw copper, nuggets, redstone, gears, sometimes an Electric Motor; 150 XP. The loot moves to the killer and only they can pick it up. Everyone within 64 blocks who had the boss bar gets the "Scrap Heap" guide step.
+- Colossus Altar: right-click it with a Signal Flare to wake a Colossus on top (needs 3x3x4 air). One Colossus per altar at a time, then the altar cools down (5 min) and goes dark. Not on Peaceful. Creative players skip the cooldown.
+- Signal Flare (Age 1: 4 copper, 2 redstone, 1 gunpowder, 1 Electric Motor, about 24 IE): the summon item. The real price is the fight.
+- Colossus Altar recipe (Age 2: 4 Reinforced Casing, Advanced Circuit, Servo Actuator, 2 obsidian, copper block, about 360 IE): build your own arena. No Servo Core needed, so worlds without foundries can still farm the boss. The altar in a ruin drops 2 copper blocks instead of itself.
+- Rusted Foundry: a ruined 25x25 hall of stone bricks and rusted copper (template `rusted_foundry.nbt`, written by `scripts/data/boss_structure.py`) around the altar, with a chest holding a Signal Flare. Plains, sunflower plains, desert, badlands; random spread 48 chunks, separation 16, kept 4 chunks from villages; skipped on slopes over 7 blocks and on water.
+- Server config `robotica-boss-server.toml`: `bossHealthMultiplier`, `bossDamageMultiplier`, `colossusMinionCap`, `altarCooldownSeconds`, `foundryEnabled`.
+
 ## Onboarding (module `codex`)
 
-- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, conduits, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
+- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, conduits, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Rusted Foundry or Signal Flare → Scrap Colossus → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
 - Custom trigger `robotica:milestone` (core `Milestones`) for wind_spring, robot_working, farm_kit, vial_complete, replicator_formed, warp, portal. Machines award their owner when online and nearby.
 - The server syncs finished guide steps to the client (`robotica:codex_guide_progress`); the Codex's first chapter "Next steps" lists the steps you can do now and a checklist.
 - When a guide step is done, chat names the next one or two steps (config `guideChatTips`).
@@ -217,7 +229,7 @@ Getting home and travelling between bases. All teleports run on the server, cost
 
 ## Later (not in this build)
 
-Guard Drone, Wingman, Mole, Courier, Exo-Frame armor, bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.
+Guard Drone, Wingman, Mole, Courier, Exo-Frame armor, the Magma and Antigrav bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.
 
 ## Engineering rules (all modules)
 
@@ -243,5 +255,6 @@ Progression pass (start quickly, scale to the late game):
 - Upgrade cards are one item per kind (13-24 IE at Age 1, about 80-90 IE at Age 2). The cost of going far now comes from stacking, the steep FE price of speed and the caps (robots: one speed/range/growth card per Mk tier, so x6 speed needs a Mk4 robot).
 - Area tools pay for size with speed early on: hammer and Bore Drill 50% in 3×3 (still 4.5x faster than nine single blocks), Servo 70%, Magma 85%, Null 100%.
 - Boss core temp recipes stay expensive and rise per age: Servo 505, Magma 1,039, Antigrav 2,198 IE.
+- Boss pass: the Scrap Colossus is the main Servo Core source (a Signal Flare costs about 24 IE plus the fight and a 5 minute altar cooldown). The Servo Core fallback recipe went from 505 to about 830 IE (diamond blocks and a Reinforced Casing) and stays only for Peaceful and foundry-less servers.
 
 Earlier passes, still valid: Age 0 uses no iron (Stumpy and Sprout 25 copper, Tinker's Hammer 9, Felling Axe 6). Each ladder step costs 4-9x the one before (tool kits 8.6 / 312 / 2.7k / 9.3k IE, accumulators 28 / 220 / 1.7k, solar 12 / 102, Mk farm kits 46 / 259 / 6.6k). Magma Core temp recipe takes 2 Quantum Circuits so every core costs more than the one before. Portal Projector ~10k IE in line with the Null Drill (~16k IE). Config `replicatorEnergyPerTick` 160, `gateIdleCost` 200. Left alone on purpose: Combustion Generator 40 FE/t, Metal Press 20 FE/t, Stumpy 4 FE/t, Sprout 3 FE/t, drills 40-80 FE per block, Null Lance 20k FE per shot. Rift Remote cost stays 150,000 FE because a game test pins it.

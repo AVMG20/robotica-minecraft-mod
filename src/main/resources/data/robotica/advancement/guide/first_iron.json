@@ -47,7 +47,8 @@
       "robotica:bore_drill_from_tinkers_hammer",
       "robotica:chainsaw_from_felling_axe",
       "robotica:copper_conduit",
-      "robotica:mining_drone"
+      "robotica:mining_drone",
+      "robotica:signal_flare"
     ],
     "experience": 10
   }

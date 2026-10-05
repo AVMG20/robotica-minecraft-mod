@@ -61,6 +61,7 @@
       "robotica:rebreather_module_from_prismarine",
       "robotica:jet_assist_module",
       "robotica:servo_stride_module_2",
+      "robotica:colossus_altar",
       "robotica:upgrade_range",
       "robotica:upgrade_fortune",
       "robotica:upgrade_silk"
