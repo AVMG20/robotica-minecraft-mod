@@ -2,28 +2,25 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "PBP",
-    "MIT",
-    "GGG"
+    "CTC",
+    "GMG",
+    "SSS"
   ],
   "key": {
-    "P": {
-      "tag": "c:plates/iron"
-    },
-    "B": {
-      "item": "robotica:basic_circuit"
-    },
-    "M": {
-      "item": "robotica:clockwork_mechanism"
-    },
-    "I": {
-      "item": "robotica:iron_casing"
+    "C": {
+      "tag": "c:ingots/copper"
     },
     "T": {
       "item": "minecraft:crafting_table"
     },
     "G": {
       "item": "robotica:copper_gear"
+    },
+    "M": {
+      "item": "robotica:clockwork_mechanism"
+    },
+    "S": {
+      "tag": "c:cobblestones/normal"
     }
   },
   "result": {

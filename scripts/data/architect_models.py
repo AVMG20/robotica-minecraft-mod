@@ -14,10 +14,10 @@ ROLES = ['wall', 'floor', 'roof', 'pillar', 'window', 'light']
 
 STYLE_NAMES = {'timberframe': 'Timberframe', 'copper_works': 'Copper Works', 'steel_lab': 'Steel Lab', 'null_spire': 'Null Spire'}
 ROLE_NAMES = {
-    'timberframe': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Beam', 'window': 'Window', 'light': 'Lantern'},
-    'copper_works': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Amber Lamp'},
-    'steel_lab': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Light Strip'},
-    'null_spire': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Energy Glass', 'light': 'Light'},
+    'timberframe': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Beam', 'window': 'Window', 'light': 'Light Panel'},
+    'copper_works': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Amber Panel'},
+    'steel_lab': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Light Panel'},
+    'null_spire': {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Energy Glass', 'light': 'Glow Panel'},
 }
 
 
@@ -48,6 +48,31 @@ def simple_block(name, model):
 
 
 # ---------- the 24 style blocks ----------
+# Walls, floors and roofs pick one of three textures per position (weights below), so big surfaces never repeat.
+WEIGHTS = {'wall': [8, 3, 1], 'floor': [6, 3, 2], 'roof': [6, 3, 2]}
+DIRS = ['down', 'up', 'north', 'south', 'west', 'east']
+
+
+def variant(name, v):
+    return name if v == 1 else f'{name}_{v}'
+
+
+def light_model(name):
+    """Panel plus a full-bright overlay of its diffuser (NeoForge per-face light data), so it glows in the dark."""
+    glow = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+    return {
+        'parent': 'minecraft:block/block',
+        'render_type': 'minecraft:cutout',
+        'textures': {'particle': tex(name), 'base': tex(name), 'glow': tex(f'{name}_glow')},
+        'elements': [
+            {'from': [0, 0, 0], 'to': [16, 16, 16],
+             'faces': {d: {'texture': '#base', 'cullface': d} for d in DIRS}},
+            {'from': [0, 0, 0], 'to': [16, 16, 16], 'shade': False,
+             'faces': {d: {'texture': '#glow', 'cullface': d, 'neoforge_data': glow} for d in DIRS}},
+        ],
+    }
+
+
 for style in STYLES:
     for role in ROLES:
         name = f'{style}_{role}'
@@ -60,13 +85,26 @@ for style in STYLES:
                 'axis=z': {'model': f'robotica:block/{name}_horizontal', 'x': 90},
                 'axis=x': {'model': f'robotica:block/{name}_horizontal', 'x': 90, 'y': 90},
             }})
-            write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}'})
+        elif role in WEIGHTS:
+            models = []
+            for v, weight in enumerate(WEIGHTS[role], start=1):
+                model = variant(name, v)
+                if role == 'roof':
+                    # Seen from inside, a roof block is the ceiling: its underside shows the style's wall surface.
+                    write(ASSETS / 'models/block' / f'{model}.json', {'parent': 'minecraft:block/cube_bottom_top', 'textures': {
+                        'top': tex(model), 'side': tex(model), 'bottom': tex(f'{style}_wall'), 'particle': tex(model)}})
+                else:
+                    write(ASSETS / 'models/block' / f'{model}.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(model)}})
+                models.append({'model': f'robotica:block/{model}', 'weight': weight})
+            write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {'': models}})
+        elif role == 'light':
+            write(ASSETS / 'models/block' / f'{name}.json', light_model(name))
+            write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {'': {'model': f'robotica:block/{name}'}}})
         else:
-            model = {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(name)}}
-            if role == 'window':
-                model['render_type'] = 'minecraft:translucent' if style == 'null_spire' else 'minecraft:cutout'
-            write(ASSETS / 'models/block' / f'{name}.json', model)
-            simple_block(name, name)
+            write(ASSETS / 'models/block' / f'{name}.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(name)},
+                  'render_type': 'minecraft:translucent' if style == 'null_spire' else 'minecraft:cutout'})
+            write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {'': {'model': f'robotica:block/{name}'}}})
+        write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}'})
         loot(name)
 
 # ---------- architect table ----------
@@ -121,67 +159,65 @@ for style in STYLES:
     for role in ROLES:
         lang[f'block.robotica.{style}_{role}'] = f'{STYLE_NAMES[style]} {ROLE_NAMES[style][role]}'
 lang.update({
-    'module.robotica.corridor': 'Corridor',
-    'module.robotica.hall': 'Hall',
-    'module.robotica.workshop': 'Workshop',
-    'module.robotica.storage_room': 'Storage Room',
-    'module.robotica.machine_hall': 'Machine Hall',
-    'module.robotica.greenhouse': 'Greenhouse',
-    'module.robotica.hangar': 'Hangar',
-    'module.robotica.stairwell': 'Stairwell',
     'gui.robotica.matter.rustic': 'Rustic',
     'gui.robotica.matter.refined': 'Refined',
     'gui.robotica.matter.exotic': 'Exotic',
-    'gui.robotica.architect_tab_plan': 'Plan',
-    'gui.robotica.architect_tab_storage': 'Storage',
-    'gui.robotica.architect_clear_on': 'Clear: ON',
-    'gui.robotica.architect_clear_off': 'Clear: OFF',
-    'gui.robotica.architect_clear_tip': 'Clear terrain: remove blocks (no containers, no unbreakable) inside new plots and turn them into rustic matter',
-    'gui.robotica.architect_queue': 'Queue build',
-    'gui.robotica.architect_forget': 'Forget',
-    'gui.robotica.architect_forget_tip': 'Forget the selected built plot so it can be planned again. The blocks stay.',
-    'gui.robotica.architect_cancel': 'Cancel all',
-    'gui.robotica.architect_cancel_one': 'Cancel this build',
-    'gui.robotica.architect_energy': 'Energy',
+    'gui.robotica.architect_build': 'Build',
+    'gui.robotica.architect_build_tip': 'Build every planned plot and update the buildings next to them',
+    'gui.robotica.architect_cancel': 'Cancel',
+    'gui.robotica.architect_cancel_tip': 'Take all queued plots off the plan. Blocks already placed stay.',
+    'gui.robotica.architect_clear_on': 'Clear terrain: ON',
+    'gui.robotica.architect_clear_off': 'Clear terrain: OFF',
+    'gui.robotica.architect_clear_tip': 'Remove blocks in the way (no containers, nothing unbreakable) and turn them into rustic matter',
     'gui.robotica.architect_status_0': 'Idle',
     'gui.robotica.architect_status_1': 'Building',
-    'gui.robotica.architect_status_2': 'Missing: rustic matter',
-    'gui.robotica.architect_status_3': 'Missing: refined matter',
-    'gui.robotica.architect_status_4': 'Missing: exotic matter',
-    'gui.robotica.architect_status_5': 'Missing: energy',
-    'gui.robotica.architect_status_6': 'Style locked: put a better casing in the casing slot',
-    'gui.robotica.architect_status_7': 'Waiting for the area to load',
-    'gui.robotica.architect_cost': 'Block: %s/%s/%s',
-    'gui.robotica.architect_no_plot': 'Click a plot',
-    'gui.robotica.architect_plot': 'Plot %s, %s',
-    'gui.robotica.architect_plot_table': 'Table plot (free)',
-    'gui.robotica.architect_plot_free': 'Free',
-    'gui.robotica.architect_plot_status_1': 'Queued',
-    'gui.robotica.architect_plot_status_2': 'Building',
-    'gui.robotica.architect_plot_status_3': 'Built',
-    'gui.robotica.architect_queue_title': 'Queue (%s)',
-    'gui.robotica.architect_more': '+%s more',
-    'gui.robotica.architect_input': 'Materials in',
-    'gui.robotica.architect_casing': 'Style casing',
-    'gui.robotica.architect_upgrades': 'Upgrades',
+    'gui.robotica.architect_status_2': 'Needs rustic',
+    'gui.robotica.architect_status_3': 'Needs refined',
+    'gui.robotica.architect_status_4': 'Needs exotic',
+    'gui.robotica.architect_status_5': 'Needs energy',
+    'gui.robotica.architect_status_6': 'Style locked',
+    'gui.robotica.architect_status_7': 'Area not loaded',
+    'gui.robotica.architect_status_8': 'Ready',
+    'gui.robotica.architect_status_tip_2': 'Feed stone, dirt, sand or wood',
+    'gui.robotica.architect_status_tip_3': 'Feed ingots, glass, bricks or quartz',
+    'gui.robotica.architect_status_tip_4': 'Feed obsidian, amethyst, glowstone, pearls or diamonds',
+    'gui.robotica.architect_status_tip_5': 'Put a wound Mainspring or a cell in the battery slot, or connect a generator',
+    'gui.robotica.architect_status_tip_6': 'Put the casing this style needs back in the casing slot',
+    'gui.robotica.architect_progress': 'Building: %s%%',
+    'gui.robotica.architect_cost_tip': 'Per block: %s rustic, %s refined, %s exotic, %s FE',
+    'gui.robotica.architect_needs_casing_1': 'Needs an Iron Casing',
+    'gui.robotica.architect_needs_casing_2': 'Needs a Reinforced Casing',
+    'gui.robotica.architect_needs_casing_3': 'Needs a Blazing Casing',
+    'gui.robotica.architect_needs_casing_4': 'Needs a Null Casing',
+    'gui.robotica.architect_door_add': 'Add a door here',
+    'gui.robotica.architect_door_remove': 'Remove this door',
+    'gui.robotica.architect_plot_table': 'Table plot: click to build here',
+    'gui.robotica.architect_plot_free': 'Click to plan a building',
+    'gui.robotica.architect_plot_queued': 'Queued',
+    'gui.robotica.architect_plot_building': 'Building',
+    'gui.robotica.architect_plot_changed': 'Built, changes pending',
+    'gui.robotica.architect_plot_built': 'Built',
+    'gui.robotica.architect_plot_forget': 'Shift-click to forget (blocks stay)',
+    'gui.robotica.architect_casing': 'Casing: unlocks styles',
+    'gui.robotica.architect_battery': 'Battery: a wound Mainspring or any FE cell',
     'gui.robotica.architect_storage_hint': 'Stone, wood, ingots, glass, quartz, obsidian and more turn into matter',
     'message.robotica.architect_not_owner': 'This Architect Table belongs to %s',
-    'message.robotica.architect_bad_request': 'Pick a plot and a module first',
-    'message.robotica.architect_plot_taken': 'That plot is already planned',
-    'message.robotica.architect_queue_full': 'The build queue is full',
+    'message.robotica.architect_bad_request': 'That is not a plot',
+    'message.robotica.architect_queue_full': 'Too many plots queued',
     'message.robotica.architect_style_locked': 'That style needs a better casing in the table',
     'message.robotica.architect_out_of_world': 'That plot would be outside the world',
-    'tooltip.robotica.architect_table': 'Builds modular rooms from matter for %s FE per block',
-    'tooltip.robotica.architect_table_matter': 'Feed it cobble, wood, ingots and more. It accepts FE and items from any side',
+    'message.robotica.architect_last_door': 'Every building keeps at least one door',
+    'tooltip.robotica.architect_table': 'Builds 9x9 buildings from matter, from %s FE per block',
+    'tooltip.robotica.architect_table_matter': 'Feed it cobble, wood, ingots and more. Runs on a wound Mainspring or any FE source',
     'tooltip.robotica.architect_table_styles': 'Casing in the style slot unlocks styles: Iron Copper Works, Reinforced Steel Lab, Null Null Spire',
     'tooltip.robotica.matter_value': 'Matter: %s',
     'robotica.configuration.architect_table': 'Architect Table',
     'robotica.configuration.baseInterval': 'Ticks per block',
     'robotica.configuration.fePerBlock': 'FE per block',
-    'robotica.configuration.energyBuffer': 'Buffer (FE)',
+    'robotica.configuration.energyBuffer': 'Energy buffer (FE)',  # shared key, same text as automation
     'robotica.configuration.energyReceive': 'Max input (FE/t)',
     'robotica.configuration.matterCap': 'Matter cap per grade',
-    'robotica.configuration.maxQueue': 'Max queued builds',
+    'robotica.configuration.maxQueue': 'Max queued plots',
     'robotica.configuration.allowClearTerrain': 'Allow clear terrain',
     'robotica.configuration.builderDrones': 'Builder drones',
 })

@@ -1,7 +1,18 @@
 {
   "variants": {
-    "": {
-      "model": "robotica:block/null_spire_roof"
-    }
+    "": [
+      {
+        "model": "robotica:block/null_spire_roof",
+        "weight": 6
+      },
+      {
+        "model": "robotica:block/null_spire_roof_2",
+        "weight": 3
+      },
+      {
+        "model": "robotica:block/null_spire_roof_3",
+        "weight": 2
+      }
+    ]
   }
 }

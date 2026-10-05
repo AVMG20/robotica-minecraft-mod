@@ -1,6 +1,9 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "all": "robotica:block/null_spire_roof"
+    "top": "robotica:block/null_spire_roof",
+    "side": "robotica:block/null_spire_roof",
+    "bottom": "robotica:block/null_spire_wall",
+    "particle": "robotica:block/null_spire_roof"
   }
 }

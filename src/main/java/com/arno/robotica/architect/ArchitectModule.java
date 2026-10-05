@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /**
  * Common (both sides) entry point of the architect module. See docs/DESIGN.md.
- * Architect Table, matter conversion, 24 style blocks, procedural modules, builder drones.
+ * Architect Table, matter conversion, 24 style blocks, 9x9 building shells on a plot grid, builder drones.
  */
 public final class ArchitectModule {
     private ArchitectModule() {}

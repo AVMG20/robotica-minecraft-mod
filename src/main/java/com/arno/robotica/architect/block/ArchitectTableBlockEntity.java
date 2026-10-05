@@ -7,13 +7,13 @@ import com.arno.robotica.architect.matter.Matter;
 import com.arno.robotica.architect.matter.MatterTable;
 import com.arno.robotica.architect.menu.ArchitectMenu;
 import com.arno.robotica.architect.plan.BlockOp;
-import com.arno.robotica.architect.plan.BuildJob;
-import com.arno.robotica.architect.plan.ModuleType;
-import com.arno.robotica.architect.plan.PlotRecord;
+import com.arno.robotica.architect.plan.Layout;
 import com.arno.robotica.architect.plan.Plots;
+import com.arno.robotica.architect.plan.Shell;
 import com.arno.robotica.architect.style.BuildStyle;
-import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
@@ -24,8 +24,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -53,25 +51,34 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Architect Table. Bulk items in the 27-slot input become matter, matter + FE become Robotica building blocks while the
- * table builds its queue, one block per interval. The queue, the plot records and the build cursor are saved, so
- * builds resume after a restart. Only the owner (or a player on the owner's scoreboard team) can use it.
+ * Architect Table. Bulk items in the input become matter; matter + FE become building blocks while the table works
+ * through its plan, one block per interval. The table is the middle floor block of its own plot and is never replaced.
+ * The plan ({@link Layout}), the running flag and the build cursor are saved and survive picking the table up.
+ * Only the owner (or a player on the owner's scoreboard team, or an operator) can use it.
  */
 public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvider {
-    public static final int INPUT_SLOTS = 27;
+    public static final int INPUT_SLOTS = 9;
 
     public static final int ST_IDLE = 0, ST_BUILDING = 1, ST_NO_RUSTIC = 2, ST_NO_REFINED = 3, ST_NO_EXOTIC = 4,
-            ST_NO_ENERGY = 5, ST_LOCKED = 6, ST_UNLOADED = 7;
+            ST_NO_ENERGY = 5, ST_LOCKED = 6, ST_UNLOADED = 7, ST_READY = 8;
 
-    // GUI actions (ArchitectActionPayload)
-    public static final int ACTION_QUEUE = 0, ACTION_CANCEL = 1, ACTION_FORGET = 2, ACTION_CLEAR = 3, ACTION_STYLE = 4;
+    // GUI actions (ArchitectActionPayload): a and b are the arguments.
+    /** a = plot, b = 1 to forget a built plot (shift-click). Empty plot: queue, queued plot: unqueue. */
+    public static final int ACTION_TOGGLE = 0;
+    /** a = plot, b = side. */
+    public static final int ACTION_DOOR = 1;
+    public static final int ACTION_BUILD = 2;
+    public static final int ACTION_CANCEL = 3;
+    /** a = 0 / 1. */
+    public static final int ACTION_CLEAR = 4;
+    /** a = style ordinal. */
+    public static final int ACTION_STYLE = 5;
 
     private static final UUID FALLBACK_OWNER = UUID.fromString("c4d8a5e2-1f43-4a5e-9d7b-0a7a0b0b0a11");
 
@@ -102,6 +109,23 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             setChanged();
         }
     };
+    /** A wound Mainspring or any FE cell: the table runs without cables. */
+    public final ItemStackHandler battery = new ItemStackHandler(1) {
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return EnergyUtil.isEnergyItem(stack);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 1;
+        }
+
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+        }
+    };
     public final Upgrades upgrades = new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY), this::setChanged);
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ArchitectConfig.energyBuffer(), ArchitectConfig.energyReceive(), 0, this::setChanged);
     private final IItemHandler automation = new InputOnlyHandler(input);
@@ -115,18 +139,25 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private BuildStyle selectedStyle = BuildStyle.TIMBERFRAME;
     private boolean clearTerrain;
 
-    private final PlotRecord[] plots = new PlotRecord[Plots.COUNT];
-    private final List<BuildJob> queue = new ArrayList<>();
+    private final Layout layout = new Layout();
+    /** Set by Build; cleared when nothing is left to do. */
+    private boolean running;
+    /** Plot being walked (-1 none), the signature its ops were made for and the position in them. */
+    private int current = -1;
+    private int currentSig;
+    private int cursor;
 
     // transient
     private int status = ST_IDLE;
     private double budget;
     private int placedCount;
-    @Nullable
-    private BuildJob opsJob;
+    private int opsSig;
+    private int opsPlot = -1;
     private List<BlockOp> ops = List.of();
     @Nullable
     private BuilderDrone drone;
+    private long lastPlaceSound = Long.MIN_VALUE / 2;
+    private long lastAbsorbSound = Long.MIN_VALUE / 2;
 
     public ArchitectTableBlockEntity(BlockPos pos, BlockState state) {
         super(ArchitectRegistry.ARCHITECT_TABLE_BE.get(), pos, state);
@@ -134,6 +165,10 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     public IItemHandler automation() {
         return automation;
+    }
+
+    public Layout layout() {
+        return layout;
     }
 
     // ---------------------------------------------------------------- ownership
@@ -201,15 +236,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         rustic = Math.min(ArchitectConfig.matterCap(), rustic + Math.max(0, amount));
     }
 
-    private long lastPlaceSound = Long.MIN_VALUE / 2;
-    private long lastAbsorbSound = Long.MIN_VALUE / 2;
-
     /** Turns input slot content into matter, a few slots per call. */
     private void convertMatter() {
         int cap = ArchitectConfig.matterCap();
         int budgetSlots = 4;
         boolean absorbed = false;
-        for (int slot = 0; slot < INPUT_SLOTS && budgetSlots > 0; slot++) {
+        for (int slot = 0; slot < input.getSlots() && budgetSlots > 0; slot++) {
             ItemStack stack = input.getStackInSlot(slot);
             if (stack.isEmpty()) continue;
             Matter v = MatterTable.valueOf(stack);
@@ -233,7 +265,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         }
     }
 
-    // ---------------------------------------------------------------- styles
+    // ---------------------------------------------------------------- styles and settings
 
     /** Casing level of a style slot item: 1 iron, 2 reinforced, 3 blazing, 4 null casing, 0 anything else. */
     public static int casingLevel(ItemStack stack) {
@@ -262,6 +294,15 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return clearTerrain;
     }
 
+    /** Base FE per block (scaled by the global energy setting), before the style factor and the cards. */
+    public static int baseEnergy() {
+        return (int) Math.round(CoreConfig.scaleEnergy(ArchitectConfig.fePerBlock()));
+    }
+
+    public boolean running() {
+        return running;
+    }
+
     public int status() {
         return status;
     }
@@ -272,47 +313,26 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     // ---------------------------------------------------------------- GUI state words
 
+    public int currentPlot() {
+        return running ? current : -1;
+    }
+
     public int progressPermille() {
-        if (queue.isEmpty()) return 0;
-        BuildJob job = queue.get(0);
-        if (!job.started) return 0;
-        PlotRecord rec = plots[job.plot];
-        if (rec == null) return 0;
-        int size = opsFor(job, rec).size();
-        return size <= 0 ? 1000 : Math.min(1000, job.cursor * 1000 / size);
+        if (current < 0 || opsPlot != current || ops.isEmpty()) return 0;
+        return Math.min(1000, cursor * 1000 / ops.size());
     }
 
-    public int queueSize() {
-        return queue.size();
-    }
-
-    /** Flags: bit 0 clear terrain, bits 1-2 selected style, bits 3-6 unlocked styles. */
+    /** Bit 0 clear terrain, bit 1 running, bits 2-3 selected style, bits 4-7 unlocked styles. */
     public int flags() {
-        return (clearTerrain ? 1 : 0) | (selectedStyle().ordinal() << 1) | (unlockedMask() << 3);
+        return (clearTerrain ? 1 : 0) | (running ? 2 : 0) | (selectedStyle().ordinal() << 2) | (unlockedMask() << 4);
     }
 
-    /** Four plots per word, 8 bits each: module id (4 bits, 0 = empty), status 0-2 (2 bits), style (2 bits). */
-    public int gridWord(int word) {
+    /** Three plots per word, 10 bits each (see {@link Layout#packed}). */
+    public int planWord(int word) {
         int w = 0;
-        for (int i = 0; i < 4; i++) {
-            int plot = word * 4 + i;
-            if (plot >= Plots.COUNT || plots[plot] == null) continue;
-            PlotRecord r = plots[plot];
-            int cell = r.module.id() | ((r.status - 1) << 4) | (r.style.ordinal() << 6);
-            w |= (cell & 0xFF) << (8 * i);
-        }
-        return w;
-    }
-
-    /** Two queue entries per word, 16 bits each: plot (5), module (4), patch (1), valid (1), style (2). */
-    public int queueWord(int word) {
-        int w = 0;
-        for (int i = 0; i < 2; i++) {
-            int index = word * 2 + i;
-            if (index >= queue.size()) continue;
-            BuildJob j = queue.get(index);
-            int entry = j.plot | (j.module.id() << 5) | ((j.patch ? 1 : 0) << 9) | (1 << 10) | (j.style.ordinal() << 11);
-            w |= (entry & 0xFFFF) << (16 * i);
+        for (int i = 0; i < 3; i++) {
+            int plot = word * 3 + i;
+            if (plot < Plots.COUNT) w |= (layout.packed(plot) & 0x3FF) << (10 * i);
         }
         return w;
     }
@@ -321,118 +341,103 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     /** Applies a GUI action from a player who passed {@link #canUse}. Returns a feedback message or null. */
     @Nullable
-    public Component handleAction(Player player, int action, int a, int b) {
+    public Component handleAction(@Nullable Player player, int action, int a, int b) {
+        Component feedback = null;
         switch (action) {
-            case ACTION_QUEUE -> {
-                return queueModule(a, ModuleType.byId(b));
+            case ACTION_TOGGLE -> feedback = toggle(a, b != 0);
+            case ACTION_DOOR -> {
+                int result = layout.toggleDoor(a, b);
+                if (result == Layout.DOOR_LAST) feedback = Component.translatable("message.robotica.architect_last_door");
             }
-            case ACTION_CANCEL -> {
-                if (a < 0) {
-                    while (!queue.isEmpty()) cancel(0);
-                } else if (a < queue.size()) {
-                    cancel(a);
-                }
+            case ACTION_BUILD -> {
+                if (layout.hasWork()) running = true;
             }
-            case ACTION_FORGET -> {
-                if (Plots.valid(a) && plots[a] != null && plots[a].status == PlotRecord.BUILT) {
-                    plots[a] = null;
-                    setChanged();
-                }
-            }
-            case ACTION_CLEAR -> {
-                clearTerrain = a != 0 && ArchitectConfig.allowClearTerrain();
-                setChanged();
-            }
+            case ACTION_CANCEL -> layout.unqueueAll();
+            case ACTION_CLEAR -> clearTerrain = a != 0 && ArchitectConfig.allowClearTerrain();
             case ACTION_STYLE -> {
-                if (a >= 0 && a < BuildStyle.values().length && unlocked(BuildStyle.values()[a])) {
-                    selectedStyle = BuildStyle.values()[a];
-                    setChanged();
-                }
+                if (a >= 0 && a < BuildStyle.values().length && unlocked(BuildStyle.values()[a])) selectedStyle = BuildStyle.values()[a];
             }
             default -> {
+                return Component.translatable("message.robotica.architect_bad_request");
             }
         }
-        return null;
+        setChanged();
+        return feedback;
     }
 
     @Nullable
-    private Component queueModule(int plot, @Nullable ModuleType module) {
-        if (module == null || !Plots.valid(plot)) return Component.translatable("message.robotica.architect_bad_request");
-        if (plots[plot] != null) return Component.translatable("message.robotica.architect_plot_taken");
-        if (queue.size() >= ArchitectConfig.maxQueue()) return Component.translatable("message.robotica.architect_queue_full");
-        BuildStyle style = selectedStyle();
-        if (!unlocked(style)) return Component.translatable("message.robotica.architect_style_locked");
-        BlockPos origin = Plots.origin(worldPosition, plot);
-        if (level == null || origin.getY() < level.getMinBuildHeight() || origin.getY() + Plots.HEIGHT > level.getMaxBuildHeight()) {
-            return Component.translatable("message.robotica.architect_out_of_world");
+    private Component toggle(int plot, boolean forget) {
+        if (!Plots.valid(plot)) return Component.translatable("message.robotica.architect_bad_request");
+        switch (layout.state(plot)) {
+            case Layout.QUEUED -> layout.unqueue(plot);
+            case Layout.BUILT -> {
+                if (forget) layout.forget(plot);
+            }
+            default -> {
+                if (layout.queuedCount() >= ArchitectConfig.maxQueue()) return Component.translatable("message.robotica.architect_queue_full");
+                BuildStyle style = selectedStyle();
+                if (!unlocked(style)) return Component.translatable("message.robotica.architect_style_locked");
+                BlockPos origin = Plots.origin(worldPosition, plot);
+                if (level == null || origin.getY() < level.getMinBuildHeight() || origin.getY() + Plots.HEIGHT > level.getMaxBuildHeight()) {
+                    return Component.translatable("message.robotica.architect_out_of_world");
+                }
+                layout.queue(plot, style);
+            }
         }
-        plots[plot] = new PlotRecord(module, style, PlotRecord.QUEUED, 0);
-        queue.add(new BuildJob(plot, module, style, clearTerrain && ArchitectConfig.allowClearTerrain(), false));
-        // Neighbours that are already being built or finished need a doorway toward the new module.
-        for (int side = 0; side < 4; side++) {
-            int n = Plots.neighbour(plot, side);
-            if (n < 0 || plots[n] == null) continue;
-            PlotRecord rec = plots[n];
-            if (rec.status == PlotRecord.QUEUED) continue;
-            int towardNew = Plots.bit(Plots.opposite(side));
-            if (rec.module.effectiveMask(rec.mask | towardNew) == rec.mask) continue;
-            boolean pending = false;
-            for (BuildJob j : queue) if (j.plot == n && !j.started) pending = true;
-            if (!pending) queue.add(new BuildJob(n, rec.module, rec.style, false, true));
-        }
-        setChanged();
         return null;
-    }
-
-    private void cancel(int index) {
-        BuildJob job = queue.remove(index);
-        PlotRecord rec = plots[job.plot];
-        if (opsJob == job) {
-            opsJob = null;
-            ops = List.of();
-        }
-        if (rec != null) {
-            if (job.patch) rec.status = PlotRecord.BUILT;
-            else plots[job.plot] = null;
-        }
-        setChanged();
     }
 
     // ---------------------------------------------------------------- build loop
 
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         if ((level.getGameTime() + pos.asLong()) % 4 == 0) convertMatter();
-        if (queue.isEmpty()) {
-            status = ST_IDLE;
+        if (energy.getSpace() > 0 && !battery.getStackInSlot(0).isEmpty()) {
+            EnergyUtil.dischargeItem(battery.getStackInSlot(0), energy, ArchitectConfig.energyReceive());
+        }
+        if (!running) {
+            status = layout.hasWork() ? ST_READY : ST_IDLE;
             budget = 0;
             return;
         }
         build(level);
     }
 
-    private List<BlockOp> opsFor(BuildJob job, PlotRecord rec) {
-        if (opsJob != job) {
-            ops = job.module.generate(rec.mask);
-            opsJob = job;
+    private List<BlockOp> opsFor(int plot, int sig) {
+        if (opsPlot != plot || opsSig != sig) {
+            ops = Shell.generate(layout.shape(plot), plot == Plots.CENTER);
+            opsPlot = plot;
+            opsSig = sig;
         }
         return ops;
     }
 
     private void build(ServerLevel level) {
-        BuildJob job = queue.get(0);
-        PlotRecord rec = plots[job.plot];
-        if (rec == null) {
-            queue.remove(0);
-            opsJob = null;
+        if (current < 0 || !layout.needsWork(current)) {
+            current = layout.nextWork();
+            cursor = 0;
+            currentSig = current < 0 ? 0 : layout.signature(current);
+            setChanged();
+        }
+        if (current < 0) {
+            running = false;
+            status = ST_IDLE;
+            budget = 0;
+            setChanged();
             return;
         }
-        if (!unlocked(job.style)) {
+        int sig = layout.signature(current);
+        if (sig != currentSig) {
+            // The plan changed under this plot: walk it again, correct blocks are skipped for free.
+            currentSig = sig;
+            cursor = 0;
+        }
+        BuildStyle style = layout.style(current);
+        if (!unlocked(style)) {
             status = ST_LOCKED;
             budget = 0;
             return;
         }
-        if (!job.started) start(job, rec);
-        List<BlockOp> list = opsFor(job, rec);
+        List<BlockOp> list = opsFor(current, sig);
 
         int speed = upgrades.level(UpgradeKind.SPEED);
         int efficiency = upgrades.level(UpgradeKind.EFFICIENCY);
@@ -440,60 +445,44 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         int actions = Math.min(16, (int) budget);
         budget -= actions;
         if (budget > 1) budget = 1;
-        int energyCost = (int) Math.max(0, Math.round(CoreConfig.scaleEnergy(ArchitectConfig.fePerBlock()) * Upgrades.energyMultiplier(speed, efficiency)));
+        int energyCost = (int) Math.max(0, Math.round(style.energyPerBlock(baseEnergy()) * Upgrades.energyMultiplier(speed, efficiency)));
 
         status = ST_BUILDING;
-        BlockOp last = null;
+        BlockPos origin = Plots.origin(worldPosition, current);
+        BlockPos last = null;
         int skips = 0;
         while (true) {
-            if (job.cursor >= list.size()) {
-                finish(level, job, rec);
+            if (cursor >= list.size()) {
+                finish(level);
                 break;
             }
             if (actions <= 0 || skips > 512) break;
-            BlockOp op = list.get(job.cursor);
-            int result = step(level, job, op, energyCost);
+            BlockOp op = list.get(cursor);
+            int result = step(level, origin, op, style, energyCost);
             if (result == STEP_SKIPPED) {
-                job.cursor++;
+                cursor++;
                 skips++;
             } else if (result == STEP_DONE) {
-                job.cursor++;
+                cursor++;
                 actions--;
-                last = op;
+                last = origin.offset(op.x(), op.y(), op.z());
             } else {
                 status = result;
                 budget = 0;
                 break;
             }
         }
-        if (last != null) {
-            BlockPos target = Plots.origin(worldPosition, job.plot).offset(last.x(), last.y(), last.z());
-            effects(level, target);
-            setChanged();
-        }
-    }
-
-    private void start(BuildJob job, PlotRecord rec) {
-        int wanted = 0;
-        for (int side = 0; side < 4; side++) {
-            int n = Plots.neighbour(job.plot, side);
-            if (n >= 0 && plots[n] != null) wanted |= Plots.bit(side);
-        }
-        rec.mask = job.module.effectiveMask(wanted);
-        rec.status = PlotRecord.BUILDING;
-        job.started = true;
-        job.cursor = 0;
-        opsJob = null;
+        if (last != null) effects(level, last);
         setChanged();
     }
 
-    private void finish(ServerLevel level, BuildJob job, PlotRecord rec) {
-        queue.remove(0);
-        rec.status = PlotRecord.BUILT;
-        opsJob = null;
-        ops = List.of();
+    private void finish(ServerLevel level) {
+        layout.markBuilt(current, currentSig);
+        current = -1;
+        cursor = 0;
         budget = 0;
         CoreSounds.play(level, worldPosition, CoreSounds.ARCHITECT_DONE, SoundSource.BLOCKS, 1.0F, 1.0F);
+        if (!layout.hasWork()) running = false;
         setChanged();
     }
 
@@ -501,41 +490,36 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private static final int STEP_DONE = -2;
 
     /** One op: returns STEP_SKIPPED (nothing to do, free), STEP_DONE (changed the world) or a status code to pause on. */
-    private int step(ServerLevel level, BuildJob job, BlockOp op, int energyCost) {
-        if (Plots.isTableCell(job.plot, op.x(), op.y(), op.z())) return STEP_SKIPPED;
-        BlockPos target = Plots.origin(worldPosition, job.plot).offset(op.x(), op.y(), op.z());
+    private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost) {
+        BlockPos target = origin.offset(op.x(), op.y(), op.z());
         if (target.equals(worldPosition) || !level.isInWorldBounds(target)) return STEP_SKIPPED;
         if (!level.isLoaded(target)) return ST_UNLOADED;
 
-        BlockState desired = op.piece().resolve(job.style);
+        BlockState desired = op.piece().resolve(style);
         BlockState current = level.getBlockState(target);
         if (current == desired || (desired.isAir() && current.isAir())) return STEP_SKIPPED;
-        // spawn protection, world border and other no-build areas: skip the block, spend nothing, never stall the queue
+        if (current.is(ArchitectRegistry.ARCHITECT_TABLE.get())) return STEP_SKIPPED;
+        // spawn protection, world border and other no-build areas: skip the block, spend nothing, never stall the build
         if (!mayBuildAt(level, target, fakePlayer(level))) return STEP_SKIPPED;
 
         boolean replaceable = current.isAir() || current.canBeReplaced() || ArchitectRegistry.isBuildingBlock(current)
                 || current.getBlock() instanceof LiquidBlock;
         boolean clearing = false;
         if (!replaceable) {
-            if (!job.clear || level.getBlockEntity(target) != null || current.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
+            if (!clearTerrain || level.getBlockEntity(target) != null || current.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
             clearing = true;
         }
-        Matter cost = Matter.ZERO;
+        Matter cost = op.piece().cost(style);
         if (!desired.isAir()) {
-            cost = op.piece().cost(job.style);
             if (rustic < cost.rustic()) return ST_NO_RUSTIC;
             if (refined < cost.refined()) return ST_NO_REFINED;
             if (exotic < cost.exotic()) return ST_NO_EXOTIC;
             if (energy.getEnergyStored() < energyCost) return ST_NO_ENERGY;
         }
 
-        FakePlayer fake = null;
-        if (!current.isAir()) {
-            fake = fakePlayer(level);
-            if (NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, target, current, fake)).isCanceled()) return STEP_SKIPPED;
-        }
+        FakePlayer fake = fakePlayer(level);
+        if (!current.isAir() && NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, target, current, fake)).isCanceled()) return STEP_SKIPPED;
         if (!desired.isAir()) {
-            if (fake == null) fake = fakePlayer(level);
             BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, target);
             if (NeoForge.EVENT_BUS.post(new BlockEvent.EntityPlaceEvent(snapshot, level.getBlockState(target.below()), fake)).isCanceled()) {
                 return STEP_SKIPPED;
@@ -597,6 +581,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     public void dropContents(Level level, BlockPos pos) {
         drop(level, pos, input);
         drop(level, pos, styleSlot);
+        drop(level, pos, battery);
         drop(level, pos, upgrades);
         if (drone != null) drone.discard();
     }
@@ -623,7 +608,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         if (!matter().isZero()) components.set(ArchitectRegistry.MATTER_COMPONENT.get(), matter());
-        if (hasBuildState()) components.set(ArchitectRegistry.BUILD_STATE_COMPONENT.get(), buildStateTag());
+        if (!layout.isEmpty()) components.set(ArchitectRegistry.BUILD_STATE_COMPONENT.get(), buildStateTag());
     }
 
     @Override
@@ -641,84 +626,62 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         tag.put("input", input.serializeNBT(registries));
         tag.put("style_slot", styleSlot.serializeNBT(registries));
         tag.put("upgrades", upgrades.serializeNBT(registries));
+        tag.put("battery", battery.serializeNBT(registries));
         tag.put("energy", energy.serializeNBT(registries));
         tag.putInt("rustic", rustic);
         tag.putInt("refined", refined);
         tag.putInt("exotic", exotic);
         if (owner != null) tag.putUUID("owner", owner);
         tag.putString("owner_name", ownerName);
-        tag.putInt("selected_style", selectedStyle.ordinal());
-        tag.putBoolean("clear_terrain", clearTerrain);
         writeBuild(tag);
     }
 
     private void writeBuild(CompoundTag tag) {
-        ListTag plotList = new ListTag();
-        for (int i = 0; i < plots.length; i++) if (plots[i] != null) plotList.add(plots[i].save(i));
-        tag.put("plots", plotList);
-        ListTag jobs = new ListTag();
-        for (BuildJob job : queue) jobs.add(job.save());
-        tag.put("queue", jobs);
+        tag.put("layout", layout.save());
+        tag.putBoolean("running", running);
+        tag.putInt("current", current);
+        tag.putInt("current_sig", currentSig);
+        tag.putInt("cursor", cursor);
+        tag.putInt("selected_style", selectedStyle.ordinal());
+        tag.putBoolean("clear_terrain", clearTerrain);
     }
 
-    private boolean hasBuildState() {
-        if (!queue.isEmpty()) return true;
-        for (PlotRecord rec : plots) if (rec != null) return true;
-        return false;
+    private void readBuild(CompoundTag tag) {
+        layout.load(tag.getCompound("layout"));
+        running = tag.getBoolean("running");
+        current = tag.contains("current") ? tag.getInt("current") : -1;
+        if (!Plots.valid(current)) current = -1;
+        currentSig = tag.getInt("current_sig");
+        cursor = Math.max(0, tag.getInt("cursor"));
+        selectedStyle = BuildStyle.byOrdinal(tag.getInt("selected_style"));
+        clearTerrain = tag.getBoolean("clear_terrain");
+        opsPlot = -1;
     }
 
-    /** Build state for the item (picking the table up): plots, queue, cursor, settings and where it was standing. */
+    /** Build state for the item (picking the table up): the plan, the cursor, settings and where it was standing. */
     private CompoundTag buildStateTag() {
         CompoundTag tag = new CompoundTag();
         writeBuild(tag);
-        tag.putInt("selected_style", selectedStyle.ordinal());
-        tag.putBoolean("clear_terrain", clearTerrain);
         tag.putLong("origin", worldPosition.asLong());
         if (level != null) tag.putString("dim", level.dimension().location().toString());
         return tag;
     }
 
     /**
-     * Restores the build state of a picked up table. Built modules stand where the table stood, so on any other spot
-     * only the work that has not left a trace yet survives: finished plots are forgotten and the job that was running
-     * starts over.
+     * Restores the build state of a picked up table. Built plots stand where the table stood, so on any other spot
+     * they are forgotten and the plot that was being built starts over; queued plots keep waiting.
      */
     private void applyBuildState(CompoundTag tag) {
         readBuild(tag);
-        selectedStyle = BuildStyle.byOrdinal(tag.getInt("selected_style"));
-        clearTerrain = tag.getBoolean("clear_terrain");
         boolean sameSpot = tag.contains("origin") && tag.getLong("origin") == worldPosition.asLong()
                 && (level == null || !tag.contains("dim") || tag.getString("dim").equals(level.dimension().location().toString()));
-        if (!sameSpot) relocate();
-        opsJob = null;
+        if (!sameSpot) {
+            layout.forgetBuilt();
+            current = -1;
+            cursor = 0;
+            running = false;
+        }
         setChanged();
-    }
-
-    private void relocate() {
-        for (int i = 0; i < plots.length; i++) {
-            if (plots[i] != null && plots[i].status == PlotRecord.BUILT) plots[i] = null;
-        }
-        queue.removeIf(job -> {
-            PlotRecord rec = plots[job.plot];
-            if (rec == null || job.patch) {
-                if (rec != null) plots[job.plot] = null;
-                return true;
-            }
-            if (job.started) {
-                job.started = false;
-                job.cursor = 0;
-                rec.status = PlotRecord.QUEUED;
-                rec.mask = 0;
-            }
-            return false;
-        });
-        for (int i = 0; i < plots.length; i++) {
-            if (plots[i] != null) {
-                boolean queued = false;
-                for (BuildJob job : queue) if (job.plot == i) queued = true;
-                if (!queued) plots[i] = null;
-            }
-        }
     }
 
     @Override
@@ -727,29 +690,13 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (tag.contains("input")) input.deserializeNBT(registries, tag.getCompound("input"));
         if (tag.contains("style_slot")) styleSlot.deserializeNBT(registries, tag.getCompound("style_slot"));
         if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
+        if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         rustic = tag.getInt("rustic");
         refined = tag.getInt("refined");
         exotic = tag.getInt("exotic");
         owner = tag.hasUUID("owner") ? tag.getUUID("owner") : null;
         ownerName = tag.getString("owner_name");
-        selectedStyle = BuildStyle.byOrdinal(tag.getInt("selected_style"));
-        clearTerrain = tag.getBoolean("clear_terrain");
         readBuild(tag);
-        opsJob = null;
-    }
-
-    private void readBuild(CompoundTag tag) {
-        java.util.Arrays.fill(plots, null);
-        for (Tag t : tag.getList("plots", Tag.TAG_COMPOUND)) {
-            CompoundTag c = (CompoundTag) t;
-            PlotRecord rec = PlotRecord.load(c);
-            if (rec != null) plots[c.getInt("plot")] = rec;
-        }
-        queue.clear();
-        for (Tag t : tag.getList("queue", Tag.TAG_COMPOUND)) {
-            BuildJob job = BuildJob.load((CompoundTag) t);
-            if (job != null && plots[job.plot] != null) queue.add(job);
-        }
     }
 }

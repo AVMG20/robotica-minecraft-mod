@@ -1,7 +1,18 @@
 {
   "variants": {
-    "": {
-      "model": "robotica:block/timberframe_wall"
-    }
+    "": [
+      {
+        "model": "robotica:block/timberframe_wall",
+        "weight": 8
+      },
+      {
+        "model": "robotica:block/timberframe_wall_2",
+        "weight": 3
+      },
+      {
+        "model": "robotica:block/timberframe_wall_3",
+        "weight": 1
+      }
+    ]
   }
 }

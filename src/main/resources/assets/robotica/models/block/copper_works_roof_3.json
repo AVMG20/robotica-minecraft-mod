@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "robotica:block/copper_works_roof_3",
+    "side": "robotica:block/copper_works_roof_3",
+    "bottom": "robotica:block/copper_works_wall",
+    "particle": "robotica:block/copper_works_roof_3"
+  }
+}
