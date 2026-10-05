@@ -512,4 +512,19 @@ public class GearGameTests {
                 "modules and energy survive the bench");
         helper.succeed();
     }
+
+    /** A cell charging the drill in your hand must not restart the block being mined (only the energy changed). */
+    @GameTest(template = "empty")
+    public static void chargingDoesNotResetMining(GameTestHelper helper) {
+        ItemStack before = new ItemStack(GearItems.BORE_DRILL.get());
+        ItemEnergy.set(before, 1_000);
+        ItemStack after = before.copy();
+        ItemEnergy.set(after, 3_000);
+        helper.assertTrue(!before.getItem().shouldCauseBlockBreakReset(before, after), "only energy changed: keep mining");
+        helper.assertTrue(!before.getItem().shouldCauseReequipAnimation(before, after, false), "no equip animation for charging");
+        ItemStack otherMode = after.copy();
+        otherMode.set(GearComponents.MODE.get(), AreaMode.SINGLE);
+        helper.assertTrue(before.getItem().shouldCauseBlockBreakReset(before, otherMode), "a real change still resets");
+        helper.succeed();
+    }
 }

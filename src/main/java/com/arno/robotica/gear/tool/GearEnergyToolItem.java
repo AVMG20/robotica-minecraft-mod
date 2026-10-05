@@ -11,6 +11,17 @@ public class GearEnergyToolItem extends GearToolItem implements EnergyItem {
         if (!spec.isEnergy()) throw new IllegalArgumentException("energy tool needs an energy capacity");
     }
 
+    /** Charging from a cell in the inventory only changes the energy: keep mining the same block. */
+    @Override
+    public boolean shouldCauseBlockBreakReset(ItemStack oldStack, ItemStack newStack) {
+        return !ItemEnergy.onlyEnergyChanged(oldStack, newStack);
+    }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return slotChanged || !ItemEnergy.onlyEnergyChanged(oldStack, newStack);
+    }
+
     @Override
     public int getEnergyCapacity(ItemStack stack) {
         return spec.energyCapacity;

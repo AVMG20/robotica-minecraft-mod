@@ -59,6 +59,18 @@ public final class ItemEnergy {
         return taken;
     }
 
+    /**
+     * True when two stacks differ only in stored energy. Held FE items use it so charging from a cell in the inventory
+     * does not restart the block being mined or replay the equip animation.
+     */
+    public static boolean onlyEnergyChanged(ItemStack a, ItemStack b) {
+        if (!a.is(b.getItem()) || a.getCount() != b.getCount()) return false;
+        ItemStack x = a.copy(), y = b.copy();
+        x.remove(CoreComponents.ENERGY.get());
+        y.remove(CoreComponents.ENERGY.get());
+        return ItemStack.isSameItemSameComponents(x, y);
+    }
+
     public static int barWidth(ItemStack stack) {
         int cap = capacity(stack);
         return cap <= 0 ? 0 : Math.round(13.0F * get(stack) / cap);

@@ -24,8 +24,13 @@ import net.minecraft.world.item.crafting.RecipeHolder;
  */
 @JeiPlugin
 public class RoboticaJeiPlugin implements IModPlugin {
-    /** Metal Press recipes (the vanilla recipe holder, so recipe ids and recipe book transfer keep working). */
-    static final RecipeType<RecipeHolder<PressingRecipe>> PRESSING = RecipeType.createFromDeferredVanilla(PowerRegistry.PRESSING_TYPE).get();
+    /**
+     * Metal Press recipes (the vanilla recipe holder, so recipe ids keep working). Built from the id, not the registry:
+     * JEI loads this class before registries are bound, and touching the deferred recipe type here crashed the plugin.
+     */
+    @SuppressWarnings("unchecked")
+    static final RecipeType<RecipeHolder<PressingRecipe>> PRESSING = new RecipeType<>(Robotica.id("pressing"),
+            (Class<RecipeHolder<PressingRecipe>>) (Class<?>) RecipeHolder.class);
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -61,6 +66,18 @@ public class RoboticaJeiPlugin implements IModPlugin {
                     stacking,
                     Component.translatable("jei.robotica.info.upgrade.rules"));
         }
+    }
+
+    /** Dev check ({@code -PjeiCheck}): logs whether JEI finds the Storage Terminal's crafting transfer handler. */
+    @Override
+    public void onRuntimeAvailable(mezz.jei.api.runtime.IJeiRuntime runtime) {
+        var player = Minecraft.getInstance().player;
+        if (!Boolean.getBoolean("robotica.jeiCheck") || player == null) return;
+        var menu = new com.arno.robotica.storage.menu.StorageMenu(0, player.getInventory(),
+                (com.arno.robotica.storage.block.StorageTerminalBlockEntity) null);
+        var category = runtime.getRecipeManager().getRecipeCategory(mezz.jei.api.constants.RecipeTypes.CRAFTING);
+        boolean found = runtime.getRecipeTransferManager().getRecipeTransferHandler(menu, category).isPresent();
+        com.mojang.logging.LogUtils.getLogger().info("[robotica jeiCheck] storage terminal crafting transfer handler found: {}", found);
     }
 
     @Override

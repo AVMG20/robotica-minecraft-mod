@@ -70,6 +70,10 @@ neoForge {
             client()
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            // ./gradlew runClient -PquickPlay=<world in run/saves> opens that world right away.
+            if (project.hasProperty('quickPlay')) programArguments.addAll '--quickPlaySingleplayer', project.property('quickPlay').toString()
+            // -PjeiCheck logs whether JEI finds Robotica's recipe transfer handlers once a world is open.
+            if (project.hasProperty('jeiCheck')) systemProperty 'robotica.jeiCheck', 'true'
         }
 
         // Dev only: opens a flat world, screenshots every block, GUI and the Codex into run-showcase/screenshots, then quits.

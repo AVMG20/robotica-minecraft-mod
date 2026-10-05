@@ -104,4 +104,10 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem {
         tooltip.add(Component.translatable(getDescriptionId() + ".tooltip", cost()).withStyle(ChatFormatting.GRAY));
         ItemEnergy.appendTooltip(stack, tooltip);
     }
+
+    /** Charging from a cell in the inventory only changes the energy: no equip animation every few ticks. */
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return slotChanged || !ItemEnergy.onlyEnergyChanged(oldStack, newStack);
+    }
 }
