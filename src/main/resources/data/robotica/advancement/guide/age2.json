@@ -49,6 +49,7 @@
       "robotica:replicator_frame",
       "robotica:replicator_glass",
       "robotica:replicator_controller",
+      "robotica:survey_rig",
       "robotica:mining_drone_mk2",
       "robotica:sentry_drone_mk2",
       "robotica:courier_drone_mk2",

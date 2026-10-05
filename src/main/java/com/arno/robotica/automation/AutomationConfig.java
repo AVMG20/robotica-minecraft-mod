@@ -23,6 +23,14 @@ public final class AutomationConfig {
     public static final ModConfigSpec.IntValue EXCAVATOR_INTERVAL;
     public static final ModConfigSpec.IntValue EXCAVATOR_FE_PER_BLOCK;
     public static final ModConfigSpec.DoubleValue GROWTH_TICKS_PER_COLUMN;
+    public static final ModConfigSpec.IntValue SURVEY_INTERVAL;
+    public static final ModConfigSpec.IntValue SURVEY_FE_PER_ORE;
+    public static final ModConfigSpec.IntValue SURVEY_ENERGY_BUFFER;
+    public static final ModConfigSpec.IntValue SURVEY_MAX_INPUT;
+    public static final ModConfigSpec.IntValue SURVEY_SECTIONS_PER_TICK;
+    public static final ModConfigSpec.BooleanValue STRIP_ORES;
+    public static final ModConfigSpec.IntValue SURVEY_STRIP_PER_TICK;
+    public static final ModConfigSpec.IntValue SURVEY_FILLER_PER_ORE;
     private static final ModConfigSpec.IntValue[] FARM_RADIUS = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] FARM_INTERVAL = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.DoubleValue[] FARM_GROWTH = new ModConfigSpec.DoubleValue[4];
@@ -55,6 +63,25 @@ public final class AutomationConfig {
                 .defineInRange("excavatorInterval", 60, 1, 1200);
         EXCAVATOR_FE_PER_BLOCK = b.comment("Excavator FE per mined block (before upgrade multipliers).")
                 .defineInRange("excavatorFePerBlock", 40, 0, 1_000_000);
+        b.pop();
+        b.comment("Survey Rig: a lag-free virtual quarry. It scans its own chunk once into an ore ledger, then mines the ledger without changing the world.").push("survey_rig");
+        SURVEY_INTERVAL = b.comment("Survey Rig ticks per ore without speed cards (100 = one ore every 5 seconds).")
+                .defineInRange("surveyRigInterval", 100, 1, 12_000);
+        SURVEY_FE_PER_ORE = b.comment("Survey Rig FE per ore before upgrade multipliers. Speed cards raise it steeply, like the Excavator's.")
+                .defineInRange("surveyRigFePerOre", 2_000, 0, 10_000_000);
+        SURVEY_ENERGY_BUFFER = b.comment("Survey Rig internal FE buffer.")
+                .defineInRange("surveyRigEnergyBuffer", 500_000, 10_000, 100_000_000);
+        SURVEY_MAX_INPUT = b.comment("Survey Rig FE per tick it accepts from conduits and its battery slot.")
+                .defineInRange("surveyRigMaxInput", 20_000, 100, 10_000_000);
+        SURVEY_SECTIONS_PER_TICK = b.comment("Chunk sections (16x16x16) the scan reads per tick. The scan never loads other chunks.")
+                .defineInRange("surveyRigSectionsPerTick", 2, 1, 24);
+        STRIP_ORES = b.comment("true: ores the rig has put in its ledger are replaced by their stone, deepslate or netherrack host (a few per tick), so nobody can also mine them by hand. An ore that is gone or protected when its turn comes is taken off the ledger.",
+                        "false: the ores stay in the world and the ledger is purely virtual (the chunk can be mined twice).")
+                .define("stripOresFromWorld", true);
+        SURVEY_STRIP_PER_TICK = b.comment("Ore blocks replaced by their host per tick when stripOresFromWorld is on.")
+                .defineInRange("surveyRigStripPerTick", 4, 1, 256);
+        SURVEY_FILLER_PER_ORE = b.comment("Host rock drops (cobblestone, cobbled deepslate, netherrack) added per mined ore. 0 = none, the default.")
+                .defineInRange("surveyRigFillerPerOre", 0, 0, 16);
         b.pop();
         SPEC = b.build();
     }
@@ -108,5 +135,37 @@ public final class AutomationConfig {
 
     public static int excavatorFe() {
         return SPEC.isLoaded() ? EXCAVATOR_FE_PER_BLOCK.get() : 40;
+    }
+
+    public static int surveyInterval() {
+        return SPEC.isLoaded() ? SURVEY_INTERVAL.get() : 100;
+    }
+
+    public static int surveyFePerOre() {
+        return SPEC.isLoaded() ? SURVEY_FE_PER_ORE.get() : 2_000;
+    }
+
+    public static int surveyEnergyBuffer() {
+        return SPEC.isLoaded() ? SURVEY_ENERGY_BUFFER.get() : 500_000;
+    }
+
+    public static int surveyMaxInput() {
+        return SPEC.isLoaded() ? SURVEY_MAX_INPUT.get() : 20_000;
+    }
+
+    public static int surveySectionsPerTick() {
+        return SPEC.isLoaded() ? SURVEY_SECTIONS_PER_TICK.get() : 2;
+    }
+
+    public static boolean stripOres() {
+        return SPEC.isLoaded() ? STRIP_ORES.get() : true;
+    }
+
+    public static int surveyStripPerTick() {
+        return SPEC.isLoaded() ? SURVEY_STRIP_PER_TICK.get() : 4;
+    }
+
+    public static int surveyFillerPerOre() {
+        return SPEC.isLoaded() ? SURVEY_FILLER_PER_ORE.get() : 0;
     }
 }

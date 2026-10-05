@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "robotica:block/survey_rig"
+    },
+    "facing=east": {
+      "model": "robotica:block/survey_rig",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "robotica:block/survey_rig",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "robotica:block/survey_rig",
+      "y": 270
+    }
+  }
+}

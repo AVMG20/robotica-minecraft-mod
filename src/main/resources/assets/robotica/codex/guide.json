@@ -127,6 +127,12 @@
       "age": 2
     },
     {
+      "id": "robotica:guide/survey_rig",
+      "parent": "robotica:guide/excavator",
+      "icon": "robotica:survey_rig",
+      "age": 2
+    },
+    {
       "id": "robotica:guide/age2",
       "parent": "robotica:guide/diamonds",
       "icon": "robotica:advanced_circuit",

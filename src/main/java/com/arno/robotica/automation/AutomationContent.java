@@ -5,14 +5,17 @@ import com.arno.robotica.automation.block.ExcavatorBlock;
 import com.arno.robotica.automation.block.SproutBlock;
 import com.arno.robotica.automation.block.StumpyBlock;
 import com.arno.robotica.automation.block.SupplyCrateBlock;
+import com.arno.robotica.automation.block.SurveyRigBlock;
 import com.arno.robotica.automation.entity.ExcavatorBlockEntity;
 import com.arno.robotica.automation.entity.SproutBlockEntity;
 import com.arno.robotica.automation.entity.StumpyBlockEntity;
 import com.arno.robotica.automation.entity.SupplyCrateBlockEntity;
+import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.automation.item.FarmKitItem;
 import com.arno.robotica.automation.item.WorkerBlockItem;
 import com.arno.robotica.automation.menu.AreaWorkerMenu;
 import com.arno.robotica.automation.menu.SupplyCrateMenu;
+import com.arno.robotica.automation.menu.SurveyRigMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
@@ -47,6 +50,9 @@ public final class AutomationContent {
     public static final DeferredBlock<SproutBlock> SPROUT = BLOCKS.registerBlock("sprout", SproutBlock::new, robot(MapColor.COLOR_YELLOW));
     public static final DeferredBlock<ExcavatorBlock> EXCAVATOR = BLOCKS.registerBlock("excavator", ExcavatorBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5F, 8.0F).sound(SoundType.METAL).noOcclusion());
+    public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG = BLOCKS.registerBlock("survey_rig", SurveyRigBlock::new,
+            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 10.0F).sound(SoundType.METAL).noOcclusion()
+                    .lightLevel(s -> 4));
     public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE = BLOCKS.registerBlock("supply_crate", SupplyCrateBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD));
 
@@ -57,6 +63,8 @@ public final class AutomationContent {
             p -> new WorkerBlockItem(SPROUT.get(), p, 0, "tooltip.robotica.sprout"));
     public static final DeferredItem<BlockItem> EXCAVATOR_ITEM = ITEMS.registerItem("excavator",
             p -> new WorkerBlockItem(EXCAVATOR.get(), p, 2, "tooltip.robotica.excavator"));
+    public static final DeferredItem<BlockItem> SURVEY_RIG_ITEM = ITEMS.registerItem("survey_rig",
+            p -> new WorkerBlockItem(SURVEY_RIG.get(), p.rarity(Rarity.UNCOMMON), 2, "tooltip.robotica.survey_rig"));
     public static final DeferredItem<BlockItem> SUPPLY_CRATE_ITEM = ITEMS.registerItem("supply_crate",
             p -> new WorkerBlockItem(SUPPLY_CRATE.get(), p, 0, "tooltip.robotica.supply_crate"));
 
@@ -76,12 +84,16 @@ public final class AutomationContent {
             () -> BlockEntityType.Builder.of(SproutBlockEntity::new, SPROUT.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ExcavatorBlockEntity>> EXCAVATOR_BE = BLOCK_ENTITIES.register("excavator",
             () -> BlockEntityType.Builder.of(ExcavatorBlockEntity::new, EXCAVATOR.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SurveyRigBlockEntity>> SURVEY_RIG_BE = BLOCK_ENTITIES.register("survey_rig",
+            () -> BlockEntityType.Builder.of(SurveyRigBlockEntity::new, SURVEY_RIG.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SupplyCrateBlockEntity>> SUPPLY_CRATE_BE = BLOCK_ENTITIES.register("supply_crate",
             () -> BlockEntityType.Builder.of(SupplyCrateBlockEntity::new, SUPPLY_CRATE.get()).build(null));
 
     // ---- menus ----
     public static final DeferredHolder<MenuType<?>, MenuType<AreaWorkerMenu>> WORKER_MENU = MENUS.register("area_worker",
             () -> IMenuTypeExtension.create(AreaWorkerMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<SurveyRigMenu>> SURVEY_RIG_MENU = MENUS.register("survey_rig",
+            () -> IMenuTypeExtension.create(SurveyRigMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<SupplyCrateMenu>> CRATE_MENU = MENUS.register("supply_crate",
             () -> IMenuTypeExtension.create(SupplyCrateMenu::new));
 }

@@ -3,6 +3,7 @@
   "values": [
     "robotica:stumpy",
     "robotica:sprout",
-    "robotica:excavator"
+    "robotica:excavator",
+    "robotica:survey_rig"
   ]
 }

@@ -217,7 +217,7 @@
       ]
     },
     {
-      "title": "Excavator",
+      "title": "Quarries",
       "icon": "robotica:excavator",
       "pages": [
         {
@@ -235,6 +235,25 @@
             "robotica:upgrade_range",
             "robotica:upgrade_fortune",
             "robotica:upgrade_void"
+          ]
+        },
+        {
+          "title": "Survey Rig",
+          "text": "Age 2: Servo parts, a diamond pickaxe and ender pearls. It mines its chunk without digging a hole.\n\nFirst it scans its own chunk, from its height down to the bottom, and counts every ore. Then it pulls one ore at a time out of that ledger, as if mined with a pickaxe. Nothing is dug: no hole, no lag.",
+          "items": [
+            "robotica:survey_rig",
+            "robotica:servo_actuator",
+            "robotica:reinforced_casing"
+          ]
+        },
+        {
+          "title": "Survey rules",
+          "text": "One ore every 5 seconds for 2,000 FE. Up to 8 speed cards (x20), but 8 cards cost 21 times the FE per ore. Fortune or Silk Touch, efficiency and void work too.\n\nThe ores it counted turn to stone in the world, so nobody mines them twice. A mined-out chunk is surveyed for good: move on to the next chunk. A Magma Core lets it take ancient debris.",
+          "items": [
+            "robotica:survey_rig",
+            "robotica:upgrade_speed",
+            "robotica:upgrade_fortune",
+            "robotica:magma_core"
           ]
         }
       ]

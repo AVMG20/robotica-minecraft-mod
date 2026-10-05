@@ -80,9 +80,9 @@ One card item per kind: `robotica:upgrade_<kind>`. A machine has a few upgrade s
 | `fortune` | 2 | 3 | Fortune I-III (Looting in the replicator) |
 | `silk` | 2 | 1 | Silk Touch |
 
-Energy per action with speed cards: normal machines `(1 + 0.25s + 0.05s^2)`, the Excavator `(1 + 0.5s + 0.25s^2)` (x1.75, x3, x7, x21 per block for 1, 2, 4, 8 cards): every card costs more than the one before.
+Energy per action with speed cards: normal machines `(1 + 0.25s + 0.05s^2)`, the Excavator and Survey Rig `(1 + 0.5s + 0.25s^2)` (x1.75, x3, x7, x21 per block for 1, 2, 4, 8 cards): every card costs more than the one before.
 
-Caps per machine: Stumpy/Sprout speed, range and growth = Mk tier (1-4), efficiency 4. Excavator: speed 8, range 4, efficiency 4, fortune 3, silk, void. Metal Press: speed 4, efficiency 4. Replicator: speed 3, fortune 3, efficiency 4. Architect Table: kind defaults.
+Caps per machine: Stumpy/Sprout speed, range and growth = Mk tier (1-4), efficiency 4. Excavator: speed 8, range 4, efficiency 4, fortune 3, silk, void. Survey Rig: speed 8, efficiency 4, fortune 3, silk, void. Metal Press: speed 4, efficiency 4. Replicator: speed 3, fortune 3, efficiency 4. Architect Table: kind defaults.
 
 API (`core.upgrade`): `new Upgrades(slots, Set<UpgradeKind>, onChanged)` (kinds capped at `maxStack`), `new Upgrades(slots, Map<UpgradeKind,Integer> caps, onChanged)` or `new Upgrades(slots, kinds, ToIntFunction<UpgradeKind> caps, onChanged)`; `level(kind)` returns the number of cards that count; `insertOne(stack, simulate)` for right-click insert; static `speedMultiplier`, `energyMultiplier`, `steepEnergyMultiplier`, `fortuneEnchantLevel`, `growthBonus`. `CoreItems.card(kind)` and `CoreItems.cards(kind, count)`; `card(kind, level)` is deprecated and returns the single card.
 
@@ -109,7 +109,13 @@ Usability: right-click with a battery swaps it in, with a card installs one card
 - Growth boost is applied as extra random ticks on crops/saplings in the area (cheap: N random positions per second, not every block).
 - Supply Crate (Age 0): 27 slots, plain inventory with item capability.
 - Excavator (Age 2: a diamond pickaxe as drill head, plus Electric Motors, Iron Casing, Basic Circuit): mines a real hole below itself. Base 8×8 area, 1 block / 60 ticks, 40 FE per block, stops at bedrock and leaves fluids alone (replaces fluid source blocks with cobblestone as it goes, so no flooding). Up to 8 speed cards at a steep FE price (see Upgrade cards), range 16/32/48/64, efficiency, fortune, silk, void. Never breaks blocks with an unbreakable hardness or block entities. The GUI shows depth, percent dug and a progress bar.
-- Later (not built): Survey Rig, a lag-free virtual quarry (scans its chunk once, mines a ledger, very slow and power hungry, diamond tier+).
+- Survey Rig (Age 2: Servo Actuators, Reinforced Casings, an Advanced Circuit, a diamond pickaxe, ender pearls; 407 IE vs the Excavator's 90): a lag-free virtual quarry that leaves no hole. Its work area is its own chunk.
+  - Scan: on first power it reads its chunk from its own Y down to the world bottom, `surveyRigSectionsPerTick` (2) section slices per tick, skipping sections whose palette has no ore and never loading another chunk. Every block in `c:ores` (without a block entity) goes into the ore ledger as a count per block.
+  - Mining: each operation takes one ore off the ledger (random, weighted by count) and rolls that ore's loot table with a pickaxe carrying the Fortune or Silk Touch of its cards. Drops go to adjacent inventories (chests, RS/AE2 interfaces) or the 9-slot buffer. No block changes, no block updates. Ancient debris (`c:ores/netherite_scrap`) is only taken with a Magma Core in its core slot (never consumed); when only debris is left it waits with "Needs Magma Core". `surveyRigFillerPerOre` (default 0) adds that many host rock drops per ore for players who want cobblestone.
+  - Rate: 1 ore / 100 ticks, 2,000 FE per ore, times `steepEnergyMultiplier` (x1.75 / x3 / x7 / x21 for 1 / 2 / 4 / 8 speed cards). Upgrades: speed 8, efficiency 4, fortune 3 or silk, void. Buffer 500k FE, input 20,000 FE/t (x20 speed costs 8,400 FE/t, 3,360 with 4 efficiency cards).
+  - Ledger and surveyed set: `SurveyLedgers`, a `SavedData` per dimension keyed by chunk. Breaking and replacing a rig resumes the ledger instead of scanning again; a second rig in a chunk that a live rig works waits ("Chunk taken"). A mined-out chunk keeps only its "surveyed" mark and a new rig there refuses ("Chunk already surveyed").
+  - Double-dip guard, server config `stripOresFromWorld` (default true): the ore positions found by the scan are swapped for their host (`c:ores_in_ground/stone|deepslate|netherrack`, else stone, deepslate below Y 0, netherrack in the Nether) `surveyRigStripPerTick` (4) per tick, only when loaded, with neighbour updates off and the BreakEvent fired (claims can veto). An ore that is gone (mined by hand, dug by an Excavator) or vetoed when its turn comes is taken off the ledger. With false the ores stay in the world and the ledger is purely virtual: the chunk can be mined twice, by hand or by an Excavator, so only use it on servers that want that.
+  - Owner, team members and operators may open or upgrade it. GUI: energy bar (FE per ore in its tooltip), battery and core slots, a small scanner screen (sweep while scanning, ore blips while mining, a tick when finished, a cross when refused), a ledger bar (ores left of the total in its tooltip), 4 upgrade slots, buffer, status dot and word.
 
 ## Tools and weapons (module `gear`)
 
@@ -203,7 +209,7 @@ Getting home and travelling between bases. All teleports run on the server, cost
 
 ## Onboarding (module `codex`)
 
-- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, conduits, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator, Servo Age → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
+- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, conduits, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
 - Custom trigger `robotica:milestone` (core `Milestones`) for wind_spring, robot_working, farm_kit, vial_complete, replicator_formed, warp, portal. Machines award their owner when online and nearby.
 - The server syncs finished guide steps to the client (`robotica:codex_guide_progress`); the Codex's first chapter "Next steps" lists the steps you can do now and a checklist.
 - When a guide step is done, chat names the next one or two steps (config `guideChatTips`).
@@ -211,7 +217,7 @@ Getting home and travelling between bases. All teleports run on the server, cost
 
 ## Later (not in this build)
 
-Guard Drone, Wingman, Mole, Courier, Survey Rig, Exo-Frame armor, bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.
+Guard Drone, Wingman, Mole, Courier, Exo-Frame armor, bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.
 
 ## Engineering rules (all modules)
 
@@ -232,6 +238,7 @@ Progression pass (start quickly, scale to the late game):
 - First iron hour, all without gold or diamonds: Combustion Generator 6.4 IE (1 iron), Charger 5.4 IE (1 iron), Copper Cell 4.8 IE (2 iron, 3 redstone), Tool Upgrade Kit I 8.6 IE, Bore Drill and Chainsaw about 32 IE through smithing (11 iron, mostly copper). A Copper Cell holds 5.7 drill charges (2.3M vs 400k FE); kept in the inventory it recharges the drill in hand.
 - Winding Crank 2,000 → 6,000 FE per turn and 5 turns/s when holding right-click: a Mainspring in about 20 s instead of 72 s of clicking.
 - Excavator moved to Age 2 (diamond pickaxe drill head, 90 IE) and slowed to 1 block / 60 ticks. Speed cards cost x1.75 / x3 / x7 / x21 FE per block for 1 / 2 / 4 / 8 cards, so x20 needs about 280 FE/t (7 generators).
+- Survey Rig (Age 2, 407 IE, 4.5x the Excavator): the lag-free quarry is the stronger one, so it is pricier, slower at base (1 ore / 5 s) and costs 2,000 FE per ore before the same steep speed curve. A typical overworld chunk holds a few hundred ores: about half an hour at base, a minute or two at x20 for roughly 40,000 FE per ore. Recipe unlocked by the Servo Age guide step; guide step "No Holes Barred" after "Dig Deep".
 - Warp Pad moved to Age 1 (41 IE): the Age 1 Recall Remote needs a pad to bind to and was a dead end.
 - Upgrade cards are one item per kind (13-24 IE at Age 1, about 80-90 IE at Age 2). The cost of going far now comes from stacking, the steep FE price of speed and the caps (robots: one speed/range/growth card per Mk tier, so x6 speed needs a Mk4 robot).
 - Area tools pay for size with speed early on: hammer and Bore Drill 50% in 3×3 (still 4.5x faster than nine single blocks), Servo 70%, Magma 85%, Null 100%.

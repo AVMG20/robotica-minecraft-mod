@@ -18,11 +18,13 @@ public final class AutomationClient {
     private static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(AutomationContent.WORKER_MENU.get(), AreaWorkerScreen::new);
         event.register(AutomationContent.CRATE_MENU.get(), SupplyCrateScreen::new);
+        event.register(AutomationContent.SURVEY_RIG_MENU.get(), SurveyRigScreen::new);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(AutomationContent.STUMPY_BE.get(), ctx -> new AreaOutlineRenderer<>());
         event.registerBlockEntityRenderer(AutomationContent.SPROUT_BE.get(), ctx -> new AreaOutlineRenderer<>());
         event.registerBlockEntityRenderer(AutomationContent.EXCAVATOR_BE.get(), ctx -> new AreaOutlineRenderer<>());
+        event.registerBlockEntityRenderer(AutomationContent.SURVEY_RIG_BE.get(), ctx -> new AreaOutlineRenderer<>());
     }
 }

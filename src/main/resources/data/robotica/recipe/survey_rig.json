@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "EAE",
+    "SXS",
+    "RCR"
+  ],
+  "key": {
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "X": {
+      "item": "minecraft:diamond_pickaxe"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    }
+  },
+  "result": {
+    "id": "robotica:survey_rig",
+    "count": 1
+  }
+}

@@ -27,6 +27,7 @@ public final class AutomationModule {
         RoboticaTab.add(AutomationContent.FARM_KIT_MK3);
         RoboticaTab.add(AutomationContent.FARM_KIT_MK4);
         RoboticaTab.add(AutomationContent.EXCAVATOR_ITEM);
+        RoboticaTab.add(AutomationContent.SURVEY_RIG_ITEM);
         RoboticaTab.add(AutomationContent.SUPPLY_CRATE_ITEM);
     }
 
@@ -34,6 +35,7 @@ public final class AutomationModule {
         registerWorker(event, AutomationContent.STUMPY_BE.get());
         registerWorker(event, AutomationContent.SPROUT_BE.get());
         registerWorker(event, AutomationContent.EXCAVATOR_BE.get());
+        registerWorker(event, AutomationContent.SURVEY_RIG_BE.get());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, AutomationContent.SUPPLY_CRATE_BE.get(), (be, side) -> be.items);
     }
 

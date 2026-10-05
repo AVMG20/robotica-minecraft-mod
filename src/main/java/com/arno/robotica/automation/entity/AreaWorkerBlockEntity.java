@@ -113,9 +113,15 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     private final int upgradeSlots;
 
     protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds, int upgradeSlots) {
+        this(type, pos, state, kinds, upgradeSlots, AutomationConfig.energyBuffer(), 1000);
+    }
+
+    /** Same, with its own FE buffer and input rate (the Survey Rig needs far more than a robot). */
+    protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds, int upgradeSlots,
+                                    int energyCapacity, int maxReceive) {
         super(type, pos, state);
         this.upgradeSlots = upgradeSlots;
-        this.energy = new MachineEnergyStorage(AutomationConfig.energyBuffer(), 1000, 0, this::setChanged);
+        this.energy = new MachineEnergyStorage(energyCapacity, maxReceive, 0, this::setChanged);
         this.upgrades = new Upgrades(upgradeSlots, kinds, this::upgradeCap, this::onUpgradesChanged);
     }
 
@@ -351,7 +357,12 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         ItemStack stack = battery.getStackInSlot(0);
         if (stack.isEmpty() || energy.getSpace() <= 0) return;
         if (energy.getEnergyStored() > energy.getMaxEnergyStored() / 4 && age % 4 != 0) return;
-        if (EnergyUtil.dischargeItem(stack, energy, MAX_PULL) > 0) setChanged();
+        if (EnergyUtil.dischargeItem(stack, energy, batteryPullRate()) > 0) setChanged();
+    }
+
+    /** Max FE pulled from the battery item per call. */
+    protected int batteryPullRate() {
+        return MAX_PULL;
     }
 
     /** Energy per tick while working, before multipliers: base * speed multiplier * (speed/efficiency energy factor). */

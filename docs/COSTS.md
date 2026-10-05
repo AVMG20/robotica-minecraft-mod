@@ -54,6 +54,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `basic_circuit` | 3 | 2 | 1 | 3 |  |  |  |  |  | 8 |
 | `iron_casing` | 8 |  |  | 1 |  |  |  |  |  | 8.4 |
 | `tool_upgrade_kit_1` | 5 | 8 |  | 1 |  |  |  |  |  | 8.6 |
+| `architect_table` |  | 26 |  |  |  |  |  |  | planks 8, cobblestone 10 | 11 |
 | `solar_panel_mk1` | 6 | 4 | 1 | 3 |  |  |  |  | glass 3 | 12.1 |
 | `upgrade_speed` | 7 | 2 | 1 | 5 |  |  |  |  | sugar 2 | 13 |
 | `upgrade_growth` | 7 | 2 | 1 | 3 |  |  |  |  | bone_block 4 | 14 |
@@ -62,7 +63,6 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `upgrade_efficiency` | 7 | 2 | 5 | 3 |  |  |  |  |  | 24 |
 | `accumulator_1` | 14 | 16 |  | 19 |  |  |  |  |  | 28 |
 | `metal_press` | 12 | 40 |  | 3 |  |  |  |  | planks 7, cobblestone 11 | 29.8 |
-| `architect_table` | 13 | 30 | 1 | 4 |  |  |  |  | planks 8, cobblestone 8 | 30.2 |
 | `shock_baton` smithing | 11 | 45 |  | 3 |  |  |  |  | planks 4, cobblestone 6, stick 1 | 30.5 |
 | `chainsaw` smithing | 11 | 46 |  | 3 |  |  |  |  | planks 4, cobblestone 6, stick 2 | 31 |
 | `bore_drill` smithing | 11 | 49 |  | 3 |  |  |  |  | planks 4, cobblestone 6, stick 1 | 32.1 |
@@ -96,6 +96,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `accumulator_2` | 84 | 48 | 12 | 102 | 3 |  |  |  | obsidian 4, quartz 4 | 220 |
 | `farm_kit_mk3` | 82 | 88 | 24 | 44 | 4 |  |  |  | quartz 6, obsidian 4, planks 8, cobblestone 10 | 259.4 |
 | `tool_upgrade_kit_2` | 119 | 96 | 22 | 49 | 5 |  |  |  | obsidian 8, quartz 6, planks 8, cobblestone 10 | 311.6 |
+| `survey_rig` | 129 | 160 | 26 | 52 | 8 |  | 2 |  | obsidian 8, quartz 6, planks 16, cobblestone 20, stick 2 | 407 |
 | `servo_core` [temp] boss core | 116 | 296 | 46 | 76 | 9 |  |  |  | quartz 10, planks 32, cobblestone 40 | 505.2 |
 | `servo_drill` smithing | 246 | 441 | 68 | 128 | 14 |  |  |  | quartz 16, obsidian 8, planks 44, cobblestone 56, stick 1 | 848.9 |
 | `replicator_controller` | 308 | 448 | 72 | 136 | 17 |  |  |  | obsidian 16, quartz 16, planks 48, cobblestone 60 | 971.2 |
@@ -135,3 +136,15 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `gate_controller` | 2080 | 2880 | 752 | 1424 | 116 | 24 | 4 | 3 | blaze_rod 72, end_crystal 10, quartz 208, shulker_shell 6, prismarine_crystals 40, obsidian 50, blaze_powder 20, planks 256, magma_block 6, cobblestone 320 | 10143.8 |
 | `null_lance` smithing | 2465 | 3184 | 886 | 1697 | 140 | 28 | 4 | 3 | blaze_rod 88, quartz 250, end_crystal 8, prismarine_crystals 40, obsidian 60, shulker_shell 4, blaze_powder 20, planks 272, magma_block 6, cobblestone 340 | 11689.8 |
 | `null_drill` smithing | 3480 | 4585 | 1228 | 2354 | 198 | 38 | 4 | 3 | blaze_rod 116, quartz 344, end_crystal 8, prismarine_crystals 44, obsidian 88, shulker_shell 4, blaze_powder 22, magma_block 10, planks 396, cobblestone 496, stick 1 | 16044.3 |
+
+## Unsorted
+
+| item | iron | copper | gold | redstone | diamond | netherite | ender pearl | nether star | other | IE |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
+| `courier_remote` | 5 | 2 | 1 | 4 |  |  |  |  |  | 10.4 |
+| `mining_drone` | 6 | 24 |  | 2 |  |  |  |  | planks 4, cobblestone 5, stick 2 | 16.7 |
+| `courier_drone` | 17 | 34 | 1 | 7 |  |  |  |  | hopper 1, planks 4, cobblestone 5 | 37.2 |
+| `sentry_drone` | 17 | 34 | 1 | 7 |  |  |  |  | crossbow 1, planks 4, cobblestone 5 | 37.2 |
+| `mining_drone_mk2` smithing | 44 | 104 | 16 | 30 | 2 |  |  |  | quartz 4, planks 12, cobblestone 15, stick 2 | 170.5 |
+| `courier_drone_mk2` smithing | 55 | 114 | 17 | 35 | 2 |  |  |  | quartz 4, planks 12, hopper 1, cobblestone 15 | 191 |
+| `sentry_drone_mk2` smithing | 55 | 114 | 17 | 35 | 2 |  |  |  | quartz 4, planks 12, crossbow 1, cobblestone 15 | 191 |

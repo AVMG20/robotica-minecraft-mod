@@ -100,7 +100,7 @@ AGE = {
         'farm_kit_mk2', 'architect_table', 'copper_works_*', 'recall_remote', 'warp_pad', 'upgrade_speed',
         'upgrade_efficiency', 'upgrade_growth', 'upgrade_void'],
     2: ['reinforced_casing', 'advanced_circuit', 'servo_actuator', 'redstone_cell', 'servo_core', 'solar_panel_mk2',
-        'accumulator_2', 'rivet_gun', 'tool_upgrade_kit_2', 'servo_drill', 'farm_kit_mk3', 'essence_vial', 'excavator',
+        'accumulator_2', 'rivet_gun', 'tool_upgrade_kit_2', 'servo_drill', 'farm_kit_mk3', 'essence_vial', 'excavator', 'survey_rig',
         'replicator_*', 'steel_lab_*', 'upgrade_range', 'upgrade_fortune', 'upgrade_silk'],
     3: ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'magma_core', 'accumulator_3', 'tool_upgrade_kit_3',
         'magma_drill', 'arc_blade', 'rift_upgrade', 'rift_remote'],
