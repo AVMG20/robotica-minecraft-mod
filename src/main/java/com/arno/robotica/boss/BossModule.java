@@ -21,6 +21,7 @@ public final class BossModule {
         container.registerConfig(ModConfig.Type.SERVER, BossConfig.SPEC, "robotica-boss-server.toml");
         modBus.addListener(BossModule::registerAttributes);
         NeoForge.EVENT_BUS.addListener(BossModule::onDrops);
+        BossLoot.init();
     }
 
     private static void registerAttributes(EntityAttributeCreationEvent event) {
@@ -29,8 +30,9 @@ public final class BossModule {
     }
 
     /**
-     * The Colossus loot belongs to whoever landed the kill: every drop moves to the killer, only they can pick it up and it
-     * lasts longer than normal items. Kills without a player (lava, /kill) leave the loot where the Colossus fell.
+     * The Colossus loot belongs to whoever landed the kill: every drop moves to the killer, only they can pick it up for two
+     * minutes (or until they log out, see {@link BossLoot}) and it lasts longer than normal items. Kills without a player
+     * (/kill, a pet) leave the loot where the Colossus fell, free for anyone.
      */
     private static void onDrops(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof ScrapColossus boss)) return;
@@ -38,7 +40,7 @@ public final class BossModule {
         for (ItemEntity drop : event.getDrops()) {
             drop.setExtendedLifetime();
             if (killer != null) {
-                drop.setTarget(killer.getUUID());
+                BossLoot.lock(drop, killer.getUUID(), boss.level().getGameTime());
                 drop.setPos(killer.getX(), killer.getY() + 0.5, killer.getZ());
                 drop.setNoPickUpDelay();
             }

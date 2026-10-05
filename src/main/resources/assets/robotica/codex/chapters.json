@@ -132,7 +132,7 @@
         },
         {
           "title": "Tesla Coils",
-          "text": "Tesla Coils send FE through the air. Put one on an Accumulator or a generator: it sends that block's FE.\n\nSneak-right-click the coil with a Tesla Linker, then right-click machines. The side you click is where the power goes in. Click it again to unlink.\n\nLink a coil to another coil to reach further. Each hop loses 5%. Every link uses one slot.\n\nTier I to V: 4, 8, 12, 16 and 32 links, 8 to 32 blocks range. Right-click a coil to see its links.\n\nHold the Tesla Linker to see every link light up. Without it, finished networks stay quiet.",
+          "text": "Tesla Coils send FE through the air. Put one on an Accumulator or a generator: it sends that block's FE.\n\nSneak-right-click the coil with a Tesla Linker, then right-click machines. The side you click is where the power goes in. Click it again to unlink.\n\nLink a coil to another coil to reach further. Each hop loses 5%. Every link uses one slot.\n\nTier I to V: 4, 8, 12, 16 and 32 links, 8 to 32 blocks range, 4,000 to 1,000,000 FE/t. Right-click a coil to see its links.\n\nHold the Tesla Linker to see every link light up. Without it, finished networks stay quiet.",
           "items": [
             "robotica:tesla_linker",
             "robotica:tesla_coil_1",
@@ -332,7 +332,7 @@
       "pages": [
         {
           "title": "Scrap Colossus",
-          "text": "A rusted copper robot, three blocks tall. It is where Servo Cores come from: it always drops one, plus copper, iron and parts.\n\nThe loot goes to whoever lands the killing blow. Everyone close by sees its health bar.",
+          "text": "A rusted copper robot, three blocks tall. It is where Servo Cores come from: it always drops one, plus copper, iron and parts.\n\nBelow half health it calls Scrap Drones and overheats now and then: its open core takes double damage.\n\nOnly real attacks hurt it. Traps, suffocation, cactus and falls do nothing.\n\nThe loot flies to whoever lands the killing blow. Only they can pick it up for two minutes, or until they log out. Everyone close by sees its health bar.",
           "items": [
             "robotica:servo_core",
             "robotica:signal_flare"
@@ -340,7 +340,7 @@
         },
         {
           "title": "Rusted Foundry",
-          "text": "Ruined copper halls in plains, deserts and badlands, far apart. The chest inside holds a Signal Flare.\n\nRight-click the Colossus Altar in the middle with a Signal Flare. One Colossus per altar at a time, then the altar cools down for 5 minutes.",
+          "text": "Ruined copper halls in plains, deserts and badlands, far apart. The chest inside holds a Signal Flare.\n\nRight-click the Colossus Altar in the middle with a Signal Flare. One Colossus per altar at a time, then the altar cools down for 5 minutes. A cooling altar cannot be mined.",
           "items": [
             "robotica:signal_flare",
             "robotica:colossus_altar"
