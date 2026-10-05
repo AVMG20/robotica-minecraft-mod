@@ -1,9 +1,88 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
   "textures": {
-    "top": "robotica:block/power_machine_top",
-    "side": "robotica:block/power_machine_side",
-    "front": "robotica:block/charger_front_on",
-    "particle": "robotica:block/power_machine_side"
-  }
+    "north": "robotica:block/charger_front_on",
+    "up": "robotica:block/charger_top_on",
+    "down": "robotica:block/power_machine_bottom",
+    "south": "robotica:block/power_machine_side",
+    "west": "robotica:block/power_machine_side",
+    "east": "robotica:block/power_machine_side",
+    "particle": "robotica:block/power_machine_side",
+    "glow_north": "robotica:block/charger_front_glow",
+    "glow_up": "robotica:block/charger_top_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#down",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#up",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#east",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glow_north",
+          "cullface": "north",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#glow_up",
+          "cullface": "up",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      }
+    }
+  ]
 }

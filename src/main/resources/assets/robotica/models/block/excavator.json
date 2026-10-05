@@ -7,6 +7,7 @@
     "brass": "robotica:block/automation_brass",
     "drill": "robotica:block/excavator_drill",
     "light": "robotica:block/excavator_light",
+    "side": "robotica:block/excavator_side",
     "particle": "robotica:block/automation_steel"
   },
   "elements": [
@@ -23,22 +24,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#side"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#side"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#side"
         },
         "west": {
-          "texture": "#steel"
+          "texture": "#side"
         },
         "up": {
           "texture": "#steel"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#dark"
         }
       }
     },
@@ -313,9 +314,21 @@
         11.5,
         1
       ],
+      "shade": false,
       "faces": {
         "north": {
-          "texture": "#light"
+          "texture": "#light",
+          "uv": [
+            5,
+            5,
+            8,
+            7
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
         }
       }
     },

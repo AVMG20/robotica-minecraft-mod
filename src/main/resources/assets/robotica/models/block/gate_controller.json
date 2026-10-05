@@ -1,5 +1,6 @@
 {
   "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
   "textures": {
     "side": "robotica:block/projector_side",
     "top": "robotica:block/projector_top",
@@ -7,6 +8,7 @@
     "lens_on": "robotica:block/projector_lens_on",
     "fin": "robotica:block/projector_fin",
     "fin_on": "robotica:block/projector_fin_on",
+    "side_glow": "robotica:block/projector_side_glow",
     "particle": "robotica:block/projector_side"
   },
   "elements": [

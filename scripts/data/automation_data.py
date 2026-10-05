@@ -6,6 +6,7 @@ derives them from the element position, which the 8-pixel-period panel textures 
 """
 import json
 import pathlib
+import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ASSETS = ROOT / 'src/main/resources/assets/robotica'
@@ -30,37 +31,77 @@ def box(a, b, tex, faces=ALL, uv=None):
     return el
 
 
-SAW_UV = {'east': [0, 0, 16, 16], 'west': [0, 0, 16, 16]}
+SAW_UV = {'east': [0, 0, 8, 8], 'west': [0, 0, 8, 8]}
+GLOW = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+
+# Texel regions of the 32x32 <robot>_body atlas, shared with scripts/textures/automation.py
+sys.path.insert(0, str(ROOT / 'scripts'))
+sys.path.insert(0, str(ROOT / 'scripts/textures'))
+from automation import ATLAS  # noqa: E402
+
+
+def at(name, mirror=False, w=None, h=None):
+    """uv of an atlas region (the atlas is 32 px, so uv = texel / 2); mirror flips it left-right."""
+    u, v, rw, rh = ATLAS[name]
+    rw, rh = w or rw, h or rh
+    return [(u + rw) / 2, v / 2, u / 2, (v + rh) / 2] if mirror else [u / 2, v / 2, (u + rw) / 2, (v + rh) / 2]
+
+
+def atlas_box(a, b, faces, glow=False):
+    """faces: direction -> (atlas region name, mirror). Texture '#atlas'."""
+    el = {'from': list(a), 'to': list(b), 'faces': {}}
+    for d, (name, mirror) in faces.items():
+        el['faces'][d] = {'texture': '#atlas', 'uv': at(name, mirror)}
+        if glow:
+            el['faces'][d]['neoforge_data'] = dict(GLOW)
+    if glow:
+        el['shade'] = False
+    return el
 
 
 def chassis():
-    """Treads, hip, body, belt in the tier colour, head, visor, eyes, antenna with tier bulb, battery pack."""
+    """Chibi proportions: treads, hip, a compact body with the tier belt low on the hips, a big head with a dark visor
+    and two glowing eyes, battery pack on the back, antenna with a tier coloured bulb."""
+    tread = {'north': ('tread_end', False), 'south': ('tread_end', False), 'west': ('tread_side', False),
+             'east': ('tread_side', True), 'up': ('tread_top', False), 'down': ('tread_top', False)}
+    belt_uv = [3.8, 6, 12.2, 7.5]
+    belt = {'from': [3.8, 3, 3.8], 'to': [12.2, 4.5, 12.2],
+            'faces': {d: {'texture': '#accent', 'uv': belt_uv} for d in ('north', 'south', 'east', 'west', 'up', 'down')}}
     return [
-        box((2.5, 0, 3), (5.5, 3, 13), 'dark'),
-        box((10.5, 0, 3), (13.5, 3, 13), 'dark'),
+        atlas_box((2.5, 0, 3), (5.5, 3, 13), tread),
+        atlas_box((10.5, 0, 3), (13.5, 3, 13), tread),
         box((5.5, 1, 4.5), (10.5, 3, 11.5), 'brass'),
-        box((4, 3, 4), (12, 9.5, 12), 'body'),
-        box((3.8, 6, 3.8), (12.2, 7.5, 12.2), 'accent'),
-        box((5.5, 3.8, 3.75), (10.5, 5.3, 4), 'dark', faces=('north',)),
-        box((5, 9.5, 5), (11, 14.5, 11), 'body'),
-        box((5.5, 10.8, 4.7), (10.5, 13.2, 5), 'dark', faces=('north',)),
-        box((6.2, 11.4, 4.5), (7.8, 12.6, 4.7), 'eye', faces=('north',)),
-        box((8.2, 11.4, 4.5), (9.8, 12.6, 4.7), 'eye', faces=('north',)),
-        box((5, 3.5, 12), (11, 8.5, 13.5), 'dark'),
-        box((5.5, 5.5, 13.4), (10.5, 6.3, 13.6), 'brass', faces=('south',)),
+        atlas_box((4, 3, 4), (12, 9, 12), {
+            'north': ('body_front', False), 'south': ('body_back', False), 'west': ('body_side', False),
+            'east': ('body_side', True), 'up': ('body_top', False), 'down': ('body_bottom', False)}),
+        belt,
+        atlas_box((3.5, 9, 4.5), (12.5, 15, 11.5), {
+            'north': ('head_front', False), 'south': ('head_back', False), 'west': ('head_side', False),
+            'east': ('head_side', True), 'up': ('head_top', False), 'down': ('head_bottom', False)}),
+        atlas_box((5, 11, 4.3), (7, 13, 4.5), {'north': ('eye', False)}, glow=True),
+        atlas_box((9, 11, 4.3), (11, 13, 4.5), {'north': ('eye', True)}, glow=True),
+        atlas_box((5, 3.5, 12), (11, 8.5, 13.5), {
+            'south': ('pack_back', False), 'west': ('pack_side', False), 'east': ('pack_side', True),
+            'up': ('pack_top', False)}),
+    ]
+
+
+def antenna(stalk='brass'):
+    return [
+        box((7.5, 15, 7.5), (8.5, 16, 8.5), stalk),
+        {'from': [7, 16, 7], 'to': [9, 17.5, 9], 'faces': {
+            d: {'texture': '#accent', 'uv': [6, 1, 8, 2.5] if d not in ('up', 'down') else [6, 1, 8, 3]}
+            for d in ('north', 'south', 'east', 'west', 'up', 'down')}},
     ]
 
 
 def stumpy_elements():
-    els = chassis()
+    els = chassis() + antenna()
     els += [
-        # antenna with tier coloured bulb
-        box((7.6, 14.5, 7.6), (8.4, 15.2, 8.4), 'brass'),
-        box((7, 15.2, 7), (9, 16, 9), 'accent'),
         # right arm with a circular saw
         box((12, 6, 6.5), (13.4, 8.5, 9.5), 'brass'),
         box((13.4, 6.2, 7.2), (14.2, 7.4, 8.8), 'steel'),
-        box((14.2, 2.5, 4), (15.2, 10.5, 12), 'steel', uv=SAW_UV),
+        box((14.2, 2.5, 4), (15.2, 10.5, 12), 'saw', faces=('east', 'west'), uv=SAW_UV),
         # left arm with an axe
         box((2.6, 6, 6.5), (4, 8.5, 9.5), 'brass'),
         box((1.2, 3, 7.6), (2.2, 10, 8.4), 'wood'),
@@ -73,10 +114,11 @@ def sprout_elements():
     els = chassis()
     els += [
         # sprout on the head, bud in the tier colour
-        box((7.6, 14.5, 7.6), (8.4, 15.4, 8.4), 'leaf'),
-        box((5.6, 14.9, 7.2), (7.6, 15.5, 8.8), 'leaf'),
-        box((8.4, 14.9, 7.2), (10.4, 15.5, 8.8), 'leaf'),
-        box((7.1, 15.4, 7.1), (8.9, 16, 8.9), 'accent'),
+        box((7.6, 15, 7.6), (8.4, 16, 8.4), 'leaf'),
+        box((5.4, 15.5, 7.2), (7.6, 16.1, 8.8), 'leaf'),
+        box((8.4, 15.5, 7.2), (10.6, 16.1, 8.8), 'leaf'),
+        {'from': [7.1, 16, 7.1], 'to': [8.9, 17.4, 8.9], 'faces': {
+            d: {'texture': '#accent', 'uv': [6, 1, 7.8, 2.4]} for d in ('north', 'south', 'east', 'west', 'up', 'down')}},
         # harvest basket on the back
         box((4.5, 2.5, 13.5), (11.5, 7.5, 15.5), 'wood'),
         box((4.2, 7.5, 13.2), (11.8, 8.3, 15.8), 'wood'),
@@ -95,7 +137,9 @@ def sprout_elements():
 
 def excavator_elements():
     return [
-        box((1, 5, 1), (15, 13, 15), 'steel'),
+        {'from': [1, 5, 1], 'to': [15, 13, 15], 'faces': {
+            'north': {'texture': '#side'}, 'south': {'texture': '#side'}, 'east': {'texture': '#side'},
+            'west': {'texture': '#side'}, 'up': {'texture': '#steel'}, 'down': {'texture': '#dark'}}},
         box((0, 5, 0), (2.5, 13, 2.5), 'dark'),
         box((13.5, 5, 0), (16, 13, 2.5), 'dark'),
         box((0, 5, 13.5), (2.5, 13, 16), 'dark'),
@@ -108,7 +152,8 @@ def excavator_elements():
         box((3, 6, 15), (13, 8, 15.3), 'dark', faces=('south',)),
         box((15, 6, 3), (15.3, 8, 13), 'dark', faces=('east',)),
         box((0.7, 6, 3), (1, 8, 13), 'dark', faces=('west',)),
-        box((6.5, 9.5, 0.6), (9.5, 11.5, 1), 'light', faces=('north',)),
+        {'from': [6.5, 9.5, 0.6], 'to': [9.5, 11.5, 1], 'shade': False, 'faces': {
+            'north': {'texture': '#light', 'uv': [5, 5, 8, 7], 'neoforge_data': dict(GLOW)}}},
         box((3, 9.5, 0.6), (5, 11.5, 1), 'brass', faces=('north',)),
         box((11, 9.5, 0.6), (13, 11.5, 1), 'brass', faces=('north',)),
         # drill head underneath
@@ -130,7 +175,7 @@ def model(textures, elements, particle):
 
 def robot(name, elements, body, mk_tex):
     base = f'robotica:block/{name}_base'
-    textures = {'body': f'robotica:block/{body}', 'brass': 'robotica:block/automation_brass',
+    textures = {'atlas': f'robotica:block/{name}_body', 'brass': 'robotica:block/automation_brass',
                 'dark': 'robotica:block/automation_dark', 'steel': 'robotica:block/automation_steel',
                 'wood': 'robotica:block/automation_wood', 'eye': 'robotica:block/automation_eye',
                 'saw': 'robotica:block/automation_saw', 'leaf': 'robotica:block/automation_leaf',
@@ -194,7 +239,7 @@ def main():
     # Excavator
     tex = {'steel': 'robotica:block/automation_steel', 'dark': 'robotica:block/automation_dark',
            'brass': 'robotica:block/automation_brass', 'drill': 'robotica:block/excavator_drill',
-           'light': 'robotica:block/excavator_light'}
+           'light': 'robotica:block/excavator_light', 'side': 'robotica:block/excavator_side'}
     write(ASSETS / 'models/block/excavator.json', model(tex, excavator_elements(), 'robotica:block/automation_steel'))
     single('excavator', 'excavator')
 

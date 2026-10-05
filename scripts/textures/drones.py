@@ -55,6 +55,8 @@ def box(c, u, v, w, h, d, ramp=('1', '2', '3', '4'), outline=None):
     for name, (x, y, rw, rh) in rects(u, v, w, h, d).items():
         base = light if name == 'top' else deep if name == 'bottom' else mid
         c.rect(x, y, rw, rh, base)
+        if rw >= 5 and rh >= 4 and name != 'bottom':           # brushed grain on the larger faces
+            c.brushed(x + 1, y + 1, rw - 2, rh - 2, (dark, dark, base, light), seed=x * 7 + y, density=0.12)
         if rw >= 3 and rh >= 3:
             if name == 'top':
                 c.bevel(x, y, rw, rh, light, mid)
@@ -234,29 +236,19 @@ def icon(draw):
 
 
 def mining_icon(pal, body, light, dark):
+    """Front three-quarter view: twin rotor pods, a stubby body with a lamp and window, the drill pointing down."""
     def draw(c):
-        # rotor on top
-        c.rect(4, 3, 8, 1, 'b').rect(4, 3, 8, 1, 'b')
-        c.set(7, 4, 'c').set(8, 4, 'c')
-        c.rect(5, 3, 2, 1, 'a').rect(9, 3, 2, 1, 'a')
-        # body
-        c.rect(4, 5, 8, 6, body)
-        c.rect(4, 5, 8, 1, light)
-        c.rect(4, 10, 8, 1, dark)
-        c.rect(4, 5, 1, 6, light)
-        c.rect(11, 5, 1, 6, dark)
-        # battery window and rivets
-        c.rect(7, 7, 3, 2, 'y').set(7, 7, 'z')
-        c.set(5, 6, 'r').set(10, 6, 'r')
-        # drill (front, left)
-        c.rect(2, 6, 2, 4, 'b').rect(2, 6, 2, 1, 'a')
-        c.rect(0, 7, 2, 2, 'a').set(0, 7, 'b').set(0, 8, 'c')
-        c.set(2, 7, 'c').set(3, 8, 'c')
-        # headlamp
-        c.set(4, 4, 'L').set(5, 4, 'l')
-        # legs / pod
-        c.rect(5, 11, 2, 1, 'c').rect(9, 11, 2, 1, 'c')
-        c.rect(12, 7, 2, 3, 'b').rect(12, 7, 2, 1, 'a')
+        for x0 in (0, 10):                                   # rotor blur and pods
+            c.rect(x0, 2, 6, 1, 'b').rect(x0 + 1, 2, 2, 1, 'a')
+            c.set(x0 + 2, 3, 'c').set(x0 + 3, 3, 'c')
+            c.rect(x0 + 1, 4, 4, 3, 'b')
+        c.rect(4, 3, 8, 7, body)                             # body
+        c.auto_shade({body: (dark, light), 'b': ('c', 'a')})
+        c.rect(6, 4, 4, 1, 'r').set(7, 4, 'L').set(8, 4, 'l')    # headlamp
+        c.rect(6, 6, 4, 2, 'k').rect(7, 6, 2, 1, 'y').set(7, 6, 'z')   # window
+        c.set(5, 4, 'R')
+        c.rect(5, 10, 6, 1, 'c').rect(6, 10, 4, 1, 'b')      # drill collar
+        c.draw(6, 11, ['abca', '.ab.', '.ca.', '.a..'])       # spiral bit
     return draw
 
 

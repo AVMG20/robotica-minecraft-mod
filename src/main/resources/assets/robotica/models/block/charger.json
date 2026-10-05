@@ -1,9 +1,53 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
   "textures": {
-    "top": "robotica:block/power_machine_top",
-    "side": "robotica:block/power_machine_side",
-    "front": "robotica:block/charger_front",
+    "north": "robotica:block/charger_front",
+    "up": "robotica:block/charger_top",
+    "down": "robotica:block/power_machine_bottom",
+    "south": "robotica:block/power_machine_side",
+    "west": "robotica:block/power_machine_side",
+    "east": "robotica:block/power_machine_side",
     "particle": "robotica:block/power_machine_side"
-  }
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#down",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#up",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#east",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
 }
