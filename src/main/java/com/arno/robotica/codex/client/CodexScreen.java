@@ -314,25 +314,37 @@ public class CodexScreen extends Screen {
         int x = left + 10, y = top + 10;
         g.drawString(font, Component.literal("ROBOTICA CODEX").withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
         y += 16;
+        int row = rowH();
+        float iconScale = row / 16F;
         for (int i = 0; i < chapters.size(); i++) {
             Chapter c = chapters.get(i);
             boolean active = !lab && i == chapter && recipeItem.isEmpty();
-            boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + 16;
-            if (active || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + 15, active ? SLOT : GRID);
-            g.renderItem(c.icon(), x, y - 1);
-            g.drawString(font, c.title(), x + 20, y + 3, active ? HEAD : INK, false);
-            y += 16;
+            boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + row;
+            if (active || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + row - 1, active ? SLOT : GRID);
+            g.pose().pushPose();
+            g.pose().translate(x, y - 1, 0);
+            g.pose().scale(iconScale, iconScale, 1F);
+            g.renderItem(c.icon(), 0, 0);
+            g.pose().popPose();
+            g.drawString(font, c.title(), x + row + 4, y + (row - 8) / 2, active ? HEAD : INK, false);
+            y += row;
         }
         if (labAllowed()) {
             y += 4;
-            boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + 16;
-            if (lab || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + 15, lab ? SLOT : GRID);
-            g.drawString(font, Component.literal("Creative Lab (OP)"), x + 20, y + 3, 0xFFB8860B, false);
+            boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + row;
+            if (lab || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + row - 1, lab ? SLOT : GRID);
+            g.drawString(font, Component.literal("Creative Lab (OP)"), x + row + 4, y + (row - 8) / 2, 0xFFB8860B, false);
         }
     }
 
+    /** Row height of the chapter list: 16 when it fits, smaller (with smaller icons) when there are many chapters. */
+    private int rowH() {
+        int rows = chapters.size() + (labAllowed() ? 1 : 0);
+        return Math.max(11, Math.min(16, (H - 26 - 12) / Math.max(1, rows)));
+    }
+
     private int listY(int index) {
-        return top + 26 + index * 16;
+        return top + 26 + index * rowH();
     }
 
     private List<FormattedCharSequence> wrappedText() {
@@ -623,7 +635,7 @@ public class CodexScreen extends Screen {
         int x = left + 10;
         for (int i = 0; i < chapters.size() && !lab; i++) {
             int y = listY(i);
-            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + 16) {
+            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + rowH()) {
                 lab = false;
                 chapter = i;
                 page = 0;
@@ -636,7 +648,7 @@ public class CodexScreen extends Screen {
         }
         if (labAllowed() && !lab) {
             int y = listY(chapters.size()) + 4;
-            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + 16) {
+            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + rowH()) {
                 lab = true;
                 rebuild();
                 return true;
