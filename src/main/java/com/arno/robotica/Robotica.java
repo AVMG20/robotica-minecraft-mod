@@ -1,6 +1,8 @@
 package com.arno.robotica;
 
 import com.arno.robotica.architect.ArchitectModule;
+import com.arno.robotica.boss.BossModule;
+import com.arno.robotica.storage.StorageModule;
 import com.arno.robotica.automation.AutomationModule;
 import com.arno.robotica.codex.CodexModule;
 import com.arno.robotica.core.RoboticaCore;
@@ -38,6 +40,8 @@ public class Robotica {
         WarpModule.init(modBus, container);
         DronesModule.init(modBus, container);
         ExoModule.init(modBus, container);
+        BossModule.init(modBus, container);
+        StorageModule.init(modBus, container);
     }
 
     public static ResourceLocation id(String path) {

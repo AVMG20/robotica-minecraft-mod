@@ -2,6 +2,8 @@ package com.arno.robotica.client;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.architect.client.ArchitectClient;
+import com.arno.robotica.boss.client.BossClient;
+import com.arno.robotica.storage.client.StorageClient;
 import com.arno.robotica.automation.client.AutomationClient;
 import com.arno.robotica.codex.client.CodexClient;
 import com.arno.robotica.core.client.CoreClient;
@@ -35,5 +37,7 @@ public class RoboticaClient {
         WarpClient.init(modBus, container);
         DronesClient.init(modBus, container);
         ExoClient.init(modBus, container);
+        BossClient.init(modBus, container);
+        StorageClient.init(modBus, container);
     }
 }
