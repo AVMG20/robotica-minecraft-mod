@@ -57,8 +57,8 @@
   "message.robotica.robot_no_energy": "%s is out of energy: right-click it with a wound Mainspring or a charged cell",
   "message.robotica.robot_full": "%s is full: put a chest or Supply Crate next to it",
   "message.robotica.battery_inserted": "Battery in: %s",
-  "message.robotica.card_inserted": "Installed: %s",
-  "message.robotica.card_refused": "That card does not fit here, or the slots are full",
+  "message.robotica.card_inserted": "%s: %s of %s",
+  "message.robotica.card_refused": "That card does not fit this machine",
   "gui.robotica.status.finished": "Finished",
   "gui.robotica.status_hint.idle": "Nothing to do in its area right now",
   "gui.robotica.status_hint.working": "Working",
@@ -66,5 +66,6 @@
   "gui.robotica.status_hint.output_full": "Put a chest or Supply Crate next to it, or empty this one",
   "gui.robotica.status_hint.finished": "The hole reaches the bottom of the world",
   "gui.robotica.depth_progress": "Y %s  %s%%",
-  "gui.robotica.progress": "%s%%"
+  "gui.robotica.progress": "%s%%",
+  "message.robotica.card_full": "%s: already at the most this machine takes (%s)"
 }

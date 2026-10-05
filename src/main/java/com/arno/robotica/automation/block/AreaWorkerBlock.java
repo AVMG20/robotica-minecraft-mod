@@ -73,19 +73,21 @@ public abstract class AreaWorkerBlock extends BaseEntityBlock {
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
-        if (stack.getItem() instanceof UpgradeCardItem) {
-            for (int i = 0; i < worker.upgrades.getSlots(); i++) {
-                if (worker.upgrades.getStackInSlot(i).isEmpty() && worker.upgrades.isItemValid(i, stack)) {
-                    if (!level.isClientSide) {
-                        worker.upgrades.setStackInSlot(i, stack.copyWithCount(1));
-                        stack.consume(1, player);
-                        CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
-                        player.displayClientMessage(Component.translatable("message.robotica.card_inserted", worker.upgrades.getStackInSlot(i).getHoverName()), true);
-                    }
-                    return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        if (stack.getItem() instanceof UpgradeCardItem card) {
+            if (worker.upgrades.insertOne(stack)) {
+                if (!level.isClientSide) {
+                    stack.consume(1, player);
+                    CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
+                    player.displayClientMessage(Component.translatable("message.robotica.card_inserted", card.getDescription(),
+                            worker.upgrades.level(card.getKind()), worker.upgrades.cap(card.getKind())), true);
                 }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
             }
-            if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.robotica.card_refused"), true);
+            if (!level.isClientSide) {
+                int cap = worker.upgrades.cap(card.getKind());
+                player.displayClientMessage(cap <= 0 ? Component.translatable("message.robotica.card_refused")
+                        : Component.translatable("message.robotica.card_full", card.getDescription(), cap), true);
+            }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

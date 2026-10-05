@@ -61,7 +61,7 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     @Override
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
-        if (slot.index <= menu.be.upgradeSlotCount()) return icon("upgrade_speed_1");
+        if (slot.index <= menu.be.upgradeSlotCount()) return icon("upgrade_speed");
         return ItemStack.EMPTY;
     }
 

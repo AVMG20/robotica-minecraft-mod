@@ -116,13 +116,18 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         super(type, pos, state);
         this.upgradeSlots = upgradeSlots;
         this.energy = new MachineEnergyStorage(AutomationConfig.energyBuffer(), 1000, 0, this::setChanged);
-        this.upgrades = new Upgrades(upgradeSlots, kinds, this::onUpgradesChanged);
+        this.upgrades = new Upgrades(upgradeSlots, kinds, this::upgradeCap, this::onUpgradesChanged);
     }
 
     // ---- subclass hooks ----
 
     /** Runs every server tick when there is no pending output. Must return the status; consumes its own energy. */
     protected abstract Status work(ServerLevel level);
+
+    /** How many cards of a kind this worker takes. Farm bots raise speed, range and growth with their Mk tier. */
+    protected int upgradeCap(UpgradeKind kind) {
+        return kind.maxStack;
+    }
 
     /** Recomputes {@link #areaSize} (and anything cached) from tier and upgrades. */
     protected abstract void recalc();

@@ -1,0 +1,53 @@
+{
+  "parent": "robotica:guide/hammer",
+  "display": {
+    "icon": {
+      "id": "robotica:minecraft:iron_ingot"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.first_iron.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.first_iron.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:iron_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:combustion_generator",
+      "robotica:charger",
+      "robotica:copper_cell",
+      "robotica:copper_coil",
+      "robotica:iron_casing",
+      "robotica:electric_motor",
+      "robotica:basic_circuit",
+      "robotica:tool_upgrade_kit_1",
+      "robotica:bore_drill_from_tinkers_hammer",
+      "robotica:chainsaw_from_felling_axe",
+      "robotica:copper_conduit"
+    ],
+    "experience": 10
+  }
+}

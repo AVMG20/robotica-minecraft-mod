@@ -75,7 +75,7 @@ public class WindingCrankBlock extends PowerBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (stack.is(CoreItems.MAINSPRING.get()) && level.getBlockEntity(pos) instanceof WindingCrankBlockEntity crank) {
+        if (WindingCrankBlockEntity.isWindable(stack) && level.getBlockEntity(pos) instanceof WindingCrankBlockEntity crank) {
             if (!crank.hasSpring()) {
                 if (!level.isClientSide) {
                     ItemStack one = stack.copyWithCount(1);

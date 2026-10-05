@@ -1,0 +1,40 @@
+{
+  "parent": "robotica:guide/magma_core",
+  "display": {
+    "icon": {
+      "id": "robotica:magma_drill"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.magma_drill.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.magma_drill.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:magma_drill"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 20
+  }
+}

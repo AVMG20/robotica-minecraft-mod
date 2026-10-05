@@ -24,7 +24,7 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
     public final ItemStackHandler spring = new ItemStackHandler(1) {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return stack.is(CoreItems.MAINSPRING.get());
+            return isWindable(stack);
         }
 
         @Override
@@ -40,7 +40,7 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
     };
 
     private final IItemHandler automation = new ItemAccess(spring,
-            (slot, stack) -> stack.is(CoreItems.MAINSPRING.get()) && spring.getStackInSlot(0).isEmpty(),
+            (slot, stack) -> isWindable(stack) && spring.getStackInSlot(0).isEmpty(),
             (slot, stack) -> ItemEnergy.get(stack) >= ItemEnergy.capacity(stack));
 
     private long lastReceiveTick = Long.MIN_VALUE;
@@ -96,6 +96,11 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
 
     public WindingCrankBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.WINDING_CRANK_BE.get(), pos, state);
+    }
+
+    /** The crank winds a Mainspring, and by hand it also charges any other FE item: a cell, a drill, a weapon. */
+    public static boolean isWindable(ItemStack stack) {
+        return stack.is(CoreItems.MAINSPRING.get()) || (stack.getItem() instanceof com.arno.robotica.core.energy.EnergyItem && ItemEnergy.capacity(stack) > 0);
     }
 
     public IEnergyStorage energy() {

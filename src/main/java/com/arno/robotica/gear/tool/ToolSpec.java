@@ -31,8 +31,11 @@ public final class ToolSpec {
     public final Set<ToggleKind> toggles;
     /** Fortune level used by the silk/fortune swap, 0 = no swap. */
     public final int fortuneLevel;
-    /** The hammer mines slower in area modes. */
-    public final boolean slowArea;
+    /**
+     * Mining speed factor in box modes (3x3 and up). Early tools pay for the area with speed: the hammer and Bore Drill
+     * dig a 3x3 at half speed, which is still four times faster than nine single blocks. Later drills lose less.
+     */
+    public final float areaSpeed;
     public final int age;
 
     private ToolSpec(Builder b) {
@@ -48,7 +51,7 @@ public final class ToolSpec {
         this.maxLogs = b.maxLogs;
         this.toggles = b.toggles.isEmpty() ? EnumSet.noneOf(ToggleKind.class) : EnumSet.copyOf(b.toggles);
         this.fortuneLevel = b.fortuneLevel;
-        this.slowArea = b.slowArea;
+        this.areaSpeed = b.areaSpeed;
         this.age = b.age;
     }
 
@@ -96,7 +99,7 @@ public final class ToolSpec {
         private int maxLogs = 64;
         private final Set<ToggleKind> toggles = EnumSet.noneOf(ToggleKind.class);
         private int fortuneLevel;
-        private boolean slowArea;
+        private float areaSpeed = 1.0F;
         private int age;
 
         private Builder(Tier tier, float speed) {
@@ -152,8 +155,8 @@ public final class ToolSpec {
             return this;
         }
 
-        public Builder slowArea() {
-            this.slowArea = true;
+        public Builder areaSpeed(float factor) {
+            this.areaSpeed = factor;
             return this;
         }
 

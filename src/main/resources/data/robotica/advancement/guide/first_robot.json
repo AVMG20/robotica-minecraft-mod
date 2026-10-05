@@ -1,0 +1,46 @@
+{
+  "parent": "robotica:guide/mainspring",
+  "display": {
+    "icon": {
+      "id": "robotica:stumpy"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.first_robot.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.first_robot.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": [
+                  "robotica:stumpy",
+                  "robotica:sprout"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 5
+  }
+}

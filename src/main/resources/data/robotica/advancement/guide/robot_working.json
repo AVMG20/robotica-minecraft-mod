@@ -1,0 +1,34 @@
+{
+  "parent": "robotica:guide/first_robot",
+  "display": {
+    "icon": {
+      "id": "robotica:sprout"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.robot_working.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.robot_working.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "robotica:milestone",
+      "conditions": {
+        "milestone": "robot_working"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 20
+  }
+}

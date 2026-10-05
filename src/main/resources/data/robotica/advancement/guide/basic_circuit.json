@@ -1,0 +1,57 @@
+{
+  "parent": "robotica:guide/first_iron",
+  "display": {
+    "icon": {
+      "id": "robotica:basic_circuit"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.basic_circuit.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.basic_circuit.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:basic_circuit"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:solar_panel_mk1",
+      "robotica:gold_conduit",
+      "robotica:accumulator_1",
+      "robotica:metal_press",
+      "robotica:metal_press_iron_plate",
+      "robotica:metal_press_copper_plate",
+      "robotica:metal_press_gold_plate",
+      "robotica:shock_baton_from_gearblade",
+      "robotica:farm_kit_mk2",
+      "robotica:warp_pad",
+      "robotica:recall_remote",
+      "robotica:upgrade_speed",
+      "robotica:upgrade_efficiency",
+      "robotica:upgrade_growth",
+      "robotica:upgrade_void"
+    ],
+    "experience": 20
+  }
+}

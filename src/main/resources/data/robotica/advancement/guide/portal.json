@@ -1,0 +1,34 @@
+{
+  "parent": "robotica:guide/antigrav_core",
+  "display": {
+    "icon": {
+      "id": "robotica:gate_controller"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.portal.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.portal.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "robotica:milestone",
+      "conditions": {
+        "milestone": "portal"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}

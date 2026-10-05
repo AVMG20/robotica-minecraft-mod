@@ -223,7 +223,7 @@ public class GearToolItem extends Item implements HasDetails {
             lines.add(Component.translatable("tooltip.robotica.gear.key_settings", HasDetails.key("key.robotica.gear.open_toggles"), on)
                     .withStyle(ChatFormatting.GRAY));
         }
-        if (spec.slowArea) lines.add(HasDetails.line("tooltip.robotica.gear.slow_area"));
+        if (spec.areaSpeed < 1.0F) lines.add(HasDetails.line("tooltip.robotica.gear.slow_area", Math.round(spec.areaSpeed * 100)));
         lines.add(HasDetails.line("tooltip.robotica.gear.enchantable"));
     }
 }

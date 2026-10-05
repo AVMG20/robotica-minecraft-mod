@@ -1,0 +1,40 @@
+{
+  "parent": "robotica:guide/antigrav_core",
+  "display": {
+    "icon": {
+      "id": "robotica:null_drill"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.null_drill.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.null_drill.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:null_drill"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}

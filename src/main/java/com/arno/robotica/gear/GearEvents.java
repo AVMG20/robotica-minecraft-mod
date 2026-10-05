@@ -120,13 +120,13 @@ public final class GearEvents {
                 .orElse(stack);
     }
 
-    /** The hammer mines at half speed in its 3x3 mode. */
+    /** Early tools mine slower in their box modes (see ToolSpec.areaSpeed). */
     @SubscribeEvent
     public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
         ItemStack stack = event.getEntity().getMainHandItem();
-        if (stack.getItem() instanceof GearToolItem tool && tool.spec.slowArea
+        if (stack.getItem() instanceof GearToolItem tool && tool.spec.areaSpeed < 1.0F
                 && tool.activeMode(stack, event.getEntity()).isBox()) {
-            event.setNewSpeed(event.getNewSpeed() * 0.5F);
+            event.setNewSpeed(event.getNewSpeed() * tool.spec.areaSpeed);
         }
     }
 

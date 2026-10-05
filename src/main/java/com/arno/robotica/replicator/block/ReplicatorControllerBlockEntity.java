@@ -60,7 +60,7 @@ import java.util.UUID;
 public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implements MenuProvider {
     public static final int OUTPUT_SLOTS = 18;
     public static final int UPGRADE_SLOTS = 3;
-    /** Speed cards above level 3 are not accepted: the replicator is strong, so it stays slow. */
+    /** At most 3 speed cards: the replicator is strong, so it stays slow. */
     public static final int MAX_SPEED_LEVEL = 3;
     /** Extra FE cost of the plasma boost, on top of the speed it gives. */
     private static final double BOOST_ENERGY_FACTOR = 1.25;
@@ -148,16 +148,10 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         };
     }
 
+    /** Speed up to 3 cards (x4, with the plasma boost x8), fortune up to 3 (Looting III), efficiency up to 4. */
     public static Upgrades newUpgrades(Runnable onChanged) {
-        return new Upgrades(UPGRADE_SLOTS, Set.of(UpgradeKind.SPEED, UpgradeKind.FORTUNE, UpgradeKind.EFFICIENCY), onChanged) {
-            @Override
-            public boolean isItemValid(int slot, ItemStack stack) {
-                if (stack.getItem() instanceof UpgradeCardItem card && card.getKind() == UpgradeKind.SPEED && card.getLevel() > MAX_SPEED_LEVEL) {
-                    return false;
-                }
-                return super.isItemValid(slot, stack);
-            }
-        };
+        return new Upgrades(UPGRADE_SLOTS, java.util.Map.of(UpgradeKind.SPEED, MAX_SPEED_LEVEL, UpgradeKind.FORTUNE, 3,
+                UpgradeKind.EFFICIENCY, 4), onChanged);
     }
 
     public final ItemStackHandler vial = newVialHandler(this::setChangedAndSync);

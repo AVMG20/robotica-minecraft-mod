@@ -51,8 +51,8 @@ public final class AutomationConfig {
                 .defineInRange("growthTicksPerColumn", 0.0146, 0.0, 5.0);
         EXCAVATOR_SIZE = b.comment("Excavator base square side without range cards (range cards give 16/32/48/64).")
                 .defineInRange("excavatorSize", 8, 1, 64);
-        EXCAVATOR_INTERVAL = b.comment("Excavator ticks per block.")
-                .defineInRange("excavatorInterval", 40, 1, 1200);
+        EXCAVATOR_INTERVAL = b.comment("Excavator ticks per block without speed cards. Slow on purpose: speed cards are the way up, at a steep FE price.")
+                .defineInRange("excavatorInterval", 60, 1, 1200);
         EXCAVATOR_FE_PER_BLOCK = b.comment("Excavator FE per mined block (before upgrade multipliers).")
                 .defineInRange("excavatorFePerBlock", 40, 0, 1_000_000);
         b.pop();
@@ -103,7 +103,7 @@ public final class AutomationConfig {
     }
 
     public static int excavatorInterval() {
-        return SPEC.isLoaded() ? EXCAVATOR_INTERVAL.get() : 40;
+        return SPEC.isLoaded() ? EXCAVATOR_INTERVAL.get() : 60;
     }
 
     public static int excavatorFe() {

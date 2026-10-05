@@ -1,0 +1,40 @@
+{
+  "parent": "robotica:guide/charger",
+  "display": {
+    "icon": {
+      "id": "robotica:copper_cell"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.copper_cell.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.copper_cell.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:copper_cell"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 5
+  }
+}

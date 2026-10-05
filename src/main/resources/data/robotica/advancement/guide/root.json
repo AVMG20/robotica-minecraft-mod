@@ -1,0 +1,48 @@
+{
+  "display": {
+    "icon": {
+      "id": "robotica:codex"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.root.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.root.description"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "minecraft:textures/block/cut_copper.png"
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:codex",
+              "minecraft:copper_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:codex",
+      "robotica:copper_gear",
+      "robotica:tinkers_hammer",
+      "robotica:felling_axe",
+      "robotica:gearblade",
+      "robotica:supply_crate"
+    ]
+  }
+}

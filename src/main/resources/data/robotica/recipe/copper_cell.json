@@ -2,9 +2,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "CPC",
-    "RBR",
-    "CPC"
+    "CRC",
+    "PRP",
+    "CRC"
   ],
   "key": {
     "C": {
@@ -15,9 +15,6 @@
     },
     "R": {
       "tag": "c:dusts/redstone"
-    },
-    "B": {
-      "item": "robotica:basic_circuit"
     }
   },
   "result": {

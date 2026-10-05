@@ -39,7 +39,7 @@ import java.util.Set;
 public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.RANGE, UpgradeKind.EFFICIENCY,
             UpgradeKind.FORTUNE, UpgradeKind.SILK, UpgradeKind.VOID);
-    /** Square side per range card level 0-4 (level 0 comes from the config). */
+    /** Square side per number of range cards 0-4 (0 cards: the config size). */
     public static final int[] RANGE_SIZES = {8, 16, 32, 48, 64};
     public static final TagKey<Item> VOIDABLE = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(Robotica.MODID, "voidable"));
     private static final int SKIP_PER_TICK = 256;
@@ -124,7 +124,8 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     public int energyPerBlock() {
         int speed = upgrades.level(UpgradeKind.SPEED);
         int eff = upgrades.level(UpgradeKind.EFFICIENCY);
-        return (int) Math.round(CoreConfig.scaleEnergy(AutomationConfig.excavatorFe()) * Upgrades.energyMultiplier(speed, eff));
+        // Steep on purpose: the Excavator is the strongest machine, each speed card costs more FE per block than the last.
+        return (int) Math.round(CoreConfig.scaleEnergy(AutomationConfig.excavatorFe()) * Upgrades.steepEnergyMultiplier(speed, eff));
     }
 
     // ---- work loop ----

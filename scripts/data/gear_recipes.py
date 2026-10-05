@@ -48,8 +48,8 @@ shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': 'copper_gear', 'S':
 shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 
 # Age 1: the Age 0 tools upgrade at a smithing table (kit I + tool + Electric Motor), like every later tier.
-# Kit I is cheap on purpose (about 20 iron): it is the step from hand tools to FE tools.
-shaped('tool_upgrade_kit_1', ['PBP', 'PIP'], {'P': IRON_PLATE, 'B': 'basic_circuit', 'I': 'iron_casing'})
+# Kit I is cheap on purpose (5 iron, some copper and redstone, no gold): the first powered tools come in the first iron hour.
+shaped('tool_upgrade_kit_1', ['PRP', 'PCP'], {'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'C': 'copper_coil'})
 
 # Age 2
 shaped('rivet_gun', ['PPP', 'SAR', ' P '], {'P': IRON_PLATE, 'S': 'servo_actuator', 'A': 'advanced_circuit', 'R': 'reinforced_casing'})
