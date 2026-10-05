@@ -1,5 +1,5 @@
 {
-  "parent": "robotica:guide/copper_gear",
+  "parent": "robotica:guide/robot_built",
   "display": {
     "icon": {
       "id": "robotica:mainspring"

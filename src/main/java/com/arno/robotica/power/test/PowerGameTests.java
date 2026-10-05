@@ -96,6 +96,9 @@ public class PowerGameTests {
 
         ItemEnergy.fill(crank.spring.getStackInSlot(0));
         helper.assertTrue(!items.extractItem(0, 1, false).isEmpty(), "Automation can extract a full spring");
+        // Other FE items fit (an FE source charges them) but only a Mainspring winds by hand.
+        helper.assertTrue(items.insertItem(0, new ItemStack(CoreItems.COPPER_CELL.get()), false).isEmpty(), "A cell fits in the crank");
+        helper.assertTrue(crank.wind(2000) == 0, "Hand winding only works on a Mainspring");
         helper.succeed();
     }
 
@@ -134,8 +137,9 @@ public class PowerGameTests {
 
         helper.succeedWhen(() -> {
             int stored = ItemEnergy.get(charger.slot.getStackInSlot(0));
-            helper.assertTrue(stored >= 1_200, "Cell should be charging at 400 FE/t, has " + stored);
-            helper.assertTrue(stored % 400 == 0, "Charge rate is 400 FE/t, has " + stored);
+            int rate = Math.min(com.arno.robotica.power.PowerConfig.chargerRate(), ChargerBlockEntity.MAX_RECEIVE);
+            helper.assertTrue(stored >= 3 * rate, "Cell should be charging at " + rate + " FE/t, has " + stored);
+            helper.assertTrue(stored % rate == 0, "Charge rate is " + rate + " FE/t, has " + stored);
         });
     }
 

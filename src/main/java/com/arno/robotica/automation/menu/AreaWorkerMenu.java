@@ -11,18 +11,16 @@ import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
  * GUI of Stumpy, Sprout and the Excavator. Layout (176 x 176): energy bar, battery slot, buttons, upgrade slots,
- * 3x3 buffer. Button ids: 0 toggles "show area", 1 toggles leaves (Stumpy).
+ * 3x3 buffer. Button ids: 0 toggles "show area".
  */
 public class AreaWorkerMenu extends MachineMenu {
     public static final int BUTTON_SHOW_AREA = 0;
-    public static final int BUTTON_LEAVES = 1;
 
     public final AreaWorkerBlockEntity be;
     private final int idxEnergy;
     private final int idxCapacity;
     private final int idxStatus;
     private final int idxShow;
-    private final int idxLeaves;
     private final int idxSize;
     private final int idxExtra;
     private final int idxProgress;
@@ -54,7 +52,6 @@ public class AreaWorkerMenu extends MachineMenu {
         idxCapacity = track(() -> be.energy.getMaxEnergyStored());
         idxStatus = track(() -> be.status().ordinal());
         idxShow = track(() -> be.showArea() ? 1 : 0);
-        idxLeaves = track(() -> be.leavesEnabled() ? 1 : 0);
         idxSize = track(be::areaSize);
         idxExtra = track(be::guiExtra);
         idxProgress = track(be::guiProgress);
@@ -76,10 +73,6 @@ public class AreaWorkerMenu extends MachineMenu {
         return synced(idxShow) != 0;
     }
 
-    public boolean leaves() {
-        return synced(idxLeaves) != 0;
-    }
-
     public int size() {
         return synced(idxSize);
     }
@@ -98,10 +91,6 @@ public class AreaWorkerMenu extends MachineMenu {
         if (be.isRemoved()) return false;
         if (id == BUTTON_SHOW_AREA) {
             be.toggleShowArea();
-            return true;
-        }
-        if (id == BUTTON_LEAVES && be.hasLeavesToggle()) {
-            be.toggleLeaves();
             return true;
         }
         return false;

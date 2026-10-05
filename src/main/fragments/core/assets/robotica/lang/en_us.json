@@ -54,6 +54,7 @@
   "item.robotica.upgrade_silk": "Silk Touch Upgrade",
   "item.robotica.upgrade_growth": "Growth Upgrade",
   "item.robotica.upgrade_void": "Void Filter Upgrade",
+  "item.robotica.upgrade_pickup": "Auto-Pickup Upgrade",
   "tooltip.robotica.upgrade.speed": "Works faster. Costs more energy per action",
   "tooltip.robotica.upgrade.range": "Bigger work area",
   "tooltip.robotica.upgrade.efficiency": "-15% energy per action per card",
@@ -61,6 +62,7 @@
   "tooltip.robotica.upgrade.silk": "Mined blocks drop themselves. Not with Fortune",
   "tooltip.robotica.upgrade.growth": "+50% crop and sapling growth per card",
   "tooltip.robotica.upgrade.void": "Deletes cobblestone, dirt, gravel and other junk",
+  "tooltip.robotica.upgrade.pickup": "Tool module: drops go straight to your inventory",
   "tooltip.robotica.upgrade.speed.steps": "Cards: 1 = x2, 2 = x3, 3 = x4, 4 = x6, 5 = x8, 6 = x11, 7 = x15, 8 = x20",
   "tooltip.robotica.upgrade.range.steps": "Robots: +2 radius per card. Excavator: 16, 32, 48, 64 wide",
   "tooltip.robotica.upgrade.efficiency.steps": "Up to 4 cards: -60%, never below 40% of the base cost",
@@ -68,6 +70,7 @@
   "tooltip.robotica.upgrade.silk.steps": "One card is all it takes",
   "tooltip.robotica.upgrade.growth.steps": "Up to 4 cards: +200% growth",
   "tooltip.robotica.upgrade.void.steps": "One card is all it takes",
+  "tooltip.robotica.upgrade.pickup.steps": "Power tools only, at a Tinker's Bench",
   "tooltip.robotica.upgrade_stacks": "Stacks: up to %s in one slot, each card adds a step",
   "tooltip.robotica.upgrade_caps": "Robots take as many speed, range and growth cards as their Mk tier",
   "tooltip.robotica.mainspring.details": "Wind it at a Winding Crank: hold right-click on the crank.\nRight-click a robot with it to power the robot.\nIn your inventory it also feeds the FE tool in your hand."

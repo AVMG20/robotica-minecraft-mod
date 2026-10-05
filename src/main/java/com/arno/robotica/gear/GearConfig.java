@@ -40,7 +40,7 @@ public final class GearConfig {
         SHOCK_BATON_COST = b.comment("FE per hit, Shock Baton.").defineInRange("shockBatonPerHit", 250, 0, 1_000_000);
         RIVET_GUN_COST = b.comment("FE per shot, Rivet Gun.").defineInRange("rivetGunPerShot", 400, 0, 1_000_000);
         ARC_BLADE_COST = b.comment("FE per hit, Arc Blade.").defineInRange("arcBladePerHit", 800, 0, 1_000_000);
-        NULL_LANCE_COST = b.comment("FE per shot, Null Lance.").defineInRange("nullLancePerShot", 20_000, 0, 100_000_000);
+        NULL_LANCE_COST = b.comment("FE per shot, Null Lance.").defineInRange("nullLancePerShot", 8_000, 0, 100_000_000);
         b.pop();
         SPEC = b.build();
     }

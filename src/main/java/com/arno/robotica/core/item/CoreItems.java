@@ -26,7 +26,7 @@ public final class CoreItems {
     public static final DeferredItem<PartItem> COPPER_GEAR = part("copper_gear", 0);
     public static final DeferredItem<PartItem> CLOCKWORK_MECHANISM = part("clockwork_mechanism", 0);
     public static final DeferredItem<PartItem> WOODEN_CHASSIS = part("wooden_chassis", 0);
-    public static final DeferredItem<CellItem> MAINSPRING = cell("mainspring", 576_000, 0, 200, Rarity.COMMON);
+    public static final DeferredItem<CellItem> MAINSPRING = cell("mainspring", 240_000, 0, 200, Rarity.COMMON);
 
     // Age 1
     public static final DeferredItem<PartItem> IRON_PLATE = part("iron_plate", 1);
@@ -36,13 +36,13 @@ public final class CoreItems {
     public static final DeferredItem<PartItem> IRON_CASING = part("iron_casing", 1);
     public static final DeferredItem<PartItem> BASIC_CIRCUIT = part("basic_circuit", 1);
     public static final DeferredItem<PartItem> ELECTRIC_MOTOR = part("electric_motor", 1);
-    public static final DeferredItem<CellItem> COPPER_CELL = cell("copper_cell", 2_304_000, 2_000, 2_000, Rarity.COMMON);
+    public static final DeferredItem<CellItem> COPPER_CELL = cell("copper_cell", 800_000, 2_000, 2_000, Rarity.COMMON);
 
     // Age 2
     public static final DeferredItem<PartItem> REINFORCED_CASING = part("reinforced_casing", 2);
     public static final DeferredItem<PartItem> ADVANCED_CIRCUIT = part("advanced_circuit", 2);
     public static final DeferredItem<PartItem> SERVO_ACTUATOR = part("servo_actuator", 2);
-    public static final DeferredItem<CellItem> REDSTONE_CELL = cell("redstone_cell", 6_912_000, 8_000, 8_000, Rarity.UNCOMMON);
+    public static final DeferredItem<CellItem> REDSTONE_CELL = cell("redstone_cell", 3_200_000, 8_000, 8_000, Rarity.UNCOMMON);
     public static final DeferredItem<PartItem> SERVO_CORE = core("servo_core", 2, Rarity.UNCOMMON);
 
     // Age 3

@@ -43,8 +43,8 @@ public final class DronesConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("mining_drone");
-        MINING_FE_PER_BLOCK = b.comment("FE per mined block.").defineInRange("miningFePerBlock", 60, 0, 1_000_000);
-        MINING_DIG_TICKS = b.comment("Ticks between two mined blocks (Mk2 is faster).").defineInRange("miningDigTicks", 3, 1, 200);
+        MINING_FE_PER_BLOCK = b.comment("FE per mined block.").defineInRange("miningFePerBlock", 80, 0, 1_000_000);
+        MINING_DIG_TICKS = b.comment("Ticks between two mined blocks (Mk2 is faster).").defineInRange("miningDigTicks", 8, 1, 200);
         TUNNEL_MAX_LENGTH = b.comment("Longest tunnel a player can order (the GUI offers 16, 32, 64 and 128 up to this value).")
                 .defineInRange("tunnelMaxLength", 128, 16, 512);
         TUNNEL_DEFAULT_LENGTH = b.comment("Tunnel length of a freshly crafted drone.").defineInRange("tunnelDefaultLength", 64, 1, 512);

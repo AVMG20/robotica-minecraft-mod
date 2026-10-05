@@ -20,8 +20,10 @@ public enum UpgradeKind {
     SILK(1, 2),
     /** +50% crop and sapling growth per card. */
     GROWTH(4, 1),
-    /** Deletes junk (tag robotica:voidable). Single card. */
-    VOID(1, 1);
+    /** Deletes junk (tag robotica:voidable). Single card. Also the void filter module of a tool (Tinker's Bench). */
+    VOID(1, 1),
+    /** Auto-pickup module of a tool (Tinker's Bench): drops go straight into the inventory. Single card, no machine takes it. */
+    PICKUP(1, 1);
 
     /** Most cards of this kind any machine accepts in its slot. 1 = not stackable. */
     public final int maxStack;

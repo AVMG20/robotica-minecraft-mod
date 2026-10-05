@@ -1,6 +1,7 @@
 package com.arno.robotica.gear.tool;
 
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.item.HasDetails;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -131,8 +132,9 @@ public class GearToolItem extends Item implements HasDetails {
         return mode(stack);
     }
 
+    /** The tool has the toggle, its module card is installed (auto-pickup, void filter) and it is switched on. */
     public boolean toggleActive(ItemStack stack, ToggleKind kind) {
-        return spec.toggles.contains(kind) && ToolSettings.has(stack, kind);
+        return spec.toggles.contains(kind) && ToolSettings.installed(stack, kind) && ToolSettings.has(stack, kind);
     }
 
     // ---- enchanting: Robotica tools take the normal mining enchantments (tag minecraft:enchantable/mining) ----
@@ -214,14 +216,28 @@ public class GearToolItem extends Item implements HasDetails {
         if (!spec.toggles.isEmpty()) {
             MutableComponent on = Component.empty();
             boolean first = true;
+            MutableComponent modules = Component.empty();
+            boolean anyModule = false, anyInstalled = false;
             for (ToggleKind kind : ToggleKind.values()) {
                 if (!spec.toggles.contains(kind)) continue;
+                if (kind.isModule()) {
+                    anyModule = true;
+                    if (!ToolSettings.installed(stack, kind)) continue;
+                    if (anyInstalled) modules.append(", ");
+                    anyInstalled = true;
+                    modules.append(CoreItems.card(kind.module).get().getDescription());
+                }
                 if (!first) on.append(", ");
                 first = false;
                 on.append(kind.displayName().copy().withStyle(ToolSettings.has(stack, kind) ? ChatFormatting.DARK_AQUA : ChatFormatting.DARK_GRAY));
             }
-            lines.add(Component.translatable("tooltip.robotica.gear.key_settings", HasDetails.key("key.robotica.gear.open_toggles"), on)
-                    .withStyle(ChatFormatting.GRAY));
+            if (!first) {
+                lines.add(Component.translatable("tooltip.robotica.gear.key_settings", HasDetails.key("key.robotica.gear.open_toggles"), on)
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            if (anyModule) {
+                lines.add(anyInstalled ? HasDetails.line("tooltip.robotica.gear.modules", modules) : HasDetails.line("tooltip.robotica.gear.no_modules"));
+            }
         }
         if (spec.areaSpeed < 1.0F) lines.add(HasDetails.line("tooltip.robotica.gear.slow_area", Math.round(spec.areaSpeed * 100)));
         lines.add(HasDetails.line("tooltip.robotica.gear.enchantable"));

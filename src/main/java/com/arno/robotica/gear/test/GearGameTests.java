@@ -5,7 +5,10 @@ import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.gear.GearComponents;
 import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.gear.GearBlocks;
 import com.arno.robotica.gear.GearItems;
+import com.arno.robotica.gear.bench.TinkersBenchMenu;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.AreaShape;
 import com.arno.robotica.gear.tool.BreakQueue;
@@ -22,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -291,7 +295,18 @@ public class GearGameTests {
         ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
         ItemEnergy.fill(drill);
         ToolSettings.set(drill, ToggleKind.AUTO_PICKUP, true);
+        ToolSettings.set(drill, ToggleKind.VOID_FILTER, true);
         player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        // Switched on, but no modules installed: the drop lands on the ground.
+        level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+        helper.assertTrue(player.gameMode.destroyBlock(pos), "stone should break");
+        helper.assertTrue(player.getInventory().countItem(Items.COBBLESTONE) == 0, "auto-pickup needs the Auto-Pickup module");
+        List<ItemEntity> dropped = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3));
+        helper.assertTrue(!dropped.isEmpty(), "without the void module the drop stays");
+        dropped.forEach(ItemEntity::discard);
+        ToolSettings.set(player.getMainHandItem(), ToggleKind.VOID_FILTER, false);
+        ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.AUTO_PICKUP, true);
+        ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
         level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
         helper.assertTrue(player.gameMode.destroyBlock(pos), "stone should break");
         helper.assertTrue(player.getInventory().countItem(Items.COBBLESTONE) == 1, "auto-pickup should put the cobblestone in the inventory");
@@ -348,8 +363,13 @@ public class GearGameTests {
             ItemStack stack = new ItemStack(tool);
             AreaMode expected = tool.spec.isAxe() ? AreaMode.TREE : AreaMode.AREA_3;
             helper.assertTrue(tool.mode(stack) == expected, tool + " should start in " + expected + ", got " + tool.mode(stack));
-            helper.assertTrue(ToolSettings.has(stack, ToggleKind.AUTO_PICKUP) == tool.spec.toggles.contains(ToggleKind.AUTO_PICKUP),
-                    tool + ": auto-pickup is on by default");
+            helper.assertTrue(!tool.toggleActive(stack, ToggleKind.AUTO_PICKUP), tool + ": no auto-pickup without the Auto-Pickup module");
+            helper.assertTrue(tool.spec.isEnergy() == tool.spec.toggles.contains(ToggleKind.AUTO_PICKUP)
+                    && tool.spec.isEnergy() == tool.spec.toggles.contains(ToggleKind.VOID_FILTER), tool + ": only power tools take modules");
+            ItemStack withPickup = stack.copy();
+            ToolSettings.setInstalled(withPickup, ToggleKind.AUTO_PICKUP, true);
+            helper.assertTrue(tool.toggleActive(withPickup, ToggleKind.AUTO_PICKUP) == tool.spec.isEnergy(),
+                    tool + ": with the Auto-Pickup card installed auto-pickup is on by default");
             player.setItemInHand(InteractionHand.MAIN_HAND, stack);
             java.util.Set<AreaMode> seen = new java.util.HashSet<>();
             for (int i = 0; i < tool.spec.modes.size(); i++) {
@@ -424,6 +444,72 @@ public class GearGameTests {
         for (String id : List.of("bore_drill_from_tinkers_hammer", "chainsaw_from_felling_axe", "shock_baton_from_gearblade")) {
             helper.assertTrue(level.getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath(Robotica.MODID, id)).isPresent(), "missing " + id);
         }
+        helper.succeed();
+    }
+
+    /** A module toggle cannot be switched on before its card is installed; plain settings work right away. */
+    @GameTest(template = "empty")
+    public static void moduleTogglesNeedTheirCard(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper, helper.absolutePos(new BlockPos(1, 1, 1)));
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(GearItems.BORE_DRILL.get()));
+        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.VOID_FILTER.ordinal());
+        helper.assertTrue(!ToolSettings.has(player.getMainHandItem(), ToggleKind.VOID_FILTER), "the void filter needs its card first");
+        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.KEEP_FLOOR.ordinal());
+        helper.assertTrue(!ToolSettings.has(player.getMainHandItem(), ToggleKind.KEEP_FLOOR), "keep floor toggles without a card");
+        ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
+        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.VOID_FILTER.ordinal());
+        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.VOID_FILTER), "installed: the toggle works");
+        helper.succeed();
+    }
+
+    /**
+     * Tinker's Bench: only power tools go in; a card in a module slot installs the module and is used up, taking it out
+     * gives the card back; closing the screen returns the tool with its modules and energy.
+     */
+    @GameTest(template = "empty")
+    public static void tinkersBenchInstallsAndRemovesModules(GameTestHelper helper) {
+        BlockPos benchPos = new BlockPos(1, 1, 1);
+        helper.setBlock(benchPos, GearBlocks.TINKERS_BENCH.get());
+        ServerPlayer player = survivalPlayer(helper, helper.absolutePos(benchPos));
+        player.getInventory().clearContent();
+        TinkersBenchMenu menu = new TinkersBenchMenu(1, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(benchPos)));
+        helper.assertTrue(!menu.getSlot(0).mayPlace(new ItemStack(GearItems.TINKERS_HAMMER.get())), "the hammer takes no modules");
+        helper.assertTrue(!menu.getSlot(0).mayPlace(new ItemStack(GearItems.FELLING_AXE.get())), "the felling axe takes no modules");
+        ItemStack pickup = CoreItems.cards(UpgradeKind.PICKUP, 3);
+        helper.assertTrue(!menu.getSlot(1).isActive() && !menu.getSlot(1).mayPlace(pickup), "no tool: the module slots are closed");
+
+        ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
+        ItemEnergy.fill(drill);
+        menu.getSlot(0).set(drill);
+        helper.assertTrue(menu.getSlot(1).mayPlace(pickup) && !menu.getSlot(2).mayPlace(pickup), "the pickup card goes in its own slot");
+        menu.getSlot(1).set(pickup.split(1));
+        helper.assertTrue(pickup.getCount() == 2, "one card is used");
+        helper.assertTrue(ToolSettings.installed(menu.tool(), ToggleKind.AUTO_PICKUP), "the pickup module is installed");
+        helper.assertTrue(menu.getSlot(1).getItem().is(CoreItems.card(UpgradeKind.PICKUP).get()), "the slot shows the installed card");
+
+        // Shift-click from the player's inventory (menu slot 3 = inventory slot 9) installs one void card.
+        player.getInventory().setItem(9, CoreItems.cards(UpgradeKind.VOID, 2));
+        menu.quickMoveStack(player, 1 + TinkersBenchMenu.MODULES.length);
+        helper.assertTrue(ToolSettings.installed(menu.tool(), ToggleKind.VOID_FILTER), "shift-click installs the void card");
+        helper.assertTrue(player.getInventory().getItem(9).getCount() == 1, "only one void card is used, " + player.getInventory().getItem(9).getCount() + " left");
+
+        // Taking a module out gives the card back.
+        ItemStack back = menu.getSlot(1).remove(1);
+        helper.assertTrue(back.is(CoreItems.card(UpgradeKind.PICKUP).get()) && !ToolSettings.installed(menu.tool(), ToggleKind.AUTO_PICKUP),
+                "removing the module returns the card");
+        helper.assertTrue(menu.getSlot(1).getItem().isEmpty(), "the slot is empty again");
+
+        // Closing hands the tool back.
+        menu.removed(player);
+        helper.assertTrue(menu.tool().isEmpty(), "the bench keeps nothing");
+        ItemStack returned = ItemStack.EMPTY;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (player.getInventory().getItem(i).is(GearItems.BORE_DRILL.get())) returned = player.getInventory().getItem(i);
+        }
+        helper.assertTrue(!returned.isEmpty(), "the drill comes back on close");
+        helper.assertTrue(ToolSettings.installed(returned, ToggleKind.VOID_FILTER) && ItemEnergy.get(returned) == ItemEnergy.capacity(returned),
+                "modules and energy survive the bench");
         helper.succeed();
     }
 }

@@ -37,7 +37,7 @@
   "exo.robotica.module.robot_hud.desc": "Shows nearby drones and robots on your HUD.",
   "exo.robotica.module.jet_assist.desc": "Slows a long fall and adds a mid-air double jump (press jump again).",
   "exo.robotica.module.flight.desc": "Creative-style flight, toggled with K. Drains the battery fast while flying.",
-  "exo.robotica.module.kinetic_shield.desc": "Absorbs incoming damage with stored energy instead of health.",
+  "exo.robotica.module.kinetic_shield.desc": "Absorbs up to 75%% of each hit with stored energy instead of health.",
   "exo.robotica.module.servo_stride_1.desc": "Run 20% faster.",
   "exo.robotica.module.servo_stride_2.desc": "Run 40% faster. Replaces Servo Stride I.",
   "exo.robotica.module.servo_stride_3.desc": "Run 60% faster. Replaces Servo Stride II.",
@@ -73,6 +73,8 @@
   "robotica.configuration.fallDampenerPerBlock": "Fall Dampener FE per block",
   "robotica.configuration.magnetPerSecond": "Magnet FE per second",
   "robotica.configuration.cellsRechargeSuit": "Cells in the inventory recharge the suit",
+  "robotica.configuration.cellRechargePerSecond": "Cell recharge FE per second (all cells)",
   "robotica.configuration.magnetRadius": "Magnet radius",
-  "robotica.configuration.airJumps": "Jet Assist extra jumps"
+  "robotica.configuration.airJumps": "Jet Assist extra jumps",
+  "robotica.configuration.kineticShieldAbsorb": "Kinetic Shield share of each hit absorbed"
 }

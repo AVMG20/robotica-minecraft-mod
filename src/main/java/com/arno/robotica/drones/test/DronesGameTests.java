@@ -2,9 +2,11 @@ package com.arno.robotica.drones.test;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.CoreComponents;
+import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.entity.CourierDrone;
 import com.arno.robotica.drones.entity.CourierRoute;
@@ -93,7 +95,8 @@ public class DronesGameTests {
             helper.assertBlockPresent(Blocks.STONE, p(3, 2, 3));
             helper.assertBlockPresent(Blocks.STONE, p(3, 0, 1));
             helper.assertTrue(drone.count(Items.COBBLESTONE) == 45, "5 slices of 9 stone give 45 cobblestone, has " + drone.count(Items.COBBLESTONE));
-            helper.assertTrue(drone.getEnergy() == before - 45 * 60, "each block costs 60 FE, spent " + (before - drone.getEnergy()));
+            int perBlock = CoreConfig.scaleEnergy(DronesConfig.miningFePerBlock());
+            helper.assertTrue(drone.getEnergy() == before - 45 * perBlock, "each block costs " + perBlock + " FE, spent " + (before - drone.getEnergy()));
             clear(helper);
         });
     }

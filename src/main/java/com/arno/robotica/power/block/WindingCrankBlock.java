@@ -117,14 +117,15 @@ public class WindingCrankBlock extends PowerBlock {
                 return InteractionResult.CONSUME;
             }
             LAST_PEEK.remove(player.getUUID());
-            ItemStack out = crank.spring.getStackInSlot(0).copy();
-            crank.spring.setStackInSlot(0, ItemStack.EMPTY);
-            CoreSounds.play(level, pos, CoreSounds.SPRING_REMOVE, SoundSource.BLOCKS, 0.7F, 1.0F);
-            player.getInventory().placeItemBackInInventory(out);
+            ejectTo(crank, level, pos, player);
             return InteractionResult.CONSUME;
         }
         if (!crank.hasSpring()) {
             player.displayClientMessage(Component.translatable("message.robotica.crank_empty"), true);
+            return InteractionResult.CONSUME;
+        }
+        if (!crank.handWindable()) {
+            player.displayClientMessage(Component.translatable("message.robotica.crank_spring_only"), true);
             return InteractionResult.CONSUME;
         }
         int now = level.getServer().getTickCount();
@@ -150,6 +151,22 @@ public class WindingCrankBlock extends PowerBlock {
         player.displayClientMessage(Component.translatable(added > 0 ? "message.robotica.crank_wound" : "message.robotica.crank_full",
                 percent, stored, capacity), true);
         return InteractionResult.CONSUME;
+    }
+
+    /** Left-click pops the spring (or whatever FE item is in the crank) out into your inventory instead of breaking the crank. */
+    @Override
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (!level.isClientSide && !player.isCreative() && level.getBlockEntity(pos) instanceof WindingCrankBlockEntity crank && crank.hasSpring()) {
+            ejectTo(crank, level, pos, player);
+        }
+        super.attack(state, level, pos, player);
+    }
+
+    private static void ejectTo(WindingCrankBlockEntity crank, Level level, BlockPos pos, Player player) {
+        ItemStack out = crank.spring.getStackInSlot(0).copy();
+        crank.spring.setStackInSlot(0, ItemStack.EMPTY);
+        CoreSounds.play(level, pos, CoreSounds.SPRING_REMOVE, SoundSource.BLOCKS, 0.7F, 1.0F);
+        player.getInventory().placeItemBackInInventory(out);
     }
 
     @Override

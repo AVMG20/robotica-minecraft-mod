@@ -35,7 +35,7 @@ Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate
 
 ### Age 0 parts
 - Copper Gear: 4 copper ingot (plus shape) + 1 cobblestone → 1
-- Mainspring (Age 0 battery, 576,000 FE, wound at the Winding Crank): 8 copper ingot ring + 1 copper gear → 1
+- Mainspring (Age 0 battery, 240,000 FE, wound at the Winding Crank): 8 copper ingot ring + 1 copper gear → 1
 - Clockwork Mechanism: 4 copper gear + 4 planks + 1 cobblestone center → 1 (raw: 16 copper)
 - Wooden Chassis: 4 logs + 4 cobblestone + 1 copper block → 1
 
@@ -45,13 +45,13 @@ Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate
 - Iron Casing: 8 iron ingot + 1 redstone → 1
 - Basic Circuit: 3 redstone / copper ingot, gold ingot, copper ingot / 3 iron plate → 1
 - Electric Motor: 4 iron plate + 2 copper coil + 2 redstone + 1 clockwork mechanism → 1
-- Copper Cell (2,304,000 FE): 4 copper ingot + 2 iron plate + 3 redstone (first-iron battery, no gold)
+- Copper Cell (800,000 FE): 4 copper ingot + 2 iron plate + 3 redstone (first-iron battery, no gold)
 
 ### Age 2 parts
 - Reinforced Casing: 4 iron casing + 4 obsidian + 1 diamond → 1 (raw: 32 iron)
 - Advanced Circuit: 4 basic circuit + 2 gold ingot + 2 quartz + 1 diamond → 1
 - Servo Actuator: 2 electric motor + 4 gold ingot + 2 iron plate + 1 advanced circuit → 1
-- Redstone Cell (6,912,000 FE): 2 copper cell + 4 redstone block + 1 reinforced casing + 1 advanced circuit
+- Redstone Cell (3,200,000 FE): 2 copper cell + 4 redstone block + 1 reinforced casing + 1 advanced circuit
 - Servo Core: Scrap Colossus drop (fallback recipe: 4 diamond blocks + 4 servo actuator + 1 reinforced casing, about 830 IE)
 
 ### Age 3 parts
@@ -77,7 +77,8 @@ One card item per kind: `robotica:upgrade_<kind>`. A machine has a few upgrade s
 | `speed` | 1 | 8 | rate x2, x3, x4, x6, x8, x11, x15, x20 |
 | `efficiency` | 1 | 4 | -15% energy per action (floor 40%) |
 | `growth` | 1 | 4 | +50% crop/sapling growth |
-| `void` | 1 | 1 | deletes `robotica:voidable` |
+| `void` | 1 | 1 | deletes `robotica:voidable` (also the void filter module of power tools) |
+| `pickup` | 1 | 1 | tool module only: auto-pickup on power tools (Tinker's Bench) |
 | `range` | 2 | 4 | machine specific (robots +2 radius, Excavator 16/32/48/64) |
 | `fortune` | 2 | 3 | Fortune I-III (Looting in the replicator) |
 | `silk` | 2 | 1 | Silk Touch |
@@ -90,9 +91,9 @@ API (`core.upgrade`): `new Upgrades(slots, Set<UpgradeKind>, onChanged)` (kinds 
 
 ## Machines and power (module `power`)
 
-- Winding Crank (Age 0): holds a Mainspring (or any FE item: cell, drill). Hold right-click with an empty hand: +6,000 FE per turn, 5 turns/s, a Mainspring is full in about 20 s. Sneak-right-click with an empty hand shows the charge on the action bar, a second sneak-click within 2 s takes the item out. Accepts FE from any source at 200 FE/t. Mainsprings only charge here; the Mainspring tooltip shows how far it is wound in percent.
-- Combustion Generator (first iron: copper shell, furnace, 1 iron ingot): burns furnace fuel, 40 FE/t, buffer 40,000. Right-click it with fuel.
-- Solar Panel Mk1 (Age 1) 8 FE/t, Mk2 (Age 2) 32 FE/t daytime with sky access.
+- Winding Crank (Age 0): holds a Mainspring (or any FE item: cell, drill). Hold right-click with an empty hand: +400 FE per turn, 5 turns/s (100 FE/t, a bit more than a Combustion Generator but you have to stand there), a Mainspring is full in about 2 minutes. Only a Mainspring winds by hand; other FE items only charge from an FE source. Left-click pops the item out; sneak-right-click shows the charge, a second sneak-click within 2 s also takes it out. Accepts FE from any source at 200 FE/t. Mainsprings only charge here; the Mainspring tooltip shows how far it is wound in percent.
+- Combustion Generator (first iron: copper shell, furnace, 1 iron ingot): burns furnace fuel, 80 FE/t (in line with other mods' coal generators), buffer 40,000. Right-click it with fuel.
+- Solar Panel Mk1 (Age 1) 20 FE/t, Mk2 (Age 2) 80 FE/t daytime with sky access.
 - Accumulator I/II/III: 1M / 4M / 16M FE, I/O 1,000 / 4,000 / 16,000 FE/t.
 - Tesla Coils (wireless power, replaced the Copper/Gold Conduits): a torch-sized coil placed on floors, walls or ceilings (FACING, 6 ways) with a full-bright tip.
   - Tiers I-V: 4 / 8 / 12 / 16 / 32 links, range 8 / 12 / 16 / 24 / 32 blocks, 4,000 / 16,000 / 64,000 / 256,000 / 1,000,000 FE/t per coil (server config `teslaRate1-5`, `teslaRange1-5`). Tier I is a first-iron item (copper coil, iron plate, redstone; 6 IE, no gold) so the first generator can feed machines; every later tier consumes the one before plus that age's circuit and casing (II basic circuit + gold, III advanced circuit + Reinforced Casing, IV quantum circuit + Blazing Casing, V null circuit + Null Casing).
@@ -101,7 +102,7 @@ API (`core.upgrade`): `new Upgrades(slots, Set<UpgradeKind>, onChanged)` (kinds 
   - Flow: each tick a source coil asks its block for up to its rate and splits it fairly over its links (then offers the rest to machines that still take energy). A coil-to-coil hop forwards the share minus `teslaHopLoss` (5%) and the next coil splits it again; a visited set per push stops loops, so one push is O(links). Each coil sends at most its rate per tick in total. Only what was delivered leaves the source.
   - Links live in the coil's block entity (target pos + face, or coil pos) with the owner UUID. Only the owner, the owner's team or an operator may link; the target must be interactable (spawn protection) and in the same dimension and range. Unloaded targets are skipped, chunks are never loaded; links to blocks that are gone (no coil, no FE capability) are dropped every 2 s.
   - Right-click with an empty hand: status screen with links used / max, FE/t sent and whether it sends or relays. The client draws thin animated arcs from the tip to every target (bright while energy flows, faint when idle) and sparks; client config `teslaArcs` / `teslaParticles` turn them off. Charger hum and zap sounds every few seconds while active.
-- Charger (first iron: copper, 1 iron plate, redstone): charges FE items, 400 FE/t, one slot. Right-click it with the item.
+- Charger (first iron: copper, 1 iron plate, redstone): charges FE items, 2,000 FE/t (never more than the item takes), one slot. Right-click it with the item.
 - Metal Press (Age 1): 1 ingot → 1 plate, 20 FE/t, 100 ticks. Right-click with ingots or upgrade cards.
 - Cells in a player's inventory recharge the FE tool or weapon in their hands at the cell's output rate.
 
@@ -111,7 +112,7 @@ Area workers are block entities, never mobs. All of them: battery slot (cell or 
 
 Usability: right-click with a battery swaps it in, with a card installs one card. Sneak-right-click with an empty hand shows a status line and the work area. The work area outline shows for 10 s after placing, upgrading or a Mk kit. A stalled robot puffs smoke (no energy) or shows a sign (output full) every 2 s and tells its owner once on the action bar (when within 32 blocks).
 
-- Stumpy (lumber bot, Age 0). Mk1 9×9, 1 action / 40 ticks, growth ×1.5, 4 FE/t while working. Fells a whole tree as one action (up to 256 logs, includes leaves only with a toggle), replants saplings from its buffer, collects item drops in the area.
+- Stumpy (lumber bot, Age 0). Mk1 9×9, 1 action / 40 ticks, growth ×1.5, 4 FE/t while working plus 250 FE per log felled (a tree never costs more than the 20k buffer; a Mainspring is roughly 850 logs). Fells a whole tree as one action (up to 256 logs, always with its natural leaves), replants saplings from its buffer, collects item drops in the area.
 - Sprout (crop bot, Age 0). Harvests mature crops (`CropBlock`, nether wart, sweet berries, cocoa), replants, tills dirt with water nearby. 3 FE/t.
 - Farm tiers via Mk kits used on the placed bot: Mk2 (Age 1 parts) 13×13, every 20 ticks, growth ×2; Mk3 (Age 2) 17×17, 5 ticks, ×3; Mk4 (Age 4) 25×25, 1 tick, ×5. Each Mk raises the speed/range/growth card cap by one. Range cards add +2 radius each.
 - Growth boost is applied as extra random ticks on crops/saplings in the area (cheap: N random positions per second, not every block).
@@ -148,7 +149,8 @@ Controls and settings (stored per tool as data components, changed through a cli
 - V cycles mode (sneak + V or sneak + scroll goes back). The HUD shows "1x1 [3x3] 5x5 [V]"; the tooltip shows every mode with the current one highlighted. A mode tick sounds higher for bigger modes.
 - Holding sneak always mines 1×1.
 - B: Silk Touch / Fortune / off (Servo and up).
-- G: settings screen. Only four toggles: keep floor (on by default), auto-pickup (on by default), void filter, auto-smelt (Magma and Null). Light placer, leaves and replant toggles were removed: tree tools always replant from your saplings and the Chainsaw always clears leaves.
+- G: settings screen. Only four toggles: keep floor (on by default), auto-pickup (on by default once installed), void filter, auto-smelt (Magma and Null). The Age 0 hammer and axe only have keep floor (hammer).
+- Tool modules (power tools only): auto-pickup needs a Auto-Pickup Upgrade (`upgrade_pickup`: ender pearls, redstone, iron plates, Basic Circuit) and the void filter a Void Filter Upgrade, installed at a Tinker's Bench (Age 1: iron plates, copper gears, crafting table, planks). The bench stores nothing: one tool slot and one slot per module; a card put in is used up and stored on the tool (`gear_modules` component, kept through smithing), taking it out gives the card back. Machines do not take the Auto-Pickup card. Light placer, leaves and replant toggles were removed: tree tools always replant from your saplings and the Chainsaw always clears leaves.
 - Area outline rendered client side before breaking.
 - Sounds scale with the break: 3×3 crunch, 5×5/3×3×3 heavy crunch, more than 27 blocks a drill spin-up, a rumble and debris while the queue drains, a crash for whole trees.
 
@@ -229,7 +231,7 @@ Getting home and travelling between bases. All teleports run on the server, cost
 
 ## Onboarding (module `codex`)
 
-- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, Tesla Coil, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Rusted Foundry or Signal Flare → Scrap Colossus → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
+- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → craft a robot → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, Tesla Coil, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Rusted Foundry or Signal Flare → Scrap Colossus → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
 - Custom trigger `robotica:milestone` (core `Milestones`) for wind_spring, robot_working, farm_kit, vial_complete, replicator_formed, warp, portal. Machines award their owner when online and nearby.
 - The server syncs finished guide steps to the client (`robotica:codex_guide_progress`); the Codex's first chapter "Next steps" lists the steps you can do now and a checklist.
 - When a guide step is done, chat names the next one or two steps (config `guideChatTips`).
@@ -256,7 +258,7 @@ Raw-material costs of every item are in `docs/COSTS.md` (regenerate with `python
 
 Progression pass (start quickly, scale to the late game):
 - First iron hour, all without gold or diamonds: Combustion Generator 6.4 IE (1 iron), Charger 5.4 IE (1 iron), Copper Cell 4.8 IE (2 iron, 3 redstone), Tool Upgrade Kit I 8.6 IE, Bore Drill and Chainsaw about 32 IE through smithing (11 iron, mostly copper). A Copper Cell holds 5.7 drill charges (2.3M vs 400k FE); kept in the inventory it recharges the drill in hand.
-- Winding Crank 2,000 → 6,000 FE per turn and 5 turns/s when holding right-click: a Mainspring in about 20 s instead of 72 s of clicking.
+- Winding Crank 2,000 → 6,000 FE per turn and 5 turns/s when holding right-click (later lowered again, see the power pass below).
 - Excavator moved to Age 2 (diamond pickaxe drill head, 90 IE) and slowed to 1 block / 60 ticks. Speed cards cost x1.75 / x3 / x7 / x21 FE per block for 1 / 2 / 4 / 8 cards, so x20 needs about 280 FE/t (7 generators).
 - Survey Rig (Age 2, 407 IE, 4.5x the Excavator): the lag-free quarry is the stronger one, so it is pricier, slower at base (1 ore / 5 s) and costs 2,000 FE per ore before the same steep speed curve. A typical overworld chunk holds a few hundred ores: about half an hour at base, a minute or two at x20 for roughly 40,000 FE per ore. Recipe unlocked by the Servo Age guide step; guide step "No Holes Barred" after "Dig Deep".
 - Warp Pad moved to Age 1 (41 IE): the Age 1 Recall Remote needs a pad to bind to and was a dead end.
@@ -264,5 +266,15 @@ Progression pass (start quickly, scale to the late game):
 - Area tools pay for size with speed early on: hammer and Bore Drill 50% in 3×3 (still 4.5x faster than nine single blocks), Servo 70%, Magma 85%, Null 100%.
 - Boss core temp recipes stay expensive and rise per age: Servo 505, Magma 1,039, Antigrav 2,198 IE.
 - Boss pass: the Scrap Colossus is the main Servo Core source (a Signal Flare costs about 24 IE plus the fight and a 5 minute altar cooldown). The Servo Core fallback recipe went from 505 to about 830 IE (diamond blocks and a Reinforced Casing) and stays only for Peaceful and foundry-less servers.
+
+Power pass (early power in line with other mods, 40-80 FE/t; the crank made everything feel infinite at 1,500 FE/t):
+- Winding Crank 6,000 → 400 FE per turn (100 FE/t while held), only a Mainspring winds by hand. A Mainspring takes 2 minutes; a Combustion Generator (40 → 80 FE/t, 128k FE per coal) wins because you can walk away.
+- Mainspring 576k → 240k, Copper Cell 2.3M → 800k, Redstone Cell 6.9M → 3.2M (cells were cheaper storage than accumulators). Ender Cell unchanged.
+- Solar Mk1 8 → 20 FE/t, Mk2 32 → 80 FE/t. Charger 400 → 2,000 FE/t.
+- Stumpy pays 250 FE per log on top of 4 FE/t while working, and always clears the natural leaves.
+- Kinetic Shield 400 → 2,000 FE per damage point, absorbs at most 75% of each hit (`kineticShieldAbsorb`). Cells top up a worn suit at most 2,000 FE per second in total (`cellRechargePerSecond`).
+- Mining Drone 60 → 80 FE per block, one block every 8 ticks instead of 3 (it outdug the Age 2 Excavator).
+- Sprout pays 30 FE per harvested crop (`sproutFePerHarvest`), like Stumpy's per-log cost. Null Lance 20,000 → 8,000 FE per shot.
+- Tool modules: auto-pickup and the void filter need an Auto-Pickup or Void Filter Upgrade installed at a Tinker's Bench; the Age 0 hammer and axe take none.
 
 Earlier passes, still valid: Age 0 uses no iron (Stumpy and Sprout 25 copper, Tinker's Hammer 9, Felling Axe 6). Each ladder step costs 4-9x the one before (tool kits 8.6 / 312 / 2.7k / 9.3k IE, accumulators 28 / 220 / 1.7k, solar 12 / 102, Mk farm kits 46 / 259 / 6.6k). Magma Core temp recipe takes 2 Quantum Circuits so every core costs more than the one before. Portal Projector ~10k IE in line with the Null Drill (~16k IE). Config `replicatorEnergyPerTick` 160, `gateIdleCost` 200. Left alone on purpose: Combustion Generator 40 FE/t, Metal Press 20 FE/t, Stumpy 4 FE/t, Sprout 3 FE/t, drills 40-80 FE per block, Null Lance 20k FE per shot. Rift Remote cost stays 150,000 FE because a game test pins it.

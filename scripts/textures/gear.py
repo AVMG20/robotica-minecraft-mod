@@ -7,7 +7,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import MATERIALS, Canvas, write_item  # noqa: E402
+from pixelart import MATERIALS, Canvas, write_block, write_item  # noqa: E402
 
 # '12345' tier material (deep -> highlight), 'abcde' steel, '678' brass, 'w W v' wood, 'y Y z' tier glow
 TIER = {
@@ -226,8 +226,54 @@ def kit(level):
     c.outline('k')
     return c.rows()
 
+# ---------------------------------------------------------------- Tinker's Bench (block)
+
+def planks(c, x0=0, y0=0, w=16, h=16):
+    """Oak-like planks: rows of 4 px boards, dark seams, staggered joints, light top edge per board."""
+    c.rect(x0, y0, w, h, 'W')
+    for y in range(y0, y0 + h):
+        if (y - y0) % 4 == 3:
+            c.rect(x0, y, w, 1, 'w')
+        elif (y - y0) % 4 == 0:
+            c.rect(x0, y, w, 1, 'v')
+    for y in range(y0, y0 + h, 4):
+        joint = x0 + (5 if (y // 4) % 2 == 0 else 11)
+        if joint < x0 + w:
+            c.rect(joint, y, 1, 3, 'w')
+
+
+def bench_top():
+    """Work surface: planks with a steel plate holding a copper gear, and a glowing card slot."""
+    c = Canvas()
+    planks(c)
+    c.rect(2, 2, 7, 7, 'c').frame(2, 2, 7, 7, 'b').rect(2, 2, 7, 1, 'd').set(2, 2, 'e')
+    c.rect(4, 4, 3, 3, '3').set(4, 4, '4').set(6, 6, '2').set(5, 5, 'K')       # copper gear hub
+    for x, y in ((5, 3), (3, 5), (7, 5), (5, 7)):
+        c.set(x, y, '3')
+    c.rect(10, 10, 4, 4, 'b').rect(11, 11, 2, 2, 'y')                         # card slot glow
+    c.frame(0, 0, 16, 16, 'w')
+    return c.rows()
+
+
+def bench_side():
+    """Side: planks under a steel table edge, with a hammer hanging on two hooks."""
+    c = Canvas()
+    planks(c)
+    c.rect(0, 0, 16, 2, 'c').rect(0, 0, 16, 1, 'd').rect(0, 2, 16, 1, 'b')      # steel table edge
+    c.rect(4, 5, 8, 3, '3').rect(4, 5, 8, 1, '4').rect(4, 7, 8, 1, '2')         # copper hammer head
+    c.rect(7, 8, 2, 6, '7').set(7, 8, '8')                                      # brass handle
+    c.set(3, 4, 'a').set(12, 4, 'a')                                            # hooks
+    c.frame(0, 0, 16, 16, 'w')
+    return c.rows()
+
+
+def write_bench():
+    write_block('tinkers_bench_top', bench_top(), pal('copper'))
+    write_block('tinkers_bench_side', bench_side(), pal('copper'))
+
 
 def main():
+    write_bench()
     write_item('tinkers_hammer', hammer(), pal('copper'), handheld=True)
     write_item('felling_axe', axe(), pal('copper'), handheld=True)
     write_item('bore_drill', drill(1), pal('copper'), handheld=True)

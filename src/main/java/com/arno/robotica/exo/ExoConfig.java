@@ -10,7 +10,8 @@ public final class ExoConfig {
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.IntValue NIGHT_VISION, REBREATHER, ROBOT_HUD, JET_ASSIST, JET_ASSIST_JUMP, FLIGHT,
             KINETIC_SHIELD, SERVO_1, SERVO_2, SERVO_3, STEP_ASSIST, SPRING_HEELS, FALL_DAMPENER, MAGNET;
-    private static final ModConfigSpec.IntValue MAGNET_RADIUS, AIR_JUMPS;
+    private static final ModConfigSpec.IntValue MAGNET_RADIUS, AIR_JUMPS, CELL_RECHARGE_RATE;
+    private static final ModConfigSpec.DoubleValue SHIELD_ABSORB;
     private static final ModConfigSpec.BooleanValue CELL_RECHARGE;
 
     static {
@@ -22,7 +23,7 @@ public final class ExoConfig {
         JET_ASSIST = cost(b, "jetAssistPerSecond", "FE per second while Jet Assist slows a fall.", 40);
         JET_ASSIST_JUMP = cost(b, "jetAssistPerDoubleJump", "FE per Jet Assist double jump.", 400);
         FLIGHT = cost(b, "flightPerSecond", "FE per second while flying (120 FE/t).", 2400);
-        KINETIC_SHIELD = cost(b, "kineticShieldPerDamage", "FE per point of damage the Kinetic Shield blocks.", 400);
+        KINETIC_SHIELD = cost(b, "kineticShieldPerDamage", "FE per point of damage the Kinetic Shield blocks.", 2000);
         SERVO_1 = cost(b, "servoStride1PerSecond", "FE per second while running with Servo Stride I.", 30);
         SERVO_2 = cost(b, "servoStride2PerSecond", "FE per second while running with Servo Stride II.", 60);
         SERVO_3 = cost(b, "servoStride3PerSecond", "FE per second while running with Servo Stride III.", 100);
@@ -32,10 +33,14 @@ public final class ExoConfig {
         MAGNET = cost(b, "magnetPerSecond", "FE per second while the Magnet pulls items.", 40);
         CELL_RECHARGE = b.comment("Energy cells (and Mainsprings) in the inventory top up the worn suit once per second.")
                 .define("cellsRechargeSuit", true);
+        CELL_RECHARGE_RATE = b.comment("Most FE per second the inventory cells move into the suit, all cells together.")
+                .defineInRange("cellRechargePerSecond", 2_000, 0, 10_000_000);
         b.pop();
         b.push("exoModules");
         MAGNET_RADIUS = b.comment("Magnet pull radius in blocks.").defineInRange("magnetRadius", 6, 1, 16);
         AIR_JUMPS = b.comment("Extra jumps in the air with Jet Assist before landing.").defineInRange("airJumps", 1, 0, 5);
+        SHIELD_ABSORB = b.comment("Share of each hit the Kinetic Shield can absorb; the rest reaches the armor as normal.")
+                .defineInRange("kineticShieldAbsorb", 0.75, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }
@@ -84,6 +89,16 @@ public final class ExoConfig {
 
     public static int airJumps() {
         return SPEC.isLoaded() ? AIR_JUMPS.get() : AIR_JUMPS.getDefault();
+    }
+
+    /** Cap on the FE per second all inventory cells together move into the suit (scaled by the global energy multiplier). */
+    public static int cellRechargePerSecond() {
+        return CoreConfig.scaleEnergy(SPEC.isLoaded() ? CELL_RECHARGE_RATE.get() : CELL_RECHARGE_RATE.getDefault());
+    }
+
+    /** Largest share of a hit the Kinetic Shield absorbs. */
+    public static double shieldAbsorb() {
+        return SPEC.isLoaded() ? SHIELD_ABSORB.get() : SHIELD_ABSORB.getDefault();
     }
 
     public static boolean cellRecharge() {

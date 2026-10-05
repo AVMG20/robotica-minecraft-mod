@@ -2,6 +2,7 @@ package com.arno.robotica.gear.client;
 
 import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.gear.tool.GearActions;
 import com.arno.robotica.gear.tool.GearToolItem;
 import com.arno.robotica.gear.tool.ToggleKind;
@@ -16,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /** Small screen with one button per setting of the tool in the main hand. Every click is a server request. */
@@ -24,7 +26,7 @@ public class ToggleScreen extends Screen {
     private static final int HEIGHT = 20;
     private static final int GAP = 4;
 
-    private record Row(Button button, Supplier<Component> label) {}
+    private record Row(Button button, Supplier<Component> label, BooleanSupplier enabled) {}
 
     private final List<Row> rows = new ArrayList<>();
     private int panelX, panelY, panelW, panelH;
@@ -49,22 +51,30 @@ public class ToggleScreen extends Screen {
         List<Supplier<Component>> labels = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
         List<Component> hints = new ArrayList<>();
+        List<BooleanSupplier> enabled = new ArrayList<>();
         if (tool.spec.modes.size() > 1) {
             labels.add(() -> Component.translatable("gear.robotica.screen.mode", tool.mode(held()).displayName()));
             actions.add(() -> GearKeys.send(GearActions.CYCLE_MODE, hasShiftDown() ? -1 : 1));
             hints.add(Component.translatable("gear.robotica.screen.mode.desc"));
+            enabled.add(() -> true);
         }
         if (tool.spec.fortuneLevel > 0) {
             labels.add(() -> Component.translatable("gear.robotica.screen.enchant", enchantName(ToolSettings.enchantMode(held()))));
             actions.add(() -> GearKeys.send(GearActions.CYCLE_ENCHANT, 0));
             hints.add(Component.translatable("gear.robotica.screen.enchant.desc"));
+            enabled.add(() -> true);
         }
         for (ToggleKind kind : ToggleKind.values()) {
             if (!tool.spec.toggles.contains(kind)) continue;
-            labels.add(() -> Component.empty().append(kind.displayName()).append(": ")
-                    .append(Component.translatable(ToolSettings.has(held(), kind) ? "gear.robotica.on" : "gear.robotica.off")));
+            labels.add(() -> Component.empty().append(kind.displayName()).append(": ").append(ToolSettings.installed(held(), kind)
+                    ? Component.translatable(ToolSettings.has(held(), kind) ? "gear.robotica.on" : "gear.robotica.off")
+                    : Component.translatable("gear.robotica.screen.needs_card", CoreItems.card(kind.module).get().getDescription())));
             actions.add(() -> GearKeys.send(GearActions.TOGGLE, kind.ordinal()));
-            hints.add(kind.description());
+            hints.add(kind.isModule()
+                    ? Component.empty().append(kind.description()).append("\n").append(Component.translatable("gear.robotica.screen.module_hint",
+                            CoreItems.card(kind.module).get().getDescription()))
+                    : kind.description());
+            enabled.add(() -> ToolSettings.installed(held(), kind));
         }
         int total = labels.size() * (HEIGHT + GAP) - GAP;
         panelW = WIDTH + 24;
@@ -78,7 +88,8 @@ public class ToggleScreen extends Screen {
             Button b = new FitButton(x, y + i * (HEIGHT + GAP), WIDTH, HEIGHT, labels.get(i).get(), btn -> action.run());
             b.setTooltip(net.minecraft.client.gui.components.Tooltip.create(hints.get(i)));
             addRenderableWidget(b);
-            rows.add(new Row(b, labels.get(i)));
+            b.active = enabled.get(i).getAsBoolean();
+            rows.add(new Row(b, labels.get(i), enabled.get(i)));
         }
         addRenderableWidget(new FitButton(x, y + total + 12, WIDTH, HEIGHT, CommonComponents.GUI_DONE, btn -> onClose()));
     }
@@ -97,7 +108,10 @@ public class ToggleScreen extends Screen {
             onClose();
             return;
         }
-        for (Row row : rows) row.button.setMessage(row.label.get());
+        for (Row row : rows) {
+            row.button.setMessage(row.label.get());
+            row.button.active = row.enabled.getAsBoolean();
+        }
     }
 
     @Override

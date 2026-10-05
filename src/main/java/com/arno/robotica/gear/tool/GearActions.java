@@ -58,6 +58,11 @@ public final class GearActions {
     public static void toggle(ServerPlayer player, ItemStack stack, GearToolItem tool, int ordinal) {
         ToggleKind kind = ToggleKind.byOrdinal(ordinal);
         if (kind == null || !tool.spec.toggles.contains(kind)) return;
+        if (!ToolSettings.installed(stack, kind)) {
+            player.displayClientMessage(Component.translatable("gear.robotica.toggle.needs_module", kind.displayName(),
+                    com.arno.robotica.core.item.CoreItems.card(kind.module).get().getDescription()), true);
+            return;
+        }
         boolean on = !ToolSettings.has(stack, kind);
         ToolSettings.set(stack, kind, on);
         click(player, on ? 1.2F : 0.85F);

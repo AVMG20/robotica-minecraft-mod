@@ -98,7 +98,7 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
         super(PowerRegistry.WINDING_CRANK_BE.get(), pos, state);
     }
 
-    /** The crank winds a Mainspring, and by hand it also charges any other FE item: a cell, a drill, a weapon. */
+    /** Any FE item fits: an FE source (water wheel, Create) charges it slowly. Only a Mainspring winds by hand. */
     public static boolean isWindable(ItemStack stack) {
         return stack.is(CoreItems.MAINSPRING.get()) || (stack.getItem() instanceof com.arno.robotica.core.energy.EnergyItem && ItemEnergy.capacity(stack) > 0);
     }
@@ -115,10 +115,15 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
         return !spring.getStackInSlot(0).isEmpty();
     }
 
-    /** Hand winding. Returns the FE actually added. */
+    /** True when the item in the crank can be wound by hand (a Mainspring). */
+    public boolean handWindable() {
+        return spring.getStackInSlot(0).is(CoreItems.MAINSPRING.get());
+    }
+
+    /** Hand winding, Mainspring only. Returns the FE actually added. */
     public int wind(int amount) {
         ItemStack stack = spring.getStackInSlot(0);
-        if (stack.isEmpty()) return 0;
+        if (!handWindable()) return 0;
         int added = ItemEnergy.addInternal(stack, amount);
         if (added > 0) setChanged();
         return added;

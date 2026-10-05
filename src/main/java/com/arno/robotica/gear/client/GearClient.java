@@ -6,6 +6,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -19,5 +20,6 @@ public final class GearClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GearKeys::onClientTick);
         NeoForge.EVENT_BUS.addListener(InputEvent.MouseScrollingEvent.class, GearKeys::onScroll);
         NeoForge.EVENT_BUS.addListener(RenderHighlightEvent.Block.class, AreaOutline::onHighlight);
+        modBus.addListener(RegisterMenuScreensEvent.class, e -> e.register(com.arno.robotica.gear.GearBlocks.TINKERS_BENCH_MENU.get(), TinkersBenchScreen::new));
     }
 }

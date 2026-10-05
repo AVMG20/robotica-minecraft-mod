@@ -42,17 +42,16 @@ public final class GearItems {
     public static final TagKey<net.minecraft.world.item.Item> VOIDABLE =
             TagKey.create(Registries.ITEM, Robotica.id("voidable"));
 
-    // Age 0
+    // Age 0: durability tools without modules (auto-pickup and the void filter start with the FE tools)
     public static final DeferredItem<HammerItem> TINKERS_HAMMER = tool("tinkers_hammer",
             ToolSpec.builder(Tiers.STONE, 5.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3).defaultMode(AreaMode.AREA_3)
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).areaSpeed(0.5F).age(0).build(),
+                    .toggles(ToggleKind.KEEP_FLOOR).areaSpeed(0.5F).age(0).build(),
             p -> p.durability(600), 5.0F, -3.0F, HammerItem::new);
 
     public static final DeferredItem<GearToolItem> FELLING_AXE = tool("felling_axe",
             ToolSpec.builder(Tiers.STONE, 5.0F).tags(BlockTags.MINEABLE_WITH_AXE)
-                    .modes(AreaMode.TREE, AreaMode.SINGLE).maxLogs(64).replants()
-                    .toggles(ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(0).build(),
+                    .modes(AreaMode.TREE, AreaMode.SINGLE).maxLogs(64).replants().age(0).build(),
             p -> p.durability(500), 6.0F, -3.1F, GearToolItem::new);
 
     // Age 1
@@ -109,7 +108,7 @@ public final class GearItems {
                     () -> GearConfig.fe(GearConfig.ARC_BLADE_COST, 800)));
     public static final DeferredItem<NullLanceItem> NULL_LANCE = ITEMS.registerItem("null_lance",
             p -> new NullLanceItem(p.rarity(Rarity.EPIC).fireResistant().attributes(weaponAttributes(6.0, 1.2)), 16_000_000,
-                    () -> GearConfig.fe(GearConfig.NULL_LANCE_COST, 20_000)));
+                    () -> GearConfig.fe(GearConfig.NULL_LANCE_COST, 8_000)));
 
     // Smithing templates
     public static final DeferredItem<UpgradeKitItem> KIT_1 = kit(1, Rarity.COMMON);

@@ -30,6 +30,19 @@ public final class ToolSettings {
         stack.set(GearComponents.TOGGLES.get(), on ? f | kind.bit : f & ~kind.bit);
     }
 
+    /** True for a plain setting, or for a module toggle whose card is installed in the tool. */
+    public static boolean installed(ItemStack stack, ToggleKind kind) {
+        return !kind.isModule() || (stack.getOrDefault(GearComponents.MODULES.get(), 0) & kind.bit) != 0;
+    }
+
+    /** Installs or removes the module card of a toggle (Tinker's Bench). */
+    public static void setInstalled(ItemStack stack, ToggleKind kind, boolean on) {
+        int m = stack.getOrDefault(GearComponents.MODULES.get(), 0);
+        m = on ? m | kind.bit : m & ~kind.bit;
+        if (m == 0) stack.remove(GearComponents.MODULES.get());
+        else stack.set(GearComponents.MODULES.get(), m);
+    }
+
     public static int enchantMode(ItemStack stack) {
         return stack.getOrDefault(GearComponents.ENCHANT_MODE.get(), ENCHANT_NONE);
     }

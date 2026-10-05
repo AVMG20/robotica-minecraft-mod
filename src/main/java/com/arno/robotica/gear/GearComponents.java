@@ -24,6 +24,13 @@ public final class GearComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> TOGGLES =
             REGISTER.registerComponentType("gear_toggles", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
+    /**
+     * Installed tool modules (Tinker's Bench), as the bits of the {@link com.arno.robotica.gear.tool.ToggleKind} they
+     * unlock. Absent means none. Carries over through smithing like every other component.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MODULES =
+            REGISTER.registerComponentType("gear_modules", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
+
     /** 0 = none, 1 = fortune, 2 = silk touch. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ENCHANT_MODE =
             REGISTER.registerComponentType("gear_enchant_mode", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));

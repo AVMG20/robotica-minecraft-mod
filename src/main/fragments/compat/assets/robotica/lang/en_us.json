@@ -14,6 +14,7 @@
   "jei.robotica.info.upgrade.silk": "Mined blocks drop themselves. Cannot be combined with a Fortune card.",
   "jei.robotica.info.upgrade.growth": "+50% crop and sapling growth per card.",
   "jei.robotica.info.upgrade.void": "Deletes cobblestone, dirt, gravel and other junk instead of storing it.",
+  "jei.robotica.info.upgrade.pickup": "Tool module: auto-pickup for power tools. Install it at a Tinker's Bench. The Void Filter card works the same way.",
   "jei.robotica.info.upgrade.stackable": "Cards of this kind stack in one upgrade slot: each card adds one step, up to %s. The machine says how many it takes.",
   "jei.robotica.info.upgrade.single": "Only one card of this kind fits in a machine.",
   "jei.robotica.info.upgrade.rules": "Right-click a machine or robot with the card, or put it in an upgrade slot. Machines only take the kinds they have a use for.",

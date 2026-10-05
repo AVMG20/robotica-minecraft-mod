@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PPP",
+    "GTG",
+    "W W"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "G": {
+      "item": "robotica:copper_gear"
+    },
+    "T": {
+      "item": "minecraft:crafting_table"
+    },
+    "W": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "result": {
+    "id": "robotica:tinkers_bench",
+    "count": 1
+  }
+}

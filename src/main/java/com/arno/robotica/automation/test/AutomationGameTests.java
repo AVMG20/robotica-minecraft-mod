@@ -1,11 +1,13 @@
 package com.arno.robotica.automation.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.AutomationContent;
 import com.arno.robotica.automation.block.FarmBotBlock;
 import com.arno.robotica.automation.entity.ExcavatorBlockEntity;
 import com.arno.robotica.automation.entity.SproutBlockEntity;
 import com.arno.robotica.automation.entity.StumpyBlockEntity;
+import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import net.minecraft.core.BlockPos;
@@ -73,7 +75,25 @@ public class AutomationGameTests {
             ChestBlockEntity chest = helper.getBlockEntity(chestPos);
             helper.assertTrue(count(chest, Items.OAK_LOG) == 3, "Chest should hold the 3 felled logs, has " + count(chest, Items.OAK_LOG));
             helper.assertBlockPresent(Blocks.OAK_SAPLING, new BlockPos(1, 1, 2));
+            helper.assertBlockNotPresent(Blocks.OAK_LEAVES, new BlockPos(1, 4, 2));
             helper.assertTrue(stumpy.energy.getEnergyStored() < stumpy.energy.getMaxEnergyStored(), "Felling must cost energy");
+        });
+    }
+
+    /** Every log costs FE: with too little in the buffer and no battery Stumpy leaves the tree standing. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void stumpyPaysPerLog(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 0);
+        helper.setBlock(new BlockPos(1, 0, 2), Blocks.DIRT);
+        for (int y = 1; y <= 3; y++) helper.setBlock(new BlockPos(1, y, 2), Blocks.OAK_LOG);
+        helper.setBlock(new BlockPos(1, 4, 2), Blocks.OAK_LEAVES);
+        helper.setBlock(bot, AutomationContent.STUMPY.get());
+        StumpyBlockEntity stumpy = helper.getBlockEntity(bot);
+        // Enough for the work ticks of a few attempts, not for 3 logs.
+        stumpy.energy.setEnergy(3 * AutomationConfig.stumpyFePerLog() - 1);
+        helper.runAfterDelay(150, () -> {
+            helper.assertBlockPresent(Blocks.OAK_LOG, new BlockPos(1, 1, 2));
+            helper.succeed();
         });
     }
 
@@ -107,6 +127,25 @@ public class AutomationGameTests {
             helper.assertTrue(count(chest, Items.WHEAT) >= 1, "Chest should hold the harvested wheat");
             BlockState state = helper.getBlockState(crop);
             helper.assertTrue(state.is(Blocks.WHEAT) && state.getValue(CropBlock.AGE) == 0, "Wheat should be replanted at age 0, is " + state);
+        });
+    }
+
+    /** Every harvest costs FE: a buffer that covers the work ticks but not the harvest leaves the crop standing. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutPaysPerHarvest(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 0);
+        BlockPos crop = new BlockPos(1, 1, 2);
+        helper.setBlock(new BlockPos(1, 0, 2), Blocks.FARMLAND);
+        helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(CropBlock.AGE, 7));
+        helper.setBlock(bot, AutomationContent.SPROUT.get());
+        SproutBlockEntity sprout = helper.getBlockEntity(bot);
+        // Exactly one action's work ticks plus one FE short of the harvest (without the harvest cost this would reap the wheat).
+        int workTicks = sprout.actionInterval() * CoreConfig.scaleEnergy(AutomationConfig.sproutFe());
+        sprout.energy.setEnergy(workTicks + CoreConfig.scaleEnergy(AutomationConfig.sproutFePerHarvest()) - 1);
+        helper.runAfterDelay(150, () -> {
+            BlockState state = helper.getBlockState(crop);
+            helper.assertTrue(state.is(Blocks.WHEAT) && state.getValue(CropBlock.AGE) == 7, "too little FE for the harvest: the crop waits, is " + state);
+            helper.succeed();
         });
     }
 

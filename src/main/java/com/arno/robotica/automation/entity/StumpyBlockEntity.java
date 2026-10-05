@@ -21,9 +21,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Lumber bot: fells whole trees as one action, replants saplings from its buffer, picks up drops. */
+/** Lumber bot: fells whole trees (with their natural leaves) as one action, replants saplings from its buffer, picks up drops. */
 public class StumpyBlockEntity extends FarmBotBlockEntity {
-    private boolean leaves;
     /** Log clusters without natural leaves (player builds). Transient. */
     private final LongOpenHashSet ignored = new LongOpenHashSet();
     private int wraps;
@@ -78,31 +77,19 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
     }
 
     @Override
-    public boolean hasLeavesToggle() {
-        return true;
-    }
-
-    @Override
-    public boolean leavesEnabled() {
-        return leaves;
-    }
-
-    @Override
-    public void toggleLeaves() {
-        leaves = !leaves;
-        setChanged();
-    }
-
-    @Override
     protected boolean act(ServerLevel sl, BlockPos start) {
         BlockState startState = sl.getBlockState(start);
         if (!startState.is(BlockTags.LOGS)) return false;
-        TreeScan tree = TreeScan.scan(sl, start, AutomationConfig.maxLogs(), leaves);
+        TreeScan tree = TreeScan.scan(sl, start, AutomationConfig.maxLogs(), true);
         if (tree.naturalLeaves == 0) {
             for (BlockPos p : tree.logs) ignored.add(p.asLong());
             if (ignored.size() > 8192) ignored.clear();
             return false;
         }
+        // Every log costs FE when the tree comes down; a huge tree is capped at the buffer so it can still be felled.
+        // Not enough yet: skip this round, the battery tops the buffer up and the next scan finds the tree again.
+        long cost = Math.min((long) scaledDrain(AutomationConfig.stumpyFePerLog(), 1) * tree.logs.size(), energy.getMaxEnergyStored());
+        if (!energy.consume((int) cost)) return false;
         ItemStack tool = new ItemStack(Items.IRON_AXE);
         List<ItemStack> drops = new ArrayList<>();
         int felled = 0;
@@ -173,12 +160,10 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
     @Override
     protected void saveExtra(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveExtra(tag, registries);
-        tag.putBoolean("leaves", leaves);
     }
 
     @Override
     protected void loadExtra(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadExtra(tag, registries);
-        leaves = tag.getBoolean("leaves");
     }
 }

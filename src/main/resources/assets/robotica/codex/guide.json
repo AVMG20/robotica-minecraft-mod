@@ -13,8 +13,14 @@
       "age": 0
     },
     {
-      "id": "robotica:guide/mainspring",
+      "id": "robotica:guide/robot_built",
       "parent": "robotica:guide/copper_gear",
+      "icon": "robotica:stumpy",
+      "age": 0
+    },
+    {
+      "id": "robotica:guide/mainspring",
+      "parent": "robotica:guide/robot_built",
       "icon": "robotica:mainspring",
       "age": 0
     },

@@ -1,14 +1,14 @@
 {
-  "parent": "robotica:guide/basic_circuit",
+  "parent": "robotica:guide/copper_gear",
   "display": {
     "icon": {
-      "id": "robotica:upgrade_speed"
+      "id": "robotica:stumpy"
     },
     "title": {
-      "translate": "advancements.robotica.guide.upgrade_card.title"
+      "translate": "advancements.robotica.guide.robot_built.title"
     },
     "description": {
-      "translate": "advancements.robotica.guide.upgrade_card.description"
+      "translate": "advancements.robotica.guide.robot_built.description"
     },
     "frame": "task",
     "show_toast": true,
@@ -22,11 +22,8 @@
         "items": [
           {
             "items": [
-              "robotica:upgrade_speed",
-              "robotica:upgrade_efficiency",
-              "robotica:upgrade_growth",
-              "robotica:upgrade_void",
-              "robotica:upgrade_pickup"
+              "robotica:stumpy",
+              "robotica:sprout"
             ]
           }
         ]

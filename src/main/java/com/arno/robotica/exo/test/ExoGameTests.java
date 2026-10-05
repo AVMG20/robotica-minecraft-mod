@@ -263,12 +263,24 @@ public class ExoGameTests {
         ticks(player, 1);
         LivingIncomingDamageEvent hit = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().generic(), 5.0F));
         NeoForge.EVENT_BUS.post(hit);
-        helper.assertTrue(hit.isCanceled(), "the shield absorbs a 5 damage hit completely");
+        // At most 75% of a hit is absorbed: 3.75 of 5 points, the rest goes through to the armor.
+        float through = (float) (5.0 * (1.0 - ExoConfig.shieldAbsorb()));
+        helper.assertTrue(!hit.isCanceled() && Math.abs(hit.getAmount() - through) < 1.0E-3F,
+                "the shield absorbs 75% of a 5 damage hit, " + through + " should go through, got " + hit.getAmount());
         ExoTicker.flush(player);
         int perPoint = ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD);
-        helper.assertTrue(ExoSuit.totalEnergy(player) == 60_000 - 5 * perPoint, "the hit cost " + 5 * perPoint + " FE from the pool, left " + ExoSuit.totalEnergy(player));
+        int cost = (int) Math.round(5.0 * ExoConfig.shieldAbsorb() * perPoint);
+        helper.assertTrue(Math.abs(ExoSuit.totalEnergy(player) - (60_000 - cost)) <= 1, "the hit cost " + cost + " FE from the pool, left " + ExoSuit.totalEnergy(player));
         // Drained from the most charged piece first (boots).
-        helper.assertTrue(ItemEnergy.get(player.getItemBySlot(EquipmentSlot.FEET)) == 50_000 - 5 * perPoint, "most charged piece pays first");
+        helper.assertTrue(Math.abs(ItemEnergy.get(player.getItemBySlot(EquipmentSlot.FEET)) - (50_000 - cost)) <= 1, "most charged piece pays first");
+
+        // Short on energy: only what the pool can pay is absorbed (1 point here), the cap never adds more.
+        for (EquipmentSlot slot : ExoSuit.SLOTS) ItemEnergy.set(player.getItemBySlot(slot), 0);
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.FEET), perPoint);
+        ticks(player, 1);
+        LivingIncomingDamageEvent weak = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().generic(), 5.0F));
+        NeoForge.EVENT_BUS.post(weak);
+        helper.assertTrue(!weak.isCanceled() && Math.abs(weak.getAmount() - 4.0F) < 1.0E-3F, "one paid point leaves 4 damage, got " + weak.getAmount());
 
         // Void damage bypasses the shield.
         LivingIncomingDamageEvent voidHit = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().genericKill(), 5.0F));

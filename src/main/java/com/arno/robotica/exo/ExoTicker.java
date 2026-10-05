@@ -330,10 +330,12 @@ public final class ExoTicker {
         }
         if (!needs) return;
         var inv = p.getInventory();
-        for (int i = 0; i < inv.items.size() + 1; i++) {
+        int budget = ExoConfig.cellRechargePerSecond();
+        for (int i = 0; i < inv.items.size() + 1 && budget > 0; i++) {
             ItemStack cell = i < inv.items.size() ? inv.items.get(i) : inv.offhand.get(0);
             if (!(cell.getItem() instanceof CellItem item) || ItemEnergy.get(cell) <= 0) continue;
-            int rate = item.getMaxExtract(cell) * 20;
+            int rate = (int) Math.min((long) item.getMaxExtract(cell) * 20, budget);
+            int start = rate;
             for (ItemStack piece : pieces) {
                 if (rate <= 0 || piece.isEmpty()) continue;
                 int space = ItemEnergy.capacity(piece) - ItemEnergy.get(piece);
@@ -343,6 +345,7 @@ public final class ExoTicker {
                 ItemEnergy.addInternal(piece, move);
                 rate -= move;
             }
+            budget -= start - rate;
         }
     }
 
@@ -363,7 +366,7 @@ public final class ExoTicker {
         event.setCanBreathe(true);
     }
 
-    /** Kinetic Shield: spends FE instead of health. A fully absorbed hit is cancelled (no knockback). */
+    /** Kinetic Shield: spends FE instead of health for up to {@link ExoConfig#shieldAbsorb} of each hit; a fully absorbed hit is cancelled (no knockback). */
     public static void onIncomingDamage(ServerPlayer p, LivingIncomingDamageEvent event) {
         State st = STATES.get(p.getUUID());
         if (st == null || !has(st, ExoModuleKind.KINETIC_SHIELD)) return;
@@ -372,7 +375,8 @@ public final class ExoTicker {
         if (damage <= 0) return;
         int perPoint = ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD);
         double have = available(st, CHEST);
-        float absorbed = perPoint <= 0 ? damage : (float) Math.min(damage, have / perPoint);
+        float cap = (float) (damage * ExoConfig.shieldAbsorb());
+        float absorbed = perPoint <= 0 ? cap : (float) Math.min(cap, have / perPoint);
         if (absorbed <= 0) return;
         spend(st, ExoModuleKind.KINETIC_SHIELD, absorbed * perPoint);
         if (absorbed >= damage) event.setCanceled(true);

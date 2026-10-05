@@ -167,17 +167,6 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         return 0;
     }
 
-    public boolean hasLeavesToggle() {
-        return false;
-    }
-
-    public boolean leavesEnabled() {
-        return false;
-    }
-
-    public void toggleLeaves() {
-    }
-
     public int tier() {
         return 1;
     }

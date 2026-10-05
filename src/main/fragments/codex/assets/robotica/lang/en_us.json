@@ -15,6 +15,8 @@
   "advancements.robotica.guide.root.description": "Robots do the boring work for you. Start with copper, wood and cobblestone. Your Codex has the recipes.",
   "advancements.robotica.guide.copper_gear.title": "Cogs and Teeth",
   "advancements.robotica.guide.copper_gear.description": "Craft a Copper Gear: four copper ingots around a cobblestone.",
+  "advancements.robotica.guide.robot_built.title": "Some Assembly Required",
+  "advancements.robotica.guide.robot_built.description": "Craft Stumpy or Sprout. Next: wind a Mainspring to power it.",
   "advancements.robotica.guide.mainspring.title": "Wind It Up",
   "advancements.robotica.guide.mainspring.description": "Put a Mainspring in a Winding Crank, then hold right-click on the crank with an empty hand.",
   "advancements.robotica.guide.first_robot.title": "Hello, Stumpy",

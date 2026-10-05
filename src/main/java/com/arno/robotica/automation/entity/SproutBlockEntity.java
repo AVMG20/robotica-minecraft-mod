@@ -161,6 +161,8 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
 
     private boolean harvest(ServerLevel sl, BlockPos pos, BlockState state) {
         if (!mayBreak(sl, pos, state)) return false;
+        // Every harvest costs FE; not enough yet and the crop waits for the next round.
+        if (!energy.consume(scaledDrain(AutomationConfig.sproutFePerHarvest(), 1))) return false;
         Block block = state.getBlock();
         List<ItemStack> drops = new ArrayList<>();
         for (ItemStack drop : Block.getDrops(state, sl, pos, null, null, new ItemStack(Items.STONE_HOE))) Drops.merge(drops, drop);

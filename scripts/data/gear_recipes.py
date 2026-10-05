@@ -47,6 +47,9 @@ shaped('tinkers_hammer', ['CCC', 'CGC', ' S '], {'C': COPPER, 'G': 'copper_gear'
 shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 
+# Age 1: Tinker's Bench installs tool modules (Magnet and Void Filter Upgrades) in the FE tools.
+shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': 'copper_gear', 'T': 'minecraft:crafting_table', 'W': '#minecraft:planks'})
+
 # Age 1: the Age 0 tools upgrade at a smithing table (kit I + tool + Electric Motor), like every later tier.
 # Kit I is cheap on purpose (5 iron, some copper and redstone, no gold): the first powered tools come in the first iron hour.
 shaped('tool_upgrade_kit_1', ['PRP', 'PCP'], {'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'C': 'copper_coil'})

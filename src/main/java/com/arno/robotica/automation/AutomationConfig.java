@@ -17,7 +17,9 @@ public final class AutomationConfig {
 
     public static final ModConfigSpec.IntValue ENERGY_BUFFER;
     public static final ModConfigSpec.IntValue STUMPY_FE_PER_TICK;
+    public static final ModConfigSpec.IntValue STUMPY_FE_PER_LOG;
     public static final ModConfigSpec.IntValue SPROUT_FE_PER_TICK;
+    public static final ModConfigSpec.IntValue SPROUT_FE_PER_HARVEST;
     public static final ModConfigSpec.IntValue MAX_LOGS;
     public static final ModConfigSpec.IntValue EXCAVATOR_SIZE;
     public static final ModConfigSpec.IntValue EXCAVATOR_INTERVAL;
@@ -42,8 +44,12 @@ public final class AutomationConfig {
                 .defineInRange("energyBuffer", 20_000, 1_000, 100_000_000);
         STUMPY_FE_PER_TICK = b.comment("FE per tick while Stumpy works (before upgrade multipliers).")
                 .defineInRange("stumpyFePerTick", 4, 0, 10_000);
+        STUMPY_FE_PER_LOG = b.comment("FE per log Stumpy fells, paid when the tree comes down (before efficiency cards). A tree never costs more than the internal buffer.")
+                .defineInRange("stumpyFePerLog", 250, 0, 100_000);
         SPROUT_FE_PER_TICK = b.comment("FE per tick while Sprout works (before upgrade multipliers).")
                 .defineInRange("sproutFePerTick", 3, 0, 10_000);
+        SPROUT_FE_PER_HARVEST = b.comment("FE per crop Sprout harvests (before efficiency cards). Without it the crop waits.")
+                .defineInRange("sproutFePerHarvest", 30, 0, 100_000);
         MAX_LOGS = b.comment("Maximum logs Stumpy fells in one action.")
                 .defineInRange("maxLogsPerTree", 256, 1, 4096);
         for (int i = 0; i < 4; i++) {
@@ -94,12 +100,20 @@ public final class AutomationConfig {
         return SPEC.isLoaded() ? ENERGY_BUFFER.get() : 20_000;
     }
 
+    public static int stumpyFePerLog() {
+        return SPEC.isLoaded() ? STUMPY_FE_PER_LOG.get() : 250;
+    }
+
     public static int stumpyFe() {
         return SPEC.isLoaded() ? STUMPY_FE_PER_TICK.get() : 4;
     }
 
     public static int sproutFe() {
         return SPEC.isLoaded() ? SPROUT_FE_PER_TICK.get() : 3;
+    }
+
+    public static int sproutFePerHarvest() {
+        return SPEC.isLoaded() ? SPROUT_FE_PER_HARVEST.get() : 30;
     }
 
     public static int maxLogs() {

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "robotica:block/tinkers_bench_side",
+    "up": "robotica:block/tinkers_bench_top",
+    "down": "minecraft:block/oak_planks",
+    "north": "robotica:block/tinkers_bench_side",
+    "south": "robotica:block/tinkers_bench_side",
+    "east": "robotica:block/tinkers_bench_side",
+    "west": "robotica:block/tinkers_bench_side"
+  }
+}

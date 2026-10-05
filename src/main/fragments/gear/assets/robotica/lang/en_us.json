@@ -1,6 +1,9 @@
 {
   "item.robotica.tinkers_hammer": "Tinker's Hammer",
   "item.robotica.felling_axe": "Felling Axe",
+  "block.robotica.tinkers_bench": "Tinker's Bench",
+  "container.robotica.tinkers_bench": "Tinker's Bench",
+  "tooltip.robotica.tinkers_bench": "Adds Auto-Pickup and Void Filter cards to power tools",
   "item.robotica.bore_drill": "Bore Drill",
   "item.robotica.chainsaw": "Chainsaw",
   "item.robotica.servo_drill": "Servo Drill",
@@ -39,6 +42,7 @@
   "gear.robotica.toggle.void_filter": "Void filter",
   "gear.robotica.toggle.auto_smelt": "Auto-smelt",
   "gear.robotica.toggle.changed": "%s: %s",
+  "gear.robotica.toggle.needs_module": "%s needs a %s (Tinker's Bench)",
   "gear.robotica.on": "On",
   "gear.robotica.off": "Off",
   "gear.robotica.enchant.none": "Silk/Fortune: off",
@@ -50,6 +54,8 @@
   "gear.robotica.screen.title": "Tool settings",
   "gear.robotica.screen.mode": "Mode: %s",
   "gear.robotica.screen.enchant": "Silk / Fortune: %s",
+  "gear.robotica.screen.needs_card": "needs %s",
+  "gear.robotica.screen.module_hint": "Needs a %s (Tinker's Bench)",
   "gear.robotica.hud.mode": "Mode: %s",
   "gear.robotica.hud.durability": "Durability %s / %s",
   "gear.robotica.lance.no_energy": "Not enough energy (%s FE needed)",
@@ -86,6 +92,8 @@
   "tooltip.robotica.gear.sneak_single": "Hold sneak to mine a single block in any mode",
   "tooltip.robotica.gear.key_enchant": "%s switch Silk Touch / Fortune / off",
   "tooltip.robotica.gear.key_settings": "%s settings: %s",
+  "tooltip.robotica.gear.modules": "Modules: %s",
+  "tooltip.robotica.gear.no_modules": "Modules: none (Tinker's Bench)",
   "tooltip.robotica.gear.slow_area": "Area modes mine at %s%% speed: still far faster than block by block",
   "tooltip.robotica.gear.enchantable": "Takes normal enchantments: Efficiency, Fortune, Silk Touch, Unbreaking",
   "tooltip.robotica.gear.what.tinkers_hammer": "Mines 1x1 or 3x3. In a crafting grid with 2 ingots it makes a plate",
@@ -94,5 +102,9 @@
   "tooltip.robotica.gear.what.chainsaw": "Fells a whole tree with its leaves, then replants. Runs on FE",
   "tooltip.robotica.gear.what.servo_drill": "Adds 5x5 and vein mining (up to 64 connected ores)",
   "tooltip.robotica.gear.what.magma_drill": "Adds 3x3x3 and 9x9. Auto-smelt in the settings",
-  "tooltip.robotica.gear.what.null_drill": "Adds 5x5x5, 12x12 and 12x12x12. Big breaks run over a few ticks"
+  "tooltip.robotica.gear.what.null_drill": "Adds 5x5x5, 12x12 and 12x12x12. Big breaks run over a few ticks",
+  "gui.robotica.bench.insert_tool": "Put in a power tool",
+  "gui.robotica.bench.modules": "Add or remove cards",
+  "gui.robotica.bench.slot_tool": "Power tool",
+  "gui.robotica.bench.slot_module": "%s: %s"
 }

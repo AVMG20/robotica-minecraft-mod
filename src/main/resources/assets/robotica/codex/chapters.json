@@ -102,7 +102,7 @@
       "pages": [
         {
           "title": "Making FE",
-          "text": "Robotica runs on FE, like Thermal and Mekanism. Their generators power Robotica and the other way round.\n\nWinding Crank: by hand.\nCombustion Generator: any furnace fuel, 40 FE/t.\nSolar Panel: 8 FE/t by day, Mk2 32 FE/t.",
+          "text": "Robotica runs on FE, like Thermal and Mekanism. Their generators power Robotica and the other way round.\n\nWinding Crank: by hand, 2 minutes per Mainspring.\nCombustion Generator: any furnace fuel, 80 FE/t.\nSolar Panel: 20 FE/t by day, Mk2 80 FE/t.",
           "items": [
             "robotica:winding_crank",
             "robotica:combustion_generator",
@@ -287,7 +287,7 @@
         },
         {
           "title": "Controls",
-          "text": "V: next mode. Sneak + V or sneak + scroll: previous.\nHold sneak: always one block.\nB: Silk Touch / Fortune / off (Servo and up).\nG: settings (keep floor, auto-pickup, void filter, auto-smelt).\n\nThe HUD shows the mode. An outline shows what will break."
+          "text": "V: next mode. Sneak + V or sneak + scroll: previous.\nHold sneak: always one block.\nB: Silk Touch / Fortune / off (Servo and up).\nG: settings (keep floor, auto-pickup, void filter, auto-smelt).\nAuto-pickup and the void filter are modules: put an Auto-Pickup or Void Filter Upgrade in a power tool at a Tinker's Bench.\n\nThe HUD shows the mode. An outline shows what will break."
         },
         {
           "title": "Trees",

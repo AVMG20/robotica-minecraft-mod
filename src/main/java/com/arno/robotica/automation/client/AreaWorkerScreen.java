@@ -13,10 +13,9 @@ import net.minecraft.world.item.Items;
 
 import java.util.Locale;
 
-/** GUI of Stumpy, Sprout and the Excavator: battery, upgrades, buffer, two icon toggles, a status dot. */
+/** GUI of Stumpy, Sprout and the Excavator: battery, upgrades, buffer, an area toggle, a status dot. */
 public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     private IconButton areaButton;
-    private IconButton leavesButton;
 
     public AreaWorkerScreen(AreaWorkerMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -29,11 +28,6 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
         super.init();
         areaButton = addRenderableWidget(new IconButton(leftPos + 52, topPos + 17, 20, new ItemStack(Items.SPYGLASS), true,
                 b -> press(AreaWorkerMenu.BUTTON_SHOW_AREA)));
-        leavesButton = null;
-        if (menu.be.hasLeavesToggle()) {
-            leavesButton = addRenderableWidget(new IconButton(leftPos + 76, topPos + 17, 20, new ItemStack(Items.OAK_LEAVES), true,
-                    b -> press(AreaWorkerMenu.BUTTON_LEAVES)));
-        }
         updateButtons();
     }
 
@@ -46,10 +40,6 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     private void updateButtons() {
         areaButton.setOn(menu.showArea());
         areaButton.hint(Component.translatable(menu.showArea() ? "gui.robotica.area_on" : "gui.robotica.area_off"));
-        if (leavesButton != null) {
-            leavesButton.setOn(menu.leaves());
-            leavesButton.hint(Component.translatable(menu.leaves() ? "gui.robotica.leaves_on" : "gui.robotica.leaves_off"));
-        }
     }
 
     @Override
