@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "GQG",
+    "IAI"
+  ],
+  "key": {
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "I": {
+      "tag": "c:plates/iron"
+    },
+    "A": {
+      "item": "robotica:plasma_actuator"
+    }
+  },
+  "result": {
+    "id": "robotica:kinetic_shield_module",
+    "count": 1
+  }
+}

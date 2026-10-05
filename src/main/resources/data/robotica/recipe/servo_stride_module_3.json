@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QPQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "U": {
+      "item": "robotica:servo_stride_module_2"
+    }
+  },
+  "result": {
+    "id": "robotica:servo_stride_module_3",
+    "count": 1
+  }
+}

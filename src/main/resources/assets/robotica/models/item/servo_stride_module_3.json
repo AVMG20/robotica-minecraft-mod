@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "robotica:item/servo_stride_module_3"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "CIC",
+    "MHM",
+    "ICI"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "H": {
+      "item": "minecraft:iron_chestplate"
+    }
+  },
+  "result": {
+    "id": "robotica:exo_chestplate_mk1",
+    "count": 1
+  }
+}

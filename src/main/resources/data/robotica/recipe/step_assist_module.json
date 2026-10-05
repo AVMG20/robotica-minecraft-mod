@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IPI",
+    "CMC"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:plates/iron"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    }
+  },
+  "result": {
+    "id": "robotica:step_assist_module",
+    "count": 1
+  }
+}
