@@ -580,6 +580,38 @@ public abstract class DroneBase extends PathfinderMob {
         return o.position().add(b.scale(back)).add(s.scale(side)).add(0, up, 0);
     }
 
+    /** Horizontal distance band in which a following drone stays put instead of repositioning. */
+    private static final double FOLLOW_MIN = 1.5, FOLLOW_MAX = 4.5, FOLLOW_KEEP = 2.5;
+
+    /**
+     * Relaxed follow: the drone keeps whatever side of the owner it is on and only moves when it drifts out of a
+     * comfortable ring (1.5 to 4.5 blocks) or the owner walks away. Turning around never sends it behind the player,
+     * and while the owner looks at it, it holds still so it is easy to right-click.
+     */
+    protected void followOwner(ServerPlayer o, double up, double speed) {
+        Vec3 anchor = o.position().add(0, up, 0);
+        Vec3 rel = position().subtract(anchor);
+        double horiz = Math.sqrt(rel.x * rel.x + rel.z * rel.z);
+        boolean comfortable = horiz >= FOLLOW_MIN && horiz <= FOLLOW_MAX && Math.abs(rel.y) < 2.5;
+        if (comfortable || (isLookedAtBy(o) && horiz <= FOLLOW_MAX + 2.0)) {
+            navigation.stop();
+            setDeltaMovement(getDeltaMovement().scale(0.5));
+            stuckTicks = 0;
+            return;
+        }
+        Vec3 dir = horiz < 1.0E-3 ? followPoint(o, 1.0, 0.0, 0.0).subtract(o.position()) : new Vec3(rel.x, 0, rel.z);
+        dir = dir.lengthSqr() < 1.0E-4 ? new Vec3(0, 0, 1) : dir.normalize();
+        chase(anchor.add(dir.scale(FOLLOW_KEEP)), speed, 32.0);
+    }
+
+    /** True when the player's crosshair points roughly at this drone (within about 10 degrees, 8 blocks). */
+    protected boolean isLookedAtBy(ServerPlayer o) {
+        Vec3 to = getBoundingBox().getCenter().subtract(o.getEyePosition());
+        double d = to.length();
+        if (d > 8.0 || d < 1.0E-3) return d < 1.0E-3;
+        return o.getLookAngle().dot(to.scale(1.0 / d)) > 0.985;
+    }
+
     /** Straight flight at a point inside a tunnel (no path finding). */
     protected void flyDirect(Vec3 target, double speed) {
         if (position().distanceToSqr(target) < 0.01) return;

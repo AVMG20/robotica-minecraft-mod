@@ -270,7 +270,7 @@ public class SentryDrone extends DroneBase {
             case FOLLOW -> {
                 ServerPlayer o = ownerHere();
                 if (o == null) return;
-                chase(followPoint(o, 1.0, 1.1, 1.9), 1.2, 32.0);
+                followOwner(o, 1.9, 1.2);
             }
             case GUARD -> {
                 if (low || engaged) {

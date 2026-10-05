@@ -414,8 +414,7 @@ public class MiningDrone extends DroneBase {
         if (isHeld()) {
             navigation.stop();
         } else {
-            Vec3 target = followPoint(o, 1.6, 0.9, 1.7);
-            chase(target, 1.2, 32.0);
+            followOwner(o, 1.7, 1.2);
         }
         if (tickCount % 4 == 0) pickUpNearbyItems(sl);
     }
