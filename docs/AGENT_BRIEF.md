@@ -42,7 +42,6 @@ The game test `everyitemhasarecipe` lists Robotica items without a recipe. Until
 - Add at least two GameTests for your module's core logic in `<module>/test`, using `@GameTestHolder(Robotica.MODID)`, `@PrefixGameTestTemplate(false)`, `template = "empty"` (a 3x3x3 empty structure).
 
 ## Finish
-Compile clean, none of your game tests failing, none of your items in the no-recipe list. Then commit in your worktree: `git add -A && git commit -m "<module>: ..."` with the message ending in
-`Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
+Compile clean, none of your game tests failing, none of your items in the no-recipe list. Then commit in your worktree: `git add -A && git commit -m "<short imperative subject>"`. No `Co-Authored-By` trailer, no tool advertising (the repo owner's rule).
 
 Final report, short: what works, what is stubbed or skipped, known risks, anything you need from core.
