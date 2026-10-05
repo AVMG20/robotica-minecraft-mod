@@ -143,6 +143,21 @@ footer{background:#1c2123;color:#8a9692;font-family:var(--f-px);text-align:cente
 
   <article class="feat">
     <div class="text">
+      <span class="kicker">Wireless power</span>
+      <h2>No cables. Just coils.</h2>
+      <p>Put a Tesla Coil on a battery or generator, grab the Linker and click your machines. Chain coils to reach further.</p>
+      <ul>
+        <li>4 to 32 links per coil, up to 1M FE/t</li>
+        <li>Click a face to pick the side power goes in</li>
+        <li>Quiet when you're done, glowing when you hold the Linker</li>
+      </ul>
+      <div class="icons" data-icons="tesla_linker"></div>
+    </div>
+    <img class="frame" src="shots/11_tesla_network.jpg" alt="A Tesla Coil on an accumulator sending power to four machines with thin glowing lines">
+  </article>
+
+  <article class="feat">
+    <div class="text">
       <span class="kicker">Power tools</span>
       <h2>1×1. 3×3. 12×12×12.</h2>
       <p>Press <kbd>V</kbd> to switch modes. Sneak for one block. A battery in your bag keeps the drill going.</p>
@@ -179,6 +194,16 @@ footer{background:#1c2123;color:#8a9692;font-family:var(--f-px);text-align:cente
 
   <article class="feat">
     <div class="text">
+      <span class="kicker">Storage Terminal</span>
+      <h2>A chest that grew up</h2>
+      <p>81 slots, search, sorting and a crafting grid. Add expansions for up to 648 slots. Hoppers and drones can use it too.</p>
+      <div class="icons" data-icons="storage_expansion_mk1"></div>
+    </div>
+    <img class="frame" src="shots/gui_95_storage_terminal.jpg" alt="Storage Terminal menu with a search box, sorted items and a crafting grid">
+  </article>
+
+  <article class="feat">
+    <div class="text">
       <span class="kicker">Warp</span>
       <h2>Portals, but cooler</h2>
       <p>One projector block throws a swirling portal into the air. Link two and walk through, even across dimensions.</p>
@@ -186,6 +211,24 @@ footer{background:#1c2123;color:#8a9692;font-family:var(--f-px);text-align:cente
       <div class="icons" data-icons="recall_remote"></div>
     </div>
     <img class="frame" src="shots/09_gate_and_pad.jpg" alt="Two portal projectors with floating swirling portals">
+  </article>
+
+  <article class="feat">
+    <div class="text">
+      <span class="kicker">First boss</span>
+      <h2>The Scrap Colossus</h2>
+      <p>Find a Rusted Foundry, light a Signal Flare at the altar and dodge the slam. When it overheats, hit the glowing core.</p>
+      <ul>
+        <li>Drops the Servo Core you need for Age 2</li>
+        <li>Summon it again whenever you want</li>
+        <li>Build your own altar for a home arena</li>
+      </ul>
+      <div class="icons" data-icons="signal_flare"></div>
+    </div>
+    <div class="pair">
+      <img class="frame" src="shots/12_scrap_colossus.jpg" alt="The Scrap Colossus, a rusted copper robot boss">
+      <img class="frame" src="shots/13_rusted_foundry.jpg" alt="A Rusted Foundry ruin seen from above">
+    </div>
   </article>
 
   <article class="feat">
@@ -228,7 +271,7 @@ footer{background:#1c2123;color:#8a9692;font-family:var(--f-px);text-align:cente
 <section class="install" id="install">
   <div class="wrap">
     <h2>Play it</h2>
-    <p>Minecraft 1.21.1 with NeoForge. Works next to Thermal, Mekanism, Refined Storage and AE2. Runs on servers.</p>
+    <p>Minecraft 1.21.1 with NeoForge. Works next to Thermal, Mekanism, Refined Storage and AE2, shows up in JEI and Jade, and runs on servers.</p>
     <div class="steps">
       <div class="step"><b>1</b><span>Install NeoForge 21.1 for Minecraft 1.21.1 from <a href="https://neoforged.net" target="_blank" rel="noopener">neoforged.net</a>.</span></div>
       <div class="step"><b>2</b><span>Drop <code>robotica-0.1.0.jar</code> in your <code>mods</code> folder.</span></div>
@@ -281,6 +324,9 @@ const ITEMS = {
   upgrade_growth:["Growth Upgrade","Crops grow faster"],
   codex:["Robotica Codex","Your guide. Every player gets one."],
   recall_remote:["Recall Remote","Hold to go home"],
+  tesla_linker:["Tesla Linker","Click a coil, then a machine"],
+  signal_flare:["Signal Flare","Wakes the Scrap Colossus"],
+  storage_expansion_mk1:["Storage Expansion","More room in your terminal"],
   mining_drone_mk2:["Mining Drone Mk2","Diamond-level digging"],
   sentry_drone_mk2:["Sentry Drone Mk2","Hits harder, flies faster"],
   courier_drone_mk2:["Courier Drone Mk2","Three stacks per trip"],
@@ -290,7 +336,7 @@ const ITEMS = {
 };
 const AGES = [
   ["Clockwork",["copper_gear","mainspring","clockwork_mechanism","tinkers_hammer","felling_axe","gearblade"]],
-  ["Wired",["copper_cell","bore_drill","chainsaw","mining_drone","sentry_drone","courier_drone","shock_baton","upgrade_speed"]],
+  ["Wired",["copper_cell","tesla_linker","bore_drill","chainsaw","mining_drone","sentry_drone","courier_drone","signal_flare","storage_expansion_mk1"]],
   ["Servo",["advanced_circuit","servo_drill","rivet_gun","redstone_cell","essence_vial_full","upgrade_fortune"]],
   ["Deep",["magma_core","magma_drill","arc_blade","upgrade_void"]],
   ["Antigrav",["antigrav_core","null_drill","null_lance","ender_cell","flight_module"]]

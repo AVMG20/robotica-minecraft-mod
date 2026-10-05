@@ -171,17 +171,10 @@ public class TeslaCoilBlock extends PowerBlock {
         if (!PowerClientConfig.teslaParticles() || !isConfiguring() || !(level.getBlockEntity(pos) instanceof TeslaCoilBlockEntity be)) return;
         List<TeslaLink> links = be.links();
         if (links.isEmpty()) return;
-        boolean active = be.isActive();
-        if (random.nextInt(active ? 2 : 6) == 0) {
+        // Very light: an occasional soft spark at the tip while configuring and the coil is sending.
+        if (be.isActive() && random.nextInt(10) == 0) {
             Vec3 tip = tipOffset(state.getValue(FACING)).add(pos.getX(), pos.getY(), pos.getZ());
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, tip.x, tip.y, tip.z,
-                    (random.nextDouble() - 0.5) * 0.1, (random.nextDouble() - 0.5) * 0.1, (random.nextDouble() - 0.5) * 0.1);
-        }
-        if (active && random.nextInt(3) == 0) {
-            TeslaLink link = links.get(random.nextInt(links.size()));
-            Vec3 end = TeslaCoilBlockEntity.endPoint(level, link);
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, end.x, end.y, end.z,
-                    (random.nextDouble() - 0.5) * 0.15, random.nextDouble() * 0.1, (random.nextDouble() - 0.5) * 0.15);
+            level.addParticle(ParticleTypes.ELECTRIC_SPARK, tip.x, tip.y, tip.z, 0, 0.01, 0);
         }
     }
 

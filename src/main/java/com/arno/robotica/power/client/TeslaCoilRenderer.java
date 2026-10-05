@@ -41,58 +41,44 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         BlockPos origin = be.getBlockPos();
         Vec3 from = TeslaCoilBlock.tipOffset(state.getValue(TeslaCoilBlock.FACING));
         boolean active = be.isActive();
-        // Full arcs only while the player holds a Tesla Linker; otherwise one barely visible thread, and only up close.
+        // Simple straight lines. Faint and only up close normally; brighter (and visible further) while holding the Linker.
         boolean configuring = TeslaCoilBlock.isConfiguring();
         if (!configuring) {
             var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
             if (cam.distanceToSqr(origin.getX() + 0.5, origin.getY() + 0.5, origin.getZ() + 0.5) > FAINT_RANGE * FAINT_RANGE) return;
         }
-        long time = level.getGameTime();
+        float time = level.getGameTime() + partialTick;
         VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
         Matrix4f m = pose.last().pose();
+        int lineAlpha = configuring ? (active ? 150 : 95) : (active ? 40 : 20);
+        float width = configuring ? 0.018F : 0.012F;
         for (int i = 0; i < links.size(); i++) {
             TeslaLink link = links.get(i);
             Vec3 to = TeslaCoilBlockEntity.endPoint(level, link).subtract(origin.getX(), origin.getY(), origin.getZ());
-            long seed = origin.asLong() * 31 + link.pos().asLong() * 17;
-            if (!configuring) {
-                long step = time / 6;
-                arc(vc, m, from, to, seed + step * 7919, 0.012F, 0.08F, 140, 190, 255, active ? 34 : 18);
-            } else if (active) {
-                long step = time / 2;
-                arc(vc, m, from, to, seed + step * 7919, 0.035F, 0.25F, 210, 240, 255, 230);
-                arc(vc, m, from, to, seed + step * 7919, 0.09F, 0.25F, 80, 150, 255, 70);
-                arc(vc, m, from, to, seed * 3 + step * 104729, 0.02F, 0.35F, 170, 210, 255, 150);
-            } else {
-                long step = time / 5;
-                arc(vc, m, from, to, seed + step * 7919, 0.018F, 0.12F, 110, 170, 255, 90);
+            line(vc, m, from, to, width, 120, 210, 255, lineAlpha);
+            if (active) {
+                // A small bright pulse travelling from the coil to the target shows which way the power flows.
+                double len = to.subtract(from).length();
+                if (len < 0.2) continue;
+                double t = ((time * 0.12 + i * 0.37) % len) / len;
+                double seg = Math.min(0.35, len * 0.25) / len;
+                Vec3 a = from.add(to.subtract(from).scale(t));
+                Vec3 b = from.add(to.subtract(from).scale(Math.min(1.0, t + seg)));
+                line(vc, m, a, b, width * 1.8F, 200, 245, 255, configuring ? 210 : 80);
             }
         }
     }
 
-    /** One jagged ribbon from a to b: crossed quads per segment, both windings, offsets fade out towards the ends. */
-    private static void arc(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, long seed, float width, float jitter,
-                            int r, int g, int bl, int alpha) {
+    /** A straight ribbon from a to b: two crossed quads, both windings. */
+    private static void line(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, float width, int r, int g, int bl, int alpha) {
         Vec3 d = b.subtract(a);
-        double len = d.length();
-        if (len < 1.0E-3) return;
-        Vec3 dir = d.scale(1.0 / len);
+        if (d.lengthSqr() < 1.0E-6) return;
+        Vec3 dir = d.normalize();
         Vec3 ref = Math.abs(dir.y) < 0.95 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
         Vec3 p1 = dir.cross(ref).normalize();
         Vec3 p2 = dir.cross(p1).normalize();
-        int segments = Math.max(3, Math.min(32, (int) (len * 1.5)));
-        double amp = Math.min(0.45, jitter * Math.sqrt(len));
-        Vec3 prev = a;
-        for (int s = 1; s <= segments; s++) {
-            double t = (double) s / segments;
-            Vec3 next = a.add(d.scale(t));
-            if (s < segments) {
-                double env = Math.sin(Math.PI * t);
-                next = next.add(p1.scale(noise(seed, s, 0) * amp * env)).add(p2.scale(noise(seed, s, 1) * amp * env));
-            }
-            quad(vc, m, prev, next, p1.scale(width), r, g, bl, alpha);
-            quad(vc, m, prev, next, p2.scale(width), r, g, bl, alpha);
-            prev = next;
-        }
+        quad(vc, m, a, b, p1.scale(width), r, g, bl, alpha);
+        quad(vc, m, a, b, p2.scale(width), r, g, bl, alpha);
     }
 
     private static void quad(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, Vec3 w, int r, int g, int bl, int alpha) {
@@ -108,17 +94,6 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         vc.addVertex(m, bx1, by1, bz1).setColor(r, g, bl, alpha);
         vc.addVertex(m, ax1, ay1, az1).setColor(r, g, bl, alpha);
         vc.addVertex(m, ax0, ay0, az0).setColor(r, g, bl, alpha);
-    }
-
-    /** Deterministic noise in [-1, 1]. */
-    private static double noise(long seed, int i, int axis) {
-        long h = seed ^ (i * 0x9E3779B97F4A7C15L) ^ (axis * 0xC2B2AE3D27D4EB4FL);
-        h ^= h >>> 33;
-        h *= 0xff51afd7ed558ccdL;
-        h ^= h >>> 33;
-        h *= 0xc4ceb9fe1a85ec53L;
-        h ^= h >>> 33;
-        return ((h >>> 11) * 0x1.0p-53) * 2.0 - 1.0;
     }
 
     @Override

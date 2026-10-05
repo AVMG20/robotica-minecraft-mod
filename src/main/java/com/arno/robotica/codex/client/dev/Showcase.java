@@ -172,6 +172,18 @@ public final class Showcase {
         return out;
     }
 
+    /** Dev only: links a Tesla Coil without the Linker (TeslaCoilBlockEntity.addLink is package-private). */
+    private static void devLink(ServerLevel level, BlockPos coil, com.arno.robotica.power.tesla.TeslaLink link) {
+        try {
+            var be = level.getBlockEntity(coil);
+            var m = com.arno.robotica.power.tesla.TeslaCoilBlockEntity.class.getDeclaredMethod("addLink", com.arno.robotica.power.tesla.TeslaLink.class);
+            m.setAccessible(true);
+            m.invoke(be, link);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            Robotica.LOGGER.warn("Showcase could not link Tesla Coil at {}", coil, e);
+        }
+    }
+
     private static void setFacing(ServerLevel level, BlockPos pos, Block block, Direction dir) {
         BlockState s = block.defaultBlockState();
         if (s.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) s = s.setValue(BlockStateProperties.HORIZONTAL_FACING, dir);
@@ -349,6 +361,89 @@ public final class Showcase {
         hud(true);
         step(40, () -> {});
         shot("10_drill_hud_outline");
+
+        // Scene 7: a Tesla network on an Accumulator, Linker in hand so the arcs show at full strength.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            BlockPos acc = new BlockPos(40, Y, -20);
+            level.setBlock(acc, block("accumulator_3").defaultBlockState(), 3);
+            var cap = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK, acc, null);
+            for (int i = 0; i < 64 && cap != null && cap.receiveEnergy(Integer.MAX_VALUE, false) > 0; i++) {}
+            BlockPos root = acc.above();
+            level.setBlock(root, block("tesla_coil_5").defaultBlockState().setValue(BlockStateProperties.FACING, Direction.UP), 3);
+            BlockPos pillar = new BlockPos(46, Y, -26);
+            level.setBlock(pillar, Blocks.POLISHED_ANDESITE.defaultBlockState(), 3);
+            level.setBlock(pillar.above(), Blocks.POLISHED_ANDESITE.defaultBlockState(), 3);
+            BlockPos relay = pillar.above(2);
+            level.setBlock(relay, block("tesla_coil_3").defaultBlockState().setValue(BlockStateProperties.FACING, Direction.UP), 3);
+            BlockPos press = new BlockPos(35, Y, -24), charger = new BlockPos(36, Y, -16), terminal = new BlockPos(50, Y, -30), excav = new BlockPos(44, Y, -16);
+            setFacing(level, press, block("metal_press"), Direction.SOUTH);
+            setFacing(level, charger, block("charger"), Direction.SOUTH);
+            setFacing(level, terminal, block("storage_terminal"), Direction.SOUTH);
+            setFacing(level, excav, block("combustion_generator"), Direction.SOUTH);
+            devLink(level, root, new com.arno.robotica.power.tesla.TeslaLink(press, Direction.UP, false));
+            devLink(level, root, new com.arno.robotica.power.tesla.TeslaLink(charger, Direction.UP, false));
+            devLink(level, root, new com.arno.robotica.power.tesla.TeslaLink(excav, Direction.UP, false));
+            devLink(level, root, new com.arno.robotica.power.tesla.TeslaLink(relay, null, true));
+            devLink(level, relay, new com.arno.robotica.power.tesla.TeslaLink(terminal, Direction.UP, false));
+            sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("tesla_linker"))));
+        }));
+        hud(false);
+        camera(41.5, Y + 4, -8, 180, 22);
+        step(60, () -> {});
+        shot("11_tesla_network");
+
+        // Scene 8: the Scrap Colossus on its altar (no AI, for the photo).
+        step(20, () -> server(sp -> {
+            MinecraftServer s = sp.server;
+            s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "difficulty normal");
+            sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            ServerLevel level = sp.serverLevel();
+            level.setBlock(new BlockPos(70, Y, -20), block("colossus_altar").defaultBlockState(), 3);
+            s.getCommands().performPrefixedCommand(s.createCommandSourceStack(),
+                    "summon robotica:scrap_colossus 70.5 " + (Y + 1) + " -19.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[0f,0f]}");
+        }));
+        camera(70.5, Y + 3, -11, 180, 8);
+        step(60, () -> {});
+        shot("12_scrap_colossus");
+
+        // Scene 9: a Rusted Foundry.
+        step(20, () -> server(sp -> {
+            MinecraftServer s = sp.server;
+            s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "kill @e[type=robotica:scrap_colossus]");
+            s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "place structure robotica:rusted_foundry 120 " + Y + " -20");
+        }));
+        camera(120, Y + 22, 6, 180, 42);
+        step(80, () -> {});
+        shot("13_rusted_foundry");
+
+        // Scene 10: a Storage Terminal with things in it.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            BlockPos t = new BlockPos(0, Y, -40);
+            setFacing(level, t, block("storage_terminal"), Direction.SOUTH);
+            var items = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, t, null);
+            var energy = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK, t, null);
+            if (energy != null) energy.receiveEnergy(Integer.MAX_VALUE, false);
+            if (items != null) {
+                net.minecraft.world.item.Item[] fill = {Items.COBBLESTONE, Items.OAK_LOG, Items.IRON_INGOT, Items.COPPER_INGOT, Items.REDSTONE,
+                        Items.COAL, Items.DIAMOND, Items.OAK_PLANKS, Items.GOLD_INGOT, Items.GLASS, Items.STICK, Items.TORCH, Items.WHEAT,
+                        Items.BREAD, Items.BONE_MEAL, Items.LAPIS_LAZULI, Items.QUARTZ, Items.OBSIDIAN, Items.SAND, Items.GRAVEL};
+                for (int i = 0; i < fill.length; i++) {
+                    for (int k = 0; k <= i % 4; k++) net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(items, new ItemStack(fill[i], 64), false);
+                }
+                for (String id : new String[]{"copper_gear", "iron_plate", "basic_circuit", "electric_motor"}) {
+                    net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(items, new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id(id)), 32), false);
+                }
+            }
+            sp.teleportTo(level, 0.5, Y, -37.5, 180, 30);
+            sp.gameMode.useItemOn(sp, level, ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(t), Direction.SOUTH, t, false));
+        }));
+        hud(true);
+        step(30, () -> {});
+        shot("gui_95_storage_terminal_full");
+        step(5, () -> { if (mc().player != null && mc().screen != null) mc().player.closeContainer(); });
 
         // GUIs: every block entity that is a menu provider.
         step(10, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
