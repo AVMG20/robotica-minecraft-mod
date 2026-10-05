@@ -33,8 +33,8 @@
   "tooltip.robotica.age": "Age %s: %s",
   "tooltip.robotica.energy": "%s / %s",
   "tooltip.robotica.cell_runtime": "About %s of work at %s FE/t",
-  "tooltip.robotica.mainspring": "Wind it at a Winding Crank",
-  "tooltip.robotica.upgrade_hint": "Goes in a machine or robot upgrade slot",
+  "tooltip.robotica.mainspring": "Wind it at a Winding Crank, then right-click a robot with it",
+  "tooltip.robotica.upgrade_hint": "Right-click a robot or machine with it to install it",
   "robotica.configuration.balance": "Balance",
   "robotica.configuration.energyUseMultiplier": "Energy use multiplier",
   "robotica.configuration.workSpeedMultiplier": "Work speed multiplier",
@@ -81,5 +81,12 @@
   "tooltip.robotica.upgrade.growth.4": "+200% crop and sapling growth in the area",
   "item.robotica.upgrade_void_1": "Void Filter Upgrade",
   "tooltip.robotica.upgrade.void.1": "Deletes cobblestone, dirt, gravel and other junk",
-  "tooltip.robotica.hold_shift": "Hold %s for details"
+  "tooltip.robotica.hold_shift": "Hold %s for details",
+  "tooltip.robotica.copper_cell.details": "Charges in a Charger. Right-click a robot with it to swap batteries.",
+  "tooltip.robotica.redstone_cell.details": "Charges in a Charger. Right-click a robot with it to swap batteries.",
+  "tooltip.robotica.ender_cell.details": "Charges in a Charger. Right-click a robot with it to swap batteries.",
+  "tooltip.robotica.copper_gear.details": "The first part of almost everything. Open the Codex (it came with you) for the next steps.",
+  "tooltip.robotica.servo_core.details": "Will drop from a boss. Until then it has an expensive recipe.",
+  "tooltip.robotica.magma_core.details": "Will drop from a boss. Until then it has an expensive recipe.",
+  "tooltip.robotica.antigrav_core.details": "Will drop from a boss. Until then it has an expensive recipe."
 }

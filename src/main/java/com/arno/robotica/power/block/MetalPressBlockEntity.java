@@ -56,6 +56,16 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
         }
     };
     public final Upgrades upgrades = new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY), this::setChanged);
+    @Override
+    public net.neoforged.neoforge.items.IItemHandler quickInsertTarget() {
+        return new net.neoforged.neoforge.items.wrapper.RangedWrapper(items, 0, 1);
+    }
+
+    @Override
+    public net.neoforged.neoforge.items.IItemHandler quickUpgrades() {
+        return upgrades;
+    }
+
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0, this::setChanged);
 
     private final IItemHandler automation = new ItemAccess(items, (slot, stack) -> slot == 0, (slot, stack) -> slot == 1);

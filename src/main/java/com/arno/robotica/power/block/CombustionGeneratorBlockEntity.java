@@ -42,6 +42,11 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
             setChanged();
         }
     };
+    @Override
+    public net.neoforged.neoforge.items.IItemHandler quickInsertTarget() {
+        return fuel;
+    }
+
     /** Receive 0: only the burning fills it. Extract is limited so conduits cannot empty it faster than MAX_OUTPUT. */
     public final MachineEnergyStorage energy = new MachineEnergyStorage(PowerConfig.generatorBuffer(), 0, MAX_OUTPUT, this::setChanged);
 

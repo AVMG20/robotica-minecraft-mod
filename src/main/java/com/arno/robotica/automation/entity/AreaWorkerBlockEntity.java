@@ -98,6 +98,10 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     @Nullable
     private UUID owner;
     private boolean showArea;
+    /** Game time until which the area outline shows on its own (after placing or upgrading). Synced. */
+    private long previewUntil;
+    /** Ticks a fresh preview lasts. */
+    public static final int PREVIEW_TICKS = 200;
     protected int areaSize = 1;
     private Status status = Status.IDLE;
     protected long age;
@@ -181,6 +185,23 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         return showArea;
     }
 
+    /** True while the outline should be drawn: the toggle, or a few seconds after placing or upgrading. Client side. */
+    public boolean outlineVisible() {
+        return showArea || (level != null && level.getGameTime() < previewUntil);
+    }
+
+    /** Shows the work area for a few seconds. Server side. */
+    public void startPreview() {
+        if (level == null || level.isClientSide) return;
+        previewUntil = level.getGameTime() + PREVIEW_TICKS;
+        setChangedAndSync();
+    }
+
+    /** Percent of the job done, or -1 for workers without a finite job (farm bots). */
+    public int guiProgress() {
+        return -1;
+    }
+
     public void toggleShowArea() {
         showArea = !showArea;
         setChangedAndSync();
@@ -227,7 +248,9 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
 
     protected void onUpgradesChanged() {
         if (level != null && !level.isClientSide) {
+            int before = areaSize;
             recalc();
+            if (areaSize != before) previewUntil = level.getGameTime() + PREVIEW_TICKS;
             setChangedAndSync();
         } else {
             setChanged();
@@ -259,11 +282,45 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
             status = next;
             setChanged();
         }
+        if ((status == Status.NO_ENERGY || status == Status.OUTPUT_FULL) && (age + worldPosition.asLong()) % 40 == 0) stallParticles(sl);
+    }
+
+    /** Puffs above a stalled robot so you can see from afar that it needs you: smoke without energy, a note when full. */
+    private void stallParticles(ServerLevel sl) {
+        double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 1.1, z = worldPosition.getZ() + 0.5;
+        if (status == Status.NO_ENERGY) {
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE, x, y, z, 6, 0.2, 0.1, 0.2, 0.01);
+        } else {
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.ANGRY_VILLAGER, x, y + 0.2, z, 1, 0.1, 0.05, 0.1, 0.0);
+        }
+    }
+
+    /** One-line status for the action bar: name, area, status hint and energy. */
+    public Component statusLine() {
+        int percent = energy.getMaxEnergyStored() <= 0 ? 0 : (int) (100L * energy.getEnergyStored() / energy.getMaxEnergyStored());
+        ItemStack cell = battery.getStackInSlot(0);
+        if (!cell.isEmpty()) {
+            int cap = com.arno.robotica.core.energy.ItemEnergy.capacity(cell);
+            if (cap > 0) percent = (int) (100L * com.arno.robotica.core.energy.ItemEnergy.get(cell) / cap);
+        }
+        return Component.translatable("message.robotica.robot_status", Component.translatable(blockKey()), areaSize, areaSize,
+                Component.translatable("gui.robotica.status." + status.name().toLowerCase(java.util.Locale.ROOT)), percent);
     }
 
     /** Robot chatter on status changes: a beep when it starts after a long rest, a buzz when it stalls. Rate limited. */
     private void announce(ServerLevel sl, Status from, Status to) {
         boolean stalled = to == Status.NO_ENERGY || to == Status.OUTPUT_FULL;
+        if (to == Status.WORKING) {
+            com.arno.robotica.core.progress.Milestones.awardOwner(sl, worldPosition, owner, com.arno.robotica.core.progress.Milestones.ROBOT_WORKING);
+        }
+        if (stalled && from != to) {
+            // Tell the owner once per stall when they are close enough to do something about it.
+            var player = com.arno.robotica.core.progress.Milestones.nearbyOwner(sl, worldPosition, owner, 32);
+            if (player != null) {
+                player.displayClientMessage(Component.translatable(to == Status.NO_ENERGY ? "message.robotica.robot_no_energy" : "message.robotica.robot_full",
+                        Component.translatable(blockKey())), true);
+            }
+        }
         if (to == Status.WORKING && age - lastWorking > BEEP_GAP && age - lastBeep > BEEP_GAP) {
             lastBeep = age;
             CoreSounds.play(sl, worldPosition, CoreSounds.ROBOT_BEEP, SoundSource.NEUTRAL, 0.7F, 1.0F);
@@ -482,6 +539,7 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         }
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
         if (tag.contains("showArea")) showArea = tag.getBoolean("showArea");
+        if (tag.contains("previewUntil")) previewUntil = tag.getLong("previewUntil");
         if (tag.contains("areaSize")) {
             // client update tag
             areaSize = tag.getInt("areaSize");
@@ -495,6 +553,7 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     @Override
     protected void saveClientData(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putBoolean("showArea", showArea);
+        tag.putLong("previewUntil", previewUntil);
         tag.putInt("areaSize", areaSize);
         saveClientExtra(tag);
     }

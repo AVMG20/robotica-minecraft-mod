@@ -18,7 +18,7 @@ import net.minecraft.world.phys.AABB;
 public class AreaOutlineRenderer<T extends AreaWorkerBlockEntity> implements BlockEntityRenderer<T> {
     @Override
     public void render(T be, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay) {
-        if (!be.showArea()) return;
+        if (!be.outlineVisible()) return;
         BlockPos pos = be.getBlockPos();
         AABB box = be.areaBox().move(-pos.getX(), -pos.getY(), -pos.getZ());
         float r = 0.36F;
@@ -35,12 +35,12 @@ public class AreaOutlineRenderer<T extends AreaWorkerBlockEntity> implements Blo
 
     @Override
     public AABB getRenderBoundingBox(T be) {
-        return be.showArea() ? be.areaBox().minmax(new AABB(be.getBlockPos())) : new AABB(be.getBlockPos());
+        return be.outlineVisible() ? be.areaBox().minmax(new AABB(be.getBlockPos())) : new AABB(be.getBlockPos());
     }
 
     @Override
     public boolean shouldRenderOffScreen(T be) {
-        return be.showArea();
+        return be.outlineVisible();
     }
 
     @Override

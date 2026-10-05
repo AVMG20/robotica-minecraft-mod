@@ -59,6 +59,11 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
             setChanged();
         }
     };
+    @Override
+    public net.neoforged.neoforge.items.IItemHandler quickInsertTarget() {
+        return slot;
+    }
+
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0, this::setChanged);
 
     private final IItemHandler automation = new ItemAccess(slot, (s, stack) -> canCharge(stack), (s, stack) -> isDone(stack));

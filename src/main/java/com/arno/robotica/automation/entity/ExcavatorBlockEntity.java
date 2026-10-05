@@ -96,6 +96,18 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
         return done ? 0 : worldPosition.getY() - 1 - cursorLayer;
     }
 
+    /** Share of the hole that is dug, 0-100, from the cursor (layers from the top down to the world bottom). */
+    @Override
+    public int guiProgress() {
+        if (done) return 100;
+        int layers = layerCount();
+        int size = Math.max(1, cursorSize > 0 ? cursorSize : areaSize);
+        long total = (long) layers * size * size;
+        if (total <= 0) return 100;
+        long dug = (long) cursorLayer * size * size + cursorIdx;
+        return (int) Math.min(99, dug * 100 / total);
+    }
+
     public boolean isDone() {
         return done;
     }

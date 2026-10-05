@@ -341,6 +341,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         status = now;
         if (wasFormed != now.formed()) {
             CoreSounds.play(level, pos, now.formed() ? CoreSounds.REPLICATOR_FORM : CoreSounds.REPLICATOR_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
+            if (now.formed()) com.arno.robotica.core.progress.Milestones.awardOwner(level, pos, owner, com.arno.robotica.core.progress.Milestones.REPLICATOR_FORMED);
         }
         if (state.getValue(ReplicatorControllerBlock.FORMED) != now.formed()) {
             BlockState next = state.setValue(ReplicatorControllerBlock.FORMED, now.formed());

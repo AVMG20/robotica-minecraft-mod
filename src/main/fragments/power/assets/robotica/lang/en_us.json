@@ -10,8 +10,8 @@
   "block.robotica.gold_conduit": "Gold Conduit",
   "block.robotica.charger": "Charger",
   "block.robotica.metal_press": "Metal Press",
-  "tooltip.robotica.winding_crank": "Right-click with an empty hand to wind a Mainspring (+%s FE per click)",
-  "tooltip.robotica.winding_crank_auto": "Also winds from any FE source, up to %s FE/t. Sneak right-click takes the Mainspring out",
+  "tooltip.robotica.winding_crank": "Winds a Mainspring by hand: +%s FE per turn",
+  "tooltip.robotica.winding_crank_auto": "Also winds from any FE source, up to %s FE/t",
   "tooltip.robotica.combustion_generator": "Burns furnace fuel for %s FE/t",
   "tooltip.robotica.solar": "Generates %s FE/t in daylight with open sky",
   "tooltip.robotica.solar_push": "Pushes energy into every adjacent block",
@@ -52,5 +52,15 @@
   "robotica.configuration.charger": "Charger",
   "robotica.configuration.chargerRate": "Charge rate (FE/t)",
   "robotica.configuration.metal_press": "Metal Press",
-  "robotica.configuration.pressPower": "Power use (FE/t)"
+  "robotica.configuration.pressPower": "Power use (FE/t)",
+  "tooltip.robotica.winding_crank.details": "Right-click it with a Mainspring to put the spring in.\nHold right-click with an empty hand to wind it.\nSneak-right-click with an empty hand takes it out.",
+  "tooltip.robotica.combustion_generator.details": "Right-click it with coal, charcoal, logs or any furnace fuel.\nIt pushes FE into conduits and machines touching it.",
+  "tooltip.robotica.solar_panel_mk1.details": "Needs open sky. Pushes FE into blocks touching it.",
+  "tooltip.robotica.solar_panel_mk2.details": "Needs open sky. Pushes FE into blocks touching it.",
+  "tooltip.robotica.charger.details": "Right-click it with a cell or an FE tool to charge it.\nNeeds FE from a generator or conduit.",
+  "tooltip.robotica.metal_press.details": "Right-click it with ingots, or feed it with a hopper.\nOne ingot makes one plate: twice what the hammer gives.",
+  "tooltip.robotica.copper_conduit.details": "Lay a line from a generator to your machines. Conduits connect by themselves.",
+  "tooltip.robotica.gold_conduit.details": "Lay a line from a generator to your machines. Conduits connect by themselves.",
+  "tooltip.robotica.accumulator_1.details": "Stores FE for the night. Put it between generators and machines.",
+  "message.robotica.machine_inserted": "Put in: %s"
 }

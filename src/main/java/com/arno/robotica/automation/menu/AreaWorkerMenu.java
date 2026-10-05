@@ -25,6 +25,7 @@ public class AreaWorkerMenu extends MachineMenu {
     private final int idxLeaves;
     private final int idxSize;
     private final int idxExtra;
+    private final int idxProgress;
 
     public AreaWorkerMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv, resolve(inv, buf));
@@ -56,6 +57,7 @@ public class AreaWorkerMenu extends MachineMenu {
         idxLeaves = track(() -> be.leavesEnabled() ? 1 : 0);
         idxSize = track(be::areaSize);
         idxExtra = track(be::guiExtra);
+        idxProgress = track(be::guiProgress);
     }
 
     public int energy() {
@@ -84,6 +86,11 @@ public class AreaWorkerMenu extends MachineMenu {
 
     public int extra() {
         return synced(idxExtra);
+    }
+
+    /** Percent of the job done, -1 when the worker has no finite job. */
+    public int progress() {
+        return synced(idxProgress);
     }
 
     @Override

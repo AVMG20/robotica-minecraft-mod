@@ -72,7 +72,7 @@ public abstract class FarmBotBlock extends AreaWorkerBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (!(stack.getItem() instanceof FarmKitItem kit)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (!(stack.getItem() instanceof FarmKitItem kit)) return super.useItemOn(stack, state, level, pos, player, hand, hit);
         int tier = state.getValue(TIER);
         if (kit.tier() != tier + 1) {
             if (!level.isClientSide) {
@@ -85,10 +85,14 @@ public abstract class FarmBotBlock extends AreaWorkerBlock {
         }
         if (!level.isClientSide) {
             level.setBlock(pos, state.setValue(TIER, kit.tier()), Block.UPDATE_ALL);
-            if (level.getBlockEntity(pos) instanceof FarmBotBlockEntity bot) bot.onTierChanged();
+            if (level.getBlockEntity(pos) instanceof FarmBotBlockEntity bot) {
+                bot.onTierChanged();
+                bot.startPreview();
+            }
             if (!player.getAbilities().instabuild) stack.shrink(1);
             CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
             player.displayClientMessage(Component.translatable("message.robotica.kit_applied", kit.tier()), true);
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) com.arno.robotica.core.progress.Milestones.award(sp, com.arno.robotica.core.progress.Milestones.FARM_KIT);
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }

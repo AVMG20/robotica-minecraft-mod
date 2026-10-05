@@ -23,6 +23,18 @@ public abstract class PowerBlockEntity extends SyncedBlockEntity {
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
     }
 
+    /** Where a right-click with an item puts that item (fuel, ingots, a cell to charge). Null: right-click opens the GUI. */
+    @org.jetbrains.annotations.Nullable
+    public IItemHandler quickInsertTarget() {
+        return null;
+    }
+
+    /** Upgrade slots a right-click with an upgrade card fills. Null when the machine takes no cards. */
+    @org.jetbrains.annotations.Nullable
+    public IItemHandler quickUpgrades() {
+        return null;
+    }
+
     /** Called when the block is broken: drop inventories here. */
     public void dropContents(Level level, BlockPos pos) {
     }

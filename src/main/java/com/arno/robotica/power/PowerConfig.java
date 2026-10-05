@@ -26,10 +26,10 @@ public final class PowerConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("winding_crank");
-        CRANK_FE_PER_CLICK = b.comment("FE wound into the Mainspring per hand click.")
-                .defineInRange("crankFePerClick", 2_000, 1, 1_000_000);
+        CRANK_FE_PER_CLICK = b.comment("FE wound into the Mainspring per hand click. Holding right-click turns the crank 5 times a second, so the default fills a Mainspring in about 20 seconds.")
+                .defineInRange("crankFePerClick", 6_000, 1, 1_000_000);
         CRANK_CLICKS_PER_SECOND = b.comment("Server side cap on hand clicks per player and second.")
-                .defineInRange("crankClicksPerSecond", 4, 1, 20);
+                .defineInRange("crankClicksPerSecond", 5, 1, 20);
         CRANK_AUTO_RATE = b.comment("FE/t the crank accepts from an FE source (water wheel, Create, ...).")
                 .defineInRange("crankAutoRate", 200, 1, 1_000_000);
         b.pop();
