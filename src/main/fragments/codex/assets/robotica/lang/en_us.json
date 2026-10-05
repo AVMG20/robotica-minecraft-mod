@@ -1,6 +1,6 @@
 {
   "item.robotica.codex": "Robotica Codex",
-  "tooltip.robotica.codex": "Right-click to read. Click any item in it to see its recipe.",
+  "tooltip.robotica.codex": "Right-click to read. The first page shows your next steps.",
   "robotica.configuration.giveCodexOnFirstJoin": "Give Codex on first join",
   "robotica.configuration.creativeLabEnabled": "Creative Lab for operators",
   "advancements.robotica.guide.root.title": "Robotica",
@@ -64,5 +64,13 @@
   "advancements.robotica.guide.null_drill.title": "Big Holes",
   "advancements.robotica.guide.null_drill.description": "Smith a Null Drill and dig a 12x12x12 cube in one swing.",
   "advancements.robotica.guide.portal.title": "Through the Lens",
-  "advancements.robotica.guide.portal.description": "Link two Portal Projectors with a Linking Card and step through the portal."
+  "advancements.robotica.guide.portal.description": "Link two Portal Projectors with a Linking Card and step through the portal.",
+  "codex.robotica.guide.title": "Your next steps",
+  "codex.robotica.guide.progress": "Guide: %s of %s steps done",
+  "codex.robotica.guide.all_done": "Every step is done. Robotica is yours.",
+  "codex.robotica.guide.missing": "The guide steps are missing from this resource pack.",
+  "codex.robotica.guide.click": "Click an icon for its recipe",
+  "codex.robotica.guide.checklist": "All steps",
+  "message.robotica.guide.next": "[Robotica] Next: %s %s",
+  "robotica.configuration.guideChatTips": "Guide tips in chat"
 }
