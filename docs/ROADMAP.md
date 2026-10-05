@@ -15,16 +15,17 @@ Last updated 2026-10-05. Main builds, `./gradlew runGameTestServer` passes 105/1
 | Architect | Architect Table: 9x9 building shells on a plot grid, 4 styles, doors where buildings touch |
 | Replicator | Essence Vial, 3x3x3 Mob Replicator, harvest/spawn modes |
 | Warp | Warp Pads, Rift Upgrade, Recall/Rift Remote, Portal Projector |
-| Codex | Guide book, 36-step advancement guide, OP Creative Lab, `/robotica` commands |
+| Codex | Guide book, 38-step advancement guide, OP Creative Lab, `/robotica` commands |
+| Boss | Scrap Colossus (Servo Core source), Scrap Drones, Signal Flare, Colossus Altar, Rusted Foundry ruins |
 
 ## Next
 
 1. **Play-test.** Run `./gradlew runClient` (or `runShowcase` for screenshots) and check GUIs, models, glow layers, keybinds, the Codex guide page, HUDs and drones. Fix what looks or feels wrong.
-2. **Bosses**, Scrap Colossus first. Boss cores then replace the temporary core recipes.
+2. **Bosses:** the Scrap Colossus is in (play-test the fight: slam timing, scrap lob arc, overheat window, drone pathing, foundry placement). Next: a Magma Core boss and an Antigrav Core boss to replace the last temporary core recipes.
 3. **Compat:** JEI and Jade are done (optional, see README). Still open: EMI, Refined Storage API for the Architect Table, Create rotation for the Winding Crank, opening JEI from the Codex.
 4. **Multiplayer test** on a dedicated server with friends.
 
-Done: **Tesla Coil wireless power** replaced the conduits (coils on Accumulators or generators, Tesla Linker, 5 tiers by link count, 5% loss per coil hop, face-specific insertion, arcs). Play-test the arcs and the coil model in a client.
+Done: **Tesla Coil wireless power** replaced the conduits (coils on Accumulators or generators, Tesla Linker, 5 tiers by link count, 5% loss per coil hop, face-specific insertion, arcs only while holding the Linker). Play-test the arcs and the coil model in a client.
 
 ## Working on it
 

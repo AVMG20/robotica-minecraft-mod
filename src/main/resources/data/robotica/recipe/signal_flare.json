@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CGC",
+    "RMR",
+    "C C"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:ingots/copper"
+    },
+    "G": {
+      "tag": "c:gunpowders"
+    },
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    }
+  },
+  "result": {
+    "id": "robotica:signal_flare",
+    "count": 1
+  }
+}

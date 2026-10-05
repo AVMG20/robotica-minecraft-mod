@@ -48,7 +48,8 @@
       "robotica:chainsaw_from_felling_axe",
       "robotica:tesla_coil_1",
       "robotica:tesla_linker",
-      "robotica:mining_drone"
+      "robotica:mining_drone",
+      "robotica:signal_flare"
     ],
     "experience": 10
   }

@@ -1,0 +1,51 @@
+{
+  "parent": "robotica:guide/age2",
+  "display": {
+    "icon": {
+      "id": "robotica:signal_flare"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.foundry.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.foundry.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "structures": "robotica:rusted_foundry"
+          }
+        }
+      }
+    },
+    "done_1": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:signal_flare"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done",
+      "done_1"
+    ]
+  ],
+  "rewards": {
+    "experience": 10
+  }
+}

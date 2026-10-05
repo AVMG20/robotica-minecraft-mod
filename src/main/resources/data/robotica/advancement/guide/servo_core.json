@@ -1,5 +1,5 @@
 {
-  "parent": "robotica:guide/age2",
+  "parent": "robotica:guide/colossus",
   "display": {
     "icon": {
       "id": "robotica:servo_core"

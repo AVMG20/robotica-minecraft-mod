@@ -70,7 +70,7 @@
       "pages": [
         {
           "title": "Five ages",
-          "text": "Age 0 Clockwork: copper, wood, stone.\nAge 1 Wired: iron, redstone, gold.\nAge 2 Servo: diamonds, obsidian, quartz, a Servo Core.\nAge 3 Deep: netherite, blaze rods, a Magma Core.\nAge 4 Antigrav: ender pearls, nether stars, an Antigrav Core.\n\nCores will drop from bosses. Until then they have an expensive recipe."
+          "text": "Age 0 Clockwork: copper, wood, stone.\nAge 1 Wired: iron, redstone, gold.\nAge 2 Servo: diamonds, obsidian, quartz, a Servo Core.\nAge 3 Deep: netherite, blaze rods, a Magma Core.\nAge 4 Antigrav: ender pearls, nether stars, an Antigrav Core.\n\nThe Servo Core drops from the Scrap Colossus (see Bosses). The other cores keep an expensive recipe until their bosses arrive."
         },
         {
           "title": "The parts ladder",
@@ -322,6 +322,44 @@
             "robotica:rivet_gun",
             "robotica:arc_blade",
             "robotica:null_lance"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Bosses",
+      "icon": "robotica:colossus_altar",
+      "pages": [
+        {
+          "title": "Scrap Colossus",
+          "text": "A rusted copper robot, three blocks tall. It is where Servo Cores come from: it always drops one, plus copper, iron and parts.\n\nThe loot goes to whoever lands the killing blow. Everyone close by sees its health bar.",
+          "items": [
+            "robotica:servo_core",
+            "robotica:signal_flare"
+          ]
+        },
+        {
+          "title": "Rusted Foundry",
+          "text": "Ruined copper halls in plains, deserts and badlands, far apart. The chest inside holds a Signal Flare.\n\nRight-click the Colossus Altar in the middle with a Signal Flare. One Colossus per altar at a time, then the altar cools down for 5 minutes.",
+          "items": [
+            "robotica:signal_flare",
+            "robotica:colossus_altar"
+          ]
+        },
+        {
+          "title": "The fight",
+          "text": "Arms up: a ground slam is coming. Jump as it lands or get 5 blocks away.\nArm swung back: it throws scrap. Keep moving.\n\nBelow half health it calls Scrap Drones and overheats now and then: it stands still with its furnace open. Hit it then for double damage.",
+          "items": [
+            "robotica:shock_baton",
+            "robotica:rivet_gun"
+          ]
+        },
+        {
+          "title": "Farming it",
+          "text": "Signal Flares are cheap: copper, redstone, gunpowder and an Electric Motor.\n\nWant your own arena? Craft a Colossus Altar from Age 2 parts and wall it in. The Colossus stays near its altar and never breaks blocks.",
+          "items": [
+            "robotica:signal_flare",
+            "robotica:colossus_altar"
           ]
         }
       ]

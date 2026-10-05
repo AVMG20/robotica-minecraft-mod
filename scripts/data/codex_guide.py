@@ -38,11 +38,19 @@ def milestone(name):
     return {'trigger': 'robotica:milestone', 'conditions': {'milestone': name}}
 
 
+def in_structure(structure):
+    return {'trigger': 'minecraft:location', 'conditions': {'player': {'location': {'structures': structure}}}}
+
+
+def killed(entity):
+    return {'trigger': 'minecraft:player_killed_entity', 'conditions': {'entity': {'type': entity}}}
+
+
 def cards(*kinds):
     return [f'upgrade_{k}' for k in kinds]
 
 
-# (name, parent, icon, frame, age, title, description, criterion, recipes, xp)
+# (name, parent, icon, frame, age, title, description, criterion, recipes, xp). A list of criteria means any one of them.
 STEPS = [
     ('root', None, 'codex', 'task', 0, 'Robotica',
      'Robots do the boring work for you. Start with copper, wood and cobblestone. Your Codex has the recipes.',
@@ -70,7 +78,7 @@ STEPS = [
      has('minecraft:iron_ingot'),
      ['combustion_generator', 'charger', 'copper_cell', 'copper_coil', 'iron_casing', 'electric_motor', 'basic_circuit',
       'tool_upgrade_kit_1', 'bore_drill_from_tinkers_hammer', 'chainsaw_from_felling_axe', 'tesla_coil_1', 'tesla_linker',
-      'mining_drone'], 10),
+      'mining_drone', 'signal_flare'], 10),
     ('mining_drone', 'first_iron', 'mining_drone', 'task', 1, 'Dig Buddy',
      'Craft a Mining Drone. Give it a battery and torches, aim it, and it digs a 3x3 tunnel and brings the loot back.',
      has('mining_drone'), [], 10),
@@ -130,8 +138,14 @@ STEPS = [
      has('advanced_circuit', 'reinforced_casing'),
      ['servo_actuator', 'storage_expansion_mk2', 'redstone_cell', 'temp_servo_core', 'solar_panel_mk2', 'accumulator_2', 'tesla_coil_3', 'rivet_gun',
       'tool_upgrade_kit_2', 'farm_kit_mk3', 'essence_vial', 'replicator_frame', 'replicator_glass',
-      'replicator_controller', 'survey_rig', 'mining_drone_mk2', 'sentry_drone_mk2', 'courier_drone_mk2', 'exo_helmet_mk2_from_mk1', 'exo_chestplate_mk2_from_mk1', 'exo_leggings_mk2_from_mk1', 'exo_boots_mk2_from_mk1', 'rebreather_module', 'rebreather_module_from_prismarine', 'jet_assist_module', 'servo_stride_module_2'] + cards('range', 'fortune', 'silk'), 30),
-    ('servo_core', 'age2', 'servo_core', 'goal', 2, 'Core Memory',
+      'replicator_controller', 'survey_rig', 'mining_drone_mk2', 'sentry_drone_mk2', 'courier_drone_mk2', 'exo_helmet_mk2_from_mk1', 'exo_chestplate_mk2_from_mk1', 'exo_leggings_mk2_from_mk1', 'exo_boots_mk2_from_mk1', 'rebreather_module', 'rebreather_module_from_prismarine', 'jet_assist_module', 'servo_stride_module_2', 'colossus_altar'] + cards('range', 'fortune', 'silk'), 30),
+    ('foundry', 'age2', 'signal_flare', 'task', 2, 'Signs of Scrap',
+     'Find a Rusted Foundry (a ruined copper hall in plains, deserts and badlands) or craft a Signal Flare.',
+     [in_structure('robotica:rusted_foundry'), has('signal_flare')], [], 10),
+    ('colossus', 'foundry', 'colossus_altar', 'goal', 2, 'Scrap Heap',
+     'Use a Signal Flare on a Colossus Altar and defeat the Scrap Colossus. Hit its open core while it overheats.',
+     killed('robotica:scrap_colossus'), [], 50),
+    ('servo_core', 'colossus', 'servo_core', 'goal', 2, 'Core Memory',
      'Get a Servo Core. It upgrades your Bore Drill and builds the Mob Replicator.',
      has('servo_core'), ['servo_drill_from_bore_drill'], 30),
     ('servo_drill', 'servo_core', 'servo_drill', 'task', 2, 'Vein Glory',
@@ -204,7 +218,11 @@ def main():
                    'show_toast': parent is not None, 'announce_to_chat': False, 'hidden': False}
         if parent is None:
             display['background'] = 'minecraft:textures/block/cut_copper.png'
-        adv = {'display': display, 'criteria': {'done': crit}, 'requirements': [['done']]}
+        if isinstance(crit, list):
+            criteria = {'done' if i == 0 else f'done_{i}': c for i, c in enumerate(crit)}
+            adv = {'display': display, 'criteria': criteria, 'requirements': [list(criteria)]}
+        else:
+            adv = {'display': display, 'criteria': {'done': crit}, 'requirements': [['done']]}
         if parent is not None:
             adv = {'parent': f'robotica:guide/{parent}', **adv}
         rewards = {}

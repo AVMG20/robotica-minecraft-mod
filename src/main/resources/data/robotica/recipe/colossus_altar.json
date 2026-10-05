@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RAR",
+    "OSO",
+    "RBR"
+  ],
+  "key": {
+    "R": {
+      "item": "robotica:reinforced_casing"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "O": {
+      "tag": "c:obsidians"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "B": {
+      "tag": "c:storage_blocks/copper"
+    }
+  },
+  "result": {
+    "id": "robotica:colossus_altar",
+    "count": 1
+  }
+}

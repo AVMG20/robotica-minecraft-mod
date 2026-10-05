@@ -81,6 +81,7 @@ TAGS = {
     'c:storage_blocks/copper': 'minecraft:copper_block', 'c:storage_blocks/lapis': 'minecraft:lapis_block',
     'c:gems/diamond': 'minecraft:diamond', 'c:gems/quartz': 'minecraft:quartz', 'c:gems/lapis': 'minecraft:lapis_lazuli',
     'c:gems/emerald': 'minecraft:emerald', 'c:obsidians': 'minecraft:obsidian',
+    'c:storage_blocks/diamond': 'minecraft:diamond_block', 'c:gunpowders': 'minecraft:gunpowder',
     'c:chests/wooden': 'minecraft:chest', 'c:chests': 'minecraft:chest',
     'c:cobblestones': 'minecraft:cobblestone', 'c:cobblestones/normal': 'minecraft:cobblestone',
     'c:stones': 'minecraft:stone', 'c:ender_pearls': 'minecraft:ender_pearl', 'c:nether_stars': 'minecraft:nether_star',

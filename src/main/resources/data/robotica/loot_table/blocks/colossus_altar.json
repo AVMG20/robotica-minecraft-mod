@@ -1,0 +1,45 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "robotica:blocks/colossus_altar",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "robotica:colossus_altar",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "robotica:colossus_altar",
+                  "properties": {
+                    "natural": "false"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:copper_block",
+              "functions": [
+                {
+                  "function": "minecraft:set_count",
+                  "count": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

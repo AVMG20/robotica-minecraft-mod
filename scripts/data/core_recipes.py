@@ -41,7 +41,9 @@ shaped('reinforced_casing', ['OCO', 'CDC', 'OCO'], {'O': '#c:obsidians', 'C': 'i
 shaped('advanced_circuit', ['BGB', 'QDQ', 'BGB'], {'B': 'basic_circuit', 'G': GOLD, 'Q': '#c:gems/quartz', 'D': DIAMOND})
 shaped('servo_actuator', ['GPG', 'MAM', 'GPG'], {'G': GOLD, 'P': IRON_PLATE, 'M': 'electric_motor', 'A': 'advanced_circuit'})
 shaped('redstone_cell', ['RCR', 'RAR', 'CX '], {'R': '#c:storage_blocks/redstone', 'C': 'copper_cell', 'A': 'advanced_circuit', 'X': 'reinforced_casing'}, category='equipment')
-shaped('temp_servo_core', ['DSD', 'SAS', 'DSD'], {'D': DIAMOND, 'S': 'servo_actuator', 'A': 'advanced_circuit'}, result='servo_core')
+# The Scrap Colossus (boss module) is the real source of Servo Cores. This fallback stays for Peaceful worlds and servers
+# that turn the Rusted Foundry off, but it costs diamond blocks instead of diamonds (about 860 IE, a Signal Flare is ~24).
+shaped('temp_servo_core', ['DSD', 'SAS', 'DSD'], {'D': '#c:storage_blocks/diamond', 'S': 'servo_actuator', 'A': 'reinforced_casing'}, result='servo_core')
 # Age 3
 shaped('blazing_casing', ['NRN', 'RMR', 'NRN'], {'N': 'minecraft:netherite_scrap', 'R': 'reinforced_casing', 'M': 'magma_core'}, count=2)
 shaped('quantum_circuit', ['ABA', 'BNB', 'ABA'], {'A': 'advanced_circuit', 'B': '#c:rods/blaze', 'N': '#c:ingots/netherite'})

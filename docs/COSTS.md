@@ -99,9 +99,9 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `farm_kit_mk3` | 82 | 88 | 24 | 44 | 4 |  |  |  | quartz 6, obsidian 4, planks 8, cobblestone 10 | 259.4 |
 | `tool_upgrade_kit_2` | 119 | 96 | 22 | 49 | 5 |  |  |  | obsidian 8, quartz 6, planks 8, cobblestone 10 | 311.6 |
 | `survey_rig` | 129 | 160 | 26 | 52 | 8 |  | 2 |  | obsidian 8, quartz 6, planks 16, cobblestone 20, stick 2 | 407 |
-| `servo_core` [temp] boss core | 116 | 296 | 46 | 76 | 9 |  |  |  | quartz 10, planks 32, cobblestone 40 | 505.2 |
-| `servo_drill` smithing | 246 | 441 | 68 | 128 | 14 |  |  |  | quartz 16, obsidian 8, planks 44, cobblestone 56, stick 1 | 848.9 |
-| `replicator_controller` | 308 | 448 | 72 | 136 | 17 |  |  |  | obsidian 16, quartz 16, planks 48, cobblestone 60 | 971.2 |
+| `servo_core` [temp] boss core | 136 | 288 | 40 | 68 | 41 |  |  |  | quartz 8, obsidian 4, planks 32, cobblestone 40 | 824.8 |
+| `servo_drill` smithing | 266 | 433 | 62 | 120 | 46 |  |  |  | obsidian 12, quartz 14, planks 44, cobblestone 56, stick 1 | 1168.5 |
+| `replicator_controller` | 328 | 440 | 66 | 128 | 49 |  |  |  | obsidian 20, quartz 14, planks 48, cobblestone 60 | 1290.8 |
 
 ## Age 3 - Deep
 
@@ -117,7 +117,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `rift_remote` smithing | 716 | 726 | 227 | 457 | 39 | 8 | 1 |  | blaze_rod 24, quartz 66, obsidian 24, prismarine_crystals 4, blaze_powder 2, magma_block 2, planks 56, cobblestone 70 | 2995.4 |
 | `rift_upgrade` | 676 | 912 | 244 | 464 | 38 | 9 | 2 |  | blaze_rod 24, quartz 68, obsidian 16, prismarine_crystals 4, magma_block 4, blaze_powder 2, planks 80, cobblestone 100 | 3137.4 |
 | `arc_blade` smithing | 854 | 1085 | 290 | 564 | 47 | 10 |  |  | blaze_rod 28, quartz 82, obsidian 24, prismarine_crystals 4, magma_block 4, blaze_powder 2, planks 92, cobblestone 116, stick 1 | 3743.5 |
-| `magma_drill` smithing | 1089 | 1481 | 358 | 689 | 61 | 10 |  |  | blaze_rod 28, quartz 98, obsidian 32, prismarine_crystals 4, magma_block 4, planks 132, blaze_powder 2, cobblestone 166, stick 1 | 4561.9 |
+| `magma_drill` smithing | 1109 | 1473 | 352 | 681 | 93 | 10 |  |  | blaze_rod 28, quartz 96, obsidian 36, prismarine_crystals 4, magma_block 4, planks 132, blaze_powder 2, cobblestone 166, stick 1 | 4881.5 |
 
 ## Age 4 - Antigrav
 
@@ -139,7 +139,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `tool_upgrade_kit_4` | 1991 | 2400 | 694 | 1345 | 113 | 24 | 4 | 2 | blaze_rod 72, quartz 198, end_crystal 4, obsidian 56, shulker_shell 4, prismarine_crystals 24, blaze_powder 12, magma_block 6, planks 200, cobblestone 250 | 9284 |
 | `gate_controller` | 2080 | 2880 | 752 | 1424 | 116 | 24 | 4 | 3 | blaze_rod 72, end_crystal 10, quartz 208, shulker_shell 6, prismarine_crystals 40, obsidian 50, blaze_powder 20, planks 256, magma_block 6, cobblestone 320 | 10143.8 |
 | `null_lance` smithing | 2465 | 3184 | 886 | 1697 | 140 | 28 | 4 | 3 | blaze_rod 88, quartz 250, end_crystal 8, prismarine_crystals 40, obsidian 60, shulker_shell 4, blaze_powder 20, planks 272, magma_block 6, cobblestone 340 | 11689.8 |
-| `null_drill` smithing | 3480 | 4585 | 1228 | 2354 | 198 | 38 | 4 | 3 | blaze_rod 116, quartz 344, end_crystal 8, prismarine_crystals 44, obsidian 88, shulker_shell 4, blaze_powder 22, magma_block 10, planks 396, cobblestone 496, stick 1 | 16044.3 |
+| `null_drill` smithing | 3500 | 4577 | 1222 | 2346 | 230 | 38 | 4 | 3 | blaze_rod 116, quartz 342, end_crystal 8, obsidian 92, prismarine_crystals 44, shulker_shell 4, blaze_powder 22, magma_block 10, planks 396, cobblestone 496, stick 1 | 16363.9 |
 
 ## Unsorted
 
@@ -150,6 +150,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `mining_drone` | 6 | 24 |  | 2 |  |  |  |  | planks 4, cobblestone 5, stick 2 | 16.7 |
 | `storage_terminal` | 11 | 4 | 1 | 4 |  |  |  |  | chest 2, planks 4 | 18.4 |
 | `storage_expansion_mk1` | 14 | 2 | 1 | 4 |  |  |  |  | chest 4 | 21.4 |
+| `signal_flare` | 6 | 36 |  | 4 |  |  |  |  | gunpowder 1, planks 4, cobblestone 5 | 22.8 |
 | `step_assist_module` | 11 | 48 |  | 3 |  |  |  |  | planks 7, cobblestone 9 | 31.9 |
 | `spring_heels_module` | 10 | 42 | 1 | 5 |  |  |  |  | slime_block 1, planks 4, cobblestone 5 | 32.6 |
 | `exo_helmet_mk1` | 16 | 20 | 2 | 7 |  |  |  |  | iron_helmet 1 | 33.3 |
@@ -173,6 +174,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `exo_leggings_mk2` smithing | 80 | 152 | 10 | 25 | 2 |  |  |  | obsidian 4, quartz 2, planks 16, iron_leggings 1, cobblestone 20 | 210.5 |
 | `exo_chestplate_mk2` smithing | 97 | 160 | 10 | 27 | 2 |  |  |  | obsidian 4, quartz 2, planks 16, iron_chestplate 1, cobblestone 20 | 231.5 |
 | `servo_stride_module_2` | 63 | 138 | 23 | 45 | 3 |  |  |  | quartz 6, planks 12, cobblestone 15 | 242.1 |
+| `colossus_altar` | 166 | 89 | 16 | 44 | 6 |  |  |  | obsidian 18, quartz 4, planks 8, cobblestone 10 | 358.8 |
 | `kinetic_shield_module` | 150 | 208 | 70 | 128 | 10 | 2 |  |  | blaze_rod 8, quartz 20, prismarine_crystals 4, blaze_powder 2, planks 16, cobblestone 20 | 792.6 |
 | `storage_expansion_mk3` | 270 | 218 | 77 | 156 | 16 | 3 |  |  | blaze_rod 8, quartz 22, obsidian 12, chest 12, magma_block 1, planks 16, cobblestone 20 | 1079.8 |
 | `servo_stride_module_3` | 259 | 378 | 115 | 221 | 17 | 3 |  |  | blaze_rod 12, quartz 34, prismarine_crystals 4, blaze_powder 2, planks 28, cobblestone 35 | 1306.7 |

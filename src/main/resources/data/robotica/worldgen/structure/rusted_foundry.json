@@ -1,0 +1,7 @@
+{
+  "type": "robotica:rusted_foundry",
+  "biomes": "#robotica:has_structure/rusted_foundry",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}
