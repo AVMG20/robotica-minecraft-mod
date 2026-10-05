@@ -43,8 +43,10 @@ shaped('solar_panel_mk1', ['GGG', 'CBC', 'PPP'],
        {'G': '#c:glass_blocks', 'C': COPPER_PLATE, 'B': 'basic_circuit', 'P': IRON_PLATE})
 shaped('accumulator_1', ['PRP', 'CIC', 'PRP'],
        {'P': IRON_PLATE, 'R': REDSTONE_BLOCK, 'C': 'copper_coil', 'I': 'iron_casing'})
-shaped('copper_conduit', ['WWW', 'CCC', 'WWW'], {'W': '#minecraft:wool', 'C': COPPER}, count=6)
-shaped('gold_conduit', ['GGG', 'CCC'], {'G': GOLD, 'C': 'copper_conduit'}, count=3)
+# Tesla Coils: wireless power. Tier I is a first-iron item (no gold); every tier consumes the one before.
+shaped('tesla_linker', ['R', 'C', 'I'], {'R': '#c:dusts/redstone', 'C': COPPER, 'I': '#c:ingots/iron'})
+shaped('tesla_coil_1', [' R ', 'CKC', ' P '], {'R': '#c:dusts/redstone', 'C': COPPER, 'K': 'copper_coil', 'P': IRON_PLATE})
+shaped('tesla_coil_2', [' B ', 'GTG', 'PKP'], {'B': 'basic_circuit', 'G': GOLD, 'T': 'tesla_coil_1', 'P': IRON_PLATE, 'K': 'copper_coil'})
 shaped('charger', ['CPC', 'RGR', 'CCC'],
        {'C': COPPER, 'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'G': 'copper_gear'})
 shaped('metal_press', ['PPP', 'GSG', 'PMP'],
@@ -54,9 +56,13 @@ shaped('metal_press', ['PPP', 'GSG', 'PMP'],
 shaped('solar_panel_mk2', ['SQS', 'QAQ', 'SQS'], {'S': 'solar_panel_mk1', 'Q': QUARTZ, 'A': 'advanced_circuit'})
 shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'advanced_circuit', 'A': 'accumulator_1', 'X': 'reinforced_casing'})
+shaped('tesla_coil_3', [' A ', 'QTQ', ' X '], {'A': 'advanced_circuit', 'Q': QUARTZ, 'T': 'tesla_coil_2', 'X': 'reinforced_casing'})
 # Age 3
 shaped('accumulator_3', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'quantum_circuit', 'A': 'accumulator_2', 'X': 'blazing_casing'})
+shaped('tesla_coil_4', [' C ', 'BTB', ' X '], {'C': 'quantum_circuit', 'B': '#c:rods/blaze', 'T': 'tesla_coil_3', 'X': 'blazing_casing'})
+# Age 4
+shaped('tesla_coil_5', [' C ', 'ETE', ' X '], {'C': 'null_circuit', 'E': '#c:ender_pearls', 'T': 'tesla_coil_4', 'X': 'null_casing'})
 
 # Metal Press: 1 ingot -> 1 plate (100 ticks at base speed)
 pressing('metal_press_iron_plate', '#c:ingots/iron', 'iron_plate')

@@ -29,7 +29,7 @@ public final class Guide {
 
     /** Step order of the guide: tips name the next steps in this order. Unknown steps sort last. */
     static final List<String> ORDER = List.of("root", "copper_gear", "mainspring", "first_robot", "robot_working", "hammer",
-            "first_iron", "generator", "charger", "copper_cell", "conduit", "power_tool", "basic_circuit", "metal_press",
+            "first_iron", "generator", "charger", "copper_cell", "tesla", "power_tool", "basic_circuit", "metal_press",
             "upgrade_card", "farm_kit", "warp", "diamonds", "excavator", "age2", "servo_core", "servo_drill", "vial",
             "replicator", "age3", "magma_core", "magma_drill", "age4", "antigrav_core", "null_drill", "portal");
 

@@ -75,6 +75,9 @@ public final class MachineInfoCollector {
             info.spring = spring.isEmpty() ? MachineInfo.SPRING_NONE : capacity <= 0 ? 0 : percent(ItemEnergy.get(spring), capacity);
         } else if (be instanceof CombustionGeneratorBlockEntity generator) {
             info.status = generator.burnTime() > 0 ? "working" : "idle";
+        } else if (be instanceof com.arno.robotica.power.tesla.TeslaCoilBlockEntity coil) {
+            info.status = coil.isActive() ? "working" : "idle";
+            info.tier = coil.tier().number();
         } else if (be instanceof SolarPanelBlockEntity solar) {
             info.status = solar.isGenerating() ? "working" : "idle";
         } else if (be instanceof ArchitectTableBlockEntity table) {

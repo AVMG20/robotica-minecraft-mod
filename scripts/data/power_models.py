@@ -143,36 +143,49 @@ for mk in (1, 2):
     item_model(name, f'robotica:block/{name}')
     loot(name)
 
-# ---------- conduits ----------
-for name in ('copper_conduit', 'gold_conduit'):
-    t = {'conduit': tex(name), 'particle': tex(name)}
-    block_model(f'{name}_core', {'parent': 'minecraft:block/block', 'textures': t, 'elements': [{
-        'from': [6, 6, 6], 'to': [10, 10, 10],
-        'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'south', 'west', 'east')}}]})
-    block_model(f'{name}_arm', {'parent': 'minecraft:block/block', 'textures': t, 'elements': [{
-        'from': [6, 6, 0], 'to': [10, 10, 6],
-        'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'west', 'east')}}]})
-    block_model(f'{name}_port', {'parent': 'minecraft:block/block', 'textures': t, 'elements': [{
-        'from': [5, 5, 0], 'to': [11, 11, 2],
-        'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'south', 'west', 'east')}}]})
-    # arm models point north; rotate for the other faces
-    rot = {'north': {}, 'east': {'y': 90}, 'south': {'y': 180}, 'west': {'y': 270}, 'up': {'x': 270}, 'down': {'x': 90}}
-    multipart = [{'apply': {'model': f'robotica:block/{name}_core'}}]
-    for face, r in rot.items():
-        multipart.append({'when': {face: 'conduit|block'}, 'apply': dict({'model': f'robotica:block/{name}_arm'}, **r)})
-        multipart.append({'when': {face: 'block'}, 'apply': dict({'model': f'robotica:block/{name}_port'}, **r)})
-    blockstate(name, {'multipart': multipart})
-    # inventory model: a straight piece with a port on each end
-    write(ASSETS / 'models/item' / f'{name}.json', {
-        'parent': 'minecraft:block/block', 'textures': t,
-        'elements': [
-            {'from': [6, 6, 6], 'to': [10, 10, 10], 'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'south', 'west', 'east')}},
-            {'from': [0, 6, 6], 'to': [6, 10, 10], 'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'south', 'west')}},
-            {'from': [10, 6, 6], 'to': [16, 10, 10], 'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'south', 'east')}},
-            {'from': [0, 5, 5], 'to': [2, 11, 11], 'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'south', 'west', 'east')}},
-            {'from': [14, 5, 5], 'to': [16, 11, 11], 'faces': {d: {'texture': '#conduit'} for d in ('down', 'up', 'north', 'south', 'west', 'east')}},
-        ],
+# ---------- tesla coils ----------
+# A torch-sized coil pointing up: steel foot, wound column, toroid cap and a full-bright tip. FACING is the direction it
+# points (away from the block it sits on); the blockstate turns the up model like a piston.
+TESLA_ROT = {'up': {}, 'down': {'x': 180}, 'north': {'x': 90}, 'south': {'x': 90, 'y': 180},
+             'west': {'x': 90, 'y': 270}, 'east': {'x': 90, 'y': 90}}
+SIDES = ('north', 'south', 'west', 'east')
+
+
+def box(frm, to, top_uv, side_uv, texture, down=True, up=True, **face_extra):
+    faces = {d: dict({'texture': texture, 'uv': side_uv}, **face_extra) for d in SIDES}
+    if up:
+        faces['up'] = dict({'texture': texture, 'uv': top_uv}, **face_extra)
+    if down:
+        faces['down'] = dict({'texture': texture, 'uv': top_uv}, **face_extra)
+    return {'from': frm, 'to': to, 'faces': faces}
+
+
+for tier in range(1, 6):
+    name = f'tesla_coil_{tier}'
+    elements = [
+        box([4, 0, 4], [12, 2, 12], [4, 4, 12, 12], [4, 14, 12, 16], '#base'),
+        box([6, 2, 6], [10, 10, 10], [6, 6, 10, 10], [6, 4, 10, 12], '#winding', down=False, up=False),
+        box([7, 10, 7], [9, 11, 9], [7, 7, 9, 9], [7, 14, 9, 15], '#base', down=False, up=False),
+        box([5, 11, 5], [11, 13, 11], [5, 5, 11, 11], [5, 7, 11, 9], '#cap'),
+        dict(box([7, 13, 7], [9, 15, 9], [6, 6, 10, 10], [6, 6, 10, 10], '#tip', down=False, neoforge_data=GLOW), shade=False),
+    ]
+    elements[0]['faces']['down']['cullface'] = 'down'
+    block_model(name, {
+        'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+        'textures': {'base': tex('tesla_coil_base'), 'winding': tex(f'{name}_winding'), 'cap': tex(f'{name}_cap'),
+                     'tip': tex('tesla_coil_tip'), 'particle': tex(f'{name}_winding')},
+        'elements': elements,
     })
+    blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
+    # The coil is small: show it bigger in the inventory and in hand.
+    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, -1, 0], 'scale': [1.0, 1.0, 1.0]},
+        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
+        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [1.0, 1.0, 1.0]},
+        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.6, 0.6, 0.6]},
+        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
+        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
+    }})
     loot(name)
 
 # ---------- winding crank ----------

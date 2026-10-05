@@ -7,8 +7,11 @@
     "robotica:accumulator_1",
     "robotica:accumulator_2",
     "robotica:accumulator_3",
-    "robotica:copper_conduit",
-    "robotica:gold_conduit",
+    "robotica:tesla_coil_1",
+    "robotica:tesla_coil_2",
+    "robotica:tesla_coil_3",
+    "robotica:tesla_coil_4",
+    "robotica:tesla_coil_5",
     "robotica:charger",
     "robotica:metal_press"
   ]

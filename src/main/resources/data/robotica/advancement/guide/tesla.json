@@ -1,0 +1,49 @@
+{
+  "parent": "robotica:guide/generator",
+  "display": {
+    "icon": {
+      "id": "robotica:tesla_coil_1"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.tesla.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.tesla.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": [
+                  "robotica:tesla_coil_1",
+                  "robotica:tesla_coil_2",
+                  "robotica:tesla_coil_3",
+                  "robotica:tesla_coil_4",
+                  "robotica:tesla_coil_5"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 5
+  }
+}

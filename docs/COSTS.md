@@ -41,16 +41,16 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `copper_works_roof` |  | 0.12 |  |  |  |  |  |  | stone 1 | 0.1 |
 | `copper_works_wall` |  | 0.12 |  |  |  |  |  |  | stone 1 | 0.1 |
 | `copper_works_window` |  | 0.12 |  |  |  |  |  |  | glass 1 | 0.2 |
-| `copper_conduit` |  | 0.5 |  |  |  |  |  |  | wool 1 | 0.4 |
 | `copper_plate` |  | 1 |  |  |  |  |  |  |  | 0.4 |
 | `iron_plate` | 1 |  |  |  |  |  |  |  |  | 1 |
 | `copper_works_light` |  |  |  | 0.5 |  |  |  |  | glowstone 0.5, cobblestone 1 | 1.2 |
+| `tesla_linker` | 1 | 1 |  | 1 |  |  |  |  |  | 1.8 |
 | `gold_plate` |  |  | 1 |  |  |  |  |  |  | 3 |
-| `gold_conduit` |  | 0.5 | 1 |  |  |  |  |  | wool 1 | 3.4 |
 | `copper_coil` | 1 | 8 |  |  |  |  |  |  |  | 4.2 |
 | `copper_cell` | 2 | 4 |  | 3 |  |  |  |  |  | 4.8 |
 | `charger` | 1 | 9 |  | 2 |  |  |  |  | cobblestone 1 | 5.4 |
 | `combustion_generator` | 1 | 13 |  |  |  |  |  |  | cobblestone 10 | 6.4 |
+| `tesla_coil_1` | 2 | 10 |  | 1 |  |  |  |  |  | 6.4 |
 | `basic_circuit` | 3 | 2 | 1 | 3 |  |  |  |  |  | 8 |
 | `iron_casing` | 8 |  |  | 1 |  |  |  |  |  | 8.4 |
 | `tool_upgrade_kit_1` | 5 | 8 |  | 1 |  |  |  |  |  | 8.6 |
@@ -61,6 +61,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `upgrade_void` | 7 | 2 | 1 | 3 |  |  |  |  | obsidian 2, cactus 2 | 15.2 |
 | `electric_motor` | 6 | 32 |  | 2 |  |  |  |  | planks 4, cobblestone 5 | 19.9 |
 | `upgrade_efficiency` | 7 | 2 | 5 | 3 |  |  |  |  |  | 24 |
+| `tesla_coil_2` | 8 | 20 | 3 | 4 |  |  |  |  |  | 26.6 |
 | `accumulator_1` | 14 | 16 |  | 19 |  |  |  |  |  | 28 |
 | `metal_press` | 12 | 40 |  | 3 |  |  |  |  | planks 7, cobblestone 11 | 29.8 |
 | `shock_baton` smithing | 11 | 45 |  | 3 |  |  |  |  | planks 4, cobblestone 6, stick 1 | 30.5 |
@@ -92,6 +93,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `solar_panel_mk2` | 36 | 24 | 10 | 24 | 1 |  |  |  | quartz 6, glass 12 | 102.4 |
 | `servo_actuator` | 26 | 72 | 10 | 16 | 1 |  |  |  | quartz 2, planks 8, cobblestone 10 | 103.8 |
 | `redstone_cell` | 48 | 16 | 6 | 58 | 2 |  |  |  | obsidian 4, quartz 2 | 123.6 |
+| `tesla_coil_3` | 52 | 28 | 9 | 20 | 2 |  |  |  | obsidian 4, quartz 4 | 128.2 |
 | `rivet_gun` | 74 | 80 | 16 | 32 | 3 |  |  |  | obsidian 4, quartz 4, planks 8, cobblestone 10 | 207.4 |
 | `accumulator_2` | 84 | 48 | 12 | 102 | 3 |  |  |  | obsidian 4, quartz 4 | 220 |
 | `farm_kit_mk3` | 82 | 88 | 24 | 44 | 4 |  |  |  | quartz 6, obsidian 4, planks 8, cobblestone 10 | 259.4 |
@@ -109,6 +111,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `plasma_actuator` | 100 | 176 | 44 | 80 | 6 | 1 |  |  | blaze_rod 4, prismarine_crystals 4, quartz 12, blaze_powder 2, planks 16, cobblestone 20 | 504.6 |
 | `blazing_casing` | 164 | 176 | 44 | 88 | 8 | 2 |  |  | blaze_rod 4, obsidian 8, quartz 12, magma_block 1, planks 16, cobblestone 20 | 648.8 |
 | `magma_core` [temp] boss core | 200 | 352 | 88 | 160 | 12 | 3 |  |  | blaze_rod 8, quartz 24, magma_block 2, planks 32, cobblestone 40 | 1039.2 |
+| `tesla_coil_4` | 264 | 236 | 77 | 156 | 14 | 3 |  |  | blaze_rod 10, quartz 24, obsidian 12, magma_block 1, planks 16, cobblestone 20 | 1067 |
 | `accumulator_3` | 428 | 336 | 116 | 424 | 22 | 4 |  |  | blaze_rod 12, quartz 36, obsidian 16, magma_block 1, planks 16, cobblestone 20 | 1663.2 |
 | `tool_upgrade_kit_3` | 643 | 688 | 202 | 401 | 35 | 7 |  |  | blaze_rod 20, quartz 58, obsidian 24, prismarine_crystals 4, blaze_powder 2, magma_block 2, planks 56, cobblestone 70 | 2673.8 |
 | `rift_remote` smithing | 716 | 726 | 227 | 457 | 39 | 8 | 1 |  | blaze_rod 24, quartz 66, obsidian 24, prismarine_crystals 4, blaze_powder 2, magma_block 2, planks 56, cobblestone 70 | 2995.4 |
@@ -130,6 +133,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `linking_card` | 96 | 64 | 48 | 96 | 8 | 2 | 3 | 0.5 | blaze_rod 8, quartz 16, paper 2 | 624.2 |
 | `antigrav_core` [temp] boss core | 400 | 704 | 176 | 320 | 24 | 4 |  | 1 | end_crystal 4, blaze_rod 16, prismarine_crystals 16, quartz 48, blaze_powder 8, planks 64, cobblestone 80 | 2198.4 |
 | `null_casing` | 528 | 704 | 176 | 336 | 28 | 6 |  | 0.5 | blaze_rod 16, end_crystal 2, quartz 48, shulker_shell 2, obsidian 16, prismarine_crystals 8, blaze_powder 4, magma_block 2, planks 64, cobblestone 80 | 2436.8 |
+| `tesla_coil_5` | 888 | 1004 | 301 | 588 | 50 | 11 | 4 | 1 | blaze_rod 34, quartz 88, end_crystal 2, obsidian 28, shulker_shell 2, prismarine_crystals 8, blaze_powder 4, magma_block 3, planks 80, cobblestone 100 | 4135.8 |
 | `ender_cell` | 1248 | 1504 | 412 | 884 | 68 | 14 | 6 | 1.5 | blaze_rod 40, quartz 116, end_crystal 4, shulker_shell 4, obsidian 40, prismarine_crystals 16, blaze_powder 8, magma_block 4, planks 128, cobblestone 160 | 5768.8 |
 | `farm_kit_mk4` | 1348 | 1712 | 492 | 944 | 78 | 17 | 5 | 2 | blaze_rod 52, quartz 140, end_crystal 4, shulker_shell 4, prismarine_crystals 20, obsidian 32, blaze_powder 10, magma_block 4, planks 144, cobblestone 180 | 6618.2 |
 | `tool_upgrade_kit_4` | 1991 | 2400 | 694 | 1345 | 113 | 24 | 4 | 2 | blaze_rod 72, quartz 198, end_crystal 4, obsidian 56, shulker_shell 4, prismarine_crystals 24, blaze_powder 12, magma_block 6, planks 200, cobblestone 250 | 9284 |
@@ -142,9 +146,34 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | item | iron | copper | gold | redstone | diamond | netherite | ender pearl | nether star | other | IE |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
 | `courier_remote` | 5 | 2 | 1 | 4 |  |  |  |  |  | 10.4 |
+| `night_vision_module` | 5 | 10 | 1 | 3 |  |  |  |  | golden_carrot 1 | 13.7 |
 | `mining_drone` | 6 | 24 |  | 2 |  |  |  |  | planks 4, cobblestone 5, stick 2 | 16.7 |
+| `storage_terminal` | 11 | 4 | 1 | 4 |  |  |  |  | chest 2, planks 4 | 18.4 |
+| `storage_expansion_mk1` | 14 | 2 | 1 | 4 |  |  |  |  | chest 4 | 21.4 |
+| `step_assist_module` | 11 | 48 |  | 3 |  |  |  |  | planks 7, cobblestone 9 | 31.9 |
+| `spring_heels_module` | 10 | 42 | 1 | 5 |  |  |  |  | slime_block 1, planks 4, cobblestone 5 | 32.6 |
+| `exo_helmet_mk1` | 16 | 20 | 2 | 7 |  |  |  |  | iron_helmet 1 | 33.3 |
 | `courier_drone` | 17 | 34 | 1 | 7 |  |  |  |  | hopper 1, planks 4, cobblestone 5 | 37.2 |
 | `sentry_drone` | 17 | 34 | 1 | 7 |  |  |  |  | crossbow 1, planks 4, cobblestone 5 | 37.2 |
+| `servo_stride_module_1` | 13 | 50 | 1 | 5 |  |  |  |  | planks 4, cobblestone 5 | 38.3 |
+| `robot_hud_module` | 13 | 16 | 6 | 13 | 1 |  |  |  | quartz 2, glass_pane 1 | 55.1 |
+| `rebreather_module` | 14 | 16 | 6 | 12 | 1 |  |  |  | quartz 2, heart_of_the_sea 1 | 55.7 |
+| `magnet_module` | 15 | 16 | 6 | 14 | 1 |  |  |  | quartz 2 | 57 |
+| `exo_boots_mk1` | 22 | 80 |  | 5 |  |  |  |  | iron_boots 1, planks 8, cobblestone 10 | 57.1 |
+| `exo_leggings_mk1` | 22 | 80 |  | 5 |  |  |  |  | iron_leggings 1, planks 8, cobblestone 10 | 57.1 |
+| `exo_chestplate_mk1` | 39 | 88 |  | 7 |  |  |  |  | iron_chestplate 1, planks 8, cobblestone 10 | 78.1 |
+| `storage_expansion_mk2` | 58 | 10 | 9 | 20 | 2 |  |  |  | obsidian 4, chest 8, quartz 2 | 129 |
+| `jet_assist_module` | 40 | 80 | 16 | 28 | 2 |  |  |  | quartz 4, feather 2, planks 8, cobblestone 10 | 156.8 |
+| `fall_dampener_module` | 39 | 88 | 16 | 28 | 2 |  |  |  | quartz 4, slime_block 1, planks 8, cobblestone 10 | 158.5 |
 | `mining_drone_mk2` smithing | 44 | 104 | 16 | 30 | 2 |  |  |  | quartz 4, planks 12, cobblestone 15, stick 2 | 170.5 |
+| `exo_helmet_mk2` smithing | 74 | 92 | 12 | 27 | 2 |  |  |  | obsidian 4, quartz 2, iron_helmet 1, planks 8, cobblestone 10 | 186.7 |
 | `courier_drone_mk2` smithing | 55 | 114 | 17 | 35 | 2 |  |  |  | quartz 4, planks 12, hopper 1, cobblestone 15 | 191 |
 | `sentry_drone_mk2` smithing | 55 | 114 | 17 | 35 | 2 |  |  |  | quartz 4, planks 12, crossbow 1, cobblestone 15 | 191 |
+| `exo_boots_mk2` smithing | 80 | 152 | 10 | 25 | 2 |  |  |  | obsidian 4, quartz 2, planks 16, iron_boots 1, cobblestone 20 | 210.5 |
+| `exo_leggings_mk2` smithing | 80 | 152 | 10 | 25 | 2 |  |  |  | obsidian 4, quartz 2, planks 16, iron_leggings 1, cobblestone 20 | 210.5 |
+| `exo_chestplate_mk2` smithing | 97 | 160 | 10 | 27 | 2 |  |  |  | obsidian 4, quartz 2, planks 16, iron_chestplate 1, cobblestone 20 | 231.5 |
+| `servo_stride_module_2` | 63 | 138 | 23 | 45 | 3 |  |  |  | quartz 6, planks 12, cobblestone 15 | 242.1 |
+| `kinetic_shield_module` | 150 | 208 | 70 | 128 | 10 | 2 |  |  | blaze_rod 8, quartz 20, prismarine_crystals 4, blaze_powder 2, planks 16, cobblestone 20 | 792.6 |
+| `storage_expansion_mk3` | 270 | 218 | 77 | 156 | 16 | 3 |  |  | blaze_rod 8, quartz 22, obsidian 12, chest 12, magma_block 1, planks 16, cobblestone 20 | 1079.8 |
+| `servo_stride_module_3` | 259 | 378 | 115 | 221 | 17 | 3 |  |  | blaze_rod 12, quartz 34, prismarine_crystals 4, blaze_powder 2, planks 28, cobblestone 35 | 1306.7 |
+| `flight_module` | 832 | 1264 | 376 | 700 | 54 | 10 | 4 | 2 | blaze_rod 40, quartz 108, end_crystal 4, prismarine_crystals 24, blaze_powder 12, planks 104, cobblestone 130, feather 2 | 4596.4 |

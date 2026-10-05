@@ -11,12 +11,13 @@ import net.minecraft.world.level.block.Block;
 import java.util.function.IntSupplier;
 
 /**
- * Read-only status screen for blocks that only store or make energy (Accumulators, Solar Panels): stored, capacity,
- * net FE/t over the last second, max I/O and a state flag. No slots.
+ * Read-only status screen for blocks that only store, make or send energy (Accumulators, Solar Panels, Tesla Coils):
+ * stored, capacity, net FE/t over the last second, max I/O and a state flag. No slots. Tesla Coils reuse the fields:
+ * stored/capacity = links used/max, rate = FE/t sent, maxIo = tier rate, flag = sits on a source.
  */
 public class EnergyInfoMenu extends MachineMenu {
     /** What the block is, so the screen can pick its status words. */
-    public static final int KIND_STORAGE = 0, KIND_SOLAR = 1;
+    public static final int KIND_STORAGE = 0, KIND_SOLAR = 1, KIND_TESLA = 2;
 
     public interface Source {
         int stored();
@@ -28,7 +29,7 @@ public class EnergyInfoMenu extends MachineMenu {
 
         int maxIo();
 
-        /** Storage: unused. Solar: 1 when the sun reaches it. */
+        /** Storage: unused. Solar: 1 when the sun reaches it. Tesla: 1 when it sits on an FE source. */
         int flag();
     }
 
@@ -39,8 +40,7 @@ public class EnergyInfoMenu extends MachineMenu {
 
     /** Client side: the kind follows from the block at the position. */
     public EnergyInfoMenu(int id, Inventory inv, BlockPos pos) {
-        this(id, inv, pos, inv.player.level().getBlockState(pos).getBlock() instanceof com.arno.robotica.power.block.SolarPanelBlock
-                ? KIND_SOLAR : KIND_STORAGE, null);
+        this(id, inv, pos, kindOf(inv.player.level().getBlockState(pos).getBlock()), null);
     }
 
     /** Server side. */
@@ -54,6 +54,16 @@ public class EnergyInfoMenu extends MachineMenu {
         rateIdx = track(src == null ? zero() : src::rate);
         ioIdx = track(src == null ? zero() : src::maxIo);
         flagIdx = track(src == null ? zero() : src::flag);
+    }
+
+    private static int kindOf(Block block) {
+        if (block instanceof com.arno.robotica.power.block.SolarPanelBlock) return KIND_SOLAR;
+        if (block instanceof com.arno.robotica.power.tesla.TeslaCoilBlock) return KIND_TESLA;
+        return KIND_STORAGE;
+    }
+
+    public Block block() {
+        return block;
     }
 
     private static IntSupplier zero() {

@@ -11,7 +11,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import Canvas, grain, material, write_anim, write_block, write_still  # noqa: E402
+from pixelart import Canvas, grain, material, write_anim, write_block, write_item, write_still  # noqa: E402
 
 CU, ST, BR, AU, WD, SO = '01234', 'abcde', '56789', 'ABCDE', 'uvwWX', 'mnopP'
 P = {'k': '#16191B', 'K': '#0B0D0E'}
@@ -365,20 +365,76 @@ def accumulator_top(tier):
     return c
 
 
-# ---------------------------------------------------------------- conduit
+# ---------------------------------------------------------------- tesla coil
+# Tier ramps: I copper, II steel, III gold, IV magma, V null. Magma and null get their own chars here.
+P.update(material('!#$%&', 'magma'))
+P.update(material('()*+,', 'null'))
+TESLA_TIER = {1: CU, 2: ST, 3: AU, 4: '!#$%&', 5: '()*+,'}
 
-def conduit(r):
-    """Twisted cable: diagonal strands with a 4 px period so every 4x4 window of the arms reads as cable."""
+
+def tesla_base():
+    """Steel foot plate: the model maps its middle 8x8 on top and the bottom rows on the sides."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, ST, 60, density=0.25)
+    c.bevel(4, 4, 8, 8, 'd', 'a')
+    for x, y in ((5, 5), (10, 5), (5, 10), (10, 10)):
+        c.rivet(x, y, ST)
+    c.rect(0, 14, 16, 1, 'c').rect(0, 15, 16, 1, 'a')                    # side band: lit lip, dark foot
+    return c
+
+
+def tesla_winding(r):
+    """Tightly wound wire: a lit and a shadowed row per turn, a glint on the left third, dark insulation every 4 turns."""
+    c = Canvas()
+    for y in range(16):
+        turn = y // 2
+        c.rect(0, y, 16, 1, r[3] if y % 2 == 0 else r[1])
+        if y % 2 == 0:
+            c.set((turn * 5) % 3 + 1, y, r[4]).set((turn * 5) % 3 + 2, y, r[4])
+        if y % 8 == 7:
+            c.rect(0, y, 16, 1, 'K')
+    for y in range(16):
+        c.set(15, y, r[0] if y % 2 else r[2])
+    return c
+
+
+def tesla_cap(r):
+    """The toroid on top: concentric rings round a dark socket, bright rim; its middle rows also wrap the sides."""
     c = Canvas()
     for y in range(16):
         for x in range(16):
-            k = (x + y) % 4
-            c.set(x, y, (r[1], r[2], r[3], r[2])[k])
-            if k == 2 and (x * 3 + y) % 8 == 0:
-                c.set(x, y, r[4])
-    for x in range(16):
-        for y in (0, 15):
-            c.set(x, y, r[0] if y == 15 else r[1])
+            d = math.hypot(x - 7.5, y - 7.5)
+            c.set(x, y, r[3] if d > 5.6 else r[2] if d > 3.8 else r[1] if d > 1.6 else 'K')
+    c.ring(7.5, 7.5, 4.6, 5.3, r[4])
+    c.rect(0, 7, 16, 1, r[4]).rect(0, 8, 16, 1, r[2])                     # side band: highlight over mid
+    return c
+
+
+def tesla_tip():
+    """Full-bright energy ball: white hot core fading to cyan."""
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5, y - 7.5)
+            c.set(x, y, 'z' if d < 1.6 else 'Y' if d < 3.2 else 'y' if d < 5.5 else 'Z')
+    return c
+
+
+def tesla_linker():
+    """Hand tool: steel grip bottom left, copper coil wrap, a forked brass probe with a cyan spark top right."""
+    c = Canvas()
+    for i in range(10):
+        x, y = 2 + i, 13 - i
+        c.set(x, y, 'c').set(x + 1, y, 'b').set(x, y - 1, 'd')
+    for i in range(3):                                                     # grip
+        x, y = 2 + i, 13 - i
+        c.set(x, y, 'K').set(x + 1, y, 'j').set(x, y - 1, 'j')
+    for i in range(4, 8):                                                  # copper wrap
+        x, y = 2 + i, 13 - i
+        c.set(x, y, '3' if i % 2 else '1').set(x + 1, y, '2').set(x, y - 1, '4' if i % 2 else '2')
+    c.set(12, 3, '8').set(13, 2, '9').set(11, 2, '7').set(13, 4, '7')     # brass fork
+    c.set(14, 1, 'Y').set(12, 1, 'y').set(14, 3, 'y').set(15, 0, 'z').set(13, 0, 'y').set(15, 2, 'y')
+    c.outline('K')
     return c
 
 
@@ -465,8 +521,12 @@ def main():
     write_anim('block', 'accumulator_front_glow', [accumulator_front_glow(i) for i in range(6)], P, frametime=4)
     write_still('block', 'accumulator_side_glow', accumulator_side_glow(), P)
 
-    write_block('copper_conduit', conduit(CU).rows(), P)
-    write_block('gold_conduit', conduit(AU).rows(), P)
+    write_block('tesla_coil_base', tesla_base().rows(), P)
+    write_block('tesla_coil_tip', tesla_tip().rows(), P)
+    for tier, ramp in TESLA_TIER.items():
+        write_block(f'tesla_coil_{tier}_winding', tesla_winding(ramp).rows(), P)
+        write_block(f'tesla_coil_{tier}_cap', tesla_cap(ramp).rows(), P)
+    write_item('tesla_linker', tesla_linker().rows(), P | {'b': '#8D9599', 'c': '#C4CBCE', 'd': '#5A6266'})
     write_block('winding_crank_base', crank_base().rows(), P)
     write_block('winding_crank_metal', crank_metal().rows(), P)
     write_block('winding_crank_spring', crank_spring().rows(), P)

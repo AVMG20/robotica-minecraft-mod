@@ -46,7 +46,8 @@
       "robotica:tool_upgrade_kit_1",
       "robotica:bore_drill_from_tinkers_hammer",
       "robotica:chainsaw_from_felling_axe",
-      "robotica:copper_conduit",
+      "robotica:tesla_coil_1",
+      "robotica:tesla_linker",
       "robotica:mining_drone"
     ],
     "experience": 10

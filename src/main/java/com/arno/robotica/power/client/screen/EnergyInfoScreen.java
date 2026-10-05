@@ -3,6 +3,7 @@ package com.arno.robotica.power.client.screen;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.power.menu.EnergyInfoMenu;
+import com.arno.robotica.power.tesla.TeslaCoilBlock;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -22,6 +23,10 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
+        if (menu.kind() == EnergyInfoMenu.KIND_TESLA) {
+            renderTesla(g, x, y);
+            return;
+        }
         long stored = menu.stored(), capacity = menu.capacity();
         drawEnergyBarWide(g, x + 8, y + 20, 160, 14, stored, capacity);
         int pct = capacity <= 0 ? 0 : (int) (100L * stored / capacity);
@@ -51,5 +56,34 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
         addTooltip(x + 98, y + 54, 70, 12,
                 Component.translatable("gui.robotica.energy_rate_tip"),
                 Component.translatable("gui.robotica.energy_io_tip", Fmt.compact(menu.maxIo())));
+    }
+
+    /** Tesla Coil: links used / max as a bar, FE/t sent, and whether it pulls from the block it sits on. */
+    private void renderTesla(GuiGraphics g, int x, int y) {
+        int used = menu.stored(), max = menu.capacity();
+        int range = menu.block() instanceof TeslaCoilBlock coil ? coil.tier().range() : 0;
+        drawLabel(g, Component.translatable("gui.robotica.tesla_links", used, max), x + 8, y + 20, 110);
+        drawLabelRight(g, Component.translatable("gui.robotica.tesla_range", range), x + 168, y + 20, 56);
+        drawProgress(g, x + 8, y + 31, 160, 8, max <= 0 ? 0 : (float) used / max);
+        addTooltip(x + 8, y + 31, 160, 8, Component.translatable("gui.robotica.tesla_links_tip"));
+
+        int rate = menu.rate();
+        drawLabel(g, Component.translatable("gui.robotica.tesla_sending", Fmt.compact(rate)), x + 8, y + 44, 110);
+        drawLabelRight(g, Component.literal("max " + Fmt.compact(menu.maxIo()) + " FE/t"), x + 168, y + 44, 56);
+
+        Tone tone;
+        Component status;
+        if (used == 0) {
+            tone = Tone.WARN;
+            status = Component.translatable("gui.robotica.tesla_no_links");
+        } else if (rate > 0) {
+            tone = Tone.GOOD;
+            status = Component.translatable(menu.flag() ? "gui.robotica.tesla_source" : "gui.robotica.tesla_relay");
+        } else {
+            tone = Tone.WARN;
+            status = Component.translatable(menu.flag() ? "gui.robotica.tesla_idle" : "gui.robotica.tesla_waiting");
+        }
+        drawStatus(g, status, x + 8, y + 58, 160, 1, tone);
+        addTooltip(x + 8, y + 56, 160, 12, Component.translatable("gui.robotica.tesla_status_tip"));
     }
 }

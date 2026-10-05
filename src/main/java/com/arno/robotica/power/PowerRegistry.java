@@ -9,15 +9,19 @@ import com.arno.robotica.power.block.ChargerBlock;
 import com.arno.robotica.power.block.ChargerBlockEntity;
 import com.arno.robotica.power.block.CombustionGeneratorBlock;
 import com.arno.robotica.power.block.CombustionGeneratorBlockEntity;
-import com.arno.robotica.power.block.ConduitBlock;
-import com.arno.robotica.power.block.ConduitBlockEntity;
 import com.arno.robotica.power.block.MetalPressBlock;
 import com.arno.robotica.power.block.MetalPressBlockEntity;
 import com.arno.robotica.power.block.SolarPanelBlock;
 import com.arno.robotica.power.block.SolarPanelBlockEntity;
 import com.arno.robotica.power.block.WindingCrankBlock;
 import com.arno.robotica.power.block.WindingCrankBlockEntity;
-import com.arno.robotica.power.conduit.ConduitTier;
+import com.arno.robotica.power.tesla.TeslaCoilBlock;
+import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
+import com.arno.robotica.power.tesla.TeslaLinkerItem;
+import com.arno.robotica.power.tesla.TeslaTier;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.world.level.material.PushReaction;
 import com.arno.robotica.power.menu.ChargerMenu;
 import com.arno.robotica.power.menu.CombustionGeneratorMenu;
 import com.arno.robotica.power.menu.MetalPressMenu;
@@ -50,6 +54,7 @@ public final class PowerRegistry {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
     public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = DeferredRegister.create(Registries.RECIPE_TYPE, Robotica.MODID);
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, Robotica.MODID);
+    public static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Robotica.MODID);
 
     private static BlockBehaviour.Properties machine() {
         return BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops();
@@ -67,8 +72,11 @@ public final class PowerRegistry {
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_1 = accumulator(AccumulatorBlock.Tier.I);
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_2 = accumulator(AccumulatorBlock.Tier.II);
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_3 = accumulator(AccumulatorBlock.Tier.III);
-    public static final DeferredBlock<ConduitBlock> COPPER_CONDUIT = conduit(ConduitTier.COPPER);
-    public static final DeferredBlock<ConduitBlock> GOLD_CONDUIT = conduit(ConduitTier.GOLD);
+    public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_1 = teslaCoil(TeslaTier.I);
+    public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_2 = teslaCoil(TeslaTier.II);
+    public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_3 = teslaCoil(TeslaTier.III);
+    public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_4 = teslaCoil(TeslaTier.IV);
+    public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_5 = teslaCoil(TeslaTier.V);
     public static final DeferredBlock<ChargerBlock> CHARGER = BLOCKS.registerBlock("charger", ChargerBlock::new, machine());
     public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock("metal_press", MetalPressBlock::new, machine());
 
@@ -76,9 +84,10 @@ public final class PowerRegistry {
         return BLOCKS.registerBlock(tier.id(), p -> new AccumulatorBlock(p, tier), machine());
     }
 
-    private static DeferredBlock<ConduitBlock> conduit(ConduitTier tier) {
-        return BLOCKS.registerBlock(tier.blockName, p -> new ConduitBlock(p, tier),
-                BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.0F, 3.0F).sound(SoundType.COPPER).noOcclusion());
+    private static DeferredBlock<TeslaCoilBlock> teslaCoil(TeslaTier tier) {
+        return BLOCKS.registerBlock(tier.id(), p -> new TeslaCoilBlock(p, tier),
+                BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.0F, 3.0F).sound(SoundType.COPPER)
+                        .noOcclusion().lightLevel(s -> 7).pushReaction(PushReaction.DESTROY));
     }
 
     // ---- Items ----
@@ -89,8 +98,12 @@ public final class PowerRegistry {
     public static final DeferredItem<Item> ACCUMULATOR_1_ITEM = accumulatorItem(ACCUMULATOR_1);
     public static final DeferredItem<Item> ACCUMULATOR_2_ITEM = accumulatorItem(ACCUMULATOR_2);
     public static final DeferredItem<Item> ACCUMULATOR_3_ITEM = accumulatorItem(ACCUMULATOR_3);
-    public static final DeferredItem<BlockItem> COPPER_CONDUIT_ITEM = ITEMS.registerSimpleBlockItem(COPPER_CONDUIT);
-    public static final DeferredItem<BlockItem> GOLD_CONDUIT_ITEM = ITEMS.registerSimpleBlockItem(GOLD_CONDUIT);
+    public static final DeferredItem<BlockItem> TESLA_COIL_1_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_1);
+    public static final DeferredItem<BlockItem> TESLA_COIL_2_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_2);
+    public static final DeferredItem<BlockItem> TESLA_COIL_3_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_3);
+    public static final DeferredItem<BlockItem> TESLA_COIL_4_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_4);
+    public static final DeferredItem<BlockItem> TESLA_COIL_5_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_5);
+    public static final DeferredItem<TeslaLinkerItem> TESLA_LINKER = ITEMS.registerItem("tesla_linker", TeslaLinkerItem::new);
     public static final DeferredItem<BlockItem> CHARGER_ITEM = ITEMS.registerSimpleBlockItem(CHARGER);
     public static final DeferredItem<BlockItem> METAL_PRESS_ITEM = ITEMS.registerSimpleBlockItem(METAL_PRESS);
 
@@ -110,8 +123,14 @@ public final class PowerRegistry {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AccumulatorBlockEntity>> ACCUMULATOR_BE =
             BLOCK_ENTITIES.register("accumulator", () -> BlockEntityType.Builder.of(AccumulatorBlockEntity::new,
                     ACCUMULATOR_1.get(), ACCUMULATOR_2.get(), ACCUMULATOR_3.get()).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ConduitBlockEntity>> CONDUIT_BE =
-            BLOCK_ENTITIES.register("conduit", () -> BlockEntityType.Builder.of(ConduitBlockEntity::new, COPPER_CONDUIT.get(), GOLD_CONDUIT.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TeslaCoilBlockEntity>> TESLA_COIL_BE =
+            BLOCK_ENTITIES.register("tesla_coil", () -> BlockEntityType.Builder.of(TeslaCoilBlockEntity::new, TESLA_COIL_1.get(),
+                    TESLA_COIL_2.get(), TESLA_COIL_3.get(), TESLA_COIL_4.get(), TESLA_COIL_5.get()).build(null));
+
+    // ---- Data components ----
+    /** The coil a Tesla Linker has selected. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> TESLA_SELECTION =
+            COMPONENTS.registerComponentType("tesla_selection", b -> b.persistent(GlobalPos.CODEC).networkSynchronized(GlobalPos.STREAM_CODEC));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChargerBlockEntity>> CHARGER_BE =
             BLOCK_ENTITIES.register("charger", () -> BlockEntityType.Builder.of(ChargerBlockEntity::new, CHARGER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MetalPressBlockEntity>> METAL_PRESS_BE =
@@ -141,6 +160,7 @@ public final class PowerRegistry {
         MENUS.register(modBus);
         RECIPE_TYPES.register(modBus);
         RECIPE_SERIALIZERS.register(modBus);
+        COMPONENTS.register(modBus);
 
         RoboticaTab.add(WINDING_CRANK_ITEM);
         RoboticaTab.add(COMBUSTION_GENERATOR_ITEM);
@@ -149,8 +169,12 @@ public final class PowerRegistry {
         RoboticaTab.add(ACCUMULATOR_1_ITEM);
         RoboticaTab.add(ACCUMULATOR_2_ITEM);
         RoboticaTab.add(ACCUMULATOR_3_ITEM);
-        RoboticaTab.add(COPPER_CONDUIT_ITEM);
-        RoboticaTab.add(GOLD_CONDUIT_ITEM);
+        RoboticaTab.add(TESLA_LINKER);
+        RoboticaTab.add(TESLA_COIL_1_ITEM);
+        RoboticaTab.add(TESLA_COIL_2_ITEM);
+        RoboticaTab.add(TESLA_COIL_3_ITEM);
+        RoboticaTab.add(TESLA_COIL_4_ITEM);
+        RoboticaTab.add(TESLA_COIL_5_ITEM);
         RoboticaTab.add(CHARGER_ITEM);
         RoboticaTab.add(METAL_PRESS_ITEM);
     }

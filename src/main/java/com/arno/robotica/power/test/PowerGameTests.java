@@ -9,10 +9,14 @@ import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.block.AccumulatorBlockEntity;
 import com.arno.robotica.power.block.ChargerBlockEntity;
 import com.arno.robotica.power.block.CombustionGeneratorBlockEntity;
-import com.arno.robotica.power.block.ConduitBlock;
 import com.arno.robotica.power.block.MetalPressBlockEntity;
 import com.arno.robotica.power.block.PowerBlock;
 import com.arno.robotica.power.block.WindingCrankBlockEntity;
+import com.arno.robotica.power.tesla.TeslaCoilBlock;
+import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
+import com.arno.robotica.power.tesla.TeslaNetwork;
+import com.arno.robotica.power.tesla.TeslaTier;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentMap;
@@ -32,26 +36,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 @GameTestHolder(Robotica.MODID)
 @PrefixGameTestTemplate(false)
 public class PowerGameTests {
-
-    /** Generator (coal) -> copper conduit -> accumulator I. Proves networks build, tick and respect the face rules. */
-    @GameTest(template = "empty", timeoutTicks = 200)
-    public static void generatorFeedsAccumulatorThroughConduit(GameTestHelper helper) {
-        BlockPos generator = new BlockPos(0, 1, 1);
-        BlockPos conduit = new BlockPos(1, 1, 1);
-        BlockPos accumulator = new BlockPos(2, 1, 1);
-        helper.setBlock(generator, PowerRegistry.COMBUSTION_GENERATOR.get().defaultBlockState());
-        helper.setBlock(conduit, PowerRegistry.COPPER_CONDUIT.get().defaultBlockState());
-        // Front faces east, away from the conduit, so the conduit side is an input face.
-        helper.setBlock(accumulator, PowerRegistry.ACCUMULATOR_1.get().defaultBlockState().setValue(PowerBlock.FACING, Direction.EAST));
-        ((CombustionGeneratorBlockEntity) helper.getBlockEntity(generator)).fuel.setStackInSlot(0, new ItemStack(Items.COAL));
-        AccumulatorBlockEntity be = (AccumulatorBlockEntity) helper.getBlockEntity(accumulator);
-
-        helper.succeedWhen(() -> {
-            helper.assertTrue(be.energy.getEnergyStored() > 200, "Accumulator should receive energy, has " + be.energy.getEnergyStored());
-            ConduitBlock.Conn west = helper.getBlockState(conduit).getValue(ConduitBlock.CONN.get(Direction.WEST));
-            helper.assertTrue(west == ConduitBlock.Conn.BLOCK, "Conduit should render a connection to the generator");
-        });
-    }
 
     /** The metal press turns an iron ingot into an iron plate, and a speed card makes it much faster. */
     @GameTest(template = "empty", timeoutTicks = 300)
@@ -155,28 +139,122 @@ public class PowerGameTests {
         });
     }
 
-    /** Furnace-like neighbours (block entity, no FE) are recorded at scan time and never cause rescans. */
+    // ---- Tesla Coils ----
+
+    private static TeslaCoilBlockEntity coil(GameTestHelper helper, BlockPos pos, net.minecraft.world.level.block.Block block) {
+        helper.setBlock(pos, block.defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
+        return (TeslaCoilBlockEntity) helper.getBlockEntity(pos);
+    }
+
+    private static AccumulatorBlockEntity accumulator(GameTestHelper helper, BlockPos pos, Direction front, int energy) {
+        helper.setBlock(pos, PowerRegistry.ACCUMULATOR_1.get().defaultBlockState().setValue(PowerBlock.FACING, front));
+        AccumulatorBlockEntity be = (AccumulatorBlockEntity) helper.getBlockEntity(pos);
+        be.energy.setEnergy(energy);
+        return be;
+    }
+
+    /** Accumulator -> coil on top of it -> Charger: the coil pulls from the block it sits on and feeds its link. */
     @GameTest(template = "empty", timeoutTicks = 60)
-    public static void nonEndpointNeighbourDoesNotRescan(GameTestHelper helper) {
-        BlockPos conduit = new BlockPos(1, 1, 1);
-        BlockPos furnace = new BlockPos(2, 1, 1);
-        helper.setBlock(conduit, PowerRegistry.COPPER_CONDUIT.get().defaultBlockState());
-        helper.setBlock(furnace, net.minecraft.world.level.block.Blocks.FURNACE);
+    public static void teslaStorageFeedsMachine(GameTestHelper helper) {
+        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        BlockPos chargerPos = new BlockPos(2, 1, 2);
+        helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
+        ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
+        helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(chargerPos), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link to the charger");
         helper.succeedWhen(() -> {
-            var level = helper.getLevel();
-            BlockPos abs = helper.absolutePos(conduit);
-            helper.assertTrue(com.arno.robotica.power.conduit.ConduitManager.networkSize(level, abs) == 1, "network should be built");
-            helper.assertTrue(!com.arno.robotica.power.conduit.ConduitManager.endpointsDirty(level, abs), "freshly scanned");
-            for (int i = 0; i < 5; i++) {
-                com.arno.robotica.power.conduit.ConduitManager.neighborChanged(level, abs, helper.absolutePos(furnace),
-                        net.minecraft.world.level.block.Blocks.FURNACE);
-            }
-            helper.assertTrue(!com.arno.robotica.power.conduit.ConduitManager.endpointsDirty(level, abs),
-                    "repeat updates from a known non-endpoint must not trigger a rescan");
-            // A block entity that was not there at scan time still triggers one.
-            com.arno.robotica.power.conduit.ConduitManager.neighborChanged(level, abs, helper.absolutePos(new BlockPos(1, 2, 1)),
-                    net.minecraft.world.level.block.Blocks.CHEST);
-            helper.assertTrue(com.arno.robotica.power.conduit.ConduitManager.endpointsDirty(level, abs), "an unknown block entity marks the network dirty");
+            helper.assertTrue(coil.isRoot(), "a coil on an Accumulator is a source");
+            helper.assertTrue(charger.energy.getEnergyStored() > 2_000, "Charger should fill, has " + charger.energy.getEnergyStored());
+        });
+    }
+
+    /** Accumulator -> coil A -> coil B -> Accumulator: the hop costs 5%, and A and B cannot link both ways. */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void teslaHopLosesFivePercent(GameTestHelper helper) {
+        AccumulatorBlockEntity source = accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+        TeslaCoilBlockEntity a = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        helper.setBlock(new BlockPos(2, 1, 2), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity b = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
+        AccumulatorBlockEntity target = accumulator(helper, new BlockPos(2, 1, 0), Direction.NORTH, 0);
+        helper.assertTrue(TeslaNetwork.toggle(a, b.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "A -> B");
+        helper.assertTrue(TeslaNetwork.toggle(b, a.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.REVERSE, "B -> A must be refused");
+        helper.assertTrue(TeslaNetwork.toggle(b, target.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "B -> accumulator");
+        helper.succeedWhen(() -> {
+            long received = target.energy.getEnergyStored();
+            long drained = 500_000 - source.energy.getEnergyStored();
+            helper.assertTrue(received >= 20_000, "target should fill, has " + received);
+            helper.assertTrue(!b.isRoot(), "B sits on iron: a relay");
+            helper.assertTrue(Math.abs(received * 100 - drained * 95) <= drained, "expected 95% of " + drained + ", got " + received);
+        });
+    }
+
+    /** Tier I takes 4 links; a fifth is refused until one is unlinked. Tiers hold 4/8/12/16/32. */
+    @GameTest(template = "empty")
+    public static void teslaLinkLimitPerTier(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(1, 0, 1), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_1.get());
+        BlockPos[] targets = {new BlockPos(0, 1, 0), new BlockPos(2, 1, 0), new BlockPos(0, 1, 2), new BlockPos(2, 1, 2), new BlockPos(0, 1, 1)};
+        for (BlockPos t : targets) helper.setBlock(t, PowerRegistry.CHARGER.get().defaultBlockState());
+        for (int i = 0; i < 4; i++) {
+            helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[i]), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link " + i);
+        }
+        helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[4]), Direction.UP) == TeslaNetwork.LinkResult.FULL, "fifth link is refused");
+        helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[0]), Direction.UP) == TeslaNetwork.LinkResult.UNLINKED, "unlink frees a slot");
+        helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[4]), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "now it fits");
+        helper.assertTrue(coil.linkCount() == 4, "four links");
+        int[] expected = {4, 8, 12, 16, 32};
+        for (TeslaTier tier : TeslaTier.values()) helper.assertTrue(tier.maxLinks == expected[tier.ordinal()], tier + " links");
+        helper.succeed();
+    }
+
+    /** The clicked face is where the power goes in: an Accumulator's front only gives energy out. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaFaceSpecificInsertion(GameTestHelper helper) {
+        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        AccumulatorBlockEntity front = accumulator(helper, new BlockPos(2, 1, 0), Direction.WEST, 0);
+        AccumulatorBlockEntity side = accumulator(helper, new BlockPos(2, 1, 2), Direction.WEST, 0);
+        helper.assertTrue(TeslaNetwork.toggle(coil, front.getBlockPos(), Direction.WEST) == TeslaNetwork.LinkResult.LINKED, "link front face");
+        helper.assertTrue(TeslaNetwork.toggle(coil, side.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "link side face");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(side.energy.getEnergyStored() > 5_000, "side face takes energy, has " + side.energy.getEnergyStored());
+            helper.assertTrue(front.energy.getEnergyStored() == 0, "front face is output only, has " + front.energy.getEnergyStored());
+        });
+    }
+
+    /** Range is checked per tier: Tier I reaches 8 blocks, Tier V 32. */
+    @GameTest(template = "empty")
+    public static void teslaRangeLimit(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(1, 0, 1), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity small = coil(helper, new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_1.get());
+        BlockPos at = small.getBlockPos();
+        helper.assertTrue(TeslaNetwork.toggle(small, at.east(9), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "9 blocks is out of range");
+        helper.assertTrue(TeslaNetwork.toggle(small, at.east(8), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "8 blocks is in range (air there)");
+        helper.assertTrue(TeslaNetwork.toggle(small, at.below(), Direction.UP) == TeslaNetwork.LinkResult.OWN_SUPPORT, "not the block it sits on");
+        helper.setBlock(new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_5.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
+        TeslaCoilBlockEntity big = (TeslaCoilBlockEntity) helper.getBlockEntity(new BlockPos(1, 1, 1));
+        helper.assertTrue(TeslaNetwork.toggle(big, at.east(20), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "Tier V reaches 20 blocks");
+        helper.assertTrue(TeslaNetwork.toggle(big, at.east(33), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "but not 33");
+        helper.succeed();
+    }
+
+    /** Clicking a linked target on the same face unlinks it (and energy stops); another face moves the link. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaUnlinking(GameTestHelper helper) {
+        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        BlockPos chargerPos = new BlockPos(2, 1, 2);
+        helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
+        ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
+        BlockPos abs = helper.absolutePos(chargerPos);
+        helper.assertTrue(TeslaNetwork.toggle(coil, abs, Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link");
+        helper.assertTrue(TeslaNetwork.toggle(coil, abs, Direction.NORTH) == TeslaNetwork.LinkResult.FACE_CHANGED, "another face moves the link");
+        helper.assertTrue(coil.linkCount() == 1 && coil.links().get(0).face() == Direction.NORTH, "one link, on the north face");
+        helper.assertTrue(TeslaNetwork.toggle(coil, abs, Direction.NORTH) == TeslaNetwork.LinkResult.UNLINKED, "same face unlinks");
+        helper.assertTrue(coil.linkCount() == 0, "no links left");
+        helper.runAfterDelay(20, () -> {
+            helper.assertTrue(charger.energy.getEnergyStored() == 0, "an unlinked charger gets nothing");
+            helper.succeed();
         });
     }
 }

@@ -43,6 +43,7 @@
       "robotica:storage_expansion_mk3",
       "robotica:temp_magma_core",
       "robotica:accumulator_3",
+      "robotica:tesla_coil_4",
       "robotica:tool_upgrade_kit_3",
       "robotica:rift_upgrade",
       "robotica:rift_remote",

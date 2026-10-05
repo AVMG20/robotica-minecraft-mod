@@ -43,6 +43,7 @@
       "robotica:temp_servo_core",
       "robotica:solar_panel_mk2",
       "robotica:accumulator_2",
+      "robotica:tesla_coil_3",
       "robotica:rivet_gun",
       "robotica:tool_upgrade_kit_2",
       "robotica:farm_kit_mk3",

@@ -39,7 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Age 0 charger for Mainsprings. Right-click with an empty hand to wind (rate limited per player),
- * right-click with a Mainspring to insert it, sneak right-click with an empty hand to take it out.
+ * right-click with a Mainspring to insert it. Sneak right-click with an empty hand shows the charge; a second one
+ * within two seconds takes the item out.
  * The ROTATION property advances with every click, which gives a turning crank without a renderer.
  */
 public class WindingCrankBlock extends PowerBlock {
@@ -49,6 +50,9 @@ public class WindingCrankBlock extends PowerBlock {
 
     /** Server tick of each player's last accepted click. Cleared on logout. */
     private static final Map<UUID, Integer> LAST_CLICK = new ConcurrentHashMap<>();
+    /** Server tick of each player's last sneak-click that showed the charge. Cleared on logout. */
+    private static final Map<UUID, Integer> LAST_PEEK = new ConcurrentHashMap<>();
+    private static final int PEEK_TICKS = 40;
 
     public WindingCrankBlock(Properties props) {
         super(props, PowerRegistry.WINDING_CRANK_BE::get);
@@ -97,12 +101,26 @@ public class WindingCrankBlock extends PowerBlock {
         if (!player.getMainHandItem().isEmpty()) return InteractionResult.PASS;
 
         if (player.isShiftKeyDown()) {
-            if (crank.hasSpring()) {
-                ItemStack out = crank.spring.getStackInSlot(0).copy();
-                crank.spring.setStackInSlot(0, ItemStack.EMPTY);
-                CoreSounds.play(level, pos, CoreSounds.SPRING_REMOVE, SoundSource.BLOCKS, 0.7F, 1.0F);
-                player.getInventory().placeItemBackInInventory(out);
+            if (!crank.hasSpring()) {
+                player.displayClientMessage(Component.translatable("message.robotica.crank_empty"), true);
+                return InteractionResult.CONSUME;
             }
+            // First sneak-click shows the charge, a second one within PEEK_TICKS takes the item out.
+            int now = level.getServer().getTickCount();
+            Integer peeked = LAST_PEEK.get(player.getUUID());
+            if (peeked == null || now - peeked > PEEK_TICKS) {
+                LAST_PEEK.put(player.getUUID(), now);
+                ItemStack held = crank.spring.getStackInSlot(0);
+                int stored = ItemEnergy.get(held), capacity = ItemEnergy.capacity(held);
+                int percent = capacity <= 0 ? 0 : (int) (100L * stored / capacity);
+                player.displayClientMessage(Component.translatable("message.robotica.crank_peek", percent, stored, capacity), true);
+                return InteractionResult.CONSUME;
+            }
+            LAST_PEEK.remove(player.getUUID());
+            ItemStack out = crank.spring.getStackInSlot(0).copy();
+            crank.spring.setStackInSlot(0, ItemStack.EMPTY);
+            CoreSounds.play(level, pos, CoreSounds.SPRING_REMOVE, SoundSource.BLOCKS, 0.7F, 1.0F);
+            player.getInventory().placeItemBackInInventory(out);
             return InteractionResult.CONSUME;
         }
         if (!crank.hasSpring()) {
@@ -142,5 +160,6 @@ public class WindingCrankBlock extends PowerBlock {
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         LAST_CLICK.remove(event.getEntity().getUUID());
+        LAST_PEEK.remove(event.getEntity().getUUID());
     }
 }
