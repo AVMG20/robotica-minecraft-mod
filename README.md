@@ -5,6 +5,7 @@ A NeoForge 1.21.1 mod about robots, drones, farms, machines, power tools and pow
 - Design: [docs/DESIGN.md](docs/DESIGN.md)
 - Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)
 - Costs per item: [docs/COSTS.md](docs/COSTS.md)
+- Showcase site: [site/index.html](site/index.html)
 
 ## Play it
 
