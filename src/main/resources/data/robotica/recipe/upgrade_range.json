@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AGB",
+    "GCG",
+    "BGA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:ender_pearls"
+    },
+    "B": {
+      "tag": "c:gems/lapis"
+    },
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "C": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_range",
+    "count": 1
+  }
+}

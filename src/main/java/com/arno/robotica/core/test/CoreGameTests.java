@@ -2,6 +2,7 @@ package com.arno.robotica.core.test;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.energy.EnergyItem;
+import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -96,5 +97,49 @@ public class CoreGameTests {
         } catch (IOException e) {
             Robotica.LOGGER.warn("Could not write audit file {}", name, e);
         }
+    }
+
+    /** Stackable cards stack in one slot up to the machine's cap; single cards do not; one slot per kind; silk excludes fortune. */
+    @GameTest(template = "empty")
+    public static void upgradeCardsStack(GameTestHelper helper) {
+        var up = new com.arno.robotica.core.upgrade.Upgrades(3, java.util.Map.of(
+                com.arno.robotica.core.upgrade.UpgradeKind.SPEED, 4, com.arno.robotica.core.upgrade.UpgradeKind.SILK, 1,
+                com.arno.robotica.core.upgrade.UpgradeKind.FORTUNE, 3), () -> {});
+        var speed = com.arno.robotica.core.upgrade.UpgradeKind.SPEED;
+        ItemStack rest = up.insertItem(0, CoreItems.cards(speed, 6), false);
+        helper.assertTrue(up.level(speed) == 4 && rest.getCount() == 2, "speed stacks to the cap of 4, rest " + rest.getCount());
+        helper.assertTrue(up.insertItem(1, CoreItems.cards(speed, 1), true).getCount() == 1, "a second slot of the same kind is refused");
+        ItemStack silk = up.insertItem(1, CoreItems.cards(com.arno.robotica.core.upgrade.UpgradeKind.SILK, 2), false);
+        helper.assertTrue(silk.getCount() == 1, "silk is a single card");
+        helper.assertTrue(up.insertItem(2, CoreItems.cards(com.arno.robotica.core.upgrade.UpgradeKind.FORTUNE, 1), true).getCount() == 1,
+                "fortune is refused next to silk");
+        helper.assertTrue(up.insertItem(2, CoreItems.cards(com.arno.robotica.core.upgrade.UpgradeKind.VOID, 1), true).getCount() == 1,
+                "a kind the machine does not take is refused");
+        helper.assertTrue(com.arno.robotica.core.upgrade.Upgrades.speedMultiplier(4) == 6 && com.arno.robotica.core.upgrade.Upgrades.speedMultiplier(8) == 20,
+                "speed steps");
+        double prev = 1, prevStep = 0;
+        for (int n = 1; n <= 8; n++) {
+            double m = com.arno.robotica.core.upgrade.Upgrades.steepEnergyMultiplier(n, 0);
+            helper.assertTrue(m - prev > prevStep, "every steep speed card costs more than the last, at " + n);
+            prevStep = m - prev;
+            prev = m;
+        }
+        helper.succeed();
+    }
+
+    /** A cell in the inventory tops up the FE tool in the hand. */
+    @GameTest(template = "empty")
+    public static void cellChargesHeldTool(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayerInLevel();
+        ItemStack drill = new ItemStack(com.arno.robotica.gear.GearItems.BORE_DRILL.get());
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, drill);
+        ItemStack cell = new ItemStack(CoreItems.COPPER_CELL.get());
+        ItemEnergy.fill(cell);
+        int before = ItemEnergy.get(cell);
+        helper.onEachTick(() -> cell.inventoryTick(helper.getLevel(), player, 9, false));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(ItemEnergy.get(player.getMainHandItem()) > 0, "the drill got energy");
+            helper.assertTrue(ItemEnergy.get(cell) + ItemEnergy.get(player.getMainHandItem()) == before, "energy moved, none made");
+        });
     }
 }

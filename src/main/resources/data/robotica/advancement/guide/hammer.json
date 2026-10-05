@@ -1,0 +1,45 @@
+{
+  "parent": "robotica:guide/copper_gear",
+  "display": {
+    "icon": {
+      "id": "robotica:tinkers_hammer"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.hammer.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.hammer.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:tinkers_hammer"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:iron_plate_from_hammer",
+      "robotica:copper_plate_from_hammer",
+      "robotica:gold_plate_from_hammer"
+    ],
+    "experience": 5
+  }
+}

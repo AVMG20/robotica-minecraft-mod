@@ -36,16 +36,17 @@ REDSTONE_BLOCK, COBBLE, QUARTZ = '#c:storage_blocks/redstone', '#c:cobblestones'
 shaped('winding_crank', [' S ', 'CGC', 'BBB'], {'S': 'minecraft:stick', 'C': COPPER, 'G': 'copper_gear', 'B': COBBLE})
 
 # Age 1
-shaped('combustion_generator', ['PPP', 'CFC', 'GIG'],
-       {'P': IRON_PLATE, 'C': 'copper_coil', 'F': 'minecraft:furnace', 'G': 'copper_gear', 'I': 'iron_casing'})
+# Early power: a furnace in a copper shell, one iron ingot. Craftable the moment you smelt your first iron.
+shaped('combustion_generator', ['CCC', 'GFG', 'CIC'],
+       {'C': COPPER, 'F': 'minecraft:furnace', 'G': 'copper_gear', 'I': '#c:ingots/iron'})
 shaped('solar_panel_mk1', ['GGG', 'CBC', 'PPP'],
        {'G': '#c:glass_blocks', 'C': COPPER_PLATE, 'B': 'basic_circuit', 'P': IRON_PLATE})
 shaped('accumulator_1', ['PRP', 'CIC', 'PRP'],
        {'P': IRON_PLATE, 'R': REDSTONE_BLOCK, 'C': 'copper_coil', 'I': 'iron_casing'})
 shaped('copper_conduit', ['WWW', 'CCC', 'WWW'], {'W': '#minecraft:wool', 'C': COPPER}, count=6)
 shaped('gold_conduit', ['GGG', 'CCC'], {'G': GOLD, 'C': 'copper_conduit'}, count=3)
-shaped('charger', ['PCP', 'CIC', 'PBP'],
-       {'P': IRON_PLATE, 'C': 'copper_coil', 'I': 'iron_casing', 'B': 'basic_circuit'})
+shaped('charger', ['CPC', 'RGR', 'CCC'],
+       {'C': COPPER, 'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'G': 'copper_gear'})
 shaped('metal_press', ['PPP', 'GSG', 'PMP'],
        {'P': IRON_PLATE, 'G': 'copper_gear', 'S': 'minecraft:piston', 'M': 'electric_motor'})
 

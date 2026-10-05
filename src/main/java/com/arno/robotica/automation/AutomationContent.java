@@ -56,7 +56,7 @@ public final class AutomationContent {
     public static final DeferredItem<BlockItem> SPROUT_ITEM = ITEMS.registerItem("sprout",
             p -> new WorkerBlockItem(SPROUT.get(), p, 0, "tooltip.robotica.sprout"));
     public static final DeferredItem<BlockItem> EXCAVATOR_ITEM = ITEMS.registerItem("excavator",
-            p -> new WorkerBlockItem(EXCAVATOR.get(), p, 1, "tooltip.robotica.excavator"));
+            p -> new WorkerBlockItem(EXCAVATOR.get(), p, 2, "tooltip.robotica.excavator"));
     public static final DeferredItem<BlockItem> SUPPLY_CRATE_ITEM = ITEMS.registerItem("supply_crate",
             p -> new WorkerBlockItem(SUPPLY_CRATE.get(), p, 0, "tooltip.robotica.supply_crate"));
 

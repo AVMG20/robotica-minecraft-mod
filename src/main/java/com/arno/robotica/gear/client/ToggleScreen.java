@@ -48,19 +48,23 @@ public class ToggleScreen extends Screen {
         }
         List<Supplier<Component>> labels = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
+        List<Component> hints = new ArrayList<>();
         if (tool.spec.modes.size() > 1) {
             labels.add(() -> Component.translatable("gear.robotica.screen.mode", tool.mode(held()).displayName()));
             actions.add(() -> GearKeys.send(GearActions.CYCLE_MODE, hasShiftDown() ? -1 : 1));
+            hints.add(Component.translatable("gear.robotica.screen.mode.desc"));
         }
         if (tool.spec.fortuneLevel > 0) {
             labels.add(() -> Component.translatable("gear.robotica.screen.enchant", enchantName(ToolSettings.enchantMode(held()))));
             actions.add(() -> GearKeys.send(GearActions.CYCLE_ENCHANT, 0));
+            hints.add(Component.translatable("gear.robotica.screen.enchant.desc"));
         }
         for (ToggleKind kind : ToggleKind.values()) {
             if (!tool.spec.toggles.contains(kind)) continue;
             labels.add(() -> Component.empty().append(kind.displayName()).append(": ")
                     .append(Component.translatable(ToolSettings.has(held(), kind) ? "gear.robotica.on" : "gear.robotica.off")));
             actions.add(() -> GearKeys.send(GearActions.TOGGLE, kind.ordinal()));
+            hints.add(kind.description());
         }
         int total = labels.size() * (HEIGHT + GAP) - GAP;
         panelW = WIDTH + 24;
@@ -72,6 +76,7 @@ public class ToggleScreen extends Screen {
         for (int i = 0; i < labels.size(); i++) {
             Runnable action = actions.get(i);
             Button b = new FitButton(x, y + i * (HEIGHT + GAP), WIDTH, HEIGHT, labels.get(i).get(), btn -> action.run());
+            b.setTooltip(net.minecraft.client.gui.components.Tooltip.create(hints.get(i)));
             addRenderableWidget(b);
             rows.add(new Row(b, labels.get(i)));
         }

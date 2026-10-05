@@ -1,0 +1,51 @@
+{
+  "parent": "robotica:guide/servo_core",
+  "display": {
+    "icon": {
+      "id": "robotica:quantum_circuit"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.age3.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.age3.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:quantum_circuit",
+              "robotica:plasma_actuator"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:blazing_casing",
+      "robotica:quantum_circuit",
+      "robotica:plasma_actuator",
+      "robotica:temp_magma_core",
+      "robotica:accumulator_3",
+      "robotica:tool_upgrade_kit_3",
+      "robotica:rift_upgrade",
+      "robotica:rift_remote"
+    ],
+    "experience": 50
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "APB",
+    "PCP",
+    "BPA"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:bone_block"
+    },
+    "B": {
+      "item": "minecraft:bone_block"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "C": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_growth",
+    "count": 1
+  }
+}

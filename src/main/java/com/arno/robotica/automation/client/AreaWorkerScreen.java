@@ -61,7 +61,7 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     @Override
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
-        if (slot.index <= menu.be.upgradeSlotCount()) return icon("upgrade_speed_1");
+        if (slot.index <= menu.be.upgradeSlotCount()) return icon("upgrade_speed");
         return ItemStack.EMPTY;
     }
 
@@ -93,10 +93,17 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
                 ? Component.translatable("gui.robotica.tier_area", menu.be.tier(), size, size)
                 : Component.translatable("gui.robotica.area", size, size);
         addTooltip(x + imageWidth - 50, y + 4, 44, 11, tierTip);
-        Component statusText = Component.translatable("gui.robotica.status." + status.name().toLowerCase(Locale.ROOT));
-        drawStatus(g, statusText, x + 9, y + 74, 90, 1, tone);
-        if (menu.extra() != 0) {
-            drawLabelRight(g, Component.translatable("gui.robotica.depth", menu.extra()), x + imageWidth - 8, y + 74, 60);
+        boolean finished = menu.progress() >= 100 && status == AreaWorkerBlockEntity.Status.IDLE;
+        String statusKey = finished ? "finished" : status.name().toLowerCase(Locale.ROOT);
+        Component statusText = Component.translatable("gui.robotica.status." + statusKey);
+        drawStatus(g, statusText, x + 9, y + 74, 90, 1, finished ? Tone.GOOD : tone);
+        addTooltip(x + 9, y + 72, 90, 11, Component.translatable("gui.robotica.status_hint." + statusKey));
+        if (menu.progress() >= 0 && !finished) {
+            Component progress = menu.extra() != 0
+                    ? Component.translatable("gui.robotica.depth_progress", menu.extra(), menu.progress())
+                    : Component.translatable("gui.robotica.progress", menu.progress());
+            drawLabelRight(g, progress, x + imageWidth - 8, y + 74, 66);
+            drawProgress(g, x + 117, y + 84, 52, 2, menu.progress() / 100.0F);
         }
     }
 

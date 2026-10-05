@@ -66,7 +66,7 @@ public class SentryDroneScreen extends MachineScreen<SentryDroneMenu> {
     @Override
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
-        if (slot.index <= 2) return icon("upgrade_speed_1");
+        if (slot.index <= 2) return icon("upgrade_speed");
         return ItemStack.EMPTY;
     }
 

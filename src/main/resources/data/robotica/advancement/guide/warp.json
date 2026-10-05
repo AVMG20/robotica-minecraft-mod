@@ -1,0 +1,34 @@
+{
+  "parent": "robotica:guide/basic_circuit",
+  "display": {
+    "icon": {
+      "id": "robotica:warp_pad"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.warp.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.warp.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "robotica:milestone",
+      "conditions": {
+        "milestone": "warp"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 10
+  }
+}

@@ -1291,5 +1291,181 @@
         "pitch": 1.0
       }
     ]
+  },
+  "area_crunch": {
+    "subtitle": "subtitles.robotica.area_crunch",
+    "sounds": [
+      {
+        "name": "minecraft:item/mace/smash_ground1",
+        "type": "file",
+        "volume": 0.55,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:item/mace/smash_ground2",
+        "type": "file",
+        "volume": 0.55,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:item/mace/smash_ground3",
+        "type": "file",
+        "volume": 0.55,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/basalt/break1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/basalt/break2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/tuff/break1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.75
+      }
+    ]
+  },
+  "area_rumble": {
+    "subtitle": "subtitles.robotica.area_rumble",
+    "sounds": [
+      {
+        "name": "minecraft:item/mace/smash_ground_heavy",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.55,
+        "weight": 2
+      },
+      {
+        "name": "minecraft:random/explode1",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:random/explode2",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:block/heavy_core/break1",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:block/heavy_core/break2",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.5
+      }
+    ]
+  },
+  "area_debris": {
+    "subtitle": "subtitles.robotica.area_debris",
+    "sounds": [
+      {
+        "name": "minecraft:block/dripstone/break1",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/dripstone/break2",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/dripstone/break3",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/suspicious_gravel/break1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/suspicious_gravel/break2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/tuff/break2",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/tuff/break3",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "drill_spinup": {
+    "subtitle": "subtitles.robotica.drill_spinup",
+    "sounds": [
+      {
+        "name": "minecraft:item/crossbow/loading_start",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone1",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone2",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.7
+      }
+    ]
+  },
+  "tree_fall": {
+    "subtitle": "subtitles.robotica.tree_fall",
+    "sounds": [
+      {
+        "name": "minecraft:mob/zombie/woodbreak",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:block/bamboo_wood/break1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/cherry_wood/break1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:dig/wood1",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.5
+      }
+    ]
   }
 }

@@ -1,6 +1,12 @@
 package com.arno.robotica.automation.block;
 
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
+import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,13 +51,59 @@ public abstract class AreaWorkerBlock extends BaseEntityBlock {
         if (placer != null && level.getBlockEntity(pos) instanceof AreaWorkerBlockEntity worker) {
             worker.setOwner(placer.getUUID());
         }
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof AreaWorkerBlockEntity worker) worker.startPreview();
+    }
+
+    /**
+     * Quick insert: right-click with a battery (cell or Mainspring) swaps it into the battery slot, with an upgrade card
+     * puts it into a free upgrade slot. Anything else opens the GUI as usual.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (!(level.getBlockEntity(pos) instanceof AreaWorkerBlockEntity worker)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (AreaWorkerBlockEntity.canUseAsBattery(stack)) {
+            if (!level.isClientSide) {
+                ItemStack old = worker.battery.getStackInSlot(0).copy();
+                worker.battery.setStackInSlot(0, stack.copyWithCount(1));
+                stack.consume(1, player);
+                if (!old.isEmpty()) player.getInventory().placeItemBackInInventory(old);
+                CoreSounds.play(level, pos, CoreSounds.SPRING_INSERT, SoundSource.BLOCKS, 0.8F, 1.1F);
+                player.displayClientMessage(Component.translatable("message.robotica.battery_inserted", worker.battery.getStackInSlot(0).getHoverName()), true);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (stack.getItem() instanceof UpgradeCardItem card) {
+            if (worker.upgrades.insertOne(stack, level.isClientSide)) {
+                if (!level.isClientSide) {
+                    stack.consume(1, player);
+                    CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
+                    player.displayClientMessage(Component.translatable("message.robotica.card_inserted", card.getDescription(),
+                            worker.upgrades.level(card.getKind()), worker.upgrades.cap(card.getKind())), true);
+                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            }
+            if (!level.isClientSide) {
+                int cap = worker.upgrades.cap(card.getKind());
+                player.displayClientMessage(cap <= 0 ? Component.translatable("message.robotica.card_refused")
+                        : Component.translatable("message.robotica.card_full", card.getDescription(), cap), true);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (level.getBlockEntity(pos) instanceof AreaWorkerBlockEntity worker && player instanceof ServerPlayer sp) {
-            sp.openMenu(worker, buf -> buf.writeBlockPos(pos));
+            if (player.isShiftKeyDown()) {
+                // Sneak + empty hand: a quick status check and the work area for a few seconds, without the GUI.
+                worker.startPreview();
+                sp.displayClientMessage(worker.statusLine(), true);
+            } else {
+                sp.openMenu(worker, buf -> buf.writeBlockPos(pos));
+            }
         }
         return InteractionResult.CONSUME;
     }

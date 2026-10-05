@@ -66,6 +66,7 @@ public class EssenceVialItem extends Item {
         if (result == Essence.Result.COMPLETED) {
             CoreSounds.play(level, target.blockPosition(), CoreSounds.ESSENCE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
             player.displayClientMessage(Component.translatable("message.robotica.vial_complete", type.getDescription()).withStyle(ChatFormatting.GREEN), true);
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) com.arno.robotica.core.progress.Milestones.award(sp, com.arno.robotica.core.progress.Milestones.VIAL_COMPLETE);
         } else {
             CoreSounds.play(level, target.blockPosition(), CoreSounds.ESSENCE_SAMPLE, SoundSource.PLAYERS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
             player.displayClientMessage(Component.translatable("message.robotica.vial_sampled", type.getDescription(),

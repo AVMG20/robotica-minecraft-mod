@@ -117,7 +117,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     protected ItemStack ghostIcon(Slot slot) {
         int casing = ArchitectTableBlockEntity.INPUT_SLOTS;
         if (slot.index == casing) return icon("iron_casing");
-        if (slot.index == casing + 1 || slot.index == casing + 2) return icon("upgrade_speed_1");
+        if (slot.index == casing + 1 || slot.index == casing + 2) return icon("upgrade_speed");
         if (slot.index == casing + 3) return icon("mainspring");
         if (slot.index < casing) return slot.index == 0 ? new ItemStack(Items.COBBLESTONE) : ItemStack.EMPTY;
         return ItemStack.EMPTY;

@@ -5,6 +5,7 @@ import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.tool.AreaBreaker;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.BreakQueue;
+import com.arno.robotica.gear.tool.GearSounds;
 import com.arno.robotica.gear.tool.GearToolItem;
 import com.arno.robotica.gear.tool.ToggleKind;
 import com.arno.robotica.gear.weapon.EnergyWeaponItem;
@@ -66,24 +67,10 @@ public final class GearEvents {
         BlockPos origin = event.getPos();
         Direction face = BreakQueue.faceFor(player, origin);
         List<BlockPos> targets = AreaBreaker.collect(level, player, stack, tool, origin, face);
-        if (targets.isEmpty() && !(tool.activeMode(stack, player) == AreaMode.TREE && tool.toggleActive(stack, ToggleKind.REPLANT))) return;
+        AreaMode mode = tool.activeMode(stack, player);
+        if (targets.isEmpty() && !(mode == AreaMode.TREE && tool.spec.replants)) return;
         BreakQueue.start(player, level, tool, stack, origin, targets);
-        if (!targets.isEmpty()) areaSound(player, level, tool, origin);
-    }
-
-    private static final Map<UUID, Long> LAST_AREA_SOUND = new HashMap<>();
-
-    /** Crunch (or chainsaw rev) once per area break, at most every half second per player. */
-    private static void areaSound(ServerPlayer player, ServerLevel level, GearToolItem tool, BlockPos origin) {
-        long now = level.getGameTime();
-        Long last = LAST_AREA_SOUND.get(player.getUUID());
-        if (last != null && now - last < 10) return;
-        LAST_AREA_SOUND.put(player.getUUID(), now);
-        if (tool == GearItems.CHAINSAW.get()) {
-            CoreSounds.play(level, origin, CoreSounds.CHAINSAW_REV, SoundSource.PLAYERS, 0.8F, 1.0F);
-        } else {
-            CoreSounds.play(level, origin, CoreSounds.AREA_BREAK, SoundSource.PLAYERS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
-        }
+        if (!targets.isEmpty()) GearSounds.breakStarted(player, level, tool, mode, origin, targets.size() + 1);
     }
 
     /** Redirects drops of Robotica tools: void filter, auto-smelt, auto-pickup (in that order). */
@@ -133,13 +120,13 @@ public final class GearEvents {
                 .orElse(stack);
     }
 
-    /** The hammer mines at half speed in its 3x3 mode. */
+    /** Early tools mine slower in their box modes (see ToolSpec.areaSpeed). */
     @SubscribeEvent
     public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
         ItemStack stack = event.getEntity().getMainHandItem();
-        if (stack.getItem() instanceof GearToolItem tool && tool.spec.slowArea
+        if (stack.getItem() instanceof GearToolItem tool && tool.spec.areaSpeed < 1.0F
                 && tool.activeMode(stack, event.getEntity()).isBox()) {
-            event.setNewSpeed(event.getNewSpeed() * 0.5F);
+            event.setNewSpeed(event.getNewSpeed() * tool.spec.areaSpeed);
         }
     }
 
@@ -162,12 +149,12 @@ public final class GearEvents {
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         BreakQueue.clear(event.getEntity().getUUID());
-        LAST_AREA_SOUND.remove(event.getEntity().getUUID());
+        GearSounds.forget(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         BreakQueue.clearAll();
-        LAST_AREA_SOUND.clear();
+        GearSounds.clearAll();
     }
 }

@@ -79,11 +79,11 @@ public class PowerGameTests {
         BlockPos pos = new BlockPos(1, 1, 1);
         helper.setBlock(pos, PowerRegistry.METAL_PRESS.get().defaultBlockState());
         MetalPressBlockEntity press = (MetalPressBlockEntity) helper.getBlockEntity(pos);
-        press.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 4).get()));
+        press.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 4));
         press.items.setStackInSlot(0, new ItemStack(Items.COPPER_INGOT, 2));
         press.energy.setEnergy(MetalPressBlockEntity.ENERGY_CAPACITY);
 
-        // Speed IV is x20: 5 ticks per plate, so both ingots are done well inside 60 ticks (base speed would need 200).
+        // Four speed cards are x6: 17 ticks per plate, so both ingots are done inside 60 ticks (base speed would need 200).
         helper.succeedWhen(() -> {
             ItemStack out = press.items.getStackInSlot(1);
             helper.assertTrue(out.is(CoreItems.COPPER_PLATE.get()) && out.getCount() == 2, "Two copper plates expected");

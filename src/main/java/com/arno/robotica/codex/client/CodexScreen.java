@@ -49,7 +49,19 @@ public class CodexScreen extends Screen {
     private static final int INK = 0xFF1E2A2A, HEAD = 0xFFA4521C, MUTED = 0xFF5D6B67, LINK = 0xFF0F7488, SLOT = 0xFFC9D2CE;
 
     private record Page(String title, String text, List<ItemStack> items) {}
-    private record Chapter(String title, ItemStack icon, List<Page> pages) {}
+    /** {@code guide}: the "Next steps" chapter, drawn from the guide advancements instead of text. */
+    private record Chapter(String title, ItemStack icon, List<Page> pages, boolean guide) {}
+    /** One step of the guide (assets/robotica/codex/guide.json, written with the advancements by codex_guide.py). */
+    private record Step(String id, String parent, ItemStack icon, int age) {
+        String key() {
+            return "advancements.robotica." + id.substring(id.indexOf(':') + 1).replace('/', '.');
+        }
+    }
+
+    private final List<Step> steps = new ArrayList<>();
+    /** Clickable icons drawn on the guide page this frame: x, y and the stack. */
+    private final List<Object[]> guideHits = new ArrayList<>();
+    private static final int GUIDE_LIST_LINES = 14;
 
     private final List<Chapter> chapters = new ArrayList<>();
     private int chapter = 0, page = 0, subPage = 0, labScroll = 0;
@@ -70,6 +82,38 @@ public class CodexScreen extends Screen {
     public CodexScreen() {
         super(Component.translatable("item.robotica.codex"));
         loadChapters();
+        loadGuide();
+    }
+
+    private void loadGuide() {
+        try {
+            Optional<Resource> res = net.minecraft.client.Minecraft.getInstance().getResourceManager().getResource(Robotica.id("codex/guide.json"));
+            if (res.isEmpty()) return;
+            try (Reader reader = res.get().openAsReader()) {
+                for (JsonElement e : JsonParser.parseReader(reader).getAsJsonObject().getAsJsonArray("steps")) {
+                    JsonObject o = e.getAsJsonObject();
+                    String parent = o.has("parent") && !o.get("parent").isJsonNull() ? o.get("parent").getAsString() : null;
+                    steps.add(new Step(o.get("id").getAsString(), parent, stackOf(o.get("icon").getAsString()), o.has("age") ? o.get("age").getAsInt() : 0));
+                }
+            }
+        } catch (Exception e) {
+            Robotica.LOGGER.error("Could not read the Robotica guide steps", e);
+        }
+    }
+
+    private boolean stepDone(Step step) {
+        return com.arno.robotica.codex.GuideProgressPayload.clientDone().contains(step.id());
+    }
+
+    /** Steps you can do now: not done, and the step before them is done. */
+    private List<Step> nextSteps() {
+        List<Step> next = new ArrayList<>();
+        for (Step step : steps) {
+            if (stepDone(step)) continue;
+            boolean open = step.parent() == null || com.arno.robotica.codex.GuideProgressPayload.clientDone().contains(step.parent());
+            if (open) next.add(step);
+        }
+        return next;
     }
 
     private void loadChapters() {
@@ -110,10 +154,12 @@ public class CodexScreen extends Screen {
                         p.has("text") ? p.get("text").getAsString() : "", items));
             }
         }
+        boolean guide = c.has("special") && "guide".equals(c.get("special").getAsString());
+        if (guide && pages.isEmpty()) pages.add(new Page("", "", List.of()));
         if (pages.isEmpty()) return null;
         String title = c.has("title") ? c.get("title").getAsString() : "?";
         ItemStack icon = c.has("icon") ? stackOf(c.get("icon").getAsString()) : ItemStack.EMPTY;
-        return new Chapter(title, icon, pages);
+        return new Chapter(title, icon, pages, guide);
     }
 
     private static ItemStack stackOf(String id) {
@@ -310,6 +356,7 @@ public class CodexScreen extends Screen {
 
     private int subPageCount() {
         if (chapters.isEmpty()) return 1;
+        if (chapters.get(chapter).guide()) return 1 + Math.max(1, (steps.size() + GUIDE_LIST_LINES - 1) / GUIDE_LIST_LINES);
         return Math.max(1, (wrappedText().size() + linesPerSubPage() - 1) / linesPerSubPage());
     }
 
@@ -320,6 +367,7 @@ public class CodexScreen extends Screen {
             return ItemStack.EMPTY;
         }
         if (!recipeItem.isEmpty()) return renderRecipe(g, x, y, mx, my);
+        if (chapters.get(chapter).guide()) return renderGuide(g, x, y, mx, my);
         Page p = chapters.get(chapter).pages().get(page);
         ItemStack hovered = ItemStack.EMPTY;
         g.drawString(font, Component.literal(p.title().isEmpty() ? chapters.get(chapter).title() : p.title()).withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
@@ -347,6 +395,78 @@ public class CodexScreen extends Screen {
             g.drawString(font, Component.literal("Click an item to see its recipe"), x, top + H - 36, MUTED, false);
         }
         return hovered;
+    }
+
+    // ---------------------------------------------------------------- guide
+
+    /** Sub-page 0: the steps you can do now, with icon, title and description. Then a checklist of every step. */
+    private ItemStack renderGuide(GuiGraphics g, int x, int y, int mx, int my) {
+        guideHits.clear();
+        ItemStack hovered = ItemStack.EMPTY;
+        int done = 0;
+        for (Step step : steps) if (stepDone(step)) done++;
+        if (subPage == 0) {
+            g.drawString(font, Component.translatable("codex.robotica.guide.title").withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
+            g.drawString(font, Component.translatable("codex.robotica.guide.progress", done, steps.size()), x, y + 11, MUTED, false);
+            y += 26;
+            List<Step> next = nextSteps();
+            int bottom = top + H - 30;
+            if (steps.isEmpty()) {
+                drawWrapped(g, Component.translatable("codex.robotica.guide.missing"), x, y, INK);
+            } else if (next.isEmpty()) {
+                drawWrapped(g, Component.translatable("codex.robotica.guide.all_done"), x, y, INK);
+            }
+            for (Step step : next) {
+                List<FormattedCharSequence> title = font.split(Component.translatable(step.key() + ".title").withStyle(ChatFormatting.BOLD), PAGE_W - 24);
+                List<FormattedCharSequence> desc = font.split(Component.translatable(step.key() + ".description"), PAGE_W - 4);
+                int needed = Math.max(18, title.size() * 10) + desc.size() * 10 + 6;
+                if (y + needed > bottom) break;
+                g.fill(x, y, x + 18, y + 18, SLOT);
+                g.renderItem(step.icon(), x + 1, y + 1);
+                guideHits.add(new Object[]{x, y, step.icon()});
+                if (mx >= x && mx < x + 18 && my >= y && my < y + 18) hovered = step.icon();
+                int ty = y + (title.size() == 1 ? 5 : 0);
+                for (FormattedCharSequence line : title) {
+                    g.drawString(font, line, x + 22, ty, HEAD, false);
+                    ty += 10;
+                }
+                y += Math.max(20, title.size() * 10 + 2);
+                for (FormattedCharSequence line : desc) {
+                    g.drawString(font, line, x, y, INK, false);
+                    y += 10;
+                }
+                y += 6;
+            }
+            if (!next.isEmpty()) g.drawString(font, Component.translatable("codex.robotica.guide.click"), x, top + H - 36, MUTED, false);
+        } else {
+            g.drawString(font, Component.translatable("codex.robotica.guide.checklist").withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
+            y += 14;
+            int from = (subPage - 1) * GUIDE_LIST_LINES;
+            for (int i = from; i < Math.min(steps.size(), from + GUIDE_LIST_LINES); i++) {
+                Step step = steps.get(i);
+                boolean ok = stepDone(step);
+                Component line = Component.literal(ok ? "\u2714 " : "\u2022 ").append(Component.translatable(step.key() + ".title"));
+                MachineScreenFit.draw(g, font, line, x, y, PAGE_W - 4, ok ? 0xFF2E7D32 : INK);
+                y += 10;
+            }
+        }
+        String counter = (subPage + 1) + "/" + subPageCount();
+        g.drawCenteredString(font, Component.literal(counter), x + PAGE_W / 2, top + H - 20, MUTED);
+        return hovered;
+    }
+
+    private void drawWrapped(GuiGraphics g, Component text, int x, int y, int color) {
+        for (FormattedCharSequence line : font.split(text, PAGE_W - 4)) {
+            g.drawString(font, line, x, y, color, false);
+            y += 10;
+        }
+    }
+
+    /** Draws one line shrunk to fit, through the core helper. */
+    private static final class MachineScreenFit {
+        static void draw(GuiGraphics g, net.minecraft.client.gui.Font font, Component text, int x, int y, int maxWidth, int color) {
+            com.arno.robotica.core.client.MachineScreen.drawFitted(g, font, text, x, y, maxWidth, color, -1, false, 1.0F);
+        }
     }
 
     // ---------------------------------------------------------------- recipes
@@ -550,6 +670,13 @@ public class CodexScreen extends Screen {
         if (chapters.isEmpty() || minecraft == null) return ItemStack.EMPTY;
         GuiGraphicsProbe probe = new GuiGraphicsProbe();
         if (!recipeItem.isEmpty()) return probe.recipeHit(mx, my);
+        if (chapters.get(chapter).guide()) {
+            for (Object[] hit : guideHits) {
+                int hx = (int) hit[0], hy = (int) hit[1];
+                if (mx >= hx && mx < hx + 18 && my >= hy && my < hy + 18) return (ItemStack) hit[2];
+            }
+            return ItemStack.EMPTY;
+        }
         Page p = chapters.get(chapter).pages().get(page);
         int x = left + W / 2 + 10, y = top + 24;
         int ix = x;

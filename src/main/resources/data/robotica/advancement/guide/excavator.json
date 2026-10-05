@@ -1,0 +1,45 @@
+{
+  "parent": "robotica:guide/diamonds",
+  "display": {
+    "icon": {
+      "id": "robotica:excavator"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.excavator.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.excavator.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": [
+                  "robotica:excavator"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 10
+  }
+}

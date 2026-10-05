@@ -24,7 +24,7 @@ public class MetalPressScreen extends MachineScreen<MetalPressMenu> {
         return switch (slot.index) {
             case 0 -> new ItemStack(Items.IRON_INGOT);
             case 1 -> icon("iron_plate");
-            default -> icon("upgrade_speed_1");
+            default -> icon("upgrade_speed");
         };
     }
 

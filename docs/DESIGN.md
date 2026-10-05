@@ -4,11 +4,14 @@ Source of truth for implementation. NeoForge 1.21.1, Java 21, mod id `robotica`,
 
 ## Direction
 
-- Faster than vanilla, on purpose. Built for modpack pace next to Refined Storage, Thermal, Mekanism.
+- Start quickly, scale all the way to the late game. Faster than vanilla, on purpose. Built for modpack pace next to Refined Storage, Thermal, Mekanism.
 - Starts on day one with wood, stone and copper. No iron needed for Age 0.
-- Cheap to start, expensive to upgrade. Base machines and tools are affordable. Upgrades pull in later-age components, so the total cost climbs with every tier.
+- The first iron hour gives power: a burner generator, a cheap Charger, the first battery (Copper Cell, needs redstone) and the first FE tools (Bore Drill, Chainsaw). No gold or diamonds for any of them.
+- Diamonds open the Excavator (the real quarry) and Age 2. Later ages follow the component ladder.
+- Cheap to start, expensive to upgrade. Base machines and tools are affordable. Tool tiers pull in later-age components; speed costs grow steeply in FE.
 - Multiplayer first. Everything must run on a dedicated server. Server is authoritative, clients only render and send input.
 - Forge Energy (FE) is the only energy unit. Items move through standard `IItemHandler` capabilities.
+- A new player knows what to do without a wiki: guide advancements, a "Next steps" Codex page, chat tips, short tooltips with Shift details (see Onboarding).
 
 ## Ages
 
@@ -40,7 +43,7 @@ Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate
 - Iron Casing: 8 iron ingot + 1 redstone → 1
 - Basic Circuit: 3 redstone / copper ingot, gold ingot, copper ingot / 3 iron plate → 1
 - Electric Motor: 4 iron plate + 2 copper coil + 2 redstone + 1 clockwork mechanism → 1
-- Copper Cell (2,304,000 FE): 4 copper ingot + 2 iron plate + 2 redstone + 1 basic circuit
+- Copper Cell (2,304,000 FE): 4 copper ingot + 2 iron plate + 3 redstone (first-iron battery, no gold)
 
 ### Age 2 parts
 - Reinforced Casing: 4 iron casing + 4 obsidian + 1 diamond → 1 (raw: 32 iron)
@@ -65,67 +68,75 @@ Rough raw cost of one casing: Age 1 = 8 iron, Age 2 = 32 iron, Age 3 = 64 iron +
 
 ## Upgrade cards
 
-One item per kind and level: `robotica:upgrade_<kind>_<level>` (level 1-4). Level N requires Age N parts. The recipe for level N+1 consumes the level N card, so a level 4 card contains every tier's cost.
+One card item per kind: `robotica:upgrade_<kind>`. A machine has a few upgrade slots; each kind takes one slot. Stackable kinds stack in that slot and every card adds one step, up to the machine's cap. Silk and void are single cards; silk and fortune exclude each other.
 
-Kinds and level effects (machines read the highest installed level of each kind):
-- `speed`: action rate ×2 / ×4 / ×10 / ×20. Energy per action +25% per level.
-- `range`: area radius steps defined per machine (see machine).
-- `efficiency`: energy per action −15% per level (min 40% of base).
-- `fortune`: cards exist at levels 2, 3 and 4 only and give Fortune I, II and III. There is no `upgrade_fortune_1`, so fortune needs Age 2.
-- `silk`: single level card (`upgrade_silk_1`, made with Age 2 parts). Mutually exclusive with fortune.
-- `growth`: crop/sapling growth boost (farm bots).
-- `void`: deletes items matching `robotica:voidable` tag (cobblestone, cobbled deepslate, dirt, gravel, netherrack, tuff, diorite, andesite, granite). Single level, Age 1.
+| kind | card age | max stack | one step |
+|---|---|---|---|
+| `speed` | 1 | 8 | rate x2, x3, x4, x6, x8, x11, x15, x20 |
+| `efficiency` | 1 | 4 | -15% energy per action (floor 40%) |
+| `growth` | 1 | 4 | +50% crop/sapling growth |
+| `void` | 1 | 1 | deletes `robotica:voidable` |
+| `range` | 2 | 4 | machine specific (robots +2 radius, Excavator 16/32/48/64) |
+| `fortune` | 2 | 3 | Fortune I-III (Looting in the replicator) |
+| `silk` | 2 | 1 | Silk Touch |
 
-Card catalysts per kind: speed = sugar + redstone, range = lapis at level 1 and ender pearl from level 2, efficiency = gold, fortune = lapis block + diamond, silk = slime ball + emerald, growth = bone block, void = cactus + obsidian.
+Energy per action with speed cards: normal machines `(1 + 0.25s + 0.05s^2)`, the Excavator `(1 + 0.5s + 0.25s^2)` (x1.75, x3, x7, x21 per block for 1, 2, 4, 8 cards): every card costs more than the one before.
+
+Caps per machine: Stumpy/Sprout speed, range and growth = Mk tier (1-4), efficiency 4. Excavator: speed 8, range 4, efficiency 4, fortune 3, silk, void. Metal Press: speed 4, efficiency 4. Replicator: speed 3, fortune 3, efficiency 4. Architect Table: kind defaults.
+
+API (`core.upgrade`): `new Upgrades(slots, Set<UpgradeKind>, onChanged)` (kinds capped at `maxStack`), `new Upgrades(slots, Map<UpgradeKind,Integer> caps, onChanged)` or `new Upgrades(slots, kinds, ToIntFunction<UpgradeKind> caps, onChanged)`; `level(kind)` returns the number of cards that count; `insertOne(stack, simulate)` for right-click insert; static `speedMultiplier`, `energyMultiplier`, `steepEnergyMultiplier`, `fortuneEnchantLevel`, `growthBonus`. `CoreItems.card(kind)` and `CoreItems.cards(kind, count)`; `card(kind, level)` is deprecated and returns the single card.
 
 ## Machines and power (module `power`)
 
-- Winding Crank (Age 0): right-click with empty hand winds a Mainspring placed in it (+2,000 FE per click, 4 click/s cap). Accepts redstone-signal-free automation: if an FE source pushes into it, it winds at 200 FE/t. Mainsprings only charge here.
-- Combustion Generator (Age 1): burns furnace fuel, 40 FE/t, buffer 40,000.
+- Winding Crank (Age 0): holds a Mainspring (or any FE item: cell, drill). Hold right-click with an empty hand: +6,000 FE per turn, 5 turns/s, a Mainspring is full in about 20 s. Accepts FE from any source at 200 FE/t. Mainsprings only charge here.
+- Combustion Generator (first iron: copper shell, furnace, 1 iron ingot): burns furnace fuel, 40 FE/t, buffer 40,000. Right-click it with fuel.
 - Solar Panel Mk1 (Age 1) 8 FE/t, Mk2 (Age 2) 32 FE/t daytime with sky access.
 - Accumulator I/II/III: 1M / 4M / 16M FE, I/O 1,000 / 4,000 / 16,000 FE/t.
 - Copper Conduit 256 FE/t, Gold Conduit 1,024 FE/t: connect to any block with the FE capability.
-- Charger (Age 1): charges FE items, 400 FE/t, one slot.
-- Metal Press (Age 1): 1 ingot → 1 plate, 20 FE/t, 100 ticks. Inputs: iron, copper, gold ingot.
+- Charger (first iron: copper, 1 iron plate, redstone): charges FE items, 400 FE/t, one slot. Right-click it with the item.
+- Metal Press (Age 1): 1 ingot → 1 plate, 20 FE/t, 100 ticks. Right-click with ingots or upgrade cards.
+- Cells in a player's inventory recharge the FE tool or weapon in their hands at the cell's output rate.
 
 ## Automation (module `automation`)
 
 Area workers are block entities, never mobs. All of them: battery slot (cell or Mainspring), upgrade slots, output to inventories on any adjacent side (chest, RS Interface, AE2 interface, Supply Crate), internal 9-slot buffer when outputs are full, work stops when full or out of energy. Idle drain 0.2 FE/t (rounded: 1 FE every 5 ticks).
 
+Usability: right-click with a battery swaps it in, with a card installs one card. Sneak-right-click with an empty hand shows a status line and the work area. The work area outline shows for 10 s after placing, upgrading or a Mk kit. A stalled robot puffs smoke (no energy) or shows a sign (output full) every 2 s and tells its owner once on the action bar (when within 32 blocks).
+
 - Stumpy (lumber bot, Age 0). Mk1 9×9, 1 action / 40 ticks, growth ×1.5, 4 FE/t while working. Fells a whole tree as one action (up to 256 logs, includes leaves only with a toggle), replants saplings from its buffer, collects item drops in the area.
 - Sprout (crop bot, Age 0). Harvests mature crops (`CropBlock`, nether wart, sweet berries, cocoa), replants, tills dirt with water nearby. 3 FE/t.
-- Farm tiers via Mk kits used on the placed bot: Mk2 (Age 1 parts) 13×13, every 20 ticks, growth ×2; Mk3 (Age 2) 17×17, 5 ticks, ×3; Mk4 (Age 4) 25×25, 1 tick, ×5. Range cards add +2 radius per level on top.
+- Farm tiers via Mk kits used on the placed bot: Mk2 (Age 1 parts) 13×13, every 20 ticks, growth ×2; Mk3 (Age 2) 17×17, 5 ticks, ×3; Mk4 (Age 4) 25×25, 1 tick, ×5. Each Mk raises the speed/range/growth card cap by one. Range cards add +2 radius each.
 - Growth boost is applied as extra random ticks on crops/saplings in the area (cheap: N random positions per second, not every block).
 - Supply Crate (Age 0): 27 slots, plain inventory with item capability.
-- Excavator (Age 1, starts cheap: Iron Casing + Clockwork Mechanism + iron pickaxe + Basic Circuit): mines a real hole below itself. Base 8×8 area, 1 block / 40 ticks, 40 FE per block, stops at bedrock and leaves fluids alone (replaces fluid source blocks with cobblestone as it goes, so no flooding). Upgrades: range 16/32/48/64 square (level 1-4), speed, efficiency, fortune, silk, void. Never breaks blocks with an unbreakable hardness or block entities. Area outline shown client side when you look at the machine.
+- Excavator (Age 2: a diamond pickaxe as drill head, plus Electric Motors, Iron Casing, Basic Circuit): mines a real hole below itself. Base 8×8 area, 1 block / 60 ticks, 40 FE per block, stops at bedrock and leaves fluids alone (replaces fluid source blocks with cobblestone as it goes, so no flooding). Up to 8 speed cards at a steep FE price (see Upgrade cards), range 16/32/48/64, efficiency, fortune, silk, void. Never breaks blocks with an unbreakable hardness or block entities. The GUI shows depth, percent dug and a progress bar.
+- Later (not built): Survey Rig, a lag-free virtual quarry (scans its chunk once, mines a ledger, very slow and power hungry, diamond tier+).
 
 ## Tools and weapons (module `gear`)
 
-Tools from Age 1 on use FE instead of durability and never break. Empty tool: mining speed of a wooden pickaxe, no area mode, weapons deal 1 damage. Upgrades go through the smithing table: template = the tier's upgrade kit, base = previous tool, addition = tier core material. Smithing keeps data components, so energy, mode and toggles carry over.
+Tools from Age 1 on use FE instead of durability and never break. Empty tool: mining speed of a wooden pickaxe, no area mode, weapons deal 1 damage. Every tool tier upgrades at the smithing table: template = the tier's upgrade kit, base = previous tool, addition = a part or core. Smithing keeps data components, so energy, mode and toggles carry over. Tools take normal enchantments (tags `minecraft:enchantable/mining`, `/durability`; batons `/sharp_weapon`, `/weapon`, `/fire_aspect`); Unbreaking lowers the FE per block (III: 40%), Mending is not offered on FE tools.
 
 Mining tools:
-| Tool | Age | Energy | Modes | Notes |
+| Tool | Age | Energy | Modes (default first in bold) | Notes |
 |---|---|---|---|---|
-| Tinker's Hammer | 0 | durability 600 | 1×1, 3×3 | 3×3 mines at 50% speed. Also makes plates. |
-| Felling Axe | 0 | durability 500 | whole tree | 1 durability per log, max 64 logs |
-| Bore Drill | 1 | 400k FE | 1×1, 3×3 | 40 FE per block |
-| Chainsaw | 1 | 400k FE | whole tree | 30 FE per log, max 256 logs, toggle leaves, toggle replant |
-| Servo Drill | 2 | 2M FE | + 5×5, vein mine (64) | |
-| Magma Drill | 3 | 8M FE | + 3×3×3, 9×9 | auto-smelt toggle |
-| Null Drill | 4 | 32M FE | + 5×5×5, 12×12, 12×12×12 | drops go to linked inventory |
+| Tinker's Hammer | 0 | durability 600 | 1×1, **3×3** | 3×3 at 50% speed. Also makes plates. |
+| Felling Axe | 0 | durability 500 | **whole tree**, 1×1 | max 64 logs, replants |
+| Bore Drill | 1 (hammer + Kit I + Electric Motor) | 400k FE | 1×1, **3×3** | iron pickaxe speed and tier, 3×3 at 50%, 40 FE per block |
+| Chainsaw | 1 (felling axe + Kit I + motor) | 400k FE | **whole tree**, 1×1 | 30 FE per log, max 256 logs, clears leaves, replants |
+| Servo Drill | 2 | 2M FE | + 5×5, vein (64) | area 70% speed |
+| Magma Drill | 3 | 8M FE | + 3×3×3, 9×9 | area 85% speed, auto-smelt |
+| Null Drill | 4 | 32M FE | + 5×5×5, 12×12, 12×12×12 | full speed |
+
+Tool Upgrade Kit I is cheap (iron plates, redstone, a copper coil): the Bore Drill and Chainsaw are first-iron-hour tools.
 
 3D modes (3×3×3 and up) are mid-to-endgame on purpose. Area breaks of more than 27 blocks run through a server-side break queue (max 64 blocks per tick per player, configurable) so large modes never freeze the server.
 
-Toggles (stored per tool as data components, changed through a client → server payload):
-- V cycles mode (only modes the tool has). Sneak and scroll also cycles.
+Controls and settings (stored per tool as data components, changed through a client → server payload validated against the held tool):
+- V cycles mode (sneak + V or sneak + scroll goes back). The HUD shows "1x1 [3x3] 5x5 [V]"; the tooltip shows every mode with the current one highlighted. A mode tick sounds higher for bigger modes.
 - Holding sneak always mines 1×1.
-- Keep floor: area modes never dig below the player's feet level.
-- Auto-pickup: drops go directly to the player inventory.
-- Void filter: delete items in `robotica:voidable`.
-- Auto-smelt (Magma and Null).
-- Silk / Fortune swap (Servo and up): one key (B).
-- Light placer: right-click on a block face places a torch from the inventory.
+- B: Silk Touch / Fortune / off (Servo and up).
+- G: settings screen. Only four toggles: keep floor (on by default), auto-pickup (on by default), void filter, auto-smelt (Magma and Null). Light placer, leaves and replant toggles were removed: tree tools always replant from your saplings and the Chainsaw always clears leaves.
 - Area outline rendered client side before breaking.
+- Sounds scale with the break: 3×3 crunch, 5×5/3×3×3 heavy crunch, more than 27 blocks a drill spin-up, a rumble and debris while the queue drains, a crash for whole trees.
 
 Weapons:
 | Weapon | Age | Energy | Behaviour |
@@ -184,11 +195,19 @@ Mid-high tier, slow, powerful.
 ## Warp (module `warp`)
 
 Getting home and travelling between bases. All teleports run on the server, cost FE, and work for every player on a server.
-- Warp Pad (Age 2 parts, FE buffer 1M): a block you name in a small GUI. Pads belong to their owner; the owner can mark a pad public so friends can use it. Stand on a pad and right-click it to open the destination list. Cost: 5,000 FE + 20 FE per block of distance, taken from the departure pad. Same dimension only, until the pad gets a Rift Upgrade (Age 3 parts + Magma Core) that unlocks cross-dimension travel for a flat 100,000 FE.
+- Warp Pad (Age 1: Basic Circuit, Iron Casing, ender pearls; FE buffer 1M): a block you name in a small GUI. Pads belong to their owner; the owner can mark a pad public so friends can use it. Stand on a pad and right-click it to open the destination list. Cost: 5,000 FE + 20 FE per block of distance, taken from the departure pad. Same dimension only, until the pad gets a Rift Upgrade (Age 3 parts + Magma Core) that unlocks cross-dimension travel for a flat 100,000 FE.
 - Recall Remote (Age 1, 400k FE): sneak-right-click a Warp Pad to bind it. Hold right-click for 3 seconds (any damage cancels) to teleport to that pad. 20,000 FE, 30 s cooldown, same dimension. Smithing upgrade to Rift Remote (Age 3) works across dimensions for 150,000 FE.
 - Portal Projector (Age 4, registry id `gate_controller`): a single squat emitter block with a glowing lens, placed on the ground (it faces the player). Link two with a Linking Card (one Null Circuit) (sneak-right-click projector A, then B). While powered (200 FE/t idle) it projects a floating, swirling elliptical portal (2 wide, 3 tall, bottom edge 1 block above the projector, light level 15 while active, 6 idle). The portal is not made of blocks: it is drawn by a block entity renderer and detected by an AABB query every 2 ticks. Players, mobs and items that touch it arrive in front of the other projector, facing out (10,000 FE per entity). Works across dimensions.
 - The pad registry is a `SavedData` on the overworld, so pads keep working when their chunk is unloaded (the destination chunk is loaded on arrival).
 - Safety: never teleport into solid blocks, look for the nearest safe 2-high spot within 3 blocks, otherwise refuse with a message and refund the FE.
+
+## Onboarding (module `codex`)
+
+- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, conduits, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator, Servo Age → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
+- Custom trigger `robotica:milestone` (core `Milestones`) for wind_spring, robot_working, farm_kit, vial_complete, replicator_formed, warp, portal. Machines award their owner when online and nearby.
+- The server syncs finished guide steps to the client (`robotica:codex_guide_progress`); the Codex's first chapter "Next steps" lists the steps you can do now and a checklist.
+- When a guide step is done, chat names the next one or two steps (config `guideChatTips`).
+- Tooltips: one or two short lines; Shift shows details (keys as bound, FE per block, settings) from `HasDetails` or lang keys `tooltip.robotica.<id>.details`.
 
 ## Later (not in this build)
 
@@ -209,12 +228,13 @@ Guard Drone, Wingman, Mole, Courier, Survey Rig, Exo-Frame armor, bosses, Magma 
 
 Raw-material costs of every item are in `docs/COSTS.md` (regenerate with `python3 scripts/cost_report.py`; iron-equivalent "IE" = iron 1, copper 0.4, redstone 0.4, gold 3, diamond 10, ender pearl 8, netherite 60, nether star 80).
 
-Checked and fine: Age 0 uses no iron (Stumpy and Sprout 25 copper, Tinker's Hammer 9, Felling Axe 6). Each ladder step costs 4-9x the one before (kits 37 / 340 / 2.7k / 9.3k IE, upgrade cards 13 / 120 / 1.1k / 4.2k IE, accumulators 28 / 220 / 1.7k, solar 12 / 102, Mk farm kits 46 / 259 / 6.6k). No Age 3/4 item undercuts its Age 2 counterpart except where listed below.
+Progression pass (start quickly, scale to the late game):
+- First iron hour, all without gold or diamonds: Combustion Generator 6.4 IE (1 iron), Charger 5.4 IE (1 iron), Copper Cell 4.8 IE (2 iron, 3 redstone), Tool Upgrade Kit I 8.6 IE, Bore Drill and Chainsaw about 32 IE through smithing (11 iron, mostly copper). A Copper Cell holds 5.7 drill charges (2.3M vs 400k FE); kept in the inventory it recharges the drill in hand.
+- Winding Crank 2,000 → 6,000 FE per turn and 5 turns/s when holding right-click: a Mainspring in about 20 s instead of 72 s of clicking.
+- Excavator moved to Age 2 (diamond pickaxe drill head, 90 IE) and slowed to 1 block / 60 ticks. Speed cards cost x1.75 / x3 / x7 / x21 FE per block for 1 / 2 / 4 / 8 cards, so x20 needs about 280 FE/t (7 generators).
+- Warp Pad moved to Age 1 (41 IE): the Age 1 Recall Remote needs a pad to bind to and was a dead end.
+- Upgrade cards are one item per kind (13-24 IE at Age 1, about 80-90 IE at Age 2). The cost of going far now comes from stacking, the steep FE price of speed and the caps (robots: one speed/range/growth card per Mk tier, so x6 speed needs a Mk4 robot).
+- Area tools pay for size with speed early on: hammer and Bore Drill 50% in 3×3 (still 4.5x faster than nine single blocks), Servo 70%, Magma 85%, Null 100%.
+- Boss core temp recipes stay expensive and rise per age: Servo 505, Magma 1,039, Antigrav 2,198 IE.
 
-Changes in the balance pass:
-- Magma Core temp recipe was cheaper than the Servo Core (483 vs 505 IE). It now also takes 2 Quantum Circuits (about 1,040 IE), so every boss core costs more than the one before. Blazing and Null Casings consume that core, so Age 3-4 parts rose by roughly a third.
-- Excavator: Electric Motor replaced by a Clockwork Mechanism (39 to 26 IE, now cheaper than the Bore Drill at 40). Architect Table: same swap (43 to 30 IE). Both stay Age 1 and still need iron, but are starters.
-- Essence Vial: Advanced Circuit replaced by a Basic Circuit (54 to 12 IE). It is a consumable sample item, not a machine part.
-- Gate Frame recipe yields 8 instead of 4, Gate Controller uses 1 Null Casing instead of 2, Linking Card uses 1 Null Circuit instead of 2. A gate (14 frames plus controller) is now about 11k IE instead of about 17k, in line with 3-4x per age (Null Drill is about 16k IE).
-- Config `replicatorEnergyPerTick` 256 to 160 (4 Combustion Generators instead of 6.4, or 5 Solar Mk2, for an Age 2 machine). Config `gateIdleCost` 500 to 200 (two open gates at 400 FE/t are 10 generators, endgame level).
-- Left alone on purpose: Combustion Generator 40 FE/t (about 64k FE per coal), Metal Press 20 FE/t, Stumpy 4 FE/t, Sprout 3 FE/t, Excavator about 1 FE/t at base speed (40 FE per block per 40 ticks), Architect Table 12.5 FE/t, drills 40-80 FE per block against 400k-32M FE buffers, Null Lance 20k FE per shot against 16M FE. No Age 0-1 machine needs more than 1 generator to run. Rift Remote cost stays 150,000 FE because a game test pins it (it holds 400k FE, so 2 trips per charge).
+Earlier passes, still valid: Age 0 uses no iron (Stumpy and Sprout 25 copper, Tinker's Hammer 9, Felling Axe 6). Each ladder step costs 4-9x the one before (tool kits 8.6 / 312 / 2.7k / 9.3k IE, accumulators 28 / 220 / 1.7k, solar 12 / 102, Mk farm kits 46 / 259 / 6.6k). Magma Core temp recipe takes 2 Quantum Circuits so every core costs more than the one before. Portal Projector ~10k IE in line with the Null Drill (~16k IE). Config `replicatorEnergyPerTick` 160, `gateIdleCost` 200. Left alone on purpose: Combustion Generator 40 FE/t, Metal Press 20 FE/t, Stumpy 4 FE/t, Sprout 3 FE/t, drills 40-80 FE per block, Null Lance 20k FE per shot. Rift Remote cost stays 150,000 FE because a game test pins it.

@@ -47,10 +47,9 @@ shaped('tinkers_hammer', ['CCC', 'CGC', ' S '], {'C': COPPER, 'G': 'copper_gear'
 shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 
-# Age 1
-shaped('bore_drill', ['PIP', 'PMP', ' B '], {'P': IRON_PLATE, 'I': 'iron_casing', 'M': 'electric_motor', 'B': 'basic_circuit'})
-shaped('chainsaw', ['PPP', 'MIB', 'P  '], {'P': IRON_PLATE, 'I': 'iron_casing', 'M': 'electric_motor', 'B': 'basic_circuit'})
-shaped('tool_upgrade_kit_1', ['PCP', 'BIB', 'PCP'], {'P': IRON_PLATE, 'C': 'copper_coil', 'B': 'basic_circuit', 'I': 'iron_casing'})
+# Age 1: the Age 0 tools upgrade at a smithing table (kit I + tool + Electric Motor), like every later tier.
+# Kit I is cheap on purpose (5 iron, some copper and redstone, no gold): the first powered tools come in the first iron hour.
+shaped('tool_upgrade_kit_1', ['PRP', 'PCP'], {'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'C': 'copper_coil'})
 
 # Age 2
 shaped('rivet_gun', ['PPP', 'SAR', ' P '], {'P': IRON_PLATE, 'S': 'servo_actuator', 'A': 'advanced_circuit', 'R': 'reinforced_casing'})
@@ -61,6 +60,8 @@ shaped('tool_upgrade_kit_3', ['QPQ', 'BKB'], {'Q': 'quantum_circuit', 'P': 'plas
 shaped('tool_upgrade_kit_4', ['NPN', 'CKC'], {'N': 'null_circuit', 'P': 'plasma_actuator', 'C': 'null_casing', 'K': 'tool_upgrade_kit_3'})
 
 # Smithing upgrades keep energy, mode and toggles (vanilla copies the component patch of the base).
+smithing('bore_drill_from_tinkers_hammer', 'tool_upgrade_kit_1', 'tinkers_hammer', 'electric_motor', 'bore_drill')
+smithing('chainsaw_from_felling_axe', 'tool_upgrade_kit_1', 'felling_axe', 'electric_motor', 'chainsaw')
 smithing('servo_drill_from_bore_drill', 'tool_upgrade_kit_2', 'bore_drill', 'servo_core', 'servo_drill')
 smithing('magma_drill_from_servo_drill', 'tool_upgrade_kit_3', 'servo_drill', 'magma_core', 'magma_drill')
 smithing('null_drill_from_magma_drill', 'tool_upgrade_kit_4', 'magma_drill', 'antigrav_core', 'null_drill')

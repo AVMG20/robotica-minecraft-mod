@@ -1,0 +1,202 @@
+{
+  "steps": [
+    {
+      "id": "robotica:guide/root",
+      "parent": null,
+      "icon": "robotica:codex",
+      "age": 0
+    },
+    {
+      "id": "robotica:guide/copper_gear",
+      "parent": "robotica:guide/root",
+      "icon": "robotica:copper_gear",
+      "age": 0
+    },
+    {
+      "id": "robotica:guide/mainspring",
+      "parent": "robotica:guide/copper_gear",
+      "icon": "robotica:mainspring",
+      "age": 0
+    },
+    {
+      "id": "robotica:guide/first_robot",
+      "parent": "robotica:guide/mainspring",
+      "icon": "robotica:stumpy",
+      "age": 0
+    },
+    {
+      "id": "robotica:guide/robot_working",
+      "parent": "robotica:guide/first_robot",
+      "icon": "robotica:sprout",
+      "age": 0
+    },
+    {
+      "id": "robotica:guide/hammer",
+      "parent": "robotica:guide/copper_gear",
+      "icon": "robotica:tinkers_hammer",
+      "age": 0
+    },
+    {
+      "id": "robotica:guide/first_iron",
+      "parent": "robotica:guide/hammer",
+      "icon": "robotica:minecraft:iron_ingot",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/mining_drone",
+      "parent": "robotica:guide/first_iron",
+      "icon": "robotica:mining_drone",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/generator",
+      "parent": "robotica:guide/first_iron",
+      "icon": "robotica:combustion_generator",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/charger",
+      "parent": "robotica:guide/generator",
+      "icon": "robotica:charger",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/copper_cell",
+      "parent": "robotica:guide/charger",
+      "icon": "robotica:copper_cell",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/conduit",
+      "parent": "robotica:guide/generator",
+      "icon": "robotica:copper_conduit",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/power_tool",
+      "parent": "robotica:guide/first_iron",
+      "icon": "robotica:bore_drill",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/basic_circuit",
+      "parent": "robotica:guide/first_iron",
+      "icon": "robotica:basic_circuit",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/drones",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:sentry_drone",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/metal_press",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:metal_press",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/upgrade_card",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:upgrade_speed",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/farm_kit",
+      "parent": "robotica:guide/upgrade_card",
+      "icon": "robotica:farm_kit_mk2",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/warp",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:warp_pad",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/diamonds",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:minecraft:diamond",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/excavator",
+      "parent": "robotica:guide/diamonds",
+      "icon": "robotica:excavator",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/age2",
+      "parent": "robotica:guide/diamonds",
+      "icon": "robotica:advanced_circuit",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/servo_core",
+      "parent": "robotica:guide/age2",
+      "icon": "robotica:servo_core",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/servo_drill",
+      "parent": "robotica:guide/servo_core",
+      "icon": "robotica:servo_drill",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/vial",
+      "parent": "robotica:guide/age2",
+      "icon": "robotica:essence_vial",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/replicator",
+      "parent": "robotica:guide/servo_core",
+      "icon": "robotica:replicator_controller",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/age3",
+      "parent": "robotica:guide/servo_core",
+      "icon": "robotica:quantum_circuit",
+      "age": 3
+    },
+    {
+      "id": "robotica:guide/magma_core",
+      "parent": "robotica:guide/age3",
+      "icon": "robotica:magma_core",
+      "age": 3
+    },
+    {
+      "id": "robotica:guide/magma_drill",
+      "parent": "robotica:guide/magma_core",
+      "icon": "robotica:magma_drill",
+      "age": 3
+    },
+    {
+      "id": "robotica:guide/age4",
+      "parent": "robotica:guide/magma_core",
+      "icon": "robotica:null_circuit",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/antigrav_core",
+      "parent": "robotica:guide/age4",
+      "icon": "robotica:antigrav_core",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/null_drill",
+      "parent": "robotica:guide/antigrav_core",
+      "icon": "robotica:null_drill",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/portal",
+      "parent": "robotica:guide/antigrav_core",
+      "icon": "robotica:gate_controller",
+      "age": 4
+    }
+  ]
+}

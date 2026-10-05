@@ -60,6 +60,27 @@ public class CellItem extends Item implements EnergyItem {
         return ItemEnergy.BAR_COLOR;
     }
 
+    /**
+     * A cell in a player's inventory tops up the FE tool or weapon in their hands (anything that holds FE but gives
+     * none out), at the cell's output rate. So a Copper Cell in the backpack keeps the Bore Drill going for hours.
+     */
+    @Override
+    public void inventoryTick(ItemStack stack, net.minecraft.world.level.Level level, net.minecraft.world.entity.Entity entity, int slot, boolean selected) {
+        if (level.isClientSide || !(entity instanceof net.minecraft.world.entity.player.Player player) || level.getGameTime() % 10 != 0) return;
+        int stored = ItemEnergy.get(stack);
+        if (stored <= 0 || maxExtract <= 0) return;
+        for (ItemStack target : new ItemStack[]{player.getMainHandItem(), player.getOffhandItem()}) {
+            if (target == stack || target.getItem() instanceof net.minecraft.world.item.BlockItem
+                    || !(target.getItem() instanceof EnergyItem e) || e.getMaxExtract(target) > 0) continue;
+            int space = e.getEnergyCapacity(target) - ItemEnergy.get(target);
+            int moved = Math.min(Math.min(space, stored), maxExtract * 10);
+            if (moved <= 0) continue;
+            ItemEnergy.set(target, ItemEnergy.get(target) + moved);
+            ItemEnergy.set(stack, stored - moved);
+            stored -= moved;
+        }
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         ItemEnergy.appendTooltip(stack, tooltip);

@@ -52,6 +52,16 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> TOOL_MODE = reg("tool_mode");
     public static final DeferredHolder<SoundEvent, SoundEvent> AREA_BREAK = reg("area_break");
     public static final DeferredHolder<SoundEvent, SoundEvent> CHAINSAW_REV = reg("chainsaw_rev");
+    /** Layered on AREA_BREAK for 10-27 blocks (5x5, 3x3x3). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> AREA_CRUNCH = reg("area_crunch");
+    /** Deep rumble of a big area break (more than 27 blocks). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> AREA_RUMBLE = reg("area_rumble");
+    /** Stones clattering while a queued area break drains. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> AREA_DEBRIS = reg("area_debris");
+    /** A drill winding up before a big break. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> DRILL_SPINUP = reg("drill_spinup");
+    /** A whole tree coming down. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> TREE_FALL = reg("tree_fall");
     public static final DeferredHolder<SoundEvent, SoundEvent> SHOCK_ZAP = reg("shock_zap");
     public static final DeferredHolder<SoundEvent, SoundEvent> RIVET_SHOT = reg("rivet_shot");
     public static final DeferredHolder<SoundEvent, SoundEvent> RIVET_EMPTY = reg("rivet_empty");

@@ -8,5 +8,6 @@ public final class CoreClient {
     private CoreClient() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(DetailTooltips::onTooltip);
     }
 }

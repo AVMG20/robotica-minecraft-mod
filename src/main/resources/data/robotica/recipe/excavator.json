@@ -1,20 +1,28 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "ingredients": [
-    {
-      "item": "robotica:iron_casing"
-    },
-    {
-      "item": "robotica:clockwork_mechanism"
-    },
-    {
-      "item": "minecraft:iron_pickaxe"
-    },
-    {
-      "item": "robotica:basic_circuit"
-    }
+  "pattern": [
+    "PBP",
+    "MXM",
+    "PIP"
   ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "X": {
+      "item": "minecraft:diamond_pickaxe"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    }
+  },
   "result": {
     "id": "robotica:excavator",
     "count": 1

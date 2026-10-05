@@ -50,5 +50,10 @@
   "subtitles.robotica.teleport_quiet_arrive": "Portal hums",
   "subtitles.robotica.gate_open": "Gate opens",
   "subtitles.robotica.gate_close": "Gate closes",
-  "subtitles.robotica.gate_ambient": "Portal hums"
+  "subtitles.robotica.gate_ambient": "Portal hums",
+  "subtitles.robotica.area_crunch": "Rock crunches",
+  "subtitles.robotica.area_rumble": "Ground rumbles",
+  "subtitles.robotica.area_debris": "Debris clatters",
+  "subtitles.robotica.drill_spinup": "Drill spins up",
+  "subtitles.robotica.tree_fall": "Tree crashes down"
 }

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AGB",
+    "GCG",
+    "BGA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:slime_balls"
+    },
+    "B": {
+      "tag": "c:gems/emerald"
+    },
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "C": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_silk",
+    "count": 1
+  }
+}

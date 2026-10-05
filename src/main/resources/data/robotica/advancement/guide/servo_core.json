@@ -1,0 +1,43 @@
+{
+  "parent": "robotica:guide/age2",
+  "display": {
+    "icon": {
+      "id": "robotica:servo_core"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.servo_core.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.servo_core.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:servo_core"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:servo_drill_from_bore_drill"
+    ],
+    "experience": 30
+  }
+}

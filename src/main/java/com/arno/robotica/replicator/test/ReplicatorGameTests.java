@@ -205,17 +205,21 @@ public class ReplicatorGameTests {
         buildShell(helper, true);
         ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
         be.vial.setStackInSlot(0, Essence.completeVial(EntityType.ZOMBIE));
-        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 3).get()));
-        be.upgrades.setStackInSlot(1, new ItemStack(CoreItems.card(UpgradeKind.FORTUNE, 4).get()));
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 3));
+        be.upgrades.setStackInSlot(1, CoreItems.cards(UpgradeKind.FORTUNE, 3));
         be.boost.setStackInSlot(0, new ItemStack(CoreItems.PLASMA_ACTUATOR.get()));
         be.energy.setEnergy(be.energy.getMaxEnergyStored());
-        helper.assertTrue(be.speedMultiplier() == 20, "speed card III and boost make x20, got " + be.speedMultiplier());
-        helper.assertTrue(be.lootingLevel() == 3, "fortune card IV is looting III");
+        helper.assertTrue(be.speedMultiplier() == 8, "3 speed cards (x4) and the boost (x2) make x8, got " + be.speedMultiplier());
+        helper.assertTrue(be.lootingLevel() == 3, "3 fortune cards are looting III");
         int energyBefore = be.energy.getEnergyStored();
+        // At x20 the machine burns 7,000 FE/t, so a full 1M buffer only lasts two cycles. A zombie roll with
+        // Looting III still drops no flesh 1 time in 18, so the test used to depend on luck: it stalled with an empty
+        // buffer after two unlucky rolls. A generator keeps it running here (refills below half, so it never reads full).
+        int[] spent = keepPowered(helper, be);
 
         helper.succeedWhen(() -> {
             helper.assertTrue(be.cycles() >= 1, "a cycle should have finished");
-            helper.assertTrue(be.energy.getEnergyStored() < energyBefore, "cycles cost energy");
+            helper.assertTrue(spent[0] > 0 || be.energy.getEnergyStored() < energyBefore, "cycles cost energy");
             IItemHandler items = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(CONTROLLER), null);
             helper.assertTrue(items != null, "output capability must exist");
             int flesh = 0;
@@ -228,6 +232,22 @@ public class ReplicatorGameTests {
             ItemStack taken = items.extractItem(findSlot(items), 1, true);
             helper.assertTrue(!taken.isEmpty(), "output can be extracted");
         });
+    }
+
+    /**
+     * Acts as a generator: tops the buffer up by half whenever it drops below half, so it never reads full again.
+     * Returns a counter of the FE added.
+     */
+    private static int[] keepPowered(GameTestHelper helper, ReplicatorControllerBlockEntity be) {
+        int[] added = new int[1];
+        helper.onEachTick(() -> {
+            int half = be.energy.getMaxEnergyStored() / 2;
+            if (be.energy.getEnergyStored() < half) {
+                added[0] += half;
+                be.energy.setEnergy(be.energy.getEnergyStored() + half);
+            }
+        });
+        return added;
     }
 
     private static int findSlot(IItemHandler items) {
@@ -243,11 +263,12 @@ public class ReplicatorGameTests {
         buildShell(helper, true);
         ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
         be.vial.setStackInSlot(0, Essence.completeVial(EntityType.ZOMBIE));
-        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 3).get()));
-        be.upgrades.setStackInSlot(1, new ItemStack(CoreItems.card(UpgradeKind.FORTUNE, 4).get()));
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 3));
+        be.upgrades.setStackInSlot(1, CoreItems.cards(UpgradeKind.FORTUNE, 3));
         be.boost.setStackInSlot(0, new ItemStack(CoreItems.PLASMA_ACTUATOR.get()));
         for (int i = 0; i < be.output.getSlots(); i++) be.output.setStackInSlot(i, new ItemStack(Items.STONE, 64));
         be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        keepPowered(helper, be); // two cycles per buffer could both roll no drops (same luck as the harvest test)
 
         helper.succeedWhen(() -> {
             helper.assertTrue(be.pendingCount() > 0, "drops of a finished cycle wait in the pending list");
@@ -265,7 +286,7 @@ public class ReplicatorGameTests {
         buildShell(helper, true);
         ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
         be.vial.setStackInSlot(0, Essence.completeVial(EntityType.BLAZE));
-        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 3).get()));
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 3));
         be.boost.setStackInSlot(0, new ItemStack(CoreItems.PLASMA_ACTUATOR.get()));
         be.energy.setEnergy(be.energy.getMaxEnergyStored());
         helper.assertTrue(be.catalyst.insertItem(0, new ItemStack(Items.DIRT), true).getCount() == 1, "only cores fit the catalyst slot");
@@ -323,7 +344,7 @@ public class ReplicatorGameTests {
         ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
         be.setMode(ReplicatorControllerBlockEntity.Mode.SPAWN);
         be.vial.setStackInSlot(0, Essence.completeVial(EntityType.SPIDER));
-        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 3).get()));
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 3));
         be.boost.setStackInSlot(0, new ItemStack(CoreItems.PLASMA_ACTUATOR.get()));
         be.energy.setEnergy(be.energy.getMaxEnergyStored());
         ServerLevel level = helper.getLevel();
@@ -353,7 +374,7 @@ public class ReplicatorGameTests {
         int initial = level.getEntitiesOfClass(Mob.class, area, m -> m.getType() == EntityType.SPIDER).size();
         be.setMode(ReplicatorControllerBlockEntity.Mode.SPAWN);
         be.vial.setStackInSlot(0, Essence.completeVial(EntityType.SPIDER));
-        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 3).get()));
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 3));
         be.boost.setStackInSlot(0, new ItemStack(CoreItems.PLASMA_ACTUATOR.get()));
         be.energy.setEnergy(be.energy.getMaxEnergyStored());
 

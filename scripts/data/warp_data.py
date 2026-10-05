@@ -149,9 +149,10 @@ def main():
     for name in ('warp_pad', 'gate_controller'):
         loot(name)
 
-    # Recipes. Age 2 pad, Age 3 rift upgrade (with the Magma Core), Age 1 remote, Age 3 remote upgrade, Age 4 portal projector.
+    # Recipes. Age 1 pad and remote (the remote binds to a pad, so both arrive together), Age 3 rift upgrade (with the
+    # Magma Core) and remote upgrade, Age 4 portal projector. Ender pearls keep the pad an evening's hunt away.
     shaped('warp_pad', ['EAE', 'GRG', 'PPP'], {
-        'E': '#c:ender_pearls', 'A': 'advanced_circuit', 'G': '#c:plates/gold', 'R': 'reinforced_casing', 'P': '#c:plates/iron'})
+        'E': '#c:ender_pearls', 'A': 'basic_circuit', 'G': '#c:plates/gold', 'R': 'iron_casing', 'P': '#c:plates/iron'})
     shaped('rift_upgrade', ['BQB', 'EME', ' P '], {
         'B': 'blazing_casing', 'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'M': 'magma_core', 'P': 'plasma_actuator'})
     shaped('recall_remote', ['PEP', 'ICI', 'PBP'], {

@@ -67,7 +67,7 @@ public class CourierDroneScreen extends MachineScreen<CourierDroneMenu> {
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index < CourierDrone.FILTER_SLOTS) return new ItemStack(Items.HOPPER);
         if (slot.index == CourierDrone.FILTER_SLOTS) return icon("copper_cell");
-        return icon("upgrade_speed_1");
+        return icon("upgrade_speed");
     }
 
     @Override

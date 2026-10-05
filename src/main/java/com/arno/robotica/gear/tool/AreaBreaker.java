@@ -118,7 +118,7 @@ public final class AreaBreaker {
         // Without natural leaves this is a log building, not a tree: only the hit log breaks.
         if (!natural) return List.of();
         List<BlockPos> out = new ArrayList<>(sortedWithoutOrigin(logs, origin));
-        if (tool.toggleActive(stack, ToggleKind.LEAVES)) {
+        if (tool.spec.cutsLeaves) {
             out.addAll(sortedWithoutOrigin(leaves(level, logs), origin));
         }
         return out;

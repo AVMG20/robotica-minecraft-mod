@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AGB",
+    "GCG",
+    "BGA"
+  ],
+  "key": {
+    "A": {
+      "tag": "c:storage_blocks/lapis"
+    },
+    "B": {
+      "tag": "c:gems/diamond"
+    },
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "C": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_fortune",
+    "count": 1
+  }
+}

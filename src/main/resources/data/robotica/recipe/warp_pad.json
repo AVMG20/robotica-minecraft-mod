@@ -11,13 +11,13 @@
       "tag": "c:ender_pearls"
     },
     "A": {
-      "item": "robotica:advanced_circuit"
+      "item": "robotica:basic_circuit"
     },
     "G": {
       "tag": "c:plates/gold"
     },
     "R": {
-      "item": "robotica:reinforced_casing"
+      "item": "robotica:iron_casing"
     },
     "P": {
       "tag": "c:plates/iron"

@@ -1,0 +1,45 @@
+{
+  "parent": "robotica:guide/basic_circuit",
+  "display": {
+    "icon": {
+      "id": "robotica:minecraft:diamond"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.diamonds.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.diamonds.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:diamond"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:excavator",
+      "robotica:reinforced_casing",
+      "robotica:advanced_circuit"
+    ],
+    "experience": 20
+  }
+}

@@ -2,22 +2,18 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "PCP",
-    "BIB",
+    "PRP",
     "PCP"
   ],
   "key": {
     "P": {
       "tag": "c:plates/iron"
     },
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
     "C": {
       "item": "robotica:copper_coil"
-    },
-    "B": {
-      "item": "robotica:basic_circuit"
-    },
-    "I": {
-      "item": "robotica:iron_casing"
     }
   },
   "result": {

@@ -37,8 +37,8 @@ public final class GearActions {
         int index = tool.spec.modes.indexOf(tool.mode(stack));
         AreaMode next = tool.spec.modes.get(Math.floorMod(index + (direction >= 0 ? 1 : -1), n));
         stack.set(com.arno.robotica.gear.GearComponents.MODE.get(), next);
-        click(player, direction >= 0 ? 1.1F : 0.9F);
-        player.displayClientMessage(Component.translatable("tooltip.robotica.gear.mode", next.displayName()), true);
+        GearSounds.modeSwitch(player, next);
+        player.displayClientMessage(tool.modeStrip(next), true);
     }
 
     public static void cycleEnchant(ServerPlayer player, ItemStack stack, GearToolItem tool) {

@@ -88,6 +88,7 @@ public final class GateTransit {
         from.energy.consume(cost);
         PortalProjectorBlockEntity.setCooldown(moved, destLevel.getGameTime(), WarpConfig.gateEntityCooldown());
         Teleporter.arriveEffects(destLevel, spot, true);
+        if (moved instanceof net.minecraft.server.level.ServerPlayer sp) com.arno.robotica.core.progress.Milestones.award(sp, com.arno.robotica.core.progress.Milestones.PORTAL);
         return Result.SENT;
     }
 }

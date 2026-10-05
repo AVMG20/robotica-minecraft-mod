@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import net.minecraft.world.item.ItemStack;
 
 /** Balance-ladder parts, cells, boss cores and upgrade cards. Recipes: data/robotica/recipe. */
 public final class CoreItems {
@@ -57,25 +57,32 @@ public final class CoreItems {
     public static final DeferredItem<CellItem> ENDER_CELL = cell("ender_cell", 20_736_000, 32_000, 32_000, Rarity.RARE);
     public static final DeferredItem<PartItem> ANTIGRAV_CORE = core("antigrav_core", 4, Rarity.EPIC);
 
-    /** Upgrade cards by kind and level. Fortune has levels 2-4, silk and void only level 1. */
-    public static final Map<UpgradeKind, Map<Integer, DeferredItem<UpgradeCardItem>>> UPGRADE_CARDS = new EnumMap<>(UpgradeKind.class);
+    /** One upgrade card per kind: robotica:upgrade_<kind>. Stackable kinds stack in a machine slot (see Upgrades). */
+    public static final Map<UpgradeKind, DeferredItem<UpgradeCardItem>> CARDS = new EnumMap<>(UpgradeKind.class);
 
     static {
         for (UpgradeKind kind : UpgradeKind.values()) {
-            Map<Integer, DeferredItem<UpgradeCardItem>> byLevel = new TreeMap<>();
-            for (int level = kind.minLevel; level <= kind.maxLevel; level++) {
-                final int lvl = level;
-                Rarity rarity = level >= 4 ? Rarity.EPIC : level == 3 ? Rarity.RARE : level == 2 ? Rarity.UNCOMMON : Rarity.COMMON;
-                DeferredItem<UpgradeCardItem> card = ITEMS.registerItem(kind.itemName(level),
-                        p -> new UpgradeCardItem(p.rarity(rarity), kind, lvl));
-                byLevel.put(level, card);
-            }
-            UPGRADE_CARDS.put(kind, byLevel);
+            Rarity rarity = kind.age >= 2 ? Rarity.UNCOMMON : Rarity.COMMON;
+            CARDS.put(kind, ITEMS.registerItem(kind.itemName(), p -> new UpgradeCardItem(p.rarity(rarity), kind)));
         }
     }
 
+    public static DeferredItem<UpgradeCardItem> card(UpgradeKind kind) {
+        return CARDS.get(kind);
+    }
+
+    /** A stack of {@code count} cards of a kind, e.g. three speed cards for "speed 3". */
+    public static ItemStack cards(UpgradeKind kind, int count) {
+        return new ItemStack(CARDS.get(kind).get(), Math.max(1, count));
+    }
+
+    /**
+     * @deprecated card levels are gone: there is one card per kind and a level N card is now a stack of N cards
+     * ({@link #cards(UpgradeKind, int)}). Returns the single card of the kind.
+     */
+    @Deprecated
     public static DeferredItem<UpgradeCardItem> card(UpgradeKind kind, int level) {
-        return UPGRADE_CARDS.get(kind).get(level);
+        return CARDS.get(kind);
     }
 
     private static DeferredItem<PartItem> part(String name, int age) {
@@ -98,6 +105,6 @@ public final class CoreItems {
 
     public static void addToTab() {
         TAB_ORDER.forEach(RoboticaTab::add);
-        UPGRADE_CARDS.values().forEach(m -> m.values().forEach(RoboticaTab::add));
+        CARDS.values().forEach(RoboticaTab::add);
     }
 }

@@ -179,6 +179,7 @@ public final class WarpTravel {
         Teleporter.arriveEffects(destLevel, spot.get(), false);
         WarpCooldowns.get(server).startPad(player.getUUID(), destLevel.getGameTime(), WarpConfig.padTravelCooldown());
         message(player, Component.translatable("message.robotica.warp.arrived", dest.name(), Fmt.energy(cost)));
+        com.arno.robotica.core.progress.Milestones.award(player, com.arno.robotica.core.progress.Milestones.WARP);
         return true;
     }
 
@@ -269,6 +270,7 @@ public final class WarpTravel {
         RemoteItem.startCooldown(player);
         Teleporter.arriveEffects(destLevel, spot.get(), false);
         message(player, Component.translatable("message.robotica.warp.arrived", dest.name(), Fmt.energy(free ? 0 : cost)));
+        com.arno.robotica.core.progress.Milestones.award(player, com.arno.robotica.core.progress.Milestones.WARP);
         return true;
     }
 

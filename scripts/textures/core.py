@@ -134,12 +134,26 @@ def cell():
     return c.rows()
 
 
-def card(level, pips_char='y'):
+# 7x3 glyph per card kind, drawn in the accent colour under the window
+CARD_GLYPHS = {
+    'speed': ['y..y...', '.y..y..', 'y..y...'],
+    'range': ['.y...y.', 'yyyyyyy', '.y...y.'],
+    'efficiency': ['..yyy..', '.y.y.y.', '..yyy..'],
+    'fortune': ['...y...', '..yyy..', '...y...'],
+    'silk': ['yyyyyyy', '.......', 'yyyyyyy'],
+    'growth': ['...y...', '.yyyyy.', '...y...'],
+    'void': ['y.....y', '..y.y..', 'y.....y'],
+}
+
+
+def card(kind, pips_char='y'):
     c = Canvas()
     c.rect(2, 1, 12, 13, 'G').frame(1, 0, 14, 15, 'k').rect(13, 1, 1, 13, 'g').rect(2, 13, 12, 1, 'g')
     c.rect(4, 2, 8, 6, 'm').frame(3, 1, 10, 8, 'k').rect(5, 3, 6, 4, 'M')
-    for i in range(level):
-        c.set(4 + i * 2, 10, pips_char)
+    for dy, row in enumerate(CARD_GLYPHS[kind]):
+        for dx, ch in enumerate(row):
+            if ch == 'y':
+                c.set(4 + dx, 9 + dy, pips_char)
     for x in range(3, 13, 2):
         c.set(x, 15, 'o')
     return c.rows()
@@ -154,8 +168,6 @@ CARD_COLORS = {
     'growth': {'m': '#5C8F2A', 'M': '#B8E07A'},
     'void': {'m': '#2A1F3A', 'M': '#5A4A7A'},
 }
-CARD_LEVELS = {'speed': range(1, 5), 'range': range(1, 5), 'efficiency': range(1, 5), 'fortune': range(2, 5),
-               'silk': [1], 'growth': range(1, 5), 'void': [1]}
 
 
 def main():
@@ -184,9 +196,8 @@ def main():
     write_item('servo_core', diamond(), pal({'m': '#C87533', 'M': '#F0A866', 'n': '#7A3E18', 'Y': '#FFE7C2'}))
     write_item('magma_core', diamond(), pal({'m': '#C23A12', 'M': '#FF7A2E', 'n': '#6E1A06', 'Y': '#FFE08A'}))
     write_item('antigrav_core', diamond(), pal({'m': '#6A3FB0', 'M': '#A884F0', 'n': '#3A1F6E', 'Y': '#E9DDFF'}))
-    for kind, levels in CARD_LEVELS.items():
-        for level in levels:
-            write_item(f'upgrade_{kind}_{level}', card(level), pal(CARD_COLORS[kind]))
+    for kind in CARD_COLORS:
+        write_item(f'upgrade_{kind}', card(kind), pal(CARD_COLORS[kind]))
 
 
 if __name__ == '__main__':

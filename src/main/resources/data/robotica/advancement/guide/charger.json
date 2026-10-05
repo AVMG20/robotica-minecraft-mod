@@ -1,0 +1,45 @@
+{
+  "parent": "robotica:guide/generator",
+  "display": {
+    "icon": {
+      "id": "robotica:charger"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.charger.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.charger.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": [
+                  "robotica:charger"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 5
+  }
+}

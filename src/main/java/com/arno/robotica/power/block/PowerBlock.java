@@ -71,6 +71,33 @@ public abstract class PowerBlock extends Block implements EntityBlock {
         return state.hasProperty(FACING) ? state.rotate(mirror.getRotation(state.getValue(FACING))) : state;
     }
 
+    /**
+     * Quick insert: right-click with fuel, ingots, a chargeable item or an upgrade card puts it straight into the
+     * machine. Anything that does not fit opens the GUI as before.
+     */
+    @Override
+    protected net.minecraft.world.ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                                                  Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
+        if (stack.isEmpty() || player.isShiftKeyDown() || !(level.getBlockEntity(pos) instanceof PowerBlockEntity be)) {
+            return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        net.neoforged.neoforge.items.IItemHandler target = stack.getItem() instanceof com.arno.robotica.core.upgrade.UpgradeCardItem
+                ? be.quickUpgrades() : be.quickInsertTarget();
+        if (target == null) return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        net.minecraft.world.item.ItemStack rest = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(target, stack.copy(), true);
+        if (rest.getCount() >= stack.getCount()) return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (!level.isClientSide) {
+            net.minecraft.world.item.ItemStack moved = stack.copy();
+            rest = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(target, stack.copy(), false);
+            moved.shrink(rest.getCount());
+            if (!player.getAbilities().instabuild) player.setItemInHand(hand, rest);
+            com.arno.robotica.core.CoreSounds.play(level, pos, com.arno.robotica.core.CoreSounds.SPRING_INSERT, net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.2F);
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.robotica.machine_inserted",
+                    net.minecraft.network.chat.Component.literal(moved.getCount() + "x ").append(moved.getHoverName())), true);
+        }
+        return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;

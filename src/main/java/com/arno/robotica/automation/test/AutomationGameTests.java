@@ -176,19 +176,20 @@ public class AutomationGameTests {
         });
     }
 
-    /** Mk4 with a Speed IV card is already at the 1 tick floor: it must not pay x20 for nothing. */
+    /** Mk4 with four speed cards is already at the 1 tick floor: it must not pay for nothing. Mk1 takes one speed card. */
     @GameTest(template = "empty")
     public static void flooredSpeedDoesNotRaiseDrain(GameTestHelper helper) {
         BlockPos bot = new BlockPos(1, 1, 1);
         helper.setBlock(bot, AutomationContent.STUMPY.get().defaultBlockState().setValue(FarmBotBlock.TIER, 4));
         FarmBotBlockEntity be = helper.getBlockEntity(bot);
-        be.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 4).get()));
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 4));
         helper.assertTrue(be.actionInterval() == 1, "Mk4 interval is floored at 1, is " + be.actionInterval());
         helper.assertTrue(be.effectiveSpeedMultiplier() == 1, "floored interval gains nothing, multiplier " + be.effectiveSpeedMultiplier());
         helper.setBlock(bot, AutomationContent.STUMPY.get());
         FarmBotBlockEntity mk1 = helper.getBlockEntity(bot);
-        mk1.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 4).get()));
-        helper.assertTrue(mk1.effectiveSpeedMultiplier() == 20, "Mk1 40 -> 2 ticks is a real x20, got " + mk1.effectiveSpeedMultiplier());
+        mk1.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 4));
+        helper.assertTrue(mk1.upgrades.level(UpgradeKind.SPEED) == 1, "Mk1 counts one speed card, got " + mk1.upgrades.level(UpgradeKind.SPEED));
+        helper.assertTrue(mk1.effectiveSpeedMultiplier() == 2, "Mk1 with one card is a real x2, got " + mk1.effectiveSpeedMultiplier());
         helper.succeed();
     }
 

@@ -18,6 +18,12 @@ public final class ToolSpec {
     public final float speed;
     public final List<TagKey<Block>> tags;
     public final List<AreaMode> modes;
+    /** Mode of a new tool: the reason you crafted it (3x3 for drills and the hammer, whole tree for axes). */
+    public final AreaMode defaultMode;
+    /** Tree tools: also clear the natural leaves of a felled tree. */
+    public final boolean cutsLeaves;
+    /** Tree tools: plant a sapling from the inventory where the trunk stood. */
+    public final boolean replants;
     /** 0 = durability based (vanilla damage), otherwise FE capacity. */
     public final int energyCapacity;
     public final IntSupplier costPerBlock;
@@ -25,8 +31,11 @@ public final class ToolSpec {
     public final Set<ToggleKind> toggles;
     /** Fortune level used by the silk/fortune swap, 0 = no swap. */
     public final int fortuneLevel;
-    /** The hammer mines slower in area modes. */
-    public final boolean slowArea;
+    /**
+     * Mining speed factor in box modes (3x3 and up). Early tools pay for the area with speed: the hammer and Bore Drill
+     * dig a 3x3 at half speed, which is still four times faster than nine single blocks. Later drills lose less.
+     */
+    public final float areaSpeed;
     public final int age;
 
     private ToolSpec(Builder b) {
@@ -34,12 +43,15 @@ public final class ToolSpec {
         this.speed = b.speed;
         this.tags = List.copyOf(b.tags);
         this.modes = List.copyOf(b.modes);
+        this.defaultMode = b.defaultMode != null && b.modes.contains(b.defaultMode) ? b.defaultMode : b.modes.get(0);
+        this.cutsLeaves = b.cutsLeaves;
+        this.replants = b.replants;
         this.energyCapacity = b.energyCapacity;
         this.costPerBlock = b.cost;
         this.maxLogs = b.maxLogs;
         this.toggles = b.toggles.isEmpty() ? EnumSet.noneOf(ToggleKind.class) : EnumSet.copyOf(b.toggles);
         this.fortuneLevel = b.fortuneLevel;
-        this.slowArea = b.slowArea;
+        this.areaSpeed = b.areaSpeed;
         this.age = b.age;
     }
 
@@ -49,6 +61,11 @@ public final class ToolSpec {
 
     public boolean hasMode(AreaMode mode) {
         return modes.contains(mode);
+    }
+
+    /** True when the tool has more than plain 1x1 mining (an area, vein or tree mode). */
+    public boolean hasAreaModes() {
+        return modes.size() > 1 || modes.get(0) != AreaMode.SINGLE;
     }
 
     public boolean isAxe() {
@@ -74,12 +91,15 @@ public final class ToolSpec {
         private final float speed;
         private final List<TagKey<Block>> tags = new ArrayList<>();
         private final List<AreaMode> modes = new ArrayList<>(List.of(AreaMode.SINGLE));
+        private AreaMode defaultMode;
+        private boolean cutsLeaves;
+        private boolean replants;
         private int energyCapacity;
         private IntSupplier cost = () -> 0;
         private int maxLogs = 64;
         private final Set<ToggleKind> toggles = EnumSet.noneOf(ToggleKind.class);
         private int fortuneLevel;
-        private boolean slowArea;
+        private float areaSpeed = 1.0F;
         private int age;
 
         private Builder(Tier tier, float speed) {
@@ -96,6 +116,21 @@ public final class ToolSpec {
         public Builder modes(AreaMode... m) {
             modes.clear();
             modes.addAll(List.of(m));
+            return this;
+        }
+
+        public Builder defaultMode(AreaMode m) {
+            this.defaultMode = m;
+            return this;
+        }
+
+        public Builder cutsLeaves() {
+            this.cutsLeaves = true;
+            return this;
+        }
+
+        public Builder replants() {
+            this.replants = true;
             return this;
         }
 
@@ -120,8 +155,8 @@ public final class ToolSpec {
             return this;
         }
 
-        public Builder slowArea() {
-            this.slowArea = true;
+        public Builder areaSpeed(float factor) {
+            this.areaSpeed = factor;
             return this;
         }
 

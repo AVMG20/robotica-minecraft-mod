@@ -29,6 +29,7 @@ public final class CodexModule {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue GIVE_ON_FIRST_JOIN;
     public static final ModConfigSpec.BooleanValue LAB_ENABLED;
+    public static final ModConfigSpec.BooleanValue GUIDE_TIPS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -36,6 +37,8 @@ public final class CodexModule {
                 .define("giveCodexOnFirstJoin", true);
         LAB_ENABLED = b.comment("Allow operators (permission level 2) to use the Creative Lab page and /robotica test commands.")
                 .define("creativeLabEnabled", true);
+        GUIDE_TIPS = b.comment("When a player finishes a step of the Robotica guide (advancements), say in chat what to do next.")
+                .define("guideChatTips", true);
         SPEC = b.build();
     }
 
@@ -47,16 +50,23 @@ public final class CodexModule {
         container.registerConfig(ModConfig.Type.SERVER, SPEC, "robotica-codex-server.toml");
         modBus.addListener(CodexModule::registerPayloads);
         NeoForge.EVENT_BUS.addListener(CodexModule::onLogin);
+        NeoForge.EVENT_BUS.addListener(Guide::onLogin);
+        NeoForge.EVENT_BUS.addListener(Guide::onEarn);
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> RoboticaCommands.register(e.getDispatcher()));
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1");
         registrar.playToServer(LabActionPayload.TYPE, LabActionPayload.STREAM_CODEC, LabActionPayload::handle);
+        registrar.playToClient(GuideProgressPayload.TYPE, GuideProgressPayload.STREAM_CODEC, GuideProgressPayload::handle);
     }
 
     public static boolean labEnabled() {
         return !SPEC.isLoaded() || LAB_ENABLED.get();
+    }
+
+    public static boolean guideTips() {
+        return !SPEC.isLoaded() || GUIDE_TIPS.get();
     }
 
     public static boolean canUseLab(Player player) {

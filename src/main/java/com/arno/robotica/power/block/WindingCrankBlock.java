@@ -75,7 +75,7 @@ public class WindingCrankBlock extends PowerBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (stack.is(CoreItems.MAINSPRING.get()) && level.getBlockEntity(pos) instanceof WindingCrankBlockEntity crank) {
+        if (WindingCrankBlockEntity.isWindable(stack) && level.getBlockEntity(pos) instanceof WindingCrankBlockEntity crank) {
             if (!crank.hasSpring()) {
                 if (!level.isClientSide) {
                     ItemStack one = stack.copyWithCount(1);
@@ -124,6 +124,7 @@ public class WindingCrankBlock extends PowerBlock {
             CoreSounds.play(level, pos, CoreSounds.CRANK_WIND, SoundSource.BLOCKS, 0.8F, 0.6F + 1.0F * fraction);
             if (stored >= capacity) CoreSounds.play(level, pos, CoreSounds.CRANK_FULL, SoundSource.BLOCKS, 0.7F, 1.0F);
             level.setBlock(pos, state.setValue(ROTATION, (state.getValue(ROTATION) + 1) & 3), Block.UPDATE_CLIENTS);
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) com.arno.robotica.core.progress.Milestones.award(sp, com.arno.robotica.core.progress.Milestones.WIND_SPRING);
         } else {
             CoreSounds.play(level, pos, CoreSounds.CRANK_FULL, SoundSource.BLOCKS, 0.4F, 1.2F);
         }

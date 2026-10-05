@@ -2,16 +2,13 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "PPP",
-    "CFC",
-    "GIG"
+    "CCC",
+    "GFG",
+    "CIC"
   ],
   "key": {
-    "P": {
-      "tag": "c:plates/iron"
-    },
     "C": {
-      "item": "robotica:copper_coil"
+      "tag": "c:ingots/copper"
     },
     "F": {
       "item": "minecraft:furnace"
@@ -20,7 +17,7 @@
       "item": "robotica:copper_gear"
     },
     "I": {
-      "item": "robotica:iron_casing"
+      "tag": "c:ingots/iron"
     }
   },
   "result": {

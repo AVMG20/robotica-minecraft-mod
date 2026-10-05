@@ -1,0 +1,48 @@
+{
+  "parent": "robotica:guide/root",
+  "display": {
+    "icon": {
+      "id": "robotica:copper_gear"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.copper_gear.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.copper_gear.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:copper_gear"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:clockwork_mechanism",
+      "robotica:wooden_chassis",
+      "robotica:mainspring",
+      "robotica:winding_crank",
+      "robotica:stumpy",
+      "robotica:sprout"
+    ],
+    "experience": 5
+  }
+}

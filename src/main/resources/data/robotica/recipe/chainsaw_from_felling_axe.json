@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:tool_upgrade_kit_1"
+  },
+  "base": {
+    "item": "robotica:felling_axe"
+  },
+  "addition": {
+    "item": "robotica:electric_motor"
+  },
+  "result": {
+    "id": "robotica:chainsaw",
+    "count": 1
+  }
+}

@@ -34,7 +34,8 @@ shaped('copper_coil', ['CCC', 'CIC', 'CCC'], {'C': COPPER, 'I': IRON})
 shaped('iron_casing', ['III', 'IRI', 'III'], {'I': IRON, 'R': REDSTONE})
 shaped('basic_circuit', ['RRR', 'CGC', 'PPP'], {'R': REDSTONE, 'C': COPPER, 'G': GOLD, 'P': IRON_PLATE})
 shaped('electric_motor', ['PRP', 'CMC', 'PRP'], {'P': IRON_PLATE, 'R': REDSTONE, 'C': 'copper_coil', 'M': 'clockwork_mechanism'})
-shaped('copper_cell', ['CPC', 'RBR', 'CPC'], {'C': COPPER, 'P': IRON_PLATE, 'R': REDSTONE, 'B': 'basic_circuit'}, category='equipment')
+# First rechargeable battery: first-iron hour, no gold. Redstone is what makes it a cell.
+shaped('copper_cell', ['CRC', 'PRP', 'CRC'], {'C': COPPER, 'P': IRON_PLATE, 'R': REDSTONE}, category='equipment')
 # Age 2
 shaped('reinforced_casing', ['OCO', 'CDC', 'OCO'], {'O': '#c:obsidians', 'C': 'iron_casing', 'D': DIAMOND})
 shaped('advanced_circuit', ['BGB', 'QDQ', 'BGB'], {'B': 'basic_circuit', 'G': GOLD, 'Q': '#c:gems/quartz', 'D': DIAMOND})
@@ -53,39 +54,25 @@ shaped('null_circuit', ['QEQ', 'ENE', 'QEQ'], {'Q': 'quantum_circuit', 'E': '#c:
 shaped('ender_cell', ['ERE', 'NCN', 'ERE'], {'E': '#c:ender_pearls', 'R': 'redstone_cell', 'N': 'null_casing', 'C': 'null_circuit'}, category='equipment')
 shaped('temp_antigrav_core', ['PCP', 'CNC', 'PCP'], {'P': 'plasma_actuator', 'C': 'minecraft:end_crystal', 'N': '#c:nether_stars'}, result='antigrav_core')
 
-# Upgrade cards. Corners: A top-left/bottom-right, B top-right/bottom-left.
-# Level N consumes level N-1, so a level 4 card carries every tier's cost.
-CATALYSTS = {
-    'speed': {1: ('minecraft:sugar', REDSTONE)},
-    'range': {1: ('#c:gems/lapis', '#c:gems/lapis'), 2: ('#c:ender_pearls', '#c:gems/lapis')},
-    'efficiency': {1: (GOLD, GOLD)},
-    'fortune': {2: ('#c:storage_blocks/lapis', DIAMOND)},
-    'silk': {1: ('#c:slime_balls', '#c:gems/emerald')},
-    'growth': {1: ('minecraft:bone_block', 'minecraft:bone_block')},
-    'void': {1: ('minecraft:cactus', '#c:obsidians')},
+# Upgrade cards: one card per kind, stackable kinds stack in a machine slot (every card adds a step, see Upgrades.java).
+# Age 1 cards: two catalysts in the corners, iron plates and a Basic Circuit. Age 2 cards: gold plates and an Advanced Circuit.
+# The price of going fast is paid in FE (speed costs grow with the square, very steeply on the Excavator) and in the
+# slot caps (robots take as many speed/range/growth cards as their Mk tier).
+CARDS = {
+    'speed': (1, 'minecraft:sugar', REDSTONE),
+    'efficiency': (1, GOLD, GOLD),
+    'growth': (1, 'minecraft:bone_block', 'minecraft:bone_block'),
+    'void': (1, 'minecraft:cactus', '#c:obsidians'),
+    'range': (2, '#c:ender_pearls', '#c:gems/lapis'),
+    'fortune': (2, '#c:storage_blocks/lapis', DIAMOND),
+    'silk': (2, '#c:slime_balls', '#c:gems/emerald'),
 }
-LEVELS = {'speed': (1, 4), 'range': (1, 4), 'efficiency': (1, 4), 'fortune': (2, 4), 'silk': (1, 1), 'growth': (1, 4), 'void': (1, 1)}
-TIER_OVERRIDE = {('silk', 1): 2}  # silk is an Age 2 card even though it has one level
-
-
-def catalyst(kind, level):
-    table = CATALYSTS[kind]
-    eligible = [k for k in table if k <= level]
-    return table[max(eligible)] if eligible else table[min(table)]
-
-
-for kind, (lo, hi) in LEVELS.items():
-    for level in range(lo, hi + 1):
-        tier = TIER_OVERRIDE.get((kind, level), level)
-        a, b = catalyst(kind, level)
-        prev = f'upgrade_{kind}_{level - 1}' if level > lo else None
-        name = f'upgrade_{kind}_{level}'
-        if tier == 1:
-            shaped(name, ['APB', 'PCP', 'BPA'], {'A': a, 'B': b, 'P': IRON_PLATE, 'C': prev or 'basic_circuit'})
-        elif tier == 2:
-            shaped(name, ['AXB', 'GCG', 'BRA'], {'A': a, 'B': b, 'X': 'advanced_circuit', 'G': GOLD_PLATE, 'C': prev or DIAMOND, 'R': 'reinforced_casing'})
-        elif tier == 3:
-            shaped(name, ['AXB', 'GCG', 'BRA'], {'A': a, 'B': b, 'X': 'quantum_circuit', 'G': '#c:rods/blaze', 'C': prev, 'R': 'blazing_casing'})
-        else:
-            shaped(name, ['AXB', 'GCG', 'BRA'], {'A': a, 'B': b, 'X': 'null_circuit', 'G': 'minecraft:shulker_shell', 'C': prev, 'R': 'null_casing'})
+for f in OUT.glob('upgrade_*.json'):
+    f.unlink()
+for kind, (age, a, b) in CARDS.items():
+    name = f'upgrade_{kind}'
+    if age == 1:
+        shaped(name, ['APB', 'PCP', 'BPA'], {'A': a, 'B': b, 'P': IRON_PLATE, 'C': 'basic_circuit'})
+    else:
+        shaped(name, ['AGB', 'GCG', 'BGA'], {'A': a, 'B': b, 'G': GOLD_PLATE, 'C': 'advanced_circuit'})
 print('core recipes written to', OUT)

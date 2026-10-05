@@ -210,7 +210,9 @@ def main():
     # Recipes (component ladder: Age 0 bots, Age 1 excavator and Mk2 kit, Age 2 Mk3 kit, Age 4 Mk4 kit)
     shapeless('stumpy', ['wooden_chassis', 'clockwork_mechanism', 'minecraft:stone_axe'])
     shapeless('sprout', ['wooden_chassis', 'clockwork_mechanism', 'minecraft:stone_hoe'])
-    shapeless('excavator', ['iron_casing', 'clockwork_mechanism', 'minecraft:iron_pickaxe', 'basic_circuit'])
+    # The real quarry waits for the first diamonds: a diamond pickaxe is its drill head.
+    shaped('excavator', ['PBP', 'MXM', 'PIP'], {'P': '#c:plates/iron', 'B': 'basic_circuit', 'M': 'electric_motor',
+                                             'X': 'minecraft:diamond_pickaxe', 'I': 'iron_casing'})
     shaped('supply_crate', ['PPP', 'C C', 'PPP'], {'P': '#minecraft:planks', 'C': '#c:ingots/copper'})
     shaped('farm_kit_mk2', ['BMB', 'PIP'], {'B': 'basic_circuit', 'M': 'electric_motor', 'P': '#c:plates/iron', 'I': 'iron_casing'})
     shaped('farm_kit_mk3', ['ASA', 'GRG'], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'G': '#c:plates/gold', 'R': 'reinforced_casing'})
