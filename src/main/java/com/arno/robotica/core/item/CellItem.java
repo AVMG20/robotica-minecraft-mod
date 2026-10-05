@@ -70,7 +70,8 @@ public class CellItem extends Item implements EnergyItem {
         int stored = ItemEnergy.get(stack);
         if (stored <= 0 || maxExtract <= 0) return;
         for (ItemStack target : new ItemStack[]{player.getMainHandItem(), player.getOffhandItem()}) {
-            if (target == stack || !(target.getItem() instanceof EnergyItem e) || e.getMaxExtract(target) > 0) continue;
+            if (target == stack || target.getItem() instanceof net.minecraft.world.item.BlockItem
+                    || !(target.getItem() instanceof EnergyItem e) || e.getMaxExtract(target) > 0) continue;
             int space = e.getEnergyCapacity(target) - ItemEnergy.get(target);
             int moved = Math.min(Math.min(space, stored), maxExtract * 10);
             if (moved <= 0) continue;
