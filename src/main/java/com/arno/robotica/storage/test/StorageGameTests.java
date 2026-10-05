@@ -12,7 +12,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -213,6 +215,63 @@ public class StorageGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(be.energy.getEnergyStored() > 0 || be.isPowered(), "the cell fed the terminal");
             helper.assertTrue(be.isPowered(), "powered through the battery slot");
+        });
+    }
+
+    /**
+     * Two players on one terminal: both see the same picture, but only the real items can be taken. A stale view slot or
+     * a stale crafting result in the second menu gives nothing; number keys and Q never make items either.
+     */
+    @GameTest(template = "empty")
+    public static void twoViewersCannotDuplicate(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        ServerPlayer pa = helper.makeMockServerPlayerInLevel();
+        ServerPlayer pb = helper.makeMockServerPlayerInLevel();
+        be.items.setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 64));
+        StorageMenu a = new StorageMenu(1, pa.getInventory(), be);
+        StorageMenu b = new StorageMenu(1, pb.getInventory(), be);
+        a.broadcastChanges();
+        b.broadcastChanges();
+        helper.assertTrue(b.viewStack(0).getCount() == 64, "B sees 64");
+
+        a.clicked(StorageMenu.VIEW_START, 0, ClickType.PICKUP, pa);
+        helper.assertTrue(a.getCarried().getCount() == 64, "A carries 64");
+        int itemsAround = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(pb.blockPosition()).inflate(4)).size();
+        b.clicked(StorageMenu.VIEW_START, 0, ClickType.PICKUP, pb);
+        b.clicked(StorageMenu.VIEW_START, 0, ClickType.SWAP, pb);
+        b.clicked(StorageMenu.VIEW_START, 1, ClickType.THROW, pb);
+        b.clicked(StorageMenu.VIEW_START, 0, ClickType.QUICK_MOVE, pb);
+        helper.assertTrue(b.getCarried().isEmpty() && total(pb, Items.COBBLESTONE) == 0, "B's stale picture gives nothing");
+        helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(pb.blockPosition()).inflate(4)).size() == itemsAround,
+                "nothing was thrown");
+        helper.assertTrue(total(be, Items.COBBLESTONE) == 0, "the terminal is empty");
+
+        // shared crafting grid: A takes the log back out, B's result is stale and must not craft from air
+        a.getSlot(StorageMenu.GRID_START).set(new ItemStack(Items.OAK_LOG));
+        a.broadcastChanges();
+        b.broadcastChanges();
+        helper.assertTrue(b.getSlot(StorageMenu.RESULT).getItem().is(Items.OAK_PLANKS), "B sees planks");
+        a.clicked(StorageMenu.GRID_START, 0, ClickType.QUICK_MOVE, pa);
+        helper.assertTrue(be.craft.get(0).isEmpty() && total(be, Items.OAK_LOG) == 1, "the log went into the terminal");
+        b.clicked(StorageMenu.RESULT, 0, ClickType.QUICK_MOVE, pb);
+        b.clicked(StorageMenu.RESULT, 0, ClickType.PICKUP, pb);
+        helper.assertTrue(total(be, Items.OAK_PLANKS) == 0 && total(pb, Items.OAK_PLANKS) == 0 && b.getCarried().isEmpty(),
+                "no planks from an empty grid");
+        helper.succeed();
+    }
+
+    /** Hoppers and pipes change the stock without a click: the picture follows within a few ticks, not every tick. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void viewFollowsExternalChanges(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        StorageMenu menu = new StorageMenu(1, player.getInventory(), be);
+        menu.broadcastChanges();
+        helper.assertTrue(menu.viewStack(0).isEmpty(), "empty at first");
+        be.access().insertItem(0, new ItemStack(Items.DIAMOND, 3), false);
+        helper.succeedWhen(() -> {
+            menu.broadcastChanges();
+            helper.assertTrue(menu.viewStack(0).is(Items.DIAMOND) && menu.viewStack(0).getCount() == 3, "the view shows the hopper's diamonds");
         });
     }
 }
