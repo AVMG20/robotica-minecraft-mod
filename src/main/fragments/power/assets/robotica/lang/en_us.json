@@ -62,5 +62,12 @@
   "tooltip.robotica.copper_conduit.details": "Lay a line from a generator to your machines. Conduits connect by themselves.",
   "tooltip.robotica.gold_conduit.details": "Lay a line from a generator to your machines. Conduits connect by themselves.",
   "tooltip.robotica.accumulator_1.details": "Stores FE for the night. Put it between generators and machines.",
-  "message.robotica.machine_inserted": "Put in: %s"
+  "message.robotica.machine_inserted": "Put in: %s",
+  "gui.robotica.solar_sun": "In the sun",
+  "gui.robotica.solar_dark": "No sun",
+  "gui.robotica.storage_charging": "Charging",
+  "gui.robotica.storage_draining": "Draining",
+  "gui.robotica.storage_full": "Full",
+  "gui.robotica.energy_rate_tip": "Energy per tick, averaged over the last second",
+  "gui.robotica.energy_io_tip": "Max transfer: %s FE/t"
 }

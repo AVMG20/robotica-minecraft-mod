@@ -11,7 +11,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Generates while it is day and the sky is visible (checked once per second). Pushes into every neighbour. */
-public class SolarPanelBlockEntity extends PowerBlockEntity {
+public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source {
+    private static final int KIND = com.arno.robotica.power.menu.EnergyInfoMenu.KIND_SOLAR;
     public final MachineEnergyStorage energy;
     private final SolarPanelBlock.Tier tier;
     private final int pushRate;
@@ -31,6 +32,41 @@ public class SolarPanelBlockEntity extends PowerBlockEntity {
 
     public boolean isGenerating() {
         return sunny;
+    }
+
+    @Override
+    public int stored() {
+        return energy.getEnergyStored();
+    }
+
+    @Override
+    public int capacity() {
+        return energy.getMaxEnergyStored();
+    }
+
+    @Override
+    public int rate() {
+        return sunny ? CoreConfig.scaleGeneration(tier.output()) : 0;
+    }
+
+    @Override
+    public int maxIo() {
+        return pushRate;
+    }
+
+    @Override
+    public int flag() {
+        return sunny ? 1 : 0;
+    }
+
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName() {
+        return getBlockState().getBlock().getName();
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv, net.minecraft.world.entity.player.Player player) {
+        return new com.arno.robotica.power.menu.EnergyInfoMenu(id, inv, getBlockPos(), KIND, this);
     }
 
     @Override

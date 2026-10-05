@@ -16,7 +16,9 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
 /** FE buffer. The energy travels with the item through the core ENERGY data component. */
-public class AccumulatorBlockEntity extends PowerBlockEntity {
+public class AccumulatorBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source {
+    private static final int KIND = com.arno.robotica.power.menu.EnergyInfoMenu.KIND_STORAGE;
+    private int lastStored = -1, netRate;
     public final MachineEnergyStorage energy;
     private final IEnergyStorage inputView;
     private final IEnergyStorage outputView;
@@ -45,7 +47,47 @@ public class AccumulatorBlockEntity extends PowerBlockEntity {
     }
 
     @Override
+    public int stored() {
+        return energy.getEnergyStored();
+    }
+
+    @Override
+    public int capacity() {
+        return energy.getMaxEnergyStored();
+    }
+
+    @Override
+    public int rate() {
+        return netRate;
+    }
+
+    @Override
+    public int maxIo() {
+        return io;
+    }
+
+    @Override
+    public int flag() {
+        return 0;
+    }
+
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName() {
+        return getBlockState().getBlock().getName();
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv, net.minecraft.world.entity.player.Player player) {
+        return new com.arno.robotica.power.menu.EnergyInfoMenu(id, inv, getBlockPos(), KIND, this);
+    }
+
+    @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
+        if (level.getGameTime() % 20 == 0) {
+            int now = energy.getEnergyStored();
+            netRate = lastStored < 0 ? 0 : (now - lastStored) / 20;
+            lastStored = now;
+        }
         if (energy.getEnergyStored() > 0) {
             Direction front = state.getValue(PowerBlock.FACING);
             IEnergyStorage target = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos.relative(front), front.getOpposite());
