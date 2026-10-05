@@ -19,6 +19,11 @@ public final class PowerClient {
 
     public static void init(IEventBus modBus, ModContainer container) {
         modBus.addListener(PowerClient::registerScreens);
+        com.arno.robotica.power.tesla.TeslaCoilBlock.configuringHook = () -> {
+            var player = net.minecraft.client.Minecraft.getInstance().player;
+            return player != null && (player.getMainHandItem().is(com.arno.robotica.power.PowerRegistry.TESLA_LINKER.get())
+                    || player.getOffhandItem().is(com.arno.robotica.power.PowerRegistry.TESLA_LINKER.get()));
+        };
         modBus.addListener(PowerClient::registerRecipeCategories);
         modBus.addListener(PowerClient::registerRenderers);
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC, "robotica-power-client.toml");

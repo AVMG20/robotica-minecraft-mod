@@ -248,11 +248,11 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
                 setChangedAndSync();
             }
         }
+        // A soft hum only for players standing right next to the coil, and rarely. No zaps from idle networks.
         if (active && now >= nextHum) {
-            nextHum = now + 80 + level.random.nextInt(80);
-            CoreSounds.play(level, pos, CoreSounds.CHARGER_HUM, SoundSource.BLOCKS, 0.15F, 1.4F + level.random.nextFloat() * 0.2F);
-            if (level.random.nextInt(3) == 0) {
-                CoreSounds.play(level, pos, CoreSounds.SHOCK_ZAP, SoundSource.BLOCKS, 0.12F, 1.6F + level.random.nextFloat() * 0.3F);
+            nextHum = now + 240 + level.random.nextInt(240);
+            if (level.getNearestPlayer(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 5.0, false) != null) {
+                CoreSounds.play(level, pos, CoreSounds.CHARGER_HUM, SoundSource.BLOCKS, 0.05F, 1.5F + level.random.nextFloat() * 0.2F);
             }
         }
     }

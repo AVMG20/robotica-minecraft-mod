@@ -132,7 +132,7 @@
         },
         {
           "title": "Tesla Coils",
-          "text": "Tesla Coils send FE through the air. Put one on an Accumulator or a generator: it sends that block's FE.\n\nSneak-right-click the coil with a Tesla Linker, then right-click machines. The side you click is where the power goes in. Click it again to unlink.\n\nLink a coil to another coil to reach further. Each hop loses 5%. Every link uses one slot.\n\nTier I to V: 4, 8, 12, 16 and 32 links, 8 to 32 blocks range. Right-click a coil to see its links.",
+          "text": "Tesla Coils send FE through the air. Put one on an Accumulator or a generator: it sends that block's FE.\n\nSneak-right-click the coil with a Tesla Linker, then right-click machines. The side you click is where the power goes in. Click it again to unlink.\n\nLink a coil to another coil to reach further. Each hop loses 5%. Every link uses one slot.\n\nTier I to V: 4, 8, 12, 16 and 32 links, 8 to 32 blocks range. Right-click a coil to see its links.\n\nHold the Tesla Linker to see every link light up. Without it, finished networks stay quiet.",
           "items": [
             "robotica:tesla_linker",
             "robotica:tesla_coil_1",

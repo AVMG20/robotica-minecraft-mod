@@ -26,6 +26,9 @@ import java.util.List;
  * the client config {@code teslaArcs} turns them off.
  */
 public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEntity> {
+    /** Without a Tesla Linker in hand, arcs only show this close, very faint. */
+    private static final double FAINT_RANGE = 12.0;
+
     public TeslaCoilRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
@@ -38,6 +41,12 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         BlockPos origin = be.getBlockPos();
         Vec3 from = TeslaCoilBlock.tipOffset(state.getValue(TeslaCoilBlock.FACING));
         boolean active = be.isActive();
+        // Full arcs only while the player holds a Tesla Linker; otherwise one barely visible thread, and only up close.
+        boolean configuring = TeslaCoilBlock.isConfiguring();
+        if (!configuring) {
+            var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+            if (cam.distanceToSqr(origin.getX() + 0.5, origin.getY() + 0.5, origin.getZ() + 0.5) > FAINT_RANGE * FAINT_RANGE) return;
+        }
         long time = level.getGameTime();
         VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
         Matrix4f m = pose.last().pose();
@@ -45,7 +54,10 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
             TeslaLink link = links.get(i);
             Vec3 to = TeslaCoilBlockEntity.endPoint(level, link).subtract(origin.getX(), origin.getY(), origin.getZ());
             long seed = origin.asLong() * 31 + link.pos().asLong() * 17;
-            if (active) {
+            if (!configuring) {
+                long step = time / 6;
+                arc(vc, m, from, to, seed + step * 7919, 0.012F, 0.08F, 140, 190, 255, active ? 34 : 18);
+            } else if (active) {
                 long step = time / 2;
                 arc(vc, m, from, to, seed + step * 7919, 0.035F, 0.25F, 210, 240, 255, 230);
                 arc(vc, m, from, to, seed + step * 7919, 0.09F, 0.25F, 80, 150, 255, 70);

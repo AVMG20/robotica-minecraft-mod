@@ -155,10 +155,20 @@ public class TeslaCoilBlock extends PowerBlock {
         }
     }
 
+    /**
+     * Set by the client to "does the local player hold a Tesla Linker". Full arcs and sparks only show while configuring,
+     * so a finished network stays quiet. Always false on a dedicated server.
+     */
+    public static java.util.function.BooleanSupplier configuringHook = () -> false;
+
+    public static boolean isConfiguring() {
+        return configuringHook.getAsBoolean();
+    }
+
     /** Client only (called by the level renderer): sparks at the tip, and at a target while energy flows. */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (!PowerClientConfig.teslaParticles() || !(level.getBlockEntity(pos) instanceof TeslaCoilBlockEntity be)) return;
+        if (!PowerClientConfig.teslaParticles() || !isConfiguring() || !(level.getBlockEntity(pos) instanceof TeslaCoilBlockEntity be)) return;
         List<TeslaLink> links = be.links();
         if (links.isEmpty()) return;
         boolean active = be.isActive();
