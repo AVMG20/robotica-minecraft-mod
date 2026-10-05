@@ -5,6 +5,7 @@ import com.arno.robotica.automation.AutomationModule;
 import com.arno.robotica.codex.CodexModule;
 import com.arno.robotica.core.RoboticaCore;
 import com.arno.robotica.drones.DronesModule;
+import com.arno.robotica.exo.ExoModule;
 import com.arno.robotica.gear.GearModule;
 import com.arno.robotica.power.PowerModule;
 import com.arno.robotica.replicator.ReplicatorModule;
@@ -36,6 +37,7 @@ public class Robotica {
         ReplicatorModule.init(modBus, container);
         WarpModule.init(modBus, container);
         DronesModule.init(modBus, container);
+        ExoModule.init(modBus, container);
     }
 
     public static ResourceLocation id(String path) {
