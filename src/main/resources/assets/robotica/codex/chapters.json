@@ -315,6 +315,43 @@
       ]
     },
     {
+      "title": "Exo-Frame",
+      "icon": "robotica:exo_chestplate_mk1",
+      "pages": [
+        {
+          "title": "The suit",
+          "text": "Four pieces of powered armor. It protects like iron, never breaks and runs on FE.\n\nCharge each piece in the Charger, or carry a cell: it tops the suit up. Wear all four and they share their batteries. An empty suit still protects; only the modules stop.",
+          "items": [
+            "robotica:exo_helmet_mk1",
+            "robotica:exo_chestplate_mk1",
+            "robotica:exo_leggings_mk1",
+            "robotica:exo_boots_mk1"
+          ]
+        },
+        {
+          "title": "Modules",
+          "text": "Sneak-right-click a piece to add modules. Press J while wearing it to switch them on or off.\n\nHelmet: night vision, rebreather, robot HUD.\nChest: jet assist (double jump), kinetic shield, flight (K to toggle).\nLegs: servo stride (faster running), step assist.\nBoots: spring heels, fall dampener, magnet.\n\nModules only use energy while they work. Flight is the hungriest.",
+          "items": [
+            "robotica:night_vision_module",
+            "robotica:jet_assist_module",
+            "robotica:flight_module",
+            "robotica:servo_stride_module_1",
+            "robotica:magnet_module",
+            "robotica:fall_dampener_module"
+          ]
+        },
+        {
+          "title": "Upgrading",
+          "text": "At a smithing table, a Reinforced Casing as template, the Mk1 piece and a Servo Actuator make the Mk2 piece: diamond protection, two module slots and a bigger battery. It keeps its energy and modules.\n\nServo Stride II and III are built from the level below. Flight needs a Jet Assist module and an Antigrav Core.",
+          "items": [
+            "robotica:exo_chestplate_mk2",
+            "robotica:servo_stride_module_2",
+            "robotica:servo_stride_module_3"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Base builder",
       "icon": "robotica:architect_table",
       "pages": [

@@ -1,0 +1,40 @@
+{
+  "parent": "robotica:guide/antigrav_core",
+  "display": {
+    "icon": {
+      "id": "robotica:flight_module"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.flight.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.flight.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:flight_module"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 50
+  }
+}

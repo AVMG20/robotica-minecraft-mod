@@ -39,6 +39,8 @@
   "advancements.robotica.guide.power_tool.description": "Smithing table: Tool Upgrade Kit I + your hammer + an Electric Motor make a Bore Drill. The felling axe becomes a Chainsaw.",
   "advancements.robotica.guide.basic_circuit.title": "Wired",
   "advancements.robotica.guide.basic_circuit.description": "Craft a Basic Circuit (it needs gold). Solar, upgrade cards, farm kits and warp pads open up.",
+  "advancements.robotica.guide.exo.title": "Suit Up",
+  "advancements.robotica.guide.exo.description": "Craft an Exo-Frame piece. Sneak-right-click it to add a module, press J to switch modules.",
   "advancements.robotica.guide.drones.title": "Air Support",
   "advancements.robotica.guide.drones.description": "Craft a Sentry Drone to guard your base, or a Courier Drone to carry items between chests.",
   "advancements.robotica.guide.metal_press.title": "Press Ahead",
@@ -77,6 +79,8 @@
   "advancements.robotica.guide.antigrav_core.description": "Get an Antigrav Core: the Null Drill, the Null Lance and Portal Projectors.",
   "advancements.robotica.guide.null_drill.title": "Big Holes",
   "advancements.robotica.guide.null_drill.description": "Smith a Null Drill and dig a 12x12x12 cube in one swing.",
+  "advancements.robotica.guide.flight.title": "Lift Off",
+  "advancements.robotica.guide.flight.description": "Put a Flight Module in an Exo chestplate and press K to fly.",
   "advancements.robotica.guide.portal.title": "Through the Lens",
   "advancements.robotica.guide.portal.description": "Link two Portal Projectors with a Linking Card and step through the portal."
 }

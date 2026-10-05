@@ -43,7 +43,7 @@ public final class LabActions {
                     Map.entry("copper_conduit", 32), Map.entry("charger", 1), Map.entry("metal_press", 1),
                     Map.entry("excavator", 1), Map.entry("farm_kit_mk2", 2), Map.entry("bore_drill", 1), Map.entry("chainsaw", 1),
                     Map.entry("shock_baton", 1), Map.entry("recall_remote", 1), Map.entry("warp_pad", 2),
-                    Map.entry("mining_drone", 1), Map.entry("sentry_drone", 1), Map.entry("courier_drone", 1), Map.entry("courier_remote", 1),
+                    Map.entry("mining_drone", 1), Map.entry("sentry_drone", 1), Map.entry("courier_drone", 1), Map.entry("courier_remote", 1), Map.entry("exo_helmet_mk1", 1), Map.entry("exo_chestplate_mk1", 1), Map.entry("exo_leggings_mk1", 1), Map.entry("exo_boots_mk1", 1), Map.entry("servo_stride_module_1", 1), Map.entry("magnet_module", 1),
                     Map.entry("upgrade_speed", 4), Map.entry("upgrade_efficiency", 4), Map.entry("upgrade_growth", 4), Map.entry("upgrade_void", 1)),
             Map.ofEntries(Map.entry("reinforced_casing", 8), Map.entry("advanced_circuit", 8), Map.entry("servo_actuator", 4),
                     Map.entry("redstone_cell", 2), Map.entry("solar_panel_mk2", 2), Map.entry("accumulator_2", 1), Map.entry("gold_conduit", 32), Map.entry("tool_upgrade_kit_2", 1), Map.entry("servo_core", 2), Map.entry("servo_drill", 1), Map.entry("rivet_gun", 1),
@@ -54,7 +54,7 @@ public final class LabActions {
                     Map.entry("magma_core", 2), Map.entry("rift_upgrade", 1), Map.entry("rift_remote", 1), Map.entry("accumulator_3", 1), Map.entry("tool_upgrade_kit_3", 1), Map.entry("magma_drill", 1), Map.entry("arc_blade", 1),
                     Map.entry("upgrade_speed", 8)),
             Map.ofEntries(Map.entry("null_casing", 8), Map.entry("null_circuit", 4), Map.entry("ender_cell", 2),
-                    Map.entry("antigrav_core", 2), Map.entry("tool_upgrade_kit_4", 1), Map.entry("null_drill", 1), Map.entry("null_lance", 1), Map.entry("farm_kit_mk4", 2),
+                    Map.entry("antigrav_core", 2), Map.entry("tool_upgrade_kit_4", 1), Map.entry("flight_module", 1), Map.entry("null_drill", 1), Map.entry("null_lance", 1), Map.entry("farm_kit_mk4", 2),
                     Map.entry("gate_controller", 2), Map.entry("linking_card", 1)));
 
     public static void run(ServerPlayer player, String action, String arg, int count) {

@@ -44,7 +44,9 @@
       "robotica:accumulator_3",
       "robotica:tool_upgrade_kit_3",
       "robotica:rift_upgrade",
-      "robotica:rift_remote"
+      "robotica:rift_remote",
+      "robotica:servo_stride_module_3",
+      "robotica:kinetic_shield_module"
     ],
     "experience": 50
   }

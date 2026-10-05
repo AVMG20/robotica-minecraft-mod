@@ -32,6 +32,16 @@ Last updated 2026-10-05. `./gradlew runGameTestServer` passes 76/76 (the replica
    - table add-ons: Drone Bay (+1 drone), Foundation (fill under floors), Supply Link (pull from nearby inventories/RS), Range Extender;
    - simple visual GUI with little text.
 
+## Planned: Tesla Coil wireless power (player request, not built yet)
+
+Inspired by Draconic Evolution's wireless power. Replaces Robotica's conduits.
+- Tesla Coil: torch-sized block, placeable on floors, walls and ceilings. Emits FE wirelessly at a high rate, but only to a limited number of links.
+- A network starts at a coil placed on a Robotica power storage block (Accumulator). From there a coil links to machines or to other coils.
+- Coil-to-coil links extend range (chaining) at 5% power loss per hop, and each coil-to-coil link uses one of the coil's link slots.
+- Tiers by link count: 4, 8, 12, 16, 32 links, each tier more expensive.
+- Linking tool: click a coil, then a machine. The face you click is the side power enters (some mods' machines only accept power on specific sides).
+- Remove Copper/Gold Conduits once this exists.
+
 ## Next (after the above)
 
 - v0.2 Defense: Guard Drone + Perimeter Post, Wingman, Mole, Command Tablet.

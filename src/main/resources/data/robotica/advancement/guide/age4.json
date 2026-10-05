@@ -43,7 +43,8 @@
       "robotica:tool_upgrade_kit_4",
       "robotica:farm_kit_mk4",
       "robotica:gate_controller",
-      "robotica:linking_card"
+      "robotica:linking_card",
+      "robotica:flight_module"
     ],
     "experience": 80
   }
