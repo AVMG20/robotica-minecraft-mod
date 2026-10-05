@@ -5,6 +5,7 @@ import com.arno.robotica.architect.client.ArchitectClient;
 import com.arno.robotica.automation.client.AutomationClient;
 import com.arno.robotica.codex.client.CodexClient;
 import com.arno.robotica.core.client.CoreClient;
+import com.arno.robotica.drones.client.DronesClient;
 import com.arno.robotica.gear.client.GearClient;
 import com.arno.robotica.power.client.PowerClient;
 import com.arno.robotica.replicator.client.ReplicatorClient;
@@ -31,5 +32,6 @@ public class RoboticaClient {
         ArchitectClient.init(modBus, container);
         ReplicatorClient.init(modBus, container);
         WarpClient.init(modBus, container);
+        DronesClient.init(modBus, container);
     }
 }
