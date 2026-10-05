@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " X ",
+    "BIM",
+    " R "
+  ],
+  "key": {
+    "X": {
+      "item": "minecraft:crossbow"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "id": "robotica:sentry_drone",
+    "count": 1
+  }
+}

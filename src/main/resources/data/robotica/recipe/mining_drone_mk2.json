@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:advanced_circuit"
+  },
+  "base": {
+    "item": "robotica:mining_drone"
+  },
+  "addition": {
+    "item": "robotica:servo_actuator"
+  },
+  "result": {
+    "id": "robotica:mining_drone_mk2",
+    "count": 1
+  }
+}
