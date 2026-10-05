@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CDC",
+    "QMB",
+    "CDC"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:chests/wooden"
+    },
+    "D": {
+      "tag": "c:gems/diamond"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "M": {
+      "item": "robotica:storage_expansion_mk2"
+    },
+    "B": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:storage_expansion_mk3",
+    "count": 1
+  }
+}

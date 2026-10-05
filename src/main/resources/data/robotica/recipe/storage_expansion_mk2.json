@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CGC",
+    "AMX",
+    "CGC"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:chests/wooden"
+    },
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "M": {
+      "item": "robotica:storage_expansion_mk1"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:storage_expansion_mk2",
+    "count": 1
+  }
+}

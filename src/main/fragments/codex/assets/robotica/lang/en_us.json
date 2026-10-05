@@ -45,6 +45,8 @@
   "advancements.robotica.guide.drones.description": "Craft a Sentry Drone to guard your base, or a Courier Drone to carry items between chests.",
   "advancements.robotica.guide.metal_press.title": "Press Ahead",
   "advancements.robotica.guide.metal_press.description": "Place a Metal Press: one ingot makes one plate, twice what the hammer gives.",
+  "advancements.robotica.guide.storage.title": "Big Chest",
+  "advancements.robotica.guide.storage.description": "Place a Storage Terminal: 81 slots, a search box, a crafting grid. Expansions add more. It needs a little power.",
   "advancements.robotica.guide.upgrade_card.title": "Plug and Play",
   "advancements.robotica.guide.upgrade_card.description": "Craft an upgrade card and right-click a robot or machine with it. More cards of a kind stack.",
   "advancements.robotica.guide.farm_kit.title": "Bigger Fields",

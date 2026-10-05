@@ -103,6 +103,12 @@
       "age": 1
     },
     {
+      "id": "robotica:guide/storage",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:storage_terminal",
+      "age": 1
+    },
+    {
       "id": "robotica:guide/upgrade_card",
       "parent": "robotica:guide/basic_circuit",
       "icon": "robotica:upgrade_speed",

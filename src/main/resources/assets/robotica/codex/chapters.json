@@ -427,6 +427,28 @@
           ]
         }
       ]
+    },
+    {
+      "title": "Storage",
+      "icon": "robotica:storage_terminal",
+      "pages": [
+        {
+          "title": "Storage Terminal",
+          "text": "Age 1. A big sorted chest: 81 slots, a search box (@mod for a mod, #tag for a tag), a sort toggle, a scrollbar and a 3x3 crafting grid. Shift-click an item to move it in or out. Hoppers, drones and pipes reach it from every side.\n\nNot a network: no autocrafting, no unlimited space.",
+          "items": [
+            "robotica:storage_terminal"
+          ]
+        },
+        {
+          "title": "Expansions and power",
+          "text": "Three expansion slots take one Storage Expansion each: Mk1 +81 slots, Mk2 +162, Mk3 +324, up to 648 in all. Each Mk is built from the one before.\n\nThe terminal uses a little FE (2 per tick, +1 per expansion): feed it from any cable or put a cell in the battery slot. Without power only the first 81 slots take new items; taking items out, search and crafting always work.",
+          "items": [
+            "robotica:storage_expansion_mk1",
+            "robotica:storage_expansion_mk2",
+            "robotica:storage_expansion_mk3"
+          ]
+        }
+      ]
     }
   ]
 }
