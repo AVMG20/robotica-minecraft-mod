@@ -1,7 +1,18 @@
 {
   "variants": {
-    "": {
-      "model": "robotica:block/steel_lab_floor"
-    }
+    "": [
+      {
+        "model": "robotica:block/steel_lab_floor",
+        "weight": 6
+      },
+      {
+        "model": "robotica:block/steel_lab_floor_2",
+        "weight": 3
+      },
+      {
+        "model": "robotica:block/steel_lab_floor_3",
+        "weight": 2
+      }
+    ]
   }
 }

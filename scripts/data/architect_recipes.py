@@ -1,4 +1,4 @@
-"""Writes the recipes of the architect module: the Architect Table (Age 1), 8 bulk blocks + 1 tier material -> 8 style blocks
+"""Writes the recipes of the architect module: the Architect Table (Age 0), 8 bulk blocks + 1 tier material -> 8 style blocks
 for all 24 blocks, and stonecutter recipes between the roles of one style.
 Run: python3 scripts/data/architect_recipes.py   (overwrites data/robotica/recipe/<name>.json for architect items only)"""
 import json
@@ -30,9 +30,10 @@ def stonecutting(name, source, result):
 
 IRON_PLATE = '#c:plates/iron'
 
-# Age 1: casing + circuit + clockwork mechanism + crafting table, gears for the drafting arm
-shaped('architect_table', ['PBP', 'MIT', 'GGG'],
-       {'P': IRON_PLATE, 'B': 'basic_circuit', 'M': 'clockwork_mechanism', 'I': 'iron_casing', 'T': 'minecraft:crafting_table', 'G': 'copper_gear'},
+# Age 0: a starter machine, no iron. Copper, cobble, a crafting table and a Clockwork Mechanism for the drafting arm.
+shaped('architect_table', ['CTC', 'GMG', 'SSS'],
+       {'C': '#c:ingots/copper', 'T': 'minecraft:crafting_table', 'G': 'copper_gear', 'M': 'clockwork_mechanism',
+        'S': '#c:cobblestones/normal'},
        category='misc')
 
 # (bulk, centre) per style and role. Every pair is unique, 8 bulk around 1 centre gives 8 blocks.

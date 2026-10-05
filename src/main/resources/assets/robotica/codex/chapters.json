@@ -213,14 +213,28 @@
       "pages": [
         {
           "title": "Architect Table",
-          "text": "Feed the table cobblestone, wood, glass, ingots or gems. It turns them into matter: rustic, refined and exotic.\n\nPick a plot on the grid, pick a room, and the table builds it out of Robotica blocks it fabricates from matter and FE. You never craft the blocks one by one. The Greenhouse leaves a glowing marker in the floor: pour water there yourself.",
+          "text": "An early machine: copper, cobblestone and a Clockwork Mechanism. Feed it cobblestone, wood, glass, ingots or gems; it turns them into matter. Power it with a wound Mainspring in its battery slot or any FE cable.\n\nThe table is the middle of the floor of its own plot. Click plots on the grid to plan buildings, then press Build.",
           "items": [
-            "robotica:architect_table"
+            "robotica:architect_table",
+            "robotica:mainspring"
+          ]
+        },
+        {
+          "title": "Buildings",
+          "text": "Every plot gets the same 9x9 building: floor, walls with windows, roof with light panels.\n\nPlots next to each other join into one big hall. Each group gets a door facing the table; click the edge of a plot to add or move doors. Shift-click a built plot to forget it.",
+          "items": [
+            "robotica:timberframe_wall",
+            "robotica:timberframe_light"
           ]
         },
         {
           "title": "Styles",
-          "text": "Timberframe (Age 0) costs only rustic matter. Copper Works (Age 1), Steel Lab (Age 2) and Null Spire (Age 4) cost more and look better.\n\nEvery building block also has a normal recipe, so you can repair or extend a room by hand."
+          "text": "Timberframe works from the start and costs only rustic matter. Copper Works, Steel Lab and Null Spire need an Iron, Reinforced or Null Casing in the casing slot and cost more.\n\nEvery building block also has a normal recipe, so you can repair or extend a building by hand.",
+          "items": [
+            "robotica:copper_works_wall",
+            "robotica:steel_lab_wall",
+            "robotica:null_spire_wall"
+          ]
         }
       ]
     },

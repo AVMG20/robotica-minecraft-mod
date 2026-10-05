@@ -140,28 +140,35 @@ Weapon upgrade path through smithing: Gearblade → Shock Baton → Arc Blade. R
 
 ## Base builder (module `architect`)
 
-The player never crafts building blocks one by one. The Architect Table turns cheap bulk materials into **matter**, then fabricates Robotica building blocks out of matter + FE while it builds.
+The player never crafts building blocks one by one. The Architect Table turns cheap bulk materials into **matter**, then fabricates Robotica building blocks out of matter + FE while it builds. It is a day-one machine: get a base up fast, then grow it.
 
 Matter grades (stored as numbers in the table, shown as three bars):
 - Rustic matter: cobblestone/stone/deepslate/dirt/sand/gravel 1, planks 1, logs 4, cobbled anything 1.
 - Refined matter: copper ingot 4, iron ingot 8, gold ingot 8, glass 2, bricks 2, quartz 4, clay ball 1.
 - Exotic matter: obsidian 4, amethyst shard 4, prismarine crystals 4, glowstone dust 2, diamond 32, ender pearl 16.
-Any item handler can feed the input slot (hoppers, RS exporters, Thermal servos).
+Any item handler can feed the input (hoppers, RS exporters, Thermal servos). Values are item tags `robotica:matter/<grade>_<value>`.
 
-Block styles, each a family of 6 roles (wall, floor, roof, pillar/trim, window, light):
-| Style | Age | Matter per block | Look |
-|---|---|---|---|
-| Timberframe | 0 | 2 rustic | oak beams, plaster, lanterns |
-| Copper Works | 1 | 2 rustic + 1 refined | riveted copper plates, bolted floor, amber lamps |
-| Steel Lab | 2 | 1 rustic + 2 refined + small exotic | white steel panels, grated floor, framed glass, cyan light strips |
-| Null Spire | 4 | 2 refined + 2 exotic | dark glossy panels, glowing teal seams, energy glass |
-Higher styles need the matching age part in the table's style slot to unlock (Iron Casing, Reinforced Casing, Null Casing). All 24 blocks also have normal crafting recipes (8 bulk blocks + 1 tier material → 8), so players can repair or extend by hand.
+Block styles, each a family of 6 roles (wall, floor, roof, pillar/trim, window, light panel):
+| Style | Age | Matter per block | FE per block | Look |
+|---|---|---|---|---|
+| Timberframe | 0 | 2 rustic | 10 | white plaster, oak boards and beams, clay tiles, paper light panels |
+| Copper Works | 1 | 2 rustic + 1 refined | 20 | copper plate courses with rivets, floor plates, standing seam roof, amber panels |
+| Steel Lab | 2 | 1 rustic + 2 refined + 1 exotic | 40 | white panels with staggered seams, grated floor, ribbed roof, cyan panels |
+| Null Spire | 4 | 2 refined + 2 exotic | 80 | dark glossy panels with a teal seam line, polished tiles, teal panels |
+Timberframe is always available; higher styles need the matching casing in the table's style slot (Iron, Reinforced, Null Casing). FE per block is `fePerBlock` (20) times the style factor (50/100/200/400 %). All 24 blocks also have normal crafting recipes (8 bulk blocks + 1 tier material → 8), so players can repair or extend by hand. Walls, floors and roofs tile seamlessly (no frame per block) and mix 3 weighted texture variants; roof blocks show the wall surface on their underside, so the ceiling reads as a ceiling; light panels have a full-bright overlay.
 
-Architect Table (Age 1, FE buffer 200k, built from a Clockwork Mechanism rather than a motor so it stays a cheap starter): 27-slot material input, style slot, 5×5 plot grid centred on the table's plot (each plot 9×9×6). The GUI shows the grid; click a plot, pick a module, confirm. Builds one block per N ticks (base 4 ticks, speed cards apply), 50 FE + matter per block. Optional "clear terrain" removes blocks in the footprint (no block entities, no unbreakables) and turns them into rustic matter. Missing matter pauses the build and the GUI says which grade is short.
+Architect Table (Age 0: 2 copper ingot + crafting table + 2 copper gear + Clockwork Mechanism + 3 cobblestone, no iron; FE buffer 200k). Slots: 9 material inputs, casing slot, battery slot (a wound Mainspring or any FE cell, so it runs without cables; a Winding Crank or a Combustion Generator is plenty), 2 upgrade slots (speed, efficiency).
 
-Modules (procedural, built bottom-up, doors open automatically toward neighbouring modules): Corridor, Hall, Workshop, Storage Room, Machine Hall, Greenhouse (glass roof, farmland), Hangar (open roof pad), Stairwell (second floor later).
+The table is the middle floor block of its own plot: the centre plot spans table.x-4..+4 and table.z-4..+4 with its floor at table.y, and the 5×5 plot grid continues on the same 9-block grid. Every plot holds the same building, a 9×9×6 shell; the player designs the layout by choosing plots.
+- GUI: the grid (click a plot to queue or unqueue it, click the edge of a planned plot to add or remove a door there, shift-click a built plot to forget it), 4 style chips, Build and Cancel, matter and energy bars, progress, a clear-terrain toggle. Built plots are solid, queued plots outlined, the plot being built pulses; joined plots are drawn as one shape. Words live in tooltips.
+- Nothing is built until Build is pressed. The table works plot by plot, bottom-up, one block per N ticks (base 4, speed cards apply), matter + FE per block. Missing matter or FE pauses and the status names it.
+- Shell: floor with a trim line along every outside wall; walls with a 5-wide window band on layers 2-3; roof with light panels on a diagonal lattice 3 blocks apart (continuous across plots) and a trim edge outside; corner posts at outer corners only.
+- Joining: a side shared with a planned neighbour has no wall at all, so a group of plots is one hall. Where an outside wall continues into a neighbour the corner is plain wall, the middle of a 2×2 block is open, and the inner corner of an L closes the wall. When a neighbour is added or removed, built plots are re-walked on the next Build and only the blocks that differ change.
+- Doors: 3 wide, 3 high, framed by two posts and a lintel, only in outside walls. Every group keeps at least one: a lone building gets one facing the table (the table's own plot faces south), and when a change leaves a group without a door, the plot nearest the table gets one. The last door of a group cannot be removed.
+- The table never replaces itself, block entities or unbreakable blocks. Without clear terrain it only builds into air and replaceable blocks (grass, water, its own blocks); with clear terrain it removes plain blocks in the footprint and turns them into rustic matter. Spawn protection, the world border and BreakEvent/EntityPlaceEvent (claims) are respected: such blocks are skipped for free.
+- Owner, team members and operators may use the table. Picking the table up keeps matter and the plan; placed elsewhere, built plots are forgotten and queued ones stay queued.
 
-Builder drones: purely visual for now, a small flying entity that flies from the table to each placed block. Optional; the table works without them.
+Builder drones: purely visual, a small flying entity that flies from the table to each placed block. Optional (config).
 
 ## Mob replicator (module `replicator`)
 

@@ -25,17 +25,18 @@ public final class ArchitectConfig {
         b.push("architect_table");
         BASE_INTERVAL = b.comment("Ticks per placed block at no speed upgrade (speed cards divide it).")
                 .defineInRange("baseInterval", 4, 1, 200);
-        FE_PER_BLOCK = b.comment("FE per placed block before the speed and efficiency card modifiers.")
-                .defineInRange("fePerBlock", 50, 0, 1_000_000);
+        FE_PER_BLOCK = b.comment("Base FE per placed block. Styles scale it: Timberframe 50 %, Copper Works 100 %, Steel Lab 200 %,",
+                        "Null Spire 400 %; speed and efficiency cards apply on top.")
+                .defineInRange("fePerBlock", 20, 0, 1_000_000);
         ENERGY_BUFFER = b.comment("Internal FE buffer.")
                 .defineInRange("energyBuffer", 200_000, 1_000, 100_000_000);
         ENERGY_RECEIVE = b.comment("Maximum FE/t accepted from any side.")
                 .defineInRange("energyReceive", 20_000, 1, 100_000_000);
         MATTER_CAP = b.comment("Maximum stored amount of each matter grade.")
                 .defineInRange("matterCap", 100_000, 1_000, 100_000_000);
-        MAX_QUEUE = b.comment("Maximum number of queued builds per table.")
-                .defineInRange("maxQueue", 12, 1, 64);
-        ALLOW_CLEAR = b.comment("Allow the clear terrain option (removes blocks inside a queued plot).")
+        MAX_QUEUE = b.comment("Maximum number of plots queued at once per table (the grid has 25).")
+                .defineInRange("maxQueue", 25, 1, 25);
+        ALLOW_CLEAR = b.comment("Allow the clear terrain option (removes blocks inside a planned building).")
                 .define("allowClearTerrain", true);
         DRONES = b.comment("Spawn the cosmetic builder drone while a table is building.")
                 .define("builderDrones", true);

@@ -1,7 +1,18 @@
 {
   "variants": {
-    "": {
-      "model": "robotica:block/copper_works_roof"
-    }
+    "": [
+      {
+        "model": "robotica:block/copper_works_roof",
+        "weight": 6
+      },
+      {
+        "model": "robotica:block/copper_works_roof_2",
+        "weight": 3
+      },
+      {
+        "model": "robotica:block/copper_works_roof_3",
+        "weight": 2
+      }
+    ]
   }
 }

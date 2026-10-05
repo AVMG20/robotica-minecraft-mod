@@ -3,9 +3,9 @@ package com.arno.robotica.codex.client.dev;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.architect.block.ArchitectTableBlockEntity;
 import com.arno.robotica.architect.matter.Matter;
-import com.arno.robotica.architect.menu.ArchitectMenu;
-import com.arno.robotica.architect.plan.BlockOp;
-import com.arno.robotica.architect.plan.ModuleType;
+import com.arno.robotica.architect.plan.Layout;
+import com.arno.robotica.architect.plan.Plots;
+import com.arno.robotica.architect.plan.ShellPlacer;
 import com.arno.robotica.architect.style.BuildStyle;
 import com.arno.robotica.codex.client.CodexScreen;
 import com.arno.robotica.core.energy.ItemEnergy;
@@ -204,7 +204,9 @@ public final class Showcase {
             case "architect_table" -> {
                 if (level.getBlockEntity(pos) instanceof ArchitectTableBlockEntity table) {
                     table.setMatter(new Matter(320, 140, 36));
-                    for (int plot : new int[]{7, 8, 13, 17}) table.handleAction(sp, ArchitectTableBlockEntity.ACTION_QUEUE, plot, ModuleType.values()[plot % 5].id());
+                    for (int plot : new int[]{Plots.index(0, -1), Plots.index(1, -1), Plots.index(1, 0), Plots.index(-1, 1)}) {
+                        table.handleAction(sp, ArchitectTableBlockEntity.ACTION_TOGGLE, plot, 0);
+                    }
                 }
             }
             case "stumpy", "sprout", "excavator" -> {
@@ -242,36 +244,28 @@ public final class Showcase {
         camera(17, Y + 3, 7, 180, 20);
         shot("03_blocks_close_b");
 
-        // Scene 2: a Hall in each building style, side by side.
+        // Scene 2: a joined pair of buildings in each style, side by side, then a 2x2 hall from the inside.
         step(40, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             int i = 0;
             for (BuildStyle style : BuildStyle.values()) {
-                BlockPos origin = new BlockPos(60 + i * 11, Y, 0);
-                for (BlockOp op : ModuleType.HALL.generate(0b0100)) {
-                    BlockState st = op.piece().resolve(style);
-                    if (st != null) level.setBlock(origin.offset(op.x(), op.y(), op.z()), st, 2);
-                }
+                Layout layout = new Layout();
+                layout.queue(Plots.CENTER, style);
+                layout.queue(Plots.index(1, 0), style);
+                ShellPlacer.placeAll(level, new BlockPos(64 + i * 20, Y, 4), layout);
                 i++;
             }
         }));
-        camera(81, Y + 8, 26, 180, 18);
+        camera(98, Y + 10, 44, 180, 14);
         shot("04_styles_halls");
-        camera(64, Y + 2, 12, 180, 5);
+        camera(64, Y + 2, 16, 180, 5);
         shot("05_style_timberframe_door");
         step(20, () -> server(sp -> {
-            ServerLevel level = sp.serverLevel();
-            int i = 0;
-            for (BuildStyle style : BuildStyle.values()) {
-                BlockPos origin = new BlockPos(60 + i * 11, Y, 30);
-                for (BlockOp op : ModuleType.WORKSHOP.generate(0b0101)) {
-                    BlockState st = op.piece().resolve(style);
-                    if (st != null) level.setBlock(origin.offset(op.x(), op.y(), op.z()), st, 2);
-                }
-                i++;
-            }
+            Layout layout = new Layout();
+            for (int plot : new int[]{Plots.CENTER, Plots.index(1, 0), Plots.index(0, 1), Plots.index(1, 1)}) layout.queue(plot, BuildStyle.STEEL_LAB);
+            ShellPlacer.placeAll(sp.serverLevel(), new BlockPos(64, Y, 44), layout);
         }));
-        camera(64, Y + 3, 32, 135, 20);
+        camera(62, Y + 3, 42, -45, 12);
         shot("06_workshop_inside");
 
         // Scene 3: robots at work.
@@ -374,12 +368,6 @@ public final class Showcase {
             step(25, () -> {
                 if (mc().screen != null) Screenshot.grab(mc().gameDirectory, String.format("gui_%02d_%s.png", idx, name), mc().getMainRenderTarget(), m -> {});
             });
-            if (name.equals("architect_table")) {
-                step(5, () -> {
-                    if (mc().screen instanceof AbstractContainerScreen<?> screen && screen.getMenu() instanceof ArchitectMenu m) m.tab = 1;
-                });
-                step(10, () -> Screenshot.grab(mc().gameDirectory, "gui_15b_architect_storage.png", mc().getMainRenderTarget(), m -> {}));
-            }
             step(5, () -> {
                 if (mc().player != null && mc().screen != null) mc().player.closeContainer();
             });

@@ -2,6 +2,7 @@ package com.arno.robotica.architect.block;
 
 import com.arno.robotica.architect.ArchitectConfig;
 import com.arno.robotica.architect.ArchitectRegistry;
+import com.arno.robotica.architect.style.BuildStyle;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/** The Architect Table: turns bulk materials into matter and builds modular rooms on a 5x5 plot grid. Age 1. */
+/** The Architect Table: turns bulk materials into matter and builds 9x9 buildings on a 5x5 plot grid. Age 0. */
 public class ArchitectTableBlock extends Block implements EntityBlock {
     public ArchitectTableBlock(Properties props) {
         super(props);
@@ -78,7 +79,8 @@ public class ArchitectTableBlock extends Block implements EntityBlock {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.architect_table", ArchitectConfig.fePerBlock()).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.architect_table",
+                BuildStyle.TIMBERFRAME.energyPerBlock(ArchitectConfig.fePerBlock())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.architect_table_matter").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.architect_table_styles").withStyle(ChatFormatting.DARK_GRAY));
     }

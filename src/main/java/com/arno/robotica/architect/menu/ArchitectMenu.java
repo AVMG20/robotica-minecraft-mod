@@ -4,6 +4,7 @@ import com.arno.robotica.architect.ArchitectConfig;
 import com.arno.robotica.architect.ArchitectRegistry;
 import com.arno.robotica.architect.block.ArchitectTableBlockEntity;
 import com.arno.robotica.architect.matter.Matter;
+import com.arno.robotica.architect.plan.Layout;
 import com.arno.robotica.architect.plan.Plots;
 import com.arno.robotica.architect.style.BuildStyle;
 import com.arno.robotica.core.menu.MachineMenu;
@@ -16,60 +17,62 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.function.IntSupplier;
 
 /**
- * Architect Table menu. The GUI has two tabs: the plan (plot grid, module list, queue) and the storage (27 input slots,
- * casing slot, upgrade slots). Slots only exist visibly on the storage tab ({@link #tab} is client side state).
- * Everything the plan shows (grid, queue, matter, status) is synced as tracked ints, so it needs no extra packets.
+ * Architect Table menu: one page with the plot grid, the material input, the casing slot and two upgrade slots.
+ * Everything the grid shows (plan, matter, status) is synced as tracked ints, so it needs no extra packets.
  */
 public class ArchitectMenu extends MachineMenu {
-    public static final int WIDTH = 288;
-    public static final int HEIGHT = 246;
-    public static final int INV_X = 63;
-    public static final int INV_Y = 164;
-    public static final int INPUT_X = 8;
-    public static final int INPUT_Y = 30;
-    public static final int STYLE_X = 8;
-    public static final int STYLE_Y = 98;
-    public static final int UPGRADE_X = 84;
-    public static final int UPGRADE_Y = 98;
+    public static final int WIDTH = 176;
+    public static final int HEIGHT = 242;
+    public static final int GRID_X = 8;
+    public static final int GRID_Y = 18;
+    public static final int CELL = 18;
+    public static final int SLOT_ROW_Y = 113;
+    public static final int CASING_X = 8;
+    public static final int CHIPS_X = 28;
+    public static final int UPGRADE_X = 110;
+    public static final int CLEAR_X = 152;
+    public static final int INPUT_Y = 136;
+    public static final int BATTERY_X = 152;
+    public static final int BATTERY_Y = 56;
+    public static final int INV_X = 8;
+    public static final int INV_Y = 160;
 
-    /** Client side: 0 = plan, 1 = storage. */
-    public int tab;
+    private static final int PLAN_WORDS = (Plots.COUNT + 2) / 3;
 
     private final BlockPos pos;
     private final ContainerLevelAccess access;
+    @Nullable
     private final ArchitectTableBlockEntity table;
-    private final int energyIndex, capacityIndex, matterCapIndex, statusIndex, progressIndex, flagsIndex, queueSizeIndex;
-    private final int gridIndex, queueIndex;
+    private final int energyIndex, capacityIndex, matterCapIndex, statusIndex, progressIndex, flagsIndex, currentIndex, feIndex, planIndex;
 
     /** Client side. */
     public ArchitectMenu(int id, Inventory inv, BlockPos pos) {
         this(id, inv, pos, new ItemStackHandler(ArchitectTableBlockEntity.INPUT_SLOTS), new ItemStackHandler(1),
-                new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY), () -> {}), null);
+                new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY), () -> {}), new ItemStackHandler(1), null);
     }
 
     /** Server side. */
     public ArchitectMenu(int id, Inventory inv, ArchitectTableBlockEntity be) {
-        this(id, inv, be.getBlockPos(), be.input, be.styleSlot, be.upgrades, be);
+        this(id, inv, be.getBlockPos(), be.input, be.styleSlot, be.upgrades, be.battery, be);
     }
 
-    private ArchitectMenu(int id, Inventory inv, BlockPos pos, IItemHandler input, IItemHandler style, IItemHandler upgrades, ArchitectTableBlockEntity be) {
+    private ArchitectMenu(int id, Inventory inv, BlockPos pos, IItemHandler input, IItemHandler style, IItemHandler upgrades,
+                          IItemHandler battery, @Nullable ArchitectTableBlockEntity be) {
         super(ArchitectRegistry.ARCHITECT_MENU.get(), id);
         this.pos = pos;
         this.table = be;
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new StorageSlot(input, col + row * 9, INPUT_X + col * 18, INPUT_Y + row * 18));
-            }
-        }
-        addSlot(new StorageSlot(style, 0, STYLE_X, STYLE_Y));
-        addSlot(new StorageSlot(upgrades, 0, UPGRADE_X, UPGRADE_Y));
-        addSlot(new StorageSlot(upgrades, 1, UPGRADE_X + 20, UPGRADE_Y));
+        for (int i = 0; i < ArchitectTableBlockEntity.INPUT_SLOTS; i++) addSlot(new SlotItemHandler(input, i, INV_X + i * 18, INPUT_Y));
+        addSlot(new SlotItemHandler(style, 0, CASING_X, SLOT_ROW_Y));
+        addSlot(new SlotItemHandler(upgrades, 0, UPGRADE_X, SLOT_ROW_Y));
+        addSlot(new SlotItemHandler(upgrades, 1, UPGRADE_X + 18, SLOT_ROW_Y));
+        addSlot(new SlotItemHandler(battery, 0, BATTERY_X, BATTERY_Y));
         addPlayerInventory(inv, INV_X, INV_Y);
 
         IntSupplier zero = () -> 0;
@@ -82,33 +85,15 @@ public class ArchitectMenu extends MachineMenu {
         statusIndex = track(be == null ? zero : be::status);
         progressIndex = track(be == null ? zero : be::progressPermille);
         flagsIndex = track(be == null ? zero : be::flags);
-        queueSizeIndex = track(be == null ? zero : be::queueSize);
-        int firstGrid = -1;
-        for (int w = 0; w < 7; w++) {
+        currentIndex = track(be == null ? zero : be::currentPlot);
+        feIndex = track(be == null ? zero : ArchitectTableBlockEntity::baseEnergy);
+        int first = -1;
+        for (int w = 0; w < PLAN_WORDS; w++) {
             final int word = w;
-            int index = track(be == null ? zero : () -> be.gridWord(word));
-            if (firstGrid < 0) firstGrid = index;
+            int index = track(be == null ? zero : () -> be.planWord(word));
+            if (first < 0) first = index;
         }
-        gridIndex = firstGrid;
-        int firstQueue = -1;
-        for (int w = 0; w < 3; w++) {
-            final int word = w;
-            int index = track(be == null ? zero : () -> be.queueWord(word));
-            if (firstQueue < 0) firstQueue = index;
-        }
-        queueIndex = firstQueue;
-    }
-
-    /** Slot of the storage tab: only usable and drawn while that tab is open. */
-    private class StorageSlot extends SlotItemHandler {
-        StorageSlot(IItemHandler handler, int index, int x, int y) {
-            super(handler, index, x, y);
-        }
-
-        @Override
-        public boolean isActive() {
-            return tab == 1;
-        }
+        planIndex = first;
     }
 
     public BlockPos pos() {
@@ -116,6 +101,7 @@ public class ArchitectMenu extends MachineMenu {
     }
 
     /** Server side: the table this menu is bound to, null on the client. */
+    @Nullable
     public ArchitectTableBlockEntity table() {
         return table;
     }
@@ -140,7 +126,7 @@ public class ArchitectMenu extends MachineMenu {
         return synced(statusIndex);
     }
 
-    /** Progress of the current build, 0-1. */
+    /** Progress of the plot being built, 0-1. */
     public float progress() {
         return synced(progressIndex) / 1000.0F;
     }
@@ -149,45 +135,63 @@ public class ArchitectMenu extends MachineMenu {
         return (synced(flagsIndex) & 1) != 0;
     }
 
+    public boolean running() {
+        return (synced(flagsIndex) & 2) != 0;
+    }
+
     public BuildStyle selectedStyle() {
-        return BuildStyle.byOrdinal((synced(flagsIndex) >> 1) & 3);
+        return BuildStyle.byOrdinal((synced(flagsIndex) >> 2) & 3);
     }
 
     public boolean styleUnlocked(BuildStyle style) {
-        return ((synced(flagsIndex) >> 3) & (1 << style.ordinal())) != 0;
+        return ((synced(flagsIndex) >> 4) & (1 << style.ordinal())) != 0;
     }
 
-    public int queueSize() {
-        return synced(queueSizeIndex);
+    /** Base FE per block before the style factor. */
+    public int baseEnergy() {
+        return synced(feIndex);
     }
 
-    /** Module id (0 = empty) of a plot. */
-    public int plotModule(int plot) {
-        return plotCell(plot) & 15;
+    /** Plot being built, or -1. */
+    public int currentPlot() {
+        return synced(currentIndex);
     }
 
-    /** Plot status: 0 empty, 1 queued, 2 building, 3 built. */
-    public int plotStatus(int plot) {
-        return plotModule(plot) == 0 ? 0 : ((plotCell(plot) >> 4) & 3) + 1;
+    private int cell(int plot) {
+        if (!Plots.valid(plot)) return 0;
+        return (synced(planIndex + plot / 3) >>> (10 * (plot % 3))) & 0x3FF;
+    }
+
+    /** {@link Layout#EMPTY}, {@link Layout#QUEUED} or {@link Layout#BUILT}. */
+    public int plotState(int plot) {
+        return cell(plot) & 3;
+    }
+
+    public boolean planned(int plot) {
+        return plotState(plot) != Layout.EMPTY;
     }
 
     public BuildStyle plotStyle(int plot) {
-        return BuildStyle.byOrdinal((plotCell(plot) >> 6) & 3);
+        return BuildStyle.byOrdinal((cell(plot) >> 2) & 3);
     }
 
-    private int plotCell(int plot) {
-        if (!Plots.valid(plot)) return 0;
-        int word = synced(gridIndex + plot / 4);
-        return (word >>> (8 * (plot % 4))) & 0xFF;
+    public int plotDoors(int plot) {
+        return (cell(plot) >> 4) & 15;
     }
 
-    /** Queue entry as {plot, module id, patch (0/1), style}, or null past the end (shows up to 6). */
-    public int[] queueEntry(int index) {
-        if (index < 0 || index >= 6) return null;
-        int word = synced(queueIndex + index / 2);
-        int entry = (word >>> (16 * (index % 2))) & 0xFFFF;
-        if ((entry & (1 << 10)) == 0) return null;
-        return new int[]{entry & 31, (entry >> 5) & 15, (entry >> 9) & 1, (entry >> 11) & 3};
+    public boolean plotNeedsWork(int plot) {
+        return (cell(plot) & (1 << 8)) != 0;
+    }
+
+    /** True when some plot is queued or a built plot needs a re-pass. */
+    public boolean hasWork() {
+        for (int plot = 0; plot < Plots.COUNT; plot++) if (plotNeedsWork(plot)) return true;
+        return false;
+    }
+
+    public boolean hasQueued() {
+        for (int plot = 0; plot < Plots.COUNT; plot++) if (plotState(plot) == Layout.QUEUED) return true;
+        return false;
     }
 
     @Override
