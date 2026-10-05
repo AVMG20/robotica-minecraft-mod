@@ -67,9 +67,9 @@
       "age": 1
     },
     {
-      "id": "robotica:guide/conduit",
+      "id": "robotica:guide/tesla",
       "parent": "robotica:guide/generator",
-      "icon": "robotica:copper_conduit",
+      "icon": "robotica:tesla_coil_1",
       "age": 1
     },
     {

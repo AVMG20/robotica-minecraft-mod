@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "ETE",
+    " X "
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "T": {
+      "item": "robotica:tesla_coil_4"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:tesla_coil_5",
+    "count": 1
+  }
+}

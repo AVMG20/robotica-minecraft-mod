@@ -18,8 +18,9 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue GENERATOR_BUFFER;
     private static final ModConfigSpec.IntValue SOLAR_MK1;
     private static final ModConfigSpec.IntValue SOLAR_MK2;
-    private static final ModConfigSpec.IntValue COPPER_CONDUIT_RATE;
-    private static final ModConfigSpec.IntValue GOLD_CONDUIT_RATE;
+    private static final ModConfigSpec.IntValue[] TESLA_RATE = new ModConfigSpec.IntValue[5];
+    private static final ModConfigSpec.IntValue[] TESLA_RANGE = new ModConfigSpec.IntValue[5];
+    private static final ModConfigSpec.IntValue TESLA_HOP_LOSS;
     private static final ModConfigSpec.IntValue CHARGER_RATE;
     private static final ModConfigSpec.IntValue PRESS_POWER;
 
@@ -45,11 +46,17 @@ public final class PowerConfig {
         SOLAR_MK2 = b.comment("Solar Panel Mk2, FE/t in daylight with sky access.")
                 .defineInRange("solarMk2", 32, 1, 1_000_000);
         b.pop();
-        b.push("conduits");
-        COPPER_CONDUIT_RATE = b.comment("FE/t a network made of Copper Conduits can move.")
-                .defineInRange("copperConduitRate", 256, 1, 100_000_000);
-        GOLD_CONDUIT_RATE = b.comment("FE/t a network made of Gold Conduits can move.")
-                .defineInRange("goldConduitRate", 1_024, 1, 100_000_000);
+        b.push("tesla");
+        int[] rates = {1_000, 4_000, 16_000, 64_000, 256_000};
+        int[] ranges = {8, 12, 16, 24, 32};
+        for (int i = 0; i < 5; i++) {
+            TESLA_RATE[i] = b.comment("Tesla Coil " + (i + 1) + ": FE/t the coil sends in total, split over its links.")
+                    .defineInRange("teslaRate" + (i + 1), rates[i], 1, Integer.MAX_VALUE / 2);
+            TESLA_RANGE[i] = b.comment("Tesla Coil " + (i + 1) + ": link range in blocks.")
+                    .defineInRange("teslaRange" + (i + 1), ranges[i], 1, 64);
+        }
+        TESLA_HOP_LOSS = b.comment("Percent of the energy lost on every coil-to-coil hop.")
+                .defineInRange("teslaHopLoss", 5, 0, 90);
         b.pop();
         b.push("charger");
         CHARGER_RATE = b.comment("FE/t the Charger pushes into the item.")
@@ -73,8 +80,10 @@ public final class PowerConfig {
     public static int generatorBuffer() { return get(GENERATOR_BUFFER); }
     public static int solarMk1() { return get(SOLAR_MK1); }
     public static int solarMk2() { return get(SOLAR_MK2); }
-    public static int copperConduitRate() { return get(COPPER_CONDUIT_RATE); }
-    public static int goldConduitRate() { return get(GOLD_CONDUIT_RATE); }
+    /** tier 1-5 */
+    public static int teslaRate(int tier) { return get(TESLA_RATE[tier - 1]); }
+    public static int teslaRange(int tier) { return get(TESLA_RANGE[tier - 1]); }
+    public static int teslaHopLoss() { return get(TESLA_HOP_LOSS); }
     public static int chargerRate() { return get(CHARGER_RATE); }
     public static int pressPower() { return get(PRESS_POWER); }
 }

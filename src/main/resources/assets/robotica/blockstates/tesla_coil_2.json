@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "robotica:block/tesla_coil_2"
+    },
+    "facing=down": {
+      "model": "robotica:block/tesla_coil_2",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "robotica:block/tesla_coil_2",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "robotica:block/tesla_coil_2",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "robotica:block/tesla_coil_2",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east": {
+      "model": "robotica:block/tesla_coil_2",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

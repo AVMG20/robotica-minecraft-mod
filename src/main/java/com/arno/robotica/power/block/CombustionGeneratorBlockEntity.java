@@ -26,9 +26,9 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-/** Fuel slot, FE buffer, lit state. Pushes into every neighbouring FE receiver; conduits pull from the buffer. */
+/** Fuel slot, FE buffer, lit state. Pushes into every neighbouring FE receiver; Tesla Coils on it pull from the buffer. */
 public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements MenuProvider {
-    /** FE/t the buffer may be drained at (by neighbours and conduits). */
+    /** FE/t the buffer may be drained at (by neighbours and Tesla Coils). */
     public static final int MAX_OUTPUT = 400;
 
     public final ItemStackHandler fuel = new ItemStackHandler(1) {
@@ -47,7 +47,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         return fuel;
     }
 
-    /** Receive 0: only the burning fills it. Extract is limited so conduits cannot empty it faster than MAX_OUTPUT. */
+    /** Receive 0: only the burning fills it. Extract is limited so Tesla Coils cannot empty it faster than MAX_OUTPUT. */
     public final MachineEnergyStorage energy = new MachineEnergyStorage(PowerConfig.generatorBuffer(), 0, MAX_OUTPUT, this::setChanged);
 
     private final IItemHandler automation = new ItemAccess(fuel, (slot, stack) -> isFuel(stack), (slot, stack) -> !isFuel(stack));

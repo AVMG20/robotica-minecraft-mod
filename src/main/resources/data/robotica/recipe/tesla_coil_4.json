@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "BTB",
+    " X "
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:quantum_circuit"
+    },
+    "B": {
+      "tag": "c:rods/blaze"
+    },
+    "T": {
+      "item": "robotica:tesla_coil_3"
+    },
+    "X": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:tesla_coil_4",
+    "count": 1
+  }
+}

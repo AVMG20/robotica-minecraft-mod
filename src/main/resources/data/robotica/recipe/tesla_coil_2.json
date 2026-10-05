@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    "GTG",
+    "PKP"
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "G": {
+      "tag": "c:ingots/gold"
+    },
+    "T": {
+      "item": "robotica:tesla_coil_1"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "K": {
+      "item": "robotica:copper_coil"
+    }
+  },
+  "result": {
+    "id": "robotica:tesla_coil_2",
+    "count": 1
+  }
+}

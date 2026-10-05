@@ -1,0 +1,335 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "base": "robotica:block/tesla_coil_base",
+    "winding": "robotica:block/tesla_coil_5_winding",
+    "cap": "robotica:block/tesla_coil_5_cap",
+    "tip": "robotica:block/tesla_coil_tip",
+    "particle": "robotica:block/tesla_coil_5_winding"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        2,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#base",
+          "uv": [
+            4,
+            14,
+            12,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#base",
+          "uv": [
+            4,
+            14,
+            12,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#base",
+          "uv": [
+            4,
+            14,
+            12,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#base",
+          "uv": [
+            4,
+            14,
+            12,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#base",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#base",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        2,
+        6
+      ],
+      "to": [
+        10,
+        10,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#winding",
+          "uv": [
+            6,
+            4,
+            10,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#winding",
+          "uv": [
+            6,
+            4,
+            10,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#winding",
+          "uv": [
+            6,
+            4,
+            10,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#winding",
+          "uv": [
+            6,
+            4,
+            10,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        10,
+        7
+      ],
+      "to": [
+        9,
+        11,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#base",
+          "uv": [
+            7,
+            14,
+            9,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#base",
+          "uv": [
+            7,
+            14,
+            9,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#base",
+          "uv": [
+            7,
+            14,
+            9,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#base",
+          "uv": [
+            7,
+            14,
+            9,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        11,
+        5
+      ],
+      "to": [
+        11,
+        13,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cap",
+          "uv": [
+            5,
+            7,
+            11,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#cap",
+          "uv": [
+            5,
+            7,
+            11,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#cap",
+          "uv": [
+            5,
+            7,
+            11,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#cap",
+          "uv": [
+            5,
+            7,
+            11,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#cap",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#cap",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        13,
+        7
+      ],
+      "to": [
+        9,
+        15,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "south": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    }
+  ]
+}
