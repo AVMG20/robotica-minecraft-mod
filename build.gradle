@@ -27,7 +27,21 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // JEI (optional integration)
+    maven {
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com/'
+        content {
+            includeGroup 'mezz.jei'
+            includeGroup 'net.mezzdev.config'
+        }
+    }
+    // Jade (optional integration), via Modrinth maven
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
 }
 
 base {
@@ -121,9 +135,26 @@ neoForge {
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+    // Optional integration mods (JEI, Jade). On the client, showcase and server runs only: the game test server uses mock
+    // players that Jade's join handler cannot talk to, and leaving them out also proves the mod loads without them.
+    optionalMods
+}
+
+neoForge.runs.configureEach {
+    if (name != 'gameTestServer' && name != 'data') {
+        additionalRuntimeClasspathConfiguration.extendsFrom configurations.optionalMods
+    }
 }
 
 dependencies {
+    // Optional integrations: only the APIs are compiled against; the full jars are dev runtime only
+    // (localRuntime is not published as a dependency). The mod loads fine without them.
+    compileOnly "mezz.jei:jei-${jei_mc_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${jei_mc_version}-neoforge-api:${jei_version}"
+    optionalMods "mezz.jei:jei-${jei_mc_version}-neoforge:${jei_version}"
+    compileOnly "maven.modrinth:jade:${jade_version}"
+    optionalMods "maven.modrinth:jade:${jade_version}"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

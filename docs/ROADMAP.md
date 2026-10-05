@@ -29,7 +29,7 @@ Last updated 2026-10-05. Main builds, `./gradlew runGameTestServer` passes 101/1
    - Remove Copper/Gold Conduits once this works.
 3. **Bosses**, Scrap Colossus first. Boss cores then replace the temporary core recipes.
 4. **Art leftovers:** redraw the warp remotes, linking card, rift upgrade, sentry and courier drone icons.
-5. **Compat:** JEI/EMI and Jade plugins, Refined Storage API for the Architect Table, Create rotation for the Winding Crank.
+5. **Compat:** JEI and Jade are done (optional, see README). Still open: EMI, Refined Storage API for the Architect Table, Create rotation for the Winding Crank, opening JEI from the Codex.
 6. **Multiplayer test** on a dedicated server with friends.
 
 ## Working on it
