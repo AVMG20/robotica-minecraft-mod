@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "robotica:advanced_circuit"
+    },
+    {
+      "item": "minecraft:heart_of_the_sea"
+    },
+    {
+      "item": "robotica:copper_coil"
+    },
+    {
+      "tag": "c:plates/iron"
+    }
+  ],
+  "result": {
+    "id": "robotica:rebreather_module",
+    "count": 1
+  }
+}

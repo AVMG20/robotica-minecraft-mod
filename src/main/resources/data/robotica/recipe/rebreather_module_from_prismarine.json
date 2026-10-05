@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "robotica:advanced_circuit"
+    },
+    {
+      "item": "minecraft:prismarine_crystals"
+    },
+    {
+      "item": "minecraft:prismarine_crystals"
+    },
+    {
+      "item": "minecraft:prismarine_crystals"
+    },
+    {
+      "item": "robotica:copper_coil"
+    }
+  ],
+  "result": {
+    "id": "robotica:rebreather_module",
+    "count": 1
+  }
+}

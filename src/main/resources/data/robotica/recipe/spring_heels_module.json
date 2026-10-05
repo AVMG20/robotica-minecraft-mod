@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:slime_block"
+    },
+    {
+      "item": "robotica:electric_motor"
+    },
+    {
+      "item": "robotica:copper_coil"
+    },
+    {
+      "item": "robotica:basic_circuit"
+    }
+  ],
+  "result": {
+    "id": "robotica:spring_heels_module",
+    "count": 1
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ICI",
+    "RAR"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:magnet_module",
+    "count": 1
+  }
+}

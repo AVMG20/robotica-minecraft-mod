@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:reinforced_casing"
+  },
+  "base": {
+    "item": "robotica:exo_chestplate_mk1"
+  },
+  "addition": {
+    "item": "robotica:servo_actuator"
+  },
+  "result": {
+    "id": "robotica:exo_chestplate_mk2",
+    "count": 1
+  }
+}

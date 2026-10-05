@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "robotica:advanced_circuit"
+    },
+    {
+      "item": "minecraft:glass_pane"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "robotica:copper_coil"
+    }
+  ],
+  "result": {
+    "id": "robotica:robot_hud_module",
+    "count": 1
+  }
+}
