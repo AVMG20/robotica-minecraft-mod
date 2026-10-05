@@ -9,7 +9,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, Canvas, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, MATERIALS, Canvas, write_item, write_png  # noqa: E402
 
 ENTITY = ASSETS / 'textures/entity'
 
@@ -252,24 +252,53 @@ def mining_icon(pal, body, light, dark):
     return draw
 
 
-def sentry_icon():
+# Item icons of the sentry and courier drones and the courier remote share the mod wide item look (see core.py): outline 'k',
+# light from the top-left, ramps from pixelart.MATERIALS. Chars: '12345' shell (deep -> highlight), 'abcde' trim,
+# 'y Y z Z' cyan glow (mid, bright, white, deep), 'K' near black glass, 'o O' brass, 'A' amber lens.
+DSTEEL = ('#2A3034', '#3F484E', '#566067', '#7E8A90', '#B5C0C5')    # Mk2 steel, same family as the Mk2 entity shells
+
+
+def ipal(shell, trim):
+    p = {'k': '#1E1A1A', 'K': '#0E0C0C'}
+    p.update(zip('12345', MATERIALS[shell] if isinstance(shell, str) else shell))
+    p.update(zip('abcde', MATERIALS[trim] if isinstance(trim, str) else trim))
+    g = MATERIALS['cyan']
+    p.update({'y': g[2], 'Y': g[3], 'z': g[4], 'Z': g[1]})
+    p.update({'o': MATERIALS['brass'][2], 'O': MATERIALS['brass'][3], 'A': '#FFB21E', 'B': '#FFE08A'})
+    return p
+
+
+SENTRY_ICON1 = ipal('white', 'copper')
+SENTRY_ICON2 = ipal(DSTEEL, 'steel')
+COURIER_ICON1 = ipal('white', 'brass')
+COURIER_ICON2 = ipal(DSTEEL, 'brass')
+
+
+def shaded_ellipse(c, cx, cy, rx, ry, chars):
+    """Lit ball, light from the top-left; `chars` run dark -> light."""
+    for y in range(c.size):
+        for x in range(c.size):
+            nx, ny = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
+            d = nx * nx + ny * ny
+            if d <= 1.0:
+                lum = -0.5 * nx - 0.6 * ny + 0.62 * (1 - d) ** 0.5
+                i = 0 if lum < -0.05 else 1 if lum < 0.3 else 2 if lum < 0.62 else 3 if lum < 0.9 else 4
+                c.set(x, y, chars[i])
+
+
+def sentry_icon(mk2):
+    """Floating orb: rotor on top, visor with a cyan eye, a trim band round the belly and a cannon on the right."""
     def draw(c):
-        # rotor
-        c.rect(3, 2, 10, 1, 'b').rect(3, 2, 3, 1, 'a')
-        c.set(7, 3, 'c').set(8, 3, 'c')
-        # orb
-        for y in range(4, 13):
-            for x in range(3, 13):
-                dx, dy = x - 7.5, y - 8
-                if dx * dx / 22.0 + dy * dy / 18.0 <= 1.0:
-                    c.set(x, y, '2')
-        c.rect(5, 4, 4, 1, '1').rect(4, 5, 3, 1, '1')
-        c.rect(9, 11, 3, 1, '3').rect(6, 12, 5, 1, '3')
-        # eye
-        c.rect(5, 7, 5, 3, 'k').rect(6, 8, 3, 1, 'Y').set(7, 8, 'z')
-        # cannon
-        c.rect(10, 9, 5, 2, 'b').rect(10, 9, 5, 1, 'a').set(15, 9, 'y').set(15, 10, 'y')
-        c.rect(9, 9, 1, 2, 'r')
+        c.rect(3, 2, 10, 1, 'c').rect(3, 2, 4, 1, 'd').set(3, 2, 'e')         # rotor blade
+        c.rect(7, 3, 2, 1, 'b').set(7, 3, 'c')                                # mast
+        shaded_ellipse(c, 7.0, 9.0, 5.0, 5.0, '12345')
+        for x in range(2, 12):                                                # belly band
+            if c.get(x, 11) != '.':
+                c.set(x, 11, 'y' if mk2 else 'c')
+        c.rect(3, 6, 7, 4, 'K').rect(3, 6, 7, 1, '1').set(3, 6, '2')          # visor with a lit brow
+        c.rect(4, 7, 5, 2, 'k').rect(4, 8, 5, 1, 'y').rect(5, 8, 3, 1, 'Y').set(5, 8, 'z')   # eye
+        c.rect(11, 8, 4, 3, 'c').rect(11, 8, 4, 1, 'd').rect(11, 10, 4, 1, 'b')   # cannon barrel
+        c.rect(14, 8, 1, 3, 'y' if mk2 else 'o').set(14, 8, 'z' if mk2 else 'O')  # muzzle
     return draw
 
 
@@ -324,13 +353,37 @@ def courier_sheet(tier):
     return c, g
 
 
-def courier_icon(c):
-    c.rect(2, 3, 4, 1, 'b').rect(10, 3, 4, 1, 'b').set(3, 3, 'a').set(11, 3, 'a')
-    c.rect(3, 4, 2, 2, 'c').rect(11, 4, 2, 2, 'c')
-    c.rect(4, 6, 8, 4, '2').rect(4, 6, 8, 1, '1').rect(4, 9, 8, 1, '3')
-    c.rect(6, 7, 4, 2, 'k').rect(6, 7, 4, 1, 'Y').set(7, 7, 'z')
-    c.rect(5, 10, 6, 3, 'b').rect(5, 10, 6, 1, 'a').rect(5, 12, 6, 1, 'c')
-    c.set(7, 11, 'k').set(8, 11, 'k')
+def courier_icon(mk2):
+    """Front view: two rotors on short posts, a steel hull with an amber sensor and a brass cargo crate underneath."""
+    def draw(c):
+        for x0 in (1, 10):                                                    # rotor blades and posts
+            c.rect(x0, 2, 5, 1, '2').rect(x0, 2, 2, 1, '3')
+            c.rect(x0 + 2, 3, 1, 3, 'b')
+        c.rect(3, 5, 10, 5, '3')                                              # hull
+        c.auto_shade({'3': ('2', '4')})
+        c.rect(6, 6, 4, 3, 'K').rect(7, 7, 2, 1, 'A').set(7, 7, 'B')          # sensor
+        accent = 'y' if mk2 else 'o'
+        c.set(4, 8, accent).set(11, 8, accent)                                # status lights
+        c.rect(4, 10, 8, 4, 'c')                                              # cargo crate
+        c.auto_shade({'c': ('b', 'd')})
+        c.rect(7, 10, 2, 4, 'y' if mk2 else 'b').set(7, 10, 'Y' if mk2 else 'c')   # strap
+    return draw
+
+
+def courier_remote_icon():
+    """Hand-held controller: steel body with a brass antenna, a cyan screen showing a drone blip and two buttons."""
+    c = Canvas(16)
+    c.rect(4, 4, 8, 11, '3')
+    c.auto_shade({'3': ('2', '4')})
+    c.rect(6, 1, 2, 3, 'c').set(6, 1, 'e').rect(6, 0, 2, 1, 'O').set(7, 0, 'o')   # antenna with brass tip
+    c.recess(5, 5, 6, 4, '12345', fill='K')
+    c.rect(6, 6, 4, 2, 'Z').rect(6, 6, 4, 1, 'y').set(8, 7, 'z')                    # screen
+    for x, y in ((6, 10), (5, 11), (7, 11), (6, 12)):                                # d-pad
+        c.set(x, y, 'c')
+    c.set(6, 11, 'k').set(6, 10, 'e')
+    c.rect(9, 10, 2, 2, 'A').set(9, 10, 'B').rect(9, 13, 2, 1, 'o')                 # buttons
+    c.outline('k')
+    return c
 
 
 def main():
@@ -350,20 +403,13 @@ def main():
         write_png(ENTITY / f'courier_drone{suffix}.png', c.rows(), pal, 64)
         if not suffix:
             write_png(ENTITY / 'courier_drone_glow.png', g.rows(), pal, 64)
-        write_item(f'courier_drone{suffix}', icon(courier_icon).rows(), pal)
-    remote = Canvas(16)
-    remote.rect(5, 2, 6, 11, 'c').rect(5, 2, 6, 1, 'a').rect(5, 12, 6, 1, 'k')
-    remote.rect(6, 3, 4, 3, 'k').rect(7, 4, 2, 1, 'Y').set(7, 4, 'z')
-    remote.rect(6, 7, 1, 1, 'r').rect(8, 7, 1, 1, 'y').rect(6, 9, 1, 1, 'y').rect(8, 9, 1, 1, 'r')
-    remote.rect(7, 0, 2, 2, 'b').set(7, 0, 'a')
-    remote.outline('k')
-    write_item('courier_remote', remote.rows(), COURIER1)
-    p1 = dict(MK1)
-    p1.update({'k': '#1E1A1A'})
+    write_item('courier_drone', icon(courier_icon(False)).rows(), COURIER_ICON1)
+    write_item('courier_drone_mk2', icon(courier_icon(True)).rows(), COURIER_ICON2)
+    write_item('courier_remote', courier_remote_icon().rows(), COURIER_ICON1)
     write_item('mining_drone', icon(mining_icon(MK1, '2', '1', '3')).rows(), MK1)
     write_item('mining_drone_mk2', icon(mining_icon(MK2, '2', '1', '3')).rows(), MK2)
-    write_item('sentry_drone', icon(sentry_icon()).rows(), SENTRY1)
-    write_item('sentry_drone_mk2', icon(sentry_icon()).rows(), SENTRY2)
+    write_item('sentry_drone', icon(sentry_icon(False)).rows(), SENTRY_ICON1)
+    write_item('sentry_drone_mk2', icon(sentry_icon(True)).rows(), SENTRY_ICON2)
     print('drone textures written')
 
 

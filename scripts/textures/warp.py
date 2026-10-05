@@ -9,7 +9,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, PALETTE, Canvas, write_anim, write_block, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, MATERIALS, PALETTE, Canvas, write_anim, write_block, write_item, write_png  # noqa: E402
 
 P = dict(PALETTE)
 P.update({
@@ -227,69 +227,85 @@ def write_portal():
 
 
 # ---- Items ----
+# Item icons follow the mod wide item look (see core.py): outline 'k' #1E1A1A, light from the top-left, ramps from
+# pixelart.MATERIALS. Chars: '12345' null purple (deep -> highlight), 'abcde' steel, 'stuvw' teal, '6789' brass,
+# 'K' near black glass.
+
+def item_pal():
+    p = {'k': '#1E1A1A', 'K': '#0E0C0C'}
+    p.update(zip('12345', MATERIALS['null']))
+    p.update(zip('abcde', MATERIALS['steel']))
+    p.update(zip('stuvw', MATERIALS['teal']))
+    b = MATERIALS['brass']
+    p.update({'6': b[1], '7': b[2], '8': b[3], '9': b[4]})
+    return p
+
+
+IP = item_pal()
+
 
 def rift_upgrade():
-    """Purple crystal ring chip on a dark card."""
+    """Upgrade card (same shape as the core upgrade cards): steel card, a portal ring in the window, null contacts."""
     c = Canvas()
-    c.rect(1, 3, 14, 10, 'd').bevel(1, 3, 14, 10, 'm', 'k')
-    c.frame(1, 3, 14, 10, 'k')
-    ring(c, 7.5, 7.5, 2.6, 4.2, 'P')
-    ring(c, 7.5, 7.5, 1.0, 2.2, 'p')
-    c.rect(7, 7, 2, 2, 'Q')
-    for x, y in ((3, 5), (12, 5), (3, 10), (12, 10)):
-        c.set(x, y, 'E')
-    c.rect(1, 13, 14, 1, 'q')
+    c.rect(2, 1, 12, 14, 'd')
+    c.set(13, 1, '.').set(12, 1, '.').set(13, 2, '.')                    # clipped corner
+    c.auto_shade({'d': ('c', 'e')})
+    c.recess(4, 3, 8, 6, 'Kbcde', fill='1')
+    c.rect(5, 4, 6, 4, '1').rect(5, 4, 6, 1, '2').set(5, 4, '3')
+    for dx, row in enumerate(['..vv..', '.v44u.', '.v45u.', '..uu..']):    # portal oval
+        for x, ch in enumerate(row):
+            if ch != '.':
+                c.set(5 + x, 4 + dx, ch)
+    for dy, row in enumerate(['.3...3.', '3.3.3.3', '...3...']):
+        for dx, ch in enumerate(row):
+            if ch == '3':
+                c.set(4 + dx, 10 + dy, '3')
+    for x in range(3, 13, 2):
+        c.set(x, 14, '7')
+    c.outline('k')
     return c.rows()
 
 
 def remote(rift):
-    """Hand-held transmitter: light slate body with a dark screen, d-pad, round buttons and an angled antenna with signal arcs."""
-    glow, bright, dim = ('P', 'Q', 'q') if rift else ('E', 'W', 'T')
+    """Hand-held transmitter: steel body, recessed screen with a pad ring (recall, teal) or a ring split by a rift
+    slit (rift, purple), d-pad, buttons and an antenna with a glowing tip and signal arcs."""
+    glow, bright, dim, deep = ('w', 'v', 'u', 's') if not rift else ('5', '4', '3', '1')
     c = Canvas()
-    c.rect(2, 5, 10, 10, 'm').bevel(2, 5, 10, 10, 'M', 'd')
-    # screen: dark glass showing a pad ring (recall) or a swirl (rift)
-    c.rect(3, 6, 8, 4, 'k').rect(4, 7, 6, 2, dim)
-    if rift:
-        for x, y in ((4, 7), (5, 7), (6, 7), (7, 8), (8, 8), (9, 8), (5, 8)):
-            c.set(x, y, glow)
-        c.set(6, 8, bright).set(8, 7, bright)
-    else:
-        for x, y in ((4, 7), (5, 7), (8, 7), (9, 7), (4, 8), (5, 8), (8, 8), (9, 8)):
-            c.set(x, y, glow)
-        c.set(6, 7, bright).set(7, 8, bright)
-    # buttons: d-pad on the left, two round buttons on the right
-    c.set(4, 12, 'W').set(5, 11, 'W').set(5, 12, 'd').set(5, 13, 'W').set(6, 12, 'W')
-    c.set(8, 11, glow).set(9, 11, glow).set(9, 13, bright if rift else glow).set(8, 13, 'M').set(10, 12, 'M')
-    # antenna with a glowing tip and signal arcs
-    for x, y in ((9, 4), (10, 3), (11, 2)):
-        c.set(x, y, 'M')
-    c.set(12, 1, bright).set(12, 0, glow).set(13, 1, glow)
-    c.set(14, 0, glow).set(14, 2, glow).set(15, 1, dim if not rift else 'P')
-    if rift:
-        for y in (8, 9):
-            c.set(1, y, 'P').set(12, y, 'P')                         # rift fins
+    c.rect(2, 6, 11, 9, 'c')
+    c.auto_shade({'c': ('b', 'd')})
+    c.recess(3, 7, 9, 5, 'Kbcde', fill=deep)
+    glyph = ['.44544.', '4..5..4', '.44544.'] if rift else ['.44444.', '4.555.4', '.44444.']
+    for dy, row in enumerate(glyph):
+        for dx, ch in enumerate(row):
+            if ch != '.':
+                c.set(4 + dx, 8 + dy, glow if ch == '5' else bright)
+    for x, y in ((4, 12), (3, 13), (5, 13), (4, 14)):                    # d-pad
+        c.set(x, y, 'b')
+    c.set(4, 13, 'k').set(4, 12, 'e')
+    c.set(8, 13, bright).set(9, 13, glow).set(10, 13, dim)               # buttons
+    for x, y in ((11, 5), (12, 4)):                                      # antenna
+        c.set(x, y, 'd')
+    c.set(13, 2, glow).set(13, 3, bright).set(14, 2, bright).set(14, 3, dim)    # tip
     c.outline('k')
     return c.rows()
 
 
 def linking_card():
-    """Key card: purple stripe, a chain link (two interlocked rounded loops) and a contact bar."""
+    """Key card: null purple body with a dark stripe, a chain link (teal and white loops) and a brass contact chip."""
     c = Canvas()
-    c.rect(0, 3, 16, 10, 'D').bevel(0, 3, 16, 10, 'M', 'k')
-    c.frame(0, 3, 16, 10, 'k')
-    c.rect(1, 4, 14, 1, 'P').rect(1, 5, 14, 1, 'p')
-    left, right = 'E', 'P'
-    for x in range(4, 8):
-        c.set(x, 7, left).set(x, 11, left)
-    for y in range(8, 11):
-        c.set(3, y, left).set(8, y, left)
-    for x in range(8, 12):
-        c.set(x, 7, right).set(x, 11, right)
-    for y in range(8, 11):
-        c.set(7, y, right).set(12, y, right)
-    c.set(7, 7, left).set(8, 7, right).set(7, 11, right).set(8, 11, left)    # weave
-    c.set(8, 9, 'W').set(7, 9, 'W')
-    c.rect(2, 12, 12, 1, 'm')
+    c.rect(1, 3, 14, 10, '3')
+    c.auto_shade({'3': ('2', '4')})
+    c.rect(2, 4, 12, 2, '1').rect(2, 4, 12, 1, 'K').rect(2, 5, 12, 1, '2')    # magnetic stripe
+    c.set(2, 6, '4')
+    for x in range(5, 9):                                               # left loop, teal
+        c.set(x, 7, 'v').set(x, 10, 'u')
+    c.set(4, 8, 'v').set(4, 9, 'v').set(8, 8, 'u').set(8, 9, 'u')
+    for x in range(8, 12):                                              # right loop, steel
+        c.set(x, 7, 'e').set(x, 10, 'c')
+    c.set(7, 8, 'd').set(7, 9, 'c').set(12, 8, 'd').set(12, 9, 'c')
+    c.set(8, 7, 'v').set(7, 10, 'c')                                    # weave
+    c.rect(2, 11, 3, 1, '7').set(2, 11, '8').rect(11, 11, 3, 1, '2')    # chip, serial bar
+    c.outline('k')
     return c.rows()
 
 
@@ -311,10 +327,10 @@ def main():
     write_block('projector_fin', projector_fin(False), P)
     write_block('projector_fin_on', projector_fin(True), P)
     write_portal()
-    write_item('rift_upgrade', rift_upgrade(), P)
-    write_item('recall_remote', remote(False), P)
-    write_item('rift_remote', remote(True), P)
-    write_item('linking_card', linking_card(), P)
+    write_item('rift_upgrade', rift_upgrade(), IP)
+    write_item('recall_remote', remote(False), IP)
+    write_item('rift_remote', remote(True), IP)
+    write_item('linking_card', linking_card(), IP)
     print('warp textures written')
 
 
