@@ -1,73 +1,44 @@
-# Robotica roadmap and handoff
+# Robotica roadmap
 
-Last updated 2026-10-05. `./gradlew runGameTestServer` passes 76/76 (the replicator flake is fixed), `python3 scripts/audit_assets.py` reports 0 problems.
+Last updated 2026-10-05. Main builds, `./gradlew runGameTestServer` passes 101/101 and `python3 scripts/audit_assets.py` reports 0 problems. Nothing has been play-tested in a real client yet.
 
-## Done (on main)
+## What's in the mod
 
-- Core: parts ladder per age, cells, upgrade cards, FE capability for items, machine menu/screen helpers, fragment merging for lang/tags.
-- Power: Winding Crank + Mainspring, Combustion Generator, Solar Mk1/Mk2, Accumulator I-III, Copper/Gold Conduit networks, Charger, Metal Press.
-- Automation: Stumpy, Sprout, Mk2-Mk4 farm kits, Excavator with upgrade cards, Supply Crate.
-- Gear: Tinker's Hammer, Felling Axe, Bore/Servo/Magma/Null Drill, Chainsaw, 5 weapons, smithing upgrade chains, mode keys (V, B, G), area outline, HUD.
-- Architect: Architect Table, matter, 24 style blocks (4 styles), 8 room types on a 9x9 plot grid, cosmetic drones.
-- Replicator: Essence Vial, 3x3x3 Mob Replicator, harvest/spawn modes, core gate for Age 3/4 mobs.
-- Warp: Warp Pads, Rift Upgrade, Recall/Rift Remote, Portal Projector (single block projecting a floating portal).
-- Codex book, OP Creative Lab, `/robotica` commands.
-- Two audits (27 issues fixed), sound design (52 custom events from vanilla sounds), balance pass (`docs/COSTS.md`, `scripts/cost_report.py`), GUI simplification, texture touch-ups.
-- Onboarding and usability pass: guide advancements (31 steps, unlock recipes in the recipe book), Codex "Next steps" chapter and step-by-step start, chat tips, Shift-detail tooltips, right-click quick insert into robots and machines, robot status/area preview, stall feedback, Excavator progress.
-- Progression rework ("start quickly, scale to the late game"): first-iron generator, Charger, Copper Cell and FE tools; cells recharge the tool in hand; Excavator at diamonds with steep speed costs; Warp Pad at Age 1.
-- Upgrade cards: one item per kind, stackable with per-machine caps (see DESIGN.md "Upgrade cards").
-- Gear: 1x1 in every tool, signature default modes, simpler toggles, smithing path from the Age 0 tools, enchanting, scaled break sounds.
-- Dev tools: `./gradlew runShowcase` (real client screenshots of every block/GUI into `run-showcase/screenshots`), `scripts/contact_sheet.py`, `scripts/audit_assets.py`, Docker build.
+| Area | Contents |
+|---|---|
+| Core | Parts ladder per age, cells, stackable upgrade cards, energy items, shared GUI helpers, 52+ sound events |
+| Power | Winding Crank + Mainspring, Combustion Generator, Solar Mk1/Mk2, Accumulator I-III, Copper/Gold Conduits, Charger, Metal Press |
+| Automation | Stumpy (trees), Sprout (crops), Mk2-Mk4 farm kits, Excavator (real quarry), Survey Rig (virtual quarry), Supply Crate |
+| Drones | Mining Drone (3x3 tunnels), Sentry Drone (guard/follow/stay), Courier Drone (routes + filters) |
+| Gear | Tinker's Hammer, Felling Axe, Bore/Servo/Magma/Null Drill, Chainsaw, 5 weapons, smithing upgrades, V/B/G keys |
+| Exo-Frame | Four armor pieces with modules (speed, night vision, rebreather, double jump, shield, flight, magnet), Mk2 |
+| Architect | Architect Table: 9x9 building shells on a plot grid, 4 styles, doors where buildings touch |
+| Replicator | Essence Vial, 3x3x3 Mob Replicator, harvest/spawn modes |
+| Warp | Warp Pads, Rift Upgrade, Recall/Rift Remote, Portal Projector |
+| Codex | Guide book, 36-step advancement guide, OP Creative Lab, `/robotica` commands |
 
-## Done on 2026-10-05
+## Next
 
-- Architect Table reworked: simple 9x9 shells on a plot grid, table is the floor centre, joined plots form one hall, doors only in outside walls, day-one recipe with a battery slot, seamless style textures with glowing light panels.
-- Onboarding: 36-step advancement guide that unlocks recipes step by step, Codex "Next steps" page, chat tips, Shift tooltips.
-- Tools: 1x1 as a normal mode, V to cycle, four toggles, size-scaled break sounds, cheap first-iron drill and axe, cells recharge the held tool.
-- Upgrades: one stackable card per kind with per-machine caps.
-- Drones: Mining Drone (3x3 tunnels, torches, returns for lava), Sentry Drone (guard/follow/stay), Courier Drone (routes + filters).
-- Survey Rig: lag-free virtual quarry per chunk.
-- Exo-Frame armor: four pieces with modules (speed, night vision, rebreather, double jump, shield, flight, magnet...), Mk2 upgrade.
-- Art pass for machines, robots, items and drones (glow overlays, animated details).
-- Not play-tested yet: GUIs, models, glow layers and keybinds have only been checked by compiling and static previews.
+1. **Play-test.** Run `./gradlew runClient` (or `runShowcase` for screenshots) and check GUIs, models, glow layers, keybinds, the Codex guide page, HUDs and drones. Fix what looks or feels wrong.
+2. **Tesla Coil wireless power** (replaces the conduits):
+   - Torch-sized coil, placeable on floors, walls and ceilings. High transfer rate, limited number of links.
+   - A network starts at a coil placed on a Robotica storage block (Accumulator). Coils link to machines or to other coils.
+   - Coil-to-coil chaining extends range at 5% power loss per hop; each coil-to-coil link uses one link slot.
+   - Tiers by link count: 4, 8, 12, 16, 32, each more expensive.
+   - Linking tool: click a coil, then a machine. The clicked face is the side power enters.
+   - Remove Copper/Gold Conduits once this works.
+3. **Bosses**, Scrap Colossus first. Boss cores then replace the temporary core recipes.
+4. **Art leftovers:** redraw the warp remotes, linking card, rift upgrade, sentry and courier drone icons.
+5. **Compat:** JEI/EMI and Jade plugins, Refined Storage API for the Architect Table, Create rotation for the Winding Crank.
+6. **Multiplayer test** on a dedicated server with friends.
 
-## Unfinished work (stopped when usage ran out)
-
-1. **Block texture overhaul (Opus)**: WIP commit on branch `worktree-agent-afc43a27d89f396c1` (worktree `.claude/worktrees/agent-afc43a27d89f396c1`). Not verified; only 3 files changed. Probably easier to restart than to merge. Goal: seamless building blocks without per-block borders, 2-4 random variants, light blocks as glowing panels (no lantern picture), emissive overlays (`neoforge_data` per face) for lights/screens, machines with proper front/side/top faces, shared material helpers in `scripts/pixelart.py`, `scripts/tile_preview.py`. Do not touch the Portal Projector assets.
-2. ~~Flaky replicator test~~: fixed. At x20 the controller burned 7,000 FE/t, so its 1M buffer lasted two cycles; a zombie roll with Looting III drops no flesh 1 time in 18, and two empty rolls left the test stalled. The tests now keep the buffer topped up.
-3. **Base builder expansion (Opus)**: lost when stopped, restart from scratch. Player's wishes:
-   - room sizes 9x9, 12x12 and 15x15 on a 3-block grid, doors where footprints touch;
-   - no pillars inside rooms, no vanilla furniture (no furnaces, chests);
-   - purpose-built spaces: Hub/atrium, Machine Bay (machine pads + cable trenches), Farm Hall (beds + empty irrigation channels), Storage Wing (wall niches), Hangar/drone deck, Observatory dome, Courtyard, Workshop, Tower/stairwell; nice roofs, light strips, trim;
-   - ghost blocks of queued buildings in the world;
-   - drones that really build: fly out, remove blocks, place, return; more drones = faster;
-   - table add-ons: Drone Bay (+1 drone), Foundation (fill under floors), Supply Link (pull from nearby inventories/RS), Range Extender;
-   - simple visual GUI with little text.
-
-## Planned: Tesla Coil wireless power (player request, not built yet)
-
-Inspired by Draconic Evolution's wireless power. Replaces Robotica's conduits.
-- Tesla Coil: torch-sized block, placeable on floors, walls and ceilings. Emits FE wirelessly at a high rate, but only to a limited number of links.
-- A network starts at a coil placed on a Robotica power storage block (Accumulator). From there a coil links to machines or to other coils.
-- Coil-to-coil links extend range (chaining) at 5% power loss per hop, and each coil-to-coil link uses one of the coil's link slots.
-- Tiers by link count: 4, 8, 12, 16, 32 links, each tier more expensive.
-- Linking tool: click a coil, then a machine. The face you click is the side power enters (some mods' machines only accept power on specific sides).
-- Remove Copper/Gold Conduits once this exists.
-
-## Next (after the above)
-
-- v0.2 Defense: Guard Drone + Perimeter Post, Wingman, Mole, Command Tablet.
-- v0.3 Exo-Frame armor (speed, water breathing, flight) and bosses (Scrap Colossus first); boss cores replace the temporary core recipes.
-- Not play-tested yet: the Codex guide page, HUD mode strip, Shift tooltips and quick insert were only compiled and game-tested. Check them in `runShowcase`/`runClient`.
-- Later: Survey Rig (virtual quarry), JEI/EMI + Jade plugins, Refined Storage API for the builder, Create crank compat, real play-testing on a server with friends.
-
-## How to resume
+## Working on it
 
 ```sh
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew runGameTestServer && python3 scripts/audit_assets.py   # health check
-./gradlew runShowcase                                            # screenshots
 ./gradlew runClient                                              # play
+./gradlew runShowcase                                            # screenshots into run-showcase/screenshots
 ```
 
-Agents should read `docs/AGENT_BRIEF.md` (rules) and `docs/DESIGN.md` (spec) first.
+Agents read `docs/AGENT_BRIEF.md` (rules) and `docs/DESIGN.md` (spec) first. Balance numbers live in `docs/COSTS.md` (`python3 scripts/cost_report.py`).

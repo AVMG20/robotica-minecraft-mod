@@ -1,32 +1,35 @@
 # Robotica
 
-A NeoForge 1.21.1 mod about robots, drones, farms, machines and power tools, from the stone age to the End. Uses Forge Energy, so it works next to Thermal, Mekanism, Refined Storage and AE2. Built for multiplayer servers.
+A NeoForge 1.21.1 mod about robots, drones, farms, machines, power tools and powered armor, from the stone age to the End. It uses Forge Energy, so it works next to Thermal, Mekanism, Refined Storage and AE2, and it runs on multiplayer servers.
 
-Design: [docs/DESIGN.md](docs/DESIGN.md).
+- Design: [docs/DESIGN.md](docs/DESIGN.md)
+- Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)
+- Costs per item: [docs/COSTS.md](docs/COSTS.md)
 
-## Run it
+## Play it
 
-Needs Java 21 (`brew install openjdk@21` on a Mac).
+1. Build the jar: `./gradlew build` → `build/libs/robotica-0.1.0.jar`.
+2. Install NeoForge 21.1.252 for Minecraft 1.21.1 (installer from neoforged.net, "Install client").
+3. Copy the jar into `~/Library/Application Support/minecraft/mods` (Windows: `%APPDATA%\.minecraft\mods`).
+4. Start the "neoforge" installation in the Minecraft Launcher.
+
+New players get the Robotica Codex on first join. Its "Next steps" page and the Robotica advancement tab guide you through the ages.
+
+## Develop
+
+Needs Java 21 (`brew install openjdk@21`).
 
 ```sh
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
-./gradlew runClient          # dev client with the mod loaded (offline player "Dev")
-./gradlew build              # mod jar in build/libs/
-./gradlew runGameTestServer  # headless server + game tests (also proves server safety)
+./gradlew runClient           # dev client with the mod (offline player "Dev")
+./gradlew runGameTestServer   # headless server + game tests
+./gradlew runShowcase         # screenshots of every block and GUI, then quits
+python3 scripts/audit_assets.py   # models, textures, names, loot tables (run after the game tests)
 ```
 
-### Without a local Java: Docker
+No local Java? `scripts/docker-build.sh` builds the jar in Docker, `scripts/docker-build.sh runGameTestServer` runs the tests.
 
-```sh
-scripts/docker-build.sh                    # jar in build/libs/
-scripts/docker-build.sh runGameTestServer  # headless game tests
-```
-
-The first run takes a few minutes; downloads are cached in the `robotica-gradle` Docker volume. Starting the game client still needs Java on your machine (or use the jar in a normal launcher).
-
-## Testing in game
-
-Every player gets the Robotica Codex on first join. Operators see a Creative Lab page in it (all items, age kits, charge, spawn mobs, weather), and can use:
+Operators can test in game with the Codex's Creative Lab page or:
 
 ```
 /robotica kit <0-4>    /robotica charge    /robotica charge_target
@@ -37,9 +40,9 @@ Every player gets the Robotica Codex on first join. Operators see a Creative Lab
 
 | Path | What |
 |---|---|
-| `src/main/java/com/arno/robotica/core` | shared energy, parts ladder, upgrade cards, menu/screen bases |
-| `.../power` `.../automation` `.../gear` `.../architect` `.../replicator` `.../warp` `.../codex` | feature modules, each with its own registries and `client/` package |
-| `src/main/fragments/<module>/` | lang and tag fragments, merged at build time |
-| `scripts/textures/*.py` | pixel-art texture generators (`python3 scripts/textures/<module>.py`) |
-| `scripts/data/core_recipes.py` | core recipe generator |
-| `scripts/contact_sheet.py` | renders all textures into one PNG for a visual check |
+| `src/main/java/com/arno/robotica/core` | Energy, parts ladder, upgrade cards, sounds, GUI helpers |
+| `.../power` `automation` `drones` `gear` `exo` `architect` `replicator` `warp` `codex` | Feature modules, each with its own registries and a `client/` package |
+| `src/main/fragments/<module>/` | Lang and tag fragments, merged at build time |
+| `scripts/textures/*.py` | Pixel-art texture generators |
+| `scripts/data/*.py` | Recipe, model and guide generators |
+| `scripts/contact_sheet.py`, `scripts/model_preview.py` | Visual checks of textures and models |
