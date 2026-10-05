@@ -45,7 +45,7 @@ public final class AutomationConfig {
                 .defineInRange("energyBuffer", 20_000, 1_000, 100_000_000);
         STUMPY_FE_PER_TICK = b.comment("FE per tick while Stumpy works (before upgrade multipliers).")
                 .defineInRange("stumpyFePerTick", 4, 0, 10_000);
-        STUMPY_FE_PER_LOG = b.comment("FE per log Stumpy fells, paid when the tree comes down (before efficiency cards). A tree never costs more than the internal buffer.")
+        STUMPY_FE_PER_LOG = b.comment("FE per log Stumpy fells, paid when the tree comes down (before efficiency cards). A tree never costs more than half the internal buffer.")
                 .defineInRange("stumpyFePerLog", 250, 0, 100_000);
         STUMPY_TICKS_PER_LOG = b.comment("Rest after a tree, in ticks per log felled (speed cards shorten it). Stumpy's area is one block smaller on each side than Sprout's.")
                 .defineInRange("stumpyTicksPerLog", 10, 0, 1_200);

@@ -80,6 +80,24 @@ public class AutomationGameTests {
         });
     }
 
+    /** A huge tree (90 logs) costs at most half the buffer, so a working Stumpy (never exactly full) still fells it. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void stumpyFellsHugeTrees(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 0);
+        for (int dx = 0; dx < 3; dx++) {
+            for (int dz = 0; dz < 3; dz++) {
+                helper.setBlock(new BlockPos(dx, 0, 2 + dz), Blocks.DIRT);
+                for (int y = 1; y <= 10; y++) helper.setBlock(new BlockPos(dx, y, 2 + dz), Blocks.OAK_LOG);
+            }
+        }
+        helper.setBlock(new BlockPos(1, 11, 3), Blocks.OAK_LEAVES);
+        helper.setBlock(bot, AutomationContent.STUMPY.get());
+        StumpyBlockEntity stumpy = helper.getBlockEntity(bot);
+        // No battery: a little under full, like a buffer that drains while it works.
+        stumpy.energy.setEnergy(stumpy.energy.getMaxEnergyStored() - 1_000);
+        helper.succeedWhen(() -> helper.assertBlockNotPresent(Blocks.OAK_LOG, new BlockPos(1, 5, 3)));
+    }
+
     /** Every log costs FE: with too little in the buffer and no battery Stumpy leaves the tree standing. */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void stumpyPaysPerLog(GameTestHelper helper) {

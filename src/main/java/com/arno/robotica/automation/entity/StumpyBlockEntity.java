@@ -92,9 +92,10 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
             if (ignored.size() > 8192) ignored.clear();
             return false;
         }
-        // Every log costs FE when the tree comes down; a huge tree is capped at the buffer so it can still be felled.
+        // Every log costs FE when the tree comes down. A huge tree is capped at half the buffer: the buffer drains a
+        // little every working tick, so it is never exactly full and a full-buffer price could never be paid.
         // Not enough yet: skip this round, the battery tops the buffer up and the next scan finds the tree again.
-        long cost = Math.min((long) scaledDrain(AutomationConfig.stumpyFePerLog(), 1) * tree.logs.size(), energy.getMaxEnergyStored());
+        long cost = Math.min((long) scaledDrain(AutomationConfig.stumpyFePerLog(), 1) * tree.logs.size(), energy.getMaxEnergyStored() / 2);
         if (!energy.consume((int) cost)) return false;
         ItemStack tool = new ItemStack(Items.IRON_AXE);
         List<ItemStack> drops = new ArrayList<>();
