@@ -19,6 +19,18 @@ Last updated 2026-10-05. `./gradlew runGameTestServer` passes 76/76 (the replica
 - Gear: 1x1 in every tool, signature default modes, simpler toggles, smithing path from the Age 0 tools, enchanting, scaled break sounds.
 - Dev tools: `./gradlew runShowcase` (real client screenshots of every block/GUI into `run-showcase/screenshots`), `scripts/contact_sheet.py`, `scripts/audit_assets.py`, Docker build.
 
+## Done on 2026-10-05
+
+- Architect Table reworked: simple 9x9 shells on a plot grid, table is the floor centre, joined plots form one hall, doors only in outside walls, day-one recipe with a battery slot, seamless style textures with glowing light panels.
+- Onboarding: 36-step advancement guide that unlocks recipes step by step, Codex "Next steps" page, chat tips, Shift tooltips.
+- Tools: 1x1 as a normal mode, V to cycle, four toggles, size-scaled break sounds, cheap first-iron drill and axe, cells recharge the held tool.
+- Upgrades: one stackable card per kind with per-machine caps.
+- Drones: Mining Drone (3x3 tunnels, torches, returns for lava), Sentry Drone (guard/follow/stay), Courier Drone (routes + filters).
+- Survey Rig: lag-free virtual quarry per chunk.
+- Exo-Frame armor: four pieces with modules (speed, night vision, rebreather, double jump, shield, flight, magnet...), Mk2 upgrade.
+- Art pass for machines, robots, items and drones (glow overlays, animated details).
+- Not play-tested yet: GUIs, models, glow layers and keybinds have only been checked by compiling and static previews.
+
 ## Unfinished work (stopped when usage ran out)
 
 1. **Block texture overhaul (Opus)**: WIP commit on branch `worktree-agent-afc43a27d89f396c1` (worktree `.claude/worktrees/agent-afc43a27d89f396c1`). Not verified; only 3 files changed. Probably easier to restart than to merge. Goal: seamless building blocks without per-block borders, 2-4 random variants, light blocks as glowing panels (no lantern picture), emissive overlays (`neoforge_data` per face) for lights/screens, machines with proper front/side/top faces, shared material helpers in `scripts/pixelart.py`, `scripts/tile_preview.py`. Do not touch the Portal Projector assets.
