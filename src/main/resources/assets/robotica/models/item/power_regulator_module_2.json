@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "robotica:item/power_regulator_module_2"
+  }
+}

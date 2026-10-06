@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QCQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "C": {
+      "item": "minecraft:slime_block"
+    },
+    "U": {
+      "item": "robotica:spring_heels_module_2"
+    }
+  },
+  "result": {
+    "id": "robotica:spring_heels_module_3",
+    "count": 1
+  }
+}

@@ -106,6 +106,60 @@ API (`core.upgrade`): `new Upgrades(slots, Set<UpgradeKind>, onChanged)` (kinds 
 - Metal Press (Age 1): 1 ingot → 1 plate, 20 FE/t, 100 ticks. Right-click with ingots or upgrade cards.
 - Cells in a player's inventory recharge the FE tool or weapon in their hands at the cell's output rate.
 
+## Exo-Frame (module `exo`)
+
+Powered armor: four pieces in four marks, modules that are real items installed in the pieces, a core socket for boss cores. The armor never breaks and keeps its base protection when empty; only the modules stop. Every number below is a server config value in `robotica-exo-server.toml` (energy values pass through the global energy multiplier, Solar Weave and the Kinetic Generator through the generation multiplier).
+
+Marks (Mk2-Mk4 by smithing; smithing keeps energy, modules, switches and the core):
+| Mark | Age | Recipe | Protection (boots/legs/chest/helmet) | Module slots | Battery |
+|---|---|---|---|---|---|
+| Mk1 | 1 | iron armor piece + Iron Casing, Electric Motors, Copper Coils | 2/5/6/2 | 1 | helmet 200k, chest 1M, legs 400k, boots 200k |
+| Mk2 | 2 | template Reinforced Casing + Mk1 + Servo Actuator | 3/6/8/3, toughness 2 | 2 | x4 |
+| Mk3 | 3 | template Blazing Casing + Mk2 + Plasma Actuator | 3/6/8/3, toughness 3, knockback resistance 0.1 | 3 | x16 |
+| Mk4 | 4 | template Null Casing + Mk3 + Null Circuit | 4/7/9/4, toughness 4, knockback resistance 0.2, does not burn | 4 | x64 |
+
+Raw cost per full set: Mk1 about 225 IE, Mk2 840, Mk3 5,450, Mk4 17,700. Protection values live in the armor materials (registry data), the batteries in the config (`capacity*`, `markCapacityMultiplier`).
+
+Energy: with all four pieces worn every module draws from all four batteries (most charged first); a partial set draws from the module's own piece. Cells and Mainsprings in the inventory top the suit up (2,000 FE/s for all cells together). Other mods' chargers fill the pieces at any rate.
+
+Modules: one item per kind and level. A kind fits certain pieces and needs a minimum mark per level; the module screen refuses anything else and says why (wrong piece, mark too low, already in the suit). A kind works once per suit (the highest switched-on level counts if two get in anyway); Capacitor Plating is the exception, it works per piece. Level upgrades are crafted from the level below plus the next age's circuits (Age 2 Advanced, Age 3 Quantum, Age 4 Null Circuits).
+| Module | Piece | Levels: min. mark | Effect | Energy (I / II / III) |
+|---|---|---|---|---|
+| Night Vision | helmet | Mk1 / Mk2 / Mk3 | night vision; II and III thermal sight: hostile mobs within 24 / 48 blocks show through walls (client outline) | 10 / 20 / 30 FE/s |
+| Rebreather | helmet | Mk2 | breathe under water | 60 FE/s submerged |
+| Robot HUD | helmet | Mk2 | nearby drones on the HUD (distance, health) | 5 FE/s |
+| Auto-Feeder | helmet | Mk1 | eats the best fitting plain food (no effects) at food level 14 or less | 500 FE per food |
+| Solar Weave | helmet | Mk2 | charges the suit by day under open sky, not in rain | makes 200 FE/s |
+| Sonar Pulse | helmet | Mk2 / Mk3 / Mk4 | key N: ores (`c:ores`) and mobs within 16 / 24 / 32 blocks are outlined for 10 s; the client scans its loaded sections, the server charges and cools down (5 s) | 4,000 / 6,000 / 8,000 per ping |
+| Jet Assist | chest | Mk2 / Mk3 / Mk4 | slows long falls; 1 / 2 / 3 extra jumps in the air | 40 / 30 / 20 FE/s gliding, 400 / 350 / 300 per jump |
+| Flight | chest | Mk3 | creative flight, K toggles | 2,400 FE/s while flying |
+| Kinetic Shield | chest | Mk3 / Mk4 / Mk4 | absorbs 75 / 85 / 95 % of each hit with FE | 2,000 / 1,600 / 1,200 FE per point |
+| Med Injector | chest | Mk2 / Mk3 / Mk4 | at 40 % health heals 2 / 3 / 4 hearts, cooldown 60 / 45 / 30 s | 20,000 / 30,000 / 40,000 per shot |
+| Hazard Seal | chest | Mk3 | clears poison, wither, hunger, nausea, blindness | 2,000 per effect |
+| Servo Stride | legs | Mk1 / Mk2 / Mk3 | +20 / 40 / 60 % speed | 30 / 60 / 100 FE/s moving |
+| Kinetic Generator | legs | Mk1 | walking charges the suit | makes 5 FE per block (8 sprinting) |
+| Dash Thrusters | legs or boots | Mk3 | key R: horizontal burst where you look (1.6 blocks/tick), cooldown 3 s | 3,000 per dash |
+| Step Assist | boots | Mk1 | step height 1.0: walk up full blocks (Age 1, about 12 IE) | 10 FE/s moving |
+| Spring Heels | boots | Mk1 / Mk2 / Mk3 | jump strength +0.15 / 0.25 / 0.35 | 100 / 150 / 200 per jump |
+| Fall Dampener | boots | Mk1 / Mk2 / Mk3 | absorbs fall damage beyond 3 blocks | 150 / 100 / 60 per block |
+| Magnet | boots | Mk1 / Mk2 / Mk3 | pulls items within 6 / 10 / 16 blocks | 40 / 60 / 80 FE/s pulling |
+| Hydro Fins | boots | Mk2 | swim speed +50 %, full mining speed under water | 20 FE/s in water |
+| Capacitor Plating | any | Mk1 / Mk2 / Mk3 | +50 / 100 / 200 % battery for its piece (removing it caps the stored energy) | none |
+| Power Regulator | any | Mk2 / Mk3 / Mk4 | every module in the suit uses 10 / 20 / 30 % less FE | none |
+
+Core socket: chestplates from Mk2 on hold one Servo, Magma or Antigrav Core (never consumed, removable, kept through smithing). The bonus needs all four pieces worn at Mk2 or better (`setBonusMinMark`):
+- Servo Core, Overclock: key O gives Haste II and Speed I for 10 s, 60 s cooldown, 50,000 FE.
+- Magma Core: fire immunity (ambient Fire Resistance, fire damage ignored), melee hits set the target on fire for 4 s, lava does not slow you (client movement).
+- Antigrav Core: no fall damage, Flight costs half, Dash cooldown halved.
+
+Screen and controls: J opens the module screen for all four worn pieces (rows; absent pieces show an empty row), sneak + right-click a piece in hand opens that piece alone. Per row: the piece, its battery, four slot positions (slots the mark does not have yet are locked and say which mark opens them), a switch and level pips per module, the core socket on the chestplate; the pooled suit battery on the right and the set bonus next to the title. Tooltips give cost, requirement and whether a module is shadowed by a duplicate. Switches are menu buttons validated on the server. Keys: J screen, K flight, R dash, N sonar, O overclock (no clash with V, B, G, H or vanilla defaults); a second jump in mid air is the Jet Assist double jump.
+
+HUD (client config `robotica-exo-client.toml`: on/off, corner, offsets, outlines, flight sound): suit energy bar, one icon per installed module (dimmed when off, empty or a duplicate), cooldown rings (Dash, Med Injector, Sonar, Overclock; vanilla item cooldowns, so they sync by themselves), sonar results, the Robot HUD's drone list.
+
+Juice: jet glide clouds, flight flames and smoke plus a client thruster loop, shield sparks and zap, dash whoosh (wind burst) and puff, sonar chime, injector hiss and hearts, hazard seal fizz, overclock spark burst. Only vanilla sounds and the core sound events.
+
+Engineering: per-player runtime state keyed by UUID and dropped on logout, death and when the suit comes off; costs are booked per piece and written to the items every 10 ticks; attribute modifiers are transient, our mob effects ambient and hidden, flight is a granted `mayfly` that is revoked again (never in creative or spectator).
+
 ## Automation (module `automation`)
 
 Area workers are block entities, never mobs. All of them: battery slot (cell or Mainspring), upgrade slots, output to inventories on any adjacent side (chest, RS Interface, AE2 interface, Supply Crate), internal 9-slot buffer when outputs are full, work stops when full or out of energy. Idle drain 0.2 FE/t (rounded: 1 FE every 5 ticks).

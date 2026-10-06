@@ -42,7 +42,7 @@
   "advancements.robotica.guide.basic_circuit.title": "Wired",
   "advancements.robotica.guide.basic_circuit.description": "Craft a Basic Circuit (it needs gold). Solar, upgrade cards, farm kits and warp pads open up.",
   "advancements.robotica.guide.exo.title": "Suit Up",
-  "advancements.robotica.guide.exo.description": "Craft an Exo-Frame piece. Sneak-right-click it to add a module, press J to switch modules.",
+  "advancements.robotica.guide.exo.description": "Craft an Exo-Frame piece. Press J (or sneak-right-click the piece) to add modules. Step Assist on the boots walks up blocks.",
   "advancements.robotica.guide.drones.title": "Air Support",
   "advancements.robotica.guide.drones.description": "Craft a Sentry Drone to guard your base, or a Courier Drone to carry items between chests.",
   "advancements.robotica.guide.metal_press.title": "Press Ahead",
@@ -81,6 +81,8 @@
   "advancements.robotica.guide.magma_core.description": "Get a Magma Core: Magma Drill, Arc Blade, Rift Upgrade and Age 3 mobs in the replicator.",
   "advancements.robotica.guide.magma_drill.title": "Smelt as You Go",
   "advancements.robotica.guide.magma_drill.description": "Smith a Magma Drill. Turn on auto-smelt in its settings.",
+  "advancements.robotica.guide.exo_mk3.title": "Blazing Frame",
+  "advancements.robotica.guide.exo_mk3.description": "Smith an Exo piece to Mk3: Blazing Casing template, the Mk2 piece, a Plasma Actuator. Three module slots; Flight, Kinetic Shield and Hazard Seal need it.",
   "advancements.robotica.guide.age4.title": "Antigrav Age",
   "advancements.robotica.guide.age4.description": "Craft a Null Circuit: ender pearls and a nether star.",
   "advancements.robotica.guide.antigrav_core.title": "Weightless",
@@ -89,6 +91,8 @@
   "advancements.robotica.guide.null_drill.description": "Smith a Null Drill and dig a 12x12x12 cube in one swing.",
   "advancements.robotica.guide.flight.title": "Lift Off",
   "advancements.robotica.guide.flight.description": "Put a Flight Module in an Exo chestplate and press K to fly.",
+  "advancements.robotica.guide.exo_mk4.title": "Null Frame",
+  "advancements.robotica.guide.exo_mk4.description": "Smith an Exo piece to Mk4: Null Casing template, the Mk3 piece, a Null Circuit. Four module slots, and it does not burn.",
   "advancements.robotica.guide.portal.title": "Through the Lens",
   "advancements.robotica.guide.portal.description": "Link two Portal Projectors with a Linking Card and step through the portal."
 }

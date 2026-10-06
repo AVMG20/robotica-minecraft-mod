@@ -3,16 +3,16 @@
   "category": "equipment",
   "ingredients": [
     {
-      "item": "robotica:advanced_circuit"
-    },
-    {
-      "item": "robotica:servo_actuator"
+      "item": "minecraft:slime_block"
     },
     {
       "item": "minecraft:slime_block"
     },
     {
-      "item": "robotica:copper_coil"
+      "item": "robotica:electric_motor"
+    },
+    {
+      "item": "robotica:basic_circuit"
     }
   ],
   "result": {

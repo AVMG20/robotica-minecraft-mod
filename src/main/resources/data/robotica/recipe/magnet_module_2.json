@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ACA",
+    " U "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "C": {
+      "item": "minecraft:iron_block"
+    },
+    "U": {
+      "item": "robotica:magnet_module"
+    }
+  },
+  "result": {
+    "id": "robotica:magnet_module_2",
+    "count": 1
+  }
+}

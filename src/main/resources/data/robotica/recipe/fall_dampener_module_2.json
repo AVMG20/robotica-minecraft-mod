@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ACA",
+    " U "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "C": {
+      "item": "robotica:servo_actuator"
+    },
+    "U": {
+      "item": "robotica:fall_dampener_module"
+    }
+  },
+  "result": {
+    "id": "robotica:fall_dampener_module_2",
+    "count": 1
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "NCN",
+    " U "
+  ],
+  "key": {
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "C": {
+      "item": "minecraft:shulker_shell"
+    },
+    "U": {
+      "item": "robotica:jet_assist_module_2"
+    }
+  },
+  "result": {
+    "id": "robotica:jet_assist_module_3",
+    "count": 1
+  }
+}

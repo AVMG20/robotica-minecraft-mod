@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "GAG",
+    "CBC"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "B": {
+      "item": "minecraft:glass_bottle"
+    }
+  },
+  "result": {
+    "id": "robotica:med_injector_module",
+    "count": 1
+  }
+}

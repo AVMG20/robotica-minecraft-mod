@@ -1,0 +1,43 @@
+{
+  "parent": "robotica:guide/magma_core",
+  "display": {
+    "icon": {
+      "id": "robotica:exo_chestplate_mk3"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.exo_mk3.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.exo_mk3.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:exo_helmet_mk3",
+              "robotica:exo_chestplate_mk3",
+              "robotica:exo_leggings_mk3",
+              "robotica:exo_boots_mk3"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 30
+  }
+}

@@ -370,7 +370,7 @@
       "pages": [
         {
           "title": "The suit",
-          "text": "Four pieces of powered armor. It protects like iron, never breaks and runs on FE.\n\nCharge each piece in the Charger, or carry a cell: it tops the suit up. Wear all four and they share their batteries. An empty suit still protects; only the modules stop.",
+          "text": "Four pieces of powered armor. They never break and run on FE.\n\nCharge each piece in the Charger, or carry a cell: it tops the suit up. Wear all four and they share their batteries. An empty suit still protects; only the modules stop.",
           "items": [
             "robotica:exo_helmet_mk1",
             "robotica:exo_chestplate_mk1",
@@ -380,23 +380,71 @@
         },
         {
           "title": "Modules",
-          "text": "Sneak-right-click a piece to add modules. Press J while wearing it to switch them on or off.\n\nHelmet: night vision, rebreather, robot HUD.\nChest: jet assist (double jump), kinetic shield, flight (K to toggle).\nLegs: servo stride (faster running), step assist.\nBoots: spring heels, fall dampener, magnet.\n\nModules only use energy while they work. Flight is the hungriest.",
+          "text": "Press J to see all four pieces, or sneak-right-click a piece in your hand. Drop modules into the slots and click the switch next to one to turn it off.\n\nEvery kind works once per suit. A module tells you which piece and which mark it needs; the screen explains when it refuses one.",
           "items": [
             "robotica:night_vision_module",
-            "robotica:jet_assist_module",
-            "robotica:flight_module",
+            "robotica:step_assist_module",
+            "robotica:auto_feeder_module",
+            "robotica:kinetic_generator_module",
             "robotica:servo_stride_module_1",
-            "robotica:magnet_module",
-            "robotica:fall_dampener_module"
+            "robotica:magnet_module"
           ]
         },
         {
-          "title": "Upgrading",
-          "text": "At a smithing table, a Reinforced Casing as template, the Mk1 piece and a Servo Actuator make the Mk2 piece: diamond protection, two module slots and a bigger battery. It keeps its energy and modules.\n\nServo Stride II and III are built from the level below. Flight needs a Jet Assist module and an Antigrav Core.",
+          "title": "Early modules",
+          "text": "Helmet: Night Vision, Auto-Feeder.\nLegs: Servo Stride (run faster), Kinetic Generator (walking charges the suit).\nBoots: Step Assist (walk up full blocks), Spring Heels, Fall Dampener, Magnet.\nAny piece: Capacitor Plating (a bigger battery for that piece).",
+          "items": [
+            "robotica:spring_heels_module",
+            "robotica:fall_dampener_module",
+            "robotica:capacitor_plating_module"
+          ]
+        },
+        {
+          "title": "Marks",
+          "text": "Smithing upgrades a piece and keeps its energy, modules and core.\n\nMk2: Reinforced Casing + Servo Actuator. 2 slots.\nMk3: Blazing Casing + Plasma Actuator. 3 slots, netherite-grade.\nMk4: Null Casing + Null Circuit. 4 slots, does not burn.\n\nEvery mark has a four times bigger battery.",
           "items": [
             "robotica:exo_chestplate_mk2",
-            "robotica:servo_stride_module_2",
-            "robotica:servo_stride_module_3"
+            "robotica:exo_chestplate_mk3",
+            "robotica:exo_chestplate_mk4"
+          ]
+        },
+        {
+          "title": "Levels",
+          "text": "Many modules come in levels I to III. Craft the next level from the one below plus the next age's circuits. Higher levels do more and often cost less FE, but need a higher mark: level II wants Mk2, level III Mk3 (Age 4 levels Mk4).\n\nThe gold pips in the module screen show the level.",
+          "items": [
+            "robotica:magnet_module_2",
+            "robotica:magnet_module_3",
+            "robotica:night_vision_module_2",
+            "robotica:power_regulator_module"
+          ]
+        },
+        {
+          "title": "Servo and Deep modules",
+          "text": "Helmet: Solar Weave, Sonar Pulse (N: outlines ores and mobs), Rebreather, Robot HUD.\nChest: Jet Assist (double jump), Med Injector, Hazard Seal (clears poison and wither), Kinetic Shield.\nLegs or boots: Dash Thrusters (R).\nBoots: Hydro Fins.\nAny piece: Power Regulator (less FE for everything).",
+          "items": [
+            "robotica:sonar_pulse_module",
+            "robotica:med_injector_module",
+            "robotica:hazard_seal_module",
+            "robotica:dash_thrusters_module",
+            "robotica:hydro_fins_module",
+            "robotica:kinetic_shield_module"
+          ]
+        },
+        {
+          "title": "Flight",
+          "text": "The Flight module needs a Mk3 chestplate and an Antigrav Core to craft. Press K to switch it on and off. It is the hungriest module by far: bring a big battery or a Power Regulator.",
+          "items": [
+            "robotica:flight_module",
+            "robotica:jet_assist_module"
+          ]
+        },
+        {
+          "title": "Core socket",
+          "text": "Chestplates from Mk2 on hold one boss core. It is never used up. With all four pieces at Mk2 or better:\n\nServo Core: O overclocks (Haste II and Speed for 10 s).\nMagma Core: fire immunity, burning hits, lava does not slow you.\nAntigrav Core: no fall damage, cheaper Flight, faster Dash.",
+          "items": [
+            "robotica:servo_core",
+            "robotica:magma_core",
+            "robotica:antigrav_core"
           ]
         }
       ]

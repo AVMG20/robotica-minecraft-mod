@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QCQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "C": {
+      "item": "minecraft:phantom_membrane"
+    },
+    "U": {
+      "item": "robotica:fall_dampener_module_2"
+    }
+  },
+  "result": {
+    "id": "robotica:fall_dampener_module_3",
+    "count": 1
+  }
+}

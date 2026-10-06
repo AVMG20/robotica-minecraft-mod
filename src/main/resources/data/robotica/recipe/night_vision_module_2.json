@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ACA",
+    " U "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "C": {
+      "item": "minecraft:spider_eye"
+    },
+    "U": {
+      "item": "robotica:night_vision_module"
+    }
+  },
+  "result": {
+    "id": "robotica:night_vision_module_2",
+    "count": 1
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:null_casing"
+  },
+  "base": {
+    "item": "robotica:exo_leggings_mk3"
+  },
+  "addition": {
+    "item": "robotica:null_circuit"
+  },
+  "result": {
+    "id": "robotica:exo_leggings_mk4",
+    "count": 1
+  }
+}

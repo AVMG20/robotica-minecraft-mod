@@ -48,7 +48,18 @@
       "robotica:rift_upgrade",
       "robotica:rift_remote",
       "robotica:servo_stride_module_3",
-      "robotica:kinetic_shield_module"
+      "robotica:kinetic_shield_module",
+      "robotica:night_vision_module_3",
+      "robotica:sonar_pulse_module_2",
+      "robotica:jet_assist_module_2",
+      "robotica:med_injector_module_2",
+      "robotica:hazard_seal_module",
+      "robotica:dash_thrusters_module",
+      "robotica:spring_heels_module_3",
+      "robotica:fall_dampener_module_3",
+      "robotica:magnet_module_3",
+      "robotica:capacitor_plating_module_3",
+      "robotica:power_regulator_module_2"
     ],
     "experience": 50
   }

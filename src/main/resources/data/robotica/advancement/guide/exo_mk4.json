@@ -1,0 +1,43 @@
+{
+  "parent": "robotica:guide/antigrav_core",
+  "display": {
+    "icon": {
+      "id": "robotica:exo_chestplate_mk4"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.exo_mk4.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.exo_mk4.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:exo_helmet_mk4",
+              "robotica:exo_chestplate_mk4",
+              "robotica:exo_leggings_mk4",
+              "robotica:exo_boots_mk4"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 80
+  }
+}

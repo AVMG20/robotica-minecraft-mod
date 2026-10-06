@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QRQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    },
+    "U": {
+      "item": "robotica:power_regulator_module"
+    }
+  },
+  "result": {
+    "id": "robotica:power_regulator_module_2",
+    "count": 1
+  }
+}

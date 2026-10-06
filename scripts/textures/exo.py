@@ -1,8 +1,10 @@
 """Exo-Frame textures: armor item icons, module icons and the humanoid armor layers (64x32).
 Run: python3 scripts/textures/exo.py
 
-Mk1 = copper plating with brass trim and cyan lights, Mk2 = steel plating with cyan trim and lights.
-Armor layers go to textures/models/armor/exo_mk{1,2}_layer_{1,2}.png (layer 1: helmet, chestplate, boots; layer 2: leggings).
+Mk1 = copper plating with brass trim and cyan lights, Mk2 = steel plating with cyan trim and lights, Mk3 = dark netherite
+plating with magma trim and amber lights, Mk4 = null-violet plating with lilac trim and teal lights.
+Armor layers go to textures/models/armor/exo_mk{1-4}_layer_{1,2}.png (layer 1: helmet, chestplate, boots; layer 2: leggings).
+Module cards are coloured by the piece they fit (any-piece modules violet); leveled modules show one gold pip per level.
 """
 import pathlib
 import sys
@@ -13,6 +15,9 @@ from pixelart import ASSETS, PALETTE, Canvas, write_item, write_png  # noqa: E40
 # Plating palettes: m mid, M light, n dark, T trim, t dark trim, a light (cyan), A bright light
 MK1 = {'m': '#C87533', 'M': '#E8A060', 'n': '#8A4A22', 'T': '#D4A73A', 't': '#8F6D1C', 'a': '#5FE3F0', 'A': '#D8FBFF'}
 MK2 = {'m': '#8D9599', 'M': '#C4CBCE', 'n': '#4D5558', 'T': '#2A8FA6', 't': '#14566A', 'a': '#5FE3F0', 'A': '#D8FBFF'}
+MK3 = {'m': '#3B3533', 'M': '#5E5552', 'n': '#1F1B1A', 'T': '#FF7A2E', 't': '#C23A12', 'a': '#FFB21E', 'A': '#FFE08A'}
+MK4 = {'m': '#2A1F45', 'M': '#4A3A75', 'n': '#140A2C', 'T': '#A884F0', 't': '#5A33A0', 'a': '#5AD6BE', 'A': '#E6DAFF'}
+MARKS = {1: MK1, 2: MK2, 3: MK3, 4: MK4}
 
 
 def pal(*dicts):
@@ -77,10 +82,13 @@ ICONS = {'helmet': helmet, 'chestplate': chestplate, 'leggings': leggings, 'boot
 
 # ------------------------------------------------------------------ module icons (16x16 circuit cards)
 
-HEAD = {'m': '#2A8FA6', 'M': '#7FE3F5', 'n': '#14566A'}
-CHEST = {'m': '#C87533', 'M': '#E8A060', 'n': '#8A4A22'}
-LEGS = {'m': '#D4A73A', 'M': '#F2D27A', 'n': '#8F6D1C'}
-FEET = {'m': '#8D9599', 'M': '#C4CBCE', 'n': '#4D5558'}
+# m card, M card light, n card dark / glyph window, A glyph, a dim glyph
+GLYPH = {'A': '#D8FBFF', 'a': '#5FE3F0'}
+HEAD = {'m': '#2A8FA6', 'M': '#7FE3F5', 'n': '#14566A', **GLYPH}
+CHEST = {'m': '#C87533', 'M': '#E8A060', 'n': '#5A2E14', **GLYPH}
+LEGS = {'m': '#D4A73A', 'M': '#F2D27A', 'n': '#5E4512', **GLYPH}
+FEET = {'m': '#8D9599', 'M': '#C4CBCE', 'n': '#33393C', **GLYPH}
+ANY = {'m': '#6A3FB0', 'M': '#A884F0', 'n': '#2A1560', **GLYPH}
 
 # 6 wide, 8 tall glyphs; X = glyph, x = dim glyph
 GLYPHS = {
@@ -97,10 +105,20 @@ GLYPHS = {
     'spring_heels': ['.XXXX.', 'X....X', '.XXXX.', 'X....X', '.XXXX.', 'X....X', '.XXXX.', '......'],
     'fall_dampener': ['..XX..', '..XX..', '..XX..', 'XXXXXX', '.XXXX.', '..XX..', 'XXXXXX', 'xxxxxx'],
     'magnet': ['XX..XX', 'XX..XX', 'XX..XX', 'XX..XX', 'XXXXXX', '.XXXX.', '......', '......'],
+    'auto_feeder': ['...X..', '..X...', '.XXXX.', 'XXXXXX', 'XXXXXX', 'XXXXXX', '.XXXX.', '......'],
+    'solar_weave': ['..X...', 'X.X.X.', '.XXX..', 'XXXXX.', '.XXX..', 'X.X.X.', '..X...', '......'],
+    'sonar_pulse': ['.xxxx.', 'x....x', 'x.XX.x', 'x.XX.x', 'x....x', '.xxxx.', '......', '......'],
+    'med_injector': ['..XX..', '..XX..', 'XXXXXX', 'XXXXXX', '..XX..', '..XX..', '......', '......'],
+    'hazard_seal': ['..X...', '.XXX..', '.XXX..', 'XXXXX.', 'XXXXX.', '.XXX..', '......', 'xxxxxx'],
+    'kinetic_generator': ['...XX.', '..XX..', '.XX...', 'XXXXX.', '..XX..', '.XX...', '.X....', '......'],
+    'dash_thrusters': ['......', 'x..X..', '...XX.', 'xXXXXX', '...XX.', 'x..X..', '......', '......'],
+    'hydro_fins': ['......', 'X.....', 'XX....', 'XXX...', 'XXXX..', 'XXXXXX', '......', 'x.x.x.'],
+    'capacitor_plating': ['..XX..', 'XXXXXX', 'X....X', 'XXXXXX', 'XXXXXX', 'XXXXXX', 'XXXXXX', '......'],
+    'power_regulator': ['.XXXX.', 'X....X', 'X..X.X', 'X.X..X', 'X....X', '.XXXX.', '......', '......'],
 }
 
 
-def module(name, colors):
+def module(name, colors, level=0):
     c = Canvas()
     c.rect(3, 1, 10, 14, 'm').bevel(3, 1, 10, 14, 'M', 'n').frame(2, 0, 12, 16, 'k')
     # glyph window
@@ -114,22 +132,37 @@ def module(name, colors):
     # gold contacts
     for x in (4, 6, 8, 10):
         c.rect(x, 12, 1, 2, 'o')
+    # level pips
+    for i in range(level):
+        c.set(5 + 2 * i, 11, 'Y')
     return c.rows()
 
 
 MODULE_COLORS = {
-    'night_vision': HEAD, 'rebreather': HEAD, 'robot_hud': HEAD,
-    'jet_assist': CHEST, 'flight': CHEST, 'kinetic_shield': CHEST,
-    'servo_stride_1': LEGS, 'servo_stride_2': LEGS, 'servo_stride_3': LEGS, 'step_assist': LEGS,
-    'spring_heels': FEET, 'fall_dampener': FEET, 'magnet': FEET,
+    'night_vision': HEAD, 'rebreather': HEAD, 'robot_hud': HEAD, 'auto_feeder': HEAD, 'solar_weave': HEAD, 'sonar_pulse': HEAD,
+    'jet_assist': CHEST, 'flight': CHEST, 'kinetic_shield': CHEST, 'med_injector': CHEST, 'hazard_seal': CHEST,
+    'servo_stride_1': LEGS, 'servo_stride_2': LEGS, 'servo_stride_3': LEGS, 'kinetic_generator': LEGS, 'dash_thrusters': LEGS,
+    'step_assist': FEET, 'spring_heels': FEET, 'fall_dampener': FEET, 'magnet': FEET, 'hydro_fins': FEET,
+    'capacitor_plating': ANY, 'power_regulator': ANY,
 }
-MODULE_FILES = {
-    'night_vision': 'night_vision_module', 'rebreather': 'rebreather_module', 'robot_hud': 'robot_hud_module',
-    'jet_assist': 'jet_assist_module', 'flight': 'flight_module', 'kinetic_shield': 'kinetic_shield_module',
-    'servo_stride_1': 'servo_stride_module_1', 'servo_stride_2': 'servo_stride_module_2', 'servo_stride_3': 'servo_stride_module_3',
-    'step_assist': 'step_assist_module', 'spring_heels': 'spring_heels_module', 'fall_dampener': 'fall_dampener_module',
-    'magnet': 'magnet_module',
-}
+# Modules with levels I-III: one file per level (level I keeps the plain name). Servo Stride has its own glyph per level.
+LEVELED = ('night_vision', 'sonar_pulse', 'jet_assist', 'kinetic_shield', 'med_injector', 'spring_heels', 'fall_dampener',
+           'magnet', 'capacitor_plating', 'power_regulator')
+
+
+def module_files():
+    """(file name, glyph, level pips) for every module item."""
+    out = []
+    for name in MODULE_COLORS:
+        if name.startswith('servo_stride_'):
+            level = int(name[-1])
+            out.append((f'servo_stride_module_{level}', name, level))
+        elif name in LEVELED:
+            for level in (1, 2, 3):
+                out.append((f'{name}_module' if level == 1 else f'{name}_module_{level}', name, level))
+        else:
+            out.append((f'{name}_module', name, 0))
+    return out
 
 
 # ------------------------------------------------------------------ armor layers (64x32)
@@ -295,14 +328,14 @@ def layer2():
 # ------------------------------------------------------------------ main
 
 def main():
-    for mk, colors in ((1, MK1), (2, MK2)):
+    for mk, colors in MARKS.items():
         p = pal(colors)
         for slot, fn in ICONS.items():
             write_item(f'exo_{slot}_mk{mk}', fn(), p)
         write_png(ASSETS / f'textures/models/armor/exo_mk{mk}_layer_1.png', layer1(), p, size=None)
         write_png(ASSETS / f'textures/models/armor/exo_mk{mk}_layer_2.png', layer2(), p, size=None)
-    for name, fname in MODULE_FILES.items():
-        write_item(fname, module(name, MODULE_COLORS[name]), pal(MODULE_COLORS[name]))
+    for fname, name, level in module_files():
+        write_item(fname, module(name, MODULE_COLORS[name], level), pal(MODULE_COLORS[name]))
 
 
 if __name__ == '__main__':

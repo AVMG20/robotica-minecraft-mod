@@ -1,19 +1,30 @@
 package com.arno.robotica.exo;
 
+import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.item.ExoModuleItem;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
-
 import org.jetbrains.annotations.Nullable;
 
-/** Reads and writes the module data (installed modules and their on/off bits) of an Exo armor piece. Safe on both sides. */
+import java.util.List;
+
+/** Reads and writes the module data (installed modules, their on/off bits and the core) of an Exo armor piece. Safe on both sides. */
 public final class ExoData {
     private ExoData() {}
 
+    /** The boss cores of the chestplate socket and their set bonus. */
+    public enum Core {
+        NONE, SERVO, MAGMA, ANTIGRAV
+    }
+
     public static int slotCount(ItemStack piece) {
         return piece.getItem() instanceof ExoArmorItem a ? a.moduleSlots() : 0;
+    }
+
+    public static int mark(ItemStack piece) {
+        return piece.getItem() instanceof ExoArmorItem a ? a.mk : 0;
     }
 
     /** The installed module stack of a slot (never modify the result), or EMPTY. */
@@ -25,8 +36,12 @@ public final class ExoData {
 
     @Nullable
     public static ExoModuleKind kind(ItemStack piece, int slot) {
-        ItemStack stack = module(piece, slot);
-        return stack.getItem() instanceof ExoModuleItem m ? m.kind : null;
+        return module(piece, slot).getItem() instanceof ExoModuleItem m ? m.kind : null;
+    }
+
+    /** Level of the module in a slot, 0 when empty. */
+    public static int level(ItemStack piece, int slot) {
+        return module(piece, slot).getItem() instanceof ExoModuleItem m ? m.level : 0;
     }
 
     /** Copies of the installed modules, one entry per module slot of the piece. */
@@ -37,7 +52,7 @@ public final class ExoData {
         return list;
     }
 
-    public static void setModules(ItemStack piece, java.util.List<ItemStack> modules) {
+    public static void setModules(ItemStack piece, List<ItemStack> modules) {
         boolean any = false;
         for (ItemStack s : modules) any |= !s.isEmpty();
         if (any) piece.set(ExoRegistry.MODULES.get(), ItemContainerContents.fromItems(modules));
@@ -59,26 +74,14 @@ public final class ExoData {
         else piece.set(ExoRegistry.MODULES_OFF.get(), mask);
     }
 
-    /** Bit set of {@link ExoModuleKind#bit()} of every installed module (on or off). */
-    public static int installedMask(ItemStack piece) {
-        int mask = 0;
+    /** Highest installed level (on or off) of a kind in the piece, 0 when absent. */
+    public static int levelIn(ItemStack piece, ExoModuleKind kind) {
+        int best = 0;
         int n = slotCount(piece);
         for (int i = 0; i < n; i++) {
-            ExoModuleKind kind = kind(piece, i);
-            if (kind != null) mask |= kind.bit();
+            if (module(piece, i).getItem() instanceof ExoModuleItem m && m.kind == kind) best = Math.max(best, m.level);
         }
-        return mask;
-    }
-
-    /** Bit set of every installed module that is switched on. */
-    public static int activeMask(ItemStack piece) {
-        int mask = 0;
-        int n = slotCount(piece);
-        for (int i = 0; i < n; i++) {
-            ExoModuleKind kind = kind(piece, i);
-            if (kind != null && isEnabled(piece, i)) mask |= kind.bit();
-        }
-        return mask;
+        return best;
     }
 
     /** Slot index of a module kind in the piece, or -1. */
@@ -88,5 +91,28 @@ public final class ExoData {
             if (kind(piece, i) == kind) return i;
         }
         return -1;
+    }
+
+    // ---------------------------------------------------------------- core socket
+
+    public static ItemStack core(ItemStack piece) {
+        ItemContainerContents contents = piece.get(ExoRegistry.CORE.get());
+        return contents == null || contents.getSlots() == 0 ? ItemStack.EMPTY : contents.getStackInSlot(0);
+    }
+
+    public static void setCore(ItemStack piece, ItemStack core) {
+        if (core.isEmpty()) piece.remove(ExoRegistry.CORE.get());
+        else piece.set(ExoRegistry.CORE.get(), ItemContainerContents.fromItems(List.of(core.copyWithCount(1))));
+    }
+
+    public static Core coreKind(ItemStack core) {
+        if (core.is(CoreItems.SERVO_CORE.get())) return Core.SERVO;
+        if (core.is(CoreItems.MAGMA_CORE.get())) return Core.MAGMA;
+        if (core.is(CoreItems.ANTIGRAV_CORE.get())) return Core.ANTIGRAV;
+        return Core.NONE;
+    }
+
+    public static boolean isCore(ItemStack stack) {
+        return coreKind(stack) != Core.NONE;
     }
 }
