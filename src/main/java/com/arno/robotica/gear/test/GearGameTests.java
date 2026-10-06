@@ -455,7 +455,7 @@ public class GearGameTests {
         GearActions.apply(player, GearActions.TOGGLE, ToggleKind.VOID_FILTER.ordinal());
         helper.assertTrue(!ToolSettings.has(player.getMainHandItem(), ToggleKind.VOID_FILTER), "the void filter needs its card first");
         GearActions.apply(player, GearActions.TOGGLE, ToggleKind.KEEP_FLOOR.ordinal());
-        helper.assertTrue(!ToolSettings.has(player.getMainHandItem(), ToggleKind.KEEP_FLOOR), "keep floor toggles without a card");
+        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.KEEP_FLOOR), "keep floor (off by default) toggles on without a card");
         ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
         GearActions.apply(player, GearActions.TOGGLE, ToggleKind.VOID_FILTER.ordinal());
         helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.VOID_FILTER), "installed: the toggle works");

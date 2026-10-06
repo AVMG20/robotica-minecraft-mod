@@ -18,6 +18,7 @@ public final class ArchitectConfig {
     private static final ModConfigSpec.IntValue MATTER_CAP;
     private static final ModConfigSpec.IntValue MAX_QUEUE;
     private static final ModConfigSpec.BooleanValue ALLOW_CLEAR;
+    private static final ModConfigSpec.IntValue CLEAR_INTERVAL;
     private static final ModConfigSpec.BooleanValue DRONES;
 
     static {
@@ -38,6 +39,8 @@ public final class ArchitectConfig {
                 .defineInRange("maxQueue", 25, 1, 25);
         ALLOW_CLEAR = b.comment("Allow the clear terrain option (removes blocks inside a planned building).")
                 .define("allowClearTerrain", true);
+        CLEAR_INTERVAL = b.comment("Ticks per block removed by clear terrain. Speed cards do not change it, so the table is no quarry.")
+                .defineInRange("clearInterval", 10, 1, 200);
         DRONES = b.comment("Spawn the cosmetic builder drone while a table is building.")
                 .define("builderDrones", true);
         b.pop();
@@ -51,5 +54,6 @@ public final class ArchitectConfig {
     public static int matterCap() { return SPEC.isLoaded() ? MATTER_CAP.get() : MATTER_CAP.getDefault(); }
     public static int maxQueue() { return SPEC.isLoaded() ? MAX_QUEUE.get() : MAX_QUEUE.getDefault(); }
     public static boolean allowClearTerrain() { return SPEC.isLoaded() ? ALLOW_CLEAR.get() : ALLOW_CLEAR.getDefault(); }
+    public static int clearInterval() { return SPEC.isLoaded() ? CLEAR_INTERVAL.get() : CLEAR_INTERVAL.getDefault(); }
     public static boolean builderDrones() { return SPEC.isLoaded() ? DRONES.get() : DRONES.getDefault(); }
 }

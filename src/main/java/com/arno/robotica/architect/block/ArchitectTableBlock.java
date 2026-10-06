@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -69,10 +70,21 @@ public class ArchitectTableBlock extends Block implements EntityBlock {
         return InteractionResult.PASS;
     }
 
+    /** Creative players get no loot: hand them the table with everything in it, like a shulker box. */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative() && level.getBlockEntity(pos) instanceof ArchitectTableBlockEntity be && be.hasContents()) {
+            ItemStack stack = new ItemStack(this);
+            stack.applyComponents(be.collectComponents());
+            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ArchitectTableBlockEntity be) {
-            be.dropContents(level, pos);
+            be.onRemoved();
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
@@ -83,5 +95,6 @@ public class ArchitectTableBlock extends Block implements EntityBlock {
                 BuildStyle.TIMBERFRAME.energyPerBlock(ArchitectConfig.fePerBlock())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.architect_table_matter").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.architect_table_styles").withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.architect_table_keeps").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

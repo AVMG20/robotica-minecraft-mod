@@ -36,7 +36,7 @@ public record StorageViewPayload(int containerId, int scrollRow, int sort, Strin
     private static void handle(StorageViewPayload payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer player
                 && player.containerMenu instanceof StorageMenu menu
-                && menu.containerId == payload.containerId()) {
+                && menu.containerId == payload.containerId() && menu.stillValid(player)) {
             menu.setView(payload.scrollRow(), StorageView.Sort.byOrdinal(payload.sort()), payload.filter());
         }
     }

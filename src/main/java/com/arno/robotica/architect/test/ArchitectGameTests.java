@@ -378,7 +378,7 @@ public class ArchitectGameTests {
         });
     }
 
-    /** Clear terrain removes plain blocks in the footprint (and pays rustic matter) but never block entities. */
+    /** Clear terrain removes plain blocks in the footprint, puts their drops in a chest on the table, never touches block entities. */
     @GameTest(template = "empty", timeoutTicks = 600)
     public static void clearTerrainRemovesBlocksButKeepsContainers(GameTestHelper helper) {
         ArchitectTableBlockEntity table = preparedTable(helper, 2, true);
@@ -389,6 +389,8 @@ public class ArchitectGameTests {
         helper.getLevel().setBlockAndUpdate(stone1, Blocks.STONE.defaultBlockState());
         helper.getLevel().setBlockAndUpdate(stone2, Blocks.STONE.defaultBlockState());
         helper.getLevel().setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
+        BlockPos stash = table.getBlockPos().above();
+        helper.getLevel().setBlockAndUpdate(stash, Blocks.CHEST.defaultBlockState());
         helper.assertTrue(table.clearTerrain(), "clear terrain should be on");
         table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
         table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
@@ -396,6 +398,10 @@ public class ArchitectGameTests {
             helper.assertTrue(!table.layout().hasWork(), "build should be finished, status " + table.status());
             helper.assertTrue(helper.getLevel().getBlockState(stone1).isAir() && helper.getLevel().getBlockState(stone2).isAir(), "stone in the footprint should be gone");
             helper.assertTrue(helper.getLevel().getBlockState(chest).is(Blocks.CHEST), "containers must stay");
+            IItemHandler drops = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, stash, Direction.DOWN);
+            int cobble = 0;
+            for (int i = 0; i < drops.getSlots(); i++) if (drops.getStackInSlot(i).is(Items.COBBLESTONE)) cobble += drops.getStackInSlot(i).getCount();
+            helper.assertTrue(cobble == 2, "the cleared stone should be in the chest on the table, found " + cobble);
         });
     }
 
@@ -448,6 +454,38 @@ public class ArchitectGameTests {
         helper.succeed();
     }
 
+    /** Height cards: a taller shell keeps 3 high doors, gets a second window band and a roof on top; old plans keep their signature. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void heightCardsMakeTallerShells(GameTestHelper helper) {
+        Shell.Shape low = Shell.lone(Plots.S);
+        Shell.Shape tall = new Shell.Shape(0, 0, Plots.bit(Plots.S), false, Plots.MAX_HEIGHT);
+        helper.assertTrue(low.signature() == new Shell.Shape(0, 0, Plots.bit(Plots.S), false, Plots.HEIGHT).signature(), "base height keeps old signatures");
+        helper.assertTrue(Shell.Shape.heightOf(tall.signature()) == Plots.MAX_HEIGHT, "the signature remembers the height");
+        helper.assertTrue(Shell.generate(tall, false).size() == Plots.SIZE * Plots.SIZE * Plots.MAX_HEIGHT, "a 12 high shell fills 12 layers");
+        int top = Plots.MAX_HEIGHT - 1;
+        helper.assertTrue(Shell.piece(tall, 4, top, 4).role() == Role.ROOF || Shell.piece(tall, 4, top, 4).role() == Role.LIGHT, "roof on the top layer");
+        helper.assertTrue(Shell.piece(tall, 4, top - 1, 4) == Piece.AIR, "open inside below the roof");
+        helper.assertTrue(Shell.piece(tall, 4, 3, 8) == Piece.AIR && Shell.piece(tall, 4, 4, 8).role() == Role.PILLAR, "doors stay 3 high with a lintel");
+        helper.assertTrue(Shell.piece(tall, 4, 6, 0) == Piece.WINDOW && Shell.piece(tall, 4, 4, 0) == Piece.WALL, "a second window band on tall walls");
+
+        ArchitectTableBlockEntity table = preparedTable(helper, 6, false);
+        table.upgrades.setStackInSlot(1, new ItemStack(CoreItems.card(UpgradeKind.HEIGHT).get(), 6));
+        table.serverTick(helper.getLevel(), table.getBlockPos(), table.getBlockState());
+        helper.assertTrue(table.layout().height() == Plots.MAX_HEIGHT, "six cards make 12 high buildings, got " + table.layout().height());
+
+        // a re-pass that is reverted half way still finishes, and remembers the tallest height for the trim
+        Layout layout = new Layout();
+        layout.queue(Plots.CENTER, BuildStyle.TIMBERFRAME);
+        layout.markBuilt(Plots.CENTER, layout.signature(Plots.CENTER));
+        layout.setHeight(8);
+        helper.assertTrue(layout.needsWork(Plots.CENTER), "taller plan: the built plot needs a re-pass");
+        layout.markChanging(Plots.CENTER, 8);
+        layout.setHeight(Plots.HEIGHT);
+        helper.assertTrue(layout.needsWork(Plots.CENTER), "cards taken out half way: the plot is still not done");
+        helper.assertTrue(layout.builtHeight(Plots.CENTER) == 8, "the trim knows the walk reached 8 high");
+        helper.succeed();
+    }
+
     // ---------------------------------------------------------------- persistence
 
     /** The plan, settings and matter survive saving and picking the table up; elsewhere only unbuilt work moves along. */
@@ -481,7 +519,8 @@ public class ArchitectGameTests {
         same.applyComponentsFromItemStack(stack);
         helper.assertTrue(java.util.Arrays.equals(planWords(same), words), "the plan is restored on the same spot");
         helper.assertTrue(same.clearTerrain(), "settings restored");
-        helper.assertTrue(same.energy.getEnergyStored() == 0, "a new table starts without energy");
+        helper.assertTrue(same.energy.getEnergyStored() == table.energy.getEnergyStored() && same.energy.getEnergyStored() > 0, "the energy comes along");
+        helper.assertTrue(same.upgrades.level(UpgradeKind.SPEED) == table.upgrades.level(UpgradeKind.SPEED) && same.upgrades.level(UpgradeKind.SPEED) > 0, "the upgrade cards come along");
 
         // another spot: built plots stay behind, queued ones move along
         BlockPos elsewhere = high(5).offset(20, 0, 0);

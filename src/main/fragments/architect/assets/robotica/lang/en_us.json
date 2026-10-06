@@ -38,7 +38,7 @@
   "gui.robotica.architect_cancel_tip": "Take all queued plots off the plan. Blocks already placed stay.",
   "gui.robotica.architect_clear_on": "Clear terrain: ON",
   "gui.robotica.architect_clear_off": "Clear terrain: OFF",
-  "gui.robotica.architect_clear_tip": "Remove blocks in the way (no containers, nothing unbreakable) and turn them into rustic matter",
+  "gui.robotica.architect_clear_tip": "Remove blocks in the way (no containers, nothing unbreakable). Slow. Drops go into a chest touching the table, or on top of it",
   "gui.robotica.architect_status_0": "Idle",
   "gui.robotica.architect_status_1": "Building",
   "gui.robotica.architect_status_2": "Needs rustic",
@@ -80,6 +80,7 @@
   "tooltip.robotica.architect_table": "Builds 9x9 buildings from matter, from %s FE per block",
   "tooltip.robotica.architect_table_matter": "Feed it cobble, wood, ingots and more. Runs on a wound Mainspring or any FE source",
   "tooltip.robotica.architect_table_styles": "A casing unlocks more styles: Iron for Smooth Panel, Reinforced for Detailed Stone, Null for Tech Stone",
+  "tooltip.robotica.architect_table_keeps": "Keeps its matter, power, items and plan when picked up. Height cards: taller buildings",
   "tooltip.robotica.matter_value": "Matter: %s",
   "robotica.configuration.architect_table": "Architect Table",
   "robotica.configuration.baseInterval": "Ticks per block",
@@ -89,5 +90,6 @@
   "robotica.configuration.matterCap": "Matter cap per grade",
   "robotica.configuration.maxQueue": "Max queued plots",
   "robotica.configuration.allowClearTerrain": "Allow clear terrain",
+  "robotica.configuration.clearInterval": "Ticks per cleared block",
   "robotica.configuration.builderDrones": "Builder drones"
 }

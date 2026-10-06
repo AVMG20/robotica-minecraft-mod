@@ -8,9 +8,11 @@ import com.arno.robotica.architect.matter.MatterTable;
 import com.arno.robotica.architect.menu.ArchitectMenu;
 import com.arno.robotica.architect.plan.BlockOp;
 import com.arno.robotica.architect.plan.Layout;
+import com.arno.robotica.architect.plan.Piece;
 import com.arno.robotica.architect.plan.Plots;
 import com.arno.robotica.architect.plan.Shell;
 import com.arno.robotica.architect.style.BuildStyle;
+import com.arno.robotica.core.CoreComponents;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyUtil;
@@ -20,6 +22,7 @@ import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ParticleTypes;
@@ -36,21 +39,25 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.scores.Team;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -59,7 +66,7 @@ import java.util.UUID;
 /**
  * Architect Table. Bulk items in the input become matter; matter + FE become building blocks while the table works
  * through its plan, one block per interval. The table is the middle floor block of its own plot and is never replaced.
- * The plan ({@link Layout}), the running flag and the build cursor are saved and survive picking the table up.
+ * Picking the table up keeps everything: matter, energy, slots, the plan ({@link Layout}), the running flag and the cursor.
  * Only the owner (or a player on the owner's scoreboard team, or an operator) can use it.
  */
 public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvider {
@@ -126,7 +133,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             setChanged();
         }
     };
-    public final Upgrades upgrades = new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY), this::setChanged);
+    public final Upgrades upgrades = new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.HEIGHT), this::setChanged);
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ArchitectConfig.energyBuffer(), ArchitectConfig.energyReceive(), 0, this::setChanged);
     private final IItemHandler automation = new InputOnlyHandler(input);
 
@@ -153,11 +160,14 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private int placedCount;
     private int opsSig;
     private int opsPlot = -1;
+    private int opsWas;
     private List<BlockOp> ops = List.of();
     @Nullable
     private BuilderDrone drone;
     private long lastPlaceSound = Long.MIN_VALUE / 2;
     private long lastAbsorbSound = Long.MIN_VALUE / 2;
+    /** Ticks until clear terrain may remove the next block. */
+    private int clearCooldown;
 
     public ArchitectTableBlockEntity(BlockPos pos, BlockState state) {
         super(ArchitectRegistry.ARCHITECT_TABLE_BE.get(), pos, state);
@@ -378,7 +388,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 BuildStyle style = selectedStyle();
                 if (!unlocked(style)) return Component.translatable("message.robotica.architect_style_locked");
                 BlockPos origin = Plots.origin(worldPosition, plot);
-                if (level == null || origin.getY() < level.getMinBuildHeight() || origin.getY() + Plots.HEIGHT > level.getMaxBuildHeight()) {
+                if (level == null || origin.getY() < level.getMinBuildHeight() || origin.getY() + layout.height() > level.getMaxBuildHeight()) {
                     return Component.translatable("message.robotica.architect_out_of_world");
                 }
                 layout.queue(plot, style);
@@ -390,6 +400,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     // ---------------------------------------------------------------- build loop
 
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
+        layout.setHeight(Math.min(Plots.HEIGHT + upgrades.level(UpgradeKind.HEIGHT), level.getMaxBuildHeight() - pos.getY()));
+        if (clearCooldown > 0) clearCooldown--;
         if ((level.getGameTime() + pos.asLong()) % 4 == 0) convertMatter();
         if (energy.getSpace() > 0 && !battery.getStackInSlot(0).isEmpty()) {
             EnergyUtil.dischargeItem(battery.getStackInSlot(0), energy, ArchitectConfig.energyReceive());
@@ -403,8 +415,18 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     }
 
     private List<BlockOp> opsFor(int plot, int sig) {
-        if (opsPlot != plot || opsSig != sig) {
-            ops = Shell.generate(layout.shape(plot), plot == Plots.CENTER);
+        int was = layout.builtHeight(plot);
+        if (opsPlot != plot || opsSig != sig || opsWas != was) {
+            opsWas = was;
+            Shell.Shape shape = layout.shape(plot);
+            ops = Shell.generate(shape, plot == Plots.CENTER);
+            if (was > shape.height()) {
+                // the building got lower (Height cards taken out): take down its old top, building blocks only
+                ops = new ArrayList<>(ops);
+                for (int y = shape.height(); y < was; y++) {
+                    for (int z = 0; z < Plots.SIZE; z++) for (int x = 0; x < Plots.SIZE; x++) ops.add(new BlockOp(x, y, z, Piece.AIR));
+                }
+            }
             opsPlot = plot;
             opsSig = sig;
         }
@@ -458,11 +480,14 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             }
             if (actions <= 0 || skips > 512) break;
             BlockOp op = list.get(cursor);
-            int result = step(level, origin, op, style, energyCost);
+            int result = step(level, origin, op, style, energyCost, layout.height());
             if (result == STEP_SKIPPED) {
                 cursor++;
                 skips++;
+            } else if (result == STEP_WAIT) {
+                break;
             } else if (result == STEP_DONE) {
+                layout.markChanging(current, layout.height());
                 cursor++;
                 actions--;
                 last = origin.offset(op.x(), op.y(), op.z());
@@ -488,9 +513,11 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     private static final int STEP_SKIPPED = -1;
     private static final int STEP_DONE = -2;
+    /** Clear terrain waits for its cooldown: stop for this tick, nothing changes. */
+    private static final int STEP_WAIT = -3;
 
-    /** One op: returns STEP_SKIPPED (nothing to do, free), STEP_DONE (changed the world) or a status code to pause on. */
-    private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost) {
+    /** One op: returns STEP_SKIPPED (nothing to do, free), STEP_DONE (changed the world), STEP_WAIT or a status code to pause on. */
+    private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost, int height) {
         BlockPos target = origin.offset(op.x(), op.y(), op.z());
         if (target.equals(worldPosition) || !level.isInWorldBounds(target)) return STEP_SKIPPED;
         if (!level.isLoaded(target)) return ST_UNLOADED;
@@ -499,6 +526,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         BlockState current = level.getBlockState(target);
         if (current == desired || (desired.isAir() && current.isAir())) return STEP_SKIPPED;
         if (current.is(ArchitectRegistry.ARCHITECT_TABLE.get())) return STEP_SKIPPED;
+        // above the building (it got lower): only its own old blocks go
+        if (op.y() >= height && !ArchitectRegistry.isBuildingBlock(current)) return STEP_SKIPPED;
         // spawn protection, world border and other no-build areas: skip the block, spend nothing, never stall the build
         if (!mayBuildAt(level, target, fakePlayer(level))) return STEP_SKIPPED;
 
@@ -508,6 +537,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (!replaceable) {
             if (!clearTerrain || level.getBlockEntity(target) != null || current.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
             clearing = true;
+            // clearing is slow on purpose (speed cards do not help), so the table is no quarry
+            if (clearCooldown > 0) return STEP_WAIT;
         }
         Matter cost = op.piece().cost(style);
         if (!desired.isAir()) {
@@ -527,8 +558,10 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         }
 
         if (clearing) {
+            List<ItemStack> drops = Block.getDrops(current, level, target, null, fake, new ItemStack(Items.DIAMOND_PICKAXE));
             level.removeBlock(target, false);
-            addRustic(Math.max(1, MatterTable.valueOf(current.getBlock().asItem()).rustic()));
+            for (ItemStack drop : drops) stash(level, drop);
+            clearCooldown = ArchitectConfig.clearInterval();
         }
         if (desired.isAir()) {
             level.setBlock(target, desired, Block.UPDATE_ALL);
@@ -540,6 +573,16 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         exotic -= cost.exotic();
         energy.consume(energyCost);
         return STEP_DONE;
+    }
+
+    /** Cleared blocks go into a container touching the table (a chest on top of it, for example), else on top of the table. */
+    private void stash(ServerLevel level, ItemStack stack) {
+        for (Direction side : Direction.values()) {
+            if (stack.isEmpty()) return;
+            IItemHandler target = level.getCapability(Capabilities.ItemHandler.BLOCK, worldPosition.relative(side), side.getOpposite());
+            if (target != null) stack = ItemHandlerHelper.insertItemStacked(target, stack, false);
+        }
+        if (!stack.isEmpty()) Containers.dropItemStack(level, worldPosition.getX() + 0.5, worldPosition.getY() + 1.2, worldPosition.getZ() + 0.5, stack);
     }
 
     /** False inside vanilla spawn protection, outside the world border, or where the player may not interact. */
@@ -578,19 +621,22 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     // ---------------------------------------------------------------- items, menu, persistence
 
-    public void dropContents(Level level, BlockPos pos) {
-        drop(level, pos, input);
-        drop(level, pos, styleSlot);
-        drop(level, pos, battery);
-        drop(level, pos, upgrades);
+    /** The table was removed. Its contents travel with the dropped item (see the loot table), only the drone goes. */
+    public void onRemoved() {
         if (drone != null) drone.discard();
     }
 
-    private static void drop(Level level, BlockPos pos, IItemHandler handler) {
-        for (int i = 0; i < handler.getSlots(); i++) {
-            ItemStack stack = handler.getStackInSlot(i);
-            if (!stack.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+    /** True when the table holds anything worth keeping (creative players get it as an item, like a shulker box). */
+    public boolean hasContents() {
+        return !matter().isZero() || !layout.isEmpty() || hasSlotsOrEnergy();
+    }
+
+    private boolean hasSlotsOrEnergy() {
+        if (energy.getEnergyStored() > 0) return true;
+        for (IItemHandler handler : List.of(input, styleSlot, battery, upgrades)) {
+            for (int i = 0; i < handler.getSlots(); i++) if (!handler.getStackInSlot(i).isEmpty()) return true;
         }
+        return false;
     }
 
     @Override
@@ -609,6 +655,11 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         super.collectImplicitComponents(components);
         if (!matter().isZero()) components.set(ArchitectRegistry.MATTER_COMPONENT.get(), matter());
         if (!layout.isEmpty()) components.set(ArchitectRegistry.BUILD_STATE_COMPONENT.get(), buildStateTag());
+        if (level != null && hasSlotsOrEnergy()) {
+            CompoundTag contents = new CompoundTag();
+            writeContents(contents, level.registryAccess());
+            components.set(CoreComponents.CONTENTS.get(), contents);
+        }
     }
 
     @Override
@@ -618,22 +669,38 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (m != null) setMatter(m);
         CompoundTag build = input.get(ArchitectRegistry.BUILD_STATE_COMPONENT.get());
         if (build != null) applyBuildState(build);
+        CompoundTag contents = input.get(CoreComponents.CONTENTS.get());
+        if (contents != null && level != null) readContents(contents, level.registryAccess());
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.put("input", input.serializeNBT(registries));
-        tag.put("style_slot", styleSlot.serializeNBT(registries));
-        tag.put("upgrades", upgrades.serializeNBT(registries));
-        tag.put("battery", battery.serializeNBT(registries));
-        tag.put("energy", energy.serializeNBT(registries));
+        writeContents(tag, registries);
         tag.putInt("rustic", rustic);
         tag.putInt("refined", refined);
         tag.putInt("exotic", exotic);
         if (owner != null) tag.putUUID("owner", owner);
         tag.putString("owner_name", ownerName);
         writeBuild(tag);
+    }
+
+    /** Slots and energy: saved with the block and carried by the item when the table is picked up. */
+    private void writeContents(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.put("input", input.serializeNBT(registries));
+        tag.put("style_slot", styleSlot.serializeNBT(registries));
+        tag.put("upgrades", upgrades.serializeNBT(registries));
+        tag.put("battery", battery.serializeNBT(registries));
+        tag.put("energy", energy.serializeNBT(registries));
+    }
+
+    private void readContents(CompoundTag tag, HolderLookup.Provider registries) {
+        if (tag.contains("input")) input.deserializeNBT(registries, tag.getCompound("input"));
+        if (tag.contains("style_slot")) styleSlot.deserializeNBT(registries, tag.getCompound("style_slot"));
+        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
+        if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
+        if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        layout.setHeight(Plots.HEIGHT + upgrades.level(UpgradeKind.HEIGHT));
     }
 
     private void writeBuild(CompoundTag tag) {
@@ -687,11 +754,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        if (tag.contains("input")) input.deserializeNBT(registries, tag.getCompound("input"));
-        if (tag.contains("style_slot")) styleSlot.deserializeNBT(registries, tag.getCompound("style_slot"));
-        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
-        if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
-        if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        readContents(tag, registries);
         rustic = tag.getInt("rustic");
         refined = tag.getInt("refined");
         exotic = tag.getInt("exotic");

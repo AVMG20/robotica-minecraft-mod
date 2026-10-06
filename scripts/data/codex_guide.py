@@ -105,7 +105,7 @@ STEPS = [
      has('basic_circuit'),
      ['solar_panel_mk1', 'tesla_coil_2', 'accumulator_1', 'metal_press', 'metal_press_iron_plate',
       'metal_press_copper_plate', 'metal_press_gold_plate', 'shock_baton_from_gearblade', 'farm_kit_mk2', 'warp_pad',
-      'recall_remote', 'storage_terminal', 'storage_expansion_mk1', 'sentry_drone', 'courier_drone', 'courier_remote', 'exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1', 'night_vision_module', 'robot_hud_module', 'step_assist_module', 'spring_heels_module', 'fall_dampener_module', 'magnet_module', 'servo_stride_module_1'] + cards('speed', 'efficiency', 'growth', 'void', 'pickup'), 20),
+      'recall_remote', 'storage_terminal', 'storage_expansion_mk1', 'sentry_drone', 'courier_drone', 'courier_remote', 'exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1', 'night_vision_module', 'robot_hud_module', 'step_assist_module', 'spring_heels_module', 'fall_dampener_module', 'magnet_module', 'servo_stride_module_1'] + cards('speed', 'efficiency', 'growth', 'void', 'pickup', 'height', 'carry'), 20),
     ('exo', 'basic_circuit', 'exo_chestplate_mk1', 'task', 1, 'Suit Up',
      'Craft an Exo-Frame piece. Sneak-right-click it to add a module, press J to switch modules.',
      has('exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1'), [], 10),

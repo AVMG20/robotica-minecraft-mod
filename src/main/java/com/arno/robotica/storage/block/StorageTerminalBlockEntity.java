@@ -1,5 +1,6 @@
 package com.arno.robotica.storage.block;
 
+import com.arno.robotica.core.CoreComponents;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
@@ -9,6 +10,7 @@ import com.arno.robotica.storage.item.StorageExpansionItem;
 import com.arno.robotica.storage.menu.StorageMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -59,8 +61,16 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
     private int lastSignal = -1;
     private int gridVersion;
     private boolean powered;
+    /** A Carry card is installed: picking the terminal up keeps everything inside. */
+    private boolean carry;
 
     public final ItemStackHandler items = new ItemStackHandler(MAX_SLOTS) {
+        /** A carried terminal (with its items inside) cannot be stored in a terminal: no endless nesting. */
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return !stack.has(CoreComponents.CONTENTS.get());
+        }
+
         @Override
         protected void onContentsChanged(int slot) {
             contentsChanged();
@@ -358,7 +368,7 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
     private void updatePower(Level level, BlockPos pos, BlockState state) {
         long cost = (long) drainPerTick() * POWER_PERIOD;
         ItemStack cell = battery.getStackInSlot(0);
-        if (!cell.isEmpty() && energy.getEnergyStored() < energy.getMaxEnergyStored() / 2) {
+        if (!cell.isEmpty() && energy.getSpace() > 0) {
             EnergyUtil.dischargeItem(cell, energy, 2_000);
         }
         boolean ok = cost <= 0 || energy.consume((int) Math.min(cost, Integer.MAX_VALUE));
@@ -384,8 +394,21 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
 
     // ------------------------------------------------------------------ misc
 
+    public boolean hasCarry() {
+        return carry;
+    }
+
+    /** Installs a Carry card for good. False when one is already in. */
+    public boolean installCarry() {
+        if (carry) return false;
+        carry = true;
+        setChanged();
+        return true;
+    }
+
+    /** Drops everything, unless a Carry card keeps it all in the dropped terminal (see the loot table). */
     public void dropContents() {
-        if (level == null) return;
+        if (level == null || carry) return;
         double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 0.5, z = worldPosition.getZ() + 0.5;
         for (int i = 0; i < MAX_SLOTS; i++) Containers.dropItemStack(level, x, y, z, items.getStackInSlot(i));
         for (int i = 0; i < upgrades.getSlots(); i++) Containers.dropItemStack(level, x, y, z, upgrades.getStackInSlot(i));
@@ -405,8 +428,34 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
     }
 
     @Override
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        if (carry && level != null) {
+            CompoundTag contents = new CompoundTag();
+            writeContents(contents, level.registryAccess());
+            components.set(CoreComponents.CONTENTS.get(), contents);
+        }
+    }
+
+    @Override
+    protected void applyImplicitComponents(DataComponentInput input) {
+        super.applyImplicitComponents(input);
+        CompoundTag contents = input.get(CoreComponents.CONTENTS.get());
+        if (contents != null && level != null) {
+            readContents(contents, level.registryAccess());
+            setChanged();
+        }
+    }
+
+    @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        writeContents(tag, registries);
+        tag.putBoolean("powered", powered);
+    }
+
+    /** Everything inside: saved with the block, and carried by the item when a Carry card is installed. */
+    private void writeContents(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("items", items.serializeNBT(registries));
         tag.put("expansions", upgrades.serializeNBT(registries));
         tag.put("battery", battery.serializeNBT(registries));
@@ -414,19 +463,24 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
         ContainerHelper.saveAllItems(grid, craft, registries);
         tag.put("craft", grid);
         tag.put("energy", energy.serializeNBT(registries));
-        tag.putBoolean("powered", powered);
+        tag.putBoolean("carry", carry);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        readContents(tag, registries);
+        powered = tag.getBoolean("powered");
+    }
+
+    private void readContents(CompoundTag tag, HolderLookup.Provider registries) {
         if (tag.contains("items")) items.deserializeNBT(registries, tag.getCompound("items"));
         if (tag.contains("expansions")) upgrades.deserializeNBT(registries, tag.getCompound("expansions"));
         if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
         craft.clear();
         if (tag.contains("craft")) ContainerHelper.loadAllItems(tag.getCompound("craft"), craft, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
-        powered = tag.getBoolean("powered");
+        carry = tag.getBoolean("carry");
         cacheDirty = true;
         signalDirty = true;
         version++;

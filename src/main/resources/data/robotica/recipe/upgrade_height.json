@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SPS",
+    "PCP",
+    "SPS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:scaffolding"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "C": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:upgrade_height",
+    "count": 2
+  }
+}

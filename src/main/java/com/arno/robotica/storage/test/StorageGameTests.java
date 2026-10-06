@@ -1,6 +1,7 @@
 package com.arno.robotica.storage.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.CoreComponents;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.storage.StorageContent;
@@ -228,6 +229,20 @@ public class StorageGameTests {
         });
     }
 
+    /** The battery tops the buffer up all the way, not only to half. */
+    @GameTest(template = "empty")
+    public static void batteryFillsPastHalf(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        ItemStack cell = new ItemStack(CoreItems.COPPER_CELL.get());
+        ItemEnergy.fill(cell);
+        be.battery.setStackInSlot(0, cell);
+        int start = be.energy.getMaxEnergyStored() / 2 + 100;
+        be.energy.setEnergy(start);
+        be.updatePowerNow();
+        helper.assertTrue(be.energy.getEnergyStored() > start, "the cell should charge a half full buffer, got " + be.energy.getEnergyStored());
+        helper.succeed();
+    }
+
     /**
      * Two players on one terminal: both see the same picture, but only the real items can be taken. A stale view slot or
      * a stale crafting result in the second menu gives nothing; number keys and Q never make items either.
@@ -310,6 +325,30 @@ public class StorageGameTests {
         helper.assertTrue(be.craft.get(0).getCount() == 3 && be.craft.get(4).getCount() == 3, "shift: 10 planks make 3 crafts, got "
                 + be.craft.get(0).getCount() + " / " + be.craft.get(4).getCount());
         helper.assertTrue(total(be, Items.OAK_PLANKS) == 1, "the last plank stays stored");
+        helper.succeed();
+    }
+
+    /** With a Carry card the terminal drops as one item that holds everything; without it the items spill out. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void carryCardKeepsItemsWhenBroken(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        be.insert(new ItemStack(Items.DIAMOND, 40), false);
+        helper.assertTrue(!be.collectComponents().has(CoreComponents.CONTENTS.get()), "no Carry card: nothing rides along");
+        helper.assertTrue(be.installCarry() && !be.installCarry(), "one Carry card goes in, a second is refused");
+
+        BlockPos abs = helper.absolutePos(POS);
+        helper.getLevel().destroyBlock(abs, true);
+        AABB box = new AABB(abs).inflate(3);
+        List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, box);
+        helper.assertTrue(drops.stream().noneMatch(e -> e.getItem().is(Items.DIAMOND)), "the diamonds must not spill out");
+        ItemStack terminal = drops.stream().map(ItemEntity::getItem).filter(s -> s.is(StorageContent.TERMINAL_ITEM.get())).findFirst().orElse(ItemStack.EMPTY);
+        helper.assertTrue(terminal.has(CoreComponents.CONTENTS.get()), "the dropped terminal carries its contents");
+        drops.forEach(ItemEntity::discard);
+
+        StorageTerminalBlockEntity again = placeUnpowered(helper);
+        again.applyComponentsFromItemStack(terminal);
+        helper.assertTrue(total(again, Items.DIAMOND) == 40 && again.hasCarry(), "placed again: diamonds and the card are back");
+        helper.assertTrue(!again.insert(terminal.copy(), true).isEmpty(), "a carried terminal never goes into a terminal");
         helper.succeed();
     }
 }

@@ -30,11 +30,15 @@ def tex(name):
 
 def loot(name, copy_matter=False):
     entry = {'type': 'minecraft:item', 'name': f'robotica:{name}'}
+    pool = {'rolls': 1.0, 'bonus_rolls': 0.0, 'entries': [entry], 'conditions': [{'condition': 'minecraft:survives_explosion'}]}
     if copy_matter:
-        entry['functions'] = [{'function': 'minecraft:copy_components', 'source': 'block_entity', 'include': ['robotica:architect_matter', 'robotica:architect_build']}]
+        # the table keeps everything when picked up, so it always drops (no explosion roll)
+        entry['functions'] = [{'function': 'minecraft:copy_components', 'source': 'block_entity',
+                               'include': ['robotica:architect_matter', 'robotica:architect_build', 'robotica:contents']}]
+        del pool['conditions']
     write(DATA / 'loot_table/blocks' / f'{name}.json', {
         'type': 'minecraft:block',
-        'pools': [{'rolls': 1.0, 'bonus_rolls': 0.0, 'entries': [entry], 'conditions': [{'condition': 'minecraft:survives_explosion'}]}],
+        'pools': [pool],
         'random_sequence': f'robotica:blocks/{name}',
     })
 
@@ -164,7 +168,7 @@ lang.update({
     'gui.robotica.architect_cancel_tip': 'Take all queued plots off the plan. Blocks already placed stay.',
     'gui.robotica.architect_clear_on': 'Clear terrain: ON',
     'gui.robotica.architect_clear_off': 'Clear terrain: OFF',
-    'gui.robotica.architect_clear_tip': 'Remove blocks in the way (no containers, nothing unbreakable) and turn them into rustic matter',
+    'gui.robotica.architect_clear_tip': 'Remove blocks in the way (no containers, nothing unbreakable). Slow. Drops go into a chest touching the table, or on top of it',
     'gui.robotica.architect_status_0': 'Idle',
     'gui.robotica.architect_status_1': 'Building',
     'gui.robotica.architect_status_2': 'Needs rustic',
@@ -206,6 +210,7 @@ lang.update({
     'tooltip.robotica.architect_table': 'Builds 9x9 buildings from matter, from %s FE per block',
     'tooltip.robotica.architect_table_matter': 'Feed it cobble, wood, ingots and more. Runs on a wound Mainspring or any FE source',
     'tooltip.robotica.architect_table_styles': 'A casing unlocks more styles: Iron for Smooth Panel, Reinforced for Detailed Stone, Null for Tech Stone',
+    'tooltip.robotica.architect_table_keeps': 'Keeps its matter, power, items and plan when picked up. Height cards: taller buildings',
     'tooltip.robotica.matter_value': 'Matter: %s',
     'robotica.configuration.architect_table': 'Architect Table',
     'robotica.configuration.baseInterval': 'Ticks per block',
@@ -215,6 +220,7 @@ lang.update({
     'robotica.configuration.matterCap': 'Matter cap per grade',
     'robotica.configuration.maxQueue': 'Max queued plots',
     'robotica.configuration.allowClearTerrain': 'Allow clear terrain',
+    'robotica.configuration.clearInterval': 'Ticks per cleared block',
     'robotica.configuration.builderDrones': 'Builder drones',
 })
 write(FRAG / 'assets/robotica/lang/en_us.json', lang)

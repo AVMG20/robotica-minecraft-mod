@@ -54,7 +54,7 @@ public class ArchitectMenu extends MachineMenu {
     /** Client side. */
     public ArchitectMenu(int id, Inventory inv, BlockPos pos) {
         this(id, inv, pos, new ItemStackHandler(ArchitectTableBlockEntity.INPUT_SLOTS), new ItemStackHandler(1),
-                new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY), () -> {}), new ItemStackHandler(1), null);
+                new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.HEIGHT), () -> {}), new ItemStackHandler(1), null);
     }
 
     /** Server side. */

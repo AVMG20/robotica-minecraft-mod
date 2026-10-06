@@ -37,7 +37,7 @@ public record StorageCraftPayload(int containerId, List<List<ItemStack>> grid, b
     private static void handle(StorageCraftPayload payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer player
                 && player.containerMenu instanceof StorageMenu menu
-                && menu.containerId == payload.containerId()) {
+                && menu.containerId == payload.containerId() && menu.stillValid(player)) {
             menu.fillGrid(payload.grid(), payload.max());
         }
     }

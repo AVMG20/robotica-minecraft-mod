@@ -66,6 +66,7 @@ CARDS = {
     'growth': (1, 'minecraft:bone_block', 'minecraft:bone_block'),
     'void': (1, 'minecraft:cactus', '#c:obsidians'),
     'pickup': (1, '#c:ender_pearls', REDSTONE),
+    'carry': (1, '#c:chests/wooden', '#c:leathers'),
     'range': (2, '#c:ender_pearls', '#c:gems/lapis'),
     'fortune': (2, '#c:storage_blocks/lapis', DIAMOND),
     'silk': (2, '#c:slime_balls', '#c:gems/emerald'),
@@ -78,4 +79,6 @@ for kind, (age, a, b) in CARDS.items():
         shaped(name, ['APB', 'PCP', 'BPA'], {'A': a, 'B': b, 'P': IRON_PLATE, 'C': 'basic_circuit'})
     else:
         shaped(name, ['AGB', 'GCG', 'BGA'], {'A': a, 'B': b, 'G': GOLD_PLATE, 'C': 'advanced_circuit'})
+# Height card (Architect Table, up to 6): cheap on purpose, two cards from scaffolding, iron plates and one circuit.
+shaped('upgrade_height', ['SPS', 'PCP', 'SPS'], {'S': 'minecraft:scaffolding', 'P': IRON_PLATE, 'C': 'basic_circuit'}, count=2)
 print('core recipes written to', OUT)

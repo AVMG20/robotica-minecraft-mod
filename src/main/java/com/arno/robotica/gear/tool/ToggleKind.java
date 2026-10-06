@@ -18,8 +18,8 @@ public enum ToggleKind {
     VOID_FILTER("void_filter", 4, UpgradeKind.VOID),
     AUTO_SMELT("auto_smelt", 8, null);
 
-    /** Flags of a tool that never had a toggle changed: keep the floor and pick drops up (once the Auto-Pickup Upgrade is in). */
-    public static final int DEFAULT_FLAGS = KEEP_FLOOR.bit | AUTO_PICKUP.bit;
+    /** Flags of a tool that never had a toggle changed: pick drops up (once the Auto-Pickup Upgrade is in). Keep floor starts off. */
+    public static final int DEFAULT_FLAGS = AUTO_PICKUP.bit;
 
     public final String id;
     public final int bit;

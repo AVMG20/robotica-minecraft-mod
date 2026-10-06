@@ -14,15 +14,11 @@
               "source": "block_entity",
               "include": [
                 "robotica:architect_matter",
-                "robotica:architect_build"
+                "robotica:architect_build",
+                "robotica:contents"
               ]
             }
           ]
-        }
-      ],
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
         }
       ]
     }

@@ -23,7 +23,11 @@ public enum UpgradeKind {
     /** Deletes junk (tag robotica:voidable). Single card. Also the void filter module of a tool (Tinker's Bench). */
     VOID(1, 1),
     /** Auto-pickup module of a tool (Tinker's Bench): drops go straight into the inventory. Single card, no machine takes it. */
-    PICKUP(1, 1);
+    PICKUP(1, 1),
+    /** Architect Table: one block taller buildings per card (6 cards: 12 high). */
+    HEIGHT(6, 1),
+    /** Utility blocks (Storage Terminal): keeps everything inside when picked up. Single card, installed by right-click. */
+    CARRY(1, 1);
 
     /** Most cards of this kind any machine accepts in its slot. 1 = not stackable. */
     public final int maxStack;

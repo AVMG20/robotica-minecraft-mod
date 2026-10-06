@@ -59,7 +59,7 @@ public final class ArchitectRegistry {
             COMPONENTS.registerComponentType("architect_build", b -> b.persistent(CompoundTag.CODEC).networkSynchronized(ByteBufCodecs.COMPOUND_TAG));
 
     public static final DeferredBlock<ArchitectTableBlock> ARCHITECT_TABLE = BLOCKS.registerBlock("architect_table", ArchitectTableBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops());
+            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL));
     public static final DeferredItem<BlockItem> ARCHITECT_TABLE_ITEM = ITEMS.registerSimpleBlockItem(ARCHITECT_TABLE);
 
     private static final Map<BuildStyle, Map<Role, DeferredBlock<Block>>> STYLE_BLOCKS = new EnumMap<>(BuildStyle.class);

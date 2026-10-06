@@ -3,7 +3,7 @@
   "item.robotica.felling_axe": "Felling Axe",
   "block.robotica.tinkers_bench": "Tinker's Bench",
   "container.robotica.tinkers_bench": "Tinker's Bench",
-  "tooltip.robotica.tinkers_bench": "Adds Auto-Pickup and Void Filter cards to power tools",
+  "tooltip.robotica.tinkers_bench": "Adds upgrade cards to power tools",
   "item.robotica.bore_drill": "Bore Drill",
   "item.robotica.chainsaw": "Chainsaw",
   "item.robotica.servo_drill": "Servo Drill",

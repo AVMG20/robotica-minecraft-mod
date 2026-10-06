@@ -1,13 +1,23 @@
 package com.arno.robotica.storage.block;
 
+import com.arno.robotica.core.CoreComponents;
+import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
+import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.storage.StorageContent;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -96,6 +106,37 @@ public class StorageTerminalBlock extends BaseEntityBlock {
         return InteractionResult.CONSUME;
     }
 
+    /** Right-click with a Carry card installs it: from then on the terminal keeps everything when picked up. */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (!(stack.getItem() instanceof UpgradeCardItem card) || card.getKind() != UpgradeKind.CARRY) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!(level.getBlockEntity(pos) instanceof StorageTerminalBlockEntity terminal)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+        if (terminal.installCarry()) {
+            stack.consume(1, player);
+            CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
+            player.displayClientMessage(Component.translatable("message.robotica.storage_carry_installed"), true);
+            return ItemInteractionResult.CONSUME;
+        }
+        // already installed: open the terminal as usual
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    /** Creative players get no loot: hand them the terminal with everything in it, like a shulker box. */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative() && level.getBlockEntity(pos) instanceof StorageTerminalBlockEntity terminal
+                && terminal.hasCarry()) {
+            ItemStack stack = new ItemStack(this);
+            stack.applyComponents(terminal.collectComponents());
+            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof StorageTerminalBlockEntity terminal) {
@@ -120,6 +161,12 @@ public class StorageTerminalBlock extends BaseEntityBlock {
             super(block, props);
         }
 
+        /** A terminal full of items never goes into another container item (no endlessly nested contents). */
+        @Override
+        public boolean canFitInsideContainerItems() {
+            return false;
+        }
+
         @Override
         public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("tooltip.robotica.age", 1, Component.translatable("age.robotica.1"))
@@ -127,6 +174,13 @@ public class StorageTerminalBlock extends BaseEntityBlock {
             tooltip.add(Component.translatable("tooltip.robotica.storage_terminal", StorageTerminalBlockEntity.BASE_SLOTS)
                     .withStyle(ChatFormatting.GRAY));
             tooltip.add(Component.translatable("tooltip.robotica.storage_terminal_power").withStyle(ChatFormatting.DARK_GRAY));
+            CompoundTag contents = stack.get(CoreComponents.CONTENTS.get());
+            if (contents != null) {
+                int stacks = contents.getCompound("items").getList("Items", Tag.TAG_COMPOUND).size();
+                tooltip.add(Component.translatable("tooltip.robotica.storage_terminal_carried", stacks).withStyle(ChatFormatting.GOLD));
+            } else {
+                tooltip.add(Component.translatable("tooltip.robotica.storage_terminal_carry").withStyle(ChatFormatting.DARK_GRAY));
+            }
         }
     }
 }

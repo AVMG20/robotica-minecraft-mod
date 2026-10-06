@@ -15,6 +15,8 @@
   "jei.robotica.info.upgrade.growth": "+50% crop and sapling growth per card.",
   "jei.robotica.info.upgrade.void": "Deletes cobblestone, dirt, gravel and other junk instead of storing it.",
   "jei.robotica.info.upgrade.pickup": "Tool module: auto-pickup for power tools. Install it at a Tinker's Bench. The Void Filter card works the same way.",
+  "jei.robotica.info.upgrade.height": "Architect Table only: every card makes the buildings one block taller, up to 12 high. Built buildings grow (or shrink) to match.",
+  "jei.robotica.info.upgrade.carry": "Storage Terminal: right-click the terminal with this card. From then on it keeps every item inside when you pick it up.",
   "jei.robotica.info.upgrade.stackable": "Cards of this kind stack in one upgrade slot: each card adds one step, up to %s. The machine says how many it takes.",
   "jei.robotica.info.upgrade.single": "Only one card of this kind fits in a machine.",
   "jei.robotica.info.upgrade.rules": "Right-click a machine or robot with the card, or put it in an upgrade slot. Machines only take the kinds they have a use for.",

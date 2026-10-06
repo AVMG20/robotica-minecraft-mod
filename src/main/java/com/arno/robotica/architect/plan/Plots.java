@@ -5,13 +5,15 @@ import net.minecraft.core.BlockPos;
 /**
  * Plot grid geometry. The table is the middle floor block of the centre plot: that plot spans table.x-4..table.x+4 and
  * table.z-4..table.z+4 with its floor at table.y, and the other plots continue on the same 9 block grid. A plot is 9x9
- * blocks and 6 high (floor layer 0, walls 1-4, roof 5). Plot index = (pz + 2) * 5 + (px + 2) for px, pz in -2..2.
+ * blocks and 6 high (floor layer 0, walls 1-4, roof 5; Height cards make it up to 12). Plot index = (pz + 2) * 5 + (px + 2) for px, pz in -2..2.
  */
 public final class Plots {
     private Plots() {}
 
     public static final int SIZE = 9;
+    /** Base height: floor, 4 wall layers, roof. Every Height card adds a wall layer, up to {@link #MAX_HEIGHT}. */
     public static final int HEIGHT = 6;
+    public static final int MAX_HEIGHT = 12;
     public static final int GRID = 5;
     public static final int RADIUS = GRID / 2;
     public static final int COUNT = GRID * GRID;

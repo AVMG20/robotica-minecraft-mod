@@ -24,6 +24,8 @@ import java.util.List;
  */
 public final class Layout {
     public static final int EMPTY = 0, QUEUED = 1, BUILT = 2;
+    /** Built signature of a plot whose re-pass is half done; never equals a real signature. */
+    private static final int CHANGING = 1 << 31;
 
     private final int[] state = new int[Plots.COUNT];
     private final BuildStyle[] style = new BuildStyle[Plots.COUNT];
@@ -32,6 +34,7 @@ public final class Layout {
     private final int[] builtSig = new int[Plots.COUNT];
     /** Queued plots in the order they were clicked. */
     private final List<Integer> order = new ArrayList<>();
+    private int height = Plots.HEIGHT;
 
     public Layout() {
         Arrays.fill(style, BuildStyle.TIMBERFRAME);
@@ -71,12 +74,36 @@ public final class Layout {
     }
 
     public Shell.Shape shape(int plot) {
-        return new Shell.Shape(sides(plot), diagonals(plot), doors[plot], ((Plots.px(plot) + Plots.pz(plot)) & 1) != 0);
+        return new Shell.Shape(sides(plot), diagonals(plot), doors[plot], ((Plots.px(plot) + Plots.pz(plot)) & 1) != 0, height);
+    }
+
+    /** Building height of every plot (set by the table from its Height cards, not saved). */
+    public int height() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = Math.max(Plots.HEIGHT, Math.min(Plots.MAX_HEIGHT, height));
+    }
+
+    /** Height a built plot was finished with (the tallest walked so far while a re-pass runs), 0 when it is not built. */
+    public int builtHeight(int plot) {
+        return state[plot] == BUILT ? Shell.Shape.heightOf(builtSig[plot]) : 0;
     }
 
     /** Shape plus style: what a finished plot must look like. */
     public int signature(int plot) {
         return shape(plot).signature() | style[plot].ordinal() << 14;
+    }
+
+    /**
+     * A re-pass changed the first block of a built plot: until a pass finishes, the plot must not count as done, even
+     * when the plan changes back. The marker keeps the tallest height walked so the trim takes it down if needed.
+     */
+    public void markChanging(int plot, int walkedHeight) {
+        if (state[plot] != BUILT || builtSig[plot] < 0) return;
+        int height = Math.max(builtHeight(plot), walkedHeight);
+        builtSig[plot] = CHANGING | (height - Plots.HEIGHT) << 20;
     }
 
     public boolean needsWork(int plot) {
