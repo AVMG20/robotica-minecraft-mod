@@ -8,6 +8,7 @@ import com.arno.robotica.exo.ExoModuleKind;
 import com.arno.robotica.exo.ExoRegistry;
 import com.arno.robotica.exo.ExoRules;
 import com.arno.robotica.exo.ExoSuit;
+import com.arno.robotica.exo.ExoTicker;
 import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.item.ExoModuleItem;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -21,12 +22,14 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Module screen of the Exo-Frame: one row per armor piece with up to four module slots, an on/off switch per module
@@ -35,6 +38,11 @@ import java.util.List;
  * ({@link #clickMenuButton}), so the server validates every click. The slots write straight into the piece's data
  * components; the energy and everything else on the piece is never touched (except that removing Capacitor Plating
  * caps the stored energy at the smaller battery).
+ *
+ * <p>The server menu remembers the exact piece stacks it was opened for and only ever reads or writes those. When a
+ * piece is swapped, moved or replaced (hotbar number keys, the offhand key, another selected slot) the menu refuses
+ * every further click and closes, so a module list can never be copied onto a second piece. Clicks that would move
+ * the held piece itself are refused outright.
  */
 public class ExoMenu extends MachineMenu {
     /** Where a section's armor piece lives: 0 worn in its slot, 1 main hand, 2 off hand. {@code count} 0 = no piece. */
@@ -57,6 +65,10 @@ public class ExoMenu extends MachineMenu {
             }
             return list;
         }
+
+        boolean hasPiece() {
+            return count > 0 || core;
+        }
     }
 
     // Layout, shared with the screen.
@@ -71,29 +83,52 @@ public class ExoMenu extends MachineMenu {
     /** Index of the first module slot of each section in {@link #slots}. */
     public final int[] firstSlot;
     private final Player player;
+    /** Server only (null on the client): the piece stack of each row at open time. Reads and writes require it. */
+    @Nullable
+    private final ItemStack[] expected;
 
     public ExoMenu(int id, Inventory inv, List<Section> sections, boolean server) {
         super(ExoRegistry.EXO_MENU.get(), id);
         this.player = inv.player;
         this.sections = List.copyOf(sections);
         this.firstSlot = new int[sections.size()];
+        this.expected = server ? new ItemStack[sections.size()] : null;
+        if (expected != null) {
+            for (int r = 0; r < sections.size(); r++) {
+                Section section = sections.get(r);
+                expected[r] = section.hasPiece() ? section.resolve(inv.player) : ItemStack.EMPTY;
+            }
+        }
         int index = 0;
         for (int r = 0; r < sections.size(); r++) {
             Section section = sections.get(r);
             firstSlot[r] = index;
             int y = rowY(r) + 3;
-            Container container = server ? new ModuleContainer(inv.player, section) : new SimpleContainer(Math.max(1, section.count()));
+            int row = r;
+            Supplier<ItemStack> piece = () -> piece(row);
+            Container container = server ? new ModuleContainer(inv.player, section, piece) : new SimpleContainer(Math.max(1, section.count()));
             for (int i = 0; i < section.count(); i++) {
-                addSlot(new ModuleSlot(container, i, inv.player, section, SLOT_X + i * SLOT_STEP, y));
+                addSlot(new ModuleSlot(container, i, inv.player, section, piece, SLOT_X + i * SLOT_STEP, y));
                 index++;
             }
             if (section.core()) {
-                Container core = server ? new CoreContainer(inv.player, section) : new SimpleContainer(1);
-                addSlot(new CoreSlot(core, inv.player, section, CORE_X, y));
+                Container core = server ? new CoreContainer(inv.player, piece) : new SimpleContainer(1);
+                addSlot(new CoreSlot(core, piece, CORE_X, y));
                 index++;
             }
         }
         addPlayerInventory(inv, (WIDTH - 162) / 2, inventoryY(sections.size()));
+    }
+
+    /**
+     * The piece of a row. On the server only the exact stack the menu was opened for, EMPTY once that stack moved, was
+     * replaced or used up. On the client whatever sits where the section points.
+     */
+    public ItemStack piece(int row) {
+        ItemStack now = sections.get(row).resolve(player);
+        if (expected == null) return now;
+        ItemStack want = expected[row];
+        return !want.isEmpty() && now == want ? now : ItemStack.EMPTY;
     }
 
     public static int rowY(int row) {
@@ -156,10 +191,34 @@ public class ExoMenu extends MachineMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        for (Section section : sections) {
-            if (section.count() > 0 && section.resolve(player).isEmpty()) return false;
+        for (int r = 0; r < sections.size(); r++) {
+            if (sections.get(r).hasPiece() && piece(r).isEmpty()) return false;
         }
         return true;
+    }
+
+    /** Refuses every click that would move a held piece the menu edits (its hotbar slot, number keys, the offhand key). */
+    @Override
+    public void clicked(int slotId, int button, ClickType type, Player player) {
+        if (movesSource(slotId, button, type, player)) return;
+        super.clicked(slotId, button, type, player);
+    }
+
+    /** True when the click would take, swap or throw the held piece of a hand section. */
+    public boolean movesSource(int slotId, int button, ClickType type, Player player) {
+        Inventory inv = player.getInventory();
+        for (Section section : sections) {
+            if (section.source() == 1) {
+                if (type == ClickType.SWAP && button == inv.selected) return true;
+                if (slotId >= 0 && slotId < slots.size()) {
+                    Slot slot = slots.get(slotId);
+                    if (slot.container == inv && slot.getContainerSlot() == inv.selected) return true;
+                }
+            } else if (section.source() == 2 && type == ClickType.SWAP && button == Inventory.SLOT_OFFHAND) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Button id = row * 4 + module slot: switches that module on or off. */
@@ -168,13 +227,11 @@ public class ExoMenu extends MachineMenu {
         int row = id / ExoArmorItem.MAX_SLOTS;
         int slot = id % ExoArmorItem.MAX_SLOTS;
         if (id < 0 || row >= sections.size() || slot >= sections.get(row).count()) return false;
-        ItemStack piece = sections.get(row).resolve(player);
+        ItemStack piece = piece(row);
         if (piece.isEmpty() || ExoData.kind(piece, slot) == null) return false;
         boolean on = !ExoData.isEnabled(piece, slot);
         ExoData.setEnabled(piece, slot, on);
-        if (!player.level().isClientSide) {
-            CoreSounds.play(player, CoreSounds.TOOL_MODE, SoundSource.PLAYERS, 0.5F, on ? 1.3F : 0.8F);
-        }
+        if (player instanceof ServerPlayer sp) ExoTicker.notifySound(sp, CoreSounds.TOOL_MODE.get(), 0.5F, on ? 1.3F : 0.8F);
         return true;
     }
 
@@ -184,8 +241,9 @@ public class ExoMenu extends MachineMenu {
      */
     public boolean isShadowed(int row, int slot) {
         Section section = sections.get(row);
-        ItemStack piece = section.resolve(player);
+        ItemStack piece = piece(row);
         if (!(ExoData.module(piece, slot).getItem() instanceof ExoModuleItem m) || m.kind.perPiece() || section.source() != 0) return false;
+        if (!ExoData.fitsHere(piece, slot)) return false;
         ExoSuit.Active active = ExoSuit.active(player);
         int best = active.level(m.kind);
         if (best <= 0 || !ExoData.isEnabled(piece, slot)) return false;
@@ -195,15 +253,23 @@ public class ExoMenu extends MachineMenu {
         return counted != ExoModuleKind.slotIndex(section.slot()) || ExoData.slotOf(piece, m.kind) != slot;
     }
 
+    /** True when the module in this row and slot sits in the wrong piece or below its mark, so it does nothing. */
+    public boolean isMisplaced(int row, int slot) {
+        ItemStack piece = piece(row);
+        return ExoData.module(piece, slot).getItem() instanceof ExoModuleItem && !ExoData.fitsHere(piece, slot);
+    }
+
     /** One slot for one module. The rules (piece, mark, one per suit) are in {@link ExoRules}. */
     public static class ModuleSlot extends Slot {
         private final Player player;
         private final Section section;
+        private final Supplier<ItemStack> piece;
 
-        public ModuleSlot(Container container, int index, Player player, Section section, int x, int y) {
+        public ModuleSlot(Container container, int index, Player player, Section section, Supplier<ItemStack> piece, int x, int y) {
             super(container, index, x, y);
             this.player = player;
             this.section = section;
+            this.piece = piece;
         }
 
         public EquipmentSlot piece() {
@@ -213,12 +279,17 @@ public class ExoMenu extends MachineMenu {
         /** Why the stack cannot go here, or null. */
         @Nullable
         public Component refusal(ItemStack stack) {
-            return ExoRules.moduleRefusal(section.resolve(player), getContainerSlot(), stack, section.others(player));
+            return ExoRules.moduleRefusal(piece.get(), getContainerSlot(), stack, section.others(player));
         }
 
         @Override
         public boolean mayPlace(ItemStack stack) {
             return refusal(stack) == null;
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return !piece.get().isEmpty();
         }
 
         @Override
@@ -234,23 +305,26 @@ public class ExoMenu extends MachineMenu {
 
     /** The chestplate's core socket: one Servo, Magma or Antigrav Core. */
     public static class CoreSlot extends Slot {
-        private final Player player;
-        private final Section section;
+        private final Supplier<ItemStack> piece;
 
-        public CoreSlot(Container container, Player player, Section section, int x, int y) {
+        public CoreSlot(Container container, Supplier<ItemStack> piece, int x, int y) {
             super(container, 0, x, y);
-            this.player = player;
-            this.section = section;
+            this.piece = piece;
         }
 
         @Nullable
         public Component refusal(ItemStack stack) {
-            return ExoRules.coreRefusal(section.resolve(player), stack);
+            return ExoRules.coreRefusal(piece.get(), stack);
         }
 
         @Override
         public boolean mayPlace(ItemStack stack) {
             return refusal(stack) == null;
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return !piece.get().isEmpty();
         }
 
         @Override
@@ -266,23 +340,26 @@ public class ExoMenu extends MachineMenu {
 
     /**
      * Server side backing of the module slots: a small container loaded from the piece's component and written back
-     * on every change. Switching state follows the module (a freshly installed module starts on).
+     * on every change, always into the stack the menu was opened for. Switching state follows the module (a freshly
+     * installed module starts on).
      */
     public static final class ModuleContainer extends SimpleContainer {
         private final Player player;
         private final Section section;
+        private final Supplier<ItemStack> source;
 
-        public ModuleContainer(Player player, Section section) {
+        public ModuleContainer(Player player, Section section, Supplier<ItemStack> source) {
             super(Math.max(1, section.count()));
             this.player = player;
             this.section = section;
-            ItemStack piece = section.resolve(player);
+            this.source = source;
+            ItemStack piece = source.get();
             for (int i = 0; i < section.count(); i++) setItem(i, ExoData.module(piece, i).copy());
             addListener(this::writeBack);
         }
 
         private void writeBack(Container container) {
-            ItemStack piece = section.resolve(player);
+            ItemStack piece = source.get();
             if (piece.isEmpty()) return;
             List<ItemStack> before = ExoData.modules(piece);
             List<ItemStack> now = new ArrayList<>();
@@ -305,21 +382,21 @@ public class ExoMenu extends MachineMenu {
         }
     }
 
-    /** Server side backing of the core socket. */
+    /** Server side backing of the core socket, written into the stack the menu was opened for. */
     public static final class CoreContainer extends SimpleContainer {
         private final Player player;
-        private final Section section;
+        private final Supplier<ItemStack> source;
 
-        public CoreContainer(Player player, Section section) {
+        public CoreContainer(Player player, Supplier<ItemStack> source) {
             super(1);
             this.player = player;
-            this.section = section;
-            setItem(0, ExoData.core(section.resolve(player)).copy());
+            this.source = source;
+            setItem(0, ExoData.core(source.get()).copy());
             addListener(this::writeBack);
         }
 
         private void writeBack(Container container) {
-            ItemStack piece = section.resolve(player);
+            ItemStack piece = source.get();
             if (piece.isEmpty()) return;
             boolean had = !ExoData.core(piece).isEmpty();
             ExoData.setCore(piece, getItem(0));

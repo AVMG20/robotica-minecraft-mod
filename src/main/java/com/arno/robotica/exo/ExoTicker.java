@@ -8,10 +8,14 @@ import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.exo.net.ExoSonarPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
@@ -29,6 +33,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Abilities;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -39,10 +44,13 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,10 +62,15 @@ import java.util.UUID;
  * <p>Everything is evaluated from the worn items each tick, so removing a piece, a module, the energy or the toggle
  * undoes the effect by itself: attribute modifiers are transient and removed when no longer wanted, mob effects are
  * short, ambient and refreshed, flight is a granted {@code mayfly} that is revoked again (never touched in creative or
- * spectator). Energy costs (and what Solar Weave and the Kinetic Generator make) are collected per piece and written
- * to the items once every 10 ticks, so the armor stack does not change (and is not re-sent to every nearby player)
- * on every tick. Cooldowns (Dash, Sonar, Med Injector, Overclock) are vanilla item cooldowns on the module item (the
- * Servo Core for Overclock), so the client sees them without extra packets.
+ * spectator). Running costs per tick (and what Solar Weave and the Kinetic Generator make) are collected per piece and
+ * written to the items once every 10 ticks, so the armor stack does not change (and is not re-sent to every nearby
+ * player) on every tick. One-shot costs (a dash, a jump, a hit, a fall, a heal, a meal, a ping) are drained from the
+ * worn stacks at once, so swapping a piece cannot dodge them.
+ *
+ * <p>Cooldowns (Dash, Sonar, Med Injector, Overclock) are vanilla item cooldowns on the module item (the Servo Core for
+ * Overclock), so the client sees them without extra packets. Their end times and the flight grant are also kept in the
+ * player's persistent data, so a relog neither resets a cooldown nor drops a flying player, and a crash cannot leave a
+ * stale {@code mayfly} behind (see {@link #onLogin}).
  */
 public final class ExoTicker {
     private ExoTicker() {}
@@ -69,6 +82,15 @@ public final class ExoTicker {
     private static final ResourceLocation DIG_ID = Robotica.id("exo_hydro_fins_mining");
     private static final int FLUSH_INTERVAL = 10;
     private static final int CHEST = 1, FEET = 3;
+    /** Persistent data: true while the suit (not a game mode or another mod) granted the player {@code mayfly}. */
+    public static final String FLIGHT_KEY = "robotica_exo_flight";
+    /** Persistent data (inside PlayerPersisted, kept through death): cooldown end times in game ticks. */
+    public static final String COOLDOWN_KEY = "robotica_exo_cooldowns";
+    public static final String CD_DASH = "dash", CD_MED = "med_injector", CD_SONAR = "sonar", CD_OVERCLOCK = "overclock";
+    /** Fewest ticks between two handled key presses of the same action, and between two refusal beeps. */
+    private static final int ACTION_GAP = 2, REFUSAL_GAP = 10;
+    /** Most horizontal blocks per tick the Kinetic Generator counts (about a sprint jump). */
+    private static final double KINETIC_MAX_STEP = 0.6;
     /** Effects the Hazard Seal clears. */
     private static final List<Holder<MobEffect>> HAZARDS = List.of(MobEffects.POISON, MobEffects.WITHER, MobEffects.HUNGER,
             MobEffects.CONFUSION, MobEffects.BLINDNESS);
@@ -93,6 +115,14 @@ public final class ExoTicker {
         boolean gliding;
         int airJumps;
         int lastAirJumpTick = -100;
+        /** Tick of the last hit the Kinetic Shield absorbed completely (its knockback is cancelled). */
+        int shieldTick = -100;
+        int lastRefusal = -100;
+        final int[] lastAction = new int[8];
+
+        State() {
+            Arrays.fill(lastAction, -100);
+        }
     }
 
     private static final Map<UUID, State> STATES = new HashMap<>();
@@ -114,15 +144,15 @@ public final class ExoTicker {
         State st = STATES.get(id);
         if (!ExoSuit.wearingAny(p)) {
             if (st != null) {
-                release(p, st, false);
+                release(p, st, false, true);
                 STATES.remove(id);
+            } else if (p.getPersistentData().getBoolean(FLIGHT_KEY)) {
+                // A grant from before a restart, with no suit on any more.
+                revokeFlight(p, new State(), false);
             }
             return;
         }
-        if (st == null) {
-            st = new State();
-            STATES.put(id, st);
-        }
+        if (st == null) st = newState(p);
         st.tick++;
         refresh(p, st);
 
@@ -131,7 +161,7 @@ public final class ExoTicker {
         boolean first = Double.isNaN(st.lastX);
         double dist = first ? 0 : Math.sqrt(dx * dx + dz * dz);
         st.moving = dist > 0.02;
-        st.walked = Math.min(dist, 1.0);
+        st.walked = Math.min(dist, KINETIC_MAX_STEP);
         st.dy = first ? 0 : p.getY() - st.lastY;
         st.lastX = p.getX();
         st.lastY = p.getY();
@@ -154,7 +184,15 @@ public final class ExoTicker {
         if (st.tick % FLUSH_INTERVAL == 0) flush(p, st);
     }
 
-    /** Writes the collected costs and production to the armor items. Called every 10 ticks; public for tests. */
+    /** A fresh state; the flight grant comes from the persistent data so it survives a restart. */
+    private static State newState(ServerPlayer p) {
+        State st = new State();
+        st.flightGranted = p.getPersistentData().getBoolean(FLIGHT_KEY);
+        STATES.put(p.getUUID(), st);
+        return st;
+    }
+
+    /** Writes the collected running costs and production to the armor items. Called every 10 ticks; public for tests. */
     public static void flush(ServerPlayer p) {
         State st = STATES.get(p.getUUID());
         if (st != null) flush(p, st);
@@ -180,15 +218,19 @@ public final class ExoTicker {
     }
 
     private static void refresh(ServerPlayer p, State st) {
+        readEnergy(p, st);
+        st.act = ExoSuit.active(p);
+        st.core = ExoSuit.setBonus(p);
+        st.factor = ExoSuit.costFactor(st.act);
+    }
+
+    private static void readEnergy(ServerPlayer p, State st) {
         st.full = true;
         for (int i = 0; i < 4; i++) {
             ItemStack piece = ExoSuit.piece(p, ExoSuit.SLOTS[i]);
             if (piece.isEmpty()) st.full = false;
             st.energy[i] = piece.isEmpty() ? 0 : ItemEnergy.get(piece);
         }
-        st.act = ExoSuit.active(p);
-        st.core = ExoSuit.setBonus(p);
-        st.factor = 1.0 - ExoConfig.regulatorSaving(st.act.level(ExoModuleKind.POWER_REGULATOR));
     }
 
     private static boolean has(State st, ExoModuleKind kind) {
@@ -217,9 +259,23 @@ public final class ExoTicker {
         return has(st, kind) && available(st, st.act.piece(kind)) >= Math.max(fe * st.factor, 1);
     }
 
-    /** Books {@code fe} (before the Power Regulator) against the module's piece. */
+    /** Books a running cost {@code fe} (before the Power Regulator) against the module's piece, written on the next flush. */
     private static void spend(State st, ExoModuleKind kind, double fe) {
         st.pending[st.act.piece(kind)] += fe * st.factor;
+    }
+
+    /** Pays a one-shot cost {@code fe} (before the Power Regulator) from the worn stacks right now. Returns the FE taken. */
+    private static int spendNow(ServerPlayer p, State st, ExoModuleKind kind, double fe) {
+        return payNow(p, st, st.act.piece(kind), fe * st.factor);
+    }
+
+    /** Drains {@code fe} (already final) for a module in piece slot {@code piece} from the worn stacks right now. */
+    private static int payNow(ServerPlayer p, State st, int piece, double fe) {
+        int amount = (int) Math.round(fe);
+        if (amount <= 0) return 0;
+        int taken = ExoSuit.drain(p, ExoSuit.SLOTS[piece], amount);
+        readEnergy(p, st);
+        return taken;
     }
 
     // ---------------------------------------------------------------- helmet
@@ -253,7 +309,10 @@ public final class ExoTicker {
         if (cur != null && cur.isAmbient() && !cur.isVisible() && !cur.showIcon()) p.removeEffect(effect);
     }
 
-    /** Auto-Feeder: once a second, eats the best fitting plain food from the inventory when hungry. */
+    /**
+     * Auto-Feeder: once a second, eats the best fitting plain food from the inventory when hungry. Foods with effects,
+     * suspicious stew and chorus fruit are skipped; a bowl or bottle left over goes back into the inventory (or drops).
+     */
     private static void autoFeeder(ServerPlayer p, State st) {
         if (!has(st, ExoModuleKind.AUTO_FEEDER) || creativeLike(p)) return;
         var food = p.getFoodData();
@@ -266,7 +325,7 @@ public final class ExoTicker {
         FoodProperties bestFood = null;
         for (int i = 0; i < inv.items.size() + 1; i++) {
             ItemStack stack = i < inv.items.size() ? inv.items.get(i) : inv.offhand.get(0);
-            if (stack.isEmpty() || stack.is(Items.CHORUS_FRUIT)) continue;
+            if (stack.isEmpty() || !plainFood(stack)) continue;
             FoodProperties props = stack.getFoodProperties(p);
             if (props == null || !props.effects().isEmpty() || props.nutrition() <= 0) continue;
             if (bestFood == null || better(props.nutrition(), bestFood.nutrition(), missing)) {
@@ -275,8 +334,15 @@ public final class ExoTicker {
             }
         }
         if (bestFood == null) return;
-        p.eat(p.level(), best, bestFood);
-        spend(st, ExoModuleKind.AUTO_FEEDER, cost);
+        ItemStack left = p.eat(p.level(), best, bestFood);
+        // Player.eat hands back the container (bowl, bottle) instead of the used up stack; never lose it.
+        if (left != best && !left.isEmpty() && !p.getInventory().add(left)) p.drop(left, false);
+        spendNow(p, st, ExoModuleKind.AUTO_FEEDER, cost);
+    }
+
+    /** Food the Auto-Feeder may eat: nothing whose use does more than feed (teleports, hidden effects). */
+    private static boolean plainFood(ItemStack stack) {
+        return !stack.is(Items.CHORUS_FRUIT) && !stack.is(Items.SUSPICIOUS_STEW) && !stack.has(DataComponents.SUSPICIOUS_STEW_EFFECTS);
     }
 
     /** Prefers the biggest food that does not overfill, else the smallest one. */
@@ -325,15 +391,19 @@ public final class ExoTicker {
         return st.core == ExoData.Core.ANTIGRAV ? cost * ExoConfig.antigravFlightFactor() : cost;
     }
 
+    /** True when the worn suit may grant flight now: a switched-on Flight module with energy for a tick, not creative. */
+    private static boolean flightValid(ServerPlayer p, State st) {
+        return !creativeLike(p) && has(st, ExoModuleKind.FLIGHT)
+                && available(st, st.act.piece(ExoModuleKind.FLIGHT)) >= Math.max(flightCost(st) * st.factor, 1);
+    }
+
     private static void flight(ServerPlayer p, State st) {
-        boolean creativeLike = creativeLike(p);
         double cost = flightCost(st);
-        boolean want = !creativeLike && has(st, ExoModuleKind.FLIGHT) && available(st, st.act.piece(ExoModuleKind.FLIGHT)) >= Math.max(cost * st.factor, 1);
         Abilities ab = p.getAbilities();
-        if (want) {
+        if (flightValid(p, st)) {
             if (!ab.mayfly) {
                 ab.mayfly = true;
-                st.flightGranted = true;
+                setFlightGranted(p, st, true);
                 p.onUpdateAbilities();
             }
             if (ab.flying) {
@@ -355,6 +425,13 @@ public final class ExoTicker {
         }
     }
 
+    /** Remembers (in the state and the player's saved data) whether the suit granted flight. */
+    private static void setFlightGranted(ServerPlayer p, State st, boolean granted) {
+        st.flightGranted = granted;
+        if (granted) p.getPersistentData().putBoolean(FLIGHT_KEY, true);
+        else p.getPersistentData().remove(FLIGHT_KEY);
+    }
+
     /** Creative and spectator players fly by themselves; the suit never grants or revokes anything for them. */
     private static boolean creativeLike(ServerPlayer p) {
         GameType type = p.gameMode.getGameModeForPlayer();
@@ -363,7 +440,7 @@ public final class ExoTicker {
 
     /** Takes back the flight we granted. Never touches creative or spectator abilities. {@code soft}: give a short slow fall. */
     private static void revokeFlight(ServerPlayer p, State st, boolean soft) {
-        st.flightGranted = false;
+        setFlightGranted(p, st, false);
         if (creativeLike(p)) return;
         Abilities ab = p.getAbilities();
         if (!ab.mayfly && !ab.flying) return;
@@ -372,7 +449,7 @@ public final class ExoTicker {
         p.onUpdateAbilities();
         if (soft && !p.onGround()) {
             p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 100, 0, true, false, true));
-            CoreSounds.play(p, CoreSounds.ROBOT_ERROR, SoundSource.PLAYERS, 0.6F, 0.8F);
+            notifySound(p, CoreSounds.ROBOT_ERROR.get(), 0.6F, 0.8F);
         }
         p.resetFallDistance();
     }
@@ -385,17 +462,11 @@ public final class ExoTicker {
         if (p.getCooldowns().isOnCooldown(item)) return;
         double cost = ExoConfig.cost(ExoModuleKind.MED_INJECTOR, level);
         if (!afford(st, ExoModuleKind.MED_INJECTOR, cost)) return;
-        spend(st, ExoModuleKind.MED_INJECTOR, cost);
+        spendNow(p, st, ExoModuleKind.MED_INJECTOR, cost);
         p.heal(ExoConfig.medHeal(level));
-        cooldownAll(p, ExoModuleKind.MED_INJECTOR, ExoConfig.medCooldown(level));
+        startCooldown(p, CD_MED, ExoConfig.medCooldown(level));
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.5F, 1.8F);
         p.serverLevel().sendParticles(ParticleTypes.HEART, p.getX(), p.getY() + 1.2, p.getZ(), 4, 0.4, 0.4, 0.4, 0.0);
-    }
-
-    /** Puts every level of a module kind on cooldown (the HUD reads the installed one). */
-    private static void cooldownAll(ServerPlayer p, ExoModuleKind kind, int ticks) {
-        if (ticks <= 0) return;
-        for (int l = 1; l <= kind.maxLevel(); l++) p.getCooldowns().addCooldown(ExoItems.module(kind, l).get(), ticks);
     }
 
     /** Hazard Seal: clears poison, wither, hunger, nausea and blindness, paying per effect. */
@@ -406,7 +477,7 @@ public final class ExoTicker {
         for (Holder<MobEffect> effect : HAZARDS) {
             if (!p.hasEffect(effect) || !afford(st, ExoModuleKind.HAZARD_SEAL, cost)) continue;
             p.removeEffect(effect);
-            spend(st, ExoModuleKind.HAZARD_SEAL, cost);
+            spendNow(p, st, ExoModuleKind.HAZARD_SEAL, cost);
             cleared = true;
         }
         if (cleared) {
@@ -454,17 +525,22 @@ public final class ExoTicker {
         }
     }
 
-    /** Kinetic Generator: walking on the ground charges the suit a little. */
+    /**
+     * Kinetic Generator: walking on the ground charges the suit a little. Only steps the player makes count: on solid
+     * ground, out of any fluid (a water stream pushing the player does not), not riding, flying or gliding, and at
+     * most about a sprint jump per tick.
+     */
     private static void kineticGenerator(ServerPlayer p, State st) {
         if (!has(st, ExoModuleKind.KINETIC_GENERATOR) || st.walked <= 0.02) return;
         if (!p.onGround() || p.isPassenger() || p.getAbilities().flying || p.isFallFlying() || p.isSpectator()) return;
+        if (p.isInWater() || p.isInLava() || p.isInFluidType() || p.isInPowderSnow) return;
         int perBlock = p.isSprinting() ? ExoConfig.kineticSprintPerBlock() : ExoConfig.cost(ExoModuleKind.KINETIC_GENERATOR, 1);
         st.made[st.act.piece(ExoModuleKind.KINETIC_GENERATOR)] += st.walked * perBlock;
     }
 
     private static void magnet(ServerPlayer p, State st) {
         int level = lvl(st, ExoModuleKind.MAGNET);
-        if (level <= 0) return;
+        if (level <= 0 || p.isSpectator()) return;
         double cost = ExoConfig.perTick(ExoModuleKind.MAGNET, level) * 2;
         if (!afford(st, ExoModuleKind.MAGNET, cost)) return;
         int radius = ExoConfig.magnetRadius(level);
@@ -537,20 +613,45 @@ public final class ExoTicker {
         return st;
     }
 
-    /** Jet Assist double jump, requested by the client in mid air. All checks are repeated here. Returns true when it fired. */
+    /**
+     * Rate limit for key presses: true at most once every {@link #ACTION_GAP} ticks per player and action, so a flood
+     * of packets costs next to nothing.
+     */
+    public static boolean actionAllowed(ServerPlayer p, int action) {
+        State st = STATES.get(p.getUUID());
+        if (st == null) return true;
+        if (action < 0 || action >= st.lastAction.length) return false;
+        if (p.tickCount - st.lastAction[action] < ACTION_GAP) return false;
+        st.lastAction[action] = p.tickCount;
+        return true;
+    }
+
+    /** A sound only the given player hears (menu clicks, refusals, toggles). */
+    public static void notifySound(ServerPlayer p, SoundEvent sound, float volume, float pitch) {
+        if (p.connection != null) p.playNotifySound(sound, SoundSource.PLAYERS, volume, pitch);
+    }
+
+    /** The refusal beep: only for the acting player, and at most every {@link #REFUSAL_GAP} ticks. */
+    private static void refuse(ServerPlayer p, State st) {
+        if (p.tickCount - st.lastRefusal < REFUSAL_GAP && p.tickCount >= st.lastRefusal) return;
+        st.lastRefusal = p.tickCount;
+        notifySound(p, CoreSounds.ROBOT_ERROR.get(), 0.4F, 1.2F);
+    }
+
+    /**
+     * Jet Assist double jump, requested by the client in mid air. All checks are repeated here with the same rules the
+     * client predicts with ({@link ExoSuit#canPayAirJump}); a refusal is silent. Returns true when it fired.
+     */
     public static boolean doubleJump(ServerPlayer p) {
         State st = state(p);
         int level = st == null ? 0 : lvl(st, ExoModuleKind.JET_ASSIST);
         if (level <= 0) return false;
         Abilities ab = p.getAbilities();
         if (p.onGround() || p.isInWater() || p.isInLava() || ab.flying || p.isFallFlying() || p.isPassenger() || p.isSpectator()) return false;
-        if (st.airJumps >= ExoConfig.airJumps(level) || p.tickCount - st.lastAirJumpTick < 6) return false;
-        int cost = ExoConfig.doubleJumpCost(level);
-        if (!afford(st, ExoModuleKind.JET_ASSIST, cost)) {
-            CoreSounds.play(p, CoreSounds.ROBOT_ERROR, SoundSource.PLAYERS, 0.4F, 1.2F);
-            return false;
-        }
-        spend(st, ExoModuleKind.JET_ASSIST, cost);
+        // Half the client's gap: packets can arrive bunched up.
+        if (st.airJumps >= ExoConfig.airJumps(level) || p.tickCount - st.lastAirJumpTick < ExoSuit.AIR_JUMP_GAP / 2) return false;
+        if (!ExoSuit.canPayAirJump(p, st.act)) return false;
+        spendNow(p, st, ExoModuleKind.JET_ASSIST, ExoConfig.doubleJumpCost(level));
         st.airJumps++;
         st.lastAirJumpTick = p.tickCount;
         Vec3 v = p.getDeltaMovement();
@@ -563,18 +664,18 @@ public final class ExoTicker {
         return true;
     }
 
-    /** Dash Thrusters: a short horizontal burst where the player looks. Returns true when it fired. */
+    /**
+     * Dash Thrusters: a short horizontal burst where the player looks. Only the server moves the player (the client
+     * does not predict it), so a refused dash moves nothing; refusals are silent. Returns true when it fired.
+     */
     public static boolean dash(ServerPlayer p) {
         State st = state(p);
         if (st == null || !has(st, ExoModuleKind.DASH_THRUSTERS) || p.isPassenger() || p.isSpectator() || p.isFallFlying()) return false;
         Item item = ExoItems.module(ExoModuleKind.DASH_THRUSTERS).get();
         if (p.getCooldowns().isOnCooldown(item)) return false;
         double cost = ExoConfig.cost(ExoModuleKind.DASH_THRUSTERS, 1);
-        if (!afford(st, ExoModuleKind.DASH_THRUSTERS, cost)) {
-            CoreSounds.play(p, CoreSounds.ROBOT_ERROR, SoundSource.PLAYERS, 0.4F, 1.2F);
-            return false;
-        }
-        spend(st, ExoModuleKind.DASH_THRUSTERS, cost);
+        if (!afford(st, ExoModuleKind.DASH_THRUSTERS, cost)) return false;
+        spendNow(p, st, ExoModuleKind.DASH_THRUSTERS, cost);
         Vec3 dir = dashDirection(p.getYRot());
         double speed = ExoConfig.dashSpeed();
         Vec3 v = p.getDeltaMovement();
@@ -583,7 +684,7 @@ public final class ExoTicker {
         p.resetFallDistance();
         int cooldown = ExoConfig.dashCooldown();
         if (st.core == ExoData.Core.ANTIGRAV) cooldown = (int) Math.round(cooldown * ExoConfig.antigravDashFactor());
-        if (cooldown > 0) p.getCooldowns().addCooldown(item, cooldown);
+        startCooldown(p, CD_DASH, cooldown);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BREEZE_WIND_CHARGE_BURST.value(), SoundSource.PLAYERS, 0.6F, 1.4F);
         p.serverLevel().sendParticles(ParticleTypes.POOF, p.getX(), p.getY() + 0.3, p.getZ(), 10, 0.25, 0.1, 0.25, 0.04);
         return true;
@@ -604,11 +705,11 @@ public final class ExoTicker {
         if (p.getCooldowns().isOnCooldown(item)) return false;
         double cost = ExoConfig.cost(ExoModuleKind.SONAR_PULSE, level);
         if (!afford(st, ExoModuleKind.SONAR_PULSE, cost)) {
-            CoreSounds.play(p, CoreSounds.ROBOT_ERROR, SoundSource.PLAYERS, 0.4F, 1.2F);
+            refuse(p, st);
             return false;
         }
-        spend(st, ExoModuleKind.SONAR_PULSE, cost);
-        cooldownAll(p, ExoModuleKind.SONAR_PULSE, ExoConfig.sonarCooldown());
+        spendNow(p, st, ExoModuleKind.SONAR_PULSE, cost);
+        startCooldown(p, CD_SONAR, ExoConfig.sonarCooldown());
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.9F, 1.4F);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 0.5F, 2.0F);
         if (p.connection != null) PacketDistributor.sendToPlayer(p, new ExoSonarPayload(ExoConfig.sonarRadius(level), ExoConfig.sonarDuration()));
@@ -626,24 +727,74 @@ public final class ExoTicker {
         if (p.getCooldowns().isOnCooldown(core)) return false;
         int cost = ExoConfig.overclockCost();
         if (available(st, CHEST) < Math.max(cost, 1)) {
-            CoreSounds.play(p, CoreSounds.ROBOT_ERROR, SoundSource.PLAYERS, 0.4F, 1.2F);
+            refuse(p, st);
             return false;
         }
-        st.pending[CHEST] += cost;
+        payNow(p, st, CHEST, cost);
         int duration = ExoConfig.overclockDuration();
         if (ExoConfig.overclockHaste() > 0) p.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, duration, ExoConfig.overclockHaste() - 1, false, false, true));
         if (ExoConfig.overclockSpeed() > 0) p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, duration, ExoConfig.overclockSpeed() - 1, false, false, true));
-        if (ExoConfig.overclockCooldown() > 0) p.getCooldowns().addCooldown(core, ExoConfig.overclockCooldown());
+        startCooldown(p, CD_OVERCLOCK, ExoConfig.overclockCooldown());
         CoreSounds.play(p, CoreSounds.MACHINE_START, SoundSource.PLAYERS, 0.8F, 1.5F);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.5F, 1.8F);
         p.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0, p.getZ(), 20, 0.4, 0.6, 0.4, 0.2);
         return true;
     }
 
+    // ---------------------------------------------------------------- cooldowns
+
+    /** The items a named cooldown sits on (every level of the module, so the HUD shows it whichever is installed). */
+    private static Item[] cooldownItems(String name) {
+        ExoModuleKind kind = switch (name) {
+            case CD_DASH -> ExoModuleKind.DASH_THRUSTERS;
+            case CD_MED -> ExoModuleKind.MED_INJECTOR;
+            case CD_SONAR -> ExoModuleKind.SONAR_PULSE;
+            default -> null;
+        };
+        if (kind == null) return CD_OVERCLOCK.equals(name) ? new Item[]{CoreItems.SERVO_CORE.get()} : new Item[0];
+        Item[] items = new Item[kind.maxLevel()];
+        for (int l = 1; l <= kind.maxLevel(); l++) items[l - 1] = ExoItems.module(kind, l).get();
+        return items;
+    }
+
+    /** Starts a cooldown on its items and remembers its end (game time) in the player's persistent data. */
+    private static void startCooldown(ServerPlayer p, String name, int ticks) {
+        if (ticks <= 0) return;
+        for (Item item : cooldownItems(name)) p.getCooldowns().addCooldown(item, ticks);
+        cooldownTag(p).putLong(name, gameTime(p) + ticks);
+    }
+
+    /** Puts every remembered cooldown that has not run out yet back on its items (login and respawn). */
+    public static void restoreCooldowns(ServerPlayer p) {
+        CompoundTag tag = cooldownTag(p);
+        long now = gameTime(p);
+        for (String name : List.copyOf(tag.getAllKeys())) {
+            long left = tag.getLong(name) - now;
+            if (left <= 0) {
+                tag.remove(name);
+                continue;
+            }
+            int ticks = (int) Math.min(left, Integer.MAX_VALUE);
+            for (Item item : cooldownItems(name)) p.getCooldowns().addCooldown(item, ticks);
+        }
+    }
+
+    private static long gameTime(ServerPlayer p) {
+        return p.server.overworld().getGameTime();
+    }
+
+    private static CompoundTag cooldownTag(ServerPlayer p) {
+        CompoundTag root = p.getPersistentData();
+        if (!root.contains(Player.PERSISTED_NBT_TAG, Tag.TAG_COMPOUND)) root.put(Player.PERSISTED_NBT_TAG, new CompoundTag());
+        CompoundTag persisted = root.getCompound(Player.PERSISTED_NBT_TAG);
+        if (!persisted.contains(COOLDOWN_KEY, Tag.TAG_COMPOUND)) persisted.put(COOLDOWN_KEY, new CompoundTag());
+        return persisted.getCompound(COOLDOWN_KEY);
+    }
+
     // ---------------------------------------------------------------- event hooks
 
     /** Rebreather: lets a player with the module and energy breathe under water. Runs on both sides (the client needs it to keep its bubbles). */
-    public static void onBreathe(net.minecraft.world.entity.player.Player player, LivingBreatheEvent event) {
+    public static void onBreathe(Player player, LivingBreatheEvent event) {
         if (event.canBreathe() || !player.isEyeInFluid(FluidTags.WATER)) return;
         if (!(player instanceof ServerPlayer p)) {
             if (ExoSuit.isActive(player, ExoModuleKind.REBREATHER)) event.setCanBreathe(true);
@@ -657,32 +808,50 @@ public final class ExoTicker {
         event.setCanBreathe(true);
     }
 
-    /**
-     * Damage to the wearer. Magma Core set: fire damage is ignored. Kinetic Shield: spends FE instead of health for up to
-     * {@link ExoConfig#shieldAbsorb} of each hit; a fully absorbed hit is cancelled (no knockback).
-     */
+    /** Incoming hit, before vanilla's checks. Magma Core set: fire damage is ignored (free, so i-frames do not matter). */
     public static void onIncomingDamage(ServerPlayer p, LivingIncomingDamageEvent event) {
         State st = STATES.get(p.getUUID());
         if (st == null) return;
-        if (st.core == ExoData.Core.MAGMA && event.getSource().is(DamageTypeTags.IS_FIRE)) {
-            event.setCanceled(true);
-            return;
-        }
+        if (st.core == ExoData.Core.MAGMA && event.getSource().is(DamageTypeTags.IS_FIRE)) event.setCanceled(true);
+    }
+
+    /**
+     * Kinetic Shield: spends FE instead of health for up to {@link ExoConfig#shieldAbsorb} of the damage that would
+     * reach the health bar. It runs in {@link LivingDamageEvent.Pre}, after vanilla's invulnerability frames and armor:
+     * a hit the i-frames block never gets here, so it costs nothing, and every hit that does get here starts i-frames
+     * as usual (lava, cactus or a crowd bill once per i-frame window, not every tick). A completely absorbed hit
+     * deals no damage and gives no knockback.
+     */
+    public static void onDamage(ServerPlayer p, LivingDamageEvent.Pre event) {
+        State st = STATES.get(p.getUUID());
+        if (st == null) return;
+        refresh(p, st);
         int level = lvl(st, ExoModuleKind.KINETIC_SHIELD);
         if (level <= 0) return;
         if (event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return;
-        float damage = event.getAmount();
+        float damage = event.getNewDamage();
         if (damage <= 0) return;
+        int piece = st.act.piece(ExoModuleKind.KINETIC_SHIELD);
         double perPoint = ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD, level) * st.factor;
-        double have = available(st, st.act.piece(ExoModuleKind.KINETIC_SHIELD));
+        double have = available(st, piece);
         float cap = (float) (damage * ExoConfig.shieldAbsorb(level));
         float absorbed = perPoint <= 0 ? cap : (float) Math.min(cap, have / perPoint);
         if (absorbed <= 0) return;
-        st.pending[st.act.piece(ExoModuleKind.KINETIC_SHIELD)] += absorbed * perPoint;
-        if (absorbed >= damage) event.setCanceled(true);
-        else event.setAmount(damage - absorbed);
+        payNow(p, st, piece, absorbed * perPoint);
+        if (absorbed >= damage) {
+            event.setNewDamage(0);
+            st.shieldTick = p.tickCount;
+        } else {
+            event.setNewDamage(damage - absorbed);
+        }
         CoreSounds.play(p, CoreSounds.SHOCK_ZAP, SoundSource.PLAYERS, 0.5F, 1.4F);
         p.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0, p.getZ(), 12, 0.4, 0.6, 0.4, 0.1);
+    }
+
+    /** A hit the Kinetic Shield absorbed completely pushes nobody around. */
+    public static void onKnockback(ServerPlayer p, LivingKnockBackEvent event) {
+        State st = STATES.get(p.getUUID());
+        if (st != null && st.shieldTick == p.tickCount) event.setCanceled(true);
     }
 
     /** Magma Core set: the wearer's melee hits set the target on fire. */
@@ -700,6 +869,7 @@ public final class ExoTicker {
     public static void onFall(ServerPlayer p, LivingFallEvent event) {
         State st = STATES.get(p.getUUID());
         if (st == null) return;
+        refresh(p, st);
         if (st.core == ExoData.Core.ANTIGRAV) {
             event.setDamageMultiplier(0.0F);
             return;
@@ -708,11 +878,12 @@ public final class ExoTicker {
         if (level <= 0) return;
         float blocks = event.getDistance() - 3.0F;
         if (blocks <= 0 || event.getDamageMultiplier() <= 0) return;
+        int piece = st.act.piece(ExoModuleKind.FALL_DAMPENER);
         double cost = (double) blocks * ExoConfig.cost(ExoModuleKind.FALL_DAMPENER, level) * st.factor;
-        double have = available(st, st.act.piece(ExoModuleKind.FALL_DAMPENER));
+        double have = available(st, piece);
         double fraction = cost <= 0 ? 1.0 : Mth.clamp(have / cost, 0.0, 1.0);
         if (fraction <= 0) return;
-        st.pending[st.act.piece(ExoModuleKind.FALL_DAMPENER)] += cost * fraction;
+        payNow(p, st, piece, cost * fraction);
         event.setDamageMultiplier((float) (event.getDamageMultiplier() * (1.0 - fraction)));
         CoreSounds.play(p, CoreSounds.MACHINE_STOP, SoundSource.PLAYERS, 0.5F, 1.5F);
         p.serverLevel().sendParticles(ParticleTypes.POOF, p.getX(), p.getY() + 0.1, p.getZ(), 8, 0.3, 0.05, 0.3, 0.02);
@@ -721,33 +892,69 @@ public final class ExoTicker {
     /** Spring Heels: the jump height itself is an attribute; this charges the jump. */
     public static void onJump(ServerPlayer p) {
         State st = STATES.get(p.getUUID());
-        int level = st == null ? 0 : lvl(st, ExoModuleKind.SPRING_HEELS);
+        if (st == null) return;
+        refresh(p, st);
+        int level = lvl(st, ExoModuleKind.SPRING_HEELS);
         if (level <= 0) return;
         double cost = ExoConfig.cost(ExoModuleKind.SPRING_HEELS, level);
-        if (afford(st, ExoModuleKind.SPRING_HEELS, cost)) spend(st, ExoModuleKind.SPRING_HEELS, cost);
+        if (afford(st, ExoModuleKind.SPRING_HEELS, cost)) spendNow(p, st, ExoModuleKind.SPRING_HEELS, cost);
     }
 
     // ---------------------------------------------------------------- lifecycle
+
+    /**
+     * Login: cooldowns come back, and a flight grant saved with the player is checked again. With a working Flight
+     * module and energy the player keeps flying (no fall on rejoin); otherwise (suit gone, empty, creative, or a stale
+     * grant from before a crash) flight is taken back.
+     */
+    public static void onLogin(ServerPlayer p) {
+        if (p instanceof FakePlayer) return;
+        restoreCooldowns(p);
+        if (!p.getPersistentData().getBoolean(FLIGHT_KEY)) return;
+        State st = STATES.get(p.getUUID());
+        if (st == null) st = newState(p);
+        st.flightGranted = true;
+        refresh(p, st);
+        if (flightValid(p, st)) {
+            Abilities ab = p.getAbilities();
+            if (!ab.mayfly) {
+                ab.mayfly = true;
+                p.onUpdateAbilities();
+            }
+        } else {
+            revokeFlight(p, st, true);
+        }
+    }
 
     /** Any game mode change: vanilla resets the abilities itself, so forget what we granted (the next tick re-grants). */
     public static void onGameModeChange(ServerPlayer p) {
         State st = STATES.get(p.getUUID());
         if (st != null) st.flightGranted = false;
+        p.getPersistentData().remove(FLIGHT_KEY);
     }
 
-    /** Logout or death: undo everything and forget the player. */
-    public static void onLeave(ServerPlayer p) {
+    /** Logout: undo the effects and forget the player, but keep a flight grant (checked again on login). */
+    public static void onLogout(ServerPlayer p) {
         State st = STATES.remove(p.getUUID());
-        if (st != null) release(p, st, false);
+        if (st != null) release(p, st, false, false);
     }
 
-    /** Respawn: new player object with fresh abilities. */
+    /** Death: undo everything, flight included. */
+    public static void onDeath(ServerPlayer p) {
+        State st = STATES.remove(p.getUUID());
+        if (st != null) release(p, st, false, true);
+        p.getPersistentData().remove(FLIGHT_KEY);
+    }
+
+    /** Respawn: new player object with fresh abilities and cooldowns; the remembered cooldowns come back. */
     public static void onRespawn(ServerPlayer p) {
         STATES.remove(p.getUUID());
+        p.getPersistentData().remove(FLIGHT_KEY);
+        restoreCooldowns(p);
     }
 
     /** Removes every effect of the suit from the player (the suit came off, or the player leaves). */
-    private static void release(ServerPlayer p, State st, boolean soft) {
+    private static void release(ServerPlayer p, State st, boolean soft, boolean revoke) {
         setModifier(p, Attributes.MOVEMENT_SPEED, SERVO_ID, 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         setModifier(p, Attributes.STEP_HEIGHT, STEP_ID, 0, AttributeModifier.Operation.ADD_VALUE);
         setModifier(p, Attributes.JUMP_STRENGTH, JUMP_ID, 0, AttributeModifier.Operation.ADD_VALUE);
@@ -756,7 +963,7 @@ public final class ExoTicker {
         if (st.nv) removeOurs(p, MobEffects.NIGHT_VISION);
         if (st.fireRes) removeOurs(p, MobEffects.FIRE_RESISTANCE);
         if (st.gliding) removeOurs(p, MobEffects.SLOW_FALLING);
-        if (st.flightGranted) revokeFlight(p, st, soft);
+        if (revoke && st.flightGranted) revokeFlight(p, st, soft);
         flush(p, st);
     }
 }

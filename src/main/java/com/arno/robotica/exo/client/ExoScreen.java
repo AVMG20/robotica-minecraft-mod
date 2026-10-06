@@ -114,6 +114,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         if (!(module.getItem() instanceof ExoModuleItem m)) return;
         boolean on = ExoData.isEnabled(piece, slot);
         boolean shadowed = menu.isShadowed(row, slot);
+        boolean misplaced = menu.isMisplaced(row, slot);
         // Level pips under the slot.
         if (m.kind.leveled()) {
             for (int l = 1; l <= m.kind.maxLevel(); l++) {
@@ -125,7 +126,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         int sx = switchX(slot);
         int sy = ry + 2;
         g.fill(sx, sy, sx + SWITCH_W, sy + SWITCH_H, BORDER);
-        int body = shadowed ? 0xFF9A5A2A : on ? 0xFF2E8B45 : 0xFF6A6A6A;
+        int body = misplaced ? 0xFF7A2A2A : shadowed ? 0xFF9A5A2A : on ? 0xFF2E8B45 : 0xFF6A6A6A;
         g.fill(sx + 1, sy + 1, sx + SWITCH_W - 1, sy + SWITCH_H - 1, body);
         int knobY = on ? sy + 2 : sy + SWITCH_H - 9;
         g.fill(sx + 2, knobY, sx + SWITCH_W - 2, knobY + 7, 0xFFE6E6E6);
@@ -137,6 +138,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         if (cost != null) lines.add(cost.copy().withStyle(ChatFormatting.AQUA));
         lines.add(ExoModuleItem.descLine(m.kind, m.level).withStyle(ChatFormatting.GRAY));
         lines.add(Component.translatable("exo.robotica.needs_mark", m.minMark()).withStyle(ChatFormatting.DARK_AQUA));
+        if (misplaced) lines.add(Component.translatable("exo.robotica.misplaced").withStyle(ChatFormatting.RED));
         if (shadowed) lines.add(Component.translatable("exo.robotica.shadowed").withStyle(ChatFormatting.GOLD));
         lines.add(Component.translatable("exo.robotica.click_toggle").withStyle(ChatFormatting.DARK_GRAY));
         addTooltip(sx, sy, SWITCH_W, SWITCH_H, lines.toArray(Component[]::new));
@@ -175,6 +177,18 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
+        // A module in the wrong piece or below its mark does nothing: dim it over the item.
+        g.pose().pushPose();
+        g.pose().translate(0, 0, 300);
+        for (int r = 0; r < menu.sections.size(); r++) {
+            for (int i = 0; i < menu.sections.get(r).count(); i++) {
+                if (!menu.isMisplaced(r, i)) continue;
+                int sx = leftPos + ExoMenu.SLOT_X + i * ExoMenu.SLOT_STEP;
+                int sy = topPos + ExoMenu.rowY(r) + 3;
+                g.fill(sx, sy, sx + 16, sy + 16, 0xA0301010);
+            }
+        }
+        g.pose().popPose();
         ItemStack carried = menu.getCarried();
         if (carried.isEmpty() || hoveredSlot == null) return;
         Component reason = null;

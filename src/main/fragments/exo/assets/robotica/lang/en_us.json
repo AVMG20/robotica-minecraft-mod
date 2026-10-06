@@ -133,6 +133,7 @@
   "exo.robotica.pool_full": "Full set: every module draws from all four batteries",
   "exo.robotica.pool_partial": "Partial set: every module draws from its own piece",
   "exo.robotica.shadowed": "Already counted elsewhere in the suit: does nothing here",
+  "exo.robotica.misplaced": "Wrong piece or mark too low: does nothing here",
   "exo.robotica.refuse": "Does not fit here",
   "exo.robotica.refuse.not_module": "Only Exo modules go here.",
   "exo.robotica.refuse.mark": "Needs an Exo piece Mk%s or better (this one is Mk%s).",

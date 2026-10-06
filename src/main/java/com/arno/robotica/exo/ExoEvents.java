@@ -5,10 +5,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -37,6 +39,17 @@ public final class ExoEvents {
         }
     }
 
+    /** After invulnerability frames and armor: the Kinetic Shield. */
+    @SubscribeEvent
+    public static void onDamage(LivingDamageEvent.Pre event) {
+        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onDamage(player, event);
+    }
+
+    @SubscribeEvent
+    public static void onKnockback(LivingKnockBackEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onKnockback(player, event);
+    }
+
     @SubscribeEvent
     public static void onFall(LivingFallEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onFall(player, event);
@@ -54,7 +67,7 @@ public final class ExoEvents {
 
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onLeave(player);
+        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onDeath(player);
     }
 
     @SubscribeEvent
@@ -63,8 +76,13 @@ public final class ExoEvents {
     }
 
     @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onLogin(player);
+    }
+
+    @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onLeave(player);
+        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onLogout(player);
     }
 
     @SubscribeEvent

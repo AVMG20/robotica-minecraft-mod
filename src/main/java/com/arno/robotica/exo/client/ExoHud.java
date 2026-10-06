@@ -56,7 +56,7 @@ final class ExoHud {
             ItemStack piece = ExoSuit.piece(player, ExoSuit.SLOTS[p]);
             for (int i = 0; i < ExoData.slotCount(piece); i++) {
                 if (!(ExoData.module(piece, i).getItem() instanceof ExoModuleItem m)) continue;
-                boolean counts = ExoData.isEnabled(piece, i) && (m.kind.perPiece() || (active.level(m.kind) == m.level && active.piece(m.kind) == p));
+                boolean counts = ExoData.isEnabled(piece, i) && ExoData.fitsHere(piece, i) && (m.kind.perPiece() || (active.level(m.kind) == m.level && active.piece(m.kind) == p));
                 float cd = player.getCooldowns().getCooldownPercent(m, partial);
                 icons.add(new Icon(new ItemStack(m), counts && ExoSuit.energyFor(player, ExoSuit.SLOTS[p]) > 0, cd, false));
             }

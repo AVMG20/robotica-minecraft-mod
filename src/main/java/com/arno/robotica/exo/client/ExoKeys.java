@@ -5,7 +5,6 @@ import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoItems;
 import com.arno.robotica.exo.ExoModuleKind;
 import com.arno.robotica.exo.ExoSuit;
-import com.arno.robotica.exo.ExoTicker;
 import com.arno.robotica.exo.net.ExoActionPayload;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -35,6 +34,7 @@ final class ExoKeys {
 
     private static boolean jumpWasDown;
     private static int airJumps;
+    private static int lastAirJump = -100;
 
     private static KeyMapping key(String name, int key) {
         return new KeyMapping("key.robotica.exo." + name, KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, key, CATEGORY);
@@ -74,15 +74,11 @@ final class ExoKeys {
             if (free) send(ExoActions.OVERCLOCK);
         }
         while (DASH.consumeClick()) {
+            // No prediction: the server applies the burst and sends the motion, so a refused dash moves nothing.
             if (free && ExoSuit.isActive(player, ExoModuleKind.DASH_THRUSTERS)
                     && !player.getCooldowns().isOnCooldown(ExoItems.module(ExoModuleKind.DASH_THRUSTERS).get())
                     && !player.isPassenger() && !player.isFallFlying()) {
                 send(ExoActions.DASH);
-                // Predict the burst; the server sends the same motion.
-                Vec3 dir = ExoTicker.dashDirection(player.getYRot());
-                double speed = ExoConfig.dashSpeed();
-                Vec3 v = player.getDeltaMovement();
-                player.setDeltaMovement(dir.x * speed, Math.max(v.y, 0.1), dir.z * speed);
             }
         }
 
@@ -90,13 +86,19 @@ final class ExoKeys {
         boolean grounded = player.onGround() || player.isInWater() || player.isInLava() || player.getAbilities().flying
                 || player.isFallFlying() || player.isPassenger();
         if (grounded) airJumps = 0;
-        int jet = worn ? ExoSuit.level(player, ExoModuleKind.JET_ASSIST) : 0;
-        if (jumpDown && !jumpWasDown && !grounded && jet > 0 && airJumps < ExoConfig.airJumps(jet)
-                && ExoSuit.isActive(player, ExoModuleKind.JET_ASSIST)) {
-            airJumps++;
-            send(ExoActions.DOUBLE_JUMP);
-            Vec3 v = player.getDeltaMovement();
-            player.setDeltaMovement(v.x, 0.55, v.z);
+        if (player.tickCount < lastAirJump) lastAirJump = -100; // a new player object (respawn, relog)
+        if (jumpDown && !jumpWasDown && !grounded && worn) {
+            // Predicted only under the server's own rules: count, spacing and the energy the jump costs.
+            ExoSuit.Active active = ExoSuit.active(player);
+            int jet = active.level(ExoModuleKind.JET_ASSIST);
+            if (jet > 0 && airJumps < ExoConfig.airJumps(jet) && player.tickCount - lastAirJump >= ExoSuit.AIR_JUMP_GAP
+                    && ExoSuit.canPayAirJump(player, active)) {
+                airJumps++;
+                lastAirJump = player.tickCount;
+                send(ExoActions.DOUBLE_JUMP);
+                Vec3 v = player.getDeltaMovement();
+                player.setDeltaMovement(v.x, 0.55, v.z);
+            }
         }
         jumpWasDown = jumpDown;
     }

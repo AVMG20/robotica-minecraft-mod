@@ -63,7 +63,7 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem {
 
     @Override
     public int getEnergyCapacity(ItemStack stack) {
-        int plating = ExoData.levelIn(stack, ExoModuleKind.CAPACITOR_PLATING);
+        int plating = ExoData.workingLevelIn(stack, ExoModuleKind.CAPACITOR_PLATING);
         return (int) Math.min(Integer.MAX_VALUE, Math.round(baseCapacity() * (1.0 + ExoConfig.capacitorBonus(plating))));
     }
 

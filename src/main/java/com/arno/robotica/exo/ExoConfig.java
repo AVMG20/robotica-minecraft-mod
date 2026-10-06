@@ -78,7 +78,7 @@ public final class ExoConfig {
         SONAR_COOLDOWN = b.comment("Ticks between two Sonar Pulse pings.").defineInRange("sonarPulseCooldown", 100, 0, 72_000);
         SONAR_DURATION = b.comment("Ticks the Sonar Pulse outlines stay visible.").defineInRange("sonarPulseDuration", 200, 20, 1_200);
         AIR_JUMPS = ints(b, "airJumps", "Extra jumps in the air with Jet Assist before landing (I, II, III).", 0, 5, 1, 2, 3);
-        SHIELD_ABSORB = doubles(b, "kineticShieldAbsorb", "Share of each hit the Kinetic Shield can absorb (I, II, III); the rest reaches the armor as normal.",
+        SHIELD_ABSORB = doubles(b, "kineticShieldAbsorb", "Share of each hit (after armor) the Kinetic Shield can absorb instead of health (I, II, III); the rest hurts as normal.",
                 0.0, 1.0, 0.75, 0.85, 0.95);
         MED_HEAL = doubles(b, "medInjectorHeal", "Health the Med Injector restores per shot (I, II, III; 2 = one heart).", 0.0, 40.0, 4.0, 6.0, 8.0);
         MED_COOLDOWN = ints(b, "medInjectorCooldown", "Ticks between two Med Injector shots (I, II, III).", 0, 72_000, 1_200, 900, 600);
