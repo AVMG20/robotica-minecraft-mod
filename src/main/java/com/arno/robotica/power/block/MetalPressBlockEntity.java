@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.Set;
+import com.arno.robotica.core.side.SideConfig;
+import net.minecraft.core.Direction;
 
 /**
  * Metal Press: slot 0 input, slot 1 output, two upgrade slots (speed, efficiency).
@@ -69,6 +71,8 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0, this::setChanged);
 
     private final IItemHandler automation = new ItemAccess(items, (slot, stack) -> slot == 0, (slot, stack) -> slot == 1);
+    /** Per-face item access and auto-transfer; every face in and out by default. */
+    public final SideConfig sides = new SideConfig(this, () -> automation);
 
     private int progress;
     private int needed = PressingRecipe.DEFAULT_TIME;
@@ -79,6 +83,12 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
 
     public IItemHandler automation() {
         return automation;
+    }
+
+    /** The item capability of a face, as the side config allows. */
+    @Nullable
+    public IItemHandler automation(@Nullable Direction side) {
+        return sides.access(side);
     }
 
     public int progress() {
@@ -132,6 +142,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
             progress = 0;
         }
         setLit(working);
+        sides.tick(level);
     }
 
     private void finish(PressingRecipe recipe) {
@@ -171,6 +182,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
         tag.put("upgrades", upgrades.serializeNBT(registries));
         tag.put("energy", energy.serializeNBT(registries));
         tag.putInt("progress", progress);
+        tag.put("sides", sides.save());
     }
 
     @Override
@@ -180,5 +192,6 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
         if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         progress = tag.getInt("progress");
+        sides.load(tag.getCompound("sides"));
     }
 }

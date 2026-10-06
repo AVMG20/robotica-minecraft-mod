@@ -31,6 +31,12 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.IItemHandler;
+import com.arno.robotica.power.block.AccumulatorBlock;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.BlockItem;
 
 /** Headless tests of the power module: {@code ./gradlew runGameTestServer}. */
 @GameTestHolder(Robotica.MODID)
@@ -124,6 +130,32 @@ public class PowerGameTests {
         helper.assertTrue(itemCap != null && itemCap.getEnergyStored() == 5_000 && itemCap.receiveEnergy(100, false) == 0,
                 "Accumulator item shows its energy and cannot be charged from outside");
         helper.succeed();
+    }
+
+    /** The front gauge (block state CHARGE) follows the stored energy, and a placed item shows its charge at once. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void accumulatorGaugeShowsCharge(GameTestHelper helper) {
+        helper.assertTrue(AccumulatorBlock.chargeLevel(0, 1_000_000) == 0, "empty: no cell");
+        helper.assertTrue(AccumulatorBlock.chargeLevel(1, 1_000_000) == 1, "any charge: one cell");
+        helper.assertTrue(AccumulatorBlock.chargeLevel(1_000_000, 1_000_000) == 5, "full: five cells");
+
+        BlockPos pos = new BlockPos(1, 1, 1);
+        AccumulatorBlockEntity be = accumulator(helper, pos, Direction.NORTH, 600_000);
+
+        ItemStack item = new ItemStack(PowerRegistry.ACCUMULATOR_1_ITEM.get());
+        ItemEnergy.set(item, 1_000_000);
+        BlockPos other = helper.absolutePos(new BlockPos(1, 1, 2));
+        var hit = new BlockHitResult(Vec3.atCenterOf(other), Direction.UP, other, false);
+        var context = new BlockPlaceContext(helper.getLevel(), null, InteractionHand.MAIN_HAND, item, hit);
+        helper.assertTrue(((BlockItem) item.getItem()).place(context).consumesAction(), "accumulator item placed");
+        helper.assertTrue(helper.getLevel().getBlockState(other).getValue(AccumulatorBlock.CHARGE) == 5,
+                "a full item is placed with a full gauge");
+        helper.assertTrue(helper.getLevel().getBlockEntity(other) instanceof AccumulatorBlockEntity placed
+                && placed.energy.getEnergyStored() == 1_000_000, "the placed block keeps the energy");
+
+        helper.succeedWhen(() -> helper.assertTrue(helper.getBlockState(pos).getValue(AccumulatorBlock.CHARGE) == 3,
+                "60% shows three cells, got " + helper.getBlockState(pos).getValue(AccumulatorBlock.CHARGE)
+                        + " at " + be.energy.getEnergyStored() + " FE"));
     }
 
     @GameTest(template = "empty", timeoutTicks = 60)

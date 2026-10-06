@@ -299,7 +299,7 @@
         },
         {
           "title": "Grinding media",
-          "text": "Optional: put flint or grinding balls in the second slot. Every ore then gives more dust and has a chance at a byproduct dust. One item wears out after a number of ores.\n\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +150%. Better balls need a better Grinder.",
+          "text": "Optional: put flint or grinding balls in the second slot. Every ore then gives more dust and has a chance at a byproduct dust. The Grinder loads one at a time and its bar shows how long that one lasts. Add or take media any time.\n\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +150%. Better balls need a better Grinder.",
           "items": [
             "minecraft:flint",
             "robotica:iron_grinding_balls",
@@ -721,6 +721,29 @@
             "robotica:storage_expansion_mk1",
             "robotica:storage_expansion_mk2",
             "robotica:storage_expansion_mk3"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Logistics",
+      "icon": "robotica:item_pipe",
+      "pages": [
+        {
+          "title": "Item pipes",
+          "text": "Pipes link to the next pipe and to chests and machines next to them.\n\nSneak-right-click an arm with an empty hand: Insert (default), Extract or Off. Extract arms pull items and send them to the Insert arms of the same pipe line, in turn.\n\nItem Pipe: 8 items per second. Mk2: 32 items every half second.",
+          "items": [
+            "robotica:item_pipe",
+            "robotica:item_pipe_mk2"
+          ]
+        },
+        {
+          "title": "Machine sides",
+          "text": "Machines have a Sides tab right of their screen. Click a face to set it: Input, Output, both or None. Right-click goes back.\n\nAuto-input pulls from chests on Input faces, auto-eject pushes results into chests on Output faces. Pipes and hoppers follow the same rules.",
+          "items": [
+            "robotica:grinder_mk1",
+            "robotica:alloy_smelter_mk1",
+            "robotica:metal_press"
           ]
         }
       ]

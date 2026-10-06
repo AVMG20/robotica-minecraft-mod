@@ -93,6 +93,7 @@ public class ProcessingMenu extends MachineMenu {
         neededIdx = track(be == null ? () -> 0 : be::needed);
         useIdx = track(be == null ? () -> 0 : be::lastUse);
         statusIdx = track(be == null ? () -> 0 : be::status);
+        trackSides(be == null ? null : be.sides);
     }
 
     /** Item position of input slot i. */

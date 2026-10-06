@@ -25,9 +25,9 @@ public final class IndustryModule {
         for (Machine machine : Machine.values()) {
             var type = IndustryRegistry.machineBlockEntity(machine).get();
             event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, type, (be, side) -> be.energy);
-            event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (be, side) -> be.automation());
+            event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (be, side) -> be.automation(side));
         }
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, IndustryRegistry.RTG_BE.get(), (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, IndustryRegistry.RTG_BE.get(), (be, side) -> be.automation());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, IndustryRegistry.RTG_BE.get(), (be, side) -> be.automation(side));
     }
 }

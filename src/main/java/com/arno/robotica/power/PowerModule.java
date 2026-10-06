@@ -64,6 +64,6 @@ public final class PowerModule {
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.CHARGER_BE.get(), (be, side) -> be.automation());
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.METAL_PRESS_BE.get(), (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.METAL_PRESS_BE.get(), (be, side) -> be.automation());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.METAL_PRESS_BE.get(), (be, side) -> be.automation(side));
     }
 }

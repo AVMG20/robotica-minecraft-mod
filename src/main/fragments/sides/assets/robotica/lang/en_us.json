@@ -1,0 +1,21 @@
+{
+  "gui.robotica.sides": "Sides",
+  "gui.robotica.sides.click": "Click: next mode, right-click: back",
+  "gui.robotica.sides.auto_input": "Auto-input",
+  "gui.robotica.sides.auto_input.hint": "Pulls items from inventories on Input faces",
+  "gui.robotica.sides.auto_eject": "Auto-eject",
+  "gui.robotica.sides.auto_eject.hint": "Pushes outputs into inventories on Output faces",
+  "gui.robotica.side.front": "Front",
+  "gui.robotica.side.back": "Back",
+  "gui.robotica.side.left": "Left",
+  "gui.robotica.side.right": "Right",
+  "gui.robotica.side.top": "Top",
+  "gui.robotica.side.bottom": "Bottom",
+  "gui.robotica.side_mode.none": "None",
+  "gui.robotica.side_mode.input": "Input",
+  "gui.robotica.side_mode.output": "Output",
+  "gui.robotica.side_mode.both": "Input + Output",
+  "robotica.configuration.sides": "Machine sides",
+  "robotica.configuration.sideTransferInterval": "Auto-transfer interval (ticks)",
+  "robotica.configuration.sideTransferItems": "Auto-transfer items per move"
+}

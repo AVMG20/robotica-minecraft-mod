@@ -1,18 +1,93 @@
 {
   "variants": {
-    "facing=north": {
-      "model": "robotica:block/accumulator_3"
+    "facing=north,charge=0": {
+      "model": "robotica:block/accumulator_3_0"
     },
-    "facing=east": {
-      "model": "robotica:block/accumulator_3",
+    "facing=east,charge=0": {
+      "model": "robotica:block/accumulator_3_0",
       "y": 90
     },
-    "facing=south": {
-      "model": "robotica:block/accumulator_3",
+    "facing=south,charge=0": {
+      "model": "robotica:block/accumulator_3_0",
       "y": 180
     },
-    "facing=west": {
-      "model": "robotica:block/accumulator_3",
+    "facing=west,charge=0": {
+      "model": "robotica:block/accumulator_3_0",
+      "y": 270
+    },
+    "facing=north,charge=1": {
+      "model": "robotica:block/accumulator_3_1"
+    },
+    "facing=east,charge=1": {
+      "model": "robotica:block/accumulator_3_1",
+      "y": 90
+    },
+    "facing=south,charge=1": {
+      "model": "robotica:block/accumulator_3_1",
+      "y": 180
+    },
+    "facing=west,charge=1": {
+      "model": "robotica:block/accumulator_3_1",
+      "y": 270
+    },
+    "facing=north,charge=2": {
+      "model": "robotica:block/accumulator_3_2"
+    },
+    "facing=east,charge=2": {
+      "model": "robotica:block/accumulator_3_2",
+      "y": 90
+    },
+    "facing=south,charge=2": {
+      "model": "robotica:block/accumulator_3_2",
+      "y": 180
+    },
+    "facing=west,charge=2": {
+      "model": "robotica:block/accumulator_3_2",
+      "y": 270
+    },
+    "facing=north,charge=3": {
+      "model": "robotica:block/accumulator_3_3"
+    },
+    "facing=east,charge=3": {
+      "model": "robotica:block/accumulator_3_3",
+      "y": 90
+    },
+    "facing=south,charge=3": {
+      "model": "robotica:block/accumulator_3_3",
+      "y": 180
+    },
+    "facing=west,charge=3": {
+      "model": "robotica:block/accumulator_3_3",
+      "y": 270
+    },
+    "facing=north,charge=4": {
+      "model": "robotica:block/accumulator_3_4"
+    },
+    "facing=east,charge=4": {
+      "model": "robotica:block/accumulator_3_4",
+      "y": 90
+    },
+    "facing=south,charge=4": {
+      "model": "robotica:block/accumulator_3_4",
+      "y": 180
+    },
+    "facing=west,charge=4": {
+      "model": "robotica:block/accumulator_3_4",
+      "y": 270
+    },
+    "facing=north,charge=5": {
+      "model": "robotica:block/accumulator_3_5"
+    },
+    "facing=east,charge=5": {
+      "model": "robotica:block/accumulator_3_5",
+      "y": 90
+    },
+    "facing=south,charge=5": {
+      "model": "robotica:block/accumulator_3_5",
+      "y": 180
+    },
+    "facing=west,charge=5": {
+      "model": "robotica:block/accumulator_3_5",
       "y": 270
     }
   }

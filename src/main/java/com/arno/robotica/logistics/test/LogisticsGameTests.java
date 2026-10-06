@@ -1,0 +1,96 @@
+package com.arno.robotica.logistics.test;
+
+import com.arno.robotica.Robotica;
+import com.arno.robotica.core.side.RelativeSide;
+import com.arno.robotica.core.side.SideMode;
+import com.arno.robotica.logistics.LogisticsContent;
+import com.arno.robotica.logistics.pipe.ItemPipeBlock;
+import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
+import com.arno.robotica.logistics.pipe.PipeConnection;
+import com.arno.robotica.logistics.pipe.PipeMode;
+import com.arno.robotica.processing.ProcessingRegistry;
+import com.arno.robotica.processing.block.GrinderBlockEntity;
+import com.arno.robotica.processing.block.ProcessingMachineBlock;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+/** Item pipes: chest to chest along a pipe line, Off links, and arms that follow a machine's side config. */
+@GameTestHolder(Robotica.MODID)
+@PrefixGameTestTemplate(false)
+public class LogisticsGameTests {
+    private static final BlockPos SOURCE = new BlockPos(0, 1, 0), TARGET = new BlockPos(2, 1, 2);
+    private static final BlockPos FIRST = new BlockPos(0, 1, 1), MIDDLE = new BlockPos(1, 1, 1), LAST = new BlockPos(2, 1, 1);
+
+    /** Chest -> three pipes -> chest; the first pipe pulls from the source chest, the last one inserts. */
+    private static ChestBlockEntity line(GameTestHelper helper) {
+        helper.setBlock(SOURCE, Blocks.CHEST);
+        helper.setBlock(TARGET, Blocks.CHEST);
+        ChestBlockEntity source = (ChestBlockEntity) helper.getBlockEntity(SOURCE);
+        source.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        source.setItem(5, new ItemStack(Items.IRON_INGOT, 3));
+        for (BlockPos pos : new BlockPos[]{FIRST, MIDDLE, LAST}) helper.setBlock(pos, LogisticsContent.ITEM_PIPE.get());
+        pipe(helper, FIRST).setMode(Direction.NORTH, PipeMode.EXTRACT);
+        return source;
+    }
+
+    private static ItemPipeBlockEntity pipe(GameTestHelper helper, BlockPos pos) {
+        return (ItemPipeBlockEntity) helper.getBlockEntity(pos);
+    }
+
+    private static int count(ChestBlockEntity chest, net.minecraft.world.item.Item item) {
+        int n = 0;
+        for (int i = 0; i < chest.getContainerSize(); i++) if (chest.getItem(i).is(item)) n += chest.getItem(i).getCount();
+        return n;
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void chestToChestThroughPipes(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        helper.succeedWhen(() -> {
+            helper.assertBlockProperty(FIRST, ItemPipeBlock.prop(Direction.NORTH), PipeConnection.EXTRACT);
+            helper.assertBlockProperty(MIDDLE, ItemPipeBlock.prop(Direction.WEST), PipeConnection.PIPE);
+            helper.assertBlockProperty(LAST, ItemPipeBlock.prop(Direction.SOUTH), PipeConnection.INSERT);
+            ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
+            helper.assertTrue(count(target, Items.COBBLESTONE) == 20 && count(target, Items.IRON_INGOT) == 3,
+                    "everything arrived, got " + count(target, Items.COBBLESTONE) + " cobblestone");
+            helper.assertTrue(source.isEmpty(), "source chest empty");
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 120)
+    public static void offLinkMovesNothing(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        pipe(helper, LAST).setMode(Direction.SOUTH, PipeMode.DISABLED);
+        helper.runAfterDelay(80, () -> {
+            helper.assertBlockProperty(LAST, ItemPipeBlock.prop(Direction.SOUTH), PipeConnection.NONE);
+            helper.assertTrue(((ChestBlockEntity) helper.getBlockEntity(TARGET)).isEmpty(), "nothing went into the Off link");
+            helper.assertTrue(count(source, Items.COBBLESTONE) == 20, "nothing left the source");
+            helper.succeed();
+        });
+    }
+
+    /** A pipe on a Grinder's top inserts there; setting that face to None removes the arm, the capability is gone. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void armFollowsMachineSideConfig(GameTestHelper helper) {
+        BlockPos machine = new BlockPos(1, 1, 1), above = new BlockPos(1, 2, 1);
+        helper.setBlock(machine, ProcessingRegistry.GRINDER_MK1.get().defaultBlockState().setValue(ProcessingMachineBlock.FACING, Direction.NORTH));
+        helper.setBlock(above, LogisticsContent.ITEM_PIPE.get());
+        GrinderBlockEntity grinder = (GrinderBlockEntity) helper.getBlockEntity(machine);
+        helper.runAfterDelay(3, () -> {
+            helper.assertBlockProperty(above, ItemPipeBlock.prop(Direction.DOWN), PipeConnection.INSERT);
+            grinder.sides.set(RelativeSide.TOP, SideMode.NONE);
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(grinder.sides.mode(RelativeSide.TOP) == SideMode.NONE, "top not switched off yet");
+            helper.assertBlockProperty(above, ItemPipeBlock.prop(Direction.DOWN), PipeConnection.NONE);
+        });
+    }
+}

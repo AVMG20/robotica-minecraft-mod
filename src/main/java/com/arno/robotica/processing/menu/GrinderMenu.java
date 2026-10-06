@@ -8,11 +8,12 @@ import com.arno.robotica.processing.block.GrinderBlockEntity;
 import com.arno.robotica.processing.block.MachineUpgrades;
 import com.arno.robotica.processing.block.ProcessingMachineBlock;
 import com.arno.robotica.processing.block.ProcessingMachineBlockEntity;
-import com.arno.robotica.processing.media.GrindingMedia;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -28,7 +29,8 @@ public class GrinderMenu extends MachineMenu {
     private final ContainerLevelAccess access;
     private final Block block;
     private final int tier;
-    private final int energyIndex, capacityIndex, progressIndex, neededIndex, statusIndex, useIndex, mediaLeftIndex, neededTierIndex;
+    private final int energyIndex, capacityIndex, progressIndex, neededIndex, statusIndex, useIndex, mediaLeftIndex, mediaUsesIndex,
+            mediaItemIndex, neededTierIndex;
 
     /** Client side. */
     public GrinderMenu(int id, Inventory inv, BlockPos pos) {
@@ -82,7 +84,10 @@ public class GrinderMenu extends MachineMenu {
         statusIndex = track(be == null ? () -> 0 : () -> be.status().ordinal());
         useIndex = track(be == null ? () -> 0 : be::lastUse);
         mediaLeftIndex = track(be == null ? () -> 0 : be::mediaLeft);
+        mediaUsesIndex = track(be == null ? () -> 0 : be::mediaUses);
+        mediaItemIndex = track(be == null ? () -> 0 : () -> BuiltInRegistries.ITEM.getId(be.loadedMedia()));
         neededTierIndex = track(be == null ? () -> 0 : be::neededTier);
+        trackSides(be == null ? null : be.sides);
     }
 
     public int tier() {
@@ -120,10 +125,14 @@ public class GrinderMenu extends MachineMenu {
         return synced(neededTierIndex);
     }
 
-    /** Uses of the media item in the slot (client: from the synced data map), 0 when none. */
+    /** Uses of a fresh item of the loaded media, 0 when none is loaded. */
     public int mediaUses() {
-        GrindingMedia media = GrindingMedia.of(slots.get(1).getItem());
-        return media == null ? 0 : media.uses();
+        return synced(mediaUsesIndex);
+    }
+
+    /** The loaded media item (air when none). */
+    public Item loadedMedia() {
+        return BuiltInRegistries.ITEM.byId(synced(mediaItemIndex));
     }
 
     @Override
