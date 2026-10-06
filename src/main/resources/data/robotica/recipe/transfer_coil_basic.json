@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "KRK",
+    "PBP",
+    "KRK"
+  ],
+  "key": {
+    "K": {
+      "item": "robotica:copper_coil"
+    },
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:transfer_coil_basic",
+    "count": 1
+  }
+}

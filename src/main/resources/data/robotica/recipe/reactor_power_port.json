@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "RKR",
+    "KCK",
+    "RAR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
+    "K": {
+      "item": "robotica:copper_coil"
+    },
+    "C": {
+      "item": "robotica:reactor_casing"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:reactor_power_port",
+    "count": 1
+  }
+}

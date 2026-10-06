@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "FNF",
+    "AXA",
+    "FRF"
+  ],
+  "key": {
+    "F": {
+      "item": "robotica:fusion_casing"
+    },
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "A": {
+      "item": "robotica:plasma_actuator"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    },
+    "R": {
+      "item": "robotica:reactor_controller"
+    }
+  },
+  "result": {
+    "id": "robotica:fusion_controller",
+    "count": 1
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "RKR",
+    "KCK",
+    "RBR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
+    "K": {
+      "item": "robotica:copper_coil"
+    },
+    "C": {
+      "item": "robotica:bank_casing"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:bank_port",
+    "count": 1
+  }
+}

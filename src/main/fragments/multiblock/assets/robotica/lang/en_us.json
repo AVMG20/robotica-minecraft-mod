@@ -1,0 +1,20 @@
+{
+  "multiblock.robotica.nothing": "Nothing",
+  "multiblock.robotica.alone": "Build the %s around the controller: %s on the edges, the controller in the middle of a side wall, screen facing out",
+  "multiblock.robotica.controller_edge": "The controller at %s must sit inside a side wall, not on an edge: wall blocks are needed left, right, above and below it",
+  "multiblock.robotica.too_wide": "Too wide: the wall through the controller is longer than %s blocks",
+  "multiblock.robotica.too_tall": "Too tall: the wall through the controller is higher than %s blocks",
+  "multiblock.robotica.too_deep": "Too deep: the side wall runs back more than %s blocks",
+  "multiblock.robotica.too_narrow": "Too small: only %s blocks wide, at least %s needed",
+  "multiblock.robotica.too_low": "Too small: only %s blocks high, at least %s needed",
+  "multiblock.robotica.too_shallow": "Too small: only %s blocks deep, at least %s needed",
+  "multiblock.robotica.no_side_wall": "No side wall: the frame should run back from the front edge at %s",
+  "multiblock.robotica.frame_missing": "Missing frame block at %s: edges and corners must be %s",
+  "multiblock.robotica.frame_wall_block": "%s at %s sits on an edge: edges and corners must be %s",
+  "multiblock.robotica.frame_wrong": "%s at %s does not belong on the frame: edges and corners must be %s",
+  "multiblock.robotica.second_controller": "Second controller at %s: one controller per structure",
+  "multiblock.robotica.wall_missing": "Hole in the wall at %s: fill it with %s",
+  "multiblock.robotica.wall_wrong": "%s at %s does not belong in the wall (allowed: %s)",
+  "multiblock.robotica.gap": "Gap in the wall at %s",
+  "multiblock.robotica.stranger": "%s at %s does not belong in the wall"
+}

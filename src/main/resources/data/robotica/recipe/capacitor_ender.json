@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "ECE",
+    "SXS",
+    "ENE"
+  ],
+  "key": {
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "C": {
+      "item": "robotica:ender_cell"
+    },
+    "S": {
+      "item": "minecraft:shulker_shell"
+    },
+    "X": {
+      "item": "robotica:capacitor_redstone"
+    },
+    "N": {
+      "item": "robotica:null_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:capacitor_ender",
+    "count": 1
+  }
+}

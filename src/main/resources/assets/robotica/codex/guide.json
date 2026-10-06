@@ -115,6 +115,12 @@
       "age": 1
     },
     {
+      "id": "robotica:guide/capacitor_bank",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:bank_controller",
+      "age": 1
+    },
+    {
       "id": "robotica:guide/upgrade_card",
       "parent": "robotica:guide/basic_circuit",
       "icon": "robotica:upgrade_speed",
@@ -178,6 +184,12 @@
       "id": "robotica:guide/rtg",
       "parent": "robotica:guide/assembler",
       "icon": "robotica:rtg",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/fission",
+      "parent": "robotica:guide/age2",
+      "icon": "robotica:reactor_controller",
       "age": 2
     },
     {
@@ -268,6 +280,12 @@
       "id": "robotica:guide/null_drill",
       "parent": "robotica:guide/antigrav_core",
       "icon": "robotica:null_drill",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/fusion",
+      "parent": "robotica:guide/age4",
+      "icon": "robotica:fusion_controller",
       "age": 4
     },
     {
