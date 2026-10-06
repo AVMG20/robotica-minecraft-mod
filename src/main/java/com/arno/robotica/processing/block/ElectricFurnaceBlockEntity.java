@@ -77,8 +77,6 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
     private final IItemHandler sideAccess = new SidedItems(items,
             (slot, stack) -> slot < MAX_LANES || slot == BATTERY,
             (slot, stack) -> isOutput(slot) || (slot == BATTERY && isEmptyBattery(stack)));
-    private final IItemHandler bottomAccess = new SidedItems(items, SidedItems.NEVER,
-            (slot, stack) -> isOutput(slot) || (slot == BATTERY && isEmptyBattery(stack)));
     /** Right-click: smeltables and batteries (cells, Mainspring) but never a charged tool. */
     private final IItemHandler quickInsert = new SidedItems(items,
             (slot, stack) -> slot < MAX_LANES || (slot == BATTERY && GrinderBlockEntity.isBattery(stack)), SidedItems.NEVER);
@@ -135,10 +133,9 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         return BATTERY;
     }
 
-    /** A null side (probes, some pipes) gets the same rules as a side face, never the raw inventory. */
     @Override
-    public IItemHandler automation(@Nullable Direction side) {
-        return side == Direction.DOWN ? bottomAccess : sideAccess;
+    protected IItemHandler automationRules() {
+        return sideAccess;
     }
 
     @Override

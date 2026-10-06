@@ -4,6 +4,7 @@ import com.arno.robotica.compat.InfoSource;
 import com.arno.robotica.compat.MachineInfo;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
+import com.arno.robotica.core.side.SideConfig;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.core.Direction;
 
 /**
  * One block entity class for every processing machine (Alloy Smelter, Centrifuge, Assembler) and every Mk.
@@ -60,6 +62,8 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
     public final Upgrades upgrades;
     public final MachineEnergyStorage energy;
     private final IItemHandler automation;
+    /** Per-face item access and auto-transfer; every face in and out by default. */
+    public final SideConfig sides;
 
     @Nullable
     private RecipeHolder<ProcessingRecipe> current;
@@ -91,6 +95,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         this.upgrades = new Upgrades(tier + 1, acceptedKinds(machine), k -> cardCap(machine, tier, k), this::setChanged);
         this.energy = new MachineEnergyStorage(scaled(IndustryConfig.machineBuffer(), tier), scaled(IndustryConfig.machineInput(), tier), 0, this::setChanged);
         this.automation = new MachineItemAccess(this);
+        this.sides = new SideConfig(this, () -> automation);
     }
 
     /** Buffer and input grow with the Mk (x1 to x4), saturating instead of overflowing with extreme configs. */
@@ -230,6 +235,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
             }
         }
         setLit(status == WORKING);
+        sides.tick(level);
     }
 
     private void craft(ServerLevel level, ProcessingRecipe recipe) {
@@ -316,8 +322,15 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
 
     // ---------------------------------------------------------------- access
 
+    /** The rules for pipes and hoppers on a face that allows both ways (and for a null side). */
     public IItemHandler automation() {
         return automation;
+    }
+
+    /** The item capability of a face, as the side config allows. */
+    @Nullable
+    public IItemHandler automation(@Nullable Direction side) {
+        return sides.access(side);
     }
 
     @Override
@@ -385,6 +398,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         tag.put("items", items.serializeNBT(registries));
         tag.put("upgrades", upgrades.serializeNBT(registries));
         tag.putLong("work", work);
+        tag.put("sides", sides.save());
     }
 
     @Override
@@ -393,6 +407,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         if (tag.contains("items")) loadInto(items, registries, tag.getCompound("items"));
         if (tag.contains("upgrades")) loadInto(upgrades, registries, tag.getCompound("upgrades"));
         work = tag.getLong("work");
+        sides.load(tag.getCompound("sides"));
         inputsChanged = true;
     }
 }

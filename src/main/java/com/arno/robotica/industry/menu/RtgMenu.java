@@ -46,6 +46,7 @@ public class RtgMenu extends MachineMenu {
         decayIdx = track(be == null ? () -> 0 : be::decay);
         totalIdx = track(be == null ? () -> 0 : be::decayTotal);
         genIdx = track(be == null ? () -> 0 : () -> be.isGenerating() ? RtgBlockEntity.output() : 0);
+        trackSides(be == null ? null : be.sides);
     }
 
     public int energy() {

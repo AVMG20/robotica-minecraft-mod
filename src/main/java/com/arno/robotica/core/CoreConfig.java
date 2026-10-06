@@ -13,6 +13,8 @@ public final class CoreConfig {
     public static final ModConfigSpec.DoubleValue ENERGY_USE_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue WORK_SPEED_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue GENERATION_MULTIPLIER;
+    public static final ModConfigSpec.IntValue SIDE_TRANSFER_INTERVAL;
+    public static final ModConfigSpec.IntValue SIDE_TRANSFER_ITEMS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -24,7 +26,21 @@ public final class CoreConfig {
         GENERATION_MULTIPLIER = b.comment("Multiplies FE produced by Robotica generators.")
                 .defineInRange("generationMultiplier", 1.0, 0.0, 100.0);
         b.pop();
+        b.comment("Machine side configuration: auto-input and auto-eject.").push("sides");
+        SIDE_TRANSFER_INTERVAL = b.comment("Ticks between two auto-input / auto-eject transfers of a machine.")
+                .defineInRange("sideTransferInterval", 10, 1, 200);
+        SIDE_TRANSFER_ITEMS = b.comment("Items a machine moves per transfer, each way.")
+                .defineInRange("sideTransferItems", 16, 1, 64);
+        b.pop();
         SPEC = b.build();
+    }
+
+    public static int sideTransferInterval() {
+        return SPEC.isLoaded() ? SIDE_TRANSFER_INTERVAL.get() : 10;
+    }
+
+    public static int sideTransferItems() {
+        return SPEC.isLoaded() ? SIDE_TRANSFER_ITEMS.get() : 16;
     }
 
     public static double energyUse() {

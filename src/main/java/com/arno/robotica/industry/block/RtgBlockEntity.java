@@ -26,6 +26,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
+import com.arno.robotica.core.side.SideConfig;
+import net.minecraft.core.Direction;
 
 /**
  * Radioisotope Generator: slot 0 fuel pellets ({@code #robotica:rtg_fuel}), slot 1 waste. One pellet at a time decays
@@ -80,6 +82,9 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
         }
     };
 
+    /** Per-face item access and auto-transfer; every face in and out by default. */
+    public final SideConfig sides = new SideConfig(this, () -> automation);
+
     private int decay;
     private int decayTotal;
 
@@ -98,6 +103,12 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
 
     public IItemHandler automation() {
         return automation;
+    }
+
+    /** The item capability of a face, as the side config allows. */
+    @Nullable
+    public IItemHandler automation(@Nullable Direction side) {
+        return sides.access(side);
     }
 
     /** FE/t while a pellet decays. */
@@ -138,6 +149,7 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
         }
         setLit(working);
         if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, IndustryConfig.rtgOutput());
+        sides.tick(level);
     }
 
     private void startPellet() {
@@ -201,6 +213,7 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
         tag.put("items", items.serializeNBT(registries));
         tag.putInt("decay", decay);
         tag.putInt("decayTotal", decayTotal);
+        tag.put("sides", sides.save());
     }
 
     @Override
@@ -209,5 +222,6 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
         if (tag.contains("items")) loadInto(items, registries, tag.getCompound("items"));
         decay = tag.getInt("decay");
         decayTotal = tag.getInt("decayTotal");
+        sides.load(tag.getCompound("sides"));
     }
 }

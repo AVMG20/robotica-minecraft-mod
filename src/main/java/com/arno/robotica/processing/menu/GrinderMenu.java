@@ -83,6 +83,7 @@ public class GrinderMenu extends MachineMenu {
         useIndex = track(be == null ? () -> 0 : be::lastUse);
         mediaLeftIndex = track(be == null ? () -> 0 : be::mediaLeft);
         neededTierIndex = track(be == null ? () -> 0 : be::neededTier);
+        trackSides(be == null ? null : be.sides);
     }
 
     public int tier() {
