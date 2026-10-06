@@ -91,6 +91,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     public static final int ACTION_CLEAR = 4;
     /** a = style ordinal. */
     public static final int ACTION_STYLE = 5;
+    /** a = plot, b = shared side: open, wall with a doorway, solid wall, open. */
+    public static final int ACTION_WALL = 6;
 
     /** Cleared junk (cobblestone, dirt, gravel and the like, tag robotica:voidable) is voided instead of stashed. */
     private static final TagKey<Item> JUNK = TagKey.create(Registries.ITEM, Robotica.id("voidable"));
@@ -170,6 +172,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private int opsPlot = -1;
     private int opsWas;
     private List<BlockOp> ops = List.of();
+    private Shell.Shape opsShape = Shell.lone(Plots.S);
     @Nullable
     private BuilderDrone drone;
     private long lastPlaceSound = Long.MIN_VALUE / 2;
@@ -345,12 +348,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return (clearTerrain ? 1 : 0) | (running ? 2 : 0) | (selectedStyle().ordinal() << 2) | (unlockedMask() << 4);
     }
 
-    /** Three plots per word, 10 bits each (see {@link Layout#packed}). */
+    /** Two plots per word, 16 bits each (see {@link Layout#packed}). */
     public int planWord(int word) {
         int w = 0;
-        for (int i = 0; i < 3; i++) {
-            int plot = word * 3 + i;
-            if (plot < Plots.COUNT) w |= (layout.packed(plot) & 0x3FF) << (10 * i);
+        for (int i = 0; i < 2; i++) {
+            int plot = word * 2 + i;
+            if (plot < Plots.COUNT) w |= (layout.packed(plot) & 0xFFFF) << (16 * i);
         }
         return w;
     }
@@ -366,6 +369,9 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             case ACTION_DOOR -> {
                 int result = layout.toggleDoor(a, b);
                 if (result == Layout.DOOR_LAST) feedback = Component.translatable("message.robotica.architect_last_door");
+            }
+            case ACTION_WALL -> {
+                if (layout.cycleWall(a, b) < 0) return Component.translatable("message.robotica.architect_no_wall");
             }
             case ACTION_BUILD -> {
                 if (layout.hasWork()) running = true;
@@ -427,6 +433,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (opsPlot != plot || opsSig != sig || opsWas != was) {
             opsWas = was;
             Shell.Shape shape = layout.shape(plot);
+            opsShape = shape;
             ops = Shell.generate(shape, plot == Plots.CENTER);
             if (was > shape.height()) {
                 // the building got lower (Height cards taken out): take down its old top, building blocks only
@@ -479,6 +486,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
         status = ST_BUILDING;
         BlockPos origin = Plots.origin(worldPosition, current);
+        // Only a first build clears terrain: a re-pass of a finished building leaves the player's things inside it alone.
+        boolean clear = clearTerrain && layout.state(current) == Layout.QUEUED;
         BlockPos last = null;
         int skips = 0;
         while (true) {
@@ -488,7 +497,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             }
             if (actions <= 0 || skips > 512) break;
             BlockOp op = list.get(cursor);
-            int result = step(level, origin, op, style, energyCost, layout.height());
+            int result = step(level, origin, op, style, energyCost, layout.height(), opsShape.overlaps(op.x(), op.z()), clear);
             if (result == STEP_SKIPPED) {
                 cursor++;
                 skips++;
@@ -524,8 +533,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     /** Clear terrain waits for its cooldown: stop for this tick, nothing changes. */
     private static final int STEP_WAIT = -3;
 
-    /** One op: returns STEP_SKIPPED (nothing to do, free), STEP_DONE (changed the world), STEP_WAIT or a status code to pause on. */
-    private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost, int height) {
+    /**
+     * One op: returns STEP_SKIPPED (nothing to do, free), STEP_DONE (changed the world), STEP_WAIT or a status code to pause on.
+     * {@code overlap}: a neighbour shares this cell, so the right piece in the neighbour's style counts as done (no swapping).
+     * {@code clear}: solid blocks in the way are removed (clear terrain on a first build).
+     */
+    private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost, int height, boolean overlap, boolean clear) {
         BlockPos target = origin.offset(op.x(), op.y(), op.z());
         if (target.equals(worldPosition) || !level.isInWorldBounds(target)) return STEP_SKIPPED;
         if (!level.isLoaded(target)) return ST_UNLOADED;
@@ -533,6 +546,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         BlockState desired = op.piece().resolve(style);
         BlockState current = level.getBlockState(target);
         if (current == desired || (desired.isAir() && current.isAir())) return STEP_SKIPPED;
+        if (overlap && op.piece().matchesAnyStyle(current)) return STEP_SKIPPED;
         if (current.is(ArchitectRegistry.ARCHITECT_TABLE.get())) return STEP_SKIPPED;
         // above the building (it got lower): only its own old blocks go
         if (op.y() >= height && !ArchitectRegistry.isBuildingBlock(current)) return STEP_SKIPPED;
@@ -543,7 +557,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 || current.getBlock() instanceof LiquidBlock;
         boolean clearing = false;
         if (!replaceable) {
-            if (!clearTerrain || current.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
+            if (!clear || current.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
             // a container touching the table is where the drops go: leave it standing
             if (level.getBlockEntity(target) != null && target.distManhattan(worldPosition) == 1) return STEP_SKIPPED;
             clearing = true;

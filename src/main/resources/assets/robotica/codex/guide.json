@@ -45,7 +45,7 @@
     {
       "id": "robotica:guide/first_iron",
       "parent": "robotica:guide/hammer",
-      "icon": "robotica:minecraft:iron_ingot",
+      "icon": "minecraft:iron_ingot",
       "age": 1
     },
     {
@@ -135,7 +135,7 @@
     {
       "id": "robotica:guide/diamonds",
       "parent": "robotica:guide/basic_circuit",
-      "icon": "robotica:minecraft:diamond",
+      "icon": "minecraft:diamond",
       "age": 2
     },
     {

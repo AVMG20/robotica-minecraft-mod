@@ -32,7 +32,8 @@ import java.util.List;
 
 /**
  * Architect Table screen, drawn procedurally and almost without text. Left: the 5x5 plot grid (click a plot to queue or
- * unqueue it, click the edge of a planned plot to put a door there, shift-click a built plot to forget it). Right:
+ * unqueue it, click the outside edge of a planned plot to put a door there, click the seam between two joined plots to
+ * step its inner wall: wall with a doorway, solid wall, open; shift-click a built plot to forget it). Right:
  * status, matter and energy bars, progress, Build and Cancel. Below: casing slot, style chips, upgrade slots, clear terrain,
  * the material input and the player inventory. Tooltips carry the words.
  */
@@ -42,7 +43,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     private static final int CELL = ArchitectMenu.CELL;
     private static final int RX = 104;
     private static final int RW = 66;
-    /** Clicks this close to the edge of a planned plot toggle a door on that side. */
+    /** Clicks this close to the edge of a planned plot toggle a door (outside) or step the inner wall (shared side). */
     private static final int EDGE = 4;
 
     public static final int[] STYLE_COLORS = {0xFFB98550, 0xFFD8813F, 0xFFDCE6EA, 0xFF2FB8A0};
@@ -184,7 +185,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         g.fill(gx0, gy0, gx0 + size, gy0 + size, GRID_BG);
         float pulse = 0.5F + 0.5F * (float) Math.sin(Util.getMillis() / 220.0);
         int hoverPlot = plotAt(mouseX, mouseY);
-        int hoverDoor = hoverPlot >= 0 ? doorSideAt(hoverPlot, mouseX, mouseY) : -1;
+        int hoverDoor = hoverPlot >= 0 ? edgeSideAt(hoverPlot, mouseX, mouseY) : -1;
         int current = menu.currentPlot();
 
         for (int plot = 0; plot < Plots.COUNT; plot++) {
@@ -219,7 +220,30 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
                 g.fill(x + 2, y + CELL - 2 - h, x + 4, y + CELL - 2, 0xC0FFFFFF);
             }
         }
-        // Doors and the hovered door slot on top of the cells.
+        // Inner walls, doors and the hovered edge on top of the cells. A seam is drawn by its west or north plot.
+        int hoverOwner = -1, hoverSeam = -1;
+        if (hoverDoor >= 0 && joined(hoverPlot, hoverDoor)) {
+            boolean own = hoverDoor == Plots.E || hoverDoor == Plots.S;
+            hoverOwner = own ? hoverPlot : Plots.neighbour(hoverPlot, hoverDoor);
+            hoverSeam = own ? hoverDoor : Plots.opposite(hoverDoor);
+        }
+        for (int plot = 0; plot < Plots.COUNT; plot++) {
+            if (!menu.planned(plot)) continue;
+            int color = STYLE_COLORS[menu.plotStyle(plot).ordinal()];
+            int wallColor = menu.plotState(plot) == Layout.BUILT ? blend(color, 0xFF000000, 0.55F) : color;
+            for (int side : new int[]{Plots.E, Plots.S}) {
+                if (!joined(plot, side)) continue;
+                int edge = menu.edge(plot, side);
+                if (plot == hoverOwner && side == hoverSeam) {
+                    // Preview the next step: open -> doorway -> wall -> open.
+                    int next = (edge + 1) % 3;
+                    if (next == Layout.EDGE_OPEN) drawSeam(g, plot, side, 0x60FFFFFF, false);
+                    else drawSeam(g, plot, side, 0xA0FFFFFF, next == Layout.EDGE_DOORWAY);
+                } else if (edge != Layout.EDGE_OPEN) {
+                    drawSeam(g, plot, side, wallColor, edge == Layout.EDGE_DOORWAY);
+                }
+            }
+        }
         for (int plot = 0; plot < Plots.COUNT; plot++) {
             if (!menu.planned(plot)) continue;
             int doors = menu.plotDoors(plot);
@@ -249,11 +273,31 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         }
     }
 
+    /** An inner wall on the E or S seam of a plot, 2 px across the line between the two cells, with a door mark in the middle. */
+    private void drawSeam(GuiGraphics g, int plot, int side, int color, boolean doorway) {
+        int x = cellX(plot), y = cellY(plot);
+        int m = CELL / 2;
+        if (side == Plots.E) {
+            g.fill(x + CELL - 1, y, x + CELL + 1, y + CELL, color);
+            if (doorway) g.fill(x + CELL - 2, y + m - 3, x + CELL + 2, y + m + 3, DOOR);
+        } else {
+            g.fill(x, y + CELL - 1, x + CELL, y + CELL + 1, color);
+            if (doorway) g.fill(x + m - 3, y + CELL - 2, x + m + 3, y + CELL + 2, DOOR);
+        }
+    }
+
     private void plotTooltip(int plot, int doorSide) {
         int x = cellX(plot), y = cellY(plot);
         List<Component> lines = new ArrayList<>();
         int state = menu.plotState(plot);
-        if (doorSide >= 0) {
+        if (doorSide >= 0 && joined(plot, doorSide)) {
+            String key = switch (menu.edge(plot, doorSide)) {
+                case Layout.EDGE_OPEN -> "wall_add";
+                case Layout.EDGE_DOORWAY -> "wall_close";
+                default -> "wall_remove";
+            };
+            lines.add(Component.translatable("gui.robotica.architect_" + key));
+        } else if (doorSide >= 0) {
             boolean on = (menu.plotDoors(plot) & Plots.bit(doorSide)) != 0;
             lines.add(Component.translatable(on ? "gui.robotica.architect_door_remove" : "gui.robotica.architect_door_add"));
         } else if (state == Layout.EMPTY) {
@@ -286,15 +330,15 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         return Plots.index(gx / CELL - Plots.RADIUS, gy / CELL - Plots.RADIUS);
     }
 
-    /** Side whose door zone the mouse is over: only outside edges of planned plots. -1 for none. */
-    private int doorSideAt(int plot, double mouseX, double mouseY) {
+    /** Side whose edge zone the mouse is over (a door on an outside side, the inner wall on a shared one), -1 for none. */
+    private int edgeSideAt(int plot, double mouseX, double mouseY) {
         if (!menu.planned(plot)) return -1;
         int lx = (int) Math.floor(mouseX) - cellX(plot);
         int ly = (int) Math.floor(mouseY) - cellY(plot);
         int[] dist = {ly, CELL - 1 - lx, CELL - 1 - ly, lx};
         int best = -1;
         for (int side = 0; side < 4; side++) {
-            if (dist[side] >= EDGE || joined(plot, side)) continue;
+            if (dist[side] >= EDGE) continue;
             if (best < 0 || dist[side] < dist[best]) best = side;
         }
         return best;
@@ -311,8 +355,9 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int plot = button == 0 ? plotAt(mouseX, mouseY) : -1;
         if (plot >= 0) {
-            int door = doorSideAt(plot, mouseX, mouseY);
-            if (door >= 0) send(ArchitectTableBlockEntity.ACTION_DOOR, plot, door);
+            // shift-click always means the plot itself (forget a built plot), even on its edge
+            int edge = hasShiftDown() ? -1 : edgeSideAt(plot, mouseX, mouseY);
+            if (edge >= 0) send(joined(plot, edge) ? ArchitectTableBlockEntity.ACTION_WALL : ArchitectTableBlockEntity.ACTION_DOOR, plot, edge);
             else send(ArchitectTableBlockEntity.ACTION_TOGGLE, plot, hasShiftDown() ? 1 : 0);
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;

@@ -105,7 +105,7 @@ STEPS = [
      has('basic_circuit'),
      ['solar_panel_mk1', 'tesla_coil_2', 'accumulator_1', 'metal_press', 'metal_press_iron_plate',
       'metal_press_copper_plate', 'metal_press_gold_plate', 'shock_baton_from_gearblade', 'farm_kit_mk2', 'warp_pad',
-      'recall_remote', 'storage_terminal', 'storage_expansion_mk1', 'sentry_drone', 'courier_drone', 'courier_remote', 'exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1', 'night_vision_module', 'robot_hud_module', 'step_assist_module', 'spring_heels_module', 'fall_dampener_module', 'magnet_module', 'servo_stride_module_1'] + cards('speed', 'efficiency', 'growth', 'void', 'pickup', 'height', 'carry'), 20),
+      'recall_remote', 'storage_terminal', 'storage_expansion_mk1', 'sentry_drone', 'courier_drone', 'courier_remote', 'exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1', 'night_vision_module', 'step_assist_module', 'spring_heels_module', 'servo_stride_module_1'] + cards('speed', 'efficiency', 'growth', 'void', 'pickup', 'height', 'carry'), 20),
     ('exo', 'basic_circuit', 'exo_chestplate_mk1', 'task', 1, 'Suit Up',
      'Craft an Exo-Frame piece. Sneak-right-click it to add a module, press J to switch modules.',
      has('exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1'), [], 10),
@@ -141,7 +141,7 @@ STEPS = [
      has('advanced_circuit', 'reinforced_casing'),
      ['servo_actuator', 'storage_expansion_mk2', 'redstone_cell', 'temp_servo_core', 'solar_panel_mk2', 'accumulator_2', 'tesla_coil_3', 'rivet_gun',
       'tool_upgrade_kit_2', 'farm_kit_mk3', 'essence_vial', 'replicator_frame', 'replicator_glass',
-      'replicator_controller', 'survey_rig', 'mining_drone_mk2', 'sentry_drone_mk2', 'courier_drone_mk2', 'exo_helmet_mk2_from_mk1', 'exo_chestplate_mk2_from_mk1', 'exo_leggings_mk2_from_mk1', 'exo_boots_mk2_from_mk1', 'rebreather_module', 'rebreather_module_from_prismarine', 'jet_assist_module', 'servo_stride_module_2', 'colossus_altar'] + cards('range', 'fortune', 'silk'), 30),
+      'replicator_controller', 'survey_rig', 'mining_drone_mk2', 'sentry_drone_mk2', 'courier_drone_mk2', 'exo_helmet_mk2_from_mk1', 'exo_chestplate_mk2_from_mk1', 'exo_leggings_mk2_from_mk1', 'exo_boots_mk2_from_mk1', 'rebreather_module', 'rebreather_module_from_prismarine', 'jet_assist_module', 'servo_stride_module_2', 'robot_hud_module', 'fall_dampener_module', 'magnet_module', 'colossus_altar'] + cards('range', 'fortune', 'silk'), 30),
     ('foundry', 'age2', 'signal_flare', 'task', 2, 'Signs of Scrap',
      'Find a Rusted Foundry (a ruined copper hall in plains, deserts and badlands) or craft a Signal Flare.',
      [in_structure('robotica:rusted_foundry'), has('signal_flare')], [], 10),
@@ -216,7 +216,8 @@ def main():
     guide = []
     for name, parent, icon, frame, age, title, desc, crit, recipes, xp in STEPS:
         key = f'advancements.robotica.guide.{name}'
-        display = {'icon': {'id': f'robotica:{icon}'}, 'title': {'translate': key + '.title'},
+        icon = icon if ':' in icon else f'robotica:{icon}'
+        display = {'icon': {'id': icon}, 'title': {'translate': key + '.title'},
                    'description': {'translate': key + '.description'}, 'frame': frame,
                    'show_toast': parent is not None, 'announce_to_chat': False, 'hidden': False}
         if parent is None:
@@ -239,7 +240,7 @@ def main():
         lang[key + '.title'] = title
         lang[key + '.description'] = desc
         guide.append({'id': f'robotica:guide/{name}', 'parent': f'robotica:guide/{parent}' if parent else None,
-                      'icon': f'robotica:{icon}', 'age': age})
+                      'icon': icon, 'age': age})
     GUIDE.write_text(json.dumps({'steps': guide}, indent=2) + '\n')
     LANG.write_text(json.dumps(lang, indent=2, ensure_ascii=False) + '\n')
     print(f'{len(STEPS)} guide steps, {len(unlocked)} recipes unlocked')

@@ -15,11 +15,15 @@ import java.util.List;
  * The plan of one table: which plots hold a building, in which style, where the doors are and what was built last.
  * Pure data, no world access, so the rules are testable on their own.
  * <ul>
- *   <li>Every plot that is queued or built counts as a neighbour; shared walls are left out of both shells.</li>
+ *   <li>Every plot that is queued or built counts as a neighbour; a shared side has no wall, and both plots build the
+ *       column they share in the same way.</li>
  *   <li>Doors only exist in outside walls. Every group of joined plots keeps at least one: when a change leaves a
  *       group without a door, the plot nearest the table gets one on its side facing the table (or any outside side).</li>
- *   <li>A built plot whose shape changed (a neighbour came or went, a door moved) needs a re-pass; the table re-walks
- *       its shell and only touches the blocks that differ.</li>
+ *   <li>A shared side can hold an inner wall, with or without a doorway. Both plots build it (they share that column);
+ *       it is stored once, on the E or S side of the plot west or north of it, and goes away with the neighbour.</li>
+ *   <li>A built plot whose shape changed (a neighbour came or went, a door moved, an inner wall changed) needs a
+ *       re-pass; the table re-walks its shell and only touches the blocks that differ. A re-pass never clears terrain,
+ *       so what the player put inside a finished building stays.</li>
  * </ul>
  */
 public final class Layout {
@@ -30,6 +34,9 @@ public final class Layout {
     private final int[] state = new int[Plots.COUNT];
     private final BuildStyle[] style = new BuildStyle[Plots.COUNT];
     private final int[] doors = new int[Plots.COUNT];
+    /** Inner walls (bits for E and S only) and which of them have a doorway. */
+    private final int[] walls = new int[Plots.COUNT];
+    private final int[] wallDoors = new int[Plots.COUNT];
     /** Signature of the shape a built plot was last finished with (0 = none). */
     private final int[] builtSig = new int[Plots.COUNT];
     /** Queued plots in the order they were clicked. */
@@ -59,10 +66,43 @@ public final class Layout {
         return doors[plot];
     }
 
+    public static final int EDGE_OPEN = 0, EDGE_DOORWAY = 1, EDGE_WALL = 2;
+    /** Sides an inner wall is stored on: the wall between two plots is kept by the west or north one. */
+    private static final int WALL_SIDES = 1 << Plots.E | 1 << Plots.S;
+
+    /** What stands on a shared side: {@link #EDGE_OPEN}, {@link #EDGE_DOORWAY} or {@link #EDGE_WALL}. */
+    public int edge(int plot, int side) {
+        if (!planned(plot) || side < 0 || side > 3) return EDGE_OPEN;
+        if ((WALL_SIDES & Plots.bit(side)) == 0) {
+            plot = Plots.neighbour(plot, side);
+            side = Plots.opposite(side);
+            if (!Plots.valid(plot)) return EDGE_OPEN;
+        }
+        int bit = Plots.bit(side);
+        return (walls[plot] & bit) == 0 ? EDGE_OPEN : (wallDoors[plot] & bit) != 0 ? EDGE_DOORWAY : EDGE_WALL;
+    }
+
     /** Sides with a planned neighbour. */
     public int sides(int plot) {
         int m = 0;
         for (int side = 0; side < 4; side++) if (planned(Plots.neighbour(plot, side))) m |= Plots.bit(side);
+        return m;
+    }
+
+    /**
+     * Corners in the middle of a block of four planned plots where an inner wall meets: any of the four seams around
+     * that corner, including the two between the neighbours.
+     */
+    public int closedCorners(int plot) {
+        int m = 0;
+        for (int c = 0; c < 4; c++) {
+            int[] cs = Plots.cornerSides(c);
+            int nx = Plots.neighbour(plot, cs[0]), nz = Plots.neighbour(plot, cs[1]);
+            if (!planned(plot) || !planned(nx) || !planned(nz) || !planned(Plots.diagonal(plot, c))) continue;
+            if (edge(plot, cs[0]) != EDGE_OPEN || edge(plot, cs[1]) != EDGE_OPEN || edge(nx, cs[1]) != EDGE_OPEN || edge(nz, cs[0]) != EDGE_OPEN) {
+                m |= 1 << c;
+            }
+        }
         return m;
     }
 
@@ -74,7 +114,13 @@ public final class Layout {
     }
 
     public Shell.Shape shape(int plot) {
-        return new Shell.Shape(sides(plot), diagonals(plot), doors[plot], ((Plots.px(plot) + Plots.pz(plot)) & 1) != 0, height);
+        int walls = 0, wallDoors = 0;
+        for (int side = 0; side < 4; side++) {
+            int edge = edge(plot, side);
+            if (edge != EDGE_OPEN) walls |= Plots.bit(side);
+            if (edge == EDGE_DOORWAY) wallDoors |= Plots.bit(side);
+        }
+        return new Shell.Shape(sides(plot), diagonals(plot), doors[plot], height, walls, wallDoors, closedCorners(plot));
     }
 
     /** Building height of every plot (set by the table from its Height cards, not saved). */
@@ -93,7 +139,7 @@ public final class Layout {
 
     /** Shape plus style: what a finished plot must look like. */
     public int signature(int plot) {
-        return shape(plot).signature() | style[plot].ordinal() << 14;
+        return shape(plot).signature() | style[plot].ordinal() << 28;
     }
 
     /**
@@ -141,6 +187,8 @@ public final class Layout {
         state[plot] = QUEUED;
         style[plot] = buildStyle;
         doors[plot] = 0;
+        walls[plot] = 0;
+        wallDoors[plot] = 0;
         builtSig[plot] = 0;
         order.add(plot);
         normalize();
@@ -171,6 +219,8 @@ public final class Layout {
     private void clear(int plot) {
         state[plot] = EMPTY;
         doors[plot] = 0;
+        walls[plot] = 0;
+        wallDoors[plot] = 0;
         builtSig[plot] = 0;
         order.remove(Integer.valueOf(plot));
     }
@@ -194,6 +244,28 @@ public final class Layout {
         return DOOR_OK;
     }
 
+    /**
+     * Steps the inner wall on a shared side: open, wall with a doorway, solid wall, open again. Either plot of the
+     * pair may be named. Returns the new {@link #edge}, or -1 when the side is not shared.
+     */
+    public int cycleWall(int plot, int side) {
+        if (!planned(plot) || side < 0 || side > 3 || (sides(plot) & Plots.bit(side)) == 0) return -1;
+        if ((WALL_SIDES & Plots.bit(side)) == 0) {
+            plot = Plots.neighbour(plot, side);
+            side = Plots.opposite(side);
+        }
+        int bit = Plots.bit(side);
+        switch (edge(plot, side)) {
+            case EDGE_OPEN -> {
+                walls[plot] |= bit;
+                wallDoors[plot] |= bit;
+            }
+            case EDGE_DOORWAY -> wallDoors[plot] &= ~bit;
+            default -> walls[plot] &= ~bit;
+        }
+        return edge(plot, side);
+    }
+
     /** Called when the table finished walking a plot's shell for this signature. */
     public void markBuilt(int plot, int signature) {
         if (state[plot] == EMPTY) return;
@@ -208,11 +280,13 @@ public final class Layout {
         normalize();
     }
 
-    /** Drops door bits on shared sides and gives every group without a door one. */
+    /** Drops door bits on shared sides, inner walls on open ones, and gives every group without a door one. */
     private void normalize() {
         for (int plot = 0; plot < Plots.COUNT; plot++) {
-            if (state[plot] == EMPTY) doors[plot] = 0;
-            else doors[plot] &= ~sides(plot);
+            int sides = state[plot] == EMPTY ? 0 : sides(plot);
+            doors[plot] &= state[plot] == EMPTY ? 0 : ~sides;
+            walls[plot] &= sides & WALL_SIDES;
+            wallDoors[plot] &= walls[plot];
         }
         boolean[] seen = new boolean[Plots.COUNT];
         for (int plot = 0; plot < Plots.COUNT; plot++) {
@@ -277,7 +351,9 @@ public final class Layout {
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
         int[] packed = new int[Plots.COUNT];
-        for (int plot = 0; plot < Plots.COUNT; plot++) packed[plot] = state[plot] | style[plot].ordinal() << 2 | doors[plot] << 4;
+        for (int plot = 0; plot < Plots.COUNT; plot++) {
+            packed[plot] = state[plot] | style[plot].ordinal() << 2 | doors[plot] << 4 | walls[plot] << 8 | wallDoors[plot] << 12;
+        }
         tag.putIntArray("plots", packed);
         tag.putIntArray("built_sig", builtSig.clone());
         tag.putIntArray("order", order.stream().mapToInt(Integer::intValue).toArray());
@@ -288,6 +364,8 @@ public final class Layout {
         Arrays.fill(state, EMPTY);
         Arrays.fill(style, BuildStyle.TIMBERFRAME);
         Arrays.fill(doors, 0);
+        Arrays.fill(walls, 0);
+        Arrays.fill(wallDoors, 0);
         Arrays.fill(builtSig, 0);
         order.clear();
         if (tag.contains("plots", Tag.TAG_INT_ARRAY)) {
@@ -297,6 +375,8 @@ public final class Layout {
                 state[plot] = s <= BUILT ? s : EMPTY;
                 style[plot] = BuildStyle.byOrdinal((packed[plot] >> 2) & 3);
                 doors[plot] = (packed[plot] >> 4) & 15;
+                walls[plot] = (packed[plot] >> 8) & 15;
+                wallDoors[plot] = (packed[plot] >> 12) & 15;
             }
         }
         if (tag.get("built_sig") instanceof IntArrayTag sigs) {
@@ -312,8 +392,9 @@ public final class Layout {
         normalize();
     }
 
-    /** 9 bits per plot for the GUI: state (2), style (2), doors (4), needs work (1). */
+    /** 13 bits per plot for the GUI: state (2), style (2), doors (4), needs work (1), {@link #edge} of the E and S sides (2 each). */
     public int packed(int plot) {
-        return state[plot] | style[plot].ordinal() << 2 | doors[plot] << 4 | (needsWork(plot) ? 1 << 8 : 0);
+        return state[plot] | style[plot].ordinal() << 2 | doors[plot] << 4 | (needsWork(plot) ? 1 << 8 : 0)
+                | edge(plot, Plots.E) << 9 | edge(plot, Plots.S) << 11;
     }
 }

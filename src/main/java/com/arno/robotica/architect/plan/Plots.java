@@ -4,13 +4,17 @@ import net.minecraft.core.BlockPos;
 
 /**
  * Plot grid geometry. The table is the middle floor block of the centre plot: that plot spans table.x-4..table.x+4 and
- * table.z-4..table.z+4 with its floor at table.y, and the other plots continue on the same 9 block grid. A plot is 9x9
- * blocks and 6 high (floor layer 0, walls 1-4, roof 5; Height cards make it up to 12). Plot index = (pz + 2) * 5 + (px + 2) for px, pz in -2..2.
+ * table.z-4..table.z+4 with its floor at table.y. A plot is 9x9 blocks and 6 high (floor layer 0, walls 1-4, roof 5;
+ * Height cards make it up to 12). Plots sit {@link #PITCH} = 8 blocks apart, so neighbours share their edge column and
+ * a wall between two rooms stands exactly in the middle: every room is 7x7 inside. The grid spans 41x41 blocks.
+ * Plot index = (pz + 2) * 5 + (px + 2) for px, pz in -2..2.
  */
 public final class Plots {
     private Plots() {}
 
     public static final int SIZE = 9;
+    /** Distance between plot origins: one less than {@link #SIZE}, so neighbours share the edge column. */
+    public static final int PITCH = SIZE - 1;
     /** Base height: floor, 4 wall layers, roof. Every Height card adds a wall layer, up to {@link #MAX_HEIGHT}. */
     public static final int HEIGHT = 6;
     public static final int MAX_HEIGHT = 12;
@@ -92,7 +96,7 @@ public final class Plots {
 
     /** World position of local (0, 0, 0) of a plot. */
     public static BlockPos origin(BlockPos table, int index) {
-        return table.offset(px(index) * SIZE - SIZE / 2, 0, pz(index) * SIZE - SIZE / 2);
+        return table.offset(px(index) * PITCH - SIZE / 2, 0, pz(index) * PITCH - SIZE / 2);
     }
 
     /** True for the local cell the table occupies: the middle floor block of the centre plot. */

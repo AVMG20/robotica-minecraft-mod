@@ -415,7 +415,7 @@
         },
         {
           "title": "Buildings",
-          "text": "Every plot gets the same 9x9 building: floor, walls with windows, roof with light panels.\n\nPlots next to each other join into one big hall. Each group gets a door facing the table; click the edge of a plot to add or move doors. Shift-click a built plot to forget it.",
+          "text": "Every plot gets the same 9x9 building: floor, walls with windows, roof with light panels.\n\nPlots next to each other join into one big hall. Each group gets a door facing the table; click the edge of a plot to add or move doors. Click the line between two joined plots to put up an inner wall: first with a doorway, then solid, then open again. Shift-click a built plot to forget it.",
           "items": [
             "robotica:timberframe_wall",
             "robotica:timberframe_light"

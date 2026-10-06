@@ -43,7 +43,7 @@ public class ArchitectMenu extends MachineMenu {
     public static final int INV_X = 8;
     public static final int INV_Y = 160;
 
-    private static final int PLAN_WORDS = (Plots.COUNT + 2) / 3;
+    private static final int PLAN_WORDS = (Plots.COUNT + 1) / 2;
 
     private final BlockPos pos;
     private final ContainerLevelAccess access;
@@ -159,7 +159,7 @@ public class ArchitectMenu extends MachineMenu {
 
     private int cell(int plot) {
         if (!Plots.valid(plot)) return 0;
-        return (synced(planIndex + plot / 3) >>> (10 * (plot % 3))) & 0x3FF;
+        return (synced(planIndex + plot / 2) >>> (16 * (plot % 2))) & 0xFFFF;
     }
 
     /** {@link Layout#EMPTY}, {@link Layout#QUEUED} or {@link Layout#BUILT}. */
@@ -177,6 +177,17 @@ public class ArchitectMenu extends MachineMenu {
 
     public int plotDoors(int plot) {
         return (cell(plot) >> 4) & 15;
+    }
+
+    /** {@link Layout#edge} of a side between two planned plots. */
+    public int edge(int plot, int side) {
+        if (!planned(plot)) return Layout.EDGE_OPEN;
+        if (side == Plots.N || side == Plots.W) {
+            plot = Plots.neighbour(plot, side);
+            side = Plots.opposite(side);
+            if (plot < 0) return Layout.EDGE_OPEN;
+        }
+        return (cell(plot) >> (side == Plots.E ? 9 : 11)) & 3;
     }
 
     public boolean plotNeedsWork(int plot) {

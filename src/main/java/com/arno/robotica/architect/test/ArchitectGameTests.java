@@ -133,7 +133,7 @@ public class ArchitectGameTests {
             for (int corners = 0; corners < 16; corners++) {
                 for (int doors = 0; doors < 16; doors += 5) {
                     for (boolean table : new boolean[]{false, true}) {
-                        Shell.Shape shape = new Shell.Shape(sides, corners, doors, corners % 2 == 1);
+                        Shell.Shape shape = new Shell.Shape(sides, corners, doors);
                         List<BlockOp> ops = Shell.generate(shape, table);
                         helper.assertTrue(ops.size() == cells - (table ? 1 : 0), "shell " + shape + " has " + ops.size() + " ops");
                         Set<Long> seen = new HashSet<>();
@@ -159,7 +159,7 @@ public class ArchitectGameTests {
         int mid = Plots.SIZE / 2, last = Plots.SIZE - 1;
         for (int sides = 0; sides < 16; sides++) {
             for (int doors = 0; doors < 16; doors++) {
-                Shell.Shape shape = new Shell.Shape(sides, 15, doors, false);
+                Shell.Shape shape = new Shell.Shape(sides, 15, doors);
                 Map<Long, Piece> at = index(Shell.generate(shape, false));
                 for (int side = 0; side < 4; side++) {
                     boolean shared = (sides & Plots.bit(side)) != 0;
@@ -185,7 +185,7 @@ public class ArchitectGameTests {
                         helper.assertTrue(at.get(key(w[0], 2, w[1])).equals(Piece.WINDOW) && at.get(key(w[0], 1, w[1])).equals(Piece.WALL), "window band on side " + side);
                     }
                 }
-                // Corner posts only where neither side touching the corner is shared.
+                // Corner posts only where neither side touching the corner is shared (with every diagonal planned).
                 for (int corner = 0; corner < 4; corner++) {
                     int x = (corner & 1) == 0 ? 0 : last, z = (corner & 2) == 0 ? 0 : last;
                     int[] cs = Plots.cornerSides(corner);
@@ -195,10 +195,10 @@ public class ArchitectGameTests {
             }
         }
         // A 2x2 block of plots has an open middle; the inner corner of an L is closed with wall.
-        Shell.Shape quad = new Shell.Shape(Plots.bit(Plots.E) | Plots.bit(Plots.S), 1 << Plots.SE, Plots.bit(Plots.N), false);
+        Shell.Shape quad = new Shell.Shape(Plots.bit(Plots.E) | Plots.bit(Plots.S), 1 << Plots.SE, Plots.bit(Plots.N));
         Map<Long, Piece> q = index(Shell.generate(quad, false));
         helper.assertTrue(q.get(key(last, 2, last)).isAir() && q.get(key(last, 0, last)).equals(Piece.FLOOR), "middle of a 2x2 hall is open");
-        Shell.Shape ell = new Shell.Shape(Plots.bit(Plots.E) | Plots.bit(Plots.S), 0, Plots.bit(Plots.N), false);
+        Shell.Shape ell = new Shell.Shape(Plots.bit(Plots.E) | Plots.bit(Plots.S), 0, Plots.bit(Plots.N));
         Map<Long, Piece> l = index(Shell.generate(ell, false));
         helper.assertTrue(l.get(key(last, 2, last)).equals(Piece.WALL), "inner corner of an L is wall");
         // Seam corner: the outside wall runs on as plain wall, its trim continues along the wall.
@@ -208,11 +208,10 @@ public class ArchitectGameTests {
         helper.assertTrue(lone.get(key(2, 1, last)).equals(Piece.POST) && lone.get(key(6, 3, last)).equals(Piece.POST), "door posts");
         helper.assertTrue(lone.get(key(4, 4, last)).equals(Piece.pillar(Direction.Axis.X)), "door lintel");
         helper.assertTrue(lone.get(key(4, 2, 0)).equals(Piece.WINDOW) && lone.get(key(4, 1, 0)).equals(Piece.WALL), "the other sides keep their windows");
-        // Lights: 5 on even plots, 4 on odd ones, 3 apart across the seam between them.
-        long even = lone.values().stream().filter(Piece.LIGHT::equals).count();
-        long odd = Shell.generate(new Shell.Shape(0, 0, 1, true), false).stream().filter(op -> op.piece().equals(Piece.LIGHT)).count();
-        helper.assertTrue(even == 5 && odd == 4, "light lattice " + even + "/" + odd);
-        helper.assertTrue(Shell.light(new Shell.Shape(0, 0, 0, false), 7, 7) && Shell.light(new Shell.Shape(0, 0, 0, true), 1, 4), "lattice continues across plots");
+        // Lights: 4 per plot at local 2 and 6, so 4 apart across the shared column too (6 -> 8 + 2).
+        long lights = lone.values().stream().filter(Piece.LIGHT::equals).count();
+        helper.assertTrue(lights == 4, "light lattice " + lights);
+        helper.assertTrue(Shell.light(2, 6) && Shell.light(6, 2) && !Shell.light(4, 4) && Plots.PITCH + 2 - 6 == 4, "lattice continues across plots");
         helper.succeed();
     }
 
@@ -266,7 +265,7 @@ public class ArchitectGameTests {
         int north = Plots.index(0, -1);
         layout.queue(north, BuildStyle.STEEL_LAB);
         helper.assertTrue(layout.nextWork() == north, "the new plot is built first");
-        helper.assertTrue(layout.needsWork(Plots.CENTER) && !layout.needsWork(west), "the centre opens toward the new plot, the west plot only touches diagonally");
+        helper.assertTrue(layout.needsWork(Plots.CENTER) && layout.needsWork(west), "the centre opens toward the new plot; the west plot's shared corner becomes the inner corner of an L");
         layout.unqueue(north);
         helper.assertTrue(!layout.hasWork(), "unqueueing restores the old shape");
         layout.forget(west);
@@ -277,6 +276,122 @@ public class ArchitectGameTests {
         copy.load(layout.save());
         for (int p = 0; p < Plots.COUNT; p++) helper.assertTrue(copy.packed(p) == layout.packed(p), "plot " + p + " survives saving");
         helper.succeed();
+    }
+
+    /** Inner walls: a shared side steps open, doorway, wall; it stands in the shared column, so both rooms are 7 wide. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void innerWallsSplitJoinedPlots(GameTestHelper helper) {
+        int last = Plots.SIZE - 1, top = Plots.HEIGHT - 1;
+        int e = Plots.bit(Plots.E), w = Plots.bit(Plots.W), s = Plots.bit(Plots.S);
+        Shell.Shape doorway = new Shell.Shape(e, 0, Plots.bit(Plots.N), Plots.HEIGHT, e, e, 0);
+        Shell.Shape solid = new Shell.Shape(e, 0, Plots.bit(Plots.N), Plots.HEIGHT, e, 0, 0);
+        Shell.Shape open = new Shell.Shape(e, 0, Plots.bit(Plots.N));
+        helper.assertTrue(doorway.signature() != solid.signature() && solid.signature() != open.signature() && doorway.signature() > 0, "inner walls change the signature");
+        helper.assertTrue(new Shell.Shape(0, 0, 0, Plots.HEIGHT, e, e, 0).walls() == 0, "no inner wall on an outside side");
+        Map<Long, Piece> d = index(Shell.generate(doorway, false));
+        Map<Long, Piece> sw = index(Shell.generate(solid, false));
+        helper.assertTrue(d.size() == Plots.SIZE * Plots.SIZE * Plots.HEIGHT, "an inner wall keeps the shell complete");
+        for (int z = 1; z < last; z++) {
+            helper.assertTrue(sw.get(key(last, 0, z)).equals(Piece.FLOOR) && sw.get(key(last, top, z)).equals(Piece.ROOF), "floor and roof run under and over the wall at " + z);
+            for (int y = 1; y < top; y++) helper.assertTrue(sw.get(key(last, y, z)).equals(Piece.WALL), "solid inner wall at " + z + "/" + y);
+        }
+        helper.assertTrue(d.get(key(last, 2, 1)).equals(Piece.WALL) && d.get(key(last, 1, 2)).equals(Piece.POST) && d.get(key(last, 3, 6)).equals(Piece.POST), "doorway posts");
+        for (int y = 1; y <= 3; y++) helper.assertTrue(d.get(key(last, y, 4)).isAir(), "doorway open at " + y);
+        helper.assertTrue(d.get(key(last, 4, 4)).equals(Piece.pillar(Direction.Axis.Z)), "doorway lintel");
+        helper.assertTrue(d.get(key(last, 2, 0)).equals(Piece.WALL) && d.get(key(last, 0, 0)).equals(Piece.pillar(Direction.Axis.X)), "the inner wall meets the outside wall");
+        // The plot on the other side builds the same wall in the same column (its x = 0).
+        Shell.Shape other = new Shell.Shape(w, 0, 0, Plots.HEIGHT, w, w, 0);
+        for (int y = 0; y < Plots.HEIGHT; y++) for (int z = 1; z < last; z++) {
+            helper.assertTrue(Shell.piece(other, 0, y, z).equals(d.get(key(last, y, z))), "both plots agree on the shared column at " + y + "/" + z);
+        }
+        // Middle of a 2x2 hall: closed where an inner wall meets, open otherwise.
+        Shell.Shape quad = new Shell.Shape(e | s, 1 << Plots.SE, Plots.bit(Plots.N), Plots.HEIGHT, 0, 0, 1 << Plots.SE);
+        helper.assertTrue(Shell.piece(quad, last, 2, last).equals(Piece.WALL) && Shell.piece(quad, last, 0, last).equals(Piece.FLOOR), "inner wall closes the hall's middle");
+
+        Layout layout = new Layout();
+        int west = Plots.index(-1, 0);
+        layout.queue(west, BuildStyle.TIMBERFRAME);
+        helper.assertTrue(layout.cycleWall(west, Plots.E) == -1, "no inner wall toward an empty plot");
+        layout.queue(Plots.CENTER, BuildStyle.TIMBERFRAME);
+        layout.markBuilt(west, layout.signature(west));
+        layout.markBuilt(Plots.CENTER, layout.signature(Plots.CENTER));
+        helper.assertTrue(layout.cycleWall(Plots.CENTER, Plots.W) == Layout.EDGE_DOORWAY, "first click: wall with a doorway");
+        helper.assertTrue(layout.edge(west, Plots.E) == Layout.EDGE_DOORWAY && layout.edge(Plots.CENTER, Plots.W) == Layout.EDGE_DOORWAY, "both plots see the same seam");
+        helper.assertTrue(layout.shape(west).walls() == e && layout.shape(Plots.CENTER).walls() == w, "both plots build it");
+        helper.assertTrue(layout.needsWork(west) && layout.needsWork(Plots.CENTER), "both need a re-pass");
+        helper.assertTrue(((layout.packed(west) >> 9) & 3) == Layout.EDGE_DOORWAY, "the GUI sees the seam");
+        Layout copy = new Layout();
+        copy.load(layout.save());
+        helper.assertTrue(copy.edge(west, Plots.E) == Layout.EDGE_DOORWAY && copy.signature(west) == layout.signature(west), "inner walls survive saving");
+        helper.assertTrue(layout.cycleWall(west, Plots.E) == Layout.EDGE_WALL, "second click: solid wall");
+        helper.assertTrue(layout.cycleWall(west, Plots.E) == Layout.EDGE_OPEN && !layout.needsWork(west), "third click: open again, nothing to rebuild");
+        layout.cycleWall(west, Plots.E);
+        layout.forget(Plots.CENTER);
+        helper.assertTrue(layout.edge(west, Plots.E) == Layout.EDGE_OPEN && layout.shape(west).walls() == 0, "the wall goes with the neighbour");
+        layout.queue(Plots.CENTER, BuildStyle.TIMBERFRAME);
+        helper.assertTrue(layout.edge(west, Plots.E) == Layout.EDGE_OPEN, "a new neighbour starts open");
+
+        // A plot that only touches a corner changes nothing: that corner is a post either way.
+        Layout corner = new Layout();
+        corner.queue(Plots.CENTER, BuildStyle.TIMBERFRAME);
+        corner.markBuilt(Plots.CENTER, corner.signature(Plots.CENTER));
+        corner.queue(Plots.index(1, 1), BuildStyle.TIMBERFRAME);
+        helper.assertTrue(!corner.needsWork(Plots.CENTER), "a diagonal neighbour needs no re-pass");
+
+        // A wall between two other plots of a 2x2 block closes this plot's corner too.
+        Layout block = new Layout();
+        int ne = Plots.index(1, -1), nw = Plots.index(0, -1), se = Plots.index(1, 0);
+        for (int p : new int[]{Plots.CENTER, ne, nw, se}) block.queue(p, BuildStyle.TIMBERFRAME);
+        helper.assertTrue(block.closedCorners(Plots.CENTER) == 0, "an open 2x2 hall");
+        block.cycleWall(ne, Plots.S);
+        helper.assertTrue(block.closedCorners(Plots.CENTER) == 1 << Plots.NE, "the far seam closes the shared corner");
+        helper.succeed();
+    }
+
+    /** Neighbours share their edge columns: every plot that covers a world cell must want the same piece there. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void sharedColumnsAgreeInEveryLayout(GameTestHelper helper) {
+        java.util.Random random = new java.util.Random(20261006L);
+        BlockPos table = BlockPos.ZERO;
+        for (int round = 0; round < 300; round++) {
+            Layout layout = new Layout();
+            for (int p = 0; p < Plots.COUNT; p++) if (random.nextInt(3) > 0) layout.queue(p, BuildStyle.TIMBERFRAME);
+            for (int p = 0; p < Plots.COUNT; p++) {
+                for (int side : new int[]{Plots.E, Plots.S}) for (int k = random.nextInt(3); k > 0; k--) layout.cycleWall(p, side);
+            }
+            Map<Long, Piece> world = new HashMap<>();
+            Map<Long, Integer> owner = new HashMap<>();
+            for (int p = 0; p < Plots.COUNT; p++) {
+                if (!layout.planned(p)) continue;
+                BlockPos origin = Plots.origin(table, p);
+                for (BlockOp op : Shell.generate(layout.shape(p), p == Plots.CENTER)) {
+                    long at = origin.offset(op.x(), op.y(), op.z()).asLong();
+                    Piece before = world.putIfAbsent(at, op.piece());
+                    if (before == null) {
+                        owner.put(at, p);
+                    } else {
+                        helper.assertTrue(before.equals(op.piece()), "round " + round + ": plots " + owner.get(at) + " and " + p + " disagree at "
+                                + op + ": " + before + " vs " + op.piece());
+                    }
+                    boolean edge = op.x() == 0 || op.x() == Plots.SIZE - 1 || op.z() == 0 || op.z() == Plots.SIZE - 1;
+                    helper.assertTrue(layout.shape(p).overlaps(op.x(), op.z()) == (edge && sharedCell(layout, p, op.x(), op.z())),
+                            "overlap flag wrong at " + op + " of plot " + p);
+                }
+            }
+        }
+        helper.succeed();
+    }
+
+    /** True when another planned plot covers this local cell. */
+    private static boolean sharedCell(Layout layout, int plot, int x, int z) {
+        for (int dz = -1; dz <= 1; dz++) for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dz == 0) continue;
+            int px = Plots.px(plot) + dx, pz = Plots.pz(plot) + dz;
+            if (Math.abs(px) > Plots.RADIUS || Math.abs(pz) > Plots.RADIUS || !layout.planned(Plots.index(px, pz))) continue;
+            int lx = x - dx * Plots.PITCH, lz = z - dz * Plots.PITCH;
+            if (lx >= 0 && lx < Plots.SIZE && lz >= 0 && lz < Plots.SIZE) return true;
+        }
+        return false;
     }
 
     // ---------------------------------------------------------------- the GUI request path
@@ -304,6 +419,11 @@ public class ArchitectGameTests {
             helper.assertTrue(table.layout().queuedCount() == 1, "a bad plot changes nothing");
             ArchitectActionPayload door = new ArchitectActionPayload(pos, ArchitectTableBlockEntity.ACTION_DOOR, plot, Plots.N);
             helper.assertTrue(ArchitectActionPayload.process(owner, door) && (table.layout().doors(plot) & Plots.bit(Plots.N)) != 0, "door added");
+            ArchitectActionPayload wall = new ArchitectActionPayload(pos, ArchitectTableBlockEntity.ACTION_WALL, plot, Plots.W);
+            helper.assertTrue(ArchitectActionPayload.process(owner, wall) && table.layout().edge(plot, Plots.W) == Layout.EDGE_OPEN, "no inner wall toward an empty plot");
+            ArchitectActionPayload.process(owner, new ArchitectActionPayload(pos, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0));
+            helper.assertTrue(ArchitectActionPayload.process(owner, wall) && table.layout().edge(Plots.CENTER, Plots.E) == Layout.EDGE_DOORWAY, "inner wall added");
+            ArchitectActionPayload.process(owner, new ArchitectActionPayload(pos, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0));
 
             stranger.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 2.5);
             stranger.containerMenu = new ArchitectMenu(2, stranger.getInventory(), table);
@@ -466,8 +586,8 @@ public class ArchitectGameTests {
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void heightCardsMakeTallerShells(GameTestHelper helper) {
         Shell.Shape low = Shell.lone(Plots.S);
-        Shell.Shape tall = new Shell.Shape(0, 0, Plots.bit(Plots.S), false, Plots.MAX_HEIGHT);
-        helper.assertTrue(low.signature() == new Shell.Shape(0, 0, Plots.bit(Plots.S), false, Plots.HEIGHT).signature(), "base height keeps old signatures");
+        Shell.Shape tall = new Shell.Shape(0, 0, Plots.bit(Plots.S), Plots.MAX_HEIGHT);
+        helper.assertTrue(low.signature() == new Shell.Shape(0, 0, Plots.bit(Plots.S), Plots.HEIGHT).signature(), "base height keeps old signatures");
         helper.assertTrue(Shell.Shape.heightOf(tall.signature()) == Plots.MAX_HEIGHT, "the signature remembers the height");
         helper.assertTrue(Shell.generate(tall, false).size() == Plots.SIZE * Plots.SIZE * Plots.MAX_HEIGHT, "a 12 high shell fills 12 layers");
         int top = Plots.MAX_HEIGHT - 1;
@@ -543,7 +663,7 @@ public class ArchitectGameTests {
     // ---------------------------------------------------------------- helpers
 
     private static int[] planWords(ArchitectTableBlockEntity table) {
-        int[] w = new int[9];
+        int[] w = new int[(Plots.COUNT + 1) / 2];
         for (int i = 0; i < w.length; i++) w[i] = table.planWord(i);
         return w;
     }

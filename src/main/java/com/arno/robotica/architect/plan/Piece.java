@@ -33,6 +33,13 @@ public record Piece(@Nullable Role role, Direction.Axis axis) {
         return isAir() ? Matter.ZERO : style.cost;
     }
 
+    /** True when the state is this piece in some style (air never matches: it has no style). */
+    public boolean matchesAnyStyle(BlockState state) {
+        if (role == null) return false;
+        for (BuildStyle style : BuildStyle.values()) if (resolve(style) == state) return true;
+        return false;
+    }
+
     public BlockState resolve(BuildStyle style) {
         if (role == null) return Blocks.AIR.defaultBlockState();
         BlockState state = ArchitectRegistry.styleBlock(style, role).get().defaultBlockState();

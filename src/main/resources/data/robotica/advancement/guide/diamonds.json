@@ -2,7 +2,7 @@
   "parent": "robotica:guide/basic_circuit",
   "display": {
     "icon": {
-      "id": "robotica:minecraft:diamond"
+      "id": "minecraft:diamond"
     },
     "title": {
       "translate": "advancements.robotica.guide.diamonds.title"

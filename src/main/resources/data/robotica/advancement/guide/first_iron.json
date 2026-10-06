@@ -2,7 +2,7 @@
   "parent": "robotica:guide/hammer",
   "display": {
     "icon": {
-      "id": "robotica:minecraft:iron_ingot"
+      "id": "minecraft:iron_ingot"
     },
     "title": {
       "translate": "advancements.robotica.guide.first_iron.title"

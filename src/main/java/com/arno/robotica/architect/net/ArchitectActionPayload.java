@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
- * Architect Table GUI request (toggle a plot, toggle a door, build, cancel, clear terrain, pick a style).
+ * Architect Table GUI request (toggle a plot, toggle a door, step an inner wall, build, cancel, clear terrain, pick a style).
  * The server only acts when the player has this table's menu open, is allowed to use the table (owner, same team
  * or operator) and is within reach; plot, side and style values are validated by the block entity.
  */
