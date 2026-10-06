@@ -4,6 +4,7 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.core.RoboticaTab;
 import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.item.ExoModuleItem;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -15,35 +16,61 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-/** The four Exo armor pieces (Mk1 and Mk2) and the module items. Recipes: scripts/data/exo_recipes.py. */
+/** The four Exo armor pieces in four marks and the module items (one per kind and level). Recipes: scripts/data/exo_recipes.py. */
 public final class ExoItems {
     private ExoItems() {}
 
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Robotica.MODID);
     private static final List<DeferredItem<? extends Item>> TAB_ORDER = new ArrayList<>();
 
-    public static final DeferredItem<ExoArmorItem> HELMET_MK1 = armor("exo_helmet_mk1", ArmorItem.Type.HELMET, 1);
-    public static final DeferredItem<ExoArmorItem> CHESTPLATE_MK1 = armor("exo_chestplate_mk1", ArmorItem.Type.CHESTPLATE, 1);
-    public static final DeferredItem<ExoArmorItem> LEGGINGS_MK1 = armor("exo_leggings_mk1", ArmorItem.Type.LEGGINGS, 1);
-    public static final DeferredItem<ExoArmorItem> BOOTS_MK1 = armor("exo_boots_mk1", ArmorItem.Type.BOOTS, 1);
-    public static final DeferredItem<ExoArmorItem> HELMET_MK2 = armor("exo_helmet_mk2", ArmorItem.Type.HELMET, 2);
-    public static final DeferredItem<ExoArmorItem> CHESTPLATE_MK2 = armor("exo_chestplate_mk2", ArmorItem.Type.CHESTPLATE, 2);
-    public static final DeferredItem<ExoArmorItem> LEGGINGS_MK2 = armor("exo_leggings_mk2", ArmorItem.Type.LEGGINGS, 2);
-    public static final DeferredItem<ExoArmorItem> BOOTS_MK2 = armor("exo_boots_mk2", ArmorItem.Type.BOOTS, 2);
+    private static final String[] PIECE_NAMES = {"helmet", "chestplate", "leggings", "boots"};
+    private static final ArmorItem.Type[] TYPES = {ArmorItem.Type.HELMET, ArmorItem.Type.CHESTPLATE, ArmorItem.Type.LEGGINGS, ArmorItem.Type.BOOTS};
+    /** [mark - 1][piece index]. */
+    @SuppressWarnings("unchecked")
+    private static final DeferredItem<ExoArmorItem>[][] ARMOR = new DeferredItem[4][4];
 
-    /** One item per module kind. */
-    public static final Map<ExoModuleKind, DeferredItem<ExoModuleItem>> MODULES = new EnumMap<>(ExoModuleKind.class);
+    static {
+        for (int mk = 1; mk <= 4; mk++) {
+            for (int piece = 0; piece < 4; piece++) ARMOR[mk - 1][piece] = armor("exo_" + PIECE_NAMES[piece] + "_mk" + mk, TYPES[piece], mk);
+        }
+    }
+
+    public static final DeferredItem<ExoArmorItem> HELMET_MK1 = ARMOR[0][0];
+    public static final DeferredItem<ExoArmorItem> CHESTPLATE_MK1 = ARMOR[0][1];
+    public static final DeferredItem<ExoArmorItem> LEGGINGS_MK1 = ARMOR[0][2];
+    public static final DeferredItem<ExoArmorItem> BOOTS_MK1 = ARMOR[0][3];
+    public static final DeferredItem<ExoArmorItem> HELMET_MK2 = ARMOR[1][0];
+    public static final DeferredItem<ExoArmorItem> CHESTPLATE_MK2 = ARMOR[1][1];
+    public static final DeferredItem<ExoArmorItem> LEGGINGS_MK2 = ARMOR[1][2];
+    public static final DeferredItem<ExoArmorItem> BOOTS_MK2 = ARMOR[1][3];
+    public static final DeferredItem<ExoArmorItem> HELMET_MK3 = ARMOR[2][0];
+    public static final DeferredItem<ExoArmorItem> CHESTPLATE_MK3 = ARMOR[2][1];
+    public static final DeferredItem<ExoArmorItem> LEGGINGS_MK3 = ARMOR[2][2];
+    public static final DeferredItem<ExoArmorItem> BOOTS_MK3 = ARMOR[2][3];
+    public static final DeferredItem<ExoArmorItem> HELMET_MK4 = ARMOR[3][0];
+    public static final DeferredItem<ExoArmorItem> CHESTPLATE_MK4 = ARMOR[3][1];
+    public static final DeferredItem<ExoArmorItem> LEGGINGS_MK4 = ARMOR[3][2];
+    public static final DeferredItem<ExoArmorItem> BOOTS_MK4 = ARMOR[3][3];
+
+    /** Module items per kind, index level - 1. */
+    private static final Map<ExoModuleKind, List<DeferredItem<ExoModuleItem>>> MODULES = new EnumMap<>(ExoModuleKind.class);
 
     static {
         for (ExoModuleKind kind : ExoModuleKind.values()) {
-            Rarity rarity = switch (kind) {
-                case FLIGHT -> Rarity.EPIC;
-                case KINETIC_SHIELD, SERVO_STRIDE_3 -> Rarity.RARE;
-                case REBREATHER, ROBOT_HUD, JET_ASSIST, SERVO_STRIDE_2, FALL_DAMPENER, MAGNET -> Rarity.UNCOMMON;
-                default -> Rarity.COMMON;
-            };
-            DeferredItem<ExoModuleItem> item = ITEMS.registerItem(kind.itemName(), p -> new ExoModuleItem(p.rarity(rarity), kind));
-            MODULES.put(kind, item);
+            List<DeferredItem<ExoModuleItem>> levels = new ArrayList<>();
+            for (int level = 1; level <= kind.maxLevel(); level++) {
+                Rarity rarity = switch (kind.minMark(level)) {
+                    case 1 -> Rarity.COMMON;
+                    case 2 -> Rarity.UNCOMMON;
+                    case 3 -> Rarity.RARE;
+                    default -> Rarity.EPIC;
+                };
+                if (kind == ExoModuleKind.FLIGHT) rarity = Rarity.EPIC;
+                final Rarity r = rarity;
+                final int lv = level;
+                levels.add(ITEMS.registerItem(kind.itemName(level), p -> new ExoModuleItem(p.rarity(r), kind, lv)));
+            }
+            MODULES.put(kind, List.copyOf(levels));
         }
     }
 
@@ -53,23 +80,22 @@ public final class ExoItems {
         return item;
     }
 
+    /** Level I of a module kind. */
     public static DeferredItem<ExoModuleItem> module(ExoModuleKind kind) {
-        return MODULES.get(kind);
+        return module(kind, 1);
     }
 
-    public static DeferredItem<ExoArmorItem> piece(int mk, net.minecraft.world.entity.EquipmentSlot slot) {
-        boolean two = mk >= 2;
-        return switch (slot) {
-            case HEAD -> two ? HELMET_MK2 : HELMET_MK1;
-            case CHEST -> two ? CHESTPLATE_MK2 : CHESTPLATE_MK1;
-            case LEGS -> two ? LEGGINGS_MK2 : LEGGINGS_MK1;
-            case FEET -> two ? BOOTS_MK2 : BOOTS_MK1;
-            default -> throw new IllegalArgumentException("not an armor slot: " + slot);
-        };
+    public static DeferredItem<ExoModuleItem> module(ExoModuleKind kind, int level) {
+        List<DeferredItem<ExoModuleItem>> levels = MODULES.get(kind);
+        return levels.get(Math.max(0, Math.min(levels.size(), level) - 1));
+    }
+
+    public static DeferredItem<ExoArmorItem> piece(int mk, EquipmentSlot slot) {
+        return ARMOR[Math.max(1, Math.min(4, mk)) - 1][ExoModuleKind.slotIndex(slot)];
     }
 
     public static void addToTab() {
         TAB_ORDER.forEach(RoboticaTab::add);
-        MODULES.values().forEach(RoboticaTab::add);
+        MODULES.values().forEach(levels -> levels.forEach(RoboticaTab::add));
     }
 }

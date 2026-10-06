@@ -45,7 +45,10 @@
       "robotica:farm_kit_mk4",
       "robotica:gate_controller",
       "robotica:linking_card",
-      "robotica:flight_module"
+      "robotica:sonar_pulse_module_3",
+      "robotica:jet_assist_module_3",
+      "robotica:med_injector_module_3",
+      "robotica:power_regulator_module_3"
     ],
     "experience": 80
   }

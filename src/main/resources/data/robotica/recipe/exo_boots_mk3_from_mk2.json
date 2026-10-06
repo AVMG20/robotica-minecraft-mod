@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:blazing_casing"
+  },
+  "base": {
+    "item": "robotica:exo_boots_mk2"
+  },
+  "addition": {
+    "item": "robotica:plasma_actuator"
+  },
+  "result": {
+    "id": "robotica:exo_boots_mk3",
+    "count": 1
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ACA",
+    " U "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "C": {
+      "item": "robotica:redstone_cell"
+    },
+    "U": {
+      "item": "robotica:capacitor_plating_module"
+    }
+  },
+  "result": {
+    "id": "robotica:capacitor_plating_module_2",
+    "count": 1
+  }
+}

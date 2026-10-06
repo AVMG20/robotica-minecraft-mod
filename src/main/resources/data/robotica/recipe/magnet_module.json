@@ -3,7 +3,7 @@
   "category": "equipment",
   "pattern": [
     "ICI",
-    "RAR"
+    "RBR"
   ],
   "key": {
     "I": {
@@ -15,8 +15,8 @@
     "R": {
       "item": "minecraft:redstone"
     },
-    "A": {
-      "item": "robotica:advanced_circuit"
+    "B": {
+      "item": "robotica:basic_circuit"
     }
   },
   "result": {

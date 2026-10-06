@@ -2,21 +2,18 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "IPI",
-    "CMC"
+    "PIP",
+    "C C"
   ],
   "key": {
-    "I": {
+    "P": {
       "tag": "c:plates/iron"
     },
-    "P": {
+    "I": {
       "item": "minecraft:piston"
     },
     "C": {
       "item": "robotica:copper_coil"
-    },
-    "M": {
-      "item": "robotica:electric_motor"
     }
   },
   "result": {

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "robotica:basic_circuit"
+    },
+    {
+      "item": "robotica:electric_motor"
+    },
+    {
+      "item": "minecraft:hopper"
+    },
+    {
+      "tag": "c:plates/iron"
+    }
+  ],
+  "result": {
+    "id": "robotica:auto_feeder_module",
+    "count": 1
+  }
+}

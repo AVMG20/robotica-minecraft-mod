@@ -211,6 +211,12 @@
       "age": 3
     },
     {
+      "id": "robotica:guide/exo_mk3",
+      "parent": "robotica:guide/magma_core",
+      "icon": "robotica:exo_chestplate_mk3",
+      "age": 3
+    },
+    {
       "id": "robotica:guide/age4",
       "parent": "robotica:guide/magma_core",
       "icon": "robotica:null_circuit",
@@ -232,6 +238,12 @@
       "id": "robotica:guide/flight",
       "parent": "robotica:guide/antigrav_core",
       "icon": "robotica:flight_module",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/exo_mk4",
+      "parent": "robotica:guide/antigrav_core",
+      "icon": "robotica:exo_chestplate_mk4",
       "age": 4
     },
     {

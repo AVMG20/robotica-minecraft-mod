@@ -2,6 +2,7 @@ package com.arno.robotica.exo.item;
 
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
 import com.arno.robotica.exo.ExoModuleKind;
 import com.arno.robotica.exo.menu.ExoMenu;
@@ -23,26 +24,47 @@ import java.util.List;
 
 /**
  * One piece of the Exo-Frame. An FE item with no durability: it never breaks and keeps its base protection when empty,
- * only the modules stop. Mk1 has one module slot, Mk2 has two and a four times bigger battery.
+ * only the modules stop. Mark N (1-4) has N module slots and a battery {@code markCapacityMultiplier}^(N-1) times the
+ * Mk1 battery; Capacitor Plating adds to it. Chestplates from Mk2 on have a core socket.
  */
 public class ExoArmorItem extends ArmorItem implements EnergyItem {
-    /** Battery of a Mk1 piece in FE: helmet, chestplate, leggings, boots. Mk2 is four times as much. */
-    private static final int[] MK1_CAPACITY = {200_000, 1_000_000, 400_000, 200_000};
+    public static final int MAX_SLOTS = 4;
 
     public final int mk;
 
     public ExoArmorItem(Properties props, Holder<ArmorMaterial> material, Type type, int mk) {
-        super(material, type, props.stacksTo(1).rarity(mk >= 2 ? Rarity.UNCOMMON : Rarity.COMMON));
+        super(material, type, mk >= 4 ? props.stacksTo(1).rarity(Rarity.EPIC).fireResistant() : props.stacksTo(1).rarity(rarity(mk)));
         this.mk = mk;
     }
 
+    private static Rarity rarity(int mk) {
+        return switch (mk) {
+            case 1 -> Rarity.COMMON;
+            case 2 -> Rarity.UNCOMMON;
+            default -> Rarity.RARE;
+        };
+    }
+
     public int moduleSlots() {
-        return mk >= 2 ? 2 : 1;
+        return Math.max(1, Math.min(MAX_SLOTS, mk));
+    }
+
+    /** Chestplates from Mk2 on hold one boss core. */
+    public boolean hasCoreSocket() {
+        return mk >= 2 && getEquipmentSlot() == net.minecraft.world.entity.EquipmentSlot.CHEST;
+    }
+
+    /** Battery without Capacitor Plating. */
+    public int baseCapacity() {
+        long cap = ExoConfig.baseCapacity(ExoModuleKind.slotIndex(getEquipmentSlot()));
+        for (int i = 1; i < mk; i++) cap *= ExoConfig.markMultiplier();
+        return (int) Math.min(Integer.MAX_VALUE, cap);
     }
 
     @Override
     public int getEnergyCapacity(ItemStack stack) {
-        return MK1_CAPACITY[ExoModuleKind.slotIndex(getEquipmentSlot())] * (mk >= 2 ? 4 : 1);
+        int plating = ExoData.levelIn(stack, ExoModuleKind.CAPACITOR_PLATING);
+        return (int) Math.min(Integer.MAX_VALUE, Math.round(baseCapacity() * (1.0 + ExoConfig.capacitorBonus(plating))));
     }
 
     @Override
@@ -80,13 +102,20 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem {
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         ItemEnergy.appendTooltip(stack, tooltip);
         int slots = moduleSlots();
-        tooltip.add(Component.translatable("exo.robotica.tooltip.slots", slots).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("exo.robotica.tooltip.slots", mk, slots).withStyle(ChatFormatting.GRAY));
         for (int i = 0; i < slots; i++) {
-            ExoModuleKind kind = ExoData.kind(stack, i);
-            if (kind == null) continue;
-            Component state = Component.translatable(ExoData.isEnabled(stack, i) ? "exo.robotica.on" : "exo.robotica.off");
-            tooltip.add(Component.literal(" ").append(Component.translatable(kind.nameKey())).append(": ").append(state)
-                    .withStyle(ExoData.isEnabled(stack, i) ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY));
+            ItemStack module = ExoData.module(stack, i);
+            if (!(module.getItem() instanceof ExoModuleItem m)) continue;
+            boolean on = ExoData.isEnabled(stack, i);
+            Component state = Component.translatable(on ? "exo.robotica.on" : "exo.robotica.off");
+            tooltip.add(Component.literal(" ").append(module.getHoverName()).append(": ").append(state)
+                    .withStyle(on ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY));
+        }
+        if (hasCoreSocket()) {
+            ItemStack core = ExoData.core(stack);
+            tooltip.add(core.isEmpty()
+                    ? Component.translatable("exo.robotica.tooltip.core_empty").withStyle(ChatFormatting.DARK_GRAY)
+                    : Component.translatable("exo.robotica.tooltip.core", core.getHoverName()).withStyle(ChatFormatting.GOLD));
         }
         tooltip.add(Component.translatable("exo.robotica.tooltip.keys").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("exo.robotica.tooltip.set").withStyle(ChatFormatting.DARK_GRAY));

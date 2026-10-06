@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "NCN",
+    "SUS"
+  ],
+  "key": {
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "C": {
+      "item": "robotica:null_casing"
+    },
+    "U": {
+      "item": "robotica:kinetic_shield_module_2"
+    },
+    "S": {
+      "item": "minecraft:shulker_shell"
+    }
+  },
+  "result": {
+    "id": "robotica:kinetic_shield_module_3",
+    "count": 1
+  }
+}

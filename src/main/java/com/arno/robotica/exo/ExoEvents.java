@@ -32,6 +32,9 @@ public final class ExoEvents {
     @SubscribeEvent
     public static void onIncomingDamage(LivingIncomingDamageEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onIncomingDamage(player, event);
+        if (!event.isCanceled() && event.getSource().getEntity() instanceof ServerPlayer attacker && attacker != event.getEntity()) {
+            ExoTicker.onAttack(attacker, event.getEntity(), event);
+        }
     }
 
     @SubscribeEvent
