@@ -6,6 +6,7 @@
   "block.robotica.capacitor_copper": "Copper Capacitor",
   "block.robotica.capacitor_redstone": "Redstone Capacitor",
   "block.robotica.capacitor_ender": "Ender Capacitor",
+  "block.robotica.capacitor_resonant": "Resonant Capacitor",
   "block.robotica.transfer_coil_basic": "Basic Transfer Coil",
   "block.robotica.transfer_coil_advanced": "Advanced Transfer Coil",
   "block.robotica.transfer_coil_elite": "Elite Transfer Coil",

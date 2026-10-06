@@ -8,13 +8,13 @@
   ],
   "key": {
     "P": {
-      "tag": "c:plates/iron"
+      "tag": "c:plates/thorium"
     },
     "G": {
       "tag": "c:glass_blocks"
     },
     "Q": {
-      "tag": "c:gems/quartz"
+      "tag": "c:dusts/graphite"
     }
   },
   "result": {

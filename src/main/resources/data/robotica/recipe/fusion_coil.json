@@ -14,7 +14,7 @@
       "item": "robotica:plasma_actuator"
     },
     "C": {
-      "item": "robotica:copper_coil"
+      "item": "robotica:superconductor_coil"
     },
     "N": {
       "item": "robotica:null_circuit"

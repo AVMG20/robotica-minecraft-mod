@@ -72,8 +72,8 @@ shaped('exo_boots_mk1', ['MHM', 'CIC'], {'M': 'electric_motor', 'I': 'iron_casin
 # ---- Mk2 (Age 2), Mk3 (Age 3), Mk4 (Age 4): smithing keeps energy, installed modules, switches and the core
 for piece in ('helmet', 'chestplate', 'leggings', 'boots'):
     smithing(f'exo_{piece}_mk2_from_mk1', 'reinforced_casing', f'exo_{piece}_mk1', 'servo_actuator', f'exo_{piece}_mk2')
-    smithing(f'exo_{piece}_mk3_from_mk2', 'blazing_casing', f'exo_{piece}_mk2', 'plasma_actuator', f'exo_{piece}_mk3')
-    smithing(f'exo_{piece}_mk4_from_mk3', 'null_casing', f'exo_{piece}_mk3', 'null_circuit', f'exo_{piece}_mk4')
+    smithing(f'exo_{piece}_mk3_from_mk2', 'blazing_casing', f'exo_{piece}_mk2', 'superconductor_coil', f'exo_{piece}_mk3')
+    smithing(f'exo_{piece}_mk4_from_mk3', 'null_casing', f'exo_{piece}_mk3', 'resonant_lattice', f'exo_{piece}_mk4')
 
 # ---- Helmet modules
 shapeless('night_vision_module', ['basic_circuit', 'copper_coil', 'minecraft:golden_carrot', PLATE])

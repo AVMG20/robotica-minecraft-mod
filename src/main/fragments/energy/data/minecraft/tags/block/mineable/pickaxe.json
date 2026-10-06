@@ -8,6 +8,7 @@
     "robotica:capacitor_copper",
     "robotica:capacitor_ender",
     "robotica:capacitor_redstone",
+    "robotica:capacitor_resonant",
     "robotica:cryo_coolant",
     "robotica:fusion_casing",
     "robotica:fusion_coil",

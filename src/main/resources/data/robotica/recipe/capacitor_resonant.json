@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "RLR",
+    "GXG",
+    "RLR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "L": {
+      "item": "robotica:resonant_lattice"
+    },
+    "G": {
+      "tag": "c:gems/resonite"
+    },
+    "X": {
+      "item": "robotica:capacitor_ender"
+    }
+  },
+  "result": {
+    "id": "robotica:capacitor_resonant",
+    "count": 1
+  }
+}

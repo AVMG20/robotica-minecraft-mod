@@ -84,7 +84,7 @@ cube_all('reactor_access_port')
 
 # ---------- columns: fuel rod, capacitors, coils, fusion coil ----------
 column('reactor_fuel_rod', 'reactor_fuel_rod', 'reactor_fuel_rod_top', 'reactor_fuel_rod_glow', 'reactor_fuel_rod_top_glow')
-for n in ('copper', 'redstone', 'ender'):
+for n in ('copper', 'redstone', 'ender', 'resonant'):
     column(f'capacitor_{n}', f'capacitor_{n}', f'capacitor_{n}_top', 'capacitor_glow')
 for n in ('basic', 'advanced', 'elite'):
     column(f'transfer_coil_{n}', f'transfer_coil_{n}', f'transfer_coil_{n}_top', f'transfer_coil_{n}_glow')

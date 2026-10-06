@@ -249,7 +249,7 @@ def cryo_coolant(frame_no):
 
 # ---------------------------------------------------------------- bank inside
 
-CAP = {0: CU, 1: RD, 2: TE}
+CAP = {0: CU, 1: RD, 2: TE, 3: PU}
 
 
 def capacitor_side(tier):
@@ -376,7 +376,7 @@ def main():
     write_block('bank_port_input_glow', bank_port_glow(False).rows(), P)
     write_block('bank_port_output', bank_port(True).rows(), P)
     write_block('bank_port_output_glow', bank_port_glow(True).rows(), P)
-    for tier, name in enumerate(('copper', 'redstone', 'ender')):
+    for tier, name in enumerate(('copper', 'redstone', 'ender', 'resonant')):
         write_block(f'capacitor_{name}', capacitor_side(tier).rows(), P)
         write_block(f'capacitor_{name}_top', capacitor_top(tier).rows(), P)
     write_block('capacitor_glow', capacitor_side_glow().rows(), P)

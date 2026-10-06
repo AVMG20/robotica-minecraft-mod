@@ -143,7 +143,7 @@ public class ExoGameTests {
         ItemStack mk2 = pieceM(ExoItems.CHESTPLATE_MK2, 777_000, mod(ExoModuleKind.MED_INJECTOR), mod(ExoModuleKind.JET_ASSIST));
         ExoData.setEnabled(mk2, 1, false);
         ExoData.setCore(mk2, new ItemStack(CoreItems.SERVO_CORE.get()));
-        SmithingRecipeInput in3 = new SmithingRecipeInput(new ItemStack(CoreItems.BLAZING_CASING.get()), mk2, new ItemStack(CoreItems.PLASMA_ACTUATOR.get()));
+        SmithingRecipeInput in3 = new SmithingRecipeInput(new ItemStack(CoreItems.BLAZING_CASING.get()), mk2, part("superconductor_coil"));
         var r3 = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, in3, level);
         helper.assertTrue(r3.isPresent(), "a Mk3 smithing recipe exists");
         ItemStack mk3 = r3.get().value().assemble(in3, level.registryAccess());
@@ -152,7 +152,7 @@ public class ExoGameTests {
         helper.assertTrue(ExoData.kind(mk3, 0) == ExoModuleKind.MED_INJECTOR && ExoData.kind(mk3, 1) == ExoModuleKind.JET_ASSIST, "modules survive smithing");
         helper.assertTrue(!ExoData.isEnabled(mk3, 1), "switches survive smithing");
         helper.assertTrue(ExoData.coreKind(ExoData.core(mk3)) == ExoData.Core.SERVO, "the core survives smithing");
-        SmithingRecipeInput in4 = new SmithingRecipeInput(new ItemStack(CoreItems.NULL_CASING.get()), mk3, new ItemStack(CoreItems.NULL_CIRCUIT.get()));
+        SmithingRecipeInput in4 = new SmithingRecipeInput(new ItemStack(CoreItems.NULL_CASING.get()), mk3, part("resonant_lattice"));
         var r4 = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, in4, level);
         helper.assertTrue(r4.isPresent(), "a Mk4 smithing recipe exists");
         ItemStack mk4 = r4.get().value().assemble(in4, level.registryAccess());
@@ -546,5 +546,10 @@ public class ExoGameTests {
         ExoTicker.flush(player);
         helper.assertTrue(before - energy(player, EquipmentSlot.LEGS) == ExoConfig.cost(ExoModuleKind.DASH_THRUSTERS, 1), "a dash costs its FE");
         helper.succeed();
+    }
+
+    /** An Assembler-only part from the industry module, looked up by id (the smithing addition of Mk3 / Mk4). */
+    private static ItemStack part(String id) {
+        return new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(com.arno.robotica.Robotica.id(id)));
     }
 }

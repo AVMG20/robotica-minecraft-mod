@@ -46,6 +46,7 @@
       "robotica:gate_controller",
       "robotica:linking_card",
       "robotica:capacitor_ender",
+      "robotica:capacitor_resonant",
       "robotica:fusion_casing",
       "robotica:fusion_coil",
       "robotica:fusion_controller",

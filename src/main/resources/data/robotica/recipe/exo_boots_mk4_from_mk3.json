@@ -7,7 +7,7 @@
     "item": "robotica:exo_boots_mk3"
   },
   "addition": {
-    "item": "robotica:null_circuit"
+    "item": "robotica:resonant_lattice"
   },
   "result": {
     "id": "robotica:exo_boots_mk4",

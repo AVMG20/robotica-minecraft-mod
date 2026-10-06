@@ -11,7 +11,7 @@
       "item": "robotica:reactor_casing"
     },
     "O": {
-      "item": "minecraft:crying_obsidian"
+      "tag": "c:plates/resonant_alloy"
     },
     "X": {
       "item": "robotica:blazing_casing"

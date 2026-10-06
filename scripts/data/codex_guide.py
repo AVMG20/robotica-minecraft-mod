@@ -232,7 +232,7 @@ STEPS = [
      'Craft a Null Circuit: ender pearls and a nether star.',
      has('null_circuit'),
      ['null_casing', 'null_circuit', 'ender_cell', 'temp_antigrav_core', 'tool_upgrade_kit_4', 'tesla_coil_5',
-      'farm_kit_mk4', 'gate_controller', 'linking_card', 'capacitor_ender', 'fusion_casing', 'fusion_coil', 'fusion_controller', 'sonar_pulse_module_3', 'jet_assist_module_3', 'med_injector_module_3',
+      'farm_kit_mk4', 'gate_controller', 'linking_card', 'capacitor_ender', 'capacitor_resonant', 'fusion_casing', 'fusion_coil', 'fusion_controller', 'sonar_pulse_module_3', 'jet_assist_module_3', 'med_injector_module_3',
       'power_regulator_module_3'], 80),
     ('resonite', 'age4', 'resonite_crystal', 'task', 4, 'Echoes',
      'Mine Resonite Ore on the outer End islands. Pyrosteel, resonite and an ender pearl make Resonant Alloy.',

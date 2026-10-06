@@ -115,8 +115,8 @@ Marks (Mk2-Mk4 by smithing; smithing keeps energy, modules, switches and the cor
 |---|---|---|---|---|---|
 | Mk1 | 1 | iron armor piece + Iron Casing, Electric Motors, Copper Coils | 2/5/6/2 | 1 | helmet 200k, chest 1M, legs 400k, boots 200k |
 | Mk2 | 2 | template Reinforced Casing + Mk1 + Servo Actuator | 3/6/8/3, toughness 2 | 2 | x4 |
-| Mk3 | 3 | template Blazing Casing + Mk2 + Plasma Actuator | 3/6/8/3, toughness 3, knockback resistance 0.1 | 3 | x16 |
-| Mk4 | 4 | template Null Casing + Mk3 + Null Circuit | 4/7/9/4, toughness 4, knockback resistance 0.2, does not burn | 4 | x64 |
+| Mk3 | 3 | template Blazing Casing + Mk2 + Superconductor Coil (Assembler) | 3/6/8/3, toughness 3, knockback resistance 0.1 | 3 | x16 |
+| Mk4 | 4 | template Null Casing + Mk3 + Resonant Lattice (Assembler) | 4/7/9/4, toughness 4, knockback resistance 0.2, does not burn | 4 | x64 |
 
 Raw cost per full set: Mk1 about 225 IE, Mk2 840, Mk3 5,450, Mk4 17,700. Protection values live in the armor materials (registry data), the batteries in the config (`capacity*`, `markCapacityMultiplier`).
 
@@ -207,7 +207,7 @@ Multiblock power for packs next to Mekanism, Thermal and Immersive Engineering: 
 - Ports are not saved links: the controller links the ports it finds on each scan; a port's FE / item capability objects are fixed and forward to the controller (nothing moves while unlinked, no capability invalidation). Ports open the controller GUI on right-click (16 block reach for big structures).
 
 **Capacitor Bank** (3x3x3 to 9x9x9): Bank Casing frame; walls of casing, Bank Glass, Bank Ports; the Capacitor Bank Controller in a side wall. Inside: any mix of Capacitors and Transfer Coils, the rest air; at least one of each and one port.
-- Capacitors: Copper 8M (4 Copper Cells, Age 1), Redstone 64M (2 Redstone Cells + the Copper one, Age 2), Ender 512M (Ender Cell + the Redstone one, Age 4). Transfer Coils: Basic 64k, Advanced 512k, Elite 4M FE/t (Age 1/2/3, each consumes the one before). The sum of the coils limits input and, separately, output per tick, shared by all ports. A 9x9x9 of Ender Capacitors holds about 175G FE.
+- Capacitors: Copper 8M (4 Copper Cells, Age 1), Redstone 64M (2 Redstone Cells + the Copper one, Age 2), Ender 512M (Ender Cell + the Redstone one, Age 4), Resonant 4G (resonant alloy plates, resonite, a Resonant Lattice + the Ender one, Age 4). Transfer Coils: Basic 64k, Advanced 512k, Elite 4M FE/t (Age 1/2/3, each consumes the one before). The sum of the coils limits input and, separately, output per tick, shared by all ports. A 9x9x9 of Ender Capacitors holds about 175G FE.
 - Energy is a long in the controller; ports clamp every transfer and the reported stored/capacity to an int. A Bank Port is input or output (sneak + right-click, the face shows an arrow). Output ports push into the block outside them and can be pulled from (a Tesla Coil on top works).
 - The energy stays in the controller when the structure breaks, and travels with the controller item (`robotica:bank_energy`, a long). Rebuilt smaller, a bank over capacity takes nothing in until it drained below.
 - GUI: big gauge, stored / capacity and percent, average in / out FE/t over the last second, a 60 s sparkline of the net flow per second (green up = charging, red down = draining), the rate limit and part count, structure line.
@@ -230,7 +230,7 @@ Multiblock power for packs next to Mekanism, Thermal and Immersive Engineering: 
 - `robotica:fusion_fuel` (items): `{"power": int, "ticks": int}`; `.../item/fusion_fuel.json`.
 - `robotica:reactor_coolant` (blocks): `{"cooling": float}`; `.../block/reactor_coolant.json` (shipped here).
 
-Recipes use the ladder parts: Bank Casing (iron plates, copper, Iron Casing, x8), Reactor Casing (iron plates, obsidian, Reinforced Casing, x8), Fusion Casing (Reactor Casing, crying obsidian, Blazing Casing, x8); controllers take that age's circuit and casing; Fusion Coils a Null Circuit and Plasma Actuators. Guide steps: "Bank on It" (bank formed), "Split the Atom" (reactor formed), "Star in a Jar" (fusion ignited). **[integration]** casings switch to industry plates, a Resonant Capacitor tier.
+Recipes use the ladder parts: Bank Casing (iron plates, copper, Iron Casing, x8), Reactor Casing (ferrothorium plates, obsidian, Reinforced Casing, x8), Fuel Rods (thorium plates, glass, graphite dust), Fusion Casing (Reactor Casing, resonant alloy plates, Blazing Casing, x8), Fusion Coils and Elite Transfer Coils (Superconductor Coils); controllers take that age's circuit and casing; Fusion Coils a Null Circuit and Plasma Actuators. Guide steps: "Bank on It" (bank formed), "Split the Atom" (reactor formed), "Star in a Jar" (fusion ignited). **[integration]** casings switch to industry plates, a Resonant Capacitor tier.
 
 ## Automation (module `automation`)
 

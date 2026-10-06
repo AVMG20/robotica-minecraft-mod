@@ -29,7 +29,7 @@ public final class EnergyConfig {
 
     private static final ModConfigSpec.IntValue BANK_MIN_SIZE;
     private static final ModConfigSpec.IntValue BANK_MAX_SIZE;
-    private static final ModConfigSpec.LongValue[] CAPACITOR = new ModConfigSpec.LongValue[3];
+    private static final ModConfigSpec.LongValue[] CAPACITOR = new ModConfigSpec.LongValue[4];
     private static final ModConfigSpec.IntValue[] COIL = new ModConfigSpec.IntValue[3];
 
     private static final ModConfigSpec.IntValue FUSION_IGNITION;
@@ -79,11 +79,11 @@ public final class EnergyConfig {
                 .defineInRange("bankMinSize", 3, 3, 32);
         BANK_MAX_SIZE = b.comment("Largest Capacitor Bank, outside size in blocks (every axis).")
                 .defineInRange("bankMaxSize", 9, 3, 32);
-        long[] caps = {8_000_000L, 64_000_000L, 512_000_000L};
+        long[] caps = {8_000_000L, 64_000_000L, 512_000_000L, 4_096_000_000L};
         int[] coils = {64_000, 512_000, 4_000_000};
-        String[] capNames = {"Copper", "Redstone", "Ender"};
+        String[] capNames = {"Copper", "Redstone", "Ender", "Resonant"};
         String[] coilNames = {"Basic", "Advanced", "Elite"};
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < CAPACITOR.length; i++) {
             CAPACITOR[i] = b.comment(capNames[i] + " Capacitor: FE stored per block.")
                     .defineInRange("capacitor" + capNames[i], caps[i], 1L, Long.MAX_VALUE / 4096);
         }

@@ -7,7 +7,7 @@
     "item": "robotica:exo_leggings_mk2"
   },
   "addition": {
-    "item": "robotica:plasma_actuator"
+    "item": "robotica:superconductor_coil"
   },
   "result": {
     "id": "robotica:exo_leggings_mk3",

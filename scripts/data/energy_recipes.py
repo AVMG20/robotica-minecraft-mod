@@ -38,28 +38,30 @@ shaped('bank_port', ['RKR', 'KCK', 'RBR'], {'R': REDSTONE, 'K': 'copper_coil', '
 shaped('capacitor_copper', ['PCP', 'CXC', 'PCP'], {'P': COPPER_PLATE, 'C': 'copper_cell', 'X': 'bank_casing'})
 shaped('capacitor_redstone', ['RCR', 'CXC', 'RAR'],
        {'R': REDSTONE_BLOCK, 'C': 'redstone_cell', 'X': 'capacitor_copper', 'A': 'advanced_circuit'})
+shaped('capacitor_resonant', ['RLR', 'GXG', 'RLR'],
+       {'R': '#c:plates/resonant_alloy', 'L': 'resonant_lattice', 'G': '#c:gems/resonite', 'X': 'capacitor_ender'})
 shaped('capacitor_ender', ['ECE', 'SXS', 'ENE'],
        {'E': PEARL, 'C': 'ender_cell', 'S': 'minecraft:shulker_shell', 'X': 'capacitor_redstone', 'N': 'null_circuit'})
 shaped('transfer_coil_basic', ['KRK', 'PBP', 'KRK'], {'K': 'copper_coil', 'R': REDSTONE, 'P': IRON_PLATE, 'B': 'basic_circuit'})
 shaped('transfer_coil_advanced', ['GAG', 'QTQ', 'GAG'], {'G': GOLD, 'A': 'advanced_circuit', 'Q': QUARTZ, 'T': 'transfer_coil_basic'})
 shaped('transfer_coil_elite', ['BQB', 'STS', 'BQB'],
-       {'B': '#c:rods/blaze', 'Q': 'quantum_circuit', 'S': 'minecraft:prismarine_crystals', 'T': 'transfer_coil_advanced'})
+       {'B': '#c:rods/blaze', 'Q': 'quantum_circuit', 'S': 'superconductor_coil', 'T': 'transfer_coil_advanced'})
 
 # ---- Fission Reactor (Age 2) ----
-shaped('reactor_casing', ['POP', 'OXO', 'POP'], {'P': IRON_PLATE, 'O': OBSIDIAN, 'X': 'reinforced_casing'}, count=8)
+shaped('reactor_casing', ['POP', 'OXO', 'POP'], {'P': '#c:plates/ferrothorium', 'O': OBSIDIAN, 'X': 'reinforced_casing'}, count=8)
 shaped('reactor_glass', ['CGC', 'GQG', 'CGC'], {'C': 'reactor_casing', 'G': GLASS, 'Q': QUARTZ}, count=4)
 shaped('reactor_controller', ['CAC', 'RXR', 'CSC'],
        {'C': 'reactor_casing', 'A': 'advanced_circuit', 'R': REDSTONE_BLOCK, 'X': 'reinforced_casing', 'S': 'servo_actuator'})
 shaped('reactor_power_port', ['RKR', 'KCK', 'RAR'], {'R': REDSTONE, 'K': 'copper_coil', 'C': 'reactor_casing', 'A': 'advanced_circuit'})
 shaped('reactor_access_port', ['PHP', 'BCB', 'PTP'],
        {'P': IRON_PLATE, 'H': 'minecraft:hopper', 'B': 'basic_circuit', 'C': 'reactor_casing', 'T': '#c:chests'})
-shaped('reactor_fuel_rod', ['PGP', 'PQP', 'PGP'], {'P': IRON_PLATE, 'G': GLASS, 'Q': QUARTZ}, count=2)
+shaped('reactor_fuel_rod', ['PGP', 'PQP', 'PGP'], {'P': '#c:plates/thorium', 'G': GLASS, 'Q': '#c:dusts/graphite'}, count=2)
 # Age 3 coolant: better than blue ice (4 vs 3)
 shaped('cryo_coolant', ['BPB', 'PSP', 'BPB'], {'B': 'minecraft:blue_ice', 'P': 'minecraft:prismarine_crystals', 'S': 'minecraft:snow_block'}, count=4)
 
 # ---- Fusion Reactor (Age 4) ----
-shaped('fusion_casing', ['ROR', 'OXO', 'ROR'], {'R': 'reactor_casing', 'O': 'minecraft:crying_obsidian', 'X': 'blazing_casing'}, count=8)
-shaped('fusion_coil', ['EPE', 'CNC', 'EPE'], {'E': PEARL, 'P': 'plasma_actuator', 'C': 'copper_coil', 'N': 'null_circuit'}, count=2)
+shaped('fusion_casing', ['ROR', 'OXO', 'ROR'], {'R': 'reactor_casing', 'O': '#c:plates/resonant_alloy', 'X': 'blazing_casing'}, count=8)
+shaped('fusion_coil', ['EPE', 'CNC', 'EPE'], {'E': PEARL, 'P': 'plasma_actuator', 'C': 'superconductor_coil', 'N': 'null_circuit'}, count=2)
 shaped('fusion_controller', ['FNF', 'AXA', 'FRF'],
        {'F': 'fusion_casing', 'N': 'null_circuit', 'A': 'plasma_actuator', 'X': 'null_casing', 'R': 'reactor_controller'})
 print('energy recipes written')

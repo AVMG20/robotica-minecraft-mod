@@ -81,6 +81,7 @@ public final class EnergyRegistry {
     public static final DeferredBlock<CapacitorBlock> CAPACITOR_COPPER = capacitor("capacitor_copper", CapacitorBlock.Kind.CAPACITOR, 0);
     public static final DeferredBlock<CapacitorBlock> CAPACITOR_REDSTONE = capacitor("capacitor_redstone", CapacitorBlock.Kind.CAPACITOR, 1);
     public static final DeferredBlock<CapacitorBlock> CAPACITOR_ENDER = capacitor("capacitor_ender", CapacitorBlock.Kind.CAPACITOR, 2);
+    public static final DeferredBlock<CapacitorBlock> CAPACITOR_RESONANT = capacitor("capacitor_resonant", CapacitorBlock.Kind.CAPACITOR, 3);
     public static final DeferredBlock<CapacitorBlock> TRANSFER_COIL_BASIC = capacitor("transfer_coil_basic", CapacitorBlock.Kind.COIL, 0);
     public static final DeferredBlock<CapacitorBlock> TRANSFER_COIL_ADVANCED = capacitor("transfer_coil_advanced", CapacitorBlock.Kind.COIL, 1);
     public static final DeferredBlock<CapacitorBlock> TRANSFER_COIL_ELITE = capacitor("transfer_coil_elite", CapacitorBlock.Kind.COIL, 2);

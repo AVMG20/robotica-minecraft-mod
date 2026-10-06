@@ -14,7 +14,7 @@
       "item": "robotica:quantum_circuit"
     },
     "S": {
-      "item": "minecraft:prismarine_crystals"
+      "item": "robotica:superconductor_coil"
     },
     "T": {
       "item": "robotica:transfer_coil_advanced"

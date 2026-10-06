@@ -7,7 +7,7 @@
     "item": "robotica:exo_chestplate_mk2"
   },
   "addition": {
-    "item": "robotica:plasma_actuator"
+    "item": "robotica:superconductor_coil"
   },
   "result": {
     "id": "robotica:exo_chestplate_mk3",
