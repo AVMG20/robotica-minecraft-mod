@@ -378,9 +378,9 @@ public class ArchitectGameTests {
         });
     }
 
-    /** Clear terrain removes plain blocks in the footprint, puts their drops in a chest on the table, never touches block entities. */
+    /** Clear terrain breaks whatever is in the way: junk is voided, a chest and its contents go to the chest on the table. */
     @GameTest(template = "empty", timeoutTicks = 600)
-    public static void clearTerrainRemovesBlocksButKeepsContainers(GameTestHelper helper) {
+    public static void clearTerrainSavesContainersAndVoidsJunk(GameTestHelper helper) {
         ArchitectTableBlockEntity table = preparedTable(helper, 2, true);
         BlockPos origin = Plots.origin(table.getBlockPos(), Plots.CENTER);
         BlockPos stone1 = origin.offset(3, 1, 3);
@@ -389,6 +389,7 @@ public class ArchitectGameTests {
         helper.getLevel().setBlockAndUpdate(stone1, Blocks.STONE.defaultBlockState());
         helper.getLevel().setBlockAndUpdate(stone2, Blocks.STONE.defaultBlockState());
         helper.getLevel().setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
+        helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, chest, null).insertItem(0, new ItemStack(Items.DIAMOND, 5), false);
         BlockPos stash = table.getBlockPos().above();
         helper.getLevel().setBlockAndUpdate(stash, Blocks.CHEST.defaultBlockState());
         helper.assertTrue(table.clearTerrain(), "clear terrain should be on");
@@ -397,11 +398,18 @@ public class ArchitectGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(!table.layout().hasWork(), "build should be finished, status " + table.status());
             helper.assertTrue(helper.getLevel().getBlockState(stone1).isAir() && helper.getLevel().getBlockState(stone2).isAir(), "stone in the footprint should be gone");
-            helper.assertTrue(helper.getLevel().getBlockState(chest).is(Blocks.CHEST), "containers must stay");
+            helper.assertTrue(!helper.getLevel().getBlockState(chest).is(Blocks.CHEST), "a chest in the way is broken");
+            helper.assertTrue(helper.getLevel().getBlockState(stash).is(Blocks.CHEST), "the chest on the table stays");
             IItemHandler drops = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, stash, Direction.DOWN);
-            int cobble = 0;
-            for (int i = 0; i < drops.getSlots(); i++) if (drops.getStackInSlot(i).is(Items.COBBLESTONE)) cobble += drops.getStackInSlot(i).getCount();
-            helper.assertTrue(cobble == 2, "the cleared stone should be in the chest on the table, found " + cobble);
+            int cobble = 0, diamonds = 0, chests = 0;
+            for (int i = 0; i < drops.getSlots(); i++) {
+                ItemStack s = drops.getStackInSlot(i);
+                if (s.is(Items.COBBLESTONE)) cobble += s.getCount();
+                if (s.is(Items.DIAMOND)) diamonds += s.getCount();
+                if (s.is(Items.CHEST)) chests += s.getCount();
+            }
+            helper.assertTrue(cobble == 0, "cobblestone is junk and voided, found " + cobble);
+            helper.assertTrue(diamonds == 5 && chests == 1, "the broken chest and its diamonds are saved, found " + diamonds + " diamonds, " + chests + " chests");
         });
     }
 

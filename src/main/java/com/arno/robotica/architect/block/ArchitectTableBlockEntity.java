@@ -1,5 +1,6 @@
 package com.arno.robotica.architect.block;
 
+import com.arno.robotica.Robotica;
 import com.arno.robotica.architect.ArchitectConfig;
 import com.arno.robotica.architect.ArchitectRegistry;
 import com.arno.robotica.architect.entity.BuilderDrone;
@@ -26,11 +27,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
@@ -38,6 +41,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -66,7 +70,8 @@ import java.util.UUID;
 /**
  * Architect Table. Bulk items in the input become matter; matter + FE become building blocks while the table works
  * through its plan, one block per interval. The table is the middle floor block of its own plot and is never replaced.
- * Picking the table up keeps everything: matter, energy, slots, the plan ({@link Layout}), the running flag and the cursor.
+ * Clear terrain breaks whatever is in the way (block entities too, their contents are saved), voids junk and stashes the
+ * rest in a container touching the table. Picking the table up keeps everything: matter, energy, slots, the plan ({@link Layout}), the running flag and the cursor.
  * Only the owner (or a player on the owner's scoreboard team, or an operator) can use it.
  */
 public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvider {
@@ -86,6 +91,9 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     public static final int ACTION_CLEAR = 4;
     /** a = style ordinal. */
     public static final int ACTION_STYLE = 5;
+
+    /** Cleared junk (cobblestone, dirt, gravel and the like, tag robotica:voidable) is voided instead of stashed. */
+    private static final TagKey<Item> JUNK = TagKey.create(Registries.ITEM, Robotica.id("voidable"));
 
     private static final UUID FALLBACK_OWNER = UUID.fromString("c4d8a5e2-1f43-4a5e-9d7b-0a7a0b0b0a11");
 
@@ -535,7 +543,9 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 || current.getBlock() instanceof LiquidBlock;
         boolean clearing = false;
         if (!replaceable) {
-            if (!clearTerrain || level.getBlockEntity(target) != null || current.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
+            if (!clearTerrain || current.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
+            // a container touching the table is where the drops go: leave it standing
+            if (level.getBlockEntity(target) != null && target.distManhattan(worldPosition) == 1) return STEP_SKIPPED;
             clearing = true;
             // clearing is slow on purpose (speed cards do not help), so the table is no quarry
             if (clearCooldown > 0) return STEP_WAIT;
@@ -558,9 +568,19 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         }
 
         if (clearing) {
-            List<ItemStack> drops = Block.getDrops(current, level, target, null, fake, new ItemStack(Items.DIAMOND_PICKAXE));
+            // chests, furnaces and the like in the way: their contents come along first, nothing spills
+            BlockEntity in = level.getBlockEntity(target);
+            IItemHandler inside = in == null ? null : level.getCapability(Capabilities.ItemHandler.BLOCK, target, null);
+            if (inside != null) {
+                for (int slot = 0; slot < inside.getSlots(); slot++) {
+                    for (ItemStack taken = inside.extractItem(slot, 64, false); !taken.isEmpty(); taken = inside.extractItem(slot, 64, false)) {
+                        stash(level, taken);
+                    }
+                }
+            }
+            List<ItemStack> drops = Block.getDrops(current, level, target, in, fake, new ItemStack(Items.DIAMOND_PICKAXE));
             level.removeBlock(target, false);
-            for (ItemStack drop : drops) stash(level, drop);
+            for (ItemStack drop : drops) if (!drop.is(JUNK)) stash(level, drop);
             clearCooldown = ArchitectConfig.clearInterval();
         }
         if (desired.isAir()) {
