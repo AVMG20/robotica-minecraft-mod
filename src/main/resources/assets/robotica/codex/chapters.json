@@ -299,7 +299,7 @@
         },
         {
           "title": "Grinding media",
-          "text": "Optional: put flint or grinding balls in the second slot. Every ore then gives more dust and has a chance at a byproduct dust. One item wears out after a number of ores.\n\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +150%. Better balls need a better Grinder.",
+          "text": "Optional: put flint or grinding balls in the second slot. Every ore then gives more dust and has a chance at a byproduct dust. The Grinder loads one at a time and its bar shows how long that one lasts. Add or take media any time.\n\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +150%. Better balls need a better Grinder.",
           "items": [
             "minecraft:flint",
             "robotica:iron_grinding_balls",

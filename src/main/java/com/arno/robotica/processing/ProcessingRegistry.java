@@ -46,8 +46,8 @@ public final class ProcessingRegistry {
     public static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Robotica.MODID);
 
     /**
-     * Ores a grinding media stack's top item has already ground. Lives on the stack, so taking the media out and putting
-     * it back keeps the wear; only that one item is used up when it reaches the media's {@code uses}.
+     * Legacy: wear that older versions kept on a media stack. Still registered so old stacks load; the Grinder loads a
+     * worn item with what it had left and strips the component, so the rest stacks again.
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MEDIA_WEAR = COMPONENTS.registerComponentType(
             "media_wear", b -> b.persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT));

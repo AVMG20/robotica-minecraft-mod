@@ -65,7 +65,8 @@ public class GrinderScreen extends MachineScreen<GrinderMenu> {
             g.fill(bx, by, bx + 3, by + h, SLOT_DARK);
             int filled = Math.round(h * Math.min(1.0F, (float) menu.mediaLeft() / uses));
             if (filled > 0) g.fillGradient(bx, by + h - filled, bx + 3, by + h, PROGRESS_TOP, PROGRESS_BOTTOM);
-            addTooltip(bx - 1, by - 1, 5, h + 2, Component.translatable("gui.robotica.processing.media_left", menu.mediaLeft(), uses));
+            addTooltip(bx - 1, by - 1, 5, h + 2, Component.translatable("gui.robotica.processing.media_left",
+                    new ItemStack(menu.loadedMedia()).getHoverName(), menu.mediaLeft(), uses));
         }
 
         Tone tone = switch (menu.status()) {

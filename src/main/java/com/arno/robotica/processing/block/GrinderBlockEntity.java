@@ -13,7 +13,9 @@ import com.arno.robotica.processing.recipe.GrindingRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -24,6 +26,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -37,8 +40,9 @@ import java.util.Set;
  * Grinder: input, grinding media, three output slots and a battery. Ores become two dusts (config), raw ores one plus
  * a chance, ingots one; {@code robotica:grinding} recipes cover the rest. Media and Fortune cards add main output on
  * ores and raw ores, not gem ores (see {@link GrindingLogic.Boost}); media also has a chance at a byproduct
- * dust and its top item wears out after N ores (the wear rides on the stack). A Void card deletes byproducts that do not
- * fit instead of stopping the machine.
+ * dust. One media item at a time is loaded into the machine straight away and lasts N ores (shown by the media bar),
+ * then the next one is taken, so the media slot holds plain stackable items the player can add or take any time.
+ * A Void card deletes byproducts that do not fit instead of stopping the machine.
  */
 public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
     public static final int INPUT = 0;
@@ -82,6 +86,9 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
 
     private int progress;
     private int needed;
+    /** The media item loaded into the machine (air when none) and the ores it still grinds. */
+    private Item loadedMedia = Items.AIR;
+    private int loadedLeft;
 
     private Item planItem = Items.AIR;
     private int planGeneration = -1;
@@ -134,19 +141,58 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         return needed;
     }
 
-    /** Ores the top media item in the slot has ground (kept on the stack, see {@link ProcessingRegistry#MEDIA_WEAR}). */
-    public int wear() {
-        return wearOf(items.getStackInSlot(MEDIA));
+    /** The loaded media item, air when none is loaded. */
+    public Item loadedMedia() {
+        return loadedMedia;
     }
 
-    public static int wearOf(ItemStack media) {
-        return media.isEmpty() ? 0 : media.getOrDefault(ProcessingRegistry.MEDIA_WEAR.get(), 0);
-    }
-
-    /** Ores left before the media item in the slot wears out, 0 without media. */
+    /** Ores the loaded media still grinds, 0 when none is loaded. */
     public int mediaLeft() {
-        GrindingMedia media = GrindingMedia.of(items.getStackInSlot(MEDIA));
-        return media == null ? 0 : Math.max(0, media.uses() - wear());
+        return loadedLeft;
+    }
+
+    /** Uses of a fresh item of the loaded media, 0 when none is loaded. */
+    public int mediaUses() {
+        GrindingMedia media = loaded();
+        return media == null ? 0 : media.uses();
+    }
+
+    @Nullable
+    private GrindingMedia loaded() {
+        return loadedLeft > 0 && loadedMedia != Items.AIR ? GrindingMedia.of(new ItemStack(loadedMedia)) : null;
+    }
+
+    /**
+     * Loads one media item from the slot when none is loaded (or the loaded one stopped being media after a data pack
+     * change). The item is used up at once; its uses go into the machine. Returns true when media is loaded.
+     */
+    public boolean loadMedia() {
+        if (loaded() != null) return true;
+        loadedMedia = Items.AIR;
+        loadedLeft = 0;
+        ItemStack stack = items.getStackInSlot(MEDIA);
+        GrindingMedia media = GrindingMedia.of(stack);
+        if (media == null || !media.fits(tier)) return false;
+        // Stacks from before media was loaded still carry their wear: the worn item goes in with what it had left.
+        int wear = stack.getOrDefault(ProcessingRegistry.MEDIA_WEAR.get(), 0);
+        loadedMedia = stack.getItem();
+        loadedLeft = Math.max(1, media.uses() - wear);
+        ItemStack rest = stack.copyWithCount(stack.getCount() - 1);
+        rest.remove(ProcessingRegistry.MEDIA_WEAR.get());
+        items.setStackInSlot(MEDIA, rest.isEmpty() ? ItemStack.EMPTY : rest);
+        setChanged();
+        return true;
+    }
+
+    /** Old media stacks (with the wear component) are loaded or, behind loaded media, become plain items again. */
+    private void stripLegacyWear() {
+        ItemStack stack = items.getStackInSlot(MEDIA);
+        if (stack.isEmpty() || !stack.has(ProcessingRegistry.MEDIA_WEAR.get())) return;
+        if (loadMedia() && stack == items.getStackInSlot(MEDIA)) {
+            ItemStack plain = stack.copy();
+            plain.remove(ProcessingRegistry.MEDIA_WEAR.get());
+            items.setStackInSlot(MEDIA, plain);
+        }
     }
 
     /** Mk a recipe for the current input needs, 0 when none. */
@@ -176,6 +222,8 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
 
     @Override
     protected void work(ServerLevel level) {
+        stripLegacyWear();
+        loadMedia();
         ItemStack input = items.getStackInSlot(INPUT);
         if (input.isEmpty()) {
             progress = 0;
@@ -211,11 +259,16 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         }
     }
 
-    /** The media in the slot when it does something for this plan and fits this Mk, else null. */
+    /**
+     * The media that works on this plan: the loaded one, or (not loaded yet) the one the slot would load. Null when the
+     * plan takes no media.
+     */
     @Nullable
     private GrindingMedia activeMedia(GrindingLogic.Plan plan) {
         if (!plan.boost().media()) return null;
-        GrindingMedia media = GrindingMedia.of(items.getStackInSlot(MEDIA));
+        GrindingMedia media = loaded();
+        if (media != null) return media;
+        media = GrindingMedia.of(items.getStackInSlot(MEDIA));
         return media != null && media.fits(tier) ? media : null;
     }
 
@@ -255,6 +308,7 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
     public boolean grindOne(RandomSource random, GrindingLogic.Plan plan) {
         ItemStack input = items.getStackInSlot(INPUT);
         if (input.isEmpty() || !hasRoom(plan)) return false;
+        if (plan.boost().media()) loadMedia();
         GrindingMedia media = activeMedia(plan);
         int mainCount = GrindingLogic.roll(mainAmount(plan, media), random);
         ItemStack main = plan.main().copyWithCount(Math.max(1, mainCount));
@@ -269,25 +323,17 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         insert(main);
         for (ItemStack extra : extras) insert(extra);   // with a Void card, what does not fit is deleted
         items.extractItem(INPUT, 1, false);
-        if (media != null) wearMedia(media);
+        if (media != null) wearMedia();
         setChanged();
         return true;
     }
 
-    /** One more ore on the top media item; when it reaches the media's uses that one item is used up. */
-    private void wearMedia(GrindingMedia media) {
-        ItemStack stack = items.getStackInSlot(MEDIA);
-        if (stack.isEmpty()) return;
-        int wear = wearOf(stack) + 1;
-        ItemStack next;
-        if (wear >= media.uses()) {
-            next = stack.copyWithCount(stack.getCount() - 1);
-            next.remove(ProcessingRegistry.MEDIA_WEAR.get());
-        } else {
-            next = stack.copy();
-            next.set(ProcessingRegistry.MEDIA_WEAR.get(), wear);
-        }
-        items.setStackInSlot(MEDIA, next.isEmpty() ? ItemStack.EMPTY : next);
+    /** One ore less on the loaded media; when it runs out the next item from the slot is loaded. */
+    private void wearMedia() {
+        if (--loadedLeft > 0) return;
+        loadedMedia = Items.AIR;
+        loadedLeft = 0;
+        loadMedia();
     }
 
     /** True when all stacks fit into the output slots together. */
@@ -342,17 +388,34 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         return new GrinderMenu(id, inv, this);
     }
 
+    /** An untouched loaded media item comes back out with the rest; a worn one is gone. */
+    @Override
+    public void dropContents(Level level, BlockPos pos) {
+        super.dropContents(level, pos);
+        GrindingMedia media = loaded();
+        if (media != null && loadedLeft >= media.uses()) popOut(level, pos, new ItemStack(loadedMedia));
+        loadedMedia = Items.AIR;
+        loadedLeft = 0;
+    }
+
     @Override
     protected void writeContents(CompoundTag tag, HolderLookup.Provider registries) {
         super.writeContents(tag, registries);
         tag.putInt("progress", progress);
+        if (loadedLeft > 0 && loadedMedia != Items.AIR) {
+            tag.putString("media", BuiltInRegistries.ITEM.getKey(loadedMedia).toString());
+            tag.putInt("mediaLeft", loadedLeft);
+        }
     }
 
     @Override
     protected void readContents(CompoundTag tag, HolderLookup.Provider registries) {
         super.readContents(tag, registries);
         progress = tag.getInt("progress");
-        // Saves from before wear lived on the media stack: move the old machine-side counter onto it.
+        ResourceLocation mediaId = ResourceLocation.tryParse(tag.getString("media"));
+        loadedMedia = mediaId == null ? Items.AIR : BuiltInRegistries.ITEM.get(mediaId);
+        loadedLeft = loadedMedia == Items.AIR ? 0 : tag.getInt("mediaLeft");
+        // Saves from before wear lived on the media stack: put the old machine-side counter on it, loaded on the next tick.
         ItemStack media = items.getStackInSlot(MEDIA);
         int oldWear = tag.getInt("wear");
         if (oldWear > 0 && !media.isEmpty() && !media.has(ProcessingRegistry.MEDIA_WEAR.get())) {
