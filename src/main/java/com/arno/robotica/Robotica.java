@@ -12,6 +12,7 @@ import com.arno.robotica.exo.ExoModule;
 import com.arno.robotica.gear.GearModule;
 import com.arno.robotica.industry.IndustryModule;
 import com.arno.robotica.power.PowerModule;
+import com.arno.robotica.processing.ProcessingModule;
 import com.arno.robotica.replicator.ReplicatorModule;
 import com.arno.robotica.warp.WarpModule;
 import com.mojang.logging.LogUtils;
@@ -37,6 +38,7 @@ public class Robotica {
         PowerModule.init(modBus, container);
         IndustryModule.init(modBus, container);
         EnergyModule.init(modBus, container);
+        ProcessingModule.init(modBus, container);
         AutomationModule.init(modBus, container);
         GearModule.init(modBus, container);
         ArchitectModule.init(modBus, container);

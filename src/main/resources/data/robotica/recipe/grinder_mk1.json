@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PFP",
+    "GMG",
+    "PBP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "F": {
+      "item": "minecraft:flint"
+    },
+    "G": {
+      "item": "robotica:copper_gear"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:grinder_mk1",
+    "count": 1
+  }
+}

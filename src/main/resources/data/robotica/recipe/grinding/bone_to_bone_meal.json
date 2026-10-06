@@ -1,0 +1,10 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:bones"
+  },
+  "result": {
+    "id": "minecraft:bone_meal",
+    "count": 6
+  }
+}

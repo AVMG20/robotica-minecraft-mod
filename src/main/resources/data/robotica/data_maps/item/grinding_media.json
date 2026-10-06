@@ -1,0 +1,34 @@
+{
+  "values": {
+    "minecraft:flint": {
+      "bonus": 0.1,
+      "secondary": 0.02,
+      "uses": 8,
+      "tier": 0
+    },
+    "robotica:iron_grinding_balls": {
+      "bonus": 0.25,
+      "secondary": 0.05,
+      "uses": 16,
+      "tier": 1
+    },
+    "robotica:ferrothorium_grinding_balls": {
+      "bonus": 0.5,
+      "secondary": 0.1,
+      "uses": 32,
+      "tier": 2
+    },
+    "robotica:pyrosteel_grinding_balls": {
+      "bonus": 1.0,
+      "secondary": 0.2,
+      "uses": 64,
+      "tier": 3
+    },
+    "robotica:resonant_grinding_balls": {
+      "bonus": 1.5,
+      "secondary": 0.25,
+      "uses": 128,
+      "tier": 4
+    }
+  }
+}

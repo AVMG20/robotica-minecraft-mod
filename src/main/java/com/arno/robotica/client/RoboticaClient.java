@@ -13,6 +13,7 @@ import com.arno.robotica.exo.client.ExoClient;
 import com.arno.robotica.gear.client.GearClient;
 import com.arno.robotica.industry.client.IndustryClient;
 import com.arno.robotica.power.client.PowerClient;
+import com.arno.robotica.processing.client.ProcessingClient;
 import com.arno.robotica.replicator.client.ReplicatorClient;
 import com.arno.robotica.warp.client.WarpClient;
 import net.neoforged.api.distmarker.Dist;
@@ -34,6 +35,7 @@ public class RoboticaClient {
         PowerClient.init(modBus, container);
         IndustryClient.init(modBus, container);
         EnergyClient.init(modBus, container);
+        ProcessingClient.init(modBus, container);
         AutomationClient.init(modBus, container);
         GearClient.init(modBus, container);
         ArchitectClient.init(modBus, container);

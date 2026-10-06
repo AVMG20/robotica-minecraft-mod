@@ -1,0 +1,11 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:ingots/copper"
+  },
+  "result": {
+    "id": "robotica:copper_dust",
+    "count": 1
+  },
+  "by_tag": true
+}

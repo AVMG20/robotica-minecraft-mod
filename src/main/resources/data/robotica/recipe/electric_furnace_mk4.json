@@ -1,0 +1,27 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "XMX",
+    "A A"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    },
+    "M": {
+      "item": "robotica:electric_furnace_mk3"
+    },
+    "A": {
+      "tag": "c:ender_pearls"
+    }
+  },
+  "result": {
+    "id": "robotica:electric_furnace_mk4",
+    "count": 1
+  }
+}

@@ -284,6 +284,53 @@
       ]
     },
     {
+      "title": "Ore processing",
+      "icon": "robotica:grinder_mk1",
+      "pages": [
+        {
+          "title": "Grinder",
+          "text": "An ore becomes two dusts. Raw ores give one dust and sometimes a second, ingots one dust. It works with every mod's ores through their tags.\n\nSmelt the dust in any furnace, or faster in a blast furnace or an Electric Furnace. Cobblestone, gravel, bones, blaze rods and more grind too.",
+          "items": [
+            "robotica:grinder_mk1",
+            "robotica:iron_dust",
+            "robotica:gold_dust",
+            "robotica:copper_dust"
+          ]
+        },
+        {
+          "title": "Grinding media",
+          "text": "Optional: put flint or grinding balls in the second slot. Every ore then gives more dust and has a chance at a byproduct dust. One item wears out after a number of ores.\n\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +150%. Better balls need a better Grinder.",
+          "items": [
+            "minecraft:flint",
+            "robotica:iron_grinding_balls",
+            "robotica:ferrothorium_grinding_balls",
+            "robotica:pyrosteel_grinding_balls",
+            "robotica:resonant_grinding_balls"
+          ]
+        },
+        {
+          "title": "Electric Furnace",
+          "text": "Smelts anything a furnace does, on FE and twice as fast. Each Mk smelts more stacks side by side: 1, 2, 4, then 8 lanes.\n\nTake the output by hand to get the experience.",
+          "items": [
+            "robotica:electric_furnace_mk1",
+            "robotica:electric_furnace_mk2",
+            "robotica:electric_furnace_mk3",
+            "robotica:electric_furnace_mk4"
+          ]
+        },
+        {
+          "title": "Mk tiers and cards",
+          "text": "Craft the next Mk around the old one: it is faster, has one more upgrade slot and takes more cards. Energy and Carry contents stay.\n\nGrinder: Speed, Efficiency, Fortune (more dust), Void (extras that do not fit are deleted), Carry. Furnace: Speed, Efficiency, Range (more items per lane), Fortune (more experience), Carry.",
+          "items": [
+            "robotica:grinder_mk1",
+            "robotica:grinder_mk2",
+            "robotica:grinder_mk3",
+            "robotica:grinder_mk4"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Robots and farms",
       "icon": "robotica:stumpy",
       "pages": [

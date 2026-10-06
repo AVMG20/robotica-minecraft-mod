@@ -1,0 +1,11 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:ores/iron"
+  },
+  "result": {
+    "id": "robotica:iron_dust",
+    "count": 2
+  },
+  "by_tag": true
+}

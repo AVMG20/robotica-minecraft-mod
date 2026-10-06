@@ -1,0 +1,10 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:ores/lapis"
+  },
+  "result": {
+    "id": "minecraft:lapis_lazuli",
+    "count": 8
+  }
+}

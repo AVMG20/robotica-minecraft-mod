@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "CFC",
+    "PBP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "F": {
+      "item": "minecraft:furnace"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:electric_furnace_mk1",
+    "count": 1
+  }
+}

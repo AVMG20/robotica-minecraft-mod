@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:grinder_mk1",
+    "robotica:grinder_mk2",
+    "robotica:grinder_mk3",
+    "robotica:grinder_mk4",
+    "robotica:electric_furnace_mk1",
+    "robotica:electric_furnace_mk2",
+    "robotica:electric_furnace_mk3",
+    "robotica:electric_furnace_mk4"
+  ]
+}

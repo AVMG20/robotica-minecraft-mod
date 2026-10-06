@@ -60,6 +60,8 @@
       "robotica:step_assist_module",
       "robotica:spring_heels_module",
       "robotica:servo_stride_module_1",
+      "robotica:grinder_mk1",
+      "robotica:electric_furnace_mk1",
       "robotica:bank_casing",
       "robotica:bank_glass",
       "robotica:bank_controller",

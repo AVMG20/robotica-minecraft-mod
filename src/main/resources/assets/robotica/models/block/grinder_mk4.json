@@ -1,0 +1,53 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "north": "robotica:block/grinder_mk4_front",
+    "up": "robotica:block/grinder_mk4_top",
+    "down": "robotica:block/processing_machine_bottom",
+    "south": "robotica:block/processing_mk4_side",
+    "west": "robotica:block/processing_mk4_side",
+    "east": "robotica:block/processing_mk4_side",
+    "particle": "robotica:block/processing_mk4_side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#down",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#up",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#east",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

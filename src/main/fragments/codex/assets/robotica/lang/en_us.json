@@ -45,6 +45,8 @@
   "advancements.robotica.guide.exo.description": "Craft an Exo-Frame piece. Press J (or sneak-right-click the piece) to add modules. Step Assist on the boots walks up blocks.",
   "advancements.robotica.guide.drones.title": "Air Support",
   "advancements.robotica.guide.drones.description": "Craft a Sentry Drone to guard your base, or a Courier Drone to carry items between chests.",
+  "advancements.robotica.guide.grinder.title": "Grind It Down",
+  "advancements.robotica.guide.grinder.description": "Place a Grinder: every ore becomes two dusts. Smelt them, or feed an Electric Furnace. Flint in the media slot adds a little more.",
   "advancements.robotica.guide.metal_press.title": "Press Ahead",
   "advancements.robotica.guide.metal_press.description": "Place a Metal Press: one ingot makes one plate, twice what the hammer gives.",
   "advancements.robotica.guide.storage.title": "Big Chest",

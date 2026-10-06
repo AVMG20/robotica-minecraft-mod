@@ -132,13 +132,20 @@ STEPS = [
      ['solar_panel_mk1', 'tesla_coil_2', 'accumulator_1', 'metal_press', 'metal_press_iron_plate',
       'metal_press_copper_plate', 'metal_press_gold_plate', 'shock_baton_from_gearblade', 'farm_kit_mk2', 'warp_pad',
       'recall_remote', 'storage_terminal', 'storage_expansion_mk1', 'sentry_drone', 'courier_drone', 'courier_remote', 'exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1', 'night_vision_module', 'step_assist_module', 'spring_heels_module', 'servo_stride_module_1',
-      'bank_casing', 'bank_glass', 'bank_controller', 'bank_port', 'capacitor_copper', 'transfer_coil_basic', 'auto_feeder_module', 'kinetic_generator_module', 'magnet_module', 'fall_dampener_module', 'capacitor_plating_module'] + cards('speed', 'efficiency', 'growth', 'void', 'pickup', 'height', 'carry'), 20),
+      'grinder_mk1', 'electric_furnace_mk1', 'bank_casing', 'bank_glass', 'bank_controller', 'bank_port', 'capacitor_copper', 'transfer_coil_basic', 'auto_feeder_module', 'kinetic_generator_module', 'magnet_module', 'fall_dampener_module', 'capacitor_plating_module'] + cards('speed', 'efficiency', 'growth', 'void', 'pickup', 'height', 'carry'), 20),
     ('exo', 'basic_circuit', 'exo_chestplate_mk1', 'task', 1, 'Suit Up',
      'Craft an Exo-Frame piece. Press J (or sneak-right-click the piece) to add modules. Step Assist on the boots walks up blocks.',
      has('exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1'), [], 10),
     ('drones', 'basic_circuit', 'sentry_drone', 'task', 1, 'Air Support',
      'Craft a Sentry Drone to guard your base, or a Courier Drone to carry items between chests.',
      has('sentry_drone', 'courier_drone'), [], 10),
+    ('grinder', 'basic_circuit', 'grinder_mk1', 'task', 1, 'Grind It Down',
+     'Place a Grinder: every ore becomes two dusts. Smelt them, or feed an Electric Furnace. Flint in the media slot adds a little more.',
+     placed('grinder_mk1', 'grinder_mk2', 'grinder_mk3', 'grinder_mk4'),
+     ['iron_grinding_balls'] + [f'{m}_ingot_from_{k}_{m}_dust' for m in ('iron', 'gold', 'copper') for k in ('smelting', 'blasting')]
+     + [f'grinding/{r}' for m in ('iron', 'gold', 'copper') for r in (f'{m}_ore_to_dust', f'raw_{m}_to_dust', f'{m}_ingot_to_dust')]
+     + [f'grinding/{r}' for r in ('cobblestone_to_gravel', 'gravel_to_sand', 'blaze_rod_to_powder', 'bone_to_bone_meal',
+                                  'glowstone_to_dust', 'wool_to_string', 'redstone_ore', 'lapis_ore', 'coal_ore')], 10),
     ('metal_press', 'basic_circuit', 'metal_press', 'task', 1, 'Press Ahead',
      'Place a Metal Press: one ingot makes one plate, twice what the hammer gives.',
      placed('metal_press'), [], 5),
@@ -175,7 +182,7 @@ STEPS = [
     ('age2', 'diamonds', 'advanced_circuit', 'goal', 2, 'Servo Age',
      'Craft an Advanced Circuit or a Reinforced Casing: diamonds, obsidian and quartz.',
      has('advanced_circuit', 'reinforced_casing'),
-     ['servo_actuator', 'storage_expansion_mk2', 'redstone_cell', 'temp_servo_core', 'solar_panel_mk2', 'accumulator_2', 'tesla_coil_3', 'rivet_gun',
+     ['servo_actuator', 'grinder_mk2', 'electric_furnace_mk2', 'ferrothorium_grinding_balls', 'storage_expansion_mk2', 'redstone_cell', 'temp_servo_core', 'solar_panel_mk2', 'accumulator_2', 'tesla_coil_3', 'rivet_gun',
       'tool_upgrade_kit_2', 'farm_kit_mk3', 'essence_vial', 'replicator_frame', 'replicator_glass',
       'replicator_controller', 'survey_rig', 'mining_drone_mk2', 'sentry_drone_mk2', 'courier_drone_mk2', 'exo_helmet_mk2_from_mk1', 'exo_chestplate_mk2_from_mk1', 'exo_leggings_mk2_from_mk1', 'exo_boots_mk2_from_mk1', 'rebreather_module', 'rebreather_module_from_prismarine', 'jet_assist_module', 'servo_stride_module_2', 'robot_hud_module',
       'capacitor_redstone', 'transfer_coil_advanced', 'reactor_casing', 'reactor_glass', 'reactor_controller', 'reactor_power_port', 'reactor_access_port', 'reactor_fuel_rod', 'night_vision_module_2', 'solar_weave_module', 'sonar_pulse_module', 'med_injector_module', 'hydro_fins_module', 'spring_heels_module_2',
@@ -210,7 +217,7 @@ STEPS = [
     ('age3', 'servo_core', 'quantum_circuit', 'goal', 3, 'Deep Age',
      'Craft a Quantum Circuit: blaze rods and netherite from the Nether.',
      has('quantum_circuit', 'plasma_actuator'),
-     ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'storage_expansion_mk3', 'temp_magma_core', 'accumulator_3', 'tesla_coil_4',
+     ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'grinder_mk3', 'electric_furnace_mk3', 'pyrosteel_grinding_balls', 'storage_expansion_mk3', 'temp_magma_core', 'accumulator_3', 'tesla_coil_4',
       'tool_upgrade_kit_3', 'rift_upgrade', 'rift_remote', 'servo_stride_module_3', 'kinetic_shield_module',
       'transfer_coil_elite', 'cryo_coolant', 'night_vision_module_3', 'sonar_pulse_module_2', 'jet_assist_module_2', 'med_injector_module_2', 'hazard_seal_module',
       'dash_thrusters_module', 'spring_heels_module_3', 'fall_dampener_module_3', 'magnet_module_3', 'capacitor_plating_module_3',
@@ -231,7 +238,7 @@ STEPS = [
     ('age4', 'magma_core', 'null_circuit', 'goal', 4, 'Antigrav Age',
      'Craft a Null Circuit: ender pearls and a nether star.',
      has('null_circuit'),
-     ['null_casing', 'null_circuit', 'ender_cell', 'temp_antigrav_core', 'tool_upgrade_kit_4', 'tesla_coil_5',
+     ['null_casing', 'null_circuit', 'ender_cell', 'grinder_mk4', 'electric_furnace_mk4', 'resonant_grinding_balls', 'temp_antigrav_core', 'tool_upgrade_kit_4', 'tesla_coil_5',
       'farm_kit_mk4', 'gate_controller', 'linking_card', 'capacitor_ender', 'capacitor_resonant', 'fusion_casing', 'fusion_coil', 'fusion_controller', 'sonar_pulse_module_3', 'jet_assist_module_3', 'med_injector_module_3',
       'power_regulator_module_3'], 80),
     ('resonite', 'age4', 'resonite_crystal', 'task', 4, 'Echoes',
@@ -263,7 +270,7 @@ STEPS = [
 def main():
     names = [s[0] for s in STEPS]
     assert len(names) == len(set(names)), 'duplicate step'
-    recipe_ids = {p.stem for p in RECIPES.glob('*.json')}
+    recipe_ids = {p.relative_to(RECIPES).with_suffix('').as_posix() for p in RECIPES.rglob('*.json')}
     unlocked = {}
     for name, parent, icon, frame, age, title, desc, crit, recipes, xp in STEPS:
         assert parent is None or parent in names[:names.index(name)], f'{name}: parent {parent} must come first'

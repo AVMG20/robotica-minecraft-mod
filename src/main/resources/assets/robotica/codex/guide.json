@@ -103,6 +103,12 @@
       "age": 1
     },
     {
+      "id": "robotica:guide/grinder",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:grinder_mk1",
+      "age": 1
+    },
+    {
       "id": "robotica:guide/metal_press",
       "parent": "robotica:guide/basic_circuit",
       "icon": "robotica:metal_press",

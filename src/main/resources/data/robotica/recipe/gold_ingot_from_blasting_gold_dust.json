@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": {
+    "item": "robotica:gold_dust"
+  },
+  "result": {
+    "id": "minecraft:gold_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 100
+}

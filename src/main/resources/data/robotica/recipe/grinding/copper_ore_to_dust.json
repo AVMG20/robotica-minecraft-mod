@@ -1,0 +1,11 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:ores/copper"
+  },
+  "result": {
+    "id": "robotica:copper_dust",
+    "count": 2
+  },
+  "by_tag": true
+}
