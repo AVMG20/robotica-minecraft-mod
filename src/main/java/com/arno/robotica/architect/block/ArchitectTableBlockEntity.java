@@ -157,8 +157,13 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private boolean clearTerrain;
 
     private final Layout layout = new Layout();
-    /** Set by Build; cleared when nothing is left to do. */
+    /** Set by Build; cleared when nothing is left to do or matter runs out. */
     private boolean running;
+    /**
+     * The matter status (ST_NO_RUSTIC / REFINED / EXOTIC) the build stopped on, 0 when it did not stop for matter. A
+     * stopped build stays stopped, drone gone, until the player presses Build again: no retry every tick.
+     */
+    private int needs;
     /** Plot being walked (-1 none), the signature its ops were made for and the position in them. */
     private int current = -1;
     private int currentSig;
@@ -328,6 +333,11 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return status;
     }
 
+    /** The matter status the build stopped on, 0 when it is not stopped for matter. */
+    public int needs() {
+        return needs;
+    }
+
     public boolean isBuilding() {
         return status == ST_BUILDING;
     }
@@ -374,9 +384,13 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 if (layout.cycleWall(a, b) < 0) return Component.translatable("message.robotica.architect_no_wall");
             }
             case ACTION_BUILD -> {
+                needs = 0;
                 if (layout.hasWork()) running = true;
             }
-            case ACTION_CANCEL -> layout.unqueueAll();
+            case ACTION_CANCEL -> {
+                layout.unqueueAll();
+                needs = 0;
+            }
             case ACTION_CLEAR -> clearTerrain = a != 0 && ArchitectConfig.allowClearTerrain();
             case ACTION_STYLE -> {
                 if (a >= 0 && a < BuildStyle.values().length && unlocked(BuildStyle.values()[a])) selectedStyle = BuildStyle.values()[a];
@@ -421,7 +435,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             EnergyUtil.dischargeItem(battery.getStackInSlot(0), energy, ArchitectConfig.energyReceive());
         }
         if (!running) {
-            status = layout.hasWork() ? ST_READY : ST_IDLE;
+            if (needs != 0 && !layout.hasWork()) needs = 0;
+            status = needs != 0 ? needs : layout.hasWork() ? ST_READY : ST_IDLE;
             budget = 0;
             return;
         }
@@ -484,7 +499,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (budget > 1) budget = 1;
         int energyCost = (int) Math.max(0, Math.round(style.energyPerBlock(baseEnergy()) * Upgrades.energyMultiplier(speed, efficiency)));
 
-        status = ST_BUILDING;
+        // The status only changes when a block is really attempted: on ticks without an action it keeps the last one
+        // (it used to be reset to "building" every tick, so a stall flickered between building and the stall reason).
         BlockPos origin = Plots.origin(worldPosition, current);
         // Only a first build clears terrain: a re-pass of a finished building leaves the player's things inside it alone.
         boolean clear = clearTerrain && layout.state(current) == Layout.QUEUED;
@@ -502,12 +518,17 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 cursor++;
                 skips++;
             } else if (result == STEP_WAIT) {
+                status = ST_BUILDING;
                 break;
             } else if (result == STEP_DONE) {
                 layout.markChanging(current, layout.height());
                 cursor++;
                 actions--;
+                status = ST_BUILDING;
                 last = origin.offset(op.x(), op.y(), op.z());
+            } else if (result == ST_NO_RUSTIC || result == ST_NO_REFINED || result == ST_NO_EXOTIC) {
+                stopForMatter(level, result);
+                break;
             } else {
                 status = result;
                 budget = 0;
@@ -515,6 +536,20 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             }
         }
         if (last != null) effects(level, last);
+        setChanged();
+    }
+
+    /** Out of matter: stop the build and send the drone away until the player feeds the table and presses Build again. */
+    private void stopForMatter(ServerLevel level, int missing) {
+        running = false;
+        needs = missing;
+        status = missing;
+        budget = 0;
+        if (drone != null) {
+            drone.discard();
+            drone = null;
+        }
+        CoreSounds.play(level, worldPosition, CoreSounds.ROBOT_ERROR, SoundSource.BLOCKS, 0.7F, 1.0F);
         setChanged();
     }
 
@@ -740,6 +775,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private void writeBuild(CompoundTag tag) {
         tag.put("layout", layout.save());
         tag.putBoolean("running", running);
+        tag.putInt("needs", needs);
         tag.putInt("current", current);
         tag.putInt("current_sig", currentSig);
         tag.putInt("cursor", cursor);
@@ -750,6 +786,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private void readBuild(CompoundTag tag) {
         layout.load(tag.getCompound("layout"));
         running = tag.getBoolean("running");
+        needs = tag.getInt("needs");
+        if (needs < ST_NO_RUSTIC || needs > ST_NO_EXOTIC) needs = 0;
         current = tag.contains("current") ? tag.getInt("current") : -1;
         if (!Plots.valid(current)) current = -1;
         currentSig = tag.getInt("current_sig");
@@ -781,6 +819,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             current = -1;
             cursor = 0;
             running = false;
+            needs = 0;
         }
         setChanged();
     }
