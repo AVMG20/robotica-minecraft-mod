@@ -8,7 +8,9 @@ import com.arno.robotica.warp.WarpComponents;
 import com.arno.robotica.warp.WarpConfig;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.WarpTravel;
+import com.arno.robotica.warp.pad.PadRecord;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
+import com.arno.robotica.warp.pad.WarpPads;
 import com.arno.robotica.warp.teleport.WarpCooldowns;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -31,8 +33,10 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * Recall Remote (Age 1) and Rift Remote (Age 3). Sneak-right-click a pad to bind it, hold right-click for 3 seconds
- * to travel there. Damage cancels the charge. The trip itself runs in {@link WarpTravel#recall}.
+ * Recall Remote (Age 1) and Rift Remote (Age 3). Sneak-right-click a pad to bind it. The Recall Remote holds one pad:
+ * hold right-click for 3 seconds to travel there. The Rift Remote stores up to 10 pads: right-click opens the list,
+ * a click on a pad starts the same 3 second charge on the server ({@link com.arno.robotica.warp.teleport.RiftCharges}).
+ * Damage cancels the charge. The trips run in {@link WarpTravel}.
  */
 public class RemoteItem extends Item implements EnergyItem {
     public static final int CHARGE_TICKS = 60;
@@ -107,6 +111,10 @@ public class RemoteItem extends Item implements EnergyItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) return InteractionResultHolder.pass(stack);
+        if (rift) {
+            if (player instanceof ServerPlayer serverPlayer) WarpTravel.openRiftRemote(serverPlayer, hand);
+            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        }
         boolean unusable = !stack.has(WarpComponents.BOUND_PAD.get())
                 || player.getCooldowns().isOnCooldown(this)
                 || (player instanceof ServerPlayer sp && cooldownLeft(sp, this) > 0)
@@ -139,6 +147,11 @@ public class RemoteItem extends Item implements EnergyItem {
             user.stopUsingItem();
             return;
         }
+        chargeEffects(serverLevel, user, elapsed, rift);
+    }
+
+    /** Particles and the rising hum of a charging remote, {@code elapsed} ticks into the charge. */
+    public static void chargeEffects(ServerLevel serverLevel, LivingEntity user, int elapsed, boolean rift) {
         if (elapsed % 2 == 0) {
             double spread = 0.4 + 0.6 * (1.0 - (double) elapsed / CHARGE_TICKS);
             serverLevel.sendParticles(rift ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.PORTAL,
@@ -156,21 +169,47 @@ public class RemoteItem extends Item implements EnergyItem {
         return stack;
     }
 
+    /** Server side: moves an old single pad into the Rift Remote's list and keeps the stored names current. */
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slot, boolean selected) {
+        if (level.isClientSide || level.getServer() == null) return;
+        boolean legacy = rift && stack.has(WarpComponents.BOUND_PAD.get());
+        if (!legacy && (level.getGameTime() + slot) % 40 != 0) return;
+        WarpPads pads = WarpPads.get(level.getServer());
+        if (rift) {
+            RiftTargets.refresh(stack, pads);
+            return;
+        }
+        WarpComponents.BoundPad bound = stack.get(WarpComponents.BOUND_PAD.get());
+        if (bound == null) return;
+        PadRecord rec = pads.get(bound.id());
+        if (rec != null && !rec.name().equals(bound.name())) {
+            stack.set(WarpComponents.BOUND_PAD.get(), new WarpComponents.BoundPad(bound.id(), rec.name(), bound.pos()));
+        }
+    }
+
     // ---- Tooltip ----
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         int age = rift ? 3 : 1;
         tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age)).withStyle(ChatFormatting.DARK_GRAY));
-        WarpComponents.BoundPad bound = stack.get(WarpComponents.BOUND_PAD.get());
-        if (bound == null) {
-            tooltip.add(Component.translatable("tooltip.robotica.remote_unbound").withStyle(ChatFormatting.YELLOW));
+        if (rift) {
+            int stored = RiftTargets.list(stack).size();
+            tooltip.add(stored == 0 ? Component.translatable("tooltip.robotica.remote_unbound").withStyle(ChatFormatting.YELLOW)
+                    : Component.translatable("tooltip.robotica.rift_remote_stored", stored, WarpComponents.MAX_RIFT_PADS).withStyle(ChatFormatting.GREEN));
         } else {
-            tooltip.add(Component.translatable("tooltip.robotica.remote_bound", bound.name()).withStyle(ChatFormatting.GREEN));
+            WarpComponents.BoundPad bound = stack.get(WarpComponents.BOUND_PAD.get());
+            if (bound == null) {
+                tooltip.add(Component.translatable("tooltip.robotica.remote_unbound").withStyle(ChatFormatting.YELLOW));
+            } else {
+                tooltip.add(Component.translatable("tooltip.robotica.remote_bound", bound.name()).withStyle(ChatFormatting.GREEN));
+            }
         }
         tooltip.add(Component.translatable(rift ? "tooltip.robotica.rift_remote" : "tooltip.robotica.recall_remote",
                 Fmt.energy(sameDimensionCost()), Fmt.energy(crossDimensionCost())).withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.remote_use", WarpConfig.remoteCooldownTicks() / 20).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable(rift ? "tooltip.robotica.rift_remote_use" : "tooltip.robotica.remote_use",
+                WarpConfig.remoteCooldownTicks() / 20).withStyle(ChatFormatting.DARK_GRAY));
         ItemEnergy.appendTooltip(stack, tooltip);
     }
 
