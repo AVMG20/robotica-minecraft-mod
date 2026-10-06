@@ -50,7 +50,8 @@
       "robotica:tesla_linker",
       "robotica:mining_drone",
       "robotica:signal_flare",
-      "robotica:tinkers_bench"
+      "robotica:tinkers_bench",
+      "robotica:item_pipe"
     ],
     "experience": 10
   }

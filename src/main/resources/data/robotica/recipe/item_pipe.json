@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    "GRG",
+    "PPP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/copper"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "R": {
+      "tag": "c:dusts/redstone"
+    }
+  },
+  "result": {
+    "id": "robotica:item_pipe",
+    "count": 8
+  }
+}

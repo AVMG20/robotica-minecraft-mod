@@ -359,6 +359,17 @@ Item machines (Grinder, Electric Furnace, Alloy Smelter, Centrifuge, Assembler, 
 - GUI: a "Sides" tab right of the machine screen (drawn by `MachineScreen`, JEI keeps clear of it). Click a face for the next mode, right-click for the previous one; two boxes toggle auto-input and auto-eject. Clicks go through `robotica:core_side_config`, applied only to the menu the player has open and only while it is still valid (in reach). The config syncs to the open menu in one data slot.
 - Opting in: a `SideConfig` field built from the machine's automation rules, `access(side)` in the capability, `tick(level)`, save/load, `trackSides` in the menu.
 
+## Logistics (module `logistics`)
+
+Item pipes, the Robotica answer to Thermal itemducts and Ender IO conduits. Items move instantly, nothing is rendered in the pipe.
+
+- Item Pipe (first iron: 6 copper plates, 2 glass, 1 redstone -> 8) and Item Pipe Mk2 (8 pipes around an Electric Motor -> 8). Server config `robotica-logistics-server.toml`: Item Pipe 8 items every 20 ticks, Mk2 32 every 10 (`pipeItemsN`, `pipeIntervalN`), networks up to `pipeNetworkMax` (4096) pipes.
+- A pipe links to every neighbouring pipe (any tier) and to every block with `Capabilities.ItemHandler.BLOCK` on the touching face (chests, machines as their side config allows, other mods). Block state per face: none / pipe / insert / extract (multipart model: core, arms, a blue Insert or orange Extract flange).
+- Inventory links are Insert (default), Extract or Off: sneak-right-click the arm (or the core face toward it) with an empty hand; a plain right-click shows the mode. Off links draw no arm.
+- Every interval each Extract link pulls up to its pipe's items and hands them to the network's Insert links in turn (round robin), through their capabilities, never back into the block they came from. At most 64 insert tries per pull; a stuck slot rotates the start slot.
+- The network (pipes and Insert links) is found by one walk over the loaded pipes and cached; placing, removing, relinking, loading or unloading a pipe marks it stale and the next pull rebuilds it. A neighbour's capability change (capability cache listener) rechecks that pipe's arms on its next tick.
+- No filters yet.
+
 ## Warp (module `warp`)
 
 Getting home and travelling between bases. All teleports run on the server, cost FE, and work for every player on a server.

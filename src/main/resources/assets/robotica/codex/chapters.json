@@ -723,6 +723,29 @@
           ]
         }
       ]
+    },
+    {
+      "title": "Logistics",
+      "icon": "robotica:item_pipe",
+      "pages": [
+        {
+          "title": "Item pipes",
+          "text": "Pipes link to the next pipe and to chests and machines next to them.\n\nSneak-right-click an arm with an empty hand: Insert (default), Extract or Off. Extract arms pull items and send them to the Insert arms of the same pipe line, in turn.\n\nItem Pipe: 8 items per second. Mk2: 32 items every half second.",
+          "items": [
+            "robotica:item_pipe",
+            "robotica:item_pipe_mk2"
+          ]
+        },
+        {
+          "title": "Machine sides",
+          "text": "Machines have a Sides tab right of their screen. Click a face to set it: Input, Output, both or None. Right-click goes back.\n\nAuto-input pulls from chests on Input faces, auto-eject pushes results into chests on Output faces. Pipes and hoppers follow the same rules.",
+          "items": [
+            "robotica:grinder_mk1",
+            "robotica:alloy_smelter_mk1",
+            "robotica:metal_press"
+          ]
+        }
+      ]
     }
   ]
 }
