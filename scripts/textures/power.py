@@ -323,9 +323,17 @@ def accumulator_side(tier):
     return c
 
 
-def accumulator_side_glow():
+# The front gauge has ACC_CELLS charge cells; the block state `charge` (0-ACC_CELLS) says how many are lit.
+ACC_CELLS = 5
+ACC_GLASS = [0, 2, 3, 5, 6, 8]                                           # sight glass rows lit per charge level
+
+
+def accumulator_side_glow(level):
+    """Sight glass filled from the bottom (8 rows, y 4-11) to the charge level."""
     c = Canvas()
-    c.rect(7, 6, 2, 6, 'y').rect(7, 9, 1, 3, 'Y')
+    h = ACC_GLASS[level]
+    if h:
+        c.rect(7, 12 - h, 2, h, 'y').rect(7, 12 - h, 1, h, 'Y')
     return c
 
 
@@ -333,18 +341,17 @@ def accumulator_front(tier):
     r = TIER[tier]
     c = frame(30 + tier, panel=CU, frame_ramp=r)
     c.recess(4, 2, 8, 12, r, fill='K')                                   # glass gauge
-    for i in range(4):
-        y = 4 + i * 2 + i // 2 * 0
-        c.rect(5, 3 + i * 2 + 1, 6, 1, 'Z')
+    for i in range(ACC_CELLS):                                           # dark cells, bottom (y 12) to top (y 4)
+        c.rect(5, 12 - i * 2, 6, 1, 'Z')
     for i in range(tier):                                                # tier pips
-        c.set(3, 4 + i * 2, 'G' if False else r[4])
+        c.set(3, 4 + i * 2, r[4])
     return c
 
 
-def accumulator_front_glow(frame_no):
-    """Charge cells, a soft wave running up the glass."""
+def accumulator_front_glow(level, frame_no):
+    """The lowest `level` charge cells lit, a soft wave running up the lit ones."""
     c = Canvas()
-    for i in range(4):
+    for i in range(level):
         y = 12 - i * 2
         k = (i - frame_no) % 6
         c.rect(5, y, 6, 1, 'z' if k == 0 else 'Y' if k == 1 else 'y')
@@ -518,8 +525,9 @@ def main():
         write_block(f'accumulator_{tier}_side', accumulator_side(tier).rows(), P)
         write_block(f'accumulator_{tier}_front', accumulator_front(tier).rows(), P)
         write_block(f'accumulator_{tier}_top', accumulator_top(tier).rows(), P)
-    write_anim('block', 'accumulator_front_glow', [accumulator_front_glow(i) for i in range(6)], P, frametime=4)
-    write_still('block', 'accumulator_side_glow', accumulator_side_glow(), P)
+    for level in range(1, ACC_CELLS + 1):
+        write_anim('block', f'accumulator_front_glow_{level}', [accumulator_front_glow(level, i) for i in range(6)], P, frametime=4)
+        write_still('block', f'accumulator_side_glow_{level}', accumulator_side_glow(level), P)
 
     write_block('tesla_coil_base', tesla_base().rows(), P)
     write_block('tesla_coil_tip', tesla_tip().rows(), P)

@@ -9,10 +9,10 @@
     "west": "robotica:block/accumulator_2_side",
     "east": "robotica:block/accumulator_2_side",
     "particle": "robotica:block/accumulator_2_side",
-    "glow_north": "robotica:block/accumulator_front_glow",
-    "glow_south": "robotica:block/accumulator_side_glow",
-    "glow_west": "robotica:block/accumulator_side_glow",
-    "glow_east": "robotica:block/accumulator_side_glow"
+    "glow_north": "robotica:block/accumulator_front_glow_5",
+    "glow_south": "robotica:block/accumulator_side_glow_5",
+    "glow_west": "robotica:block/accumulator_side_glow_5",
+    "glow_east": "robotica:block/accumulator_side_glow_5"
   },
   "elements": [
     {

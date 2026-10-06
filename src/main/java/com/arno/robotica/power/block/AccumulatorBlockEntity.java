@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.level.block.Block;
 
 /** FE buffer. The energy travels with the item through the core ENERGY data component. */
 public class AccumulatorBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source {
@@ -97,10 +98,25 @@ public class AccumulatorBlockEntity extends PowerBlockEntity implements net.mine
                 if (accepted > 0) energy.consume(accepted);
             }
         }
+        updateGauge(level, pos);
         int signal = comparatorSignal();
         if (signal != lastSignal) {
             if (lastSignal != -1) level.updateNeighbourForOutputSignal(pos, state.getBlock());
             lastSignal = signal;
+        }
+    }
+
+    /** Ticks between gauge checks: the block state only changes when the level does, and at most this often. */
+    private static final int GAUGE_INTERVAL = 10;
+
+    /** Sets the CHARGE state when the lit cell count changed (client update only, no neighbour updates). */
+    private void updateGauge(ServerLevel level, BlockPos pos) {
+        if (Math.floorMod(level.getGameTime() + pos.asLong(), GAUGE_INTERVAL) != 0) return;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(AccumulatorBlock.CHARGE)) return;
+        int charge = AccumulatorBlock.chargeLevel(energy.getEnergyStored(), energy.getMaxEnergyStored());
+        if (state.getValue(AccumulatorBlock.CHARGE) != charge) {
+            level.setBlock(pos, state.setValue(AccumulatorBlock.CHARGE, charge), Block.UPDATE_CLIENTS);
         }
     }
 
