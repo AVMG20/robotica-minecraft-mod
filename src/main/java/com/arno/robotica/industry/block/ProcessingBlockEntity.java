@@ -46,6 +46,10 @@ import java.util.Set;
  * Mk + 1 upgrade slots. Each tick it works on the first recipe of its type that matches the inputs (shapeless, one
  * ingredient per slot), at {@code power} FE/t times the Mk speed and the card multipliers, for {@code time} ticks
  * divided by the same speed (so FE per craft only rises by the speed cards' energy penalty).
+ *
+ * <p>Progress is counted in FE: a craft needs {@code power x time} FE. When that FE/t is more than the buffer or the
+ * input rate can deliver (a Mk4 full of speed cards on an expensive recipe) the machine draws only what it can
+ * sustain each tick and the craft takes longer, so it never stalls and FE per craft stays as designed.
  */
 public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuProvider, InfoSource {
     public static final int IDLE = 0, WORKING = 1, NO_ENERGY = 2, OUTPUT_FULL = 3;
@@ -60,6 +64,8 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
     @Nullable
     private RecipeHolder<ProcessingRecipe> current;
     private boolean inputsChanged = true;
+    /** FE (or work units for free recipes) put into the current craft. */
+    private long work;
     private int progress;
     private int needed;
     private int lastUse;
@@ -83,8 +89,13 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
             }
         };
         this.upgrades = new Upgrades(tier + 1, acceptedKinds(machine), k -> cardCap(machine, tier, k), this::setChanged);
-        this.energy = new MachineEnergyStorage(IndustryConfig.machineBuffer(), IndustryConfig.machineInput(), 0, this::setChanged);
+        this.energy = new MachineEnergyStorage(scaled(IndustryConfig.machineBuffer(), tier), scaled(IndustryConfig.machineInput(), tier), 0, this::setChanged);
         this.automation = new MachineItemAccess(this);
+    }
+
+    /** Buffer and input grow with the Mk (x1 to x4), saturating instead of overflowing with extreme configs. */
+    private static int scaled(int base, int tier) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) base * Math.max(1, tier));
     }
 
     // ---------------------------------------------------------------- cards
@@ -141,9 +152,30 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         int base = CoreConfig.scaleEnergy(recipe.effectivePower());
         if (base == 0) return 0;
         int speed = upgrades.level(UpgradeKind.SPEED);
-        double m = speedFactor() * Upgrades.energyMultiplier(speed, upgrades.level(UpgradeKind.EFFICIENCY))
-                * (1.0 + 0.25 * upgrades.level(UpgradeKind.FORTUNE));
+        int fortune = recipe.fortune() ? upgrades.level(UpgradeKind.FORTUNE) : 0;
+        double m = speedFactor() * Upgrades.energyMultiplier(speed, upgrades.level(UpgradeKind.EFFICIENCY)) * (1.0 + 0.25 * fortune);
         return (int) Math.max(1, Math.min(Integer.MAX_VALUE / 2, Math.round(base * m)));
+    }
+
+    /** Most FE/t the machine can sustain: what the buffer holds and what its input lets in per tick. */
+    public int maxDraw() {
+        return Math.max(1, Math.min(energy.getMaxEnergyStored(), scaled(IndustryConfig.machineInput(), tier)));
+    }
+
+    /** FE/t actually drawn for a recipe: its power, clamped to {@link #maxDraw}. */
+    public int drawFor(ProcessingRecipe recipe) {
+        return Math.min(powerFor(recipe), maxDraw());
+    }
+
+    /** FE one craft costs (work units, one per tick, for a free recipe). */
+    public long workFor(ProcessingRecipe recipe) {
+        return (long) Math.max(1, powerFor(recipe)) * ticksFor(recipe);
+    }
+
+    /** Ticks a craft really takes when power is plentiful: longer than {@link #ticksFor} if the draw is clamped. */
+    public int effectiveTicksFor(ProcessingRecipe recipe) {
+        int step = powerFor(recipe) == 0 ? 1 : drawFor(recipe);
+        return (int) Math.min(Integer.MAX_VALUE, (workFor(recipe) + step - 1) / step);
     }
 
     /** Ticks a recipe takes in this machine right now. */
@@ -157,12 +189,14 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         if (inputsChanged || (current == null && (level.getGameTime() + pos.asLong()) % 100 == 0)) {
             inputsChanged = false;
             ResourceLocation before = current == null ? null : current.id();
-            current = level.getRecipeManager().getRecipeFor(IndustryRegistry.recipeType(machine).get(), input(), level, current).orElse(null);
+            // Hint by id: after /reload the old holder is gone, so a holder hint would keep a stale recipe.
+            current = level.getRecipeManager().getRecipeFor(IndustryRegistry.recipeType(machine).get(), input(), level, before).orElse(null);
             ResourceLocation after = current == null ? null : current.id();
-            if (before != null && !before.equals(after)) progress = 0;
+            if (before != null && !before.equals(after)) work = 0;
         }
         if (current == null) {
             status = IDLE;
+            work = 0;
             progress = 0;
             lastUse = 0;
         } else {
@@ -171,12 +205,19 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
                 status = OUTPUT_FULL;
                 lastUse = 0;
             } else {
-                needed = ticksFor(recipe);
-                int perTick = powerFor(recipe);
-                if (energy.consume(perTick)) {
+                int power = powerFor(recipe);
+                long total = workFor(recipe);
+                int step = power == 0 ? 1 : drawFor(recipe);
+                needed = effectiveTicksFor(recipe);
+                int use = (int) Math.max(0, Math.min(step, total - work));
+                int cost = power == 0 ? 0 : use;
+                if (energy.consume(cost)) {
                     status = WORKING;
-                    lastUse = perTick;
-                    if (++progress >= needed) {
+                    lastUse = cost;
+                    work += use;
+                    progress = (int) Math.min(needed, work / step);
+                    if (work >= total) {
+                        work = 0;
                         progress = 0;
                         craft(level, recipe);
                     } else if ((level.getGameTime() + pos.asLong()) % 40 == 0) {
@@ -202,7 +243,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
             in.shrink(recipe.inputs().get(i).count());
             items.setStackInSlot(slots[i], in.isEmpty() ? ItemStack.EMPTY : in);
         }
-        int fortune = upgrades.level(UpgradeKind.FORTUNE);
+        int fortune = recipe.fortune() ? upgrades.level(UpgradeKind.FORTUNE) : 0;
         for (int i = 0; i < recipe.results().size(); i++) {
             ItemStack out = recipe.results().get(i).roll(level.random);
             if (out.isEmpty()) continue;
@@ -218,7 +259,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         List<ItemStack> sim = new ArrayList<>(machine.outputs);
         for (int i = 0; i < machine.outputs; i++) sim.add(items.getStackInSlot(machine.inputs + i).copy());
         boolean voids = upgrades.level(UpgradeKind.VOID) > 0;
-        boolean fortune = upgrades.level(UpgradeKind.FORTUNE) > 0;
+        boolean fortune = recipe.fortune() && upgrades.level(UpgradeKind.FORTUNE) > 0;
         for (int i = 0; i < recipe.results().size(); i++) {
             ChanceResult r = recipe.results().get(i);
             ItemStack stack = r.stack().copy();
@@ -343,7 +384,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         super.saveAdditional(tag, registries);
         tag.put("items", items.serializeNBT(registries));
         tag.put("upgrades", upgrades.serializeNBT(registries));
-        tag.putInt("progress", progress);
+        tag.putLong("work", work);
     }
 
     @Override
@@ -351,7 +392,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         super.loadAdditional(tag, registries);
         if (tag.contains("items")) loadInto(items, registries, tag.getCompound("items"));
         if (tag.contains("upgrades")) loadInto(upgrades, registries, tag.getCompound("upgrades"));
-        progress = tag.getInt("progress");
+        work = tag.getLong("work");
         inputsChanged = true;
     }
 }

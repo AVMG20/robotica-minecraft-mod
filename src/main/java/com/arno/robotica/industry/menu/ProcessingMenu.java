@@ -1,6 +1,7 @@
 package com.arno.robotica.industry.menu;
 
 import com.arno.robotica.core.menu.MachineMenu;
+import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.industry.IndustryRegistry;
 import com.arno.robotica.industry.block.IndustryBlockEntity;
@@ -8,6 +9,7 @@ import com.arno.robotica.industry.block.ProcessingBlock;
 import com.arno.robotica.industry.block.ProcessingBlockEntity;
 import com.arno.robotica.industry.recipe.Machine;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -15,7 +17,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
  * Menu of every processing machine. Slot order: inputs, outputs, battery, upgrades, then the player inventory.
@@ -31,9 +32,20 @@ public class ProcessingMenu extends MachineMenu {
     public final int tier;
     private final int energyIdx, capacityIdx, progressIdx, neededIdx, useIdx, statusIdx;
 
-    /** Client side: machine and Mk follow from the block at the position. */
-    public ProcessingMenu(int id, Inventory inv, BlockPos pos) {
-        this(id, inv, pos, (ProcessingBlock) inv.player.level().getBlockState(pos).getBlock(), null);
+    /** Client side: machine and Mk come from the open-menu buffer (the client may not know the block yet). */
+    public static ProcessingMenu client(int id, Inventory inv, RegistryFriendlyByteBuf buf) {
+        BlockPos pos = buf.readBlockPos();
+        Machine[] machines = Machine.values();
+        Machine machine = machines[Math.floorMod(buf.readVarInt(), machines.length)];
+        int tier = Math.max(1, Math.min(Machine.TIERS, buf.readVarInt()));
+        return new ProcessingMenu(id, inv, pos, IndustryRegistry.machineBlock(machine, tier).get(), null);
+    }
+
+    /** Writes what {@link #client} reads. */
+    public static void writeOpenData(RegistryFriendlyByteBuf buf, ProcessingBlockEntity be) {
+        buf.writeBlockPos(be.getBlockPos());
+        buf.writeVarInt(be.machine.ordinal());
+        buf.writeVarInt(be.tier);
     }
 
     /** Server side. */
@@ -54,25 +66,25 @@ public class ProcessingMenu extends MachineMenu {
 
         for (int i = 0; i < machine.inputs; i++) {
             int[] p = inputPos(machine, i);
-            addSlot(new SlotItemHandler(items, i, p[0], p[1]));
+            addSlot(new MachineSlot(items, i, p[0], p[1]));
         }
         for (int i = 0; i < machine.outputs; i++) {
             int[] p = outputPos(machine, i);
-            addSlot(new SlotItemHandler(items, machine.inputs + i, p[0], p[1]) {
+            addSlot(new MachineSlot(items, machine.inputs + i, p[0], p[1]) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;
                 }
             });
         }
-        addSlot(new SlotItemHandler(battery, 0, 8, 66) {
+        addSlot(new MachineSlot(battery, 0, 8, 66) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return IndustryBlockEntity.isBattery(stack);
             }
         });
         int n = upgrades.getSlots();
-        for (int i = 0; i < n; i++) addSlot(new SlotItemHandler(upgrades, i, 152 - 18 * (n - 1 - i), UPGRADE_Y));
+        for (int i = 0; i < n; i++) addSlot(new MachineSlot(upgrades, i, 152 - 18 * (n - 1 - i), UPGRADE_Y));
         addPlayerInventory(inv, 8, HEIGHT - 82);
 
         energyIdx = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());

@@ -12,6 +12,9 @@ OUT = pathlib.Path(__file__).resolve().parents[2] / 'src/main/resources/data/rob
 
 
 def ing(x):
+    """'#tag', 'item' or a list of those (any of them)."""
+    if isinstance(x, (list, tuple)):
+        return [ing(i) for i in x]
     if x.startswith('#'):
         return {'tag': x[1:]}
     return {'item': x if ':' in x else f'robotica:{x}'}
@@ -39,7 +42,7 @@ shaped('capacitor_copper', ['PCP', 'CXC', 'PCP'], {'P': COPPER_PLATE, 'C': 'copp
 shaped('capacitor_redstone', ['RCR', 'CXC', 'RAR'],
        {'R': REDSTONE_BLOCK, 'C': 'redstone_cell', 'X': 'capacitor_copper', 'A': 'advanced_circuit'})
 shaped('capacitor_resonant', ['RLR', 'GXG', 'RLR'],
-       {'R': '#c:plates/resonant_alloy', 'L': 'resonant_lattice', 'G': '#c:gems/resonite', 'X': 'capacitor_ender'})
+       {'R': '#c:plates/resonant_alloy', 'L': 'resonant_lattice', 'G': ['#c:gems/resonite', '#c:dusts/resonite'], 'X': 'capacitor_ender'})
 shaped('capacitor_ender', ['ECE', 'SXS', 'ENE'],
        {'E': PEARL, 'C': 'ender_cell', 'S': 'minecraft:shulker_shell', 'X': 'capacitor_redstone', 'N': 'null_circuit'})
 shaped('transfer_coil_basic', ['KRK', 'PBP', 'KRK'], {'K': 'copper_coil', 'R': REDSTONE, 'P': IRON_PLATE, 'B': 'basic_circuit'})

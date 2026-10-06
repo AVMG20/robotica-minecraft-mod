@@ -116,7 +116,7 @@ public final class EnergyRegistry {
     private static DeferredBlock<CapacitorBlock> capacitor(String name, CapacitorBlock.Kind kind, int tier) {
         MapColor color = tier == 0 ? MapColor.COLOR_ORANGE : tier == 1 ? MapColor.COLOR_RED : MapColor.COLOR_CYAN;
         DeferredBlock<CapacitorBlock> block = BLOCKS.registerBlock(name, p -> new CapacitorBlock(p, kind, tier), casing(color));
-        Rarity rarity = tier == 2 ? Rarity.RARE : tier == 1 ? Rarity.UNCOMMON : Rarity.COMMON;
+        Rarity rarity = tier >= 2 ? Rarity.RARE : tier == 1 ? Rarity.UNCOMMON : Rarity.COMMON;
         TAB_ORDER.add(ITEMS.registerItem(name, p -> new BlockItem(block.get(), p.rarity(rarity))));
         return block;
     }

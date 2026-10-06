@@ -261,6 +261,54 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /** With room for only part of a tick's output the reactor burns only that share of fuel; full, it burns none. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void reactorBurnsOnlyWhatFits(GameTestHelper helper) {
+        ReactorControllerBlockEntity be = reactor(helper, Blocks.PACKED_ICE.defaultBlockState());
+        be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 8));
+        be.simulate(20);
+        double perTick = Math.pow(3, 0.8);
+        int max = be.energy.getMaxEnergyStored();
+        be.energy.setEnergy(max - 100);
+        double before = be.burnLeft();
+        be.simulate(1);
+        double used = before - be.burnLeft();
+        helper.assertTrue(be.energy.getEnergyStored() >= max - 2, "fills the buffer to the brim, has " + (max - be.energy.getEnergyStored()) + " room");
+        helper.assertTrue(used > 0 && used < perTick * 0.15, "burns only the share that fits: " + used + " of " + perTick);
+        helper.assertTrue(be.state() == ReactorControllerBlockEntity.State.RUNNING, "still running");
+        be.energy.setEnergy(max);
+        before = be.burnLeft();
+        be.simulate(1);
+        helper.assertTrue(be.state() == ReactorControllerBlockEntity.State.BUFFER_FULL && be.burnLeft() == before, "a full buffer burns nothing");
+        helper.assertTrue(helper.getBlockState(new BlockPos(3, 3, 1)).getValue(ControllerBlock.LIT), "the glow does not flicker off at the brim");
+        helper.succeed();
+    }
+
+    /**
+     * A walk ends at the frame edge: a neighbour one air gap away and casing touching an edge do not break the
+     * structure. A controller turned sideways still forms (and turns to face out). Reactors start at 5x5x5.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void structureEndsAtItsFrame(GameTestHelper helper) {
+        ReactorControllerBlockEntity be = reactor(helper, Blocks.PACKED_ICE.defaultBlockState());
+        BlockPos min = new BlockPos(1, 1, 1);
+        helper.setBlock(min.offset(5, 2, 0), EnergyRegistry.REACTOR_CASING.get());
+        helper.setBlock(min.offset(7, 2, 0), EnergyRegistry.REACTOR_CASING.get());
+        helper.setBlock(min.offset(2, 5, 0), EnergyRegistry.REACTOR_CASING.get());
+        be.scanNow();
+        helper.assertTrue(be.isFormed() && be.box().getXSpan() == 5 && be.box().getYSpan() == 5,
+                "casing next to the frame does not stretch the reactor: " + (be.problem() == null ? "box " + be.box() : be.problem().message().getString()));
+
+        BlockPos c = min.offset(2, 2, 0);
+        helper.setBlock(c, helper.getBlockState(c).setValue(ControllerBlock.FACING, Direction.EAST));
+        be = be(helper, c);
+        be.scanNow();
+        helper.assertTrue(be.isFormed(), "a sideways controller still forms");
+        helper.assertTrue(helper.getBlockState(c).getValue(ControllerBlock.FACING) == Direction.NORTH, "and turns to face out");
+        helper.assertTrue(ReactorControllerBlockEntity.SPEC.minWidth().getAsInt() == 5, "reactors start at 5x5x5");
+        helper.succeed();
+    }
+
     /** A Tesla Coil sitting on a Power Port pulls the reactor's FE and sends it to a Charger. */
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void teslaCoilPullsFromPowerPort(GameTestHelper helper) {
@@ -310,6 +358,14 @@ public class EnergyGameTests {
         var tag = new net.minecraft.nbt.CompoundTag();
         bank.writeSync(tag, helper.getLevel().registryAccess());
         helper.assertTrue(tag.getLongArray("history").length == BankControllerBlockEntity.HISTORY && tag.getLong("capacity") == 8_000_000L, "GUI sync of the bank");
+
+        // A port saves its link: reloaded next to a running controller it works right away.
+        PortBlockEntity inPort = be(helper, inPos);
+        var saved = inPort.saveWithoutMetadata(helper.getLevel().registryAccess());
+        PortBlockEntity reloaded = new PortBlockEntity(helper.absolutePos(inPos), helper.getBlockState(inPos));
+        reloaded.setLevel(helper.getLevel());
+        reloaded.loadWithComponents(saved, helper.getLevel().registryAccess());
+        helper.assertTrue(reloaded.controller() == bank, "the reloaded port knows its controller");
         helper.succeed();
     }
 
@@ -331,12 +387,23 @@ public class EnergyGameTests {
         long big = 10_000_000_000L;
         bank.setEnergy(big);
         IEnergyStorage port = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(portPos), Direction.SOUTH);
-        helper.assertTrue(port.getEnergyStored() == Integer.MAX_VALUE && port.getMaxEnergyStored() == Integer.MAX_VALUE, "ports clamp to int");
+        helper.assertTrue(port.getMaxEnergyStored() == Integer.MAX_VALUE, "ports clamp the capacity to int");
+        long expected = (long) ((double) big * Integer.MAX_VALUE / capacity);
+        helper.assertTrue(Math.abs(port.getEnergyStored() - expected) <= 1, "stored scales with the capacity: " + port.getEnergyStored() + " vs " + expected);
+        bank.setEnergy(capacity - 1);
+        helper.assertTrue(port.getEnergyStored() < port.getMaxEnergyStored(), "a bank that is not full never reports itself full");
+        bank.setEnergy(big);
         helper.assertTrue(port.receiveEnergy(4_000_000, false) == 4_000_000, "elite coil: 4M FE/t in");
         helper.assertTrue(bank.energy() == big + 4_000_000L, "long arithmetic, got " + bank.energy());
         // The energy travels with the controller item.
         var components = bank.collectComponents();
         helper.assertTrue(components.getOrDefault(EnergyRegistry.BANK_ENERGY.get(), 0L) == big + 4_000_000L, "controller item keeps the long");
+
+        // Rebuilt smaller: the energy above the new capacity is lost.
+        for (int x = 1; x <= 3; x++) for (int z = 1; z <= 3; z++) helper.setBlock(min.offset(x, 1, z), Blocks.AIR);
+        bank.scanNow();
+        helper.assertTrue(bank.isFormed() && bank.capacity() == 17L * 512_000_000L, "17 capacitors left, got " + bank.capacity());
+        helper.assertTrue(bank.energy() == bank.capacity(), "energy capped to the smaller bank, got " + bank.energy());
         helper.succeed();
     }
 
@@ -368,6 +435,8 @@ public class EnergyGameTests {
         }
         BlockPos portPos = min.offset(3, 1, 6);
         helper.setBlock(portPos, EnergyRegistry.REACTOR_POWER_PORT.get());
+        BlockPos accessPos = min.offset(2, 1, 6);
+        helper.setBlock(accessPos, EnergyRegistry.REACTOR_ACCESS_PORT.get());
         helper.setBlock(min.offset(3, 2, 3), EnergyRegistry.REACTOR_GLASS.get());
         FusionControllerBlockEntity fusion = be(helper, c);
         fusion.scanNow();
@@ -404,6 +473,11 @@ public class EnergyGameTests {
         fusion.setEnabled(false);
         fusion.step();
         helper.assertFalse(fusion.ignited(), "switching off collapses the plasma");
+
+        // Access Port: fuel goes in, automation can not pull it back out.
+        IItemHandler access = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(accessPos), Direction.SOUTH);
+        helper.assertTrue(access != null && access.insertItem(0, new ItemStack(Items.STRUCTURE_VOID), false).isEmpty(), "fuel goes in");
+        helper.assertTrue(!fusion.fuel.getStackInSlot(0).isEmpty() && access.extractItem(0, 64, false).isEmpty(), "fuel can not be pulled out");
         helper.succeed();
     }
 

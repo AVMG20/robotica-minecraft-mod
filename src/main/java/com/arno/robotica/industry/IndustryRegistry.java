@@ -142,7 +142,7 @@ public final class IndustryRegistry {
             BLOCK_ENTITIES.register("rtg", () -> BlockEntityType.Builder.of(RtgBlockEntity::new, RTG.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>, MenuType<ProcessingMenu>> PROCESSING_MENU =
-            MENUS.register("industry_machine", () -> IMenuTypeExtension.create((id, inv, buf) -> new ProcessingMenu(id, inv, buf.readBlockPos())));
+            MENUS.register("industry_machine", () -> IMenuTypeExtension.create(ProcessingMenu::client));
     public static final DeferredHolder<MenuType<?>, MenuType<RtgMenu>> RTG_MENU =
             MENUS.register("rtg", () -> IMenuTypeExtension.create((id, inv, buf) -> new RtgMenu(id, inv, buf.readBlockPos())));
 

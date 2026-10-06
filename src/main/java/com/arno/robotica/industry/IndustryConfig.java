@@ -32,9 +32,9 @@ public final class IndustryConfig {
                 .defineInRange("centrifugePower", 60, 1, 1_000_000);
         ASSEMBLER_POWER = b.comment("Assembler: base FE/t while working (Age 3 and 4 parts ask for more).")
                 .defineInRange("assemblerPower", 80, 1, 1_000_000);
-        MACHINE_BUFFER = b.comment("FE buffer of every industry machine.")
+        MACHINE_BUFFER = b.comment("FE buffer of a Mk1 industry machine (a MkN holds N times as much).")
                 .defineInRange("machineBuffer", 200_000, 1_000, 100_000_000);
-        MACHINE_INPUT = b.comment("FE/t an industry machine accepts from cables, Tesla Coils and its battery slot.")
+        MACHINE_INPUT = b.comment("FE/t a Mk1 industry machine accepts from cables and Tesla Coils (a MkN N times as much). A recipe that wants more FE/t runs at this rate and takes longer.")
                 .defineInRange("machineInput", 20_000, 1, 100_000_000);
         double[] speeds = {1.0, 2.0, 3.0, 5.0};
         for (int i = 0; i < 4; i++) {

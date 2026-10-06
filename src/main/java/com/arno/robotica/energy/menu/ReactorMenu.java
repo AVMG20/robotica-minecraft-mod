@@ -1,12 +1,12 @@
 package com.arno.robotica.energy.menu;
 
+import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.energy.EnergyRegistry;
 import com.arno.robotica.energy.block.ReactorControllerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /** Fission Reactor GUI. Slots: 0-2 fuel, 3-5 waste (take only), then the player inventory. */
@@ -27,9 +27,9 @@ public class ReactorMenu extends ControllerMenu {
 
     private ReactorMenu(int id, Inventory inv, BlockPos pos, IItemHandler fuel, IItemHandler waste, @Nullable ReactorControllerBlockEntity be) {
         super(EnergyRegistry.REACTOR_MENU.get(), id, inv, pos, be);
-        for (int i = 0; i < ReactorControllerBlockEntity.FUEL_SLOTS; i++) addSlot(new SlotItemHandler(fuel, i, FUEL_X, SLOT_Y + i * 18));
+        for (int i = 0; i < ReactorControllerBlockEntity.FUEL_SLOTS; i++) addSlot(new MachineSlot(fuel, i, FUEL_X, SLOT_Y + i * 18));
         for (int i = 0; i < ReactorControllerBlockEntity.WASTE_SLOTS; i++) {
-            addSlot(new SlotItemHandler(waste, i, WASTE_X, SLOT_Y + i * 18) {
+            addSlot(new MachineSlot(waste, i, WASTE_X, SLOT_Y + i * 18) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;

@@ -155,6 +155,18 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         BlockState state = getBlockState();
         Direction facing = state.hasProperty(ControllerBlock.FACING) ? state.getValue(ControllerBlock.FACING) : Direction.NORTH;
         CuboidScanner.Result result = CuboidScanner.scan(level, worldPosition, facing, spec(), this::newVisitor);
+        if (result.status() == CuboidScanner.Status.INVALID) {
+            // The placement facing comes from where the player looked: try the two sideways directions as well and
+            // turn the controller to the one that forms (problems are still reported for its own facing).
+            for (Direction side : new Direction[]{facing.getClockWise(), facing.getCounterClockWise()}) {
+                CuboidScanner.Result alt = CuboidScanner.scan(level, worldPosition, side, spec(), this::newVisitor);
+                if (alt.formed()) {
+                    result = alt;
+                    turnTowards(alt.box());
+                    break;
+                }
+            }
+        }
         if (result.status() == CuboidScanner.Status.UNLOADED) {
             nextPeriodic = now + 20;
             return;
@@ -184,6 +196,17 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         watchArea();
         setFormedState(formed);
         setChanged();
+    }
+
+    /** Turns the controller's screen to the box face it sits in (outward). */
+    private void turnTowards(@Nullable BoundingBox found) {
+        if (found == null || level == null) return;
+        Direction out = worldPosition.getX() == found.minX() ? Direction.WEST : worldPosition.getX() == found.maxX() ? Direction.EAST
+                : worldPosition.getZ() == found.minZ() ? Direction.NORTH : worldPosition.getZ() == found.maxZ() ? Direction.SOUTH : null;
+        BlockState state = getBlockState();
+        if (out != null && state.hasProperty(ControllerBlock.FACING) && state.getValue(ControllerBlock.FACING) != out) {
+            level.setBlock(worldPosition, state.setValue(ControllerBlock.FACING, out), Block.UPDATE_CLIENTS);
+        }
     }
 
     private void watchArea() {

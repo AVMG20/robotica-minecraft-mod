@@ -90,8 +90,9 @@ def result(item, count=1, chance=None):
     return r
 
 
-def processing(kind, name, inputs, results, time=None, power=None):
-    """inputs: list of (ingredient, count) or ingredient; results: list of result() dicts."""
+def processing(kind, name, inputs, results, time=None, power=None, fortune=None):
+    """inputs: list of (ingredient, count) or ingredient; results: list of result() dicts.
+    fortune: whether Fortune cards may add a main result; left out it is the machine default (alloying only)."""
     data = {'type': f'robotica:{kind}',
             'inputs': [sized(*i) if isinstance(i, tuple) else sized(i) for i in inputs],
             'results': results}
@@ -99,6 +100,8 @@ def processing(kind, name, inputs, results, time=None, power=None):
         data['time'] = time
     if power:
         data['power'] = power
+    if fortune is not None:
+        data['fortune'] = fortune
     recipe(f'{kind}_{name}', data)
 
 
@@ -187,7 +190,8 @@ def recipes():
                [result('thermocouple')], time=300)
     processing('assembling', 'superconductor_coil', [(PYRO, 4), ('copper_coil', 2), ('#c:dusts/graphite', 2), 'quantum_circuit'],
                [result('superconductor_coil')], time=600, power=400)
-    processing('assembling', 'resonant_lattice', [(RESO, 4), ('#c:gems/resonite', 2), 'superconductor_coil', 'null_circuit'],
+    # Gem or dust: the Grinder turns resonite ore into dust, and nothing turns dust back into crystals.
+    processing('assembling', 'resonant_lattice', [(RESO, 4), (RESONITE, 2), 'superconductor_coil', 'null_circuit'],
                [result('resonant_lattice')], time=800, power=1500)
     # ... the reactor fuel ...
     processing('assembling', 'thorium_fuel_pellet', [('#c:dusts/thorium', 2), '#c:dusts/graphite', FERRO],
@@ -223,7 +227,7 @@ def recipes():
     shaped('alloy_smelter_mk1', ['PKP', 'FCF', 'PBP'],
            {'P': IRON_PLATE, 'K': 'copper_coil', 'F': 'minecraft:furnace', 'C': 'iron_casing', 'B': 'basic_circuit'})
     shaped('centrifuge_mk1', ['PAP', 'MGM', 'PXP'],
-           {'P': FERRO, 'A': 'advanced_circuit', 'M': 'electric_motor', 'G': 'minecraft:brewing_stand', 'X': 'iron_casing'})
+           {'P': FERRO, 'A': 'advanced_circuit', 'M': 'electric_motor', 'G': 'minecraft:cauldron', 'X': 'iron_casing'})
     shaped('assembler_mk1', ['PAP', 'MTM', 'PSP'],
            {'P': FERRO, 'A': 'advanced_circuit', 'M': 'electric_motor', 'T': 'minecraft:crafting_table', 'S': 'servo_actuator'})
     for machine in MACHINES:
@@ -455,7 +459,7 @@ def lang():
     for m, name in MACHINE_NAMES.items():
         for t in TIERS:
             out[f'block.robotica.{m}_mk{t}'] = f'{name} Mk{t}'
-            out[f'tooltip.robotica.{m}_mk{t}.details'] = MACHINE_DETAILS[m] + '\nCards: speed, efficiency' + (', fortune' if t > 1 else '') + (', void' if m == 'centrifuge' else '') + '.'
+            out[f'tooltip.robotica.{m}_mk{t}.details'] = MACHINE_DETAILS[m] + '\nCards: speed, efficiency' + ((', fortune' if m == 'alloy_smelter' else ', fortune (recipes that allow it)') if t > 1 else '') + (', void' if m == 'centrifuge' else '') + '.'
     for k, v in DETAILS.items():
         out[f'tooltip.robotica.{k}.details'] = v
     out.update({

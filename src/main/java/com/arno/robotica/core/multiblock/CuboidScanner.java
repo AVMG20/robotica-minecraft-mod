@@ -17,7 +17,10 @@ import org.jetbrains.annotations.Nullable;
  *   <li>checks every position of the box: edges and corners against the frame rule, faces against the wall rule,
  *       the inside through the {@link CuboidVisitor}; the first position that fails is the reported problem.</li>
  * </ol>
- * A walk that stops at a wrong block or a gap with more wall behind it reports that block instead of a size error.
+ * Each walk ends at the frame edge (the first block with shell right behind it, towards the inside), so structures
+ * built in a row, or decoration next to a corner, do not stretch the walk. A walk that stops at a wrong block or a gap
+ * with more wall behind it reports that block instead of a size error; one that leaves the world's build height is
+ * invalid with its own message (not "unloaded", which would wait forever).
  * If the controller's front faces into the structure, the other direction is tried as well. Cost: one pass over the
  * box (at most a few hundred block reads); callers re-scan only when something inside changed (see {@link MultiblockWatcher}).
  */
@@ -52,10 +55,10 @@ public final class CuboidScanner {
         int maxW = spec.maxWidth().getAsInt(), minW = spec.minWidth().getAsInt();
         int maxH = spec.maxHeight().getAsInt(), minH = spec.minHeight().getAsInt();
 
-        Walk r = walk(level, controller, right, maxW, spec);
-        Walk l = walk(level, controller, left, maxW, spec);
-        Walk u = walk(level, controller, Direction.UP, maxH, spec);
-        Walk d = walk(level, controller, Direction.DOWN, maxH, spec);
+        Walk r = walk(level, controller, right, inward, maxW, spec);
+        Walk l = walk(level, controller, left, inward, maxW, spec);
+        Walk u = walk(level, controller, Direction.UP, inward, maxH, spec);
+        Walk d = walk(level, controller, Direction.DOWN, inward, maxH, spec);
         if (r.unloaded || l.unloaded || u.unloaded || d.unloaded) return new Result(Status.UNLOADED, null, null, null);
         // A gap or a stranger in the wall line through the controller: name it right away.
         for (Walk w : new Walk[]{r, l, u, d}) {
@@ -77,7 +80,7 @@ public final class CuboidScanner {
 
         // Depth: from the front edge on the right, walk back along the right side wall.
         BlockPos edge = controller.relative(right, r.run);
-        Walk back = walk(level, edge, inward, maxW, spec);
+        Walk back = walk(level, edge, inward, left, maxW, spec);
         if (back.unloaded) return new Result(Status.UNLOADED, null, null, null);
         if (back.gap != null) return invalid(null, back.gap);
         int depth = back.run + 1;
@@ -181,14 +184,27 @@ public final class CuboidScanner {
      */
     private record Walk(int run, BlockPos stop, @Nullable StructureProblem gap, boolean unloaded) {}
 
-    private static Walk walk(Level level, BlockPos from, Direction dir, int max, CuboidSpec spec) {
+    /**
+     * Walks from {@code from} in {@code dir} over shell blocks. {@code inside} points from the walked wall into the
+     * structure: a shell block there means the walk reached the perpendicular wall, i.e. the frame edge, and stops.
+     */
+    private static Walk walk(Level level, BlockPos from, Direction dir, Direction inside, int max, CuboidSpec spec) {
         BlockPos.MutableBlockPos p = from.mutable();
         int run = 0;
         while (run < max) {
             p.move(dir);
+            if (level.isOutsideBuildHeight(p)) {
+                BlockPos last = p.relative(dir.getOpposite());
+                return new Walk(run, p.immutable(), StructureProblem.of(last, "multiblock.robotica.out_of_world", StructureProblem.at(last)), false);
+            }
             if (!level.isLoaded(p)) return new Walk(run, p.immutable(), null, true);
             if (!spec.isShell(level.getBlockState(p))) break;
             run++;
+            BlockPos behind = p.relative(inside);
+            if (!level.isOutsideBuildHeight(behind) && level.isLoaded(behind) && spec.isShell(level.getBlockState(behind))) {
+                // The frame edge: the structure ends here, whatever stands beyond it.
+                return new Walk(run, p.relative(dir), null, false);
+            }
         }
         BlockPos stop = p.immutable();
         if (run >= max) return new Walk(run, stop, null, false);

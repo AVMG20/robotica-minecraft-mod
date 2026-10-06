@@ -73,11 +73,12 @@ public class BankControllerBlockEntity extends StructureControllerBlockEntity {
         @Override
         public StructureProblem interior(BlockPos pos, BlockState state, BoundingBox box) {
             if (state.getBlock() instanceof CapacitorBlock c) {
+                // Saturating sums: extreme configs must not wrap around to a negative capacity.
                 if (c.kind() == CapacitorBlock.Kind.CAPACITOR) {
-                    capacity += c.capacity();
+                    capacity = saturatingAdd(capacity, c.capacity());
                     capacitors++;
                 } else {
-                    rate += c.rate();
+                    rate = saturatingAdd(rate, c.rate());
                     coils++;
                 }
                 return null;
@@ -95,10 +96,21 @@ public class BankControllerBlockEntity extends StructureControllerBlockEntity {
         }
     }
 
+    static long saturatingAdd(long a, long b) {
+        long sum = a + Math.max(0, b);
+        return sum < a ? Long.MAX_VALUE : sum;
+    }
+
     @Override
     protected void onFormed(Visitor visitor) {
         BankVisitor v = (BankVisitor) visitor;
         capacity = v.capacity;
+        // Formed smaller than the energy it holds (capacitors removed, or a full controller in a small bank): the
+        // excess is lost.
+        if (energy > capacity) {
+            energy = capacity;
+            setChanged();
+        }
         rate = (int) Math.min(Integer.MAX_VALUE, v.rate);
         capacitors = v.capacitors;
         coils = v.coils;

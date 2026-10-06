@@ -28,10 +28,13 @@ def loot(name, copy=None):
     entry = {'type': 'minecraft:item', 'name': f'robotica:{name}'}
     if copy:
         entry['functions'] = [{'function': 'minecraft:copy_components', 'source': 'block_entity', 'include': copy}]
+    pool = {'rolls': 1.0, 'bonus_rolls': 0.0, 'entries': [entry]}
+    # A block that carries stored energy always drops, so an explosion never deletes the energy with it.
+    if not copy:
+        pool['conditions'] = [{'condition': 'minecraft:survives_explosion'}]
     write(DATA / 'loot_table/blocks' / f'{name}.json', {
         'type': 'minecraft:block',
-        'pools': [{'rolls': 1.0, 'bonus_rolls': 0.0, 'entries': [entry],
-                   'conditions': [{'condition': 'minecraft:survives_explosion'}]}],
+        'pools': [pool],
         'random_sequence': f'robotica:blocks/{name}',
     })
 

@@ -2,6 +2,8 @@ package com.arno.robotica.energy.block;
 
 import com.arno.robotica.energy.EnergyRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -10,8 +12,9 @@ import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Port block entity: remembers the controller that formed it (not saved; the controller re-links its ports on its
- * first scan after loading) and exposes fixed capability objects that forward to it. The objects never change, so no
+ * Port block entity: remembers the controller that formed it (saved, so a port whose chunk reloads next to a running
+ * controller works right away; {@link #controller()} only trusts the link while that controller is formed and lists
+ * this port) and exposes fixed capability objects that forward to it. The objects never change, so no
  * capability invalidation is needed: an unlinked port simply moves nothing and shows 0 slots.
  */
 public class PortBlockEntity extends BlockEntity {
@@ -34,7 +37,7 @@ public class PortBlockEntity extends BlockEntity {
         @Override
         public int getEnergyStored() {
             StructureControllerBlockEntity c = controller();
-            return c == null ? 0 : clamp(c.portStored());
+            return c == null ? 0 : reportedStored(c.portStored(), c.portCapacity());
         }
 
         @Override
@@ -108,6 +111,23 @@ public class PortBlockEntity extends BlockEntity {
         return (int) Math.max(0, Math.min(Integer.MAX_VALUE, value));
     }
 
+    /**
+     * Stored FE as the int FE API sees it, next to {@link #clamp clamp(capacity)}. Banks beyond an int scale stored
+     * by the same factor as the capacity, and a bank that is not full never reports itself full.
+     */
+    static int reportedStored(long stored, long capacity) {
+        if (capacity <= 0) return 0;
+        stored = Math.max(0, Math.min(stored, capacity));
+        int reported;
+        if (capacity <= Integer.MAX_VALUE) {
+            reported = (int) stored;
+        } else {
+            reported = (int) Math.min(Integer.MAX_VALUE, (long) Math.floor((double) stored * Integer.MAX_VALUE / capacity));
+        }
+        if (stored < capacity && reported >= clamp(capacity)) reported = clamp(capacity) - 1;
+        return reported;
+    }
+
     public PortBlock.Kind kind() {
         return getBlockState().getBlock() instanceof PortBlock port ? port.kind() : PortBlock.Kind.REACTOR_POWER;
     }
@@ -118,11 +138,38 @@ public class PortBlockEntity extends BlockEntity {
     }
 
     void link(BlockPos controller) {
+        if (controller.equals(controllerPos)) return;
         controllerPos = controller.immutable();
+        setChanged();
     }
 
     void unlink(BlockPos controller) {
-        if (controller.equals(controllerPos)) controllerPos = null;
+        if (controller.equals(controllerPos)) {
+            controllerPos = null;
+            setChanged();
+        }
+    }
+
+    /** Back after a chunk load: let the controller re-check its structure soon (it may have missed changes). */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && !level.isClientSide && controllerPos != null && level.isLoaded(controllerPos)
+                && level.getBlockEntity(controllerPos) instanceof StructureControllerBlockEntity c) {
+            c.markDirty();
+        }
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (controllerPos != null) tag.putLong("controller", controllerPos.asLong());
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        controllerPos = tag.contains("controller") ? BlockPos.of(tag.getLong("controller")) : null;
     }
 
     /** The formed controller this port belongs to, or null. */

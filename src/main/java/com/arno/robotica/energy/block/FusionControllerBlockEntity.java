@@ -297,8 +297,41 @@ public class FusionControllerBlockEntity extends StructureControllerBlockEntity 
 
     @Override
     public IItemHandler portItems() {
-        return fuel;
+        return access;
     }
+
+    /** Access Port view: fuel goes in, nothing comes out (pipes must not pull the fuel back). */
+    private final IItemHandler access = new IItemHandler() {
+        @Override
+        public int getSlots() {
+            return fuel.getSlots();
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return fuel.getStackInSlot(slot);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return fuel.insertItem(slot, stack, simulate);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return fuel.getSlotLimit(slot);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return fuel.isItemValid(slot, stack);
+        }
+    };
 
     // ---------------------------------------------------------------- menu and sync
 

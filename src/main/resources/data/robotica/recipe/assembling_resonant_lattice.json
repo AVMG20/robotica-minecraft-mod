@@ -8,9 +8,14 @@
       "count": 4
     },
     {
-      "ingredient": {
-        "tag": "c:gems/resonite"
-      },
+      "ingredient": [
+        {
+          "tag": "c:gems/resonite"
+        },
+        {
+          "tag": "c:dusts/resonite"
+        }
+      ],
       "count": 2
     },
     {
