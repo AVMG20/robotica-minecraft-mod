@@ -84,6 +84,25 @@ public final class ExoData {
         return best;
     }
 
+    /**
+     * True when the module in this slot may work where it sits: it fits the piece type and the piece's mark is high
+     * enough. A module that got in anyway (old data, commands) is shown dimmed and does nothing.
+     */
+    public static boolean fitsHere(ItemStack piece, int slot) {
+        return piece.getItem() instanceof ExoArmorItem a && module(piece, slot).getItem() instanceof ExoModuleItem m
+                && m.kind.fits(a.getEquipmentSlot()) && a.mk >= m.minMark();
+    }
+
+    /** Highest installed level of a kind that may work in this piece ({@link #fitsHere}), 0 when absent. */
+    public static int workingLevelIn(ItemStack piece, ExoModuleKind kind) {
+        int best = 0;
+        int n = slotCount(piece);
+        for (int i = 0; i < n; i++) {
+            if (module(piece, i).getItem() instanceof ExoModuleItem m && m.kind == kind && fitsHere(piece, i)) best = Math.max(best, m.level);
+        }
+        return best;
+    }
+
     /** Slot index of a module kind in the piece, or -1. */
     public static int slotOf(ItemStack piece, ExoModuleKind kind) {
         int n = slotCount(piece);

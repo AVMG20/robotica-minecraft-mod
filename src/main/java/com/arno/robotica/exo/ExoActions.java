@@ -4,7 +4,6 @@ import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.exo.menu.ExoMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 
@@ -20,7 +19,7 @@ public final class ExoActions {
     public static final int OVERCLOCK = 5;
 
     public static void apply(ServerPlayer player, int action) {
-        if (player.isSpectator() || !ExoSuit.wearingAny(player)) return;
+        if (player.isSpectator() || !ExoSuit.wearingAny(player) || !ExoTicker.actionAllowed(player, action)) return;
         switch (action) {
             case OPEN_MODULES -> ExoMenu.openWorn(player);
             case TOGGLE_FLIGHT -> toggleFlight(player);
@@ -44,7 +43,7 @@ public final class ExoActions {
         boolean on = !ExoData.isEnabled(chest, slot);
         ExoData.setEnabled(chest, slot, on);
         player.displayClientMessage(Component.translatable("exo.robotica.flight", Component.translatable(on ? "exo.robotica.on" : "exo.robotica.off")), true);
-        CoreSounds.play(player, CoreSounds.TOOL_MODE, SoundSource.PLAYERS, 0.6F, on ? 1.3F : 0.8F);
+        ExoTicker.notifySound(player, CoreSounds.TOOL_MODE.get(), 0.6F, on ? 1.3F : 0.8F);
         return true;
     }
 }

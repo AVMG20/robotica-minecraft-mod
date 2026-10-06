@@ -23,6 +23,10 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -31,6 +35,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -379,12 +384,10 @@ public class ExoGameTests {
         helper.assertTrue(ExoSuit.energyFor(player, EquipmentSlot.CHEST) == 60_000, "full set pools all batteries");
 
         ticks(player, 1);
-        LivingIncomingDamageEvent hit = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().generic(), 5.0F));
-        NeoForge.EVENT_BUS.post(hit);
+        LivingDamageEvent.Pre hit = shieldHit(player, player.damageSources().generic(), 5.0F);
         float through = (float) (5.0 * (1.0 - ExoConfig.shieldAbsorb(1)));
-        helper.assertTrue(!hit.isCanceled() && Math.abs(hit.getAmount() - through) < 1.0E-3F,
-                "the shield absorbs 75% of a 5 damage hit, " + through + " should go through, got " + hit.getAmount());
-        ExoTicker.flush(player);
+        helper.assertTrue(Math.abs(hit.getNewDamage() - through) < 1.0E-3F,
+                "the shield absorbs 75% of a 5 damage hit, " + through + " should go through, got " + hit.getNewDamage());
         int perPoint = ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD, 1);
         int cost = (int) Math.round(5.0 * ExoConfig.shieldAbsorb(1) * perPoint);
         helper.assertTrue(Math.abs(ExoSuit.totalEnergy(player) - (60_000 - cost)) <= 1, "the hit cost " + cost + " FE from the pool, left " + ExoSuit.totalEnergy(player));
@@ -393,28 +396,56 @@ public class ExoGameTests {
         for (EquipmentSlot slot : ExoSuit.SLOTS) ItemEnergy.set(player.getItemBySlot(slot), 0);
         ItemEnergy.set(player.getItemBySlot(EquipmentSlot.FEET), perPoint);
         ticks(player, 1);
-        LivingIncomingDamageEvent weak = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().generic(), 5.0F));
-        NeoForge.EVENT_BUS.post(weak);
-        helper.assertTrue(!weak.isCanceled() && Math.abs(weak.getAmount() - 4.0F) < 1.0E-3F, "one paid point leaves 4 damage, got " + weak.getAmount());
+        LivingDamageEvent.Pre weak = shieldHit(player, player.damageSources().generic(), 5.0F);
+        helper.assertTrue(Math.abs(weak.getNewDamage() - 4.0F) < 1.0E-3F, "one paid point leaves 4 damage, got " + weak.getNewDamage());
 
-        LivingIncomingDamageEvent voidHit = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().genericKill(), 5.0F));
-        NeoForge.EVENT_BUS.post(voidHit);
-        helper.assertTrue(!voidHit.isCanceled(), "damage that bypasses invulnerability is never absorbed");
+        LivingDamageEvent.Pre voidHit = shieldHit(player, player.damageSources().genericKill(), 5.0F);
+        helper.assertTrue(voidHit.getNewDamage() == 5.0F, "damage that bypasses invulnerability is never absorbed");
 
         // Kinetic Shield III absorbs more of each hit for less FE per point.
         player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK4, 1_000_000, mod(ExoModuleKind.KINETIC_SHIELD, 3)));
         ticks(player, 1);
-        LivingIncomingDamageEvent strong = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().generic(), 10.0F));
-        NeoForge.EVENT_BUS.post(strong);
+        LivingDamageEvent.Pre strong = shieldHit(player, player.damageSources().generic(), 10.0F);
         float through3 = (float) (10.0 * (1.0 - ExoConfig.shieldAbsorb(3)));
-        helper.assertTrue(Math.abs(strong.getAmount() - through3) < 1.0E-3F, "Kinetic Shield III lets " + through3 + " through, got " + strong.getAmount());
+        helper.assertTrue(Math.abs(strong.getNewDamage() - through3) < 1.0E-3F, "Kinetic Shield III lets " + through3 + " through, got " + strong.getNewDamage());
         helper.assertTrue(ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD, 3) < perPoint, "higher levels pay less per point");
 
         for (EquipmentSlot slot : ExoSuit.SLOTS) ItemEnergy.set(player.getItemBySlot(slot), 0);
         ticks(player, 1);
-        LivingIncomingDamageEvent late = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().generic(), 5.0F));
-        NeoForge.EVENT_BUS.post(late);
-        helper.assertTrue(!late.isCanceled() && late.getAmount() == 5.0F, "an empty shield absorbs nothing");
+        LivingDamageEvent.Pre late = shieldHit(player, player.damageSources().generic(), 5.0F);
+        helper.assertTrue(late.getNewDamage() == 5.0F, "an empty shield absorbs nothing");
+        helper.succeed();
+    }
+
+    /** Posts the damage stage the Kinetic Shield works in (after i-frames and armor) and returns the event. */
+    private static LivingDamageEvent.Pre shieldHit(ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, float amount) {
+        LivingDamageEvent.Pre event = new LivingDamageEvent.Pre(player, new DamageContainer(source, amount));
+        NeoForge.EVENT_BUS.post(event);
+        return event;
+    }
+
+    /** Real hits through vanilla's hurt(): hits inside the invulnerability frames never reach the shield, so they cost nothing. */
+    @GameTest(template = "empty")
+    public static void kineticShieldDoesNotPayForInvulnerabilityFrames(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK4, 1_000_000, mod(ExoModuleKind.KINETIC_SHIELD, 3)));
+        for (int i = 0; i < 61; i++) player.tick(); // past the spawn protection of a new player
+        ticks(player, 1);
+        player.invulnerableTime = 0;
+        float health = player.getHealth();
+        int before = energy(player, EquipmentSlot.CHEST);
+        player.hurt(player.damageSources().cactus(), 6.0F);
+        int afterFirst = energy(player, EquipmentSlot.CHEST);
+        helper.assertTrue(afterFirst < before, "the first hit is absorbed and paid at once, energy " + before + " -> " + afterFirst);
+        helper.assertTrue(player.invulnerableTime > 10, "an absorbed hit still starts the invulnerability frames, " + player.invulnerableTime);
+        helper.assertTrue(player.getHealth() > health - 6.0F * 0.5F, "most of the hit is absorbed, health " + health + " -> " + player.getHealth());
+        for (int i = 0; i < 9; i++) {
+            player.tick();
+            player.hurt(player.damageSources().cactus(), 6.0F);
+        }
+        ExoTicker.flush(player);
+        helper.assertTrue(energy(player, EquipmentSlot.CHEST) == afterFirst,
+                "hits inside the i-frames cost nothing, energy " + afterFirst + " -> " + energy(player, EquipmentSlot.CHEST));
         helper.succeed();
     }
 
@@ -545,6 +576,141 @@ public class ExoGameTests {
         helper.assertTrue(!ExoTicker.dash(player), "then it cools down");
         ExoTicker.flush(player);
         helper.assertTrue(before - energy(player, EquipmentSlot.LEGS) == ExoConfig.cost(ExoModuleKind.DASH_THRUSTERS, 1), "a dash costs its FE");
+        helper.succeed();
+    }
+
+    // ---------------------------------------------------------------- audit fixes
+
+    /** Index in the menu of the slot showing player inventory slot {@code invSlot}. */
+    private static int menuSlotOf(ExoMenu menu, ServerPlayer player, int invSlot) {
+        for (int i = 0; i < menu.slots.size(); i++) {
+            Slot slot = menu.slots.get(i);
+            if (slot.container == player.getInventory() && slot.getContainerSlot() == invSlot) return i;
+        }
+        throw new IllegalStateException("no menu slot for inventory slot " + invSlot);
+    }
+
+    private static int moduleCount(ItemStack piece) {
+        int n = 0;
+        for (ItemStack m : ExoData.modules(piece)) n += m.isEmpty() ? 0 : 1;
+        return n;
+    }
+
+    /** The hand-held module screen never writes into a piece that was swapped into the hand: no module copies. */
+    @GameTest(template = "empty")
+    public static void handMenuCannotCopyModulesOntoASwappedPiece(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        var inv = player.getInventory();
+        inv.selected = 0;
+        ItemStack a = piece(ExoItems.CHESTPLATE_MK3, 1_000, ExoModuleKind.FLIGHT, ExoModuleKind.HAZARD_SEAL);
+        ItemStack b = piece(ExoItems.CHESTPLATE_MK3, 1_000);
+        inv.setItem(0, a);
+        inv.setItem(9, b);
+        ExoMenu menu = new ExoMenu(4, inv, List.of(new ExoMenu.Section(EquipmentSlot.CHEST, 1, 3, true)), true);
+
+        // Normal use still works: take a module out of the held piece and put it back.
+        menu.clicked(1, 0, ClickType.PICKUP, player);
+        helper.assertTrue(menu.getCarried().is(ExoItems.module(ExoModuleKind.HAZARD_SEAL).get()) && moduleCount(a) == 1, "a module comes out of the held piece");
+        menu.clicked(1, 0, ClickType.PICKUP, player);
+        helper.assertTrue(menu.getCarried().isEmpty() && moduleCount(a) == 2, "and goes back in");
+
+        // Hover piece B and press the held slot's number key: refused, nothing moves.
+        menu.clicked(menuSlotOf(menu, player, 9), 0, ClickType.SWAP, player);
+        helper.assertTrue(inv.getItem(0) == a && inv.getItem(9) == b, "the number key swap of the held slot is refused");
+        // Picking up, shift-clicking or throwing the held piece itself: refused.
+        int held = menuSlotOf(menu, player, 0);
+        menu.clicked(held, 0, ClickType.PICKUP, player);
+        menu.clicked(held, 0, ClickType.QUICK_MOVE, player);
+        menu.clicked(held, 0, ClickType.THROW, player);
+        helper.assertTrue(inv.getItem(0) == a && menu.getCarried().isEmpty(), "the held piece cannot be picked up while its screen is open");
+
+        // The swap happens anyway (any other path): the menu notices, refuses clicks and writes nothing into B.
+        inv.setItem(0, b);
+        inv.setItem(9, a);
+        helper.assertTrue(!menu.stillValid(player), "a swapped piece invalidates the menu");
+        helper.assertTrue(!menu.slots.get(0).mayPickup(player) && !menu.slots.get(3).mayPickup(player), "module and core slots lock");
+        menu.clicked(0, 0, ClickType.PICKUP, player);
+        helper.assertTrue(menu.getCarried().isEmpty(), "no module comes out after the swap");
+        helper.assertTrue(menu.clickMenuButton(player, 0) == false, "switches do nothing after the swap");
+        helper.assertTrue(moduleCount(b) == 0 && moduleCount(a) == 2, "B gets no modules and A keeps its two: no copies");
+
+        // Offhand piece: the offhand key (F) is refused.
+        ItemStack c = piece(ExoItems.CHESTPLATE_MK3, 1_000, ExoModuleKind.FLIGHT);
+        player.setItemSlot(EquipmentSlot.OFFHAND, c);
+        ExoMenu off = new ExoMenu(5, inv, List.of(new ExoMenu.Section(EquipmentSlot.CHEST, 2, 3, true)), true);
+        off.clicked(menuSlotOf(off, player, 9), Inventory.SLOT_OFFHAND, ClickType.SWAP, player);
+        helper.assertTrue(player.getOffhandItem() == c && off.stillValid(player), "the offhand swap key is refused");
+        helper.succeed();
+    }
+
+    /** A module in the wrong piece or below its mark does nothing, and the screen marks it. */
+    @GameTest(template = "empty")
+    public static void misplacedModulesDoNothing(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK1, 100_000, mod(ExoModuleKind.SERVO_STRIDE, 3)));
+        player.setItemSlot(EquipmentSlot.FEET, pieceM(ExoItems.BOOTS_MK3, 100_000, mod(ExoModuleKind.NIGHT_VISION)));
+        helper.assertTrue(!ExoSuit.active(player).has(ExoModuleKind.SERVO_STRIDE), "Stride III in Mk1 leggings does nothing");
+        helper.assertTrue(!ExoSuit.active(player).has(ExoModuleKind.NIGHT_VISION), "Night Vision in boots does nothing");
+        ticks(player, 2);
+        helper.assertTrue(player.getAttribute(Attributes.MOVEMENT_SPEED).getModifier(Robotica.id("exo_servo_stride")) == null, "no speed bonus");
+        helper.assertTrue(!player.hasEffect(MobEffects.NIGHT_VISION), "no night vision");
+        ExoMenu menu = new ExoMenu(6, player.getInventory(), List.of(new ExoMenu.Section(EquipmentSlot.FEET, 0, 3, false)), true);
+        helper.assertTrue(menu.isMisplaced(0, 0), "the screen marks it");
+        helper.succeed();
+    }
+
+    /** One-shot costs are paid from the worn stacks at once; cooldowns and the flight grant survive a relog. */
+    @GameTest(template = "empty")
+    public static void costsCooldownsAndFlightSurviveSwapsAndRelogs(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK3, 100_000, ExoModuleKind.DASH_THRUSTERS));
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.dash(player), "the dash fires");
+        helper.assertTrue(energy(player, EquipmentSlot.LEGS) == 100_000 - ExoConfig.cost(ExoModuleKind.DASH_THRUSTERS, 1),
+                "the dash is paid at once, before any piece swap could dodge it");
+        Item dash = ExoItems.module(ExoModuleKind.DASH_THRUSTERS).get();
+        player.getCooldowns().removeCooldown(dash);
+        ExoTicker.onLogin(player);
+        helper.assertTrue(player.getCooldowns().isOnCooldown(dash), "the dash cooldown comes back after a relog");
+
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 500_000, ExoModuleKind.FLIGHT));
+        ticks(player, 1);
+        player.getAbilities().flying = true;
+        helper.assertTrue(player.getPersistentData().getBoolean(ExoTicker.FLIGHT_KEY), "the grant is saved with the player");
+        ExoTicker.onLogout(player);
+        helper.assertTrue(player.getAbilities().mayfly && player.getAbilities().flying, "logging out does not drop a flying player");
+        ExoTicker.onLogin(player);
+        helper.assertTrue(player.getAbilities().mayfly && player.getAbilities().flying, "rejoining with a working Flight module keeps flying");
+
+        ExoTicker.onLogout(player);
+        player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+        ExoTicker.onLogin(player);
+        helper.assertTrue(!player.getAbilities().mayfly && !player.getAbilities().flying, "a stale grant without the module is revoked on login");
+        helper.assertTrue(!player.getPersistentData().getBoolean(ExoTicker.FLIGHT_KEY), "and forgotten");
+
+        // A grant saved before a crash, no suit at all: the first tick takes it back.
+        ExoTicker.onLogout(player);
+        player.getAbilities().mayfly = true;
+        player.getPersistentData().putBoolean(ExoTicker.FLIGHT_KEY, true);
+        player.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
+        ExoTicker.tick(player);
+        helper.assertTrue(!player.getAbilities().mayfly, "a stale grant is revoked without a suit");
+        helper.succeed();
+    }
+
+    /** The Auto-Feeder gives bowls back and never eats suspicious stew. */
+    @GameTest(template = "empty")
+    public static void autoFeederKeepsContainers(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ExoModuleKind.AUTO_FEEDER));
+        player.getFoodData().setFoodLevel(4);
+        player.getInventory().add(new ItemStack(Items.SUSPICIOUS_STEW));
+        player.getInventory().add(new ItemStack(Items.MUSHROOM_STEW));
+        ticks(player, 20);
+        helper.assertTrue(player.getFoodData().getFoodLevel() == 10, "the stew is eaten, food " + player.getFoodData().getFoodLevel());
+        helper.assertTrue(player.getInventory().countItem(Items.BOWL) == 1 && player.getInventory().countItem(Items.MUSHROOM_STEW) == 0,
+                "the bowl comes back");
+        helper.assertTrue(player.getInventory().countItem(Items.SUSPICIOUS_STEW) == 1, "suspicious stew is never eaten");
         helper.succeed();
     }
 

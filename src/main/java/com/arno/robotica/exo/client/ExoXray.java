@@ -73,6 +73,8 @@ final class ExoXray {
     private static int duration = 1;
     // Thermal sight
     private static final List<Entity> thermal = new ArrayList<>();
+    /** The level the outlines belong to; a dimension change (new level object) clears them. */
+    private static ClientLevel lastLevel;
 
     /** Ores found by the running sonar ping (HUD). */
     static int oreCount() {
@@ -95,7 +97,12 @@ final class ExoXray {
         ClientLevel level = mc.level;
         if (player == null || level == null) {
             clear();
+            lastLevel = null;
             return;
+        }
+        if (level != lastLevel) {
+            clear();
+            lastLevel = level;
         }
         ExoSonarPayload ping = ExoSonarPayload.take();
         if (ping != null) start(player, level, ping);
@@ -205,7 +212,7 @@ final class ExoXray {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         if (!ExoClientConfig.outlines() || (ores.isEmpty() && mobs.isEmpty() && thermal.isEmpty())) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
+        if (mc.level == null || mc.level != lastLevel) return;
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 cam = event.getCamera().getPosition();
         PoseStack pose = new PoseStack();

@@ -61,7 +61,10 @@ public final class ExoSuit {
         }
     }
 
-    /** Collects the switched-on modules of every worn piece. Duplicates count once, at their highest level. */
+    /**
+     * Collects the switched-on modules of every worn piece. Duplicates count once, at their highest level. A module in
+     * the wrong piece or below its mark ({@link ExoData#fitsHere}) does nothing.
+     */
     public static Active active(LivingEntity entity) {
         Active a = new Active();
         for (int p = 0; p < 4; p++) {
@@ -69,7 +72,8 @@ public final class ExoSuit {
             if (piece.isEmpty()) continue;
             int n = ExoData.slotCount(piece);
             for (int i = 0; i < n; i++) {
-                if (!(ExoData.module(piece, i).getItem() instanceof ExoModuleItem m) || !ExoData.isEnabled(piece, i)) continue;
+                if (!(ExoData.module(piece, i).getItem() instanceof ExoModuleItem m) || !ExoData.isEnabled(piece, i)
+                        || !ExoData.fitsHere(piece, i)) continue;
                 int k = m.kind.ordinal();
                 if (m.level > a.level[k]) {
                     a.level[k] = m.level;
@@ -78,6 +82,24 @@ public final class ExoSuit {
             }
         }
         return a;
+    }
+
+    /** Ticks between two Jet Assist air jumps. */
+    public static final int AIR_JUMP_GAP = 6;
+
+    /** What the Power Regulator leaves of every cost (1 = no regulator). */
+    public static double costFactor(Active a) {
+        return 1.0 - ExoConfig.regulatorSaving(a.level(ExoModuleKind.POWER_REGULATOR));
+    }
+
+    /**
+     * True when the suit's Jet Assist can pay an air jump right now. The client checks exactly this before it predicts
+     * the jump, and the server repeats it, so both sides agree.
+     */
+    public static boolean canPayAirJump(LivingEntity entity, Active a) {
+        int level = a.level(ExoModuleKind.JET_ASSIST);
+        if (level <= 0) return false;
+        return energyFor(entity, SLOTS[a.piece(ExoModuleKind.JET_ASSIST)]) >= Math.max(ExoConfig.doubleJumpCost(level) * costFactor(a), 1);
     }
 
     /** Level of a switched-on module kind in the worn suit, 0 when absent. */

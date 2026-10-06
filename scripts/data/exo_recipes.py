@@ -123,7 +123,8 @@ level3('fall_dampener', 'minecraft:phantom_membrane')
 shaped('magnet_module', ['ICI', 'RBR'], {'I': '#c:ingots/iron', 'C': 'copper_coil', 'R': 'minecraft:redstone', 'B': 'basic_circuit'})
 level2('magnet', 'minecraft:iron_block')
 level3('magnet', 'minecraft:lodestone')
-shaped('hydro_fins_module', ['SAS', 'PCP'], {'S': 'minecraft:prismarine_shard', 'A': 'advanced_circuit', 'P': PLATE, 'C': 'copper_coil'})
+# Age 2 like its mark: kelp fins on a Servo Actuator (prismarine is Age 3).
+shaped('hydro_fins_module', ['KAK', 'PSP'], {'K': 'minecraft:dried_kelp_block', 'A': 'advanced_circuit', 'P': PLATE, 'S': 'servo_actuator'})
 
 # ---- Any piece
 shaped('capacitor_plating_module', ['PCP', 'RBR'], {'P': PLATE, 'C': 'copper_cell', 'R': 'minecraft:redstone', 'B': 'basic_circuit'})
