@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -141,22 +140,16 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
         return InteractionResult.PASS;
     }
 
-    /** Creative players get no loot: with a Carry card, hand them the machine with everything in it. */
-    @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide && player.isCreative() && level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity be && be.hasCarry()) {
-            ItemStack stack = new ItemStack(this);
-            stack.applyComponents(be.collectComponents());
-            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
-        }
-        return super.playerWillDestroy(level, pos, state, player);
-    }
-
+    /**
+     * Only a block change to another block spills anything (a LIT or FACING change keeps the same block). Everything
+     * inside spills however the machine breaks; the loot table drops the machine with its energy.
+     */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity be) {
+        if (!level.isClientSide && !state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity be) {
             be.dropContents(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
+
 }

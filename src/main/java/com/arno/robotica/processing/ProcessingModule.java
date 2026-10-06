@@ -48,6 +48,11 @@ public final class ProcessingModule {
         event.getToolTip().add(Component.translatable("tooltip.robotica.grinding_media",
                 Math.round(media.bonus() * 100), Math.round(media.secondary() * 100), media.uses(), Math.max(1, media.tier()))
                 .withStyle(ChatFormatting.DARK_GRAY));
+        int wear = event.getItemStack().getOrDefault(ProcessingRegistry.MEDIA_WEAR.get(), 0);
+        if (wear > 0) {
+            event.getToolTip().add(Component.translatable("tooltip.robotica.grinding_media_worn", Math.max(0, media.uses() - wear), media.uses())
+                    .withStyle(ChatFormatting.GOLD));
+        }
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {

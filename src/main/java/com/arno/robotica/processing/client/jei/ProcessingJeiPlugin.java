@@ -55,12 +55,12 @@ public class ProcessingJeiPlugin implements IModPlugin {
             GrindingRecipe r = holder.value();
             if (r.byTag()) continue;   // shown below with the live tag rule and config counts
             boolean boostable = false;
-            for (ItemStack s : r.ingredient().getItems()) boostable |= GrindingLogic.isBoostable(s);
+            for (ItemStack s : r.ingredient().getItems()) boostable |= GrindingLogic.boostFor(s).boosts();
             displays.add(new GrindingDisplay(holder.id(), r.ingredient(), r.result(), r.extras(), r.minTier(), r.time(), boostable));
         }
         for (GrindingLogic.TagRule rule : GrindingLogic.tagRules(stack -> GrindingLogic.hasRecipe(level, stack))) {
             Ingredient input = Ingredient.of(rule.inputs().toArray(Item[]::new));
-            displays.add(new GrindingDisplay(rule.id(), input, rule.main(), rule.extras(), 1, 0, rule.kind() != GrindingLogic.Kind.INGOT));
+            displays.add(new GrindingDisplay(rule.id(), input, rule.main(), rule.extras(), 1, 0, rule.boostable()));
         }
         registration.addRecipes(GRINDING, displays);
 

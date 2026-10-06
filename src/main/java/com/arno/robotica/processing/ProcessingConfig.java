@@ -85,10 +85,10 @@ public final class ProcessingConfig {
                 .defineInRange("rawBonusChance", 0.25, 0.0, 1.0);
         INGOT_DUST_COUNT = b.comment("Dusts per ingot (c:ingots/<metal>). 0 turns ingot grinding off.")
                 .defineInRange("ingotDustCount", 1, 0, 16);
-        FORTUNE_BONUS = b.comment("Extra main output per Fortune card on ores and raw ores (0.1 = +10%).")
+        FORTUNE_BONUS = b.comment("Extra main output per Fortune card on ores and raw ores (0.1 = +10%). Gem ores and ingots get none.")
                 .defineInRange("fortuneBonus", 0.10, 0.0, 10.0);
-        FALLBACK_BYPRODUCTS = b.comment("Byproducts of grinding media when the input has no entry in the robotica:grinding_byproducts data map. "
-                        + "Item ids or #tags; one that exists is picked at random.")
+        FALLBACK_BYPRODUCTS = b.comment("Byproducts of grinding media when a metal ore or raw ore (one with a c:ingots/<name> tag) has no entry "
+                        + "in the robotica:grinding_byproducts data map. Item ids or #tags; one that exists is picked at random.")
                 .defineListAllowEmpty("fallbackByproducts", List.of("#c:dusts/iron", "#c:dusts/copper", "#c:dusts/gold", "#c:dusts/redstone"),
                         () -> "#c:dusts/iron", o -> o instanceof String s && !s.isBlank());
         b.pop();
@@ -103,7 +103,7 @@ public final class ProcessingConfig {
             LANES[i] = b.comment("Mk" + (i + 1) + ": lanes that smelt in parallel (each has its own input and output slot).")
                     .defineInRange("lanesMk" + (i + 1), lanes[i], 1, 8);
         }
-        XP_PER_FORTUNE = b.comment("Extra experience per Fortune card (0.5 = +50%).")
+        XP_PER_FORTUNE = b.comment("Extra experience per Fortune card (0.5 = +50%). Never for inputs in c:dusts, so ingot -> dust -> ingot farms no experience.")
                 .defineInRange("xpPerFortune", 0.5, 0.0, 10.0);
         b.pop();
         SPEC = b.build();

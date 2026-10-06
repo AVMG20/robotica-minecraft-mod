@@ -81,9 +81,11 @@ for mk, (circuit, casing, grinder_extra, furnace_extra) in TIERS.items():
             {'C': circuit, 'X': casing, 'M': f'electric_furnace_mk{mk - 1}', 'A': furnace_extra})
 
 # ---------------------------------------------------------------- dusts back to ingots
-for metal, xp in (('iron', 0.7), ('gold', 1.0), ('copper', 0.7)):
-    cooking(f'{metal}_ingot_from_smelting_{metal}_dust', 'smelting', f'{metal}_dust', f'minecraft:{metal}_ingot', xp, 200)
-    cooking(f'{metal}_ingot_from_blasting_{metal}_dust', 'blasting', f'{metal}_dust', f'minecraft:{metal}_ingot', xp, 100)
+# Only 0.1 experience: an ingot grinds back into dust, so ore-like experience here would be an endless experience farm
+# (the Electric Furnace's Fortune cards never boost dusts either). The ore's experience comes when the ore is mined.
+for metal in ('iron', 'gold', 'copper'):
+    cooking(f'{metal}_ingot_from_smelting_{metal}_dust', 'smelting', f'{metal}_dust', f'minecraft:{metal}_ingot', 0.1, 200)
+    cooking(f'{metal}_ingot_from_blasting_{metal}_dust', 'blasting', f'{metal}_dust', f'minecraft:{metal}_ingot', 0.1, 100)
 
 # ---------------------------------------------------------------- grinding media
 # Iron balls: one ingot and four nuggets make two, each lasts 16 ores at +25%: worth it from the first stack of ore.
@@ -116,7 +118,8 @@ grinding('lapis_ore', '#c:ores/lapis', 'minecraft:lapis_lazuli', 8)
 grinding('coal_ore', '#c:ores/coal', 'minecraft:coal', 2, extras=[('minecraft:coal', 1, 0.25)])
 
 # ---------------------------------------------------------------- data maps
-# Grinding media: bonus = extra main output on ores and raw ores, secondary = chance of a byproduct per ore,
+# Grinding media: bonus = extra main output on metal ores (rawBoostFactor of it on raw ores, none on gem ores; capped by
+# maxOreOutput / maxRawOutput), secondary = chance of a byproduct per ore,
 # uses = ores per item, tier = lowest Grinder Mk it fits.
 write(DATA / 'data_maps/item/grinding_media.json', {'values': {
     'minecraft:flint': {'bonus': 0.1, 'secondary': 0.02, 'uses': 8, 'tier': 0},
@@ -127,6 +130,8 @@ write(DATA / 'data_maps/item/grinding_media.json', {'values': {
 }})
 
 # Byproducts of grinding media: first entry that exists in the pack wins (nickel/silver/tin come from other mods).
+# Metal ores without an entry fall back to the fallbackByproducts config; gem, coal, redstone and lapis ores only get
+# a byproduct from an entry here.
 BYPRODUCTS = {
     'iron': ['#c:dusts/nickel', '#c:dusts/tin', '#c:dusts/gold'],
     'gold': ['#c:dusts/silver', '#c:dusts/copper'],
@@ -142,10 +147,13 @@ BYPRODUCTS = {
     'pyrolite': ['#c:dusts/glowstone'],
     'resonite': ['minecraft:popped_chorus_fruit'],
 }
+# Ores that drop crystals, not raw ores: no c:raw_materials/<name> key for them.
+NO_RAW = {'pyrolite', 'resonite'}
 values = {}
 for metal, refs in BYPRODUCTS.items():
     values[f'#c:ores/{metal}'] = {'byproducts': refs}
-    values[f'#c:raw_materials/{metal}'] = {'byproducts': refs}
+    if metal not in NO_RAW:
+        values[f'#c:raw_materials/{metal}'] = {'byproducts': refs}
 values['#c:ores/redstone'] = {'byproducts': ['#c:dusts/glowstone']}
 write(DATA / 'data_maps/item/grinding_byproducts.json', {'values': values})
 

@@ -1,7 +1,9 @@
 package com.arno.robotica.processing.client;
 
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.processing.block.GrinderBlockEntity;
+import com.arno.robotica.processing.block.ProcessingMachineBlock;
 import com.arno.robotica.processing.block.ProcessingMachineBlockEntity;
 import com.arno.robotica.processing.menu.GrinderMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,6 +12,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GrinderScreen extends MachineScreen<GrinderMenu> {
     public GrinderScreen(GrinderMenu menu, Inventory inv, Component title) {
@@ -32,8 +37,19 @@ public class GrinderScreen extends MachineScreen<GrinderMenu> {
         if (slot.index == GrinderBlockEntity.INPUT) return Component.translatable("gui.robotica.processing.slot_grind");
         if (slot.index == GrinderBlockEntity.MEDIA) return Component.translatable("gui.robotica.processing.slot_media");
         if (slot.index == GrinderBlockEntity.BATTERY) return Component.translatable("gui.robotica.slot_battery");
-        if (slot.index > GrinderBlockEntity.BATTERY) return Component.translatable("gui.robotica.processing.slot_upgrade");
+        if (slot.index > GrinderBlockEntity.BATTERY) return Component.translatable("gui.robotica.processing.slot_upgrade_grinder");
         return Component.translatable("gui.robotica.slot_output");
+    }
+
+    /** Upgrade cards (in the slots or the inventory) say what they do in this Grinder. */
+    @Override
+    protected List<Component> getTooltipFromContainerItem(ItemStack stack) {
+        List<Component> lines = super.getTooltipFromContainerItem(stack);
+        if (stack.getItem() instanceof UpgradeCardItem card) {
+            lines = new ArrayList<>(lines);
+            lines.addAll(ProcessingMachineBlockEntity.cardHelp(ProcessingMachineBlock.Kind.GRINDER, menu.tier(), card.getKind()));
+        }
+        return lines;
     }
 
     @Override

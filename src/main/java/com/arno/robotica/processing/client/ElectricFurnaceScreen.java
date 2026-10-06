@@ -1,6 +1,9 @@
 package com.arno.robotica.processing.client;
 
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.processing.block.ElectricFurnaceBlockEntity;
+import com.arno.robotica.processing.block.ProcessingMachineBlock;
+import com.arno.robotica.processing.block.ProcessingMachineBlockEntity;
 import com.arno.robotica.processing.menu.ElectricFurnaceMenu;
 import com.arno.robotica.core.client.MachineScreen;
 import net.minecraft.client.gui.GuiGraphics;
@@ -9,6 +12,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
     private static final int LANES = ElectricFurnaceBlockEntity.MAX_LANES;
@@ -32,7 +38,18 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
         if (slot.index < LANES) return Component.translatable("gui.robotica.processing.slot_smelt");
         if (slot.index < LANES * 2) return Component.translatable("gui.robotica.slot_output");
         if (slot.index == ElectricFurnaceBlockEntity.BATTERY) return Component.translatable("gui.robotica.slot_battery");
-        return Component.translatable("gui.robotica.processing.slot_upgrade");
+        return Component.translatable("gui.robotica.processing.slot_upgrade_furnace");
+    }
+
+    /** Upgrade cards (in the slots or the inventory) say what they do in this Electric Furnace. */
+    @Override
+    protected List<Component> getTooltipFromContainerItem(ItemStack stack) {
+        List<Component> lines = super.getTooltipFromContainerItem(stack);
+        if (stack.getItem() instanceof UpgradeCardItem card) {
+            lines = new ArrayList<>(lines);
+            lines.addAll(ProcessingMachineBlockEntity.cardHelp(ProcessingMachineBlock.Kind.ELECTRIC_FURNACE, menu.tier(), card.getKind()));
+        }
+        return lines;
     }
 
     @Override

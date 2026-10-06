@@ -2,8 +2,8 @@
 Run: python3 scripts/data/processing_models.py   (overwrites files named after processing blocks only)
 
 Each machine is one cube: Mk-coloured front/top/sides, a shared bottom, and while lit a coplanar full-bright overlay on
-the front (sparks, glowing coils). The blockstate turns it by FACING. The loot table keeps the stored energy and, with a
-Carry card, everything inside (robotica:contents).
+the front (sparks, glowing coils). The blockstate turns it by FACING. The loot table keeps the stored energy; the contents
+spill when the machine breaks.
 """
 import json
 import pathlib
@@ -43,7 +43,7 @@ def machine_model(faces, glow=None):
 def loot(name):
     entry = {'type': 'minecraft:item', 'name': f'robotica:{name}',
              'functions': [{'function': 'minecraft:copy_components', 'source': 'block_entity',
-                            'include': ['robotica:energy', 'robotica:contents']}]}
+                            'include': ['robotica:energy']}]}
     write(DATA / 'loot_table/blocks' / f'{name}.json', {
         'type': 'minecraft:block',
         'pools': [{'rolls': 1.0, 'bonus_rolls': 0.0, 'entries': [entry],

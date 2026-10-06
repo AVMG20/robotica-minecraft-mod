@@ -1,5 +1,6 @@
 package com.arno.robotica.processing.block;
 
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
 import net.minecraft.world.item.ItemStack;
@@ -30,5 +31,16 @@ public class MachineUpgrades extends Upgrades {
     @Override
     public boolean isItemValid(int slot, ItemStack stack) {
         return slot < activeSlots() && super.isItemValid(slot, stack);
+    }
+
+    /** Only cards in open slots count (a server may lower {@code upgradeSlotsMk} while cards sit in the last ones). */
+    @Override
+    public int level(UpgradeKind kind) {
+        int n = 0;
+        for (int i = 0; i < activeSlots(); i++) {
+            ItemStack stack = getStackInSlot(i);
+            if (stack.getItem() instanceof UpgradeCardItem card && card.getKind() == kind) n += stack.getCount();
+        }
+        return Math.min(n, cap(kind));
     }
 }
