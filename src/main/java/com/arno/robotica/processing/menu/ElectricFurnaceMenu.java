@@ -1,6 +1,7 @@
 package com.arno.robotica.processing.menu;
 
 import com.arno.robotica.core.menu.MachineMenu;
+import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.processing.ProcessingConfig;
 import com.arno.robotica.processing.ProcessingRegistry;
 import com.arno.robotica.processing.block.ElectricFurnaceBlockEntity;
@@ -58,7 +59,7 @@ public class ElectricFurnaceMenu extends MachineMenu {
         for (int i = 0; i < ElectricFurnaceBlockEntity.MAX_LANES; i++) {
             final boolean on = i < lanes;
             int x = laneX + Math.min(i, lanes - 1) * 18;
-            addSlot(new SlotItemHandler(items, i, x, INPUT_Y) {
+            addSlot(new MachineSlot(items, i, x, INPUT_Y) {
                 @Override
                 public boolean isActive() {
                     return on;
@@ -73,7 +74,7 @@ public class ElectricFurnaceMenu extends MachineMenu {
         for (int i = 0; i < ElectricFurnaceBlockEntity.MAX_LANES; i++) {
             final boolean on = i < lanes;
             int x = laneX + Math.min(i, lanes - 1) * 18;
-            addSlot(new SlotItemHandler(items, ElectricFurnaceBlockEntity.OUT_FIRST + i, x, OUTPUT_Y) {
+            addSlot(new MachineSlot(items, ElectricFurnaceBlockEntity.OUT_FIRST + i, x, OUTPUT_Y) {
                 @Override
                 public boolean isActive() {
                     return on;
@@ -96,7 +97,7 @@ public class ElectricFurnaceMenu extends MachineMenu {
         int active = ProcessingConfig.upgradeSlots(tier);
         for (int i = 0; i < MachineUpgrades.MAX_SLOTS; i++) {
             final boolean on = i < active;
-            addSlot(new SlotItemHandler(upgrades, i, UPGRADE_X + i * 18, ROW_Y) {
+            addSlot(new MachineSlot(upgrades, i, UPGRADE_X + i * 18, ROW_Y) {
                 @Override
                 public boolean isActive() {
                     return on;

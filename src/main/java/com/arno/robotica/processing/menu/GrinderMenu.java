@@ -1,6 +1,7 @@
 package com.arno.robotica.processing.menu;
 
 import com.arno.robotica.core.menu.MachineMenu;
+import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.processing.ProcessingConfig;
 import com.arno.robotica.processing.ProcessingRegistry;
 import com.arno.robotica.processing.block.GrinderBlockEntity;
@@ -50,7 +51,7 @@ public class GrinderMenu extends MachineMenu {
         addSlot(new SlotItemHandler(items, GrinderBlockEntity.INPUT, 26, 17));
         addSlot(new SlotItemHandler(items, GrinderBlockEntity.MEDIA, 26, 41));
         for (int i = 0; i < GrinderBlockEntity.OUT_COUNT; i++) {
-            addSlot(new SlotItemHandler(items, GrinderBlockEntity.OUT_FIRST + i, 80 + i * 18, 17) {
+            addSlot(new MachineSlot(items, GrinderBlockEntity.OUT_FIRST + i, 80 + i * 18, 17) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;
@@ -61,7 +62,7 @@ public class GrinderMenu extends MachineMenu {
         int active = ProcessingConfig.upgradeSlots(tier);
         for (int i = 0; i < MachineUpgrades.MAX_SLOTS; i++) {
             final boolean on = i < active;
-            addSlot(new SlotItemHandler(upgrades, i, UPGRADE_X + i * 18, UPGRADE_Y) {
+            addSlot(new MachineSlot(upgrades, i, UPGRADE_X + i * 18, UPGRADE_Y) {
                 @Override
                 public boolean isActive() {
                     return on;
