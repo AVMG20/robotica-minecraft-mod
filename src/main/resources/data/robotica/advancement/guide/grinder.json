@@ -1,0 +1,75 @@
+{
+  "parent": "robotica:guide/basic_circuit",
+  "display": {
+    "icon": {
+      "id": "robotica:grinder_mk1"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.grinder.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.grinder.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": [
+                  "robotica:grinder_mk1",
+                  "robotica:grinder_mk2",
+                  "robotica:grinder_mk3",
+                  "robotica:grinder_mk4"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:iron_grinding_balls",
+      "robotica:iron_ingot_from_smelting_iron_dust",
+      "robotica:iron_ingot_from_blasting_iron_dust",
+      "robotica:gold_ingot_from_smelting_gold_dust",
+      "robotica:gold_ingot_from_blasting_gold_dust",
+      "robotica:copper_ingot_from_smelting_copper_dust",
+      "robotica:copper_ingot_from_blasting_copper_dust",
+      "robotica:grinding/iron_ore_to_dust",
+      "robotica:grinding/raw_iron_to_dust",
+      "robotica:grinding/iron_ingot_to_dust",
+      "robotica:grinding/gold_ore_to_dust",
+      "robotica:grinding/raw_gold_to_dust",
+      "robotica:grinding/gold_ingot_to_dust",
+      "robotica:grinding/copper_ore_to_dust",
+      "robotica:grinding/raw_copper_to_dust",
+      "robotica:grinding/copper_ingot_to_dust",
+      "robotica:grinding/cobblestone_to_gravel",
+      "robotica:grinding/gravel_to_sand",
+      "robotica:grinding/blaze_rod_to_powder",
+      "robotica:grinding/bone_to_bone_meal",
+      "robotica:grinding/glowstone_to_dust",
+      "robotica:grinding/wool_to_string",
+      "robotica:grinding/redstone_ore",
+      "robotica:grinding/lapis_ore",
+      "robotica:grinding/coal_ore"
+    ],
+    "experience": 10
+  }
+}

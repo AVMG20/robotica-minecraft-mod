@@ -1,0 +1,27 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "XMX",
+    "A A"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:quantum_circuit"
+    },
+    "X": {
+      "item": "robotica:blazing_casing"
+    },
+    "M": {
+      "item": "robotica:electric_furnace_mk2"
+    },
+    "A": {
+      "tag": "c:rods/blaze"
+    }
+  },
+  "result": {
+    "id": "robotica:electric_furnace_mk3",
+    "count": 1
+  }
+}

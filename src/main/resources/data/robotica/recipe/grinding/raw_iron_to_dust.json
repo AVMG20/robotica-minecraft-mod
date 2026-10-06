@@ -1,0 +1,20 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:raw_materials/iron"
+  },
+  "result": {
+    "id": "robotica:iron_dust",
+    "count": 1
+  },
+  "extras": [
+    {
+      "result": {
+        "id": "robotica:iron_dust",
+        "count": 1
+      },
+      "chance": 0.25
+    }
+  ],
+  "by_tag": true
+}

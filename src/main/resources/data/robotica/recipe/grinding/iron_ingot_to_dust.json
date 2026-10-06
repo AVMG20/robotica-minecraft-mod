@@ -1,0 +1,11 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:ingots/iron"
+  },
+  "result": {
+    "id": "robotica:iron_dust",
+    "count": 1
+  },
+  "by_tag": true
+}

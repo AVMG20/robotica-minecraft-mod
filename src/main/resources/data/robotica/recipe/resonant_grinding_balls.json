@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "ABA",
+    " A "
+  ],
+  "key": {
+    "A": {
+      "tag": "c:ingots/resonant_alloy"
+    },
+    "B": {
+      "item": "robotica:pyrosteel_grinding_balls"
+    }
+  },
+  "result": {
+    "id": "robotica:resonant_grinding_balls",
+    "count": 4
+  }
+}

@@ -38,6 +38,9 @@
   "rewards": {
     "recipes": [
       "robotica:servo_actuator",
+      "robotica:grinder_mk2",
+      "robotica:electric_furnace_mk2",
+      "robotica:ferrothorium_grinding_balls",
       "robotica:storage_expansion_mk2",
       "robotica:redstone_cell",
       "robotica:temp_servo_core",

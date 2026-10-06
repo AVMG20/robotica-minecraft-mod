@@ -1,0 +1,11 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:ingots/gold"
+  },
+  "result": {
+    "id": "robotica:gold_dust",
+    "count": 1
+  },
+  "by_tag": true
+}

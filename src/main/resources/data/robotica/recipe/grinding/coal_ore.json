@@ -1,0 +1,19 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "c:ores/coal"
+  },
+  "result": {
+    "id": "minecraft:coal",
+    "count": 2
+  },
+  "extras": [
+    {
+      "result": {
+        "id": "minecraft:coal",
+        "count": 1
+      },
+      "chance": 0.25
+    }
+  ]
+}

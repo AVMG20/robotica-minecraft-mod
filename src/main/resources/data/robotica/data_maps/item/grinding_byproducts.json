@@ -1,0 +1,121 @@
+{
+  "values": {
+    "#c:ores/iron": {
+      "byproducts": [
+        "#c:dusts/nickel",
+        "#c:dusts/tin",
+        "#c:dusts/gold"
+      ]
+    },
+    "#c:raw_materials/iron": {
+      "byproducts": [
+        "#c:dusts/nickel",
+        "#c:dusts/tin",
+        "#c:dusts/gold"
+      ]
+    },
+    "#c:ores/gold": {
+      "byproducts": [
+        "#c:dusts/silver",
+        "#c:dusts/copper"
+      ]
+    },
+    "#c:raw_materials/gold": {
+      "byproducts": [
+        "#c:dusts/silver",
+        "#c:dusts/copper"
+      ]
+    },
+    "#c:ores/copper": {
+      "byproducts": [
+        "#c:dusts/gold"
+      ]
+    },
+    "#c:raw_materials/copper": {
+      "byproducts": [
+        "#c:dusts/gold"
+      ]
+    },
+    "#c:ores/tin": {
+      "byproducts": [
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:raw_materials/tin": {
+      "byproducts": [
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:ores/lead": {
+      "byproducts": [
+        "#c:dusts/silver"
+      ]
+    },
+    "#c:raw_materials/lead": {
+      "byproducts": [
+        "#c:dusts/silver"
+      ]
+    },
+    "#c:ores/silver": {
+      "byproducts": [
+        "#c:dusts/lead"
+      ]
+    },
+    "#c:raw_materials/silver": {
+      "byproducts": [
+        "#c:dusts/lead"
+      ]
+    },
+    "#c:ores/nickel": {
+      "byproducts": [
+        "#c:dusts/platinum",
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:raw_materials/nickel": {
+      "byproducts": [
+        "#c:dusts/platinum",
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:ores/osmium": {
+      "byproducts": [
+        "#c:dusts/tin",
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:raw_materials/osmium": {
+      "byproducts": [
+        "#c:dusts/tin",
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:ores/zinc": {
+      "byproducts": [
+        "#c:dusts/lead",
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:raw_materials/zinc": {
+      "byproducts": [
+        "#c:dusts/lead",
+        "#c:dusts/iron"
+      ]
+    },
+    "#c:ores/uranium": {
+      "byproducts": [
+        "#c:dusts/lead"
+      ]
+    },
+    "#c:raw_materials/uranium": {
+      "byproducts": [
+        "#c:dusts/lead"
+      ]
+    },
+    "#c:ores/redstone": {
+      "byproducts": [
+        "#c:dusts/glowstone"
+      ]
+    }
+  }
+}

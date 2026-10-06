@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "ABA",
+    " A "
+  ],
+  "key": {
+    "A": {
+      "tag": "c:ingots/ferrothorium"
+    },
+    "B": {
+      "item": "robotica:iron_grinding_balls"
+    }
+  },
+  "result": {
+    "id": "robotica:ferrothorium_grinding_balls",
+    "count": 4
+  }
+}

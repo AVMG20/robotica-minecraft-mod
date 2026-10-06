@@ -1,0 +1,27 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "XMX",
+    "A A"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    },
+    "M": {
+      "item": "robotica:grinder_mk3"
+    },
+    "A": {
+      "item": "minecraft:shulker_shell"
+    }
+  },
+  "result": {
+    "id": "robotica:grinder_mk4",
+    "count": 1
+  }
+}
