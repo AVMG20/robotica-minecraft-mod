@@ -177,14 +177,15 @@ for tier in range(1, 6):
         'elements': elements,
     })
     blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
-    # The coil is small: show it bigger in the inventory and in hand.
+    # The coil is 15 high: a little bigger than a block (0.625) in the slot, but no more, or it sticks out of the slot.
+    # In the GUI view it spans about 12 px at 0.75, lifted 1 px so the tip and the foot sit evenly in the slot.
     write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, -1, 0], 'scale': [1.0, 1.0, 1.0]},
-        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
-        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [1.0, 1.0, 1.0]},
-        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.6, 0.6, 0.6]},
-        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
-        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, 1, 0], 'scale': [0.75, 0.75, 0.75]},
+        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.4, 0.4, 0.4]},
+        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [0.6, 0.6, 0.6]},
+        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.45, 0.45, 0.45]},
+        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
+        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
     }})
     loot(name)
 
