@@ -129,17 +129,7 @@
         "#c:dusts/glowstone"
       ]
     },
-    "#c:raw_materials/pyrolite": {
-      "byproducts": [
-        "#c:dusts/glowstone"
-      ]
-    },
     "#c:ores/resonite": {
-      "byproducts": [
-        "minecraft:popped_chorus_fruit"
-      ]
-    },
-    "#c:raw_materials/resonite": {
       "byproducts": [
         "minecraft:popped_chorus_fruit"
       ]

@@ -18,6 +18,12 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.nbt.CompoundTag;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -83,9 +89,9 @@ public class ProcessingGameTests {
         helper.assertTrue(redstone != null && redstone.main().is(Items.REDSTONE) && redstone.main().getCount() == 6,
                 "redstone ore recipe beats the tag rule (6 redstone)");
         GrindingRecipe mk3 = new GrindingRecipe(Ingredient.of(Items.OBSIDIAN), new ItemStack(Items.FLINT), List.of(), 3, 0, false);
-        GrindingLogic.Lookup low = GrindingLogic.pick(List.of(mk3), 2, false);
+        GrindingLogic.Lookup low = GrindingLogic.pick(List.of(mk3), 2, GrindingLogic.Boost.NONE);
         helper.assertTrue(low.plan() == null && low.neededTier() == 3, "a Mk3 recipe refuses a Mk2 grinder and names Mk3");
-        helper.assertTrue(GrindingLogic.pick(List.of(mk3), 3, false).plan() != null, "a Mk3 grinder runs it");
+        helper.assertTrue(GrindingLogic.pick(List.of(mk3), 3, GrindingLogic.Boost.NONE).plan() != null, "a Mk3 grinder runs it");
         helper.succeed();
     }
 
@@ -149,7 +155,7 @@ public class ProcessingGameTests {
             GrinderBlockEntity be = place(helper, grinders.get(i));
             helper.assertTrue(be.tier() == mk, "tier from the block");
             helper.assertTrue(be.upgrades.activeSlots() == mk + 1, "Mk" + mk + " has " + (mk + 1) + " slots, got " + be.upgrades.activeSlots());
-            helper.assertTrue(be.upgrades.insertItem(mk + 1 > 4 ? 4 : mk + 1, CoreItems.cards(UpgradeKind.CARRY, 1), true).getCount() == (mk + 1 > 4 ? 0 : 1),
+            helper.assertTrue(be.upgrades.insertItem(mk + 1 > 4 ? 4 : mk + 1, CoreItems.cards(UpgradeKind.VOID, 1), true).getCount() == (mk + 1 > 4 ? 0 : 1),
                     "Mk" + mk + ": the slot after the last is closed");
             ItemStack rest = be.upgrades.insertItem(0, CoreItems.cards(UpgradeKind.SPEED, 8), false);
             helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == ProcessingConfig.speedCap(mk), "speed cap per Mk");
@@ -214,21 +220,201 @@ public class ProcessingGameTests {
         helper.succeed();
     }
 
-    /** With a Carry card the machine keeps its inventory in the item; without it the items spill. */
+    /** Media wear rides on the stack: taking the media out and putting it back does not reset it. */
     @GameTest(template = "empty")
-    public static void carryCardKeepsContents(GameTestHelper helper) {
+    public static void mediaWearSurvivesTakingItOut(GameTestHelper helper) {
+        GrinderBlockEntity be = place(helper, ProcessingRegistry.GRINDER_MK1);
+        be.items.setStackInSlot(GrinderBlockEntity.MEDIA, new ItemStack(Items.FLINT, 2));
+        be.items.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.RAW_IRON, 16));
+        var random = helper.getLevel().random;
+        GrindingLogic.Plan plan = GrindingLogic.find(helper.getLevel(), new ItemStack(Items.RAW_IRON), 1).plan();
+        for (int i = 0; i < 3; i++) {
+            helper.assertTrue(be.grindOne(random, plan), "grind " + i);
+            for (int s = 0; s < GrinderBlockEntity.OUT_COUNT; s++) be.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST + s, ItemStack.EMPTY);
+        }
+        helper.assertTrue(be.wear() == 3, "three ores worn, got " + be.wear());
+        ItemStack taken = be.items.extractItem(GrinderBlockEntity.MEDIA, 64, false);
+        helper.assertTrue(be.wear() == 0 && GrinderBlockEntity.wearOf(taken) == 3, "the wear left with the stack");
+        helper.assertTrue(be.items.insertItem(GrinderBlockEntity.MEDIA, taken, false).isEmpty(), "media goes back in");
+        helper.assertTrue(be.wear() == 3 && be.mediaLeft() == 5, "wear is back: 3 used, 5 left");
+        for (int i = 0; i < 5; i++) {
+            helper.assertTrue(be.grindOne(random, plan), "grind " + (i + 3));
+            for (int s = 0; s < GrinderBlockEntity.OUT_COUNT; s++) be.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST + s, ItemStack.EMPTY);
+        }
+        ItemStack left = be.items.getStackInSlot(GrinderBlockEntity.MEDIA);
+        helper.assertTrue(left.getCount() == 1 && GrinderBlockEntity.wearOf(left) == 0, "after 8 ores one flint is gone, the next is fresh");
+        helper.assertTrue(ItemStack.isSameItemSameComponents(left, new ItemStack(Items.FLINT)), "a fresh flint stacks with new flint again");
+        helper.succeed();
+    }
+
+    /**
+     * Gem ores give gems (even when another mod adds a dust of the same name) with no media or Fortune bonus, ores and
+     * raw ores keep the full bonus, and only metal inputs fall back to random byproducts.
+     */
+    @GameTest(template = "empty")
+    public static void boostRules(GameTestHelper helper) {
+        var level = helper.getLevel();
+        GrindingLogic.Plan diamond = GrindingLogic.find(level, new ItemStack(Items.DIAMOND_ORE), 4).plan();
+        helper.assertTrue(diamond != null && diamond.main().is(Items.DIAMOND) && !diamond.boostable(), "diamond ore: gems, no boost");
+        helper.assertTrue(GrindingLogic.mainAmount(diamond, 1.5, 3) == ProcessingConfig.gemOreCount(), "resonant media + 3 Fortune: still 2 diamonds");
+        helper.assertTrue(GrindingLogic.byproductOptions(new ItemStack(Items.DIAMOND_ORE), diamond.boost().fallback()).isEmpty(),
+                "no random metal dust from diamond ore");
+        helper.assertTrue(!diamond.boost().media(), "media is not used up on diamond ore");
+
+        var pyroliteOre = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(Robotica.id("pyrolite_ore"));
+        var pyroliteShard = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(Robotica.id("pyrolite_shard"));
+        if (pyroliteOre != Items.AIR && pyroliteShard != Items.AIR) {
+            GrindingLogic.Plan pyro = GrindingLogic.find(level, new ItemStack(pyroliteOre), 4).plan();
+            helper.assertTrue(pyro != null && pyro.main().is(pyroliteShard), "an ore with both a gem and a dust tag gives gems, got "
+                    + (pyro == null ? null : pyro.main()));
+        }
+
+        GrindingLogic.Plan coal = GrindingLogic.find(level, new ItemStack(Items.COAL_ORE), 4).plan();
+        helper.assertTrue(coal != null && coal.boostable() && !coal.boost().fallback(), "coal ore: boosted, but no fallback byproduct");
+        helper.assertTrue(GrindingLogic.byproductOptions(new ItemStack(Items.COAL_ORE), coal.boost().fallback()).isEmpty(), "coal: no byproduct");
+
+        GrindingLogic.Plan iron = GrindingLogic.find(level, new ItemStack(Items.IRON_ORE), 4).plan();
+        helper.assertTrue(iron.boostable() && iron.boost().fallback(), "iron ore: boosted, metal");
+        double fortune = ProcessingConfig.fortuneBonus();
+        helper.assertTrue(Math.abs(GrindingLogic.mainAmount(iron, 1.5, 3) - 2 * (2.5 + 3 * fortune)) < 1e-6, "iron ore: full media and Fortune bonus");
+        GrindingLogic.Plan raw = GrindingLogic.find(level, new ItemStack(Items.RAW_IRON), 4).plan();
+        helper.assertTrue(Math.abs(GrindingLogic.mainAmount(raw, 1.5, 3) - (2.5 + 3 * fortune)) < 1e-6, "raw iron: full bonus");
+
+        GrindingLogic.Plan ingot = GrindingLogic.find(level, new ItemStack(Items.IRON_INGOT), 4).plan();
+        helper.assertTrue(GrindingLogic.mainAmount(ingot, 1.5, 3) == 1.0 && !ingot.boost().media(), "ingots: never boosted");
+        helper.succeed();
+    }
+
+    /** Dusts smelt back for 0.1 experience and Fortune cards never boost them: no ingot -> dust -> ingot farm. */
+    @GameTest(template = "empty")
+    public static void dustSmeltingFarmsNoExperience(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var smelt = level.getRecipeManager().getRecipeFor(RecipeType.SMELTING,
+                new net.minecraft.world.item.crafting.SingleRecipeInput(new ItemStack(ProcessingRegistry.IRON_DUST.get())), level).orElseThrow();
+        helper.assertTrue(smelt.value().getExperience() <= 0.1F + 1e-6, "iron dust smelts for 0.1 experience");
+        ElectricFurnaceBlockEntity be = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4);
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, 3));
+        helper.assertTrue(be.xpBoost(new ItemStack(ProcessingRegistry.IRON_DUST.get())) == 1.0, "no Fortune experience for dusts");
+        helper.assertTrue(be.xpBoost(new ItemStack(Items.RAW_IRON)) > 1.0, "Fortune experience for raw iron");
+        helper.succeed();
+    }
+
+    /** Pipes on a null side get the sided rules, and a charged tool is never quick-inserted as a battery. */
+    @GameTest(template = "empty")
+    public static void nullSideAndQuickInsertRules(GameTestHelper helper) {
+        GrinderBlockEntity be = place(helper, ProcessingRegistry.GRINDER_MK1);
+        be.items.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.IRON_ORE, 4));
+        helper.assertTrue(be.automation(null).extractItem(GrinderBlockEntity.INPUT, 4, true).isEmpty(), "null side can not pull the input");
+        helper.assertTrue(be.quickInsertTarget().insertItem(GrinderBlockEntity.BATTERY, new ItemStack(Items.DIAMOND_PICKAXE), true).getCount() == 1,
+                "a tool is not a battery");
+        helper.assertTrue(be.quickInsertTarget().insertItem(GrinderBlockEntity.BATTERY, new ItemStack(CoreItems.COPPER_CELL.get()), true).isEmpty(),
+                "a cell is");
+        helper.succeed();
+    }
+
+    private static int dropped(GameTestHelper helper, BlockPos rel, net.minecraft.world.item.Item item) {
+        BlockPos abs = helper.absolutePos(rel);
+        int n = 0;
+        for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(abs).inflate(2.5))) {
+            if (e.getItem().is(item)) {
+                helper.assertTrue(!e.getItem().has(CoreComponents.CONTENTS.get()), "no contents ride in a dropped item");
+                n += e.getItem().getCount();
+            }
+        }
+        return n;
+    }
+
+    private static GrinderBlockEntity filledGrinder(GameTestHelper helper) {
         GrinderBlockEntity be = place(helper, ProcessingRegistry.GRINDER_MK2);
         be.items.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.IRON_ORE, 10));
-        helper.assertTrue(!be.collectComponents().has(CoreComponents.CONTENTS.get()), "no Carry card: no contents in the item");
-        helper.assertTrue(be.upgrades.insertOne(CoreItems.cards(UpgradeKind.CARRY, 1)), "Carry card fits");
-        var components = be.collectComponents();
-        helper.assertTrue(components.has(CoreComponents.CONTENTS.get()), "Carry card: contents in the item");
+        be.items.setStackInSlot(GrinderBlockEntity.MEDIA, new ItemStack(Items.FLINT, 3));
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 2));
+        return be;
+    }
+
+    private static void assertSpilled(GameTestHelper helper) {
+        helper.assertTrue(dropped(helper, POS, Items.IRON_ORE) == 10, "ore spilled, got " + dropped(helper, POS, Items.IRON_ORE));
+        helper.assertTrue(dropped(helper, POS, Items.FLINT) == 3, "media spilled");
+        helper.assertTrue(dropped(helper, POS, CoreItems.cards(UpgradeKind.SPEED, 1).getItem()) == 2, "cards spilled");
+    }
+
+    /** Removes the dropped items again, so they do not wander into tests running next door (item magnets). */
+    private static void clearDrops(GameTestHelper helper, BlockPos rel) {
+        for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(rel)).inflate(3))) e.discard();
+    }
+
+    /** Broken with loot: the machine drops once with its energy only, everything inside spills, nothing twice. */
+    @GameTest(template = "empty")
+    public static void breakingSpillsContentsKeepsEnergy(GameTestHelper helper) {
+        GrinderBlockEntity be = filledGrinder(helper);
+        helper.assertTrue(!be.collectComponents().has(CoreComponents.CONTENTS.get()), "the item never carries contents");
+        var item = ProcessingRegistry.GRINDER_MK2.get().asItem();
+        helper.getLevel().destroyBlock(helper.absolutePos(POS), true);
+        helper.assertTrue(dropped(helper, POS, item) == 1, "one machine dropped, got " + dropped(helper, POS, item));
+        boolean energy = false;
+        for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(POS)).inflate(2.5))) {
+            if (e.getItem().is(item)) energy = e.getItem().getOrDefault(CoreComponents.ENERGY.get(), 0) > 0;
+        }
+        helper.assertTrue(energy, "the stored energy rides in the item");
+        assertSpilled(helper);
+        clearDrops(helper, POS);
+        helper.succeed();
+    }
+
+    /** Broken without loot (wrong tool) or blown up: the contents still spill. */
+    @GameTest(template = "empty")
+    public static void breakingWithoutLootStillSpills(GameTestHelper helper) {
+        filledGrinder(helper);
+        helper.getLevel().destroyBlock(helper.absolutePos(POS), false);
+        assertSpilled(helper);
+        clearDrops(helper, POS);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void explosionSpillsContents(GameTestHelper helper) {
+        filledGrinder(helper);
+        BlockPos abs = helper.absolutePos(POS);
+        // Only this block is hit (a real explosion would reach the tests next door).
+        var level = helper.getLevel();
+        var explosion = new net.minecraft.world.level.Explosion(level, null, abs.getX() + 0.5, abs.getY() + 0.5, abs.getZ() + 0.5, 4.0F, false,
+                net.minecraft.world.level.Explosion.BlockInteraction.DESTROY_WITH_DECAY);
+        level.getBlockState(abs).onExplosionHit(level, abs, explosion, (stack, at) -> Block.popResource(level, at, stack));
+        helper.assertTrue(helper.getLevel().getBlockState(abs).isAir(), "the machine was blown up");
+        assertSpilled(helper);
+        clearDrops(helper, POS);
+        helper.succeed();
+    }
+
+    /**
+     * The Carry card has no job in these machines; a machine item from an older version that still carries contents
+     * moves them into the placed machine (nothing lost, nothing doubled) and an old Carry card pops out.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void oldCarriedContentsAreHarmless(GameTestHelper helper) {
+        GrinderBlockEntity be = place(helper, ProcessingRegistry.GRINDER_MK2);
+        helper.assertTrue(!be.upgrades.insertOne(CoreItems.cards(UpgradeKind.CARRY, 1), true), "Carry card is not accepted");
+        var registries = helper.getLevel().registryAccess();
+        ItemStackHandler oldItems = new ItemStackHandler(GrinderBlockEntity.SLOTS);
+        oldItems.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.IRON_ORE, 10));
+        ItemStackHandler oldCards = new ItemStackHandler(5);
+        oldCards.setStackInSlot(1, CoreItems.cards(UpgradeKind.CARRY, 1));
+        CompoundTag contents = new CompoundTag();
+        contents.put("items", oldItems.serializeNBT(registries));
+        contents.put("upgrades", oldCards.serializeNBT(registries));
         BlockPos other = new BlockPos(1, 1, 0);
         helper.setBlock(other, ProcessingRegistry.GRINDER_MK2.get().defaultBlockState());
         GrinderBlockEntity placed = (GrinderBlockEntity) helper.getBlockEntity(other);
-        placed.applyComponents(components, DataComponentPatch.EMPTY);
-        helper.assertTrue(placed.items.getStackInSlot(GrinderBlockEntity.INPUT).getCount() == 10 && placed.hasCarry(),
-                "ores and the card are back");
-        helper.succeed();
+        placed.applyComponents(DataComponentMap.builder().set(CoreComponents.CONTENTS.get(), contents).build(), DataComponentPatch.EMPTY);
+        helper.assertTrue(placed.items.getStackInSlot(GrinderBlockEntity.INPUT).getCount() == 10, "old contents moved into the machine");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(placed.upgrades.getStackInSlot(1).isEmpty(), "the old Carry card popped out");
+            int cards = 0;
+            for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(other)).inflate(3))) {
+                if (e.getItem().is(CoreItems.cards(UpgradeKind.CARRY, 1).getItem())) cards += e.getItem().getCount();
+            }
+            helper.assertTrue(cards == 1, "exactly one Carry card came out");
+            clearDrops(helper, other);
+        });
     }
 }

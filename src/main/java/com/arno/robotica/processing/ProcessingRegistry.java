@@ -10,7 +10,10 @@ import com.arno.robotica.processing.menu.ElectricFurnaceMenu;
 import com.arno.robotica.processing.menu.GrinderMenu;
 import com.arno.robotica.processing.recipe.GrindingRecipe;
 import com.arno.robotica.processing.recipe.MachineUpgradeRecipe;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -40,6 +43,14 @@ public final class ProcessingRegistry {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
     public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = DeferredRegister.create(Registries.RECIPE_TYPE, Robotica.MODID);
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, Robotica.MODID);
+    public static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Robotica.MODID);
+
+    /**
+     * Ores a grinding media stack's top item has already ground. Lives on the stack, so taking the media out and putting
+     * it back keeps the wear; only that one item is used up when it reaches the media's {@code uses}.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MEDIA_WEAR = COMPONENTS.registerComponentType(
+            "media_wear", b -> b.persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
     private static BlockBehaviour.Properties machine() {
         return BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL)
@@ -112,6 +123,7 @@ public final class ProcessingRegistry {
         MENUS.register(modBus);
         RECIPE_TYPES.register(modBus);
         RECIPE_SERIALIZERS.register(modBus);
+        COMPONENTS.register(modBus);
 
         for (DeferredBlock<ProcessingMachineBlock> block : GRINDERS) RoboticaTab.add(item(block));
         for (DeferredBlock<ProcessingMachineBlock> block : FURNACES) RoboticaTab.add(item(block));

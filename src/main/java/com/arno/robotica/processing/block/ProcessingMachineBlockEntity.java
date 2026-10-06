@@ -8,9 +8,11 @@ import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.processing.ProcessingConfig;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -31,13 +33,14 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 /**
  * Shared base of the Grinder and the Electric Furnace: Mk tier from the block, FE buffer and input rate per Mk,
- * a battery slot, upgrade slots (one more per Mk, higher caps per Mk), status for the GUI and Jade, and the item
- * components (energy always, everything inside with a Carry card).
+ * a battery slot, upgrade slots (one more per Mk, higher caps per Mk), status for the GUI and Jade, and the stored
+ * energy as an item component. Everything inside spills when the machine breaks, like a furnace.
  */
 public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity implements MenuProvider, InfoSource {
     public enum Status { IDLE, WORKING, NO_ENERGY, OUTPUT_FULL, NEEDS_TIER }
@@ -96,20 +99,49 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
     /** 0-100 for Jade, -1 when idle. */
     protected abstract int progressPercent();
 
-    public boolean hasCarry() {
-        return upgrades.level(UpgradeKind.CARRY) > 0;
-    }
-
     // ------------------------------------------------------------------ tick
+
+    /** Ticks without work before the machine goes dark, so a machine on weak power does not flicker. */
+    private static final int LIT_GRACE = 30;
+    private int idleTicks;
 
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         ItemStack battery = items().getStackInSlot(batterySlot());
         if (!battery.isEmpty() && energy.getSpace() > 0) {
             EnergyUtil.dischargeItem(battery, energy, ProcessingConfig.maxInput(tier));
         }
+        if ((level.getGameTime() + pos.asLong()) % 20 == 0) tidyHiddenSlots(level, pos);
         lastUse = 0;
         work(level);
-        setLit(status == Status.WORKING);
+        if (status == Status.WORKING) {
+            idleTicks = 0;
+            setLit(true);
+        } else if (idleTicks < LIT_GRACE && ++idleTicks >= LIT_GRACE) {
+            setLit(false);
+        }
+    }
+
+    /**
+     * Upgrade slots (and furnace lanes) beyond what the Mk opens, after a server lowered {@code upgradeSlotsMk} or
+     * {@code lanesMk}: their items move to open slots, or pop out on top of the machine. They never count while hidden.
+     * Cards this machine no longer takes (a Carry card from an older version) pop out too.
+     */
+    protected void tidyHiddenSlots(ServerLevel level, BlockPos pos) {
+        int active = upgrades.activeSlots();
+        for (int i = 0; i < upgrades.getSlots(); i++) {
+            ItemStack stack = upgrades.getStackInSlot(i);
+            if (stack.isEmpty()) continue;
+            boolean usable = stack.getItem() instanceof UpgradeCardItem card && upgrades.cap(card.getKind()) > 0;
+            if (i < active && usable) continue;
+            ItemStack rest = stack.copy();
+            for (int j = 0; j < active && !rest.isEmpty(); j++) rest = upgrades.insertItem(j, rest, false);
+            upgrades.setStackInSlot(i, ItemStack.EMPTY);
+            popOut(level, pos, rest);
+        }
+    }
+
+    protected static void popOut(Level level, BlockPos pos, ItemStack stack) {
+        if (!stack.isEmpty()) Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, stack);
     }
 
     /** Work rate of this Mk with its Speed cards. */
@@ -127,12 +159,15 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
         int base = CoreConfig.scaleEnergy(basePower);
         if (base <= 0) return 0;
         double mult = Upgrades.energyMultiplier(upgrades.level(UpgradeKind.SPEED), upgrades.level(UpgradeKind.EFFICIENCY));
-        return (int) Math.max(1, Math.ceil(base * speedFactor() * mult));
+        double cost = Math.ceil((double) base * speedFactor() * mult);
+        return (int) Math.max(1, Math.min(Integer.MAX_VALUE, cost));
     }
 
-    protected boolean useEnergy(int amount) {
-        if (!energy.consume(amount)) return false;
-        lastUse += amount;
+    /** Takes FE from the buffer; long so that cost x count never wraps negative (more than the buffer just fails). */
+    protected boolean useEnergy(long amount) {
+        if (amount < 0 || amount > Integer.MAX_VALUE) return false;
+        if (!energy.consume((int) amount)) return false;
+        lastUse = (int) Math.min(Integer.MAX_VALUE, (long) lastUse + amount);
         return true;
     }
 
@@ -155,31 +190,35 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
 
     // ------------------------------------------------------------------ breaking and item components
 
-    /** Without a Carry card everything spills; with one it rides in the dropped item. */
+    /**
+     * The block is gone: everything inside spills (inputs, outputs, media, battery, cards), however it broke. The
+     * loot table drops the machine with only its energy. The slots are emptied so nothing can be dropped twice.
+     */
     public void dropContents(Level level, BlockPos pos) {
-        if (hasCarry()) return;
         drop(level, pos, items());
         drop(level, pos, upgrades);
     }
 
-    protected static void drop(Level level, BlockPos pos, IItemHandler handler) {
+    protected static void drop(Level level, BlockPos pos, ItemStackHandler handler) {
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack stack = handler.getStackInSlot(i);
-            if (!stack.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+            if (stack.isEmpty()) continue;
+            handler.setStackInSlot(i, ItemStack.EMPTY);
+            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
         }
     }
 
+    /** Only the stored energy rides in the dropped item; the contents spill instead. */
     @Override
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
         if (energy.getEnergyStored() > 0) components.set(CoreComponents.ENERGY.get(), energy.getEnergyStored());
-        if (hasCarry() && level != null) {
-            CompoundTag contents = new CompoundTag();
-            writeContents(contents, level.registryAccess());
-            components.set(CoreComponents.CONTENTS.get(), contents);
-        }
     }
 
+    /**
+     * Energy from the item. A machine item from an older version may still carry contents (Carry card): they are moved
+     * into the placed machine (not copied, the item is used up), and a card it no longer takes pops out on its next tidy.
+     */
     @Override
     protected void applyImplicitComponents(DataComponentInput input) {
         super.applyImplicitComponents(input);
@@ -242,6 +281,25 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
         };
         int p = progressPercent();
         if (p >= 0) info.progress = p;
+    }
+
+    /**
+     * What a card does in this kind of machine at this Mk, for the GUI tooltips: one line, plus how many count here.
+     * Grinder Fortune adds dust on metal ores, furnace Fortune adds experience, Range adds items per lane and cycle.
+     */
+    public static List<Component> cardHelp(ProcessingMachineBlock.Kind machine, int tier, UpgradeKind kind) {
+        String name = machine == ProcessingMachineBlock.Kind.GRINDER ? "grinder" : "electric_furnace";
+        Set<UpgradeKind> kinds = machine == ProcessingMachineBlock.Kind.GRINDER ? GrinderBlockEntity.KINDS : ElectricFurnaceBlockEntity.KINDS;
+        int cap = kinds.contains(kind) ? cap(kind, tier) : 0;
+        if (cap <= 0) return List.of(Component.translatable("gui.robotica.processing.card.unused").withStyle(ChatFormatting.RED));
+        String key = "gui.robotica.processing.card." + name + "." + kind.name().toLowerCase(Locale.ROOT);
+        Component line = switch (kind) {
+            case FORTUNE -> Component.translatable(key, Math.round((machine == ProcessingMachineBlock.Kind.GRINDER
+                    ? ProcessingConfig.fortuneBonus() : ProcessingConfig.xpPerFortune()) * 100));
+            default -> Component.translatable(key);
+        };
+        return List.of(line.copy().withStyle(ChatFormatting.AQUA),
+                Component.translatable("gui.robotica.processing.card.cap", cap, tier).withStyle(ChatFormatting.DARK_GRAY));
     }
 
     public String statusKey() {

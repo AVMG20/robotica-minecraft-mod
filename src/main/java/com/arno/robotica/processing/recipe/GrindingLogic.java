@@ -31,14 +31,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * What the Grinder makes of an input. Order: {@code robotica:grinding} recipes first, then the generic tag rules, so
  * every mod's ores work without a recipe:
  * <ul>
- *   <li>{@code c:ores/<m>} -> {@code oreDustCount} (2) x {@code c:dusts/<m>}; without a dust but with {@code c:gems/<m>},
- *       {@code gemOreCount} (2) gems</li>
+ *   <li>{@code c:ores/<m>} with a {@code c:gems/<m>} tag -> {@code gemOreCount} (2) gems (gems win over a dust, so
+ *       diamond ore stays diamonds with Mekanism or Thermal installed)</li>
+ *   <li>other {@code c:ores/<m>} -> {@code oreDustCount} (2) x {@code c:dusts/<m>}</li>
  *   <li>{@code c:raw_materials/<m>} -> 1 dust plus a {@code rawBonusChance} (25%) chance of one more</li>
  *   <li>{@code c:ingots/<m>} -> 1 dust</li>
  * </ul>
  * The output is picked from the tag: a Robotica item first, then Minecraft, then the alphabetically first id.
- * Items in {@code robotica:grinding_blacklist} are never ground. Grinding media and Fortune cards only boost inputs in
- * {@code c:ores} or {@code c:raw_materials} (never ingots, so dust -> ingot -> dust can not loop).
+ * Items in {@code robotica:grinding_blacklist} are never ground. Grinding media and Fortune cards boost inputs in
+ * {@code c:ores} or {@code c:raw_materials}, except gem ores (a silk-touched diamond ore stays 2 diamonds), and never
+ * ingots (so dust -> ingot -> dust can not loop). See {@link Boost}.
  */
 public final class GrindingLogic {
     private GrindingLogic() {}
@@ -50,10 +52,21 @@ public final class GrindingLogic {
     public enum Kind { RECIPE, ORE, GEM_ORE, RAW, INGOT }
 
     /**
-     * One grinding job: the main output, rolled extras, the lowest Mk, the base ticks (0 = config) and whether media and
-     * Fortune cards boost it.
+     * How grinding media and Fortune cards act on an input. {@code boosts}: their bonus adds main output (ores and raw
+     * ores, not gem ores); {@code media}: media is used (and worn) at all; {@code fallback}: a missing byproduct entry
+     * may fall back to {@code fallbackByproducts} (metal ores and raw ores only, those with a {@code c:ingots/<m>} tag).
      */
-    public record Plan(Kind kind, ItemStack main, List<GrindingRecipe.Extra> extras, int minTier, int time, boolean boostable) {}
+    public record Boost(boolean boosts, boolean media, boolean fallback) {
+        public static final Boost NONE = new Boost(false, false, false);
+    }
+
+    /** One grinding job: the main output, rolled extras, the lowest Mk, the base ticks (0 = config) and its {@link Boost}. */
+    public record Plan(Kind kind, ItemStack main, List<GrindingRecipe.Extra> extras, int minTier, int time, Boost boost) {
+        /** True when media and Fortune cards add main output. */
+        public boolean boostable() {
+            return boost.boosts();
+        }
+    }
 
     /** {@code plan} is null when the input can not be ground here; {@code neededTier} > 0 names the Mk a recipe wants. */
     public record Lookup(@Nullable Plan plan, int neededTier) {
@@ -63,7 +76,11 @@ public final class GrindingLogic {
     /** Result of the tag rules for one item (cached, cleared when tags reload). */
     private record TagPlan(Kind kind, Item output, String material) {}
 
+    /** What the c: tags say about an ore or raw ore: in c:ores / c:raw_materials, gem material, metal material. */
+    private record Material(boolean ore, boolean raw, boolean gem, boolean metal) {}
+
     private static final Map<Item, Optional<TagPlan>> TAG_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Item, Material> MATERIAL_CACHE = new ConcurrentHashMap<>();
     private static final AtomicInteger GENERATION = new AtomicInteger();
 
     /** Bumps on every tag or data reload; block entities drop their cached plan when it changes. */
@@ -73,6 +90,7 @@ public final class GrindingLogic {
 
     public static void invalidate() {
         TAG_CACHE.clear();
+        MATERIAL_CACHE.clear();
         GENERATION.incrementAndGet();
     }
 
@@ -86,7 +104,7 @@ public final class GrindingLogic {
         for (RecipeHolder<GrindingRecipe> holder : matches) {
             if (!holder.value().byTag()) recipes.add(holder.value());
         }
-        if (!recipes.isEmpty()) return pick(recipes, tier, isBoostable(input));
+        if (!recipes.isEmpty()) return pick(recipes, tier, boostFor(input));
         Plan plan = tagPlan(input);
         return plan == null ? Lookup.NONE : new Lookup(plan, 0);
     }
@@ -101,19 +119,49 @@ public final class GrindingLogic {
     }
 
     /** The first recipe the Mk may run, else the lowest Mk that would run one. */
-    public static Lookup pick(List<GrindingRecipe> recipes, int tier, boolean boostable) {
+    public static Lookup pick(List<GrindingRecipe> recipes, int tier, Boost boost) {
         int lowest = Integer.MAX_VALUE;
         for (GrindingRecipe r : recipes) {
             if (r.minTier() <= tier) {
-                return new Lookup(new Plan(Kind.RECIPE, r.result().copy(), r.extras(), r.minTier(), r.time(), boostable), 0);
+                return new Lookup(new Plan(Kind.RECIPE, r.result().copy(), r.extras(), r.minTier(), r.time(), boost), 0);
             }
             lowest = Math.min(lowest, r.minTier());
         }
         return lowest == Integer.MAX_VALUE ? Lookup.NONE : new Lookup(null, lowest);
     }
 
-    public static boolean isBoostable(ItemStack input) {
-        return input.is(ORES) || input.is(RAW_MATERIALS);
+    /** How media and Fortune cards act on this input (see {@link Boost}). */
+    public static Boost boostFor(ItemStack input) {
+        if (input.isEmpty()) return Boost.NONE;
+        Material m = MATERIAL_CACHE.computeIfAbsent(input.getItem(), GrindingLogic::computeMaterial);
+        if (!m.ore() && !m.raw()) return Boost.NONE;
+        boolean boosts = !m.gem();
+        boolean fallback = m.metal();
+        boolean media = boosts || fallback || GrindingByproducts.of(input) != null;
+        return new Boost(boosts, media, fallback);
+    }
+
+    private static Material computeMaterial(Item item) {
+        var holder = item.builtInRegistryHolder();
+        String ore = null, raw = null;
+        for (TagKey<Item> tag : holder.tags().sorted(Comparator.comparing(t -> t.location().toString())).toList()) {
+            ResourceLocation id = tag.location();
+            if (!"c".equals(id.getNamespace())) continue;
+            if (ore == null) ore = material(id.getPath(), "ores/");
+            if (raw == null) raw = material(id.getPath(), "raw_materials/");
+        }
+        boolean inOre = ore != null || holder.is(ORES);
+        boolean inRaw = raw != null || holder.is(RAW_MATERIALS);
+        String name = ore != null ? ore : raw;
+        boolean gem = name != null && preferred(cTag("gems/" + name)) != null;
+        boolean metal = name != null && !gem && preferred(cTag("ingots/" + name)) != null;
+        return new Material(inOre, inRaw, gem, metal);
+    }
+
+    /** Main output amount (fractions are rolled) with this media bonus and Fortune card count. */
+    public static double mainAmount(Plan plan, double mediaBonus, int fortuneCards) {
+        if (!plan.boostable()) return plan.main().getCount();
+        return plan.main().getCount() * (1.0 + Math.max(0.0, mediaBonus) + fortuneCards * ProcessingConfig.fortuneBonus());
     }
 
     /** Plan from the c: tag rules, or null. Counts come from the config, so they follow config changes. */
@@ -123,18 +171,19 @@ public final class GrindingLogic {
         TagPlan tp = TAG_CACHE.computeIfAbsent(input.getItem(), item -> Optional.ofNullable(computeTagPlan(item))).orElse(null);
         if (tp == null) return null;
         Item out = tp.output();
+        Boost boost = tp.kind() == Kind.INGOT ? Boost.NONE : boostFor(input);
         return switch (tp.kind()) {
-            case ORE -> new Plan(Kind.ORE, new ItemStack(out, ProcessingConfig.oreDustCount()), List.of(), 1, 0, true);
+            case ORE -> new Plan(Kind.ORE, new ItemStack(out, ProcessingConfig.oreDustCount()), List.of(), 1, 0, boost);
             case GEM_ORE -> ProcessingConfig.gemOreCount() <= 0 ? null
-                    : new Plan(Kind.GEM_ORE, new ItemStack(out, ProcessingConfig.gemOreCount()), List.of(), 1, 0, true);
+                    : new Plan(Kind.GEM_ORE, new ItemStack(out, ProcessingConfig.gemOreCount()), List.of(), 1, 0, boost);
             case RAW -> {
                 int count = ProcessingConfig.rawDustCount();
                 float chance = ProcessingConfig.rawBonusChance();
                 List<GrindingRecipe.Extra> extras = chance > 0 ? List.of(new GrindingRecipe.Extra(new ItemStack(out), chance)) : List.of();
-                yield count <= 0 ? null : new Plan(Kind.RAW, new ItemStack(out, count), extras, 1, 0, true);
+                yield count <= 0 ? null : new Plan(Kind.RAW, new ItemStack(out, count), extras, 1, 0, boost);
             }
             case INGOT -> ProcessingConfig.ingotDustCount() <= 0 ? null
-                    : new Plan(Kind.INGOT, new ItemStack(out, ProcessingConfig.ingotDustCount()), List.of(), 1, 0, false);
+                    : new Plan(Kind.INGOT, new ItemStack(out, ProcessingConfig.ingotDustCount()), List.of(), 1, 0, Boost.NONE);
             default -> null;
         };
     }
@@ -158,10 +207,10 @@ public final class GrindingLogic {
             if (ingot == null) ingot = material(path, "ingots/");
         }
         if (ore != null) {
-            Item dust = preferred(cTag("dusts/" + ore));
-            if (dust != null) return new TagPlan(Kind.ORE, dust, ore);
             Item gem = preferred(cTag("gems/" + ore));
             if (gem != null) return new TagPlan(Kind.GEM_ORE, gem, ore);
+            Item dust = preferred(cTag("dusts/" + ore));
+            if (dust != null) return new TagPlan(Kind.ORE, dust, ore);
             return null;
         }
         if (raw != null) {
@@ -230,27 +279,37 @@ public final class GrindingLogic {
         return whole + (frac > 1e-6 && random.nextDouble() < frac ? 1 : 0);
     }
 
-    /** The byproduct grinding media shakes out of this input: its data map entry, else a random fallback. */
-    public static ItemStack byproduct(ItemStack input, RandomSource random) {
+    /**
+     * Every item grinding media may shake out of this input: its data map entry (first that exists), else, for metal
+     * ores and raw ores only ({@code fallback}), the {@code fallbackByproducts} config list. Empty when there is none.
+     */
+    public static List<Item> byproductOptions(ItemStack input, boolean fallback) {
         GrindingByproducts entry = GrindingByproducts.of(input);
         if (entry != null) {
             for (String ref : entry.byproducts()) {
                 Item item = resolve(ref);
-                if (item != null) return new ItemStack(item);
+                if (item != null) return List.of(item);
             }
         }
+        if (!fallback) return List.of();
         List<Item> options = new ArrayList<>();
         for (String ref : ProcessingConfig.fallbackByproducts()) {
             Item item = resolve(ref);
             if (item != null && !options.contains(item)) options.add(item);
         }
+        return options;
+    }
+
+    /** The byproduct grinding media shakes out of this input (one of {@link #byproductOptions}), or empty. */
+    public static ItemStack byproduct(ItemStack input, boolean fallback, RandomSource random) {
+        List<Item> options = byproductOptions(input, fallback);
         return options.isEmpty() ? ItemStack.EMPTY : new ItemStack(options.get(random.nextInt(options.size())));
     }
 
     // ------------------------------------------------------------------ JEI / docs
 
     /** One generic tag rule, for recipe viewers: the inputs it covers and what one of them makes. */
-    public record TagRule(ResourceLocation id, Kind kind, List<Item> inputs, ItemStack main, List<GrindingRecipe.Extra> extras) {}
+    public record TagRule(ResourceLocation id, Kind kind, List<Item> inputs, ItemStack main, List<GrindingRecipe.Extra> extras, boolean boostable) {}
 
     /**
      * Every tag rule that applies in this pack, grouped by kind and material. Inputs that a recipe already covers are
@@ -269,7 +328,7 @@ public final class GrindingLogic {
                 String key = plan.kind().name().toLowerCase(java.util.Locale.ROOT) + "/" + material;
                 TagRule rule = rules.get(key);
                 if (rule == null) {
-                    rule = new TagRule(Robotica.id("grinding/tag/" + key), plan.kind(), new ArrayList<>(), plan.main(), plan.extras());
+                    rule = new TagRule(Robotica.id("grinding/tag/" + key), plan.kind(), new ArrayList<>(), plan.main(), plan.extras(), plan.boostable());
                     rules.put(key, rule);
                 }
                 if (!rule.inputs().contains(holder.value())) rule.inputs().add(holder.value());
