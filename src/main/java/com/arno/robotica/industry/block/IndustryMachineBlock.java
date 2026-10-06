@@ -1,6 +1,7 @@
 package com.arno.robotica.industry.block;
 
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.industry.menu.ProcessingMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -110,7 +111,8 @@ public abstract class IndustryMachineBlock extends Block implements EntityBlock 
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (level.getBlockEntity(pos) instanceof MenuProvider provider && player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.openMenu(provider, buf -> buf.writeBlockPos(pos));
+            if (provider instanceof ProcessingBlockEntity machine) serverPlayer.openMenu(provider, buf -> ProcessingMenu.writeOpenData(buf, machine));
+            else serverPlayer.openMenu(provider, buf -> buf.writeBlockPos(pos));
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;

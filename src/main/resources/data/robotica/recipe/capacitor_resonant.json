@@ -13,9 +13,14 @@
     "L": {
       "item": "robotica:resonant_lattice"
     },
-    "G": {
-      "tag": "c:gems/resonite"
-    },
+    "G": [
+      {
+        "tag": "c:gems/resonite"
+      },
+      {
+        "tag": "c:dusts/resonite"
+      }
+    ],
     "X": {
       "item": "robotica:capacitor_ender"
     }

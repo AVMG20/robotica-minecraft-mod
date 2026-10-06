@@ -7,6 +7,7 @@ import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.items.SlotItemHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,22 +76,72 @@ public abstract class MachineMenu extends AbstractContainerMenu {
         return synced.get(index)[0];
     }
 
+    /**
+     * Plain {@code new SlotItemHandler(...)} slots become {@link MachineSlot}s, so changes made through the menu always
+     * reach the handler's {@code onContentsChanged} and card caps hold for normal clicks too.
+     */
+    @Override
+    protected Slot addSlot(Slot slot) {
+        if (slot.getClass() == SlotItemHandler.class) {
+            SlotItemHandler plain = (SlotItemHandler) slot;
+            slot = new MachineSlot(plain.getItemHandler(), plain.getSlotIndex(), plain.x, plain.y);
+        }
+        return super.addSlot(slot);
+    }
+
+    /**
+     * Shift-click between the machine slots and the player inventory. Works on a copy and writes both ends back with
+     * {@link Slot#set}, so item handlers see every change (vanilla shrinks the live stack and calls
+     * {@link Slot#setChanged}, which a {@link SlotItemHandler} sends nowhere).
+     */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        if (machineSlotCount < 0) return ItemStack.EMPTY;
+        if (machineSlotCount < 0 || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
         Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (index < machineSlotCount) {
-            if (!moveItemStackTo(stack, machineSlotCount, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(stack, 0, machineSlotCount, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        if (stack.getCount() == original.getCount()) return ItemStack.EMPTY;
-        slot.onTake(player, stack);
+        if (!slot.hasItem() || !slot.mayPickup(player)) return ItemStack.EMPTY;
+        ItemStack original = slot.getItem().copy();
+        ItemStack stack = original.copy();
+        boolean moved = index < machineSlotCount
+                ? moveItemStackTo(stack, machineSlotCount, slots.size(), true)
+                : moveItemStackTo(stack, 0, machineSlotCount, false);
+        int count = original.getCount() - stack.getCount();
+        if (!moved || count <= 0) return ItemStack.EMPTY;
+        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY, original);
+        else slot.set(stack);
+        if (!(slot instanceof MachineSlot)) slot.setChanged();
+        slot.onTake(player, original.copyWithCount(count));
         return original;
+    }
+
+    /**
+     * Same contract as vanilla (shrinks {@code stack}, returns true if anything moved), but it skips inactive slots,
+     * asks {@link Slot#mayPlace} for merges too, respects what an item handler really accepts ({@link MachineSlot#limit})
+     * and writes targets back with {@link Slot#set} instead of growing their live stacks.
+     */
+    @Override
+    protected boolean moveItemStackTo(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection) {
+        boolean moved = false;
+        if (stack.isStackable()) moved = fill(stack, startIndex, endIndex, reverseDirection, true);
+        if (!stack.isEmpty()) moved |= fill(stack, startIndex, endIndex, reverseDirection, false);
+        return moved;
+    }
+
+    private boolean fill(ItemStack stack, int start, int end, boolean reverse, boolean merge) {
+        boolean moved = false;
+        for (int k = 0; k < end - start && !stack.isEmpty(); k++) {
+            Slot slot = slots.get(reverse ? end - 1 - k : start + k);
+            if (!slot.isActive()) continue;
+            ItemStack current = slot.getItem();
+            if (merge ? current.isEmpty() || !ItemStack.isSameItemSameComponents(current, stack) : !current.isEmpty()) continue;
+            if (!slot.mayPlace(stack)) continue;
+            int n = Math.min(stack.getCount(), MachineSlot.limit(slot, stack) - current.getCount());
+            if (n <= 0) continue;
+            if (merge) slot.set(current.copyWithCount(current.getCount() + n));
+            else slot.setByPlayer(stack.copyWithCount(n));
+            if (!(slot instanceof MachineSlot)) slot.setChanged();
+            stack.shrink(n);
+            moved = true;
+        }
+        return moved;
     }
 }

@@ -1,6 +1,7 @@
 package com.arno.robotica.industry.menu;
 
 import com.arno.robotica.core.menu.MachineMenu;
+import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.industry.IndustryRegistry;
 import com.arno.robotica.industry.block.RtgBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -10,7 +11,6 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 
 /** RTG: fuel slot, waste slot, energy, pellet decay. */
 public class RtgMenu extends MachineMenu {
@@ -28,13 +28,13 @@ public class RtgMenu extends MachineMenu {
     private RtgMenu(int id, Inventory inv, BlockPos pos, IItemHandler items, RtgBlockEntity be) {
         super(IndustryRegistry.RTG_MENU.get(), id);
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
-        addSlot(new SlotItemHandler(items, RtgBlockEntity.FUEL, 56, 30) {
+        addSlot(new MachineSlot(items, RtgBlockEntity.FUEL, 56, 30) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return RtgBlockEntity.isFuel(stack);
             }
         });
-        addSlot(new SlotItemHandler(items, RtgBlockEntity.WASTE, 116, 30) {
+        addSlot(new MachineSlot(items, RtgBlockEntity.WASTE, 116, 30) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;

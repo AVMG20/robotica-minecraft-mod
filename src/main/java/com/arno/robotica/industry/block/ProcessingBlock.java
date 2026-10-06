@@ -49,6 +49,8 @@ public class ProcessingBlock extends IndustryMachineBlock {
                                               InteractionHand hand, BlockHitResult hit) {
         if (stack.getItem() instanceof BlockItem item && item.getBlock() instanceof ProcessingBlock next
                 && next.machine == machine && next.tier == tier + 1) {
+            // Swapping the block is building: adventure mode and protected spots may not.
+            if (!player.mayBuild() || !level.mayInteract(player, pos)) return ItemInteractionResult.FAIL;
             if (!level.isClientSide && upgradeInPlace(level, pos, state, next, player) && !player.getAbilities().instabuild) stack.shrink(1);
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }

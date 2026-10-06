@@ -34,7 +34,7 @@
   "tooltip.robotica.reactor_casing": "Frame and walls of a Fission Reactor",
   "tooltip.robotica.reactor_glass": "Window for Fission and Fusion Reactor walls",
   "tooltip.robotica.reactor_controller": "Brain of a Fission Reactor: fuel, temperature, control rods",
-  "tooltip.robotica.reactor_controller_shape": "Hollow box 3x3x3 to 7x7x7, in a side wall. Inside: Fuel Rod columns and coolant",
+  "tooltip.robotica.reactor_controller_shape": "Hollow box 5x5x5 to 7x7x7, in a side wall. Inside: Fuel Rod columns and coolant",
   "tooltip.robotica.reactor_controller.details": "Frame: Reactor Casing. Walls: casing, Reactor Glass, Power and Access Ports.\nFuel Rods fill whole columns, floor to roof. Coolant next to rods (water, ice, packed ice, blue ice, Cryo Coolant) cools and raises efficiency.\nToo hot: output throttles, then the reactor SCRAMs. It never explodes.",
   "tooltip.robotica.reactor_power_port": "Sends a reactor's FE out. A Tesla Coil can sit on it",
   "tooltip.robotica.reactor_access_port": "Fuel in, waste out: hoppers and pipes welcome",
@@ -172,6 +172,7 @@
   "robotica.configuration.capacitorCopper": "Copper Capacitor (FE)",
   "robotica.configuration.capacitorRedstone": "Redstone Capacitor (FE)",
   "robotica.configuration.capacitorEnder": "Ender Capacitor (FE)",
+  "robotica.configuration.capacitorResonant": "Resonant Capacitor (FE)",
   "robotica.configuration.transferCoilBasic": "Basic Transfer Coil (FE/t)",
   "robotica.configuration.transferCoilAdvanced": "Advanced Transfer Coil (FE/t)",
   "robotica.configuration.transferCoilElite": "Elite Transfer Coil (FE/t)",
@@ -180,5 +181,5 @@
   "robotica.configuration.fusionBuffer": "Fusion FE buffer",
   "robotica.configuration.fusionWarmupTicks": "Plasma warm-up (ticks)",
   "robotica.configuration.fusionStarveTicks": "Plasma survives without fuel (ticks)",
-  "robotica.configuration.fusionChargeRate": "Charging FE/t per tick"
+  "robotica.configuration.fusionChargeRate": "Charging FE/t (all ports together)"
 }

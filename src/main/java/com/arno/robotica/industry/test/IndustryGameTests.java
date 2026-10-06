@@ -7,6 +7,7 @@ import com.arno.robotica.industry.IndustryRegistry;
 import com.arno.robotica.industry.block.ProcessingBlock;
 import com.arno.robotica.industry.block.ProcessingBlockEntity;
 import com.arno.robotica.industry.block.RtgBlockEntity;
+import com.arno.robotica.industry.menu.ProcessingMenu;
 import com.arno.robotica.industry.recipe.Machine;
 import com.arno.robotica.industry.recipe.ProcessingInput;
 import com.arno.robotica.industry.recipe.ProcessingRecipe;
@@ -19,7 +20,12 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.biome.Biomes;
@@ -110,6 +116,85 @@ public class IndustryGameTests {
         helper.assertTrue(mk2.ticksFor(recipe) < mk1Ticks, "Mk2 is faster: " + mk2.ticksFor(recipe) + " vs " + mk1Ticks);
         helper.assertTrue(mk2.upgrades.insertItem(2, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).isEmpty(), "Mk2 takes a fortune card");
         helper.assertTrue(ProcessingBlockEntity.cardCap(Machine.ASSEMBLER, 4, UpgradeKind.SPEED) == 8, "Mk4 takes 8 speed cards");
+        helper.succeed();
+    }
+
+    private static ProcessingRecipe recipeMaking(GameTestHelper helper, Machine machine, Item item) {
+        return helper.getLevel().getRecipeManager().getAllRecipesFor(IndustryRegistry.recipeType(machine).get())
+                .stream().map(RecipeHolder::value).filter(r -> r.getResultItem(helper.getLevel().registryAccess()).is(item))
+                .findFirst().orElseThrow();
+    }
+
+    /**
+     * A Mk4 with 8 speed cards on a 1,000 FE/t recipe wants far more FE/t than its input lets in: it draws only what
+     * it can sustain, takes longer, and still finishes (it used to stall forever).
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void mk4FullSpeedFinishesExpensiveRecipe(GameTestHelper helper) {
+        ProcessingBlockEntity be = place(helper, Machine.ASSEMBLER, 4);
+        be.energy.setEnergy(0);
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 8));
+        ProcessingRecipe recipe = recipeMaking(helper, Machine.ASSEMBLER, IndustryRegistry.FUSION_FUEL_PELLET.get());
+        helper.assertTrue(be.powerFor(recipe) > be.maxDraw(), "the recipe wants more than the input can give: " + be.powerFor(recipe));
+        helper.assertTrue(be.drawFor(recipe) <= be.maxDraw() && be.effectiveTicksFor(recipe) > be.ticksFor(recipe), "the draw is clamped and the craft stretched");
+        be.items.setStackInSlot(0, new ItemStack(IndustryRegistry.RESONITE_DUST.get(), 2));
+        be.items.setStackInSlot(1, new ItemStack(IndustryRegistry.RADIANT_ISOTOPE.get()));
+        long[] fed = new long[1];
+        // Feed it like a cable would: at most the input rate per tick.
+        helper.onEachTick(() -> {
+            fed[0] += be.energy.receiveEnergy(Integer.MAX_VALUE, false);
+            helper.assertTrue(be.lastUse() <= be.maxDraw(), "never draws more than it can sustain: " + be.lastUse());
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(be.items.getStackInSlot(6).is(IndustryRegistry.FUSION_FUEL_PELLET.get()), "the pellet is made");
+            long used = fed[0] - be.energy.getEnergyStored();
+            helper.assertTrue(used == be.workFor(recipe), "FE per craft stays as designed: " + used + " vs " + be.workFor(recipe));
+        });
+    }
+
+    /** Fortune only works on recipes that allow it: alloying by default, centrifuging and assembling not. */
+    @GameTest(template = "empty")
+    public static void fortuneIsPerRecipe(GameTestHelper helper) {
+        helper.assertTrue(recipeMaking(helper, Machine.ALLOY_SMELTER, IndustryRegistry.FERROTHORIUM_INGOT.get()).fortune(), "alloying takes fortune");
+        helper.assertTrue(!recipeMaking(helper, Machine.CENTRIFUGE, Items.SLIME_BALL).fortune(), "centrifuging magma cream does not");
+        helper.assertTrue(!recipeMaking(helper, Machine.ASSEMBLER, IndustryRegistry.THERMOCOUPLE.get()).fortune(), "assembling does not");
+        ProcessingBlockEntity be = place(helper, Machine.ASSEMBLER, 4);
+        ProcessingRecipe recipe = recipeMaking(helper, Machine.ASSEMBLER, IndustryRegistry.THERMOCOUPLE.get());
+        int before = be.powerFor(recipe);
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, 3));
+        helper.assertTrue(be.powerFor(recipe) == before, "fortune cards cost nothing where they do nothing");
+        helper.succeed();
+    }
+
+    /**
+     * Shift-clicking out of a machine writes the change back through the item handler (so the block entity is saved),
+     * and shift-clicking cards in respects the machine's card cap.
+     */
+    @GameTest(template = "empty")
+    public static void shiftClickUpdatesMachine(GameTestHelper helper) {
+        ProcessingBlockEntity be = place(helper, Machine.ALLOY_SMELTER, 1);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        Inventory inv = player.getInventory();
+        for (int i = 0; i < 36; i++) inv.setItem(i, new ItemStack(Items.DIRT, 64));
+        inv.setItem(9, new ItemStack(IndustryRegistry.FERROTHORIUM_INGOT.get(), 60));
+        be.items.setStackInSlot(3, new ItemStack(IndustryRegistry.FERROTHORIUM_INGOT.get(), 10));
+        ProcessingMenu menu = new ProcessingMenu(0, inv, be);
+        LevelChunk chunk = helper.getLevel().getChunkAt(helper.absolutePos(POS));
+        chunk.setUnsaved(false);
+
+        menu.quickMoveStack(player, 3);
+        helper.assertTrue(inv.getItem(9).getCount() == 64, "4 ingots fit into the player's stack, has " + inv.getItem(9).getCount());
+        helper.assertTrue(be.items.getStackInSlot(3).getCount() == 6, "6 stay in the output, has " + be.items.getStackInSlot(3).getCount());
+        helper.assertTrue(chunk.isUnsaved(), "the partial move marked the machine changed");
+
+        // Menu slots: 3 inputs, 1 output, battery, 2 card slots, then the player inventory (slot 9 first).
+        int firstPlayerSlot = Machine.ALLOY_SMELTER.slots() + 1 + be.upgrades.getSlots();
+        inv.setItem(9, CoreItems.cards(UpgradeKind.SPEED, 16));
+        menu.quickMoveStack(player, firstPlayerSlot);
+        helper.assertTrue(be.upgrades.getStackInSlot(0).getCount() == 2 && be.upgrades.getStackInSlot(1).isEmpty(),
+                "Mk1 takes 2 speed cards in one slot, has " + be.upgrades.getStackInSlot(0).getCount() + " + " + be.upgrades.getStackInSlot(1).getCount());
+        helper.assertTrue(inv.getItem(9).getCount() == 14, "the rest stays with the player, has " + inv.getItem(9).getCount());
+        helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == 2, "the card cache sees the cards");
         helper.succeed();
     }
 

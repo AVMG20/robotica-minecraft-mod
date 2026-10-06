@@ -48,8 +48,8 @@ public final class EnergyConfig {
         b.pop();
 
         b.push("fission_reactor");
-        REACTOR_MIN_SIZE = b.comment("Smallest Fission Reactor, outside size in blocks (every axis).")
-                .defineInRange("reactorMinSize", 3, 3, 32);
+        REACTOR_MIN_SIZE = b.comment("Smallest Fission Reactor, outside size in blocks (every axis). 5 is the smallest with room for coolant around a rod.")
+                .defineInRange("reactorMinSize", 5, 5, 32);
         REACTOR_MAX_SIZE = b.comment("Largest Fission Reactor, outside size in blocks (every axis).")
                 .defineInRange("reactorMaxSize", 7, 3, 32);
         REACTOR_BUFFER = b.comment("FE the reactor holds before its Power Ports send it on. Fuel only burns while there is room.")
@@ -102,7 +102,7 @@ public final class EnergyConfig {
                 .defineInRange("fusionWarmupTicks", 200, 1, 72_000);
         FUSION_STARVE = b.comment("Ticks the plasma survives without fuel before it collapses and needs a new ignition charge.")
                 .defineInRange("fusionStarveTicks", 100, 1, 72_000);
-        FUSION_CHARGE_RATE = b.comment("Most FE/t the reactor takes in through each Power Port while charging.")
+        FUSION_CHARGE_RATE = b.comment("Most FE/t the reactor takes in while charging, shared by all its Power Ports.")
                 .defineInRange("fusionChargeRate", 1_000_000, 1, Integer.MAX_VALUE);
         b.pop();
         SPEC = b.build();

@@ -1,11 +1,11 @@
 package com.arno.robotica.energy.menu;
 
+import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.energy.EnergyRegistry;
 import com.arno.robotica.energy.block.FusionControllerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /** Fusion Reactor GUI. Slots: 0-2 fusion fuel, then the player inventory. */
@@ -26,7 +26,7 @@ public class FusionMenu extends ControllerMenu {
 
     private FusionMenu(int id, Inventory inv, BlockPos pos, IItemHandler fuel, @Nullable FusionControllerBlockEntity be) {
         super(EnergyRegistry.FUSION_MENU.get(), id, inv, pos, be);
-        for (int i = 0; i < FusionControllerBlockEntity.FUEL_SLOTS; i++) addSlot(new SlotItemHandler(fuel, i, FUEL_X, SLOT_Y + i * 18));
+        for (int i = 0; i < FusionControllerBlockEntity.FUEL_SLOTS; i++) addSlot(new MachineSlot(fuel, i, FUEL_X, SLOT_Y + i * 18));
         addPlayerInventory(inv, 8, PLAYER_Y);
     }
 

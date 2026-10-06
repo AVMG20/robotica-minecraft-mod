@@ -7,6 +7,8 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +20,9 @@ import java.util.WeakHashMap;
  * (players, pistons, flowing water, other mods' machines). The callback should only set a "dirty" flag; the
  * controller re-scans on its own tick, throttled. Changes without neighbour updates are caught by the controller's
  * slow periodic re-scan. Server side only; a few controllers per level, so the per-update cost is a short loop.
+ *
+ * <p>The callbacks hold their block entities and those their level, so a weak key alone would never let a closed
+ * world go: watches are dropped explicitly when a level unloads and when the server stops.
  */
 @EventBusSubscriber(modid = Robotica.MODID)
 public final class MultiblockWatcher {
@@ -41,6 +46,16 @@ public final class MultiblockWatcher {
     public static boolean isWatched(Level level, BlockPos owner) {
         Map<BlockPos, Watch> map = WATCHES.get(level);
         return map != null && map.containsKey(owner);
+    }
+
+    @SubscribeEvent
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        WATCHES.remove(event.getLevel());
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        WATCHES.clear();
     }
 
     @SubscribeEvent

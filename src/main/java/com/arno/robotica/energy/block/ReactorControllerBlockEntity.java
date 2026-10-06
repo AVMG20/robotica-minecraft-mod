@@ -50,7 +50,8 @@ import java.util.Set;
  *       the SCRAM point), at 1800 C the reactor SCRAMs: rods drop in, it cools down and waits for a reset from the GUI.
  *       It never explodes and never touches blocks.</li>
  * </ul>
- * Fuel only burns while the FE buffer has room and the waste has somewhere to go.
+ * Fuel only burns while the FE buffer has room and the waste has somewhere to go; with less room than a full tick's
+ * output it burns only that share (fuel and heat), so no fuel is wasted on FE the buffer cannot take.
  */
 public class ReactorControllerBlockEntity extends StructureControllerBlockEntity {
     public static final int FUEL_SLOTS = 3, WASTE_SLOTS = 3;
@@ -117,6 +118,9 @@ public class ReactorControllerBlockEntity extends StructureControllerBlockEntity
     private double heat, cooling, efficiency = 1.0, throttle = 1.0;
     private int fePerTick;
     private State state = State.NOT_FORMED;
+    /** Ticks the working glow stays on after the last heat, so a buffer at the brim does not flicker the block. */
+    private int litHold;
+    private static final int LIT_HOLD = 40;
 
     public ReactorControllerBlockEntity(BlockPos pos, BlockState blockState) {
         super(EnergyRegistry.REACTOR_BE.get(), pos, blockState);
@@ -230,15 +234,17 @@ public class ReactorControllerBlockEntity extends StructureControllerBlockEntity
         else {
             int ready = ensureBurning();
             if (ready == 1) {
-                heat = burnHeat * activity;
-                burnLeft -= activity;
-                if (burnLeft <= 0) finishUnit();
+                // Burn only the share of a tick whose FE fits into the buffer.
+                double share = burnShare(burnHeat * activity);
+                heat = burnHeat * activity * share;
+                burnLeft -= activity * share;
+                if (burnLeft <= 1e-9) finishUnit();
                 state = State.RUNNING;
             } else {
                 state = ready == 0 ? State.NO_FUEL : State.WASTE_FULL;
             }
         }
-        cooling = effectiveRods * (EnergyConfig.reactorPassiveCooling() + EnergyConfig.reactorCoolantCapacity() * averageCoolant);
+        cooling = coolingNow();
         double load = cooling > 0 ? heat / cooling : (heat > 0 ? 10.0 : 0.0);
         double safe = EnergyConfig.reactorSafeTemp(), scram = EnergyConfig.reactorScramTemp();
         coolTowards(AMBIENT + (safe - AMBIENT) * load);
@@ -249,7 +255,27 @@ public class ReactorControllerBlockEntity extends StructureControllerBlockEntity
         fePerTick = (int) Math.min(Integer.MAX_VALUE, Math.round(fe));
         if (fePerTick > 0) energy.generate(fePerTick);
         if (!scrammed && temperature >= scram) scram();
-        setLit(heat > 0);
+        if (heat > 0) litHold = LIT_HOLD;
+        else if (litHold > 0) litHold--;
+        setLit(litHold > 0);
+    }
+
+    private double coolingNow() {
+        return effectiveRods * (EnergyConfig.reactorPassiveCooling() + EnergyConfig.reactorCoolantCapacity() * averageCoolant);
+    }
+
+    /** 0..1: how much of a full tick's burn the buffer has room for, from the output that heat would give right now. */
+    private double burnShare(double fullHeat) {
+        double safe = EnergyConfig.reactorSafeTemp(), scram = EnergyConfig.reactorScramTemp();
+        double minThrottle = EnergyConfig.reactorMinThrottle();
+        double throttleNow = temperature <= safe ? 1.0 : Math.max(minThrottle, 1.0 - (1.0 - minThrottle) * (temperature - safe) / (scram - safe));
+        double eff = 1.0 + EnergyConfig.reactorCoolantEfficiency() * averageCoolant;
+        double perHeat = eff * throttleNow * CoreConfig.generation();
+        double expected = Math.min(fullHeat, coolingNow()) * perHeat;
+        double room = energy.getMaxEnergyStored() - energy.getEnergyStored();
+        if (expected <= 0 || room >= expected) return 1.0;
+        // Output is min(heat, cooling) x perHeat, so burning room / (fullHeat x perHeat) of a tick never overfills.
+        return Math.max(0.0, Math.min(1.0, room / (fullHeat * perHeat)));
     }
 
     private void coolTowards(double target) {
@@ -316,6 +342,8 @@ public class ReactorControllerBlockEntity extends StructureControllerBlockEntity
     public int rodInsertion() { return rodInsertion; }
     public boolean isScrammed() { return scrammed; }
     public double temperature() { return temperature; }
+    /** Fuel ticks left of the unit that is burning (fractions while the buffer is nearly full). */
+    public double burnLeft() { return burnLeft; }
     public double heat() { return heat; }
     public double cooling() { return cooling; }
     public double efficiency() { return efficiency; }

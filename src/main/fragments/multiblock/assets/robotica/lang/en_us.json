@@ -16,5 +16,6 @@
   "multiblock.robotica.wall_missing": "Hole in the wall at %s: fill it with %s",
   "multiblock.robotica.wall_wrong": "%s at %s does not belong in the wall (allowed: %s)",
   "multiblock.robotica.gap": "Gap in the wall at %s",
-  "multiblock.robotica.stranger": "%s at %s does not belong in the wall"
+  "multiblock.robotica.stranger": "%s at %s does not belong in the wall",
+  "multiblock.robotica.out_of_world": "The structure would reach outside the world at %s"
 }
