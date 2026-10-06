@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "robotica:block/transfer_coil_basic"
+    }
+  }
+}

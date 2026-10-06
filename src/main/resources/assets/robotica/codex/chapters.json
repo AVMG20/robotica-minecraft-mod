@@ -155,6 +155,69 @@
       ]
     },
     {
+      "title": "Big energy",
+      "icon": "robotica:reactor_controller",
+      "pages": [
+        {
+          "title": "Multiblocks",
+          "text": "Banks and reactors are hollow boxes. Casing on every edge and corner, casing, glass or ports in the walls, the controller in the middle of a side wall with its screen facing out.\n\nThe controller GUI names the first wrong block and where it is. The spyglass button outlines the box and the wrong block in the world.\n\nPorts work with any mod's cables and with Tesla Coils.",
+          "items": [
+            "robotica:bank_casing",
+            "robotica:bank_glass",
+            "robotica:bank_controller",
+            "robotica:reactor_casing",
+            "robotica:reactor_controller",
+            "robotica:fusion_casing",
+            "robotica:fusion_controller"
+          ]
+        },
+        {
+          "title": "Capacitor Bank",
+          "text": "3x3x3 up to 9x9x9. Fill the inside with Capacitors (storage) and at least one Transfer Coil (speed). Copper 8M, Redstone 64M, Ender 512M FE. Coils add 64k, 512k or 4M FE/t, for input and output each.\n\nSneak-right-click a Bank Port to switch it between input and output. A broken controller keeps its energy.",
+          "items": [
+            "robotica:bank_port",
+            "robotica:capacitor_copper",
+            "robotica:capacitor_redstone",
+            "robotica:capacitor_ender",
+            "robotica:transfer_coil_basic",
+            "robotica:transfer_coil_advanced",
+            "robotica:transfer_coil_elite"
+          ]
+        },
+        {
+          "title": "Fission Reactor",
+          "text": "3x3x3 up to 7x7x7. Fuel Rods fill whole columns, floor to roof. Put coolant next to them: water 1, ice 1.5, packed ice 2, blue ice 3, Cryo Coolant 4. Coolant carries the heat away and raises the efficiency.\n\nFuel pellets go in the controller or an Access Port, waste comes out the same way. Power Ports send the FE out; a Tesla Coil can sit on one.\n\nA 5x5x5 with one rod column makes about 1,000 FE/t, a full 7x7x7 tens of thousands.",
+          "items": [
+            "robotica:reactor_casing",
+            "robotica:reactor_glass",
+            "robotica:reactor_fuel_rod",
+            "robotica:reactor_power_port",
+            "robotica:reactor_access_port",
+            "robotica:cryo_coolant"
+          ]
+        },
+        {
+          "title": "Heat and SCRAM",
+          "text": "More heat than cooling and the reactor heats up. Above 1,000 C the output drops, at 1,800 C it SCRAMs: it shuts itself down. It never explodes and never breaks blocks.\n\nDrag the control rod slider to make less heat. After a SCRAM let it cool, fix the cooling, then press Reset.\n\nFuel only burns while the power goes somewhere.",
+          "items": [
+            "robotica:reactor_controller",
+            "robotica:reactor_fuel_rod",
+            "robotica:cryo_coolant"
+          ]
+        },
+        {
+          "title": "Fusion Reactor",
+          "text": "A 7x3x7 box of Fusion Casing. Inside, one layer: a ring of 16 Fusion Coils around an empty 3x3 chamber. Reactor Glass and Reactor Ports fit in its walls.\n\nFeed 20M FE into a Power Port to charge it, add fusion fuel and it ignites: about 200,000 FE/t. It burns fuel whether you use the power or not. Out of fuel, the plasma collapses and needs a new charge.",
+          "items": [
+            "robotica:fusion_casing",
+            "robotica:fusion_coil",
+            "robotica:fusion_controller",
+            "robotica:reactor_power_port"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Robots and farms",
       "icon": "robotica:stumpy",
       "pages": [

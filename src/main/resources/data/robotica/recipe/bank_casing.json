@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PCP",
+    "CXC",
+    "PCP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "C": {
+      "tag": "c:ingots/copper"
+    },
+    "X": {
+      "item": "robotica:iron_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:bank_casing",
+    "count": 8
+  }
+}

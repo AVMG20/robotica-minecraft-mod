@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BQB",
+    "STS",
+    "BQB"
+  ],
+  "key": {
+    "B": {
+      "tag": "c:rods/blaze"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "S": {
+      "item": "minecraft:prismarine_crystals"
+    },
+    "T": {
+      "item": "robotica:transfer_coil_advanced"
+    }
+  },
+  "result": {
+    "id": "robotica:transfer_coil_elite",
+    "count": 1
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "output=false": {
+      "model": "robotica:block/bank_port_input"
+    },
+    "output=true": {
+      "model": "robotica:block/bank_port_output"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CAC",
+    "RXR",
+    "CSC"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:reactor_casing"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "R": {
+      "tag": "c:storage_blocks/redstone"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    }
+  },
+  "result": {
+    "id": "robotica:reactor_controller",
+    "count": 1
+  }
+}

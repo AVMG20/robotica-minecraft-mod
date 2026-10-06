@@ -45,7 +45,11 @@
       "robotica:farm_kit_mk4",
       "robotica:gate_controller",
       "robotica:linking_card",
-      "robotica:flight_module"
+      "robotica:flight_module",
+      "robotica:capacitor_ender",
+      "robotica:fusion_casing",
+      "robotica:fusion_coil",
+      "robotica:fusion_controller"
     ],
     "experience": 80
   }

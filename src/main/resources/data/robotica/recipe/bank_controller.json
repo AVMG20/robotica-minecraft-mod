@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CBC",
+    "RXR",
+    "CBC"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:bank_casing"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "R": {
+      "tag": "c:storage_blocks/redstone"
+    },
+    "X": {
+      "item": "robotica:copper_cell"
+    }
+  },
+  "result": {
+    "id": "robotica:bank_controller",
+    "count": 1
+  }
+}

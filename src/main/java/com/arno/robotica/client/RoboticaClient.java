@@ -8,6 +8,7 @@ import com.arno.robotica.automation.client.AutomationClient;
 import com.arno.robotica.codex.client.CodexClient;
 import com.arno.robotica.core.client.CoreClient;
 import com.arno.robotica.drones.client.DronesClient;
+import com.arno.robotica.energy.client.EnergyClient;
 import com.arno.robotica.exo.client.ExoClient;
 import com.arno.robotica.gear.client.GearClient;
 import com.arno.robotica.power.client.PowerClient;
@@ -30,6 +31,7 @@ public class RoboticaClient {
         CoreClient.init(modBus, container);
         CodexClient.init(modBus, container);
         PowerClient.init(modBus, container);
+        EnergyClient.init(modBus, container);
         AutomationClient.init(modBus, container);
         GearClient.init(modBus, container);
         ArchitectClient.init(modBus, container);

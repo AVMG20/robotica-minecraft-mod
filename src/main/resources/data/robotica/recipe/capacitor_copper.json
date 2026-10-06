@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PCP",
+    "CXC",
+    "PCP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/copper"
+    },
+    "C": {
+      "item": "robotica:copper_cell"
+    },
+    "X": {
+      "item": "robotica:bank_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:capacitor_copper",
+    "count": 1
+  }
+}

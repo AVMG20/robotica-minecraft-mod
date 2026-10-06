@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "RCR",
+    "CXC",
+    "RAR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:storage_blocks/redstone"
+    },
+    "C": {
+      "item": "robotica:redstone_cell"
+    },
+    "X": {
+      "item": "robotica:capacitor_copper"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:capacitor_redstone",
+    "count": 1
+  }
+}

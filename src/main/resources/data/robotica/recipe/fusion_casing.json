@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "ROR",
+    "OXO",
+    "ROR"
+  ],
+  "key": {
+    "R": {
+      "item": "robotica:reactor_casing"
+    },
+    "O": {
+      "item": "minecraft:crying_obsidian"
+    },
+    "X": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:fusion_casing",
+    "count": 8
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PHP",
+    "BCB",
+    "PTP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "C": {
+      "item": "robotica:reactor_casing"
+    },
+    "T": {
+      "tag": "c:chests"
+    }
+  },
+  "result": {
+    "id": "robotica:reactor_access_port",
+    "count": 1
+  }
+}

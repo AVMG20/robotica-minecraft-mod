@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CGC",
+    "GQG",
+    "CGC"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:reactor_casing"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "Q": {
+      "tag": "c:gems/quartz"
+    }
+  },
+  "result": {
+    "id": "robotica:reactor_glass",
+    "count": 4
+  }
+}

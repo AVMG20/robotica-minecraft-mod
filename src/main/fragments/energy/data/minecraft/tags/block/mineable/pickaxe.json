@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:bank_casing",
+    "robotica:bank_controller",
+    "robotica:bank_glass",
+    "robotica:bank_port",
+    "robotica:capacitor_copper",
+    "robotica:capacitor_ender",
+    "robotica:capacitor_redstone",
+    "robotica:cryo_coolant",
+    "robotica:fusion_casing",
+    "robotica:fusion_coil",
+    "robotica:fusion_controller",
+    "robotica:reactor_access_port",
+    "robotica:reactor_casing",
+    "robotica:reactor_controller",
+    "robotica:reactor_fuel_rod",
+    "robotica:reactor_glass",
+    "robotica:reactor_power_port",
+    "robotica:transfer_coil_advanced",
+    "robotica:transfer_coil_basic",
+    "robotica:transfer_coil_elite"
+  ]
+}

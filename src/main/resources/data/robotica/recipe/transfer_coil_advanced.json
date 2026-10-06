@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "GAG",
+    "QTQ",
+    "GAG"
+  ],
+  "key": {
+    "G": {
+      "tag": "c:ingots/gold"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "Q": {
+      "tag": "c:gems/quartz"
+    },
+    "T": {
+      "item": "robotica:transfer_coil_basic"
+    }
+  },
+  "result": {
+    "id": "robotica:transfer_coil_advanced",
+    "count": 1
+  }
+}
