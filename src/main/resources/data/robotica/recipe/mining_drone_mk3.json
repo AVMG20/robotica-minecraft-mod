@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:quantum_circuit"
+  },
+  "base": {
+    "item": "robotica:mining_drone_mk2"
+  },
+  "addition": {
+    "item": "robotica:plasma_actuator"
+  },
+  "result": {
+    "id": "robotica:mining_drone_mk3",
+    "count": 1
+  }
+}

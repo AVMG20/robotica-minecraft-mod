@@ -18,6 +18,8 @@ public final class DronesConfig {
     private static final ModConfigSpec.IntValue TORCH_SPACING;
     private static final ModConfigSpec.IntValue MINING_BUFFER;
     private static final ModConfigSpec.IntValue MINING_BUFFER_MK2;
+    private static final ModConfigSpec.IntValue MINING_BUFFER_MK3;
+    private static final ModConfigSpec.DoubleValue MK3_SPEED;
     private static final ModConfigSpec.IntValue MINING_HEALTH;
 
     private static final ModConfigSpec.DoubleValue SENTRY_DAMAGE;
@@ -51,7 +53,9 @@ public final class DronesConfig {
         TORCH_SPACING = b.comment("A torch from the torch slot is placed every this many slices.").defineInRange("torchSpacing", 8, 2, 64);
         MINING_BUFFER = b.comment("Internal FE buffer of the Mining Drone.").defineInRange("miningBuffer", 500_000, 1_000, 100_000_000);
         MINING_BUFFER_MK2 = b.comment("Internal FE buffer of the Mining Drone Mk2.").defineInRange("miningBufferMk2", 2_000_000, 1_000, 100_000_000);
-        MINING_HEALTH = b.comment("Hit points of the Mining Drone.").defineInRange("miningHealth", 20, 1, 1000);
+        MINING_BUFFER_MK3 = b.comment("Internal FE buffer of the Mining Drone Mk3.").defineInRange("miningBufferMk3", 8_000_000, 1_000, 1_000_000_000);
+        MK3_SPEED = b.comment("Mk3 multiplier of the dig speed (it digs 25 blocks per slice instead of 9).").defineInRange("mk3Speed", 2.5, 1.0, 20.0);
+        MINING_HEALTH = b.comment("Hit points of the Mining Drone (Mk2 x1.5, Mk3 x2).").defineInRange("miningHealth", 20, 1, 1000);
         b.pop();
         b.push("sentry_drone");
         SENTRY_DAMAGE = b.comment("Damage of one energy bolt.").defineInRange("sentryDamage", 5.0, 0.5, 100.0);
@@ -94,8 +98,10 @@ public final class DronesConfig {
     public static int tunnelMaxLength() { return i(TUNNEL_MAX_LENGTH); }
     public static int tunnelDefaultLength() { return Math.min(i(TUNNEL_DEFAULT_LENGTH), tunnelMaxLength()); }
     public static int torchSpacing() { return i(TORCH_SPACING); }
-    public static int miningBuffer(int tier) { return tier >= 2 ? i(MINING_BUFFER_MK2) : i(MINING_BUFFER); }
-    public static int miningHealth(int tier) { return Math.round(i(MINING_HEALTH) * (tier >= 2 ? 1.5F : 1.0F)); }
+    public static int miningBuffer(int tier) { return tier >= 3 ? i(MINING_BUFFER_MK3) : tier >= 2 ? i(MINING_BUFFER_MK2) : i(MINING_BUFFER); }
+    public static int miningHealth(int tier) { return Math.round(i(MINING_HEALTH) * (tier >= 3 ? 2.0F : tier >= 2 ? 1.5F : 1.0F)); }
+    /** Dig speed multiplier of a Mining Drone tier: 1, mk2Speed, mk3Speed. */
+    public static double miningSpeed(int tier) { return tier >= 3 ? d(MK3_SPEED) : tier >= 2 ? d(MK2_SPEED) : 1.0; }
 
     public static float sentryDamage(int tier) { return (float) (d(SENTRY_DAMAGE) * (tier >= 2 ? d(MK2_DAMAGE) : 1.0)); }
     public static int sentryFePerShot() { return i(SENTRY_FE_PER_SHOT); }

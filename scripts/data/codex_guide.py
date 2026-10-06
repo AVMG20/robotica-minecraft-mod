@@ -220,7 +220,7 @@ STEPS = [
      ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'grinder_mk3', 'electric_furnace_mk3', 'pyrosteel_grinding_balls', 'storage_expansion_mk3', 'temp_magma_core', 'accumulator_3', 'tesla_coil_4',
       'tool_upgrade_kit_3', 'rift_upgrade', 'rift_remote', 'servo_stride_module_3', 'kinetic_shield_module', 'cryo_coolant', 'night_vision_module_3', 'sonar_pulse_module_2', 'jet_assist_module_2', 'med_injector_module_2', 'hazard_seal_module',
       'dash_thrusters_module', 'spring_heels_module_3', 'fall_dampener_module_3', 'magnet_module_3', 'capacitor_plating_module_3',
-      'power_regulator_module_2'], 50),
+      'power_regulator_module_2', 'mining_drone_mk3'], 50),
     ('pyrolite', 'age3', 'pyrolite_shard', 'task', 3, 'Fire Stone',
      'Mine Pyrolite Ore in the Nether, most of it in basalt deltas. With ferrothorium and blaze powder it makes Pyrosteel.',
      has('pyrolite_shard', 'pyrolite_ore'), INDUSTRY_PYROLITE, 20),

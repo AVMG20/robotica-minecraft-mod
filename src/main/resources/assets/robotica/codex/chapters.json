@@ -360,10 +360,11 @@
       "pages": [
         {
           "title": "Mining Drone",
-          "text": "A flying helper for early game. Right-click a block to deploy it, sneak-right-click to pick it up again with everything it carries.\n\nGive it a Copper Cell or Mainspring and some torches. In its menu, turn the drill with the N/E/S/W button, pick a length and press the pickaxe. It digs a 3x3 tunnel, lights it, bridges gaps and brings your loot back.\n\nIt turns back for lava, water, a full inventory or low energy. Press H to make the nearest drone dig where you look. Sneak+H calls all drones back.",
+          "text": "A flying helper for early game. Right-click a block to deploy it, sneak-right-click to pick it up again with everything it carries.\n\nGive it a Copper Cell or Mainspring and some torches. In its menu, turn the drill with the N/E/S/W button, pick a length and press the pickaxe. It digs a 3x3 tunnel (Mk3: 5x5 with Fortune I), lights it, bridges gaps and brings your loot back.\n\nIt turns back for lava, water, a full inventory or low energy. Press H to make the nearest drone dig where you look. Sneak+H calls all drones back.",
           "items": [
             "robotica:mining_drone",
-            "robotica:mining_drone_mk2"
+            "robotica:mining_drone_mk2",
+            "robotica:mining_drone_mk3"
           ]
         },
         {

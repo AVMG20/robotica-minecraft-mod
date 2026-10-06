@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * A drone in item form. Right-click a block face to deploy it; sneak-right-click the drone to get this item back with its
- * energy, inventory and settings (data components). Mk2 is the same entity with better numbers, reached by smithing.
+ * energy, inventory and settings (data components). Mk2 (and the Mining Drone Mk3) are the same entity with better numbers, reached by smithing.
  */
 public class DroneItem extends Item implements EnergyItem {
     private final DronesRegistry.Kind kind;
@@ -129,7 +129,8 @@ public class DroneItem extends Item implements EnergyItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         ItemEnergy.appendTooltip(stack, tooltip);
-        tooltip.add(Component.translatable("tooltip.robotica.drone." + kind.name().toLowerCase(java.util.Locale.ROOT)).withStyle(ChatFormatting.GRAY));
+        String key = kind.name().toLowerCase(java.util.Locale.ROOT) + (kind == DronesRegistry.Kind.MINING && tier >= 3 ? "_mk3" : "");
+        tooltip.add(Component.translatable("tooltip.robotica.drone." + key).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.drone.pickup").withStyle(ChatFormatting.DARK_GRAY));
         CompoundTag state = stack.get(DronesRegistry.DRONE_STATE.get());
         if (kind == DronesRegistry.Kind.COURIER) {

@@ -28,6 +28,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -51,7 +52,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Mining Drone: digs a 3x3 tunnel in a straight line, collects the drops, lights the way with torches, bridges floor gaps
+ * Mining Drone: digs a 3x3 tunnel (Mk3: 5x5 with Fortune I) in a straight line, collects the drops, lights the way with torches, bridges floor gaps
  * with cobblestone and flies back to its owner when it is done, when lava or water shows up, when it is full or low on
  * energy. It breaks blocks through a fake player of its owner so protection and claim mods can veto, never touches block
  * entities or unbreakable blocks, and never loads chunks: an unloaded slice ends the job.
@@ -90,6 +91,17 @@ public class MiningDrone extends DroneBase {
 
     /** Tunnel slice cells in dig order: the drone's own line first, then up and down, then the sides. */
     private static final int[][] CELLS = {{0, 0}, {0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+    /** The Mk3 5x5 slice: floor at foot level like the 3x3, so lateral -2..2 and vertical -1..3, nearest cells first. */
+    private static final int[][] CELLS_5 = cells5();
+
+    private static int[][] cells5() {
+        List<int[]> list = new ArrayList<>();
+        for (int vert = -1; vert <= 3; vert++) {
+            for (int lat = -2; lat <= 2; lat++) list.add(new int[]{lat, vert});
+        }
+        list.sort(java.util.Comparator.<int[]>comparingInt(c -> Math.abs(c[0]) + Math.abs(c[1])).thenComparingInt(c -> Math.abs(c[0])));
+        return list.toArray(new int[0][]);
+    }
 
     private static final int PHASE_MOVE = 0;
     private static final int PHASE_CHECK = 1;
@@ -192,7 +204,7 @@ public class MiningDrone extends DroneBase {
 
     @Override
     public Item baseItem() {
-        return tier() >= 2 ? DronesRegistry.MINING_DRONE_MK2.get() : DronesRegistry.MINING_DRONE.get();
+        return tier() >= 3 ? DronesRegistry.MINING_DRONE_MK3.get() : tier() >= 2 ? DronesRegistry.MINING_DRONE_MK2.get() : DronesRegistry.MINING_DRONE.get();
     }
 
     @Override
@@ -207,6 +219,21 @@ public class MiningDrone extends DroneBase {
 
     public int storageSlots() {
         return tier() >= 2 ? STORAGE_MK2 : STORAGE_MK1;
+    }
+
+    /** Half width of the tunnel: 1 for 3x3 (Mk1, Mk2), 2 for 5x5 (Mk3). */
+    public int radius() {
+        return tier() >= 3 ? 2 : 1;
+    }
+
+    /** Cells of one slice as {lateral, vertical} offsets from the drone's line, own line first. */
+    private int[][] sliceCells() {
+        return radius() >= 2 ? CELLS_5 : CELLS;
+    }
+
+    /** Highest vertical offset of a slice: 1 for 3x3, 3 for 5x5 (the floor stays at foot level). */
+    private int top() {
+        return 2 * radius() - 1;
     }
 
     public static boolean isTorch(ItemStack stack) {
@@ -323,9 +350,9 @@ public class MiningDrone extends DroneBase {
         return startTunnel(heading, Math.min(tunnelLength, DronesConfig.tunnelMaxLength()), feet);
     }
 
-    /** Starts a job: the slices run from {@code feet} (the owner's feet) in direction {@code dir}, 3 wide and 3 high from foot level. */
+    /** Starts a job: the slices run from {@code feet} (the owner's feet) in direction {@code dir}, 3 (Mk3: 5) wide and high from foot level. */
     public boolean startTunnel(Direction dir, int length, BlockPos feet) {
-        if (isEnergyLow() || getEnergy() + batteryReserve() < feeBlock() * 9) {
+        if (isEnergyLow() || getEnergy() + batteryReserve() < feeBlock() * sliceCells().length) {
             say(msg("mining.energy"), false);
             CoreSounds.play(this, CoreSounds.ROBOT_ERROR, SoundSource.NEUTRAL, 0.7F, 1.0F);
             return false;
@@ -486,7 +513,7 @@ public class MiningDrone extends DroneBase {
     private int digInterval() {
         int base = digTicksOverride > 0 ? digTicksOverride : CoreConfig.scaleInterval(DronesConfig.miningDigTicks());
         if (digTicksOverride > 0) return Math.max(1, base);
-        return Math.max(1, (int) Math.round(base / (tier() >= 2 ? DronesConfig.mk2Speed() : 1.0)));
+        return Math.max(1, (int) Math.round(base / DronesConfig.miningSpeed(tier())));
     }
 
     private BlockPos axis(Tunnel t, int k) {
@@ -613,15 +640,14 @@ public class MiningDrone extends DroneBase {
         t.phase = PHASE_MINE;
     }
 
-    /** Positions whose fluids matter for a slice: its 3x3, the ring around it and the 3x3 of the next slice. */
+    /** Positions whose fluids matter for a slice: the slice, the ring around it and the slice after it. */
     private List<BlockPos> hazardArea(Tunnel t, int k) {
-        List<BlockPos> list = new ArrayList<>(50);
-        for (int lat = -2; lat <= 2; lat++) {
-            for (int vert = -2; vert <= 2; vert++) list.add(cell(t, k, lat, vert));
+        int r = radius();
+        List<BlockPos> list = new ArrayList<>(100);
+        for (int lat = -r - 1; lat <= r + 1; lat++) {
+            for (int vert = -2; vert <= top() + 1; vert++) list.add(cell(t, k, lat, vert));
         }
-        for (int lat = -1; lat <= 1; lat++) {
-            for (int vert = -1; vert <= 1; vert++) list.add(cell(t, k + 1, lat, vert));
-        }
+        for (int[] c : sliceCells()) list.add(cell(t, k + 1, c[0], c[1]));
         return list;
     }
 
@@ -633,17 +659,15 @@ public class MiningDrone extends DroneBase {
     }
 
     private boolean sliceInBounds(ServerLevel sl, Tunnel t, int k) {
-        for (int lat = -1; lat <= 1; lat++) {
-            for (int vert = -1; vert <= 1; vert++) {
-                BlockPos p = cell(t, k, lat, vert);
-                if (!sl.getWorldBorder().isWithinBounds(p) || !sl.isInWorldBounds(p) || p.getY() <= sl.getMinBuildHeight() + 1) return false;
-            }
+        for (int[] c : sliceCells()) {
+            BlockPos p = cell(t, k, c[0], c[1]);
+            if (!sl.getWorldBorder().isWithinBounds(p) || !sl.isInWorldBounds(p) || p.getY() <= sl.getMinBuildHeight() + 1) return false;
         }
         return true;
     }
 
     private boolean sliceAllAir(ServerLevel sl, Tunnel t, int k) {
-        for (int[] c : CELLS) {
+        for (int[] c : sliceCells()) {
             if (!sl.getBlockState(cell(t, k, c[0], c[1])).isAir()) return false;
         }
         return true;
@@ -661,9 +685,14 @@ public class MiningDrone extends DroneBase {
         return mayBreak(sl, pos, state) ? CellKind.MINE : CellKind.SKIP;
     }
 
-    private ItemStack tool() {
-        if (tool.isEmpty() || tool.is(Items.DIAMOND_PICKAXE) != tier() >= 2) {
-            tool = new ItemStack(tier() >= 2 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE);
+    /** The pickaxe the drone mines with: iron (Mk1), diamond (Mk2), netherite with Fortune I (Mk3). Drops are rolled with it. */
+    public ItemStack tool() {
+        Item wanted = tier() >= 3 ? Items.NETHERITE_PICKAXE : tier() >= 2 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE;
+        if (tool.isEmpty() || !tool.is(wanted)) {
+            tool = new ItemStack(wanted);
+            if (tier() >= 3) {
+                tool.enchant(level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE), 1);
+            }
         }
         return tool;
     }
@@ -683,8 +712,9 @@ public class MiningDrone extends DroneBase {
     }
 
     private void mineSlice(ServerLevel sl, Tunnel t) {
-        while (t.cell < CELLS.length) {
-            int[] c = CELLS[t.cell];
+        int[][] cells = sliceCells();
+        while (t.cell < cells.length) {
+            int[] c = cells[t.cell];
             BlockPos pos = cell(t, t.k, c[0], c[1]);
             BlockState state = sl.getBlockState(pos);
             CellKind kind = classify(sl, pos, state);
@@ -752,15 +782,15 @@ public class MiningDrone extends DroneBase {
     }
 
     private boolean hasFallingAbove(ServerLevel sl, Tunnel t) {
-        for (int lat = -1; lat <= 1; lat++) {
-            if (sl.getBlockState(cell(t, t.k, lat, 2)).getBlock() instanceof FallingBlock) return true;
+        for (int lat = -radius(); lat <= radius(); lat++) {
+            if (sl.getBlockState(cell(t, t.k, lat, top() + 1)).getBlock() instanceof FallingBlock) return true;
         }
         return false;
     }
 
     /** Gaps in the floor of the finished slice are bridged with cobblestone the drone mined, so the tunnel can be walked. */
     private void fillFloor(ServerLevel sl, Tunnel t) {
-        for (int lat = -1; lat <= 1; lat++) {
+        for (int lat = -radius(); lat <= radius(); lat++) {
             BlockPos p = cell(t, t.k, lat, -2);
             if (!sl.isLoaded(p)) continue;
             BlockState s = sl.getBlockState(p);
@@ -774,8 +804,9 @@ public class MiningDrone extends DroneBase {
         ItemStack torchStack = torch.getStackInSlot(0);
         if (torchStack.isEmpty() || !isTorch(torchStack)) return;
         Direction side = left ? t.dir.getCounterClockWise() : t.dir.getClockWise();
-        BlockPos spot = cell(t, t.k, left ? -1 : 1, 0);
-        BlockPos wall = cell(t, t.k, left ? -2 : 2, 0);
+        int r = radius();
+        BlockPos spot = cell(t, t.k, left ? -r : r, 0);
+        BlockPos wall = cell(t, t.k, left ? -r - 1 : r + 1, 0);
         if (!sl.getBlockState(spot).isAir()) return;
         boolean soul = torchStack.is(Items.SOUL_TORCH);
         BlockState placed = null;

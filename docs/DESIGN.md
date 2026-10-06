@@ -415,6 +415,7 @@ Power pass (early power in line with other mods, 40-80 FE/t; the crank made ever
 - Storage Terminal: without power nothing new goes in (taking out and crafting still work). JEI can fill its crafting grid from the terminal and your inventory. A Carry Upgrade (right-click the terminal, stays in for good) makes it keep every item when picked up.
 - Kinetic Shield 400 → 2,000 FE per damage point, absorbs at most 75% of each hit (`kineticShieldAbsorb`). Cells top up a worn suit at most 2,000 FE per second in total (`cellRechargePerSecond`).
 - Mining Drone 60 → 80 FE per block, one block every 8 ticks instead of 3 (it outdug the Age 2 Excavator).
+- Mining Drone Mk3 (Age 3: smithing a Mk2 with a Quantum Circuit template and a Plasma Actuator): 5x5 tunnels (floor at foot level, 2 blocks to each side, 5 high) instead of 3x3, drops rolled with a netherite pickaxe carrying Fortune I, 2.5x dig speed (`mk3Speed`; Mk2 1.5x), 8M FE buffer, double health. Per metre it digs 25 blocks in about 75 ticks against the Mk2's 9 in 45, still 80 FE per block, so it beats the Mk2 without outdigging an Excavator with speed cards.
 - Sprout pays 30 FE per harvested crop (`sproutFePerHarvest`), like Stumpy's per-log cost. Null Lance 20,000 → 8,000 FE per shot.
 - Tool modules: auto-pickup and the void filter need an Auto-Pickup or Void Filter Upgrade installed at a Tinker's Bench; the Age 0 hammer and axe take none.
 
