@@ -37,11 +37,7 @@
   "rewards": {
     "recipes": [
       "robotica:magma_drill_from_servo_drill",
-      "robotica:arc_blade_from_shock_baton",
-      "robotica:exo_helmet_mk3_from_mk2",
-      "robotica:exo_chestplate_mk3_from_mk2",
-      "robotica:exo_leggings_mk3_from_mk2",
-      "robotica:exo_boots_mk3_from_mk2"
+      "robotica:arc_blade_from_shock_baton"
     ],
     "experience": 50
   }

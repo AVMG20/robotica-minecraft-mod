@@ -37,6 +37,14 @@
   ],
   "rewards": {
     "recipes": [
+      "robotica:exo_helmet_mk4_from_mk3",
+      "robotica:exo_chestplate_mk4_from_mk3",
+      "robotica:exo_leggings_mk4_from_mk3",
+      "robotica:exo_boots_mk4_from_mk3",
+      "robotica:capacitor_resonant",
+      "robotica:fusion_casing",
+      "robotica:fusion_coil",
+      "robotica:fusion_controller",
       "robotica:resonite_block",
       "robotica:resonite_crystal_from_block",
       "robotica:resonite_crystal_from_ore_smelting",

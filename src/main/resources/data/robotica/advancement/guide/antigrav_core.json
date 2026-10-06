@@ -40,11 +40,7 @@
       "robotica:null_lance_from_rivet_gun",
       "robotica:flight_module",
       "robotica:kinetic_shield_module_2",
-      "robotica:kinetic_shield_module_3",
-      "robotica:exo_helmet_mk4_from_mk3",
-      "robotica:exo_chestplate_mk4_from_mk3",
-      "robotica:exo_leggings_mk4_from_mk3",
-      "robotica:exo_boots_mk4_from_mk3"
+      "robotica:kinetic_shield_module_3"
     ],
     "experience": 80
   }
