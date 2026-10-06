@@ -69,7 +69,12 @@
       "robotica:colossus_altar",
       "robotica:upgrade_range",
       "robotica:upgrade_fortune",
-      "robotica:upgrade_silk"
+      "robotica:upgrade_silk",
+      "robotica:centrifuge_mk1",
+      "robotica:assembler_mk1",
+      "robotica:centrifuging_depleted_fuel_pellet",
+      "robotica:centrifuging_magma_cream",
+      "robotica:centrifuging_glistering_melon_slice"
     ],
     "experience": 30
   }

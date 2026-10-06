@@ -1,0 +1,61 @@
+{
+  "parent": "robotica:guide/age3",
+  "display": {
+    "icon": {
+      "id": "robotica:pyrolite_shard"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.pyrolite.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.pyrolite.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:pyrolite_shard",
+              "robotica:pyrolite_ore"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:pyrolite_block",
+      "robotica:pyrolite_shard_from_block",
+      "robotica:pyrolite_shard_from_ore_smelting",
+      "robotica:pyrolite_shard_from_ore_blasting",
+      "robotica:pyrolite_dust_from_hammer",
+      "robotica:grinding_pyrolite_dust",
+      "robotica:centrifuging_pyrolite_dust",
+      "robotica:alloying_pyrosteel",
+      "robotica:pyrosteel_plate_from_hammer",
+      "robotica:metal_press_pyrosteel_plate",
+      "robotica:assembling_enriched_fuel_pellet",
+      "robotica:assembling_superconductor_coil",
+      "robotica:assembling_quantum_circuit",
+      "robotica:assembling_plasma_actuator",
+      "robotica:assembling_blazing_casing",
+      "robotica:alloy_smelter_mk3",
+      "robotica:centrifuge_mk2",
+      "robotica:assembler_mk2"
+    ],
+    "experience": 20
+  }
+}

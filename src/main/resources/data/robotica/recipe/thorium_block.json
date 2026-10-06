@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/thorium"
+    }
+  },
+  "result": {
+    "id": "robotica:thorium_block",
+    "count": 1
+  }
+}

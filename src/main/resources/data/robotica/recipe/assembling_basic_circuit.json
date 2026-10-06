@@ -1,0 +1,35 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "c:dusts/redstone"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/gold"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/iron"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/copper"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:basic_circuit"
+    }
+  ],
+  "time": 200
+}

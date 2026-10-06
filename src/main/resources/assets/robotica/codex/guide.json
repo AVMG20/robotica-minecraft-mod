@@ -133,6 +133,18 @@
       "age": 1
     },
     {
+      "id": "robotica:guide/thorium",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:raw_thorium",
+      "age": 1
+    },
+    {
+      "id": "robotica:guide/ferrothorium",
+      "parent": "robotica:guide/thorium",
+      "icon": "robotica:ferrothorium_ingot",
+      "age": 2
+    },
+    {
       "id": "robotica:guide/diamonds",
       "parent": "robotica:guide/basic_circuit",
       "icon": "minecraft:diamond",
@@ -154,6 +166,18 @@
       "id": "robotica:guide/age2",
       "parent": "robotica:guide/diamonds",
       "icon": "robotica:advanced_circuit",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/assembler",
+      "parent": "robotica:guide/age2",
+      "icon": "robotica:assembler_mk1",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/rtg",
+      "parent": "robotica:guide/assembler",
+      "icon": "robotica:rtg",
       "age": 2
     },
     {
@@ -199,6 +223,12 @@
       "age": 3
     },
     {
+      "id": "robotica:guide/pyrolite",
+      "parent": "robotica:guide/age3",
+      "icon": "robotica:pyrolite_shard",
+      "age": 3
+    },
+    {
       "id": "robotica:guide/magma_core",
       "parent": "robotica:guide/age3",
       "icon": "robotica:magma_core",
@@ -214,6 +244,12 @@
       "id": "robotica:guide/age4",
       "parent": "robotica:guide/magma_core",
       "icon": "robotica:null_circuit",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/resonite",
+      "parent": "robotica:guide/age4",
+      "icon": "robotica:resonite_crystal",
       "age": 4
     },
     {

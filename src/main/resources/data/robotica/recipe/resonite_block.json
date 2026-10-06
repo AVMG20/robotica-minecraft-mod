@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GGG",
+    "GGG",
+    "GGG"
+  ],
+  "key": {
+    "G": {
+      "tag": "c:gems/resonite"
+    }
+  },
+  "result": {
+    "id": "robotica:resonite_block",
+    "count": 1
+  }
+}

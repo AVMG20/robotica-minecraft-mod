@@ -1,0 +1,11 @@
+{
+  "type": "robotica:pressing",
+  "ingredient": {
+    "tag": "c:ingots/ferrothorium"
+  },
+  "result": {
+    "id": "robotica:ferrothorium_plate",
+    "count": 1
+  },
+  "time": 120
+}

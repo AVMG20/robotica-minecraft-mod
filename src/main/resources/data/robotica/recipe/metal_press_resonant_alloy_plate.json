@@ -1,0 +1,11 @@
+{
+  "type": "robotica:pressing",
+  "ingredient": {
+    "tag": "c:ingots/resonant_alloy"
+  },
+  "result": {
+    "id": "robotica:resonant_alloy_plate",
+    "count": 1
+  },
+  "time": 200
+}

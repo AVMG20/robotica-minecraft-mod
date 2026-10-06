@@ -9,6 +9,7 @@ import com.arno.robotica.core.RoboticaCore;
 import com.arno.robotica.drones.DronesModule;
 import com.arno.robotica.exo.ExoModule;
 import com.arno.robotica.gear.GearModule;
+import com.arno.robotica.industry.IndustryModule;
 import com.arno.robotica.power.PowerModule;
 import com.arno.robotica.replicator.ReplicatorModule;
 import com.arno.robotica.warp.WarpModule;
@@ -33,6 +34,7 @@ public class Robotica {
         RoboticaCore.init(modBus, container);
         CodexModule.init(modBus, container);
         PowerModule.init(modBus, container);
+        IndustryModule.init(modBus, container);
         AutomationModule.init(modBus, container);
         GearModule.init(modBus, container);
         ArchitectModule.init(modBus, container);

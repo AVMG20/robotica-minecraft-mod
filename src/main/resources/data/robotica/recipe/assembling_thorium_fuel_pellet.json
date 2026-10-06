@@ -1,0 +1,29 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "c:dusts/thorium"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:dusts/graphite"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/ferrothorium"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:thorium_fuel_pellet"
+    }
+  ],
+  "time": 200
+}

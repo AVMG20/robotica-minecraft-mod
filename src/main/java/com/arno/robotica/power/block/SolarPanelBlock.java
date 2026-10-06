@@ -59,5 +59,6 @@ public class SolarPanelBlock extends PowerBlock {
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.robotica.solar", tier.output()).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.solar_push").withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.generator_cards").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

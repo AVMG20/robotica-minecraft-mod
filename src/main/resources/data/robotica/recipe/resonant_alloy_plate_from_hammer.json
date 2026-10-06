@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:tinkers_hammer"
+    },
+    {
+      "tag": "c:ingots/resonant_alloy"
+    },
+    {
+      "tag": "c:ingots/resonant_alloy"
+    }
+  ],
+  "result": {
+    "id": "robotica:resonant_alloy_plate",
+    "count": 1
+  }
+}

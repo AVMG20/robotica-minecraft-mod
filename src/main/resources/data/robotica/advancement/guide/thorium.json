@@ -1,0 +1,62 @@
+{
+  "parent": "robotica:guide/basic_circuit",
+  "display": {
+    "icon": {
+      "id": "robotica:raw_thorium"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.thorium.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.thorium.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:raw_thorium",
+              "robotica:thorium_ore",
+              "robotica:deepslate_thorium_ore",
+              "robotica:thorium_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:raw_thorium_block",
+      "robotica:raw_thorium_from_block",
+      "robotica:thorium_block",
+      "robotica:thorium_ingot_from_block",
+      "robotica:thorium_ingot_from_smelting",
+      "robotica:thorium_ingot_from_blasting",
+      "robotica:thorium_ingot_from_dust_smelting",
+      "robotica:thorium_ingot_from_dust_blasting",
+      "robotica:thorium_ingot_from_ore_smelting",
+      "robotica:thorium_ingot_from_ore_blasting",
+      "robotica:thorium_dust_from_hammer",
+      "robotica:graphite_dust_from_hammer",
+      "robotica:grinding_graphite_dust",
+      "robotica:thorium_plate_from_hammer",
+      "robotica:metal_press_thorium_plate",
+      "robotica:alloy_smelter_mk1",
+      "robotica:alloying_ferrothorium"
+    ],
+    "experience": 10
+  }
+}

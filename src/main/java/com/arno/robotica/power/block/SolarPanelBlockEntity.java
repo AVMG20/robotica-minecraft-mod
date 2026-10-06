@@ -3,6 +3,7 @@ package com.arno.robotica.power.block;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
+import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -10,13 +11,41 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Generates while it is day and the sky is visible (checked once per second). Pushes into every neighbour. */
+/**
+ * Generates while it is day and the sky is visible (checked once per second). Pushes into every neighbour.
+ * Two card slots: each speed card adds {@link PowerConfig#solarSpeedBonus()} % daylight output, each efficiency card
+ * lets it keep {@link PowerConfig#solarNightPerCard()} % of it at night under open sky (moonlight).
+ */
 public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source {
-    private static final int KIND = com.arno.robotica.power.menu.EnergyInfoMenu.KIND_SOLAR;
     public final MachineEnergyStorage energy;
     private final SolarPanelBlock.Tier tier;
     private final int pushRate;
     private boolean sunny;
+    private boolean openSky;
+    public final com.arno.robotica.core.upgrade.Upgrades upgrades = new com.arno.robotica.core.upgrade.Upgrades(2,
+            java.util.Map.of(com.arno.robotica.core.upgrade.UpgradeKind.SPEED, 4, com.arno.robotica.core.upgrade.UpgradeKind.EFFICIENCY, 4), this::setChanged);
+
+    @Override
+    public net.neoforged.neoforge.items.IItemHandler quickUpgrades() {
+        return upgrades;
+    }
+
+    @Override
+    public void dropContents(net.minecraft.world.level.Level level, BlockPos pos) {
+        drop(level, pos, upgrades);
+    }
+
+    /** FE/t (before the global multiplier) for a base output, sun or night, and the installed cards. */
+    public static int outputFor(int base, boolean sun, int speedCards, int efficiencyCards) {
+        if (sun) return (int) Math.round(base * (1.0 + PowerConfig.solarSpeedBonus() / 100.0 * speedCards));
+        return (int) Math.round(base * PowerConfig.solarNightPerCard() / 100.0 * efficiencyCards);
+    }
+
+    private int currentOutput() {
+        if (!openSky) return 0;
+        return CoreConfig.scaleGeneration(outputFor(tier.output(), sunny,
+                upgrades.level(com.arno.robotica.core.upgrade.UpgradeKind.SPEED), upgrades.level(com.arno.robotica.core.upgrade.UpgradeKind.EFFICIENCY)));
+    }
 
     public SolarPanelBlockEntity(BlockPos pos, BlockState state) {
         super(typeFor(state), pos, state);
@@ -46,7 +75,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
 
     @Override
     public int rate() {
-        return sunny ? CoreConfig.scaleGeneration(tier.output()) : 0;
+        return currentOutput();
     }
 
     @Override
@@ -66,15 +95,17 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
 
     @Override
     public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv, net.minecraft.world.entity.player.Player player) {
-        return new com.arno.robotica.power.menu.EnergyInfoMenu(id, inv, getBlockPos(), KIND, this);
+        return new com.arno.robotica.power.menu.SolarPanelMenu(id, inv, this);
     }
 
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         if ((level.getGameTime() + pos.asLong()) % 20 == 0) {
-            sunny = !level.dimensionType().hasFixedTime() && level.isDay() && level.canSeeSky(pos.above());
+            openSky = !level.dimensionType().hasFixedTime() && level.canSeeSky(pos.above());
+            sunny = openSky && level.isDay();
         }
-        if (sunny) energy.generate(CoreConfig.scaleGeneration(tier.output()));
+        int gen = currentOutput();
+        if (gen > 0) energy.generate(gen);
         if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, pushRate);
     }
 
@@ -82,11 +113,13 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.put("energy", energy.serializeNBT(registries));
+        tag.put("upgrades", upgrades.serializeNBT(registries));
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
     }
 }

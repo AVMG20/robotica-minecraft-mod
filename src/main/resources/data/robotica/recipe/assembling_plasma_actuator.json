@@ -1,0 +1,42 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:servo_actuator"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:prismarine_crystals"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:blaze_powder"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "robotica:quantum_circuit"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/pyrosteel"
+      },
+      "count": 2
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:plasma_actuator"
+    }
+  ],
+  "time": 400,
+  "power": 400
+}

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "#c:ingots/thorium",
+    "#c:ingots/ferrothorium",
+    "#c:ingots/pyrosteel",
+    "#c:ingots/resonant_alloy"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "PMP",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/pyrosteel"
+    },
+    "C": {
+      "item": "robotica:quantum_circuit"
+    },
+    "S": {
+      "item": "robotica:superconductor_coil"
+    },
+    "M": {
+      "item": "robotica:alloy_smelter_mk2"
+    }
+  },
+  "result": {
+    "id": "robotica:alloy_smelter_mk3",
+    "count": 1
+  }
+}

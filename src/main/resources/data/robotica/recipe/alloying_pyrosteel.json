@@ -1,0 +1,35 @@
+{
+  "type": "robotica:alloying",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "c:ingots/ferrothorium"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "c:gems/pyrolite"
+        },
+        {
+          "tag": "c:dusts/pyrolite"
+        }
+      ],
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:blaze_powder"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:pyrosteel_ingot"
+    }
+  ],
+  "time": 300,
+  "power": 120
+}

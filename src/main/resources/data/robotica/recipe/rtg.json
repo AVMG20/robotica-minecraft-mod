@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PTP",
+    "GXG",
+    "PTP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/ferrothorium"
+    },
+    "T": {
+      "item": "robotica:thermocouple"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:rtg",
+    "count": 1
+  }
+}

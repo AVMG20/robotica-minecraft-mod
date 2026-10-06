@@ -1,0 +1,24 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "c:dusts/resonite"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "robotica:radiant_isotope"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:fusion_fuel_pellet"
+    }
+  ],
+  "time": 400,
+  "power": 1000
+}

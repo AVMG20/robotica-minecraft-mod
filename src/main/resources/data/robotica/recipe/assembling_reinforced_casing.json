@@ -1,0 +1,36 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:iron_casing"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "tag": "c:obsidians"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:gems/diamond"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/ferrothorium"
+      },
+      "count": 2
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:reinforced_casing"
+    }
+  ],
+  "time": 300,
+  "power": 160
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": {
+    "tag": "c:ores/resonite"
+  },
+  "result": {
+    "id": "robotica:resonite_crystal"
+  },
+  "experience": 1.5,
+  "cookingtime": 100
+}

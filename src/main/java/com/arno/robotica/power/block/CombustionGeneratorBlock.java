@@ -32,5 +32,6 @@ public class CombustionGeneratorBlock extends PowerBlock {
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.robotica.combustion_generator", PowerConfig.generatorOutput()).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.generator_cards").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

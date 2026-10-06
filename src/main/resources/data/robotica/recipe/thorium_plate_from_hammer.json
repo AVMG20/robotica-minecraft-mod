@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:tinkers_hammer"
+    },
+    {
+      "tag": "c:ingots/thorium"
+    },
+    {
+      "tag": "c:ingots/thorium"
+    }
+  ],
+  "result": {
+    "id": "robotica:thorium_plate",
+    "count": 1
+  }
+}

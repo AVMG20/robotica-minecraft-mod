@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PAP",
+    "MTM",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/ferrothorium"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "T": {
+      "item": "minecraft:crafting_table"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    }
+  },
+  "result": {
+    "id": "robotica:assembler_mk1",
+    "count": 1
+  }
+}

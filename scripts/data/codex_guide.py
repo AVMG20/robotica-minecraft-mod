@@ -50,6 +50,32 @@ def cards(*kinds):
     return [f'upgrade_{k}' for k in kinds]
 
 
+# Industry module (ores, alloys, machines, RTG): recipe unlocks per step.
+INDUSTRY_THORIUM = ['raw_thorium_block', 'raw_thorium_from_block', 'thorium_block', 'thorium_ingot_from_block',
+                    'thorium_ingot_from_smelting', 'thorium_ingot_from_blasting', 'thorium_ingot_from_dust_smelting',
+                    'thorium_ingot_from_dust_blasting', 'thorium_ingot_from_ore_smelting', 'thorium_ingot_from_ore_blasting',
+                    'thorium_dust_from_hammer', 'graphite_dust_from_hammer', 'grinding_graphite_dust',
+                    'thorium_plate_from_hammer', 'metal_press_thorium_plate', 'alloy_smelter_mk1', 'alloying_ferrothorium']
+INDUSTRY_FERROTHORIUM = ['ferrothorium_plate_from_hammer', 'metal_press_ferrothorium_plate']
+INDUSTRY_AGE2 = ['centrifuge_mk1', 'assembler_mk1', 'centrifuging_depleted_fuel_pellet', 'centrifuging_magma_cream',
+                 'centrifuging_glistering_melon_slice']
+INDUSTRY_ASSEMBLER = ['rtg', 'alloy_smelter_mk2', 'assembling_thermocouple', 'assembling_thorium_fuel_pellet',
+                      'assembling_basic_circuit', 'assembling_electric_motor', 'assembling_advanced_circuit',
+                      'assembling_servo_actuator', 'assembling_reinforced_casing']
+INDUSTRY_PYROLITE = ['pyrolite_block', 'pyrolite_shard_from_block', 'pyrolite_shard_from_ore_smelting',
+                     'pyrolite_shard_from_ore_blasting', 'pyrolite_dust_from_hammer', 'grinding_pyrolite_dust',
+                     'centrifuging_pyrolite_dust', 'alloying_pyrosteel', 'pyrosteel_plate_from_hammer',
+                     'metal_press_pyrosteel_plate', 'assembling_enriched_fuel_pellet', 'assembling_superconductor_coil',
+                     'assembling_quantum_circuit', 'assembling_plasma_actuator', 'assembling_blazing_casing',
+                     'alloy_smelter_mk3', 'centrifuge_mk2', 'assembler_mk2']
+INDUSTRY_RESONITE = ['resonite_block', 'resonite_crystal_from_block', 'resonite_crystal_from_ore_smelting',
+                     'resonite_crystal_from_ore_blasting', 'resonite_dust_from_hammer', 'grinding_resonite_dust',
+                     'alloying_resonant_alloy', 'resonant_alloy_plate_from_hammer', 'metal_press_resonant_alloy_plate',
+                     'assembling_resonant_lattice', 'assembling_fusion_fuel_pellet', 'assembling_null_circuit',
+                     'assembling_null_casing', 'alloy_smelter_mk4', 'centrifuge_mk3', 'centrifuge_mk4', 'assembler_mk3',
+                     'assembler_mk4']
+
+
 # (name, parent, icon, frame, age, title, description, criterion, recipes, xp). A list of criteria means any one of them.
 STEPS = [
     ('root', None, 'codex', 'task', 0, 'Robotica',
@@ -127,6 +153,12 @@ STEPS = [
     ('warp', 'basic_circuit', 'warp_pad', 'task', 1, 'Home Run',
      'Place two Warp Pads, power them, stand on one and right-click it.',
      milestone('warp'), [], 10),
+    ('thorium', 'basic_circuit', 'raw_thorium', 'task', 1, 'Green Glow',
+     'Mine Thorium Ore (Y -48 to 32). Smelt it into ingots; an Alloy Smelter turns iron and thorium into Ferrothorium.',
+     has('raw_thorium', 'thorium_ore', 'deepslate_thorium_ore', 'thorium_ingot'), INDUSTRY_THORIUM, 10),
+    ('ferrothorium', 'thorium', 'ferrothorium_ingot', 'task', 2, 'Alloyed',
+     'Make Ferrothorium in an Alloy Smelter. Its plates build the Age 2 industry machines.',
+     has('ferrothorium_ingot'), INDUSTRY_FERROTHORIUM, 10),
     ('diamonds', 'basic_circuit', 'minecraft:diamond', 'goal', 2, 'Diamonds!',
      'Find diamonds. They make the Excavator and the Age 2 parts.',
      has('minecraft:diamond'), ['excavator', 'reinforced_casing', 'advanced_circuit'], 20),
@@ -141,7 +173,13 @@ STEPS = [
      has('advanced_circuit', 'reinforced_casing'),
      ['servo_actuator', 'storage_expansion_mk2', 'redstone_cell', 'temp_servo_core', 'solar_panel_mk2', 'accumulator_2', 'tesla_coil_3', 'rivet_gun',
       'tool_upgrade_kit_2', 'farm_kit_mk3', 'essence_vial', 'replicator_frame', 'replicator_glass',
-      'replicator_controller', 'survey_rig', 'mining_drone_mk2', 'sentry_drone_mk2', 'courier_drone_mk2', 'exo_helmet_mk2_from_mk1', 'exo_chestplate_mk2_from_mk1', 'exo_leggings_mk2_from_mk1', 'exo_boots_mk2_from_mk1', 'rebreather_module', 'rebreather_module_from_prismarine', 'jet_assist_module', 'servo_stride_module_2', 'robot_hud_module', 'fall_dampener_module', 'magnet_module', 'colossus_altar'] + cards('range', 'fortune', 'silk'), 30),
+      'replicator_controller', 'survey_rig', 'mining_drone_mk2', 'sentry_drone_mk2', 'courier_drone_mk2', 'exo_helmet_mk2_from_mk1', 'exo_chestplate_mk2_from_mk1', 'exo_leggings_mk2_from_mk1', 'exo_boots_mk2_from_mk1', 'rebreather_module', 'rebreather_module_from_prismarine', 'jet_assist_module', 'servo_stride_module_2', 'robot_hud_module', 'fall_dampener_module', 'magnet_module', 'colossus_altar'] + cards('range', 'fortune', 'silk') + INDUSTRY_AGE2, 30),
+    ('assembler', 'age2', 'assembler_mk1', 'task', 2, 'Machine Made',
+     'Place an Assembler. It makes Thermocouples and fuel pellets, and ladder parts for less than the crafting table.',
+     placed('assembler_mk1', 'assembler_mk2', 'assembler_mk3', 'assembler_mk4'), INDUSTRY_ASSEMBLER, 15),
+    ('rtg', 'assembler', 'rtg', 'task', 2, 'Slow Burn',
+     'Place a Radioisotope Generator and feed it Thorium Fuel Pellets: 150 FE/t, quietly, 20 minutes a pellet.',
+     placed('rtg'), [], 15),
     ('foundry', 'age2', 'signal_flare', 'task', 2, 'Signs of Scrap',
      'Find a Rusted Foundry (a ruined copper hall in plains, deserts and badlands) or craft a Signal Flare.',
      [in_structure('robotica:rusted_foundry'), has('signal_flare')], [], 10),
@@ -165,6 +203,9 @@ STEPS = [
      has('quantum_circuit', 'plasma_actuator'),
      ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'storage_expansion_mk3', 'temp_magma_core', 'accumulator_3', 'tesla_coil_4',
       'tool_upgrade_kit_3', 'rift_upgrade', 'rift_remote', 'servo_stride_module_3', 'kinetic_shield_module'], 50),
+    ('pyrolite', 'age3', 'pyrolite_shard', 'task', 3, 'Fire Stone',
+     'Mine Pyrolite Ore in the Nether, most of it in basalt deltas. With ferrothorium and blaze powder it makes Pyrosteel.',
+     has('pyrolite_shard', 'pyrolite_ore'), INDUSTRY_PYROLITE, 20),
     ('magma_core', 'age3', 'magma_core', 'goal', 3, 'Hot Core',
      'Get a Magma Core: Magma Drill, Arc Blade, Rift Upgrade and Age 3 mobs in the replicator.',
      has('magma_core'), ['magma_drill_from_servo_drill', 'arc_blade_from_shock_baton'], 50),
@@ -176,6 +217,9 @@ STEPS = [
      has('null_circuit'),
      ['null_casing', 'null_circuit', 'ender_cell', 'temp_antigrav_core', 'tool_upgrade_kit_4', 'tesla_coil_5',
       'farm_kit_mk4', 'gate_controller', 'linking_card', 'flight_module'], 80),
+    ('resonite', 'age4', 'resonite_crystal', 'task', 4, 'Echoes',
+     'Mine Resonite Ore on the outer End islands. Pyrosteel, resonite and an ender pearl make Resonant Alloy.',
+     has('resonite_crystal', 'resonite_ore'), INDUSTRY_RESONITE, 30),
     ('antigrav_core', 'age4', 'antigrav_core', 'goal', 4, 'Weightless',
      'Get an Antigrav Core: the Null Drill, the Null Lance and Portal Projectors.',
      has('antigrav_core'), ['null_drill_from_magma_drill', 'null_lance_from_rivet_gun'], 80),

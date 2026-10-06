@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/raw_thorium"
+    }
+  ],
+  "result": {
+    "id": "robotica:raw_thorium",
+    "count": 9
+  }
+}

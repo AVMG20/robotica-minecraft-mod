@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "PMP",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "S": {
+      "item": "robotica:resonant_lattice"
+    },
+    "M": {
+      "item": "robotica:assembler_mk3"
+    }
+  },
+  "result": {
+    "id": "robotica:assembler_mk4",
+    "count": 1
+  }
+}

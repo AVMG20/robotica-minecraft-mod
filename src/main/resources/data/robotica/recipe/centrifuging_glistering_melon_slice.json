@@ -1,0 +1,21 @@
+{
+  "type": "robotica:centrifuging",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "minecraft:glistering_melon_slice"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "minecraft:melon_slice"
+    },
+    {
+      "id": "minecraft:gold_nugget",
+      "count": 4
+    }
+  ],
+  "time": 160
+}

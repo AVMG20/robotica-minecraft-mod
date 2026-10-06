@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:tinkers_hammer"
+    },
+    {
+      "tag": "c:ingots/ferrothorium"
+    },
+    {
+      "tag": "c:ingots/ferrothorium"
+    }
+  ],
+  "result": {
+    "id": "robotica:ferrothorium_plate",
+    "count": 1
+  }
+}

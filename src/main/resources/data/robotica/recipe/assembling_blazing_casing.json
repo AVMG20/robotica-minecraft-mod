@@ -1,0 +1,37 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:reinforced_casing"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:netherite_scrap"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "robotica:magma_core"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/pyrosteel"
+      },
+      "count": 2
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:blazing_casing",
+      "count": 2
+    }
+  ],
+  "time": 400,
+  "power": 400
+}

@@ -1,0 +1,26 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:thorium_ore",
+    "robotica:deepslate_thorium_ore",
+    "robotica:pyrolite_ore",
+    "robotica:resonite_ore",
+    "robotica:raw_thorium_block",
+    "robotica:thorium_block",
+    "robotica:pyrolite_block",
+    "robotica:resonite_block",
+    "robotica:alloy_smelter_mk1",
+    "robotica:alloy_smelter_mk2",
+    "robotica:alloy_smelter_mk3",
+    "robotica:alloy_smelter_mk4",
+    "robotica:centrifuge_mk1",
+    "robotica:centrifuge_mk2",
+    "robotica:centrifuge_mk3",
+    "robotica:centrifuge_mk4",
+    "robotica:assembler_mk1",
+    "robotica:assembler_mk2",
+    "robotica:assembler_mk3",
+    "robotica:assembler_mk4",
+    "robotica:rtg"
+  ]
+}

@@ -1,8 +1,6 @@
 package com.arno.robotica.power.client.screen;
 
-import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.client.MachineScreen;
-import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.menu.CombustionGeneratorMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -19,7 +17,7 @@ public class CombustionGeneratorScreen extends MachineScreen<CombustionGenerator
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        int output = CoreConfig.scaleGeneration(PowerConfig.generatorOutput());
+        int output = menu.output();
         boolean burning = menu.burnTime() > 0;
         drawEnergyBar(g, x + 12, y + 17, 14, 52, menu.energy(), menu.capacity(), false,
                 Component.translatable("gui.robotica.generating", output).withStyle(ChatFormatting.GRAY));
@@ -36,11 +34,15 @@ public class CombustionGeneratorScreen extends MachineScreen<CombustionGenerator
 
     @Override
     protected ItemStack ghostIcon(Slot slot) {
-        return new ItemStack(Items.COAL);
+        return switch (slot.index) {
+            case 0 -> new ItemStack(Items.COAL);
+            case 1 -> icon("upgrade_speed");
+            default -> icon("upgrade_efficiency");
+        };
     }
 
     @Override
     protected Component slotHint(Slot slot) {
-        return Component.translatable("gui.robotica.slot_fuel");
+        return Component.translatable(slot.index == 0 ? "gui.robotica.slot_fuel" : "gui.robotica.slot_upgrade");
     }
 }
