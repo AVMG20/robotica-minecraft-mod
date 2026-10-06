@@ -112,6 +112,38 @@
         "#c:dusts/lead"
       ]
     },
+    "#c:ores/thorium": {
+      "byproducts": [
+        "#c:dusts/graphite",
+        "#c:dusts/lead"
+      ]
+    },
+    "#c:raw_materials/thorium": {
+      "byproducts": [
+        "#c:dusts/graphite",
+        "#c:dusts/lead"
+      ]
+    },
+    "#c:ores/pyrolite": {
+      "byproducts": [
+        "#c:dusts/glowstone"
+      ]
+    },
+    "#c:raw_materials/pyrolite": {
+      "byproducts": [
+        "#c:dusts/glowstone"
+      ]
+    },
+    "#c:ores/resonite": {
+      "byproducts": [
+        "minecraft:popped_chorus_fruit"
+      ]
+    },
+    "#c:raw_materials/resonite": {
+      "byproducts": [
+        "minecraft:popped_chorus_fruit"
+      ]
+    },
     "#c:ores/redstone": {
       "byproducts": [
         "#c:dusts/glowstone"

@@ -138,6 +138,9 @@ BYPRODUCTS = {
     'osmium': ['#c:dusts/tin', '#c:dusts/iron'],
     'zinc': ['#c:dusts/lead', '#c:dusts/iron'],
     'uranium': ['#c:dusts/lead'],
+    'thorium': ['#c:dusts/graphite', '#c:dusts/lead'],
+    'pyrolite': ['#c:dusts/glowstone'],
+    'resonite': ['minecraft:popped_chorus_fruit'],
 }
 values = {}
 for metal, refs in BYPRODUCTS.items():

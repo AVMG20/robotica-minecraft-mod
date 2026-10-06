@@ -230,7 +230,7 @@ Multiblock power for packs next to Mekanism, Thermal and Immersive Engineering: 
 - `robotica:fusion_fuel` (items): `{"power": int, "ticks": int}`; `.../item/fusion_fuel.json`.
 - `robotica:reactor_coolant` (blocks): `{"cooling": float}`; `.../block/reactor_coolant.json` (shipped here).
 
-Recipes use the ladder parts: Bank Casing (iron plates, copper, Iron Casing, x8), Reactor Casing (ferrothorium plates, obsidian, Reinforced Casing, x8), Fuel Rods (thorium plates, glass, graphite dust), Fusion Casing (Reactor Casing, resonant alloy plates, Blazing Casing, x8), Fusion Coils and Elite Transfer Coils (Superconductor Coils); controllers take that age's circuit and casing; Fusion Coils a Null Circuit and Plasma Actuators. Guide steps: "Bank on It" (bank formed), "Split the Atom" (reactor formed), "Star in a Jar" (fusion ignited). **[integration]** casings switch to industry plates, a Resonant Capacitor tier.
+Recipes use the ladder parts: Bank Casing (iron plates, copper, Iron Casing, x8), Reactor Casing (ferrothorium plates, obsidian, Reinforced Casing, x8), Fuel Rods (thorium plates, glass, graphite dust), Fusion Casing (Reactor Casing, resonant alloy plates, Blazing Casing, x8), Fusion Coils and Elite Transfer Coils (Superconductor Coils); controllers take that age's circuit and casing; Fusion Coils a Null Circuit and Plasma Actuators. Guide steps: "Bank on It" (bank formed), "Split the Atom" (reactor formed), "Star in a Jar" (fusion ignited).
 
 ## Ore processing (module `processing`)
 
@@ -380,7 +380,7 @@ Getting home and travelling between bases. All teleports run on the server, cost
 
 ## Later (not in this build)
 
-Guard Drone, Wingman, Mole, Courier, Exo-Frame armor, the Magma and Antigrav bosses, Magma Reactor, Ender conduit, RS API integration, Create compat.
+Guard Drone, Wingman, Mole, the Magma and Antigrav bosses, an item storage network, RS API integration, Create compat.
 
 ## Engineering rules (all modules)
 

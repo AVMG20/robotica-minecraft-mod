@@ -55,7 +55,7 @@
   "robotica.configuration.rawDustCount": "Dusts per raw ore",
   "robotica.configuration.rawBonusChance": "Raw ore bonus dust chance",
   "robotica.configuration.ingotDustCount": "Dusts per ingot",
-  "robotica.configuration.fortuneBonus": "Fortune card ore bonus",
+  "robotica.configuration.fortuneBonus": "Fortune card bonus (% per card)",
   "robotica.configuration.fallbackByproducts": "Fallback media byproducts",
   "robotica.configuration.furnaceTimeFactor": "Cooking time factor (Mk1)",
   "robotica.configuration.furnacePower": "Power use per lane (FE/t, Mk1)",
