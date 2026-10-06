@@ -46,14 +46,8 @@ public final class MachineInfoCollector {
             info.progress = worker.guiProgress();
             info.owner = OwnerNames.name(level.getServer(), worker.owner());
             if (worker instanceof FarmBotBlockEntity bot) info.tier = bot.tier();
-            if (worker instanceof SurveyRigBlockEntity rig) {
-                if (rig.rigState() == SurveyRigBlockEntity.RigState.FINISHED || rig.rigState() == SurveyRigBlockEntity.RigState.SURVEYED) {
-                    info.status = "finished";
-                }
-                if (rig.ledgerTotal() > 0) {
-                    info.oresLeft = rig.ledgerLeft();
-                    info.oresTotal = rig.ledgerTotal();
-                }
+            if (worker instanceof SurveyRigBlockEntity rig && rig.lastOre() != null) {
+                info.lastOre = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(rig.lastOre()).toString();
             }
         } else if (be instanceof MetalPressBlockEntity press) {
             boolean lit = press.getBlockState().hasProperty(BlockStateProperties.LIT) && press.getBlockState().getValue(BlockStateProperties.LIT);

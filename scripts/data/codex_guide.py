@@ -177,7 +177,7 @@ STEPS = [
      'Place an Excavator with a chest next to it. It digs a hole down to bedrock, slowly, unless you feed it speed cards and power.',
      placed('excavator'), [], 10),
     ('survey_rig', 'excavator', 'survey_rig', 'task', 2, 'No Holes Barred',
-     'Servo parts make a Survey Rig: it counts the ores in its chunk and pulls them out without digging. Slow, and hungry for power.',
+     'Servo parts make a Survey Rig: place it once and it turns power into random ores. Slow, and very hungry for power.',
      placed('survey_rig'), [], 20),
     ('age2', 'diamonds', 'advanced_circuit', 'goal', 2, 'Servo Age',
      'Craft an Advanced Circuit or a Reinforced Casing: diamonds, obsidian and quartz.',

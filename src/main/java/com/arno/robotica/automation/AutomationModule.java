@@ -1,11 +1,15 @@
 package com.arno.robotica.automation;
 
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
+import com.arno.robotica.automation.entity.SurveyOrePool;
 import com.arno.robotica.core.RoboticaTab;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
@@ -20,6 +24,10 @@ public final class AutomationModule {
         AutomationContent.MENUS.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, AutomationConfig.SPEC, "robotica-automation-server.toml");
         modBus.addListener(AutomationModule::registerCapabilities);
+        // the Survey Rig's ore pool comes from the c:ores tag and the config: rebuild it after either changes
+        modBus.addListener(ModConfigEvent.Loading.class, e -> SurveyOrePool.invalidate());
+        modBus.addListener(ModConfigEvent.Reloading.class, e -> SurveyOrePool.invalidate());
+        NeoForge.EVENT_BUS.addListener(TagsUpdatedEvent.class, e -> SurveyOrePool.invalidate());
 
         RoboticaTab.add(AutomationContent.STUMPY_ITEM);
         RoboticaTab.add(AutomationContent.SPROUT_ITEM);

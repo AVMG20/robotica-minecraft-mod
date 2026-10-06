@@ -427,7 +427,7 @@
         },
         {
           "title": "Survey Rig",
-          "text": "Age 2: Servo parts, a diamond pickaxe and ender pearls. It mines its chunk without digging a hole.\n\nFirst it scans its own chunk, from its height down to the bottom, and counts every ore. Then it pulls one ore at a time out of that ledger, as if mined with a pickaxe. Nothing is dug: no hole, no lag.",
+          "text": "Age 2: Servo parts, a diamond pickaxe and ender pearls. Place it once and power it: it turns a lot of FE into random ores, as if mined with a pickaxe. Nothing is dug: no hole, no lag, no moving it around.\n\nEvery ore with a c:ores tag can come out, other mods' ores and Robotica's too. Common ores (coal, copper, iron) come often, gold, redstone and lapis less, diamonds and emeralds rarely.",
           "items": [
             "robotica:survey_rig",
             "robotica:servo_actuator",
@@ -436,7 +436,7 @@
         },
         {
           "title": "Survey rules",
-          "text": "One ore every 5 seconds for 2,000 FE. Up to 8 speed cards (x20), but 8 cards cost 21 times the FE per ore. Fortune or Silk Touch, efficiency and void work too.\n\nThe ores it counted turn to stone in the world, so nobody mines them twice. A mined-out chunk is surveyed for good: move on to the next chunk. A Magma Core lets it take ancient debris.",
+          "text": "One ore every 20 seconds at 200 FE/t. Up to 8 speed cards (x20), but the power climbs much faster: 8 cards draw 420 times the FE/t. Fortune or Silk Touch, efficiency and void work too.\n\nA Magma Core in its core slot adds ancient debris to the mix, very rarely. The ore weights are in the server config.",
           "items": [
             "robotica:survey_rig",
             "robotica:upgrade_speed",

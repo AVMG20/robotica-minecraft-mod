@@ -11,8 +11,8 @@ import com.arno.robotica.core.upgrade.Upgrades;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -24,19 +24,14 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.scores.Team;
-import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,20 +41,19 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * A lag-free virtual quarry. On first power it scans its own chunk once, from its Y down to the world bottom, a few
- * sections per tick and never loading another chunk, into an ore ledger ({@link SurveyLedgers}). Then every operation
- * takes one ore off the ledger and rolls that ore's loot table with a pickaxe carrying the Fortune or Silk Touch of its
- * cards. The world is not dug: no holes, no block updates. With {@code stripOresFromWorld} the ledger's ores are swapped
- * for their host rock a few per tick, so they cannot also be mined by hand. A mined-out chunk is surveyed for good.
+ * Survey Rig: placed once and powered, it slowly turns a lot of FE into random ores. Every {@link #actionInterval}
+ * ticks it rolls one ore kind of {@link SurveyOrePool} by weight (coal and iron often, diamonds rarely, ancient debris
+ * only with a Magma Core) and rolls that ore's loot table with a pickaxe carrying the Fortune or Silk Touch of its cards.
+ * The world is never touched. Speed cards cut the interval but raise the FE per tick steeply (speed x per-ore factor).
  */
 public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.FORTUNE,
             UpgradeKind.SILK, UpgradeKind.VOID);
     public static final int UPGRADE_SLOTS = 4;
 
-    /** What the rig is doing, for the GUI and the status line. */
+    /** What the rig is doing, for the GUI. */
     public enum RigState {
-        WAITING, SCANNING, MINING, NEEDS_CORE, FINISHED, SURVEYED, BUSY;
+        WAITING, MINING, NO_ORES;
 
         public static RigState byOrdinal(int i) {
             RigState[] v = values();
@@ -67,7 +61,7 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
         }
     }
 
-    /** Magma Core slot: lets the rig mine ancient debris. Never consumed. */
+    /** Magma Core slot: lets the rig make ancient debris (and the other core ores of the config). Never consumed. */
     public final ItemStackHandler core = new ItemStackHandler(1) {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
@@ -86,21 +80,11 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     };
 
     private RigState rigState = RigState.WAITING;
-    private boolean finishedHere;
     private int progress;
-    private int ledgerLeft;
-    private int ledgerTotal;
-    private int scanPercent;
+    /** Registry id of the last ore made, -1 for none (GUI). */
+    private int lastOre = -1;
     private int toolKey = -1;
     private ItemStack toolStack = ItemStack.EMPTY;
-
-    // ---- game test hooks (not saved) ----
-    @Nullable
-    private BoundingBox scanBounds;
-    @Nullable
-    private ChunkPos ledgerChunkOverride;
-    @Nullable
-    private Boolean stripOverride;
 
     public SurveyRigBlockEntity(BlockPos pos, BlockState state) {
         super(AutomationContent.SURVEY_RIG_BE.get(), pos, state, KINDS, UPGRADE_SLOTS,
@@ -112,60 +96,27 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
         return "block.robotica.survey_rig";
     }
 
-    /** Test hook: scan only this box (absolute coordinates, intersected with the chunk). */
-    public void setScanBounds(@Nullable BoundingBox box) {
-        scanBounds = box;
-    }
-
-    /** Test hook: keep the ledger under another chunk key so parallel tests in one chunk do not meet. */
-    public void setLedgerChunk(@Nullable ChunkPos chunk) {
-        ledgerChunkOverride = chunk;
-    }
-
-    /** Test hook: overrides the stripOresFromWorld config for this rig. */
-    public void setStripOverride(@Nullable Boolean strip) {
-        stripOverride = strip;
-    }
-
-    public ChunkPos ledgerChunk() {
-        return ledgerChunkOverride != null ? ledgerChunkOverride : new ChunkPos(worldPosition);
-    }
-
-    private boolean strip() {
-        return stripOverride != null ? stripOverride : AutomationConfig.stripOres();
-    }
-
-    // ---- area: the rig's own chunk ----
+    // ---- no area: the rig works in place ----
 
     @Override
     protected void recalc() {
-        areaSize = 16;
+        areaSize = 1;
         toolKey = -1;
     }
 
     @Override
-    public int areaMinX() {
-        return SectionPos.sectionToBlockCoord(SectionPos.blockToSectionCoord(worldPosition.getX()));
-    }
-
-    @Override
-    public int areaMinZ() {
-        return SectionPos.sectionToBlockCoord(SectionPos.blockToSectionCoord(worldPosition.getZ()));
-    }
-
-    @Override
     protected int areaMinY() {
-        return level != null ? level.getMinBuildHeight() : worldPosition.getY() - 64;
-    }
-
-    @Override
-    protected int areaMaxY() {
         return worldPosition.getY();
     }
 
     @Override
+    protected int areaMaxY() {
+        return worldPosition.getY() + 1;
+    }
+
+    @Override
     protected int batteryPullRate() {
-        return 8_000;
+        return 20_000;
     }
 
     // ---- numbers ----
@@ -174,23 +125,23 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
         return rigState;
     }
 
-    public int ledgerLeft() {
-        return ledgerLeft;
+    public int progressTicks() {
+        return progress;
     }
 
-    public int ledgerTotal() {
-        return ledgerTotal;
+    @Nullable
+    public Item lastOre() {
+        return lastOre < 0 ? null : BuiltInRegistries.ITEM.byId(lastOre);
     }
 
-    public int scanPercent() {
-        return scanPercent;
+    public int lastOreId() {
+        return lastOre;
     }
 
     @Override
     public int guiProgress() {
-        if (rigState == RigState.SCANNING || rigState == RigState.WAITING) return 0;
-        if (ledgerTotal <= 0) return 100;
-        return (int) Math.min(100, 100L * (ledgerTotal - ledgerLeft) / ledgerTotal);
+        int interval = actionInterval();
+        return interval <= 0 ? 0 : (int) Math.min(100, 100L * progress / interval);
     }
 
     public int actionInterval() {
@@ -198,34 +149,25 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
         return Math.max(1, base / Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
     }
 
-    /** FE per ore: steep like the Excavator, every speed card costs more per ore than the one before. */
-    public int energyPerOre() {
+    /**
+     * FE per tick while working: base x speed multiplier x the steep per-ore factor, so each speed card costs more than
+     * the one before (1 card x3.5, 2 x9, 4 x42, 8 x420 FE/t). Efficiency cards take 15% each off the factor.
+     */
+    public int energyPerTick() {
         int speed = upgrades.level(UpgradeKind.SPEED);
         int eff = upgrades.level(UpgradeKind.EFFICIENCY);
-        return (int) Math.round(CoreConfig.scaleEnergy(AutomationConfig.surveyFePerOre()) * Upgrades.steepEnergyMultiplier(speed, eff));
+        double value = CoreConfig.scaleEnergy(AutomationConfig.surveyFePerTick()) * (double) Upgrades.speedMultiplier(speed)
+                * Upgrades.steepEnergyMultiplier(speed, eff);
+        return (int) Math.min(Integer.MAX_VALUE, Math.round(value));
     }
 
-    public static boolean isOre(BlockState state) {
-        return state.is(Tags.Blocks.ORES) && !state.hasBlockEntity();
-    }
-
-    /** Ancient debris (and other netherite ores) need a Magma Core in the rig. */
-    public static boolean needsCore(Block block) {
-        return block == Blocks.ANCIENT_DEBRIS || block.defaultBlockState().is(Tags.Blocks.ORES_NETHERITE_SCRAP);
+    /** FE one ore costs at the current cards. */
+    public long energyPerOre() {
+        return (long) energyPerTick() * actionInterval();
     }
 
     public boolean hasCore() {
         return !core.getStackInSlot(0).isEmpty();
-    }
-
-    /** The rock an ore sits in: what replaces it when stripped, and what filler drops come from. */
-    public static BlockState hostFor(Level level, BlockState ore, BlockPos pos) {
-        if (ore.is(Tags.Blocks.ORES_IN_GROUND_DEEPSLATE)) return Blocks.DEEPSLATE.defaultBlockState();
-        if (ore.is(Tags.Blocks.ORES_IN_GROUND_NETHERRACK)) return Blocks.NETHERRACK.defaultBlockState();
-        if (ore.is(Tags.Blocks.ORES_IN_GROUND_STONE)) return Blocks.STONE.defaultBlockState();
-        if (level.dimension() == Level.NETHER) return Blocks.NETHERRACK.defaultBlockState();
-        if (level.dimension() == Level.END) return Blocks.END_STONE.defaultBlockState();
-        return pos.getY() < 0 ? Blocks.DEEPSLATE.defaultBlockState() : Blocks.STONE.defaultBlockState();
     }
 
     private void setRigState(RigState next) {
@@ -235,203 +177,46 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
         }
     }
 
-    private void cache(@Nullable SurveyLedgers.Entry e) {
-        if (e == null) {
-            ledgerLeft = ledgerTotal = scanPercent = 0;
-            return;
-        }
-        ledgerLeft = e.left();
-        ledgerTotal = e.total();
-        scanPercent = Math.round(e.scanProgress() * 100);
-    }
-
-    /** True when another, live rig is working this rig's chunk. Server side. */
-    public boolean chunkTakenByOther(ServerLevel sl, @Nullable SurveyLedgers.Entry e) {
-        if (e == null || e.rig == null || e.rig.equals(worldPosition)) return false;
-        return sl.isLoaded(e.rig) && sl.getBlockEntity(e.rig) instanceof SurveyRigBlockEntity other && !other.isRemoved();
-    }
-
     // ---- work loop ----
 
     @Override
     protected Status work(ServerLevel sl) {
-        SurveyLedgers data = SurveyLedgers.get(sl);
-        ChunkPos key = ledgerChunk();
-        SurveyLedgers.Entry e = data.get(key);
-        if (e != null && e.phase == SurveyLedgers.Phase.DONE) {
-            setRigState(finishedHere ? RigState.FINISHED : RigState.SURVEYED);
-            ledgerLeft = 0;
-            ledgerTotal = e.total();
-            scanPercent = 100;
+        SurveyOrePool pool = SurveyOrePool.get();
+        boolean core = hasCore();
+        if (pool.totalWeight(core) <= 0) {
+            setRigState(RigState.NO_ORES);
             return Status.IDLE;
         }
-        if (chunkTakenByOther(sl, e)) {
-            setRigState(RigState.BUSY);
-            cache(e);
-            return Status.IDLE;
+        int cost = energyPerTick();
+        if (energy.getEnergyStored() < cost) {
+            setRigState(RigState.WAITING);
+            return Status.NO_ENERGY;
         }
-        if (e == null) {
-            if (energy.getEnergyStored() <= 0) {
-                setRigState(RigState.WAITING);
-                cache(null);
-                return Status.NO_ENERGY;
-            }
-            e = data.getOrCreate(key);
-            startScan(sl, e);
-            data.setDirty();
-            CoreSounds.play(sl, worldPosition, CoreSounds.MACHINE_START, SoundSource.BLOCKS, 0.8F, 0.9F);
-        }
-        if (!worldPosition.equals(e.rig)) {
-            e.rig = worldPosition.immutable();
-            data.setDirty();
-        }
-        if (e.phase == SurveyLedgers.Phase.SCANNING) {
-            if (energy.getEnergyStored() <= 0) {
-                cache(e);
-                return Status.NO_ENERGY;
-            }
-            setRigState(RigState.SCANNING);
-            scan(sl, e);
-            data.setDirty();
-            cache(e);
-            if (CoreSounds.due(sl, worldPosition, 40)) CoreSounds.play(sl, worldPosition, CoreSounds.CHARGER_HUM, SoundSource.BLOCKS, 0.5F, 1.4F);
-            if (e.phase != SurveyLedgers.Phase.SCANNING) CoreSounds.play(sl, worldPosition, CoreSounds.ROBOT_BEEP, SoundSource.BLOCKS, 0.8F, 1.2F);
+        energy.consume(cost);
+        setRigState(RigState.MINING);
+        if (++progress < actionInterval()) {
+            if (CoreSounds.due(sl, worldPosition, 60)) CoreSounds.play(sl, worldPosition, CoreSounds.DRILL_GRIND, SoundSource.BLOCKS, 0.35F, 1.3F);
             return Status.WORKING;
         }
-        // Mining the ledger.
-        if (stripWorld(sl, e)) data.setDirty();
-        cache(e);
-        if (e.left() <= 0) {
-            if (e.stripQueued() > 0) {
-                setRigState(RigState.MINING);
-                return Status.WORKING;
-            }
-            e.finish();
-            data.setDirty();
-            finishedHere = true;
-            setRigState(RigState.FINISHED);
-            cache(e);
-            finishedSound(sl);
-            setChanged();
-            return Status.IDLE;
-        }
-        boolean core = hasCore();
-        if (e.pick(sl.random, b -> core || !needsCore(b)) == null) {
-            setRigState(RigState.NEEDS_CORE);
-            return Status.IDLE;
-        }
-        setRigState(RigState.MINING);
-        int cost = energyPerOre();
-        int interval = actionInterval();
-        if (progress < interval) {
-            if (energy.getEnergyStored() < cost) return Status.NO_ENERGY;
-            progress++;
-            if (CoreSounds.due(sl, worldPosition, 60)) CoreSounds.play(sl, worldPosition, CoreSounds.DRILL_GRIND, SoundSource.BLOCKS, 0.35F, 1.3F);
-            if (progress < interval) return Status.WORKING;
-        }
-        if (!energy.consume(cost)) return Status.NO_ENERGY;
         progress = 0;
-        Block ore = e.pick(sl.random, b -> core || !needsCore(b));
-        if (ore != null && e.take(e.key(ore))) {
-            data.setDirty();
-            mine(sl, ore);
-        }
-        cache(e);
+        Item ore = pool.roll(sl.random, core);
+        if (ore != null) mine(sl, ore);
+        setChanged();
         return Status.WORKING;
     }
 
-    private void startScan(ServerLevel sl, SurveyLedgers.Entry e) {
-        int top = Math.min(worldPosition.getY() - 1, sl.getMaxBuildHeight() - 1);
-        int bottom = sl.getMinBuildHeight();
-        if (scanBounds != null) {
-            top = Math.min(top, scanBounds.maxY());
-            bottom = Math.max(bottom, scanBounds.minY());
-        }
-        e.phase = SurveyLedgers.Phase.SCANNING;
-        e.scanTop = top;
-        e.scanBottom = bottom;
-        e.scanCursor = top;
-    }
-
-    /** Reads up to N section slices of the rig's own chunk. Waits (keeps the cursor) while the chunk is not loaded. */
-    private void scan(ServerLevel sl, SurveyLedgers.Entry e) {
-        ChunkPos chunk = new ChunkPos(worldPosition);
-        LevelChunk lc = sl.getChunkSource().getChunkNow(chunk.x, chunk.z);
-        if (lc == null) return;
-        boolean record = strip();
-        int minX = chunk.getMinBlockX();
-        int minZ = chunk.getMinBlockZ();
-        int budget = AutomationConfig.surveySectionsPerTick();
-        while (budget-- > 0 && e.scanCursor >= e.scanBottom) {
-            int top = e.scanCursor;
-            int bottom = Math.max(e.scanBottom, SectionPos.sectionToBlockCoord(SectionPos.blockToSectionCoord(top)));
-            LevelChunkSection section = lc.getSection(lc.getSectionIndex(top));
-            if (!section.hasOnlyAir() && section.maybeHas(SurveyRigBlockEntity::isOre)) {
-                for (int y = top; y >= bottom; y--) {
-                    for (int x = 0; x < 16; x++) {
-                        for (int z = 0; z < 16; z++) {
-                            int wx = minX + x, wz = minZ + z;
-                            if (scanBounds != null && !scanBounds.isInside(wx, y, wz)) continue;
-                            BlockState state = section.getBlockState(x, y & 15, z);
-                            if (isOre(state)) e.add(state.getBlock(), record ? new BlockPos(wx, y, wz) : null);
-                        }
-                    }
-                }
-            }
-            e.scanCursor = bottom - 1;
-        }
-        if (e.scanCursor < e.scanBottom) e.phase = SurveyLedgers.Phase.MINING;
-    }
-
-    /**
-     * Swaps a few ledger ores in the world for their host rock. An ore that is gone (mined by hand, dug by an Excavator)
-     * or protected by a claim comes off the ledger instead. Returns true when anything changed.
-     */
-    private boolean stripWorld(ServerLevel sl, SurveyLedgers.Entry e) {
-        if (e.stripPos.isEmpty()) return false;
-        if (!strip()) {
-            e.stripPos.clear();
-            e.stripKey.clear();
-            return true;
-        }
-        boolean changed = false;
-        for (int n = AutomationConfig.surveyStripPerTick(); n > 0 && !e.stripPos.isEmpty(); n--) {
-            int last = e.stripPos.size() - 1;
-            BlockPos pos = BlockPos.of(e.stripPos.getLong(last));
-            if (!sl.isLoaded(pos)) break;
-            int k = e.stripKey.getInt(last);
-            e.stripPos.removeLong(last);
-            e.stripKey.removeInt(last);
-            changed = true;
-            Block expected = k >= 0 && k < e.keys.size() ? e.keys.get(k) : Blocks.AIR;
-            BlockState state = sl.getBlockState(pos);
-            if (expected != Blocks.AIR && state.is(expected) && mayBreak(sl, pos, state)) {
-                sl.setBlock(pos, hostFor(sl, state, pos), Block.UPDATE_CLIENTS);
-            } else {
-                e.take(k);
-            }
-        }
-        return changed;
-    }
-
-    /** Rolls one ore's loot table as if mined with the card pickaxe; nothing in the world changes. */
-    private void mine(ServerLevel sl, Block ore) {
-        BlockState state = ore.defaultBlockState();
-        ItemStack tool = tool(sl);
+    /** Rolls the ore's loot table as if mined with the card pickaxe (an ore item without a block comes out as is). */
+    private void mine(ServerLevel sl, Item ore) {
+        lastOre = BuiltInRegistries.ITEM.getId(ore);
         boolean voiding = upgrades.level(UpgradeKind.VOID) > 0;
-        for (ItemStack drop : Block.getDrops(state, sl, worldPosition, null, null, tool)) {
+        List<ItemStack> drops = List.of(new ItemStack(ore));
+        if (ore instanceof BlockItem blockItem) {
+            List<ItemStack> rolled = Block.getDrops(blockItem.getBlock().defaultBlockState(), sl, worldPosition, null, null, tool(sl));
+            if (!rolled.isEmpty()) drops = rolled;
+        }
+        for (ItemStack drop : drops) {
             if (voiding && drop.is(ExcavatorBlockEntity.VOIDABLE)) continue;
             output(drop);
-        }
-        int filler = AutomationConfig.surveyFillerPerOre();
-        if (filler > 0) {
-            BlockState host = hostFor(sl, state, worldPosition.below());
-            for (int i = 0; i < filler; i++) {
-                for (ItemStack drop : Block.getDrops(host, sl, worldPosition, null, null, tool)) {
-                    if (voiding && drop.is(ExcavatorBlockEntity.VOIDABLE)) continue;
-                    output(drop);
-                }
-            }
         }
         workSound(sl, worldPosition, CoreSounds.MATTER_ABSORB, 0.5F, 0.9F + sl.random.nextFloat() * 0.3F);
         sl.sendParticles(ParticleTypes.END_ROD, worldPosition.getX() + 0.5, worldPosition.getY() + 1.05, worldPosition.getZ() + 0.5,
@@ -492,28 +277,25 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
         return new SurveyRigMenu(id, inv, this);
     }
 
-    // ---- persistence ----
+    // ---- persistence (tags of the old chunk-ledger rig, such as finishedHere, are simply ignored) ----
 
     @Override
     protected void saveExtra(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("core", core.serializeNBT(registries));
         tag.putInt("progress", progress);
-        tag.putBoolean("finishedHere", finishedHere);
-        tag.putInt("rigState", rigState.ordinal());
+        if (lastOre >= 0) tag.putString("lastOre", BuiltInRegistries.ITEM.getKey(BuiltInRegistries.ITEM.byId(lastOre)).toString());
     }
 
     @Override
     protected void loadExtra(CompoundTag tag, HolderLookup.Provider registries) {
         if (tag.contains("core")) core.deserializeNBT(registries, tag.getCompound("core"));
-        progress = tag.getInt("progress");
-        finishedHere = tag.getBoolean("finishedHere");
-        rigState = RigState.byOrdinal(tag.getInt("rigState"));
-    }
-
-    /** Ores of the ledger left in this rig's chunk, by block (game tests). */
-    public int ledgerCount(ServerLevel sl, Block block) {
-        SurveyLedgers.Entry e = SurveyLedgers.get(sl).get(ledgerChunk());
-        return e == null ? 0 : e.count(block);
+        progress = Math.max(0, tag.getInt("progress"));
+        lastOre = -1;
+        if (tag.contains("lastOre")) {
+            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(tag.getString("lastOre"));
+            if (id != null && BuiltInRegistries.ITEM.containsKey(id)) lastOre = BuiltInRegistries.ITEM.getId(BuiltInRegistries.ITEM.get(id));
+        }
+        rigState = RigState.WAITING;
     }
 
     public List<ItemStack> bufferContents() {

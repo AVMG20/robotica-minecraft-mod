@@ -11,7 +11,7 @@ import snownee.jade.api.WailaPlugin;
 /**
  * Jade integration (optional). Jade finds this class through the {@link WailaPlugin} annotation, so it is never loaded
  * when Jade is missing. Energy bars come from Jade's own FE support (every Robotica machine exposes the capability);
- * this adds status, progress, tier, owner, spring charge and ore ledger, plus an energy bar and mode for drones.
+ * this adds status, progress, tier, owner, spring charge and the Survey Rig's last ore, plus an energy bar and mode for drones.
  */
 @WailaPlugin
 public class RoboticaJadePlugin implements IWailaPlugin {

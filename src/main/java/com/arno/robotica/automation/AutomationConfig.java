@@ -2,6 +2,8 @@ package com.arno.robotica.automation;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
+import java.util.List;
+
 /**
  * Balance for the automation module (server config robotica-automation-server.toml).
  * Static getters fall back to the defaults while the config is not loaded (early init, game tests).
@@ -27,13 +29,21 @@ public final class AutomationConfig {
     public static final ModConfigSpec.IntValue EXCAVATOR_FE_PER_BLOCK;
     public static final ModConfigSpec.DoubleValue GROWTH_TICKS_PER_COLUMN;
     public static final ModConfigSpec.IntValue SURVEY_INTERVAL;
-    public static final ModConfigSpec.IntValue SURVEY_FE_PER_ORE;
+    public static final ModConfigSpec.IntValue SURVEY_FE_PER_TICK;
     public static final ModConfigSpec.IntValue SURVEY_ENERGY_BUFFER;
     public static final ModConfigSpec.IntValue SURVEY_MAX_INPUT;
-    public static final ModConfigSpec.IntValue SURVEY_SECTIONS_PER_TICK;
-    public static final ModConfigSpec.BooleanValue STRIP_ORES;
-    public static final ModConfigSpec.IntValue SURVEY_STRIP_PER_TICK;
-    public static final ModConfigSpec.IntValue SURVEY_FILLER_PER_ORE;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> SURVEY_ORE_WEIGHTS;
+    public static final ModConfigSpec.IntValue SURVEY_DEFAULT_WEIGHT;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> SURVEY_CORE_ORES;
+
+    /** Default ore weights of the Survey Rig: common metals high, gems low, ancient debris lowest. */
+    public static final List<String> DEFAULT_ORE_WEIGHTS = List.of(
+            "#c:ores/coal=100", "#c:ores/copper=90", "#c:ores/iron=80",
+            "#c:ores/tin=60", "#c:ores/zinc=50", "#c:ores/aluminum=50", "#c:ores/thorium=50", "#c:ores/lead=45", "#c:ores/nickel=40",
+            "#c:ores/redstone=35", "#c:ores/gold=30", "#c:ores/quartz=30", "#c:ores/lapis=25", "#c:ores/silver=25",
+            "#c:ores/osmium=40", "#c:ores/uranium=12", "#c:ores/pyrolite=15", "#c:ores/fluorite=20",
+            "#c:ores/diamond=6", "#c:ores/emerald=4", "#c:ores/resonite=2", "#c:ores/netherite_scrap=1");
+    public static final List<String> DEFAULT_CORE_ORES = List.of("#c:ores/netherite_scrap", "#c:ores/resonite");
     private static final ModConfigSpec.IntValue[] FARM_RADIUS = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] FARM_INTERVAL = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.DoubleValue[] FARM_GROWTH = new ModConfigSpec.DoubleValue[4];
@@ -73,24 +83,22 @@ public final class AutomationConfig {
         EXCAVATOR_FE_PER_BLOCK = b.comment("Excavator FE per mined block (before upgrade multipliers).")
                 .defineInRange("excavatorFePerBlock", 40, 0, 1_000_000);
         b.pop();
-        b.comment("Survey Rig: a lag-free virtual quarry. It scans its own chunk once into an ore ledger, then mines the ledger without changing the world.").push("survey_rig");
-        SURVEY_INTERVAL = b.comment("Survey Rig ticks per ore without speed cards (100 = one ore every 5 seconds).")
-                .defineInRange("surveyRigInterval", 100, 1, 12_000);
-        SURVEY_FE_PER_ORE = b.comment("Survey Rig FE per ore before upgrade multipliers. Speed cards raise it steeply, like the Excavator's.")
-                .defineInRange("surveyRigFePerOre", 2_000, 0, 10_000_000);
+        b.comment("Survey Rig: placed once, it slowly turns a lot of power into random ores from the c:ores item tag.").push("survey_rig");
+        SURVEY_INTERVAL = b.comment("Survey Rig ticks per ore without speed cards (400 = one ore every 20 seconds).")
+                .defineInRange("surveyRigTicksPerOre", 400, 1, 72_000);
+        SURVEY_FE_PER_TICK = b.comment("Survey Rig FE per tick while working, before upgrades. Speed cards multiply it by their speed and by the steep per-ore factor (8 cards: x20 speed, x420 FE/t).")
+                .defineInRange("surveyRigFePerTick", 200, 0, 10_000_000);
         SURVEY_ENERGY_BUFFER = b.comment("Survey Rig internal FE buffer.")
-                .defineInRange("surveyRigEnergyBuffer", 500_000, 10_000, 100_000_000);
-        SURVEY_MAX_INPUT = b.comment("Survey Rig FE per tick it accepts from conduits and its battery slot.")
-                .defineInRange("surveyRigMaxInput", 20_000, 100, 10_000_000);
-        SURVEY_SECTIONS_PER_TICK = b.comment("Chunk sections (16x16x16) the scan reads per tick. The scan never loads other chunks.")
-                .defineInRange("surveyRigSectionsPerTick", 2, 1, 24);
-        STRIP_ORES = b.comment("true: ores the rig has put in its ledger are replaced by their stone, deepslate or netherrack host (a few per tick), so nobody can also mine them by hand. An ore that is gone or protected when its turn comes is taken off the ledger.",
-                        "false: the ores stay in the world and the ledger is purely virtual (the chunk can be mined twice).")
-                .define("stripOresFromWorld", true);
-        SURVEY_STRIP_PER_TICK = b.comment("Ore blocks replaced by their host per tick when stripOresFromWorld is on.")
-                .defineInRange("surveyRigStripPerTick", 4, 1, 256);
-        SURVEY_FILLER_PER_ORE = b.comment("Host rock drops (cobblestone, cobbled deepslate, netherrack) added per mined ore. 0 = none, the default.")
-                .defineInRange("surveyRigFillerPerOre", 0, 0, 16);
+                .defineInRange("surveyRigBuffer", 2_000_000, 10_000, 1_000_000_000);
+        SURVEY_MAX_INPUT = b.comment("Survey Rig FE per tick it accepts from cables and its battery slot.")
+                .defineInRange("surveyRigInputPerTick", 100_000, 100, 100_000_000);
+        SURVEY_ORE_WEIGHTS = b.comment("Weight of each ore kind, as \"#tag=weight\" (an ores/<name> item tag) or \"namespace:item=weight\".",
+                        "Every item in c:ores can come out. Variants of one kind (stone, deepslate, nether) share their kind's weight. 0 = never.")
+                .defineListAllowEmpty("surveyRigOreWeights", DEFAULT_ORE_WEIGHTS, () -> "#c:ores/example=10", o -> o instanceof String str && str.contains("="));
+        SURVEY_DEFAULT_WEIGHT = b.comment("Weight of ore kinds that are not listed above (other mods' ores).")
+                .defineInRange("surveyRigDefaultOreWeight", 15, 0, 100_000);
+        SURVEY_CORE_ORES = b.comment("Ore kinds (\"#tag\" or item id) the rig only makes with a Magma Core in its core slot.")
+                .defineListAllowEmpty("surveyRigCoreOres", DEFAULT_CORE_ORES, () -> "#c:ores/example", o -> o instanceof String);
         b.pop();
         SPEC = b.build();
     }
@@ -159,34 +167,30 @@ public final class AutomationConfig {
     }
 
     public static int surveyInterval() {
-        return SPEC.isLoaded() ? SURVEY_INTERVAL.get() : 100;
+        return SPEC.isLoaded() ? SURVEY_INTERVAL.get() : 400;
     }
 
-    public static int surveyFePerOre() {
-        return SPEC.isLoaded() ? SURVEY_FE_PER_ORE.get() : 2_000;
+    public static int surveyFePerTick() {
+        return SPEC.isLoaded() ? SURVEY_FE_PER_TICK.get() : 200;
     }
 
     public static int surveyEnergyBuffer() {
-        return SPEC.isLoaded() ? SURVEY_ENERGY_BUFFER.get() : 500_000;
+        return SPEC.isLoaded() ? SURVEY_ENERGY_BUFFER.get() : 2_000_000;
     }
 
     public static int surveyMaxInput() {
-        return SPEC.isLoaded() ? SURVEY_MAX_INPUT.get() : 20_000;
+        return SPEC.isLoaded() ? SURVEY_MAX_INPUT.get() : 100_000;
     }
 
-    public static int surveySectionsPerTick() {
-        return SPEC.isLoaded() ? SURVEY_SECTIONS_PER_TICK.get() : 2;
+    public static List<? extends String> surveyOreWeights() {
+        return SPEC.isLoaded() ? SURVEY_ORE_WEIGHTS.get() : DEFAULT_ORE_WEIGHTS;
     }
 
-    public static boolean stripOres() {
-        return SPEC.isLoaded() ? STRIP_ORES.get() : true;
+    public static int surveyDefaultWeight() {
+        return SPEC.isLoaded() ? SURVEY_DEFAULT_WEIGHT.get() : 15;
     }
 
-    public static int surveyStripPerTick() {
-        return SPEC.isLoaded() ? SURVEY_STRIP_PER_TICK.get() : 4;
-    }
-
-    public static int surveyFillerPerOre() {
-        return SPEC.isLoaded() ? SURVEY_FILLER_PER_ORE.get() : 0;
+    public static List<? extends String> surveyCoreOres() {
+        return SPEC.isLoaded() ? SURVEY_CORE_ORES.get() : DEFAULT_CORE_ORES;
     }
 }
