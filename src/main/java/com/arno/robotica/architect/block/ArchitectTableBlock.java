@@ -94,7 +94,5 @@ public class ArchitectTableBlock extends Block implements EntityBlock {
         tooltip.add(Component.translatable("tooltip.robotica.architect_table",
                 BuildStyle.TIMBERFRAME.energyPerBlock(ArchitectConfig.fePerBlock())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.architect_table_matter").withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.architect_table_styles").withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.architect_table_keeps").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

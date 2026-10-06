@@ -131,7 +131,6 @@ public class DroneItem extends Item implements EnergyItem {
         ItemEnergy.appendTooltip(stack, tooltip);
         String key = kind.name().toLowerCase(java.util.Locale.ROOT) + (kind == DronesRegistry.Kind.MINING && tier >= 3 ? "_mk3" : "");
         tooltip.add(Component.translatable("tooltip.robotica.drone." + key).withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.drone.pickup").withStyle(ChatFormatting.DARK_GRAY));
         CompoundTag state = stack.get(DronesRegistry.DRONE_STATE.get());
         if (kind == DronesRegistry.Kind.COURIER) {
             tooltip.add(Component.translatable("tooltip.robotica.drone.courier_link").withStyle(ChatFormatting.DARK_GRAY));

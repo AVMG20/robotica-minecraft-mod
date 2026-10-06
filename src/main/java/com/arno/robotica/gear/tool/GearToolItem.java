@@ -208,7 +208,6 @@ public class GearToolItem extends Item implements HasDetails {
         }
         if (spec.modes.size() > 1) {
             lines.add(Component.translatable("tooltip.robotica.gear.key_mode", HasDetails.key("key.robotica.gear.cycle_mode")).withStyle(ChatFormatting.GRAY));
-            lines.add(HasDetails.line("tooltip.robotica.gear.sneak_single"));
         }
         if (spec.fortuneLevel > 0) {
             lines.add(Component.translatable("tooltip.robotica.gear.key_enchant", HasDetails.key("key.robotica.gear.swap_enchant")).withStyle(ChatFormatting.GRAY));
@@ -239,7 +238,5 @@ public class GearToolItem extends Item implements HasDetails {
                 lines.add(anyInstalled ? HasDetails.line("tooltip.robotica.gear.modules", modules) : HasDetails.line("tooltip.robotica.gear.no_modules"));
             }
         }
-        if (spec.areaSpeed < 1.0F) lines.add(HasDetails.line("tooltip.robotica.gear.slow_area", Math.round(spec.areaSpeed * 100)));
-        lines.add(HasDetails.line("tooltip.robotica.gear.enchantable"));
     }
 }

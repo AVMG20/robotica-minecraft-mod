@@ -36,9 +36,6 @@ public class ExoModuleItem extends Item {
         tooltip.add(Component.translatable("exo.robotica.needs_mark", minMark()).withStyle(ChatFormatting.DARK_AQUA));
         Component cost = costLine(kind, level);
         if (cost != null) tooltip.add(cost.copy().withStyle(ChatFormatting.AQUA));
-        if (kind.leveled() && level < kind.maxLevel()) {
-            tooltip.add(Component.translatable("exo.robotica.upgrade_hint").withStyle(ChatFormatting.DARK_GRAY));
-        }
     }
 
     /** What the module does at this level, with its numbers from the server config. */
