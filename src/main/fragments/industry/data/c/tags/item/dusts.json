@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "#c:dusts/thorium",
+    "#c:dusts/pyrolite",
+    "#c:dusts/resonite",
+    "#c:dusts/graphite"
+  ]
+}

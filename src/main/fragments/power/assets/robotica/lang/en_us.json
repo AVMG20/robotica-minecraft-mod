@@ -127,5 +127,12 @@
   "tooltip.robotica.tesla_coil_4.details": "Place it on an Accumulator or a generator: it sends that block's FE.\nOn any other block it relays what other coils send it.\nLink it with a Tesla Linker. Right-click it for its status.",
   "robotica.configuration.teslaRate5": "Tier V rate (FE/t)",
   "robotica.configuration.teslaRange5": "Tier V range (blocks)",
-  "tooltip.robotica.tesla_coil_5.details": "Place it on an Accumulator or a generator: it sends that block's FE.\nOn any other block it relays what other coils send it.\nLink it with a Tesla Linker. Right-click it for its status."
+  "tooltip.robotica.tesla_coil_5.details": "Place it on an Accumulator or a generator: it sends that block's FE.\nOn any other block it relays what other coils send it.\nLink it with a Tesla Linker. Right-click it for its status.",
+  "gui.robotica.solar_moon": "Moonlight",
+  "gui.robotica.solar_speed_slot": "Speed cards: more FE/t in daylight",
+  "gui.robotica.solar_efficiency_slot": "Efficiency cards: some FE/t at night",
+  "gui.robotica.solar_cards_tip": "Speed cards: +25% daylight output each. Efficiency cards: 10% of it at night each (open sky)",
+  "robotica.configuration.solarSpeedBonus": "Speed card bonus (%)",
+  "robotica.configuration.solarNightPerCard": "Night output per efficiency card (%)",
+  "tooltip.robotica.generator_cards": "Takes Speed and Efficiency upgrades"
 }

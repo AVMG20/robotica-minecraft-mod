@@ -1,0 +1,26 @@
+{
+  "type": "robotica:centrifuging",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:depleted_fuel_pellet"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:radiant_isotope",
+      "chance": 0.1
+    },
+    {
+      "id": "robotica:thorium_dust"
+    },
+    {
+      "id": "robotica:graphite_dust",
+      "chance": 0.5
+    }
+  ],
+  "time": 400,
+  "power": 100
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:tinkers_hammer"
+    },
+    {
+      "tag": "c:gems/pyrolite"
+    }
+  ],
+  "result": {
+    "id": "robotica:pyrolite_dust",
+    "count": 1
+  }
+}

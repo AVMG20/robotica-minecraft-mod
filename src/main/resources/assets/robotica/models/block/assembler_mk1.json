@@ -1,0 +1,53 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "down": "robotica:block/industry_bottom",
+    "up": "robotica:block/assembler_top",
+    "south": "robotica:block/industry_side_mk1",
+    "west": "robotica:block/industry_side_mk1",
+    "east": "robotica:block/industry_side_mk1",
+    "north": "robotica:block/assembler_mk1_front",
+    "particle": "robotica:block/industry_side_mk1"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#down",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#up",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#east",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

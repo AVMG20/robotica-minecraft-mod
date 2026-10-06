@@ -1,0 +1,35 @@
+{
+  "type": "robotica:alloying",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "c:ingots/pyrosteel"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "c:gems/resonite"
+        },
+        {
+          "tag": "c:dusts/resonite"
+        }
+      ],
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:ender_pearls"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:resonant_alloy_ingot"
+    }
+  ],
+  "time": 400,
+  "power": 400
+}

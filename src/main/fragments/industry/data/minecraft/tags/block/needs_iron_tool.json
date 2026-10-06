@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:pyrolite_ore",
+    "robotica:pyrolite_block"
+  ]
+}

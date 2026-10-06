@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "robotica:block/deepslate_thorium_ore"
+  }
+}

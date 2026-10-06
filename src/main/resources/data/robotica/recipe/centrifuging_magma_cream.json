@@ -1,0 +1,20 @@
+{
+  "type": "robotica:centrifuging",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "minecraft:magma_cream"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "minecraft:slime_ball"
+    },
+    {
+      "id": "minecraft:blaze_powder"
+    }
+  ],
+  "time": 200
+}

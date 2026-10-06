@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#c:ores/thorium",
+    "#c:ores/pyrolite",
+    "#c:ores/resonite"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:basic_circuit"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/gold"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:gems/quartz"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:gems/diamond"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/ferrothorium"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:advanced_circuit"
+    }
+  ],
+  "time": 300,
+  "power": 160
+}

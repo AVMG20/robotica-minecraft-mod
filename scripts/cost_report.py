@@ -2,7 +2,7 @@
 """Raw-material cost report for every Robotica item.
 
 Parses all recipes in data/robotica/recipe (crafting_shaped, crafting_shapeless, smithing_transform, stonecutting,
-robotica:pressing), resolves every ingredient recursively (cheapest recipe wins) down to raw materials and writes
+smelting, blasting, robotica:pressing, the industry machines and the Grinder), resolves every ingredient recursively (cheapest recipe wins) down to raw materials and writes
 docs/COSTS.md sorted by age.
 
 Run: python3 scripts/cost_report.py            (writes docs/COSTS.md)
@@ -13,6 +13,10 @@ Conventions
 - Boss cores (servo/magma/antigrav core) use their temp_ recipes and are marked [temp].
 - Tools that are only consumed as a catalyst (Tinker's Hammer in hand-plate recipes) are never the cheapest route.
 - Iron-equivalent score = sum(raw * WEIGHT). Weights are a rough rarity scale, not a market price.
+- Industry: raw thorium, pyrolite shards, resonite crystals and radiant isotopes are raw materials. Assembler recipes
+  only count for items without any other recipe (Assembler-only parts, fuel pellets), so the table keeps showing the
+  crafting-table price of the ladder parts (the Assembler saves about a quarter). Centrifuge recipes are by-products
+  and never count.
 """
 import json
 import pathlib
@@ -25,6 +29,8 @@ OUT = ROOT / 'docs/COSTS.md'
 
 # --- raw material model -------------------------------------------------------------------------------------------
 COLUMNS = ['iron', 'copper', 'gold', 'redstone', 'diamond', 'netherite', 'ender_pearl', 'nether_star']
+FALLBACK_KINDS = ('assembling',)   # only used when an item has no other recipe
+IGNORED_KINDS = ('centrifuging',)  # by-products, never a cost route
 WEIGHT = {
     'iron': 1.0, 'copper': 0.4, 'gold': 3.0, 'redstone': 0.4, 'diamond': 10.0, 'netherite': 60.0,
     'ender_pearl': 8.0, 'nether_star': 80.0,
@@ -33,6 +39,8 @@ WEIGHT = {
     'prismarine_crystals': 3.0, 'magma_block': 2.0, 'end_crystal': 25.0, 'emerald': 6.0, 'slime_ball': 2.0,
     'glowstone': 2.0, 'sea_lantern': 4.0, 'amethyst': 1.0, 'wool': 0.2, 'glass': 0.1, 'dye': 0.1, 'bone_block': 0.5,
     'cactus': 0.1, 'sugar': 0.1, 'paper': 0.1, 'stone_axe': 0.0,
+    'thorium': 1.5, 'pyrolite': 3.0, 'resonite': 10.0, 'radiant_isotope': 40.0, 'coal': 0.3, 'magma_cream': 3.0,
+    'glowstone_dust': 0.5, 'brewing_stand': 6.0,
     'cobblestone': 0.02, 'planks': 0.05, 'logs': 0.1, 'stone': 0.02, 'stick': 0.02,
 }
 DEFAULT_OTHER_WEIGHT = 0.5
@@ -69,6 +77,11 @@ VANILLA = {
     'minecraft:polished_andesite': {'stone': 1}, 'minecraft:blackstone': {'stone': 1},
     'minecraft:polished_blackstone': {'stone': 1}, 'minecraft:cobbled_deepslate': {'cobblestone': 1},
     'minecraft:iron_bars': {'iron': 0.5},
+    'minecraft:coal': {'coal': 1}, 'minecraft:magma_cream': {'magma_cream': 1},
+    'minecraft:brewing_stand': {'blaze_rod': 1, 'cobblestone': 3},
+    # industry raw materials (mined, or a Centrifuge by-product)
+    'robotica:raw_thorium': {'thorium': 1}, 'robotica:pyrolite_shard': {'pyrolite': 1},
+    'robotica:resonite_crystal': {'resonite': 1}, 'robotica:radiant_isotope': {'radiant_isotope': 1},
 }
 
 # tag -> representative item
@@ -90,6 +103,19 @@ TAGS = {
     'minecraft:planks': 'minecraft:oak_planks', 'minecraft:logs': 'minecraft:oak_log',
     'minecraft:wool': 'minecraft:white_wool', 'minecraft:wooden_slabs': 'minecraft:oak_planks',
     'minecraft:wooden_stairs': 'minecraft:oak_planks',
+    'minecraft:coals': 'minecraft:coal', 'c:dusts/iron': 'minecraft:iron_ingot',
+    'c:raw_materials/thorium': 'robotica:raw_thorium', 'c:ingots/thorium': 'robotica:thorium_ingot',
+    'c:dusts/thorium': 'robotica:thorium_dust', 'c:plates/thorium': 'robotica:thorium_plate',
+    'c:ores/thorium': 'robotica:raw_thorium', 'c:storage_blocks/thorium': 'robotica:thorium_block',
+    'c:storage_blocks/raw_thorium': 'robotica:raw_thorium_block',
+    'c:gems/pyrolite': 'robotica:pyrolite_shard', 'c:dusts/pyrolite': 'robotica:pyrolite_dust',
+    'c:ores/pyrolite': 'robotica:pyrolite_shard', 'c:storage_blocks/pyrolite': 'robotica:pyrolite_block',
+    'c:gems/resonite': 'robotica:resonite_crystal', 'c:dusts/resonite': 'robotica:resonite_dust',
+    'c:ores/resonite': 'robotica:resonite_crystal', 'c:storage_blocks/resonite': 'robotica:resonite_block',
+    'c:dusts/graphite': 'robotica:graphite_dust',
+    'c:ingots/ferrothorium': 'robotica:ferrothorium_ingot', 'c:plates/ferrothorium': 'robotica:ferrothorium_plate',
+    'c:ingots/pyrosteel': 'robotica:pyrosteel_ingot', 'c:plates/pyrosteel': 'robotica:pyrosteel_plate',
+    'c:ingots/resonant_alloy': 'robotica:resonant_alloy_ingot', 'c:plates/resonant_alloy': 'robotica:resonant_alloy_plate',
 }
 
 # --- ages ---------------------------------------------------------------------------------------------------------
@@ -100,14 +126,20 @@ AGE = {
         'copper_cell', 'combustion_generator', 'solar_panel_mk1', 'accumulator_1', 'tesla_linker', 'tesla_coil_1', 'tesla_coil_2',
         'charger', 'metal_press', 'bore_drill', 'chainsaw', 'tool_upgrade_kit_1', 'shock_baton',
         'farm_kit_mk2', 'architect_table', 'copper_works_*', 'recall_remote', 'warp_pad', 'upgrade_speed',
-        'upgrade_efficiency', 'upgrade_growth', 'upgrade_void', 'upgrade_pickup', 'tinkers_bench'],
+        'upgrade_efficiency', 'upgrade_growth', 'upgrade_void', 'upgrade_pickup', 'tinkers_bench',
+        'raw_thorium*', 'thorium_*', 'graphite_dust', 'alloy_smelter_mk1'],
     2: ['reinforced_casing', 'advanced_circuit', 'servo_actuator', 'redstone_cell', 'servo_core', 'solar_panel_mk2',
         'accumulator_2', 'tesla_coil_3', 'rivet_gun', 'tool_upgrade_kit_2', 'servo_drill', 'farm_kit_mk3', 'essence_vial', 'excavator', 'survey_rig',
-        'replicator_*', 'steel_lab_*', 'upgrade_range', 'upgrade_fortune', 'upgrade_silk'],
+        'replicator_*', 'steel_lab_*', 'upgrade_range', 'upgrade_fortune', 'upgrade_silk',
+        'ferrothorium_*', 'thermocouple', 'thorium_fuel_pellet', 'rtg', 'alloy_smelter_mk2', 'centrifuge_mk1', 'assembler_mk1'],
     3: ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'magma_core', 'accumulator_3', 'tesla_coil_4', 'tool_upgrade_kit_3',
-        'magma_drill', 'arc_blade', 'rift_upgrade', 'rift_remote'],
+        'magma_drill', 'arc_blade', 'rift_upgrade', 'rift_remote',
+        'pyrolite_*', 'pyrosteel_*', 'superconductor_coil', 'enriched_fuel_pellet', 'alloy_smelter_mk3', 'centrifuge_mk2',
+        'assembler_mk2'],
     4: ['null_casing', 'null_circuit', 'ender_cell', 'antigrav_core', 'tesla_coil_5', 'tool_upgrade_kit_4', 'null_drill',
-        'null_lance', 'farm_kit_mk4', 'gate_controller', 'linking_card', 'null_spire_*'],
+        'null_lance', 'farm_kit_mk4', 'gate_controller', 'linking_card', 'null_spire_*',
+        'resonite_*', 'resonant_*', 'fusion_fuel_pellet', 'alloy_smelter_mk4', 'centrifuge_mk3', 'centrifuge_mk4',
+        'assembler_mk3', 'assembler_mk4'],
 }
 
 
@@ -157,13 +189,20 @@ def load_recipes():
                 counts[ing_key(r[k])] += 1
         elif t == 'stonecutting':
             counts[ing_key(r['ingredient'])] += 1
-        elif t == 'pressing':
+        elif t in ('pressing', 'smelting', 'blasting', 'grinding'):
             counts[ing_key(r['ingredient'])] += 1
+        elif t in ('alloying', 'centrifuging', 'assembling'):
+            for i in r['inputs']:
+                counts[ing_key(i['ingredient'])] += i.get('count', 1)
+            res = r['results'][0]
+            out[res['id']].append((t, dict(counts), res.get('count', 1), f.stem))
+            continue
         else:
             print('unknown recipe type', t, f.name, file=sys.stderr)
             continue
         res = r['result']
-        out[res['id']].append((t, dict(counts), res.get('count', 1), f.stem))
+        rid = res['id'] if isinstance(res, dict) else res
+        out[rid].append((t, dict(counts), res.get('count', 1) if isinstance(res, dict) else 1, f.stem))
     return out
 
 
@@ -201,10 +240,15 @@ def cost_of(item, stack=()):
     if not item.startswith('robotica:'):
         return {item.split(':')[1]: 1.0}
     best = None
-    for kind, ingredients, count, name in RECIPE_MAP.get(item, []):
+    options = [r for r in RECIPE_MAP.get(item, []) if r[0] not in IGNORED_KINDS]
+    if any(r[0] not in FALLBACK_KINDS for r in options):
+        options = [r for r in options if r[0] not in FALLBACK_KINDS]
+    for kind, ingredients, count, name in options:
         total = {}
         ok = True
         for ingk, n in ingredients.items():
+            if name.endswith('_from_hammer') and ingk == 'robotica:tinkers_hammer' and not name.endswith('_plate_from_hammer'):
+                continue  # the hammer only loses one point of durability
             c = cost_of(ingk, stack + (item,))
             if c is None:
                 ok = False
@@ -215,7 +259,7 @@ def cost_of(item, stack=()):
         total = {k: v / count for k, v in total.items()}
         if best is None or score(total) < score(best):
             best = total
-    if best is None and item in RECIPE_MAP:
+    if best is None and options:
         return None
     if best is None:
         print('no recipe for', item, file=sys.stderr)

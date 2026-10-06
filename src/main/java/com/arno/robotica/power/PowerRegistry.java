@@ -143,6 +143,8 @@ public final class PowerRegistry {
             MENUS.register("charger", () -> IMenuTypeExtension.create((id, inv, buf) -> new ChargerMenu(id, inv, buf.readBlockPos())));
     public static final DeferredHolder<MenuType<?>, MenuType<com.arno.robotica.power.menu.EnergyInfoMenu>> ENERGY_INFO_MENU =
             MENUS.register("energy_info", () -> IMenuTypeExtension.create((id, inv, buf) -> new com.arno.robotica.power.menu.EnergyInfoMenu(id, inv, buf.readBlockPos())));
+    public static final DeferredHolder<MenuType<?>, MenuType<com.arno.robotica.power.menu.SolarPanelMenu>> SOLAR_PANEL_MENU =
+            MENUS.register("solar_panel", () -> IMenuTypeExtension.create((id, inv, buf) -> new com.arno.robotica.power.menu.SolarPanelMenu(id, inv, buf.readBlockPos())));
     public static final DeferredHolder<MenuType<?>, MenuType<MetalPressMenu>> METAL_PRESS_MENU =
             MENUS.register("metal_press", () -> IMenuTypeExtension.create((id, inv, buf) -> new MetalPressMenu(id, inv, buf.readBlockPos())));
 

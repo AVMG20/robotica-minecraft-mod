@@ -1,0 +1,14 @@
+{
+  "values": {
+    "robotica:thorium_fuel_pellet": {
+      "heat": 400,
+      "ticks": 12000,
+      "waste": "robotica:depleted_fuel_pellet"
+    },
+    "robotica:enriched_fuel_pellet": {
+      "heat": 1000,
+      "ticks": 12000,
+      "waste": "robotica:depleted_fuel_pellet"
+    }
+  }
+}

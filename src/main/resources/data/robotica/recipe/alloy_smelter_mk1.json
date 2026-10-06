@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PKP",
+    "FCF",
+    "PBP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "K": {
+      "item": "robotica:copper_coil"
+    },
+    "F": {
+      "item": "minecraft:furnace"
+    },
+    "C": {
+      "item": "robotica:iron_casing"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:alloy_smelter_mk1",
+    "count": 1
+  }
+}

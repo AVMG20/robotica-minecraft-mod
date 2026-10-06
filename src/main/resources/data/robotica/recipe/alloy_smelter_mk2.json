@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "PMP",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/ferrothorium"
+    },
+    "C": {
+      "item": "robotica:advanced_circuit"
+    },
+    "S": {
+      "item": "robotica:thermocouple"
+    },
+    "M": {
+      "item": "robotica:alloy_smelter_mk1"
+    }
+  },
+  "result": {
+    "id": "robotica:alloy_smelter_mk2",
+    "count": 1
+  }
+}

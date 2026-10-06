@@ -1,0 +1,44 @@
+{
+  "parent": "robotica:guide/thorium",
+  "display": {
+    "icon": {
+      "id": "robotica:ferrothorium_ingot"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.ferrothorium.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.ferrothorium.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:ferrothorium_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:ferrothorium_plate_from_hammer",
+      "robotica:metal_press_ferrothorium_plate"
+    ],
+    "experience": 10
+  }
+}

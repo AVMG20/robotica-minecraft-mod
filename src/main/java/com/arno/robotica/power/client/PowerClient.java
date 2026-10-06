@@ -33,6 +33,7 @@ public final class PowerClient {
         event.register(PowerRegistry.COMBUSTION_GENERATOR_MENU.get(), CombustionGeneratorScreen::new);
         event.register(PowerRegistry.CHARGER_MENU.get(), ChargerScreen::new);
         event.register(PowerRegistry.METAL_PRESS_MENU.get(), MetalPressScreen::new);
+        event.register(PowerRegistry.SOLAR_PANEL_MENU.get(), com.arno.robotica.power.client.screen.SolarPanelScreen::new);
         event.register(PowerRegistry.ENERGY_INFO_MENU.get(), com.arno.robotica.power.client.screen.EnergyInfoScreen::new);
     }
 

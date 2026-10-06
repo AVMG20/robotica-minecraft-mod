@@ -18,6 +18,8 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue GENERATOR_BUFFER;
     private static final ModConfigSpec.IntValue SOLAR_MK1;
     private static final ModConfigSpec.IntValue SOLAR_MK2;
+    private static final ModConfigSpec.IntValue SOLAR_SPEED_BONUS;
+    private static final ModConfigSpec.IntValue SOLAR_NIGHT_PER_CARD;
     private static final ModConfigSpec.IntValue[] TESLA_RATE = new ModConfigSpec.IntValue[5];
     private static final ModConfigSpec.IntValue[] TESLA_RANGE = new ModConfigSpec.IntValue[5];
     private static final ModConfigSpec.IntValue TESLA_HOP_LOSS;
@@ -45,6 +47,10 @@ public final class PowerConfig {
                 .defineInRange("solarMk1", 20, 1, 1_000_000);
         SOLAR_MK2 = b.comment("Solar Panel Mk2, FE/t in daylight with sky access.")
                 .defineInRange("solarMk2", 80, 1, 1_000_000);
+        SOLAR_SPEED_BONUS = b.comment("Percent more daylight output per speed card in a Solar Panel (up to 4 cards).")
+                .defineInRange("solarSpeedBonus", 25, 0, 1_000);
+        SOLAR_NIGHT_PER_CARD = b.comment("Percent of the daylight output a Solar Panel keeps at night (open sky) per efficiency card (up to 4 cards).")
+                .defineInRange("solarNightPerCard", 10, 0, 100);
         b.pop();
         b.push("tesla");
         int[] rates = {4_000, 16_000, 64_000, 256_000, 1_000_000};
@@ -80,6 +86,8 @@ public final class PowerConfig {
     public static int generatorBuffer() { return get(GENERATOR_BUFFER); }
     public static int solarMk1() { return get(SOLAR_MK1); }
     public static int solarMk2() { return get(SOLAR_MK2); }
+    public static int solarSpeedBonus() { return get(SOLAR_SPEED_BONUS); }
+    public static int solarNightPerCard() { return get(SOLAR_NIGHT_PER_CARD); }
     /** tier 1-5 */
     public static int teslaRate(int tier) { return get(TESLA_RATE[tier - 1]); }
     public static int teslaRange(int tier) { return get(TESLA_RANGE[tier - 1]); }

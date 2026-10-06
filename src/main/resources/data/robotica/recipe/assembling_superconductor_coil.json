@@ -1,0 +1,36 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "c:plates/pyrosteel"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "robotica:copper_coil"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:dusts/graphite"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "robotica:quantum_circuit"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:superconductor_coil"
+    }
+  ],
+  "time": 600,
+  "power": 400
+}

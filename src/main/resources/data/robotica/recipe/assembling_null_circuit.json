@@ -1,0 +1,37 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:quantum_circuit"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "tag": "c:ender_pearls"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:nether_stars"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/resonant_alloy"
+      },
+      "count": 2
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:null_circuit",
+      "count": 2
+    }
+  ],
+  "time": 600,
+  "power": 1000
+}

@@ -1,0 +1,33 @@
+{
+  "type": "robotica:alloying",
+  "inputs": [
+    {
+      "ingredient": [
+        {
+          "tag": "c:ingots/iron"
+        },
+        {
+          "tag": "c:dusts/iron"
+        }
+      ],
+      "count": 1
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "c:ingots/thorium"
+        },
+        {
+          "tag": "c:dusts/thorium"
+        }
+      ],
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:ferrothorium_ingot"
+    }
+  ],
+  "time": 200
+}

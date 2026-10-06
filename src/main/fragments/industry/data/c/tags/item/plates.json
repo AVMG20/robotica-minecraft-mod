@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "#c:plates/thorium",
+    "#c:plates/ferrothorium",
+    "#c:plates/pyrosteel",
+    "#c:plates/resonant_alloy"
+  ]
+}

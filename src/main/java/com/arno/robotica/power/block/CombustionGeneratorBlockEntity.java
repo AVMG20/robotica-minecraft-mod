@@ -4,6 +4,8 @@ import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
+import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.menu.CombustionGeneratorMenu;
@@ -26,7 +28,12 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-/** Fuel slot, FE buffer, lit state. Pushes into every neighbouring FE receiver; Tesla Coils on it pull from the buffer. */
+/**
+ * Fuel slot, FE buffer, lit state. Pushes into every neighbouring FE receiver; Tesla Coils on it pull from the buffer.
+ * Two card slots: speed cards (up to 3) multiply the FE/t like a machine's work rate (x2, x3, x4) but burn fuel faster
+ * still ({@link Upgrades#energyMultiplier} on top), so FE per fuel item drops; efficiency cards (up to 4) add 20% FE
+ * per fuel item each by slowing the burn.
+ */
 public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements MenuProvider {
     /** FE/t the buffer may be drained at (by neighbours and Tesla Coils). */
     public static final int MAX_OUTPUT = 400;
@@ -47,6 +54,13 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         return fuel;
     }
 
+    public final Upgrades upgrades = new Upgrades(2, java.util.Map.of(UpgradeKind.SPEED, 3, UpgradeKind.EFFICIENCY, 4), this::setChanged);
+
+    @Override
+    public net.neoforged.neoforge.items.IItemHandler quickUpgrades() {
+        return upgrades;
+    }
+
     /** Receive 0: only the burning fills it. Extract is limited so Tesla Coils cannot empty it faster than MAX_OUTPUT. */
     public final MachineEnergyStorage energy = new MachineEnergyStorage(PowerConfig.generatorBuffer(), 0, MAX_OUTPUT, this::setChanged);
 
@@ -54,6 +68,8 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
 
     private int burnTime;
     private int burnTotal;
+    /** Fraction of a fuel tick already burned (cards make the burn rate fractional). */
+    private float burnDebt;
 
     public CombustionGeneratorBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.COMBUSTION_GENERATOR_BE.get(), pos, state);
@@ -75,13 +91,26 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         return burnTotal;
     }
 
+    /** FE/t while burning with the installed speed cards. */
+    public int output() {
+        return CoreConfig.scaleGeneration(PowerConfig.generatorOutput()) * Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED));
+    }
+
+    /** Fuel ticks burned per tick: speed multiplier times the speed energy penalty, divided by the efficiency bonus. */
+    public static double fuelPerTick(int speedCards, int efficiencyCards) {
+        return Upgrades.speedMultiplier(speedCards) * Upgrades.energyMultiplier(speedCards, 0) / (1.0 + 0.2 * Math.max(0, efficiencyCards));
+    }
+
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
-        int gen = CoreConfig.scaleGeneration(PowerConfig.generatorOutput());
+        int gen = output();
         if (burnTime == 0 && gen > 0 && energy.getSpace() >= gen) ignite();
         if (burnTime > 0 && energy.getSpace() >= gen) {
             energy.generate(gen);
-            burnTime--;
+            burnDebt += (float) fuelPerTick(upgrades.level(UpgradeKind.SPEED), upgrades.level(UpgradeKind.EFFICIENCY));
+            int whole = (int) burnDebt;
+            burnDebt -= whole;
+            burnTime = Math.max(0, burnTime - whole);
             if (CoreSounds.due(level, pos, 50)) CoreSounds.play(level, pos, CoreSounds.GENERATOR_BURN, SoundSource.BLOCKS, 0.5F, 1.0F);
             if (burnTime == 0) setChanged();
         }
@@ -104,6 +133,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
     @Override
     public void dropContents(Level level, BlockPos pos) {
         drop(level, pos, fuel);
+        drop(level, pos, upgrades);
     }
 
     @Override
@@ -124,6 +154,8 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         tag.put("energy", energy.serializeNBT(registries));
         tag.putInt("burnTime", burnTime);
         tag.putInt("burnTotal", burnTotal);
+        tag.putFloat("burnDebt", burnDebt);
+        tag.put("upgrades", upgrades.serializeNBT(registries));
     }
 
     @Override
@@ -133,5 +165,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         burnTime = tag.getInt("burnTime");
         burnTotal = tag.getInt("burnTotal");
+        burnDebt = tag.getFloat("burnDebt");
+        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
     }
 }

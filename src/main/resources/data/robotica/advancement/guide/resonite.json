@@ -1,0 +1,61 @@
+{
+  "parent": "robotica:guide/age4",
+  "display": {
+    "icon": {
+      "id": "robotica:resonite_crystal"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.resonite.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.resonite.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:resonite_crystal",
+              "robotica:resonite_ore"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:resonite_block",
+      "robotica:resonite_crystal_from_block",
+      "robotica:resonite_crystal_from_ore_smelting",
+      "robotica:resonite_crystal_from_ore_blasting",
+      "robotica:resonite_dust_from_hammer",
+      "robotica:grinding_resonite_dust",
+      "robotica:alloying_resonant_alloy",
+      "robotica:resonant_alloy_plate_from_hammer",
+      "robotica:metal_press_resonant_alloy_plate",
+      "robotica:assembling_resonant_lattice",
+      "robotica:assembling_fusion_fuel_pellet",
+      "robotica:assembling_null_circuit",
+      "robotica:assembling_null_casing",
+      "robotica:alloy_smelter_mk4",
+      "robotica:centrifuge_mk3",
+      "robotica:centrifuge_mk4",
+      "robotica:assembler_mk3",
+      "robotica:assembler_mk4"
+    ],
+    "experience": 30
+  }
+}

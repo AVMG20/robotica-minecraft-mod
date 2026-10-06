@@ -1,0 +1,11 @@
+{
+  "type": "robotica:pressing",
+  "ingredient": {
+    "tag": "c:ingots/thorium"
+  },
+  "result": {
+    "id": "robotica:thorium_plate",
+    "count": 1
+  },
+  "time": 100
+}

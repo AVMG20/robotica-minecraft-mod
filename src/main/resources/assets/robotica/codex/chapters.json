@@ -155,6 +155,72 @@
       ]
     },
     {
+      "title": "Industry",
+      "icon": "robotica:alloy_smelter_mk1",
+      "pages": [
+        {
+          "title": "New ores",
+          "text": "Thorium: Overworld, Y -48 to 32, in stone and deepslate. Common.\nPyrolite: the Nether, most in basalt deltas. Iron pickaxe.\nResonite: end stone on the outer End islands. Rare. Diamond pickaxe.\n\nA Tinker's Hammer cracks raw thorium, shards and crystals into dust. A Grinder doubles ores.",
+          "items": [
+            "robotica:thorium_ore",
+            "robotica:raw_thorium",
+            "robotica:pyrolite_shard",
+            "robotica:resonite_crystal"
+          ]
+        },
+        {
+          "title": "Alloy Smelter",
+          "text": "Robotica alloys come only from here.\n\nFerrothorium: iron + thorium (Age 2).\nPyrosteel: ferrothorium + pyrolite + blaze powder (Age 3).\nResonant Alloy: pyrosteel + resonite + ender pearl (Age 4).\n\nThe Metal Press or the hammer makes plates of them.",
+          "items": [
+            "robotica:alloy_smelter_mk1",
+            "robotica:ferrothorium_ingot",
+            "robotica:pyrosteel_ingot",
+            "robotica:resonant_alloy_ingot"
+          ]
+        },
+        {
+          "title": "Assembler",
+          "text": "Up to six inputs, one part. Thermocouples, Superconductor Coils and Resonant Lattices are made nowhere else. Circuits, motors and casings cost about a quarter less here than at the crafting table.\n\nBig parts need a lot of FE.",
+          "items": [
+            "robotica:assembler_mk1",
+            "robotica:thermocouple",
+            "robotica:superconductor_coil",
+            "robotica:resonant_lattice"
+          ]
+        },
+        {
+          "title": "Centrifuge",
+          "text": "Splits one input into up to four results, some by chance. Depleted Fuel Pellets give thorium dust back and, one time in ten, a Radiant Isotope. It also splits magma cream and glistering melons.",
+          "items": [
+            "robotica:centrifuge_mk1",
+            "robotica:depleted_fuel_pellet",
+            "robotica:radiant_isotope",
+            "robotica:thorium_dust"
+          ]
+        },
+        {
+          "title": "Mk1 to Mk4",
+          "text": "Every industry machine comes in four Mks. Each Mk works faster (x1, x2, x3, x5) and has one more card slot (2 to 5) with higher caps: speed, efficiency, and from Mk2 fortune (a chance of one more result).\n\nCraft the next Mk from the last one, or right-click a placed machine with the next Mk: it keeps everything inside and you get the old one back.",
+          "items": [
+            "robotica:alloy_smelter_mk1",
+            "robotica:alloy_smelter_mk2",
+            "robotica:alloy_smelter_mk3",
+            "robotica:alloy_smelter_mk4"
+          ]
+        },
+        {
+          "title": "Fuel and the RTG",
+          "text": "The Assembler presses thorium dust, graphite and a ferrothorium plate into a Thorium Fuel Pellet.\n\nThe Radioisotope Generator burns one at a time: 150 FE/t, silently, for 20 minutes. Build more for more power. Reactors burn the same pellets faster and hotter.",
+          "items": [
+            "robotica:rtg",
+            "robotica:thorium_fuel_pellet",
+            "robotica:enriched_fuel_pellet",
+            "robotica:fusion_fuel_pellet"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Robots and farms",
       "icon": "robotica:stumpy",
       "pages": [

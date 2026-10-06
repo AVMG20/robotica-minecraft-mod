@@ -1,0 +1,29 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "c:plates/thorium"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/copper"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "robotica:basic_circuit"
+      },
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:thermocouple"
+    }
+  ],
+  "time": 300
+}

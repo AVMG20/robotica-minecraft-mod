@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:raw_materials/thorium"
+    }
+  },
+  "result": {
+    "id": "robotica:raw_thorium_block",
+    "count": 1
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:advanced_circuit"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "tag": "c:rods/blaze"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "tag": "c:ingots/netherite"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "c:plates/pyrosteel"
+      },
+      "count": 2
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:quantum_circuit"
+    }
+  ],
+  "time": 400,
+  "power": 400
+}

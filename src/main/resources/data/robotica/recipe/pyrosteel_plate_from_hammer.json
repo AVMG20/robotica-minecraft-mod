@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:tinkers_hammer"
+    },
+    {
+      "tag": "c:ingots/pyrosteel"
+    },
+    {
+      "tag": "c:ingots/pyrosteel"
+    }
+  ],
+  "result": {
+    "id": "robotica:pyrosteel_plate",
+    "count": 1
+  }
+}

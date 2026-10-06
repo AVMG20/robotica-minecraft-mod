@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PAP",
+    "MGM",
+    "PXP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/ferrothorium"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "G": {
+      "item": "minecraft:brewing_stand"
+    },
+    "X": {
+      "item": "robotica:iron_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:centrifuge_mk1",
+    "count": 1
+  }
+}

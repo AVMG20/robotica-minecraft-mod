@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:thorium_ore",
+    "robotica:deepslate_thorium_ore",
+    "robotica:pyrolite_ore",
+    "robotica:resonite_ore"
+  ]
+}

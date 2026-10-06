@@ -1,0 +1,59 @@
+{
+  "parent": "robotica:guide/age2",
+  "display": {
+    "icon": {
+      "id": "robotica:assembler_mk1"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.assembler.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.assembler.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": [
+                  "robotica:assembler_mk1",
+                  "robotica:assembler_mk2",
+                  "robotica:assembler_mk3",
+                  "robotica:assembler_mk4"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:rtg",
+      "robotica:alloy_smelter_mk2",
+      "robotica:assembling_thermocouple",
+      "robotica:assembling_thorium_fuel_pellet",
+      "robotica:assembling_basic_circuit",
+      "robotica:assembling_electric_motor",
+      "robotica:assembling_advanced_circuit",
+      "robotica:assembling_servo_actuator",
+      "robotica:assembling_reinforced_casing"
+    ],
+    "experience": 15
+  }
+}

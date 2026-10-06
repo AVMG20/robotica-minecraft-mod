@@ -1,0 +1,10 @@
+{
+  "type": "robotica:grinding",
+  "ingredient": {
+    "tag": "minecraft:coals"
+  },
+  "result": {
+    "id": "robotica:graphite_dust",
+    "count": 1
+  }
+}
