@@ -371,7 +371,7 @@ Modules (the shared framework, see Modules): the Tinker's Bench (Age 1: iron pla
 | Silk Touch | drills | 1 | blocks drop themselves; B picks Fortune, Silk Touch or off | none |
 | Auto-Pickup | drills, Chainsaw | 1 | drops go into the inventory | none |
 | Void Filter | drills, Chainsaw | 1 | deletes `robotica:voidable` drops | none |
-| Lamp Placer | drills | 1 | after mining, if the spot has light 7 or less (`lampPlacerLight`), a Spark Lamp goes on the floor, a wall or the ceiling there (or at your feet); one per 10 ticks (`lampPlacerCooldown`) | 10 FE per lamp (`lampPlacerCost`) |
+| Lamp Placer | drills | 1 | after mining, if the spot has light 7 or less (`lampPlacerLight`), a Spark Lamp goes on the floor, a wall or the ceiling there (area modes: the bottom row of the mined area; or at your feet); one per 10 ticks (`lampPlacerCooldown`) | 10 FE per lamp (`lampPlacerCost`) |
 | Sharpened Edge I-III | FE weapons | 1 / 2 / 3 | +15 / 30 / 45 % damage on paid hits (`sharpenedEdgeDamage1-3`) | +50 / 100 / 150 FE per use |
 | Looting I-III | FE weapons | 1 / 2 / 3 | mob drops as with Looting I / II / III | none |
 | Thermal Edge | FE weapons | 1 | paid hits and rivets set the target on fire for 4 s | +100 FE per use |

@@ -17,6 +17,7 @@ import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,8 +25,9 @@ import java.util.UUID;
 /**
  * Lamp Placer module (drills): a moment after you mine a block, if the spot is dark (light at or below
  * {@link GearConfig#lampLight}, sky or block light), a Spark Lamp goes on the floor, a wall or the ceiling there, or at
- * your feet. Paid in FE from the drill, at most one lamp per {@link GearConfig#lampCooldown} ticks. Placement goes
- * through {@link SparkLamps} (build rights, spawn protection, world border, place event). State is per player UUID and
+ * your feet. For an area break the spot is the bottom row of the mined area (nearest the origin), so the lamp sits on
+ * the floor instead of at eye level. Paid in FE from the drill, at most one lamp per {@link GearConfig#lampCooldown}
+ * ticks. Placement goes through {@link SparkLamps} (build rights, spawn protection, world border, place event). State is per player UUID and
  * dropped on logout.
  */
 public final class LampPlacer {
@@ -34,15 +36,30 @@ public final class LampPlacer {
     /** Ticks between the break and the light check (lets an area break and the light engine finish). */
     public static final int DELAY = 2;
 
-    private record Pending(ResourceKey<Level> dimension, BlockPos pos, long due) {}
+    private record Pending(ResourceKey<Level> dimension, BlockPos pos, BlockPos origin, long due) {}
 
     private static final Map<UUID, Pending> PENDING = new HashMap<>();
     private static final Map<UUID, Long> LAST = new HashMap<>();
 
-    /** Called when the player breaks a block with a drill (origin of the break only). */
-    public static void schedule(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos pos) {
+    /** Called when the player breaks a block with a drill (origin of the break only, plus the extra area blocks). */
+    public static void schedule(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos origin, List<BlockPos> targets) {
         if (Modules.active(tool, ModuleKind.LAMP_PLACER) <= 0) return;
-        PENDING.put(player.getUUID(), new Pending(level.dimension(), pos.immutable(), level.getGameTime() + DELAY));
+        BlockPos spot = spotFor(origin, targets, player.blockPosition().getY());
+        PENDING.put(player.getUUID(), new Pending(level.dimension(), spot, origin.immutable(), level.getGameTime() + DELAY));
+    }
+
+    /**
+     * The lowest mined position nearest the origin, not below the player's feet: bottom-centre of a wall area, the origin
+     * itself for 1x1 or a floor.
+     */
+    public static BlockPos spotFor(BlockPos origin, List<BlockPos> targets, int feetY) {
+        int floorY = Math.min(origin.getY(), feetY);
+        BlockPos best = origin;
+        for (BlockPos p : targets) {
+            if (p.getY() < floorY) continue;
+            if (p.getY() < best.getY() || (p.getY() == best.getY() && p.distSqr(origin) < best.distSqr(origin))) best = p;
+        }
+        return best.immutable();
     }
 
     public static void tick(MinecraftServer server) {
@@ -61,7 +78,7 @@ public final class LampPlacer {
             it.remove();
             ItemStack tool = player.getMainHandItem();
             if (Modules.active(tool, ModuleKind.LAMP_PLACER) <= 0 || !level.isLoaded(p.pos())) continue;
-            if (isDark(level, p.pos())) tryPlace(player, level, tool, p.pos());
+            if (isDark(level, p.pos())) tryPlace(player, level, tool, p.pos(), p.origin());
         }
     }
 
@@ -70,12 +87,16 @@ public final class LampPlacer {
         return level.getRawBrightness(pos, 0) <= GearConfig.lampLight();
     }
 
+    public static boolean tryPlace(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos pos) {
+        return tryPlace(player, level, tool, pos, pos);
+    }
+
     /**
      * Places a lamp near {@code pos} without looking at the light (the caller did): the spot itself, the block below it,
-     * then the player's feet; on the floor first, then a wall (facing the player first), then the ceiling. Returns true
-     * when placed.
+     * then the origin of the break, then the player's feet; on the floor first, then a wall (facing the player first),
+     * then the ceiling. Returns true when placed.
      */
-    public static boolean tryPlace(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos pos) {
+    public static boolean tryPlace(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos pos, BlockPos origin) {
         if (!player.mayBuild()) return false;
         long now = level.getGameTime();
         Long last = LAST.get(player.getUUID());
@@ -83,7 +104,7 @@ public final class LampPlacer {
         boolean creative = player.getAbilities().instabuild;
         int cost = Modules.regulated(tool, GearConfig.lampCost());
         if (!creative && ItemEnergy.get(tool) < cost) return false;
-        for (BlockPos spot : List.of(pos, pos.below(), player.blockPosition())) {
+        for (BlockPos spot : new LinkedHashSet<>(List.of(pos, pos.below(), origin, player.blockPosition()))) {
             for (Direction facing : facings(player, spot)) {
                 if (!SparkLamps.canPlace(player, level, spot, facing)) continue;
                 if (!SparkLamps.place(player, level, spot, facing)) return false;
