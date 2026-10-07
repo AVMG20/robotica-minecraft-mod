@@ -14,12 +14,16 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from pixelart import Canvas, grain, material, write_anim, write_block, write_item, write_still  # noqa: E402
 
 CU, ST, BR, AU, WD, SO = '01234', 'abcde', '56789', 'ABCDE', 'uvwWX', 'mnopP'
+MG, NV, SL = '!#$%&', '()[]{', '<>?;:'                                                 # magma, null, slate (solar Mk3 / Mk4)
 P = {'k': '#16191B', 'K': '#0B0D0E'}
 P.update(material(CU, 'copper'))
 P.update(material(ST, 'steel'))
 P.update(material(BR, 'brass'))
 P.update(material(AU, 'gold'))
 P.update(material(WD, 'wood'))
+P.update(material(MG, 'magma'))
+P.update(material(NV, 'null'))
+P.update(material(SL, 'slate'))
 P.update({
     'm': '#0B1638', 'n': '#14245E', 'o': '#22408F', 'p': '#3F6FC8', 'P': '#9CC4F4',      # solar cell blue
     'f': '#FF7A1A', 'F': '#FFC23A', 'O': '#FFF3C0', 'x': '#B8261A', 'X': '#5A1408',    # flame, ember
@@ -323,30 +327,46 @@ def wireless_mast():
 
 # ---------------------------------------------------------------- solar panels
 
+SOLAR_FRAME = {1: CU, 2: AU, 3: MG, 4: SL}
+
+
 def solar_top(mk):
-    frame_r = CU if mk == 1 else AU
+    frame_r = SOLAR_FRAME[mk]
     c = Canvas()
     c.plate(0, 0, 16, 16, frame_r, 13, brushed=False)
-    n = 2 if mk == 1 else 3
-    size = 7 if mk == 1 else 4
-    for i in range(n):
-        for j in range(n):
-            x, y = 1 + i * (size + 1 if mk == 2 else size), 1 + j * (size + 1 if mk == 2 else size)
-            c.vgradient(x, y, size, size, 'pon' if mk == 1 else 'onnm')
-            c.rect(x, y + size - 1, size, 1, 'm').rect(x + size - 1, y, 1, size, 'm')
-            c.rect(x, y, size, 1, 'p').rect(x, y, 1, size, 'p')
-            if mk == 1:
-                c.rect(x + 3, y + 1, 1, size - 2, 'n').rect(x + 1, y + 3, size - 2, 1, 'n')   # busbars
-            c.set(x + 1, y + 1, 'P')
     if mk == 1:
+        for i in range(2):
+            for j in range(2):
+                x, y = 1 + i * 7, 1 + j * 7
+                c.vgradient(x, y, 7, 7, 'pon')
+                c.rect(x, y + 6, 7, 1, 'm').rect(x + 6, y, 1, 7, 'm')
+                c.rect(x, y, 7, 1, 'p').rect(x, y, 1, 7, 'p')
+                c.rect(x + 3, y + 1, 1, 5, 'n').rect(x + 1, y + 3, 5, 1, 'n')   # busbars
+                c.set(x + 1, y + 1, 'P')
         c.rect(1, 7, 14, 1, frame_r[1]).rect(7, 1, 1, 14, frame_r[1]).rect(8, 1, 1, 14, frame_r[3])
         c.line(2, 5, 5, 2, 'P').line(9, 12, 12, 9, 'p')                     # sky glint
-    else:
-        for k in (5, 10):
-            c.rect(1, k, 14, 1, frame_r[1]).rect(k, 1, 1, 14, frame_r[1])
-        c.line(2, 4, 4, 2, 'P').line(7, 9, 9, 7, 'P').line(12, 14, 14, 12, 'p')
-        for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):
-            c.set(x, y, 'E')
+        return c
+    # Mk2-Mk4: 3x3 cells of 4 px; Mk3 dark cells with hot busbars, Mk4 violet-black cells around a null core
+    cell = {2: 'onnm', 3: 'nnmm', 4: 'nm(('}[mk]
+    edge_lo, edge_hi, glint = ('m', 'p', 'P') if mk < 4 else ('(', ']', '{')
+    for i in range(3):
+        for j in range(3):
+            x, y = 1 + i * 5, 1 + j * 5
+            c.vgradient(x, y, 4, 4, cell)
+            c.rect(x, y + 3, 4, 1, edge_lo).rect(x + 3, y, 1, 4, edge_lo)
+            c.rect(x, y, 4, 1, edge_hi).rect(x, y, 1, 4, edge_hi)
+            if mk == 3:
+                c.rect(x + 1, y + 2, 2, 1, '$')                              # heat busbar
+            c.set(x + 1, y + 1, glint)
+    for k in (5, 10):
+        c.rect(1, k, 14, 1, frame_r[1]).rect(k, 1, 1, 14, frame_r[1])
+    if mk == 4:
+        c.rect(6, 6, 4, 4, '(').rect(7, 7, 2, 2, '[').set(7, 7, '{')        # null core in the middle cell
+    c.line(2, 4, 4, 2, glint).line(12, 14, 14, 12, edge_hi)
+    if mk != 4:
+        c.line(7, 9, 9, 7, 'P')
+    for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):
+        c.set(x, y, frame_r[4] if mk < 4 else '{')
     return c
 
 
@@ -355,17 +375,24 @@ def solar_glow(mk):
     c = Canvas()
     if mk == 1:
         c.set(2, 2, 'Y').set(9, 2, 'Y').set(2, 9, 'Y').set(9, 9, 'Y')
-    else:
+        return c
+    spark = {2: 'Y', 3: 'F', 4: '{'}[mk]
+    for i in range(3):
+        for j in range(3):
+            c.set(2 + i * 5, 2 + j * 5, spark)
+    c.set(7, 7, {2: 'z', 3: 'O', 4: '{'}[mk])
+    if mk == 3:
         for i in range(3):
             for j in range(3):
-                c.set(2 + i * 5, 2 + j * 5, 'Y')
-        c.set(7, 7, 'z')
+                c.set(2 + i * 5, 3 + j * 5, '%')
+    if mk == 4:
+        c.set(8, 7, ']').set(7, 8, ']').set(8, 8, '[')
     return c
 
 
 def solar_side(mk):
     """Only rows 0-5 show on the 6 px tall sides: frame lip, cell edge, mounting rail with bolts."""
-    r = CU if mk == 1 else AU
+    r = SOLAR_FRAME[mk]
     c = Canvas()
     c.plate(0, 0, 16, 16, ST, 14, density=0.1)
     c.rect(0, 0, 16, 2, r[3]).rect(0, 0, 16, 1, r[4]).rect(0, 2, 16, 1, r[1])
@@ -374,6 +401,9 @@ def solar_side(mk):
         c.set(x, 4, 'e').set(x + 1, 5, 'a')
     for x in (4, 10):
         c.rect(x, 3, 2, 3, 'K')
+    if mk >= 3:
+        band = r if mk == 3 else NV
+        c.rect(7, 3, 2, 3, band[2]).set(7, 3, band[3])                      # tier band
     return c
 
 
@@ -589,7 +619,7 @@ def main():
     write_block('wireless_charger_top', wireless_top().rows(), P)
     write_block('wireless_charger_mast', wireless_mast().rows(), P)
 
-    for mk in (1, 2):
+    for mk in (1, 2, 3, 4):
         write_block(f'solar_panel_mk{mk}_top', solar_top(mk).rows(), P)
         write_block(f'solar_panel_mk{mk}_side', solar_side(mk).rows(), P)
         write_block(f'solar_panel_mk{mk}_glow', solar_glow(mk).rows(), P)

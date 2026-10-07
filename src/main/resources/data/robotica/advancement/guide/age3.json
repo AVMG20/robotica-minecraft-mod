@@ -40,6 +40,7 @@
       "robotica:blazing_casing",
       "robotica:quantum_circuit",
       "robotica:plasma_actuator",
+      "robotica:solar_panel_mk3",
       "robotica:grinder_mk3",
       "robotica:electric_furnace_mk3",
       "robotica:pyrosteel_grinding_balls",

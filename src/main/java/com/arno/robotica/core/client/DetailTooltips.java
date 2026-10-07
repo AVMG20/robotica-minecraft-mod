@@ -30,7 +30,7 @@ final class DetailTooltips {
         if (stack.getItem() instanceof HasDetails d) d.appendDetails(stack, event.getContext(), details);
         String langKey = "tooltip.robotica." + id.getPath() + ".details";
         if (I18n.exists(langKey)) {
-            for (String line : I18n.get(langKey).split("\n")) details.add(Component.literal(line).withStyle(ChatFormatting.GRAY));
+            for (String line : I18n.get(langKey, com.arno.robotica.core.item.DetailArgs.get(id.getPath())).split("\n")) details.add(Component.literal(line).withStyle(ChatFormatting.GRAY));
         }
         if (details.isEmpty()) return;
         List<Component> tooltip = event.getToolTip();

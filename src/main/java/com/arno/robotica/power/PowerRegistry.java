@@ -69,6 +69,10 @@ public final class PowerRegistry {
             p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK1), machine().noOcclusion());
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK2 = BLOCKS.registerBlock("solar_panel_mk2",
             p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK2), machine().noOcclusion());
+    public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK3 = BLOCKS.registerBlock("solar_panel_mk3",
+            p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK3), machine().noOcclusion());
+    public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK4 = BLOCKS.registerBlock("solar_panel_mk4",
+            p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK4), machine().noOcclusion());
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_1 = accumulator(AccumulatorBlock.Tier.I);
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_2 = accumulator(AccumulatorBlock.Tier.II);
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_3 = accumulator(AccumulatorBlock.Tier.III);
@@ -97,6 +101,8 @@ public final class PowerRegistry {
     public static final DeferredItem<BlockItem> COMBUSTION_GENERATOR_ITEM = ITEMS.registerSimpleBlockItem(COMBUSTION_GENERATOR);
     public static final DeferredItem<BlockItem> SOLAR_PANEL_MK1_ITEM = ITEMS.registerSimpleBlockItem(SOLAR_PANEL_MK1);
     public static final DeferredItem<BlockItem> SOLAR_PANEL_MK2_ITEM = ITEMS.registerSimpleBlockItem(SOLAR_PANEL_MK2);
+    public static final DeferredItem<BlockItem> SOLAR_PANEL_MK3_ITEM = ITEMS.registerSimpleBlockItem(SOLAR_PANEL_MK3);
+    public static final DeferredItem<BlockItem> SOLAR_PANEL_MK4_ITEM = ITEMS.registerSimpleBlockItem(SOLAR_PANEL_MK4);
     public static final DeferredItem<Item> ACCUMULATOR_1_ITEM = accumulatorItem(ACCUMULATOR_1);
     public static final DeferredItem<Item> ACCUMULATOR_2_ITEM = accumulatorItem(ACCUMULATOR_2);
     public static final DeferredItem<Item> ACCUMULATOR_3_ITEM = accumulatorItem(ACCUMULATOR_3);
@@ -123,6 +129,10 @@ public final class PowerRegistry {
             BLOCK_ENTITIES.register("solar_panel_mk1", () -> BlockEntityType.Builder.of(SolarPanelBlockEntity::new, SOLAR_PANEL_MK1.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SolarPanelBlockEntity>> SOLAR_MK2_BE =
             BLOCK_ENTITIES.register("solar_panel_mk2", () -> BlockEntityType.Builder.of(SolarPanelBlockEntity::new, SOLAR_PANEL_MK2.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SolarPanelBlockEntity>> SOLAR_MK3_BE =
+            BLOCK_ENTITIES.register("solar_panel_mk3", () -> BlockEntityType.Builder.of(SolarPanelBlockEntity::new, SOLAR_PANEL_MK3.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SolarPanelBlockEntity>> SOLAR_MK4_BE =
+            BLOCK_ENTITIES.register("solar_panel_mk4", () -> BlockEntityType.Builder.of(SolarPanelBlockEntity::new, SOLAR_PANEL_MK4.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AccumulatorBlockEntity>> ACCUMULATOR_BE =
             BLOCK_ENTITIES.register("accumulator", () -> BlockEntityType.Builder.of(AccumulatorBlockEntity::new,
                     ACCUMULATOR_1.get(), ACCUMULATOR_2.get(), ACCUMULATOR_3.get()).build(null));
@@ -176,6 +186,8 @@ public final class PowerRegistry {
         RoboticaTab.add(COMBUSTION_GENERATOR_ITEM);
         RoboticaTab.add(SOLAR_PANEL_MK1_ITEM);
         RoboticaTab.add(SOLAR_PANEL_MK2_ITEM);
+        RoboticaTab.add(SOLAR_PANEL_MK3_ITEM);
+        RoboticaTab.add(SOLAR_PANEL_MK4_ITEM);
         RoboticaTab.add(ACCUMULATOR_1_ITEM);
         RoboticaTab.add(ACCUMULATOR_2_ITEM);
         RoboticaTab.add(ACCUMULATOR_3_ITEM);

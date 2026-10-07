@@ -1,0 +1,97 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "top": "robotica:block/solar_panel_mk4_top",
+    "side": "robotica:block/solar_panel_mk4_side",
+    "bottom": "robotica:block/power_machine_bottom",
+    "glow": "robotica:block/solar_panel_mk4_glow",
+    "particle": "robotica:block/solar_panel_mk4_side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        6,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#bottom",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#top"
+        },
+        "north": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        6,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "neoforge_data": {
+            "block_light": 9,
+            "sky_light": 9,
+            "ambient_occlusion": false
+          }
+        }
+      }
+    }
+  ]
+}

@@ -4,6 +4,8 @@
     "robotica:combustion_generator",
     "robotica:solar_panel_mk1",
     "robotica:solar_panel_mk2",
+    "robotica:solar_panel_mk3",
+    "robotica:solar_panel_mk4",
     "robotica:accumulator_1",
     "robotica:accumulator_2",
     "robotica:accumulator_3",

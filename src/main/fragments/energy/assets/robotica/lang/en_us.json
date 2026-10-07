@@ -20,11 +20,10 @@
   "block.robotica.fusion_casing": "Fusion Casing",
   "block.robotica.fusion_coil": "Fusion Coil",
   "block.robotica.fusion_controller": "Fusion Reactor Controller",
-
   "tooltip.robotica.bank_casing": "Frame and walls of a Capacitor Bank",
   "tooltip.robotica.bank_glass": "Window for the walls of a Capacitor Bank",
   "tooltip.robotica.bank_controller": "Controller of a Capacitor Bank",
-  "tooltip.robotica.bank_controller_shape": "Hollow box 3x3x3 to 9x9x9, in a side wall",
+  "tooltip.robotica.bank_controller_shape": "Hollow box %1$sx%1$sx%1$s to %2$sx%2$sx%2$s, in a side wall",
   "tooltip.robotica.bank_controller.details": "Inside: Capacitors and Transfer Coils",
   "tooltip.robotica.bank_port": "FE in or out of a Capacitor Bank. Sneak-right-click to switch",
   "tooltip.robotica.bank_stored": "Stored: %s",
@@ -34,7 +33,7 @@
   "tooltip.robotica.reactor_casing": "Frame and walls of a Fission Reactor",
   "tooltip.robotica.reactor_glass": "Window for Fission and Fusion Reactor walls",
   "tooltip.robotica.reactor_controller": "Controller of a Fission Reactor",
-  "tooltip.robotica.reactor_controller_shape": "Hollow box 5x5x5 to 7x7x7, in a side wall",
+  "tooltip.robotica.reactor_controller_shape": "Hollow box %1$sx%1$sx%1$s to %2$sx%2$sx%2$s, in a side wall",
   "tooltip.robotica.reactor_controller.details": "Fuel Rods in full columns, coolant beside them. Never explodes",
   "tooltip.robotica.reactor_power_port": "Sends a reactor's FE out. A Tesla Coil can sit on it",
   "tooltip.robotica.reactor_access_port": "Fuel in, waste out",
@@ -44,13 +43,11 @@
   "tooltip.robotica.fusion_coil": "16 of them form the ring inside a Fusion Reactor",
   "tooltip.robotica.fusion_controller": "Controller of a Fusion Reactor",
   "tooltip.robotica.fusion_controller_shape": "7x3x7 box in a side wall: 16 Fusion Coils around an empty 3x3",
-  "tooltip.robotica.fusion_controller.details": "Charge 20M FE, add fusion fuel: about 200,000 FE/t",
-
+  "tooltip.robotica.fusion_controller.details": "Charge %s, add fusion fuel: about 200,000 FE/t",
   "message.robotica.bank_port_input": "Bank Port: input",
   "message.robotica.bank_port_output": "Bank Port: output",
   "message.robotica.port_unlinked": "Not part of a finished structure: check its controller",
   "message.robotica.reactor_scram": "Reactor SCRAM: too hot. Add coolant or insert the control rods, then reset it",
-
   "multiblock.robotica.fission_reactor": "Fission Reactor",
   "multiblock.robotica.capacitor_bank": "Capacitor Bank",
   "multiblock.robotica.fusion_reactor": "Fusion Reactor",
@@ -67,7 +64,6 @@
   "multiblock.robotica.bank_no_port": "Needs at least one Bank Port in a wall",
   "multiblock.robotica.fusion_ring": "%s at %s: the ring around the plasma chamber must be Fusion Coils",
   "multiblock.robotica.fusion_chamber": "%s at %s: the 3x3 plasma chamber in the middle must stay empty",
-
   "gui.robotica.energy.show_tip": "Show the structure in the world: its outline, and the wrong block in red",
   "gui.robotica.energy.show_box": "Outlined: the structure, and the first wrong block in red",
   "gui.robotica.energy.show_preview": "Outlined: the smallest shape this controller can form",
@@ -116,7 +112,6 @@
   "gui.robotica.energy.reactor.rods_in.tip": "The control rods are fully in: the reactor is off",
   "gui.robotica.energy.reactor.scram": "SCRAM",
   "gui.robotica.energy.reactor.scram.tip": "It got too hot and shut itself down. Add coolant or insert control rods, let it cool, then press Reset",
-
   "gui.robotica.energy.bank_exact": "%s / %s FE",
   "gui.robotica.energy.bank_in": "In %s FE/t",
   "gui.robotica.energy.bank_out": "Out %s FE/t",
@@ -126,7 +121,6 @@
   "gui.robotica.energy.bank_history_tip": "Net flow per second over the last minute: up is charging, down is draining",
   "gui.robotica.energy.bank_history_avg": "Average: %s FE/t",
   "gui.robotica.energy.bank_parts": "%s capacitors, %s coils, max %s FE/t each way",
-
   "gui.robotica.energy.fusion_power_tip": "Switch the reactor on or off. Off collapses the plasma",
   "gui.robotica.energy.fusion_on": "On",
   "gui.robotica.energy.fusion_off": "Off",
@@ -149,7 +143,6 @@
   "gui.robotica.energy.fusion.running.tip": "Fusing: the plasma burns fuel whether or not the power is taken",
   "gui.robotica.energy.fusion.starving": "Out of fuel",
   "gui.robotica.energy.fusion.starving.tip": "Add fuel quickly or the plasma collapses and needs a new charge",
-
   "robotica.configuration.multiblock": "Multiblocks",
   "robotica.configuration.multiblockScanCooldown": "Ticks between structure checks after a change",
   "robotica.configuration.multiblockRescanInterval": "Periodic structure check (ticks)",

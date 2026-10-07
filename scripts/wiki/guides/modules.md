@@ -34,14 +34,14 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 | [[void_filter_module]] | drills, Chainsaw | 1 | deletes junk drops |
 | [[lamp_placer_module]] | drills | 1 | Spark Lamps where you mine in the dark, 10 FE each |
 
-> B cycles Fortune, Silk Touch and off.
+> B cycles Fortune, Silk Touch and off. Overclock, Fortune and Silk Touch only work while the tool has FE.
 
 ## Weapon modules
 
 | Module | Fits | Min. Age | Does |
 |---|---|---|---|
 | [[sharpened_edge_module]] I-III | FE weapons | 1 / 2 / 3 | +15 / 30 / 45% damage |
-| [[looting_module]] I-III | FE weapons | 1 / 2 / 3 | Looting I-III on kills |
+| [[looting_module]] I-III | FE weapons | 1 / 2 / 3 | Looting I-III on kills while the weapon has FE |
 | [[thermal_edge_module]] | FE weapons | 1 | sets targets on fire |
 | [[armor_pierce_module]] I-III | FE weapons | 1 / 2 / 3 | ignores 20 / 35 / 50% of armor |
 | [[chain_lightning_module]] I-III | Arc Blade | 3 | more arcs, longer jumps |

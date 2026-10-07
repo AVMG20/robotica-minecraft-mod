@@ -237,7 +237,10 @@ public class IndustryGameTests {
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void generatorCards(GameTestHelper helper) {
         helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(0, 0) == 1.0, "no cards: one fuel tick per tick");
-        helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(0, 4) == Upgrades.energyMultiplier(0, 4), "4 efficiency cards: fuel lasts 2.5x");
+        double fourCards = CombustionGeneratorBlockEntity.fuelPerTick(0, 4);
+        helper.assertTrue(Math.abs(fourCards - (1.0 - 4 * com.arno.robotica.power.PowerConfig.generatorEfficiencyPerCard())) < 1e-9,
+                "4 efficiency cards: the generator's own step per card");
+        helper.assertTrue(fourCards > Upgrades.energyMultiplier(0, 4), "efficiency cards save less fuel than in machines (1.67x by default, not 2.5x)");
         helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(3, 0) == 4 * Upgrades.energyMultiplier(3, 0), "speed burns fuel faster than it adds FE");
 
         helper.setBlock(POS, PowerRegistry.COMBUSTION_GENERATOR.get().defaultBlockState());

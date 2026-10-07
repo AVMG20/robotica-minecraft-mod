@@ -68,7 +68,7 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
     public float getDestroySpeed(ItemStack stack, BlockState state) {
         if (!hasPower(stack)) return canMine(state) ? EMPTY_SPEED : 1.0F;
         float speed = super.getDestroySpeed(stack, state);
-        int overclock = Modules.active(stack, ModuleKind.OVERCLOCK);
+        int overclock = Modules.powered(stack, ModuleKind.OVERCLOCK);
         return overclock > 0 && speed > 1.0F ? speed * (float) (1.0 + GearConfig.overclockSpeed(overclock)) : speed;
     }
 
@@ -177,12 +177,15 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
         return !spec.isEnergy() && super.isPrimaryItemFor(stack, enchantment);
     }
 
-    /** FE tools: only the switched-on Fortune or Silk Touch module counts, as that enchantment; nothing else does. */
+    /**
+     * FE tools: only the switched-on Fortune or Silk Touch module counts, as that enchantment, and only while the tool
+     * has FE (like Overclock); nothing else does.
+     */
     @Override
     public int getEnchantmentLevel(ItemStack stack, Holder<Enchantment> enchantment) {
         if (spec.isEnergy()) {
-            if (enchantment.is(Enchantments.FORTUNE)) return Modules.active(stack, ModuleKind.FORTUNE);
-            if (enchantment.is(Enchantments.SILK_TOUCH)) return Math.min(1, Modules.active(stack, ModuleKind.SILK_TOUCH));
+            if (enchantment.is(Enchantments.FORTUNE)) return Modules.powered(stack, ModuleKind.FORTUNE);
+            if (enchantment.is(Enchantments.SILK_TOUCH)) return Math.min(1, Modules.powered(stack, ModuleKind.SILK_TOUCH));
             return 0;
         }
         return super.getEnchantmentLevel(stack, enchantment);
@@ -192,8 +195,8 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
     public ItemEnchantments getAllEnchantments(ItemStack stack, HolderLookup.RegistryLookup<Enchantment> lookup) {
         ItemEnchantments base = super.getAllEnchantments(stack, lookup);
         if (!spec.isEnergy()) return base;
-        int fortune = Modules.active(stack, ModuleKind.FORTUNE);
-        int silk = Modules.active(stack, ModuleKind.SILK_TOUCH);
+        int fortune = Modules.powered(stack, ModuleKind.FORTUNE);
+        int silk = Modules.powered(stack, ModuleKind.SILK_TOUCH);
         ItemEnchantments.Mutable all = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
         if (fortune > 0) all.set(lookup.getOrThrow(Enchantments.FORTUNE), fortune);
         if (silk > 0) all.set(lookup.getOrThrow(Enchantments.SILK_TOUCH), 1);

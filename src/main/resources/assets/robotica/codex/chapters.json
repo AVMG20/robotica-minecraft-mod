@@ -102,12 +102,14 @@
       "pages": [
         {
           "title": "Making FE",
-          "text": "Robotica runs on FE: other mods' generators and cables work.\n- Winding Crank: by hand, Mainsprings only.\n- Combustion Generator: 80 FE/t.\n- Solar Panel: 20 FE/t by day, Mk2 80.",
+          "text": "Robotica runs on FE: other mods' generators and cables work.\n- Winding Crank: by hand, Mainsprings only.\n- Combustion Generator: 80 FE/t. Speed cards: more FE/t; efficiency: -10% fuel each.\n- Solar Panel Mk1-4: 20 / 80 / 200 / 500 FE/t by day.",
           "items": [
             "robotica:winding_crank",
             "robotica:combustion_generator",
             "robotica:solar_panel_mk1",
-            "robotica:solar_panel_mk2"
+            "robotica:solar_panel_mk2",
+            "robotica:solar_panel_mk3",
+            "robotica:solar_panel_mk4"
           ]
         },
         {
@@ -523,7 +525,7 @@
         },
         {
           "title": "Tool modules",
-          "text": "- Overclock I-III: mines faster\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Lamp Placer: lamps in the dark\n- Power Regulator: less FE",
+          "text": "- Overclock I-III: mines faster\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Lamp Placer: lamps in the dark\n- Power Regulator: less FE\nOverclock, Fortune, Silk Touch and Looting need FE in the item.",
           "items": [
             "robotica:overclock_module",
             "robotica:fortune_module",

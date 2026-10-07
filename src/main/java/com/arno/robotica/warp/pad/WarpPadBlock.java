@@ -145,7 +145,7 @@ public class WarpPadBlock extends Block implements EntityBlock {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.age", 2, Component.translatable("age.robotica.2")).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.age", 1, Component.translatable("age.robotica.1")).withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.warp_pad").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.warp_pad_use").withStyle(ChatFormatting.DARK_GRAY));
     }

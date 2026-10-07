@@ -66,7 +66,7 @@ public class RoboticaJeiPlugin implements IModPlugin {
         registration.addItemStackInfo(new ItemStack(CoreItems.MAGMA_CORE.get()), Component.translatable("jei.robotica.info.magma_core"));
         registration.addItemStackInfo(new ItemStack(CoreItems.ANTIGRAV_CORE.get()), Component.translatable("jei.robotica.info.antigrav_core"));
         registration.addItemStackInfo(new ItemStack(ReplicatorRegistry.ESSENCE_VIAL.get()), Component.translatable("jei.robotica.info.essence_vial"));
-        registration.addItemStackInfo(new ItemStack(CoreItems.MAINSPRING.get()), Component.translatable("jei.robotica.info.mainspring"));
+        registration.addItemStackInfo(new ItemStack(CoreItems.MAINSPRING.get()), Component.translatable("jei.robotica.info.mainspring", mainspringSeconds()));
 
         // One page per upgrade card: the shared stacking rules, then what this kind does.
         for (UpgradeKind kind : UpgradeKind.values()) {
@@ -74,7 +74,7 @@ public class RoboticaJeiPlugin implements IModPlugin {
                     ? Component.translatable("jei.robotica.info.upgrade.stackable", kind.maxStack)
                     : Component.translatable("jei.robotica.info.upgrade.single");
             registration.addItemStackInfo(new ItemStack(CoreItems.card(kind).get()),
-                    Component.translatable("jei.robotica.info.upgrade." + kind.id()),
+                    Component.translatable("jei.robotica.info.upgrade." + kind.id(), com.arno.robotica.core.upgrade.UpgradeText.args(kind)),
                     stacking,
                     Component.translatable("jei.robotica.info.upgrade.rules"));
         }
@@ -100,5 +100,12 @@ public class RoboticaJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addRecipeCatalysts(PRESSING, PowerRegistry.METAL_PRESS_ITEM.get());
+    }
+
+    /** Seconds of winding at the Winding Crank to fill an empty Mainspring (config values). */
+    private static long mainspringSeconds() {
+        int capacity = com.arno.robotica.core.energy.ItemEnergy.capacity(new ItemStack(CoreItems.MAINSPRING.get()));
+        double perSecond = com.arno.robotica.power.PowerConfig.crankFePerClick() * 20.0 / com.arno.robotica.power.PowerConfig.crankClickGapTicks();
+        return Math.round(capacity / Math.max(1.0, perSecond));
     }
 }

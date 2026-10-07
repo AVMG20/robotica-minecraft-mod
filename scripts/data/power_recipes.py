@@ -61,10 +61,15 @@ shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'advanced_circuit', 'A': 'accumulator_1', 'X': 'reinforced_casing'})
 shaped('tesla_coil_3', [' A ', 'QTQ', ' X '], {'A': 'advanced_circuit', 'Q': QUARTZ, 'T': 'tesla_coil_2', 'X': 'reinforced_casing'})
 # Age 3
+# Solar Mk3 / Mk4: two panels of the tier below (2 x 80 -> 200, 2 x 200 -> 500 FE/t), that age's circuit and alloy plates.
+shaped('solar_panel_mk3', ['PGP', 'SCS', 'PGP'], {'P': '#c:plates/pyrosteel', 'G': '#c:glass_blocks', 'S': 'solar_panel_mk2',
+                                                 'C': 'quantum_circuit'})
 shaped('accumulator_3', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'quantum_circuit', 'A': 'accumulator_2', 'X': 'blazing_casing'})
 shaped('tesla_coil_4', [' C ', 'BTB', ' X '], {'C': 'quantum_circuit', 'B': '#c:rods/blaze', 'T': 'tesla_coil_3', 'X': 'blazing_casing'})
 # Age 4
+shaped('solar_panel_mk4', ['PEP', 'SCS', 'PEP'], {'P': '#c:plates/resonant_alloy', 'E': '#c:ender_pearls', 'S': 'solar_panel_mk3',
+                                                 'C': 'null_circuit'})
 shaped('tesla_coil_5', [' C ', 'ETE', ' X '], {'C': 'null_circuit', 'E': '#c:ender_pearls', 'T': 'tesla_coil_4', 'X': 'null_casing'})
 
 # Metal Press: 1 ingot -> 1 plate (100 ticks at base speed)

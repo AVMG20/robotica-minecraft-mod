@@ -181,6 +181,14 @@ public final class Modules {
     }
 
     /**
+     * {@link #active} for modules that only work while an FE tool or weapon has energy (Overclock, Fortune, Silk Touch,
+     * Looting): 0 when the item runs on FE and is empty. Items without a battery are never gated.
+     */
+    public static int powered(ItemStack stack, ModuleKind kind) {
+        return ItemEnergy.capacity(stack) > 0 && ItemEnergy.get(stack) <= 0 ? 0 : active(stack, kind);
+    }
+
+    /**
      * Steps through a group: off, then each installed kind of the group in order, then off again (the B key: Fortune,
      * Silk Touch, off). Returns the kind now on, or null for off.
      */

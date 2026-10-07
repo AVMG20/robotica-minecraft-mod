@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PGP",
+    "SCS",
+    "PGP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/pyrosteel"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "S": {
+      "item": "robotica:solar_panel_mk2"
+    },
+    "C": {
+      "item": "robotica:quantum_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:solar_panel_mk3",
+    "count": 1
+  }
+}

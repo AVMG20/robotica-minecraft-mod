@@ -114,7 +114,12 @@ public class ControllerBlock extends Block implements EntityBlock {
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         String id = BuiltInRegistries.BLOCK.getKey(this).getPath();
         tooltip.add(Component.translatable("tooltip.robotica." + id).withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica." + id + "_shape").withStyle(ChatFormatting.DARK_GRAY));
+        Object[] size = switch (id) {
+            case "bank_controller" -> new Object[]{com.arno.robotica.energy.EnergyConfig.bankMinSize(), com.arno.robotica.energy.EnergyConfig.bankMaxSize()};
+            case "reactor_controller" -> new Object[]{com.arno.robotica.energy.EnergyConfig.reactorMinSize(), com.arno.robotica.energy.EnergyConfig.reactorMaxSize()};
+            default -> new Object[0];
+        };
+        tooltip.add(Component.translatable("tooltip.robotica." + id + "_shape", size).withStyle(ChatFormatting.DARK_GRAY));
         Long stored = stack.get(com.arno.robotica.energy.EnergyRegistry.BANK_ENERGY.get());
         if (stored != null && stored > 0) {
             tooltip.add(Component.translatable("tooltip.robotica.bank_stored", com.arno.robotica.core.util.Fmt.energy(stored)).withStyle(ChatFormatting.AQUA));

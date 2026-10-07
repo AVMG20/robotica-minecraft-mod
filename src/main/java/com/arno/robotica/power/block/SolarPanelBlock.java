@@ -21,7 +21,9 @@ import java.util.function.IntSupplier;
 public class SolarPanelBlock extends PowerBlock {
     public enum Tier {
         MK1(PowerConfig::solarMk1, 4_000),
-        MK2(PowerConfig::solarMk2, 16_000);
+        MK2(PowerConfig::solarMk2, 16_000),
+        MK3(PowerConfig::solarMk3, 40_000),
+        MK4(PowerConfig::solarMk4, 100_000);
 
         private final IntSupplier output;
         public final int buffer;
@@ -42,8 +44,17 @@ public class SolarPanelBlock extends PowerBlock {
     private final Tier tier;
 
     public SolarPanelBlock(Properties props, Tier tier) {
-        super(props, tier == Tier.MK1 ? PowerRegistry.SOLAR_MK1_BE::get : PowerRegistry.SOLAR_MK2_BE::get);
+        super(props, () -> typeFor(tier));
         this.tier = tier;
+    }
+
+    public static net.minecraft.world.level.block.entity.BlockEntityType<SolarPanelBlockEntity> typeFor(Tier tier) {
+        return switch (tier) {
+            case MK1 -> PowerRegistry.SOLAR_MK1_BE.get();
+            case MK2 -> PowerRegistry.SOLAR_MK2_BE.get();
+            case MK3 -> PowerRegistry.SOLAR_MK3_BE.get();
+            case MK4 -> PowerRegistry.SOLAR_MK4_BE.get();
+        };
     }
 
     public Tier tier() {
@@ -57,8 +68,7 @@ public class SolarPanelBlock extends PowerBlock {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.solar", tier.output()).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.solar", com.arno.robotica.core.CoreConfig.scaleGeneration(tier.output())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.solar_push").withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.generator_cards").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

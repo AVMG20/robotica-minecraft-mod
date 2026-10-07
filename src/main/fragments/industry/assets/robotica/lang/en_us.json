@@ -89,7 +89,7 @@
   "tooltip.robotica.industry_upgrade": "Right-click the placed previous Mk to upgrade it",
   "tooltip.robotica.pyrolite_ore.details": "Nether, richest in basalt deltas",
   "tooltip.robotica.pyrosteel_ingot.details": "Alloy Smelter: ferrothorium + pyrolite + blaze powder",
-  "tooltip.robotica.radiant_isotope.details": "Centrifuge: 10% from Depleted Fuel Pellets",
+  "tooltip.robotica.radiant_isotope.details": "Centrifuge: 10%% from Depleted Fuel Pellets",
   "tooltip.robotica.resonant_alloy_ingot.details": "Alloy Smelter: pyrosteel + resonite + ender pearl",
   "tooltip.robotica.resonant_lattice.details": "Assembler only",
   "tooltip.robotica.resonite_ore.details": "Outer End islands. Rare",
@@ -97,6 +97,6 @@
   "tooltip.robotica.rtg_pellet": "One pellet lasts %s minutes",
   "tooltip.robotica.superconductor_coil.details": "Assembler only",
   "tooltip.robotica.thermocouple.details": "Assembler only",
-  "tooltip.robotica.thorium_fuel_pellet.details": "RTG: 150 FE/t for 20 minutes. Also reactor fuel",
+  "tooltip.robotica.thorium_fuel_pellet.details": "RTG: %s FE/t for %s minutes. Also reactor fuel",
   "tooltip.robotica.thorium_ore.details": "Overworld, Y -48 to 32"
 }

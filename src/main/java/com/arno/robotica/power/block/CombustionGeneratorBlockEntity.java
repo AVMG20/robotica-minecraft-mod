@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * Fuel slot, FE buffer, lit state. Pushes into every neighbouring FE receiver; Tesla Coils on it pull from the buffer.
  * Two card slots ({@link com.arno.robotica.core.upgrade.UpgradeRules.Fixed#COMBUSTION_GENERATOR}): speed cards multiply
  * the FE/t like a machine's work rate; fuel burns at that rate times {@link Upgrades#energyMultiplier}, the same energy
- * math as every machine, so speed costs fuel per FE and efficiency saves it.
+ * math as every machine (efficiency cards save less here), so speed costs fuel per FE and efficiency saves it.
  */
 public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements MenuProvider {
     /** FE/t the buffer may be drained at (by neighbours and Tesla Coils). */
@@ -98,9 +98,12 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         return CoreConfig.scaleGeneration(PowerConfig.generatorOutput()) * Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED));
     }
 
-    /** Fuel ticks burned per tick: the speed multiplier times the machine energy multiplier. */
+    /**
+     * Fuel ticks burned per tick: the speed multiplier times the machine energy multiplier, with the generator's own,
+     * smaller saving per efficiency card ({@link PowerConfig#generatorEfficiencyPerCard}, 4 cards 1.67x FE per fuel).
+     */
     public static double fuelPerTick(int speedCards, int efficiencyCards) {
-        return Upgrades.speedMultiplier(speedCards) * Upgrades.energyMultiplier(speedCards, efficiencyCards);
+        return Upgrades.speedMultiplier(speedCards) * Upgrades.energyMultiplier(speedCards, efficiencyCards, PowerConfig.generatorEfficiencyPerCard());
     }
 
     @Override

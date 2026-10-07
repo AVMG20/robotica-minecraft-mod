@@ -18,6 +18,7 @@ public final class AutomationModule {
     private AutomationModule() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        registerTextArgs();
         AutomationContent.BLOCKS.register(modBus);
         AutomationContent.ITEMS.register(modBus);
         AutomationContent.BLOCK_ENTITIES.register(modBus);
@@ -57,5 +58,20 @@ public final class AutomationModule {
     private static <T extends AreaWorkerBlockEntity> void registerWorker(RegisterCapabilitiesEvent event, BlockEntityType<T> type) {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, type, (be, side) -> be.energy);
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (be, side) -> be.sides.access(side));
+    }
+
+    /** Config numbers shown in card and Shift-details texts. */
+    private static void registerTextArgs() {
+        com.arno.robotica.core.upgrade.UpgradeText.register(com.arno.robotica.core.upgrade.UpgradeText.EXCAVATOR_RANGE_STEP,
+                AutomationConfig::excavatorRangeStep);
+        com.arno.robotica.core.item.DetailArgs.register("survey_rig", () -> {
+            boolean loaded = AutomationConfig.SPEC.isLoaded();
+            int fePerTick = loaded ? AutomationConfig.SURVEY_FE_PER_TICK.get() : 200;
+            int ticks = loaded ? AutomationConfig.SURVEY_INTERVAL.get() : 400;
+            int cards = Math.min(8, 4 * com.arno.robotica.core.CoreConfig.speedCapPerMk());
+            int speed = com.arno.robotica.core.upgrade.Upgrades.speedMultiplier(cards);
+            long feFactor = Math.round(speed * com.arno.robotica.core.upgrade.Upgrades.steepEnergyMultiplier(cards, 0));
+            return new Object[]{com.arno.robotica.core.CoreConfig.scaleEnergy(fePerTick), Math.round(ticks / 20.0), speed, feFactor};
+        });
     }
 }
