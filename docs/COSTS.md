@@ -189,12 +189,14 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
 | `item_pipe` |  | 0.75 |  | 0.12 |  |  |  |  | glass 0.25 | 0.4 |
 | `iron_grinding_balls` | 0.5 |  |  |  |  |  |  |  | c:nuggets/iron 2 | 1.5 |
+| `lamp_rod` |  | 2 |  | 1 |  |  |  |  | c:dusts/glowstone 1 | 1.7 |
 | `bank_casing` | 1.5 | 0.5 |  | 0.12 |  |  |  |  |  | 1.8 |
 | `bank_glass` | 1.5 | 0.5 |  | 0.38 |  |  |  |  | glass 1 | 2 |
 | `item_pipe_mk2` | 0.75 | 4.75 |  | 0.38 |  |  |  |  | glass 0.25, planks 0.5, cobblestone 0.62 | 2.9 |
 | `cryo_coolant` |  |  |  |  |  |  |  |  | prismarine_crystals 1, blue_ice 1, snow_block 0.25 | 3.6 |
 | `reactor_fuel_rod` |  |  |  |  |  |  |  |  | thorium 3, coal 0.5, glass 1 | 4.8 |
 | `upgrade_height` | 3.5 | 1 | 0.5 | 1.5 |  |  |  |  | scaffolding 2 | 7 |
+| `lamp_placer_module` | 3 | 8 |  | 1 |  |  |  |  | c:dusts/glowstone 2 | 7.6 |
 | `reactor_casing` | 4.5 |  |  | 0.5 | 0.12 |  |  |  | obsidian 1, thorium 0.5 | 8.2 |
 | `reactor_glass` | 4.5 |  |  | 0.5 | 0.12 |  |  |  | obsidian 1, thorium 0.5, quartz 0.25, glass 1 | 8.5 |
 | `courier_remote` | 5 | 2 | 1 | 4 |  |  |  |  |  | 10.4 |
@@ -203,7 +205,6 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `fortune_module` | 5 | 2 | 2 | 3 |  |  |  |  | lapis 2 | 14 |
 | `silk_touch_module` | 5 | 2 | 2 | 3 |  |  |  |  | c:strings 2 | 14 |
 | `upgrade_carry` | 7 | 2 | 1 | 3 |  |  |  |  | chest 2, c:leathers 2 | 14 |
-| `torch_placer_module` | 6 | 10 | 1 | 3 |  |  |  |  | stick 2 | 14.2 |
 | `magnet_module` | 6 | 10 | 1 | 5 |  |  |  |  |  | 15 |
 | `capacitor_plating_module` | 7 | 6 | 1 | 8 |  |  |  |  |  | 15.6 |
 | `mining_drone` | 6 | 24 |  | 2 |  |  |  |  | planks 4, cobblestone 5, stick 2 | 16.7 |

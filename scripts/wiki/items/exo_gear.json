@@ -912,6 +912,36 @@
   },
   {
    "items": [
+    "lamp_rod"
+   ],
+   "what": "Small FE tool that places Spark Lamps: torch light (14), no collision, breaks instantly, drops nothing.",
+   "use": [
+    "Right-click a block face to place a lamp on the floor, a wall or the ceiling.",
+    "Sneak-right-click a lamp to remove it.",
+    "Charge it like any FE item."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Age",
+      "1"
+     ],
+     [
+      "Battery",
+      "20,000 FE"
+     ],
+     [
+      "Per lamp",
+      "20 FE"
+     ]
+    ]
+   },
+   "see": [
+    "item:lamp_placer_module"
+   ]
+  },
+  {
+   "items": [
     "servo_drill"
    ],
    "what": "Age 2 drill: adds 5x5 and vein mining (64).",
@@ -1323,12 +1353,11 @@
   },
   {
    "items": [
-    "torch_placer_module"
+    "lamp_placer_module"
    ],
-   "what": "Drill module: when the spot you mined is dark, places a torch from your inventory there.",
+   "what": "Drill module: when the spot you mined is dark, places a Spark Lamp there for a little FE.",
    "use": [
-    "Install at a [[tinkers_bench]] in a drill.",
-    "Carry torches."
+    "Install at a [[tinkers_bench]] in a drill."
    ],
    "stats": {
     "rows": [
@@ -1341,11 +1370,18 @@
       "7 or less"
      ],
      [
-      "Per torch",
-      "25 FE"
+      "Per lamp",
+      "10 FE"
+     ],
+     [
+      "Lamp light",
+      "14"
      ]
     ]
-   }
+   },
+   "see": [
+    "item:lamp_rod"
+   ]
   },
   {
    "items": [

@@ -283,7 +283,7 @@ WEAPON_CARD = {'m': '#9A2A30', 'M': '#E0606A', 'n': '#2A0C10'}
 
 # 6 wide, 8 tall glyphs; X = glyph, x = dim glyph
 MOD_GLYPHS = {
-    'torch_placer': ['...X..', '..XX..', '..XXX.', '..XX..', '..xx..', '..xx..', '..xx..', '..xx..'],
+    'lamp_placer': ['.XXXX.', 'X.xx.X', 'X.xx.X', 'X....X', '.XXXX.', '..XX..', '.xxxx.', '..xx..'],
     'armor_pierce': ['..X...', '.XXX..', 'xxXxx.', 'xxXxx.', 'xxXxx.', '.xXx..', '..X...', '..X...'],
     'chain_lightning': ['...XX.', '..XX..', '.XXXX.', '...XX.', '..XX..', '.XX...', '.X....', '......'],
     'ricochet': ['......', 'X....X', 'X....X', '.X..X.', '.X..X.', '..XX..', 'xxxxxx', '......'],
@@ -297,7 +297,7 @@ MOD_GLYPHS = {
     'looting': ['..XX..', '.X..X.', '..XX..', '.XXXX.', 'XXXXXX', 'XXXXXX', '.XXXX.', '......'],
     'thermal_edge': ['..X...', '..XX..', '.XXX..', '.XXXX.', 'XXXXX.', 'XXxXXX', '.XxxX.', '..XX..'],
 }
-MOD_LEVELS = {'torch_placer': 1, 'armor_pierce': 3, 'chain_lightning': 3, 'ricochet': 2, 'lifesteal': 1,
+MOD_LEVELS = {'lamp_placer': 1, 'armor_pierce': 3, 'chain_lightning': 3, 'ricochet': 2, 'lifesteal': 1,
               'overclock': 3, 'fortune': 3, 'silk_touch': 1, 'auto_pickup': 1, 'void_filter': 1,
               'sharpened_edge': 3, 'looting': 3, 'thermal_edge': 1}
 MOD_WEAPON = {'armor_pierce', 'chain_lightning', 'ricochet', 'lifesteal', 'sharpened_edge', 'looting', 'thermal_edge'}
@@ -342,6 +342,61 @@ def write_modules():
         write_item(fname, gear_module(name, level), {**MOD_BASE, **colors})
 
 
+# ---------------------------------------------------------------- Lamp Rod and Spark Lamp
+
+def lamp_rod():
+    """Lamp Rod: a steel rod with a copper grip and a brass collar; at the tip a small brass cage around a warm bulb."""
+    c = Canvas()
+    stamp(c, 2, 13, 8, 7, 'c', 2)                                        # steel rod
+    stamp(c, 2, 13, 4, 11, '3', 2)                                       # copper grip
+    c.rect(8, 6, 3, 3, '7')                                              # brass collar
+    c.disc(11.5, 4.5, 2.3, 'y')                                          # bulb
+    c.rect(9, 2, 1, 5, '7').rect(14, 2, 1, 5, '7').rect(10, 1, 4, 1, '7').set(12, 0, '7')   # brass cage
+    c.auto_shade(SHADE)
+    c.set(11, 3, 'z').set(12, 4, 'z').set(11, 5, 'z').set(12, 3, 'Y').set(11, 4, 'Y').set(12, 5, 'Y')   # filament
+    c.set(3, 12, '4').set(5, 10, '4')                                    # grip bands
+    c.outline('k')
+    return c.rows()
+
+
+def lamp_body():
+    """Spark Lamp housing atlas (UVs in scripts/data/gear_models.py): copper plate 0-5, its rim row 6, brass band
+    8-10 x 0-1, brass cap 8-10 x 2-4, steel cage wire column 12; copper elsewhere (break particles)."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, '3')
+    c.speckle(0, 0, 16, 16, '24', density=0.12, seed=7)
+    c.rect(0, 0, 6, 6, '3').rect(0, 0, 6, 1, '4').rect(0, 0, 1, 6, '4').rect(0, 5, 6, 1, '2').rect(5, 0, 1, 6, '2')
+    c.set(0, 0, '5').set(1, 1, 'K').set(4, 1, 'K').set(1, 4, 'K').set(4, 4, 'K')       # rivets
+    c.rect(0, 6, 6, 1, '1')
+    c.rect(8, 0, 3, 1, '8').rect(8, 1, 3, 1, '6')
+    c.rect(8, 2, 3, 3, '7').set(9, 3, '6').set(8, 2, '8')
+    c.rect(12, 0, 1, 4, 'b').set(12, 0, 'd')
+    return c.rows()
+
+
+def lamp_bulb():
+    """Spark Lamp bulb (full-bright): warm glass with a white-hot zigzag filament."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'y')
+    c.rect(5, 2, 6, 12, 'Y')
+    for i, y in enumerate(range(5, 11)):
+        c.set(7 + (i % 2), y, 'z')
+    return c.rows()
+
+
+def lamp_pal():
+    p = pal('copper')
+    g = MATERIALS['amber']
+    p.update({'Z': g[1], 'y': g[2], 'Y': g[3], 'z': g[4]})
+    return p
+
+
+def write_lamp():
+    write_item('lamp_rod', lamp_rod(), lamp_pal(), handheld=True)
+    write_block('spark_lamp', lamp_body(), lamp_pal())
+    write_block('spark_lamp_bulb', lamp_bulb(), lamp_pal())
+
+
 # ---------------------------------------------------------------- Rivet Gun projectile (entity texture)
 
 def rivet_texture():
@@ -377,6 +432,7 @@ def main():
     write_bench()
     write_modules()
     write_rivet()
+    write_lamp()
     write_item('tinkers_hammer', hammer(), pal('copper'), handheld=True)
     write_item('felling_axe', axe(), pal('copper'), handheld=True)
     write_item('bore_drill', drill(1), pal('copper'), handheld=True)

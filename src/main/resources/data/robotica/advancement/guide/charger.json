@@ -40,6 +40,9 @@
     ]
   ],
   "rewards": {
+    "recipes": [
+      "robotica:lamp_rod"
+    ],
     "experience": 5
   }
 }

@@ -36,7 +36,7 @@ final class GearModuleText {
         return switch (kind) {
             case OVERCLOCK -> Component.translatable(key, pct(GearConfig.overclockSpeed(level)));
             case FORTUNE, LOOTING -> Component.translatable(key, ModuleKind.roman(level));
-            case TORCH_PLACER -> Component.translatable(key, GearConfig.torchLight());
+            case LAMP_PLACER -> Component.translatable(key, GearConfig.lampLight());
             case SHARPENED_EDGE -> Component.translatable(key, pct(GearConfig.edgeDamage(level)));
             case THERMAL_EDGE -> Component.translatable(key, GearConfig.thermalSeconds());
             case ARMOR_PIERCE -> Component.translatable(key, pct(GearConfig.pierceShare(level)));
@@ -54,7 +54,7 @@ final class GearModuleText {
         String key = "module.robotica." + kind.id + ".cost";
         return switch (kind) {
             case OVERCLOCK -> Component.translatable(key, pct(GearConfig.overclockCost(level)));
-            case TORCH_PLACER -> Component.translatable(key, GearConfig.torchCost());
+            case LAMP_PLACER -> Component.translatable(key, GearConfig.lampCost());
             case SHARPENED_EDGE -> Component.translatable("module.robotica.cost.per_hit", GearConfig.edgeCost(level));
             case THERMAL_EDGE -> Component.translatable("module.robotica.cost.per_hit", GearConfig.thermalCost(level));
             case ARMOR_PIERCE -> Component.translatable("module.robotica.cost.per_hit", GearConfig.pierceCost(level));

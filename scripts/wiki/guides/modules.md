@@ -32,7 +32,7 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 | [[silk_touch_module]] | drills | 1 | blocks drop themselves |
 | [[auto_pickup_module]] | drills, Chainsaw | 1 | drops go into your inventory |
 | [[void_filter_module]] | drills, Chainsaw | 1 | deletes junk drops |
-| [[torch_placer_module]] | drills | 1 | torches where you mine in the dark |
+| [[lamp_placer_module]] | drills | 1 | Spark Lamps where you mine in the dark, 10 FE each |
 
 > B cycles Fortune, Silk Touch and off.
 

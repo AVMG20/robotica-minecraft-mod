@@ -4,6 +4,7 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.core.RoboticaTab;
 import com.arno.robotica.core.module.ModuleItems;
 import com.arno.robotica.gear.item.UpgradeKitItem;
+import com.arno.robotica.gear.lamp.LampRodItem;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.GearEnergyToolItem;
 import com.arno.robotica.gear.tool.GearToolItem;
@@ -69,6 +70,8 @@ public final class GearItems {
                     .energy(400_000, () -> GearConfig.fe(GearConfig.CHAINSAW_COST, 30)).age(1).build(),
             p -> p, 6.0F, -3.0F, GearEnergyToolItem::new);
 
+    public static final DeferredItem<LampRodItem> LAMP_ROD = ITEMS.registerItem("lamp_rod", LampRodItem::new);
+
     // Age 2
     public static final DeferredItem<GearEnergyToolItem> SERVO_DRILL = tool("servo_drill",
             ToolSpec.builder(Tiers.DIAMOND, 10.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
@@ -117,7 +120,7 @@ public final class GearItems {
     public static final DeferredItem<UpgradeKitItem> KIT_4 = kit(4, Rarity.EPIC);
 
     static {
-        for (DeferredItem<? extends Item> item : List.of(TINKERS_HAMMER, FELLING_AXE, BORE_DRILL, CHAINSAW, SERVO_DRILL, MAGMA_DRILL,
+        for (DeferredItem<? extends Item> item : List.of(TINKERS_HAMMER, FELLING_AXE, BORE_DRILL, CHAINSAW, LAMP_ROD, SERVO_DRILL, MAGMA_DRILL,
                 NULL_DRILL, GEARBLADE, SHOCK_BATON, RIVET_GUN, ARC_BLADE, NULL_LANCE, KIT_1, KIT_2, KIT_3, KIT_4)) {
             TAB_ORDER.add(item);
         }

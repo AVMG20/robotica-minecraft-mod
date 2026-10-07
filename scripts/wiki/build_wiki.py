@@ -601,6 +601,8 @@ def main():
     lang, owner = load_lang()
     ids, no_model = item_ids(lang)
     for i in no_model:
+        if (ASSETS / 'blockstates' / f'{i}.json').exists():
+            continue  # a block without an item (Spark Lamp)
         warn(f'item {i}: has a name but no item model (left out)')
     idset = set(ids)
     kinds = build_icons(ids)

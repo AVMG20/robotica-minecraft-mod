@@ -2,25 +2,25 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "TBT",
-    "PCP"
+    "GCG",
+    "PRP"
   ],
   "key": {
-    "T": {
-      "item": "minecraft:torch"
+    "G": {
+      "tag": "c:dusts/glowstone"
     },
-    "B": {
-      "item": "robotica:basic_circuit"
+    "C": {
+      "item": "robotica:copper_coil"
     },
     "P": {
       "tag": "c:plates/iron"
     },
-    "C": {
-      "item": "robotica:copper_coil"
+    "R": {
+      "tag": "c:dusts/redstone"
     }
   },
   "result": {
-    "id": "robotica:torch_placer_module",
+    "id": "robotica:lamp_placer_module",
     "count": 1
   }
 }

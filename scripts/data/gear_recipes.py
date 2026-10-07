@@ -54,6 +54,9 @@ shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': 'copper_ge
 # Kit I is cheap on purpose (5 iron, some copper and redstone, no gold): the first powered tools come in the first iron hour.
 shaped('tool_upgrade_kit_1', ['PRP', 'PCP'], {'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'C': 'copper_coil'})
 
+# Lamp Rod: copper and glowstone, no parts beyond the first iron hour.
+shaped('lamp_rod', ['  G', ' CR', 'C  '], {'G': '#c:dusts/glowstone', 'C': COPPER, 'R': '#c:dusts/redstone'})
+
 # Age 2
 shaped('rivet_gun', ['PPP', 'SAR', ' P '], {'P': IRON_PLATE, 'S': 'servo_actuator', 'A': 'advanced_circuit', 'R': 'reinforced_casing'})
 shaped('tool_upgrade_kit_2', ['ASA', 'RKR'], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'R': 'reinforced_casing', 'K': 'tool_upgrade_kit_1'})
@@ -73,7 +76,8 @@ smithing('arc_blade_from_shock_baton', 'tool_upgrade_kit_3', 'shock_baton', 'mag
 smithing('null_lance_from_rivet_gun', 'tool_upgrade_kit_4', 'rivet_gun', 'antigrav_core', 'null_lance')
 # Tool and weapon modules (Tinker's Bench). Like the Exo modules: one item per level, each level consumes the one below
 # plus the next age's circuits. Lifesteal is the late-game capstone: Null Circuits, a Null Casing and a Totem of Undying.
-shaped('torch_placer_module', ['TBT', 'PCP'], {'T': 'minecraft:torch', 'B': 'basic_circuit', 'P': IRON_PLATE, 'C': 'copper_coil'})
+# Lamp Placer: cheap and early (no circuit), like the Lamp Rod.
+shaped('lamp_placer_module', ['GCG', 'PRP'], {'G': '#c:dusts/glowstone', 'C': 'copper_coil', 'P': IRON_PLATE, 'R': '#c:dusts/redstone'})
 shaped('armor_pierce_module', ['PFP', 'CBC'], {'P': IRON_PLATE, 'F': 'minecraft:flint', 'C': 'copper_coil', 'B': 'basic_circuit'})
 shaped('armor_pierce_module_2', ['ADA', ' U '], {'A': 'advanced_circuit', 'D': '#c:gems/diamond', 'U': 'armor_pierce_module'})
 shaped('armor_pierce_module_3', ['QNQ', ' U '], {'Q': 'quantum_circuit', 'N': 'minecraft:netherite_scrap', 'U': 'armor_pierce_module_2'})

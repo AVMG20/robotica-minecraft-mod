@@ -2,6 +2,7 @@ package com.arno.robotica.gear.client;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
@@ -16,6 +17,7 @@ public final class GearClient {
     private GearClient() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        container.registerConfig(ModConfig.Type.CLIENT, com.arno.robotica.gear.GearClientConfig.SPEC, "robotica-gear-client.toml");
         modBus.addListener(RegisterKeyMappingsEvent.class, GearKeys::register);
         modBus.addListener(RegisterGuiLayersEvent.class, GearHud::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GearKeys::onClientTick);

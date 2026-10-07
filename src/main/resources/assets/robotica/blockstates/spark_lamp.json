@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "robotica:block/spark_lamp"
+    },
+    "facing=down": {
+      "model": "robotica:block/spark_lamp",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "robotica:block/spark_lamp",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "robotica:block/spark_lamp",
+      "x": 90,
+      "y": 90
+    },
+    "facing=south": {
+      "model": "robotica:block/spark_lamp",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "robotica:block/spark_lamp",
+      "x": 90,
+      "y": 270
+    }
+  }
+}
