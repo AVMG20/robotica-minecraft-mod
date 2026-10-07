@@ -3,8 +3,8 @@
   "category": "misc",
   "pattern": [
     "PEP",
-    "SCS",
-    "PEP"
+    "ESE",
+    "PCP"
   ],
   "key": {
     "P": {

@@ -15,7 +15,7 @@ Forge Energy (FE) is the only unit. Every port works with other mods' cables too
 | [[solar_panel_mk1]] | 1 | 20 FE/t | daytime, sky access |
 | [[solar_panel_mk2]] | 2 | 80 FE/t | daytime, sky access |
 | [[solar_panel_mk3]] | 3 | 200 FE/t | daytime, sky access |
-| [[solar_panel_mk4]] | 4 | 500 FE/t | daytime, sky access |
+| [[solar_panel_mk4]] | 4 | 320 FE/t | daytime, sky access |
 | [[rtg]] | 2 | 150 FE/t | one Thorium Fuel Pellet lasts 24,000 ticks |
 | Fission Reactor | 2-3 | about 1,150 to 45,000 FE/t | 5x5x5 to 7x7x7, see [fission](#/guide/fission-reactor) |
 | Fusion Reactor | 4 | 200,000 FE/t | per fusion pellet, see [fusion](#/guide/fusion-reactor) |

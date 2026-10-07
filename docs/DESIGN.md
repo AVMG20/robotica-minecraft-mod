@@ -121,9 +121,9 @@ numbers by name in init).
 
 - Winding Crank (Age 0): holds a Mainspring (or any FE item: cell, drill). Hold right-click with an empty hand: +400 FE per turn, 5 turns/s (100 FE/t, a bit more than a Combustion Generator but you have to stand there), a Mainspring is full in about 2 minutes. Only a Mainspring winds by hand; other FE items only charge from an FE source. Left-click pops the item out; sneak-right-click shows the charge, a second sneak-click within 2 s also takes it out. Accepts FE from any source at 200 FE/t. Mainsprings only charge here; the Mainspring tooltip shows how far it is wound in percent.
 - Combustion Generator (first iron: copper shell, furnace, 1 iron ingot): burns furnace fuel, 80 FE/t (in line with other mods' coal generators), buffer 40,000. Right-click it with fuel.
-- Solar Panel Mk1-Mk4 (Age 1-4): 20 / 80 / 200 / 500 FE/t by day with sky access, 0 at night, no cards (config
+- Solar Panel Mk1-Mk4 (Age 1-4): 20 / 80 / 200 / 320 FE/t by day with sky access, 0 at night, no cards (config
   `solarMk1-4`). Buffers 4k / 16k / 40k / 100k FE. Mk2 is four Mk1 around an Advanced Circuit; Mk3 two Mk2, a Quantum
-  Circuit, pyrosteel plates and glass; Mk4 two Mk3, a Null Circuit, resonant alloy plates and ender pearls (12 / 102 /
+  Circuit, pyrosteel plates and glass; Mk4 one Mk3, a Null Circuit, resonant alloy plates and ender pearls (12 / 102 /
   517 / 1,770 IE). A Mk4 by day is under half of a 5x5x5 fission reactor, about a fifth over a whole day.
 - Accumulator I/II/III: 1M / 4M / 16M FE, I/O 1,000 / 4,000 / 16,000 FE/t. The front gauge shows the charge: block state `charge` 0-5 (lit cells, 0 only when empty), checked every 10 ticks and set only when it changes (client update, no neighbour updates). A placed item shows its charge at once, the item model too (item property `robotica:charge`).
 - Tesla Coils (wireless power, replaced the Copper/Gold Conduits): a torch-sized coil placed on floors, walls or ceilings (FACING, 6 ways) with a full-bright tip.
@@ -540,7 +540,7 @@ Balance pass 0.5 (`docs/COSTS.md` now sorts every item into its age):
 
 | Change | Before | After | Why |
 |---|---|---|---|
-| Solar Panel Mk3 / Mk4 (new) | - | 200 / 500 FE/t by day, 517 / 1,770 IE | useful no-input power, a small share of a reactor |
+| Solar Panel Mk3 / Mk4 (new) | - | 200 / 320 FE/t by day | useful no-input power, a small share of a reactor |
 | Combustion Generator efficiency card | -15% fuel each, 4 cards 2.5x FE per fuel | -10% each, 1.67x (`generatorEfficiencyPerCard`) | Thermal/Mekanism augments give about 1.5x |
 | Fortune, Silk Touch, Looting modules | worked on an empty tool or weapon | need FE, like Overclock | an empty FE tool is a plain tool |
 | Warp Pad tooltip | Age 2 | Age 1 | matches the recipe |

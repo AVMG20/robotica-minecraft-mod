@@ -102,7 +102,7 @@
       "pages": [
         {
           "title": "Making FE",
-          "text": "Robotica runs on FE: other mods' generators and cables work.\n- Winding Crank: by hand, Mainsprings only.\n- Combustion Generator: 80 FE/t. Speed cards: more FE/t; efficiency: -10% fuel each.\n- Solar Panel Mk1-4: 20 / 80 / 200 / 500 FE/t by day.",
+          "text": "Robotica runs on FE: other mods' generators and cables work.\n- Winding Crank: by hand, Mainsprings only.\n- Combustion Generator: 80 FE/t. Speed cards: more FE/t; efficiency: -10% fuel each.\n- Solar Panel Mk1-4: 20 / 80 / 200 / 320 FE/t by day.",
           "items": [
             "robotica:winding_crank",
             "robotica:combustion_generator",

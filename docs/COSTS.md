@@ -288,7 +288,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `linking_card` | 96 | 64 | 48 | 96 | 8 | 2 | 3 | 0.5 | blaze_rod 8, quartz 16, paper 2 | 624.2 |
 | `resonant_lattice` | 154 | 112 | 72 | 144 | 12 | 3 | 6 | 0.5 | resonite 6, blaze_rod 12, pyrolite 8, quartz 24, blaze_powder 8, thorium 8, coal 2 | 1061 |
 | `fusion_coil` | 202 | 256 | 92 | 176 | 14 | 3 | 3 | 0.25 | blaze_rod 12, quartz 28, blaze_powder 6, prismarine_crystals 4, pyrolite 4, thorium 4, planks 16, coal 2, cobblestone 20 | 1149.6 |
-| `solar_panel_mk4` | 348 | 224 | 136 | 288 | 20 | 4 | 8 | 0.5 | blaze_rod 16, quartz 56, resonite 4, pyrolite 12, blaze_powder 12, thorium 12, glass 52 | 1770 |
+| `solar_panel_mk4` | 224 | 144 | 92 | 192 | 14 | 3 | 9 | 0.5 | blaze_rod 12, resonite 4, quartz 36, pyrolite 8, blaze_powder 8, thorium 8, glass 26 | 1261 |
 | `med_injector_module_3` | 302 | 216 | 150 | 300 | 25 | 6 | 4 | 1 | blaze_rod 24, quartz 50, glistering_melon_slice 2, ghast_tear 1, golden_apple 1, glass 3 | 1852.7 |
 | `sonar_pulse_module_3` | 302 | 216 | 150 | 300 | 25 | 6 | 4 | 1 | blaze_rod 24, quartz 50, prismarine_crystals 1, amethyst_shard 2, ender_eye 1, note_block 1 | 1855.4 |
 | `power_regulator_module_3` | 302 | 216 | 152 | 318 | 25 | 6 | 4 | 1 | blaze_rod 24, quartz 50, comparator 1 | 1864.1 |

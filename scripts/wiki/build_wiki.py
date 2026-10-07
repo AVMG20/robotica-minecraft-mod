@@ -115,7 +115,8 @@ def display_name(lang, i):
 def tooltip(lang, i):
     first = lang.get(f'tooltip.robotica.{i}') or lang.get(f'item.robotica.{i}.tooltip')
     details = lang.get(f'tooltip.robotica.{i}.details')
-    clean = lambda s: re.sub(r'%\d*\$?s', '...', s) if s else s
+    # lines with config arguments are shown in game only; the wiki item entries give the default numbers
+    clean = lambda s: None if not s or re.search(r'%\d*\$?[sd]', s) else s.replace('%%', '%')
     return clean(first), clean(details)
 
 
