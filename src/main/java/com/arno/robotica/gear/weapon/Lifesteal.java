@@ -22,30 +22,71 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Lifesteal module (Age 4 weapons only). Heals a share of the damage a paid hit or beam deals, never more than
- * {@link GearConfig#lifestealMaxPerSecond} health in any one-second window; reaching that cap starts a cooldown
- * ({@link GearConfig#lifestealCooldown}) without any healing. Every point healed costs FE from the weapon, so an empty
- * weapon heals nothing. The cooldown is a vanilla item cooldown on the Lifesteal module item, which syncs to the client
- * by itself for the HUD. Per-player windows are keyed by UUID and dropped on logout.
+ * Lifesteal module (Age 4 weapons only). Heals a share of the damage a paid hit or beam deals out of a budget of
+ * {@link GearConfig#lifestealMaxPerSecond} health that refills over {@link GearConfig#lifestealCooldown} ticks, and never
+ * more than that cap in any rolling second. An empty budget starts the cooldown (a vanilla item cooldown on the Lifesteal
+ * module item, which syncs to the client by itself for the HUD) while it refills. Over time that is at most cap per
+ * cooldown (3 health per 5 s, 0.6 health per second). Every point healed costs FE from the weapon, so an empty weapon
+ * heals nothing. Per-player budgets are keyed by UUID and dropped on logout.
  */
 public final class Lifesteal {
     private Lifesteal() {}
 
-    private static final class Window {
-        long start = Long.MIN_VALUE;
-        float healed;
+    /** One player's healing budget: a token bucket plus the healing of the last 20 ticks, one slot per tick. */
+    public static final class Budget {
+        public static final int SECOND = 20;
+        private float tokens = -1.0F;
+        private long last;
+        private final float[] healed = new float[SECOND];
+        private final long[] tick = new long[SECOND];
+
+        private void refill(long now, float cap, int refillTicks) {
+            if (tokens < 0.0F || now < last) {
+                tokens = cap;
+                java.util.Arrays.fill(healed, 0.0F);
+                java.util.Arrays.fill(tick, Long.MIN_VALUE);
+            } else {
+                tokens = Math.min(cap, tokens + (now - last) * cap / Math.max(SECOND, refillTicks));
+            }
+            last = now;
+        }
+
+        /** Health healed in the 20 ticks up to {@code now}. */
+        public float lastSecond(long now) {
+            float sum = 0.0F;
+            for (int i = 0; i < SECOND; i++) if (tick[i] <= now && tick[i] > now - SECOND) sum += healed[i];
+            return sum;
+        }
+
+        /** How much may be healed at {@code now}. */
+        public float room(long now, float cap, int refillTicks) {
+            refill(now, cap, refillTicks);
+            return Math.max(0.0F, Math.min(tokens, cap - lastSecond(now)));
+        }
+
+        /** Books {@code amount} healed at {@code now} (after {@link #room}); true when the budget is now empty. */
+        public boolean spend(long now, float amount) {
+            tokens = Math.max(0.0F, tokens - amount);
+            int i = (int) Math.floorMod(now, (long) SECOND);
+            if (tick[i] != now) {
+                tick[i] = now;
+                healed[i] = 0.0F;
+            }
+            healed[i] += amount;
+            return tokens < 0.01F;
+        }
     }
 
-    private static final Map<UUID, Window> WINDOWS = new HashMap<>();
+    private static final Map<UUID, Budget> BUDGETS = new HashMap<>();
 
     public static Item cooldownItem() {
         return GearItems.module(GearModuleKind.LIFESTEAL, 1).get();
     }
 
-    /** Health healed in the player's current one-second window (tests, HUD). */
+    /** Health healed in the player's last second (tests, HUD). */
     public static float healedThisSecond(ServerPlayer player) {
-        Window w = WINDOWS.get(player.getUUID());
-        return w == null || player.level().getGameTime() - w.start >= 20 ? 0.0F : w.healed;
+        Budget b = BUDGETS.get(player.getUUID());
+        return b == null ? 0.0F : b.lastSecond(player.level().getGameTime());
     }
 
     /**
@@ -59,25 +100,19 @@ public final class Lifesteal {
         float missing = player.getMaxHealth() - player.getHealth();
         if (missing <= 0.0F || !player.isAlive()) return 0.0F;
         long now = player.level().getGameTime();
-        Window w = WINDOWS.computeIfAbsent(player.getUUID(), k -> new Window());
-        if (now - w.start >= 20 || now < w.start) {
-            w.start = now;
-            w.healed = 0.0F;
-        }
+        Budget budget = BUDGETS.computeIfAbsent(player.getUUID(), k -> new Budget());
         float cap = GearConfig.lifestealMaxPerSecond();
-        float amount = Math.min(dealt * GearConfig.lifestealShare(), Math.min(cap - w.healed, missing));
+        int cooldown = GearConfig.lifestealCooldown();
+        float amount = Math.min(dealt * GearConfig.lifestealShare(), Math.min(budget.room(now, cap, cooldown), missing));
         int costPer = GearConfig.lifestealCost();
         boolean creative = player.getAbilities().instabuild;
         if (!creative && costPer > 0) amount = Math.min(amount, ItemEnergy.get(weapon) / (float) costPer);
         if (amount < 0.01F) return 0.0F;
         if (!creative && costPer > 0) ItemEnergy.drain(weapon, (int) Math.ceil(amount * costPer));
         player.heal(amount);
-        w.healed += amount;
         effects(player, target);
-        if (w.healed >= cap - 0.001F) {
-            player.getCooldowns().addCooldown(cd, GearConfig.lifestealCooldown());
-            w.start = now;
-            w.healed = 0.0F;
+        if (budget.spend(now, amount) && cooldown > 0) {
+            player.getCooldowns().addCooldown(cd, cooldown);
             player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 0.4F, 1.6F);
         }
         return amount;
@@ -100,10 +135,10 @@ public final class Lifesteal {
     }
 
     public static void forget(UUID player) {
-        WINDOWS.remove(player);
+        BUDGETS.remove(player);
     }
 
     public static void clearAll() {
-        WINDOWS.clear();
+        BUDGETS.clear();
     }
 }

@@ -84,6 +84,7 @@ public final class TorchPlacer {
      * then the player's feet; on the floor first, else on a wall (facing the player first). Returns true when placed.
      */
     public static boolean tryPlace(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos pos) {
+        if (!player.mayBuild()) return false;
         long now = level.getGameTime();
         Long last = LAST.get(player.getUUID());
         if (last != null && now - last < GearConfig.torchCooldown() && now >= last) return false;
@@ -95,7 +96,7 @@ public final class TorchPlacer {
         for (BlockPos spot : List.of(pos, pos.below(), player.blockPosition())) {
             for (BlockState state : candidates(player, spot)) {
                 if (!level.isLoaded(spot) || !level.getBlockState(spot).isAir() || !state.canSurvive(level, spot)) continue;
-                if (!level.mayInteract(player, spot)) continue;
+                if (!level.mayInteract(player, spot) || !level.getWorldBorder().isWithinBounds(spot)) continue;
                 BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, spot);
                 if (!level.setBlock(spot, state, Block.UPDATE_ALL)) continue;
                 if (EventHooks.onBlockPlace(player, snapshot, Direction.UP)) {

@@ -986,7 +986,7 @@
    "items": [
     "rivet_gun"
    ],
-   "what": "Rapid fire, no ammo: right-click fires glowing rivets that stick in walls and shatter. Never drop as items.",
+   "what": "Rapid fire, no ammo: right-click fires glowing rivets that stick in walls, then shatter.",
    "stats": {
     "rows": [
      [
@@ -1078,7 +1078,7 @@
    "items": [
     "tinkers_bench"
    ],
-   "what": "Fits upgrade cards and modules into power tools and FE weapons. Stores nothing.",
+   "what": "Fits upgrade cards and modules into power tools and FE weapons.",
    "use": [
     "Put the tool or weapon in.",
     "Cards (Auto-Pickup, Void Filter) go in the two card slots and need no module slot.",
@@ -1244,12 +1244,12 @@
       "10% of damage dealt"
      ],
      [
-      "Cap",
-      "3 health per second"
+      "Pool",
+      "3 health, refills in 5 s"
      ],
      [
-      "Then",
-      "5 s cooldown"
+      "Cap",
+      "3 health per second"
      ],
      [
       "Cost",

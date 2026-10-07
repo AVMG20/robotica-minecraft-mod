@@ -710,9 +710,10 @@ public class ArchitectGameTests {
     // ---------------------------------------------------------------- demolish
 
     /**
-     * Demolish takes a built plot down to the floor: building blocks go back as matter, a chest's contents, the chest,
-     * a door and silk-touched stone go to the stash on the table; the table, the stash, bedrock and a block outside the
-     * world border stay; a queued plot leaves the plan without touching its ground, and the plan ends up empty.
+     * Demolish takes a built plot down to the floor: the table's own building blocks go back as matter, a building
+     * block it did not put there, a chest's contents, the chest, a door and silk-touched stone go to the stash on the
+     * table; the table, the stash, bedrock, a block outside the world border and an item lying in the plot stay; a
+     * queued plot leaves the plan without touching its ground, and the plan ends up empty.
      */
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void demolishClearsBuiltPlotsAndRefundsMatter(GameTestHelper helper) {
@@ -726,10 +727,18 @@ public class ArchitectGameTests {
         layout.markBuilt(Plots.CENTER, layout.signature(Plots.CENTER));
         layout.queue(east, BuildStyle.TIMBERFRAME);
 
-        BlockPos wall = origin.offset(4, 2, 0), roof = origin.offset(4, 5, 4), stone = origin.offset(5, 2, 5);
+        BlockPos wall = origin.offset(4, 4, 0), roof = origin.offset(4, 5, 4), stone = origin.offset(5, 2, 5), stray = origin.offset(4, 3, 4);
         BlockPos chest = origin.offset(3, 1, 3), bedrock = origin.offset(2, 1, 2), door = origin.offset(6, 1, 6);
         BlockPos outside = origin.offset(0, 3, 4), eastGround = Plots.origin(tablePos, east).offset(4, 1, 4), stash = tablePos.above();
-        level.setBlockAndUpdate(wall, ArchitectRegistry.styleBlock(BuildStyle.TIMBERFRAME, Role.WALL).get().defaultBlockState());
+        BlockState planned = Shell.piece(layout.shape(Plots.CENTER), 4, 4, 0).resolve(BuildStyle.TIMBERFRAME);
+        helper.assertTrue(!planned.isAir(), "the plan has a block in the wall");
+        level.setBlockAndUpdate(wall, planned);
+        level.setBlockAndUpdate(stray, ArchitectRegistry.styleBlock(BuildStyle.TIMBERFRAME, Role.WALL).get().defaultBlockState());
+        net.minecraft.world.entity.item.ItemEntity loose = new net.minecraft.world.entity.item.ItemEntity(level,
+                origin.getX() + 6.5, origin.getY() + 3.2, origin.getZ() + 2.5, new ItemStack(Items.EMERALD));
+        loose.setNoGravity(true);
+        loose.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        level.addFreshEntity(loose);
         level.setBlockAndUpdate(roof, ArchitectRegistry.styleBlock(BuildStyle.TIMBERFRAME, Role.ROOF).get().defaultBlockState());
         level.setBlockAndUpdate(stone, Blocks.STONE.defaultBlockState());
         level.setBlockAndUpdate(bedrock, Blocks.BEDROCK.defaultBlockState());
@@ -783,10 +792,26 @@ public class ArchitectGameTests {
         }
         helper.assertTrue(diamonds == 5 && chests == 1, "the chest and its diamonds are kept, found " + diamonds + " diamonds, " + chests + " chests");
         helper.assertTrue(stones == 1 && doors == 1, "other blocks drop themselves, found " + stones + " stone, " + doors + " doors");
-        helper.assertTrue(walls == 0, "building blocks do not come back as items");
+        helper.assertTrue(walls == 1, "only the building block the plan did not put there comes back as an item, found " + walls);
+        helper.assertTrue(loose.isAlive(), "an item lying in the plot is left alone");
         int refund = (int) (2 * BuildStyle.TIMBERFRAME.cost.rustic() * com.arno.robotica.architect.ArchitectConfig.demolishRefund());
         helper.assertTrue(table.matter().rustic() == 100 + refund, "two building blocks refund " + refund + " rustic, matter is " + table.matter());
         helper.assertTrue(table.energy.getEnergyStored() < energyBefore, "demolish uses some energy");
+        helper.succeed();
+    }
+
+    /** Taking a container's contents is one pass over its own slots, even when it hands out items without end. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void containerContentsAreTakenInOnePass(GameTestHelper helper) {
+        net.minecraft.world.SimpleContainer endless = new net.minecraft.world.SimpleContainer(3) {
+            @Override
+            public ItemStack removeItemNoUpdate(int slot) {
+                return new ItemStack(Items.DIAMOND, 64);
+            }
+        };
+        java.util.List<ItemStack> out = new java.util.ArrayList<>();
+        ArchitectTableBlockEntity.takeContents(endless, out::add);
+        helper.assertTrue(out.size() == 3, "one stack per slot, got " + out.size());
         helper.succeed();
     }
 

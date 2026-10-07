@@ -44,8 +44,6 @@ import java.util.Comparator;
  */
 public class RivetEntity extends ThrowableProjectile {
     private static final EntityDataAccessor<Boolean> STUCK = SynchedEntityData.defineId(RivetEntity.class, EntityDataSerializers.BOOLEAN);
-    public static final float SPEED = 4.5F;
-    private static final int MAX_FLIGHT_TICKS = 100;
     private static final DustParticleOptions TRACER = new DustParticleOptions(new Vector3f(1.0F, 0.78F, 0.35F), 0.7F);
 
     private float damage = 8.0F;
@@ -127,7 +125,7 @@ public class RivetEntity extends ThrowableProjectile {
         }
         if (level().isClientSide) {
             trail(before, position());
-        } else if (tickCount > MAX_FLIGHT_TICKS) {
+        } else if (tickCount > GearConfig.rivetFlightTicks()) {
             discard();
         }
     }
@@ -177,7 +175,7 @@ public class RivetEntity extends ThrowableProjectile {
         Vec3 start = from.getBoundingBox().getCenter();
         Vec3 dir = next.getBoundingBox().getCenter().subtract(start).normalize();
         setPos(start.x, start.y, start.z);
-        shoot(dir.x, dir.y, dir.z, SPEED, 0.0F);
+        shoot(dir.x, dir.y, dir.z, GearConfig.rivetSpeed(), 0.0F);
         hasImpulse = true;
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, start.x, start.y, start.z, 14, 0.2, 0.2, 0.2, 0.35);
         level.sendParticles(ParticleTypes.FLASH, start.x, start.y, start.z, 1, 0, 0, 0, 0);

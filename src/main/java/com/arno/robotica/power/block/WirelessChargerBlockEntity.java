@@ -241,12 +241,18 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         IEnergyStorage item = stack.getCapability(Capabilities.EnergyStorage.ITEM);
         if (item == null || !item.canReceive() || item.getEnergyStored() >= item.getMaxEnergyStored()) return 0;
         int loss = PowerConfig.wirelessLoss();
-        long affordable = (long) energy.getEnergyStored() * 100L / (100L + loss);
+        long stored = energy.getEnergyStored();
+        long affordable = stored * 100L / (100L + loss);
+        while (affordable > 0 && costOf(affordable, loss) > stored) affordable--;
         int offer = (int) Math.min(Math.min(max, affordable), Integer.MAX_VALUE);
         if (offer <= 0) return 0;
-        int got = item.receiveEnergy(offer, false);
-        if (got > 0) energy.consume((int) Math.min(energy.getEnergyStored(), costOf(got, loss)));
-        return Math.max(0, got);
+        // the item says what it takes first, then gets exactly that: never more than the buffer can pay for, loss included
+        int accepted = Math.min(offer, item.receiveEnergy(offer, true));
+        if (accepted <= 0) return 0;
+        int got = Math.min(accepted, item.receiveEnergy(accepted, false));
+        if (got <= 0) return 0;
+        energy.consume((int) costOf(got, loss));
+        return got;
     }
 
     /** FE drawn from the buffer for {@code delivered} FE that reached items. */

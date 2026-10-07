@@ -74,6 +74,15 @@ public class WirelessChargerGameTests {
                 "the buffer pays delivered FE plus " + loss + "%: drew " + drawn);
         helper.assertTrue(drawn == 6_600, "6,000 FE delivered cost 6,600 at 10% loss, drew " + drawn);
 
+        // a nearly empty buffer only delivers what it can pay for, loss included
+        for (int stored = 1; stored <= 40; stored++) {
+            be.energy.setEnergy(stored);
+            long small = be.chargePlayer(owner, 1_000);
+            long paid = stored - be.energy.getEnergyStored();
+            helper.assertTrue(paid == WirelessChargerBlockEntity.costOf(small, loss) && paid <= stored,
+                    stored + " FE stored: delivered " + small + " for " + paid);
+        }
+
         // an empty buffer charges nothing
         be.energy.setEnergy(0);
         helper.assertTrue(be.chargePlayer(owner, 1_000) == 0, "no energy, no charge");

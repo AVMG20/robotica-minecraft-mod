@@ -78,14 +78,22 @@ public class ProcessingGameTests {
                 new net.minecraft.world.phys.BlockHitResult(abs.getCenter(), net.minecraft.core.Direction.UP, abs, false));
         helper.assertTrue(level.getBlockState(abs).is(ProcessingRegistry.GRINDER_MK1.get()) && mk3.getCount() == 1, "Mk3 does not fit on Mk1: " + skip);
 
+        ItemStack full = new ItemStack(ProcessingRegistry.GRINDER_MK2.get());
+        full.set(CoreComponents.CONTENTS.get(), new net.minecraft.nbt.CompoundTag());
+        level.getBlockState(abs).useItemOn(full, level, player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(abs.getCenter(), net.minecraft.core.Direction.UP, abs, false));
+        helper.assertTrue(level.getBlockState(abs).is(ProcessingRegistry.GRINDER_MK1.get()) && full.getCount() == 1, "a Mk2 with contents must be placed first");
+
         ItemStack mk2 = new ItemStack(ProcessingRegistry.GRINDER_MK2.get());
+        mk2.set(CoreComponents.ENERGY.get(), 1_000);
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, mk2);
         level.getBlockState(abs).useItemOn(mk2, level, player, net.minecraft.world.InteractionHand.MAIN_HAND,
                 new net.minecraft.world.phys.BlockHitResult(abs.getCenter(), net.minecraft.core.Direction.UP, abs, false));
         helper.assertTrue(level.getBlockState(abs).is(ProcessingRegistry.GRINDER_MK2.get()), "the Grinder is Mk2 now");
         GrinderBlockEntity fresh = (GrinderBlockEntity) helper.getBlockEntity(POS);
         helper.assertTrue(fresh.tier() == 2, "the block entity is Mk2");
-        helper.assertTrue(fresh.energy.getEnergyStored() == 12_345, "energy stays, got " + fresh.energy.getEnergyStored());
+        int expected = Math.min(fresh.energy.getMaxEnergyStored(), 13_345);
+        helper.assertTrue(fresh.energy.getEnergyStored() == expected, "energy stays and the Mk2 item's energy is added, got " + fresh.energy.getEnergyStored());
         helper.assertTrue(fresh.items.getStackInSlot(GrinderBlockEntity.INPUT).is(Items.IRON_ORE) && fresh.items.getStackInSlot(GrinderBlockEntity.INPUT).getCount() == 7, "inputs stay");
         helper.assertTrue(fresh.items.getStackInSlot(GrinderBlockEntity.OUT_FIRST).getCount() == 3, "outputs stay");
         helper.assertTrue(fresh.upgrades.level(UpgradeKind.SPEED) == 1, "cards stay");

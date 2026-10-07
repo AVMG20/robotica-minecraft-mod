@@ -184,6 +184,9 @@ public class GearModuleGameTests {
         player.setItemInHand(InteractionHand.MAIN_HAND, drill);
         helper.assertTrue(!TorchPlacer.tryPlace(player, level, player.getMainHandItem(), floor.above()), "no torches, no torch");
         player.getInventory().add(new ItemStack(Items.TORCH, 4));
+        player.getAbilities().mayBuild = false;
+        helper.assertTrue(!TorchPlacer.tryPlace(player, level, player.getMainHandItem(), floor.above()), "no torch where the player may not build");
+        player.getAbilities().mayBuild = true;
         int before = ItemEnergy.get(player.getMainHandItem());
         helper.assertTrue(TorchPlacer.tryPlace(player, level, player.getMainHandItem(), floor.above()), "a torch is placed");
         helper.assertTrue(level.getBlockState(floor.above()).is(Blocks.TORCH), "on the floor");
@@ -255,7 +258,7 @@ public class GearModuleGameTests {
         RivetEntity rivet = new RivetEntity(level, player, GearConfig.rivetDamage(), 0.0F, GearConfig.ricochetBounces(2));
         Vec3 start = helper.absoluteVec(new Vec3(0.02, 1.9, 0.5));
         rivet.setPos(start.x, start.y, start.z);
-        rivet.shoot(1.0, 0.0, 0.0, RivetEntity.SPEED, 0.0F);
+        rivet.shoot(1.0, 0.0, 0.0, GearConfig.rivetSpeed(), 0.0F);
         var first = rivet.ricochetTarget(level, a);
         helper.assertTrue(first == b, "from A the nearest monster in sight is B");
         level.addFreshEntity(rivet);
@@ -339,6 +342,36 @@ public class GearModuleGameTests {
         GearModules.setEnabled(lance, GearModuleKind.LIFESTEAL, false);
         helper.assertTrue(GearModules.active(lance, GearModuleKind.LIFESTEAL) == 0, "switched off in G");
         Lifesteal.forget(player.getUUID());
+        helper.succeed();
+    }
+
+    /**
+     * The Lifesteal budget: hits just under the cap every second (or every tick) heal at most the cap in any rolling
+     * second, across window edges too, and at most cap per refill time over a long fight.
+     */
+    @GameTest(template = "empty")
+    public static void lifestealBudgetLimitsLongRunHealing(GameTestHelper helper) {
+        float cap = 3.0F;
+        int refill = 100;
+        for (int gap : new int[] {1, 7, 19, 20, 21}) {
+            Lifesteal.Budget budget = new Lifesteal.Budget();
+            float[] perTick = new float[4000];
+            float total = 0.0F;
+            for (int t = 0; t < perTick.length; t += gap) {
+                float amount = Math.min(cap - 0.1F, budget.room(1000 + t, cap, refill));
+                if (amount < 0.01F) continue;
+                budget.spend(1000 + t, amount);
+                perTick[t] = amount;
+                total += amount;
+            }
+            float window = 0.0F;
+            for (int t = 0; t < perTick.length; t++) {
+                window += perTick[t] - (t >= 20 ? perTick[t - 20] : 0.0F);
+                helper.assertTrue(window <= cap + 1.0E-3, "gap " + gap + ": " + window + " healed in one second at tick " + t);
+            }
+            float allowed = cap + cap * perTick.length / refill;
+            helper.assertTrue(total <= allowed + 1.0E-2, "gap " + gap + ": healed " + total + " over 200 s, allowed " + allowed);
+        }
         helper.succeed();
     }
 

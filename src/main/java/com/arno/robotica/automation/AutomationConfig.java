@@ -42,6 +42,7 @@ public final class AutomationConfig {
     private static final ModConfigSpec.IntValue[] EXC_EFF_CAP = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] EXC_FORTUNE_CAP = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue EXCAVATOR_RANGE_STEP;
+    private static final ModConfigSpec.IntValue EXCAVATOR_MAX_SIZE;
     private static final ModConfigSpec.IntValue EXCAVATOR_INPUT;
     private static final ModConfigSpec.IntValue[] SURVEY_SLOTS = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] SURVEY_SPEED_CAP = new ModConfigSpec.IntValue[4];
@@ -119,6 +120,8 @@ public final class AutomationConfig {
         }
         EXCAVATOR_RANGE_STEP = b.comment("Blocks every range card adds to the Excavator's square side (Mk4 with 4 cards: 24 + 40 = 64).")
                 .defineInRange("excavatorRangeStep", 10, 1, 32);
+        EXCAVATOR_MAX_SIZE = b.comment("Largest square side an Excavator digs, whatever its Mk and range cards.")
+                .defineInRange("excavatorMaxSize", 128, 8, 256);
         EXCAVATOR_INPUT = b.comment("FE/t an Excavator Mk1 accepts from cables and Tesla Coils (a MkN N times as much; its buffer is energyBuffer x N).")
                 .defineInRange("excavatorInputPerTick", 1_000, 1, 100_000_000);
         EXCAVATOR_FE_PER_BLOCK = b.comment("Excavator FE per mined block (before upgrade multipliers).")
@@ -225,6 +228,7 @@ public final class AutomationConfig {
     public static int excavatorEfficiencyCap(int tier) { return mk(EXC_EFF_CAP, DEF_EFF_CAP, tier); }
     public static int excavatorFortuneCap(int tier) { return mk(EXC_FORTUNE_CAP, DEF_FORTUNE_CAP, tier); }
     public static int excavatorRangeStep() { return SPEC.isLoaded() ? EXCAVATOR_RANGE_STEP.get() : 10; }
+    public static int excavatorMaxSize() { return SPEC.isLoaded() ? EXCAVATOR_MAX_SIZE.get() : 128; }
     public static int excavatorInput() { return SPEC.isLoaded() ? EXCAVATOR_INPUT.get() : 1_000; }
     public static int surveySlots(int tier) { return mk(SURVEY_SLOTS, DEF_SURVEY_SLOTS, tier); }
     public static int surveySpeedCap(int tier) { return mk(SURVEY_SPEED_CAP, DEF_SPEED_CAP, tier); }

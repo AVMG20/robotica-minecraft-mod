@@ -137,6 +137,11 @@ public final class Layout {
         return state[plot] == BUILT ? Shell.Shape.heightOf(builtSig[plot]) : 0;
     }
 
+    /** The signature a built plot was finished with, 0 when it is not built or a re-pass is changing it. */
+    public int builtSignature(int plot) {
+        return state[plot] == BUILT && builtSig[plot] > 0 ? builtSig[plot] : 0;
+    }
+
     /** Shape plus style: what a finished plot must look like. */
     public int signature(int plot) {
         return shape(plot).signature() | style[plot].ordinal() << 28;

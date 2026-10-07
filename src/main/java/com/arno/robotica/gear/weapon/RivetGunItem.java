@@ -24,7 +24,6 @@ import java.util.function.IntSupplier;
  * along on the rivet.
  */
 public class RivetGunItem extends EnergyWeaponItem {
-    public static final float VELOCITY = RivetEntity.SPEED;
     public static final int COOLDOWN_TICKS = 5;
 
     public RivetGunItem(Properties props, int capacity, IntSupplier cost) {
@@ -55,7 +54,7 @@ public class RivetGunItem extends EnergyWeaponItem {
         float pierce = (float) GearConfig.pierceShare(GearModules.active(gun, GearModuleKind.ARMOR_PIERCE));
         int bounces = GearConfig.ricochetBounces(GearModules.active(gun, GearModuleKind.RICOCHET));
         RivetEntity rivet = new RivetEntity(level, player, GearConfig.rivetDamage(), pierce, bounces);
-        rivet.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, VELOCITY, 0.5F);
+        rivet.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, GearConfig.rivetSpeed(), 0.5F);
         level.addFreshEntity(rivet);
         Vec3 look = player.getLookAngle();
         Vec3 muzzle = player.getEyePosition().add(look.scale(0.9)).add(0, -0.15, 0);

@@ -114,6 +114,10 @@ public abstract class AreaWorkerBlock extends BaseEntityBlock {
         if (isNextMk(stack)) {
             // Swapping the block is building: adventure mode and protected spots may not.
             if (!player.mayBuild() || !level.mayInteract(player, pos)) return ItemInteractionResult.FAIL;
+            if (!level.isClientSide && !worker.canUse(player)) {
+                player.displayClientMessage(Component.translatable("message.robotica.worker_locked"), true);
+                return ItemInteractionResult.CONSUME;
+            }
             if (!level.isClientSide && upgradeInPlace(level, pos, state, (AreaWorkerBlock) ((BlockItem) stack.getItem()).getBlock(), player)
                     && !player.getAbilities().instabuild) stack.shrink(1);
             return ItemInteractionResult.sidedSuccess(level.isClientSide);

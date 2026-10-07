@@ -36,6 +36,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -107,6 +108,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     /** Cleared junk (cobblestone, dirt, gravel and the like, tag robotica:voidable) is voided instead of stashed. */
     private static final TagKey<Item> JUNK = TagKey.create(Registries.ITEM, Robotica.id("voidable"));
+
+    /**
+     * Server safety limits, not balance (speed comes from the interval configs and cards): at most this many blocks
+     * changed, and this many cells skipped for free, per tick.
+     */
+    private static final int MAX_ACTIONS_PER_TICK = 16, MAX_SKIPS_PER_TICK = 512;
 
     private static final UUID FALLBACK_OWNER = UUID.fromString("c4d8a5e2-1f43-4a5e-9d7b-0a7a0b0b0a11");
 
@@ -199,9 +206,11 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     /**
      * Demolish: the height to take down per plot (0 = not part of it), how many plots it started with (0 = not
      * demolishing), the plot being taken down and the cell in it (top layer first), and the matter fractions left over
-     * from refunds.
+     * from refunds. {@code demolishSig}: per plot, the signature (shape at the demolish height, plus style) of what the
+     * table built there; only blocks matching it are refunded as matter.
      */
     private final int[] demolish = new int[Plots.COUNT];
+    private final int[] demolishSig = new int[Plots.COUNT];
     private int demolishTotal;
     private int demoPlot = -1;
     private int demoCursor;
@@ -557,7 +566,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         int speed = upgrades.level(UpgradeKind.SPEED);
         int efficiency = upgrades.level(UpgradeKind.EFFICIENCY);
         budget += Upgrades.speedMultiplier(speed) * CoreConfig.workSpeed() / ArchitectConfig.baseInterval();
-        int actions = Math.min(16, (int) budget);
+        int actions = Math.min(MAX_ACTIONS_PER_TICK, (int) budget);
         budget -= actions;
         if (budget > 1) budget = 1;
         int energyCost = (int) Math.max(0, Math.round(style.energyPerBlock(baseEnergy()) * Upgrades.energyMultiplier(speed, efficiency)));
@@ -574,7 +583,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 finish(level);
                 break;
             }
-            if (actions <= 0 || skips > 512) break;
+            if (actions <= 0 || skips > MAX_SKIPS_PER_TICK) break;
             BlockOp op = list.get(cursor);
             int result = step(level, origin, op, style, energyCost, layout.height(), opsShape.overlaps(op.x(), op.z()), clear);
             if (result == STEP_SKIPPED) {
@@ -680,19 +689,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         }
 
         if (clearing) {
-            // chests, furnaces and the like in the way: their contents come along first, nothing spills
-            BlockEntity in = level.getBlockEntity(target);
-            IItemHandler inside = in == null ? null : level.getCapability(Capabilities.ItemHandler.BLOCK, target, null);
-            if (inside != null) {
-                for (int slot = 0; slot < inside.getSlots(); slot++) {
-                    for (ItemStack taken = inside.extractItem(slot, 64, false); !taken.isEmpty(); taken = inside.extractItem(slot, 64, false)) {
-                        stash(level, taken);
-                    }
-                }
-            }
-            List<ItemStack> drops = Block.getDrops(current, level, target, in, fake, new ItemStack(Items.DIAMOND_PICKAXE));
-            level.removeBlock(target, false);
-            for (ItemStack drop : drops) if (!drop.is(JUNK)) stash(level, drop);
+            breakAndStash(level, target, current, fake, new ItemStack(Items.DIAMOND_PICKAXE));
             clearCooldown = ArchitectConfig.clearInterval();
         }
         if (desired.isAir()) {
@@ -715,6 +712,37 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             if (target != null) stack = ItemHandlerHelper.insertItemStacked(target, stack, false);
         }
         if (!stack.isEmpty()) Containers.dropItemStack(level, worldPosition.getX() + 0.5, worldPosition.getY() + 1.2, worldPosition.getZ() + 0.5, stack);
+    }
+
+    /**
+     * Breaks one block into air and stashes what it gives: a vanilla-style container's own slots (one pass), its loot
+     * drops and whatever its removal spills right there (a modded machine's inventory, a torch that loses its wall).
+     * Never reads item capabilities: an interface or proxy could hand out items from elsewhere (other inventories, a
+     * storage network) without end. Junk is voided.
+     */
+    private void breakAndStash(ServerLevel level, BlockPos target, BlockState state, FakePlayer fake, ItemStack tool) {
+        BlockEntity in = level.getBlockEntity(target);
+        if (in instanceof Container container) takeContents(container, stack -> stash(level, stack));
+        List<ItemStack> drops = new ArrayList<>(Block.getDrops(state, level, target, in, fake, tool));
+        AABB spot = new AABB(target).inflate(1);
+        Set<ItemEntity> before = new java.util.HashSet<>(level.getEntitiesOfClass(ItemEntity.class, spot));
+        // air, not removeBlock: a waterlogged block leaves no water behind
+        level.setBlock(target, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, spot, e -> e.isAlive() && !before.contains(e))) {
+            drops.add(item.getItem().copy());
+            item.discard();
+        }
+        for (ItemStack drop : drops) if (!drop.is(JUNK)) stash(level, drop);
+    }
+
+    /** Empties a container's own slots once, bounded by its size. */
+    public static void takeContents(Container container, java.util.function.Consumer<ItemStack> out) {
+        int size = container.getContainerSize();
+        for (int slot = 0; slot < size; slot++) {
+            ItemStack taken = container.removeItemNoUpdate(slot);
+            if (!taken.isEmpty()) out.accept(taken);
+        }
+        container.setChanged();
     }
 
     /** False inside vanilla spawn protection, outside the world border, or where the player may not interact. */
@@ -769,6 +797,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             int height = layout.builtHeight(plot);
             if (plot == current && (cursor > 0 || layout.state(plot) == Layout.BUILT)) height = Math.max(height, layout.height());
             demolish[plot] = Math.max(0, Math.min(Plots.MAX_HEIGHT, height));
+            demolishSig[plot] = demolish[plot] > 0 ? builtSignature(plot, demolish[plot]) : 0;
             if (demolish[plot] > 0) count++;
         }
         if (count == 0) return Component.translatable("message.robotica.architect_nothing_built");
@@ -786,10 +815,21 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return Component.translatable("message.robotica.architect_demolish_started", count);
     }
 
+    /** What the table built on a plot, as a signature at the given height (the plan's shape when no finished build is known). */
+    private int builtSignature(int plot, int height) {
+        if (!layout.planned(plot)) return 0;
+        int sig = layout.builtSignature(plot);
+        if (sig == 0) sig = layout.signature(plot);
+        Shell.Shape s = Shell.Shape.fromSignature(sig);
+        Shell.Shape shape = new Shell.Shape(s.sides(), s.diagonals(), s.doors(), height, s.walls(), s.wallDoors(), s.closed());
+        return shape.signature() | (sig & 3 << 28);
+    }
+
     /** Cancel while demolishing: what stands stays in the plan; a half taken down plot is rebuilt by the next Build. */
     private void stopDemolish() {
         if (demoPlot >= 0 && demoCursor > 0 && layout.state(demoPlot) == Layout.BUILT) layout.markChanging(demoPlot, demolish[demoPlot]);
         Arrays.fill(demolish, 0);
+        Arrays.fill(demolishSig, 0);
         demolishTotal = 0;
         demoPlot = -1;
         demoCursor = 0;
@@ -822,7 +862,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         int speed = upgrades.level(UpgradeKind.SPEED);
         int efficiency = upgrades.level(UpgradeKind.EFFICIENCY);
         budget += Upgrades.speedMultiplier(speed) * CoreConfig.workSpeed() / ArchitectConfig.demolishInterval();
-        int actions = Math.min(16, (int) budget);
+        int actions = Math.min(MAX_ACTIONS_PER_TICK, (int) budget);
         budget -= actions;
         if (budget > 1) budget = 1;
         int energyCost = (int) Math.max(0, Math.round(CoreConfig.scaleEnergy(ArchitectConfig.demolishEnergy()) * Upgrades.energyMultiplier(speed, efficiency)));
@@ -832,18 +872,23 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         BlockPos origin = Plots.origin(worldPosition, demoPlot);
         FakePlayer fake = fakePlayer(level);
         ItemStack tool = demolishTool(level);
+        int sig = demolishSig[demoPlot];
+        Shell.Shape shape = sig == 0 ? null : Shell.Shape.fromSignature(sig);
+        BuildStyle builtStyle = BuildStyle.byOrdinal(sig >> 28 & 3);
         BlockPos last = null;
         int skips = 0, shown = 0;
         while (true) {
             if (demoCursor >= height * layer) {
-                plotDemolished(level, origin, height);
+                plotDemolished(level);
                 break;
             }
-            if (actions <= 0 || skips > 512) break;
+            if (actions <= 0 || skips > MAX_SKIPS_PER_TICK) break;
             int rest = demoCursor % layer;
-            BlockPos target = origin.offset(rest % Plots.SIZE, height - 1 - demoCursor / layer, rest / Plots.SIZE);
+            int x = rest % Plots.SIZE, y = height - 1 - demoCursor / layer, z = rest / Plots.SIZE;
+            BlockPos target = origin.offset(x, y, z);
             BlockState was = level.getBlockState(target);
-            int result = takeDown(level, target, was, energyCost, fake, tool);
+            boolean own = shape != null && builtHere(shape, builtStyle, x, y, z, was);
+            int result = takeDown(level, target, was, energyCost, fake, tool, own);
             if (result == STEP_SKIPPED) {
                 demoCursor++;
                 skips++;
@@ -864,11 +909,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     }
 
     /**
-     * Takes one block down. Robotica building blocks go back into the table as matter, anything else breaks with its
-     * drops (Silk Touch, so glass and furniture come back), a container's contents first; all of it is stashed like
-     * clear terrain does, junk voided. Never the table, the container it stashes into, unbreakable or protected blocks.
+     * Takes one block down. The table's own building blocks ({@code own}: the piece its plan put there) go back into
+     * the table as matter, anything else breaks with its drops (Silk Touch, so glass and furniture come back), a
+     * container's contents first; all of it is stashed like clear terrain does, junk voided. Never the table, the
+     * container it stashes into, unbreakable or protected blocks.
      */
-    private int takeDown(ServerLevel level, BlockPos target, BlockState state, int energyCost, FakePlayer fake, ItemStack tool) {
+    private int takeDown(ServerLevel level, BlockPos target, BlockState state, int energyCost, FakePlayer fake, ItemStack tool, boolean own) {
         if (target.equals(worldPosition) || !level.isInWorldBounds(target)) return STEP_SKIPPED;
         if (!level.isLoaded(target)) return ST_UNLOADED;
         if (state.isAir() || state.is(ArchitectRegistry.ARCHITECT_TABLE.get()) || state.getDestroySpeed(level, target) < 0) return STEP_SKIPPED;
@@ -883,20 +929,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             level.setBlock(target, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             return STEP_DONE;
         }
-        if (!refund(state)) {
-            IItemHandler inside = in == null ? null : level.getCapability(Capabilities.ItemHandler.BLOCK, target, null);
-            if (inside != null) {
-                for (int slot = 0; slot < inside.getSlots(); slot++) {
-                    for (ItemStack taken = inside.extractItem(slot, 64, false); !taken.isEmpty(); taken = inside.extractItem(slot, 64, false)) {
-                        stash(level, taken);
-                    }
-                }
-            }
-            List<ItemStack> drops = Block.getDrops(state, level, target, in, fake, tool);
-            for (ItemStack drop : drops) if (!drop.is(JUNK)) stash(level, drop);
+        if (own && refund(state)) {
+            // air, not removeBlock: a waterlogged block leaves no water behind
+            level.setBlock(target, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        } else {
+            breakAndStash(level, target, state, fake, tool);
         }
-        // air, not removeBlock: a waterlogged block leaves no water behind
-        level.setBlock(target, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         energy.consume(energyCost);
         return STEP_DONE;
     }
@@ -910,6 +948,20 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 && state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
             return level.getBlockState(pos.relative(state.getValue(BlockStateProperties.HORIZONTAL_FACING))).is(state.getBlock());
         }
+        return false;
+    }
+
+    /**
+     * True when the block is the piece the plan built at this cell: in the plot's style, or any style on a cell a
+     * neighbouring plot shares.
+     */
+    private static boolean builtHere(Shell.Shape shape, BuildStyle style, int x, int y, int z, BlockState state) {
+        if (!ArchitectRegistry.isBuildingBlock(state)) return false;
+        Piece piece = Shell.piece(shape, x, y, z);
+        if (piece.resolve(style).isAir()) return false;
+        if (state.is(piece.resolve(style).getBlock())) return true;
+        if (!shape.overlaps(x, z)) return false;
+        for (BuildStyle other : BuildStyle.values()) if (state.is(piece.resolve(other).getBlock())) return true;
         return false;
     }
 
@@ -940,19 +992,11 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return pick;
     }
 
-    /** A plot is down: items lying in it (a dropped torch, anything left) are stashed, and it leaves the plan. */
-    private void plotDemolished(ServerLevel level, BlockPos origin, int height) {
-        AABB box = new AABB(origin.getX(), origin.getY(), origin.getZ(), origin.getX() + Plots.SIZE, origin.getY() + height, origin.getZ() + Plots.SIZE);
-        AABB onTable = new AABB(worldPosition.above());
-        FakePlayer fake = fakePlayer(level);
-        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box, e -> e.isAlive() && !e.getBoundingBox().intersects(onTable))) {
-            if (!mayBuildAt(level, item.blockPosition(), fake)) continue;
-            ItemStack stack = item.getItem().copy();
-            item.discard();
-            stash(level, stack);
-        }
+    /** A plot is down: it leaves the plan. */
+    private void plotDemolished(ServerLevel level) {
         if (layout.state(demoPlot) == Layout.BUILT) layout.forget(demoPlot);
         demolish[demoPlot] = 0;
+        demolishSig[demoPlot] = 0;
         demoPlot = -1;
         demoCursor = 0;
         CoreSounds.play(level, worldPosition, CoreSounds.ARCHITECT_DONE, SoundSource.BLOCKS, 0.8F, 0.7F);
@@ -1069,6 +1113,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         tag.putBoolean("clear_terrain", clearTerrain);
         if (demolishing()) {
             tag.putIntArray("demolish", demolish.clone());
+            tag.putIntArray("demolish_sig", demolishSig.clone());
             tag.putInt("demolish_total", demolishTotal);
             tag.putInt("demolish_plot", demoPlot);
             tag.putInt("demolish_cursor", demoCursor);
@@ -1091,11 +1136,14 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         clearTerrain = tag.getBoolean("clear_terrain");
         opsPlot = -1;
         Arrays.fill(demolish, 0);
+        Arrays.fill(demolishSig, 0);
         int[] saved = tag.getIntArray("demolish");
+        int[] sigs = tag.getIntArray("demolish_sig");
         int left = 0;
         for (int plot = 0; plot < Math.min(saved.length, Plots.COUNT); plot++) {
             demolish[plot] = Math.max(0, Math.min(Plots.MAX_HEIGHT, saved[plot]));
             if (demolish[plot] > 0) left++;
+            if (demolish[plot] > 0) demolishSig[plot] = plot < sigs.length && sigs[plot] > 0 ? sigs[plot] : builtSignature(plot, demolish[plot]);
         }
         demolishTotal = left == 0 ? 0 : Math.max(left, tag.getInt("demolish_total"));
         demoPlot = tag.contains("demolish_plot") && Plots.valid(tag.getInt("demolish_plot")) ? tag.getInt("demolish_plot") : -1;
