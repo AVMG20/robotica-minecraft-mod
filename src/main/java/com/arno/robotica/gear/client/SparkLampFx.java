@@ -2,11 +2,11 @@ package com.arno.robotica.gear.client;
 
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.GearClientConfig;
-import com.arno.robotica.gear.GearParticles;
 import com.arno.robotica.gear.lamp.SparkLampBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -14,10 +14,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Ambient effects of a Spark Lamp, run from {@link SparkLampBlock#animateTick}: white flickers at the core, embers
- * drifting up, now and then a spark spat out that falls, a rare crackle (short jagged arc and a quiet zap) and a rarer
- * faint hum. Nothing happens beyond the client config range from the camera, so a cave full of lamps only costs the
- * lamps near you.
+ * Ambient effects of a Spark Lamp, run from {@link SparkLampBlock#animateTick}: a tiny spark flickering at the core, a rare
+ * crackle (short spark arc and a quiet zap) and a rarer faint hum. Nothing happens beyond the client config range
+ * from the camera, so a cave full of lamps only costs the lamps near you.
  */
 public final class SparkLampFx {
     private SparkLampFx() {}
@@ -37,30 +36,18 @@ public final class SparkLampFx {
         int range = GearClientConfig.lampFxRange();
         if (camera.distanceToSqr(x, y, z) > (double) range * range) return;
 
-        if (particles) {
-            if (random.nextInt(5) == 0) {           // white flicker at the core
-                level.addParticle(GearParticles.LAMP_FLICK.get(), x + jitter(random, 0.1), y + jitter(random, 0.1), z + jitter(random, 0.1), 0, 0, 0);
-            }
-            if (random.nextInt(6) == 0) {           // an ember drifting up
-                level.addParticle(GearParticles.LAMP_EMBER.get(), x + jitter(random, 0.08), y + jitter(random, 0.08), z + jitter(random, 0.08),
-                        jitter(random, 0.006), 0.004 + random.nextDouble() * 0.006, jitter(random, 0.006));
-            }
-            if (random.nextInt(14) == 0) {          // a spark spat out, falling
-                for (int i = random.nextInt(2); i >= 0; i--) spit(level, random, x, y, z, 0.05 + random.nextDouble() * 0.06);
-            }
+        if (particles && random.nextInt(2) == 0) {
+            level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + jitter(random, 0.14), y + jitter(random, 0.14), z + jitter(random, 0.14),
+                    jitter(random, 0.012), jitter(random, 0.012) + 0.004, jitter(random, 0.012));
         }
-        if (random.nextInt(45) == 0) {              // crackle: a short jagged arc, a spark off its tip and a quiet zap
+        if (random.nextInt(40) == 0) {
             if (particles) {
                 double dx = jitter(random, 1), dy = jitter(random, 1), dz = jitter(random, 1);
                 double len = Math.max(0.01, Math.sqrt(dx * dx + dy * dy + dz * dz));
-                double px = x, py = y, pz = z;
-                for (int i = 0; i < 4; i++) {
-                    px += dx / len * 0.06 + jitter(random, 0.025);
-                    py += dy / len * 0.06 + jitter(random, 0.025);
-                    pz += dz / len * 0.06 + jitter(random, 0.025);
-                    level.addParticle(GearParticles.LAMP_FLICK.get(), px, py, pz, 0, 0, 0);
+                for (int i = 1; i <= 3; i++) {
+                    double step = 0.06 * i / len;
+                    level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + dx * step, y + dy * step, z + dz * step, 0, 0, 0);
                 }
-                spit(level, random, px, py, pz, 0.08);
             }
             if (sounds) {
                 level.playLocalSound(x, y, z, CoreSounds.SPARK_LAMP_CRACKLE.get(), SoundSource.BLOCKS, 1.0F, 0.9F + random.nextFloat() * 0.2F, false);
@@ -68,12 +55,6 @@ public final class SparkLampFx {
         } else if (sounds && random.nextInt(160) == 0) {
             level.playLocalSound(x, y, z, CoreSounds.SPARK_LAMP_HUM.get(), SoundSource.BLOCKS, 1.0F, 0.9F + random.nextFloat() * 0.2F, false);
         }
-    }
-
-    private static void spit(Level level, RandomSource random, double x, double y, double z, double speed) {
-        double dx = jitter(random, 1), dz = jitter(random, 1), dy = 0.3 + random.nextDouble() * 0.7;
-        double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        level.addParticle(GearParticles.LAMP_SPARK.get(), x, y, z, dx / len * speed, dy / len * speed, dz / len * speed);
     }
 
     private static double jitter(RandomSource random, double size) {

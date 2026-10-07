@@ -81,7 +81,6 @@ neoForge {
             client()
             gameDirectory = project.file('run-showcase')
             systemProperty 'robotica.showcase', 'true'
-            if (project.hasProperty('showcaseClip')) systemProperty 'robotica.showcase.clip', project.showcaseClip
             programArguments.addAll '--width', '1280', '--height', '800'
         }
 
