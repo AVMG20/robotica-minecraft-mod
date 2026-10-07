@@ -64,7 +64,9 @@ public final class WeaponModuleEvents {
         if (item instanceof NullLanceItem) return NullLanceItem.firing() ? weapon : ItemStack.EMPTY;
         // the Arc Blade's arcs belong to the swing that paid for them, even when that payment emptied the blade
         if (ArcBladeItem.arcing(weapon)) return weapon;
-        return item.paidMelee() && (item.hasCharge(weapon) || isCreative(attacker)) ? weapon : ItemStack.EMPTY;
+        // melee only: a real swing, not Thorns or other damage the attacker caused
+        boolean swing = source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK) || source.is(net.minecraft.world.damagesource.DamageTypes.MOB_ATTACK);
+        return swing && item.paidMelee() && (item.hasCharge(weapon) || isCreative(attacker)) ? weapon : ItemStack.EMPTY;
     }
 
     private static boolean isCreative(LivingEntity entity) {

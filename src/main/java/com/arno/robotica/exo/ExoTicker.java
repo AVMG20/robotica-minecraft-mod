@@ -551,6 +551,8 @@ public final class ExoTicker {
         AABB box = p.getBoundingBox().inflate(radius);
         List<ItemEntity> items = p.serverLevel().getEntitiesOfClass(ItemEntity.class, box,
                 e -> e.isAlive() && !e.hasPickUpDelay() && e.distanceToSqr(p) > 0.6 && e.distanceToSqr(p) <= (double) radius * radius);
+        // nearest first, so the cap of 32 per pass always takes the closest drops
+        items.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(p)));
         int pulled = 0;
         for (ItemEntity item : items) {
             if (pulled >= 32) break;

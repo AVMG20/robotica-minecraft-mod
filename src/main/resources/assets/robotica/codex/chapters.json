@@ -578,7 +578,7 @@
         },
         {
           "title": "Weapon modules",
-          "text": "- Sharpened Edge I-III: more damage\n- Looting I-III\n- Thermal Edge: sets on fire\n- Armor Pierce: ignores armor\n- Chain Lightning: Arc Blade\n- Ricochet: Rivet Gun\n- Lifesteal (Age 4): heals a bit, capped",
+          "text": "- Sharpened Edge I-III: more damage\n- Looting I-III\n- Thermal Edge: sets on fire\n- Armor Pierce: ignores 20-50% of armor\n- Chain Lightning: Arc Blade\n- Ricochet: Rivet Gun\n- Lifesteal (Age 4): heals a bit, capped",
           "items": [
             "robotica:sharpened_edge_module",
             "robotica:looting_module",

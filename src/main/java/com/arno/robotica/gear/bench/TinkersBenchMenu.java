@@ -172,4 +172,10 @@ public class TinkersBenchMenu extends MachineMenu {
         public void clearContent() {
         }
     }
+
+    /** Double-click collecting never pulls installed modules out of the item. */
+    @Override
+    public boolean canTakeItemForPickAll(net.minecraft.world.item.ItemStack stack, net.minecraft.world.inventory.Slot slot) {
+        return !(slot instanceof ModuleSlot) && super.canTakeItemForPickAll(stack, slot);
+    }
 }

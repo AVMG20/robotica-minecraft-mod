@@ -225,5 +225,8 @@ lang.update({
     'robotica.configuration.clearInterval': 'Ticks per cleared block',
     'robotica.configuration.builderDrones': 'Builder drones',
 })
-write(FRAG / 'assets/robotica/lang/en_us.json', lang)
+# keep keys added by hand (demolish, config) and overwrite only the generated ones
+_lang_file = FRAG / 'assets/robotica/lang/en_us.json'
+_existing = json.loads(_lang_file.read_text()) if _lang_file.exists() else {}
+write(_lang_file, {**_existing, **lang})
 print('architect models, loot, tags and lang written')

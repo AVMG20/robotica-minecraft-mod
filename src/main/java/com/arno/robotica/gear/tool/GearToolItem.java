@@ -177,12 +177,13 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
         return !spec.isEnergy() && super.isPrimaryItemFor(stack, enchantment);
     }
 
-    /** FE tools: the switched-on Fortune or Silk Touch module counts as that enchantment for drops. */
+    /** FE tools: only the switched-on Fortune or Silk Touch module counts, as that enchantment; nothing else does. */
     @Override
     public int getEnchantmentLevel(ItemStack stack, Holder<Enchantment> enchantment) {
         if (spec.isEnergy()) {
             if (enchantment.is(Enchantments.FORTUNE)) return Modules.active(stack, ModuleKind.FORTUNE);
             if (enchantment.is(Enchantments.SILK_TOUCH)) return Math.min(1, Modules.active(stack, ModuleKind.SILK_TOUCH));
+            return 0;
         }
         return super.getEnchantmentLevel(stack, enchantment);
     }
@@ -193,8 +194,7 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
         if (!spec.isEnergy()) return base;
         int fortune = Modules.active(stack, ModuleKind.FORTUNE);
         int silk = Modules.active(stack, ModuleKind.SILK_TOUCH);
-        if (fortune <= 0 && silk <= 0) return base;
-        ItemEnchantments.Mutable all = new ItemEnchantments.Mutable(base);
+        ItemEnchantments.Mutable all = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
         if (fortune > 0) all.set(lookup.getOrThrow(Enchantments.FORTUNE), fortune);
         if (silk > 0) all.set(lookup.getOrThrow(Enchantments.SILK_TOUCH), 1);
         return all.toImmutable();
@@ -204,6 +204,8 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         // A drill smithed from a worn hammer inherits its damage value; FE tools have no durability, so drop it.
         if (!level.isClientSide && spec.isEnergy() && stack.has(DataComponents.DAMAGE)) stack.remove(DataComponents.DAMAGE);
+        // Enchantments smithed over from an Age 0 tool do nothing on FE tools: clear them.
+        if (!level.isClientSide && spec.isEnergy() && stack.has(DataComponents.ENCHANTMENTS)) stack.remove(DataComponents.ENCHANTMENTS);
     }
 
     @Override

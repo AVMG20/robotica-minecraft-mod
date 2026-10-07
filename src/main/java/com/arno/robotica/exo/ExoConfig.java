@@ -195,7 +195,7 @@ public final class ExoConfig {
     }
 
     /**
-     * Configured cost of a module in FE per {@link ModuleKind#unit} (second, jump, block, damage point, use...),
+     * Configured cost of a module in FE per unit (second, jump, block, damage point, use...),
      * scaled by the global energy multiplier. For Solar Weave and the Kinetic Generator it is what they make, scaled
      * by the generation multiplier.
      */

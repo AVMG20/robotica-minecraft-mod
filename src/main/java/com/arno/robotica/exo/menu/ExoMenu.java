@@ -396,4 +396,10 @@ public class ExoMenu extends MachineMenu {
             }
         }
     }
+
+    /** Double-click collecting never pulls installed modules out of the item. */
+    @Override
+    public boolean canTakeItemForPickAll(net.minecraft.world.item.ItemStack stack, net.minecraft.world.inventory.Slot slot) {
+        return !(slot instanceof ModuleSlot || slot instanceof CoreSlot) && super.canTakeItemForPickAll(stack, slot);
+    }
 }

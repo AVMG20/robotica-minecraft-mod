@@ -142,18 +142,25 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem, Modul
     /** The switched-on Looting module counts as Looting for mob drops. */
     @Override
     public int getEnchantmentLevel(ItemStack stack, Holder<Enchantment> enchantment) {
-        if (enchantment.is(Enchantments.LOOTING)) return Modules.active(stack, ModuleKind.LOOTING);
-        return super.getEnchantmentLevel(stack, enchantment);
+        // Only the Looting module counts; enchantments smithed over from the Gearblade do nothing.
+        return enchantment.is(Enchantments.LOOTING) ? Modules.active(stack, ModuleKind.LOOTING) : 0;
     }
 
     @Override
     public ItemEnchantments getAllEnchantments(ItemStack stack, HolderLookup.RegistryLookup<Enchantment> lookup) {
-        ItemEnchantments base = super.getAllEnchantments(stack, lookup);
         int looting = Modules.active(stack, ModuleKind.LOOTING);
-        if (looting <= 0) return base;
-        ItemEnchantments.Mutable all = new ItemEnchantments.Mutable(base);
-        all.set(lookup.getOrThrow(Enchantments.LOOTING), looting);
+        ItemEnchantments.Mutable all = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        if (looting > 0) all.set(lookup.getOrThrow(Enchantments.LOOTING), looting);
         return all.toImmutable();
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slot, boolean selected) {
+        super.inventoryTick(stack, level, entity, slot, selected);
+        // Enchantments smithed over from the Gearblade do nothing on FE weapons: clear them.
+        if (!level.isClientSide && stack.has(net.minecraft.core.component.DataComponents.ENCHANTMENTS)) {
+            stack.remove(net.minecraft.core.component.DataComponents.ENCHANTMENTS);
+        }
     }
 
     @Override

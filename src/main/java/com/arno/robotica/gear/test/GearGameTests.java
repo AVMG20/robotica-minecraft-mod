@@ -457,6 +457,20 @@ public class GearGameTests {
             ItemStack rolled = net.minecraft.world.item.enchantment.EnchantmentHelper.enchantItem(random, stack.copy(), 30, level.registryAccess(),
                     Optional.empty());
             helper.assertTrue(rolled.getTagEnchantments().isEmpty(), item + ": enchanted loot rolls nothing");
+            // enchantments smithed over from an Age 0 tool do nothing and are cleared
+            if (!(item instanceof com.arno.robotica.exo.item.ExoArmorItem)) {
+                ItemStack smithed = stack.copy();
+                net.minecraft.world.item.enchantment.EnchantmentHelper.updateEnchantments(smithed, m -> {
+                    m.set(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.EFFICIENCY), 5);
+                    m.set(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS), 5);
+                    m.set(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH), 1);
+                });
+                helper.assertTrue(smithed.getAllEnchantments(lookup).isEmpty(), item + ": smithed enchantments must not count");
+                helper.assertTrue(smithed.getEnchantmentLevel(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.EFFICIENCY)) == 0,
+                        item + ": smithed Efficiency must not count");
+                smithed.inventoryTick(level, helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL), 0, false);
+                helper.assertTrue(smithed.getTagEnchantments().isEmpty(), item + ": smithed enchantments are cleared");
+            }
             for (var tag : List.of(net.minecraft.tags.ItemTags.MINING_ENCHANTABLE, net.minecraft.tags.ItemTags.DURABILITY_ENCHANTABLE,
                     net.minecraft.tags.ItemTags.WEAPON_ENCHANTABLE, net.minecraft.tags.ItemTags.SWORD_ENCHANTABLE,
                     net.minecraft.tags.ItemTags.ARMOR_ENCHANTABLE, net.minecraft.tags.ItemTags.EQUIPPABLE_ENCHANTABLE)) {
