@@ -2,34 +2,46 @@ package com.arno.robotica.gear.weapon;
 
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.core.module.ModuleHolder;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.ModuleTarget;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.GearConfig;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.function.IntSupplier;
 
-/** FE powered weapon. With less energy than one use it falls back to 1 damage (see GearEvents attribute hook). */
-public abstract class EnergyWeaponItem extends Item implements EnergyItem {
+/**
+ * FE powered weapon. With less energy than one use it falls back to 1 damage (see GearEvents attribute hook). Takes
+ * modules instead of enchantments (Sharpened Edge, Looting, Thermal Edge...).
+ */
+public abstract class EnergyWeaponItem extends Item implements EnergyItem, ModuleHolder {
     private final int capacity;
     private final IntSupplier cost;
     private final int age;
+    private final ModuleTarget target;
 
-    protected EnergyWeaponItem(Properties props, int capacity, IntSupplier cost, int age) {
+    protected EnergyWeaponItem(Properties props, int capacity, IntSupplier cost, int age, ModuleTarget target) {
         super(props.stacksTo(1));
         this.capacity = capacity;
         this.cost = cost;
         this.age = age;
+        this.target = target;
     }
 
     /** Base FE for one hit or shot, without modules. */
@@ -37,13 +49,26 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem {
         return cost.getAsInt();
     }
 
-    /** FE for one hit or shot of this stack: the base cost plus what its switched-on modules add per use. */
+    /** FE for one hit or shot of this stack: the base cost plus what its switched-on modules add, after the Power Regulator. */
     public int cost(ItemStack stack) {
-        return cost() + GearConfig.pierceCost(GearModules.active(stack, GearModuleKind.ARMOR_PIERCE))
-                + GearConfig.ricochetCost(GearModules.active(stack, GearModuleKind.RICOCHET));
+        int fe = cost() + GearConfig.pierceCost(Modules.active(stack, ModuleKind.ARMOR_PIERCE))
+                + GearConfig.ricochetCost(Modules.active(stack, ModuleKind.RICOCHET))
+                + GearConfig.edgeCost(Modules.active(stack, ModuleKind.SHARPENED_EDGE))
+                + GearConfig.thermalCost(Modules.active(stack, ModuleKind.THERMAL_EDGE));
+        return Modules.regulated(stack, fe);
     }
 
     public int age() {
+        return age;
+    }
+
+    @Override
+    public ModuleTarget moduleTarget(ItemStack stack) {
+        return target;
+    }
+
+    @Override
+    public int moduleTier(ItemStack stack) {
         return age;
     }
 
@@ -87,22 +112,48 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem {
         return ItemEnergy.BAR_COLOR;
     }
 
-    /** Melee FE weapons (tag minecraft:enchantable/weapon) take Sharpness, Fire Aspect and friends; never Unbreaking or Mending. */
+    // ---- no enchanting: FE weapons take modules ----
+
     @Override
     public boolean isEnchantable(ItemStack stack) {
-        return stack.is(net.minecraft.tags.ItemTags.WEAPON_ENCHANTABLE);
+        return false;
     }
 
     @Override
     public int getEnchantmentValue() {
-        return 12;
+        return 0;
     }
 
     @Override
-    public boolean supportsEnchantment(ItemStack stack, net.minecraft.core.Holder<net.minecraft.world.item.enchantment.Enchantment> enchantment) {
-        if (enchantment.is(net.minecraft.world.item.enchantment.Enchantments.MENDING)
-                || enchantment.is(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING)) return false;
-        return super.supportsEnchantment(stack, enchantment);
+    public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
+        return false;
+    }
+
+    @Override
+    public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
+        return false;
+    }
+
+    @Override
+    public boolean isPrimaryItemFor(ItemStack stack, Holder<Enchantment> enchantment) {
+        return false;
+    }
+
+    /** The switched-on Looting module counts as Looting for mob drops. */
+    @Override
+    public int getEnchantmentLevel(ItemStack stack, Holder<Enchantment> enchantment) {
+        if (enchantment.is(Enchantments.LOOTING)) return Modules.active(stack, ModuleKind.LOOTING);
+        return super.getEnchantmentLevel(stack, enchantment);
+    }
+
+    @Override
+    public ItemEnchantments getAllEnchantments(ItemStack stack, HolderLookup.RegistryLookup<Enchantment> lookup) {
+        ItemEnchantments base = super.getAllEnchantments(stack, lookup);
+        int looting = Modules.active(stack, ModuleKind.LOOTING);
+        if (looting <= 0) return base;
+        ItemEnchantments.Mutable all = new ItemEnchantments.Mutable(base);
+        all.set(lookup.getOrThrow(Enchantments.LOOTING), looting);
+        return all.toImmutable();
     }
 
     @Override
@@ -120,9 +171,9 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem {
         tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age))
                 .withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable(getDescriptionId() + ".tooltip", cost(stack)).withStyle(ChatFormatting.GRAY));
-        var modules = GearModules.describe(stack);
+        var modules = Modules.describe(stack);
         tooltip.add(modules != null ? Component.translatable("tooltip.robotica.gear.modules", modules).withStyle(ChatFormatting.GRAY)
-                : Component.translatable("tooltip.robotica.gear.weapon_modules", GearModules.slots(stack)).withStyle(ChatFormatting.DARK_GRAY));
+                : Component.translatable("tooltip.robotica.gear.weapon_modules", Modules.slots(stack)).withStyle(ChatFormatting.DARK_GRAY));
         ItemEnergy.appendTooltip(stack, tooltip);
     }
 

@@ -2,9 +2,14 @@ package com.arno.robotica.exo.item;
 
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.core.module.ModuleHolder;
+import com.arno.robotica.core.module.ModuleItem;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.ModuleTarget;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
-import com.arno.robotica.exo.ExoModuleKind;
+import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.menu.ExoMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
@@ -12,23 +17,27 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
 
 /**
  * One piece of the Exo-Frame. An FE item with no durability: it never breaks and keeps its base protection when empty,
- * only the modules stop. Mark N (1-4) has N module slots and a battery {@code markCapacityMultiplier}^(N-1) times the
- * Mk1 battery; Capacitor Plating adds to it. Chestplates from Mk2 on have a core socket.
+ * only the modules stop. Its mark sets its module slots (see {@link Modules}) and a battery
+ * {@code markCapacityMultiplier}^(mk-1) times the Mk1 battery; Capacitor Plating adds to it. Chestplates from Mk2 on
+ * have a core socket. Takes modules instead of enchantments.
  */
-public class ExoArmorItem extends ArmorItem implements EnergyItem {
-    public static final int MAX_SLOTS = 4;
+public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder {
+    /** Module slots the J screen shows per piece. */
+    public static final int MAX_SLOTS = Modules.MAX_ARMOR_SLOTS;
 
     public final int mk;
 
@@ -45,25 +54,31 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem {
         };
     }
 
-    public int moduleSlots() {
-        return Math.max(1, Math.min(MAX_SLOTS, mk));
+    @Override
+    public ModuleTarget moduleTarget(ItemStack stack) {
+        return ModuleTarget.armor(getEquipmentSlot());
+    }
+
+    @Override
+    public int moduleTier(ItemStack stack) {
+        return mk;
     }
 
     /** Chestplates from Mk2 on hold one boss core. */
     public boolean hasCoreSocket() {
-        return mk >= 2 && getEquipmentSlot() == net.minecraft.world.entity.EquipmentSlot.CHEST;
+        return mk >= 2 && getEquipmentSlot() == EquipmentSlot.CHEST;
     }
 
     /** Battery without Capacitor Plating. */
     public int baseCapacity() {
-        long cap = ExoConfig.baseCapacity(ExoModuleKind.slotIndex(getEquipmentSlot()));
+        long cap = ExoConfig.baseCapacity(ExoSuit.index(getEquipmentSlot()));
         for (int i = 1; i < mk; i++) cap *= ExoConfig.markMultiplier();
         return (int) Math.min(Integer.MAX_VALUE, cap);
     }
 
     @Override
     public int getEnergyCapacity(ItemStack stack) {
-        int plating = ExoData.workingLevelIn(stack, ExoModuleKind.CAPACITOR_PLATING);
+        int plating = Modules.level(stack, ModuleKind.CAPACITOR_PLATING);
         return (int) Math.min(Integer.MAX_VALUE, Math.round(baseCapacity() * (1.0 + ExoConfig.capacitorBonus(plating))));
     }
 
@@ -87,6 +102,33 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem {
         return ItemEnergy.BAR_COLOR;
     }
 
+    // ---- no enchanting: Exo armor takes modules ----
+
+    @Override
+    public boolean isEnchantable(ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    public int getEnchantmentValue() {
+        return 0;
+    }
+
+    @Override
+    public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
+        return false;
+    }
+
+    @Override
+    public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
+        return false;
+    }
+
+    @Override
+    public boolean isPrimaryItemFor(ItemStack stack, Holder<Enchantment> enchantment) {
+        return false;
+    }
+
     /** Sneak + right-click opens the module screen for this piece; a normal right-click equips it like any armor. */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -101,12 +143,12 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         ItemEnergy.appendTooltip(stack, tooltip);
-        int slots = moduleSlots();
+        int slots = Modules.slots(stack);
         tooltip.add(Component.translatable("exo.robotica.tooltip.slots", mk, slots).withStyle(ChatFormatting.GRAY));
         for (int i = 0; i < slots; i++) {
-            ItemStack module = ExoData.module(stack, i);
-            if (!(module.getItem() instanceof ExoModuleItem m)) continue;
-            boolean on = ExoData.isEnabled(stack, i);
+            ItemStack module = Modules.module(stack, i);
+            if (!(module.getItem() instanceof ModuleItem)) continue;
+            boolean on = Modules.enabled(stack, i);
             Component state = Component.translatable(on ? "exo.robotica.on" : "exo.robotica.off");
             tooltip.add(Component.literal(" ").append(module.getHoverName()).append(": ").append(state)
                     .withStyle(on ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY));

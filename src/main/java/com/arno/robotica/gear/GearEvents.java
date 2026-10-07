@@ -2,6 +2,8 @@ package com.arno.robotica.gear;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.tool.AreaBreaker;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.BreakQueue;
@@ -76,15 +78,15 @@ public final class GearEvents {
         if (!targets.isEmpty()) GearSounds.breakStarted(player, level, tool, mode, origin, targets.size() + 1);
     }
 
-    /** Redirects drops of Robotica tools: void filter, auto-smelt, auto-pickup (in that order). */
+    /** Redirects drops of Robotica tools: Void Filter module, auto-smelt, Auto-Pickup module (in that order). */
     @SubscribeEvent
     public static void onDrops(BlockDropsEvent event) {
         if (!(event.getBreaker() instanceof ServerPlayer player)) return;
         ItemStack tool = event.getTool();
         if (!(tool.getItem() instanceof GearToolItem item)) return;
-        boolean voidIt = item.toggleActive(tool, ToggleKind.VOID_FILTER);
+        boolean voidIt = Modules.active(tool, ModuleKind.VOID_FILTER) > 0;
         boolean smelt = item.toggleActive(tool, ToggleKind.AUTO_SMELT);
-        boolean pickup = item.toggleActive(tool, ToggleKind.AUTO_PICKUP);
+        boolean pickup = Modules.active(tool, ModuleKind.AUTO_PICKUP) > 0;
         if (!voidIt && !smelt && !pickup) return;
         ServerLevel level = event.getLevel();
         Iterator<ItemEntity> it = event.getDrops().iterator();

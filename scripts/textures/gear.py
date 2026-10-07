@@ -288,9 +288,19 @@ MOD_GLYPHS = {
     'chain_lightning': ['...XX.', '..XX..', '.XXXX.', '...XX.', '..XX..', '.XX...', '.X....', '......'],
     'ricochet': ['......', 'X....X', 'X....X', '.X..X.', '.X..X.', '..XX..', 'xxxxxx', '......'],
     'lifesteal': ['.X..X.', 'XXXXXX', 'XXXXXX', '.XXXX.', '..XX..', '..x...', '..x...', '..x...'],
+    'overclock': ['......', 'X..X..', 'XX.XX.', '.XX.XX', '.XX.XX', 'XX.XX.', 'X..X..', '......'],
+    'fortune': ['......', '.XXXX.', 'XxXXxX', 'XXXXXX', '.XXXX.', '..XX..', '......', 'x.x.x.'],
+    'silk_touch': ['XXXXXX', 'X....X', 'X.xx.X', 'X.xx.X', 'X....X', 'XXXXXX', '......', '......'],
+    'auto_pickup': ['..XX..', '..XX..', '..XX..', 'XXXXXX', '.XXXX.', '..XX..', 'x....x', 'xxxxxx'],
+    'void_filter': ['X....X', '.X..X.', '..XX..', '..XX..', '.X..X.', 'X....X', '......', 'xxxxxx'],
+    'sharpened_edge': ['.....X', '....XX', '...XX.', '..XX..', '.XX...', 'XX....', 'xx....', 'x.....'],
+    'looting': ['..XX..', '.X..X.', '..XX..', '.XXXX.', 'XXXXXX', 'XXXXXX', '.XXXX.', '......'],
+    'thermal_edge': ['..X...', '..XX..', '.XXX..', '.XXXX.', 'XXXXX.', 'XXxXXX', '.XxxX.', '..XX..'],
 }
-MOD_LEVELS = {'torch_placer': 1, 'armor_pierce': 3, 'chain_lightning': 3, 'ricochet': 2, 'lifesteal': 1}
-MOD_WEAPON = {'armor_pierce', 'chain_lightning', 'ricochet', 'lifesteal'}
+MOD_LEVELS = {'torch_placer': 1, 'armor_pierce': 3, 'chain_lightning': 3, 'ricochet': 2, 'lifesteal': 1,
+              'overclock': 3, 'fortune': 3, 'silk_touch': 1, 'auto_pickup': 1, 'void_filter': 1,
+              'sharpened_edge': 3, 'looting': 3, 'thermal_edge': 1}
+MOD_WEAPON = {'armor_pierce', 'chain_lightning', 'ricochet', 'lifesteal', 'sharpened_edge', 'looting', 'thermal_edge'}
 
 
 def gear_module(name, level=0):

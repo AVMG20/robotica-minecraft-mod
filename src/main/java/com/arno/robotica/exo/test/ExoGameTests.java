@@ -7,8 +7,10 @@ import com.arno.robotica.exo.ExoActions;
 import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
 import com.arno.robotica.exo.ExoItems;
-import com.arno.robotica.exo.ExoModuleKind;
-import com.arno.robotica.exo.ExoRules;
+import com.arno.robotica.core.module.ModuleConfig;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.ExoTicker;
 import com.arno.robotica.exo.item.ExoArmorItem;
@@ -57,23 +59,23 @@ public class ExoGameTests {
         return player;
     }
 
-    private static ItemStack mod(ExoModuleKind kind, int level) {
-        return new ItemStack(ExoItems.module(kind, level).get());
+    private static ItemStack mod(ModuleKind kind, int level) {
+        return new ItemStack(ModuleItems.get(kind, level).get());
     }
 
-    private static ItemStack mod(ExoModuleKind kind) {
+    private static ItemStack mod(ModuleKind kind) {
         return mod(kind, 1);
     }
 
     /** An Exo piece with the given modules installed and the given energy. */
     private static ItemStack pieceM(DeferredItem<ExoArmorItem> item, int energy, ItemStack... modules) {
         ItemStack stack = new ItemStack(item.get());
-        ExoData.setModules(stack, Arrays.asList(modules));
+        for (int i = 0; i < modules.length; i++) Modules.setModule(stack, i, modules[i]);
         ItemEnergy.set(stack, energy);
         return stack;
     }
 
-    private static ItemStack piece(DeferredItem<ExoArmorItem> item, int energy, ExoModuleKind... kinds) {
+    private static ItemStack piece(DeferredItem<ExoArmorItem> item, int energy, ModuleKind... kinds) {
         return pieceM(item, energy, Arrays.stream(kinds).map(ExoGameTests::mod).toArray(ItemStack[]::new));
     }
 
@@ -95,25 +97,25 @@ public class ExoGameTests {
         player.setItemSlot(EquipmentSlot.CHEST, chest);
         ExoMenu menu = new ExoMenu(1, player.getInventory(), List.of(new ExoMenu.Section(EquipmentSlot.CHEST, 0, 3, true)), true);
 
-        helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ExoModuleKind.NIGHT_VISION)), "a helmet module must not fit the chestplate");
-        ItemStack flight = mod(ExoModuleKind.FLIGHT);
+        helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ModuleKind.NIGHT_VISION)), "a helmet module must not fit the chestplate");
+        ItemStack flight = mod(ModuleKind.FLIGHT);
         helper.assertTrue(menu.slots.get(0).mayPlace(flight), "a chest module fits the chestplate");
 
         menu.slots.get(0).set(flight);
         ItemStack worn = player.getItemBySlot(EquipmentSlot.CHEST);
-        helper.assertTrue(ExoData.kind(worn, 0) == ExoModuleKind.FLIGHT, "module should be installed in the worn piece");
+        helper.assertTrue(Modules.kind(worn, 0) == ModuleKind.FLIGHT, "module should be installed in the worn piece");
         helper.assertTrue(ItemEnergy.get(worn) == 123_456, "installing a module must keep the energy, got " + ItemEnergy.get(worn));
-        helper.assertTrue(ExoData.isEnabled(worn, 0), "a new module starts switched on");
-        helper.assertTrue(!menu.slots.get(1).mayPlace(mod(ExoModuleKind.FLIGHT)), "the same kind twice in one piece is refused");
+        helper.assertTrue(Modules.enabled(worn, 0), "a new module starts switched on");
+        helper.assertTrue(!menu.slots.get(1).mayPlace(mod(ModuleKind.FLIGHT)), "the same kind twice in one piece is refused");
 
         helper.assertTrue(menu.clickMenuButton(player, 0), "toggle click should work");
-        helper.assertTrue(!ExoData.isEnabled(worn, 0), "toggle should switch the module off");
-        helper.assertTrue(!ExoSuit.active(player).has(ExoModuleKind.FLIGHT), "a switched off module is not active");
+        helper.assertTrue(!Modules.enabled(worn, 0), "toggle should switch the module off");
+        helper.assertTrue(!ExoSuit.active(player).has(ModuleKind.FLIGHT), "a switched off module is not active");
 
         ItemStack taken = menu.slots.get(0).remove(1);
-        helper.assertTrue(taken.getItem() == ExoItems.module(ExoModuleKind.FLIGHT).get(), "the module comes back out");
-        helper.assertTrue(ExoData.kind(worn, 0) == null, "slot should be empty again");
-        helper.assertTrue(ExoData.isEnabled(worn, 0), "removing clears the off bit");
+        helper.assertTrue(taken.getItem() == ModuleItems.get(ModuleKind.FLIGHT, 1).get(), "the module comes back out");
+        helper.assertTrue(Modules.kind(worn, 0) == null, "slot should be empty again");
+        helper.assertTrue(Modules.enabled(worn, 0), "removing clears the off bit");
         helper.assertTrue(ItemEnergy.get(worn) == 123_456, "removing a module must keep the energy");
 
         // Core socket: only boss cores, not consumed, removable.
@@ -131,7 +133,7 @@ public class ExoGameTests {
         for (int mk = 1; mk <= 4; mk++) {
             for (EquipmentSlot slot : ExoSuit.SLOTS) {
                 ExoArmorItem item = ExoItems.piece(mk, slot).get();
-                helper.assertTrue(item.mk == mk && item.moduleSlots() == mk, "Mk" + mk + " has " + mk + " module slots");
+                helper.assertTrue(item.mk == mk && Modules.slots(new ItemStack(item)) == mk, "Mk" + mk + " has " + mk + " module slots");
                 helper.assertTrue(item.getEquipmentSlot() == slot, "piece " + slot + " Mk" + mk);
                 helper.assertTrue(item.hasCoreSocket() == (mk >= 2 && slot == EquipmentSlot.CHEST), "core socket only on Mk2+ chestplates");
             }
@@ -145,8 +147,8 @@ public class ExoGameTests {
 
         // Smithing Mk2 -> Mk3 -> Mk4 keeps energy, modules, switches and the core.
         ServerLevel level = helper.getLevel();
-        ItemStack mk2 = pieceM(ExoItems.CHESTPLATE_MK2, 777_000, mod(ExoModuleKind.MED_INJECTOR), mod(ExoModuleKind.JET_ASSIST));
-        ExoData.setEnabled(mk2, 1, false);
+        ItemStack mk2 = pieceM(ExoItems.CHESTPLATE_MK2, 777_000, mod(ModuleKind.MED_INJECTOR), mod(ModuleKind.JET_ASSIST));
+        Modules.setEnabled(mk2, 1, false);
         ExoData.setCore(mk2, new ItemStack(CoreItems.SERVO_CORE.get()));
         SmithingRecipeInput in3 = new SmithingRecipeInput(new ItemStack(CoreItems.BLAZING_CASING.get()), mk2, part("superconductor_coil"));
         var r3 = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, in3, level);
@@ -154,14 +156,14 @@ public class ExoGameTests {
         ItemStack mk3 = r3.get().value().assemble(in3, level.registryAccess());
         helper.assertTrue(mk3.is(ExoItems.CHESTPLATE_MK3.get()), "smithing makes the Mk3 chestplate");
         helper.assertTrue(ItemEnergy.get(mk3) == 777_000, "energy survives smithing");
-        helper.assertTrue(ExoData.kind(mk3, 0) == ExoModuleKind.MED_INJECTOR && ExoData.kind(mk3, 1) == ExoModuleKind.JET_ASSIST, "modules survive smithing");
-        helper.assertTrue(!ExoData.isEnabled(mk3, 1), "switches survive smithing");
+        helper.assertTrue(Modules.kind(mk3, 0) == ModuleKind.MED_INJECTOR && Modules.kind(mk3, 1) == ModuleKind.JET_ASSIST, "modules survive smithing");
+        helper.assertTrue(!Modules.enabled(mk3, 1), "switches survive smithing");
         helper.assertTrue(ExoData.coreKind(ExoData.core(mk3)) == ExoData.Core.SERVO, "the core survives smithing");
         SmithingRecipeInput in4 = new SmithingRecipeInput(new ItemStack(CoreItems.NULL_CASING.get()), mk3, part("resonant_lattice"));
         var r4 = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, in4, level);
         helper.assertTrue(r4.isPresent(), "a Mk4 smithing recipe exists");
         ItemStack mk4 = r4.get().value().assemble(in4, level.registryAccess());
-        helper.assertTrue(mk4.is(ExoItems.CHESTPLATE_MK4.get()) && ItemEnergy.get(mk4) == 777_000 && ExoData.slotCount(mk4) == 4,
+        helper.assertTrue(mk4.is(ExoItems.CHESTPLATE_MK4.get()) && ItemEnergy.get(mk4) == 777_000 && Modules.slots(mk4) == 4,
                 "Mk4 chestplate with four slots keeps its energy");
         helper.succeed();
     }
@@ -170,34 +172,34 @@ public class ExoGameTests {
     public static void markGatingAndOnePerSuit(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         ItemStack mk2Chest = new ItemStack(ExoItems.CHESTPLATE_MK2.get());
-        helper.assertTrue(ExoRules.moduleRefusal(mk2Chest, 0, mod(ExoModuleKind.FLIGHT), List.of()) != null, "Flight needs a Mk3 chestplate");
-        helper.assertTrue(ExoRules.moduleRefusal(new ItemStack(ExoItems.CHESTPLATE_MK3.get()), 0, mod(ExoModuleKind.FLIGHT), List.of()) == null, "Mk3 takes Flight");
-        helper.assertTrue(ExoRules.moduleRefusal(mk2Chest, 0, mod(ExoModuleKind.KINETIC_SHIELD), List.of()) != null, "Kinetic Shield needs Mk3");
-        helper.assertTrue(ExoRules.moduleRefusal(new ItemStack(ExoItems.CHESTPLATE_MK3.get()), 0, mod(ExoModuleKind.KINETIC_SHIELD, 2), List.of()) != null,
+        helper.assertTrue(Modules.refusal(mk2Chest, 0, mod(ModuleKind.FLIGHT), List.of()) != null, "Flight needs a Mk3 chestplate");
+        helper.assertTrue(Modules.refusal(new ItemStack(ExoItems.CHESTPLATE_MK3.get()), 0, mod(ModuleKind.FLIGHT), List.of()) == null, "Mk3 takes Flight");
+        helper.assertTrue(Modules.refusal(mk2Chest, 0, mod(ModuleKind.KINETIC_SHIELD), List.of()) != null, "Kinetic Shield needs Mk3");
+        helper.assertTrue(Modules.refusal(new ItemStack(ExoItems.CHESTPLATE_MK3.get()), 0, mod(ModuleKind.KINETIC_SHIELD, 2), List.of()) != null,
                 "Kinetic Shield II needs Mk4");
-        helper.assertTrue(ExoRules.moduleRefusal(new ItemStack(ExoItems.BOOTS_MK1.get()), 0, mod(ExoModuleKind.MAGNET, 2), List.of()) != null, "level II needs Mk2");
+        helper.assertTrue(Modules.refusal(new ItemStack(ExoItems.BOOTS_MK1.get()), 0, mod(ModuleKind.MAGNET, 2), List.of()) != null, "level II needs Mk2");
         // Step Assist sits on the boots, from Mk1.
-        helper.assertTrue(ExoRules.moduleRefusal(new ItemStack(ExoItems.BOOTS_MK1.get()), 0, mod(ExoModuleKind.STEP_ASSIST), List.of()) == null, "Step Assist fits Mk1 boots");
-        helper.assertTrue(ExoRules.moduleRefusal(new ItemStack(ExoItems.LEGGINGS_MK4.get()), 0, mod(ExoModuleKind.STEP_ASSIST), List.of()) != null, "Step Assist is not for leggings");
+        helper.assertTrue(Modules.refusal(new ItemStack(ExoItems.BOOTS_MK1.get()), 0, mod(ModuleKind.STEP_ASSIST), List.of()) == null, "Step Assist fits Mk1 boots");
+        helper.assertTrue(Modules.refusal(new ItemStack(ExoItems.LEGGINGS_MK4.get()), 0, mod(ModuleKind.STEP_ASSIST), List.of()) != null, "Step Assist is not for leggings");
 
         // Same kind twice in one piece (Stride I + II) is refused.
-        ItemStack legs = pieceM(ExoItems.LEGGINGS_MK2, 0, mod(ExoModuleKind.SERVO_STRIDE, 1));
-        helper.assertTrue(ExoRules.moduleRefusal(legs, 1, mod(ExoModuleKind.SERVO_STRIDE, 2), List.of()) != null, "Stride I and II in one piece is refused");
+        ItemStack legs = pieceM(ExoItems.LEGGINGS_MK2, 0, mod(ModuleKind.SERVO_STRIDE, 1));
+        helper.assertTrue(Modules.refusal(legs, 1, mod(ModuleKind.SERVO_STRIDE, 2), List.of()) != null, "Stride I and II in one piece is refused");
 
         // One per suit across pieces: Dash Thrusters fit legs or boots, but only once.
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ExoModuleKind.DASH_THRUSTERS));
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ModuleKind.DASH_THRUSTERS));
         player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK3, 50_000));
         ExoMenu menu = new ExoMenu(2, player.getInventory(), List.of(new ExoMenu.Section(EquipmentSlot.LEGS, 0, 3, false)), true);
-        helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ExoModuleKind.DASH_THRUSTERS)), "a second Dash Thrusters in the suit is refused");
-        helper.assertTrue(menu.slots.get(0).mayPlace(mod(ExoModuleKind.CAPACITOR_PLATING)), "Capacitor Plating fits any piece");
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ExoModuleKind.CAPACITOR_PLATING));
-        helper.assertTrue(menu.slots.get(0).mayPlace(mod(ExoModuleKind.CAPACITOR_PLATING)), "Capacitor Plating works per piece, one in every piece is fine");
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ExoModuleKind.POWER_REGULATOR));
-        helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ExoModuleKind.POWER_REGULATOR)), "the Power Regulator works for the whole suit, once");
+        helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ModuleKind.DASH_THRUSTERS)), "a second Dash Thrusters in the suit is refused");
+        helper.assertTrue(menu.slots.get(0).mayPlace(mod(ModuleKind.CAPACITOR_PLATING)), "Capacitor Plating fits any piece");
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ModuleKind.CAPACITOR_PLATING));
+        helper.assertTrue(menu.slots.get(0).mayPlace(mod(ModuleKind.CAPACITOR_PLATING)), "Capacitor Plating works per piece, one in every piece is fine");
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ModuleKind.POWER_REGULATOR));
+        helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ModuleKind.POWER_REGULATOR)), "the Power Regulator works for the whole suit, once");
 
         // Duplicates that got in anyway (two pieces put on) never stack: the highest level counts.
-        player.setItemSlot(EquipmentSlot.HEAD, pieceM(ExoItems.HELMET_MK4, 50_000, mod(ExoModuleKind.POWER_REGULATOR, 3)));
-        helper.assertTrue(ExoSuit.active(player).level(ExoModuleKind.POWER_REGULATOR) == 3, "the highest level counts once");
+        player.setItemSlot(EquipmentSlot.HEAD, pieceM(ExoItems.HELMET_MK4, 50_000, mod(ModuleKind.POWER_REGULATOR, 3)));
+        helper.assertTrue(ExoSuit.active(player).level(ModuleKind.POWER_REGULATOR) == 3, "the highest level counts once");
         helper.succeed();
     }
 
@@ -206,9 +208,9 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void abilitiesConsumeEnergyAndStopWhenEmpty(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ExoModuleKind.NIGHT_VISION));
-        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK2, 100_000, mod(ExoModuleKind.SERVO_STRIDE, 2)));
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ExoModuleKind.STEP_ASSIST));
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ModuleKind.NIGHT_VISION));
+        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK2, 100_000, mod(ModuleKind.SERVO_STRIDE, 2)));
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ModuleKind.STEP_ASSIST));
 
         ticks(player, 40);
         helper.assertTrue(player.hasEffect(MobEffects.NIGHT_VISION), "night vision should be applied while charged");
@@ -217,7 +219,7 @@ public class ExoGameTests {
         helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.STEP_HEIGHT) - 1.0) < 1.0E-6,
                 "step assist on the boots walks up full blocks, step height " + player.getAttributeValue(Attributes.STEP_HEIGHT));
         int nvUsed = 100_000 - energy(player, EquipmentSlot.HEAD);
-        helper.assertTrue(nvUsed > 0 && nvUsed <= ExoConfig.cost(ExoModuleKind.NIGHT_VISION, 1) * 3, "night vision costs a little FE, used " + nvUsed);
+        helper.assertTrue(nvUsed > 0 && nvUsed <= ExoConfig.cost(ModuleKind.NIGHT_VISION, 1) * 3, "night vision costs a little FE, used " + nvUsed);
 
         ItemEnergy.set(player.getItemBySlot(EquipmentSlot.HEAD), 0);
         ItemEnergy.set(player.getItemBySlot(EquipmentSlot.LEGS), 0);
@@ -241,14 +243,14 @@ public class ExoGameTests {
     public static void flightIsGrantedAndRevokedCleanly(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         int start = 500_000;
-        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, start, ExoModuleKind.FLIGHT));
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, start, ModuleKind.FLIGHT));
         ticks(player, 1);
         helper.assertTrue(player.getAbilities().mayfly, "flight module grants mayfly");
 
         player.getAbilities().flying = true;
         ticks(player, 20);
         int used = start - energy(player, EquipmentSlot.CHEST);
-        int expected = ExoConfig.cost(ExoModuleKind.FLIGHT, 1);
+        int expected = ExoConfig.cost(ModuleKind.FLIGHT, 1);
         helper.assertTrue(used >= expected * 0.8 && used <= expected * 1.3, "one second of flight costs about " + expected + " FE, used " + used);
         helper.assertTrue(player.getAbilities().mayfly && player.getAbilities().flying, "still flying while charged");
 
@@ -277,7 +279,7 @@ public class ExoGameTests {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         player.setGameMode(GameType.CREATIVE);
         helper.assertTrue(player.getAbilities().mayfly, "creative flies");
-        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 0, ExoModuleKind.FLIGHT));
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 0, ModuleKind.FLIGHT));
         ticks(player, 3);
         helper.assertTrue(player.getAbilities().mayfly, "empty suit does not revoke creative flight");
         player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
@@ -285,7 +287,7 @@ public class ExoGameTests {
         helper.assertTrue(player.getAbilities().mayfly, "unequipping does not revoke creative flight");
 
         player.setGameMode(GameType.SURVIVAL);
-        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 100_000, ExoModuleKind.FLIGHT));
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 100_000, ModuleKind.FLIGHT));
         ticks(player, 1);
         helper.assertTrue(player.getAbilities().mayfly, "suit grants flight in survival");
         player.setGameMode(GameType.CREATIVE);
@@ -309,7 +311,7 @@ public class ExoGameTests {
     public static void magnetRadiusGrowsWithLevel(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         int start = 50_000;
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, start, ExoModuleKind.MAGNET));
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, start, ModuleKind.MAGNET));
         ServerLevel level = helper.getLevel();
         ItemEntity near = drop(level, player, 4.0);
         ItemEntity far = drop(level, player, 12.0);
@@ -319,7 +321,7 @@ public class ExoGameTests {
         helper.assertTrue(far.getDeltaMovement().lengthSqr() < 1.0E-6, "an item out of Magnet I range stays put");
         helper.assertTrue(energy(player, EquipmentSlot.FEET) < start, "pulling costs energy");
 
-        player.setItemSlot(EquipmentSlot.FEET, pieceM(ExoItems.BOOTS_MK3, start, mod(ExoModuleKind.MAGNET, 3)));
+        player.setItemSlot(EquipmentSlot.FEET, pieceM(ExoItems.BOOTS_MK3, start, mod(ModuleKind.MAGNET, 3)));
         ticks(player, 4);
         helper.assertTrue(ExoConfig.magnetRadius(3) >= 12 && far.getDeltaMovement().lengthSqr() > 1.0E-4, "Magnet III reaches " + ExoConfig.magnetRadius(3) + " blocks");
         near.discard();
@@ -337,9 +339,9 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void fallDampenerCancelsFallDamageWhileCharged(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ExoModuleKind.FALL_DAMPENER));
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ModuleKind.FALL_DAMPENER));
         ticks(player, 1);
-        int perBlock = ExoConfig.cost(ExoModuleKind.FALL_DAMPENER, 1);
+        int perBlock = ExoConfig.cost(ModuleKind.FALL_DAMPENER, 1);
         helper.assertTrue(fall(player, 10.0F) == 0.0F, "a charged fall dampener removes the fall damage");
         ExoTicker.flush(player);
         int used = 100_000 - energy(player, EquipmentSlot.FEET);
@@ -360,14 +362,14 @@ public class ExoGameTests {
         helper.assertTrue(fall(player, 10.0F) == 1.0F, "no module, no protection");
 
         // Power Regulator III (helmet) cuts every cost by 30%.
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ExoModuleKind.FALL_DAMPENER));
-        player.setItemSlot(EquipmentSlot.HEAD, pieceM(ExoItems.HELMET_MK4, 0, mod(ExoModuleKind.POWER_REGULATOR, 3)));
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ModuleKind.FALL_DAMPENER));
+        player.setItemSlot(EquipmentSlot.HEAD, pieceM(ExoItems.HELMET_MK4, 0, mod(ModuleKind.POWER_REGULATOR, 3)));
         ticks(player, 1);
         helper.assertTrue(fall(player, 10.0F) == 0.0F, "still absorbed with the regulator");
         ExoTicker.flush(player);
         int reg = 100_000 - energy(player, EquipmentSlot.FEET);
-        int want = (int) Math.round(7 * perBlock * (1.0 - ExoConfig.regulatorSaving(3)));
-        helper.assertTrue(Math.abs(reg - want) <= 1, "the regulator saves " + ExoConfig.regulatorSaving(3) + ": " + want + " FE, used " + reg);
+        int want = (int) Math.round(7 * perBlock * (1.0 - ModuleConfig.regulatorSaving(3)));
+        helper.assertTrue(Math.abs(reg - want) <= 1, "the regulator saves " + ModuleConfig.regulatorSaving(3) + ": " + want + " FE, used " + reg);
         helper.succeed();
     }
 
@@ -375,7 +377,7 @@ public class ExoGameTests {
     public static void fullSetSharesEnergyAndKineticShieldBlocksHits(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 10_000));
-        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 0, ExoModuleKind.KINETIC_SHIELD));
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 0, ModuleKind.KINETIC_SHIELD));
         player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK1, 0));
         helper.assertTrue(!ExoSuit.fullSet(player), "three pieces are not a full set");
         helper.assertTrue(ExoSuit.energyFor(player, EquipmentSlot.CHEST) == 0, "a partial set uses only the module's own piece");
@@ -388,7 +390,7 @@ public class ExoGameTests {
         float through = (float) (5.0 * (1.0 - ExoConfig.shieldAbsorb(1)));
         helper.assertTrue(Math.abs(hit.getNewDamage() - through) < 1.0E-3F,
                 "the shield absorbs 75% of a 5 damage hit, " + through + " should go through, got " + hit.getNewDamage());
-        int perPoint = ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD, 1);
+        int perPoint = ExoConfig.cost(ModuleKind.KINETIC_SHIELD, 1);
         int cost = (int) Math.round(5.0 * ExoConfig.shieldAbsorb(1) * perPoint);
         helper.assertTrue(Math.abs(ExoSuit.totalEnergy(player) - (60_000 - cost)) <= 1, "the hit cost " + cost + " FE from the pool, left " + ExoSuit.totalEnergy(player));
         helper.assertTrue(Math.abs(energy(player, EquipmentSlot.FEET) - (50_000 - cost)) <= 1, "most charged piece pays first");
@@ -403,12 +405,12 @@ public class ExoGameTests {
         helper.assertTrue(voidHit.getNewDamage() == 5.0F, "damage that bypasses invulnerability is never absorbed");
 
         // Kinetic Shield III absorbs more of each hit for less FE per point.
-        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK4, 1_000_000, mod(ExoModuleKind.KINETIC_SHIELD, 3)));
+        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK4, 1_000_000, mod(ModuleKind.KINETIC_SHIELD, 3)));
         ticks(player, 1);
         LivingDamageEvent.Pre strong = shieldHit(player, player.damageSources().generic(), 10.0F);
         float through3 = (float) (10.0 * (1.0 - ExoConfig.shieldAbsorb(3)));
         helper.assertTrue(Math.abs(strong.getNewDamage() - through3) < 1.0E-3F, "Kinetic Shield III lets " + through3 + " through, got " + strong.getNewDamage());
-        helper.assertTrue(ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD, 3) < perPoint, "higher levels pay less per point");
+        helper.assertTrue(ExoConfig.cost(ModuleKind.KINETIC_SHIELD, 3) < perPoint, "higher levels pay less per point");
 
         for (EquipmentSlot slot : ExoSuit.SLOTS) ItemEnergy.set(player.getItemBySlot(slot), 0);
         ticks(player, 1);
@@ -428,7 +430,7 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void kineticShieldDoesNotPayForInvulnerabilityFrames(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK4, 1_000_000, mod(ExoModuleKind.KINETIC_SHIELD, 3)));
+        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK4, 1_000_000, mod(ModuleKind.KINETIC_SHIELD, 3)));
         for (int i = 0; i < 61; i++) player.tick(); // past the spawn protection of a new player
         ticks(player, 1);
         player.invulnerableTime = 0;
@@ -457,7 +459,7 @@ public class ExoGameTests {
         helper.assertTrue(ItemEnergy.capacity(chest) == base, "no plating: base battery");
         player.setItemSlot(EquipmentSlot.CHEST, chest);
         ExoMenu menu = new ExoMenu(3, player.getInventory(), List.of(new ExoMenu.Section(EquipmentSlot.CHEST, 0, 1, false)), true);
-        menu.slots.get(0).set(mod(ExoModuleKind.CAPACITOR_PLATING));
+        menu.slots.get(0).set(mod(ModuleKind.CAPACITOR_PLATING));
         ItemStack worn = player.getItemBySlot(EquipmentSlot.CHEST);
         int plated = (int) Math.round(base * (1.0 + ExoConfig.capacitorBonus(1)));
         helper.assertTrue(ItemEnergy.capacity(worn) == plated, "Capacitor Plating I adds 50%: " + plated + ", got " + ItemEnergy.capacity(worn));
@@ -466,7 +468,7 @@ public class ExoGameTests {
         menu.slots.get(0).remove(1);
         helper.assertTrue(ItemEnergy.capacity(worn) == base && ItemEnergy.get(worn) == base, "taking the plating out caps the energy at the old battery");
 
-        ItemStack mk3 = pieceM(ExoItems.BOOTS_MK3, 0, mod(ExoModuleKind.CAPACITOR_PLATING, 3));
+        ItemStack mk3 = pieceM(ExoItems.BOOTS_MK3, 0, mod(ModuleKind.CAPACITOR_PLATING, 3));
         helper.assertTrue(ItemEnergy.capacity(mk3) == (int) Math.round(ExoItems.BOOTS_MK3.get().baseCapacity() * (1.0 + ExoConfig.capacitorBonus(3))),
                 "Capacitor Plating III triples the battery");
         helper.succeed();
@@ -528,15 +530,15 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void medInjectorHazardSealAndAutoFeeder(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 1_000_000, ExoModuleKind.MED_INJECTOR, ExoModuleKind.HAZARD_SEAL));
-        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ExoModuleKind.AUTO_FEEDER));
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 1_000_000, ModuleKind.MED_INJECTOR, ModuleKind.HAZARD_SEAL));
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ModuleKind.AUTO_FEEDER));
         player.setHealth(4.0F);
         ticks(player, 1);
         helper.assertTrue(Math.abs(player.getHealth() - (4.0F + ExoConfig.medHeal(1))) < 1.0E-3F, "the injector heals " + ExoConfig.medHeal(1) + ", health " + player.getHealth());
         player.setHealth(4.0F);
         ticks(player, 1);
         helper.assertTrue(player.getHealth() == 4.0F, "then it cools down");
-        helper.assertTrue(1_000_000 - energy(player, EquipmentSlot.CHEST) == ExoConfig.cost(ExoModuleKind.MED_INJECTOR, 1), "one shot cost");
+        helper.assertTrue(1_000_000 - energy(player, EquipmentSlot.CHEST) == ExoConfig.cost(ModuleKind.MED_INJECTOR, 1), "one shot cost");
 
         player.addEffect(new MobEffectInstance(MobEffects.POISON, 200));
         player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 200));
@@ -557,7 +559,7 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void kineticGeneratorAndDash(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK3, 10_000, ExoModuleKind.KINETIC_GENERATOR, ExoModuleKind.DASH_THRUSTERS));
+        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK3, 10_000, ModuleKind.KINETIC_GENERATOR, ModuleKind.DASH_THRUSTERS));
         ticks(player, 1);
         for (int i = 0; i < 20; i++) {
             player.setPos(player.getX() + 0.5, player.getY(), player.getZ());
@@ -566,7 +568,7 @@ public class ExoGameTests {
         }
         ExoTicker.flush(player);
         int made = energy(player, EquipmentSlot.LEGS) - 10_000;
-        int expect = 10 * ExoConfig.cost(ExoModuleKind.KINETIC_GENERATOR, 1);
+        int expect = 10 * ExoConfig.cost(ModuleKind.KINETIC_GENERATOR, 1);
         helper.assertTrue(Math.abs(made - expect) <= 2, "walking 10 blocks makes about " + expect + " FE, made " + made);
 
         int before = energy(player, EquipmentSlot.LEGS);
@@ -575,7 +577,7 @@ public class ExoGameTests {
         helper.assertTrue(player.getDeltaMovement().z > 1.0, "the dash pushes where the player looks, motion " + player.getDeltaMovement());
         helper.assertTrue(!ExoTicker.dash(player), "then it cools down");
         ExoTicker.flush(player);
-        helper.assertTrue(before - energy(player, EquipmentSlot.LEGS) == ExoConfig.cost(ExoModuleKind.DASH_THRUSTERS, 1), "a dash costs its FE");
+        helper.assertTrue(before - energy(player, EquipmentSlot.LEGS) == ExoConfig.cost(ModuleKind.DASH_THRUSTERS, 1), "a dash costs its FE");
         helper.succeed();
     }
 
@@ -592,7 +594,7 @@ public class ExoGameTests {
 
     private static int moduleCount(ItemStack piece) {
         int n = 0;
-        for (ItemStack m : ExoData.modules(piece)) n += m.isEmpty() ? 0 : 1;
+        for (int i = 0; i < Modules.MAX_SLOTS; i++) n += Modules.module(piece, i).isEmpty() ? 0 : 1;
         return n;
     }
 
@@ -602,7 +604,7 @@ public class ExoGameTests {
         ServerPlayer player = survivalPlayer(helper);
         var inv = player.getInventory();
         inv.selected = 0;
-        ItemStack a = piece(ExoItems.CHESTPLATE_MK3, 1_000, ExoModuleKind.FLIGHT, ExoModuleKind.HAZARD_SEAL);
+        ItemStack a = piece(ExoItems.CHESTPLATE_MK3, 1_000, ModuleKind.FLIGHT, ModuleKind.HAZARD_SEAL);
         ItemStack b = piece(ExoItems.CHESTPLATE_MK3, 1_000);
         inv.setItem(0, a);
         inv.setItem(9, b);
@@ -610,7 +612,7 @@ public class ExoGameTests {
 
         // Normal use still works: take a module out of the held piece and put it back.
         menu.clicked(1, 0, ClickType.PICKUP, player);
-        helper.assertTrue(menu.getCarried().is(ExoItems.module(ExoModuleKind.HAZARD_SEAL).get()) && moduleCount(a) == 1, "a module comes out of the held piece");
+        helper.assertTrue(menu.getCarried().is(ModuleItems.get(ModuleKind.HAZARD_SEAL, 1).get()) && moduleCount(a) == 1, "a module comes out of the held piece");
         menu.clicked(1, 0, ClickType.PICKUP, player);
         helper.assertTrue(menu.getCarried().isEmpty() && moduleCount(a) == 2, "and goes back in");
 
@@ -635,7 +637,7 @@ public class ExoGameTests {
         helper.assertTrue(moduleCount(b) == 0 && moduleCount(a) == 2, "B gets no modules and A keeps its two: no copies");
 
         // Offhand piece: the offhand key (F) is refused.
-        ItemStack c = piece(ExoItems.CHESTPLATE_MK3, 1_000, ExoModuleKind.FLIGHT);
+        ItemStack c = piece(ExoItems.CHESTPLATE_MK3, 1_000, ModuleKind.FLIGHT);
         player.setItemSlot(EquipmentSlot.OFFHAND, c);
         ExoMenu off = new ExoMenu(5, inv, List.of(new ExoMenu.Section(EquipmentSlot.CHEST, 2, 3, true)), true);
         off.clicked(menuSlotOf(off, player, 9), Inventory.SLOT_OFFHAND, ClickType.SWAP, player);
@@ -647,10 +649,10 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void misplacedModulesDoNothing(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK1, 100_000, mod(ExoModuleKind.SERVO_STRIDE, 3)));
-        player.setItemSlot(EquipmentSlot.FEET, pieceM(ExoItems.BOOTS_MK3, 100_000, mod(ExoModuleKind.NIGHT_VISION)));
-        helper.assertTrue(!ExoSuit.active(player).has(ExoModuleKind.SERVO_STRIDE), "Stride III in Mk1 leggings does nothing");
-        helper.assertTrue(!ExoSuit.active(player).has(ExoModuleKind.NIGHT_VISION), "Night Vision in boots does nothing");
+        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK1, 100_000, mod(ModuleKind.SERVO_STRIDE, 3)));
+        player.setItemSlot(EquipmentSlot.FEET, pieceM(ExoItems.BOOTS_MK3, 100_000, mod(ModuleKind.NIGHT_VISION)));
+        helper.assertTrue(!ExoSuit.active(player).has(ModuleKind.SERVO_STRIDE), "Stride III in Mk1 leggings does nothing");
+        helper.assertTrue(!ExoSuit.active(player).has(ModuleKind.NIGHT_VISION), "Night Vision in boots does nothing");
         ticks(player, 2);
         helper.assertTrue(player.getAttribute(Attributes.MOVEMENT_SPEED).getModifier(Robotica.id("exo_servo_stride")) == null, "no speed bonus");
         helper.assertTrue(!player.hasEffect(MobEffects.NIGHT_VISION), "no night vision");
@@ -663,17 +665,17 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void costsCooldownsAndFlightSurviveSwapsAndRelogs(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK3, 100_000, ExoModuleKind.DASH_THRUSTERS));
+        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK3, 100_000, ModuleKind.DASH_THRUSTERS));
         ticks(player, 1);
         helper.assertTrue(ExoTicker.dash(player), "the dash fires");
-        helper.assertTrue(energy(player, EquipmentSlot.LEGS) == 100_000 - ExoConfig.cost(ExoModuleKind.DASH_THRUSTERS, 1),
+        helper.assertTrue(energy(player, EquipmentSlot.LEGS) == 100_000 - ExoConfig.cost(ModuleKind.DASH_THRUSTERS, 1),
                 "the dash is paid at once, before any piece swap could dodge it");
-        Item dash = ExoItems.module(ExoModuleKind.DASH_THRUSTERS).get();
+        Item dash = ModuleItems.get(ModuleKind.DASH_THRUSTERS, 1).get();
         player.getCooldowns().removeCooldown(dash);
         ExoTicker.onLogin(player);
         helper.assertTrue(player.getCooldowns().isOnCooldown(dash), "the dash cooldown comes back after a relog");
 
-        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 500_000, ExoModuleKind.FLIGHT));
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, 500_000, ModuleKind.FLIGHT));
         ticks(player, 1);
         player.getAbilities().flying = true;
         helper.assertTrue(player.getPersistentData().getBoolean(ExoTicker.FLIGHT_KEY), "the grant is saved with the player");
@@ -702,7 +704,7 @@ public class ExoGameTests {
     @GameTest(template = "empty")
     public static void autoFeederKeepsContainers(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
-        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ExoModuleKind.AUTO_FEEDER));
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ModuleKind.AUTO_FEEDER));
         player.getFoodData().setFoodLevel(4);
         player.getInventory().add(new ItemStack(Items.SUSPICIOUS_STEW));
         player.getInventory().add(new ItemStack(Items.MUSHROOM_STEW));

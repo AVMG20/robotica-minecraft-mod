@@ -22,12 +22,6 @@ public enum UpgradeKind {
     GROWTH(4, 1),
     /** Deletes junk (tag robotica:voidable) or outputs that do not fit. Single card. */
     VOID(1, 1),
-    /**
-     * @deprecated no machine takes it: Auto-Pickup becomes a tool module (gear). Kept only until gear stops using
-     * it; then delete this constant, its lang keys and texture. No recipe.
-     */
-    @Deprecated
-    PICKUP(1, 1),
     /** Architect Table: one block taller buildings per card (6 cards: 12 high). */
     HEIGHT(6, 1),
     /** Storage Terminal: keeps everything inside when picked up. Single card, installed by right-click. */

@@ -2,6 +2,9 @@ package com.arno.robotica.exo;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CellItem;
 import com.arno.robotica.core.item.CoreItems;
@@ -233,11 +236,11 @@ public final class ExoTicker {
         }
     }
 
-    private static boolean has(State st, ExoModuleKind kind) {
+    private static boolean has(State st, ModuleKind kind) {
         return st.act.has(kind);
     }
 
-    private static int lvl(State st, ExoModuleKind kind) {
+    private static int lvl(State st, ModuleKind kind) {
         return st.act.level(kind);
     }
 
@@ -255,17 +258,17 @@ public final class ExoTicker {
     }
 
     /** True when the module is on and its energy covers {@code fe} (before the Power Regulator). */
-    private static boolean afford(State st, ExoModuleKind kind, double fe) {
+    private static boolean afford(State st, ModuleKind kind, double fe) {
         return has(st, kind) && available(st, st.act.piece(kind)) >= Math.max(fe * st.factor, 1);
     }
 
     /** Books a running cost {@code fe} (before the Power Regulator) against the module's piece, written on the next flush. */
-    private static void spend(State st, ExoModuleKind kind, double fe) {
+    private static void spend(State st, ModuleKind kind, double fe) {
         st.pending[st.act.piece(kind)] += fe * st.factor;
     }
 
     /** Pays a one-shot cost {@code fe} (before the Power Regulator) from the worn stacks right now. Returns the FE taken. */
-    private static int spendNow(ServerPlayer p, State st, ExoModuleKind kind, double fe) {
+    private static int spendNow(ServerPlayer p, State st, ModuleKind kind, double fe) {
         return payNow(p, st, st.act.piece(kind), fe * st.factor);
     }
 
@@ -281,10 +284,10 @@ public final class ExoTicker {
     // ---------------------------------------------------------------- helmet
 
     private static void helmet(ServerPlayer p, State st) {
-        int nvLevel = lvl(st, ExoModuleKind.NIGHT_VISION);
-        double cost = nvLevel > 0 ? ExoConfig.perTick(ExoModuleKind.NIGHT_VISION, nvLevel) : 0;
-        if (nvLevel > 0 && afford(st, ExoModuleKind.NIGHT_VISION, cost)) {
-            spend(st, ExoModuleKind.NIGHT_VISION, cost);
+        int nvLevel = lvl(st, ModuleKind.NIGHT_VISION);
+        double cost = nvLevel > 0 ? ExoConfig.perTick(ModuleKind.NIGHT_VISION, nvLevel) : 0;
+        if (nvLevel > 0 && afford(st, ModuleKind.NIGHT_VISION, cost)) {
+            spend(st, ModuleKind.NIGHT_VISION, cost);
             refreshEffect(p, MobEffects.NIGHT_VISION, 0, 300, 240);
             st.nv = true;
         } else if (st.nv) {
@@ -292,8 +295,8 @@ public final class ExoTicker {
             removeOurs(p, MobEffects.NIGHT_VISION);
         }
         // Robot HUD and thermal sight are client displays; they only draw power.
-        double hud = ExoConfig.perTick(ExoModuleKind.ROBOT_HUD, 1);
-        if (afford(st, ExoModuleKind.ROBOT_HUD, hud)) spend(st, ExoModuleKind.ROBOT_HUD, hud);
+        double hud = ExoConfig.perTick(ModuleKind.ROBOT_HUD, 1);
+        if (afford(st, ModuleKind.ROBOT_HUD, hud)) spend(st, ModuleKind.ROBOT_HUD, hud);
     }
 
     private static void refreshEffect(ServerPlayer p, Holder<MobEffect> effect, int amplifier, int duration, int below) {
@@ -314,11 +317,11 @@ public final class ExoTicker {
      * suspicious stew and chorus fruit are skipped; a bowl or bottle left over goes back into the inventory (or drops).
      */
     private static void autoFeeder(ServerPlayer p, State st) {
-        if (!has(st, ExoModuleKind.AUTO_FEEDER) || creativeLike(p)) return;
+        if (!has(st, ModuleKind.AUTO_FEEDER) || creativeLike(p)) return;
         var food = p.getFoodData();
         if (food.getFoodLevel() > ExoConfig.autoFeederHunger()) return;
-        double cost = ExoConfig.cost(ExoModuleKind.AUTO_FEEDER, 1);
-        if (!afford(st, ExoModuleKind.AUTO_FEEDER, cost)) return;
+        double cost = ExoConfig.cost(ModuleKind.AUTO_FEEDER, 1);
+        if (!afford(st, ModuleKind.AUTO_FEEDER, cost)) return;
         int missing = 20 - food.getFoodLevel();
         var inv = p.getInventory();
         ItemStack best = ItemStack.EMPTY;
@@ -337,7 +340,7 @@ public final class ExoTicker {
         ItemStack left = p.eat(p.level(), best, bestFood);
         // Player.eat hands back the container (bowl, bottle) instead of the used up stack; never lose it.
         if (left != best && !left.isEmpty() && !p.getInventory().add(left)) p.drop(left, false);
-        spendNow(p, st, ExoModuleKind.AUTO_FEEDER, cost);
+        spendNow(p, st, ModuleKind.AUTO_FEEDER, cost);
     }
 
     /** Food the Auto-Feeder may eat: nothing whose use does more than feed (teleports, hidden effects). */
@@ -354,11 +357,11 @@ public final class ExoTicker {
 
     /** Solar Weave: once a second in daylight under open sky, charges the suit. */
     private static void solarWeave(ServerPlayer p, State st) {
-        if (!has(st, ExoModuleKind.SOLAR_WEAVE)) return;
+        if (!has(st, ModuleKind.SOLAR_WEAVE)) return;
         ServerLevel level = p.serverLevel();
         BlockPos eyes = BlockPos.containing(p.getEyePosition());
         if (!level.isDay() || !level.canSeeSky(eyes) || level.isRainingAt(eyes)) return;
-        st.made[st.act.piece(ExoModuleKind.SOLAR_WEAVE)] += ExoConfig.cost(ExoModuleKind.SOLAR_WEAVE, 1);
+        st.made[st.act.piece(ModuleKind.SOLAR_WEAVE)] += ExoConfig.cost(ModuleKind.SOLAR_WEAVE, 1);
     }
 
     // ---------------------------------------------------------------- chestplate
@@ -367,11 +370,11 @@ public final class ExoTicker {
         Abilities ab = p.getAbilities();
         boolean grounded = p.onGround() || p.isInWater() || p.isInLava() || ab.flying || p.isFallFlying() || p.isPassenger();
         if (grounded) st.airJumps = 0;
-        int level = lvl(st, ExoModuleKind.JET_ASSIST);
-        double cost = level > 0 ? ExoConfig.perTick(ExoModuleKind.JET_ASSIST, level) : 0;
-        boolean glide = level > 0 && !grounded && afford(st, ExoModuleKind.JET_ASSIST, cost) && (st.gliding ? st.dy < -0.01 : st.dy < -0.5);
+        int level = lvl(st, ModuleKind.JET_ASSIST);
+        double cost = level > 0 ? ExoConfig.perTick(ModuleKind.JET_ASSIST, level) : 0;
+        boolean glide = level > 0 && !grounded && afford(st, ModuleKind.JET_ASSIST, cost) && (st.gliding ? st.dy < -0.01 : st.dy < -0.5);
         if (glide) {
-            spend(st, ExoModuleKind.JET_ASSIST, cost);
+            spend(st, ModuleKind.JET_ASSIST, cost);
             MobEffectInstance cur = p.getEffect(MobEffects.SLOW_FALLING);
             if (cur == null || (cur.isAmbient() && cur.getDuration() < 6)) {
                 p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 12, 0, true, false, false));
@@ -387,14 +390,14 @@ public final class ExoTicker {
 
     /** Flight cost per tick after the Antigrav Core discount. */
     private static double flightCost(State st) {
-        double cost = ExoConfig.perTick(ExoModuleKind.FLIGHT, 1);
+        double cost = ExoConfig.perTick(ModuleKind.FLIGHT, 1);
         return st.core == ExoData.Core.ANTIGRAV ? cost * ExoConfig.antigravFlightFactor() : cost;
     }
 
     /** True when the worn suit may grant flight now: a switched-on Flight module with energy for a tick, not creative. */
     private static boolean flightValid(ServerPlayer p, State st) {
-        return !creativeLike(p) && has(st, ExoModuleKind.FLIGHT)
-                && available(st, st.act.piece(ExoModuleKind.FLIGHT)) >= Math.max(flightCost(st) * st.factor, 1);
+        return !creativeLike(p) && has(st, ModuleKind.FLIGHT)
+                && available(st, st.act.piece(ModuleKind.FLIGHT)) >= Math.max(flightCost(st) * st.factor, 1);
     }
 
     private static void flight(ServerPlayer p, State st) {
@@ -407,7 +410,7 @@ public final class ExoTicker {
                 p.onUpdateAbilities();
             }
             if (ab.flying) {
-                spend(st, ExoModuleKind.FLIGHT, cost);
+                spend(st, ModuleKind.FLIGHT, cost);
                 if ((st.tick & 1) == 0) {
                     ServerLevel level = p.serverLevel();
                     level.sendParticles(ParticleTypes.SMALL_FLAME, p.getX(), p.getY() - 0.05, p.getZ(), 2, 0.12, 0.02, 0.12, 0.005);
@@ -420,7 +423,7 @@ public final class ExoTicker {
             }
         } else if (st.flightGranted) {
             ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
-            boolean moduleStillWorn = !chest.isEmpty() && ExoData.levelIn(chest, ExoModuleKind.FLIGHT) > 0;
+            boolean moduleStillWorn = !chest.isEmpty() && Modules.installed(chest, ModuleKind.FLIGHT) > 0;
             revokeFlight(p, st, moduleStillWorn);
         }
     }
@@ -456,13 +459,13 @@ public final class ExoTicker {
 
     /** Med Injector: heals once when health drops low, then waits out its cooldown. */
     private static void medInjector(ServerPlayer p, State st) {
-        int level = lvl(st, ExoModuleKind.MED_INJECTOR);
+        int level = lvl(st, ModuleKind.MED_INJECTOR);
         if (level <= 0 || !p.isAlive() || p.getHealth() > p.getMaxHealth() * ExoConfig.medThreshold()) return;
-        Item item = ExoItems.module(ExoModuleKind.MED_INJECTOR, level).get();
+        Item item = ModuleItems.get(ModuleKind.MED_INJECTOR, level).get();
         if (p.getCooldowns().isOnCooldown(item)) return;
-        double cost = ExoConfig.cost(ExoModuleKind.MED_INJECTOR, level);
-        if (!afford(st, ExoModuleKind.MED_INJECTOR, cost)) return;
-        spendNow(p, st, ExoModuleKind.MED_INJECTOR, cost);
+        double cost = ExoConfig.cost(ModuleKind.MED_INJECTOR, level);
+        if (!afford(st, ModuleKind.MED_INJECTOR, cost)) return;
+        spendNow(p, st, ModuleKind.MED_INJECTOR, cost);
         p.heal(ExoConfig.medHeal(level));
         startCooldown(p, CD_MED, ExoConfig.medCooldown(level));
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.5F, 1.8F);
@@ -471,13 +474,13 @@ public final class ExoTicker {
 
     /** Hazard Seal: clears poison, wither, hunger, nausea and blindness, paying per effect. */
     private static void hazardSeal(ServerPlayer p, State st) {
-        if (!has(st, ExoModuleKind.HAZARD_SEAL)) return;
-        double cost = ExoConfig.cost(ExoModuleKind.HAZARD_SEAL, 1);
+        if (!has(st, ModuleKind.HAZARD_SEAL)) return;
+        double cost = ExoConfig.cost(ModuleKind.HAZARD_SEAL, 1);
         boolean cleared = false;
         for (Holder<MobEffect> effect : HAZARDS) {
-            if (!p.hasEffect(effect) || !afford(st, ExoModuleKind.HAZARD_SEAL, cost)) continue;
+            if (!p.hasEffect(effect) || !afford(st, ModuleKind.HAZARD_SEAL, cost)) continue;
             p.removeEffect(effect);
-            spendNow(p, st, ExoModuleKind.HAZARD_SEAL, cost);
+            spendNow(p, st, ModuleKind.HAZARD_SEAL, cost);
             cleared = true;
         }
         if (cleared) {
@@ -489,27 +492,27 @@ public final class ExoTicker {
     // ---------------------------------------------------------------- legs and boots
 
     private static void attributes(ServerPlayer p, State st) {
-        int servo = lvl(st, ExoModuleKind.SERVO_STRIDE);
+        int servo = lvl(st, ModuleKind.SERVO_STRIDE);
         boolean servoOn = false;
         if (servo > 0) {
-            double cost = ExoConfig.perTick(ExoModuleKind.SERVO_STRIDE, servo);
-            servoOn = afford(st, ExoModuleKind.SERVO_STRIDE, cost);
-            if (servoOn && st.moving) spend(st, ExoModuleKind.SERVO_STRIDE, cost);
+            double cost = ExoConfig.perTick(ModuleKind.SERVO_STRIDE, servo);
+            servoOn = afford(st, ModuleKind.SERVO_STRIDE, cost);
+            if (servoOn && st.moving) spend(st, ModuleKind.SERVO_STRIDE, cost);
         }
         setModifier(p, Attributes.MOVEMENT_SPEED, SERVO_ID, servoOn ? ExoConfig.servoSpeed(servo) : 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-        double stepCost = ExoConfig.perTick(ExoModuleKind.STEP_ASSIST, 1);
-        boolean stepOn = afford(st, ExoModuleKind.STEP_ASSIST, stepCost);
-        if (stepOn && st.moving) spend(st, ExoModuleKind.STEP_ASSIST, stepCost);
+        double stepCost = ExoConfig.perTick(ModuleKind.STEP_ASSIST, 1);
+        boolean stepOn = afford(st, ModuleKind.STEP_ASSIST, stepCost);
+        if (stepOn && st.moving) spend(st, ModuleKind.STEP_ASSIST, stepCost);
         setModifier(p, Attributes.STEP_HEIGHT, STEP_ID, stepOn ? ExoConfig.stepBonus() : 0, AttributeModifier.Operation.ADD_VALUE);
 
-        int spring = lvl(st, ExoModuleKind.SPRING_HEELS);
-        boolean springOn = spring > 0 && afford(st, ExoModuleKind.SPRING_HEELS, ExoConfig.cost(ExoModuleKind.SPRING_HEELS, spring));
+        int spring = lvl(st, ModuleKind.SPRING_HEELS);
+        boolean springOn = spring > 0 && afford(st, ModuleKind.SPRING_HEELS, ExoConfig.cost(ModuleKind.SPRING_HEELS, spring));
         setModifier(p, Attributes.JUMP_STRENGTH, JUMP_ID, springOn ? ExoConfig.springBoost(spring) : 0, AttributeModifier.Operation.ADD_VALUE);
 
-        double finsCost = ExoConfig.perTick(ExoModuleKind.HYDRO_FINS, 1);
-        boolean fins = afford(st, ExoModuleKind.HYDRO_FINS, finsCost);
-        if (fins && p.isInWater()) spend(st, ExoModuleKind.HYDRO_FINS, finsCost);
+        double finsCost = ExoConfig.perTick(ModuleKind.HYDRO_FINS, 1);
+        boolean fins = afford(st, ModuleKind.HYDRO_FINS, finsCost);
+        if (fins && p.isInWater()) spend(st, ModuleKind.HYDRO_FINS, finsCost);
         setModifier(p, NeoForgeMod.SWIM_SPEED, SWIM_ID, fins ? ExoConfig.hydroSwim() : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         setModifier(p, Attributes.SUBMERGED_MINING_SPEED, DIG_ID, fins ? ExoConfig.hydroMining() : 0, AttributeModifier.Operation.ADD_VALUE);
     }
@@ -531,18 +534,18 @@ public final class ExoTicker {
      * most about a sprint jump per tick.
      */
     private static void kineticGenerator(ServerPlayer p, State st) {
-        if (!has(st, ExoModuleKind.KINETIC_GENERATOR) || st.walked <= 0.02) return;
+        if (!has(st, ModuleKind.KINETIC_GENERATOR) || st.walked <= 0.02) return;
         if (!p.onGround() || p.isPassenger() || p.getAbilities().flying || p.isFallFlying() || p.isSpectator()) return;
         if (p.isInWater() || p.isInLava() || p.isInFluidType() || p.isInPowderSnow) return;
-        int perBlock = p.isSprinting() ? ExoConfig.kineticSprintPerBlock() : ExoConfig.cost(ExoModuleKind.KINETIC_GENERATOR, 1);
-        st.made[st.act.piece(ExoModuleKind.KINETIC_GENERATOR)] += st.walked * perBlock;
+        int perBlock = p.isSprinting() ? ExoConfig.kineticSprintPerBlock() : ExoConfig.cost(ModuleKind.KINETIC_GENERATOR, 1);
+        st.made[st.act.piece(ModuleKind.KINETIC_GENERATOR)] += st.walked * perBlock;
     }
 
     private static void magnet(ServerPlayer p, State st) {
-        int level = lvl(st, ExoModuleKind.MAGNET);
+        int level = lvl(st, ModuleKind.MAGNET);
         if (level <= 0 || p.isSpectator()) return;
-        double cost = ExoConfig.perTick(ExoModuleKind.MAGNET, level) * 2;
-        if (!afford(st, ExoModuleKind.MAGNET, cost)) return;
+        double cost = ExoConfig.perTick(ModuleKind.MAGNET, level) * 2;
+        if (!afford(st, ModuleKind.MAGNET, cost)) return;
         int radius = ExoConfig.magnetRadius(level);
         Vec3 target = p.position().add(0, 0.4, 0);
         AABB box = p.getBoundingBox().inflate(radius);
@@ -560,7 +563,7 @@ public final class ExoTicker {
             item.hasImpulse = true;
             pulled++;
         }
-        if (pulled > 0) spend(st, ExoModuleKind.MAGNET, cost);
+        if (pulled > 0) spend(st, ModuleKind.MAGNET, cost);
     }
 
     // ---------------------------------------------------------------- set bonus
@@ -644,14 +647,14 @@ public final class ExoTicker {
      */
     public static boolean doubleJump(ServerPlayer p) {
         State st = state(p);
-        int level = st == null ? 0 : lvl(st, ExoModuleKind.JET_ASSIST);
+        int level = st == null ? 0 : lvl(st, ModuleKind.JET_ASSIST);
         if (level <= 0) return false;
         Abilities ab = p.getAbilities();
         if (p.onGround() || p.isInWater() || p.isInLava() || ab.flying || p.isFallFlying() || p.isPassenger() || p.isSpectator()) return false;
         // Half the client's gap: packets can arrive bunched up.
         if (st.airJumps >= ExoConfig.airJumps(level) || p.tickCount - st.lastAirJumpTick < ExoSuit.AIR_JUMP_GAP / 2) return false;
         if (!ExoSuit.canPayAirJump(p, st.act)) return false;
-        spendNow(p, st, ExoModuleKind.JET_ASSIST, ExoConfig.doubleJumpCost(level));
+        spendNow(p, st, ModuleKind.JET_ASSIST, ExoConfig.doubleJumpCost(level));
         st.airJumps++;
         st.lastAirJumpTick = p.tickCount;
         Vec3 v = p.getDeltaMovement();
@@ -670,12 +673,12 @@ public final class ExoTicker {
      */
     public static boolean dash(ServerPlayer p) {
         State st = state(p);
-        if (st == null || !has(st, ExoModuleKind.DASH_THRUSTERS) || p.isPassenger() || p.isSpectator() || p.isFallFlying()) return false;
-        Item item = ExoItems.module(ExoModuleKind.DASH_THRUSTERS).get();
+        if (st == null || !has(st, ModuleKind.DASH_THRUSTERS) || p.isPassenger() || p.isSpectator() || p.isFallFlying()) return false;
+        Item item = ModuleItems.get(ModuleKind.DASH_THRUSTERS, 1).get();
         if (p.getCooldowns().isOnCooldown(item)) return false;
-        double cost = ExoConfig.cost(ExoModuleKind.DASH_THRUSTERS, 1);
-        if (!afford(st, ExoModuleKind.DASH_THRUSTERS, cost)) return false;
-        spendNow(p, st, ExoModuleKind.DASH_THRUSTERS, cost);
+        double cost = ExoConfig.cost(ModuleKind.DASH_THRUSTERS, 1);
+        if (!afford(st, ModuleKind.DASH_THRUSTERS, cost)) return false;
+        spendNow(p, st, ModuleKind.DASH_THRUSTERS, cost);
         Vec3 dir = dashDirection(p.getYRot());
         double speed = ExoConfig.dashSpeed();
         Vec3 v = p.getDeltaMovement();
@@ -699,16 +702,16 @@ public final class ExoTicker {
     /** Sonar Pulse: charges the ping and tells the wearer's client to outline ores and mobs. Returns true when it fired. */
     public static boolean sonar(ServerPlayer p) {
         State st = state(p);
-        int level = st == null ? 0 : lvl(st, ExoModuleKind.SONAR_PULSE);
+        int level = st == null ? 0 : lvl(st, ModuleKind.SONAR_PULSE);
         if (level <= 0) return false;
-        Item item = ExoItems.module(ExoModuleKind.SONAR_PULSE, level).get();
+        Item item = ModuleItems.get(ModuleKind.SONAR_PULSE, level).get();
         if (p.getCooldowns().isOnCooldown(item)) return false;
-        double cost = ExoConfig.cost(ExoModuleKind.SONAR_PULSE, level);
-        if (!afford(st, ExoModuleKind.SONAR_PULSE, cost)) {
+        double cost = ExoConfig.cost(ModuleKind.SONAR_PULSE, level);
+        if (!afford(st, ModuleKind.SONAR_PULSE, cost)) {
             refuse(p, st);
             return false;
         }
-        spendNow(p, st, ExoModuleKind.SONAR_PULSE, cost);
+        spendNow(p, st, ModuleKind.SONAR_PULSE, cost);
         startCooldown(p, CD_SONAR, ExoConfig.sonarCooldown());
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.9F, 1.4F);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 0.5F, 2.0F);
@@ -745,15 +748,15 @@ public final class ExoTicker {
 
     /** The items a named cooldown sits on (every level of the module, so the HUD shows it whichever is installed). */
     private static Item[] cooldownItems(String name) {
-        ExoModuleKind kind = switch (name) {
-            case CD_DASH -> ExoModuleKind.DASH_THRUSTERS;
-            case CD_MED -> ExoModuleKind.MED_INJECTOR;
-            case CD_SONAR -> ExoModuleKind.SONAR_PULSE;
+        ModuleKind kind = switch (name) {
+            case CD_DASH -> ModuleKind.DASH_THRUSTERS;
+            case CD_MED -> ModuleKind.MED_INJECTOR;
+            case CD_SONAR -> ModuleKind.SONAR_PULSE;
             default -> null;
         };
         if (kind == null) return CD_OVERCLOCK.equals(name) ? new Item[]{CoreItems.SERVO_CORE.get()} : new Item[0];
         Item[] items = new Item[kind.maxLevel()];
-        for (int l = 1; l <= kind.maxLevel(); l++) items[l - 1] = ExoItems.module(kind, l).get();
+        for (int l = 1; l <= kind.maxLevel(); l++) items[l - 1] = ModuleItems.get(kind, l).get();
         return items;
     }
 
@@ -797,14 +800,14 @@ public final class ExoTicker {
     public static void onBreathe(Player player, LivingBreatheEvent event) {
         if (event.canBreathe() || !player.isEyeInFluid(FluidTags.WATER)) return;
         if (!(player instanceof ServerPlayer p)) {
-            if (ExoSuit.isActive(player, ExoModuleKind.REBREATHER)) event.setCanBreathe(true);
+            if (ExoSuit.isActive(player, ModuleKind.REBREATHER)) event.setCanBreathe(true);
             return;
         }
         State st = STATES.get(p.getUUID());
         if (st == null) return;
-        double cost = ExoConfig.perTick(ExoModuleKind.REBREATHER, 1);
-        if (!afford(st, ExoModuleKind.REBREATHER, cost)) return;
-        spend(st, ExoModuleKind.REBREATHER, cost);
+        double cost = ExoConfig.perTick(ModuleKind.REBREATHER, 1);
+        if (!afford(st, ModuleKind.REBREATHER, cost)) return;
+        spend(st, ModuleKind.REBREATHER, cost);
         event.setCanBreathe(true);
     }
 
@@ -826,13 +829,13 @@ public final class ExoTicker {
         State st = STATES.get(p.getUUID());
         if (st == null) return;
         refresh(p, st);
-        int level = lvl(st, ExoModuleKind.KINETIC_SHIELD);
+        int level = lvl(st, ModuleKind.KINETIC_SHIELD);
         if (level <= 0) return;
         if (event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return;
         float damage = event.getNewDamage();
         if (damage <= 0) return;
-        int piece = st.act.piece(ExoModuleKind.KINETIC_SHIELD);
-        double perPoint = ExoConfig.cost(ExoModuleKind.KINETIC_SHIELD, level) * st.factor;
+        int piece = st.act.piece(ModuleKind.KINETIC_SHIELD);
+        double perPoint = ExoConfig.cost(ModuleKind.KINETIC_SHIELD, level) * st.factor;
         double have = available(st, piece);
         float cap = (float) (damage * ExoConfig.shieldAbsorb(level));
         float absorbed = perPoint <= 0 ? cap : (float) Math.min(cap, have / perPoint);
@@ -874,12 +877,12 @@ public final class ExoTicker {
             event.setDamageMultiplier(0.0F);
             return;
         }
-        int level = lvl(st, ExoModuleKind.FALL_DAMPENER);
+        int level = lvl(st, ModuleKind.FALL_DAMPENER);
         if (level <= 0) return;
         float blocks = event.getDistance() - 3.0F;
         if (blocks <= 0 || event.getDamageMultiplier() <= 0) return;
-        int piece = st.act.piece(ExoModuleKind.FALL_DAMPENER);
-        double cost = (double) blocks * ExoConfig.cost(ExoModuleKind.FALL_DAMPENER, level) * st.factor;
+        int piece = st.act.piece(ModuleKind.FALL_DAMPENER);
+        double cost = (double) blocks * ExoConfig.cost(ModuleKind.FALL_DAMPENER, level) * st.factor;
         double have = available(st, piece);
         double fraction = cost <= 0 ? 1.0 : Mth.clamp(have / cost, 0.0, 1.0);
         if (fraction <= 0) return;
@@ -894,10 +897,10 @@ public final class ExoTicker {
         State st = STATES.get(p.getUUID());
         if (st == null) return;
         refresh(p, st);
-        int level = lvl(st, ExoModuleKind.SPRING_HEELS);
+        int level = lvl(st, ModuleKind.SPRING_HEELS);
         if (level <= 0) return;
-        double cost = ExoConfig.cost(ExoModuleKind.SPRING_HEELS, level);
-        if (afford(st, ExoModuleKind.SPRING_HEELS, cost)) spendNow(p, st, ExoModuleKind.SPRING_HEELS, cost);
+        double cost = ExoConfig.cost(ModuleKind.SPRING_HEELS, level);
+        if (afford(st, ModuleKind.SPRING_HEELS, cost)) spendNow(p, st, ModuleKind.SPRING_HEELS, cost);
     }
 
     // ---------------------------------------------------------------- lifecycle

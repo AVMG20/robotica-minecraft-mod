@@ -753,25 +753,37 @@
     "power_regulator_module_2",
     "power_regulator_module_3"
    ],
-   "what": "Exo module (any piece). Every module in the suit uses 10 / 20 / 30% less FE.",
+   "what": "Module for tools, weapons and Exo armor: less FE per block, per hit or for every module of the suit.",
    "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
     "rows": [
      [
       "Fits",
-      "Exo any piece"
+      "tools, weapons, any Exo piece",
+      "",
+      ""
      ],
      [
-      "Min. mark (I / II / III)",
-      "Mk2 / Mk3 / Mk4"
+      "Min. Age / Mk",
+      "2",
+      "3",
+      "4"
      ],
      [
-      "Energy",
-      "none"
+      "FE saved",
+      "15%",
+      "25%",
+      "35%"
      ]
     ]
    },
    "see": [
-    "guide:exo-frame"
+    "guide:exo-frame",
+    "guide:modules"
    ]
   },
   {
@@ -843,7 +855,7 @@
    "use": [
     "V switches mode.",
     "Keep a [[copper_cell]] in your inventory: it recharges the drill.",
-    "Add cards and a module at a [[tinkers_bench]]: Auto-Pickup, Void Filter, [[torch_placer_module]]."
+    "Add modules at a [[tinkers_bench]]: [[overclock_module]], [[fortune_module]], [[auto_pickup_module]]..."
    ],
    "stats": {
     "rows": [
@@ -858,11 +870,15 @@
      [
       "3x3",
       "at 50% speed"
+     ],
+     [
+      "Module slots",
+      "2"
      ]
     ]
    },
    "see": [
-    "guide:upgrade-cards"
+    "guide:modules"
    ]
   },
   {
@@ -886,6 +902,10 @@
      [
       "Max logs",
       "256"
+     ],
+     [
+      "Module slots",
+      "2"
      ]
     ]
    }
@@ -894,7 +914,7 @@
    "items": [
     "servo_drill"
    ],
-   "what": "Age 2 drill: adds 5x5 and vein mining (64). B toggles Silk Touch / Fortune.",
+   "what": "Age 2 drill: adds 5x5 and vein mining (64).",
    "stats": {
     "rows": [
      [
@@ -908,6 +928,10 @@
      [
       "Area speed",
       "70%"
+     ],
+     [
+      "Module slots",
+      "3"
      ]
     ]
    }
@@ -930,6 +954,10 @@
      [
       "Area speed",
       "85%"
+     ],
+     [
+      "Module slots",
+      "4"
      ]
     ]
    }
@@ -952,6 +980,10 @@
      [
       "Modes",
       "up to 5x5x5, 12x12, 12x12x12"
+     ],
+     [
+      "Module slots",
+      "5"
      ]
     ]
    }
@@ -977,7 +1009,7 @@
      ],
      [
       "Module slots",
-      "1"
+      "2"
      ]
     ]
    }
@@ -1007,7 +1039,7 @@
      ],
      [
       "Module slots",
-      "2"
+      "3"
      ]
     ]
    },
@@ -1037,7 +1069,7 @@
      ],
      [
       "Module slots",
-      "3"
+      "4"
      ]
     ]
    },
@@ -1066,7 +1098,7 @@
      ],
      [
       "Module slots",
-      "4"
+      "5"
      ]
     ]
    },
@@ -1078,15 +1110,15 @@
    "items": [
     "tinkers_bench"
    ],
-   "what": "Fits upgrade cards and modules into power tools and FE weapons.",
+   "what": "Fits modules into power tools, FE weapons and Exo armor pieces.",
    "use": [
-    "Put the tool or weapon in.",
-    "Cards (Auto-Pickup, Void Filter) go in the two card slots and need no module slot.",
-    "Modules go in the module slots: Age 1-4 opens 1-4 of them.",
-    "Take a card or module out to get it back. G in hand switches them."
+    "Put the tool, weapon or Exo piece in.",
+    "Drop modules in the slots: Age 1-4 opens 2-5, Mk1-4 opens 1-4.",
+    "Take a module out to get it back.",
+    "G (held tool or weapon) or J (worn armor) switches them."
    ],
    "see": [
-    "guide:upgrade-cards"
+    "guide:modules"
    ]
   },
   {
@@ -1100,6 +1132,194 @@
    "use": [
     "Smithing table: kit + old tool + the part or core."
    ]
+  },
+  {
+   "items": [
+    "overclock_module",
+    "overclock_module_2",
+    "overclock_module_3"
+   ],
+   "what": "Tool module: mines faster, uses a bit more FE per block.",
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
+    "rows": [
+     [
+      "Fits",
+      "drills, Chainsaw",
+      "",
+      ""
+     ],
+     [
+      "Min. Age",
+      "1",
+      "2",
+      "3"
+     ],
+     [
+      "Speed",
+      "+50%",
+      "+100%",
+      "+200%"
+     ],
+     [
+      "Extra FE per block",
+      "+20%",
+      "+40%",
+      "+60%"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "fortune_module",
+    "fortune_module_2",
+    "fortune_module_3"
+   ],
+   "what": "Drill module: mined blocks drop as with Fortune I / II / III. B switches Fortune, Silk Touch or off.",
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
+    "rows": [
+     [
+      "Fits",
+      "drills",
+      "",
+      ""
+     ],
+     [
+      "Min. Age",
+      "1",
+      "2",
+      "3"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "silk_touch_module"
+   ],
+   "what": "Drill module: mined blocks drop themselves. B switches Fortune, Silk Touch or off.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "drills, Age 1+"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "auto_pickup_module"
+   ],
+   "what": "Tool module: drops go straight into your inventory.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "drills, Chainsaw, Age 1+"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "void_filter_module"
+   ],
+   "what": "Tool module: deletes cobblestone, dirt, gravel and other junk drops.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "drills, Chainsaw, Age 1+"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "sharpened_edge_module",
+    "sharpened_edge_module_2",
+    "sharpened_edge_module_3"
+   ],
+   "what": "Weapon module: every paid hit or shot deals more damage.",
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
+    "rows": [
+     [
+      "Min. Age",
+      "1",
+      "2",
+      "3"
+     ],
+     [
+      "Damage",
+      "+15%",
+      "+30%",
+      "+45%"
+     ],
+     [
+      "Extra FE per use",
+      "50",
+      "100",
+      "150"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "looting_module",
+    "looting_module_2",
+    "looting_module_3"
+   ],
+   "what": "Weapon module: kills drop as with Looting I / II / III.",
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
+    "rows": [
+     [
+      "Min. Age",
+      "1",
+      "2",
+      "3"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "thermal_edge_module"
+   ],
+   "what": "Weapon module: paid hits and rivets set the target on fire for 4 s.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "FE weapons, Age 1+"
+     ],
+     [
+      "Extra FE per use",
+      "100"
+     ]
+    ]
+   }
   },
   {
    "items": [

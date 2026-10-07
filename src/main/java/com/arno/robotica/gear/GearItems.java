@@ -2,9 +2,8 @@ package com.arno.robotica.gear;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.RoboticaTab;
+import com.arno.robotica.core.module.ModuleItems;
 import com.arno.robotica.gear.item.UpgradeKitItem;
-import com.arno.robotica.gear.module.GearModuleItem;
-import com.arno.robotica.gear.module.GearModuleKind;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.GearEnergyToolItem;
 import com.arno.robotica.gear.tool.GearToolItem;
@@ -31,12 +30,10 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.UnaryOperator;
 
-/** Tools, weapons and upgrade kits. Recipes: data/robotica/recipe (scripts/data/gear_recipes.py). */
+/** Tools, weapons and upgrade kits (module items: core ModuleItems). Recipes: data/robotica/recipe (scripts/data/gear_recipes.py). */
 public final class GearItems {
     private GearItems() {}
 
@@ -46,7 +43,7 @@ public final class GearItems {
     public static final TagKey<net.minecraft.world.item.Item> VOIDABLE =
             TagKey.create(Registries.ITEM, Robotica.id("voidable"));
 
-    // Age 0: durability tools without modules (auto-pickup and the void filter start with the FE tools)
+    // Age 0: durability tools without modules (modules start with the FE tools)
     public static final DeferredItem<HammerItem> TINKERS_HAMMER = tool("tinkers_hammer",
             ToolSpec.builder(Tiers.STONE, 5.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3).defaultMode(AreaMode.AREA_3)
@@ -63,30 +60,29 @@ public final class GearItems {
             ToolSpec.builder(Tiers.IRON, 6.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3).defaultMode(AreaMode.AREA_3).areaSpeed(0.5F)
                     .energy(400_000, () -> GearConfig.fe(GearConfig.BORE_DRILL_COST, 40))
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(1).build(),
+                    .toggles(ToggleKind.KEEP_FLOOR).age(1).build(),
             p -> p, 3.0F, -2.8F, GearEnergyToolItem::new);
 
     public static final DeferredItem<GearEnergyToolItem> CHAINSAW = tool("chainsaw",
             ToolSpec.builder(Tiers.IRON, 9.0F).tags(BlockTags.MINEABLE_WITH_AXE)
                     .modes(AreaMode.TREE, AreaMode.SINGLE).maxLogs(256).cutsLeaves().replants()
-                    .energy(400_000, () -> GearConfig.fe(GearConfig.CHAINSAW_COST, 30))
-                    .toggles(ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(1).build(),
+                    .energy(400_000, () -> GearConfig.fe(GearConfig.CHAINSAW_COST, 30)).age(1).build(),
             p -> p, 6.0F, -3.0F, GearEnergyToolItem::new);
 
     // Age 2
     public static final DeferredItem<GearEnergyToolItem> SERVO_DRILL = tool("servo_drill",
             ToolSpec.builder(Tiers.DIAMOND, 10.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.VEIN).defaultMode(AreaMode.AREA_3).areaSpeed(0.7F)
-                    .energy(2_000_000, () -> GearConfig.fe(GearConfig.SERVO_DRILL_COST, 50)).fortune(1)
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER).age(2).build(),
+                    .energy(2_000_000, () -> GearConfig.fe(GearConfig.SERVO_DRILL_COST, 50))
+                    .toggles(ToggleKind.KEEP_FLOOR).age(2).build(),
             p -> p.rarity(Rarity.UNCOMMON), 3.5F, -2.8F, GearEnergyToolItem::new);
 
     // Age 3
     public static final DeferredItem<GearEnergyToolItem> MAGMA_DRILL = tool("magma_drill",
             ToolSpec.builder(Tiers.DIAMOND, 12.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9, AreaMode.VEIN).defaultMode(AreaMode.AREA_3).areaSpeed(0.85F)
-                    .energy(8_000_000, () -> GearConfig.fe(GearConfig.MAGMA_DRILL_COST, 60)).fortune(2)
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.AUTO_SMELT).age(3).build(),
+                    .energy(8_000_000, () -> GearConfig.fe(GearConfig.MAGMA_DRILL_COST, 60))
+                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_SMELT).age(3).build(),
             p -> p.rarity(Rarity.RARE).fireResistant(), 4.0F, -2.8F, GearEnergyToolItem::new);
 
     // Age 4
@@ -94,8 +90,8 @@ public final class GearItems {
             ToolSpec.builder(Tiers.NETHERITE, 15.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9,
                             AreaMode.CUBE_5, AreaMode.AREA_12, AreaMode.CUBE_12, AreaMode.VEIN).defaultMode(AreaMode.AREA_3)
-                    .energy(32_000_000, () -> GearConfig.fe(GearConfig.NULL_DRILL_COST, 80)).fortune(3)
-                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER, ToggleKind.AUTO_SMELT).age(4).build(),
+                    .energy(32_000_000, () -> GearConfig.fe(GearConfig.NULL_DRILL_COST, 80))
+                    .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_SMELT).age(4).build(),
             p -> p.rarity(Rarity.EPIC).fireResistant(), 5.0F, -2.8F, GearEnergyToolItem::new);
 
     // Weapons
@@ -120,37 +116,11 @@ public final class GearItems {
     public static final DeferredItem<UpgradeKitItem> KIT_3 = kit(3, Rarity.RARE);
     public static final DeferredItem<UpgradeKitItem> KIT_4 = kit(4, Rarity.EPIC);
 
-    /** Module items per kind, index level - 1. */
-    private static final Map<GearModuleKind, List<DeferredItem<GearModuleItem>>> MODULES = new EnumMap<>(GearModuleKind.class);
-
-    static {
-        for (GearModuleKind kind : GearModuleKind.values()) {
-            List<DeferredItem<GearModuleItem>> levels = new ArrayList<>();
-            for (int level = 1; level <= kind.maxLevel(); level++) {
-                Rarity rarity = switch (kind.minAge(level)) {
-                    case 1 -> Rarity.COMMON;
-                    case 2 -> Rarity.UNCOMMON;
-                    case 3 -> Rarity.RARE;
-                    default -> Rarity.EPIC;
-                };
-                final int lv = level;
-                levels.add(ITEMS.registerItem(kind.itemName(level), p -> new GearModuleItem(p.rarity(rarity), kind, lv)));
-            }
-            MODULES.put(kind, List.copyOf(levels));
-        }
-    }
-
-    public static DeferredItem<GearModuleItem> module(GearModuleKind kind, int level) {
-        List<DeferredItem<GearModuleItem>> levels = MODULES.get(kind);
-        return levels.get(Math.max(0, Math.min(levels.size(), level) - 1));
-    }
-
     static {
         for (DeferredItem<? extends Item> item : List.of(TINKERS_HAMMER, FELLING_AXE, BORE_DRILL, CHAINSAW, SERVO_DRILL, MAGMA_DRILL,
                 NULL_DRILL, GEARBLADE, SHOCK_BATON, RIVET_GUN, ARC_BLADE, NULL_LANCE, KIT_1, KIT_2, KIT_3, KIT_4)) {
             TAB_ORDER.add(item);
         }
-        MODULES.values().forEach(TAB_ORDER::addAll);
     }
 
     /** Attack damage and speed as the player sees them (base damage is 1, base attack speed 4). */
@@ -179,5 +149,6 @@ public final class GearItems {
 
     public static void addToTab() {
         TAB_ORDER.forEach(RoboticaTab::add);
+        ModuleItems.addToTab(kind -> !kind.armorOnly());
     }
 }

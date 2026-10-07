@@ -1,5 +1,6 @@
 package com.arno.robotica.gear.weapon;
 
+import com.arno.robotica.core.module.ModuleTarget;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import com.arno.robotica.core.CoreSounds;
@@ -14,7 +15,7 @@ import java.util.function.IntSupplier;
 /** Age 1 melee weapon: 7 damage, Slowness II for 2 s, 250 FE per hit. */
 public class ShockBatonItem extends EnergyWeaponItem {
     public ShockBatonItem(Properties props, int capacity, IntSupplier cost) {
-        super(props, capacity, cost, 1);
+        super(props, capacity, cost, 1, ModuleTarget.SHOCK_BATON);
     }
 
     @Override

@@ -70,7 +70,11 @@
       "robotica:armor_pierce_module_3",
       "robotica:ricochet_module_2",
       "robotica:chain_lightning_module",
-      "robotica:chain_lightning_module_2"
+      "robotica:chain_lightning_module_2",
+      "robotica:overclock_module_3",
+      "robotica:fortune_module_3",
+      "robotica:sharpened_edge_module_3",
+      "robotica:looting_module_3"
     ],
     "experience": 50
   }

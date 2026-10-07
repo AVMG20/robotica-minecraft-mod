@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QEQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "E": {
+      "tag": "c:gems/emerald"
+    },
+    "U": {
+      "item": "robotica:fortune_module_2"
+    }
+  },
+  "result": {
+    "id": "robotica:fortune_module_3",
+    "count": 1
+  }
+}

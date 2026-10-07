@@ -1,10 +1,11 @@
 package com.arno.robotica.gear.weapon;
 
+import com.arno.robotica.core.module.ModuleTarget;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.gear.GearConfig;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -32,7 +33,7 @@ public class ArcBladeItem extends EnergyWeaponItem {
     public static final double CHAIN_RANGE = 6.0;
 
     public ArcBladeItem(Properties props, int capacity, IntSupplier cost) {
-        super(props, capacity, cost, 3);
+        super(props, capacity, cost, 3, ModuleTarget.ARC_BLADE);
     }
 
     @Override
@@ -50,7 +51,7 @@ public class ArcBladeItem extends EnergyWeaponItem {
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         if (!pay(stack, attacker) || !(attacker.level() instanceof ServerLevel level)) return true;
-        int chain = GearModules.active(stack, GearModuleKind.CHAIN_LIGHTNING);
+        int chain = Modules.active(stack, ModuleKind.CHAIN_LIGHTNING);
         int arcs = CHAIN_TARGETS + GearConfig.chainExtraArcs(chain);
         double range = CHAIN_RANGE + GearConfig.chainRangeBonus(chain);
         DamageSource source = attacker instanceof Player p ? level.damageSources().playerAttack(p) : level.damageSources().mobAttack(attacker);
@@ -65,7 +66,7 @@ public class ArcBladeItem extends EnergyWeaponItem {
                 LivingEntity next = nextTarget(level, from, attacker, done, range);
                 if (next == null) break;
                 // Arcs beyond the blade's own 3 come from Chain Lightning and cost extra.
-                if (hit >= CHAIN_TARGETS && !creative && !ItemEnergy.tryUse(stack, GearConfig.chainCostPerArc())) break;
+                if (hit >= CHAIN_TARGETS && !creative && !ItemEnergy.tryUse(stack, Modules.regulated(stack, GearConfig.chainCostPerArc()))) break;
                 done.add(next);
                 next.hurt(source, BASE_DAMAGE * 0.5F);
                 arc(level, from.getBoundingBox().getCenter(), next.getBoundingBox().getCenter());

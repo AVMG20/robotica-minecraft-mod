@@ -2,7 +2,10 @@ package com.arno.robotica.exo;
 
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.exo.item.ExoArmorItem;
-import com.arno.robotica.exo.item.ExoModuleItem;
+import com.arno.robotica.core.module.ModuleConfig;
+import com.arno.robotica.core.module.ModuleItem;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +23,18 @@ public final class ExoSuit {
     private ExoSuit() {}
 
     public static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-    private static final ExoModuleKind[] KINDS = ExoModuleKind.values();
+    private static final ModuleKind[] KINDS = ModuleKind.values();
+
+    /** 0 head, 1 chest, 2 legs, 3 feet. */
+    public static int index(EquipmentSlot slot) {
+        return switch (slot) {
+            case HEAD -> 0;
+            case CHEST -> 1;
+            case LEGS -> 2;
+            case FEET -> 3;
+            default -> throw new IllegalArgumentException("not an armor slot: " + slot);
+        };
+    }
 
     /** The worn Exo piece in a slot, or EMPTY. */
     public static ItemStack piece(LivingEntity entity, EquipmentSlot slot) {
@@ -47,33 +61,33 @@ public final class ExoSuit {
         public final int[] level = new int[KINDS.length];
         public final int[] piece = new int[KINDS.length];
 
-        public int level(ExoModuleKind kind) {
+        public int level(ModuleKind kind) {
             return level[kind.ordinal()];
         }
 
-        public boolean has(ExoModuleKind kind) {
+        public boolean has(ModuleKind kind) {
             return level[kind.ordinal()] > 0;
         }
 
         /** Piece index (0-3) of the active module of this kind. */
-        public int piece(ExoModuleKind kind) {
+        public int piece(ModuleKind kind) {
             return piece[kind.ordinal()];
         }
     }
 
     /**
      * Collects the switched-on modules of every worn piece. Duplicates count once, at their highest level. A module in
-     * the wrong piece or below its mark ({@link ExoData#fitsHere}) does nothing.
+     * the wrong piece or below its mark ({@link Modules#works}) does nothing.
      */
     public static Active active(LivingEntity entity) {
         Active a = new Active();
         for (int p = 0; p < 4; p++) {
             ItemStack piece = piece(entity, SLOTS[p]);
             if (piece.isEmpty()) continue;
-            int n = ExoData.slotCount(piece);
+            int n = Modules.slots(piece);
             for (int i = 0; i < n; i++) {
-                if (!(ExoData.module(piece, i).getItem() instanceof ExoModuleItem m) || !ExoData.isEnabled(piece, i)
-                        || !ExoData.fitsHere(piece, i)) continue;
+                if (!(Modules.module(piece, i).getItem() instanceof ModuleItem m) || !Modules.enabled(piece, i)
+                        || !Modules.works(piece, i)) continue;
                 int k = m.kind.ordinal();
                 if (m.level > a.level[k]) {
                     a.level[k] = m.level;
@@ -89,7 +103,7 @@ public final class ExoSuit {
 
     /** What the Power Regulator leaves of every cost (1 = no regulator). */
     public static double costFactor(Active a) {
-        return 1.0 - ExoConfig.regulatorSaving(a.level(ExoModuleKind.POWER_REGULATOR));
+        return 1.0 - ModuleConfig.regulatorSaving(a.level(ModuleKind.POWER_REGULATOR));
     }
 
     /**
@@ -97,18 +111,18 @@ public final class ExoSuit {
      * the jump, and the server repeats it, so both sides agree.
      */
     public static boolean canPayAirJump(LivingEntity entity, Active a) {
-        int level = a.level(ExoModuleKind.JET_ASSIST);
+        int level = a.level(ModuleKind.JET_ASSIST);
         if (level <= 0) return false;
-        return energyFor(entity, SLOTS[a.piece(ExoModuleKind.JET_ASSIST)]) >= Math.max(ExoConfig.doubleJumpCost(level) * costFactor(a), 1);
+        return energyFor(entity, SLOTS[a.piece(ModuleKind.JET_ASSIST)]) >= Math.max(ExoConfig.doubleJumpCost(level) * costFactor(a), 1);
     }
 
     /** Level of a switched-on module kind in the worn suit, 0 when absent. */
-    public static int level(LivingEntity entity, ExoModuleKind kind) {
+    public static int level(LivingEntity entity, ModuleKind kind) {
         return active(entity).level(kind);
     }
 
     /** True when the module is installed, switched on and its energy source holds any energy. Used by client prediction too. */
-    public static boolean isActive(LivingEntity entity, ExoModuleKind kind) {
+    public static boolean isActive(LivingEntity entity, ModuleKind kind) {
         Active a = active(entity);
         return a.has(kind) && energyFor(entity, SLOTS[a.piece(kind)]) > 0;
     }

@@ -1,10 +1,11 @@
 package com.arno.robotica.gear.weapon;
 
+import com.arno.robotica.core.module.ModuleTarget;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.GearConfig;
 import com.arno.robotica.gear.entity.RivetEntity;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -27,7 +28,7 @@ public class RivetGunItem extends EnergyWeaponItem {
     public static final int COOLDOWN_TICKS = 5;
 
     public RivetGunItem(Properties props, int capacity, IntSupplier cost) {
-        super(props, capacity, cost, 2);
+        super(props, capacity, cost, 2, ModuleTarget.RIVET_GUN);
     }
 
     @Override
@@ -51,9 +52,11 @@ public class RivetGunItem extends EnergyWeaponItem {
 
     /** Spawns one rivet from the player's eyes along the look direction, with the gun's modules. Returns it. */
     public static RivetEntity fire(ServerLevel level, Player player, ItemStack gun) {
-        float pierce = (float) GearConfig.pierceShare(GearModules.active(gun, GearModuleKind.ARMOR_PIERCE));
-        int bounces = GearConfig.ricochetBounces(GearModules.active(gun, GearModuleKind.RICOCHET));
-        RivetEntity rivet = new RivetEntity(level, player, GearConfig.rivetDamage(), pierce, bounces);
+        float pierce = (float) GearConfig.pierceShare(Modules.active(gun, ModuleKind.ARMOR_PIERCE));
+        int bounces = GearConfig.ricochetBounces(Modules.active(gun, ModuleKind.RICOCHET));
+        float damage = GearConfig.rivetDamage() * (float) (1.0 + GearConfig.edgeDamage(Modules.active(gun, ModuleKind.SHARPENED_EDGE)));
+        RivetEntity rivet = new RivetEntity(level, player, damage, pierce, bounces);
+        if (Modules.active(gun, ModuleKind.THERMAL_EDGE) > 0) rivet.setFireSeconds(GearConfig.thermalSeconds());
         rivet.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, GearConfig.rivetSpeed(), 0.5F);
         level.addFreshEntity(rivet);
         Vec3 look = player.getLookAngle();

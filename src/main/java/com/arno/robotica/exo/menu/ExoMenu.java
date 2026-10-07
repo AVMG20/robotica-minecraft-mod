@@ -1,16 +1,14 @@
 package com.arno.robotica.exo.menu;
 
 import com.arno.robotica.core.CoreSounds;
-import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.exo.ExoData;
-import com.arno.robotica.exo.ExoModuleKind;
 import com.arno.robotica.exo.ExoRegistry;
-import com.arno.robotica.exo.ExoRules;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.ExoTicker;
 import com.arno.robotica.exo.item.ExoArmorItem;
-import com.arno.robotica.exo.item.ExoModuleItem;
+import com.arno.robotica.core.module.ModuleItem;
+import com.arno.robotica.core.module.Modules;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -147,7 +145,7 @@ public class ExoMenu extends MachineMenu {
         for (EquipmentSlot slot : ExoSuit.SLOTS) {
             ItemStack piece = ExoSuit.piece(player, slot);
             list.add(piece.getItem() instanceof ExoArmorItem item
-                    ? new Section(slot, 0, item.moduleSlots(), item.hasCoreSocket())
+                    ? new Section(slot, 0, Modules.slots(piece), item.hasCoreSocket())
                     : new Section(slot, 0, 0, false));
         }
         open(player, list);
@@ -156,7 +154,7 @@ public class ExoMenu extends MachineMenu {
     public static void openForHand(ServerPlayer player, InteractionHand hand) {
         ItemStack piece = player.getItemInHand(hand);
         if (!(piece.getItem() instanceof ExoArmorItem item)) return;
-        open(player, List.of(new Section(item.getEquipmentSlot(), hand == InteractionHand.MAIN_HAND ? 1 : 2, item.moduleSlots(), item.hasCoreSocket())));
+        open(player, List.of(new Section(item.getEquipmentSlot(), hand == InteractionHand.MAIN_HAND ? 1 : 2, Modules.slots(piece), item.hasCoreSocket())));
     }
 
     private static void open(ServerPlayer player, List<Section> sections) {
@@ -228,9 +226,9 @@ public class ExoMenu extends MachineMenu {
         int slot = id % ExoArmorItem.MAX_SLOTS;
         if (id < 0 || row >= sections.size() || slot >= sections.get(row).count()) return false;
         ItemStack piece = piece(row);
-        if (piece.isEmpty() || ExoData.kind(piece, slot) == null) return false;
-        boolean on = !ExoData.isEnabled(piece, slot);
-        ExoData.setEnabled(piece, slot, on);
+        if (piece.isEmpty() || Modules.kind(piece, slot) == null) return false;
+        boolean on = !Modules.enabled(piece, slot);
+        Modules.setEnabled(piece, slot, on);
         if (player instanceof ServerPlayer sp) ExoTicker.notifySound(sp, CoreSounds.TOOL_MODE.get(), 0.5F, on ? 1.3F : 0.8F);
         return true;
     }
@@ -242,24 +240,24 @@ public class ExoMenu extends MachineMenu {
     public boolean isShadowed(int row, int slot) {
         Section section = sections.get(row);
         ItemStack piece = piece(row);
-        if (!(ExoData.module(piece, slot).getItem() instanceof ExoModuleItem m) || m.kind.perPiece() || section.source() != 0) return false;
-        if (!ExoData.fitsHere(piece, slot)) return false;
+        if (!(Modules.module(piece, slot).getItem() instanceof ModuleItem m) || m.kind.perPiece() || section.source() != 0) return false;
+        if (!Modules.works(piece, slot)) return false;
         ExoSuit.Active active = ExoSuit.active(player);
         int best = active.level(m.kind);
-        if (best <= 0 || !ExoData.isEnabled(piece, slot)) return false;
+        if (best <= 0 || !Modules.enabled(piece, slot)) return false;
         if (best > m.level) return true;
         // Same level elsewhere: the first piece in head-to-feet order counts.
         int counted = active.piece(m.kind);
-        return counted != ExoModuleKind.slotIndex(section.slot()) || ExoData.slotOf(piece, m.kind) != slot;
+        return counted != ExoSuit.index(section.slot()) || Modules.slotOf(piece, m.kind) != slot;
     }
 
     /** True when the module in this row and slot sits in the wrong piece or below its mark, so it does nothing. */
     public boolean isMisplaced(int row, int slot) {
         ItemStack piece = piece(row);
-        return ExoData.module(piece, slot).getItem() instanceof ExoModuleItem && !ExoData.fitsHere(piece, slot);
+        return Modules.module(piece, slot).getItem() instanceof ModuleItem && !Modules.works(piece, slot);
     }
 
-    /** One slot for one module. The rules (piece, mark, one per suit) are in {@link ExoRules}. */
+    /** One slot for one module. The rules (piece, mark, one per suit) are in {@link Modules#refusal}. */
     public static class ModuleSlot extends Slot {
         private final Player player;
         private final Section section;
@@ -279,7 +277,7 @@ public class ExoMenu extends MachineMenu {
         /** Why the stack cannot go here, or null. */
         @Nullable
         public Component refusal(ItemStack stack) {
-            return ExoRules.moduleRefusal(piece.get(), getContainerSlot(), stack, section.others(player));
+            return Modules.refusal(piece.get(), getContainerSlot(), stack, section.others(player));
         }
 
         @Override
@@ -314,7 +312,7 @@ public class ExoMenu extends MachineMenu {
 
         @Nullable
         public Component refusal(ItemStack stack) {
-            return ExoRules.coreRefusal(piece.get(), stack);
+            return ExoData.coreRefusal(piece.get(), stack);
         }
 
         @Override
@@ -354,28 +352,21 @@ public class ExoMenu extends MachineMenu {
             this.section = section;
             this.source = source;
             ItemStack piece = source.get();
-            for (int i = 0; i < section.count(); i++) setItem(i, ExoData.module(piece, i).copy());
+            for (int i = 0; i < section.count(); i++) setItem(i, Modules.module(piece, i).copy());
             addListener(this::writeBack);
         }
 
         private void writeBack(Container container) {
             ItemStack piece = source.get();
             if (piece.isEmpty()) return;
-            List<ItemStack> before = ExoData.modules(piece);
-            List<ItemStack> now = new ArrayList<>();
             boolean installed = false;
             for (int i = 0; i < section.count(); i++) {
                 ItemStack stack = getItem(i);
-                now.add(stack.isEmpty() ? ItemStack.EMPTY : stack.copy());
-                ItemStack was = i < before.size() ? before.get(i) : ItemStack.EMPTY;
-                if (!ItemStack.isSameItem(was, stack)) {
-                    ExoData.setEnabled(piece, i, true);
-                    installed |= !stack.isEmpty();
-                }
+                if (ItemStack.isSameItem(Modules.module(piece, i), stack)) continue;
+                // A changed slot starts on; removing Capacitor Plating caps the stored energy (both in setModule).
+                Modules.setModule(piece, i, stack);
+                installed |= !stack.isEmpty();
             }
-            ExoData.setModules(piece, now);
-            // Removing Capacitor Plating shrinks the battery: cap the stored energy.
-            if (ItemEnergy.get(piece) > ItemEnergy.capacity(piece)) ItemEnergy.set(piece, ItemEnergy.capacity(piece));
             if (installed && !player.level().isClientSide) {
                 CoreSounds.play(player, CoreSounds.UPGRADE_INSTALL, SoundSource.PLAYERS, 0.6F, 1.0F);
             }

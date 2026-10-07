@@ -1,6 +1,7 @@
 package com.arno.robotica.exo;
 
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.module.ModuleKind;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -23,7 +24,7 @@ public final class ExoConfig {
 
     // ---- module numbers
     private static final ModConfigSpec.IntValue[] MAGNET_RADIUS, AIR_JUMPS, THERMAL_RADIUS, SONAR_RADIUS, MED_COOLDOWN;
-    private static final ModConfigSpec.DoubleValue[] SHIELD_ABSORB, SERVO_SPEED, SPRING_BOOST, MED_HEAL, CAPACITOR_BONUS, REGULATOR_SAVING;
+    private static final ModConfigSpec.DoubleValue[] SHIELD_ABSORB, SERVO_SPEED, SPRING_BOOST, MED_HEAL, CAPACITOR_BONUS;
     private static final ModConfigSpec.DoubleValue STEP_BONUS, MED_THRESHOLD, HYDRO_SWIM, HYDRO_MINING, DASH_SPEED;
     private static final ModConfigSpec.IntValue AUTO_FEEDER_HUNGER, SONAR_COOLDOWN, SONAR_DURATION, DASH_COOLDOWN;
 
@@ -96,7 +97,6 @@ public final class ExoConfig {
                 .defineInRange("hydroFinsMiningSpeed", 0.8, 0.0, 1.0);
         CAPACITOR_BONUS = doubles(b, "capacitorPlatingBonus", "Extra battery of the piece with Capacitor Plating (I, II, III; 0.5 = +50%).",
                 0.0, 10.0, 0.5, 1.0, 2.0);
-        REGULATOR_SAVING = doubles(b, "powerRegulatorSaving", "Share of every module's FE the Power Regulator saves (I, II, III).", 0.0, 0.9, 0.1, 0.2, 0.3);
         b.pop();
 
         b.push("exoArmor");
@@ -138,7 +138,7 @@ public final class ExoConfig {
     private static ModConfigSpec.IntValue[] ints(ModConfigSpec.Builder b, String key, String comment, int min, int max, int... defs) {
         ModConfigSpec.IntValue[] out = new ModConfigSpec.IntValue[defs.length];
         for (int i = 0; i < defs.length; i++) {
-            out[i] = b.comment(comment + " Level " + ExoModuleKind.roman(i + 1) + ".").defineInRange(levelKey(key, i + 1), defs[i], min, max);
+            out[i] = b.comment(comment + " Level " + ModuleKind.roman(i + 1) + ".").defineInRange(levelKey(key, i + 1), defs[i], min, max);
         }
         return out;
     }
@@ -146,7 +146,7 @@ public final class ExoConfig {
     private static ModConfigSpec.DoubleValue[] doubles(ModConfigSpec.Builder b, String key, String comment, double min, double max, double... defs) {
         ModConfigSpec.DoubleValue[] out = new ModConfigSpec.DoubleValue[defs.length];
         for (int i = 0; i < defs.length; i++) {
-            out[i] = b.comment(comment + " Level " + ExoModuleKind.roman(i + 1) + ".").defineInRange(levelKey(key, i + 1), defs[i], min, max);
+            out[i] = b.comment(comment + " Level " + ModuleKind.roman(i + 1) + ".").defineInRange(levelKey(key, i + 1), defs[i], min, max);
         }
         return out;
     }
@@ -169,7 +169,7 @@ public final class ExoConfig {
 
     // ---------------------------------------------------------------- costs
 
-    private static int base(ExoModuleKind kind, int level) {
+    private static int base(ModuleKind kind, int level) {
         return switch (kind) {
             case NIGHT_VISION -> get(lv(NIGHT_VISION, level));
             case REBREATHER -> get(REBREATHER);
@@ -190,23 +190,23 @@ public final class ExoConfig {
             case FALL_DAMPENER -> get(lv(FALL_DAMPENER, level));
             case MAGNET -> get(lv(MAGNET, level));
             case HYDRO_FINS -> get(HYDRO_FINS);
-            case CAPACITOR_PLATING, POWER_REGULATOR -> 0;
+            default -> 0;
         };
     }
 
     /**
-     * Configured cost of a module in FE per {@link ExoModuleKind#unit} (second, jump, block, damage point, use...),
+     * Configured cost of a module in FE per {@link ModuleKind#unit} (second, jump, block, damage point, use...),
      * scaled by the global energy multiplier. For Solar Weave and the Kinetic Generator it is what they make, scaled
      * by the generation multiplier.
      */
-    public static int cost(ExoModuleKind kind, int level) {
+    public static int cost(ModuleKind kind, int level) {
         int base = base(kind, level);
-        if (kind == ExoModuleKind.SOLAR_WEAVE || kind == ExoModuleKind.KINETIC_GENERATOR) return CoreConfig.scaleGeneration(base);
+        if (kind == ModuleKind.SOLAR_WEAVE || kind == ModuleKind.KINETIC_GENERATOR) return CoreConfig.scaleGeneration(base);
         return CoreConfig.scaleEnergy(base);
     }
 
     /** FE per tick of a per-second module. */
-    public static double perTick(ExoModuleKind kind, int level) {
+    public static double perTick(ModuleKind kind, int level) {
         return cost(kind, level) / 20.0;
     }
 
@@ -308,10 +308,6 @@ public final class ExoConfig {
         return level <= 0 ? 0 : get(lv(CAPACITOR_BONUS, level));
     }
 
-    public static double regulatorSaving(int level) {
-        return level <= 0 ? 0 : get(lv(REGULATOR_SAVING, level));
-    }
-
     // ---------------------------------------------------------------- armor and set bonus
 
     /** Mk1 battery of a piece (0 head, 1 chest, 2 legs, 3 feet). */
@@ -362,7 +358,7 @@ public final class ExoConfig {
     }
 
     /** Format arguments of the module's description line ({@code exo.robotica.module.<id>.desc}). */
-    public static Object[] describeArgs(ExoModuleKind kind, int level) {
+    public static Object[] describeArgs(ModuleKind kind, int level) {
         return switch (kind) {
             case NIGHT_VISION -> new Object[]{thermalRadius(level)};
             case SONAR_PULSE -> new Object[]{sonarRadius(level)};
@@ -374,7 +370,6 @@ public final class ExoConfig {
             case SPRING_HEELS -> new Object[]{level};
             case MAGNET -> new Object[]{magnetRadius(level)};
             case CAPACITOR_PLATING -> new Object[]{pct(capacitorBonus(level))};
-            case POWER_REGULATOR -> new Object[]{pct(regulatorSaving(level))};
             case KINETIC_GENERATOR -> new Object[]{kineticSprintPerBlock()};
             default -> new Object[0];
         };

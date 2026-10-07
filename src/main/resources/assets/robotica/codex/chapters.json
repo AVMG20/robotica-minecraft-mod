@@ -479,6 +479,30 @@
       ]
     },
     {
+      "title": "Modules",
+      "icon": "robotica:overclock_module",
+      "pages": [
+        {
+          "title": "Modules",
+          "text": "Modules upgrade what you carry: power tools, FE weapons and Exo armor. Cards upgrade machines.\n- Tinker's Bench: put the item in, drop modules in.\n- One of each kind per item.\n- G (held) or J (worn armor) switches them.",
+          "items": [
+            "robotica:tinkers_bench",
+            "robotica:overclock_module",
+            "robotica:sharpened_edge_module",
+            "robotica:power_regulator_module"
+          ]
+        },
+        {
+          "title": "Slots and levels",
+          "text": "- Tools, weapons: Age 1-4 = 2-5 slots\n- Exo pieces: Mk1-4 = 1-4 slots\n- Higher levels need a higher Age or Mk.\n- Level II and III: craft from the level below.\n- No enchanting on FE gear.",
+          "items": [
+            "robotica:overclock_module_2",
+            "robotica:overclock_module_3"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Tools",
       "icon": "robotica:bore_drill",
       "pages": [
@@ -495,15 +519,17 @@
         },
         {
           "title": "Controls",
-          "text": "- V: next mode. Sneak+V: back.\n- Hold sneak: 1 block.\n- B: Silk / Fortune / off (Servo+).\n- G: settings and modules."
+          "text": "- V: next mode. Sneak+V: back.\n- Hold sneak: 1 block.\n- B: Fortune / Silk Touch / off.\n- G: settings and modules."
         },
         {
-          "title": "Tinker's Bench",
-          "text": "Fits cards and modules into power tools and FE weapons.\n- Module slots: Age 1-4 = 1-4\n- Cards (Auto-Pickup, Void Filter) need no slot\n- Torch Placer: a torch where you mine in the dark\nG switches each one.",
+          "title": "Tool modules",
+          "text": "- Overclock I-III: mines faster\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Torch Placer: torches in the dark\n- Power Regulator: less FE",
           "items": [
-            "robotica:tinkers_bench",
-            "robotica:upgrade_pickup",
-            "robotica:upgrade_void",
+            "robotica:overclock_module",
+            "robotica:fortune_module",
+            "robotica:silk_touch_module",
+            "robotica:auto_pickup_module",
+            "robotica:void_filter_module",
             "robotica:torch_placer_module"
           ]
         },
@@ -517,7 +543,7 @@
         },
         {
           "title": "Upgrading tools",
-          "text": "Smithing table: Upgrade Kit + old tool + a part or core. Energy and settings carry over.\nUnbreaking lowers the FE per block.",
+          "text": "Smithing table: Upgrade Kit + old tool + a part or core. Energy, settings and modules carry over.",
           "items": [
             "robotica:tool_upgrade_kit_1",
             "robotica:tool_upgrade_kit_2",
@@ -544,11 +570,13 @@
         },
         {
           "title": "Weapon modules",
-          "text": "Tinker's Bench, slots = Age.\n- Armor Pierce: ignores armor\n- Chain Lightning: more Arc Blade arcs\n- Ricochet: rivets bounce on\n- Lifesteal (Age 4): heals a bit, FE, capped\nG switches them.",
+          "text": "- Sharpened Edge I-III: more damage\n- Looting I-III\n- Thermal Edge: sets on fire\n- Armor Pierce: ignores armor\n- Chain Lightning: Arc Blade\n- Ricochet: Rivet Gun\n- Lifesteal (Age 4): heals a bit, capped",
           "items": [
+            "robotica:sharpened_edge_module",
+            "robotica:looting_module",
+            "robotica:thermal_edge_module",
             "robotica:armor_pierce_module",
             "robotica:chain_lightning_module",
-            "robotica:ricochet_module",
             "robotica:lifesteal_module"
           ]
         }
@@ -608,7 +636,7 @@
         },
         {
           "title": "Modules",
-          "text": "J: module screen (or sneak-right-click a piece). Drop modules in; the switch turns one off.\nEach kind works once per suit.",
+          "text": "J: module screen (or sneak-right-click a piece, or a Tinker's Bench). Drop modules in; the switch turns one off.\nEach kind works once per suit.",
           "items": [
             "robotica:night_vision_module",
             "robotica:step_assist_module",

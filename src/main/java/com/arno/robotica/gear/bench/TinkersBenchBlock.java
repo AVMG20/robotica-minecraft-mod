@@ -18,8 +18,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import java.util.List;
 
 /**
- * Tinker's Bench (Age 1): installs and removes cards (Auto-Pickup, Void Filter) and modules in power tools and FE
- * weapons (see {@link TinkersBenchMenu}). Like a crafting table it stores nothing: the item goes back to the player when
+ * Tinker's Bench (Age 1): installs and removes modules in power tools, FE weapons and Exo armor pieces (see
+ * {@link TinkersBenchMenu}). Like a crafting table it stores nothing: the item goes back to the player when
  * the screen closes.
  */
 public class TinkersBenchBlock extends Block {

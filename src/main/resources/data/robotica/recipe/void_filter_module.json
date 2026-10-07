@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "POP",
+    "CBC"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "O": {
+      "tag": "c:obsidians"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:void_filter_module",
+    "count": 1
+  }
+}

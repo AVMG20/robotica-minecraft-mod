@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QDQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "D": {
+      "tag": "c:gems/diamond"
+    },
+    "U": {
+      "item": "robotica:looting_module_2"
+    }
+  },
+  "result": {
+    "id": "robotica:looting_module_3",
+    "count": 1
+  }
+}

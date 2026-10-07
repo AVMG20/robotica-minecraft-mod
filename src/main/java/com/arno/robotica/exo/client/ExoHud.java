@@ -5,9 +5,11 @@ import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.exo.ExoData;
-import com.arno.robotica.exo.ExoModuleKind;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.ExoSuit;
-import com.arno.robotica.exo.item.ExoModuleItem;
+import com.arno.robotica.core.module.ModuleItem;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -54,9 +56,9 @@ final class ExoHud {
         List<Icon> icons = new ArrayList<>();
         for (int p = 0; p < 4; p++) {
             ItemStack piece = ExoSuit.piece(player, ExoSuit.SLOTS[p]);
-            for (int i = 0; i < ExoData.slotCount(piece); i++) {
-                if (!(ExoData.module(piece, i).getItem() instanceof ExoModuleItem m)) continue;
-                boolean counts = ExoData.isEnabled(piece, i) && ExoData.fitsHere(piece, i) && (m.kind.perPiece() || (active.level(m.kind) == m.level && active.piece(m.kind) == p));
+            for (int i = 0; i < Modules.slots(piece); i++) {
+                if (!(Modules.module(piece, i).getItem() instanceof ModuleItem m)) continue;
+                boolean counts = Modules.enabled(piece, i) && Modules.works(piece, i) && (m.kind.perPiece() || (active.level(m.kind) == m.level && active.piece(m.kind) == p));
                 float cd = player.getCooldowns().getCooldownPercent(m, partial);
                 icons.add(new Icon(new ItemStack(m), counts && ExoSuit.energyFor(player, ExoSuit.SLOTS[p]) > 0, cd, false));
             }
@@ -73,7 +75,7 @@ final class ExoHud {
             icons.add(new Icon(new ItemStack(core), true, cd, servo && player.hasEffect(MobEffects.DIG_SPEED)));
         }
 
-        boolean robotHud = active.has(ExoModuleKind.ROBOT_HUD) && ExoSuit.isActive(player, ExoModuleKind.ROBOT_HUD);
+        boolean robotHud = active.has(ModuleKind.ROBOT_HUD) && ExoSuit.isActive(player, ModuleKind.ROBOT_HUD);
         if (robotHud) scanDrones(mc);
         int sonarLeft = ExoXray.sonarTicksLeft();
         int droneLines = robotHud ? Math.min(4, (int) drones.stream().filter(DroneBase::isAlive).count()) : 0;

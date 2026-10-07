@@ -45,7 +45,7 @@ One kind works once per suit. Higher levels need a higher mark.
 | [[magnet_module]] | boots | Mk1 / Mk2 / Mk3 | pulls items in 6 / 10 / 16 blocks |
 | [[hydro_fins_module]] | boots | Mk2 | swim fast, mine fast under water |
 | [[capacitor_plating_module]] | any | Mk1 / Mk2 / Mk3 | +50 / 100 / 200% battery for its piece |
-| [[power_regulator_module]] | any | Mk2 / Mk3 / Mk4 | all modules use 10-30% less FE |
+| [[power_regulator_module]] | any (also tools, weapons) | Mk2 / Mk3 / Mk4 | all modules use 15-35% less FE |
 
 ## Core socket
 
@@ -59,5 +59,5 @@ Chestplate Mk2 and up holds one core. The bonus needs all four pieces worn, Mk2 
 
 ## Keys and energy
 
-- **J** module screen, **K** flight, **R** dash, **N** sonar, **O** overclock. Double jump is Jet Assist.
+- **J** module screen (or a [[tinkers_bench]]), **K** flight, **R** dash, **N** sonar, **O** overclock. Double jump is Jet Assist.
 - With all four pieces on, modules share all four batteries. Cells in your inventory top the suit up (2,000 FE/s).

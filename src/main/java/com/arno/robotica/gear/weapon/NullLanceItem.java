@@ -1,5 +1,6 @@
 package com.arno.robotica.gear.weapon;
 
+import com.arno.robotica.core.module.ModuleTarget;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -38,7 +39,7 @@ public class NullLanceItem extends EnergyWeaponItem {
     }
 
     public NullLanceItem(Properties props, int capacity, IntSupplier cost) {
-        super(props, capacity, cost, 4);
+        super(props, capacity, cost, 4, ModuleTarget.NULL_LANCE);
     }
 
     @Override

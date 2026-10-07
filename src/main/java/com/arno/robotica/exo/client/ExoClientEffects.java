@@ -1,7 +1,9 @@
 package com.arno.robotica.exo.client;
 
 import com.arno.robotica.exo.ExoData;
-import com.arno.robotica.exo.ExoModuleKind;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.ExoSuit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -37,7 +39,7 @@ final class ExoClientEffects {
 
     private static void flightSound(LocalPlayer player) {
         boolean flying = player.getAbilities().flying && !player.isCreative() && !player.isSpectator()
-                && ExoSuit.isActive(player, ExoModuleKind.FLIGHT) && ExoClientConfig.flightSound();
+                && ExoSuit.isActive(player, ModuleKind.FLIGHT) && ExoClientConfig.flightSound();
         if (flying && (loop == null || loop.isStopped())) {
             loop = new FlightLoop(player);
             Minecraft.getInstance().getSoundManager().play(loop);
@@ -68,7 +70,7 @@ final class ExoClientEffects {
 
         @Override
         public void tick() {
-            boolean on = !player.isRemoved() && player.getAbilities().flying && ExoSuit.isActive(player, ExoModuleKind.FLIGHT);
+            boolean on = !player.isRemoved() && player.getAbilities().flying && ExoSuit.isActive(player, ModuleKind.FLIGHT);
             fade = on ? Math.min(10, fade + 1) : fade - 1;
             if (fade <= 0 && !on) {
                 stop();

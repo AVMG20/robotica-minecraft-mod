@@ -1,7 +1,9 @@
 package com.arno.robotica.exo.client;
 
 import com.arno.robotica.exo.ExoConfig;
-import com.arno.robotica.exo.ExoModuleKind;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.net.ExoSonarPayload;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -198,8 +200,8 @@ final class ExoXray {
     private static void updateThermal(LocalPlayer player, ClientLevel level) {
         thermal.clear();
         if (!ExoClientConfig.outlines() || !ExoSuit.wearingAny(player)) return;
-        int nv = ExoSuit.level(player, ExoModuleKind.NIGHT_VISION);
-        if (nv < 2 || !ExoSuit.isActive(player, ExoModuleKind.NIGHT_VISION)) return;
+        int nv = ExoSuit.level(player, ModuleKind.NIGHT_VISION);
+        if (nv < 2 || !ExoSuit.isActive(player, ModuleKind.NIGHT_VISION)) return;
         int r = ExoConfig.thermalRadius(nv);
         if (r <= 0) return;
         double r2 = (double) r * r;
