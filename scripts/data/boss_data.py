@@ -149,7 +149,7 @@ def worldgen():
     write(DATA / 'worldgen/structure_set/cinder_forge.json', {
         'structures': [{'structure': 'robotica:cinder_forge', 'weight': 1}],
         'placement': {'type': 'minecraft:random_spread', 'spacing': 32, 'separation': 12, 'salt': 19071906,
-                      'exclusion_zone': {'other_set': 'minecraft:nether_complexes', 'chunk_count': 3}}})
+                      'exclusion_zone': {'other_set': 'minecraft:nether_complexes', 'chunk_count': 7}}})
 
 
 def altar_models(name):

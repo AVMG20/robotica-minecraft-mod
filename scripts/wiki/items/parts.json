@@ -719,7 +719,7 @@
    "what": "Wakes the Scrap Colossus boss. Found in Rusted Foundries, or craft your own.",
    "use": [
     "Right-click it with a [[signal_flare]].",
-    "Needs 3x3x4 air above. 5 min cooldown."
+    "Needs 3x3x3 air above. 5 min cooldown."
    ],
    "see": [
     "guide:bosses"
@@ -738,7 +738,7 @@
    "what": "Wakes the Forge Tyrant boss. Found in Cinder Forges in the Nether, or craft your own.",
    "use": [
     "Right-click it with an [[ignition_charge]].",
-    "Needs 3x3x4 air above. 5 min cooldown."
+    "Needs 3x3x3 air above. 5 min cooldown."
    ],
    "see": [
     "guide:bosses"

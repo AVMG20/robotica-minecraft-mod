@@ -45,7 +45,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Boss altar: right-click it with its summon item to wake its boss on top. One boss at a time per altar, then a cooldown
+ * Boss altar: right-click it with its summon item to wake its boss on top. One boss at a time per altar (and none while a
+ * boss of its kind is alive within {@value #ONE_BOSS_RADIUS} blocks), then a cooldown
  * (config, 5 minutes). The Colossus Altar (Signal Flare, Scrap Colossus) stands in every Rusted Foundry, the Forge Altar
  * (Ignition Charge, Forge Tyrant) in every Cinder Forge ({@link #NATURAL}: drops building blocks instead of itself, so the
  * ruin's altar stays where it is). Both are craftable to build your own arena.
@@ -66,6 +67,9 @@ public class BossAltarBlock extends Block implements EntityBlock {
     public static final BooleanProperty READY = BooleanProperty.create("ready");
     /** Generated in a Rusted Foundry. */
     public static final BooleanProperty NATURAL = BooleanProperty.create("natural");
+
+    /** No altar wakes its boss while one of the same kind is alive within this many blocks. */
+    public static final double ONE_BOSS_RADIUS = 32.0;
 
     public enum Result {
         SPAWNED, COOLDOWN, BOSS_ALIVE, PEACEFUL, BLOCKED
@@ -109,7 +113,7 @@ public class BossAltarBlock extends Block implements EntityBlock {
         if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
         if (!(level.getBlockEntity(pos) instanceof BossAltarBlockEntity altar)) return InteractionResult.PASS;
         long left = altar.cooldownLeft(level.getGameTime());
-        if (altar.boss(server) != null) {
+        if (bossAlive(server, pos, altar, kind)) {
             tell(player, kind.message("boss_alive"));
         } else if (left > 0) {
             tell(player, Component.translatable("message.robotica.boss.cooldown", time(left)));
@@ -131,7 +135,7 @@ public class BossAltarBlock extends Block implements EntityBlock {
             tell(player, kind.message("peaceful"));
             return Result.PEACEFUL;
         }
-        if (altar.boss(level) != null) {
+        if (bossAlive(level, pos, altar, kind)) {
             tell(player, kind.message("boss_alive"));
             return Result.BOSS_ALIVE;
         }
@@ -171,6 +175,16 @@ public class BossAltarBlock extends Block implements EntityBlock {
             near.sendSystemMessage(news);
         }
         return Result.SPAWNED;
+    }
+
+    /**
+     * The boss this altar woke is still alive, or any boss of its kind is alive within {@value #ONE_BOSS_RADIUS} blocks
+     * (also covers an altar that was broken and placed again).
+     */
+    private static boolean bossAlive(ServerLevel level, BlockPos pos, BossAltarBlockEntity altar, Kind kind) {
+        if (altar.boss(level) != null) return true;
+        EntityType<? extends Mob> type = kind.boss().get();
+        return !level.getEntities(type, new AABB(pos).inflate(ONE_BOSS_RADIUS), Mob::isAlive).isEmpty();
     }
 
     private static void awakenEffects(ServerLevel level, BlockPos pos, Kind kind) {

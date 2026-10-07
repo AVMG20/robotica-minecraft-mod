@@ -25,6 +25,10 @@ public final class BossConfig {
     private static final ModConfigSpec.IntValue TYRANT_ATTACKS_PER_VENT;
     private static final ModConfigSpec.IntValue TYRANT_VENT_TICKS;
     private static final ModConfigSpec.DoubleValue TYRANT_VENT_MULTIPLIER;
+    private static final ModConfigSpec.DoubleValue MAX_ATTACKER_DISTANCE;
+    private static final ModConfigSpec.IntValue REGEN_DELAY;
+    private static final ModConfigSpec.DoubleValue REGEN_RADIUS;
+    private static final ModConfigSpec.DoubleValue REGEN_PERCENT;
     private static final ModConfigSpec.IntValue ALTAR_COOLDOWN;
     private static final ModConfigSpec.IntValue LOOT_LOCK;
     private static final ModConfigSpec.BooleanValue FOUNDRY_ENABLED;
@@ -33,16 +37,16 @@ public final class BossConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("colossus");
-        HEALTH_MULTIPLIER = b.comment("Multiplier of the Scrap Colossus hit points (base 300). Applied when it is summoned.")
-                .defineInRange("bossHealthMultiplier", 1.0, 0.1, 100.0);
+        HEALTH_MULTIPLIER = b.comment("Multiplier of the Scrap Colossus hit points (base 300). Applied when it is summoned. Max 3.4 (1024 hit points, the game's limit).")
+                .defineInRange("bossHealthMultiplier", 1.0, 0.1, 3.4);
         DAMAGE_MULTIPLIER = b.comment("Multiplier of every attack of the Scrap Colossus and its Scrap Drones.")
                 .defineInRange("bossDamageMultiplier", 1.0, 0.0, 100.0);
         MINION_CAP = b.comment("Most Scrap Drones one Colossus may have alive at once (0 turns the minions off).")
                 .defineInRange("colossusMinionCap", 3, 0, 16);
         b.pop();
         b.push("tyrant");
-        TYRANT_HEALTH = b.comment("Hit points of the Forge Tyrant. Applied when it is summoned.")
-                .defineInRange("tyrantHealth", 500.0, 1.0, 100_000.0);
+        TYRANT_HEALTH = b.comment("Hit points of the Forge Tyrant. Applied when it is summoned. Max 1024 (the game's limit).")
+                .defineInRange("tyrantHealth", 500.0, 1.0, 1024.0);
         TYRANT_ARMOR = b.comment("Armor of the Forge Tyrant.")
                 .defineInRange("tyrantArmor", 12.0, 0.0, 30.0);
         TYRANT_MELEE = b.comment("Damage of the Forge Tyrant's hammer punch.")
@@ -63,6 +67,16 @@ public final class BossConfig {
                 .defineInRange("tyrantVentTicks", 100, 20, 1200);
         TYRANT_VENT_MULTIPLIER = b.comment("Damage multiplier while the Forge Tyrant vents.")
                 .defineInRange("tyrantVentDamageMultiplier", 2.0, 1.0, 10.0);
+        b.pop();
+        b.push("fight");
+        MAX_ATTACKER_DISTANCE = b.comment("Bosses ignore damage from attackers further away than this many blocks.")
+                .defineInRange("maxAttackerDistance", 32.0, 8.0, 256.0);
+        REGEN_DELAY = b.comment("Seconds without a player nearby before a boss starts to heal.")
+                .defineInRange("regenDelaySeconds", 30, 1, 3600);
+        REGEN_RADIUS = b.comment("Blocks around a boss a player must stay within to stop it from healing.")
+                .defineInRange("regenRadius", 32.0, 8.0, 128.0);
+        REGEN_PERCENT = b.comment("Percent of its max health a boss heals per second while no player is nearby (0 turns it off).")
+                .defineInRange("regenPercentPerSecond", 5.0, 0.0, 100.0);
         b.pop();
         b.push("altar");
         ALTAR_COOLDOWN = b.comment("Seconds before a Colossus Altar or Forge Altar can be used again after a summon.")
@@ -141,6 +155,22 @@ public final class BossConfig {
 
     public static float tyrantVentMultiplier() {
         return (float) get(TYRANT_VENT_MULTIPLIER);
+    }
+
+    public static double maxAttackerDistance() {
+        return get(MAX_ATTACKER_DISTANCE);
+    }
+
+    public static int regenDelayTicks() {
+        return 20 * get(REGEN_DELAY);
+    }
+
+    public static double regenRadius() {
+        return get(REGEN_RADIUS);
+    }
+
+    public static float regenPercent() {
+        return (float) get(REGEN_PERCENT);
     }
 
     public static int altarCooldownTicks() {

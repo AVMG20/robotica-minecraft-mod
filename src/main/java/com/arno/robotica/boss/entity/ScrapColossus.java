@@ -39,7 +39,6 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -63,8 +62,10 @@ import java.util.Optional;
  * half health it enters phase 2 once: it calls up to three Scrap Drones and starts to overheat every 20 s. While it
  * overheats it stands still for 4 s venting steam with its furnace core open and takes double damage.
  *
- * <p>Never breaks blocks and only takes damage from attackers (no trap farming). Drops a Servo Core (loot table), and the
- * killer gets the loot (see BossModule#onDrops and BossLoot).
+ * <p>Never breaks blocks and only takes damage from attackers within {@link BossConfig#maxAttackerDistance()} blocks (no
+ * trap farming or sniping from afar). Its attacks only hit players, their pets and whatever fights it. Left alone it heals
+ * ({@link BossRules#regen}). Drops a Servo Core (loot table), and the killer gets the loot (see BossModule#onDrops and
+ * BossLoot).
  */
 public class ScrapColossus extends Monster implements RoboticaBoss {
     public static final float BASE_HEALTH = 300.0F;
@@ -80,6 +81,8 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
     public static final int OVERHEAT_INTERVAL = 400;
     /** Ticks the target must stay out of melee reach before scrap also flies at close range (pillars, pits, walls). */
     public static final int OUT_OF_REACH_TICKS = 60;
+    /** Normal scrap range; an unreachable target gets scrap out to the full follow range. */
+    public static final double THROW_RANGE = 28.0;
 
     /** What the Colossus is doing, synced to clients for the animation. */
     public enum Action {
@@ -104,6 +107,7 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
     private boolean minionsCalled;
     /** Ticks the current target has been out of melee reach. Server only, not saved. */
     private int outOfReachTicks;
+    private int aloneTicks;
     @Nullable
     private BlockPos altarPos;
 
@@ -143,7 +147,7 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
         goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 16.0F));
         goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        targetSelector.addGoal(1, new HurtByTargetGoal(this, ScrapDrone.class));
+        targetSelector.addGoal(1, new BossHurtByTargetGoal(this, ScrapDrone.class));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
@@ -245,6 +249,7 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
         LivingEntity target = getTarget();
         if (target != null && target.isAlive() && !isWithinMeleeAttackRange(target)) outOfReachTicks++;
         else outOfReachTicks = 0;
+        aloneTicks = BossRules.regen(this, aloneTicks);
         if (isOverheating()) {
             getNavigation().stop();
             setDeltaMovement(0.0, getDeltaMovement().y, 0.0);
@@ -325,7 +330,7 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
 
     // ------------------------------------------------------------------ attacks
 
-    /** The shockwave: hurts and throws back every living thing on the ground within SLAM_RADIUS (jumping dodges it). */
+    /** The shockwave: hurts and throws back players and their pets on the ground within SLAM_RADIUS (jumping dodges it). */
     public int slam() {
         if (!(level() instanceof ServerLevel server)) return 0;
         BlockPos below = blockPosition().below();
@@ -347,12 +352,11 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
         float damage = SLAM_DAMAGE * BossConfig.damageMultiplier();
         AABB area = getBoundingBox().inflate(SLAM_RADIUS, 1.5, SLAM_RADIUS);
         int hit = 0;
-        for (LivingEntity target : server.getEntitiesOfClass(LivingEntity.class, area, e -> e != this && e.isAlive() && !(e instanceof ScrapDrone))) {
+        for (LivingEntity target : server.getEntitiesOfClass(LivingEntity.class, area, e -> !(e instanceof ScrapDrone) && BossRules.isFoe(this, e))) {
             double dx = target.getX() - getX();
             double dz = target.getZ() - getZ();
             double dist = Math.sqrt(dx * dx + dz * dz);
             if (dist > SLAM_RADIUS + 1.0 || !target.onGround()) continue;
-            if (target instanceof Player p && (p.isCreative() || p.isSpectator())) continue;
             float falloff = (float) Mth.clamp(1.0 - dist / (SLAM_RADIUS + 1.0) * 0.5, 0.5, 1.0);
             if (target.hurt(damageSources().mobAttack(this), damage * falloff)) hit++;
             double len = Math.max(0.3, dist);
@@ -394,23 +398,26 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
 
     /**
      * Only attacks hurt it: damage that no living attacker caused (suffocation, cactus, drowning, falling anvils, unowned
-     * TNT or dispenser arrows, lightning, poison) does nothing, so it cannot be farmed in a trap. /kill and the void still
-     * work.
+     * TNT or dispenser arrows, lightning, poison) does nothing, so it cannot be farmed in a trap. Hits from attackers further
+     * away than the config allows do nothing either. /kill and the void still work.
      */
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        if (super.isInvulnerableTo(source)) return true;
+        if (super.isInvulnerableTo(source) || BossRules.attackerTooFar(this, source)) return true;
         return !(source.getEntity() instanceof LivingEntity) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
     /**
-     * Scrap goes at targets 6 to 28 blocks away, and at targets from 3 blocks on that it has not been able to reach in
-     * melee for {@value #OUT_OF_REACH_TICKS} ticks: no safe spot on a pillar, across a pit or behind a wall gap.
+     * Scrap goes at targets in sight 6 to {@value #THROW_RANGE} blocks away. A target it has not been able to reach in melee
+     * for {@value #OUT_OF_REACH_TICKS} ticks gets scrap from 3 blocks out to the full follow range, lobbed over cover too:
+     * no safe spot on a pillar, across a pit, behind a wall or out past its leash.
      */
     public boolean canThrowAt(LivingEntity target) {
         double d = distanceToSqr(target);
-        if (d >= 28.0 * 28.0 || !hasLineOfSight(target)) return false;
-        return d > 36.0 || (d > 9.0 && outOfReachTicks >= OUT_OF_REACH_TICKS);
+        boolean stuck = outOfReachTicks >= OUT_OF_REACH_TICKS;
+        double range = stuck ? Math.max(THROW_RANGE, getAttributeValue(Attributes.FOLLOW_RANGE)) : THROW_RANGE;
+        if (d >= range * range || (!stuck && !hasLineOfSight(target))) return false;
+        return d > 36.0 || (d > 9.0 && stuck);
     }
 
     /** Double damage while the core is exposed: the counterplay window. */

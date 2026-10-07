@@ -6,6 +6,8 @@ import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -38,20 +40,25 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -69,8 +76,10 @@ import java.util.Optional;
  * with its furnace doors open and takes extra damage. Below half health it marks a ring of eruptions around itself and
  * attacks faster.
  *
- * <p>Fairness: only damage with a living attacker hurts it (no traps, lava or suffocation), it never breaks blocks or sets
- * fires, walks on lava, and a target it cannot reach in melee gets mortar and eruptions. Numbers: {@link BossConfig}.
+ * <p>Fairness: only damage with a living attacker within {@link BossConfig#maxAttackerDistance()} blocks hurts it (no
+ * traps, lava, suffocation or sniping from afar), its attacks only hit players, their pets and whatever fights it, it never
+ * breaks blocks or sets fires, walks on lava, and a target it cannot reach in melee gets mortar and eruptions out to its
+ * full follow range. Left alone it heals ({@link BossRules#regen}). Numbers: {@link BossConfig}.
  */
 public class ForgeTyrant extends Monster implements RoboticaBoss {
     public static final int BREATH_WINDUP = 20;
@@ -88,7 +97,7 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
     public static final double ERUPT_RADIUS = 1.5;
     public static final double ERUPT_RANGE = 24.0;
     public static final double MORTAR_RANGE = 28.0;
-    /** Ticks the target must stay out of melee reach before mortar and eruptions also go at close range. */
+    /** Ticks the target must stay out of melee reach before mortar and eruptions go at close range and out to the follow range. */
     public static final int OUT_OF_REACH_TICKS = 60;
 
     /** What the Tyrant is doing, synced to clients for the animation. */
@@ -102,14 +111,21 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
 
     private static final EntityDataAccessor<Byte> ACTION = SynchedEntityData.defineId(ForgeTyrant.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> PHASE_TWO = SynchedEntityData.defineId(ForgeTyrant.class, EntityDataSerializers.BOOLEAN);
+    /** Direction of the current flame breath; the client draws the flames. */
+    private static final EntityDataAccessor<Vector3f> BREATH_DIR = SynchedEntityData.defineId(ForgeTyrant.class, EntityDataSerializers.VECTOR3);
+    /** Marked eruption spots (list "S" of x, y, z, at); the client draws the glowing rings. Changes only when spots come or go. */
+    private static final EntityDataAccessor<CompoundTag> SPOTS = SynchedEntityData.defineId(ForgeTyrant.class, EntityDataSerializers.COMPOUND_TAG);
 
     private final ServerBossEvent bossEvent = (ServerBossEvent) new ServerBossEvent(getDisplayName(),
             BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10).setPlayBossMusic(false);
 
-    /** A marked spot that erupts at {@code at} (game time). Server only, not saved. */
+    /** A marked spot that erupts at {@code at} (game time). Not saved; synced to clients through {@link #SPOTS}. */
     private record Spot(Vec3 pos, long at) {}
 
     private final List<Spot> spots = new ArrayList<>();
+    /** Client copy of the marked spots. */
+    private List<Spot> clientSpots = List.of();
+    private int aloneTicks;
     private int actionTicks;
     private int attackCooldown = 40;
     private int attacksSinceVent;
@@ -146,6 +162,8 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         super.defineSynchedData(builder);
         builder.define(ACTION, (byte) 0);
         builder.define(PHASE_TWO, false);
+        builder.define(BREATH_DIR, new Vector3f(0.0F, 0.0F, 1.0F));
+        builder.define(SPOTS, new CompoundTag());
     }
 
     @Override
@@ -157,7 +175,7 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 16.0F));
         goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        targetSelector.addGoal(1, new BossHurtByTargetGoal(this));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
@@ -207,6 +225,11 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         this.attackCooldown = ticks;
     }
 
+    /** Ticks it has been without a player nearby (tests use it to skip the wait before it heals). */
+    public void setAloneTicks(int ticks) {
+        this.aloneTicks = ticks;
+    }
+
     public int pendingEruptions() {
         return spots.size();
     }
@@ -227,6 +250,31 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
     public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
         super.onSyncedDataUpdated(key);
         if (ACTION.equals(key)) actionTicks = 0;
+        if (SPOTS.equals(key) && level().isClientSide) clientSpots = readSpots(entityData.get(SPOTS));
+    }
+
+    private void syncSpots() {
+        ListTag list = new ListTag();
+        for (Spot s : spots) {
+            CompoundTag t = new CompoundTag();
+            t.putDouble("x", s.pos().x);
+            t.putDouble("y", s.pos().y);
+            t.putDouble("z", s.pos().z);
+            t.putLong("at", s.at());
+            list.add(t);
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.put("S", list);
+        entityData.set(SPOTS, tag);
+    }
+
+    private static List<Spot> readSpots(CompoundTag tag) {
+        List<Spot> out = new ArrayList<>();
+        for (Tag t : tag.getList("S", Tag.TAG_COMPOUND)) {
+            CompoundTag c = (CompoundTag) t;
+            out.add(new Spot(new Vec3(c.getDouble("x"), c.getDouble("y"), c.getDouble("z")), c.getLong("at")));
+        }
+        return out;
     }
 
     @Override
@@ -274,6 +322,33 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
             level().addParticle(ParticleTypes.FALLING_LAVA, getX() + (random.nextDouble() - 0.5) * 2.0, getY() + 1.0 + random.nextDouble(),
                     getZ() + (random.nextDouble() - 0.5) * 2.0, 0.0, 0.0, 0.0);
         }
+        if (a == Action.BREATH) {
+            Vector3f d = entityData.get(BREATH_DIR);
+            for (int i = 0; i < 8; i++) {
+                double speed = 0.45 + random.nextDouble() * 0.3;
+                level().addParticle(ParticleTypes.FLAME, mouth.x, mouth.y, mouth.z, (d.x + random.nextGaussian() * 0.12) * speed,
+                        (d.y + random.nextGaussian() * 0.08) * speed, (d.z + random.nextGaussian() * 0.12) * speed);
+            }
+            if (actionTicks % 3 == 0) level().addParticle(ParticleTypes.LARGE_SMOKE, mouth.x, mouth.y, mouth.z, d.x * 0.3, d.y * 0.3 + 0.03, d.z * 0.3);
+        }
+        long now = level().getGameTime();
+        if (now % 2 == 0) {
+            for (Spot s : clientSpots) {
+                if (now >= s.at()) continue;
+                double spin = now * 0.15;
+                for (int i = 0; i < 10; i++) {
+                    double angle = spin + i * Math.PI * 2.0 / 10;
+                    level().addParticle(ParticleTypes.FLAME, s.pos().x + Math.cos(angle) * ERUPT_RADIUS, s.pos().y + 0.1,
+                            s.pos().z + Math.sin(angle) * ERUPT_RADIUS, 0.0, 0.0, 0.0);
+                }
+                if (s.at() - now < 12) {
+                    for (int i = 0; i < 2; i++) {
+                        level().addParticle(ParticleTypes.LAVA, s.pos().x + random.nextGaussian() * 0.4, s.pos().y + 0.1,
+                                s.pos().z + random.nextGaussian() * 0.4, 0.0, 0.0, 0.0);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -285,6 +360,7 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         if (target != null && target.isAlive() && !isWithinMeleeAttackRange(target)) outOfReachTicks++;
         else outOfReachTicks = 0;
         tickSpots();
+        aloneTicks = BossRules.regen(this, aloneTicks);
         if (isVenting()) {
             getNavigation().stop();
             setDeltaMovement(0.0, getDeltaMovement().y, 0.0);
@@ -315,6 +391,7 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
 
     public void startVent() {
         spots.clear();
+        syncSpots();
         setAction(Action.VENT);
         attacksSinceVent = 0;
         goalSelector.disableControlFlag(Goal.Flag.MOVE);
@@ -336,15 +413,22 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
 
     // ------------------------------------------------------------------ attacks
 
-    /** Which big attacks fit this target right now. Mortar and eruptions also go at a close target it cannot reach. */
+    /**
+     * Which big attacks fit this target right now. A target it has not reached in melee for {@value #OUT_OF_REACH_TICKS}
+     * ticks (a pillar, across lava, out past its leash) gets mortar and eruptions at close range and out to the full follow
+     * range; eruptions need no line of sight.
+     */
     public List<Action> attackOptions(LivingEntity target) {
         List<Action> options = new ArrayList<>();
         double d = distanceTo(target);
         boolean sight = hasLineOfSight(target);
         boolean stuck = outOfReachTicks >= OUT_OF_REACH_TICKS;
+        double reach = getAttributeValue(Attributes.FOLLOW_RANGE);
+        double mortarRange = stuck ? Math.max(MORTAR_RANGE, reach) : MORTAR_RANGE;
+        double eruptRange = stuck ? Math.max(ERUPT_RANGE, reach) : ERUPT_RANGE;
         if (sight && d <= BREATH_RANGE - 1.0 && Math.abs(target.getY() - getY()) < 3.0) options.add(Action.BREATH_WINDUP);
-        if (sight && d <= MORTAR_RANGE && (d > 8.0 || stuck)) options.add(Action.MORTAR_WINDUP);
-        if (d <= ERUPT_RANGE && (d > 4.0 || stuck)) options.add(Action.ERUPT_WINDUP);
+        if (sight && d <= mortarRange && (d > 8.0 || stuck)) options.add(Action.MORTAR_WINDUP);
+        if (d <= eruptRange && (d > 4.0 || stuck)) options.add(Action.ERUPT_WINDUP);
         return options;
     }
 
@@ -361,6 +445,7 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         Vec3 aim = target != null ? target.getBoundingBox().getCenter().subtract(mouth) : forward();
         if (aim.lengthSqr() < 1.0E-4) aim = forward();
         breathDir = aim.normalize();
+        entityData.set(BREATH_DIR, breathDir.toVector3f());
         float yaw = (float) (Mth.atan2(breathDir.z, breathDir.x) * Mth.RAD_TO_DEG) - 90.0F;
         setYRot(yaw);
         yBodyRot = yaw;
@@ -369,17 +454,12 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         playSound(SoundEvents.BLAZE_SHOOT, 2.0F, 0.5F);
     }
 
-    /** One tick of flame breath: particles every tick, damage every {@value #BREATH_PULSE} ticks. Returns how many it hit. */
+    /** One tick of flame breath: damage every {@value #BREATH_PULSE} ticks (clients draw the flames). Returns how many it hit. */
     public int breathTick(int tick) {
         if (!(level() instanceof ServerLevel server)) return 0;
         setYRot(yBodyRot);
         yHeadRot = yBodyRot;
         Vec3 mouth = mouthPos();
-        for (int i = 0; i < 8; i++) {
-            Vec3 v = breathDir.add(random.nextGaussian() * 0.12, random.nextGaussian() * 0.08, random.nextGaussian() * 0.12);
-            server.sendParticles(ParticleTypes.FLAME, mouth.x, mouth.y, mouth.z, 0, v.x, v.y, v.z, 0.45 + random.nextDouble() * 0.3);
-        }
-        if (tick % 3 == 0) server.sendParticles(ParticleTypes.LARGE_SMOKE, mouth.x, mouth.y, mouth.z, 0, breathDir.x, breathDir.y + 0.1, breathDir.z, 0.3);
         if (tick % BREATH_PULSE != 0) return 0;
         playSound(SoundEvents.BLAZE_SHOOT, 1.5F, 0.6F + random.nextFloat() * 0.2F);
         float damage = BossConfig.tyrantBreath();
@@ -400,7 +480,7 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
     }
 
     private boolean canHurt(LivingEntity e) {
-        return e != this && e.isAlive() && !(e instanceof Player p && (p.isCreative() || p.isSpectator()));
+        return BossRules.isFoe(this, e);
     }
 
     /** Lobs globs of magma at and around the target: three, five in phase 2. */
@@ -447,30 +527,21 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
 
     private void mark(Vec3 pos) {
         spots.add(new Spot(pos, level().getGameTime() + ERUPT_DELAY));
+        syncSpots();
         level().playSound(null, pos.x, pos.y, pos.z, SoundEvents.LAVA_POP, SoundSource.HOSTILE, 1.5F, 0.6F);
     }
 
-    /** Glowing rings over marked spots, then the eruption. */
+    /** Erupts the marked spots that are due (clients draw the glowing rings from the synced list). */
     private void tickSpots() {
         if (spots.isEmpty() || !(level() instanceof ServerLevel server)) return;
         long now = server.getGameTime();
         List<Spot> due = new ArrayList<>();
         for (Spot s : spots) {
-            if (now >= s.at()) {
-                due.add(s);
-                continue;
-            }
-            if (now % 2 != 0) continue;
-            int points = 10;
-            double spin = now * 0.15;
-            for (int i = 0; i < points; i++) {
-                double a = spin + i * Math.PI * 2.0 / points;
-                server.sendParticles(ParticleTypes.FLAME, s.pos().x + Math.cos(a) * ERUPT_RADIUS, s.pos().y + 0.1,
-                        s.pos().z + Math.sin(a) * ERUPT_RADIUS, 1, 0.0, 0.0, 0.0, 0.0);
-            }
-            if (s.at() - now < 12) server.sendParticles(ParticleTypes.LAVA, s.pos().x, s.pos().y + 0.1, s.pos().z, 2, 0.4, 0.0, 0.4, 0.0);
+            if (now >= s.at()) due.add(s);
         }
+        if (due.isEmpty()) return;
         spots.removeAll(due);
+        syncSpots();
         for (Spot s : due) eruptAt(server, s.pos());
     }
 
@@ -512,11 +583,12 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
 
     /**
      * Only attacks hurt it: damage without a living attacker (lava, fire, magma floors, suffocation, cactus, unowned TNT or
-     * dispenser arrows, lightning, poison) does nothing. /kill and the void still work.
+     * dispenser arrows, lightning, poison) does nothing, and neither do hits from attackers further away than the config
+     * allows. /kill and the void still work.
      */
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        if (super.isInvulnerableTo(source)) return true;
+        if (super.isInvulnerableTo(source) || BossRules.attackerTooFar(this, source)) return true;
         return !(source.getEntity() instanceof LivingEntity) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
@@ -538,11 +610,42 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         return fluid.is(FluidTags.LAVA);
     }
 
+    /** Paths over lava like a strider (the default ground navigation refuses lava). */
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        return new LavaWalkerNavigation(this, level);
+    }
+
+    /** Ground navigation that takes lava and fire as walkable, like the vanilla strider's. */
+    static class LavaWalkerNavigation extends GroundPathNavigation {
+        LavaWalkerNavigation(ForgeTyrant tyrant, Level level) {
+            super(tyrant, level);
+        }
+
+        @Override
+        protected PathFinder createPathFinder(int maxVisitedNodes) {
+            nodeEvaluator = new WalkNodeEvaluator();
+            nodeEvaluator.setCanPassDoors(true);
+            return new PathFinder(nodeEvaluator, maxVisitedNodes);
+        }
+
+        @Override
+        protected boolean hasValidPathType(PathType type) {
+            return type == PathType.LAVA || type == PathType.DAMAGE_FIRE || type == PathType.DANGER_FIRE || super.hasValidPathType(type);
+        }
+
+        @Override
+        public boolean isStableDestination(BlockPos pos) {
+            return level.getBlockState(pos).is(Blocks.LAVA) || super.isStableDestination(pos);
+        }
+    }
+
     /** Everyone who fought it (had the boss bar and stayed close) gets the guide step, not only the killer. */
     @Override
     public void die(DamageSource source) {
         super.die(source);
         spots.clear();
+        syncSpots();
         if (!(level() instanceof ServerLevel server)) return;
         server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.5, getZ(), 1, 0.0, 0.0, 0.0, 0.0);
         server.sendParticles(ParticleTypes.LAVA, getX(), getY() + 1.5, getZ(), 30, 0.8, 1.0, 0.8, 0.0);
@@ -660,10 +763,12 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
 
     // ------------------------------------------------------------------ goal
 
-    /** Runs one big attack from wind-up to recovery, then counts it towards the next vent. */
+    /** Runs one big attack from wind-up to recovery, then counts it towards the next vent if it went off. */
     class AttackGoal extends Goal {
         @Nullable
         private Action chosen;
+        /** Whether this attack went off; an aborted wind-up does not count towards the vent. */
+        private boolean fired;
 
         AttackGoal() {
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
@@ -687,6 +792,7 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         public void start() {
             if (chosen == null) return;
             lastAttack = chosen;
+            fired = false;
             setAction(chosen);
             getNavigation().stop();
             switch (chosen) {
@@ -713,7 +819,10 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
             if (a != Action.BREATH && target != null) getLookControl().setLookAt(target, 30.0F, 30.0F);
             switch (a) {
                 case BREATH_WINDUP -> {
-                    if (actionTicks >= BREATH_WINDUP) startBreath(target);
+                    if (actionTicks >= BREATH_WINDUP) {
+                        startBreath(target);
+                        fired = true;
+                    }
                 }
                 case BREATH -> {
                     breathTick(actionTicks);
@@ -721,13 +830,19 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
                 }
                 case MORTAR_WINDUP -> {
                     if (actionTicks >= MORTAR_WINDUP) {
-                        if (target != null && target.isAlive()) fireMortar(target);
+                        if (target != null && target.isAlive()) {
+                            fireMortar(target);
+                            fired = true;
+                        }
                         setAction(Action.MORTAR);
                     }
                 }
                 case ERUPT_WINDUP -> {
                     if (actionTicks >= ERUPT_WINDUP) {
-                        if (target != null && target.isAlive()) erupt(target);
+                        if (target != null && target.isAlive()) {
+                            erupt(target);
+                            fired = true;
+                        }
                         setAction(Action.ERUPT);
                     }
                 }
@@ -746,7 +861,8 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         public void stop() {
             if (action() != Action.VENT && action() != Action.IDLE) setAction(Action.IDLE);
             attackCooldown = BossConfig.tyrantCooldown(isPhaseTwo());
-            if (++attacksSinceVent >= BossConfig.tyrantAttacksPerVent() && isAlive()) startVent();
+            if (fired && ++attacksSinceVent >= BossConfig.tyrantAttacksPerVent() && isAlive()) startVent();
+            fired = false;
         }
     }
 }

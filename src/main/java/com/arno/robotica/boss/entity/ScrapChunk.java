@@ -11,6 +11,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -27,6 +28,8 @@ public class ScrapChunk extends ThrowableProjectile {
     public static final BlockState LOOK = Blocks.WEATHERED_CUT_COPPER.defaultBlockState();
     private static final double GRAVITY = 0.05;
     private static final double SPEED = 1.0;
+    /** Longest flight in ticks: far throws fly faster instead of higher. */
+    private static final int MAX_FLIGHT = 40;
 
     private float damage = ScrapColossus.SCRAP_DAMAGE;
 
@@ -42,15 +45,9 @@ public class ScrapChunk extends ThrowableProjectile {
         this.damage = damage;
     }
 
-    /** Ballistic lob: fixed horizontal speed, vertical speed chosen so the arc ends at the aim point (drag included roughly). */
+    /** Ballistic lob that lands on the aim point. */
     public void lobAt(Vec3 aim) {
-        double dx = aim.x - getX();
-        double dz = aim.z - getZ();
-        double dy = aim.y - getY();
-        double horizontal = Math.max(0.5, Math.sqrt(dx * dx + dz * dz));
-        double ticks = horizontal * 1.08 / SPEED;
-        double vy = dy / ticks + 0.5 * GRAVITY * ticks;
-        setDeltaMovement(dx / horizontal * SPEED, vy, dz / horizontal * SPEED);
+        setDeltaMovement(BossRules.lob(position(), aim, SPEED, GRAVITY, MAX_FLIGHT));
     }
 
     @Override
@@ -74,7 +71,8 @@ public class ScrapChunk extends ThrowableProjectile {
 
     @Override
     protected boolean canHitEntity(Entity target) {
-        return super.canHitEntity(target) && !(target instanceof ScrapColossus) && !(target instanceof ScrapDrone);
+        return super.canHitEntity(target) && !(target instanceof ScrapColossus) && !(target instanceof ScrapDrone)
+                && BossRules.isFoe(getOwner() instanceof Mob mob ? mob : null, target);
     }
 
     @Override
