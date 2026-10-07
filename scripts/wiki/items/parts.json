@@ -465,7 +465,8 @@
    },
    "see": [
     "guide:logistics"
-   ]
+   ],
+   "image": "shots/17_item_pipes.jpg|Item Pipes from a chest through a Grinder and an Electric Furnace into a chest"
   },
   {
    "items": [
@@ -658,7 +659,8 @@
       "1 block per tick, 5 FE each, 75% matter back"
      ]
     ]
-   }
+   },
+   "image": "shots/25_architect_build.jpg|Halls in four styles built around an Architect Table"
   },
   {
    "items": [
@@ -740,7 +742,8 @@
    ],
    "see": [
     "guide:bosses"
-   ]
+   ],
+   "image": "shots/27_forge_tyrant.jpg|The Forge Tyrant venting next to its Forge Altar"
   },
   {
    "items": [

@@ -632,6 +632,8 @@ def main():
                 kind, _, arg = see.partition(':')
                 if not ((kind == 'guide' and arg in slugs) or (kind == 'multiblock' and arg in mbs) or (kind == 'item' and arg in idset)):
                     warn(f'facts {e["items"][0]}: broken see link {see}')
+            if 'image' in e and not (ROOT / 'docs' / e['image'].split('|')[0]).exists():
+                warn(f'facts {e["items"][0]}: missing image {e["image"]}')
     mb_of = {}
     for key, mb in mbs.items():
         for b in mb['parts']:

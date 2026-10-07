@@ -26,7 +26,7 @@ Age 0 needs only wood, stone and copper. No iron.
 - Right-click the robot with the wound Mainspring (or a cell) to power it. Place a [[supply_crate]] (27 slots) next to the robot: it outputs there.
 - Sneak-right-click with an empty hand: status and work area.
 
-{{image shots/gui_11_stumpy.jpg|Stumpy's screen}}
+{{image shots/gui_stumpy.jpg|Stumpy's screen}}
 
 ## Plates by hand
 

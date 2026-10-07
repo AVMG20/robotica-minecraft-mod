@@ -38,6 +38,10 @@ A variable-size cuboid from 5x5x5 to 7x7x7 (outside size). Age 2-3 power.
 
 {{multiblock fission_reactor_7}}
 
+{{image shots/19_fission_reactor.jpg|A formed 5x5x5 Fission Reactor}}
+
+{{image shots/gui_fission_formed.jpg|Fission Reactor Controller, formed}}
+
 ## Heat
 
 - Up to **1,000 C**: full output.

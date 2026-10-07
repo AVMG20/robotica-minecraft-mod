@@ -23,6 +23,8 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 | Power tools, FE weapons | Age 1 / 2 / 3 / 4: 2 / 3 / 4 / 5 |
 | Exo pieces | Mk1 / 2 / 3 / 4: 1 / 2 / 3 / 4 |
 
+{{image shots/gui_tinkers_bench.jpg|Tinker's Bench with a Null Drill and five modules}}
+
 ## Tool modules
 
 | Module | Fits | Min. Age | Does |

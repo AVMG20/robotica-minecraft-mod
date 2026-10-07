@@ -48,6 +48,8 @@ The Assembler also makes circuits, motors and casings for about a quarter less m
 
 Made in the Assembler. Burned pellets leave a [[depleted_fuel_pellet]]; the Centrifuge recycles it.
 
+{{image shots/15_industry_machines.jpg|Assemblers, Centrifuges, Alloy Smelters, Electric Furnaces and Grinders, Mk1 to Mk4}}
+
 ## Machine tiers
 
 | | Mk1 | Mk2 | Mk3 | Mk4 |

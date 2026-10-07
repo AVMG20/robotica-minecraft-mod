@@ -22,6 +22,8 @@ Two machine lines, Mk1 (Age 1, needs a Basic Circuit) to Mk4. Both work on `c:` 
 - Ancient debris does not grind.
 - Dusts smelt into ingots.
 
+{{image shots/gui_grinder.jpg|Grinder Mk2 menu}}
+
 ## Electric Furnace
 
 - Every vanilla smelting recipe at half the time, 20 FE/t per lane and item.
@@ -38,6 +40,8 @@ Optional second input. One item is loaded straight into the Grinder and lasts it
 | [[ferrothorium_grinding_balls]] | +50% | 10% | 32 | Mk2 |
 | [[pyrosteel_grinding_balls]] | +100% | 20% | 64 | Mk3 |
 | [[resonant_grinding_balls]] | +150% | 25% | 128 | Mk4 |
+
+{{image shots/16_grinder_furnace.jpg|Grinders and Electric Furnaces, Mk1 to Mk4}}
 
 ## Mk tiers
 

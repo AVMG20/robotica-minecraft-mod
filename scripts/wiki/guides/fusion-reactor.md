@@ -19,6 +19,8 @@ A fixed 7x3x7 structure (Age 4). It needs a big charge to start and burns fuel n
 
 {{multiblock fusion_reactor}}
 
+{{image shots/21_fusion_reactor.jpg|A formed Fusion Reactor}}
+
 ## Running it
 
 1. **Charge**: Power Ports take FE in, at most **1,000,000 FE/t** in total, until the **20,000,000 FE** ignition charge is full. Use a Capacitor Bank or Tesla Coils.
@@ -33,5 +35,7 @@ A fixed 7x3x7 structure (Age 4). It needs a big charge to start and burns fuel n
 - **No throttle**: it burns fuel whether or not the power is taken (20M FE buffer).
 - **Starve**: without fuel the plasma survives 5 s, then collapses and needs a new charge. Switching off or breaking the structure collapses it too.
 - No explosions, no block damage.
+
+{{image shots/gui_fusion_formed.jpg|Fusion Reactor Controller, formed}}
 
 {{guide capacitor-bank}}
