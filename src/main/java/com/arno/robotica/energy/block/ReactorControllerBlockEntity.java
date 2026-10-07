@@ -311,6 +311,7 @@ public class ReactorControllerBlockEntity extends StructureControllerBlockEntity
 
     private void scram() {
         scrammed = true;
+        if (EnergyConfig.reactorScramVoidsFuel() && burnLeft > 0 && burnTotal > 0) finishUnit();
         if (level != null) {
             level.playSound(null, worldPosition, SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 1.0F, 0.6F);
             level.playSound(null, worldPosition, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 0.8F);

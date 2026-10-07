@@ -372,13 +372,13 @@
    "items": [
     "radiant_isotope"
    ],
-   "what": "Rare Centrifuge result from spent fuel. Goes into Fusion Fuel."
+   "what": "Centrifuge result from spent fuel (20%). Goes into Fusion Fuel."
   },
   {
    "items": [
     "fusion_fuel_pellet"
    ],
-   "what": "Fusion Reactor fuel: 200,000 FE/t for 2,400 ticks.",
+   "what": "Fusion Reactor fuel: 200,000 FE/t for 6,000 ticks (5 minutes).",
    "see": [
     "guide:fusion-reactor"
    ]

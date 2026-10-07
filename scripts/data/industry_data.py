@@ -176,7 +176,7 @@ def recipes():
     # ---- Centrifuge
     # The rare result goes first: recipe viewers and the item audit read the first result.
     processing('centrifuging', 'depleted_fuel_pellet', ['depleted_fuel_pellet'],
-               [result('radiant_isotope', chance=0.1), result('thorium_dust'), result('graphite_dust', chance=0.5)],
+               [result('radiant_isotope', chance=0.2), result('thorium_dust'), result('graphite_dust', chance=0.5)],
                time=400, power=100)
     processing('centrifuging', 'magma_cream', ['minecraft:magma_cream'],
                [result('minecraft:slime_ball'), result('minecraft:blaze_powder')], time=200)
@@ -415,7 +415,7 @@ def data_maps():
         'robotica:enriched_fuel_pellet': {'heat': 1000, 'ticks': 12000, 'waste': waste},
     }})
     write(DATA / 'data_maps/item/fusion_fuel.json', {'values': {
-        'robotica:fusion_fuel_pellet': {'power': 200000, 'ticks': 2400},
+        'robotica:fusion_fuel_pellet': {'power': 200000, 'ticks': 6000},
     }})
 
 
@@ -457,8 +457,8 @@ DETAILS = {
     'resonant_lattice': 'Assembler only',
     'thorium_fuel_pellet': 'RTG: 150 FE/t for 20 minutes. Also reactor fuel',
     'enriched_fuel_pellet': '2.5x the heat of a thorium pellet',
-    'depleted_fuel_pellet': 'Centrifuge: thorium dust, rarely a Radiant Isotope',
-    'radiant_isotope': 'Centrifuge: 10% from Depleted Fuel Pellets',
+    'depleted_fuel_pellet': 'Centrifuge: thorium dust, sometimes a Radiant Isotope',
+    'radiant_isotope': 'Centrifuge: 20% from Depleted Fuel Pellets',
 }
 
 
@@ -496,7 +496,7 @@ def lang():
         'jei.robotica.info.thorium_ore': 'Found in the Overworld from Y -48 to 32 (most around Y -8), in stone and deepslate. Common enough to mine by hand. Drops Raw Thorium.',
         'jei.robotica.info.pyrolite_ore': 'Found in Nether netherrack, more of it in basalt deltas. Drops a Pyrolite Shard. Needs an iron pickaxe.',
         'jei.robotica.info.resonite_ore': 'Found in end stone on the outer End islands (not the main island). Rare. Drops a Resonite Crystal. Needs a diamond pickaxe.',
-        'jei.robotica.info.depleted_fuel_pellet': 'Waste of a burned fuel pellet, from the RTG or a fission reactor. Put it in a Centrifuge: thorium dust back, sometimes graphite, and a 10% chance of a Radiant Isotope.',
+        'jei.robotica.info.depleted_fuel_pellet': 'Waste of a burned fuel pellet, from the RTG or a fission reactor. Put it in a Centrifuge: thorium dust back, sometimes graphite, and a 20% chance of a Radiant Isotope.',
         'jei.robotica.info.thorium_fuel_pellet': 'RTG fuel: %s FE/t for %s minutes, one pellet at a time. Also fuel for the fission reactor, which gets more out of it.',
         'robotica.configuration.machines': 'Industry machines',
         'robotica.configuration.alloySmelterPower': 'Alloy Smelter power (FE/t)',

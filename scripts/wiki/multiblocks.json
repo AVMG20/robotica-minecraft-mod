@@ -4,11 +4,11 @@
     "controller": "reactor_controller",
     "guide": "fission-reactor",
     "check": "fission",
-    "about": "Smallest reactor: one Fuel Rod column with water on all four sides. About 1,150 FE/t on thorium pellets.",
+    "about": "Smallest reactor: one Fuel Rod column with water on all four sides. About 1,100 FE/t on thorium pellets.",
     "notes": [
       "Fuel Rods fill the whole column, floor to roof.",
       "Only the 4 horizontal neighbours of a rod cool it.",
-      "Swap the water for packed ice for about 1,350 FE/t."
+      "Swap the water for packed ice for about 1,280 FE/t."
     ],
     "legend": {
       "C": "reactor_casing",
@@ -63,7 +63,7 @@
     "controller": "reactor_controller",
     "guide": "fission-reactor",
     "check": "fission",
-    "about": "Biggest default reactor: 13 Fuel Rod columns in a Cryo Coolant checkerboard. About 45,000 FE/t on enriched pellets at 32% load.",
+    "about": "Biggest default reactor: 13 Fuel Rod columns in a Cryo Coolant checkerboard. About 37,000 FE/t on enriched pellets at 32% load.",
     "notes": [
       "Every rod has Cryo Coolant on its four sides (or the wall).",
       "Runs hot at full power: set the control rods so it stays under 1,000 C.",
@@ -250,7 +250,7 @@
     "about": "Fixed size. A ring of 16 Fusion Coils around an empty 3x3 plasma chamber, one layer high.",
     "notes": [
       "The 3x3 middle must stay empty: that is where the plasma burns.",
-      "Power Ports take the 20M FE ignition charge in and send power out.",
+      "Power Ports take the 100M FE ignition charge in and send power out.",
       "Access Ports only take fuel in."
     ],
     "legend": {

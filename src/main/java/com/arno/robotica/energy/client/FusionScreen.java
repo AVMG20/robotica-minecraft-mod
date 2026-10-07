@@ -7,6 +7,7 @@ import com.arno.robotica.energy.menu.FusionMenu;
 import com.arno.robotica.energy.net.ControllerActionPayload;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -15,6 +16,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /** Fusion Reactor GUI: ignition charge, plasma, output and buffer, fuel slots, an on/off switch, status and structure. */
 public class FusionScreen extends ControllerScreen<FusionMenu> {
     private FitButton powerButton;
+    private Boolean shownEnabled;
 
     public FusionScreen(FusionMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -32,13 +34,17 @@ public class FusionScreen extends ControllerScreen<FusionMenu> {
         super.init();
         addShowButton(150, 92);
         powerButton = addRenderableWidget(new FitButton(leftPos + 98, topPos + 92, 48, 18, Component.empty(),
-                b -> PacketDistributor.sendToServer(new ControllerActionPayload(menu.pos(), ControllerActionPayload.SET_ENABLED, menu.enabled() ? 0 : 1)),
-                Component.translatable("gui.robotica.energy.fusion_power_tip")));
+                b -> PacketDistributor.sendToServer(new ControllerActionPayload(menu.pos(), ControllerActionPayload.SET_ENABLED, menu.enabled() ? 0 : 1))));
+        shownEnabled = null;
         updateButton();
     }
 
     private void updateButton() {
-        powerButton.setMessage(Component.translatable(menu.enabled() ? "gui.robotica.energy.fusion_on" : "gui.robotica.energy.fusion_off"));
+        boolean on = menu.enabled();
+        if (shownEnabled != null && shownEnabled == on) return;
+        shownEnabled = on;
+        powerButton.setMessage(Component.translatable(on ? "gui.robotica.energy.fusion_on" : "gui.robotica.energy.fusion_off"));
+        powerButton.setTooltip(Tooltip.create(Component.translatable(on ? "gui.robotica.energy.fusion_power_tip_on" : "gui.robotica.energy.fusion_power_tip_off")));
     }
 
     @Override

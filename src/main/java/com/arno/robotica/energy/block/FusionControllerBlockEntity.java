@@ -33,7 +33,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
  * Ports, the controller in a side wall; inside, a ring of 16 Fusion Coils around an empty 3x3 plasma chamber.
  * <ol>
  *   <li>Charging: the Power Ports take FE in (up to {@code fusionChargeRate} per tick) until the ignition charge
- *       (20M FE by default) is full. Tesla Coils, cables and Capacitor Banks all work.</li>
+ *       (100M FE by default) is full. Tesla Coils, cables and Capacitor Banks all work.</li>
  *   <li>Ignition: with a full charge, fuel in the controller and the reactor switched on, the charge is spent and the
  *       plasma lights.</li>
  *   <li>Burning: each unit of fusion fuel gives its {@code power} FE/t for its {@code ticks}; the output ramps up over

@@ -4,7 +4,7 @@ icon: fusion_controller
 order: 50
 summary: The fixed 7x3x7 Age 4 Fusion Reactor: ignition charge, fusion fuel and how the plasma behaves.
 ---
-A fixed 7x3x7 structure (Age 4). It needs a 20M FE charge to start and burns fuel nonstop once lit.
+A fixed 7x3x7 structure (Age 4). It needs a 100M FE charge to start and burns fuel nonstop once lit.
 
 ## Parts
 
@@ -23,17 +23,21 @@ A fixed 7x3x7 structure (Age 4). It needs a 20M FE charge to start and burns fue
 
 ## Running it
 
-1. **Charge**: Power Ports take FE in (and send the output out), at most **1,000,000 FE/t** in total, until the **20,000,000 FE** ignition charge is full. Use a Capacitor Bank or Tesla Coils.
-2. **Fuel**: put [[fusion_fuel_pellet]] in the controller or an Access Port. Its [[radiant_isotope]] comes from centrifuging [[depleted_fuel_pellet]] (10% chance), so run a fission reactor first.
-3. **Ignite**: switch it on; the charge is spent and the plasma lights.
+1. **Build** it (above).
+2. **Charge**: feed **100,000,000 FE** into a Power Port (at most 1,000,000 FE/t in total). The same port sends the power out. Use a Capacitor Bank or Tesla Coils.
+3. **Fuel**: put [[fusion_fuel_pellet]] in the controller or an Access Port.
+4. **Switch on**: the GUI button shows **Running** (click to stop or start). The charge is spent and the plasma lights.
+
+It runs as long as it has fuel: one pellet lasts **5 minutes**. With no fuel for 5 s, or when switched off, the plasma collapses and needs a new charge.
 
 | Fuel | Output | Burn time |
 |---|---|---|
-| [[fusion_fuel_pellet]] | 200,000 FE/t | 2,400 ticks |
+| [[fusion_fuel_pellet]] | 200,000 FE/t | 6,000 ticks (5 min) |
 
+- **Fuel source**: [[radiant_isotope]] comes from centrifuging [[depleted_fuel_pellet]] (20% chance): run a fission reactor first.
 - **Warmup**: output ramps from 0 to full over 10 s.
 - **No throttle**: it burns fuel whether or not the power is taken (20M FE buffer).
-- **Starve**: without fuel the plasma survives 5 s, then collapses and needs a new charge. Switching off or breaking the structure collapses it too.
+- Breaking the structure also collapses the plasma.
 
 {{image shots/gui_fusion_formed.jpg|Fusion Reactor Controller, formed}}
 

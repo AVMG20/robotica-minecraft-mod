@@ -48,6 +48,7 @@ Every rod needs coolant beside it. In a 5x5x5, put rods in an X (corners and cen
 
 - Up to **1,000 C**: full output.
 - Above it the output throttles down to 25%; at **1,800 C** it SCRAMs. Reset from the GUI below 200 C.
+- A SCRAM loses the burning pellet: it turns into [[depleted_fuel_pellet]].
 
 Control rods (0-100%) are set with the GUI slider; 100% stops the reactor. Heat above the cooling is wasted fuel. Fuel only burns while the 5M FE buffer has room.
 
@@ -57,8 +58,8 @@ After a SCRAM, push rods in or add coolant first, then Reset: with the same setu
 
 | Build | Output |
 |---|---|
-| 5x5x5, one column of 3 thorium rods, 4 water around each | about 1,150 FE/t |
-| Same with packed ice | about 1,350 FE/t |
-| 7x7x7, 13 enriched columns in a Cryo Coolant checkerboard | about 45,000 FE/t at 32% load |
+| 5x5x5, one column of 3 thorium rods, 4 water around each | about 1,100 FE/t |
+| Same with packed ice | about 1,280 FE/t |
+| 7x7x7, 13 enriched columns in a Cryo Coolant checkerboard | about 37,000 FE/t at 32% load |
 
 Water-only big reactors run hot: push some rods in.
