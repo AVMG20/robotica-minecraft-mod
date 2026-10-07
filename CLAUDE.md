@@ -6,7 +6,7 @@ Mekanism/Thermal/Create, so balance should be similar to those mods (ours may be
 The user is the only developer.
 
 ## Project structure
-- `docs/DESIGN.md`: the spec, one section per module. Read the section you need, not the whole file.
+- `docs/DESIGN.md`: the spec, one section per module.
 - `docs/AGENT_BRIEF.md`: engineering rules (server safety, payloads, config, textures, tests).
 - Code: `src/main/java/com/arno/robotica/<module>/` (`core` is shared; `client/` subpackages are client-only).
   Every module has `<Module>Module.init` and `client/<Module>Client.init`.
