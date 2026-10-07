@@ -839,26 +839,28 @@ public final class Showcase {
         step(60, () -> {});
         shot("24_spark_lamp_cave");
 
-        // Architect Table: a built plan in all four styles around the table, one more plot queued.
+        // Architect Table: four separate buildings, one per style, around the table plot (queued), one joined pair.
         step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             setFacing(level, TABLE, block("architect_table"), Direction.SOUTH);
             if (!(level.getBlockEntity(TABLE) instanceof ArchitectTableBlockEntity table)) return;
             Layout layout = table.layout();
-            int[][] plots = {{0, 0}, {1, 0}, {0, 1}, {1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {-1, 1}};
-            BuildStyle[] styles = {BuildStyle.STEEL_LAB, BuildStyle.STEEL_LAB, BuildStyle.STEEL_LAB, BuildStyle.STEEL_LAB,
-                    BuildStyle.COPPER_WORKS, BuildStyle.COPPER_WORKS, BuildStyle.TIMBERFRAME, BuildStyle.NULL_SPIRE, BuildStyle.TIMBERFRAME};
+            int[][] plots = {{-1, -1}, {1, -1}, {-1, 1}, {1, 1}, {2, 1}};
+            BuildStyle[] styles = {BuildStyle.TIMBERFRAME, BuildStyle.COPPER_WORKS, BuildStyle.STEEL_LAB, BuildStyle.NULL_SPIRE,
+                    BuildStyle.NULL_SPIRE};
             for (int i = 0; i < plots.length; i++) layout.queue(Plots.index(plots[i][0], plots[i][1]), styles[i]);
+            // an inner wall with a doorway between the joined pair
+            layout.cycleWall(Plots.index(1, 1), Plots.E);
             ShellPlacer.placeAll(level, TABLE, layout);
             for (int[] p : plots) {
                 int plot = Plots.index(p[0], p[1]);
                 layout.markBuilt(plot, layout.signature(plot));
             }
-            layout.queue(Plots.index(2, 0), BuildStyle.NULL_SPIRE);
+            layout.queue(Plots.CENTER, BuildStyle.COPPER_WORKS);
             table.setMatter(new Matter(820, 360, 140));
             table.setChanged();
         }));
-        camera(TABLE.getX() - 19, Y + 8, TABLE.getZ() - 21, -45, 15);
+        camera(TABLE.getX() - 24, Y + 17, TABLE.getZ() - 26, -40, 30);
         step(40, () -> {});
         shot("25_architect_build");
 
