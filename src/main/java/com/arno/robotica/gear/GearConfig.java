@@ -31,9 +31,12 @@ public final class GearConfig {
     public static final ModConfigSpec.IntValue[] EDGE_COST = new ModConfigSpec.IntValue[3];
     public static final ModConfigSpec.IntValue THERMAL_SECONDS;
     public static final ModConfigSpec.IntValue THERMAL_COST;
-    public static final ModConfigSpec.IntValue TORCH_LIGHT;
-    public static final ModConfigSpec.IntValue TORCH_COST;
-    public static final ModConfigSpec.IntValue TORCH_COOLDOWN;
+    public static final ModConfigSpec.IntValue LAMP_LIGHT;
+    public static final ModConfigSpec.IntValue LAMP_COST;
+    public static final ModConfigSpec.IntValue LAMP_COOLDOWN;
+    public static final ModConfigSpec.IntValue ROD_COST;
+    public static final ModConfigSpec.IntValue ROD_CAPACITY;
+    public static final ModConfigSpec.IntValue ROD_COOLDOWN;
     public static final ModConfigSpec.DoubleValue[] PIERCE_SHARE = new ModConfigSpec.DoubleValue[3];
     public static final ModConfigSpec.IntValue[] PIERCE_COST = new ModConfigSpec.IntValue[3];
     public static final ModConfigSpec.IntValue[] CHAIN_EXTRA_ARCS = new ModConfigSpec.IntValue[3];
@@ -79,6 +82,11 @@ public final class GearConfig {
         ARC_BLADE_COST = b.comment("FE per hit, Arc Blade.").defineInRange("arcBladePerHit", 800, 0, 1_000_000);
         NULL_LANCE_COST = b.comment("FE per shot, Null Lance.").defineInRange("nullLancePerShot", 8_000, 0, 100_000_000);
         b.pop();
+        b.push("lampRod");
+        ROD_COST = b.comment("Lamp Rod: FE per Spark Lamp placed.").defineInRange("lampRodPerLamp", 20, 0, 1_000_000);
+        ROD_CAPACITY = b.comment("Lamp Rod: battery size in FE.").defineInRange("lampRodCapacity", 20_000, 1, 100_000_000);
+        ROD_COOLDOWN = b.comment("Lamp Rod: ticks between two uses.").defineInRange("lampRodCooldown", 4, 0, 1200);
+        b.pop();
         b.push("rivet");
         RIVET_DAMAGE = b.comment("Damage of one Rivet Gun rivet.").defineInRange("rivetDamage", 8.0, 0.0, 1000.0);
         RIVET_STICK_TICKS = b.comment("Ticks a rivet stays stuck in a block before it shatters.").defineInRange("rivetStickTicks", 20, 1, 1200);
@@ -100,10 +108,10 @@ public final class GearConfig {
         }
         THERMAL_SECONDS = b.comment("Thermal Edge: seconds a paid hit or shot sets the target on fire.").defineInRange("thermalEdgeSeconds", 4, 1, 60);
         THERMAL_COST = b.comment("Thermal Edge: extra FE per hit or shot.").defineInRange("thermalEdgeCost", 100, 0, 1_000_000);
-        TORCH_LIGHT = b.comment("Torch Placer: places a torch where you mined when the light there is this or lower (sky or block light).")
-                .defineInRange("torchPlacerLight", 7, 0, 14);
-        TORCH_COST = b.comment("Torch Placer: FE per torch placed.").defineInRange("torchPlacerCost", 25, 0, 1_000_000);
-        TORCH_COOLDOWN = b.comment("Torch Placer: ticks between two torches.").defineInRange("torchPlacerCooldown", 10, 0, 1200);
+        LAMP_LIGHT = b.comment("Lamp Placer: places a Spark Lamp where you mined when the light there is this or lower (sky or block light).")
+                .defineInRange("lampPlacerLight", 7, 0, 14);
+        LAMP_COST = b.comment("Lamp Placer: FE per Spark Lamp placed.").defineInRange("lampPlacerCost", 10, 0, 1_000_000);
+        LAMP_COOLDOWN = b.comment("Lamp Placer: ticks between two lamps.").defineInRange("lampPlacerCooldown", 10, 0, 1200);
         for (int lv = 1; lv <= 3; lv++) {
             PIERCE_SHARE[lv - 1] = b.comment("Armor Pierce " + lv + ": share of the armor reduction that is ignored.")
                     .defineInRange("armorPierceShare" + lv, PIERCE_SHARE_DEFAULTS[lv - 1], 0.0, 1.0);
@@ -194,16 +202,28 @@ public final class GearConfig {
         return SPEC.isLoaded() ? RIVET_FLIGHT_TICKS.get() : 100;
     }
 
-    public static int torchLight() {
-        return SPEC.isLoaded() ? TORCH_LIGHT.get() : 7;
+    public static int rodCost() {
+        return fe(ROD_COST, 20);
     }
 
-    public static int torchCost() {
-        return fe(TORCH_COST, 25);
+    public static int rodCapacity() {
+        return SPEC.isLoaded() ? ROD_CAPACITY.get() : 20_000;
     }
 
-    public static int torchCooldown() {
-        return SPEC.isLoaded() ? TORCH_COOLDOWN.get() : 10;
+    public static int rodCooldown() {
+        return SPEC.isLoaded() ? ROD_COOLDOWN.get() : 4;
+    }
+
+    public static int lampLight() {
+        return SPEC.isLoaded() ? LAMP_LIGHT.get() : 7;
+    }
+
+    public static int lampCost() {
+        return fe(LAMP_COST, 10);
+    }
+
+    public static int lampCooldown() {
+        return SPEC.isLoaded() ? LAMP_COOLDOWN.get() : 10;
     }
 
     private static int lv(int level, int max) {

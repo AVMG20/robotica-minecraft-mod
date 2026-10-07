@@ -51,7 +51,8 @@
       "robotica:mining_drone",
       "robotica:signal_flare",
       "robotica:tinkers_bench",
-      "robotica:item_pipe"
+      "robotica:item_pipe",
+      "robotica:lamp_placer_module"
     ],
     "experience": 10
   }

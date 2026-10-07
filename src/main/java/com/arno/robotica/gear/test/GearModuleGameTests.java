@@ -12,11 +12,14 @@ import com.arno.robotica.gear.GearItems;
 import com.arno.robotica.gear.bench.TinkersBenchMenu;
 import com.arno.robotica.gear.entity.RivetEntity;
 import com.arno.robotica.gear.tool.GearActions;
-import com.arno.robotica.gear.tool.TorchPlacer;
+import com.arno.robotica.gear.lamp.LampRodItem;
+import com.arno.robotica.gear.lamp.SparkLampBlock;
+import com.arno.robotica.gear.tool.LampPlacer;
 import com.arno.robotica.gear.weapon.Lifesteal;
 import com.arno.robotica.gear.weapon.RivetGunItem;
 import com.arno.robotica.gear.weapon.WeaponModuleEvents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +32,12 @@ import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -37,7 +45,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
 
-/** Modules on tools, weapons and armor: bench and framework rules, torch placer, weapon modules, the rivet. */
+/** Modules on tools, weapons and armor: bench and framework rules, lamp placer, weapon modules, the rivet. */
 @GameTestHolder(Robotica.MODID)
 @PrefixGameTestTemplate(false)
 public class GearModuleGameTests {
@@ -81,10 +89,10 @@ public class GearModuleGameTests {
         helper.assertTrue(pickup.getCount() == 2 && Modules.active(menu.tool(), ModuleKind.AUTO_PICKUP) == 1, "one module is used and installed");
 
         // Shift-click from the player's inventory (first inventory slot of the menu = inventory slot 9).
-        player.getInventory().setItem(9, new ItemStack(ModuleItems.get(ModuleKind.TORCH_PLACER, 1).get(), 2));
+        player.getInventory().setItem(9, new ItemStack(ModuleItems.get(ModuleKind.LAMP_PLACER, 1).get(), 2));
         menu.quickMoveStack(player, TinkersBenchMenu.MACHINE_SLOTS);
-        helper.assertTrue(Modules.level(menu.tool(), ModuleKind.TORCH_PLACER) == 1, "shift-click installs the torch placer");
-        helper.assertTrue(player.getInventory().getItem(9).getCount() == 1, "only one torch placer is used");
+        helper.assertTrue(Modules.level(menu.tool(), ModuleKind.LAMP_PLACER) == 1, "shift-click installs the lamp placer");
+        helper.assertTrue(player.getInventory().getItem(9).getCount() == 1, "only one lamp placer is used");
 
         // The Bore Drill (Age 1) has two module slots: the third is locked.
         ItemStack voidFilter = module(ModuleKind.VOID_FILTER, 1);
@@ -103,7 +111,7 @@ public class GearModuleGameTests {
             if (player.getInventory().getItem(i).is(GearItems.BORE_DRILL.get())) returned = player.getInventory().getItem(i);
         }
         helper.assertTrue(!returned.isEmpty() && Modules.level(returned, ModuleKind.VOID_FILTER) == 1
-                && Modules.level(returned, ModuleKind.TORCH_PLACER) == 1 && ItemEnergy.get(returned) == ItemEnergy.capacity(returned),
+                && Modules.level(returned, ModuleKind.LAMP_PLACER) == 1 && ItemEnergy.get(returned) == ItemEnergy.capacity(returned),
                 "modules and energy survive the bench");
 
         // An Exo piece at the bench: armor modules by Mk, gear modules refused, Power Regulator fits all three.
@@ -144,7 +152,7 @@ public class GearModuleGameTests {
         helper.assertTrue(Modules.refusal(drill, 0, module(ModuleKind.OVERCLOCK, 2), none) != null, "Overclock II needs Age 2");
         helper.assertTrue(Modules.refusal(chainsaw, 0, module(ModuleKind.OVERCLOCK, 1), none) == null, "Overclock fits the Chainsaw");
         helper.assertTrue(Modules.refusal(chainsaw, 0, module(ModuleKind.FORTUNE, 1), none) != null, "Fortune is for drills");
-        helper.assertTrue(Modules.refusal(chainsaw, 0, module(ModuleKind.TORCH_PLACER, 1), none) != null, "the torch placer is for drills only");
+        helper.assertTrue(Modules.refusal(chainsaw, 0, module(ModuleKind.LAMP_PLACER, 1), none) != null, "the lamp placer is for drills only");
         helper.assertTrue(Modules.refusal(drill, 0, module(ModuleKind.ARMOR_PIERCE, 1), none) != null, "weapon module refused by a drill");
         // weapons
         helper.assertTrue(Modules.refusal(baton, 0, module(ModuleKind.SHARPENED_EDGE, 1), none) == null, "Sharpened Edge I fits the baton");
@@ -167,8 +175,8 @@ public class GearModuleGameTests {
                 && Modules.refusal(blade, 0, regulator, none) == null
                 && Modules.refusal(new ItemStack(ExoItems.CHESTPLATE_MK3.get()), 0, regulator, none) == null, "Power Regulator II fits tools, weapons and armor");
         // once per item, forced modules do nothing
-        Modules.setModule(nullDrill, 0, module(ModuleKind.TORCH_PLACER, 1));
-        helper.assertTrue(Modules.refusal(nullDrill, 1, module(ModuleKind.TORCH_PLACER, 1), none) != null, "a kind goes in once");
+        Modules.setModule(nullDrill, 0, module(ModuleKind.LAMP_PLACER, 1));
+        helper.assertTrue(Modules.refusal(nullDrill, 1, module(ModuleKind.LAMP_PLACER, 1), none) != null, "a kind goes in once");
         Modules.setModule(blade, 0, module(ModuleKind.LIFESTEAL, 1));
         helper.assertTrue(Modules.level(blade, ModuleKind.LIFESTEAL) == 0, "a forced lifesteal on an Age 3 weapon stays inactive");
         Modules.setModule(drill, 0, module(ModuleKind.NIGHT_VISION, 1));
@@ -204,35 +212,85 @@ public class GearModuleGameTests {
         helper.succeed();
     }
 
-    /** The Torch Placer puts a torch from the inventory on the floor, pays FE, and waits for its cooldown. */
+    /**
+     * The Lamp Placer puts a Spark Lamp in a dark spot, pays FE from the drill, needs build rights and FE, and waits for
+     * its cooldown. The lamp lights its spot to 14.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void lampPlacerLightsTheDark(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos spot = helper.absolutePos(new BlockPos(1, 1, 1));
+        for (Direction d : Direction.values()) level.setBlock(spot.relative(d), Blocks.STONE.defaultBlockState(), 3);
+        level.setBlock(spot, Blocks.AIR.defaultBlockState(), 3);
+        ServerPlayer player = GearGameTests.survivalPlayer(helper, spot);
+        ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
+        Modules.setModule(drill, 0, module(ModuleKind.LAMP_PLACER, 1));
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        helper.startSequence().thenExecuteAfter(10, () -> {
+            ItemStack held = player.getMainHandItem();
+            helper.assertTrue(LampPlacer.isDark(level, spot), "a closed pocket is dark");
+            helper.assertTrue(!LampPlacer.tryPlace(player, level, held, spot), "no FE, no lamp");
+            ItemEnergy.fill(held);
+            player.getAbilities().mayBuild = false;
+            helper.assertTrue(!LampPlacer.tryPlace(player, level, held, spot), "no lamp where the player may not build");
+            player.getAbilities().mayBuild = true;
+            int before = ItemEnergy.get(held);
+            helper.assertTrue(LampPlacer.tryPlace(player, level, held, spot), "a lamp is placed");
+            BlockState lamp = level.getBlockState(spot);
+            helper.assertTrue(lamp.is(GearBlocks.SPARK_LAMP.get()) && lamp.getValue(SparkLampBlock.FACING) == Direction.UP, "on the floor");
+            helper.assertTrue(before - ItemEnergy.get(held) == GearConfig.lampCost(), "paid in FE");
+            level.setBlock(spot.above(), Blocks.AIR.defaultBlockState(), 3);
+            helper.assertTrue(!LampPlacer.tryPlace(player, level, held, spot.above()), "cooldown between lamps");
+            Modules.setEnabled(held, ModuleKind.LAMP_PLACER, false);
+            helper.assertTrue(Modules.active(held, ModuleKind.LAMP_PLACER) == 0, "switched off in G");
+            LampPlacer.forget(player.getUUID());
+        }).thenWaitUntil(() -> helper.assertTrue(level.getBrightness(LightLayer.BLOCK, spot) == SparkLampBlock.LIGHT, "the lamp gives light 14"))
+                .thenSucceed();
+    }
+
+    /**
+     * Lamp Rod: places a Spark Lamp on the clicked face for FE, refuses without FE or build rights; the lamp breaks
+     * instantly, drops nothing, falls off when its block goes, and a sneak-right-click takes it away.
+     */
     @GameTest(template = "empty")
-    public static void torchPlacerPlacesFromInventory(GameTestHelper helper) {
+    public static void lampRodPlacesLamps(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos floor = helper.absolutePos(new BlockPos(1, 0, 1));
+        BlockPos wall = helper.absolutePos(new BlockPos(2, 1, 2));
         level.setBlock(floor, Blocks.STONE.defaultBlockState(), 3);
-        level.setBlock(floor.above(), Blocks.AIR.defaultBlockState(), 3);
+        level.setBlock(wall, Blocks.STONE.defaultBlockState(), 3);
         ServerPlayer player = GearGameTests.survivalPlayer(helper, floor.above());
-        player.getInventory().clearContent();
-        ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
-        ItemEnergy.fill(drill);
-        Modules.setModule(drill, 0, module(ModuleKind.TORCH_PLACER, 1));
-        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
-        helper.assertTrue(!TorchPlacer.tryPlace(player, level, player.getMainHandItem(), floor.above()), "no torches, no torch");
-        player.getInventory().add(new ItemStack(Items.TORCH, 4));
+        ItemStack rod = new ItemStack(GearItems.LAMP_ROD.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, rod);
+        LampRodItem item = GearItems.LAMP_ROD.get();
+        helper.assertTrue(!item.use(player, level, rod, floor, Direction.UP) && level.getBlockState(floor.above()).isAir(), "no FE, no lamp");
+        ItemEnergy.fill(rod);
         player.getAbilities().mayBuild = false;
-        helper.assertTrue(!TorchPlacer.tryPlace(player, level, player.getMainHandItem(), floor.above()), "no torch where the player may not build");
+        helper.assertTrue(!item.use(player, level, rod, floor, Direction.UP) && level.getBlockState(floor.above()).isAir(),
+                "no lamp where the player may not build");
         player.getAbilities().mayBuild = true;
-        int before = ItemEnergy.get(player.getMainHandItem());
-        helper.assertTrue(TorchPlacer.tryPlace(player, level, player.getMainHandItem(), floor.above()), "a torch is placed");
-        helper.assertTrue(level.getBlockState(floor.above()).is(Blocks.TORCH), "on the floor");
-        helper.assertTrue(player.getInventory().countItem(Items.TORCH) == 3, "taken from the inventory");
-        helper.assertTrue(before - ItemEnergy.get(player.getMainHandItem()) == GearConfig.torchCost(), "paid in FE");
-        BlockPos other = floor.offset(1, 1, 0);
-        level.setBlock(other.below(), Blocks.STONE.defaultBlockState(), 3);
-        helper.assertTrue(!TorchPlacer.tryPlace(player, level, player.getMainHandItem(), other), "cooldown between torches");
-        Modules.setEnabled(player.getMainHandItem(), ModuleKind.TORCH_PLACER, false);
-        helper.assertTrue(Modules.active(player.getMainHandItem(), ModuleKind.TORCH_PLACER) == 0, "switched off in G");
-        TorchPlacer.forget(player.getUUID());
+        int before = ItemEnergy.get(rod);
+        helper.assertTrue(item.use(player, level, rod, floor, Direction.UP), "a lamp is placed");
+        BlockState lamp = level.getBlockState(floor.above());
+        helper.assertTrue(lamp.is(GearBlocks.SPARK_LAMP.get()) && lamp.getValue(SparkLampBlock.FACING) == Direction.UP, "on the floor");
+        helper.assertTrue(before - ItemEnergy.get(rod) == GearConfig.rodCost(), "paid in FE");
+        helper.assertTrue(lamp.getLightEmission(level, floor.above()) == SparkLampBlock.LIGHT, "torch light");
+        helper.assertTrue(lamp.getDestroySpeed(level, floor.above()) == 0.0F, "breaks instantly");
+        helper.assertTrue(Block.getDrops(lamp, level, floor.above(), null).isEmpty(), "drops nothing");
+        helper.assertTrue(lamp.getCollisionShape(level, floor.above()).isEmpty(), "no collision");
+
+        player.getCooldowns().removeCooldown(item);
+        helper.assertTrue(item.use(player, level, rod, wall, Direction.WEST), "a lamp goes on a wall");
+        BlockPos wallLamp = wall.west();
+        helper.assertTrue(level.getBlockState(wallLamp).is(GearBlocks.SPARK_LAMP.get())
+                && level.getBlockState(wallLamp).getValue(SparkLampBlock.FACING) == Direction.WEST, "facing away from the wall");
+        level.setBlock(wall, Blocks.AIR.defaultBlockState(), 3);
+        helper.assertTrue(level.getBlockState(wallLamp).isAir(), "falls off when its block goes");
+
+        player.setShiftKeyDown(true);
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(floor.above()), Direction.UP, floor.above(), false);
+        item.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit));
+        helper.assertTrue(level.getBlockState(floor.above()).isAir(), "sneak-right-click removes the lamp");
         helper.succeed();
     }
 

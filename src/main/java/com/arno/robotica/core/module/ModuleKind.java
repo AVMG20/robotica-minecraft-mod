@@ -24,7 +24,7 @@ public enum ModuleKind {
     SILK_TOUCH("silk_touch", DRILLS, Group.DROPS, 1),
     AUTO_PICKUP("auto_pickup", TOOLS, 0, 1),
     VOID_FILTER("void_filter", TOOLS, 0, 1),
-    TORCH_PLACER("torch_placer", DRILLS, 0, 1),
+    LAMP_PLACER("lamp_placer", DRILLS, 0, 1),
     // FE weapons
     SHARPENED_EDGE("sharpened_edge", WEAPONS, 0, 1, 2, 3),
     LOOTING("looting", WEAPONS, 0, 1, 2, 3),

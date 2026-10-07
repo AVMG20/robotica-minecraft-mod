@@ -348,6 +348,9 @@ Weapons:
 
 Weapon upgrade path through smithing: Gearblade → Shock Baton → Arc Blade. Rivet Gun → Null Lance.
 
+Lights: the Spark Lamp is a small copper lamp with a caged, full-bright bulb. Light 14 like a torch, no collision, breaks instantly, drops nothing (it is made from energy), pops off when its block goes. Floor, wall and ceiling variants. It has no item: only the Lamp Rod and the Lamp Placer module place it, through the normal place event (build rights, spawn protection, world border, claim mods). Client flair: a rare tiny spark and a very rare soft buzz, both off in `robotica-gear-client.toml` (`sparkLampParticles`, `sparkLampSounds`). Placing zaps (sparks, a copper-bulb click).
+- Lamp Rod (Age 1: copper ingots, glowstone dust, redstone): 20,000 FE battery (`lampRodCapacity`), chargeable like any FE item. Right-click a block face: a Spark Lamp there for 20 FE (`lampRodPerLamp`), 4 ticks between uses (`lampRodCooldown`). Sneak-right-click a lamp: removes it (free).
+
 Modules (the shared framework, see Modules): the Tinker's Bench (Age 1: iron plates, copper gears, crafting table, planks) takes power tools (FE drills, Chainsaw), FE weapons and Exo pieces and stores nothing. Slots: Age 1-4 = 2 / 3 / 4 / 5. A module put in is used up and stored on the item, taking it out gives it back. G switches every installed module; tooltips and the HUD list them (dimmed when off).
 
 | Module | Fits | Levels: min. Age | Effect | Energy |
@@ -357,7 +360,7 @@ Modules (the shared framework, see Modules): the Tinker's Bench (Age 1: iron pla
 | Silk Touch | drills | 1 | blocks drop themselves; B picks Fortune, Silk Touch or off | none |
 | Auto-Pickup | drills, Chainsaw | 1 | drops go into the inventory | none |
 | Void Filter | drills, Chainsaw | 1 | deletes `robotica:voidable` drops | none |
-| Torch Placer | drills | 1 | after mining, if the spot has light 7 or less (`torchPlacerLight`), a torch from your inventory goes on the floor or a wall there (or at your feet); one per 10 ticks | 25 FE per torch |
+| Lamp Placer | drills | 1 | after mining, if the spot has light 7 or less (`lampPlacerLight`), a Spark Lamp goes on the floor, a wall or the ceiling there (or at your feet); one per 10 ticks (`lampPlacerCooldown`) | 10 FE per lamp (`lampPlacerCost`) |
 | Sharpened Edge I-III | FE weapons | 1 / 2 / 3 | +15 / 30 / 45 % damage on paid hits (`sharpenedEdgeDamage1-3`) | +50 / 100 / 150 FE per use |
 | Looting I-III | FE weapons | 1 / 2 / 3 | mob drops as with Looting I / II / III | none |
 | Thermal Edge | FE weapons | 1 | paid hits and rivets set the target on fire for 4 s | +100 FE per use |
@@ -367,7 +370,7 @@ Modules (the shared framework, see Modules): the Tinker's Bench (Age 1: iron pla
 | Lifesteal | Age 4 weapons (Null Lance beam) | 4 | heals 10 % of the damage dealt from a 3 health pool that refills in 5 s (0.6 health per second over time), never more than 3 health in any second; an empty pool starts a 5 s cooldown while it refills; no healing at full health | 2,000 FE per health point |
 | Power Regulator | tools, weapons, Exo pieces | 2 / 3 / 4 | 15 / 25 / 35 % less FE per block or use | none |
 
-Recipes follow the ladder (each level consumes the one below): level I of Overclock, Fortune, Sharpened Edge, Looting, Armor Pierce and Silk Touch, Auto-Pickup, Void Filter, Thermal Edge, Torch Placer at Age 1 (Basic Circuit), level II and Ricochet I at Age 2 (Advanced Circuit), level III, Ricochet II, Chain Lightning I-II at Age 3, Chain Lightning III and Lifesteal at Age 4 (Lifesteal: 2 Null Circuits, a Null Casing, a Totem of Undying, 2 ghast tears). Weapon visuals: the Arc Blade's arcs are jagged bolts that jump target to target, the Null Lance beam has a bright core, a violet spiral and an impact flash, rivets ping and spark when they ricochet.
+Recipes follow the ladder (each level consumes the one below): level I of Overclock, Fortune, Sharpened Edge, Looting, Armor Pierce and Silk Touch, Auto-Pickup, Void Filter, Thermal Edge at Age 1 (Basic Circuit), Lamp Placer at Age 1 without a circuit (glowstone dust, a copper coil, iron plates, redstone), level II and Ricochet I at Age 2 (Advanced Circuit), level III, Ricochet II, Chain Lightning I-II at Age 3, Chain Lightning III and Lifesteal at Age 4 (Lifesteal: 2 Null Circuits, a Null Casing, a Totem of Undying, 2 ghast tears). Weapon visuals: the Arc Blade's arcs are jagged bolts that jump target to target, the Null Lance beam has a bright core, a violet spiral and an impact flash, rivets ping and spark when they ricochet.
 
 ## Base builder (module `architect`)
 

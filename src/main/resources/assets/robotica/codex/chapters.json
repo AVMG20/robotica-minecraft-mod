@@ -523,14 +523,22 @@
         },
         {
           "title": "Tool modules",
-          "text": "- Overclock I-III: mines faster\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Torch Placer: torches in the dark\n- Power Regulator: less FE",
+          "text": "- Overclock I-III: mines faster\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Lamp Placer: lamps in the dark\n- Power Regulator: less FE",
           "items": [
             "robotica:overclock_module",
             "robotica:fortune_module",
             "robotica:silk_touch_module",
             "robotica:auto_pickup_module",
             "robotica:void_filter_module",
-            "robotica:torch_placer_module"
+            "robotica:lamp_placer_module"
+          ]
+        },
+        {
+          "title": "Lights",
+          "text": "Lamp Rod: right-click a block for a Spark Lamp (torch light, paid in FE). Sneak-right-click a lamp to remove it. The Lamp Placer module puts lamps where you mine in the dark.",
+          "items": [
+            "robotica:lamp_rod",
+            "robotica:lamp_placer_module"
           ]
         },
         {
