@@ -45,6 +45,7 @@ import java.util.Comparator;
 public class RivetEntity extends ThrowableProjectile {
     private static final EntityDataAccessor<Boolean> STUCK = SynchedEntityData.defineId(RivetEntity.class, EntityDataSerializers.BOOLEAN);
     private static final DustParticleOptions TRACER = new DustParticleOptions(new Vector3f(1.0F, 0.78F, 0.35F), 0.7F);
+    private static final double TRAIL_GAP = 1.5;
 
     private float damage = 8.0F;
     private float pierce;
@@ -58,6 +59,9 @@ public class RivetEntity extends ThrowableProjectile {
     private Entity bounceFrom;
     @Nullable
     private LivingEntity bounceTo;
+    /** Client: where the tracer started (see {@link #trail}). */
+    @Nullable
+    private Vec3 trailStart;
     /** Entity ids already hit by this rivet (a ricochet never comes back). */
     private final IntList hit = new IntArrayList();
 
@@ -136,12 +140,17 @@ public class RivetEntity extends ThrowableProjectile {
         }
     }
 
-    /** Client: a bright dotted tracer between last and this tick's position, a spark now and then. */
+    /**
+     * Client: a bright dotted tracer between last and this tick's position, a spark now and then. The first
+     * {@link #TRAIL_GAP} blocks from where the rivet appeared stay clear, so the tracer never starts in the shooter's face.
+     */
     private void trail(Vec3 a, Vec3 b) {
+        if (trailStart == null) trailStart = a;
         Vec3 d = b.subtract(a);
         int steps = Math.min(12, Math.max(1, (int) (d.length() / 0.35)));
         for (int i = 0; i < steps; i++) {
             Vec3 p = a.add(d.scale(i / (double) steps));
+            if (p.distanceToSqr(trailStart) < TRAIL_GAP * TRAIL_GAP) continue;
             level().addParticle(TRACER, p.x, p.y, p.z, 0, 0, 0);
         }
         if (random.nextInt(3) == 0) level().addParticle(ParticleTypes.ELECTRIC_SPARK, b.x, b.y, b.z, 0, 0, 0);

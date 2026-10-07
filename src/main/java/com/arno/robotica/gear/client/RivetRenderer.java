@@ -29,6 +29,8 @@ public class RivetRenderer extends EntityRenderer<RivetEntity> {
 
     @Override
     public void render(RivetEntity entity, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
+        // Like vanilla thrown items: skip the first ticks right next to the camera, so the bolt never fills the screen.
+        if (entity.tickCount < 2 && entityRenderDispatcher.camera.getEntity().distanceToSqr(entity) < 12.25) return;
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F));
         pose.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTick, entity.xRotO, entity.getXRot())));
