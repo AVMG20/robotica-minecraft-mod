@@ -12,6 +12,7 @@ import com.arno.robotica.energy.client.EnergyClient;
 import com.arno.robotica.exo.client.ExoClient;
 import com.arno.robotica.gear.client.GearClient;
 import com.arno.robotica.industry.client.IndustryClient;
+import com.arno.robotica.logistics.client.LogisticsClient;
 import com.arno.robotica.power.client.PowerClient;
 import com.arno.robotica.processing.client.ProcessingClient;
 import com.arno.robotica.replicator.client.ReplicatorClient;
@@ -45,5 +46,6 @@ public class RoboticaClient {
         ExoClient.init(modBus, container);
         BossClient.init(modBus, container);
         StorageClient.init(modBus, container);
+        LogisticsClient.init(modBus, container);
     }
 }

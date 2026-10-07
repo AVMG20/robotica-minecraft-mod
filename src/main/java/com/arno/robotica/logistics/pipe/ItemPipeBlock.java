@@ -2,15 +2,21 @@ package com.arno.robotica.logistics.pipe;
 
 import com.arno.robotica.logistics.LogisticsConfig;
 import com.arno.robotica.logistics.LogisticsContent;
+import com.arno.robotica.logistics.menu.PipeMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -41,7 +47,8 @@ import java.util.Map;
 /**
  * Item pipe (tier 1 or Mk2). Each face links to the next pipe or to a block with an item capability on that face
  * (chests, machines as their side config allows, other mods' inventories). A link to an inventory is Insert (default),
- * Extract or Disabled, switched by sneak-right-clicking the arm with an empty hand; see {@link ItemPipeBlockEntity}.
+ * Extract or Disabled with a filter and an order, set in the GUI of the right-clicked arm (sneak-right-click with an
+ * empty hand switches the mode without it); see {@link ItemPipeBlockEntity}.
  */
 public class ItemPipeBlock extends Block implements EntityBlock {
     private static final Map<Direction, EnumProperty<PipeConnection>> PROPS = new EnumMap<>(Direction.class);
@@ -195,23 +202,39 @@ public class ItemPipeBlock extends Block implements EntityBlock {
         return max <= 3.0 / 16 + 1e-4 ? clickedFace : Direction.getNearest(d.x, d.y, d.z);
     }
 
-    /** Empty hand: shows the mode of the clicked inventory link; sneaking switches it Insert, Extract, Disabled. */
+    /** Holding a block: place it against the pipe instead of opening the GUI. */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        return stack.getItem() instanceof BlockItem ? ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
+                : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    /**
+     * Right-click an inventory link: opens its GUI (mode, filter, order). Sneak-right-click with an empty hand switches
+     * it Insert, Extract, Off without the GUI.
+     */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         Direction side = sideFromHit(hit.getLocation(), pos, hit.getDirection());
         if (state.getValue(prop(side)) == PipeConnection.PIPE) return InteractionResult.PASS;
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (!(level.getBlockEntity(pos) instanceof ItemPipeBlockEntity pipe) || !hasInventory(level, pos, side)) return InteractionResult.PASS;
-        PipeMode mode = pipe.mode(side);
-        if (player.isShiftKeyDown()) {
-            if (!level.mayInteract(player, pos)) return InteractionResult.FAIL;
-            mode = mode.next();
-            pipe.setMode(side, mode);
-            level.setBlock(pos, state.setValue(prop(side), mode.connection), Block.UPDATE_ALL);
-            level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3F, mode == PipeMode.DISABLED ? 0.6F : 1.2F);
+        if (!player.isShiftKeyDown()) {
+            if (player instanceof ServerPlayer serverPlayer) openMenu(serverPlayer, level, pos, side, pipe);
+            return InteractionResult.CONSUME;
         }
+        if (!level.mayInteract(player, pos)) return InteractionResult.FAIL;
+        PipeMode mode = pipe.mode(side).next();
+        pipe.changeMode(side, mode);
+        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3F, mode == PipeMode.DISABLED ? 0.6F : 1.2F);
         player.displayClientMessage(Component.translatable(mode.translationKey()).withStyle(mode.color), true);
         return InteractionResult.CONSUME;
+    }
+
+    private static void openMenu(ServerPlayer player, Level level, BlockPos pos, Direction side, ItemPipeBlockEntity pipe) {
+        Component title = Component.translatable("gui.robotica.pipe.title", level.getBlockState(pos.relative(side)).getBlock().getName());
+        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new PipeMenu(id, inv, pos, side, pipe), title),
+                buf -> PipeMenu.writeOpenData(buf, pos, side));
     }
 
     @Override

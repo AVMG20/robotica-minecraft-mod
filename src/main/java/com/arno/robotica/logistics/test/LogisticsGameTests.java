@@ -8,6 +8,7 @@ import com.arno.robotica.logistics.pipe.ItemPipeBlock;
 import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
 import com.arno.robotica.logistics.pipe.PipeConnection;
 import com.arno.robotica.logistics.pipe.PipeMode;
+import com.arno.robotica.logistics.pipe.PipeOrder;
 import com.arno.robotica.processing.ProcessingRegistry;
 import com.arno.robotica.processing.block.GrinderBlockEntity;
 import com.arno.robotica.processing.block.ProcessingMachineBlock;
@@ -18,11 +19,12 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-/** Item pipes: chest to chest along a pipe line, Off links, and arms that follow a machine's side config. */
+/** Item pipes: chest to chest along a pipe line, Off links, filters, Closest First, and arms that follow a machine's side config. */
 @GameTestHolder(Robotica.MODID)
 @PrefixGameTestTemplate(false)
 public class LogisticsGameTests {
@@ -39,6 +41,15 @@ public class LogisticsGameTests {
         for (BlockPos pos : new BlockPos[]{FIRST, MIDDLE, LAST}) helper.setBlock(pos, LogisticsContent.ITEM_PIPE.get());
         pipe(helper, FIRST).setMode(Direction.NORTH, PipeMode.EXTRACT);
         return source;
+    }
+
+    /** A barrel next to the first pipe: the Insert link nearest to the Extract link. */
+    private static final BlockPos NEAR = new BlockPos(0, 1, 2);
+
+    private static int count(BarrelBlockEntity barrel, net.minecraft.world.item.Item item) {
+        int n = 0;
+        for (int i = 0; i < barrel.getContainerSize(); i++) if (barrel.getItem(i).is(item)) n += barrel.getItem(i).getCount();
+        return n;
     }
 
     private static ItemPipeBlockEntity pipe(GameTestHelper helper, BlockPos pos) {
@@ -91,6 +102,52 @@ public class LogisticsGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(grinder.sides.mode(RelativeSide.TOP) == SideMode.NONE, "top not switched off yet");
             helper.assertBlockProperty(above, ItemPipeBlock.prop(Direction.DOWN), PipeConnection.NONE);
+        });
+    }
+
+    /** Extract blacklist keeps cobblestone in the source; an Insert whitelist sends iron only to the near barrel. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void filtersPickWhatMovesAndWhere(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        source.setItem(9, new ItemStack(Items.GOLD_INGOT, 4));
+        helper.setBlock(NEAR, Blocks.BARREL);
+        ItemPipeBlockEntity first = pipe(helper, FIRST);
+        first.filter(Direction.NORTH).setStackInSlot(0, new ItemStack(Items.COBBLESTONE));
+        first.filter(Direction.SOUTH).setStackInSlot(0, new ItemStack(Items.IRON_INGOT));
+        first.setWhitelist(Direction.SOUTH, true);
+        helper.succeedWhen(() -> {
+            ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
+            BarrelBlockEntity near = (BarrelBlockEntity) helper.getBlockEntity(NEAR);
+            helper.assertTrue(count(near, Items.IRON_INGOT) == 3 && count(near, Items.GOLD_INGOT) == 0, "only iron in the whitelisted barrel");
+            helper.assertTrue(count(target, Items.GOLD_INGOT) == 4 && count(target, Items.IRON_INGOT) == 0, "gold went to the open chest");
+            helper.assertTrue(count(source, Items.COBBLESTONE) == 20 && count(target, Items.COBBLESTONE) == 0, "blacklisted cobblestone stayed");
+        });
+    }
+
+    /** Closest First fills the barrel next to the Extract pipe; the far chest gets nothing while the barrel has room. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void closestFirstFillsNearestLink(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        helper.setBlock(NEAR, Blocks.BARREL);
+        pipe(helper, FIRST).setOrder(Direction.NORTH, PipeOrder.CLOSEST_FIRST);
+        helper.succeedWhen(() -> {
+            BarrelBlockEntity near = (BarrelBlockEntity) helper.getBlockEntity(NEAR);
+            helper.assertTrue(source.isEmpty(), "source chest empty");
+            helper.assertTrue(count(near, Items.COBBLESTONE) == 20 && count(near, Items.IRON_INGOT) == 3, "everything in the near barrel");
+            helper.assertTrue(((ChestBlockEntity) helper.getBlockEntity(TARGET)).isEmpty(), "nothing went to the far chest");
+        });
+    }
+
+    /** Round robin with the same layout spreads items over both links. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void roundRobinSpreadsItems(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        helper.setBlock(NEAR, Blocks.BARREL);
+        helper.succeedWhen(() -> {
+            BarrelBlockEntity near = (BarrelBlockEntity) helper.getBlockEntity(NEAR);
+            ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
+            helper.assertTrue(source.isEmpty(), "source chest empty");
+            helper.assertTrue(count(near, Items.COBBLESTONE) > 0 && count(target, Items.COBBLESTONE) > 0, "both links got cobblestone");
         });
     }
 }

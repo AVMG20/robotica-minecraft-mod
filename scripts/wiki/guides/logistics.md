@@ -22,8 +22,19 @@ Pipes move items instantly between chests and machines.
 3. Sneak-right-click the arm at the source with an empty hand: **Extract**. Again: **Off**.
 4. Extract arms pull items and hand them to the Insert arms of the same line, in turn.
 
-- A plain right-click shows an arm's mode.
-- No filters. One network holds up to 4,096 pipes.
+- One network holds up to 4,096 pipes.
+
+## Filters and order
+
+Right-click an arm to open its screen: mode buttons, 9 filter slots and two switches.
+
+- Click a filter slot with an item to add it, or shift-click the item in your inventory. The item stays in your inventory. Click the slot again to clear it.
+- **Blacklist** (default): listed items do not pass. **Whitelist**: only listed items pass. An empty filter lets everything through.
+- On an Extract arm the filter picks what gets pulled; on an Insert arm it picks what goes in.
+- Extract arms have an order: **Round robin** spreads items over every Insert arm in turn, **Closest first** fills the nearest Insert arm (fewest pipes away) and only sends the rest on.
+- Filters match the item, not its damage or enchantments.
+
+Example: one chest feeds a Grinder and a Furnace. Whitelist ores on the Grinder arm, raw food on the Furnace arm.
 
 ## Machine sides
 

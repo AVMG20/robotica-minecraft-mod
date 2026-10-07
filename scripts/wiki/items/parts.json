@@ -448,6 +448,7 @@
    "use": [
     "Place pipes from the source to the target.",
     "Sneak-right-click the arm at the source with an empty hand: Extract.",
+    "Right-click an arm: mode, a 9-slot filter (whitelist or blacklist) and the Extract order (Round robin or Closest first).",
     "Machines follow their Sides settings."
    ],
    "stats": {

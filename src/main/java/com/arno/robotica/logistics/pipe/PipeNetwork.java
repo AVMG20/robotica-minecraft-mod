@@ -7,8 +7,10 @@ import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,6 +23,9 @@ public final class PipeNetwork {
     public record Endpoint(ItemPipeBlockEntity pipe, Direction side, BlockPos target) {}
 
     private final List<Endpoint> destinations = new ArrayList<>();
+    /** Closest First order per Extract pipe, built on first use and kept until the network is rebuilt. */
+    private final Map<BlockPos, List<Endpoint>> nearest = new HashMap<>();
+    private final Set<BlockPos> members = new HashSet<>();
     private int pipes;
     private boolean valid = true;
 
@@ -43,6 +48,28 @@ public final class PipeNetwork {
         return pipes;
     }
 
+    /** Insert connections ordered by how many pipes away they are from {@code from}, its own faces first. */
+    public List<Endpoint> byDistance(ServerLevel level, ItemPipeBlockEntity from) {
+        return nearest.computeIfAbsent(from.getBlockPos(), pos -> {
+            List<Endpoint> order = new ArrayList<>();
+            ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+            Set<BlockPos> seen = new HashSet<>();
+            queue.add(pos);
+            seen.add(pos);
+            while (!queue.isEmpty()) {
+                BlockPos at = queue.poll();
+                if (!(level.getBlockEntity(at) instanceof ItemPipeBlockEntity pipe) || pipe.isRemoved()) continue;
+                for (Direction dir : Direction.values()) {
+                    PipeConnection link = pipe.getBlockState().getValue(ItemPipeBlock.prop(dir));
+                    BlockPos next = at.relative(dir);
+                    if (link == PipeConnection.INSERT) order.add(new Endpoint(pipe, dir, next));
+                    else if (link == PipeConnection.PIPE && members.contains(next) && seen.add(next)) queue.add(next);
+                }
+            }
+            return order;
+        });
+    }
+
     /** Walks the loaded pipes linked to {@code start}, gives each of them the new network and collects the Insert faces. */
     static PipeNetwork build(ServerLevel level, ItemPipeBlockEntity start) {
         PipeNetwork net = new PipeNetwork();
@@ -55,6 +82,7 @@ public final class PipeNetwork {
             ItemPipeBlockEntity pipe = queue.poll();
             pipe.joinNetwork(net);
             net.pipes++;
+            net.members.add(pipe.getBlockPos());
             for (Direction dir : Direction.values()) {
                 PipeConnection link = pipe.getBlockState().getValue(ItemPipeBlock.prop(dir));
                 BlockPos at = pipe.getBlockPos().relative(dir);

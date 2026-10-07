@@ -12,26 +12,34 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * One item pipe: the mode of each inventory link, cached item capabilities of its neighbours, and its network.
- * Every {@code pipeInterval} ticks each Extract link pulls up to {@code pipeItems} items and hands them to the Insert
- * links of the network in turn (round robin), through their item capabilities, so machine side configs and other mods'
- * inventories decide what fits. Items move instantly and never go back into the inventory they came from.
+ * One item pipe: the mode, filter and order of each inventory link, cached item capabilities of its neighbours, and its
+ * network. Every {@code pipeInterval} ticks each Extract link pulls up to {@code pipeItems} items that pass its filter and
+ * hands them to the Insert links of the network whose filter takes them, in turn (round robin) or nearest first, through
+ * their item capabilities, so machine side configs and other mods' inventories decide what fits. Items move instantly
+ * and never go back into the inventory they came from.
  */
 public class ItemPipeBlockEntity extends BlockEntity {
     /** Insert simulations per pull at most, so a full network costs little; the start slot rotates when stuck. */
     private static final int MAX_TRIES = 64;
+    public static final int FILTER_SLOTS = 9;
 
     private final PipeMode[] modes = new PipeMode[6];
+    private final PipeOrder[] orders = new PipeOrder[6];
+    private final boolean[] whitelist = new boolean[6];
+    /** Per face: ghost entries only, never real items. Empty filter: everything passes. */
+    private final ItemStackHandler[] filters = new ItemStackHandler[6];
     @SuppressWarnings("unchecked")
     private final BlockCapabilityCache<IItemHandler, Direction>[] caches = new BlockCapabilityCache[6];
     @Nullable
@@ -44,6 +52,20 @@ public class ItemPipeBlockEntity extends BlockEntity {
     public ItemPipeBlockEntity(BlockPos pos, BlockState state) {
         super(LogisticsContent.ITEM_PIPE_BE.get(), pos, state);
         Arrays.fill(modes, PipeMode.INSERT);
+        Arrays.fill(orders, PipeOrder.ROUND_ROBIN);
+        for (int i = 0; i < 6; i++) {
+            filters[i] = new ItemStackHandler(FILTER_SLOTS) {
+                @Override
+                protected void onContentsChanged(int slot) {
+                    setChanged();
+                }
+
+                @Override
+                public int getSlotLimit(int slot) {
+                    return 1;
+                }
+            };
+        }
     }
 
     public int tier() {
@@ -57,6 +79,51 @@ public class ItemPipeBlockEntity extends BlockEntity {
     public void setMode(Direction side, PipeMode mode) {
         modes[side.ordinal()] = mode;
         setChanged();
+    }
+
+    /** Sets the mode and shows it on the arm at once (server). */
+    public void changeMode(Direction side, PipeMode mode) {
+        setMode(side, mode);
+        if (!(level instanceof ServerLevel server)) return;
+        BlockState state = getBlockState();
+        EnumProperty<PipeConnection> prop = ItemPipeBlock.prop(side);
+        if (state.getValue(prop) == PipeConnection.PIPE || !ItemPipeBlock.hasInventory(server, worldPosition, side)) return;
+        if (state.getValue(prop) != mode.connection) server.setBlock(worldPosition, state.setValue(prop, mode.connection), Block.UPDATE_ALL);
+    }
+
+    public PipeOrder order(Direction side) {
+        return orders[side.ordinal()];
+    }
+
+    public void setOrder(Direction side, PipeOrder order) {
+        orders[side.ordinal()] = order;
+        setChanged();
+    }
+
+    public boolean whitelist(Direction side) {
+        return whitelist[side.ordinal()];
+    }
+
+    public void setWhitelist(Direction side, boolean on) {
+        whitelist[side.ordinal()] = on;
+        setChanged();
+    }
+
+    public ItemStackHandler filter(Direction side) {
+        return filters[side.ordinal()];
+    }
+
+    /** Whitelist: only items matching an entry. Blacklist: everything else. An empty filter lets everything through. */
+    public boolean passes(Direction side, ItemStack stack) {
+        ItemStackHandler filter = filters[side.ordinal()];
+        boolean any = false;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getStackInSlot(i);
+            if (entry.isEmpty()) continue;
+            any = true;
+            if (ItemStack.isSameItem(entry, stack)) return whitelist[side.ordinal()];
+        }
+        return !any || !whitelist[side.ordinal()];
     }
 
     // ---------------------------------------------------------------- network
@@ -143,20 +210,23 @@ public class ItemPipeBlockEntity extends BlockEntity {
         return next;
     }
 
-    /** Pulls up to this tier's items from the inventory on {@code side} into the network's Insert links. */
+    /** Pulls up to this tier's items that pass the filter from the inventory on {@code side} into the network's Insert links. */
     private void pull(ServerLevel level, Direction side) {
         IItemHandler source = handler(side);
         if (source == null || source.getSlots() == 0) return;
-        List<PipeNetwork.Endpoint> targets = network(level).destinations();
+        boolean closest = order(side) == PipeOrder.CLOSEST_FIRST;
+        PipeNetwork net = network(level);
+        List<PipeNetwork.Endpoint> targets = closest ? net.byDistance(level, this) : net.destinations();
         int count = targets.size();
         if (count == 0) return;
         BlockPos from = worldPosition.relative(side);
         int budget = LogisticsConfig.items(tier());
         int moved = 0, tries = 0, slots = source.getSlots();
-        int start = Math.floorMod(nextDestination, count), resume = start;
+        int start = closest ? 0 : Math.floorMod(nextDestination, count), resume = start;
         for (int s = 0; s < slots && moved < budget && tries < MAX_TRIES; s++) {
             int slot = (nextSlot + s) % slots;
-            if (source.getStackInSlot(slot).isEmpty()) continue;
+            ItemStack inSlot = source.getStackInSlot(slot);
+            if (inSlot.isEmpty() || !passes(side, inSlot)) continue;
             for (int k = 0; k < count && moved < budget && tries < MAX_TRIES; k++) {
                 int index = (start + k) % count;
                 PipeNetwork.Endpoint target = targets.get(index);
@@ -165,6 +235,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
                 if (dest == null) continue;
                 ItemStack offer = source.extractItem(slot, budget - moved, true);
                 if (offer.isEmpty()) break;
+                if (!target.pipe().passes(target.side(), offer)) continue;
                 tries++;
                 int fits = offer.getCount() - ItemHandlerHelper.insertItemStacked(dest, offer, true).getCount();
                 if (fits <= 0) continue;
@@ -176,7 +247,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
                 resume = (index + 1) % count;
             }
         }
-        nextDestination = resume;
+        if (!closest) nextDestination = resume;
         // Nothing could move: start at the next slot next time, so one stuck item does not block the rest.
         if (moved == 0) nextSlot = (nextSlot + 1) % slots;
     }
@@ -196,6 +267,22 @@ public class ItemPipeBlockEntity extends BlockEntity {
         byte[] bytes = new byte[6];
         for (int i = 0; i < 6; i++) bytes[i] = (byte) modes[i].ordinal();
         tag.putByteArray("modes", bytes);
+        byte[] order = new byte[6];
+        byte[] white = new byte[6];
+        CompoundTag filterTag = new CompoundTag();
+        for (int i = 0; i < 6; i++) {
+            order[i] = (byte) orders[i].ordinal();
+            white[i] = (byte) (whitelist[i] ? 1 : 0);
+            if (!isEmpty(filters[i])) filterTag.put(String.valueOf(i), filters[i].serializeNBT(registries));
+        }
+        tag.putByteArray("orders", order);
+        tag.putByteArray("whitelist", white);
+        if (!filterTag.isEmpty()) tag.put("filters", filterTag);
+    }
+
+    private static boolean isEmpty(ItemStackHandler handler) {
+        for (int i = 0; i < handler.getSlots(); i++) if (!handler.getStackInSlot(i).isEmpty()) return false;
+        return true;
     }
 
     @Override
@@ -203,5 +290,15 @@ public class ItemPipeBlockEntity extends BlockEntity {
         super.loadAdditional(tag, registries);
         byte[] bytes = tag.getByteArray("modes");
         for (int i = 0; i < 6; i++) modes[i] = i < bytes.length ? PipeMode.byId(bytes[i]) : PipeMode.INSERT;
+        byte[] order = tag.getByteArray("orders");
+        byte[] white = tag.getByteArray("whitelist");
+        CompoundTag filterTag = tag.getCompound("filters");
+        for (int i = 0; i < 6; i++) {
+            orders[i] = i < order.length ? PipeOrder.byId(order[i]) : PipeOrder.ROUND_ROBIN;
+            whitelist[i] = i < white.length && white[i] != 0;
+            ItemStackHandler fresh = new ItemStackHandler(FILTER_SLOTS);
+            if (filterTag.contains(String.valueOf(i))) fresh.deserializeNBT(registries, filterTag.getCompound(String.valueOf(i)));
+            for (int slot = 0; slot < FILTER_SLOTS; slot++) filters[i].setStackInSlot(slot, slot < fresh.getSlots() ? fresh.getStackInSlot(slot) : ItemStack.EMPTY);
+        }
     }
 }

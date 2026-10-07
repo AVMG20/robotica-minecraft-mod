@@ -2,7 +2,7 @@
   "block.robotica.item_pipe": "Item Pipe Mk1",
   "block.robotica.item_pipe_mk2": "Item Pipe Mk2",
   "tooltip.robotica.item_pipe": "Pulls %s items every %s s",
-  "tooltip.robotica.item_pipe_modes": "Sneak-right-click an arm: Insert, Extract, Off",
+  "tooltip.robotica.item_pipe_modes": "Right-click an arm: mode, filter and order. Sneak-right-click: switch mode",
   "message.robotica.pipe_mode.insert": "Insert",
   "message.robotica.pipe_mode.extract": "Extract",
   "message.robotica.pipe_mode.disabled": "Off",
@@ -11,5 +11,18 @@
   "robotica.configuration.pipeItems1": "Item Pipe: items per pull",
   "robotica.configuration.pipeInterval2": "Item Pipe Mk2: ticks per pull",
   "robotica.configuration.pipeItems2": "Item Pipe Mk2: items per pull",
-  "robotica.configuration.pipeNetworkMax": "Largest pipe network"
+  "robotica.configuration.pipeNetworkMax": "Largest pipe network",
+  "gui.robotica.pipe.title": "Pipe to %s",
+  "gui.robotica.pipe.mode.insert": "Items from the network go in here",
+  "gui.robotica.pipe.mode.extract": "Pulls items out and sends them into the network",
+  "gui.robotica.pipe.mode.disabled": "Nothing goes in or out",
+  "gui.robotica.pipe.whitelist": "Whitelist",
+  "gui.robotica.pipe.whitelist.hint": "Only listed items pass. An empty list lets everything through.",
+  "gui.robotica.pipe.blacklist": "Blacklist",
+  "gui.robotica.pipe.blacklist.hint": "Everything passes except listed items",
+  "gui.robotica.pipe.order.round_robin": "Round robin",
+  "gui.robotica.pipe.order.round_robin.hint": "Spreads items over every Insert link in turn",
+  "gui.robotica.pipe.order.closest_first": "Closest first",
+  "gui.robotica.pipe.order.closest_first.hint": "Fills the nearest Insert link first",
+  "gui.robotica.pipe.slot_filter": "Filter: click with an item to add it, click again to clear. Shift-click items in your inventory to add them."
 }

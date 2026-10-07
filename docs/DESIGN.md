@@ -444,10 +444,10 @@ Item pipes, the Robotica answer to Thermal itemducts and Ender IO conduits. Item
 
 - Item Pipe (first iron: 6 copper plates, 2 glass, 1 redstone -> 8) and Item Pipe Mk2 (8 pipes around an Electric Motor -> 8). Server config `robotica-logistics-server.toml`: Item Pipe 8 items every 20 ticks, Mk2 32 every 10 (`pipeItemsN`, `pipeIntervalN`), networks up to `pipeNetworkMax` (4096) pipes.
 - A pipe links to every neighbouring pipe (any tier) and to every block with `Capabilities.ItemHandler.BLOCK` on the touching face (chests, machines as their side config allows, other mods). Block state per face: none / pipe / insert / extract (multipart model: core, arms, a blue Insert or orange Extract flange).
-- Inventory links are Insert (default), Extract or Off: sneak-right-click the arm (or the core face toward it) with an empty hand; a plain right-click shows the mode. Off links draw no arm.
-- Every interval each Extract link pulls up to its pipe's items and hands them to the network's Insert links in turn (round robin), through their capabilities, never back into the block they came from. At most 64 insert tries per pull; a stuck slot rotates the start slot.
+- Inventory links are Insert (default), Extract or Off: sneak-right-click the arm (or the core face toward it) with an empty hand. Off links draw no arm.
+- Right-click an inventory link (empty hand or a non-block item; a held block places instead) opens its GUI (`PipeMenu`, one face): Insert / Extract / Off buttons, a 9-slot ghost filter, Blacklist (default) / Whitelist, and for Extract the order. Filter entries are copies: clicking a slot with an item or shift-clicking it in the inventory adds it, clicking again clears it. Matching is by item (`isSameItem`), an empty filter passes everything. Saved per face in the pipe.
+- Every interval each Extract link pulls up to its pipe's items that pass its filter and hands them to the network's Insert links whose filter takes them, through their capabilities, never back into the block they came from. Order per Extract link: Round robin (start after the link used last) or Closest first (Insert links sorted by pipe distance from the extracting pipe, a breadth-first walk cached in the network per pipe). At most 64 insert tries per pull; a stuck slot rotates the start slot.
 - The network (pipes and Insert links) is found by one walk over the loaded pipes and cached; placing, removing, relinking, loading or unloading a pipe marks it stale and the next pull rebuilds it. A neighbour's capability change (capability cache listener) rechecks that pipe's arms on its next tick.
-- No filters yet.
 
 ## Warp (module `warp`)
 

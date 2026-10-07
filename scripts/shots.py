@@ -51,6 +51,7 @@ SHOTS = {
     'gui_wireless_charger': ('gui_*_wireless_charger.png', 'gui'),
     'gui_replicator_formed': ('gui_92_replicator_formed.png', 'gui'),
     'gui_storage_terminal': ('gui_95_storage_terminal_full.png', 'gui'),
+    'gui_item_pipe': ('gui_101_item_pipe.png', 'gui'),
 }
 
 

@@ -911,6 +911,25 @@ public final class Showcase {
     }
 
     private static void newGuis() {
+        // An Item Pipe arm into the chest of the pipe scene: Extract, a whitelist and Closest first.
+        final BlockPos pipePos = new BlockPos(21, Y, 124);
+        step(10, () -> server(sp -> {
+            if (!(sp.serverLevel().getBlockEntity(pipePos) instanceof ItemPipeBlockEntity pipe)) return;
+            pipe.filter(Direction.WEST).setStackInSlot(0, new ItemStack(Items.RAW_IRON));
+            pipe.filter(Direction.WEST).setStackInSlot(1, new ItemStack(Items.RAW_COPPER));
+            pipe.filter(Direction.WEST).setStackInSlot(2, new ItemStack(Items.RAW_GOLD));
+            pipe.setWhitelist(Direction.WEST, true);
+            pipe.setOrder(Direction.WEST, com.arno.robotica.logistics.pipe.PipeOrder.CLOSEST_FIRST);
+            sp.teleportTo(sp.serverLevel(), pipePos.getX() + 0.5, Y, pipePos.getZ() + 2.5, 180, 20);
+            sp.setShiftKeyDown(false);
+            sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(pipePos).add(-0.4, 0, 0), Direction.SOUTH, pipePos, false));
+        }));
+        step(30, () -> Screenshot.grab(mc().gameDirectory, "gui_101_item_pipe.png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> {
+            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+        });
+
         // The formed energy multiblocks.
         openGui(FISSION, "gui_98_fission_formed");
         openGui(BANK, "gui_99_bank_formed");
