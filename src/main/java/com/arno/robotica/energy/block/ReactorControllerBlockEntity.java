@@ -340,6 +340,12 @@ public class ReactorControllerBlockEntity extends StructureControllerBlockEntity
     // ---------------------------------------------------------------- accessors (GUI, tests)
 
     public int rodInsertion() { return rodInsertion; }
+
+    @Override
+    protected boolean litSounds() {
+        return true;
+    }
+
     public boolean isScrammed() { return scrammed; }
     public double temperature() { return temperature; }
     /** Fuel ticks left of the unit that is burning (fractions while the buffer is nearly full). */

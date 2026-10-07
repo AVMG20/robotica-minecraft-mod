@@ -321,7 +321,7 @@
         },
         {
           "title": "Mk tiers and cards",
-          "text": "Craft the next Mk around the old one: x1, x1.5, x2, x3 speed. Energy stays.\n- Grinder: Speed, Efficiency, Fortune, Void\n- Furnace: Speed, Efficiency, Range, Fortune",
+          "text": "Right-click it with the next Mk (contents stay) or craft around it: x1, x1.5, x2, x3 speed.\n- Grinder: Speed, Efficiency, Fortune, Void\n- Furnace: Speed, Efficiency, Range, Fortune",
           "items": [
             "robotica:grinder_mk1",
             "robotica:grinder_mk2",
@@ -663,6 +663,14 @@
             "robotica:copper_works_wall",
             "robotica:steel_lab_wall",
             "robotica:null_spire_wall"
+          ]
+        },
+        {
+          "title": "Demolish",
+          "text": "Click Demolish twice: every built plot comes down, all inside.\n- Building blocks: 75% matter back.\n- The rest: into a chest touching the table.",
+          "items": [
+            "robotica:architect_table",
+            "minecraft:chest"
           ]
         }
       ]

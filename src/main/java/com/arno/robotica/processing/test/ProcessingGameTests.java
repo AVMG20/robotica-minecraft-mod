@@ -57,6 +57,44 @@ public class ProcessingGameTests {
         return n;
     }
 
+
+    /**
+     * Right-clicking a placed Grinder with the next Mk swaps it in place: inputs, outputs, battery, cards, side config
+     * and energy stay, nothing spills, the old Mk comes back to the player and a Mk that is not the next one is refused.
+     */
+    @GameTest(template = "empty")
+    public static void inPlaceUpgradeKeepsContents(GameTestHelper helper) {
+        GrinderBlockEntity old = place(helper, ProcessingRegistry.GRINDER_MK1);
+        old.energy.setEnergy(12_345);
+        old.items.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.IRON_ORE, 7));
+        old.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST, new ItemStack(ProcessingRegistry.IRON_DUST.get(), 3));
+        old.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED).get()));
+        old.sides.set(com.arno.robotica.core.side.RelativeSide.TOP, com.arno.robotica.core.side.SideMode.NONE);
+        var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        BlockPos abs = helper.absolutePos(POS);
+        var level = helper.getLevel();
+        ItemStack mk3 = new ItemStack(ProcessingRegistry.GRINDER_MK3.get());
+        var skip = level.getBlockState(abs).useItemOn(mk3, level, player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(abs.getCenter(), net.minecraft.core.Direction.UP, abs, false));
+        helper.assertTrue(level.getBlockState(abs).is(ProcessingRegistry.GRINDER_MK1.get()) && mk3.getCount() == 1, "Mk3 does not fit on Mk1: " + skip);
+
+        ItemStack mk2 = new ItemStack(ProcessingRegistry.GRINDER_MK2.get());
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, mk2);
+        level.getBlockState(abs).useItemOn(mk2, level, player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(abs.getCenter(), net.minecraft.core.Direction.UP, abs, false));
+        helper.assertTrue(level.getBlockState(abs).is(ProcessingRegistry.GRINDER_MK2.get()), "the Grinder is Mk2 now");
+        GrinderBlockEntity fresh = (GrinderBlockEntity) helper.getBlockEntity(POS);
+        helper.assertTrue(fresh.tier() == 2, "the block entity is Mk2");
+        helper.assertTrue(fresh.energy.getEnergyStored() == 12_345, "energy stays, got " + fresh.energy.getEnergyStored());
+        helper.assertTrue(fresh.items.getStackInSlot(GrinderBlockEntity.INPUT).is(Items.IRON_ORE) && fresh.items.getStackInSlot(GrinderBlockEntity.INPUT).getCount() == 7, "inputs stay");
+        helper.assertTrue(fresh.items.getStackInSlot(GrinderBlockEntity.OUT_FIRST).getCount() == 3, "outputs stay");
+        helper.assertTrue(fresh.upgrades.level(UpgradeKind.SPEED) == 1, "cards stay");
+        helper.assertTrue(fresh.sides.mode(com.arno.robotica.core.side.RelativeSide.TOP) == com.arno.robotica.core.side.SideMode.NONE, "side config stays");
+        helper.assertTrue(mk2.isEmpty(), "the Mk2 item is used");
+        helper.assertTrue(player.getInventory().countItem(ProcessingRegistry.GRINDER_MK1.get().asItem()) == 1, "the Mk1 comes back");
+        helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, new AABB(abs).inflate(3)).isEmpty(), "nothing spills");
+        helper.succeed();
+    }
     /** Generic tag rules: a vanilla ore doubles into our dust, raw ore gives 1 + chance, an ingot 1. */
     @GameTest(template = "empty")
     public static void tagRulesDoubleVanillaOre(GameTestHelper helper) {

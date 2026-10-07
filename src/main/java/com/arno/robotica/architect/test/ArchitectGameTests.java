@@ -27,6 +27,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -702,6 +704,133 @@ public class ArchitectGameTests {
         moved.applyComponentsFromItemStack(stack);
         helper.assertTrue(moved.layout().state(queued) == Layout.QUEUED, "unbuilt work moves with the table");
         helper.assertTrue(moved.layout().state(built) == Layout.EMPTY, "built plots stay where they stand");
+        helper.succeed();
+    }
+
+    // ---------------------------------------------------------------- demolish
+
+    /**
+     * Demolish takes a built plot down to the floor: building blocks go back as matter, a chest's contents, the chest,
+     * a door and silk-touched stone go to the stash on the table; the table, the stash, bedrock and a block outside the
+     * world border stay; a queued plot leaves the plan without touching its ground, and the plan ends up empty.
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void demolishClearsBuiltPlotsAndRefundsMatter(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, 8, false);
+        var level = helper.getLevel();
+        BlockPos tablePos = table.getBlockPos();
+        BlockPos origin = Plots.origin(tablePos, Plots.CENTER);
+        int east = Plots.index(1, 0);
+        Layout layout = table.layout();
+        layout.queue(Plots.CENTER, BuildStyle.TIMBERFRAME);
+        layout.markBuilt(Plots.CENTER, layout.signature(Plots.CENTER));
+        layout.queue(east, BuildStyle.TIMBERFRAME);
+
+        BlockPos wall = origin.offset(4, 2, 0), roof = origin.offset(4, 5, 4), stone = origin.offset(5, 2, 5);
+        BlockPos chest = origin.offset(3, 1, 3), bedrock = origin.offset(2, 1, 2), door = origin.offset(6, 1, 6);
+        BlockPos outside = origin.offset(0, 3, 4), eastGround = Plots.origin(tablePos, east).offset(4, 1, 4), stash = tablePos.above();
+        level.setBlockAndUpdate(wall, ArchitectRegistry.styleBlock(BuildStyle.TIMBERFRAME, Role.WALL).get().defaultBlockState());
+        level.setBlockAndUpdate(roof, ArchitectRegistry.styleBlock(BuildStyle.TIMBERFRAME, Role.ROOF).get().defaultBlockState());
+        level.setBlockAndUpdate(stone, Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(bedrock, Blocks.BEDROCK.defaultBlockState());
+        level.setBlockAndUpdate(outside, Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(eastGround, Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(door, Blocks.OAK_DOOR.defaultBlockState());
+        level.setBlockAndUpdate(door.above(), Blocks.OAK_DOOR.defaultBlockState().setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER));
+        level.setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
+        level.getCapability(Capabilities.ItemHandler.BLOCK, chest, null).insertItem(0, new ItemStack(Items.DIAMOND, 5), false);
+        level.setBlockAndUpdate(stash, Blocks.CHEST.defaultBlockState());
+        table.setMatter(new Matter(100, 0, 0));
+        int energyBefore = table.energy.getEnergyStored();
+
+        helper.assertTrue(table.handleAction(null, ArchitectTableBlockEntity.ACTION_DEMOLISH, 1, 0) != null && !table.demolishing(),
+                "demolish needs the confirm code");
+        var border = level.getWorldBorder();
+        double oldSize = border.getSize(), oldX = border.getCenterX(), oldZ = border.getCenterZ();
+        try {
+            // the border leaves out the plot's west edge column (local x 0) and nothing else of it
+            border.setCenter(tablePos.getX() + 20.5, tablePos.getZ() + 0.5);
+            border.setSize(47);
+            table.handleAction(null, ArchitectTableBlockEntity.ACTION_DEMOLISH, ArchitectTableBlockEntity.DEMOLISH_CONFIRM, 0);
+            helper.assertTrue(table.demolishing() && table.status() == ArchitectTableBlockEntity.ST_DEMOLISHING, "demolish started");
+            helper.assertTrue(layout.state(east) == Layout.EMPTY, "queued plots leave the plan");
+            BlockState tableState = level.getBlockState(tablePos);
+            for (int i = 0; i < 2000 && table.demolishing(); i++) table.serverTick(level, tablePos, tableState);
+        } finally {
+            border.setSize(oldSize);
+            border.setCenter(oldX, oldZ);
+        }
+        helper.assertTrue(!table.demolishing() && layout.isEmpty(), "demolish finished with an empty plan");
+        helper.assertTrue(level.getBlockState(tablePos).is(ArchitectRegistry.ARCHITECT_TABLE.get()), "the table stays");
+        helper.assertTrue(level.getBlockState(stash).is(Blocks.CHEST), "the stash on the table stays");
+        helper.assertTrue(level.getBlockState(bedrock).is(Blocks.BEDROCK), "unbreakable blocks stay");
+        helper.assertTrue(level.getBlockState(outside).is(Blocks.STONE), "blocks outside the world border stay");
+        helper.assertTrue(level.getBlockState(eastGround).is(Blocks.STONE), "a queued plot's ground is not touched");
+        for (int y = 0; y < Plots.HEIGHT; y++) for (int z = 0; z < Plots.SIZE; z++) for (int x = 0; x < Plots.SIZE; x++) {
+            BlockPos p = origin.offset(x, y, z);
+            if (p.equals(tablePos) || p.equals(stash) || p.equals(bedrock) || p.equals(outside)) continue;
+            helper.assertTrue(level.getBlockState(p).isAir(), "everything else in the plot is gone, found " + level.getBlockState(p) + " at " + x + " " + y + " " + z);
+        }
+        IItemHandler drops = level.getCapability(Capabilities.ItemHandler.BLOCK, stash, Direction.DOWN);
+        int diamonds = 0, chests = 0, stones = 0, doors = 0, walls = 0;
+        for (int i = 0; i < drops.getSlots(); i++) {
+            ItemStack s = drops.getStackInSlot(i);
+            if (s.is(Items.DIAMOND)) diamonds += s.getCount();
+            if (s.is(Items.CHEST)) chests += s.getCount();
+            if (s.is(Items.STONE)) stones += s.getCount();
+            if (s.is(Items.OAK_DOOR)) doors += s.getCount();
+            if (s.is(ArchitectRegistry.styleItem(BuildStyle.TIMBERFRAME, Role.WALL).get())) walls += s.getCount();
+        }
+        helper.assertTrue(diamonds == 5 && chests == 1, "the chest and its diamonds are kept, found " + diamonds + " diamonds, " + chests + " chests");
+        helper.assertTrue(stones == 1 && doors == 1, "other blocks drop themselves, found " + stones + " stone, " + doors + " doors");
+        helper.assertTrue(walls == 0, "building blocks do not come back as items");
+        int refund = (int) (2 * BuildStyle.TIMBERFRAME.cost.rustic() * com.arno.robotica.architect.ArchitectConfig.demolishRefund());
+        helper.assertTrue(table.matter().rustic() == 100 + refund, "two building blocks refund " + refund + " rustic, matter is " + table.matter());
+        helper.assertTrue(table.energy.getEnergyStored() < energyBefore, "demolish uses some energy");
+        helper.succeed();
+    }
+
+    /** Demolish goes through the payload checks, locks the plan while it runs and Cancel stops it with the plan kept. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void demolishIsValidatedAndCancellable(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, 9, false);
+        BlockPos pos = table.getBlockPos();
+        FakePlayer owner = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.fromString("5e1d2c3b-0000-4000-8000-00000000a003"), "architect_owner2"));
+        FakePlayer stranger = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.fromString("5e1d2c3b-0000-4000-8000-00000000a004"), "architect_stranger2"));
+        table.setOwner(owner);
+        Layout layout = table.layout();
+        ArchitectActionPayload demolish = new ArchitectActionPayload(pos, ArchitectTableBlockEntity.ACTION_DEMOLISH, ArchitectTableBlockEntity.DEMOLISH_CONFIRM, 0);
+        try {
+            owner.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 2.5);
+            owner.containerMenu = new ArchitectMenu(1, owner.getInventory(), table);
+            helper.assertTrue(ArchitectActionPayload.process(owner, demolish) && !table.demolishing(), "nothing built: nothing to demolish");
+            layout.queue(Plots.CENTER, BuildStyle.TIMBERFRAME);
+            layout.markBuilt(Plots.CENTER, layout.signature(Plots.CENTER));
+
+            stranger.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 2.5);
+            stranger.containerMenu = new ArchitectMenu(2, stranger.getInventory(), table);
+            helper.assertTrue(!ArchitectActionPayload.process(stranger, demolish) && !table.demolishing(), "a stranger may not demolish");
+            owner.containerMenu = owner.inventoryMenu;
+            helper.assertTrue(!ArchitectActionPayload.process(owner, demolish) && !table.demolishing(), "refused without the menu open");
+            owner.containerMenu = new ArchitectMenu(3, owner.getInventory(), table);
+            owner.setPos(pos.getX() + 30, pos.getY(), pos.getZ());
+            helper.assertTrue(!ArchitectActionPayload.process(owner, demolish) && !table.demolishing(), "refused out of reach");
+            owner.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 2.5);
+            helper.assertTrue(ArchitectActionPayload.process(owner, demolish) && table.demolishing(), "the owner may demolish");
+            helper.assertTrue((table.flags() & 256) != 0, "the menu sees the demolish flag");
+            com.arno.robotica.compat.MachineInfo info = new com.arno.robotica.compat.MachineInfo();
+            table.collectInfo(helper.getLevel(), info);
+            helper.assertTrue("working".equals(info.status), "Jade shows a demolishing table as working, was " + info.status);
+
+            int east = Plots.index(1, 0);
+            ArchitectActionPayload.process(owner, new ArchitectActionPayload(pos, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0));
+            helper.assertTrue(layout.state(east) == Layout.EMPTY, "the plan is locked while demolishing");
+            ArchitectActionPayload.process(owner, new ArchitectActionPayload(pos, ArchitectTableBlockEntity.ACTION_CANCEL, 0, 0));
+            helper.assertTrue(!table.demolishing() && layout.state(Plots.CENTER) == Layout.BUILT, "Cancel stops demolish, the plot stays planned");
+        } finally {
+            owner.containerMenu = owner.inventoryMenu;
+            stranger.containerMenu = stranger.inventoryMenu;
+        }
         helper.succeed();
     }
 

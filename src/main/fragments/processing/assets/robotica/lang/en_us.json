@@ -25,7 +25,7 @@
   "tooltip.robotica.grinder_help": "Grinding media in the second slot: more dust and byproducts",
   "tooltip.robotica.electric_furnace_help": "Each lane smelts its own stack",
   "tooltip.robotica.processing_sides": "Pipes: in from top and sides, out from any side",
-  "tooltip.robotica.processing_upgrade": "Craft the next Mk around it: its energy stays",
+  "tooltip.robotica.processing_upgrade": "Right-click it with the next Mk to upgrade in place (all contents stay), or craft the next Mk around it",
   "tooltip.robotica.grinding_media": "Grinding media: +%s%% ore output, %s%% byproduct, lasts %s ores (Grinder Mk%s+)",
   "gui.robotica.processing.status.idle": "Idle",
   "gui.robotica.processing.status.working": "Working",

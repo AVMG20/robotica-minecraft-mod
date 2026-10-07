@@ -93,5 +93,20 @@
   "robotica.configuration.maxQueue": "Max queued plots",
   "robotica.configuration.allowClearTerrain": "Allow clear terrain",
   "robotica.configuration.clearInterval": "Ticks per cleared block",
-  "robotica.configuration.builderDrones": "Builder drones"
+  "robotica.configuration.builderDrones": "Builder drones",
+  "gui.robotica.architect_status_9": "Demolishing",
+  "gui.robotica.architect_demolish": "Demolish",
+  "gui.robotica.architect_demolish_tip": "Take down every built plot, everything inside included. Building blocks turn back into matter, the rest goes into a chest touching the table. Click twice",
+  "gui.robotica.architect_demolish_confirm": "Click again",
+  "gui.robotica.architect_demolish_confirm_tip": "Click again to demolish every building of this table",
+  "gui.robotica.architect_demolish_progress": "Demolishing: %s%%",
+  "gui.robotica.architect_cancel_demolish_tip": "Stop demolishing. What still stands stays in the plan.",
+  "message.robotica.architect_demolishing": "The table is demolishing: press Cancel to stop it first",
+  "message.robotica.architect_demolish_off": "Demolish is turned off on this server",
+  "message.robotica.architect_nothing_built": "Nothing built to demolish",
+  "message.robotica.architect_demolish_started": "Demolishing %s plots",
+  "robotica.configuration.allowDemolish": "Allow demolish",
+  "robotica.configuration.demolishInterval": "Ticks per demolished block",
+  "robotica.configuration.demolishEnergy": "FE per demolished block",
+  "robotica.configuration.demolishRefund": "Matter refund share"
 }

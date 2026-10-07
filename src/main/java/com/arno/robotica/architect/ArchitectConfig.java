@@ -20,6 +20,10 @@ public final class ArchitectConfig {
     private static final ModConfigSpec.BooleanValue ALLOW_CLEAR;
     private static final ModConfigSpec.IntValue CLEAR_INTERVAL;
     private static final ModConfigSpec.BooleanValue DRONES;
+    private static final ModConfigSpec.BooleanValue ALLOW_DEMOLISH;
+    private static final ModConfigSpec.IntValue DEMOLISH_INTERVAL;
+    private static final ModConfigSpec.IntValue DEMOLISH_ENERGY;
+    private static final ModConfigSpec.DoubleValue DEMOLISH_REFUND;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -43,6 +47,15 @@ public final class ArchitectConfig {
                 .defineInRange("clearInterval", 10, 1, 200);
         DRONES = b.comment("Spawn the cosmetic builder drone while a table is building.")
                 .define("builderDrones", true);
+        ALLOW_DEMOLISH = b.comment("Allow demolish (takes down every built plot of a table, everything inside included).")
+                .define("allowDemolish", true);
+        DEMOLISH_INTERVAL = b.comment("Ticks per block taken down by demolish at no speed upgrade (speed cards divide it). Building takes baseInterval.")
+                .defineInRange("demolishInterval", 1, 1, 200);
+        DEMOLISH_ENERGY = b.comment("FE per block taken down by demolish (global energy multiplier, speed and efficiency cards apply). Air and liquids are free.")
+                .defineInRange("demolishEnergy", 5, 0, 1_000_000);
+        DEMOLISH_REFUND = b.comment("Share of a Robotica building block's matter price that demolish puts back into the table.",
+                        "0 gives the blocks back as items instead.")
+                .defineInRange("demolishRefund", 0.75, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }
@@ -55,5 +68,9 @@ public final class ArchitectConfig {
     public static int maxQueue() { return SPEC.isLoaded() ? MAX_QUEUE.get() : MAX_QUEUE.getDefault(); }
     public static boolean allowClearTerrain() { return SPEC.isLoaded() ? ALLOW_CLEAR.get() : ALLOW_CLEAR.getDefault(); }
     public static int clearInterval() { return SPEC.isLoaded() ? CLEAR_INTERVAL.get() : CLEAR_INTERVAL.getDefault(); }
+    public static boolean allowDemolish() { return SPEC.isLoaded() ? ALLOW_DEMOLISH.get() : ALLOW_DEMOLISH.getDefault(); }
+    public static int demolishInterval() { return SPEC.isLoaded() ? DEMOLISH_INTERVAL.get() : DEMOLISH_INTERVAL.getDefault(); }
+    public static int demolishEnergy() { return SPEC.isLoaded() ? DEMOLISH_ENERGY.get() : DEMOLISH_ENERGY.getDefault(); }
+    public static double demolishRefund() { return SPEC.isLoaded() ? DEMOLISH_REFUND.get() : DEMOLISH_REFUND.getDefault(); }
     public static boolean builderDrones() { return SPEC.isLoaded() ? DRONES.get() : DRONES.getDefault(); }
 }

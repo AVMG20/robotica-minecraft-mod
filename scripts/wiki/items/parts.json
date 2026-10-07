@@ -351,7 +351,7 @@
      [
       "RTG",
       "3.6M FE",
-      "\u2013"
+      "–"
      ]
     ]
    },
@@ -625,11 +625,12 @@
    "items": [
     "architect_table"
    ],
-   "what": "Builds whole halls for you from cheap matter. Pick plots on a grid and press Build.",
+   "what": "Builds whole halls for you from cheap matter, and takes them down again. Pick plots on a grid and press Build.",
    "use": [
     "Feed it cobble, wood, ingots (matter).",
     "Pick plots in the GUI, then Build.",
-    "A casing in the style slot opens higher styles."
+    "A casing in the style slot opens higher styles.",
+    "Demolish (click twice) clears every built plot: building blocks back as matter, the rest into a chest touching the table."
    ],
    "stats": {
     "rows": [
@@ -648,6 +649,10 @@
      [
       "Buffer",
       "200,000 FE"
+     ],
+     [
+      "Demolish",
+      "1 block per tick, 5 FE each, 75% matter back"
      ]
     ]
    }

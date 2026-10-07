@@ -131,6 +131,16 @@ public final class ArchitectRegistry {
         return state.getBlock() instanceof BuildingBlock;
     }
 
+    /** The style a building block belongs to, null for any other block. */
+    @org.jetbrains.annotations.Nullable
+    public static BuildStyle styleOf(BlockState state) {
+        if (!isBuildingBlock(state)) return null;
+        for (BuildStyle style : BuildStyle.values()) {
+            for (DeferredBlock<Block> block : STYLE_BLOCKS.get(style).values()) if (state.is(block.get())) return style;
+        }
+        return null;
+    }
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ArchitectTableBlockEntity>> ARCHITECT_TABLE_BE =
             BLOCK_ENTITIES.register("architect_table", () -> BlockEntityType.Builder.of(ArchitectTableBlockEntity::new, ARCHITECT_TABLE.get()).build(null));
 

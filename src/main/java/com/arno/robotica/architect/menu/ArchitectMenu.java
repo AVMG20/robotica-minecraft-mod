@@ -139,6 +139,10 @@ public class ArchitectMenu extends MachineMenu {
         return (synced(flagsIndex) & 2) != 0;
     }
 
+    public boolean demolishing() {
+        return (synced(flagsIndex) & 256) != 0;
+    }
+
     public BuildStyle selectedStyle() {
         return BuildStyle.byOrdinal((synced(flagsIndex) >> 2) & 3);
     }
@@ -197,6 +201,11 @@ public class ArchitectMenu extends MachineMenu {
     /** True when some plot is queued or a built plot needs a re-pass. */
     public boolean hasWork() {
         for (int plot = 0; plot < Plots.COUNT; plot++) if (plotNeedsWork(plot)) return true;
+        return false;
+    }
+
+    public boolean hasBuilt() {
+        for (int plot = 0; plot < Plots.COUNT; plot++) if (plotState(plot) == Layout.BUILT) return true;
         return false;
     }
 

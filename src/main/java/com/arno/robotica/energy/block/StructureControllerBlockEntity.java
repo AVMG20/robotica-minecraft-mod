@@ -45,7 +45,7 @@ import java.util.function.Predicate;
  * forward their capabilities to {@link #portReceive} / {@link #portExtract} / {@link #portItems}.
  * Server ticking only; the GUI gets its numbers through {@link #writeSync}.
  */
-public abstract class StructureControllerBlockEntity extends SyncedBlockEntity implements MenuProvider {
+public abstract class StructureControllerBlockEntity extends SyncedBlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
     public record Port(BlockPos pos, Direction outward, PortBlock.Kind kind) {}
 
     /** Collects the ports of the walls; structure visitors extend it. */
@@ -131,6 +131,24 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
     @Nullable
     public UUID owner() {
         return owner;
+    }
+
+    /** Jade: working while the controller glows, the owner, and {@link #infoProgress} when there is one. */
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        if (owner != null) info.owner = com.arno.robotica.compat.OwnerNames.name(level.getServer(), owner);
+        BlockState state = getBlockState();
+        boolean lit = state.hasProperty(ControllerBlock.LIT) && state.getValue(ControllerBlock.LIT);
+        info.status = isFormed() && lit ? "working" : "idle";
+        if (isFormed()) {
+            int progress = infoProgress();
+            if (progress >= 0) info.progress = Math.min(100, progress);
+        }
+    }
+
+    /** Percent for the Jade bar (bank fill, ignition charge), -1 for none. */
+    protected int infoProgress() {
+        return -1;
     }
 
     /** Something in or around the structure changed: re-scan on the next allowed tick. */
@@ -258,12 +276,26 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         }
     }
 
+    private long lastLitSound = Long.MIN_VALUE / 2;
+
     /** Shows the working glow on the controller (only sends an update when it changes). */
     protected void setLit(boolean lit) {
         BlockState state = getBlockState();
         if (level != null && state.hasProperty(ControllerBlock.LIT) && state.getValue(ControllerBlock.LIT) != lit) {
             level.setBlock(worldPosition, state.setValue(ControllerBlock.LIT, lit), Block.UPDATE_CLIENTS);
+            // the same start / stop sounds as the other machines, at most every 2 s so a flickering load stays quiet
+            long now = level.getGameTime();
+            if (litSounds() && now - lastLitSound >= 40) {
+                lastLitSound = now;
+                com.arno.robotica.core.CoreSounds.play(level, worldPosition, lit ? com.arno.robotica.core.CoreSounds.MACHINE_START
+                        : com.arno.robotica.core.CoreSounds.MACHINE_STOP, net.minecraft.sounds.SoundSource.BLOCKS, 0.7F, 0.8F);
+            }
         }
+    }
+
+    /** Whether the glow turning on or off plays the machine start / stop sound (the reactor; the bank glows on every flow). */
+    protected boolean litSounds() {
+        return false;
     }
 
     @Override

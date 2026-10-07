@@ -272,7 +272,8 @@
    "use": [
     "Put ores, raw ores or ingots in.",
     "Add grinding media for a bonus.",
-    "Smelt the dusts in an [[electric_furnace_mk1]]."
+    "Smelt the dusts in an [[electric_furnace_mk1]].",
+    "Right-click it with the next Mk to upgrade in place; everything inside stays."
    ],
    "stats": {
     "columns": [
@@ -333,7 +334,8 @@
    "what": "Smelts every furnace recipe in half the time, on several lanes at once.",
    "use": [
     "Put items in the lanes.",
-    "Take results by hand to get the stored experience."
+    "Take results by hand to get the stored experience.",
+    "Right-click it with the next Mk to upgrade in place; everything inside stays."
    ],
    "stats": {
     "columns": [
