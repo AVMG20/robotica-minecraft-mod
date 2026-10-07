@@ -11,7 +11,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 ASSETS = ROOT / 'src/main/resources/assets/robotica'
 DATA = ROOT / 'src/main/resources/data/robotica'
 
-PIPES = {'item_pipe': 'item_pipe', 'item_pipe_mk2': 'item_pipe_mk2'}
+PIPES = {n: n for n in ('item_pipe', 'item_pipe_mk2', 'item_pipe_mk3', 'item_pipe_mk4')}
 # Turns a north-pointing part to each face (x 270 turns north to up, x 90 to down).
 ROT = {'north': {}, 'east': {'y': 90}, 'south': {'y': 180}, 'west': {'y': 270}, 'up': {'x': 270}, 'down': {'x': 90}}
 
@@ -104,3 +104,6 @@ def shaped(name, pattern, key, count):
 # four times the items per pull).
 shaped('item_pipe', ['PPP', 'GRG', 'PPP'], {'P': '#c:plates/copper', 'G': '#c:glass_blocks', 'R': '#c:dusts/redstone'}, 8)
 shaped('item_pipe_mk2', ['PPP', 'PMP', 'PPP'], {'P': 'robotica:item_pipe', 'M': 'robotica:electric_motor'}, 8)
+# Mk3 (Age 2) and Mk4 (Age 3): eight pipes of the tier below around that age's actuator.
+shaped('item_pipe_mk3', ['PPP', 'PAP', 'PPP'], {'P': 'robotica:item_pipe_mk2', 'A': 'robotica:servo_actuator'}, 8)
+shaped('item_pipe_mk4', ['PPP', 'PAP', 'PPP'], {'P': 'robotica:item_pipe_mk3', 'A': 'robotica:plasma_actuator'}, 8)

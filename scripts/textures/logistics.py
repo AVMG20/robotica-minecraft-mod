@@ -1,4 +1,5 @@
-"""Logistics module textures: the item pipes (copper Item Pipe, steel-and-brass Item Pipe Mk2) and the two connection
+"""Logistics module textures: the item pipes (copper Mk1, steel-and-brass Mk2, slate-and-teal Mk3, slate-and-magma Mk4)
+and the two connection
 flanges (Insert blue, Extract orange).
 Run: python3 scripts/textures/logistics.py   (writes textures/block/item_pipe*.png; models, blockstates, loot and
 recipes are written by scripts/data/logistics_data.py)
@@ -17,12 +18,16 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from pixelart import Canvas, material, write_block  # noqa: E402
 
 CU, ST, BR, BL, OR = '01234', 'abcde', '56789', 'fghij', 'pqrst'
+DK, TL, MG = 'ABCDE', 'FGHIJ', 'LMNOQ'
 P = {'k': '#16191B', 'K': '#0B0D0E', 'V': '#0E1A1F', 'W': '#2A4650'}
 P.update(material(CU, 'copper'))
 P.update(material(ST, 'steel'))
 P.update(material(BR, 'brass'))
 P.update(material(BL, 'cyan'))
 P.update(material(OR, 'amber'))
+P.update(material(DK, 'slate'))
+P.update(material(TL, 'teal'))
+P.update(material(MG, 'magma'))
 
 
 def tube_rows(r, n):
@@ -74,6 +79,8 @@ def flange(ring):
 def main():
     write_block('item_pipe', pipe(CU, ST).rows(), P)
     write_block('item_pipe_mk2', pipe(ST, BR).rows(), P)
+    write_block('item_pipe_mk3', pipe(DK, TL).rows(), P)
+    write_block('item_pipe_mk4', pipe(DK, MG).rows(), P)
     write_block('item_pipe_insert', flange(BL).rows(), P)
     write_block('item_pipe_extract', flange(OR).rows(), P)
 

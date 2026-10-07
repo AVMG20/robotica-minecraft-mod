@@ -6,7 +6,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 
 /**
- * Common (both sides) entry point of the logistics module: item pipes (Item Pipe, Item Pipe Mk2) that pull from
+ * Common (both sides) entry point of the logistics module: item pipes (Mk1 to Mk4) that pull from
  * Extract links and push into Insert links through standard item capabilities. See docs/DESIGN.md, "Logistics".
  * Client side: the per-face pipe GUI ({@code client/LogisticsClient}); the pipes are plain multipart block models.
  */
@@ -22,5 +22,7 @@ public final class LogisticsModule {
 
         RoboticaTab.add(LogisticsContent.ITEM_PIPE_ITEM);
         RoboticaTab.add(LogisticsContent.ITEM_PIPE_MK2_ITEM);
+        RoboticaTab.add(LogisticsContent.ITEM_PIPE_MK3_ITEM);
+        RoboticaTab.add(LogisticsContent.ITEM_PIPE_MK4_ITEM);
     }
 }

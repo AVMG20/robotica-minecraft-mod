@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Item pipe (tier 1 or Mk2). Each face links to the next pipe or to a block with an item capability on that face
+ * Item pipe (Mk1 to Mk4). Each face links to the next pipe or to a block with an item capability on that face
  * (chests, machines as their side config allows, other mods' inventories). A link to an inventory is Insert (default),
  * Extract or Disabled with a filter and an order, set in the GUI of the right-clicked arm (sneak-right-click with an
  * empty hand switches the mode without it); see {@link ItemPipeBlockEntity}.
@@ -84,7 +84,7 @@ public class ItemPipeBlock extends Block implements EntityBlock {
         return PROPS.get(dir);
     }
 
-    /** 1 for the Item Pipe, 2 for the Mk2. */
+    /** 1 to 4: the Mk. */
     public int tier() {
         return tier;
     }
@@ -240,7 +240,7 @@ public class ItemPipeBlock extends Block implements EntityBlock {
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         int interval = LogisticsConfig.interval(tier);
-        String seconds = interval % 20 == 0 ? String.valueOf(interval / 20) : String.format(java.util.Locale.ROOT, "%.1f", interval / 20.0);
+        String seconds = java.math.BigDecimal.valueOf(interval / 20.0).stripTrailingZeros().toPlainString();
         tooltip.add(Component.translatable("tooltip.robotica.item_pipe", LogisticsConfig.items(tier), seconds).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.item_pipe_modes").withStyle(ChatFormatting.DARK_GRAY));
     }

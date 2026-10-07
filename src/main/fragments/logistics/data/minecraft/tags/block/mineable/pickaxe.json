@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "robotica:item_pipe",
-    "robotica:item_pipe_mk2"
+    "robotica:item_pipe_mk2",
+    "robotica:item_pipe_mk3",
+    "robotica:item_pipe_mk4"
   ]
 }

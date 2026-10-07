@@ -136,7 +136,7 @@ AGE = {
         'farm_kit_mk2', 'architect_table', 'copper_works_*', 'recall_remote', 'warp_pad', 'upgrade_speed',
         'upgrade_efficiency', 'upgrade_growth', 'upgrade_void', 'tinkers_bench',
         'raw_thorium*', 'thorium_*', 'graphite_dust', 'alloy_smelter_mk1',
-        'item_pipe', 'item_pipe_mk2', 'iron_grinding_balls', 'lamp_rod', 'bank_casing', 'bank_glass', 'bank_port',
+        'item_pipe', 'item_pipe_mk2', 'item_pipe_mk3', 'item_pipe_mk4', 'iron_grinding_balls', 'lamp_rod', 'bank_casing', 'bank_glass', 'bank_port',
         'bank_controller', 'capacitor_copper', 'transfer_coil_basic', 'upgrade_height', 'upgrade_carry', 'courier_remote',
         'mining_drone', 'courier_drone', 'sentry_drone', 'storage_terminal', 'storage_expansion_mk1', 'signal_flare',
         'grinder_mk1', 'electric_furnace_mk1', 'exo_*_mk1', 'servo_stride_module_1', 'overclock_module', 'fortune_module',

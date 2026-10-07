@@ -442,25 +442,46 @@
   {
    "items": [
     "item_pipe",
-    "item_pipe_mk2"
+    "item_pipe_mk2",
+    "item_pipe_mk3",
+    "item_pipe_mk4"
    ],
    "what": "Moves items between chests and machines, instantly. Arms are Insert by default.",
    "use": [
     "Place pipes from the source to the target.",
     "Sneak-right-click the arm at the source with an empty hand: Extract.",
     "Right-click an arm: mode, a 9-slot filter (whitelist or blacklist) and the Extract order (Round robin or Closest first).",
-    "Machines follow their Sides settings."
+    "Machines follow their Sides settings.",
+    "Mk2 to Mk4: 8 pipes of the tier below around an Electric Motor, Servo Actuator or Plasma Actuator."
    ],
    "stats": {
     "columns": [
-     "Pipe",
-     "Mk2"
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
     ],
     "rows": [
      [
+      "Age",
+      "1",
+      "1",
+      "2",
+      "3"
+     ],
+     [
       "Moves",
-      "8 items per second",
-      "32 items per 0.5 s"
+      "8 items / 1 s",
+      "32 items / 0.5 s",
+      "64 items / 0.25 s",
+      "128 items / 0.2 s"
+     ],
+     [
+      "Items per second",
+      "8",
+      "64",
+      "256",
+      "640"
      ]
     ]
    },

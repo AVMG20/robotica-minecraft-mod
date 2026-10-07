@@ -2,33 +2,42 @@ package com.arno.robotica.logistics;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-/** Server config of the logistics module ({@code robotica-logistics-server.toml}): item pipe rates per tier. */
+/** Server config of the logistics module ({@code robotica-logistics-server.toml}): item pipe rates per tier (Mk1 to Mk4). */
 public final class LogisticsConfig {
     private LogisticsConfig() {}
 
+    public static final int TIERS = 4;
+    private static final int[] DEFAULT_INTERVAL = {20, 10, 5, 4};
+    private static final int[] DEFAULT_ITEMS = {8, 32, 64, 128};
+
     public static final ModConfigSpec SPEC;
-    private static final ModConfigSpec.IntValue INTERVAL_1, ITEMS_1, INTERVAL_2, ITEMS_2, MAX_PIPES;
+    private static final ModConfigSpec.IntValue[] INTERVAL = new ModConfigSpec.IntValue[TIERS];
+    private static final ModConfigSpec.IntValue[] ITEMS = new ModConfigSpec.IntValue[TIERS];
+    private static final ModConfigSpec.IntValue MAX_PIPES;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.comment("Item pipes: every Extract connection pulls this many items every this many ticks.").push("itemPipes");
-        INTERVAL_1 = b.comment("Item Pipe: ticks between two pulls.").defineInRange("pipeInterval1", 20, 1, 200);
-        ITEMS_1 = b.comment("Item Pipe: items per pull.").defineInRange("pipeItems1", 8, 1, 64);
-        INTERVAL_2 = b.comment("Item Pipe Mk2: ticks between two pulls.").defineInRange("pipeInterval2", 10, 1, 200);
-        ITEMS_2 = b.comment("Item Pipe Mk2: items per pull.").defineInRange("pipeItems2", 32, 1, 64);
+        for (int i = 0; i < TIERS; i++) {
+            int mk = i + 1;
+            INTERVAL[i] = b.comment("Item Pipe Mk" + mk + ": ticks between two pulls.").defineInRange("pipeInterval" + mk, DEFAULT_INTERVAL[i], 1, 200);
+            ITEMS[i] = b.comment("Item Pipe Mk" + mk + ": items per pull.").defineInRange("pipeItems" + mk, DEFAULT_ITEMS[i], 1, 256);
+        }
         MAX_PIPES = b.comment("Largest pipe network; pipes beyond it are not reached.").defineInRange("pipeNetworkMax", 4096, 16, 65536);
         b.pop();
         SPEC = b.build();
     }
 
+    private static int index(int tier) {
+        return Math.max(0, Math.min(TIERS, tier) - 1);
+    }
+
     public static int interval(int tier) {
-        if (!SPEC.isLoaded()) return tier >= 2 ? 10 : 20;
-        return tier >= 2 ? INTERVAL_2.get() : INTERVAL_1.get();
+        return SPEC.isLoaded() ? INTERVAL[index(tier)].get() : DEFAULT_INTERVAL[index(tier)];
     }
 
     public static int items(int tier) {
-        if (!SPEC.isLoaded()) return tier >= 2 ? 32 : 8;
-        return tier >= 2 ? ITEMS_2.get() : ITEMS_1.get();
+        return SPEC.isLoaded() ? ITEMS[index(tier)].get() : DEFAULT_ITEMS[index(tier)];
     }
 
     public static int maxPipes() {

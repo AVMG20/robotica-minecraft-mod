@@ -1,0 +1,168 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "robotica:block/item_pipe_mk4_core"
+      }
+    },
+    {
+      "when": {
+        "north": "pipe|insert|extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_mk4_arm"
+      }
+    },
+    {
+      "when": {
+        "north": "insert"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_insert"
+      }
+    },
+    {
+      "when": {
+        "north": "extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_extract"
+      }
+    },
+    {
+      "when": {
+        "east": "pipe|insert|extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_mk4_arm",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "insert"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_insert",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_extract",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "pipe|insert|extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_mk4_arm",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "insert"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_insert",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_extract",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "pipe|insert|extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_mk4_arm",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "insert"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_insert",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_extract",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "up": "pipe|insert|extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_mk4_arm",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "insert"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_insert",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_extract",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "down": "pipe|insert|extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_mk4_arm",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "down": "insert"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_insert",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "down": "extract"
+      },
+      "apply": {
+        "model": "robotica:block/item_pipe_extract",
+        "x": 90
+      }
+    }
+  ]
+}

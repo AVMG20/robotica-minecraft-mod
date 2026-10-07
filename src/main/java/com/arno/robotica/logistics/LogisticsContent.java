@@ -28,12 +28,16 @@ public final class LogisticsContent {
 
     public static final DeferredBlock<ItemPipeBlock> ITEM_PIPE = pipe("item_pipe", 1);
     public static final DeferredBlock<ItemPipeBlock> ITEM_PIPE_MK2 = pipe("item_pipe_mk2", 2);
+    public static final DeferredBlock<ItemPipeBlock> ITEM_PIPE_MK3 = pipe("item_pipe_mk3", 3);
+    public static final DeferredBlock<ItemPipeBlock> ITEM_PIPE_MK4 = pipe("item_pipe_mk4", 4);
 
     public static final DeferredItem<BlockItem> ITEM_PIPE_ITEM = ITEMS.registerSimpleBlockItem(ITEM_PIPE);
     public static final DeferredItem<BlockItem> ITEM_PIPE_MK2_ITEM = ITEMS.registerSimpleBlockItem(ITEM_PIPE_MK2);
+    public static final DeferredItem<BlockItem> ITEM_PIPE_MK3_ITEM = ITEMS.registerSimpleBlockItem(ITEM_PIPE_MK3);
+    public static final DeferredItem<BlockItem> ITEM_PIPE_MK4_ITEM = ITEMS.registerSimpleBlockItem(ITEM_PIPE_MK4);
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ItemPipeBlockEntity>> ITEM_PIPE_BE = BLOCK_ENTITIES.register("item_pipe",
-            () -> BlockEntityType.Builder.of(ItemPipeBlockEntity::new, ITEM_PIPE.get(), ITEM_PIPE_MK2.get()).build(null));
+            () -> BlockEntityType.Builder.of(ItemPipeBlockEntity::new, ITEM_PIPE.get(), ITEM_PIPE_MK2.get(), ITEM_PIPE_MK3.get(), ITEM_PIPE_MK4.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>, MenuType<PipeMenu>> PIPE_MENU = MENUS.register("item_pipe", () -> IMenuTypeExtension.create(PipeMenu::client));
 

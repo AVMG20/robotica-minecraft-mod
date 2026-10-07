@@ -6,18 +6,20 @@ summary: Move items with pipes and set which machine face takes items in or give
 ---
 Pipes move items instantly between chests and machines.
 
-{{items item_pipe item_pipe_mk2 grinder_mk1 electric_furnace_mk1}}
+{{items item_pipe item_pipe_mk2 item_pipe_mk3 item_pipe_mk4 grinder_mk1 electric_furnace_mk1}}
 
 {{image shots/17_item_pipes.jpg|Item Pipes from a chest through a Grinder and an Electric Furnace into a chest}}
 
 ## Pipes
 
-| Pipe | Moves |
-|---|---|
-| [[item_pipe]] | 8 items every second |
-| [[item_pipe_mk2]] | 32 items every half second |
+| Pipe | Age | Moves | Items/s |
+|---|---|---|---|
+| [[item_pipe]] | 1 | 8 items every second | 8 |
+| [[item_pipe_mk2]] | 1 | 32 items every half second | 64 |
+| [[item_pipe_mk3]] | 2 | 64 items every 5 ticks | 256 |
+| [[item_pipe_mk4]] | 3 | 128 items every 4 ticks | 640 |
 
-1. Lay pipes from the source to the target. Pipes of both tiers connect.
+1. Lay pipes from the source to the target. Pipes of every tier connect; each Extract arm pulls at its own pipe's rate.
 2. Every arm into a chest or machine starts as **Insert**.
 3. Sneak-right-click the arm at the source with an empty hand: **Extract**. Again: **Off**.
 4. Extract arms pull items and hand them to the Insert arms of the same line, in turn.
@@ -27,6 +29,8 @@ Pipes move items instantly between chests and machines.
 ## Filters and order
 
 Right-click an arm to open its screen: mode buttons, 9 filter slots and two switches.
+
+{{image shots/gui_item_pipe.jpg|The screen of a pipe arm: Extract, a whitelist of raw ores, Closest first}}
 
 - Click a filter slot with an item to add it, or shift-click the item in your inventory. The item stays in your inventory. Click the slot again to clear it.
 - **Blacklist** (default): listed items do not pass. **Whitelist**: only listed items pass. An empty filter lets everything through.

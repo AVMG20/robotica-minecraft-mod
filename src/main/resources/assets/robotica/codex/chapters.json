@@ -861,10 +861,12 @@
       "pages": [
         {
           "title": "Item pipes",
-          "text": "Pipes connect to pipes, chests and machines.\n- Right-click an arm: mode, filter and order.\n- Sneak-right-click an arm (empty hand): Insert, Extract or Off.\n- Pipe: 8 items/s. Mk2: 32 per half second.",
+          "text": "Pipes connect to pipes, chests and machines.\n- Right-click an arm: mode, filter and order.\n- Sneak-right-click an arm (empty hand): Insert, Extract or Off.\n- Items/s: Mk1 8, Mk2 64, Mk3 256, Mk4 640.",
           "items": [
             "robotica:item_pipe",
-            "robotica:item_pipe_mk2"
+            "robotica:item_pipe_mk2",
+            "robotica:item_pipe_mk3",
+            "robotica:item_pipe_mk4"
           ]
         },
         {
