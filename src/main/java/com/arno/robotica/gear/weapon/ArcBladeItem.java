@@ -32,7 +32,7 @@ public class ArcBladeItem extends EnergyWeaponItem {
     public static final int CHAIN_TARGETS = 3;
     public static final double CHAIN_RANGE = 6.0;
 
-    public ArcBladeItem(Properties props, int capacity, IntSupplier cost) {
+    public ArcBladeItem(Properties props, IntSupplier capacity, IntSupplier cost) {
         super(props, capacity, cost, 3, ModuleTarget.ARC_BLADE);
     }
 

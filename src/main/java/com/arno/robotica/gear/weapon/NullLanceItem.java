@@ -38,7 +38,7 @@ public class NullLanceItem extends EnergyWeaponItem {
         return firing;
     }
 
-    public NullLanceItem(Properties props, int capacity, IntSupplier cost) {
+    public NullLanceItem(Properties props, IntSupplier capacity, IntSupplier cost) {
         super(props, capacity, cost, 4, ModuleTarget.NULL_LANCE);
     }
 

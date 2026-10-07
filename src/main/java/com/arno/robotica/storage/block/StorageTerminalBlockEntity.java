@@ -11,6 +11,9 @@ import com.arno.robotica.storage.menu.StorageMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.BundleContents;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -65,10 +68,9 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
     private boolean carry;
 
     public final ItemStackHandler items = new ItemStackHandler(MAX_SLOTS) {
-        /** A carried terminal (with its items inside) cannot be stored in a terminal: no endless nesting. */
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return !stack.has(CoreComponents.CONTENTS.get());
+            return canStore(stack);
         }
 
         @Override
@@ -253,6 +255,18 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
             if (!s.isEmpty()) out.add(s);
         }
         return out;
+    }
+
+    /**
+     * Whether a stack may go into a terminal (storage or crafting grid): not a carried terminal, a filled shulker box or a
+     * filled bundle, so a carried terminal never holds storage inside storage.
+     */
+    public static boolean canStore(ItemStack stack) {
+        if (stack.has(CoreComponents.CONTENTS.get())) return false;
+        ItemContainerContents container = stack.get(DataComponents.CONTAINER);
+        if (container != null && container.nonEmptyStream().findAny().isPresent()) return false;
+        BundleContents bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
+        return bundle == null || bundle.isEmpty();
     }
 
     /** Inserts into the slots that currently take new items. Returns what did not fit. */

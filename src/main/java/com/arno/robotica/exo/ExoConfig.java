@@ -49,7 +49,7 @@ public final class ExoConfig {
         JET_ASSIST = costs(b, "jetAssistPerSecond", "FE per second while Jet Assist slows a fall (I, II, III).", 40, 30, 20);
         JET_ASSIST_JUMP = costs(b, "jetAssistPerDoubleJump", "FE per Jet Assist double jump (I, II, III).", 400, 350, 300);
         FLIGHT = cost(b, "flightPerSecond", "FE per second while flying (120 FE/t).", 2_400);
-        KINETIC_SHIELD = costs(b, "kineticShieldPerDamage", "FE per point of damage the Kinetic Shield blocks (I, II, III).", 2_000, 1_600, 1_200);
+        KINETIC_SHIELD = costs(b, "kineticShieldPerDamage", "FE per point of damage the Kinetic Shield blocks (I, II, III).", 8_000, 6_000, 4_000);
         MED_INJECTOR = costs(b, "medInjectorPerUse", "FE per Med Injector shot (I, II, III).", 20_000, 30_000, 40_000);
         HAZARD_SEAL = cost(b, "hazardSealPerEffect", "FE per harmful effect the Hazard Seal clears.", 2_000);
         SERVO = new ModConfigSpec.IntValue[]{

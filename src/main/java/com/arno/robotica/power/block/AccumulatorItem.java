@@ -25,7 +25,7 @@ public class AccumulatorItem extends BlockItem implements EnergyItem {
 
     @Override
     public int getEnergyCapacity(ItemStack stack) {
-        return tier.capacity;
+        return tier.capacity();
     }
 
     @Override
@@ -56,7 +56,7 @@ public class AccumulatorItem extends BlockItem implements EnergyItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         ItemEnergy.appendTooltip(stack, tooltip);
-        tooltip.add(Component.translatable("tooltip.robotica.accumulator_io", Fmt.compact(tier.io)).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.accumulator_io", Fmt.compact(tier.io())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.accumulator_faces").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.accumulator_keeps").withStyle(ChatFormatting.DARK_GRAY));
     }

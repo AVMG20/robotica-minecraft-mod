@@ -125,7 +125,7 @@ numbers by name in init).
   `solarMk1-4`). Buffers 4k / 16k / 40k / 100k FE. Mk2 is four Mk1 around an Advanced Circuit; Mk3 two Mk2, a Quantum
   Circuit, pyrosteel plates and glass; Mk4 one Mk3, a Null Circuit, resonant alloy plates and ender pearls (12 / 102 /
   517 / 1,770 IE). A Mk4 by day is under half of a 5x5x5 fission reactor, about a fifth over a whole day.
-- Accumulator I/II/III: 1M / 4M / 16M FE, I/O 1,000 / 4,000 / 16,000 FE/t. The front gauge shows the charge: block state `charge` 0-5 (lit cells, 0 only when empty), checked every 10 ticks and set only when it changes (client update, no neighbour updates). A placed item shows its charge at once, the item model too (item property `robotica:charge`).
+- Accumulator I/II/III: 1M / 16M / 128M FE, I/O 1,000 / 16,000 / 64,000 FE/t (`accumulatorCapacity1-3`, `accumulatorIo1-3`). The front gauge shows the charge: block state `charge` 0-5 (lit cells, 0 only when empty), checked every 10 ticks and set only when it changes (client update, no neighbour updates). A placed item shows its charge at once, the item model too (item property `robotica:charge`).
 - Tesla Coils (wireless power, replaced the Copper/Gold Conduits): a torch-sized coil placed on floors, walls or ceilings (FACING, 6 ways) with a full-bright tip.
   - Tiers I-V: 4 / 8 / 12 / 16 / 32 links, range 8 / 12 / 16 / 24 / 32 blocks, 4,000 / 16,000 / 64,000 / 256,000 / 1,000,000 FE/t per coil (server config `teslaRate1-5`, `teslaRange1-5`). Tier I is a first-iron item (copper coil, iron plate, redstone; 6 IE, no gold) so the first generator can feed machines; every later tier consumes the one before plus that age's circuit and casing (II basic circuit + gold, III advanced circuit + Reinforced Casing, IV quantum circuit + Blazing Casing, V null circuit + Null Casing).
   - Source: a coil pulls from the block it sits on when that block gives FE out (through the touching face, else its internal storage): Accumulators, but also the Combustion Generator, Solar Panels and other mods' generators and batteries, so early players are not stuck before Accumulator I (Basic Circuit). Any other coil is a relay.
@@ -181,7 +181,7 @@ Modules (see Modules above): one item per kind and level. A kind fits certain pi
 | Sonar Pulse | helmet | Mk2 / Mk3 / Mk4 | key N: ores (`c:ores`) and mobs within 16 / 24 / 32 blocks are outlined for 10 s; the client scans its loaded sections, the server charges and cools down (5 s) | 4,000 / 6,000 / 8,000 per ping |
 | Jet Assist | chest | Mk2 / Mk3 / Mk4 | slows long falls; 1 / 2 / 3 extra jumps in the air | 40 / 30 / 20 FE/s gliding, 400 / 350 / 300 per jump |
 | Flight | chest | Mk3 | creative flight, K toggles | 2,400 FE/s while flying |
-| Kinetic Shield | chest | Mk3 / Mk4 / Mk4 | absorbs 75 / 85 / 95 % of each hit with FE | 2,000 / 1,600 / 1,200 FE per point |
+| Kinetic Shield | chest | Mk3 / Mk4 / Mk4 | absorbs 75 / 85 / 95 % of each hit with FE | 8,000 / 6,000 / 4,000 FE per point |
 | Med Injector | chest | Mk2 / Mk3 / Mk4 | at 40 % health heals 2 / 3 / 4 hearts, cooldown 60 / 45 / 30 s | 20,000 / 30,000 / 40,000 per shot |
 | Hazard Seal | chest | Mk3 | clears poison, wither, hunger, nausea, blindness | 2,000 per effect |
 | Servo Stride | legs | Mk1 / Mk2 / Mk3 | +20 / 40 / 60 % speed | 30 / 60 / 100 FE/s moving |
@@ -258,7 +258,7 @@ Multiblock power for packs next to Mekanism, Thermal and Immersive Engineering: 
 - Jade: a controller shows working while it glows (bank flow, reactor heat, lit plasma) or idle, its owner, the bank's fill and the fusion ignition charge as a bar. The fission controller plays the machine start / stop sounds when its glow turns on or off (at most every 2 s).
 
 **Capacitor Bank** (3x3x3 to 9x9x9): Bank Casing frame; walls of casing, Bank Glass, Bank Ports; the Capacitor Bank Controller in a side wall. Inside: any mix of Capacitors and Transfer Coils, the rest air; at least one of each and one port.
-- Capacitors: Copper 8M (4 Copper Cells, Age 1), Redstone 64M (2 Redstone Cells + the Copper one, Age 2), Ender 512M (Ender Cell + the Redstone one, Age 4), Resonant 4G (resonant alloy plates, resonite, a Resonant Lattice + the Ender one, Age 4). Transfer Coils: Basic 64k, Advanced 512k, Elite 4M FE/t (Age 1/2/3, each consumes the one before). The sum of the coils limits input and, separately, output per tick, shared by all ports. A 9x9x9 of Ender Capacitors holds about 175G FE.
+- Capacitors: Copper 4M (4 Copper Cells, Age 1), Redstone 64M (2 Redstone Cells + the Copper one, Age 2), Ender 512M (Ender Cell + the Redstone one, Age 4), Resonant 4G (resonant alloy plates, resonite, a Resonant Lattice + the Ender one, Age 4). Transfer Coils: Basic 16k, Advanced 512k, Elite 4M FE/t (Age 1/2/3, each consumes the one before). The sum of the coils limits input and, separately, output per tick, shared by all ports. A 9x9x9 of Ender Capacitors holds about 175G FE.
 - Energy is a long in the controller (capacity sums saturate); ports clamp every transfer to an int. Beyond an int a port reports the int maximum as capacity and the stored energy scaled by the same factor, and never reports a bank that is not full as full. A Bank Port is input or output (sneak + right-click, the face shows an arrow). Output ports push into the block outside them and can be pulled from (a Tesla Coil on top works).
 - The energy stays in the controller when the structure breaks, and travels with the controller item (`robotica:bank_energy`, a long; the controller always drops, explosions included). Formed smaller than its energy (capacitors removed, or a full controller in a small bank), the energy above the new capacity is lost.
 - GUI: big gauge, stored / capacity and percent, average in / out FE/t over the last second, a 60 s sparkline of the net flow per second (green up = charging, red down = draining), the rate limit and part count, structure line.
@@ -351,12 +351,13 @@ Weapons:
 | Weapon | Age | Energy | Behaviour |
 |---|---|---|---|
 | Gearblade | 0 | durability 400 | copper sword, 6 damage, fast swing |
-| Shock Baton | 1 | 200k FE | 7 damage, Slowness II 2s, 250 FE per hit |
-| Rivet Gun | 2 | 1M FE | right-click fires a glowing rivet (own projectile with a tracer; sticks in a block for 1 s, then shatters), 8 damage, `rivetSpeed` 4.5 blocks/tick for up to `rivetFlightTicks` 100, 4 shots/s, 400 FE per shot, no ammo |
+| Shock Baton | 1 | 200k FE | 7 damage, attack speed 1.6, Slowness II 2s, 250 FE per hit |
+| Rivet Gun | 2 | 1M FE | right-click fires a glowing rivet (own projectile with a tracer; sticks in a block for 1 s, then shatters), 6 damage (`rivetDamage`), `rivetSpeed` 4.5 blocks/tick for up to `rivetFlightTicks` 100, 2 shots/s (`rivetCooldown` 10 ticks, matching the hit immunity), 400 FE per shot, no ammo |
 | Arc Blade | 3 | 4M FE | 11 damage, arcs 50% damage to 3 nearby hostiles, 800 FE per hit |
 | Null Lance | 4 | 16M FE | hold to charge 1s, beam pierces all mobs in 32 blocks for 30 damage, 8,000 FE per shot |
 
 Weapon upgrade path through smithing: Gearblade → Shock Baton → Arc Blade. Rivet Gun → Null Lance.
+Battery sizes are server config (`gear` `battery` section: `boreDrillCapacity` ... `nullLanceCapacity`). Weapon damage and attack speed are item attributes built at registration, so they stay in code (`GearItems`).
 
 Lights: the Spark Lamp is a small floating electric wisp: a pale full-bright core in a faint animated halo. Light 14 like a torch, no collision, breaks instantly, drops nothing (it is made from energy), pops off when its block goes. Floor, wall and ceiling variants. It has no item: only the Lamp Rod and the Lamp Placer module place it, through the normal place event (build rights, spawn protection, world border, claim mods). Client flair: tiny flickering sparks, a rare crackle (spark arc, quiet zap) and a rarer faint hum, only within 20 blocks of the camera (`sparkLampFxRange`), each off in `robotica-gear-client.toml` (`sparkLampParticles`, `sparkLampSounds`). Placing plays a rising charge with sparks, removing a falling fizz.
 - Lamp Rod (Age 1: copper ingots, glowstone dust, redstone): 20,000 FE battery (`lampRodCapacity`), chargeable like any FE item. Right-click a block face: a Spark Lamp there for 20 FE (`lampRodPerLamp`), 4 ticks between uses (`lampRodCooldown`). Sneak-right-click a lamp: removes it (free).
@@ -534,7 +535,7 @@ Power pass (early power in line with other mods, 40-80 FE/t; the crank made ever
 - Mainspring 576k → 240k, Copper Cell 2.3M → 800k, Redstone Cell 6.9M → 3.2M (cells were cheaper storage than accumulators). Ender Cell unchanged.
 - Solar Mk1 8 → 20 FE/t, Mk2 32 → 80 FE/t. Charger 400 → 2,000 FE/t.
 - Stumpy pays 250 FE per log on top of 4 FE/t while working, rests 10 ticks per log after a tree (speed cards shorten it), works a 7×7 area at Mk1 (Sprout 9×9), and always clears the natural leaves.
-- Storage Terminal: without power nothing new goes in (taking out and crafting still work). JEI can fill its crafting grid from the terminal and your inventory. A Carry Upgrade (right-click the terminal, stays in for good) makes it keep every item when picked up.
+- Storage Terminal: without power nothing new goes in (taking out and crafting still work). JEI can fill its crafting grid from the terminal and your inventory. A Carry Upgrade (right-click the terminal, stays in for good) makes it keep every item when picked up. Filled shulker boxes and bundles (and carried terminals) go neither into the storage nor into the crafting grid (`StorageTerminalBlockEntity.canStore`).
 - Kinetic Shield 400 → 2,000 FE per damage point, absorbs at most 75% of each hit (`kineticShieldAbsorb`). Cells top up a worn suit at most 2,000 FE per second in total (`cellRechargePerSecond`).
 - Mining Drone 60 → 80 FE per block, one block every 8 ticks instead of 3 (it outdug the Age 2 Excavator).
 - Mining Drone Mk3 (Age 3: smithing a Mk2 with a Quantum Circuit template and a Plasma Actuator): 5x5 tunnels (floor at foot level, 2 blocks to each side, 5 high) instead of 3x3, drops rolled with a netherite pickaxe carrying Fortune I, 2.5x dig speed (`mk3Speed`; Mk2 1.5x), 8M FE buffer, double health. Per metre it digs 25 blocks in about 75 ticks against the Mk2's 9 in 45, still 80 FE per block, so it beats the Mk2 without outdigging an Excavator with speed cards.
@@ -552,6 +553,11 @@ Balance pass 0.5 (`docs/COSTS.md` now sorts every item into its age):
 | Fortune, Silk Touch, Looting modules | worked on an empty tool or weapon | need FE, like Overclock | an empty FE tool is a plain tool |
 | Warp Pad tooltip | Age 2 | Age 1 | matches the recipe |
 | Card, generator, solar, Survey Rig, RTG pellet, fusion, bank and reactor shape, Exo set bonus, Mainspring texts | hard-coded defaults | read the config | config-true text |
+| Accumulator II / III | 4M, 4,000 FE/t / 16M, 16,000 FE/t (hard-coded) | 16M, 16,000 FE/t / 128M, 64,000 FE/t (config) | a single block that is worth its age next to the bank |
+| Copper Capacitor, Basic Transfer Coil | 8M FE, 64,000 FE/t | 4M FE, 16,000 FE/t | an Age 1 bank made the Accumulators pointless |
+| Rivet Gun | 8 damage, 4 shots/s | 6 damage, 2 shots/s (`rivetCooldown`) | every second shot hit the 10 tick hit immunity |
+| Kinetic Shield | 2,000 / 1,600 / 1,200 FE per point | 8,000 / 6,000 / 4,000 | near-free damage immunity |
+| Shock Baton attack speed | 1.8 | 1.6 | in line with a sword |
 
 Reviewed and left as they are: Grinder 4,000 FE per ore and Electric Furnace 2,000 FE per item (Thermal's numbers), RTG
 150 FE/t, fission 1,150 to 45,000 FE/t, fusion 200,000 FE/t, Tesla Coil and transfer rates, Wireless Charger 1,000 FE/t

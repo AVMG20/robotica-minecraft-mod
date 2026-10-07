@@ -82,8 +82,8 @@ public final class EnergyConfig {
                 .defineInRange("bankMinSize", 3, 3, 32);
         BANK_MAX_SIZE = b.comment("Largest Capacitor Bank, outside size in blocks (every axis).")
                 .defineInRange("bankMaxSize", 9, 3, 32);
-        long[] caps = {8_000_000L, 64_000_000L, 512_000_000L, 4_096_000_000L};
-        int[] coils = {64_000, 512_000, 4_000_000};
+        long[] caps = {4_000_000L, 64_000_000L, 512_000_000L, 4_096_000_000L};
+        int[] coils = {16_000, 512_000, 4_000_000};
         String[] capNames = {"Copper", "Redstone", "Ender", "Resonant"};
         String[] coilNames = {"Basic", "Advanced", "Elite"};
         for (int i = 0; i < CAPACITOR.length; i++) {

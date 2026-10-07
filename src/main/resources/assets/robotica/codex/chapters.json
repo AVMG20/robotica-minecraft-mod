@@ -124,7 +124,7 @@
         },
         {
           "title": "Storing FE",
-          "text": "- Accumulator I, II, III: 1M, 4M, 16M FE. Output on the front; keeps its charge when broken.\n- Charger: right-click it with a cell or tool.",
+          "text": "- Accumulator I, II, III: 1M, 16M, 128M FE. Output on the front; keeps its charge when broken.\n- Charger: right-click it with a cell or tool.",
           "items": [
             "robotica:accumulator_1",
             "robotica:accumulator_2",
@@ -250,7 +250,7 @@
         },
         {
           "title": "Capacitor Bank",
-          "text": "3x3x3 to 9x9x9. Inside: Capacitors and 1+ Transfer Coil.\n- Capacitors: 8M, 64M, 512M, 4G FE\n- Coils: 64k, 512k, 4M FE/t\nSneak-right-click a port: in or out.",
+          "text": "3x3x3 to 9x9x9. Inside: Capacitors and 1+ Transfer Coil.\n- Capacitors: 4M, 64M, 512M, 4G FE\n- Coils: 16k, 512k, 4M FE/t\nSneak-right-click a port: in or out.",
           "items": [
             "robotica:bank_port",
             "robotica:capacitor_copper",
@@ -839,7 +839,7 @@
       "pages": [
         {
           "title": "Storage Terminal",
-          "text": "A big sorted chest: 81 slots, search (@mod, #tag), 3x3 crafting grid.\nHoppers and pipes work on every side.",
+          "text": "A big sorted chest: 81 slots, search (@mod, #tag), 3x3 crafting grid.\nHoppers and pipes work on every side.\nTakes empty shulker boxes and bundles only.",
           "items": [
             "robotica:storage_terminal"
           ]

@@ -1,5 +1,6 @@
 package com.arno.robotica.power.block;
 
+import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.core.energy.ItemEnergy;
 import net.minecraft.core.BlockPos;
@@ -23,16 +24,16 @@ public class AccumulatorBlock extends PowerBlock {
     public static final IntegerProperty CHARGE = IntegerProperty.create("charge", 0, CHARGE_LEVELS);
 
     public enum Tier {
-        I(1_000_000, 1_000),
-        II(4_000_000, 4_000),
-        III(16_000_000, 16_000);
+        I, II, III;
 
-        public final int capacity;
-        public final int io;
+        /** FE stored, from the server config. */
+        public int capacity() {
+            return PowerConfig.accumulatorCapacity(ordinal() + 1);
+        }
 
-        Tier(int capacity, int io) {
-            this.capacity = capacity;
-            this.io = io;
+        /** FE/t in and out, from the server config. */
+        public int io() {
+            return PowerConfig.accumulatorIo(ordinal() + 1);
         }
 
         public String id() {
@@ -69,7 +70,7 @@ public class AccumulatorBlock extends PowerBlock {
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = super.getStateForPlacement(context);
         if (state == null) return null;
-        return state.setValue(CHARGE, chargeLevel(ItemEnergy.get(context.getItemInHand()), tier.capacity));
+        return state.setValue(CHARGE, chargeLevel(ItemEnergy.get(context.getItemInHand()), tier.capacity()));
     }
 
     @Override
