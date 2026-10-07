@@ -96,7 +96,7 @@ public class PipeMenu extends MachineMenu {
             if ((type == ClickType.PICKUP || type == ClickType.QUICK_MOVE) && canEdit(player)) {
                 ItemStack carried = getCarried();
                 if (carried.isEmpty() || button == 1 || type == ClickType.QUICK_MOVE) ghost.set(ItemStack.EMPTY);
-                else ghost.set(carried.copyWithCount(1));
+                else ghost.set(new ItemStack(carried.getItem()));
                 broadcastChanges();
             }
             return;
@@ -116,7 +116,7 @@ public class PipeMenu extends MachineMenu {
             if (ItemStack.isSameItem(entry, stack)) return ItemStack.EMPTY;
             if (entry.isEmpty() && free < 0) free = i;
         }
-        if (free >= 0) slots.get(free).set(stack.copyWithCount(1));
+        if (free >= 0) slots.get(free).set(new ItemStack(stack.getItem()));
         return ItemStack.EMPTY;
     }
 

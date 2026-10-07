@@ -869,7 +869,7 @@
         },
         {
           "title": "Pipe filters",
-          "text": "Click a filter slot with an item, or shift-click it in your inventory. The item stays yours.\n- Blacklist: listed items do not pass. Whitelist: only they pass.\n- On Extract: what gets pulled. On Insert: what goes in.\n- Extract order: Round robin spreads items, Closest first fills the nearest arm first.",
+          "text": "Click a filter slot with an item, or shift-click it in your inventory.\n- Blacklist: listed items stop. Whitelist: only they pass.\n- Extract: what gets pulled. Insert: what goes in.\n- Order: Round robin or Closest first.",
           "items": [
             "robotica:item_pipe",
             "robotica:item_pipe_mk2"
