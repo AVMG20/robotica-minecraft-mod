@@ -19,6 +19,9 @@ public final class CoreConfig {
     public static final ModConfigSpec.IntValue EFFICIENCY_CAP_PER_MK;
     public static final ModConfigSpec.IntValue RANGE_CAP_PER_MK;
     public static final ModConfigSpec.IntValue FORTUNE_CAP_MAX;
+    public static final ModConfigSpec.IntValue GROWTH_CAP_PER_MK;
+    /** Caps of the machines without a Mk, keyed "MACHINE/KIND". */
+    private static final java.util.Map<String, ModConfigSpec.IntValue> FIXED_CAPS = new java.util.HashMap<>();
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -45,8 +48,38 @@ public final class CoreConfig {
                 .defineInRange("rangeCapPerMk", 1, 0, 4);
         FORTUNE_CAP_MAX = b.comment("Fortune cards that count: the Mk, at most this.")
                 .defineInRange("fortuneCapMax", 3, 0, 3);
+        GROWTH_CAP_PER_MK = b.comment("Growth cards that count per Mk.")
+                .defineInRange("growthCapPerMk", 1, 0, 4);
+        b.pop();
+        b.comment("Upgrade cards in machines without a Mk: most cards of a kind that count.").push("fixedMachines");
+        for (com.arno.robotica.core.upgrade.UpgradeRules.Fixed machine : com.arno.robotica.core.upgrade.UpgradeRules.Fixed.values()) {
+            for (com.arno.robotica.core.upgrade.UpgradeKind kind : machine.kinds()) {
+                String key = camel(machine.name()) + camel(kind.name()) + "Cap";
+                FIXED_CAPS.put(machine.name() + "/" + kind.name(),
+                        b.defineInRange(key, machine.defaultCap(kind), 0, kind.maxStack));
+            }
+        }
         b.pop();
         SPEC = b.build();
+    }
+
+    private static String camel(String name) {
+        StringBuilder out = new StringBuilder();
+        for (String part : name.toLowerCase(java.util.Locale.ROOT).split("_")) {
+            if (part.isEmpty()) continue;
+            out.append(out.isEmpty() ? part : Character.toUpperCase(part.charAt(0)) + part.substring(1));
+        }
+        return out.toString();
+    }
+
+    /** Configured cap of a card kind in a machine without a Mk, or {@code fallback} before the config is loaded. */
+    public static int fixedCap(String machine, String kind, int fallback) {
+        ModConfigSpec.IntValue v = FIXED_CAPS.get(machine + "/" + kind);
+        return SPEC.isLoaded() && v != null ? v.get() : fallback;
+    }
+
+    public static int growthCapPerMk() {
+        return SPEC.isLoaded() ? GROWTH_CAP_PER_MK.get() : 1;
     }
 
     public static int sideTransferInterval() {

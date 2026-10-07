@@ -11,7 +11,7 @@ import java.util.Set;
  *
  * <p>A machine with a Mk (Mk1-Mk4) follows one rule: {@link #mkSlots} = Mk + 1, caps from {@link #mkCap} (speed 2 x Mk,
  * efficiency Mk, range Mk, growth Mk, fortune min(Mk, 3), silk and void 1; per-Mk numbers in {@link CoreConfig}).
- * Machines without a Mk are listed in {@link Fixed}.
+ * Machines without a Mk are listed in {@link Fixed}; their caps are server config too.
  */
 public final class UpgradeRules {
     private UpgradeRules() {}
@@ -37,7 +37,7 @@ public final class UpgradeRules {
             case EFFICIENCY -> CoreConfig.efficiencyCapPerMk() * m;
             case RANGE -> CoreConfig.rangeCapPerMk() * m;
             case FORTUNE -> Math.min(m, CoreConfig.fortuneCapMax());
-            case GROWTH -> m;
+            case GROWTH -> CoreConfig.growthCapPerMk() * m;
             default -> 1;
         };
         return Math.min(kind.maxStack, cap);
@@ -67,7 +67,14 @@ public final class UpgradeRules {
             return caps.keySet();
         }
 
+        /** Most cards of a kind that count (server config, default from this table). */
         public int cap(UpgradeKind kind) {
+            Integer def = caps.get(kind);
+            return def == null ? 0 : Math.min(kind.maxStack, CoreConfig.fixedCap(name(), kind.name(), def));
+        }
+
+        /** The built-in default cap (the config's default). */
+        public int defaultCap(UpgradeKind kind) {
             return caps.getOrDefault(kind, 0);
         }
     }
