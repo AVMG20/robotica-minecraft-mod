@@ -80,7 +80,7 @@ CHEST, COPPER, IRON_PLATE, GOLD_PLATE, DIAMOND = '#c:chests/wooden', '#c:ingots/
 
 # Age 1: two chests, an iron casing, a crafting table, copper and a Basic Circuit.
 shaped('storage_terminal', ['CIC', 'RTR', ' B '],
-       {'C': CHEST, 'I': 'iron_casing', 'R': COPPER, 'T': 'minecraft:crafting_table', 'B': 'basic_circuit'})
+       {'C': CHEST, 'I': 'iron_casing', 'R': COPPER, 'T': '#c:player_workstations/crafting_tables', 'B': 'basic_circuit'})
 # Expansions climb the component ladder; each Mk eats the one before.
 shaped('storage_expansion_mk1', ['CPC', 'PIP', 'CBC'],
        {'C': CHEST, 'P': IRON_PLATE, 'I': 'iron_casing', 'B': 'basic_circuit'})

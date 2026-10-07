@@ -1,7 +1,7 @@
 {
   "type": "robotica:grinding",
   "ingredient": {
-    "item": "minecraft:gravel"
+    "tag": "c:gravels"
   },
   "result": {
     "id": "minecraft:sand",

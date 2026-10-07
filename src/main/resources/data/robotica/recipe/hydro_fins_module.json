@@ -7,7 +7,7 @@
   ],
   "key": {
     "K": {
-      "item": "minecraft:dried_kelp_block"
+      "tag": "c:storage_blocks/dried_kelp"
     },
     "A": {
       "item": "robotica:advanced_circuit"

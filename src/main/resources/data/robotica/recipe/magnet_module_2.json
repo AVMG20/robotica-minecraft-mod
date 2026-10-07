@@ -10,7 +10,7 @@
       "item": "robotica:advanced_circuit"
     },
     "C": {
-      "item": "minecraft:iron_block"
+      "tag": "c:storage_blocks/iron"
     },
     "U": {
       "item": "robotica:magnet_module"

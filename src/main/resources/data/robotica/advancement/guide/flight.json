@@ -8,7 +8,12 @@
       "translate": "advancements.robotica.guide.flight.title"
     },
     "description": {
-      "translate": "advancements.robotica.guide.flight.description"
+      "translate": "advancements.robotica.guide.flight.description",
+      "with": [
+        {
+          "keybind": "key.robotica.exo.toggle_flight"
+        }
+      ]
     },
     "frame": "challenge",
     "show_toast": true,

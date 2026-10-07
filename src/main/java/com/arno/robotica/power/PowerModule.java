@@ -27,6 +27,8 @@ public final class PowerModule {
         PowerRegistry.register(modBus);
         com.arno.robotica.core.upgrade.UpgradeText.register(com.arno.robotica.core.upgrade.UpgradeText.WIRELESS_RANGE_STEP,
                 PowerConfig::wirelessRangePerCard);
+        com.arno.robotica.core.upgrade.UpgradeText.register(com.arno.robotica.core.upgrade.UpgradeText.GENERATOR_EFFICIENCY,
+                () -> (int) Math.round(PowerConfig.generatorEfficiencyPerCard() * 100));
         container.registerConfig(ModConfig.Type.SERVER, PowerConfig.SPEC, "robotica-power-server.toml");
         modBus.addListener(PowerModule::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(WindingCrankBlock::onLogout);

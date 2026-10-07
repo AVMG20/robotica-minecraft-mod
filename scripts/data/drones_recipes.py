@@ -38,19 +38,19 @@ IRON = '#c:ingots/iron'
 
 # Mining Drone: iron pickaxe on top, clockwork mechanism in the middle, copper coil as the motor
 shaped('mining_drone', [' P ', 'ICI', 'RWR'],
-       {'P': 'minecraft:iron_pickaxe', 'I': IRON, 'C': 'clockwork_mechanism', 'R': 'minecraft:redstone', 'W': 'copper_coil'})
+       {'P': 'minecraft:iron_pickaxe', 'I': IRON, 'C': 'clockwork_mechanism', 'R': '#c:dusts/redstone', 'W': 'copper_coil'})
 # Sentry Drone: crossbow as the cannon, motor, casing and circuit
 shaped('sentry_drone', [' X ', 'BIM', ' R '],
-       {'X': 'minecraft:crossbow', 'B': 'basic_circuit', 'I': 'iron_casing', 'M': 'electric_motor', 'R': 'minecraft:redstone'})
+       {'X': '#c:tools/crossbow', 'B': 'basic_circuit', 'I': 'iron_casing', 'M': 'electric_motor', 'R': '#c:dusts/redstone'})
 # Courier Drone: hopper as the cargo hold
 shaped('courier_drone', [' H ', 'BIM', ' R '],
-       {'H': 'minecraft:hopper', 'B': 'basic_circuit', 'I': 'iron_casing', 'M': 'electric_motor', 'R': 'minecraft:redstone'})
+       {'H': 'minecraft:hopper', 'B': 'basic_circuit', 'I': 'iron_casing', 'M': 'electric_motor', 'R': '#c:dusts/redstone'})
 # Mk2: smithing keeps the data components of the base (energy, inventory, settings)
 smithing('mining_drone_mk2', 'advanced_circuit', 'mining_drone', 'servo_actuator', 'mining_drone_mk2')
 # Mk3 (Age 3, mining only): 5x5 tunnel and Fortune I, again by smithing so nothing is lost
 smithing('mining_drone_mk3', 'quantum_circuit', 'mining_drone_mk2', 'plasma_actuator', 'mining_drone_mk3')
 # Courier Remote: a circuit and a little redstone in an iron shell
-shaped('courier_remote', [' R ', 'ICI'], {'R': 'minecraft:redstone', 'I': IRON, 'C': 'basic_circuit'})
+shaped('courier_remote', [' R ', 'ICI'], {'R': '#c:dusts/redstone', 'I': IRON, 'C': 'basic_circuit'})
 smithing('courier_drone_mk2', 'advanced_circuit', 'courier_drone', 'servo_actuator', 'courier_drone_mk2')
 smithing('sentry_drone_mk2', 'advanced_circuit', 'sentry_drone', 'servo_actuator', 'sentry_drone_mk2')
 print('drone recipes written to', OUT)

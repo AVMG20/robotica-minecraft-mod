@@ -1,5 +1,6 @@
 package com.arno.robotica.exo.item;
 
+import com.arno.robotica.core.item.HasDetails;
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.module.ModuleHolder;
@@ -159,7 +160,9 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder 
                     ? Component.translatable("exo.robotica.tooltip.core_empty").withStyle(ChatFormatting.DARK_GRAY)
                     : Component.translatable("exo.robotica.tooltip.core", core.getHoverName()).withStyle(ChatFormatting.GOLD));
         }
-        tooltip.add(Component.translatable("exo.robotica.tooltip.keys").withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("exo.robotica.tooltip.keys", HasDetails.key("key.robotica.exo.open_modules"),
+                HasDetails.key("key.robotica.exo.toggle_flight"), HasDetails.key("key.robotica.exo.dash"),
+                HasDetails.key("key.robotica.exo.sonar"), HasDetails.key("key.robotica.exo.overclock")).withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("exo.robotica.tooltip.set").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

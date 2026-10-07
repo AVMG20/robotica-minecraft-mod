@@ -8,7 +8,7 @@
   ],
   "key": {
     "P": {
-      "item": "minecraft:prismarine_crystals"
+      "tag": "c:gems/prismarine"
     },
     "B": {
       "item": "minecraft:blaze_powder"

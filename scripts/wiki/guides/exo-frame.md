@@ -32,15 +32,15 @@ One kind works once per suit. Higher levels need a higher mark.
 | [[robot_hud_module]] | helmet | Mk2 | your drones on the HUD |
 | [[auto_feeder_module]] | helmet | Mk1 | eats when hungry |
 | [[solar_weave_module]] | helmet | Mk2 | 200 FE/s by day |
-| [[sonar_pulse_module]] | helmet | Mk2 / Mk3 / Mk4 | key N: outline ores and mobs |
+| [[sonar_pulse_module]] | helmet | Mk2 / Mk3 / Mk4 | Sonar key (default N): outline ores and mobs |
 | [[jet_assist_module]] | chest | Mk2 / Mk3 / Mk4 | soft landings, 1-3 air jumps |
-| [[flight_module]] | chest | Mk3 | creative flight, key K |
+| [[flight_module]] | chest | Mk3 | creative flight, Flight key (default K) |
 | [[kinetic_shield_module]] | chest | Mk3 / Mk4 / Mk4 | absorbs 75-95% of each hit with FE |
 | [[med_injector_module]] | chest | Mk2 / Mk3 / Mk4 | heals at 40% health |
 | [[hazard_seal_module]] | chest | Mk3 | clears bad effects |
 | [[servo_stride_module_1]] | legs | Mk1 / Mk2 / Mk3 | +20 / 40 / 60% speed |
 | [[kinetic_generator_module]] | legs | Mk1 | walking charges the suit |
-| [[dash_thrusters_module]] | legs or boots | Mk3 | key R: dash |
+| [[dash_thrusters_module]] | legs or boots | Mk3 | Dash key (default R): dash |
 | [[step_assist_module]] | boots | Mk1 | walk up full blocks |
 | [[spring_heels_module]] | boots | Mk1 / Mk2 / Mk3 | jump higher |
 | [[fall_dampener_module]] | boots | Mk1 / Mk2 / Mk3 | less fall damage |
@@ -55,7 +55,7 @@ Chestplate Mk2 and up holds one core. The bonus needs all four pieces worn, Mk2 
 
 | Core | Bonus |
 |---|---|
-| [[servo_core]] | key O: Haste II + Speed I for 10 s (60 s cooldown, 50,000 FE) |
+| [[servo_core]] | Overclock key (default O): Haste II + Speed I for 10 s (60 s cooldown, 50,000 FE) |
 | [[magma_core]] | fire immunity, hits set targets on fire, lava doesn't slow you |
 | [[antigrav_core]] | no fall damage, Flight costs half, Dash cooldown halved |
 

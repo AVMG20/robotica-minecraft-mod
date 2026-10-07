@@ -1,5 +1,6 @@
 package com.arno.robotica.gear;
 
+import com.arno.robotica.core.item.HasDetails;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.core.module.ModuleText;
 import com.arno.robotica.gear.weapon.ArcBladeItem;
@@ -35,7 +36,9 @@ final class GearModuleText {
         String key = "module.robotica." + kind.id + ".desc";
         return switch (kind) {
             case OVERCLOCK -> Component.translatable(key, pct(GearConfig.overclockSpeed(level)));
-            case FORTUNE, LOOTING -> Component.translatable(key, ModuleKind.roman(level));
+            case FORTUNE -> Component.translatable(key, ModuleKind.roman(level), HasDetails.key("key.robotica.gear.swap_enchant"));
+            case SILK_TOUCH -> Component.translatable(key, HasDetails.key("key.robotica.gear.swap_enchant"));
+            case LOOTING -> Component.translatable(key, ModuleKind.roman(level));
             case LAMP_PLACER -> Component.translatable(key, GearConfig.lampLight());
             case SHARPENED_EDGE -> Component.translatable(key, pct(GearConfig.edgeDamage(level)));
             case THERMAL_EDGE -> Component.translatable(key, GearConfig.thermalSeconds());

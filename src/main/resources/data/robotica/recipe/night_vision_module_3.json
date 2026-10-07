@@ -10,7 +10,7 @@
       "item": "robotica:quantum_circuit"
     },
     "C": {
-      "item": "minecraft:blaze_rod"
+      "tag": "c:rods/blaze"
     },
     "U": {
       "item": "robotica:night_vision_module_2"

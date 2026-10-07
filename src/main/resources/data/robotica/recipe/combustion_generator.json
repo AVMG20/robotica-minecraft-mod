@@ -11,7 +11,7 @@
       "tag": "c:ingots/copper"
     },
     "F": {
-      "item": "minecraft:furnace"
+      "tag": "c:player_workstations/furnaces"
     },
     "G": {
       "item": "robotica:copper_gear"

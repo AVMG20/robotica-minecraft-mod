@@ -168,7 +168,7 @@
    "items": [
     "servo_core"
    ],
-   "what": "Opens Age 2. Drops from the Scrap Colossus. In an Exo chestplate: Overclock (key O).",
+   "what": "Opens Age 2. Drops from the Scrap Colossus. In an Exo chestplate: Overclock (Overclock key, default O).",
    "see": [
     "item:colossus_altar",
     "guide:bosses"
@@ -768,7 +768,7 @@
    "items": [
     "upgrade_efficiency"
    ],
-   "what": "Machines use 15% less FE per action per card, never below 40%.",
+   "what": "Machines use 15% less FE per action per card, never below 40%. Combustion Generator: 10% less fuel per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -777,7 +777,7 @@
    "items": [
     "upgrade_range"
    ],
-   "what": "Bigger work area or range: robots +2 radius, Excavator +10 wide, Wireless Charger +4 blocks per card.",
+   "what": "Bigger work area or range: robots +2 radius, Excavator +10 wide, Wireless Charger +4 blocks, Electric Furnace +1 item per lane per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -786,7 +786,7 @@
    "items": [
     "upgrade_fortune"
    ],
-   "what": "Fortune I-III on mined blocks, more output in ore machines, Looting in the Replicator. Not with Silk Touch.",
+   "what": "Fortune I-III on mined blocks, more output in the Grinder and Alloy Smelter, +50% experience in the Electric Furnace, Looting in the Replicator. Not with Silk Touch.",
    "see": [
     "guide:upgrade-cards"
    ]

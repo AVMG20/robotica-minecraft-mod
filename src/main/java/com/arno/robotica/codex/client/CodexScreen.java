@@ -54,7 +54,7 @@ public class CodexScreen extends Screen {
     /** {@code guide}: the "Next steps" chapter, drawn from the guide advancements instead of text. */
     private record Chapter(String title, ItemStack icon, List<Page> pages, boolean guide) {}
     /** One step of the guide (assets/robotica/codex/guide.json, written with the advancements by codex_guide.py). */
-    private record Step(String id, String parent, ItemStack icon, int age) {
+    private record Step(String id, String parent, ItemStack icon, int age, List<String> keys) {
         String key() {
             return "advancements.robotica." + id.substring(id.indexOf(':') + 1).replace('/', '.');
         }
@@ -97,7 +97,9 @@ public class CodexScreen extends Screen {
                 for (JsonElement e : JsonParser.parseReader(reader).getAsJsonObject().getAsJsonArray("steps")) {
                     JsonObject o = e.getAsJsonObject();
                     String parent = o.has("parent") && !o.get("parent").isJsonNull() ? o.get("parent").getAsString() : null;
-                    steps.add(new Step(o.get("id").getAsString(), parent, stackOf(o.get("icon").getAsString()), o.has("age") ? o.get("age").getAsInt() : 0));
+                    List<String> keys = new ArrayList<>();
+                    if (o.has("keys")) for (JsonElement k : o.getAsJsonArray("keys")) keys.add(k.getAsString());
+                    steps.add(new Step(o.get("id").getAsString(), parent, stackOf(o.get("icon").getAsString()), o.has("age") ? o.get("age").getAsInt() : 0, keys));
                 }
             }
         } catch (Exception e) {
@@ -484,7 +486,8 @@ public class CodexScreen extends Screen {
     }
 
     private List<FormattedCharSequence> stepDescription(Step step) {
-        return font.split(Component.translatable(step.key() + ".description"), CodexLayout.TEXT_W);
+        Object[] args = step.keys().stream().map(Component::keybind).toArray();
+        return font.split(Component.translatable(step.key() + ".description", args), CodexLayout.TEXT_W);
     }
 
     /** First the steps you can do now (icon, title, description), then a checklist of every step. */

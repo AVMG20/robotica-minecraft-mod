@@ -48,7 +48,7 @@ shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': 'copper_gear', 'S':
 shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 
 # Age 1: Tinker's Bench fits modules into FE tools, FE weapons and Exo armor.
-shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': 'copper_gear', 'T': 'minecraft:crafting_table', 'W': '#minecraft:planks'})
+shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': 'copper_gear', 'T': '#c:player_workstations/crafting_tables', 'W': '#minecraft:planks'})
 
 # Age 1: the Age 0 tools upgrade at a smithing table (kit I + tool + Electric Motor), like every later tier.
 # Kit I is cheap on purpose (5 iron, some copper and redstone, no gold): the first powered tools come in the first iron hour.
@@ -81,10 +81,10 @@ shaped('lamp_placer_module', ['GCG', 'PRP'], {'G': '#c:dusts/glowstone', 'C': 'c
 shaped('armor_pierce_module', ['PFP', 'CBC'], {'P': IRON_PLATE, 'F': 'minecraft:flint', 'C': 'copper_coil', 'B': 'basic_circuit'})
 shaped('armor_pierce_module_2', ['ADA', ' U '], {'A': 'advanced_circuit', 'D': '#c:gems/diamond', 'U': 'armor_pierce_module'})
 shaped('armor_pierce_module_3', ['QNQ', ' U '], {'Q': 'quantum_circuit', 'N': 'minecraft:netherite_scrap', 'U': 'armor_pierce_module_2'})
-shaped('ricochet_module', ['SAS', 'PRP'], {'S': 'minecraft:slime_ball', 'A': 'advanced_circuit', 'P': IRON_PLATE, 'R': 'servo_actuator'})
-shaped('ricochet_module_2', ['QSQ', ' U '], {'Q': 'quantum_circuit', 'S': 'minecraft:slime_block', 'U': 'ricochet_module'})
+shaped('ricochet_module', ['SAS', 'PRP'], {'S': '#c:slime_balls', 'A': 'advanced_circuit', 'P': IRON_PLATE, 'R': 'servo_actuator'})
+shaped('ricochet_module_2', ['QSQ', ' U '], {'Q': 'quantum_circuit', 'S': '#c:storage_blocks/slime', 'U': 'ricochet_module'})
 shaped('chain_lightning_module', ['QLQ', 'CBC'], {'Q': 'quantum_circuit', 'L': 'minecraft:lightning_rod', 'C': 'copper_coil',
-                                                  'B': 'minecraft:blaze_rod'})
+                                                  'B': '#c:rods/blaze'})
 shaped('chain_lightning_module_2', ['QPQ', ' U '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'U': 'chain_lightning_module'})
 shaped('chain_lightning_module_3', ['NLN', ' U '], {'N': 'null_circuit', 'L': 'minecraft:lightning_rod', 'U': 'chain_lightning_module_2'})
 shaped('lifesteal_module', ['NTN', 'GCG'], {'N': 'null_circuit', 'T': 'minecraft:totem_of_undying', 'G': 'minecraft:ghast_tear',
@@ -102,7 +102,7 @@ shaped('void_filter_module', ['POP', 'CBC'], {'P': IRON_PLATE, 'O': '#c:obsidian
 # Weapon modules: they replace Sharpness, Looting and Fire Aspect.
 shaped('sharpened_edge_module', ['PSP', 'CBC'], {'P': IRON_PLATE, 'S': 'minecraft:iron_sword', 'C': 'copper_coil', 'B': 'basic_circuit'})
 shaped('sharpened_edge_module_2', ['ADA', ' U '], {'A': 'advanced_circuit', 'D': '#c:gems/diamond', 'U': 'sharpened_edge_module'})
-shaped('sharpened_edge_module_3', ['QBQ', ' U '], {'Q': 'quantum_circuit', 'B': 'minecraft:blaze_rod', 'U': 'sharpened_edge_module_2'})
+shaped('sharpened_edge_module_3', ['QBQ', ' U '], {'Q': 'quantum_circuit', 'B': '#c:rods/blaze', 'U': 'sharpened_edge_module_2'})
 shaped('looting_module', ['LEL', 'PBP'], {'L': '#c:gems/lapis', 'E': '#c:gems/emerald', 'P': IRON_PLATE, 'B': 'basic_circuit'})
 shaped('looting_module_2', ['AGA', ' U '], {'A': 'advanced_circuit', 'G': '#c:storage_blocks/gold', 'U': 'looting_module'})
 shaped('looting_module_3', ['QDQ', ' U '], {'Q': 'quantum_circuit', 'D': '#c:gems/diamond', 'U': 'looting_module_2'})
