@@ -24,10 +24,10 @@ RAMPS = {
     'pyrosteel': ('#3A0E08', '#6E2210', '#A8421C', '#E07A3A', '#FFC58A'),
     'resonant': ('#160A2E', '#36206A', '#5E46B0', '#8EA0F0', '#D8F4FF'),
     'pyrolite': ('#4A1004', '#8A2A08', '#D8561A', '#FF9A3A', '#FFE6A0'),
-    'resonite': ('#120C34', '#2A2A7A', '#4A6AD0', '#7AD8F0', '#E0FFFF'),
+    'resonite': ('#24104A', '#46288A', '#6E4AC4', '#A084EC', '#8AF2E6'),
     'graphite': ('#121214', '#26262A', '#3C3C42', '#5A5A62', '#8A8A94'),
     'lead': ('#1C1E24', '#30343E', '#4C5260', '#757D8E', '#AEB6C6'),
-    'thorium_ore': ('#143A1E', '#2A6E36', '#46A852', '#86DC6E', '#D8FFC0'),
+    'thorium_ore': ('#465E4E', '#6A8670', '#90AC94', '#B6D0B4', '#E2F5DC'),   # ore pieces: lighter, sit on rock
 }
 GLOWS = {
     'green': ('#2E7A1E', '#7CE84A', '#D8FF9A', '#F8FFE8'),
@@ -73,13 +73,21 @@ def ingot():
 
 
 def raw_chunk():
-    """Lumpy raw ore: a rough nugget with darker pits and a few bright facets."""
+    """Raw ore nugget: a few fused lumps, crevices between them, each lump lit on its top-left."""
+    lumps = ((8.0, 9.0, 4.3), (11.4, 5.4, 2.3), (5.2, 5.6, 2.4), (3.6, 10.6, 2.0))
     c = Canvas()
-    c.shape(lambda x, y: (x - 7.5) ** 2 / 36 + (y - 8.0) ** 2 / 26 + 0.35 * (hash01(x, y, 5) - 0.5) < 1.0,
-            lambda x, y: '3')
-    c.speckle(2, 2, 12, 12, '22', 0.18, 3, only='3')
-    c.auto_shade(SHADE)
-    c.set(5, 5, '5').set(6, 4, '5').set(9, 9, '4').set(10, 7, '4')
+    for y in range(16):
+        for x in range(16):
+            d = sorted((math.hypot(x - lx, y - ly) - r, i) for i, (lx, ly, r) in enumerate(lumps))
+            if d[0][0] > 0.2:
+                continue
+            lx, ly, r = lumps[d[0][1]]
+            crevice = d[1][0] - d[0][0] < 0.6 and -1.2 < d[1][0] < 0.4
+            u = ((x - lx) + (y - ly)) / r
+            c.set(x, y, '2' if crevice else '4' if u < -0.7 else '2' if u > 0.9 else '3')
+    for lx, ly, r in lumps:
+        c.set(round(lx - r * 0.45), round(ly - r * 0.45), '5')
+    c.speckle(2, 2, 12, 12, '2', 0.08, 3, only='3')
     c.outline('k')
     return c.rows()
 
@@ -239,56 +247,95 @@ def items():
 
 # =================================================================================================== ore and storage blocks
 
-def host(kind, seed=0):
-    """Seamless host rock: stone, deepslate, netherrack or end stone, from smooth noise."""
-    c = Canvas()
-    for y in range(16):
-        for x in range(16):
-            n = fbm(x, y if kind != 'deepslate' else y * 2, seed + {'stone': 1, 'deepslate': 2, 'netherrack': 3, 'end_stone': 4}[kind])
-            if kind == 'deepslate' and y % 4 == 0:
-                n -= 0.25
-            c.set(x, y, 'ABCDE'[max(0, min(4, int(n * 5.2 - 0.3)))])
-    return c
+# Ores are two-layer models (scripts/data/industry_data.py): the vanilla host texture underneath, our cutout overlay
+# with only the ore pieces on top, so they match vanilla rock and resource packs. Pyrolite and resonite add a small
+# full-bright layer with the core pixels.
+#
+# A piece is a little sprite: 'X' body (auto-shaded from its outline: lit top-left, dark bottom-right), '5' highlight,
+# '*' glowing core, 'T' glowing accent tip, '6' accent. Around it the overlay adds a shadow 'k' below/right and a rim
+# 'm' above/left, both in host-rock colours.
 
+HOST_EDGE = {   # (shadow, rim) per host rock
+    'stone': ('#58585A', '#686868'),
+    'deepslate': ('#232329', '#2F2F37'),
+    'netherrack': ('#2E0C0C', '#411616'),
+    'end_stone': ('#8E875E', '#B0A877'),
+}
 
-HOSTS = {
-    'stone': ('#5E5E5E', '#6E6E6E', '#7E7E7E', '#8E8E8E', '#9E9E9E'),
-    'deepslate': ('#2E2E34', '#3A3A40', '#47474D', '#55555B', '#646469'),
-    'netherrack': ('#4A1414', '#5E1A1A', '#722222', '#843030', '#9A4242'),
-    'end_stone': ('#B8B47A', '#CCC88A', '#DAD69A', '#E6E2AA', '#F0EEC0'),
+THORIUM_PIECES = {   # metallic chunks
+    'a': ('.5X.', '5X2X', 'XXXX', '.XX.'),
+    'b': ('5X.', 'X2X', '.XX'),
+    'c': ('.5X', 'X2X', 'XX.'),
+    'd': ('5XX', 'XX.'),
+    'e': ('.5X.', 'X42X', 'XXX.'),
+    'f': ('5X', 'XX'),
+}
+PYROLITE_PIECES = {   # shards with a hot core
+    'a': ('..X5', '.X*X', 'X*X.', 'XX..'),
+    'b': ('5X..', 'X*X.', '.X*X', '..XX'),
+    'c': ('...5', '..XX', '.*X.', 'XX..', 'X...'),
+    'd': ('.5', '*X', 'X.'),
+}
+RESONITE_PIECES = {   # crystal prisms with teal tips
+    'a': ('.T..', '.6.T', 'TX.6', 'XXXX', '.XX.'),
+    'b': ('T.', '6T', 'XX'),
+    'c': ('..T', 'T.6', '6XX', 'XXX'),
+    'd': ('.T.', 'T6.', 'XXX'),
+}
+
+ORE_LAYOUTS = {   # name: (host, pieces, ((piece, x, y), ...))
+    'thorium_ore': ('stone', THORIUM_PIECES, (('a', 1, 1), ('d', 9, 1), ('e', 10, 6), ('b', 4, 8), ('f', 1, 13), ('c', 11, 12))),
+    'deepslate_thorium_ore': ('deepslate', THORIUM_PIECES, (('b', 2, 2), ('a', 9, 1), ('f', 7, 7), ('e', 1, 10), ('c', 11, 10), ('d', 6, 13))),
+    'pyrolite_ore': ('netherrack', PYROLITE_PIECES, (('a', 1, 1), ('b', 10, 1), ('c', 6, 6), ('d', 13, 7), ('d', 1, 11), ('b', 10, 11))),
+    'resonite_ore': ('end_stone', RESONITE_PIECES, (('a', 1, 1), ('b', 10, 2), ('d', 6, 7), ('c', 1, 11), ('a', 11, 9))),
 }
 
 
-def ore_texture(kind, seed, clusters, glow):
-    """Host rock with mineral clusters: each blob shaded light top-left, dark bottom-right, a bright core pixel."""
-    c = host(kind, seed)
-    g = Canvas()
-    for cx, cy, r in clusters:
-        for y in range(16):
-            for x in range(16):
-                d = math.hypot(x - cx, y - cy) + 0.45 * hash01(x, y, seed)
-                if r < d <= r + 0.75 and c.get(x, y) in 'ABCDE':
-                    c.set(x, y, '1')
-                if d <= r:
-                    ch = '4' if (x - cx) + (y - cy) < -0.5 else '2' if (x - cx) + (y - cy) > 0.8 else '3'
-                    c.set(x, y, ch)
-                    if d < r - 0.9 and hash01(x, y, seed + 3) < 0.35:
-                        c.set(x, y, '5')
-                        if glow:
-                            g.set(x, y, 'Y')
-        c.set(round(cx), round(cy), '5')
-        if glow:
-            g.set(round(cx), round(cy), 'z')
+def ore_overlay(name):
+    """Returns (overlay, glow) canvases for an ore."""
+    _, pieces, layout = ORE_LAYOUTS[name]
+    body = {}
+    for key, ox, oy in layout:
+        for y, row in enumerate(pieces[key]):
+            for x, ch in enumerate(row):
+                if ch != '.':
+                    body[(ox + x, oy + y)] = ch
+    c, g = Canvas(), Canvas()
+    for (x, y), ch in body.items():
+        if ch == 'X':
+            score = sum((x + dx, y + dy) not in body for dx, dy in ((0, -1), (-1, 0))) \
+                - sum((x + dx, y + dy) not in body for dx, dy in ((0, 1), (1, 0)))
+            ch = '4' if score > 0 else '2' if score < 0 else '3'
+            if score < 0 and (x + 1, y + 1) not in body and (x - 1, y) in body and (x, y - 1) in body:
+                ch = '1'
+        c.set(x, y, ch)
+        if ch in '*T':
+            g.set(x, y, ch)
+    for y in range(16):
+        for x in range(16):
+            if (x, y) in body:
+                continue
+            if (x, y - 1) in body or (x - 1, y) in body:
+                c.set(x, y, 'k')
+            elif (x, y + 1) in body or (x + 1, y) in body:
+                c.set(x, y, 'm')
     return c, g
 
 
-def ore_pal(kind, main, glow='green'):
-    p = {'A': HOSTS[kind][0], 'B': HOSTS[kind][1], 'C': HOSTS[kind][2], 'D': HOSTS[kind][3], 'E': HOSTS[kind][4]}
-    p.update(dict(zip(M, RAMPS[main])))
-    g = GLOWS[glow]
-    p.update({'y': g[1], 'Y': g[2], 'z': g[3], 'k': '#1A1C1C'})
-    return p
+ORE_RAMPS = {   # name -> (ramp, (core/tip colour, accent), glow colour)
+    'thorium_ore': ('thorium_ore', ('#E2F5DC', '#A8CDA8'), None),
+    'deepslate_thorium_ore': ('thorium_ore', ('#E2F5DC', '#A8CDA8'), None),
+    'pyrolite_ore': ('pyrolite', ('#FFE6A0', '#FF9A3A'), '#FFD070'),
+    'resonite_ore': ('resonite', ('#9AF4EA', '#4FC4C8'), '#8AE8E0'),
+}
 
+
+def ore_pal(name):
+    host = ORE_LAYOUTS[name][0]
+    ramp, (core, accent), glow = ORE_RAMPS[name]
+    p = dict(zip(M, RAMPS[ramp]))
+    p.update({'k': HOST_EDGE[host][0], 'm': HOST_EDGE[host][1], '*': core, 'T': core, '6': accent})
+    return p, {'*': glow or core, 'T': glow or core}
 
 def storage_block(main, kind, glow=False):
     """Metal or crystal block: bevelled tiles with seams; crystal blocks get facets and glowing seams."""
@@ -319,16 +366,12 @@ def storage_block(main, kind, glow=False):
 
 
 def blocks_ores():
-    c, _ = ore_texture('stone', 1, ((4, 4, 2.0), (11, 6, 1.8), (6, 11, 2.2), (12, 12, 1.4)), False)
-    write_block('thorium_ore', c.rows(), ore_pal('stone', 'thorium_ore'))
-    c, _ = ore_texture('deepslate', 2, ((4, 5, 2.0), (11, 4, 1.6), (7, 11, 2.2), (13, 11, 1.5)), False)
-    write_block('deepslate_thorium_ore', c.rows(), ore_pal('deepslate', 'thorium_ore'))
-    c, g = ore_texture('netherrack', 3, ((4, 4, 1.8), (11, 5, 2.0), (5, 11, 1.6), (11, 12, 1.9)), True)
-    write_block('pyrolite_ore', c.rows(), ore_pal('netherrack', 'pyrolite', 'amber'))
-    write_block('pyrolite_ore_glow', g.rows(), ore_pal('netherrack', 'pyrolite', 'amber'))
-    c, g = ore_texture('end_stone', 4, ((5, 5, 1.9), (11, 9, 2.1), (4, 12, 1.4)), True)
-    write_block('resonite_ore', c.rows(), ore_pal('end_stone', 'resonite', 'cyan'))
-    write_block('resonite_ore_glow', g.rows(), ore_pal('end_stone', 'resonite', 'cyan'))
+    for name in ORE_LAYOUTS:
+        c, g = ore_overlay(name)
+        p, gp = ore_pal(name)
+        write_block(name, c.rows(), p)
+        if ORE_RAMPS[name][2]:
+            write_block(name + '_glow', g.rows(), gp)
 
     c, _ = storage_block('thorium', 'raw')
     write_block('raw_thorium_block', c.rows(), pal('thorium'))
@@ -338,7 +381,7 @@ def blocks_ores():
     write_block('pyrolite_block', c.rows(), pal('pyrolite', 'amber'))
     write_block('pyrolite_block_glow', g.rows(), pal('pyrolite', 'amber'))
     c, g = storage_block('resonite', 'crystal', True)
-    write_block('resonite_block', c.rows(), pal('resonite', 'cyan'))
+    write_block('resonite_block', c.rows(), pal('resonite', 'cyan', **{'5': '#C4B0F6'}))
     write_block('resonite_block_glow', g.rows(), pal('resonite', 'cyan'))
 
 

@@ -2,19 +2,10 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "down": "robotica:block/resonite_ore",
-    "up": "robotica:block/resonite_ore",
-    "north": "robotica:block/resonite_ore",
-    "south": "robotica:block/resonite_ore",
-    "west": "robotica:block/resonite_ore",
-    "east": "robotica:block/resonite_ore",
-    "particle": "robotica:block/resonite_ore",
-    "glow_down": "robotica:block/resonite_ore_glow",
-    "glow_up": "robotica:block/resonite_ore_glow",
-    "glow_north": "robotica:block/resonite_ore_glow",
-    "glow_south": "robotica:block/resonite_ore_glow",
-    "glow_west": "robotica:block/resonite_ore_glow",
-    "glow_east": "robotica:block/resonite_ore_glow"
+    "host": "minecraft:block/end_stone",
+    "ore": "robotica:block/resonite_ore",
+    "particle": "minecraft:block/end_stone",
+    "glow": "robotica:block/resonite_ore_glow"
   },
   "elements": [
     {
@@ -30,27 +21,65 @@
       ],
       "faces": {
         "down": {
-          "texture": "#down",
+          "texture": "#host",
           "cullface": "down"
         },
         "up": {
-          "texture": "#up",
+          "texture": "#host",
           "cullface": "up"
         },
         "north": {
-          "texture": "#north",
+          "texture": "#host",
           "cullface": "north"
         },
         "south": {
-          "texture": "#south",
+          "texture": "#host",
           "cullface": "south"
         },
         "west": {
-          "texture": "#west",
+          "texture": "#host",
           "cullface": "west"
         },
         "east": {
-          "texture": "#east",
+          "texture": "#host",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ore",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#ore",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#ore",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#ore",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#ore",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#ore",
           "cullface": "east"
         }
       }
@@ -69,7 +98,7 @@
       "shade": false,
       "faces": {
         "down": {
-          "texture": "#glow_down",
+          "texture": "#glow",
           "cullface": "down",
           "neoforge_data": {
             "block_light": 15,
@@ -78,7 +107,7 @@
           }
         },
         "up": {
-          "texture": "#glow_up",
+          "texture": "#glow",
           "cullface": "up",
           "neoforge_data": {
             "block_light": 15,
@@ -87,7 +116,7 @@
           }
         },
         "north": {
-          "texture": "#glow_north",
+          "texture": "#glow",
           "cullface": "north",
           "neoforge_data": {
             "block_light": 15,
@@ -96,7 +125,7 @@
           }
         },
         "south": {
-          "texture": "#glow_south",
+          "texture": "#glow",
           "cullface": "south",
           "neoforge_data": {
             "block_light": 15,
@@ -105,7 +134,7 @@
           }
         },
         "west": {
-          "texture": "#glow_west",
+          "texture": "#glow",
           "cullface": "west",
           "neoforge_data": {
             "block_light": 15,
@@ -114,7 +143,7 @@
           }
         },
         "east": {
-          "texture": "#glow_east",
+          "texture": "#glow",
           "cullface": "east",
           "neoforge_data": {
             "block_light": 15,

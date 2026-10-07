@@ -218,6 +218,7 @@ Ores and materials (worldgen is data, written by `scripts/data/industry_worldgen
 | Thorium (stone, deepslate) | Overworld, trapezoid Y -48..32, 9 per chunk | 8 | Raw Thorium (fortune) | raw block, ingot, block, dust, plate |
 | Pyrolite | Nether netherrack Y 10..117, 10 per chunk, +8 in basalt deltas (also in basalt and blackstone) | 9 | Pyrolite Shard, 2-5 XP, iron pickaxe | dust, block |
 | Resonite | outer End islands (highlands, midlands, barrens) end stone Y 16..80, 5 per chunk, rare | 5 | Resonite Crystal, 3-7 XP, diamond pickaxe | dust, block |
+- Ore models have two layers: the vanilla host texture (`minecraft:block/stone`, `deepslate`, `netherrack`, `end_stone`) under our cutout overlay with only the ore pieces, so they follow resource packs. Pyrolite and resonite add a small full-bright layer on the shard cores and crystal tips.
 - Raw thorium, thorium dust and the ores smelt or blast into ingots; the ores' gems smelt out too. A Tinker's Hammer in the crafting grid cracks raw thorium, a shard, a crystal or coal into one dust (no gain; the Grinder doubles). Graphite Dust is ground coal or charcoal.
 - Survey Rig, Excavator and the Grinder pick the ores up through `c:ores`.
 
