@@ -2,14 +2,14 @@ package com.arno.robotica.boss.block;
 
 import com.arno.robotica.boss.BossConfig;
 import com.arno.robotica.boss.BossRegistry;
-import com.arno.robotica.boss.entity.ScrapColossus;
-import com.arno.robotica.boss.item.SignalFlareItem;
+import com.arno.robotica.boss.entity.RoboticaBoss;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -20,6 +20,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
@@ -41,13 +42,26 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
- * Colossus Altar: right-click it with a Signal Flare to wake a Scrap Colossus on top. One Colossus at a time per altar,
- * then a cooldown (config, 5 minutes). Found at the heart of every Rusted Foundry ({@link #NATURAL}: drops copper instead of
- * itself, so the ruin's altar stays where it is) and craftable from Age 2 parts to build your own arena.
+ * Boss altar: right-click it with its summon item to wake its boss on top. One boss at a time per altar, then a cooldown
+ * (config, 5 minutes). The Colossus Altar (Signal Flare, Scrap Colossus) stands in every Rusted Foundry, the Forge Altar
+ * (Ignition Charge, Forge Tyrant) in every Cinder Forge ({@link #NATURAL}: drops building blocks instead of itself, so the
+ * ruin's altar stays where it is). Both are craftable to build your own arena.
  */
-public class ColossusAltarBlock extends Block implements EntityBlock {
+public class BossAltarBlock extends Block implements EntityBlock {
+    /**
+     * What one altar summons. {@code key} names its messages: {@code message.robotica.boss.<key>.awakened / boss_alive /
+     * peaceful / ready}. {@code colors} are the firework colors of the summon.
+     */
+    public record Kind(String key, Supplier<? extends EntityType<? extends Mob>> boss, Supplier<? extends net.minecraft.world.item.Item> summon,
+                       int[] colors, int fade) {
+        MutableComponent message(String what) {
+            return Component.translatable("message.robotica.boss." + key + "." + what);
+        }
+    }
+
     /** Lit when it can be awakened again (cosmetic; the block entity holds the real cooldown). */
     public static final BooleanProperty READY = BooleanProperty.create("ready");
     /** Generated in a Rusted Foundry. */
@@ -57,8 +71,11 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
         SPAWNED, COOLDOWN, BOSS_ALIVE, PEACEFUL, BLOCKED
     }
 
-    public ColossusAltarBlock(Properties props) {
+    private final Kind kind;
+
+    public BossAltarBlock(Kind kind, Properties props) {
         super(props);
+        this.kind = kind;
         registerDefaultState(stateDefinition.any().setValue(READY, true).setValue(NATURAL, false));
     }
 
@@ -70,13 +87,17 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return BossRegistry.COLOSSUS_ALTAR_BE.get().create(pos, state);
+        return BossRegistry.BOSS_ALTAR_BE.get().create(pos, state);
+    }
+
+    public Kind kind() {
+        return kind;
     }
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (!(stack.getItem() instanceof SignalFlareItem)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (!stack.is(kind.summon().get())) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if (!(level instanceof ServerLevel server)) return ItemInteractionResult.SUCCESS;
         Result result = awaken(server, pos, player);
         if (result == Result.SPAWNED && !player.getAbilities().instabuild) stack.shrink(1);
@@ -86,30 +107,32 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
-        if (!(level.getBlockEntity(pos) instanceof ColossusAltarBlockEntity altar)) return InteractionResult.PASS;
+        if (!(level.getBlockEntity(pos) instanceof BossAltarBlockEntity altar)) return InteractionResult.PASS;
         long left = altar.cooldownLeft(level.getGameTime());
         if (altar.boss(server) != null) {
-            tell(player, Component.translatable("message.robotica.boss.boss_alive"));
+            tell(player, kind.message("boss_alive"));
         } else if (left > 0) {
             tell(player, Component.translatable("message.robotica.boss.cooldown", time(left)));
         } else {
-            tell(player, Component.translatable("message.robotica.boss.ready"));
+            tell(player, kind.message("ready"));
         }
         return InteractionResult.CONSUME;
     }
 
     /**
-     * Wakes a Scrap Colossus on top of the altar if it is ready. Creative players skip the cooldown (never the one-boss
+     * Wakes the altar's boss on top of it if it is ready. Creative players skip the cooldown (never the one-boss
      * rule). Tells the player why when it does not. The caller consumes the flare on {@link Result#SPAWNED}.
      */
     public static Result awaken(ServerLevel level, BlockPos pos, @Nullable Player player) {
-        if (!(level.getBlockEntity(pos) instanceof ColossusAltarBlockEntity altar)) return Result.BLOCKED;
+        if (!(level.getBlockEntity(pos) instanceof BossAltarBlockEntity altar)
+                || !(level.getBlockState(pos).getBlock() instanceof BossAltarBlock block)) return Result.BLOCKED;
+        Kind kind = block.kind;
         if (level.getDifficulty() == Difficulty.PEACEFUL) {
-            tell(player, Component.translatable("message.robotica.boss.peaceful"));
+            tell(player, kind.message("peaceful"));
             return Result.PEACEFUL;
         }
         if (altar.boss(level) != null) {
-            tell(player, Component.translatable("message.robotica.boss.boss_alive"));
+            tell(player, kind.message("boss_alive"));
             return Result.BOSS_ALIVE;
         }
         long left = altar.cooldownLeft(level.getGameTime());
@@ -117,12 +140,12 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
             tell(player, Component.translatable("message.robotica.boss.cooldown", time(left)));
             return Result.COOLDOWN;
         }
-        EntityType<ScrapColossus> type = BossRegistry.SCRAP_COLOSSUS.get();
+        EntityType<? extends Mob> type = kind.boss().get();
         double x = pos.getX() + 0.5;
         double y = pos.getY() + 1.0;
         double z = pos.getZ() + 0.5;
         AABB space = type.getSpawnAABB(x, y, z);
-        ScrapColossus boss = type.create(level);
+        Mob boss = type.create(level);
         if (boss == null || !level.noCollision(space)) {
             tell(player, Component.translatable("message.robotica.boss.blocked"));
             return Result.BLOCKED;
@@ -132,7 +155,7 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
         boss.setYHeadRot(yaw);
         boss.yBodyRot = yaw;
         boss.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.TRIGGERED, null);
-        boss.setAltarPos(pos);
+        if (boss instanceof RoboticaBoss altarBoss) altarBoss.setAltarPos(pos);
         if (player != null && !player.getAbilities().instabuild) boss.setTarget(player);
         level.addFreshEntity(boss);
 
@@ -142,15 +165,15 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
             level.setBlock(pos, level.getBlockState(pos).setValue(READY, false), Block.UPDATE_ALL);
             level.scheduleTick(pos, level.getBlockState(pos).getBlock(), cooldown);
         }
-        awakenEffects(level, pos);
-        Component news = Component.translatable("message.robotica.boss.awakened").withStyle(ChatFormatting.GOLD);
+        awakenEffects(level, pos, kind);
+        Component news = kind.message("awakened").withStyle(ChatFormatting.GOLD);
         for (ServerPlayer near : level.getPlayers(p -> p.distanceToSqr(x, y, z) < 64.0 * 64.0)) {
             near.sendSystemMessage(news);
         }
         return Result.SPAWNED;
     }
 
-    private static void awakenEffects(ServerLevel level, BlockPos pos) {
+    private static void awakenEffects(ServerLevel level, BlockPos pos, Kind kind) {
         double x = pos.getX() + 0.5;
         double y = pos.getY() + 1.0;
         double z = pos.getZ() + 0.5;
@@ -163,7 +186,7 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
         // The flare itself goes up as a firework high above the altar, so everyone around sees the fight start.
         ItemStack rocket = new ItemStack(Items.FIREWORK_ROCKET);
         rocket.set(DataComponents.FIREWORKS, new Fireworks(2, List.of(new FireworkExplosion(FireworkExplosion.Shape.LARGE_BALL,
-                IntList.of(0xE8742A, 0xC9302A), IntList.of(0xFFD080), true, false))));
+                IntList.of(kind.colors()), IntList.of(kind.fade()), true, false))));
         level.addFreshEntity(new FireworkRocketEntity(level, x, y + 3.5, z, rocket));
     }
 
@@ -191,7 +214,7 @@ public class ColossusAltarBlock extends Block implements EntityBlock {
 
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (!(level.getBlockEntity(pos) instanceof ColossusAltarBlockEntity altar)) return;
+        if (!(level.getBlockEntity(pos) instanceof BossAltarBlockEntity altar)) return;
         long left = altar.cooldownLeft(level.getGameTime());
         if (left > 0) {
             level.scheduleTick(pos, this, (int) Math.min(Integer.MAX_VALUE, left));

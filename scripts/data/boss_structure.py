@@ -1,6 +1,8 @@
 """Writes the structure templates of the boss module.
 - data/robotica/structure/rusted_foundry.nbt : the Rusted Foundry, a ruined 25x25 hall of stone bricks and rusted copper
   with broken walls, roof beams with hanging chains, a round arena floor and the Colossus Altar in the centre (12, 1, 12).
+- data/robotica/structure/cinder_forge.nbt   : the Cinder Forge, a ruined 23x23 Nether forge of blackstone, basalt and
+  gold with magma channels, broken walls, lava cauldrons and the Forge Altar in the centre (11, 1, 11).
 - data/robotica/structure/boss_arena.nbt     : an empty 9x8x9 game test area.
 Run: python3 scripts/data/boss_structure.py   (deterministic: the same file every run)
 """
@@ -243,6 +245,123 @@ def build_foundry():
     return t
 
 
+# ---------------------------------------------------------------- Cinder Forge (Nether)
+
+FSIZE, FHEIGHT, FC = 23, 11, 11
+
+
+def blackstone():
+    return pick(('polished_blackstone_bricks', 5), ('cracked_polished_blackstone_bricks', 3), ('blackstone', 2),
+                ('gilded_blackstone', 0.3))
+
+
+def build_cinder_forge():
+    t = Template(FSIZE, FHEIGHT, FSIZE)
+    for x in range(FSIZE):
+        for z in range(FSIZE):
+            for y in range(1, FHEIGHT):
+                t.set(x, y, z, 'air')
+
+    # floor: blackstone bricks, a round arena of polished blackstone with a magma ring and basalt spokes
+    for x in range(FSIZE):
+        for z in range(FSIZE):
+            d = math.hypot(x - FC, z - FC)
+            if d <= 2.5:
+                block, props = 'polished_blackstone', {}
+            elif abs(d - 8.0) < 0.55:
+                block, props = 'magma_block', {}
+            elif d < 8.0 and (x == FC or z == FC):
+                block, props = 'polished_basalt', {'axis': 'x' if z == FC else 'z'}
+            elif d < 8.0:
+                block, props = pick(('polished_blackstone', 6), ('blackstone', 2), ('cracked_polished_blackstone_bricks', 1)), {}
+            else:
+                block, props = pick(('polished_blackstone_bricks', 5), ('cracked_polished_blackstone_bricks', 3),
+                                    ('blackstone', 2), ('basalt', 1), ('netherrack', 1)), {}
+                if block == 'basalt':
+                    props = {'axis': 'y'}
+            t.set(x, 0, z, block, **props)
+
+    # dais: gilded plinth with the altar in the middle, slab steps around it
+    for dx in range(-2, 3):
+        for dz in range(-2, 3):
+            if max(abs(dx), abs(dz)) == 2:
+                t.set(FC + dx, 1, FC + dz, 'polished_blackstone_slab', type='bottom', waterlogged=False)
+            else:
+                t.set(FC + dx, 1, FC + dz, 'gilded_blackstone')
+    t.set(FC, 1, FC, 'robotica:forge_altar', natural=True, ready=True)
+
+    # outer walls: blackstone below, basalt above, broken to uneven heights, doorways in the middle of each side
+    def wall_height(i, side):
+        n = math.sin(i * 0.8 + side * 1.7) + math.sin(i * 0.41 + side * 4.1)
+        return max(1, min(7, int(round(5 + n * 1.8 - (1 if rng.random() < 0.15 else 0)))))
+
+    perimeter = []
+    for i in range(FSIZE):
+        perimeter += [(i, 0, 0), (i, FSIZE - 1, 1), (0, i, 2), (FSIZE - 1, i, 3)]
+    for x, z, side in perimeter:
+        i = x if side < 2 else z
+        h = 0 if FC - 1 <= i <= FC + 1 else wall_height(i, side)
+        corner = i in (0, FSIZE - 1)
+        pillar = i in (0, 5, FSIZE - 6, FSIZE - 1)
+        if pillar:
+            h = 9 if corner or rng.random() < 0.6 else 6
+        for y in range(1, h + 1):
+            if pillar:
+                t.set(x, y, z, 'polished_basalt' if y > 1 else 'chiseled_polished_blackstone', **({'axis': 'y'} if y > 1 else {}))
+            elif y <= 2:
+                t.set(x, y, z, blackstone())
+            elif y in (3, 4) and i % 4 == 2:
+                t.set(x, y, z, 'iron_bars', east=False, west=False, north=False, south=False, waterlogged=False)
+            elif rng.random() < 0.08:
+                t.set(x, y, z, 'magma_block')
+            else:
+                t.set(x, y, z, 'basalt', axis='y')
+        if 0 < h < 7 and not pillar and rng.random() < 0.25:
+            t.set(x, h + 1, z, 'blackstone_slab', type='bottom', waterlogged=False)
+    # gilded lintels over the doorways
+    for x0, z0 in ((FC, 0), (FC, FSIZE - 1), (0, FC), (FSIZE - 1, FC)):
+        for k in (-2, -1, 0, 1, 2):
+            x, z = (x0, FC + k) if x0 in (0, FSIZE - 1) else (FC + k, z0)
+            t.set(x, 5, z, 'gilded_blackstone' if k == 0 else 'polished_blackstone_bricks')
+
+    # roof beams with gaps, chains and soul lanterns
+    for bz, broken_from in ((5, 14), (17, 99)):
+        for x in range(1, FSIZE - 1):
+            if x >= broken_from or rng.random() < 0.15:
+                if x >= broken_from and rng.random() < 0.2:
+                    t.set(x, 1, bz, 'polished_blackstone_brick_slab', type='bottom', waterlogged=False)
+                continue
+            t.set(x, 9, bz, 'polished_blackstone_bricks')
+        for x in range(3, FSIZE - 3, 4):
+            if t.get(x, 9, bz) != 'minecraft:polished_blackstone_bricks':
+                continue
+            length = 2 + rng.randrange(3)
+            for y in range(8, 8 - length, -1):
+                t.set(x, y, bz, 'chain', axis='y', waterlogged=False)
+            if rng.random() < 0.7:
+                t.set(x, 8 - length, bz, 'soul_lantern', hanging=True, waterlogged=False)
+
+    # lava cauldrons by the pillars as lights
+    for x, z in ((5, 1), (FSIZE - 6, 1), (5, FSIZE - 2), (FSIZE - 6, FSIZE - 2), (1, 5), (1, FSIZE - 6), (FSIZE - 2, 5),
+                 (FSIZE - 2, FSIZE - 6)):
+        t.set(x, 1, z, 'lava_cauldron')
+
+    # old forge machinery along the walls
+    t.set(2, 1, 3, 'blast_furnace', facing='east', lit=True)
+    t.set(2, 1, 4, 'blast_furnace', facing='east', lit=False)
+    t.set(2, 2, 3, 'polished_blackstone_slab', type='bottom', waterlogged=False)
+    t.set(FSIZE - 3, 1, 3, 'anvil', facing='north')
+    t.set(FSIZE - 3, 1, FSIZE - 4, 'smithing_table')
+    t.set(FSIZE - 3, 1, FSIZE - 5, 'gilded_blackstone')
+    for x, z in ((4, FSIZE - 3), (5, FSIZE - 3), (4, FSIZE - 4)):
+        t.set(x, 1, z, 'soul_sand')
+    t.set(4, 2, FSIZE - 3, 'soul_sand')
+    # the loot chest in a corner: Nether goods and an Ignition Charge to start the fight
+    t.set(2, 1, FSIZE - 3, 'chest', {'id': 'minecraft:chest', 'LootTable': 'robotica:chests/cinder_forge'},
+          facing='east', type='single', waterlogged=False)
+    return t
+
+
 def build_arena():
     return Template(9, 8, 9)
 
@@ -250,6 +369,8 @@ def build_arena():
 def main():
     n, p = build_foundry().write(OUT / 'rusted_foundry.nbt')
     print(f'rusted_foundry.nbt: {n} blocks, {p} states')
+    n, p = build_cinder_forge().write(OUT / 'cinder_forge.nbt')
+    print(f'cinder_forge.nbt: {n} blocks, {p} states')
     build_arena().write(OUT / 'boss_arena.nbt')
     print('boss_arena.nbt written')
 

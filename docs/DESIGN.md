@@ -23,9 +23,9 @@ Source of truth for implementation. NeoForge 1.21.1, Java 21, mod id `robotica`,
 | 3 | Deep | Magma Core (+ Swarm, Tide later) | netherite scrap, blaze, prismarine |
 | 4 | Antigrav | Antigrav Core | ender pearls, nether star, shulker shell |
 
-The Servo Core drops from the Scrap Colossus (module `boss`, see Bosses). It keeps a pricier fallback recipe (`temp_servo_core`) for Peaceful worlds and servers that turn the Rusted Foundry off. The Magma and Antigrav Cores keep their temporary expensive recipe (marked `temp_` in the file name) until their bosses exist.
+The Servo Core drops from the Scrap Colossus and the Magma Core from the Forge Tyrant (module `boss`, see Bosses). Both keep a pricier fallback recipe (`temp_servo_core`, `temp_magma_core`) for Peaceful worlds and servers that turn the Rusted Foundry or Cinder Forge off. The Antigrav Core keeps its temporary expensive recipe until its boss exists.
 
-- Fairness rules: the Colossus only takes damage caused by a living attacker (no suffocation, cactus, drowning or dispenser cheese), it throws scrap at targets it can't reach in melee, its loot is locked to the killer for 2 minutes (or until they log off), and an altar that is cooling down can't be mined.
+- Fairness rules (both bosses): they only take damage caused by a living attacker (no suffocation, cactus, drowning, lava, fire or dispenser cheese), they have a ranged answer to targets they can't reach in melee (thrown scrap; magma globs and eruptions), their loot is locked to the killer for 2 minutes (or until they log off), and an altar that is cooling down can't be mined.
 
 ## Balance system: component ladder
 
@@ -58,7 +58,7 @@ Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate
 - Blazing Casing: 4 reinforced casing + 4 netherite scrap + 1 magma core → 2
 - Quantum Circuit: 4 advanced circuit + 4 blaze rod + 1 netherite ingot → 1
 - Plasma Actuator: 2 servo actuator + 4 prismarine crystals + 2 blaze powder + 1 quantum circuit → 1
-- Magma Core: boss drop (temp: 4 servo actuator + 2 quantum circuit + 2 magma block + 1 netherite ingot)
+- Magma Core: Forge Tyrant drop (fallback recipe: 4 servo actuator + 2 quantum circuit + 2 netherite ingot + 1 plasma actuator)
 
 ### Age 4 parts
 - Null Casing: 4 blazing casing + 4 shulker shell + 1 antigrav core → 2
@@ -458,11 +458,23 @@ Getting home and travelling between bases. All teleports run on the server, cost
 - Signal Flare (Age 1: 4 copper, 2 redstone, 1 gunpowder, 1 Electric Motor, about 24 IE): the summon item. The real price is the fight.
 - Colossus Altar recipe (Age 2: 4 Reinforced Casing, Advanced Circuit, Servo Actuator, 2 obsidian, copper block, about 360 IE): build your own arena. No Servo Core needed, so worlds without foundries can still farm the boss. The altar in a ruin drops 2 copper blocks instead of itself.
 - Rusted Foundry: a ruined 25x25 hall of stone bricks and rusted copper (template `rusted_foundry.nbt`, written by `scripts/data/boss_structure.py`) around the altar, with a chest holding a Signal Flare. Plains, sunflower plains, desert, badlands; random spread 48 chunks, separation 16, kept 4 chunks from villages; skipped on slopes over 7 blocks and on water.
-- Server config `robotica-boss-server.toml`: `bossHealthMultiplier`, `bossDamageMultiplier`, `colossusMinionCap`, `altarCooldownSeconds`, `foundryEnabled`.
+- Forge Tyrant (Age 3): a walking blast furnace of blackstone and gold, 2.2 wide and 2.9 tall (500 HP, armor 12, toughness 6, full knockback resistance, fire immune, walks on lava). Boss bar, never breaks blocks or lights fires, stays within 20 blocks of its altar.
+- Tyrant attacks, one big attack every 3 s (1.75 s below half health), plain hammer punches (14, sets on fire) in between:
+  - Flame breath (targets within 6 blocks): 1 s with glowing, half-open furnace doors, then a 7 block, 70 degree cone of fire for 2 s in a fixed direction, 5 damage every 0.5 s and 3 s of fire. Walls block it. Step aside.
+  - Magma mortar (targets 8-28 blocks away): the crucible arm swings back, then lobs 3 globs (5 below half health) at and around the target; each splashes 9 damage and fire within 1.6 blocks.
+  - Eruptions (targets 4-24 blocks away, no line of sight needed): the hammer goes up and slams down, glowing rings mark the target's spot and 2 more around it (4 below half health); 1.5 s later each erupts for 16 damage, 4 s of fire and a throw upwards.
+  - A target it can't reach in melee for 3 s also gets mortar and eruptions at close range.
+- Vent (the weak window): after every 3 big attacks it stands still for 5 s with its furnace doors open and takes double damage.
+- Below half health, once: the bar turns white, it marks a ring of 8 eruptions around itself and attacks faster.
+- Drops: 1 Magma Core always, gold ingots, blaze rods, a 50% netherite scrap, magma cream, quartz, Pyrolite Shards, gilded blackstone, sometimes a Quantum Circuit; 250 XP. Loot locked to the killer like the Colossus. Everyone within 64 blocks with the boss bar gets the "Quenched" guide step.
+- Forge Altar: right-click it with an Ignition Charge to wake the Tyrant (needs 3x3x4 air, same cooldown and rules as the Colossus Altar). Recipe (Age 3: 4 Reinforced Casing, Quantum Circuit, Plasma Actuator, 2 netherite scrap, magma block). The altar in a ruin drops 2 gilded blackstone.
+- Ignition Charge (Age 3: 4 gold, 2 blaze rods, fire charge, Servo Actuator): the summon item.
+- Cinder Forge: a ruined 23x23 Nether forge of blackstone, basalt and gold with a magma ring, lava cauldrons and soul lanterns (template `cinder_forge.nbt`, `scripts/data/boss_structure.py`) around the Forge Altar, with a chest holding an Ignition Charge. Nether wastes, crimson and warped forests, soul sand valleys; on a cave floor between y 33 and 100 (corners within 5 blocks); random spread 32 chunks, separation 12, kept 3 chunks from fortresses and bastions.
+- Server config `robotica-boss-server.toml`: `bossHealthMultiplier`, `bossDamageMultiplier`, `colossusMinionCap` (Colossus); `tyrantHealth`, `tyrantArmor`, `tyrantMeleeDamage`, `tyrantBreathDamage`, `tyrantMortarDamage`, `tyrantEruptionDamage`, `tyrantAttackCooldown`, `tyrantAttackCooldownPhaseTwo`, `tyrantAttacksPerVent`, `tyrantVentTicks`, `tyrantVentDamageMultiplier` (Tyrant); `altarCooldownSeconds`, `lootLockSeconds`; `foundryEnabled`, `cinderForgeEnabled`.
 
 ## Onboarding (module `codex`)
 
-- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → craft a robot → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, Tesla Coil, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Rusted Foundry or Signal Flare → Scrap Colossus → Servo Core → replicator, Deep Age → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
+- Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → craft a robot → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, Tesla Coil, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Rusted Foundry or Signal Flare → Scrap Colossus → Servo Core → replicator, Deep Age → Cinder Forge or Ignition Charge → Forge Tyrant → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
 - Custom trigger `robotica:milestone` (core `Milestones`) for wind_spring, robot_working, farm_kit, vial_complete, replicator_formed, warp, portal. Machines award their owner when online and nearby.
 - The server syncs finished guide steps to the client (`robotica:codex_guide_progress`); the Codex's first chapter "Next steps" lists the steps you can do now and a checklist.
 - When a guide step is done, chat names the next one or two steps (config `guideChatTips`).
@@ -470,7 +482,7 @@ Getting home and travelling between bases. All teleports run on the server, cost
 
 ## Later (not in this build)
 
-Guard Drone, Wingman, Mole, the Magma and Antigrav bosses, an item storage network, RS API integration, Create compat.
+Guard Drone, Wingman, Mole, the Antigrav (End) boss, an item storage network, RS API integration, Create compat.
 
 ## Engineering rules (all modules)
 

@@ -1,0 +1,51 @@
+{
+  "parent": "robotica:guide/age3",
+  "display": {
+    "icon": {
+      "id": "robotica:ignition_charge"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.cinder_forge.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.cinder_forge.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "location": {
+            "structures": "robotica:cinder_forge"
+          }
+        }
+      }
+    },
+    "done_1": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:ignition_charge"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done",
+      "done_1"
+    ]
+  ],
+  "rewards": {
+    "experience": 20
+  }
+}

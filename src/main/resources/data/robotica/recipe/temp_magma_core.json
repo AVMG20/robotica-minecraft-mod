@@ -3,7 +3,7 @@
   "category": "misc",
   "pattern": [
     "SQS",
-    "MNM",
+    "NPN",
     "SQS"
   ],
   "key": {
@@ -13,11 +13,11 @@
     "Q": {
       "item": "robotica:quantum_circuit"
     },
-    "M": {
-      "item": "minecraft:magma_block"
-    },
     "N": {
       "tag": "c:ingots/netherite"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
     }
   },
   "result": {

@@ -31,7 +31,7 @@ public final class Guide {
     static final List<String> ORDER = List.of("root", "copper_gear", "robot_built", "mainspring", "first_robot", "robot_working", "hammer",
             "first_iron", "generator", "charger", "copper_cell", "tesla", "power_tool", "basic_circuit", "metal_press",
             "upgrade_card", "farm_kit", "warp", "diamonds", "excavator", "survey_rig", "storage", "foundry", "age2", "colossus", "servo_core", "servo_drill", "vial",
-            "replicator", "age3", "magma_core", "magma_drill", "age4", "antigrav_core", "null_drill", "portal");
+            "replicator", "age3", "cinder_forge", "tyrant", "magma_core", "magma_drill", "age4", "antigrav_core", "null_drill", "portal");
 
     public static boolean isGuide(ResourceLocation id) {
         return Robotica.MODID.equals(id.getNamespace()) && id.getPath().startsWith(PREFIX);

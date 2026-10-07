@@ -1,0 +1,45 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "robotica:blocks/forge_altar",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "robotica:forge_altar",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "robotica:forge_altar",
+                  "properties": {
+                    "natural": "false"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:gilded_blackstone",
+              "functions": [
+                {
+                  "function": "minecraft:set_count",
+                  "count": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

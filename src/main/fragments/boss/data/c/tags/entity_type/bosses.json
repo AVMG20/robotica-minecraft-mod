@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "robotica:scrap_colossus"
+    "robotica:scrap_colossus",
+    "robotica:forge_tyrant"
   ]
 }

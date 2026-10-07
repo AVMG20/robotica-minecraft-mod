@@ -14,15 +14,13 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Boss loot that only its killer may pick up, for a while. The lock ends after {@link #LOCK_TICKS} or as soon as the killer
- * is offline, so a full inventory or a disconnect never leaves the Servo Core lying there for nobody. The release time is
+ * Boss loot that only its killer may pick up, for a while. The lock ends after {@link BossConfig#lootLockTicks()} or as soon
+ * as the killer is offline, so a full inventory or a disconnect never leaves a boss core lying there for nobody. The release time is
  * stored on the item entity (it survives chunk unloads and restarts); loaded locked drops are checked once a second.
  */
 public final class BossLoot {
     private BossLoot() {}
 
-    /** Two minutes for the killer alone. */
-    public static final int LOCK_TICKS = 20 * 120;
     private static final String KEY = "robotica:loot_lock_until";
 
     /** Loaded, still locked drops. Server thread only. */
@@ -34,10 +32,10 @@ public final class BossLoot {
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, e -> LOCKED.clear());
     }
 
-    /** Locks a drop to the killer until {@code now + LOCK_TICKS}. The drop is tracked once it joins the level. */
+    /** Locks a drop to the killer until {@code now + lootLockTicks}. The drop is tracked once it joins the level. */
     public static void lock(ItemEntity drop, UUID killer, long now) {
         drop.setTarget(killer);
-        drop.getPersistentData().putLong(KEY, now + LOCK_TICKS);
+        drop.getPersistentData().putLong(KEY, now + BossConfig.lootLockTicks());
     }
 
     private static void onJoin(EntityJoinLevelEvent event) {

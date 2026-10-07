@@ -1,5 +1,5 @@
 {
-  "parent": "robotica:guide/age3",
+  "parent": "robotica:guide/tyrant",
   "display": {
     "icon": {
       "id": "robotica:magma_core"

@@ -247,8 +247,20 @@
       "age": 3
     },
     {
-      "id": "robotica:guide/magma_core",
+      "id": "robotica:guide/cinder_forge",
       "parent": "robotica:guide/age3",
+      "icon": "robotica:ignition_charge",
+      "age": 3
+    },
+    {
+      "id": "robotica:guide/tyrant",
+      "parent": "robotica:guide/cinder_forge",
+      "icon": "robotica:forge_altar",
+      "age": 3
+    },
+    {
+      "id": "robotica:guide/magma_core",
+      "parent": "robotica:guide/tyrant",
       "icon": "robotica:magma_core",
       "age": 3
     },

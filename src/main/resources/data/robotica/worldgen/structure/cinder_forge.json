@@ -1,0 +1,7 @@
+{
+  "type": "robotica:cinder_forge",
+  "biomes": "#robotica:has_structure/cinder_forge",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

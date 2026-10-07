@@ -49,6 +49,7 @@
   "tooltip.robotica.redstone_cell.details": "Recharges the FE tool in your hand from your inventory",
   "tooltip.robotica.ender_cell.details": "Recharges the FE tool in your hand from your inventory",
   "tooltip.robotica.servo_core.details": "Dropped by the Scrap Colossus",
+  "tooltip.robotica.magma_core.details": "Dropped by the Forge Tyrant",
   "item.robotica.upgrade_speed": "Speed Upgrade",
   "item.robotica.upgrade_range": "Range Upgrade",
   "item.robotica.upgrade_efficiency": "Efficiency Upgrade",
