@@ -217,6 +217,12 @@ public class BankControllerBlockEntity extends StructureControllerBlockEntity {
     // ---------------------------------------------------------------- accessors
 
     public long energy() { return energy; }
+
+    @Override
+    protected int infoProgress() {
+        return capacity <= 0 ? -1 : (int) Math.min(100, energy * 100 / capacity);
+    }
+
     public long capacity() { return capacity; }
     public int rate() { return rate; }
     public long averageIn() { return avgIn; }

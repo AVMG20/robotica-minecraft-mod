@@ -5,6 +5,7 @@ import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.processing.ProcessingRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +14,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -35,7 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A Grinder or Electric Furnace of one Mk (1-4). Faces the player, lights up while working, opens its GUI on
- * right-click; right-click with an item puts it straight in (ore, media, battery, upgrade card).
+ * right-click; right-click with an item puts it straight in (ore, media, battery, upgrade card), with the next Mk
+ * upgrades it in place.
  */
 public class ProcessingMachineBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -103,6 +106,13 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof BlockItem item && item.getBlock() instanceof ProcessingMachineBlock next
+                && next.kind == kind && next.tier == tier + 1) {
+            // Swapping the block is building: adventure mode and protected spots may not.
+            if (!player.mayBuild() || !level.mayInteract(player, pos)) return ItemInteractionResult.FAIL;
+            if (!level.isClientSide && upgradeInPlace(level, pos, state, next, player) && !player.getAbilities().instabuild) stack.shrink(1);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (stack.isEmpty() || player.isShiftKeyDown() || !(level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity be)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -130,6 +140,28 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    /**
+     * Swaps the placed machine for the next Mk, keeping inputs, outputs, media, battery, cards, side config, energy,
+     * progress and stored experience, and gives the old machine back (like the industry machines).
+     */
+    public static boolean upgradeInPlace(Level level, BlockPos pos, BlockState state, ProcessingMachineBlock next, @Nullable Player player) {
+        if (!(level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity old)) return false;
+        CompoundTag saved = old.saveWithoutMetadata(level.registryAccess());
+        old.keepContents = true;
+        level.setBlock(pos, next.defaultBlockState().setValue(FACING, state.getValue(FACING)).setValue(LIT, state.getValue(LIT)), Block.UPDATE_ALL);
+        if (level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity fresh) {
+            fresh.loadCustomOnly(saved, level.registryAccess());
+            fresh.setChanged();
+        }
+        if (player != null) {
+            ItemStack back = new ItemStack(state.getBlock().asItem());
+            if (!player.getInventory().add(back)) player.drop(back, false);
+            player.displayClientMessage(Component.translatable("message.robotica.machine_upgraded", next.getName()), true);
+        }
+        CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
+        return true;
+    }
+
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
@@ -146,7 +178,7 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
      */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!level.isClientSide && !state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity be) {
+        if (!level.isClientSide && !state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity be && !be.keepContents) {
             be.dropContents(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

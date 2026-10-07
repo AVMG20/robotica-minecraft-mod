@@ -237,6 +237,14 @@ public class FusionControllerBlockEntity extends StructureControllerBlockEntity 
     }
 
     public boolean enabled() { return enabled; }
+
+    /** Jade: the ignition charge while the plasma is out. */
+    @Override
+    protected int infoProgress() {
+        int need = com.arno.robotica.energy.EnergyConfig.fusionIgnitionEnergy();
+        return ignited || need <= 0 || charge <= 0 ? -1 : (int) Math.min(100, (long) charge * 100 / need);
+    }
+
     public boolean ignited() { return ignited; }
     public int charge() { return charge; }
     public double plasma() { return plasma; }

@@ -35,7 +35,7 @@ import java.util.UUID;
  * ({@link PortalGeometry#triggerBox}) with a single entity query and hands them to {@link GateTransit}, all inside its own
  * server tick.
  */
-public class PortalProjectorBlockEntity extends SyncedBlockEntity {
+public class PortalProjectorBlockEntity extends SyncedBlockEntity implements com.arno.robotica.compat.InfoSource {
     public static final int CHECK_INTERVAL = 10;
     public static final int SCAN_INTERVAL = 2;
     public static final int MAX_PER_SCAN = 8;
@@ -74,6 +74,13 @@ public class PortalProjectorBlockEntity extends SyncedBlockEntity {
     @Nullable
     public UUID owner() {
         return owner;
+    }
+
+    /** Jade: projecting, waiting for power (linked but empty), or idle; and the owner. */
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        info.status = isActive() ? "working" : linked != null && energy.getEnergyStored() < WarpConfig.gateIdleCost() ? "no_energy" : "idle";
+        if (!ownerName.isEmpty()) info.owner = ownerName;
     }
 
     public String ownerName() {

@@ -41,7 +41,7 @@ Optional second input. One item is loaded straight into the Grinder and lasts it
 
 ## Mk tiers
 
-Upgrade in the crafting grid around the previous Mk; stored energy is kept.
+Right-click a placed machine with the next Mk to swap it in place (inputs, outputs, media, cards, sides and energy stay; the old Mk comes back), or craft the next Mk around the previous one (stored energy is kept).
 
 | | Mk1 | Mk2 | Mk3 | Mk4 |
 |---|---|---|---|---|

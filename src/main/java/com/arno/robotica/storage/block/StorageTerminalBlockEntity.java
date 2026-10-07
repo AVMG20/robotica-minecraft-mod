@@ -44,7 +44,7 @@ import java.util.List;
  * items, but everything stored can always be taken out and the GUI, search and crafting keep working. Nothing is ever
  * locked away.
  */
-public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvider {
+public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
     public static final int BASE_SLOTS = 81;
     /** Slots added by Mk1, Mk2, Mk3. One of each fits, so the maximum is 81 + 81 + 162 + 324 = 648 (12 double chests). */
     public static final int[] EXPANSION_SLOTS = {81, 162, 324};
@@ -159,6 +159,13 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
 
     public boolean isPowered() {
         return powered;
+    }
+
+    /** Jade: "no energy" while nothing new goes in, and how full the terminal is. */
+    @Override
+    public void collectInfo(net.minecraft.server.level.ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        if (!powered) info.status = "no_energy";
+        if (capacity() > 0) info.progress = Math.min(100, usedSlots() * 100 / capacity());
     }
 
     /** FE per tick the terminal uses (before the global energy multiplier). */

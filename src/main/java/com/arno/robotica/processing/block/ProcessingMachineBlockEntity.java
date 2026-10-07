@@ -56,6 +56,8 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
     protected Status status = Status.IDLE;
     /** FE used in the last tick, for the GUI. */
     protected int lastUse;
+    /** Set while the block is swapped for its next Mk in place: the contents move over instead of spilling. */
+    public boolean keepContents;
 
     protected ProcessingMachineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds) {
         super(type, pos, state);

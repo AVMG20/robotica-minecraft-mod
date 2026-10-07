@@ -54,7 +54,12 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     private static final int DOOR = 0xFFFFE9A8;
 
     private final StyleChip[] chips = new StyleChip[BuildStyle.values().length];
-    private Button buildButton, cancelButton;
+    private Button buildButton, cancelButton, demolishButton;
+    /** Demolish asks twice: the first click arms the button for {@link #ARM_MILLIS}, the second sends the request. */
+    private static final long ARM_MILLIS = 3000;
+    private long demolishArmedUntil;
+    private int demolishShown = -1;
+    private boolean cancelDemolishShown;
     private IconButton clearButton;
 
     public ArchitectScreen(ArchitectMenu menu, Inventory inv, Component title) {
@@ -74,10 +79,19 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             chips[style.ordinal()] = addRenderableWidget(new StyleChip(leftPos + ArchitectMenu.CHIPS_X + 18 * style.ordinal(),
                     topPos + ArchitectMenu.SLOT_ROW_Y - 1, style));
         }
-        buildButton = addRenderableWidget(new FitButton(leftPos + RX, topPos + 88, 32, 16, Component.translatable("gui.robotica.architect_build"),
+        buildButton = addRenderableWidget(new FitButton(leftPos + RX, topPos + 82, 32, 13, Component.translatable("gui.robotica.architect_build"),
                 b -> send(ArchitectTableBlockEntity.ACTION_BUILD, 0, 0), Component.translatable("gui.robotica.architect_build_tip")));
-        cancelButton = addRenderableWidget(new FitButton(leftPos + RX + 34, topPos + 88, 32, 16, Component.translatable("gui.robotica.architect_cancel"),
+        cancelButton = addRenderableWidget(new FitButton(leftPos + RX + 34, topPos + 82, 32, 13, Component.translatable("gui.robotica.architect_cancel"),
                 b -> send(ArchitectTableBlockEntity.ACTION_CANCEL, 0, 0), Component.translatable("gui.robotica.architect_cancel_tip")));
+        demolishButton = addRenderableWidget(new FitButton(leftPos + RX, topPos + 96, RW, 12, Component.translatable("gui.robotica.architect_demolish"), b -> {
+            long now = Util.getMillis();
+            if (now < demolishArmedUntil) {
+                demolishArmedUntil = 0;
+                send(ArchitectTableBlockEntity.ACTION_DEMOLISH, ArchitectTableBlockEntity.DEMOLISH_CONFIRM, 0);
+            } else {
+                demolishArmedUntil = now + ARM_MILLIS;
+            }
+        }));
         clearButton = addRenderableWidget(new IconButton(leftPos + ArchitectMenu.CLEAR_X, topPos + ArchitectMenu.SLOT_ROW_Y - 1, 18,
                 new ItemStack(Items.IRON_PICKAXE), true, b -> send(ArchitectTableBlockEntity.ACTION_CLEAR, menu.clearTerrain() ? 0 : 1, 0)));
     }
@@ -90,8 +104,23 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     private boolean clearHinted;
 
     private void updateWidgets() {
-        buildButton.active = menu.hasWork() && !menu.running();
-        cancelButton.active = menu.hasQueued();
+        boolean demolishing = menu.demolishing();
+        buildButton.active = menu.hasWork() && !menu.running() && !demolishing;
+        cancelButton.active = menu.hasQueued() || demolishing;
+        if (demolishing != cancelDemolishShown || demolishShown < 0) {
+            cancelDemolishShown = demolishing;
+            cancelButton.setTooltip(Tooltip.create(Component.translatable(demolishing ? "gui.robotica.architect_cancel_demolish_tip" : "gui.robotica.architect_cancel_tip")));
+        }
+        demolishButton.active = (menu.hasBuilt() || menu.running()) && !demolishing;
+        if (!demolishButton.active) demolishArmedUntil = 0;
+        int armed = Util.getMillis() < demolishArmedUntil ? 1 : 0;
+        if (armed != demolishShown) {
+            demolishShown = armed;
+            demolishButton.setMessage(armed == 1
+                    ? Component.translatable("gui.robotica.architect_demolish_confirm").withStyle(ChatFormatting.RED)
+                    : Component.translatable("gui.robotica.architect_demolish"));
+            demolishButton.setTooltip(Tooltip.create(Component.translatable(armed == 1 ? "gui.robotica.architect_demolish_confirm_tip" : "gui.robotica.architect_demolish_tip")));
+        }
         boolean clear = menu.clearTerrain();
         clearButton.setOn(clear);
         if (!clearHinted || clear != lastClear) {
@@ -144,7 +173,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
 
     private void drawSide(GuiGraphics g, int rx, int top) {
         int status = menu.status();
-        Tone tone = status == ArchitectTableBlockEntity.ST_BUILDING ? Tone.GOOD
+        Tone tone = status == ArchitectTableBlockEntity.ST_BUILDING || status == ArchitectTableBlockEntity.ST_DEMOLISHING ? Tone.GOOD
                 : status == ArchitectTableBlockEntity.ST_IDLE || status == ArchitectTableBlockEntity.ST_READY || status == ArchitectTableBlockEntity.ST_UNLOADED
                 ? Tone.WARN : Tone.BAD;
         drawStatus(g, Component.translatable("gui.robotica.architect_status_" + status), rx, top + 18, RW, 1, tone);
@@ -165,9 +194,10 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         drawEnergyBarWide(g, rx, top + 60, 42, 6, menu.energy(), menu.capacity());
 
         int current = menu.currentPlot();
-        drawProgress(g, rx, top + 79, RW, 4, current >= 0 ? menu.progress() : 0);
+        drawProgress(g, rx, top + 76, RW, 4, current >= 0 ? menu.progress() : 0);
         if (current >= 0) {
-            addTooltip(rx - 1, top + 77, RW + 2, 8, Component.translatable("gui.robotica.architect_progress", Math.round(menu.progress() * 100)));
+            addTooltip(rx - 1, top + 74, RW + 2, 8, Component.translatable(menu.demolishing() ? "gui.robotica.architect_demolish_progress" : "gui.robotica.architect_progress",
+                    Math.round(menu.progress() * 100)));
         }
     }
 
