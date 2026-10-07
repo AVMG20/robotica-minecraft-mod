@@ -20,7 +20,17 @@ public final class GearConfig {
     public static final ModConfigSpec.IntValue RIVET_GUN_COST;
     public static final ModConfigSpec.IntValue ARC_BLADE_COST;
     public static final ModConfigSpec.IntValue NULL_LANCE_COST;
+    public static final ModConfigSpec.IntValue BORE_DRILL_CAPACITY;
+    public static final ModConfigSpec.IntValue CHAINSAW_CAPACITY;
+    public static final ModConfigSpec.IntValue SERVO_DRILL_CAPACITY;
+    public static final ModConfigSpec.IntValue MAGMA_DRILL_CAPACITY;
+    public static final ModConfigSpec.IntValue NULL_DRILL_CAPACITY;
+    public static final ModConfigSpec.IntValue SHOCK_BATON_CAPACITY;
+    public static final ModConfigSpec.IntValue RIVET_GUN_CAPACITY;
+    public static final ModConfigSpec.IntValue ARC_BLADE_CAPACITY;
+    public static final ModConfigSpec.IntValue NULL_LANCE_CAPACITY;
     public static final ModConfigSpec.DoubleValue RIVET_DAMAGE;
+    public static final ModConfigSpec.IntValue RIVET_COOLDOWN;
     public static final ModConfigSpec.IntValue RIVET_STICK_TICKS;
     public static final ModConfigSpec.DoubleValue RIVET_SPEED;
     public static final ModConfigSpec.IntValue RIVET_FLIGHT_TICKS;
@@ -82,13 +92,25 @@ public final class GearConfig {
         ARC_BLADE_COST = b.comment("FE per hit, Arc Blade.").defineInRange("arcBladePerHit", 800, 0, 1_000_000);
         NULL_LANCE_COST = b.comment("FE per shot, Null Lance.").defineInRange("nullLancePerShot", 8_000, 0, 100_000_000);
         b.pop();
+        b.push("battery");
+        BORE_DRILL_CAPACITY = b.comment("Bore Drill: battery size in FE.").defineInRange("boreDrillCapacity", 400_000, 1, 1_000_000_000);
+        CHAINSAW_CAPACITY = b.comment("Chainsaw: battery size in FE.").defineInRange("chainsawCapacity", 400_000, 1, 1_000_000_000);
+        SERVO_DRILL_CAPACITY = b.comment("Servo Drill: battery size in FE.").defineInRange("servoDrillCapacity", 2_000_000, 1, 1_000_000_000);
+        MAGMA_DRILL_CAPACITY = b.comment("Magma Drill: battery size in FE.").defineInRange("magmaDrillCapacity", 8_000_000, 1, 1_000_000_000);
+        NULL_DRILL_CAPACITY = b.comment("Null Drill: battery size in FE.").defineInRange("nullDrillCapacity", 32_000_000, 1, 1_000_000_000);
+        SHOCK_BATON_CAPACITY = b.comment("Shock Baton: battery size in FE.").defineInRange("shockBatonCapacity", 200_000, 1, 1_000_000_000);
+        RIVET_GUN_CAPACITY = b.comment("Rivet Gun: battery size in FE.").defineInRange("rivetGunCapacity", 1_000_000, 1, 1_000_000_000);
+        ARC_BLADE_CAPACITY = b.comment("Arc Blade: battery size in FE.").defineInRange("arcBladeCapacity", 4_000_000, 1, 1_000_000_000);
+        NULL_LANCE_CAPACITY = b.comment("Null Lance: battery size in FE.").defineInRange("nullLanceCapacity", 16_000_000, 1, 1_000_000_000);
+        b.pop();
         b.push("lampRod");
         ROD_COST = b.comment("Lamp Rod: FE per Spark Lamp placed.").defineInRange("lampRodPerLamp", 20, 0, 1_000_000);
         ROD_CAPACITY = b.comment("Lamp Rod: battery size in FE.").defineInRange("lampRodCapacity", 20_000, 1, 100_000_000);
         ROD_COOLDOWN = b.comment("Lamp Rod: ticks between two uses.").defineInRange("lampRodCooldown", 4, 0, 1200);
         b.pop();
         b.push("rivet");
-        RIVET_DAMAGE = b.comment("Damage of one Rivet Gun rivet.").defineInRange("rivetDamage", 8.0, 0.0, 1000.0);
+        RIVET_DAMAGE = b.comment("Damage of one Rivet Gun rivet.").defineInRange("rivetDamage", 6.0, 0.0, 1000.0);
+        RIVET_COOLDOWN = b.comment("Ticks between two Rivet Gun shots (a mob can only be hurt every 10 ticks).").defineInRange("rivetCooldown", 10, 1, 1200);
         RIVET_STICK_TICKS = b.comment("Ticks a rivet stays stuck in a block before it shatters.").defineInRange("rivetStickTicks", 20, 1, 1200);
         RIVET_SPEED = b.comment("Rivet speed in blocks per tick (an arrow from a full bow is 3).").defineInRange("rivetSpeed", 4.5, 0.5, 10.0);
         RIVET_FLIGHT_TICKS = b.comment("Ticks a rivet flies before it drops out of the air.").defineInRange("rivetFlightTicks", 100, 10, 1200);
@@ -187,7 +209,47 @@ public final class GearConfig {
     }
 
     public static float rivetDamage() {
-        return SPEC.isLoaded() ? RIVET_DAMAGE.get().floatValue() : 8.0F;
+        return SPEC.isLoaded() ? RIVET_DAMAGE.get().floatValue() : 6.0F;
+    }
+
+    public static int boreDrillCapacity() {
+        return SPEC.isLoaded() ? BORE_DRILL_CAPACITY.get() : 400_000;
+    }
+
+    public static int chainsawCapacity() {
+        return SPEC.isLoaded() ? CHAINSAW_CAPACITY.get() : 400_000;
+    }
+
+    public static int servoDrillCapacity() {
+        return SPEC.isLoaded() ? SERVO_DRILL_CAPACITY.get() : 2_000_000;
+    }
+
+    public static int magmaDrillCapacity() {
+        return SPEC.isLoaded() ? MAGMA_DRILL_CAPACITY.get() : 8_000_000;
+    }
+
+    public static int nullDrillCapacity() {
+        return SPEC.isLoaded() ? NULL_DRILL_CAPACITY.get() : 32_000_000;
+    }
+
+    public static int shockBatonCapacity() {
+        return SPEC.isLoaded() ? SHOCK_BATON_CAPACITY.get() : 200_000;
+    }
+
+    public static int rivetGunCapacity() {
+        return SPEC.isLoaded() ? RIVET_GUN_CAPACITY.get() : 1_000_000;
+    }
+
+    public static int arcBladeCapacity() {
+        return SPEC.isLoaded() ? ARC_BLADE_CAPACITY.get() : 4_000_000;
+    }
+
+    public static int nullLanceCapacity() {
+        return SPEC.isLoaded() ? NULL_LANCE_CAPACITY.get() : 16_000_000;
+    }
+
+    public static int rivetCooldown() {
+        return SPEC.isLoaded() ? RIVET_COOLDOWN.get() : 10;
     }
 
     public static int rivetStickTicks() {

@@ -456,7 +456,7 @@
      ],
      [
       "Energy",
-      "2,000 / 1,600 / 1,200 FE per point"
+      "8,000 / 6,000 / 4,000 FE per point"
      ]
     ]
    },
@@ -1053,16 +1053,16 @@
    "items": [
     "rivet_gun"
    ],
-   "what": "Hold right-click: rapid fire, no ammo, runs on FE.",
+   "what": "Hold right-click to fire rivets. No ammo, runs on FE.",
    "stats": {
     "rows": [
      [
       "Damage",
-      "8"
+      "6"
      ],
      [
       "Rate",
-      "4 shots/s"
+      "2 shots/s"
      ],
      [
       "Energy",

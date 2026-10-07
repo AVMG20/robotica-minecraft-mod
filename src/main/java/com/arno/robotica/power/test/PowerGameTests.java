@@ -6,6 +6,7 @@ import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.power.PowerRegistry;
+import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.block.AccumulatorBlockEntity;
 import com.arno.robotica.power.block.ChargerBlockEntity;
 import com.arno.robotica.power.block.CombustionGeneratorBlockEntity;
@@ -151,7 +152,8 @@ public class PowerGameTests {
         AccumulatorBlockEntity placed = (AccumulatorBlockEntity) helper.getBlockEntity(other);
         placed.applyComponents(components, DataComponentPatch.EMPTY);
         helper.assertTrue(placed.energy.getEnergyStored() == 123_456, "Placed accumulator must restore the energy");
-        helper.assertTrue(placed.energy.getMaxEnergyStored() == 4_000_000, "Tier II holds 4M FE");
+        helper.assertTrue(placed.energy.getMaxEnergyStored() == PowerConfig.accumulatorCapacity(2)
+                && PowerConfig.accumulatorCapacity(2) == 16_000_000, "Tier II holds 16M FE (config)");
 
         ItemStack item = new ItemStack(PowerRegistry.ACCUMULATOR_2_ITEM.get());
         ItemEnergy.set(item, 5_000);

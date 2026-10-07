@@ -24,8 +24,10 @@ public final class ToolSpec {
     public final boolean cutsLeaves;
     /** Tree tools: plant a sapling from the inventory where the trunk stood. */
     public final boolean replants;
-    /** 0 = durability based (vanilla damage), otherwise FE capacity. */
-    public final int energyCapacity;
+    /** False: durability based (vanilla damage). True: FE powered, battery size from {@link #energyCapacity}. */
+    public final boolean energy;
+    /** FE capacity of a powered tool (server config). */
+    public final IntSupplier energyCapacity;
     public final IntSupplier costPerBlock;
     public final int maxLogs;
     public final Set<ToggleKind> toggles;
@@ -44,7 +46,8 @@ public final class ToolSpec {
         this.defaultMode = b.defaultMode != null && b.modes.contains(b.defaultMode) ? b.defaultMode : b.modes.get(0);
         this.cutsLeaves = b.cutsLeaves;
         this.replants = b.replants;
-        this.energyCapacity = b.energyCapacity;
+        this.energy = b.energyCapacity != null;
+        this.energyCapacity = b.energyCapacity != null ? b.energyCapacity : () -> 0;
         this.costPerBlock = b.cost;
         this.maxLogs = b.maxLogs;
         this.toggles = b.toggles.isEmpty() ? EnumSet.noneOf(ToggleKind.class) : EnumSet.copyOf(b.toggles);
@@ -53,7 +56,7 @@ public final class ToolSpec {
     }
 
     public boolean isEnergy() {
-        return energyCapacity > 0;
+        return energy;
     }
 
     public boolean hasMode(AreaMode mode) {
@@ -91,7 +94,7 @@ public final class ToolSpec {
         private AreaMode defaultMode;
         private boolean cutsLeaves;
         private boolean replants;
-        private int energyCapacity;
+        private IntSupplier energyCapacity;
         private IntSupplier cost = () -> 0;
         private int maxLogs = 64;
         private final Set<ToggleKind> toggles = EnumSet.noneOf(ToggleKind.class);
@@ -130,7 +133,7 @@ public final class ToolSpec {
             return this;
         }
 
-        public Builder energy(int capacity, IntSupplier costPerBlock) {
+        public Builder energy(IntSupplier capacity, IntSupplier costPerBlock) {
             this.energyCapacity = capacity;
             this.cost = costPerBlock;
             return this;

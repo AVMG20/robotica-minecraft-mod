@@ -10,6 +10,7 @@ import com.arno.robotica.storage.menu.StorageMenu;
 import com.arno.robotica.storage.menu.StorageView;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,10 +20,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.BundleContents;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.List;
 
@@ -349,6 +353,29 @@ public class StorageGameTests {
         again.applyComponentsFromItemStack(terminal);
         helper.assertTrue(total(again, Items.DIAMOND) == 40 && again.hasCarry(), "placed again: diamonds and the card are back");
         helper.assertTrue(!again.insert(terminal.copy(), true).isEmpty(), "a carried terminal never goes into a terminal");
+        helper.succeed();
+    }
+
+    /** Filled shulker boxes and bundles stay out of the terminal and its grid; empty ones go in. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void terminalRefusesFilledContainers(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        ItemStack shulker = new ItemStack(Items.SHULKER_BOX);
+        shulker.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(new ItemStack(Items.DIAMOND, 64))));
+        ItemStack bundle = new ItemStack(Items.BUNDLE);
+        bundle.set(DataComponents.BUNDLE_CONTENTS, new BundleContents(List.of(new ItemStack(Items.DIAMOND, 16))));
+        helper.assertTrue(be.insert(shulker.copy(), false).getCount() == 1, "a filled shulker box is refused");
+        helper.assertTrue(be.insert(bundle.copy(), false).getCount() == 1, "a filled bundle is refused");
+        IItemHandler handler = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(POS), Direction.UP);
+        helper.assertTrue(handler != null && ItemHandlerHelper.insertItemStacked(handler, shulker.copy(), false).getCount() == 1,
+                "hoppers and pipes cannot put one in either");
+        helper.assertTrue(be.insert(new ItemStack(Items.SHULKER_BOX), false).isEmpty(), "an empty shulker box goes in");
+        helper.assertTrue(be.insert(new ItemStack(Items.BUNDLE), false).isEmpty(), "an empty bundle goes in");
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        StorageMenu menu = new StorageMenu(1, player.getInventory(), be);
+        helper.assertTrue(!menu.getSlot(StorageMenu.GRID_START).mayPlace(shulker), "the crafting grid refuses it too");
+        helper.assertTrue(menu.getSlot(StorageMenu.GRID_START).mayPlace(new ItemStack(Items.SHULKER_BOX)), "the grid takes an empty one");
         helper.succeed();
     }
 }

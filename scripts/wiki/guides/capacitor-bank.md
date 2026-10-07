@@ -21,14 +21,14 @@ A variable-size cuboid from 3x3x3 to 9x9x9 (outside size) that stores FE. Age 1 
 
 | Capacitor | FE per block | Age |
 |---|---|---|
-| [[capacitor_copper]] | 8,000,000 | 1 |
+| [[capacitor_copper]] | 4,000,000 | 1 |
 | [[capacitor_redstone]] | 64,000,000 | 2 |
 | [[capacitor_ender]] | 512,000,000 | 4 |
 | [[capacitor_resonant]] | 4,096,000,000 | 4 |
 
 | Transfer Coil | Adds FE/t | Age |
 |---|---|---|
-| [[transfer_coil_basic]] | 64,000 | 1 |
+| [[transfer_coil_basic]] | 16,000 | 1 |
 | [[transfer_coil_advanced]] | 512,000 | 2 |
 | [[transfer_coil_elite]] | 4,000,000 | 3 |
 

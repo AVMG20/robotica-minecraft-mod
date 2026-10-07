@@ -105,7 +105,7 @@ public class StorageMenu extends MachineMenu {
 
         addSlot(new ResultSlot(inv.player, grid, result, 0, RESULT_X, RESULT_Y));
         for (int r = 0; r < 3; r++) {
-            for (int c = 0; c < 3; c++) addSlot(new Slot(grid, c + r * 3, CRAFT_X + c * 18, CRAFT_Y + r * 18));
+            for (int c = 0; c < 3; c++) addSlot(new GridSlot(grid, c + r * 3, CRAFT_X + c * 18, CRAFT_Y + r * 18));
         }
         for (int i = 0; i < VIEW_SLOTS; i++) {
             addSlot(new ViewSlot(view, i, VIEW_X + (i % COLS) * 18, VIEW_Y + (i / COLS) * 18));
@@ -275,6 +275,7 @@ public class StorageMenu extends MachineMenu {
         List<ItemStack> items = grid.getItems();
         for (int i = 0; i < wanted.size(); i++) {
             for (ItemStack option : wanted.get(i)) {
+                if (!StorageTerminalBlockEntity.canStore(option)) continue;
                 ItemStack got = take(option, 1);
                 if (!got.isEmpty()) {
                     items.set(i, got);
@@ -326,6 +327,18 @@ public class StorageMenu extends MachineMenu {
     }
 
     /** The persistent 3 x 3 grid of the block entity (a throwaway one on the client). */
+    /** A crafting grid slot: the grid travels with a carried terminal, so it takes what the storage takes. */
+    private static final class GridSlot extends Slot {
+        GridSlot(net.minecraft.world.Container container, int index, int x, int y) {
+            super(container, index, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return StorageTerminalBlockEntity.canStore(stack);
+        }
+    }
+
     private final class Grid implements CraftingContainer {
         private final NonNullList<ItemStack> list;
 

@@ -31,12 +31,12 @@ import java.util.function.IntSupplier;
  * modules instead of enchantments (Sharpened Edge, Looting, Thermal Edge...).
  */
 public abstract class EnergyWeaponItem extends Item implements EnergyItem, ModuleHolder {
-    private final int capacity;
+    private final IntSupplier capacity;
     private final IntSupplier cost;
     private final int age;
     private final ModuleTarget target;
 
-    protected EnergyWeaponItem(Properties props, int capacity, IntSupplier cost, int age, ModuleTarget target) {
+    protected EnergyWeaponItem(Properties props, IntSupplier capacity, IntSupplier cost, int age, ModuleTarget target) {
         super(props.stacksTo(1));
         this.capacity = capacity;
         this.cost = cost;
@@ -89,7 +89,7 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem, Modul
 
     @Override
     public int getEnergyCapacity(ItemStack stack) {
-        return capacity;
+        return capacity.getAsInt();
     }
 
     @Override

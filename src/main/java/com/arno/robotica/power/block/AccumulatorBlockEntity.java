@@ -29,8 +29,8 @@ public class AccumulatorBlockEntity extends PowerBlockEntity implements net.mine
     public AccumulatorBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.ACCUMULATOR_BE.get(), pos, state);
         AccumulatorBlock.Tier tier = ((AccumulatorBlock) state.getBlock()).tier();
-        this.io = tier.io;
-        this.energy = new MachineEnergyStorage(tier.capacity, tier.io, tier.io, this::setChanged);
+        this.io = tier.io();
+        this.energy = new MachineEnergyStorage(tier.capacity(), io, io, this::setChanged);
         this.inputView = new SidedEnergy(energy, true, false);
         this.outputView = new SidedEnergy(energy, false, true);
     }

@@ -60,14 +60,14 @@ public final class GearItems {
     public static final DeferredItem<GearEnergyToolItem> BORE_DRILL = tool("bore_drill",
             ToolSpec.builder(Tiers.IRON, 6.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3).defaultMode(AreaMode.AREA_3).areaSpeed(0.5F)
-                    .energy(400_000, () -> GearConfig.fe(GearConfig.BORE_DRILL_COST, 40))
+                    .energy(GearConfig::boreDrillCapacity, () -> GearConfig.fe(GearConfig.BORE_DRILL_COST, 40))
                     .toggles(ToggleKind.KEEP_FLOOR).age(1).build(),
             p -> p, 3.0F, -2.8F, GearEnergyToolItem::new);
 
     public static final DeferredItem<GearEnergyToolItem> CHAINSAW = tool("chainsaw",
             ToolSpec.builder(Tiers.IRON, 9.0F).tags(BlockTags.MINEABLE_WITH_AXE)
                     .modes(AreaMode.TREE, AreaMode.SINGLE).maxLogs(256).cutsLeaves().replants()
-                    .energy(400_000, () -> GearConfig.fe(GearConfig.CHAINSAW_COST, 30)).age(1).build(),
+                    .energy(GearConfig::chainsawCapacity, () -> GearConfig.fe(GearConfig.CHAINSAW_COST, 30)).age(1).build(),
             p -> p, 6.0F, -3.0F, GearEnergyToolItem::new);
 
     public static final DeferredItem<LampRodItem> LAMP_ROD = ITEMS.registerItem("lamp_rod", LampRodItem::new);
@@ -76,7 +76,7 @@ public final class GearItems {
     public static final DeferredItem<GearEnergyToolItem> SERVO_DRILL = tool("servo_drill",
             ToolSpec.builder(Tiers.DIAMOND, 10.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.VEIN).defaultMode(AreaMode.AREA_3).areaSpeed(0.7F)
-                    .energy(2_000_000, () -> GearConfig.fe(GearConfig.SERVO_DRILL_COST, 50))
+                    .energy(GearConfig::servoDrillCapacity, () -> GearConfig.fe(GearConfig.SERVO_DRILL_COST, 50))
                     .toggles(ToggleKind.KEEP_FLOOR).age(2).build(),
             p -> p.rarity(Rarity.UNCOMMON), 3.5F, -2.8F, GearEnergyToolItem::new);
 
@@ -84,7 +84,7 @@ public final class GearItems {
     public static final DeferredItem<GearEnergyToolItem> MAGMA_DRILL = tool("magma_drill",
             ToolSpec.builder(Tiers.DIAMOND, 12.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9, AreaMode.VEIN).defaultMode(AreaMode.AREA_3).areaSpeed(0.85F)
-                    .energy(8_000_000, () -> GearConfig.fe(GearConfig.MAGMA_DRILL_COST, 60))
+                    .energy(GearConfig::magmaDrillCapacity, () -> GearConfig.fe(GearConfig.MAGMA_DRILL_COST, 60))
                     .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_SMELT).age(3).build(),
             p -> p.rarity(Rarity.RARE).fireResistant(), 4.0F, -2.8F, GearEnergyToolItem::new);
 
@@ -93,7 +93,7 @@ public final class GearItems {
             ToolSpec.builder(Tiers.NETHERITE, 15.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9,
                             AreaMode.CUBE_5, AreaMode.AREA_12, AreaMode.CUBE_12, AreaMode.VEIN).defaultMode(AreaMode.AREA_3)
-                    .energy(32_000_000, () -> GearConfig.fe(GearConfig.NULL_DRILL_COST, 80))
+                    .energy(GearConfig::nullDrillCapacity, () -> GearConfig.fe(GearConfig.NULL_DRILL_COST, 80))
                     .toggles(ToggleKind.KEEP_FLOOR, ToggleKind.AUTO_SMELT).age(4).build(),
             p -> p.rarity(Rarity.EPIC).fireResistant(), 5.0F, -2.8F, GearEnergyToolItem::new);
 
@@ -101,16 +101,16 @@ public final class GearItems {
     public static final DeferredItem<SwordItem> GEARBLADE = ITEMS.registerItem("gearblade",
             p -> new SwordItem(Tiers.WOOD, p.durability(400).attributes(SwordItem.createAttributes(Tiers.WOOD, 5.0F, -2.0F))));
     public static final DeferredItem<ShockBatonItem> SHOCK_BATON = ITEMS.registerItem("shock_baton",
-            p -> new ShockBatonItem(p.rarity(Rarity.COMMON).attributes(weaponAttributes(7.0, 1.8)), 200_000,
+            p -> new ShockBatonItem(p.rarity(Rarity.COMMON).attributes(weaponAttributes(7.0, 1.6)), GearConfig::shockBatonCapacity,
                     () -> GearConfig.fe(GearConfig.SHOCK_BATON_COST, 250)));
     public static final DeferredItem<RivetGunItem> RIVET_GUN = ITEMS.registerItem("rivet_gun",
-            p -> new RivetGunItem(p.rarity(Rarity.UNCOMMON).attributes(weaponAttributes(3.0, 1.6)), 1_000_000,
+            p -> new RivetGunItem(p.rarity(Rarity.UNCOMMON).attributes(weaponAttributes(3.0, 1.6)), GearConfig::rivetGunCapacity,
                     () -> GearConfig.fe(GearConfig.RIVET_GUN_COST, 400)));
     public static final DeferredItem<ArcBladeItem> ARC_BLADE = ITEMS.registerItem("arc_blade",
-            p -> new ArcBladeItem(p.rarity(Rarity.RARE).fireResistant().attributes(weaponAttributes(ArcBladeItem.BASE_DAMAGE, 1.6)), 4_000_000,
+            p -> new ArcBladeItem(p.rarity(Rarity.RARE).fireResistant().attributes(weaponAttributes(ArcBladeItem.BASE_DAMAGE, 1.6)), GearConfig::arcBladeCapacity,
                     () -> GearConfig.fe(GearConfig.ARC_BLADE_COST, 800)));
     public static final DeferredItem<NullLanceItem> NULL_LANCE = ITEMS.registerItem("null_lance",
-            p -> new NullLanceItem(p.rarity(Rarity.EPIC).fireResistant().attributes(weaponAttributes(6.0, 1.2)), 16_000_000,
+            p -> new NullLanceItem(p.rarity(Rarity.EPIC).fireResistant().attributes(weaponAttributes(6.0, 1.2)), GearConfig::nullLanceCapacity,
                     () -> GearConfig.fe(GearConfig.NULL_LANCE_COST, 8_000)));
 
     // Smithing templates

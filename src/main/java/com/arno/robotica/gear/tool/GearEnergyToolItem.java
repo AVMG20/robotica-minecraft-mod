@@ -24,7 +24,7 @@ public class GearEnergyToolItem extends GearToolItem implements EnergyItem {
 
     @Override
     public int getEnergyCapacity(ItemStack stack) {
-        return spec.energyCapacity;
+        return spec.energyCapacity.getAsInt();
     }
 
     @Override

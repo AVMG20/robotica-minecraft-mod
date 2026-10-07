@@ -28,8 +28,8 @@ Forge Energy (FE) is the only unit. Every port works with other mods' cables too
 |---|---|
 | [[mainspring]] | 240,000 FE (crank only) |
 | [[copper_cell]] / [[redstone_cell]] / [[ender_cell]] | 800k / 3.2M / 20,736,000 FE |
-| [[accumulator_1]] / [[accumulator_2]] / [[accumulator_3]] | 1M / 4M / 16M FE, I/O 1,000 / 4,000 / 16,000 FE/t |
-| [[bank_controller]] | multiblock, 8M to 4G per capacitor, see [Capacitor Bank](#/guide/capacitor-bank) |
+| [[accumulator_1]] / [[accumulator_2]] / [[accumulator_3]] | 1M / 16M / 128M FE, I/O 1,000 / 16,000 / 64,000 FE/t |
+| [[bank_controller]] | multiblock, 4M to 4G per capacitor, see [Capacitor Bank](#/guide/capacitor-bank) |
 
 ## Tesla Coils
 

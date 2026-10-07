@@ -476,7 +476,8 @@
    "use": [
     "Shift-click items in or out.",
     "Search with @mod or #tag.",
-    "Add Storage Expansions for more room."
+    "Add Storage Expansions for more room.",
+    "Takes empty shulker boxes and bundles only."
    ],
    "stats": {
     "rows": [

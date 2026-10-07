@@ -14,7 +14,7 @@ import java.util.function.IntSupplier;
 
 /** Age 1 melee weapon: 7 damage, Slowness II for 2 s, 250 FE per hit. */
 public class ShockBatonItem extends EnergyWeaponItem {
-    public ShockBatonItem(Properties props, int capacity, IntSupplier cost) {
+    public ShockBatonItem(Properties props, IntSupplier capacity, IntSupplier cost) {
         super(props, capacity, cost, 1, ModuleTarget.SHOCK_BATON);
     }
 

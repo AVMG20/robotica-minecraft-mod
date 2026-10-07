@@ -21,13 +21,11 @@ import java.util.function.IntSupplier;
 
 /**
  * Age 2 ranged weapon. Right-click fires a glowing steel rivet ({@link RivetEntity}) for {@link GearConfig#rivetDamage}
- * damage, 4 shots per second, no ammo. Muzzle flash, a punchy layered shot sound. Armor Pierce and Ricochet Rivets ride
+ * damage every {@link GearConfig#rivetCooldown} ticks, no ammo. Muzzle flash, a punchy layered shot sound. Armor Pierce and Ricochet Rivets ride
  * along on the rivet.
  */
 public class RivetGunItem extends EnergyWeaponItem {
-    public static final int COOLDOWN_TICKS = 5;
-
-    public RivetGunItem(Properties props, int capacity, IntSupplier cost) {
+    public RivetGunItem(Properties props, IntSupplier capacity, IntSupplier cost) {
         super(props, capacity, cost, 2, ModuleTarget.RIVET_GUN);
     }
 
@@ -44,7 +42,7 @@ public class RivetGunItem extends EnergyWeaponItem {
         if (level instanceof ServerLevel server) {
             pay(gun, player);
             fire(server, player, gun);
-            player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
+            player.getCooldowns().addCooldown(this, GearConfig.rivetCooldown());
         }
         player.swing(hand);
         return InteractionResultHolder.sidedSuccess(gun, level.isClientSide);

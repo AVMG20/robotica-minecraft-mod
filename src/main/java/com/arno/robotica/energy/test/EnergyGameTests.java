@@ -1,6 +1,7 @@
 package com.arno.robotica.energy.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.energy.EnergyConfig;
 import com.arno.robotica.energy.EnergyDataMaps;
 import com.arno.robotica.energy.EnergyRegistry;
 import com.arno.robotica.energy.block.BankControllerBlockEntity;
@@ -343,21 +344,24 @@ public class EnergyGameTests {
         BankControllerBlockEntity bank = be(helper, c);
         bank.scanNow();
         helper.assertTrue(bank.isFormed(), "bank forms: " + (bank.problem() == null ? "" : bank.problem().message().getString()));
-        helper.assertTrue(bank.capacity() == 8_000_000L && bank.rate() == 64_000, "8M FE, 64k FE/t; got " + bank.capacity() + " / " + bank.rate());
+        long cap = EnergyConfig.capacitor(0);
+        int rate = EnergyConfig.transferCoil(0);
+        helper.assertTrue(cap == 4_000_000L && rate == 16_000, "defaults: 4M FE, 16k FE/t");
+        helper.assertTrue(bank.capacity() == cap && bank.rate() == rate, "one capacitor, one coil; got " + bank.capacity() + " / " + bank.rate());
 
         IEnergyStorage in = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(inPos), Direction.SOUTH);
         IEnergyStorage out = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(outPos), Direction.SOUTH);
         helper.assertTrue(in != null && in.canReceive() && !in.canExtract(), "input port");
         helper.assertTrue(out != null && out.canExtract() && !out.canReceive(), "output port");
-        helper.assertTrue(in.receiveEnergy(Integer.MAX_VALUE, true) == 64_000, "input clamps to the coil rate");
-        helper.assertTrue(in.receiveEnergy(40_000, false) == 40_000, "takes 40k");
-        helper.assertTrue(in.receiveEnergy(40_000, false) == 24_000, "only 24k more this tick (rate shared by all ports)");
-        helper.assertTrue(out.extractEnergy(Integer.MAX_VALUE, false) == 64_000, "output clamps to the coil rate");
+        helper.assertTrue(in.receiveEnergy(Integer.MAX_VALUE, true) == rate, "input clamps to the coil rate");
+        helper.assertTrue(in.receiveEnergy(10_000, false) == 10_000, "takes 10k");
+        helper.assertTrue(in.receiveEnergy(10_000, false) == rate - 10_000, "only the rest of the rate this tick (rate shared by all ports)");
+        helper.assertTrue(out.extractEnergy(Integer.MAX_VALUE, false) == rate, "output clamps to the coil rate");
         helper.assertTrue(out.extractEnergy(1, false) == 0, "output budget spent for this tick");
-        helper.assertTrue(bank.energy() == 0, "64k in, 64k out");
+        helper.assertTrue(bank.energy() == 0, "16k in, 16k out");
         var tag = new net.minecraft.nbt.CompoundTag();
         bank.writeSync(tag, helper.getLevel().registryAccess());
-        helper.assertTrue(tag.getLongArray("history").length == BankControllerBlockEntity.HISTORY && tag.getLong("capacity") == 8_000_000L, "GUI sync of the bank");
+        helper.assertTrue(tag.getLongArray("history").length == BankControllerBlockEntity.HISTORY && tag.getLong("capacity") == cap, "GUI sync of the bank");
 
         // A port saves its link: reloaded next to a running controller it works right away.
         PortBlockEntity inPort = be(helper, inPos);

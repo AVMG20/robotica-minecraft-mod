@@ -24,6 +24,8 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue[] TESLA_RATE = new ModConfigSpec.IntValue[5];
     private static final ModConfigSpec.IntValue[] TESLA_RANGE = new ModConfigSpec.IntValue[5];
     private static final ModConfigSpec.IntValue TESLA_HOP_LOSS;
+    private static final ModConfigSpec.IntValue[] ACCUMULATOR_CAPACITY = new ModConfigSpec.IntValue[3];
+    private static final ModConfigSpec.IntValue[] ACCUMULATOR_IO = new ModConfigSpec.IntValue[3];
     private static final ModConfigSpec.IntValue CHARGER_RATE;
     private static final ModConfigSpec.IntValue PRESS_POWER;
     private static final ModConfigSpec.IntValue WIRELESS_RATE;
@@ -74,6 +76,17 @@ public final class PowerConfig {
         TESLA_HOP_LOSS = b.comment("Percent of the energy lost on every coil-to-coil hop.")
                 .defineInRange("teslaHopLoss", 5, 0, 90);
         b.pop();
+        b.push("accumulator");
+        int[] accCapacity = {1_000_000, 16_000_000, 128_000_000};
+        int[] accIo = {1_000, 16_000, 64_000};
+        String[] accNames = {"I", "II", "III"};
+        for (int i = 0; i < 3; i++) {
+            ACCUMULATOR_CAPACITY[i] = b.comment("Accumulator " + accNames[i] + ": FE stored.")
+                    .defineInRange("accumulatorCapacity" + (i + 1), accCapacity[i], 1_000, Integer.MAX_VALUE);
+            ACCUMULATOR_IO[i] = b.comment("Accumulator " + accNames[i] + ": FE/t in and out.")
+                    .defineInRange("accumulatorIo" + (i + 1), accIo[i], 1, Integer.MAX_VALUE);
+        }
+        b.pop();
         b.push("charger");
         CHARGER_RATE = b.comment("FE/t the Charger pushes into the item (never more than the item accepts).")
                 .defineInRange("chargerRate", 2_000, 1, 100_000_000);
@@ -120,6 +133,9 @@ public final class PowerConfig {
     public static int teslaRate(int tier) { return get(TESLA_RATE[tier - 1]); }
     public static int teslaRange(int tier) { return get(TESLA_RANGE[tier - 1]); }
     public static int teslaHopLoss() { return get(TESLA_HOP_LOSS); }
+    /** tier 1-3 */
+    public static int accumulatorCapacity(int tier) { return get(ACCUMULATOR_CAPACITY[tier - 1]); }
+    public static int accumulatorIo(int tier) { return get(ACCUMULATOR_IO[tier - 1]); }
     public static int chargerRate() { return get(CHARGER_RATE); }
     public static int pressPower() { return get(PRESS_POWER); }
     public static int wirelessRate() { return get(WIRELESS_RATE); }

@@ -150,7 +150,7 @@
     "controller": "bank_controller",
     "guide": "capacitor-bank",
     "check": "bank",
-    "about": "Smallest working bank: one Copper Capacitor and one Basic Transfer Coil. 8M FE, 64,000 FE/t in and out.",
+    "about": "Smallest working bank: one Copper Capacitor and one Basic Transfer Coil. 4M FE, 16,000 FE/t in and out.",
     "notes": [
       "A 3x3x3 is a legal size but has room for one part only, and a bank needs a capacitor and a coil.",
       "Sneak + right-click a Bank Port to switch it between input and output."
