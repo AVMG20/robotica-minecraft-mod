@@ -16,7 +16,12 @@ import com.arno.robotica.boss.world.CinderForgeStructure;
 import com.arno.robotica.boss.world.RustedFoundryPiece;
 import com.arno.robotica.boss.world.RustedFoundryStructure;
 import com.arno.robotica.core.item.CoreItems;
+import com.mojang.authlib.GameProfile;
+import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
@@ -26,6 +31,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Husk;
@@ -78,6 +84,27 @@ public class BossGameTests {
         boss.setHealth(boss.getMaxHealth());
         boss.setAttackCooldown(100_000);
         return boss;
+    }
+
+    /** A server player in the level that counts as survival (the vanilla mock player is always creative). */
+    private static ServerPlayer survivalPlayer(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "test-survivor"), false);
+        ServerPlayer player = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation()) {
+            @Override
+            public boolean isSpectator() {
+                return false;
+            }
+
+            @Override
+            public boolean isCreative() {
+                return false;
+            }
+        };
+        Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        new EmbeddedChannel(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        return player;
     }
 
     /** A husk that stands still and never burns: a target or attacker for tests. */
@@ -445,5 +472,170 @@ public class BossGameTests {
         helper.assertTrue(expired.getTarget() == null, "after the lock time the loot is free");
         cleanup(helper);
         helper.succeed();
+    }
+
+    // ------------------------------------------------------------------ 0.5 audit fixes
+
+    /**
+     * No bow cheese: a target out past its leash gets eruptions (and mortar in sight) out to the follow range once it has
+     * been out of reach a while, and hits from attackers further than the configured distance do nothing.
+     */
+    @GameTest(template = "boss_arena", batch = "tyrantFarReach", timeoutTicks = 200)
+    public static void tyrantReachesFarTargetsAndIgnoresSnipers(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        boss.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+        Husk far = dummy(helper, CENTRE.offset(0, 0, 35));
+        Husk near = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = helper.getLevel().damageSources();
+        helper.runAfterDelay(2, () -> {
+            double d = boss.distanceTo(far);
+            helper.assertTrue(d > ForgeTyrant.MORTAR_RANGE && d > BossConfig.maxAttackerDistance()
+                    && d < boss.getAttributeValue(Attributes.FOLLOW_RANGE), "the sniper stands past the normal ranges, " + d);
+            boss.setTarget(far);
+            helper.assertTrue(boss.attackOptions(far).isEmpty(), "nothing reaches that far right away");
+            helper.assertTrue(!boss.hurt(damage.mobAttack(far), 5.0F), "a hit from 35 blocks does nothing");
+            helper.assertTrue(boss.getHealth() == boss.getMaxHealth(), "still at full health");
+        });
+        helper.runAfterDelay(2 + ForgeTyrant.OUT_OF_REACH_TICKS + 10, () -> {
+            helper.assertTrue(boss.getTarget() == far, "still on the sniper");
+            var options = boss.attackOptions(far);
+            helper.assertTrue(options.contains(ForgeTyrant.Action.ERUPT_WINDUP), "eruptions reach the sniper, options " + options);
+            if (boss.hasLineOfSight(far)) {
+                helper.assertTrue(options.contains(ForgeTyrant.Action.MORTAR_WINDUP), "and the mortar does in sight, options " + options);
+            }
+            helper.assertTrue(boss.hurt(damage.mobAttack(near), 5.0F), "a hit from close by hurts");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** The Colossus throws scrap at an unreachable target out past its normal 28 block range, up to the follow range. */
+    @GameTest(template = "boss_arena", batch = "colossusFarReach", timeoutTicks = 200)
+    public static void colossusReachesFarTargets(GameTestHelper helper) {
+        ScrapColossus boss = colossus(helper);
+        boss.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+        Husk far = dummy(helper, CENTRE.offset(0, 0, 34));
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(far);
+            helper.assertTrue(!boss.canThrowAt(far), "no scrap past 28 blocks right away");
+        });
+        helper.runAfterDelay(2 + ScrapColossus.OUT_OF_REACH_TICKS + 10, () -> {
+            helper.assertTrue(boss.getTarget() == far, "still on the same target");
+            helper.assertTrue(boss.canThrowAt(far), "an unreachable far target gets scrap");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** The Tyrant paths over a strip of lava and takes lava as a place to walk to, like a strider. */
+    @GameTest(template = "boss_arena", batch = "tyrantLava", timeoutTicks = 300)
+    public static void tyrantPathsOverLava(GameTestHelper helper) {
+        floor(helper);
+        for (int x = 1; x <= 7; x++) {
+            for (int z = 3; z <= 5; z++) {
+                helper.setBlock(new BlockPos(x, -1, z), Blocks.STONE);
+                helper.setBlock(new BlockPos(x, 0, z), Blocks.LAVA);
+            }
+        }
+        ForgeTyrant boss = helper.spawn(BossRegistry.FORGE_TYRANT.get(), new BlockPos(4, 1, 1));
+        boss.setAttackCooldown(100_000);
+        BlockPos dest = helper.absolutePos(new BlockPos(4, 1, 7));
+        helper.runAfterDelay(3, () -> {
+            helper.assertTrue(boss.getNavigation().isStableDestination(helper.absolutePos(new BlockPos(4, 0, 4))),
+                    "lava counts as a place to walk to");
+            var path = boss.getNavigation().createPath(dest, 0);
+            helper.assertTrue(path != null && path.canReach(), "a path leads over the lava, got " + (path == null ? null
+                    : path.getNodeCount() + " nodes to " + path.getTarget() + " from " + boss.blockPosition() + ", dest " + dest));
+        });
+        helper.onEachTick(() -> {
+            if (boss.isAlive() && !dest.equals(boss.getNavigation().getTargetPos())) {
+                boss.getNavigation().moveTo(dest.getX() + 0.5, dest.getY(), dest.getZ() + 0.5, 1.0);
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(boss.getZ() > helper.absolutePos(new BlockPos(4, 1, 6)).getZ() + 0.4, "the Tyrant crossed the lava");
+            for (int x = 1; x <= 7; x++) {
+                for (int z = 3; z <= 5; z++) helper.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+            }
+            cleanup(helper);
+        });
+    }
+
+    /**
+     * Its attacks hit only players, their pets and what it fights: an eruption under its target spares a mob standing
+     * next to it.
+     */
+    @GameTest(template = "boss_arena", batch = "tyrantBystander", timeoutTicks = 100)
+    public static void tyrantSparesBystanders(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        boss.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+        Husk target = dummy(helper, new BlockPos(0, 1, 0));
+        Husk bystander = dummy(helper, new BlockPos(1, 1, 0));
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(target);
+            boss.erupt(target);
+        });
+        helper.runAfterDelay(2 + ForgeTyrant.ERUPT_DELAY + 5, () -> {
+            helper.assertTrue(target.getHealth() < target.getMaxHealth(), "the eruption hurt its target");
+            helper.assertTrue(bystander.getHealth() == bystander.getMaxHealth(), "the mob next to it was spared");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** No other mob steals its attention from a player in range: it keeps on the player after a mob hits it. */
+    @GameTest(template = "boss_arena", batch = "tyrantAggro", timeoutTicks = 100)
+    public static void tyrantKeepsPlayerAggro(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        boss.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+        Husk mob = dummy(helper, new BlockPos(0, 1, 0));
+        ServerPlayer player = survivalPlayer(helper);
+        BlockPos at = helper.absolutePos(new BlockPos(8, 1, 8));
+        player.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(player);
+            boss.hurt(helper.getLevel().damageSources().mobAttack(mob), 1.0F);
+        });
+        helper.runAfterDelay(10, () -> {
+            helper.assertTrue(boss.getTarget() != mob, "a mob's hit does not pull it off the player");
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** With no player nearby for the configured time it heals. */
+    @GameTest(template = "boss_arena", batch = "tyrantRegen", timeoutTicks = 100)
+    public static void tyrantHealsWhenLeftAlone(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        boss.setHealth(100.0F);
+        boss.setAloneTicks(BossConfig.regenDelayTicks());
+        helper.runAfterDelay(45, () -> {
+            boolean playerNear = helper.getLevel().getNearestPlayer(boss.getX(), boss.getY(), boss.getZ(), BossConfig.regenRadius(),
+                    EntitySelector.NO_CREATIVE_OR_SPECTATOR) != null;
+            if (!playerNear) helper.assertTrue(boss.getHealth() > 100.0F, "it heals when left alone, has " + boss.getHealth());
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** An altar refuses while a boss of its kind is alive close by, also one it did not wake (a moved altar). */
+    @GameTest(template = "boss_arena", batch = "tyrantOneBoss", timeoutTicks = 100)
+    public static void altarRefusesWithBossNearby(GameTestHelper helper) {
+        floor(helper);
+        ForgeTyrant other = helper.spawn(BossRegistry.FORGE_TYRANT.get(), new BlockPos(1, 1, 1));
+        other.setAttackCooldown(100_000);
+        helper.setBlock(new BlockPos(6, 1, 6), BossRegistry.FORGE_ALTAR.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos altarPos = helper.absolutePos(new BlockPos(6, 1, 6));
+        helper.runAfterDelay(2, () -> {
+            BossAltarBlock.Result first = BossAltarBlock.awaken(level, altarPos, null);
+            helper.assertTrue(first == BossAltarBlock.Result.BOSS_ALIVE, "a Tyrant nearby blocks the altar, got " + first);
+            other.discard();
+            BossAltarBlock.Result second = BossAltarBlock.awaken(level, altarPos, null);
+            helper.assertTrue(second == BossAltarBlock.Result.SPAWNED, "with it gone the altar works, got " + second);
+            cleanup(helper);
+            helper.succeed();
+        });
     }
 }

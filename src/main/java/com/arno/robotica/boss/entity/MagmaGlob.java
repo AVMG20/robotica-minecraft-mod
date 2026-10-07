@@ -10,7 +10,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -18,15 +18,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A glob of magma lobbed by the Forge Tyrant. Flies in a slow, readable arc and splashes where it lands: hurts and burns
- * everything within {@value #SPLASH} blocks. Never breaks blocks or lights fires. Rendered as a small spinning magma block.
+ * players and their pets within {@value #SPLASH} blocks. Never breaks blocks or lights fires. Rendered as a small spinning magma block.
  */
 public class MagmaGlob extends ThrowableProjectile {
     public static final BlockState LOOK = Blocks.MAGMA_BLOCK.defaultBlockState();
     public static final double SPLASH = 1.6;
     private static final double GRAVITY = 0.05;
+    /** Longest flight in ticks: far lobs fly faster instead of higher, so they fit under a Nether cave roof. */
+    private static final int MAX_FLIGHT = 40;
 
     private float damage = 9.0F;
 
@@ -42,15 +45,9 @@ public class MagmaGlob extends ThrowableProjectile {
         this.damage = damage;
     }
 
-    /** Ballistic lob: fixed horizontal speed, vertical speed chosen so the arc ends at the aim point (drag included roughly). */
+    /** Ballistic lob that lands on the aim point; {@code speed} sets the flight time (blocks per tick). */
     public void lobAt(Vec3 aim, double speed) {
-        double dx = aim.x - getX();
-        double dz = aim.z - getZ();
-        double dy = aim.y - getY();
-        double horizontal = Math.max(0.5, Math.sqrt(dx * dx + dz * dz));
-        double ticks = horizontal * 1.08 / speed;
-        double vy = dy / ticks + 0.5 * GRAVITY * ticks;
-        setDeltaMovement(dx / horizontal * speed, vy, dz / horizontal * speed);
+        setDeltaMovement(BossRules.lob(position(), aim, speed, GRAVITY, MAX_FLIGHT));
     }
 
     @Override
@@ -80,7 +77,13 @@ public class MagmaGlob extends ThrowableProjectile {
 
     @Override
     protected boolean canHitEntity(Entity target) {
-        return super.canHitEntity(target) && !(target instanceof ForgeTyrant) && !(target instanceof MagmaGlob);
+        return super.canHitEntity(target) && !(target instanceof ForgeTyrant) && !(target instanceof MagmaGlob)
+                && BossRules.isFoe(ownerMob(), target);
+    }
+
+    @Nullable
+    private Mob ownerMob() {
+        return getOwner() instanceof Mob mob ? mob : null;
     }
 
     /** Splash on any hit, block or entity: everything close takes the damage once. */
@@ -96,8 +99,8 @@ public class MagmaGlob extends ThrowableProjectile {
         server.playSound(null, at.x, at.y, at.z, SoundEvents.LAVA_EXTINGUISH, SoundSource.HOSTILE, 0.8F, 1.2F);
         LivingEntity owner = getOwner() instanceof LivingEntity living ? living : null;
         AABB area = new AABB(at, at).inflate(SPLASH, SPLASH, SPLASH);
-        for (LivingEntity e : server.getEntitiesOfClass(LivingEntity.class, area, e -> e.isAlive() && !(e instanceof ForgeTyrant)
-                && !(e instanceof Player p && (p.isCreative() || p.isSpectator())))) {
+        Mob boss = ownerMob();
+        for (LivingEntity e : server.getEntitiesOfClass(LivingEntity.class, area, e -> !(e instanceof ForgeTyrant) && BossRules.isFoe(boss, e))) {
             if (e.getBoundingBox().distanceToSqr(at) > SPLASH * SPLASH) continue;
             if (e.hurt(damageSources().mobProjectile(this, owner), damage)) e.igniteForSeconds(3.0F);
         }
