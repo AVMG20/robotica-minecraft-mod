@@ -80,7 +80,7 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     private ItemStack toolStack = ItemStack.EMPTY;
 
     public SurveyRigBlockEntity(BlockPos pos, BlockState state) {
-        super(AutomationContent.SURVEY_RIG_BE.get(), pos, state, KINDS, AutomationConfig.surveySlots(tierOf(state)),
+        super(AutomationContent.SURVEY_RIG_BE.get(), pos, state, KINDS,
                 (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.surveyEnergyBuffer() * tierOf(state)),
                 (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.surveyMaxInput() * tierOf(state)));
     }
@@ -88,18 +88,6 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     @Override
     public String blockKey() {
         return getBlockState().getBlock().getDescriptionId();
-    }
-
-    /** Card caps grow with the Mk (server config): speed 2/4/6/8, efficiency 1-4, fortune 1/2/3/3, silk and void 1. */
-    @Override
-    protected int upgradeCap(UpgradeKind kind) {
-        int tier = tier();
-        return switch (kind) {
-            case SPEED -> AutomationConfig.surveySpeedCap(tier);
-            case EFFICIENCY -> AutomationConfig.surveyEfficiencyCap(tier);
-            case FORTUNE -> AutomationConfig.surveyFortuneCap(tier);
-            default -> kind.maxStack;
-        };
     }
 
     /** Percent more weight this Mk gives rare ore kinds. */
@@ -272,7 +260,7 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
         return new SurveyRigMenu(id, inv, this);
     }
 
-    // ---- persistence (tags of the old chunk-ledger rig, such as finishedHere, are simply ignored) ----
+    // ---- persistence ----
 
     @Override
     protected void saveExtra(CompoundTag tag, HolderLookup.Provider registries) {

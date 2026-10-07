@@ -211,7 +211,6 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
     /** Lanes closed by a lowered {@code lanesMk}: inputs and outputs move to open lanes, or pop out on top. */
     @Override
     protected void tidyHiddenSlots(ServerLevel level, BlockPos pos) {
-        super.tidyHiddenSlots(level, pos);
         int lanes = lanes();
         for (int lane = lanes; lane < MAX_LANES; lane++) {
             for (int slot : new int[]{lane, OUT_FIRST + lane}) {

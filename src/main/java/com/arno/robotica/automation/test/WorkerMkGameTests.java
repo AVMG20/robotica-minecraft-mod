@@ -127,7 +127,7 @@ public class WorkerMkGameTests {
     public static void surveyRigMkUpgradeAndRareOres(GameTestHelper helper) {
         helper.setBlock(POS, AutomationContent.SURVEY_RIG.get());
         SurveyRigBlockEntity mk1 = helper.getBlockEntity(POS);
-        helper.assertTrue(mk1.upgradeSlotCount() == 1 && mk1.upgrades.cap(UpgradeKind.SPEED) == 2, "Mk1: one slot, two speed cards");
+        helper.assertTrue(mk1.upgradeSlotCount() == 2 && mk1.upgrades.cap(UpgradeKind.SPEED) == 2, "Mk1: two slots, two speed cards");
         mk1.core.setStackInSlot(0, new ItemStack(CoreItems.MAGMA_CORE.get()));
         mk1.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 2));
         mk1.energy.setEnergy(123_456);
@@ -139,7 +139,7 @@ public class WorkerMkGameTests {
         SurveyRigBlockEntity rig = helper.getBlockEntity(POS);
         helper.assertTrue(rig.hasCore() && rig.upgrades.level(UpgradeKind.SPEED) == 2 && rig.energy.getEnergyStored() == 123_456,
                 "core, cards and energy kept");
-        helper.assertTrue(rig.upgradeSlotCount() == 2 && rig.upgrades.cap(UpgradeKind.SPEED) == 4, "Mk2: two slots, four speed cards");
+        helper.assertTrue(rig.upgradeSlotCount() == 3 && rig.upgrades.cap(UpgradeKind.SPEED) == 4, "Mk2: three slots, four speed cards");
 
         helper.setBlock(POS, AutomationContent.SURVEY_RIG_MK4.get());
         SurveyRigBlockEntity mk4 = helper.getBlockEntity(POS);
@@ -155,26 +155,6 @@ public class WorkerMkGameTests {
         double boosted = pool.chance(diamond, false, mk4.rareBonus(), rare);
         helper.assertTrue(boosted > 2.5 * base, "Mk4 makes diamonds about three times as often: " + base + " -> " + boosted);
         helper.assertTrue(pool.chance(iron, false, mk4.rareBonus(), rare) < pool.chance(iron, false, 0, rare), "common ores get rarer");
-        helper.succeed();
-    }
-
-    /** A rig saved with more cards than its Mk has slots (before the Mk tiers) keeps the first and puts the rest out. */
-    @GameTest(template = "empty")
-    public static void extraCardsComeOutOnLoad(GameTestHelper helper) {
-        helper.setBlock(POS, AutomationContent.SURVEY_RIG.get());
-        SurveyRigBlockEntity rig = helper.getBlockEntity(POS);
-        var provider = helper.getLevel().registryAccess();
-        CompoundTag tag = rig.saveWithoutMetadata(provider);
-        ItemStackHandler old = new ItemStackHandler(4);
-        old.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 8));
-        old.setStackInSlot(1, CoreItems.cards(UpgradeKind.EFFICIENCY, 4));
-        old.setStackInSlot(3, CoreItems.cards(UpgradeKind.VOID, 1));
-        tag.put("upgrades", old.serializeNBT(provider));
-        rig.loadWithComponents(tag, provider);
-        helper.assertTrue(rig.upgrades.getSlots() == 1, "still one slot");
-        helper.assertTrue(rig.upgrades.getStackInSlot(0).getCount() == 8 && rig.upgrades.level(UpgradeKind.SPEED) == 2,
-                "the first card stack stays, two of it count");
-        helper.assertTrue(rig.hasPendingOutput(), "the other cards wait to come out");
         helper.succeed();
     }
 }

@@ -7,6 +7,7 @@ import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.UpgradeRules;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.replicator.ReplicatorConfig;
 import com.arno.robotica.replicator.ReplicatorRegistry;
@@ -59,9 +60,7 @@ import java.util.UUID;
  */
 public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implements MenuProvider {
     public static final int OUTPUT_SLOTS = 18;
-    public static final int UPGRADE_SLOTS = 3;
-    /** At most 3 speed cards: the replicator is strong, so it stays slow. */
-    public static final int MAX_SPEED_LEVEL = 3;
+    public static final int UPGRADE_SLOTS = UpgradeRules.Fixed.REPLICATOR.slots;
     /** Extra FE cost of the plasma boost, on top of the speed it gives. */
     private static final double BOOST_ENERGY_FACTOR = 1.25;
     private static final int MAX_XP = 1_000_000;
@@ -148,10 +147,9 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         };
     }
 
-    /** Speed up to 3 cards (x4, with the plasma boost x8), fortune up to 3 (Looting III), efficiency up to 4. */
+    /** Caps in {@link UpgradeRules.Fixed#REPLICATOR}: speed 3 (x4, with the plasma boost x8), fortune 3 (Looting III). */
     public static Upgrades newUpgrades(Runnable onChanged) {
-        return new Upgrades(UPGRADE_SLOTS, java.util.Map.of(UpgradeKind.SPEED, MAX_SPEED_LEVEL, UpgradeKind.FORTUNE, 3,
-                UpgradeKind.EFFICIENCY, 4), onChanged);
+        return Upgrades.fixed(UpgradeRules.Fixed.REPLICATOR, onChanged);
     }
 
     public final ItemStackHandler vial = newVialHandler(this::setChangedAndSync);
@@ -270,7 +268,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     }
 
     public int speedLevel() {
-        return Math.min(MAX_SPEED_LEVEL, upgrades.level(UpgradeKind.SPEED));
+        return upgrades.level(UpgradeKind.SPEED);
     }
 
     /** Tier of the installed catalyst core: 0 none, 3 Magma Core, 4 Antigrav Core. */

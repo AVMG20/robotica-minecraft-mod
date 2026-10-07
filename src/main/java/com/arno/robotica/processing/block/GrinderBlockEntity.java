@@ -173,26 +173,12 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         ItemStack stack = items.getStackInSlot(MEDIA);
         GrindingMedia media = GrindingMedia.of(stack);
         if (media == null || !media.fits(tier)) return false;
-        // Stacks from before media was loaded still carry their wear: the worn item goes in with what it had left.
-        int wear = stack.getOrDefault(ProcessingRegistry.MEDIA_WEAR.get(), 0);
         loadedMedia = stack.getItem();
-        loadedLeft = Math.max(1, media.uses() - wear);
+        loadedLeft = Math.max(1, media.uses());
         ItemStack rest = stack.copyWithCount(stack.getCount() - 1);
-        rest.remove(ProcessingRegistry.MEDIA_WEAR.get());
         items.setStackInSlot(MEDIA, rest.isEmpty() ? ItemStack.EMPTY : rest);
         setChanged();
         return true;
-    }
-
-    /** Old media stacks (with the wear component) are loaded or, behind loaded media, become plain items again. */
-    private void stripLegacyWear() {
-        ItemStack stack = items.getStackInSlot(MEDIA);
-        if (stack.isEmpty() || !stack.has(ProcessingRegistry.MEDIA_WEAR.get())) return;
-        if (loadMedia() && stack == items.getStackInSlot(MEDIA)) {
-            ItemStack plain = stack.copy();
-            plain.remove(ProcessingRegistry.MEDIA_WEAR.get());
-            items.setStackInSlot(MEDIA, plain);
-        }
     }
 
     /** Mk a recipe for the current input needs, 0 when none. */
@@ -222,7 +208,6 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
 
     @Override
     protected void work(ServerLevel level) {
-        stripLegacyWear();
         loadMedia();
         ItemStack input = items.getStackInSlot(INPUT);
         if (input.isEmpty()) {
@@ -415,13 +400,5 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         ResourceLocation mediaId = ResourceLocation.tryParse(tag.getString("media"));
         loadedMedia = mediaId == null ? Items.AIR : BuiltInRegistries.ITEM.get(mediaId);
         loadedLeft = loadedMedia == Items.AIR ? 0 : tag.getInt("mediaLeft");
-        // Saves from before wear lived on the media stack: put the old machine-side counter on it, loaded on the next tick.
-        ItemStack media = items.getStackInSlot(MEDIA);
-        int oldWear = tag.getInt("wear");
-        if (oldWear > 0 && !media.isEmpty() && !media.has(ProcessingRegistry.MEDIA_WEAR.get())) {
-            ItemStack worn = media.copy();
-            worn.set(ProcessingRegistry.MEDIA_WEAR.get(), oldWear);
-            items.setStackInSlot(MEDIA, worn);
-        }
     }
 }

@@ -32,7 +32,7 @@ public class SurveyRigScreen extends MachineScreen<SurveyRigMenu> {
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
         if (slot.index == SurveyRigMenu.SLOT_CORE) return icon("magma_core");
-        if (slot.index < SurveyRigMenu.FIRST_UPGRADE + menu.be.upgradeSlotCount()) return icon("upgrade_speed");
+        if (slot.index < SurveyRigMenu.FIRST_UPGRADE + menu.be.upgrades.getSlots()) return icon("upgrade_speed");
         return ItemStack.EMPTY;
     }
 
@@ -40,7 +40,7 @@ public class SurveyRigScreen extends MachineScreen<SurveyRigMenu> {
     protected Component slotHint(Slot slot) {
         if (slot.index == 0) return Component.translatable("gui.robotica.slot_battery");
         if (slot.index == SurveyRigMenu.SLOT_CORE) return Component.translatable("gui.robotica.survey.slot_core");
-        if (slot.index < SurveyRigMenu.FIRST_UPGRADE + menu.be.upgradeSlotCount()) return Component.translatable("gui.robotica.slot_upgrade");
+        if (slot.index < SurveyRigMenu.FIRST_UPGRADE + menu.be.upgrades.getSlots()) return Component.translatable("gui.robotica.slot_upgrade");
         return null;
     }
 

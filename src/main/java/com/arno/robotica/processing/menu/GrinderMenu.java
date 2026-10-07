@@ -4,8 +4,8 @@ import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.processing.ProcessingConfig;
 import com.arno.robotica.processing.ProcessingRegistry;
+import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.processing.block.GrinderBlockEntity;
-import com.arno.robotica.processing.block.MachineUpgrades;
 import com.arno.robotica.processing.block.ProcessingMachineBlock;
 import com.arno.robotica.processing.block.ProcessingMachineBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -47,8 +47,8 @@ public class GrinderMenu extends MachineMenu {
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
         this.block = inv.player.level().getBlockState(pos).getBlock();
         this.tier = block instanceof ProcessingMachineBlock m ? m.tier() : 1;
-        IItemHandler upgrades = be != null ? be.upgrades
-                : new MachineUpgrades(GrinderBlockEntity.KINDS, k -> ProcessingMachineBlockEntity.cap(k, tier), () -> ProcessingConfig.upgradeSlots(tier), () -> {});
+        Upgrades upgrades = be != null ? be.upgrades
+                : Upgrades.forMk(() -> tier, GrinderBlockEntity.KINDS, () -> {});
 
         addSlot(new SlotItemHandler(items, GrinderBlockEntity.INPUT, 26, 17));
         addSlot(new SlotItemHandler(items, GrinderBlockEntity.MEDIA, 26, 41));
@@ -61,21 +61,7 @@ public class GrinderMenu extends MachineMenu {
             });
         }
         addSlot(new SlotItemHandler(items, GrinderBlockEntity.BATTERY, 152, 17));
-        int active = ProcessingConfig.upgradeSlots(tier);
-        for (int i = 0; i < MachineUpgrades.MAX_SLOTS; i++) {
-            final boolean on = i < active;
-            addSlot(new MachineSlot(upgrades, i, UPGRADE_X + i * 18, UPGRADE_Y) {
-                @Override
-                public boolean isActive() {
-                    return on;
-                }
-
-                @Override
-                public boolean mayPlace(ItemStack stack) {
-                    return on && super.mayPlace(stack);
-                }
-            });
-        }
+        for (int i = 0; i < upgrades.getSlots(); i++) addSlot(upgrades.slot(i, UPGRADE_X + i * 18, UPGRADE_Y));
         addPlayerInventory(inv, 8, 84);
         energyIndex = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());

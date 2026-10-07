@@ -38,7 +38,9 @@ public class CoreGameTests {
     /** Items that are intentionally not craftable. Keep this short and justify each entry. */
     private static final Set<String> NO_RECIPE_OK = Set.of(
             // industry: ores only come from world generation, the depleted pellet is the waste of the RTG and reactors
-            "thorium_ore", "deepslate_thorium_ore", "pyrolite_ore", "resonite_ore", "depleted_fuel_pellet");
+            "thorium_ore", "deepslate_thorium_ore", "pyrolite_ore", "resonite_ore", "depleted_fuel_pellet",
+            // core: the old Auto-Pickup card, kept only until gear's Auto-Pickup module replaces it
+            "upgrade_pickup");
 
     @GameTest(template = "empty")
     public static void energyItemsExposeCapability(GameTestHelper helper) {
@@ -104,9 +106,9 @@ public class CoreGameTests {
     /** Stackable cards stack in one slot up to the machine's cap; single cards do not; one slot per kind; silk excludes fortune. */
     @GameTest(template = "empty")
     public static void upgradeCardsStack(GameTestHelper helper) {
-        var up = new com.arno.robotica.core.upgrade.Upgrades(3, java.util.Map.of(
-                com.arno.robotica.core.upgrade.UpgradeKind.SPEED, 4, com.arno.robotica.core.upgrade.UpgradeKind.SILK, 1,
-                com.arno.robotica.core.upgrade.UpgradeKind.FORTUNE, 3), () -> {});
+        var up = com.arno.robotica.core.upgrade.Upgrades.forMk(() -> 2, java.util.Set.of(
+                com.arno.robotica.core.upgrade.UpgradeKind.SPEED, com.arno.robotica.core.upgrade.UpgradeKind.SILK,
+                com.arno.robotica.core.upgrade.UpgradeKind.FORTUNE), () -> {});
         var speed = com.arno.robotica.core.upgrade.UpgradeKind.SPEED;
         ItemStack rest = up.insertItem(0, CoreItems.cards(speed, 6), false);
         helper.assertTrue(up.level(speed) == 4 && rest.getCount() == 2, "speed stacks to the cap of 4, rest " + rest.getCount());

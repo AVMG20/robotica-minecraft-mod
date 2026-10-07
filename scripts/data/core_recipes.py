@@ -56,16 +56,15 @@ shaped('null_circuit', ['QEQ', 'ENE', 'QEQ'], {'Q': 'quantum_circuit', 'E': '#c:
 shaped('ender_cell', ['ERE', 'NCN', 'ERE'], {'E': '#c:ender_pearls', 'R': 'redstone_cell', 'N': 'null_casing', 'C': 'null_circuit'}, category='equipment')
 shaped('temp_antigrav_core', ['PCP', 'CNC', 'PCP'], {'P': 'plasma_actuator', 'C': 'minecraft:end_crystal', 'N': '#c:nether_stars'}, result='antigrav_core')
 
-# Upgrade cards: one card per kind, stackable kinds stack in a machine slot (every card adds a step, see Upgrades.java).
+# Upgrade cards (machines only): one card per kind, stackable kinds stack in a machine slot (see Upgrades.java).
 # Age 1 cards: two catalysts in the corners, iron plates and a Basic Circuit. Age 2 cards: gold plates and an Advanced Circuit.
-# The price of going fast is paid in FE (speed costs grow with the square, very steeply on the Excavator) and in the
-# slot caps (robots take as many speed/range/growth cards as their Mk tier).
+# The price of going fast is paid in FE (speed costs grow with the square, very steeply on the quarries) and in the
+# caps (UpgradeRules: a Mk machine takes 2 speed cards per Mk).
 CARDS = {
     'speed': (1, 'minecraft:sugar', REDSTONE),
     'efficiency': (1, GOLD, GOLD),
     'growth': (1, 'minecraft:bone_block', 'minecraft:bone_block'),
     'void': (1, 'minecraft:cactus', '#c:obsidians'),
-    'pickup': (1, '#c:ender_pearls', REDSTONE),
     'carry': (1, '#c:chests/wooden', '#c:leathers'),
     'range': (2, '#c:ender_pearls', '#c:gems/lapis'),
     'fortune': (2, '#c:storage_blocks/lapis', DIAMOND),

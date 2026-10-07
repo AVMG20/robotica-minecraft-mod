@@ -131,30 +131,24 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     private long lastWorking;
     private long lastBeep = -BEEP_GAP;
     private long lastWorkSound = -20;
-    private final int upgradeSlots;
 
-    protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds, int upgradeSlots) {
-        this(type, pos, state, kinds, upgradeSlots, AutomationConfig.energyBuffer(), 1000);
+    /** Card slots and caps follow the Mk rule ({@link Upgrades#forMk}) with this worker's {@link #tier()}. */
+    protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds) {
+        this(type, pos, state, kinds, AutomationConfig.energyBuffer(), 1000);
     }
 
     /** Same, with its own FE buffer and input rate (the Survey Rig needs far more than a robot). */
-    protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds, int upgradeSlots,
+    protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds,
                                     int energyCapacity, int maxReceive) {
         super(type, pos, state);
-        this.upgradeSlots = upgradeSlots;
         this.energy = new MachineEnergyStorage(energyCapacity, maxReceive, 0, this::setChanged);
-        this.upgrades = new Upgrades(upgradeSlots, kinds, this::upgradeCap, this::onUpgradesChanged);
+        this.upgrades = Upgrades.forMk(this::tier, kinds, this::onUpgradesChanged);
     }
 
     // ---- subclass hooks ----
 
     /** Runs every server tick when there is no pending output. Must return the status; consumes its own energy. */
     protected abstract Status work(ServerLevel level);
-
-    /** How many cards of a kind this worker takes. Farm bots raise speed, range and growth with their Mk tier. */
-    protected int upgradeCap(UpgradeKind kind) {
-        return kind.maxStack;
-    }
 
     /** Recomputes {@link #areaSize} (and anything cached) from tier and upgrades. */
     protected abstract void recalc();
@@ -200,7 +194,6 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
 
     /** Called after an in-place Mk upgrade loaded the old worker's data. */
     public void afterUpgrade() {
-        upgrades.capsChanged();
         recalc();
         startPreview();
         setChangedAndSync();
@@ -285,8 +278,9 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         return profile.map(GameProfile::getName).filter(n -> !n.isEmpty()).orElse(null);
     }
 
+    /** Card slots the Mk opens (the menu has {@link com.arno.robotica.core.upgrade.UpgradeRules#MAX_SLOTS}, the rest hidden). */
     public int upgradeSlotCount() {
-        return upgradeSlots;
+        return upgrades.activeSlots();
     }
 
     public int level(UpgradeKind kind) {
@@ -627,17 +621,7 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
                 ItemStack.parse(registries, t).ifPresent(pending::add);
             }
         }
-        if (tag.contains("upgrades")) {
-            // Slot by slot, so a different slot count (next Mk, or a save from before the Mk tiers) never resizes the
-            // handler; cards that no longer have a slot come out like any other output.
-            ItemStackHandler saved = new ItemStackHandler();
-            saved.deserializeNBT(registries, tag.getCompound("upgrades"));
-            for (int i = 0; i < Math.max(upgrades.getSlots(), saved.getSlots()); i++) {
-                ItemStack stack = i < saved.getSlots() ? saved.getStackInSlot(i) : ItemStack.EMPTY;
-                if (i < upgrades.getSlots()) upgrades.setStackInSlot(i, stack);
-                else if (!stack.isEmpty()) pending.add(stack.copy());
-            }
-        }
+        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
         if (tag.contains("sides")) sides.load(tag.getCompound("sides"));
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
         if (tag.contains("showArea")) showArea = tag.getBoolean("showArea");

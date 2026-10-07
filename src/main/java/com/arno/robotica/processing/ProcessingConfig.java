@@ -14,12 +14,7 @@ public final class ProcessingConfig {
 
     public static final ModConfigSpec SPEC;
 
-    private static final ModConfigSpec.IntValue[] UPGRADE_SLOTS = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.DoubleValue[] TIER_SPEED = new ModConfigSpec.DoubleValue[4];
-    private static final ModConfigSpec.IntValue[] SPEED_CAP = new ModConfigSpec.IntValue[4];
-    private static final ModConfigSpec.IntValue[] EFFICIENCY_CAP = new ModConfigSpec.IntValue[4];
-    private static final ModConfigSpec.IntValue[] FORTUNE_CAP = new ModConfigSpec.IntValue[4];
-    private static final ModConfigSpec.IntValue[] RANGE_CAP = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] BUFFER = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] MAX_INPUT = new ModConfigSpec.IntValue[4];
 
@@ -41,28 +36,13 @@ public final class ProcessingConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.comment("Machine tiers (Mk1-Mk4), shared by the Grinder and the Electric Furnace.").push("processing_tiers");
-        int[] slots = {2, 3, 4, 5};
         double[] speeds = {1.0, 1.5, 2.0, 3.0};
-        int[] speedCaps = {2, 4, 6, 8};
-        int[] effCaps = {2, 3, 4, 4};
-        int[] fortuneCaps = {0, 1, 2, 3};
-        int[] rangeCaps = {0, 1, 2, 3};
         int[] buffers = {20_000, 80_000, 320_000, 1_280_000};
         int[] inputs = {4_000, 16_000, 64_000, 256_000};
         for (int i = 0; i < 4; i++) {
             int mk = i + 1;
-            UPGRADE_SLOTS[i] = b.comment("Mk" + mk + ": upgrade slots (one card kind per slot).")
-                    .defineInRange("upgradeSlotsMk" + mk, slots[i], 1, 5);
             TIER_SPEED[i] = b.comment("Mk" + mk + ": work speed multiplier (FE/t rises with it, FE per item stays the same).")
                     .defineInRange("tierSpeedMk" + mk, speeds[i], 0.1, 100.0);
-            SPEED_CAP[i] = b.comment("Mk" + mk + ": most Speed cards that count.")
-                    .defineInRange("speedCapMk" + mk, speedCaps[i], 0, 8);
-            EFFICIENCY_CAP[i] = b.comment("Mk" + mk + ": most Efficiency cards that count.")
-                    .defineInRange("efficiencyCapMk" + mk, effCaps[i], 0, 4);
-            FORTUNE_CAP[i] = b.comment("Mk" + mk + ": most Fortune cards that count (Grinder: more ore output, Electric Furnace: more experience).")
-                    .defineInRange("fortuneCapMk" + mk, fortuneCaps[i], 0, 3);
-            RANGE_CAP[i] = b.comment("Mk" + mk + ": most Range cards that count (Electric Furnace: +1 item per lane and cycle each).")
-                    .defineInRange("rangeCapMk" + mk, rangeCaps[i], 0, 4);
             BUFFER[i] = b.comment("Mk" + mk + ": energy buffer (FE).")
                     .defineInRange("bufferMk" + mk, buffers[i], 1_000, Integer.MAX_VALUE / 2);
             MAX_INPUT[i] = b.comment("Mk" + mk + ": most FE/t the machine accepts from cables or its battery slot.")
@@ -121,12 +101,7 @@ public final class ProcessingConfig {
         return Math.max(1, Math.min(4, tier)) - 1;
     }
 
-    public static int upgradeSlots(int tier) { return get(UPGRADE_SLOTS[mk(tier)]); }
     public static double tierSpeed(int tier) { return get(TIER_SPEED[mk(tier)]); }
-    public static int speedCap(int tier) { return get(SPEED_CAP[mk(tier)]); }
-    public static int efficiencyCap(int tier) { return get(EFFICIENCY_CAP[mk(tier)]); }
-    public static int fortuneCap(int tier) { return get(FORTUNE_CAP[mk(tier)]); }
-    public static int rangeCap(int tier) { return get(RANGE_CAP[mk(tier)]); }
     public static int buffer(int tier) { return get(BUFFER[mk(tier)]); }
     public static int maxInput(int tier) { return get(MAX_INPUT[mk(tier)]); }
 

@@ -61,8 +61,8 @@ public class ProcessingMenu extends MachineMenu {
         this.tier = block.tier();
         IItemHandler items = be != null ? be.items : new ItemStackHandler(machine.slots());
         IItemHandler battery = be != null ? be.battery : new ItemStackHandler(1);
-        IItemHandler upgrades = be != null ? be.upgrades : new Upgrades(tier + 1, ProcessingBlockEntity.acceptedKinds(machine),
-                k -> ProcessingBlockEntity.cardCap(machine, tier, k), () -> {});
+        int mk = tier;
+        Upgrades upgrades = be != null ? be.upgrades : Upgrades.forMk(() -> mk, ProcessingBlockEntity.acceptedKinds(machine), () -> {});
 
         for (int i = 0; i < machine.inputs; i++) {
             int[] p = inputPos(machine, i);
@@ -83,8 +83,8 @@ public class ProcessingMenu extends MachineMenu {
                 return IndustryBlockEntity.isBattery(stack);
             }
         });
-        int n = upgrades.getSlots();
-        for (int i = 0; i < n; i++) addSlot(new MachineSlot(upgrades, i, 152 - 18 * (n - 1 - i), UPGRADE_Y));
+        int n = upgrades.activeSlots();
+        for (int i = 0; i < upgrades.getSlots(); i++) addSlot(upgrades.slot(i, 152 - 18 * (n - 1 - i), UPGRADE_Y));
         addPlayerInventory(inv, 8, HEIGHT - 82);
 
         energyIdx = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());

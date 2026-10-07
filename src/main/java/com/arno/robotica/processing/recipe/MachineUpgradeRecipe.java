@@ -19,8 +19,7 @@ import net.minecraft.world.item.crafting.ShapedRecipePattern;
 
 /**
  * Shaped crafting recipe {@code robotica:machine_upgrade} for the next Mk of a processing machine: same JSON as
- * {@code minecraft:crafting_shaped}, but the result keeps the energy of the machine in the grid (and the contents an item
- * from an older version may still carry), so upgrading a Grinder or Electric Furnace loses nothing.
+ * {@code minecraft:crafting_shaped}, but the result keeps the energy of the machine in the grid.
  */
 public class MachineUpgradeRecipe extends ShapedRecipe {
     private final ItemStack output;
@@ -38,8 +37,6 @@ public class MachineUpgradeRecipe extends ShapedRecipe {
             if (in.getItem() instanceof BlockItem block && block.getBlock() instanceof ProcessingMachineBlock) {
                 Integer energy = in.get(CoreComponents.ENERGY.get());
                 if (energy != null) out.set(CoreComponents.ENERGY.get(), energy);
-                var contents = in.get(CoreComponents.CONTENTS.get());
-                if (contents != null) out.set(CoreComponents.CONTENTS.get(), contents.copy());
                 break;
             }
         }

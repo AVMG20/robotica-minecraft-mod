@@ -76,15 +76,6 @@ public final class CoreItems {
         return new ItemStack(CARDS.get(kind).get(), Math.max(1, count));
     }
 
-    /**
-     * @deprecated card levels are gone: there is one card per kind and a level N card is now a stack of N cards
-     * ({@link #cards(UpgradeKind, int)}). Returns the single card of the kind.
-     */
-    @Deprecated
-    public static DeferredItem<UpgradeCardItem> card(UpgradeKind kind, int level) {
-        return CARDS.get(kind);
-    }
-
     private static DeferredItem<PartItem> part(String name, int age) {
         DeferredItem<PartItem> item = ITEMS.registerItem(name, p -> new PartItem(p, age));
         TAB_ORDER.add(item);

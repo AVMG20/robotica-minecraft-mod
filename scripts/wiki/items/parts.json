@@ -730,7 +730,7 @@
    "items": [
     "upgrade_speed"
    ],
-   "what": "Work faster; costs more FE per action. Each card is one step: x2, x3, x4, x6, x8, x11, x15, x20.",
+   "what": "Machines work faster and use more FE per action. Each card is one step: x2, x3, x4, x6, x8, x11, x15, x20.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -739,7 +739,7 @@
    "items": [
     "upgrade_efficiency"
    ],
-   "what": "-15% energy per action per card. Never below 40% of the base cost.",
+   "what": "Machines use 15% less FE per action per card, never below 40%.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -748,7 +748,7 @@
    "items": [
     "upgrade_range"
    ],
-   "what": "Bigger work area. What a step means depends on the machine.",
+   "what": "Bigger work area or range: robots +2 radius, Excavator +10 wide, Wireless Charger +4 blocks per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -757,7 +757,7 @@
    "items": [
     "upgrade_fortune"
    ],
-   "what": "Fortune I-III; Looting in the Replicator. Not together with a Silk Touch card.",
+   "what": "Fortune I-III on mined blocks, more output in ore machines, Looting in the Replicator. Not with Silk Touch.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -775,7 +775,7 @@
    "items": [
     "upgrade_growth"
    ],
-   "what": "+50% crop and sapling growth per card.",
+   "what": "Farm bots: +50% crop and sapling growth per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -784,16 +784,7 @@
    "items": [
     "upgrade_void"
    ],
-   "what": "Deletes junk or outputs that don't fit. Single card. Also the void filter module of power tools.",
-   "see": [
-    "guide:upgrade-cards"
-   ]
-  },
-  {
-   "items": [
-    "upgrade_pickup"
-   ],
-   "what": "Power tool module: drops go to your inventory. Installed at a Tinker's Bench.",
+   "what": "Deletes junk or outputs that don't fit. Single card.",
    "see": [
     "guide:upgrade-cards"
    ]

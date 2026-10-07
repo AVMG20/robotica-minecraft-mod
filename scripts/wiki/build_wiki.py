@@ -9,7 +9,7 @@ Reads (generated, never hand-copied)
 - assets/robotica/codex/chapters.json                                  Codex pages per item
 - worldgen + biome modifiers + loot tables + block tags                where to find ores, the Rusted Foundry
 Joins the curated sources next to this script
-- upgrades.json        which machine takes which card, caps per Mk, effect   (keep in sync with the Java code)
+- upgrades.json        which machine takes which card and what it does; slots and caps come from UpgradeRules.java
 - multiblocks.json     example structures, checked by multiblock_check.py    (keep in sync with the structure rules)
 - items/*.json         what each item does, how to use it, key numbers       (keep in sync with configs)
 - guides/*.md          the wiki guides
@@ -435,9 +435,63 @@ def build_world():
 
 # ---------------------------------------------------------------- curated sources
 
+JAVA = SRC / 'java/com/arno/robotica'
+
+
+def card_rules():
+    """Card stacks, the Mk rule and the fixed machines, read from the Java code so the wiki cannot drift."""
+    kind_src = (JAVA / 'core/upgrade/UpgradeKind.java').read_text()
+    kinds = {k.lower(): {'maxStack': int(a), 'age': int(b)}
+             for k, a, b in re.findall(r'^\s+([A-Z]+)\((\d+), (\d+)\)[,;]', kind_src, re.M)}
+    cfg = (JAVA / 'core/CoreConfig.java').read_text()
+    per = {k: int(re.search(r'defineInRange\("%s", (\d+)' % k, cfg).group(1))
+           for k in ('speedCapPerMk', 'efficiencyCapPerMk', 'rangeCapPerMk', 'fortuneCapMax')}
+    rules = (JAVA / 'core/upgrade/UpgradeRules.java').read_text()
+    max_mk = int(re.search(r'MAX_MK = (\d+);', rules).group(1))
+    extra = int(re.search(r'return clampMk\(mk\) \+ (\d+);', rules).group(1))
+    fixed = {}
+    for name, slots, caps in re.findall(r'^\s+([A-Z_]+)\((\d+)((?:, limit\(UpgradeKind\.[A-Z]+, \d+\))+)\)[,;]', rules, re.M):
+        fixed[name] = {'slots': int(slots), 'caps': {k.lower(): min(int(n), kinds[k.lower()]['maxStack'])
+                                                    for k, n in re.findall(r'UpgradeKind\.([A-Z]+), (\d+)', caps)}}
+
+    def mk_cap(mk, kind):
+        cap = {'speed': per['speedCapPerMk'] * mk, 'efficiency': per['efficiencyCapPerMk'] * mk,
+               'range': per['rangeCapPerMk'] * mk, 'fortune': min(mk, per['fortuneCapMax']), 'growth': mk}.get(kind, 1)
+        return min(kinds[kind]['maxStack'], cap)
+
+    mks = range(1, max_mk + 1)
+    text = (f'Machines with a Mk: Mk + {extra} card slots; speed {per["speedCapPerMk"]} per Mk, efficiency '
+            f'{per["efficiencyCapPerMk"]}, range {per["rangeCapPerMk"]} and growth 1 per Mk, fortune up to '
+            f'{per["fortuneCapMax"]}, silk and void 1. Machines without a Mk have fixed slots.')
+    return kinds, [mk + extra for mk in mks], text, fixed, mks, mk_cap
+
+
 def load_upgrades(ids):
     up = json.loads((HERE / 'upgrades.json').read_text())
+    kinds, mk_slots, rule_text, fixed, mks, mk_cap = card_rules()
+    for k, c in up['cards'].items():
+        if k in kinds:
+            c.update(kinds[k])
+        else:
+            warn(f'upgrades.json: unknown card kind {k}')
     for m in up['machines']:
+        rule = m.get('rule', '')
+        if rule == 'mk':
+            m['slots'] = mk_slots
+            m['caps'] = {}
+            for k in m['effects']:
+                if k in kinds:
+                    caps = [mk_cap(mk, k) for mk in mks]
+                    m['caps'][k] = caps[0] if len(set(caps)) == 1 else caps
+        elif rule.startswith('fixed:') and rule[6:] in fixed:
+            m['slots'] = fixed[rule[6:]]['slots']
+            m['caps'] = fixed[rule[6:]]['caps']
+            for k in m['effects']:
+                if k not in m['caps']:
+                    warn(f'upgrades.json {m["id"]}: {rule[6:]} takes no {k} card')
+        else:
+            warn(f'upgrades.json {m["id"]}: rule must be mk or fixed:<UpgradeRules.Fixed name>, is {rule!r}')
+            m['slots'], m['caps'] = 0, {}
         for i in m['items'] + [t for t in m.get('tierItems', []) if t]:
             if i not in ids:
                 warn(f'upgrades.json {m["id"]}: unknown item {i}')
@@ -446,7 +500,9 @@ def load_upgrades(ids):
                 warn(f'upgrades.json {m["id"]}: unknown card kind {k}')
             if k not in m['effects']:
                 warn(f'upgrades.json {m["id"]}: no effect text for {k}')
-    return {'cards': up['cards'], 'machines': up['machines']}
+    table = {'tiers': [f'Mk{mk}' for mk in mks], 'slots': mk_slots,
+             'caps': {k: [mk_cap(mk, k) for mk in mks] for k in ('speed', 'efficiency', 'range', 'growth', 'fortune', 'silk', 'void')}}
+    return {'cards': up['cards'], 'machines': up['machines'], 'rule': rule_text, 'mkRule': table}
 
 
 def load_multiblocks(ids):

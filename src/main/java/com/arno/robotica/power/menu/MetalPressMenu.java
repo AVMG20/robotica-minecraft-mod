@@ -1,7 +1,6 @@
 package com.arno.robotica.power.menu;
 
 import com.arno.robotica.core.menu.MachineMenu;
-import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.block.MetalPressBlockEntity;
@@ -14,7 +13,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
-import java.util.Set;
 
 public class MetalPressMenu extends MachineMenu {
     private final ContainerLevelAccess access;
@@ -26,7 +24,7 @@ public class MetalPressMenu extends MachineMenu {
     /** Client side. */
     public MetalPressMenu(int id, Inventory inv, BlockPos pos) {
         this(id, inv, pos, new ItemStackHandler(2),
-                new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY), () -> {}), null);
+                Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.METAL_PRESS, () -> {}), null);
     }
 
     /** Server side. */

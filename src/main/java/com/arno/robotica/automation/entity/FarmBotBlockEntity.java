@@ -34,12 +34,6 @@ import java.util.Set;
  */
 public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
     public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.RANGE, UpgradeKind.EFFICIENCY, UpgradeKind.GROWTH);
-
-    /** Speed, range and growth cards: as many as the Mk tier (Mk1 one card ... Mk4 four). Efficiency up to 4. */
-    @Override
-    protected int upgradeCap(UpgradeKind kind) {
-        return kind == UpgradeKind.EFFICIENCY ? kind.maxStack : Math.min(kind.maxStack, tier());
-    }
     private static final int SCAN_PER_TICK = 64;
     private static final int MAX_PICKUP = 16;
 
@@ -55,7 +49,7 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
     private double growthCarry;
 
     protected FarmBotBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state, KINDS, 4);
+        super(type, pos, state, KINDS);
     }
 
     // ---- subclass hooks ----
@@ -108,7 +102,6 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
 
     /** Called by the block after a Mk kit was applied. */
     public void onTierChanged() {
-        upgrades.capsChanged();
         recalc();
         progress = 0;
         setChangedAndSync();

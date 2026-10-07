@@ -92,7 +92,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
                 setChanged();
             }
         };
-        this.upgrades = new Upgrades(tier + 1, acceptedKinds(machine), k -> cardCap(machine, tier, k), this::setChanged);
+        this.upgrades = Upgrades.forMk(() -> tier, acceptedKinds(machine), this::setChanged);
         this.energy = new MachineEnergyStorage(scaled(IndustryConfig.machineBuffer(), tier), scaled(IndustryConfig.machineInput(), tier), 0, this::setChanged);
         this.automation = new MachineItemAccess(this);
         this.sides = new SideConfig(this, () -> automation);
@@ -105,22 +105,11 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
 
     // ---------------------------------------------------------------- cards
 
-    /** Every machine takes speed, efficiency and fortune (Mk2+); the Centrifuge also a void card. */
+    /** Every machine takes speed, efficiency and fortune; the Centrifuge also a void card. Slots and caps: the Mk rule. */
     public static Set<UpgradeKind> acceptedKinds(Machine machine) {
         Set<UpgradeKind> kinds = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.FORTUNE);
         if (machine == Machine.CENTRIFUGE) kinds.add(UpgradeKind.VOID);
         return kinds;
-    }
-
-    /** Card caps grow with the Mk: speed 2/4/6/8, efficiency 1-4, fortune 0-3, void 1. */
-    public static int cardCap(Machine machine, int tier, UpgradeKind kind) {
-        return switch (kind) {
-            case SPEED -> 2 * tier;
-            case EFFICIENCY -> Math.min(4, tier);
-            case FORTUNE -> tier - 1;
-            case VOID -> machine == Machine.CENTRIFUGE ? 1 : 0;
-            default -> 0;
-        };
     }
 
     // ---------------------------------------------------------------- inputs

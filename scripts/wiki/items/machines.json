@@ -530,7 +530,7 @@
     "farm_kit_mk3",
     "farm_kit_mk4"
    ],
-   "what": "Upgrades a placed Stumpy or Sprout to the next Mk: bigger, faster, one more card of each kind.",
+   "what": "Upgrades a placed Stumpy or Sprout to the next Mk: bigger, faster, one more card slot and higher card caps.",
    "use": [
     "Right-click the placed robot with the kit."
    ],
@@ -690,10 +690,10 @@
      ],
      [
       "Card slots",
-      "1",
       "2",
       "3",
-      "4"
+      "4",
+      "5"
      ],
      [
       "Speed cards",

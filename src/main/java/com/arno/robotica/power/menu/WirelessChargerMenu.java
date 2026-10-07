@@ -36,7 +36,7 @@ public class WirelessChargerMenu extends MachineMenu {
         super(PowerRegistry.WIRELESS_CHARGER_MENU.get(), id);
         this.pos = pos;
         this.be = be;
-        var upgrades = be != null ? be.upgrades : new net.neoforged.neoforge.items.ItemStackHandler(WirelessChargerBlockEntity.UPGRADE_SLOTS);
+        var upgrades = be != null ? be.upgrades : com.arno.robotica.core.upgrade.Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.WIRELESS_CHARGER, () -> {});
         for (int i = 0; i < WirelessChargerBlockEntity.UPGRADE_SLOTS; i++) {
             addSlot(new SlotItemHandler(upgrades, i, SLOT_X, SLOT_Y + i * 18));
         }

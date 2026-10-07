@@ -65,7 +65,7 @@ public class SentryDrone extends DroneBase {
     private static final DustParticleOptions BOLT_DUST = new DustParticleOptions(new Vector3f(0.37F, 0.89F, 0.94F), 0.8F);
 
     /** Speed, range and efficiency cards. */
-    public final Upgrades upgrades = new Upgrades(2, EnumSet.of(UpgradeKind.SPEED, UpgradeKind.RANGE, UpgradeKind.EFFICIENCY), () -> {});
+    public final Upgrades upgrades = Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.SENTRY_DRONE, () -> {});
 
     private boolean aggressive = true;
     private int radiusIdx;
@@ -156,7 +156,7 @@ public class SentryDrone extends DroneBase {
 
     public int cooldownTicks() {
         double base = DronesConfig.sentryCooldown(tier());
-        return Math.max(3, (int) Math.round(base / (1.0 + 0.4 * upgrades.level(UpgradeKind.SPEED))));
+        return Math.max(3, (int) Math.round(base / Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED))));
     }
 
     public int fePerShot() {

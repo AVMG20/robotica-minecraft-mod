@@ -233,7 +233,7 @@ public class AutomationGameTests {
         });
     }
 
-    /** Mk4 with four speed cards is already at the 1 tick floor: it must not pay for nothing. Mk1 takes one speed card. */
+    /** Mk4 with four speed cards is already at the 1 tick floor: it must not pay for nothing. Mk1 takes two speed cards. */
     @GameTest(template = "empty")
     public static void flooredSpeedDoesNotRaiseDrain(GameTestHelper helper) {
         BlockPos bot = new BlockPos(1, 1, 1);
@@ -245,8 +245,8 @@ public class AutomationGameTests {
         helper.setBlock(bot, AutomationContent.STUMPY.get());
         FarmBotBlockEntity mk1 = helper.getBlockEntity(bot);
         mk1.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 4));
-        helper.assertTrue(mk1.upgrades.level(UpgradeKind.SPEED) == 1, "Mk1 counts one speed card, got " + mk1.upgrades.level(UpgradeKind.SPEED));
-        helper.assertTrue(mk1.effectiveSpeedMultiplier() == 2, "Mk1 with one card is a real x2, got " + mk1.effectiveSpeedMultiplier());
+        helper.assertTrue(mk1.upgrades.level(UpgradeKind.SPEED) == 2, "Mk1 counts two speed cards, got " + mk1.upgrades.level(UpgradeKind.SPEED));
+        helper.assertTrue(mk1.effectiveSpeedMultiplier() == 3, "Mk1 with two cards is a real x3, got " + mk1.effectiveSpeedMultiplier());
         helper.succeed();
     }
 

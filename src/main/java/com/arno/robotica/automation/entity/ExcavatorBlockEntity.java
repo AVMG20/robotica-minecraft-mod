@@ -56,7 +56,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     private ItemStack toolStack = ItemStack.EMPTY;
 
     public ExcavatorBlockEntity(BlockPos pos, BlockState state) {
-        super(AutomationContent.EXCAVATOR_BE.get(), pos, state, KINDS, AutomationConfig.excavatorSlots(tierOf(state)),
+        super(AutomationContent.EXCAVATOR_BE.get(), pos, state, KINDS,
                 (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.energyBuffer() * tierOf(state)),
                 (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.excavatorInput() * tierOf(state)));
     }
@@ -64,19 +64,6 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     @Override
     public String blockKey() {
         return getBlockState().getBlock().getDescriptionId();
-    }
-
-    /** Card caps grow with the Mk (server config): speed 2/4/6/8, range and efficiency 1-4, fortune 1/2/3/3, silk and void 1. */
-    @Override
-    protected int upgradeCap(UpgradeKind kind) {
-        int tier = tier();
-        return switch (kind) {
-            case SPEED -> AutomationConfig.excavatorSpeedCap(tier);
-            case RANGE -> AutomationConfig.excavatorRangeCap(tier);
-            case EFFICIENCY -> AutomationConfig.excavatorEfficiencyCap(tier);
-            case FORTUNE -> AutomationConfig.excavatorFortuneCap(tier);
-            default -> kind.maxStack;
-        };
     }
 
     /** Square side without range cards for this Mk. */

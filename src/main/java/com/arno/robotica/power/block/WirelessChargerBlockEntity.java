@@ -6,6 +6,7 @@ import com.arno.robotica.compat.OwnerNames;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.UpgradeRules;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
@@ -48,7 +49,7 @@ import java.util.UUID;
  */
 public class WirelessChargerBlockEntity extends PowerBlockEntity implements MenuProvider, InfoSource {
     public static final int SCAN_INTERVAL = 10;
-    public static final int UPGRADE_SLOTS = 2;
+    public static final int UPGRADE_SLOTS = UpgradeRules.Fixed.WIRELESS_CHARGER.slots;
     /** Per player state: items took energy since the last scan / nothing to charge / not allowed / buffer empty. */
     public static final byte CHARGING = 0, IDLE = 1, DENIED = 2, NO_POWER = 3;
 
@@ -57,8 +58,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     public static Boolean anyoneOverride;
 
     public final MachineEnergyStorage energy = new MachineEnergyStorage(PowerConfig.wirelessBuffer(), PowerConfig.wirelessInput(), 0, this::setChanged);
-    public final Upgrades upgrades = new Upgrades(UPGRADE_SLOTS, java.util.EnumSet.of(UpgradeKind.SPEED, UpgradeKind.RANGE),
-            kind -> kind == UpgradeKind.SPEED ? PowerConfig.wirelessSpeedCap() : PowerConfig.wirelessRangeCap(), this::setChanged);
+    public final Upgrades upgrades = Upgrades.fixed(UpgradeRules.Fixed.WIRELESS_CHARGER, this::setChanged);
 
     @Nullable
     private UUID owner;

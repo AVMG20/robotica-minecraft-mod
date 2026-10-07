@@ -111,11 +111,6 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
                 && next.kind == kind && next.tier == tier + 1) {
             // Swapping the block is building: adventure mode and protected spots may not.
             if (!player.mayBuild() || !level.mayInteract(player, pos)) return ItemInteractionResult.FAIL;
-            if (stack.has(CoreComponents.CONTENTS.get())) {
-                // an old item with contents inside: placing it moves them into the machine, a swap would lose them
-                if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.robotica.machine_place_first", stack.getHoverName()), true);
-                return ItemInteractionResult.sidedSuccess(level.isClientSide);
-            }
             if (!level.isClientSide && upgradeInPlace(level, pos, state, next, player, stack.getOrDefault(CoreComponents.ENERGY.get(), 0))
                     && !player.getAbilities().instabuild) stack.shrink(1);
             return ItemInteractionResult.sidedSuccess(level.isClientSide);

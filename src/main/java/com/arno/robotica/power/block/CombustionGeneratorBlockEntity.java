@@ -30,9 +30,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Fuel slot, FE buffer, lit state. Pushes into every neighbouring FE receiver; Tesla Coils on it pull from the buffer.
- * Two card slots: speed cards (up to 3) multiply the FE/t like a machine's work rate (x2, x3, x4) but burn fuel faster
- * still ({@link Upgrades#energyMultiplier} on top), so FE per fuel item drops; efficiency cards (up to 4) add 20% FE
- * per fuel item each by slowing the burn.
+ * Two card slots ({@link com.arno.robotica.core.upgrade.UpgradeRules.Fixed#COMBUSTION_GENERATOR}): speed cards multiply
+ * the FE/t like a machine's work rate; fuel burns at that rate times {@link Upgrades#energyMultiplier}, the same energy
+ * math as every machine, so speed costs fuel per FE and efficiency saves it.
  */
 public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements MenuProvider {
     /** FE/t the buffer may be drained at (by neighbours and Tesla Coils). */
@@ -54,7 +54,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         return fuel;
     }
 
-    public final Upgrades upgrades = new Upgrades(2, java.util.Map.of(UpgradeKind.SPEED, 3, UpgradeKind.EFFICIENCY, 4), this::setChanged);
+    public final Upgrades upgrades = Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.COMBUSTION_GENERATOR, this::setChanged);
 
     @Override
     public net.neoforged.neoforge.items.IItemHandler quickUpgrades() {
@@ -98,9 +98,9 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         return CoreConfig.scaleGeneration(PowerConfig.generatorOutput()) * Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED));
     }
 
-    /** Fuel ticks burned per tick: speed multiplier times the speed energy penalty, divided by the efficiency bonus. */
+    /** Fuel ticks burned per tick: the speed multiplier times the machine energy multiplier. */
     public static double fuelPerTick(int speedCards, int efficiencyCards) {
-        return Upgrades.speedMultiplier(speedCards) * Upgrades.energyMultiplier(speedCards, 0) / (1.0 + 0.2 * Math.max(0, efficiencyCards));
+        return Upgrades.speedMultiplier(speedCards) * Upgrades.energyMultiplier(speedCards, efficiencyCards);
     }
 
     @Override

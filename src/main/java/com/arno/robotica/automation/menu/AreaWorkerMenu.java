@@ -39,9 +39,7 @@ public class AreaWorkerMenu extends MachineMenu {
         super(AutomationContent.WORKER_MENU.get(), id);
         this.be = be;
         addSlot(new SlotItemHandler(be.battery, 0, 26, 18));
-        for (int i = 0; i < be.upgradeSlotCount(); i++) {
-            addSlot(new SlotItemHandler(be.upgrades, i, 26 + i * 18, 52));
-        }
+        for (int i = 0; i < be.upgrades.getSlots(); i++) addSlot(be.upgrades.slot(i, 26 + i * 18, 52));
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 3; c++) {
                 addSlot(new SlotItemHandler(be.buffer, c + r * 3, 117 + c * 18, 18 + r * 18));
