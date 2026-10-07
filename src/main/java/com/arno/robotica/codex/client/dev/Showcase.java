@@ -275,6 +275,10 @@ public final class Showcase {
 
     private static void buildPlan() {
         mc().options.renderDistance().set(8);
+        if ("lamp".equals(System.getProperty("robotica.showcase.clip"))) {
+            lampClip();
+            return;
+        }
         step(20, () -> server(sp -> {
             MinecraftServer s = sp.server;
             s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "time set 6000");
@@ -602,6 +606,45 @@ public final class Showcase {
     }
 
     // ------------------------------------------------------------------ 0.3 / 0.4 content
+
+    /**
+     * Clip mode ({@code -PshowcaseClip=lamp}): a Spark Lamp close up in a dark cave, one screenshot per game tick at a
+     * quarter tick rate (so every shot is a fresh frame), saved as clip_000.png and up; then quits.
+     */
+    private static void lampClip() {
+        int x0 = 300, z0 = 300;
+        step(20, () -> server(sp -> {
+            MinecraftServer s = sp.server;
+            s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "gamemode spectator " + sp.getGameProfile().getName());
+            ServerLevel level = sp.serverLevel();
+            BlockState[] rock = {Blocks.STONE.defaultBlockState(), Blocks.ANDESITE.defaultBlockState(), Blocks.STONE.defaultBlockState(),
+                    Blocks.TUFF.defaultBlockState(), Blocks.STONE.defaultBlockState(), Blocks.COAL_ORE.defaultBlockState()};
+            for (int x = -1; x <= 8; x++) for (int y = -1; y <= 5; y++) for (int z = -1; z <= 8; z++) {
+                boolean shell = x < 0 || x > 7 || y < 0 || y > 4 || z < 0 || z > 7;
+                level.setBlock(new BlockPos(x0 + x, Y + y, z0 + z), shell ? rock[Math.floorMod(x * 31 + y * 17 + z * 7, rock.length)]
+                        : Blocks.AIR.defaultBlockState(), 3);
+            }
+            SparkLampBlock lamp = (SparkLampBlock) block("spark_lamp");
+            level.setBlock(new BlockPos(x0 + 3, Y, z0 + 3), lamp.facing(Direction.UP), 3);
+            level.setBlock(new BlockPos(x0 + 6, Y + 2, z0 + 1), lamp.facing(Direction.WEST), 3);
+            level.setBlock(new BlockPos(x0 + 1, Y + 4, z0 + 1), lamp.facing(Direction.DOWN), 3);
+        }));
+        hud(false);
+        camera(x0 + 3.5, Y - 0.85, z0 + 4.45, 180, 30);
+        step(80, () -> {});
+        step(20, () -> server(sp -> sp.server.getCommands().performPrefixedCommand(sp.server.createCommandSourceStack(), "tick rate 4")));
+        for (int i = 0; i < 160; i++) {
+            String name = String.format("clip_%03d", i);
+            if (i == 100) step(0, () -> server(sp -> {
+                BlockPos pos = new BlockPos(x0 + 2, Y, z0 + 3);
+                sp.serverLevel().setBlock(pos, ((SparkLampBlock) block("spark_lamp")).facing(Direction.UP), 3);
+                com.arno.robotica.gear.lamp.SparkLamps.zap(sp.serverLevel(), pos, true);
+            }));
+            step(1, () -> Screenshot.grab(mc().gameDirectory, name + ".png", mc().getMainRenderTarget(), msg -> {}));
+        }
+        step(20, () -> server(sp -> sp.server.getCommands().performPrefixedCommand(sp.server.createCommandSourceStack(), "tick rate 20")));
+        step(20, () -> mc().stop());
+    }
 
     private static Item item(String name) {
         return BuiltInRegistries.ITEM.get(Robotica.id(name));

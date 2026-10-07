@@ -2,9 +2,9 @@ package com.arno.robotica.gear.lamp;
 
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.GearBlocks;
+import com.arno.robotica.gear.GearParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -59,10 +59,10 @@ public final class SparkLamps {
         double x = pos.getX() + 0.5, y = pos.getY() + 0.5, z = pos.getZ() + 0.5;
         if (on) {
             CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_ON, SoundSource.BLOCKS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 10, 0.12, 0.12, 0.12, 0.25);
+            level.sendParticles(GearParticles.LAMP_SPARK.get(), x, y, z, 8, 0.05, 0.05, 0.05, 0.08);
         } else {
             CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 4, 0.1, 0.1, 0.1, 0.1);
+            level.sendParticles(GearParticles.LAMP_FLICK.get(), x, y, z, 4, 0.1, 0.1, 0.1, 0);
         }
     }
 }

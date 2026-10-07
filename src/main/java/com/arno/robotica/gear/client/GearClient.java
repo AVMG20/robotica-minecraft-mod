@@ -9,6 +9,7 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -19,6 +20,7 @@ public final class GearClient {
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, com.arno.robotica.gear.GearClientConfig.SPEC, "robotica-gear-client.toml");
         SparkLampFx.install();
+        modBus.addListener(RegisterParticleProvidersEvent.class, LampSparkParticle::register);
         modBus.addListener(RegisterKeyMappingsEvent.class, GearKeys::register);
         modBus.addListener(RegisterGuiLayersEvent.class, GearHud::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GearKeys::onClientTick);

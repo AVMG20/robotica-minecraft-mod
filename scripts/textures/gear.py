@@ -7,7 +7,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import MATERIALS, Canvas, write_anim, write_block, write_item  # noqa: E402
+from pixelart import ASSETS, MATERIALS, Canvas, write_anim, write_block, write_item, write_png  # noqa: E402
 
 # '12345' tier material (deep -> highlight), 'abcde' steel, '678' brass, 'w W v' wood, 'y Y z' tier glow
 TIER = {
@@ -344,10 +344,9 @@ def write_modules():
 
 # ---------------------------------------------------------------- Lamp Rod and Spark Lamp
 
-WISP = {'k': '#1E1A1A', 'W': '#FFFFFF', 'Y': '#E6FCFF', 'y': '#A8EEF8', 'z': '#6FCDE0',
-        'a': '#A8EEF828', 'b': '#BFF3FF50', 'c': '#D8FBFF88', 'A': '#F4FEFFD0', 'B': '#A8EEF890'}
-
-
+WISP = {'W': '#FFFFFF', 'C': '#FFF6D6', 'Y': '#FFE27A', 'G': '#F0B43C',
+        'a': '#FFF1C824', 'b': '#FFF4D24A', 'c': '#FFF8E480', 'A': '#FFFFFFE0', 'B': '#FFE27AC0', 'D': '#F0B43C90',
+        's': '#FFFFFF', 'h': '#FFFFFF90'}
 def lamp_rod():
     """Lamp Rod: a steel rod with a copper grip and a brass collar; a small pale spark floats at the tip."""
     c = Canvas()
@@ -364,38 +363,49 @@ def lamp_rod():
 
 
 def lamp_core(frame):
-    """Spark Lamp core (full-bright, the model uses the middle 2x2): a pale cyan flicker, white at its brightest."""
-    shades = 'YWYyYWWY'
-    c = Canvas(fill='y')
-    c.rect(6, 6, 4, 4, 'Y').rect(7, 7, 2, 2, shades[frame % len(shades)])
-    c.set(7, 7, 'W')
+    """Spark Lamp core (full-bright, the model uses the middle 2x2): a warm cream flicker, white at its brightest, now
+    and then a yellow pixel."""
+    c = Canvas(fill='C')
+    c.rect(7, 7, 2, 2, 'C').set(7, 7, 'WCWWCWWW'[frame % 8])
+    c.set(8, 8, 'Y' if frame % 8 == 5 else 'W' if frame % 2 else 'C')
     return c
 
 
+ARCS = {3: [(10, 6), (11, 6), (12, 5), (12, 4)], 9: [(5, 9), (4, 10), (4, 11)], 13: [(9, 10), (10, 11), (9, 12), (10, 13)]}
+
+
 def lamp_glow(frame):
-    """Spark Lamp halo (full-bright, translucent, the model uses the middle 8x8): soft haze that breathes, with a
-    short crackle arc in some frames."""
-    pulse = (1.0, 1.08, 1.15, 1.08, 1.0, 0.93, 0.88, 0.93)[frame % 8]
+    """Spark Lamp halo (full-bright, translucent, the model uses the middle 8x8): faint warm haze that breathes, two
+    sparks (white and yellow) circling the core, and in a few frames a short jagged arc."""
+    pulse = 1.0 + 0.1 * math.sin(frame / 16 * 2 * math.pi * 2)
     c = Canvas()
     for y in range(16):
         for x in range(16):
             d = math.hypot(x + 0.5 - 8, y + 0.5 - 8) / pulse
-            if d < 1.6:
+            if d < 1.5:
                 c.set(x, y, 'c')
-            elif d < 2.7:
+            elif d < 2.5:
                 c.set(x, y, 'b')
-            elif d < 3.8:
+            elif d < 3.6:
                 c.set(x, y, 'a')
-    arcs = {1: [(10, 6), (11, 5), (11, 4)], 4: [(5, 9), (4, 10)], 6: [(9, 10), (10, 11), (9, 12)]}
-    for i, (x, y) in enumerate(arcs.get(frame, [])):
-        c.set(x, y, 'A' if i == 0 else 'B')
+    for k, ch in ((0, 'A'), (1, 'B')):
+        a = frame / 16 * 2 * math.pi + k * math.pi
+        c.set(int(8 + 2.6 * math.cos(a)), int(8 + 2.6 * math.sin(a)), ch)
+    for i, (x, y) in enumerate(ARCS.get(frame, [])):
+        c.set(x, y, 'A' if i < 2 else 'B' if i < 3 else 'D')
     return c
 
 
+def lamp_spark():
+    """Spark Lamp particle (tinted white to gold in code): a soft 4x4 dot."""
+    return ['.hh.', 'hssh', 'hssh', '.hh.']
+
+
 def write_lamp():
-    write_item('lamp_rod', lamp_rod(), {**lamp_pal(), 'i': '#A8EEF8', 'j': '#E6FCFF', 'W': '#FFFFFF'}, handheld=True)
+    write_item('lamp_rod', lamp_rod(), {**lamp_pal(), 'i': '#FFE27A', 'j': '#FFF6D6', 'W': '#FFFFFF'}, handheld=True)
     write_anim('block', 'spark_lamp_core', [lamp_core(f) for f in range(8)], WISP, frametime=2)
-    write_anim('block', 'spark_lamp_glow', [lamp_glow(f) for f in range(8)], WISP, frametime=3)
+    write_anim('block', 'spark_lamp_glow', [lamp_glow(f) for f in range(16)], WISP, frametime=2)
+    write_png(ASSETS / 'textures/particle/lamp_spark.png', lamp_spark(), WISP, size=None)
     for old in ('spark_lamp', 'spark_lamp_bulb'):
         stale = pathlib.Path(__file__).resolve().parents[2] / f'src/main/resources/assets/robotica/textures/block/{old}.png'
         if stale.exists():
