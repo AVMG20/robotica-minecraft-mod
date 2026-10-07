@@ -35,7 +35,7 @@ public class UpgradeCardItem extends Item implements HasDetails {
     @Override
     public void appendDetails(ItemStack stack, TooltipContext ctx, List<Component> lines) {
         lines.add(HasDetails.line("tooltip.robotica.upgrade_hint"));
-        lines.add(HasDetails.line("tooltip.robotica.upgrade." + kind.id() + ".steps"));
-        lines.add(HasDetails.line("tooltip.robotica.upgrade_caps"));
+        lines.add(UpgradeText.steps(kind).withStyle(ChatFormatting.GRAY));
+        lines.add(UpgradeText.caps().withStyle(ChatFormatting.GRAY));
     }
 }

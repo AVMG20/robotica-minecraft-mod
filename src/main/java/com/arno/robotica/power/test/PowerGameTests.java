@@ -43,6 +43,35 @@ import net.minecraft.world.item.BlockItem;
 @PrefixGameTestTemplate(false)
 public class PowerGameTests {
 
+    /**
+     * Solar Mk1-Mk4: each tier makes more than the one before, has a buffer and an FE port, and its recipe consumes
+     * the tier below (Mk3 and Mk4 are the Age 3 and Age 4 panels).
+     */
+    @GameTest(template = "empty")
+    public static void solarTiersClimb(GameTestHelper helper) {
+        var tiers = java.util.List.of(PowerRegistry.SOLAR_PANEL_MK1, PowerRegistry.SOLAR_PANEL_MK2, PowerRegistry.SOLAR_PANEL_MK3, PowerRegistry.SOLAR_PANEL_MK4);
+        int lastOutput = 0;
+        for (int i = 0; i < tiers.size(); i++) {
+            var block = tiers.get(i).get();
+            int output = block.tier().output();
+            helper.assertTrue(output > lastOutput, "Mk" + (i + 1) + " makes more than the tier below: " + output);
+            lastOutput = output;
+            BlockPos pos = new BlockPos(i % 3, 1, i / 3);
+            helper.setBlock(pos, block.defaultBlockState());
+            com.arno.robotica.power.block.SolarPanelBlockEntity be = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(pos);
+            helper.assertTrue(be.capacity() == block.tier().buffer, "Mk" + (i + 1) + " buffer");
+            IEnergyStorage cap = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(pos), Direction.DOWN);
+            helper.assertTrue(cap != null && cap.canExtract() && !cap.canReceive(), "Mk" + (i + 1) + " gives FE out and takes none");
+            if (i == 0) continue;
+            var recipe = helper.getLevel().getRecipeManager().byKey(Robotica.id("solar_panel_mk" + (i + 1)));
+            helper.assertTrue(recipe.isPresent(), "recipe for Mk" + (i + 1));
+            ItemStack below = new ItemStack(tiers.get(i - 1).get());
+            helper.assertTrue(recipe.get().value().getIngredients().stream().anyMatch(ing -> ing.test(below)),
+                    "Mk" + (i + 1) + " consumes the Mk" + i);
+        }
+        helper.succeed();
+    }
+
     /** The metal press turns an iron ingot into an iron plate, and a speed card makes it much faster. */
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void metalPressMakesIronPlate(GameTestHelper helper) {

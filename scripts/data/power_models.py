@@ -149,7 +149,7 @@ for tier in (1, 2, 3):
     loot(name, copy_energy=True)
 
 # ---------- solar panels: a 6 px slab, cells catch a faint glow ----------
-for mk in (1, 2):
+for mk in (1, 2, 3, 4):
     name = f'solar_panel_mk{mk}'
     side_uv = [0, 0, 16, 6]
     block_model(name, {

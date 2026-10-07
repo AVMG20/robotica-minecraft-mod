@@ -20,6 +20,8 @@ public final class EnergyModule {
 
     public static void init(IEventBus modBus, ModContainer container) {
         EnergyRegistry.register(modBus);
+        com.arno.robotica.core.item.DetailArgs.register("fusion_controller",
+                () -> new Object[]{com.arno.robotica.core.util.Fmt.energy(EnergyConfig.fusionIgnitionEnergy())});
         container.registerConfig(ModConfig.Type.SERVER, EnergyConfig.SPEC, "robotica-energy-server.toml");
         modBus.addListener(RegisterDataMapTypesEvent.class, EnergyDataMaps::register);
         modBus.addListener(RegisterCapabilitiesEvent.class, EnergyModule::registerCapabilities);

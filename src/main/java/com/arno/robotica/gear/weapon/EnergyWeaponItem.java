@@ -139,16 +139,16 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem, Modul
         return false;
     }
 
-    /** The switched-on Looting module counts as Looting for mob drops. */
+    /** The switched-on Looting module counts as Looting for mob drops while the weapon has FE. */
     @Override
     public int getEnchantmentLevel(ItemStack stack, Holder<Enchantment> enchantment) {
         // Only the Looting module counts; enchantments smithed over from the Gearblade do nothing.
-        return enchantment.is(Enchantments.LOOTING) ? Modules.active(stack, ModuleKind.LOOTING) : 0;
+        return enchantment.is(Enchantments.LOOTING) ? Modules.powered(stack, ModuleKind.LOOTING) : 0;
     }
 
     @Override
     public ItemEnchantments getAllEnchantments(ItemStack stack, HolderLookup.RegistryLookup<Enchantment> lookup) {
-        int looting = Modules.active(stack, ModuleKind.LOOTING);
+        int looting = Modules.powered(stack, ModuleKind.LOOTING);
         ItemEnchantments.Mutable all = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
         if (looting > 0) all.set(lookup.getOrThrow(Enchantments.LOOTING), looting);
         return all.toImmutable();

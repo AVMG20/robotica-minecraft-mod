@@ -164,8 +164,13 @@ public class Upgrades extends ItemStackHandler {
      * +180%, 8 cards +520%); each efficiency card takes 15% off, never below 40%.
      */
     public static double energyMultiplier(int speedCards, int efficiencyCards) {
+        return energyMultiplier(speedCards, efficiencyCards, EFFICIENCY_PER_CARD);
+    }
+
+    /** {@link #energyMultiplier(int, int)} with a machine's own saving per efficiency card (the Combustion Generator). */
+    public static double energyMultiplier(int speedCards, int efficiencyCards, double perCard) {
         double s = Math.max(0, speedCards);
-        return efficiency(1.0 + 0.25 * s + 0.05 * s * s, efficiencyCards);
+        return Math.max(ENERGY_FLOOR, (1.0 + 0.25 * s + 0.05 * s * s) * (1.0 - perCard * Math.max(0, efficiencyCards)));
     }
 
     /**

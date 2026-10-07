@@ -68,7 +68,7 @@
   "message.robotica.card_full": "%s: already at the most this machine takes (%s)",
   "block.robotica.survey_rig": "Survey Rig",
   "tooltip.robotica.survey_rig": "Turns lots of FE into random ores, no digging",
-  "tooltip.robotica.survey_rig.details": "200 FE/t, one ore per 20 s. Rare ores come out less often\nSpeed cards: up to x20 speed for up to x420 FE/t",
+  "tooltip.robotica.survey_rig.details": "%s FE/t, one ore per %s s. Rare ores come out less often\nSpeed cards: up to x%s speed for up to x%s FE/t",
   "message.robotica.survey_locked": "Only the owner, their team or an operator can use this Survey Rig",
   "gui.robotica.survey.slot_core": "Magma Core (ancient debris)",
   "gui.robotica.survey.fe_per_tick": "%s/t",

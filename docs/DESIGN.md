@@ -107,18 +107,24 @@ Solar Panels, the Charger and the Mining Drone take no cards.
 
 Energy (one formula for all): FE per action x `energyMultiplier(s, e)` = (1 + 0.25s + 0.05s^2) x (1 - 0.15e), floor
 0.4. The quarries (Excavator, Survey Rig) use `steepEnergyMultiplier` (1 + 0.5s + 0.25s^2): x1.75, x3, x7, x21 per
-action for 1, 2, 4, 8 cards. The Combustion Generator burns fuel at `speedMultiplier x energyMultiplier`.
+action for 1, 2, 4, 8 cards. The Combustion Generator burns fuel at `speedMultiplier x energyMultiplier` with its own
+efficiency step (`generatorEfficiencyPerCard`, 10%: 4 cards 1.67x FE per fuel item).
 
 API (`core.upgrade`): `Upgrades.forMk(mk, kinds, onChanged)` (always 5 slots inside, the Mk opens Mk + 1),
 `Upgrades.fixed(UpgradeRules.Fixed, onChanged)`, `level(kind)`, `insertOne(stack, simulate)`, `slot(i, x, y)` for menus
 (hidden while closed); `UpgradeRules.mkSlots` / `mkCap`; static `speedMultiplier`, `energyMultiplier`,
 `steepEnergyMultiplier`, `fortuneEnchantLevel`, `growthBonus`. `CoreItems.card(kind)`, `CoreItems.cards(kind, count)`.
+`UpgradeText`: card texts with config numbers (caps line, range and height steps; other modules register their
+numbers by name in init).
 
 ## Machines and power (module `power`)
 
 - Winding Crank (Age 0): holds a Mainspring (or any FE item: cell, drill). Hold right-click with an empty hand: +400 FE per turn, 5 turns/s (100 FE/t, a bit more than a Combustion Generator but you have to stand there), a Mainspring is full in about 2 minutes. Only a Mainspring winds by hand; other FE items only charge from an FE source. Left-click pops the item out; sneak-right-click shows the charge, a second sneak-click within 2 s also takes it out. Accepts FE from any source at 200 FE/t. Mainsprings only charge here; the Mainspring tooltip shows how far it is wound in percent.
 - Combustion Generator (first iron: copper shell, furnace, 1 iron ingot): burns furnace fuel, 80 FE/t (in line with other mods' coal generators), buffer 40,000. Right-click it with fuel.
-- Solar Panel Mk1 (Age 1) 20 FE/t, Mk2 (Age 2) 80 FE/t daytime with sky access.
+- Solar Panel Mk1-Mk4 (Age 1-4): 20 / 80 / 200 / 500 FE/t by day with sky access, 0 at night, no cards (config
+  `solarMk1-4`). Buffers 4k / 16k / 40k / 100k FE. Mk2 is four Mk1 around an Advanced Circuit; Mk3 two Mk2, a Quantum
+  Circuit, pyrosteel plates and glass; Mk4 two Mk3, a Null Circuit, resonant alloy plates and ender pearls (12 / 102 /
+  517 / 1,770 IE). A Mk4 by day is under half of a 5x5x5 fission reactor, about a fifth over a whole day.
 - Accumulator I/II/III: 1M / 4M / 16M FE, I/O 1,000 / 4,000 / 16,000 FE/t. The front gauge shows the charge: block state `charge` 0-5 (lit cells, 0 only when empty), checked every 10 ticks and set only when it changes (client update, no neighbour updates). A placed item shows its charge at once, the item model too (item property `robotica:charge`).
 - Tesla Coils (wireless power, replaced the Copper/Gold Conduits): a torch-sized coil placed on floors, walls or ceilings (FACING, 6 ways) with a full-bright tip.
   - Tiers I-V: 4 / 8 / 12 / 16 / 32 links, range 8 / 12 / 16 / 24 / 32 blocks, 4,000 / 16,000 / 64,000 / 256,000 / 1,000,000 FE/t per coil (server config `teslaRate1-5`, `teslaRange1-5`). Tier I is a first-iron item (copper coil, iron plate, redstone; 6 IE, no gold) so the first generator can feed machines; every later tier consumes the one before plus that age's circuit and casing (II basic circuit + gold, III advanced circuit + Reinforced Casing, IV quantum circuit + Blazing Casing, V null circuit + Null Casing).
@@ -142,9 +148,11 @@ One rule: cards upgrade machines, modules upgrade what you carry (power tools, F
 - Rules (one check for everything, with a reason): not a module holder, not a module, wrong item, Age or Mk too low, slot locked (says which tier opens it), kind already in the item, kind already in the worn suit (armor; Capacitor Plating works per piece). A module that got in anyway does nothing.
 - Every module starts switched on. Fortune and Silk Touch are alternatives: at most one of them is on (B cycles Fortune, Silk Touch, off).
 - Installing: the Tinker's Bench takes tools, weapons and Exo pieces (the item goes back when the screen closes). The J screen installs and switches modules in the worn suit; G switches the modules of the held tool or weapon.
+- Overclock, Fortune, Silk Touch and Looting only work while the tool or weapon has FE (`Modules.powered`); an empty
+  one mines and loots like a plain tool.
 - Power Regulator I-III (Age/Mk 2 / 3 / 4): saves 15 / 25 / 35 % FE (`powerRegulatorSaving1-3`): per block on tools, per hit or shot on weapons, every module of the Exo suit.
 - Data: components `robotica:modules` (installed items by slot) and `robotica:modules_off` (off bits by slot), kept through smithing. Fortune, Silk Touch and Looting are reported to vanilla loot through NeoForge's `getEnchantmentLevel` / `getAllEnchantments` item hooks; nothing is written as a real enchantment.
-- API: `ModuleHolder` (items: `moduleTarget`, `moduleTier`), `ModuleKind`, `ModuleTarget`, `Modules` (`slots`, `setModule`, `level`, `active`, `setEnabled`, `cycleGroup`, `refusal`, `regulated`), `ModuleItems.get(kind, level)`, `ModuleText` (tooltip lines registered by gear and exo).
+- API: `ModuleHolder` (items: `moduleTarget`, `moduleTier`), `ModuleKind`, `ModuleTarget`, `Modules` (`slots`, `setModule`, `level`, `active`, `powered`, `setEnabled`, `cycleGroup`, `refusal`, `regulated`), `ModuleItems.get(kind, level)`, `ModuleText` (tooltip lines registered by gear and exo).
 
 ## Exo-Frame (module `exo`)
 
@@ -229,7 +237,8 @@ Fuel (Assembler): Thorium Fuel Pellet (Age 2: 2 thorium dust, graphite dust, fer
 
 Radioisotope Generator `rtg` (Age 2: 4 ferrothorium plates, 2 Thermocouples, Reinforced Casing, glass): a single block that burns `#robotica:rtg_fuel` (Thorium Fuel Pellets) one at a time, 150 FE/t for 24,000 ticks (3.6M FE per pellet; a reactor gets more out of one), pausing while its 100k buffer is full or the waste slot has no room. Quiet. Pushes up to 1,000 FE/t into neighbours, Tesla Coils on it send it on. More power = more RTGs. Config `rtgPower`, `rtgPelletTicks`, `rtgBuffer`, `rtgOutput`.
 
-Generator cards (power module): the Combustion Generator takes up to 3 speed cards (FE/t x2 / x3 / x4) and 4 efficiency cards; fuel burns at `speedMultiplier x energyMultiplier(speed, efficiency)`, so 3 speed cards give 45% of the FE per fuel item and 4 efficiency cards 2.5x. Solar Panels take no cards.
+Generator cards (power module): the Combustion Generator takes up to 3 speed cards (FE/t x2 / x3 / x4) and 4 efficiency cards; fuel burns at `speedMultiplier x energyMultiplier(speed, efficiency)`, so 3 speed cards give 45% of the FE per fuel item and 4 efficiency cards 1.67x (10% less fuel each,
+`generatorEfficiencyPerCard`). Solar Panels take no cards.
 
 Server config `robotica-industry-server.toml`: `alloySmelterPower` 40, `centrifugePower` 60, `assemblerPower` 80, `machineBuffer`, `machineInput`, `tierSpeedMk1-4`, `fortuneBonus`, and the RTG values. Guide steps: Green Glow (thorium, after Wired), Alloyed, Machine Made (Assembler, after Servo Age), Slow Burn (RTG), Fire Stone (pyrolite, after Deep Age), Echoes (resonite, after Antigrav Age). Codex chapter "Industry".
 
@@ -344,7 +353,7 @@ Weapons:
 | Shock Baton | 1 | 200k FE | 7 damage, Slowness II 2s, 250 FE per hit |
 | Rivet Gun | 2 | 1M FE | right-click fires a glowing rivet (own projectile with a tracer; sticks in a block for 1 s, then shatters), 8 damage, `rivetSpeed` 4.5 blocks/tick for up to `rivetFlightTicks` 100, 4 shots/s, 400 FE per shot, no ammo |
 | Arc Blade | 3 | 4M FE | 11 damage, arcs 50% damage to 3 nearby hostiles, 800 FE per hit |
-| Null Lance | 4 | 16M FE | hold to charge 1s, beam pierces all mobs in 32 blocks for 30 damage, 20,000 FE per shot |
+| Null Lance | 4 | 16M FE | hold to charge 1s, beam pierces all mobs in 32 blocks for 30 damage, 8,000 FE per shot |
 
 Weapon upgrade path through smithing: Gearblade → Shock Baton → Arc Blade. Rivet Gun → Null Lance.
 
@@ -467,6 +476,9 @@ Getting home and travelling between bases. All teleports run on the server, cost
 - The server syncs finished guide steps to the client (`robotica:codex_guide_progress`); the Codex's first chapter "Next steps" lists the steps you can do now and a checklist.
 - When a guide step is done, chat names the next one or two steps (config `guideChatTips`).
 - Tooltips: one or two short lines; Shift shows details (keys as bound, FE per block, settings) from `HasDetails` or lang keys `tooltip.robotica.<id>.details`.
+- Config-true text: every in-game line that shows a configurable number gets it as a translation argument from the
+  config (`DetailArgs` for `.details` keys, `UpgradeText` for cards). Guide advancement texts carry no config numbers;
+  the Codex and the wiki show the defaults.
 
 ## Later (not in this build)
 
@@ -510,4 +522,19 @@ Power pass (early power in line with other mods, 40-80 FE/t; the crank made ever
 - Sprout pays 30 FE per harvested crop (`sproutFePerHarvest`), like Stumpy's per-log cost. Null Lance 20,000 → 8,000 FE per shot.
 - Tool modules: auto-pickup and the void filter need an Auto-Pickup or Void Filter Upgrade installed at a Tinker's Bench; the Age 0 hammer and axe take none.
 
-Earlier passes, still valid: Age 0 uses no iron (Stumpy and Sprout 25 copper, Tinker's Hammer 9, Felling Axe 6). Each ladder step costs 4-9x the one before (tool kits 8.6 / 312 / 2.7k / 9.3k IE, accumulators 28 / 220 / 1.7k, solar 12 / 102, Mk farm kits 46 / 259 / 6.6k). Magma Core temp recipe takes 2 Quantum Circuits so every core costs more than the one before. Portal Projector ~10k IE in line with the Null Drill (~16k IE). Config `replicatorEnergyPerTick` 160, `gateIdleCost` 200. Left alone on purpose: Combustion Generator 40 FE/t, Metal Press 20 FE/t, Stumpy 4 FE/t, Sprout 3 FE/t, drills 40-80 FE per block, Null Lance 20k FE per shot. Rift Remote cost stays 150,000 FE because a game test pins it.
+Earlier passes, still valid: Age 0 uses no iron (Stumpy and Sprout 25 copper, Tinker's Hammer 9, Felling Axe 6). Each ladder step costs 4-9x the one before (tool kits 8.6 / 312 / 2.7k / 9.3k IE, accumulators 28 / 220 / 1.7k, solar 12 / 102 / 517 / 1.8k, Mk farm kits 46 / 259 / 6.6k). Magma Core temp recipe takes 2 Quantum Circuits so every core costs more than the one before. Portal Projector ~10k IE in line with the Null Drill (~16k IE). Config `replicatorEnergyPerTick` 160, `gateIdleCost` 200. Left alone on purpose: Metal Press 20 FE/t, Stumpy 4 FE/t, Sprout 3 FE/t, drills 40-80 FE per block. Rift Remote cost stays 150,000 FE because a game test pins it.
+
+Balance pass 0.5 (`docs/COSTS.md` now sorts every item into its age):
+
+| Change | Before | After | Why |
+|---|---|---|---|
+| Solar Panel Mk3 / Mk4 (new) | - | 200 / 500 FE/t by day, 517 / 1,770 IE | useful no-input power, a small share of a reactor |
+| Combustion Generator efficiency card | -15% fuel each, 4 cards 2.5x FE per fuel | -10% each, 1.67x (`generatorEfficiencyPerCard`) | Thermal/Mekanism augments give about 1.5x |
+| Fortune, Silk Touch, Looting modules | worked on an empty tool or weapon | need FE, like Overclock | an empty FE tool is a plain tool |
+| Warp Pad tooltip | Age 2 | Age 1 | matches the recipe |
+| Card, generator, solar, Survey Rig, RTG pellet, fusion, bank and reactor shape, Exo set bonus, Mainspring texts | hard-coded defaults | read the config | config-true text |
+
+Reviewed and left as they are: Grinder 4,000 FE per ore and Electric Furnace 2,000 FE per item (Thermal's numbers), RTG
+150 FE/t, fission 1,150 to 45,000 FE/t, fusion 200,000 FE/t, Tesla Coil and transfer rates, Wireless Charger 1,000 FE/t
+per player, Exo marks (225 / 840 / 5,450 / 17,700 IE per set; the Mk3 jump comes from the temporary Magma Core recipe in
+the Blazing Casing) and module costs, Excavator / Survey Rig Mks, item pipes.

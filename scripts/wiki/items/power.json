@@ -52,6 +52,10 @@
      [
       "Coal",
       "128,000 FE"
+     ],
+     [
+      "Cards",
+      "speed x2 / x3 / x4 FE/t; efficiency -10% fuel each (4 cards: 1.67x FE per fuel)"
      ]
     ]
    },
@@ -62,29 +66,56 @@
   {
    "items": [
     "solar_panel_mk1",
-    "solar_panel_mk2"
+    "solar_panel_mk2",
+    "solar_panel_mk3",
+    "solar_panel_mk4"
    ],
-   "what": "Free FE by day under open sky.",
+   "what": "Free FE by day under open sky. Takes no cards.",
    "stats": {
     "columns": [
      "Mk1",
-     "Mk2"
+     "Mk2",
+     "Mk3",
+     "Mk4"
     ],
     "rows": [
      [
       "Age",
       "1",
-      "2"
+      "2",
+      "3",
+      "4"
      ],
      [
       "Daylight",
       "20 FE/t",
-      "80 FE/t"
+      "80 FE/t",
+      "200 FE/t",
+      "500 FE/t"
+     ],
+     [
+      "Night",
+      "0",
+      "0",
+      "0",
+      "0"
+     ],
+     [
+      "Buffer",
+      "4,000 FE",
+      "16,000 FE",
+      "40,000 FE",
+      "100,000 FE"
      ]
     ]
    },
    "see": [
     "guide:power-ladder"
+   ],
+   "use": [
+    "Place it with open sky above.",
+    "Machines touching it get power, or put a [[tesla_coil_1]] on it.",
+    "Mk2-Mk4: craft two panels of the tier below with that age's circuit (Mk2: four Mk1)."
    ]
   },
   {

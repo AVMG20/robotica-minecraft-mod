@@ -18,6 +18,9 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue GENERATOR_BUFFER;
     private static final ModConfigSpec.IntValue SOLAR_MK1;
     private static final ModConfigSpec.IntValue SOLAR_MK2;
+    private static final ModConfigSpec.IntValue SOLAR_MK3;
+    private static final ModConfigSpec.IntValue SOLAR_MK4;
+    private static final ModConfigSpec.IntValue GENERATOR_EFFICIENCY_PER_CARD;
     private static final ModConfigSpec.IntValue[] TESLA_RATE = new ModConfigSpec.IntValue[5];
     private static final ModConfigSpec.IntValue[] TESLA_RANGE = new ModConfigSpec.IntValue[5];
     private static final ModConfigSpec.IntValue TESLA_HOP_LOSS;
@@ -46,12 +49,18 @@ public final class PowerConfig {
                 .defineInRange("generatorOutput", 80, 1, 1_000_000);
         GENERATOR_BUFFER = b.comment("Internal FE buffer.")
                 .defineInRange("generatorBuffer", 40_000, 1_000, 100_000_000);
+        GENERATOR_EFFICIENCY_PER_CARD = b.comment("Percent less fuel per FE for each efficiency card (4 cards at 10: 1.67x FE per fuel item).")
+                .defineInRange("generatorEfficiencyPerCard", 10, 0, 15);
         b.pop();
         b.push("solar");
         SOLAR_MK1 = b.comment("Solar Panel Mk1, FE/t in daylight with sky access.")
                 .defineInRange("solarMk1", 20, 1, 1_000_000);
         SOLAR_MK2 = b.comment("Solar Panel Mk2, FE/t in daylight with sky access.")
                 .defineInRange("solarMk2", 80, 1, 1_000_000);
+        SOLAR_MK3 = b.comment("Solar Panel Mk3, FE/t in daylight with sky access.")
+                .defineInRange("solarMk3", 200, 1, 1_000_000);
+        SOLAR_MK4 = b.comment("Solar Panel Mk4, FE/t in daylight with sky access.")
+                .defineInRange("solarMk4", 500, 1, 1_000_000);
         b.pop();
         b.push("tesla");
         int[] rates = {4_000, 16_000, 64_000, 256_000, 1_000_000};
@@ -103,6 +112,10 @@ public final class PowerConfig {
     public static int generatorBuffer() { return get(GENERATOR_BUFFER); }
     public static int solarMk1() { return get(SOLAR_MK1); }
     public static int solarMk2() { return get(SOLAR_MK2); }
+    public static int solarMk3() { return get(SOLAR_MK3); }
+    public static int solarMk4() { return get(SOLAR_MK4); }
+    /** Share of fuel per FE each efficiency card saves in the Combustion Generator (0.10 = 10%). */
+    public static double generatorEfficiencyPerCard() { return get(GENERATOR_EFFICIENCY_PER_CARD) / 100.0; }
     /** tier 1-5 */
     public static int teslaRate(int tier) { return get(TESLA_RATE[tier - 1]); }
     public static int teslaRange(int tier) { return get(TESLA_RANGE[tier - 1]); }

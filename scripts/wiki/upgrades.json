@@ -198,7 +198,7 @@
       ],
       "effects": {
         "speed": "FE/t x2, x3, x4; fuel burns faster still (more fuel per FE).",
-        "efficiency": "-15% fuel per FE per card, never below 40%."
+        "efficiency": "-10% fuel per FE per card (4 cards: 1.67x FE per fuel item)."
       },
       "source": "power/block/CombustionGeneratorBlockEntity",
       "rule": "fixed:COMBUSTION_GENERATOR"

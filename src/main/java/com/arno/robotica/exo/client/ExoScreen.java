@@ -171,7 +171,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         int w = Math.min(84, (int) (font.width(label) * 0.75F) + 2);
         addTooltip(x + POOL_X + 8 - w, y + 5, w, 9,
                 Component.translatable("exo.robotica.bonus." + id),
-                Component.translatable("exo.robotica.bonus." + id + ".desc").withStyle(ChatFormatting.GRAY),
+                Component.translatable("exo.robotica.bonus." + id + ".desc", ExoConfig.bonusArgs(id)).withStyle(ChatFormatting.GRAY),
                 Component.translatable(active ? "exo.robotica.bonus.active" : "exo.robotica.bonus.needs", ExoConfig.setBonusMinMark())
                         .withStyle(active ? ChatFormatting.GREEN : ChatFormatting.GOLD));
     }

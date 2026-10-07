@@ -206,8 +206,11 @@ public class GearModuleGameTests {
         ItemStack lance = new ItemStack(GearItems.NULL_LANCE.get());
         Modules.setModule(lance, 0, module(ModuleKind.LOOTING, 3));
         player.setItemInHand(InteractionHand.MAIN_HAND, lance);
+        helper.assertTrue(net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, player) == 0,
+                "an empty weapon has no Looting");
+        ItemEnergy.fill(player.getMainHandItem());
         helper.assertTrue(net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, player) == 3,
-                "Looting III counts for mob drops");
+                "Looting III counts for mob drops while charged");
         helper.assertTrue(lance.getTagEnchantments().isEmpty(), "no real enchantment is written");
         helper.succeed();
     }

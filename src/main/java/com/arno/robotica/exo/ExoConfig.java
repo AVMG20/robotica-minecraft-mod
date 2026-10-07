@@ -353,6 +353,18 @@ public final class ExoConfig {
 
     // ---------------------------------------------------------------- tooltips
 
+    /** Format arguments of a core's set bonus description ({@code exo.robotica.bonus.<id>.desc}). */
+    public static Object[] bonusArgs(String id) {
+        return switch (id) {
+            case "servo" -> new Object[]{net.minecraft.network.chat.Component.translatable("enchantment.level." + overclockHaste()),
+                    net.minecraft.network.chat.Component.translatable("enchantment.level." + overclockSpeed()),
+                    Math.round(overclockDuration() / 20.0), Math.round(overclockCooldown() / 20.0)};
+            case "magma" -> new Object[]{magmaBurnSeconds()};
+            case "antigrav" -> new Object[]{pct(antigravFlightFactor()), pct(antigravDashFactor())};
+            default -> new Object[0];
+        };
+    }
+
     private static String pct(double share) {
         return Long.toString(Math.round(share * 100));
     }

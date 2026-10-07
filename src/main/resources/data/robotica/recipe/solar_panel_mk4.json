@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PEP",
+    "SCS",
+    "PEP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "S": {
+      "item": "robotica:solar_panel_mk3"
+    },
+    "C": {
+      "item": "robotica:null_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:solar_panel_mk4",
+    "count": 1
+  }
+}

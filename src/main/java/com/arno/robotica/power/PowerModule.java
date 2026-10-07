@@ -25,6 +25,8 @@ public final class PowerModule {
 
     public static void init(IEventBus modBus, ModContainer container) {
         PowerRegistry.register(modBus);
+        com.arno.robotica.core.upgrade.UpgradeText.register(com.arno.robotica.core.upgrade.UpgradeText.WIRELESS_RANGE_STEP,
+                PowerConfig::wirelessRangePerCard);
         container.registerConfig(ModConfig.Type.SERVER, PowerConfig.SPEC, "robotica-power-server.toml");
         modBus.addListener(PowerModule::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(WindingCrankBlock::onLogout);
@@ -57,6 +59,8 @@ public final class PowerModule {
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK1_BE.get(), (be, side) -> be.energy);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK2_BE.get(), (be, side) -> be.energy);
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK3_BE.get(), (be, side) -> be.energy);
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK4_BE.get(), (be, side) -> be.energy);
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.ACCUMULATOR_BE.get(), (be, side) -> be.energyFor(side));
 

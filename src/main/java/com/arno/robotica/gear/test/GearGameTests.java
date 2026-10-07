@@ -342,6 +342,10 @@ public class GearGameTests {
         helper.assertTrue(net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(fortune, drill) == 3,
                 "loot sees Fortune III");
         helper.assertTrue(drill.getTagEnchantments().isEmpty(), "nothing is written as a real enchantment");
+        ItemStack empty = drill.copy();
+        ItemEnergy.set(empty, 0);
+        helper.assertTrue(empty.getEnchantmentLevel(fortune) == 0 && empty.getAllEnchantments(lookup).isEmpty(),
+                "an empty drill has no Fortune (like Overclock)");
         player.setItemInHand(InteractionHand.MAIN_HAND, drill);
         GearActions.apply(player, GearActions.CYCLE_DROPS, 0);
         ItemStack held = player.getMainHandItem();

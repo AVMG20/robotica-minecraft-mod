@@ -177,8 +177,9 @@ public class UpgradeRuleGameTests {
 
         for (int s = 0; s <= 3; s++) {
             for (int e = 0; e <= 4; e++) {
-                helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(s, e) == Upgrades.speedMultiplier(s) * Upgrades.energyMultiplier(s, e),
-                        "generator fuel follows the machine math at " + s + "/" + e);
+                double perCard = com.arno.robotica.power.PowerConfig.generatorEfficiencyPerCard();
+                helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(s, e) == Upgrades.speedMultiplier(s) * Upgrades.energyMultiplier(s, e, perCard),
+                        "generator fuel follows the machine math (own efficiency step) at " + s + "/" + e);
             }
         }
 

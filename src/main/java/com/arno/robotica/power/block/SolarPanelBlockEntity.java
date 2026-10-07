@@ -4,7 +4,6 @@ import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.power.PowerConfig;
-import com.arno.robotica.power.PowerRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -34,8 +33,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     }
 
     private static net.minecraft.world.level.block.entity.BlockEntityType<?> typeFor(BlockState state) {
-        return ((SolarPanelBlock) state.getBlock()).tier() == SolarPanelBlock.Tier.MK1
-                ? PowerRegistry.SOLAR_MK1_BE.get() : PowerRegistry.SOLAR_MK2_BE.get();
+        return SolarPanelBlock.typeFor(((SolarPanelBlock) state.getBlock()).tier());
     }
 
     public boolean isGenerating() {

@@ -725,7 +725,7 @@ public final class ExoTicker {
     public static boolean overclock(ServerPlayer p) {
         State st = state(p);
         if (st == null || st.core != ExoData.Core.SERVO) {
-            p.displayClientMessage(net.minecraft.network.chat.Component.translatable("exo.robotica.no_overclock"), true);
+            p.displayClientMessage(net.minecraft.network.chat.Component.translatable("exo.robotica.no_overclock", ExoConfig.setBonusMinMark()), true);
             return false;
         }
         Item core = CoreItems.SERVO_CORE.get();

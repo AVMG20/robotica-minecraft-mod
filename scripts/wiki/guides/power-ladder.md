@@ -4,16 +4,18 @@ icon: tesla_coil_1
 order: 20
 summary: Every generator from the crank to fusion, where to store FE and how Tesla Coils move it wirelessly.
 ---
-Forge Energy (FE) is the only unit. Every port works with other mods' cables too.
+Forge Energy (FE) is the only unit. Every port works with other mods' cables too. Numbers are the config defaults.
 
 ## Generators
 
 | Source | Age | Output | Notes |
 |---|---|---|---|
 | [[winding_crank]] | 0 | 100 FE/t | only while you hold right-click; winds a Mainspring |
-| [[combustion_generator]] | 1 | 80 FE/t | furnace fuel, 40,000 FE buffer |
+| [[combustion_generator]] | 1 | 80 FE/t | furnace fuel, 40,000 FE buffer; speed and efficiency cards |
 | [[solar_panel_mk1]] | 1 | 20 FE/t | daytime, sky access |
 | [[solar_panel_mk2]] | 2 | 80 FE/t | daytime, sky access |
+| [[solar_panel_mk3]] | 3 | 200 FE/t | daytime, sky access |
+| [[solar_panel_mk4]] | 4 | 500 FE/t | daytime, sky access |
 | [[rtg]] | 2 | 150 FE/t | one Thorium Fuel Pellet lasts 24,000 ticks |
 | Fission Reactor | 2-3 | about 1,150 to 45,000 FE/t | 5x5x5 to 7x7x7, see [fission](#/guide/fission-reactor) |
 | Fusion Reactor | 4 | 200,000 FE/t | per fusion pellet, see [fusion](#/guide/fusion-reactor) |

@@ -17,6 +17,8 @@ public final class IndustryModule {
 
     public static void init(IEventBus modBus, ModContainer container) {
         IndustryRegistry.register(modBus);
+        com.arno.robotica.core.item.DetailArgs.register("thorium_fuel_pellet", () -> new Object[]{
+                com.arno.robotica.core.CoreConfig.scaleGeneration(IndustryConfig.rtgPower()), Math.round(IndustryConfig.rtgPelletTicks() / 1200.0)});
         container.registerConfig(ModConfig.Type.SERVER, IndustryConfig.SPEC, "robotica-industry-server.toml");
         modBus.addListener(IndustryModule::registerCapabilities);
     }
