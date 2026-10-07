@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RQR",
+    "NPN",
+    "RMR"
+  ],
+  "key": {
+    "R": {
+      "item": "robotica:reinforced_casing"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "N": {
+      "item": "minecraft:netherite_scrap"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "M": {
+      "item": "minecraft:magma_block"
+    }
+  },
+  "result": {
+    "id": "robotica:forge_altar",
+    "count": 1
+  }
+}

@@ -3,12 +3,16 @@ package com.arno.robotica.boss.test;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.boss.BossConfig;
 import com.arno.robotica.boss.BossRegistry;
-import com.arno.robotica.boss.block.ColossusAltarBlock;
-import com.arno.robotica.boss.block.ColossusAltarBlockEntity;
+import com.arno.robotica.boss.block.BossAltarBlock;
+import com.arno.robotica.boss.block.BossAltarBlockEntity;
 import com.arno.robotica.boss.BossLoot;
+import com.arno.robotica.boss.entity.ForgeTyrant;
+import com.arno.robotica.boss.entity.MagmaGlob;
 import com.arno.robotica.boss.entity.ScrapChunk;
 import com.arno.robotica.boss.entity.ScrapColossus;
 import com.arno.robotica.boss.entity.ScrapDrone;
+import com.arno.robotica.boss.world.CinderForgePiece;
+import com.arno.robotica.boss.world.CinderForgeStructure;
 import com.arno.robotica.boss.world.RustedFoundryPiece;
 import com.arno.robotica.boss.world.RustedFoundryStructure;
 import com.arno.robotica.core.item.CoreItems;
@@ -64,8 +68,16 @@ public class BossGameTests {
         AABB area = new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(40);
         List<Entity> leftovers = level.getEntitiesOfClass(Entity.class, area,
                 e -> e instanceof ScrapColossus || e instanceof ScrapDrone || e instanceof ItemEntity || e instanceof Husk
-                        || e instanceof ScrapChunk);
+                        || e instanceof ScrapChunk || e instanceof ForgeTyrant || e instanceof MagmaGlob);
         leftovers.forEach(Entity::discard);
+    }
+
+    private static ForgeTyrant tyrant(GameTestHelper helper) {
+        floor(helper);
+        ForgeTyrant boss = helper.spawn(BossRegistry.FORGE_TYRANT.get(), CENTRE);
+        boss.setHealth(boss.getMaxHealth());
+        boss.setAttackCooldown(100_000);
+        return boss;
     }
 
     /** A husk that stands still and never burns: a target or attacker for tests. */
@@ -85,24 +97,24 @@ public class BossGameTests {
         BlockPos altarPos = helper.absolutePos(CENTRE);
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
 
-        ColossusAltarBlock.Result first = ColossusAltarBlock.awaken(level, altarPos, null);
-        helper.assertTrue(first == ColossusAltarBlock.Result.SPAWNED, "the first flare wakes the Colossus, got " + first);
+        BossAltarBlock.Result first = BossAltarBlock.awaken(level, altarPos, null);
+        helper.assertTrue(first == BossAltarBlock.Result.SPAWNED, "the first flare wakes the Colossus, got " + first);
         ScrapColossus boss = helper.findClosestEntity(BossRegistry.SCRAP_COLOSSUS.get(), CENTRE.getX(), CENTRE.getY() + 1, CENTRE.getZ(), 3.0);
         helper.assertTrue(boss != null && altarPos.equals(boss.altarPos()), "the Colossus stands on its altar");
         helper.assertTrue(boss.getY() >= altarPos.getY() + 1.0, "the Colossus spawns on top of the altar");
-        ColossusAltarBlockEntity altar = (ColossusAltarBlockEntity) level.getBlockEntity(altarPos);
+        BossAltarBlockEntity altar = (BossAltarBlockEntity) level.getBlockEntity(altarPos);
         helper.assertTrue(altar != null && altar.cooldownLeft(level.getGameTime()) == BossConfig.altarCooldownTicks(),
                 "the altar cools down for the configured time");
-        helper.assertTrue(!level.getBlockState(altarPos).getValue(ColossusAltarBlock.READY), "the altar goes dark while it cools down");
+        helper.assertTrue(!level.getBlockState(altarPos).getValue(BossAltarBlock.READY), "the altar goes dark while it cools down");
 
-        ColossusAltarBlock.Result second = ColossusAltarBlock.awaken(level, altarPos, player);
-        helper.assertTrue(second == ColossusAltarBlock.Result.BOSS_ALIVE, "one Colossus per altar, got " + second);
+        BossAltarBlock.Result second = BossAltarBlock.awaken(level, altarPos, player);
+        helper.assertTrue(second == BossAltarBlock.Result.BOSS_ALIVE, "one Colossus per altar, got " + second);
         boss.discard();
-        ColossusAltarBlock.Result third = ColossusAltarBlock.awaken(level, altarPos, player);
-        helper.assertTrue(third == ColossusAltarBlock.Result.COOLDOWN, "the cooldown holds after the Colossus is gone, got " + third);
+        BossAltarBlock.Result third = BossAltarBlock.awaken(level, altarPos, player);
+        helper.assertTrue(third == BossAltarBlock.Result.COOLDOWN, "the cooldown holds after the Colossus is gone, got " + third);
         altar.resetCooldown();
-        ColossusAltarBlock.Result fourth = ColossusAltarBlock.awaken(level, altarPos, player);
-        helper.assertTrue(fourth == ColossusAltarBlock.Result.SPAWNED, "a cooled down altar works again, got " + fourth);
+        BossAltarBlock.Result fourth = BossAltarBlock.awaken(level, altarPos, player);
+        helper.assertTrue(fourth == BossAltarBlock.Result.SPAWNED, "a cooled down altar works again, got " + fourth);
         cleanup(helper);
         helper.succeed();
     }
@@ -153,7 +165,7 @@ public class BossGameTests {
         helper.assertTrue(altars.size() == 1, "exactly one altar, found " + altars.size());
         helper.assertTrue(altars.get(0).pos().equals(new BlockPos(RustedFoundryStructure.HALF, 1, RustedFoundryStructure.HALF)),
                 "the altar sits in the centre, at " + altars.get(0).pos());
-        helper.assertTrue(altars.get(0).state().getValue(ColossusAltarBlock.NATURAL), "the ruin's altar is marked natural");
+        helper.assertTrue(altars.get(0).state().getValue(BossAltarBlock.NATURAL), "the ruin's altar is marked natural");
         var chests = template.get().filterBlocks(BlockPos.ZERO, new StructurePlaceSettings(), Blocks.CHEST);
         helper.assertTrue(chests.size() == 1 && chests.get(0).nbt() != null
                 && "robotica:chests/rusted_foundry".equals(chests.get(0).nbt().getString("LootTable")), "one loot chest with the foundry loot");
@@ -239,8 +251,8 @@ public class BossGameTests {
         helper.setBlock(CENTRE, BossRegistry.COLOSSUS_ALTAR.get());
         ServerLevel level = helper.getLevel();
         BlockPos altarPos = helper.absolutePos(CENTRE);
-        ColossusAltarBlock.Result result = ColossusAltarBlock.awaken(level, altarPos, null);
-        helper.assertTrue(result == ColossusAltarBlock.Result.SPAWNED, "woke the Colossus, got " + result);
+        BossAltarBlock.Result result = BossAltarBlock.awaken(level, altarPos, null);
+        helper.assertTrue(result == BossAltarBlock.Result.SPAWNED, "woke the Colossus, got " + result);
         cleanup(helper);
 
         ServerPlayer miner = helper.makeMockServerPlayerInLevel();
@@ -251,12 +263,158 @@ public class BossGameTests {
         miner.gameMode.destroyBlock(altarPos);
         helper.assertTrue(level.getBlockState(altarPos).is(BossRegistry.COLOSSUS_ALTAR.get()), "a forced break is refused too");
 
-        ((ColossusAltarBlockEntity) level.getBlockEntity(altarPos)).resetCooldown();
-        level.setBlock(altarPos, level.getBlockState(altarPos).setValue(ColossusAltarBlock.READY, true), 3);
+        ((BossAltarBlockEntity) level.getBlockEntity(altarPos)).resetCooldown();
+        level.setBlock(altarPos, level.getBlockState(altarPos).setValue(BossAltarBlock.READY, true), 3);
         helper.assertTrue(level.getBlockState(altarPos).getDestroyProgress(miner, level, altarPos) > 0.0F, "a ready altar can be mined");
         miner.gameMode.destroyBlock(altarPos);
         helper.assertTrue(level.getBlockState(altarPos).isAir(), "and broken");
         cleanup(helper);
+        helper.succeed();
+    }
+
+    // ------------------------------------------------------------------ Forge Tyrant
+
+    /** An Ignition Charge at a Forge Altar wakes one Forge Tyrant on top; the Signal Flare does not. */
+    @GameTest(template = "boss_arena", batch = "tyrantAltar", timeoutTicks = 200)
+    public static void forgeAltarSpawnsTyrant(GameTestHelper helper) {
+        floor(helper);
+        helper.setBlock(CENTRE, BossRegistry.FORGE_ALTAR.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos altarPos = helper.absolutePos(CENTRE);
+        BossAltarBlock block = (BossAltarBlock) BossRegistry.FORGE_ALTAR.get();
+        helper.assertTrue(new ItemStack(BossRegistry.IGNITION_CHARGE.get()).is(block.kind().summon().get()), "the Ignition Charge wakes it");
+        helper.assertTrue(!new ItemStack(BossRegistry.SIGNAL_FLARE.get()).is(block.kind().summon().get()), "a Signal Flare does not");
+        BossAltarBlock.Result first = BossAltarBlock.awaken(level, altarPos, null);
+        helper.assertTrue(first == BossAltarBlock.Result.SPAWNED, "the charge wakes the Tyrant, got " + first);
+        ForgeTyrant boss = helper.findClosestEntity(BossRegistry.FORGE_TYRANT.get(), CENTRE.getX(), CENTRE.getY() + 1, CENTRE.getZ(), 3.0);
+        helper.assertTrue(boss != null && altarPos.equals(boss.altarPos()), "the Tyrant stands on its altar");
+        helper.assertTrue(Math.abs(boss.getMaxHealth() - BossConfig.tyrantHealth()) < 0.01, "health comes from the config, has " + boss.getMaxHealth());
+        helper.assertTrue(BossAltarBlock.awaken(level, altarPos, null) == BossAltarBlock.Result.BOSS_ALIVE, "one Tyrant per altar");
+        cleanup(helper);
+        helper.succeed();
+    }
+
+    /** Lava, fire, magma floors, suffocation and unowned damage do nothing; a living attacker's hit does. */
+    @GameTest(template = "boss_arena", batch = "tyrantTrap", timeoutTicks = 100)
+    public static void tyrantOnlyTakesDamageFromLivingAttackers(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = helper.getLevel().damageSources();
+        helper.runAfterDelay(2, () -> {
+            helper.assertTrue(!boss.hurt(damage.lava(), 5.0F), "lava does nothing");
+            helper.assertTrue(!boss.hurt(damage.inFire(), 5.0F), "fire does nothing");
+            helper.assertTrue(!boss.hurt(damage.hotFloor(), 5.0F), "magma blocks do nothing");
+            helper.assertTrue(!boss.hurt(damage.inWall(), 5.0F), "suffocation does nothing");
+            helper.assertTrue(!boss.hurt(damage.cactus(), 5.0F), "cactus does nothing");
+            helper.assertTrue(!boss.hurt(damage.magic(), 5.0F), "unowned magic does nothing");
+            helper.assertTrue(!boss.hurt(damage.explosion(null, null), 5.0F), "unowned TNT does nothing");
+            helper.assertTrue(boss.getHealth() == boss.getMaxHealth(), "still at full health");
+            helper.assertTrue(boss.hurt(damage.mobAttack(attacker), 5.0F), "a real attack hurts");
+            helper.assertTrue(boss.getHealth() < boss.getMaxHealth(), "and takes health");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** A player kill drops the Magma Core at the killer, locked to them. */
+    @GameTest(template = "boss_arena", batch = "tyrantLoot", timeoutTicks = 100)
+    public static void tyrantDropsMagmaCoreToKiller(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        ServerPlayer killer = helper.makeMockServerPlayerInLevel();
+        BlockPos at = helper.absolutePos(new BlockPos(1, 1, 1));
+        killer.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        helper.runAfterDelay(2, () -> {
+            boss.setHealth(1.0F);
+            boss.hurt(helper.getLevel().damageSources().playerAttack(killer), 100.0F);
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(boss.isDeadOrDying(), "the Tyrant is dead");
+            List<ItemEntity> cores = helper.getLevel().getEntitiesOfClass(ItemEntity.class, killer.getBoundingBox().inflate(3.0),
+                    e -> e.getItem().is(CoreItems.MAGMA_CORE.get()));
+            if (cores.isEmpty() && killer.getInventory().contains(new ItemStack(CoreItems.MAGMA_CORE.get()))) {
+                cleanup(helper);
+                return;                                            // already picked up by the killer
+            }
+            helper.assertTrue(cores.size() == 1, "one Magma Core at the killer, found " + cores.size());
+            helper.assertTrue(killer.getUUID().equals(cores.get(0).getTarget()), "the core is locked to the killer");
+            cleanup(helper);
+        });
+    }
+
+    /** While it vents it takes the configured extra damage; below half health it marks a ring of eruptions. */
+    @GameTest(template = "boss_arena", batch = "tyrantVent", timeoutTicks = 100)
+    public static void tyrantVentsAndEntersPhaseTwo(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = helper.getLevel().damageSources();
+        helper.runAfterDelay(2, () -> {
+            boss.startVent();
+            helper.assertTrue(boss.isVenting(), "it vents");
+            float before = boss.getHealth();
+            boss.hurt(damage.indirectMagic(attacker, attacker), 10.0F);
+            float taken = before - boss.getHealth();
+            float expected = 10.0F * BossConfig.tyrantVentMultiplier();
+            helper.assertTrue(Math.abs(taken - expected) < 0.01F, "venting takes " + expected + ", took " + taken);
+            helper.assertTrue(!boss.isPhaseTwo(), "still phase 1");
+            boss.hurt(damage.indirectMagic(attacker, attacker), boss.getMaxHealth() * 0.3F);
+        });
+        helper.runAfterDelay(6, () -> {
+            helper.assertTrue(boss.isPhaseTwo(), "below half health is phase 2");
+            helper.assertTrue(boss.pendingEruptions() == 8, "phase 2 marks 8 eruptions around it, has " + boss.pendingEruptions());
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * No safe spot: a target it cannot reach in melee gets mortar and eruptions after a few seconds, also at close range,
+     * and an eruption under a target hurts it.
+     */
+    @GameTest(template = "boss_arena", batch = "tyrantReach", timeoutTicks = 200)
+    public static void tyrantEruptsUnderUnreachableTargets(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        boss.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+        Husk target = dummy(helper, new BlockPos(0, 1, 0));
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(target);
+            helper.assertTrue(!boss.attackOptions(target).contains(ForgeTyrant.Action.MORTAR_WINDUP), "no mortar at close range right away");
+        });
+        helper.runAfterDelay(2 + ForgeTyrant.OUT_OF_REACH_TICKS + 10, () -> {
+            helper.assertTrue(boss.getTarget() == target, "still on the same target");
+            var options = boss.attackOptions(target);
+            helper.assertTrue(options.contains(ForgeTyrant.Action.MORTAR_WINDUP) && options.contains(ForgeTyrant.Action.ERUPT_WINDUP),
+                    "an unreachable close target gets mortar and eruptions, options " + options);
+            helper.assertTrue(boss.erupt(target) >= 3, "eruptions mark the target and around it");
+        });
+        helper.runAfterDelay(2 + ForgeTyrant.OUT_OF_REACH_TICKS + 10 + ForgeTyrant.ERUPT_DELAY + 5, () -> {
+            helper.assertTrue(target.getHealth() < target.getMaxHealth(), "the eruption hurt the target");
+            helper.assertTrue(boss.pendingEruptions() == 0, "every marked spot erupted");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** The Cinder Forge template loads with a natural Forge Altar in the centre and a loot chest; its structure is registered. */
+    @GameTest(template = "empty")
+    public static void cinderForgeTemplateHasAltar(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var template = level.getStructureManager().get(CinderForgePiece.TEMPLATE);
+        helper.assertTrue(template.isPresent(), "the cinder_forge template loads");
+        int size = CinderForgeStructure.SIZE;
+        helper.assertTrue(template.get().getSize().getX() == size && template.get().getSize().getZ() == size,
+                "the hall is " + size + " wide, is " + template.get().getSize());
+        var altars = template.get().filterBlocks(BlockPos.ZERO, new StructurePlaceSettings(), BossRegistry.FORGE_ALTAR.get());
+        helper.assertTrue(altars.size() == 1, "exactly one altar, found " + altars.size());
+        helper.assertTrue(altars.get(0).pos().equals(new BlockPos(CinderForgeStructure.HALF, 1, CinderForgeStructure.HALF)),
+                "the altar sits in the centre, at " + altars.get(0).pos());
+        helper.assertTrue(altars.get(0).state().getValue(BossAltarBlock.NATURAL), "the ruin's altar is marked natural");
+        var chests = template.get().filterBlocks(BlockPos.ZERO, new StructurePlaceSettings(), Blocks.CHEST);
+        helper.assertTrue(chests.size() == 1 && chests.get(0).nbt() != null
+                && "robotica:chests/cinder_forge".equals(chests.get(0).nbt().getString("LootTable")), "one loot chest with the forge loot");
+        Structure forge = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(Robotica.id("cinder_forge"));
+        helper.assertTrue(forge instanceof CinderForgeStructure, "robotica:cinder_forge is registered with its own type");
+        helper.assertTrue(level.registryAccess().registryOrThrow(Registries.STRUCTURE_SET).containsKey(Robotica.id("cinder_forge")),
+                "robotica:cinder_forge has a structure set");
         helper.succeed();
     }
 
@@ -276,7 +434,7 @@ public class BossGameTests {
         ItemEntity expired = new ItemEntity(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(CoreItems.SERVO_CORE.get()));
         BossLoot.lock(mine, killer.getUUID(), now);
         BossLoot.lock(offline, UUID.randomUUID(), now);
-        BossLoot.lock(expired, killer.getUUID(), now - BossLoot.LOCK_TICKS);
+        BossLoot.lock(expired, killer.getUUID(), now - BossConfig.lootLockTicks());
         for (ItemEntity item : List.of(mine, offline, expired)) {
             item.setNeverPickUp();
             level.addFreshEntity(item);

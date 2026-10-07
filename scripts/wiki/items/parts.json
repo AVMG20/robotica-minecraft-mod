@@ -170,15 +170,18 @@
    ],
    "what": "Opens Age 2. Drops from the Scrap Colossus. In an Exo chestplate: Overclock (key O).",
    "see": [
-    "item:colossus_altar"
+    "item:colossus_altar",
+    "guide:bosses"
    ]
   },
   {
    "items": [
     "magma_core"
    ],
-   "what": "Opens Age 3. Survey Rig core slot: ancient debris and resonite. Exo chestplate: fire immunity.",
+   "what": "Opens Age 3. Drops from the Forge Tyrant. Survey Rig core slot: ancient debris and resonite. Exo chestplate: fire immunity.",
    "see": [
+    "item:forge_altar",
+    "guide:bosses",
     "guide:exo-frame"
    ]
   },
@@ -717,7 +720,7 @@
     "Needs 3x3x4 air above. 5 min cooldown."
    ],
    "see": [
-    "guide:finding-ores"
+    "guide:bosses"
    ]
   },
   {
@@ -725,6 +728,28 @@
     "signal_flare"
    ],
    "what": "Summons the Scrap Colossus at an altar. It drops the [[servo_core]]."
+  },
+  {
+   "items": [
+    "forge_altar"
+   ],
+   "what": "Wakes the Forge Tyrant boss. Found in Cinder Forges in the Nether, or craft your own.",
+   "use": [
+    "Right-click it with an [[ignition_charge]].",
+    "Needs 3x3x4 air above. 5 min cooldown."
+   ],
+   "see": [
+    "guide:bosses"
+   ]
+  },
+  {
+   "items": [
+    "ignition_charge"
+   ],
+   "what": "Summons the Forge Tyrant at a Forge Altar. It drops the [[magma_core]].",
+   "see": [
+    "guide:bosses"
+   ]
   },
   {
    "items": [

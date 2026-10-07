@@ -1,7 +1,8 @@
-"""Boss module textures: the Scrap Colossus (128x128 model sheet + glow layer), the Scrap Drone (32x32 + glow), the Signal
-Flare icon and the Colossus Altar block (side, top, bottom and their glow overlays).
+"""Boss module textures: the Scrap Colossus (128x128 model sheet + glow layer), the Scrap Drone (32x32 + glow), the Forge
+Tyrant (128x128 + glow), the Signal Flare and Ignition Charge icons, and the Colossus Altar and Forge Altar blocks (side,
+top, bottom and their glow overlays).
 Run: python3 scripts/textures/boss.py
-The model sheets follow the box layout of boss/client/ScrapColossusModel and ScrapDroneModel: texOffs(u, v), box w x h x d
+The model sheets follow the box layout of boss/client/ScrapColossusModel, ScrapDroneModel and ForgeTyrantModel: texOffs(u, v), box w x h x d
 unfolds as  top (u+d, v)  bottom (u+d+w, v)  west (u, v+d)  north/front (u+d, v+d)  east (u+d+w, v+d)  south (u+2d+w, v+d).
 """
 import pathlib
@@ -25,8 +26,13 @@ PAL = {
     'm': '#4F4F52', 'n': '#6C6C70', 'o': '#8A8A8E', 'p': '#A8A8AC',
     # flare
     'R': '#C9302A', 'S': '#FF6B5E', 'T': '#7A1712',
+    # blackstone (dark -> light) and gold (dark -> light) for the Forge Tyrant
+    '6': '#121014', '7': '#1F1B22', '8': '#2F2933', '9': '#443C48', '0': '#5E5462',
+    'g': '#5C3A0A', 'h': '#9A6A12', 'i': '#D9A423', 'j': '#F7D25A', 'l': '#FFF0A8',
 }
 COPPER = ('1', '2', '3', '4', '5')
+BLACK = ('6', '7', '8', '9', '0')
+GOLD = ('g', 'h', 'i', 'j', 'l')
 STEEL = ('s', 't', 'u', 'v', 'w')
 
 
@@ -257,6 +263,172 @@ def drone():
     return c, g
 
 
+# ---------------------------------------------------------------- Forge Tyrant
+
+def molten(c, g, x, y, w, h, seed=0, cracks=0.1, bevel=True, dark=False):
+    """Blackstone plate with glowing magma cracks (the cracks go on the glow layer too)."""
+    weathered(c, x, y, w, h, BLACK, seed, verdigris=0.0, rust=0.0, bevel=bevel, dark=dark)
+    for yy in range(h):
+        for xx in range(w):
+            px, py = x + xx, y + yy
+            f = fbm(px, py, seed + 57, wrap=128)
+            if abs(f - 0.5) < cracks * 0.25:
+                ch = 'F' if abs(f - 0.5) < cracks * 0.1 else 'D'
+                c.set(px, py, ch)
+                g.set(px, py, ch)
+
+
+def mbox(c, g, u, v, w, h, d, seed=0, cracks=0.1):
+    f = rects(u, v, w, h, d)
+    for i, (name, (x, y, rw, rh)) in enumerate(f.items()):
+        molten(c, g, x, y, rw, rh, seed + i * 13 + u * 3 + v, cracks=cracks, dark=(name == 'bottom'))
+    return f
+
+
+def gold_rivet(c, face, dx, dy):
+    put(c, face, dx, dy, 'j')
+    put(c, face, dx + 1, dy + 1, 'g')
+
+
+def tyrant():
+    c = Canvas(128)
+    g = Canvas(128)
+    # body 24x20x18 at (0,0)
+    f = mbox(c, g, 0, 0, 24, 20, 18, seed=101, cracks=0.12)
+    front = f['north']
+    band(c, front, 0, 2, GOLD)
+    band(c, front, 18, 2, GOLD)
+    fill(c, front, 5, 2, 14, 13, 'k')                             # furnace mouth behind the doors
+    fill(c, front, 6, 3, 12, 11, 'D')
+    fill(g, front, 6, 3, 12, 11, 'D')
+    for dx in (1, 3, 20, 22):
+        for dy in (4, 9, 14):
+            gold_rivet(c, front, dx, dy)
+    for side in ('west', 'east'):                                  # side grilles glowing from inside
+        sf = f[side]
+        band(c, sf, 0, 2, GOLD)
+        band(c, sf, 18, 2, GOLD)
+        for dy in range(5, 15, 2):
+            fill(c, sf, 4, dy, 10, 1, 'k')
+            fill(c, sf, 4, dy + 1, 10, 1, 'F')
+            fill(g, sf, 4, dy + 1, 10, 1, 'F')
+        gold_rivet(c, sf, 1, 3)
+        gold_rivet(c, sf, 15, 3)
+    back = f['south']
+    band(c, back, 0, 2, GOLD)
+    fill(c, back, 4, 4, 16, 12, 't')                               # riveted back plate with a pressure gauge
+    fill(c, back, 5, 5, 14, 10, 'u')
+    for dy in range(6, 14, 2):
+        fill(c, back, 6, dy, 12, 1, 's')
+    fill(c, back, 10, 16, 4, 3, 'i')
+    put(c, back, 11, 17, 'E')
+    put(g, back, 11, 17, 'E')
+    fill(c, f['top'], 7, 9, 10, 9, 't')                            # deck under the chimney
+    # chimney 8x12x8 at (86,16): sooty steel with gold bands, glowing mouth
+    f = box(c, 86, 16, 8, 12, 8, STEEL, seed=102, verdigris=0.0, rust=0.3)
+    fill(c, f['top'], 0, 0, 8, 8, 'k')
+    fill(c, f['top'], 2, 2, 4, 4, 'D')
+    fill(g, f['top'], 2, 2, 4, 4, 'F')
+    put(g, f['top'], 3, 3, 'G')
+    put(g, f['top'], 4, 4, 'G')
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 0, 2, GOLD)
+        band(c, f[name], 7, 1, GOLD)
+    # head 10x6x10 at (86,0): blackstone hood with a visor slit and two white-hot eyes
+    f = mbox(c, g, 86, 0, 10, 6, 10, seed=103, cracks=0.06)
+    hf = f['north']
+    band(c, hf, 0, 1, GOLD)
+    fill(c, hf, 1, 2, 8, 2, 'k')
+    for dx in (2, 6):
+        fill(c, hf, dx, 2, 2, 2, 'G')
+        fill(g, hf, dx, 2, 2, 2, 'G')
+        put(c, hf, dx, 2, 'H')
+        put(g, hf, dx, 2, 'H')
+    fill(c, hf, 3, 5, 4, 1, 'i')
+    # legs 8x12x8 at (0,40): blackstone with a gold knee band; feet 10x4x10 at (32,40): dark steel
+    f = mbox(c, g, 0, 40, 8, 12, 8, seed=104)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 4, 2, GOLD)
+        gold_rivet(c, f[name], 1, 1)
+        gold_rivet(c, f[name], 5, 1)
+    f = box(c, 32, 40, 10, 4, 10, STEEL, seed=105, verdigris=0.0, rust=0.2)
+    for name in ('north', 'west', 'east', 'south'):
+        band(c, f[name], 0, 1, GOLD)
+    # arms 6x14x6 at (72,40): blackstone with gold piston bands
+    f = mbox(c, g, 72, 40, 6, 14, 6, seed=106)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 4, 1, GOLD)
+        band(c, f[name], 10, 1, GOLD)
+        fill(c, f[name], 2, 5, 1, 5, 'w')
+    # crucible 9x7x9 at (0,62): dark steel pot with a gold rim, glowing spout and a red-hot bottom
+    f = box(c, 0, 62, 9, 7, 9, STEEL, seed=107, verdigris=0.0, rust=0.15)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 0, 1, GOLD)
+        band(c, f[name], 6, 1, GOLD)
+    for dy in range(1, 6):
+        put(c, f['north'], 4, dy, 'F')
+        put(g, f['north'], 4, dy, 'F')
+    put(c, f['north'], 4, 5, 'G')
+    put(g, f['north'], 4, 5, 'G')
+    x0, y0, rw, rh = f['bottom']
+    for yy in range(rh):
+        for xx in range(rw):
+            d = abs(xx - 4) + abs(yy - 4)
+            ch = 'G' if d < 2 else 'F' if d < 4 else 'D'
+            c.set(x0 + xx, y0 + yy, ch)
+            g.set(x0 + xx, y0 + yy, ch)
+    # hammer 10x8x10 at (36,62): heavy steel head with a gold rim and a blackstone striking face
+    f = box(c, 36, 62, 10, 8, 10, STEEL, seed=108, verdigris=0.0, rust=0.2)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 0, 1, GOLD)
+        gold_rivet(c, f[name], 1, 3)
+        gold_rivet(c, f[name], 7, 3)
+    x0, y0, rw, rh = f['bottom']
+    molten(c, g, x0, y0, rw, rh, seed=109, cracks=0.2)
+    # shoulder pads 9x5x9 at (78,62): gold plate with rivets
+    f = box(c, 78, 62, 9, 5, 9, GOLD, seed=110, verdigris=0.0, rust=0.05)
+    for name in ('north', 'south', 'west', 'east'):
+        put(c, f[name], 1, 1, 'l')
+        put(c, f[name], 7, 1, 'l')
+        fill(c, f[name], 0, 4, 9, 1, 'g')
+    for dx, dy in ((1, 1), (7, 1), (1, 7), (7, 7), (4, 4)):
+        put(c, f['top'], dx, dy, 'l')
+    # doors 7x10x1 at (0,82): blackstone with gold frames and glowing grate slits
+    f = rects(0, 82, 7, 10, 1)
+    for name, (x, y, rw, rh) in f.items():
+        molten(c, g, x, y, rw, rh, seed=111, cracks=0.0, bevel=rw >= 3 and rh >= 3)
+    df = f['north']
+    for dx in range(7):
+        put(c, df, dx, 0, 'i')
+        put(c, df, dx, 9, 'h')
+    for dy in range(10):
+        put(c, df, 0, dy, 'i')
+    for dy in (2, 4, 6):
+        fill(c, df, 2, dy, 4, 1, 'F')
+        fill(g, df, 2, dy, 4, 1, 'F')
+        put(c, df, 3, dy, 'G')
+        put(g, df, 3, dy, 'G')
+    put(c, df, 5, 8, 'j')
+    fill(c, f['south'], 0, 0, 7, 10, 'D')
+    fill(g, f['south'], 0, 0, 7, 10, 'D')
+    # core 12x10x1 at (20,82): white-hot centre behind grate bars
+    f = rects(20, 82, 12, 10, 1)
+    for name, (x, y, rw, rh) in f.items():
+        c.rect(x, y, rw, rh, 'F')
+        g.rect(x, y, rw, rh, 'F')
+    cf = f['north']
+    for dy in range(10):
+        for dx in range(12):
+            dist = abs(dx - 5.5) / 6 + abs(dy - 4.5) / 5
+            ch = 'H' if dist < 0.45 else 'G' if dist < 0.85 else 'F'
+            put(c, cf, dx, dy, ch)
+            put(g, cf, dx, dy, ch)
+    for dx in (2, 5, 8):
+        fill(c, cf, dx, 0, 1, 10, 'D')
+        fill(g, cf, dx, 0, 1, 10, 'D')
+    return c, g
+
+
 # ---------------------------------------------------------------- items and blocks
 
 def signal_flare():
@@ -271,6 +443,77 @@ def signal_flare():
     c.set(11, 4, 'G').set(12, 3, 'H').set(13, 2, 'G').set(12, 5, 'F').set(10, 3, 'F').set(14, 4, 'F')
     c.set(13, 5, 'D').set(11, 2, 'D')
     write_item('signal_flare', c.rows(), PAL)
+
+
+def ignition_charge():
+    c = Canvas(16)
+    c.rect(5, 4, 6, 10, '8')                                      # blackstone canister
+    for y in range(4, 14):
+        c.set(5, y, '9').set(10, y, '7')
+    for y in (5, 12):                                             # gold bands
+        for x in range(5, 11):
+            c.set(x, y, 'i' if x < 9 else 'h')
+    c.rect(6, 7, 4, 4, 'D')                                       # magma window
+    c.rect(7, 8, 2, 2, 'F')
+    c.set(7, 8, 'G')
+    c.set(7, 3, 'h').set(8, 3, 'i').set(8, 2, 'i')                # gold fuse
+    c.outline('k')
+    c.set(9, 1, 'G').set(8, 0, 'H').set(10, 0, 'F').set(10, 2, 'F').set(7, 1, 'D')
+    write_item('ignition_charge', c.rows(), PAL)
+
+
+def forge_altar():
+    side = Canvas(16)
+    glow_side = Canvas(16)
+    molten(side, glow_side, 0, 4, 16, 8, seed=141, cracks=0.1)
+    for y in range(12, 16):                                       # polished blackstone footing
+        for x in range(16):
+            side.set(x, y, '8' if hash01(x, y, 14) > 0.25 else '7')
+    for x in range(16):
+        side.set(x, 12, '9')
+        side.set(x, 15, '6')
+    for x in (3, 11):
+        side.set(x, 13, '6').set(x, 14, '6')
+    for y in range(0, 4):                                         # top rim: gold band with rivets
+        for x in range(16):
+            side.set(x, y, 'i' if y in (1, 2) else 'j' if y == 0 else 'h')
+    for x in (1, 5, 10, 14):
+        side.set(x, 1, 'l').set(x + 1, 2, 'g')
+    side.rect(5, 6, 6, 5, 'k')                                    # furnace mouth with a grate
+    side.rect(6, 7, 4, 3, 'D')
+    glow_side.rect(6, 7, 4, 3, 'F')
+    glow_side.set(7, 8, 'G').set(8, 8, 'H').set(7, 9, 'G').set(8, 9, 'G')
+    for x in (6, 9):
+        side.set(x, 7, 'g').set(x, 8, 'g').set(x, 9, 'g')
+        glow_side.set(x, 7, '.').set(x, 8, '.').set(x, 9, '.')
+    top = Canvas(16)
+    glow_top = Canvas(16)
+    weathered(top, 0, 0, 16, 16, BLACK, seed=143, verdigris=0.0, rust=0.0)
+    for y in range(16):                                           # gold-rimmed crucible full of magma
+        for x in range(16):
+            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
+            if 5.2 <= d <= 6.4:
+                top.set(x, y, 'i' if (x + y) % 3 else 'j')
+            elif 4.4 <= d < 5.2:
+                top.set(x, y, 'g')
+            elif d < 4.4:
+                ch = 'H' if d < 1.2 else 'G' if d < 2.6 else 'F' if hash01(x, y, 9) > 0.2 else 'D'
+                top.set(x, y, ch)
+                glow_top.set(x, y, ch)
+    bottom = Canvas(16)
+    for y in range(16):
+        for x in range(16):
+            bottom.set(x, y, '8' if hash01(x, y, 17) > 0.25 else '7')
+        if y % 4 == 3:
+            for x in range(16):
+                bottom.set(x, y, '6')
+    for y in range(16):
+        bottom.set((y // 4 % 2) * 8 + 3, y, '6')
+    write_block('forge_altar_side', side.rows(), PAL)
+    write_block('forge_altar_side_glow', glow_side.rows(), PAL)
+    write_block('forge_altar_top', top.rows(), PAL)
+    write_block('forge_altar_top_glow', glow_top.rows(), PAL)
+    write_block('forge_altar_bottom', bottom.rows(), PAL)
 
 
 def altar():
@@ -337,8 +580,13 @@ def main():
     c, g = drone()
     write_png(ENTITY / 'scrap_drone.png', c.rows(), PAL, 32)
     write_png(ENTITY / 'scrap_drone_glow.png', g.rows(), PAL, 32)
+    c, g = tyrant()
+    write_png(ENTITY / 'forge_tyrant.png', c.rows(), PAL, 128)
+    write_png(ENTITY / 'forge_tyrant_glow.png', g.rows(), PAL, 128)
     signal_flare()
     altar()
+    ignition_charge()
+    forge_altar()
     print('boss textures written')
 
 

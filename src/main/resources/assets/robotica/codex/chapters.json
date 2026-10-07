@@ -70,7 +70,7 @@
       "pages": [
         {
           "title": "Five ages",
-          "text": "0 Clockwork: copper, wood\n1 Wired: iron, redstone, gold\n2 Servo: diamond, obsidian\n3 Deep: netherite, blaze\n4 Antigrav: pearls, nether star\n\nServo Core: drops from the Scrap Colossus. Magma and Antigrav Cores: a pricey recipe for now."
+          "text": "0 Clockwork: copper, wood\n1 Wired: iron, redstone, gold\n2 Servo: diamond, obsidian\n3 Deep: netherite, blaze\n4 Antigrav: pearls, nether star\n\nServo Core: Scrap Colossus. Magma Core: Forge Tyrant. Antigrav Core: a pricey recipe for now."
         },
         {
           "title": "The parts ladder",
@@ -626,6 +626,23 @@
           "items": [
             "robotica:signal_flare",
             "robotica:colossus_altar"
+          ]
+        },
+        {
+          "title": "Forge Tyrant",
+          "text": "Age 3, in the Nether. Always drops a Magma Core.\nCinder Forge: blackstone ruins in Nether caves. Its chest has an Ignition Charge.\nRight-click the Forge Altar with it.",
+          "items": [
+            "robotica:magma_core",
+            "robotica:ignition_charge",
+            "robotica:forge_altar"
+          ]
+        },
+        {
+          "title": "Tyrant fight",
+          "text": "- Doors glow: flame breath. Step aside.\n- Crucible back: magma globs. Keep moving.\n- Hammer up: glowing rings. Get off them.\n- Doors open: it vents. Double damage.",
+          "items": [
+            "robotica:arc_blade",
+            "robotica:rivet_gun"
           ]
         }
       ]

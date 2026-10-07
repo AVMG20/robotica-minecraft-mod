@@ -1,0 +1,36 @@
+{
+  "parent": "robotica:guide/cinder_forge",
+  "display": {
+    "icon": {
+      "id": "robotica:forge_altar"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.tyrant.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.tyrant.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "robotica:forge_tyrant"
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 80
+  }
+}

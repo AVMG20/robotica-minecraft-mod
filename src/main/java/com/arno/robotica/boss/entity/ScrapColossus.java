@@ -66,7 +66,7 @@ import java.util.Optional;
  * <p>Never breaks blocks and only takes damage from attackers (no trap farming). Drops a Servo Core (loot table), and the
  * killer gets the loot (see BossModule#onDrops and BossLoot).
  */
-public class ScrapColossus extends Monster {
+public class ScrapColossus extends Monster implements RoboticaBoss {
     public static final float BASE_HEALTH = 300.0F;
     public static final float BASE_MELEE = 10.0F;
     public static final float SLAM_DAMAGE = 14.0F;
@@ -186,6 +186,7 @@ public class ScrapColossus extends Monster {
         return action() == Action.OVERHEAT;
     }
 
+    @Override
     public void setAltarPos(@Nullable BlockPos pos) {
         this.altarPos = pos;
         if (pos != null) restrictTo(pos, 20);

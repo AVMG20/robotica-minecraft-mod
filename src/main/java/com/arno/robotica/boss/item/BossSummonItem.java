@@ -12,20 +12,27 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-/** Signal Flare: right-click a Colossus Altar with it to wake a Scrap Colossus. The altar does the work (ColossusAltarBlock#useItemOn). */
-public class SignalFlareItem extends Item {
-    public SignalFlareItem(Properties props) {
+/**
+ * A boss summon item (Signal Flare, Ignition Charge): right-click its altar with it to wake the boss. The altar does the
+ * work (BossAltarBlock#useItemOn). {@code key} names the lang keys {@code tooltip.robotica.<key>} and
+ * {@code message.robotica.boss.<key>.need_altar}.
+ */
+public class BossSummonItem extends Item {
+    private final String key;
+
+    public BossSummonItem(String key, Properties props) {
         super(props);
+        this.key = key;
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.robotica.boss.need_altar"), true);
+        if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.robotica.boss." + key + ".need_altar"), true);
         return InteractionResultHolder.pass(player.getItemInHand(hand));
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.signal_flare").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica." + key).withStyle(ChatFormatting.GRAY));
     }
 }

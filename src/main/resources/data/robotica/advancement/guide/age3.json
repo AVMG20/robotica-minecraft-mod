@@ -75,7 +75,9 @@
       "robotica:overclock_module_3",
       "robotica:fortune_module_3",
       "robotica:sharpened_edge_module_3",
-      "robotica:looting_module_3"
+      "robotica:looting_module_3",
+      "robotica:ignition_charge",
+      "robotica:forge_altar"
     ],
     "experience": 50
   }

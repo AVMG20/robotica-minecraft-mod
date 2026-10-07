@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GFG",
+    "BSB",
+    "G G"
+  ],
+  "key": {
+    "G": {
+      "tag": "c:ingots/gold"
+    },
+    "F": {
+      "item": "minecraft:fire_charge"
+    },
+    "B": {
+      "tag": "c:rods/blaze"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    }
+  },
+  "result": {
+    "id": "robotica:ignition_charge",
+    "count": 1
+  }
+}

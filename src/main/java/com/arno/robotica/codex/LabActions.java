@@ -54,7 +54,7 @@ public final class LabActions {
                     Map.entry("signal_flare", 4), Map.entry("colossus_altar", 1)),
             Map.ofEntries(Map.entry("blazing_casing", 8), Map.entry("quantum_circuit", 4), Map.entry("plasma_actuator", 4),
                     Map.entry("magma_core", 2), Map.entry("storage_expansion_mk3", 1), Map.entry("rift_upgrade", 1), Map.entry("rift_remote", 1), Map.entry("accumulator_3", 1), Map.entry("tesla_coil_4", 2), Map.entry("tool_upgrade_kit_3", 1), Map.entry("magma_drill", 1), Map.entry("arc_blade", 1),
-                    Map.entry("upgrade_speed", 8)),
+                    Map.entry("upgrade_speed", 8), Map.entry("ignition_charge", 4), Map.entry("forge_altar", 1)),
             Map.ofEntries(Map.entry("null_casing", 8), Map.entry("null_circuit", 4), Map.entry("ender_cell", 2), Map.entry("tesla_coil_5", 2),
                     Map.entry("antigrav_core", 2), Map.entry("tool_upgrade_kit_4", 1), Map.entry("flight_module", 1), Map.entry("null_drill", 1), Map.entry("null_lance", 1), Map.entry("farm_kit_mk4", 2),
                     Map.entry("gate_controller", 2), Map.entry("linking_card", 1)));
