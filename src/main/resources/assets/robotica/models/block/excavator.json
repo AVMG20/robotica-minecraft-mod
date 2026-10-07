@@ -8,6 +8,7 @@
     "drill": "robotica:block/excavator_drill",
     "light": "robotica:block/excavator_light",
     "side": "robotica:block/excavator_side",
+    "accent": "robotica:block/automation_brass",
     "particle": "robotica:block/automation_steel"
   },
   "elements": [
@@ -216,22 +217,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "south": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "east": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "west": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "up": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "down": {
-          "texture": "#brass"
+          "texture": "#accent"
         }
       }
     },

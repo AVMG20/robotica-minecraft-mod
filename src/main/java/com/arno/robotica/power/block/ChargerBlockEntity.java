@@ -27,7 +27,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 /** One slot, an FE buffer that accepts energy from every side, and a fixed charge rate into the item. */
-public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider {
+public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
     public static final int ENERGY_CAPACITY = 20_000;
     public static final int MAX_RECEIVE = 2_000;
 
@@ -67,6 +67,8 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0, this::setChanged);
 
     private final IItemHandler automation = new ItemAccess(slot, (s, stack) -> canCharge(stack), (s, stack) -> isDone(stack));
+    /** Per-face item config (empty items in, charged items out); every face both ways by default. */
+    public final com.arno.robotica.core.side.SideConfig sides = new com.arno.robotica.core.side.SideConfig(this, () -> automation);
 
     private boolean wasCharging;
 
@@ -80,6 +82,7 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
 
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
+        sides.tick(level);
         ItemStack stack = slot.getStackInSlot(0);
         boolean charging = false;
         if (!stack.isEmpty() && energy.getEnergyStored() > 0) {
@@ -119,6 +122,7 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
         super.saveAdditional(tag, registries);
         tag.put("slot", slot.serializeNBT(registries));
         tag.put("energy", energy.serializeNBT(registries));
+        tag.put("sides", sides.save());
     }
 
     @Override
@@ -126,5 +130,16 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
         super.loadAdditional(tag, registries);
         if (tag.contains("slot")) slot.deserializeNBT(registries, tag.getCompound("slot"));
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        sides.load(tag.getCompound("sides"));
+    }
+
+    /** Overlay info (Jade): charging or idle, and how full the item in the slot is. */
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        ItemStack stack = slot.getStackInSlot(0);
+        boolean lit = getBlockState().hasProperty(ChargerBlock.LIT) && getBlockState().getValue(ChargerBlock.LIT);
+        info.status = lit ? "working" : !stack.isEmpty() && !isDone(stack) && energy.getEnergyStored() <= 0 ? "no_energy" : "idle";
+        IEnergyStorage item = stack.isEmpty() ? null : stack.getCapability(Capabilities.EnergyStorage.ITEM);
+        if (item != null && item.getMaxEnergyStored() > 0) info.progress = (int) (100L * item.getEnergyStored() / item.getMaxEnergyStored());
     }
 }

@@ -25,21 +25,42 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-/** Survey Rig: turns FE into random ores without digging. Owner, team and operators only. */
+/** Survey Rig: turns FE into random ores without digging. Owner, team and operators only. One block per Mk (1-4). */
 public class SurveyRigBlock extends AreaWorkerBlock {
-    public static final MapCodec<SurveyRigBlock> CODEC = simpleCodec(SurveyRigBlock::new);
+    public static final MapCodec<SurveyRigBlock> CODEC = simpleCodec(p -> new SurveyRigBlock(p, 1));
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
     private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 4, 16), Block.box(2, 4, 2, 14, 16, 14));
 
-    public SurveyRigBlock(Properties props) {
+    private final int tier;
+
+    public SurveyRigBlock(Properties props, int tier) {
         super(props);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        this.tier = tier;
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
+    }
+
+    @Override
+    public int mkTier() {
+        return tier;
+    }
+
+    /** Sparks around the receiver while the rig works (client side, random display ticks). */
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (!state.getValue(LIT) || random.nextInt(4) != 0) return;
+        level.addParticle(ParticleTypes.ELECTRIC_SPARK, pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.3, pos.getY() + 1.2,
+                pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.02, 0.0);
     }
 
     @Override
@@ -49,7 +70,7 @@ public class SurveyRigBlock extends AreaWorkerBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, LIT);
     }
 
     @Override

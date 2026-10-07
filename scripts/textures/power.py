@@ -254,6 +254,73 @@ def charger_top_glow():
     return c
 
 
+# ---------------------------------------------------------------- wireless charger
+
+WAVE_ARCS = ((2.2, 3.0), (4.2, 5.0), (6.2, 7.0))
+
+
+def wave_pixels(r0, r1):
+    """Pixels of a wave arc opening upwards from the emitter dot at (7.5, 10.5) on the front."""
+    out = []
+    for y in range(3, 12):
+        for x in range(3, 13):
+            d = math.hypot(x - 7.5, y - 10.5)
+            if r0 <= d < r1 and y <= 10 and abs(x - 7.5) <= (10.5 - y) + 1.5:
+                out.append((x, y))
+    return out
+
+
+def wireless_front(lit):
+    """Dark window with three wave arcs over an emitter dot, a status LED below."""
+    c = frame(12, panel=ST)
+    c.recess(3, 3, 10, 9, ST, fill='K')
+    for r0, r1 in WAVE_ARCS:
+        for x, y in wave_pixels(r0, r1):
+            c.set(x, y, 'Z')
+    c.disc(7.5, 10.5, 1.0, 'y')
+    c.rect(4, 13, 8, 1, 'K')
+    led(c, 7, 13, lit, 'G')
+    led(c, 8, 13, lit, 'G')
+    return c
+
+
+def wireless_glow(frame_no):
+    """The arcs light up one after another, outward, like a signal."""
+    c = Canvas()
+    for i, (r0, r1) in enumerate(WAVE_ARCS):
+        bright = (frame_no - i) % 4 == 0
+        dim = (frame_no - i) % 4 == 1
+        if not (bright or dim):
+            continue
+        for x, y in wave_pixels(r0, r1):
+            c.set(x, y, 'z' if bright else 'y')
+    c.disc(7.5, 10.5, 1.0, 'Y')
+    c.set(7, 13, 'G').set(8, 13, 'G')
+    return c
+
+
+def wireless_top():
+    """Emitter plate seen from above: rings of copper windings round the mast socket."""
+    c = frame(14, panel=ST)
+    for y in range(3, 13):
+        for x in range(3, 13):
+            d = math.hypot(x - 7.5, y - 7.5)
+            if 2.0 <= d <= 5.0:
+                c.set(x, y, '3' if int(d * 1.5) % 2 == 0 else '1')
+    c.ring(7.5, 7.5, 4.6, 5.3, '0')
+    c.disc(7.5, 7.5, 1.6, 'K')
+    return c
+
+
+def wireless_mast():
+    """Brass mast for the emitter rod (16x16, the model samples a thin strip)."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, BR, 5, vertical=True, density=0.3)
+    for y in range(0, 16, 4):
+        c.rect(0, y, 16, 1, '6')
+    return c
+
+
 # ---------------------------------------------------------------- solar panels
 
 def solar_top(mk):
@@ -515,6 +582,12 @@ def main():
     write_block('charger_top', charger_top(False).rows(), P)
     write_block('charger_top_on', charger_top(True).rows(), P)
     write_block('charger_top_glow', charger_top_glow().rows(), P)
+
+    write_block('wireless_charger_front', wireless_front(False).rows(), P)
+    write_block('wireless_charger_front_on', wireless_front(True).rows(), P)
+    write_anim('block', 'wireless_charger_front_glow', [wireless_glow(i) for i in range(8)], P, frametime=3)
+    write_block('wireless_charger_top', wireless_top().rows(), P)
+    write_block('wireless_charger_mast', wireless_mast().rows(), P)
 
     for mk in (1, 2):
         write_block(f'solar_panel_mk{mk}_top', solar_top(mk).rows(), P)

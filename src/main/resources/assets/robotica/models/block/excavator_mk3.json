@@ -1,0 +1,6 @@
+{
+  "parent": "robotica:block/excavator",
+  "textures": {
+    "accent": "robotica:block/automation_mk3"
+  }
+}

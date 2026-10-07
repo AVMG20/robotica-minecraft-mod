@@ -224,6 +224,44 @@
   },
   {
    "items": [
+    "wireless_charger"
+   ],
+   "what": "Charges the FE items of you and your team in range, without plugging anything in: worn armor first, then held items, then the inventory.",
+   "use": [
+    "Place it and feed it FE by cable or a [[tesla_coil_1]] link.",
+    "Stand within range: arcs show who it charges.",
+    "Add range and speed cards for more reach and rate."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Rate",
+      "1,000 FE/t per player (x6 with 4 speed cards)"
+     ],
+     [
+      "Range",
+      "8 blocks (+4 per range card, 24 max)"
+     ],
+     [
+      "Loss",
+      "10% extra FE from its buffer"
+     ],
+     [
+      "Buffer",
+      "200,000 FE, input 20,000 FE/t"
+     ],
+     [
+      "Who",
+      "owner and team (server config: everyone)"
+     ]
+    ]
+   },
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
     "metal_press"
    ],
    "what": "Presses 1 ingot into 1 plate: twice what the hammer gives.",

@@ -25,7 +25,10 @@
             "predicate": {
               "block": {
                 "blocks": [
-                  "robotica:survey_rig"
+                  "robotica:survey_rig",
+                  "robotica:survey_rig_mk2",
+                  "robotica:survey_rig_mk3",
+                  "robotica:survey_rig_mk4"
                 ]
               }
             }
@@ -40,6 +43,9 @@
     ]
   ],
   "rewards": {
+    "recipes": [
+      "robotica:survey_rig_mk2"
+    ],
     "experience": 20
   }
 }

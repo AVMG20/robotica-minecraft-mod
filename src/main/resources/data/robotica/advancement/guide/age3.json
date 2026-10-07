@@ -64,7 +64,9 @@
       "robotica:magnet_module_3",
       "robotica:capacitor_plating_module_3",
       "robotica:power_regulator_module_2",
-      "robotica:mining_drone_mk3"
+      "robotica:mining_drone_mk3",
+      "robotica:excavator_mk3",
+      "robotica:survey_rig_mk3"
     ],
     "experience": 50
   }

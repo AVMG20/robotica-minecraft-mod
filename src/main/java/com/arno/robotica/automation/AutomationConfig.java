@@ -24,8 +24,32 @@ public final class AutomationConfig {
     public static final ModConfigSpec.IntValue SPROUT_FE_PER_TICK;
     public static final ModConfigSpec.IntValue SPROUT_FE_PER_HARVEST;
     public static final ModConfigSpec.IntValue MAX_LOGS;
-    public static final ModConfigSpec.IntValue EXCAVATOR_SIZE;
-    public static final ModConfigSpec.IntValue EXCAVATOR_INTERVAL;
+    private static final int[] DEF_EXC_SIZE = {8, 12, 16, 24};
+    private static final int[] DEF_EXC_INTERVAL = {60, 40, 30, 20};
+    private static final int[] DEF_EXC_SLOTS = {2, 3, 4, 5};
+    private static final int[] DEF_SPEED_CAP = {2, 4, 6, 8};
+    private static final int[] DEF_RANGE_CAP = {1, 2, 3, 4};
+    private static final int[] DEF_EFF_CAP = {1, 2, 3, 4};
+    private static final int[] DEF_FORTUNE_CAP = {1, 2, 3, 3};
+    private static final int[] DEF_SURVEY_SLOTS = {1, 2, 3, 4};
+    private static final int[] DEF_SURVEY_SPEED = {100, 150, 200, 300};
+    private static final int[] DEF_SURVEY_RARE = {0, 50, 100, 200};
+    private static final ModConfigSpec.IntValue[] EXC_SIZE = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] EXC_INTERVAL = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] EXC_SLOTS = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] EXC_SPEED_CAP = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] EXC_RANGE_CAP = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] EXC_EFF_CAP = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] EXC_FORTUNE_CAP = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue EXCAVATOR_RANGE_STEP;
+    private static final ModConfigSpec.IntValue EXCAVATOR_INPUT;
+    private static final ModConfigSpec.IntValue[] SURVEY_SLOTS = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] SURVEY_SPEED_CAP = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] SURVEY_EFF_CAP = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] SURVEY_FORTUNE_CAP = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] SURVEY_SPEED = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] SURVEY_RARE = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue SURVEY_RARE_WEIGHT;
     public static final ModConfigSpec.IntValue EXCAVATOR_FE_PER_BLOCK;
     public static final ModConfigSpec.DoubleValue GROWTH_TICKS_PER_COLUMN;
     public static final ModConfigSpec.IntValue SURVEY_INTERVAL;
@@ -76,10 +100,27 @@ public final class AutomationConfig {
         }
         GROWTH_TICKS_PER_COLUMN = b.comment("Extra random ticks per second per area column for each +1.0 of growth multiplier. Vanilla gives a block 3/4096 random ticks per game tick = 0.0146 per second, so the default makes a x1.5 multiplier really mean x1.5.")
                 .defineInRange("growthTicksPerColumn", 0.0146, 0.0, 5.0);
-        EXCAVATOR_SIZE = b.comment("Excavator base square side without range cards (range cards give 16/32/48/64).")
-                .defineInRange("excavatorSize", 8, 1, 64);
-        EXCAVATOR_INTERVAL = b.comment("Excavator ticks per block without speed cards. Slow on purpose: speed cards are the way up, at a steep FE price.")
-                .defineInRange("excavatorInterval", 60, 1, 1200);
+        for (int i = 0; i < 4; i++) {
+            int mk = i + 1;
+            EXC_SIZE[i] = b.comment("Excavator Mk" + mk + ": square side of the hole without range cards.")
+                    .defineInRange("excavatorSizeMk" + mk, DEF_EXC_SIZE[i], 1, 64);
+            EXC_INTERVAL[i] = b.comment("Excavator Mk" + mk + ": ticks per block without speed cards (speed cards divide it, at a steep FE price).")
+                    .defineInRange("excavatorIntervalMk" + mk, DEF_EXC_INTERVAL[i], 1, 1200);
+            EXC_SLOTS[i] = b.comment("Excavator Mk" + mk + ": upgrade slots (one card kind per slot).")
+                    .defineInRange("excavatorSlotsMk" + mk, DEF_EXC_SLOTS[i], 1, 5);
+            EXC_SPEED_CAP[i] = b.comment("Excavator Mk" + mk + ": speed cards that count.")
+                    .defineInRange("excavatorSpeedCapMk" + mk, DEF_SPEED_CAP[i], 0, 8);
+            EXC_RANGE_CAP[i] = b.comment("Excavator Mk" + mk + ": range cards that count.")
+                    .defineInRange("excavatorRangeCapMk" + mk, DEF_RANGE_CAP[i], 0, 4);
+            EXC_EFF_CAP[i] = b.comment("Excavator Mk" + mk + ": efficiency cards that count.")
+                    .defineInRange("excavatorEfficiencyCapMk" + mk, DEF_EFF_CAP[i], 0, 4);
+            EXC_FORTUNE_CAP[i] = b.comment("Excavator Mk" + mk + ": fortune cards that count.")
+                    .defineInRange("excavatorFortuneCapMk" + mk, DEF_FORTUNE_CAP[i], 0, 3);
+        }
+        EXCAVATOR_RANGE_STEP = b.comment("Blocks every range card adds to the Excavator's square side (Mk4 with 4 cards: 24 + 40 = 64).")
+                .defineInRange("excavatorRangeStep", 10, 1, 32);
+        EXCAVATOR_INPUT = b.comment("FE/t an Excavator Mk1 accepts from cables and Tesla Coils (a MkN N times as much; its buffer is energyBuffer x N).")
+                .defineInRange("excavatorInputPerTick", 1_000, 1, 100_000_000);
         EXCAVATOR_FE_PER_BLOCK = b.comment("Excavator FE per mined block (before upgrade multipliers).")
                 .defineInRange("excavatorFePerBlock", 40, 0, 1_000_000);
         b.pop();
@@ -92,6 +133,23 @@ public final class AutomationConfig {
                 .defineInRange("surveyRigBuffer", 2_000_000, 10_000, 1_000_000_000);
         SURVEY_MAX_INPUT = b.comment("Survey Rig FE per tick it accepts from cables and its battery slot.")
                 .defineInRange("surveyRigInputPerTick", 100_000, 100, 100_000_000);
+        for (int i = 0; i < 4; i++) {
+            int mk = i + 1;
+            SURVEY_SLOTS[i] = b.comment("Survey Rig Mk" + mk + ": upgrade slots (one card kind per slot).")
+                    .defineInRange("surveyRigSlotsMk" + mk, DEF_SURVEY_SLOTS[i], 1, 4);
+            SURVEY_SPEED_CAP[i] = b.comment("Survey Rig Mk" + mk + ": speed cards that count.")
+                    .defineInRange("surveyRigSpeedCapMk" + mk, DEF_SPEED_CAP[i], 0, 8);
+            SURVEY_EFF_CAP[i] = b.comment("Survey Rig Mk" + mk + ": efficiency cards that count.")
+                    .defineInRange("surveyRigEfficiencyCapMk" + mk, DEF_EFF_CAP[i], 0, 4);
+            SURVEY_FORTUNE_CAP[i] = b.comment("Survey Rig Mk" + mk + ": fortune cards that count.")
+                    .defineInRange("surveyRigFortuneCapMk" + mk, DEF_FORTUNE_CAP[i], 0, 3);
+            SURVEY_SPEED[i] = b.comment("Survey Rig Mk" + mk + ": work speed in percent of Mk1. Time per ore shrinks and FE/t grows by it, so FE per ore stays the same; buffer and input grow with the Mk.")
+                    .defineInRange("surveyRigSpeedMk" + mk, DEF_SURVEY_SPEED[i], 10, 10_000);
+            SURVEY_RARE[i] = b.comment("Survey Rig Mk" + mk + ": percent more weight for rare ore kinds (weight <= surveyRigRareWeight).")
+                    .defineInRange("surveyRigRareBonusMk" + mk, DEF_SURVEY_RARE[i], 0, 10_000);
+        }
+        SURVEY_RARE_WEIGHT = b.comment("Ore kinds with at most this weight count as rare for the Survey Rig's Mk bonus (diamond 6, emerald 4, pyrolite 15).")
+                .defineInRange("surveyRigRareWeight", 20, 0, 100_000);
         SURVEY_ORE_WEIGHTS = b.comment("Weight of each ore kind, as \"#tag=weight\" (an ores/<name> item tag) or \"namespace:item=weight\".",
                         "Every item in c:ores can come out. Variants of one kind (stone, deepslate, nether) share their kind's weight. 0 = never.")
                 .defineListAllowEmpty("surveyRigOreWeights", DEFAULT_ORE_WEIGHTS, () -> "#c:ores/example=10", o -> o instanceof String str && str.contains("="));
@@ -154,13 +212,28 @@ public final class AutomationConfig {
         return SPEC.isLoaded() ? GROWTH_TICKS_PER_COLUMN.get() : 0.0146;
     }
 
-    public static int excavatorSize() {
-        return SPEC.isLoaded() ? EXCAVATOR_SIZE.get() : 8;
+    private static int mk(ModConfigSpec.IntValue[] values, int[] defaults, int tier) {
+        int i = tierIndex(tier);
+        return SPEC.isLoaded() ? values[i].get() : defaults[i];
     }
 
-    public static int excavatorInterval() {
-        return SPEC.isLoaded() ? EXCAVATOR_INTERVAL.get() : 60;
-    }
+    public static int excavatorSize(int tier) { return mk(EXC_SIZE, DEF_EXC_SIZE, tier); }
+    public static int excavatorInterval(int tier) { return mk(EXC_INTERVAL, DEF_EXC_INTERVAL, tier); }
+    public static int excavatorSlots(int tier) { return mk(EXC_SLOTS, DEF_EXC_SLOTS, tier); }
+    public static int excavatorSpeedCap(int tier) { return mk(EXC_SPEED_CAP, DEF_SPEED_CAP, tier); }
+    public static int excavatorRangeCap(int tier) { return mk(EXC_RANGE_CAP, DEF_RANGE_CAP, tier); }
+    public static int excavatorEfficiencyCap(int tier) { return mk(EXC_EFF_CAP, DEF_EFF_CAP, tier); }
+    public static int excavatorFortuneCap(int tier) { return mk(EXC_FORTUNE_CAP, DEF_FORTUNE_CAP, tier); }
+    public static int excavatorRangeStep() { return SPEC.isLoaded() ? EXCAVATOR_RANGE_STEP.get() : 10; }
+    public static int excavatorInput() { return SPEC.isLoaded() ? EXCAVATOR_INPUT.get() : 1_000; }
+    public static int surveySlots(int tier) { return mk(SURVEY_SLOTS, DEF_SURVEY_SLOTS, tier); }
+    public static int surveySpeedCap(int tier) { return mk(SURVEY_SPEED_CAP, DEF_SPEED_CAP, tier); }
+    public static int surveyEfficiencyCap(int tier) { return mk(SURVEY_EFF_CAP, DEF_EFF_CAP, tier); }
+    public static int surveyFortuneCap(int tier) { return mk(SURVEY_FORTUNE_CAP, DEF_FORTUNE_CAP, tier); }
+    /** Percent of Mk1 speed. */
+    public static int surveySpeed(int tier) { return mk(SURVEY_SPEED, DEF_SURVEY_SPEED, tier); }
+    public static int surveyRareBonus(int tier) { return mk(SURVEY_RARE, DEF_SURVEY_RARE, tier); }
+    public static int surveyRareWeight() { return SPEC.isLoaded() ? SURVEY_RARE_WEIGHT.get() : 20; }
 
     public static int excavatorFe() {
         return SPEC.isLoaded() ? EXCAVATOR_FE_PER_BLOCK.get() : 40;

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "SXS",
+    " R "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "X": {
+      "item": "robotica:excavator"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:excavator_mk2",
+    "count": 1
+  }
+}

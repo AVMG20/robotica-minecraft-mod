@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " T ",
+    "ACA",
+    "QXQ"
+  ],
+  "key": {
+    "T": {
+      "item": "robotica:tesla_coil_2"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "C": {
+      "item": "robotica:charger"
+    },
+    "Q": {
+      "tag": "c:gems/quartz"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:wireless_charger",
+    "count": 1
+  }
+}

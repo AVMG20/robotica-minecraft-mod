@@ -55,6 +55,7 @@ public class AreaWorkerMenu extends MachineMenu {
         idxSize = track(be::areaSize);
         idxExtra = track(be::guiExtra);
         idxProgress = track(be::guiProgress);
+        trackSides(inv.player.level().isClientSide ? null : be.sides);
     }
 
     public int energy() {

@@ -1,0 +1,7 @@
+{
+  "parent": "robotica:block/survey_rig",
+  "textures": {
+    "scan": "robotica:block/survey_rig_scan_on",
+    "glow": "robotica:block/survey_rig_glow_on"
+  }
+}

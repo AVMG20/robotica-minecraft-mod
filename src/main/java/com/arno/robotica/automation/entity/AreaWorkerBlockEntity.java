@@ -1,7 +1,14 @@
 package com.arno.robotica.automation.entity;
 
 import com.arno.robotica.automation.AutomationConfig;
+import com.arno.robotica.automation.block.AreaWorkerBlock;
 import com.arno.robotica.automation.menu.AreaWorkerMenu;
+import com.arno.robotica.compat.InfoSource;
+import com.arno.robotica.compat.MachineInfo;
+import com.arno.robotica.compat.OwnerNames;
+import com.arno.robotica.core.side.SideConfig;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
@@ -51,7 +58,7 @@ import java.util.function.Supplier;
  * cables, upgrade slots, 9-slot buffer, output into adjacent item handlers, idle drain, owner and "show area" flag.
  * Subclasses implement {@link #work} which runs every server tick and returns the resulting status.
  */
-public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements MenuProvider {
+public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements MenuProvider, InfoSource {
     public enum Status {
         IDLE, WORKING, NO_ENERGY, OUTPUT_FULL;
 
@@ -93,6 +100,15 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     };
     /** Item and capability view of the buffer for pipes and hoppers: extract anything, insert only wanted items. */
     public final IItemHandler externalBuffer = new ExternalBuffer();
+    /**
+     * Per-face item config: the item capability per face follows it, and the worker only pushes its output into
+     * inventories on faces that allow output. Every face starts as Input + Output (the old behaviour).
+     */
+    public final SideConfig sides = new SideConfig(this, () -> externalBuffer);
+    /** Set while the block is swapped for its next Mk, so breaking the old one does not drop anything. */
+    public boolean keepContents;
+    /** Ticks the LIT state stays on after the last work tick, so a short pause does not flicker the model. */
+    private static final int LIT_HOLD = 40;
 
     private final List<ItemStack> pending = new ArrayList<>();
     @Nullable
@@ -167,8 +183,32 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         return 0;
     }
 
+    /** Mk tier: the block's Mk for one-block-per-Mk workers (Excavator, Survey Rig), 1 otherwise (farm bots override). */
     public int tier() {
-        return 1;
+        return tierOf(getBlockState());
+    }
+
+    /** Mk of a worker block state, 1 for blocks without Mk blocks. Safe inside constructors. */
+    public static int tierOf(BlockState state) {
+        return state.getBlock() instanceof AreaWorkerBlock block && block.mkTier() > 0 ? block.mkTier() : 1;
+    }
+
+    /** Called after an in-place Mk upgrade loaded the old worker's data. */
+    public void afterUpgrade() {
+        upgrades.capsChanged();
+        recalc();
+        startPreview();
+        setChangedAndSync();
+    }
+
+    /** Overlay info (Jade): status, progress, Mk and owner. */
+    @Override
+    public void collectInfo(ServerLevel level, MachineInfo info) {
+        boolean finished = guiProgress() >= 100 && status == Status.IDLE;
+        info.status = finished ? "finished" : status.name().toLowerCase(java.util.Locale.ROOT);
+        info.progress = guiProgress();
+        info.tier = tier();
+        info.owner = OwnerNames.name(level.getServer(), owner);
     }
 
     // ---- common state ----
@@ -283,6 +323,19 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
             setChanged();
         }
         if ((status == Status.NO_ENERGY || status == Status.OUTPUT_FULL) && (age + worldPosition.asLong()) % 40 == 0) stallParticles(sl);
+        if (next == Status.WORKING) litUntil = age + LIT_HOLD;
+        if (age % 10 == 0) updateLit(sl, age < litUntil);
+        sides.tick(sl);
+    }
+
+    private long litUntil;
+
+    /** Working look (glowing drill light, scan band) through the block's LIT property, client update only. */
+    private void updateLit(ServerLevel sl, boolean lit) {
+        BlockState state = getBlockState();
+        if (state.hasProperty(BlockStateProperties.LIT) && state.getValue(BlockStateProperties.LIT) != lit) {
+            sl.setBlock(worldPosition, state.setValue(BlockStateProperties.LIT, lit), Block.UPDATE_CLIENTS);
+        }
     }
 
     /** Puffs above a stalled robot so you can see from afar that it needs you: smoke without energy, a note when full. */
@@ -415,6 +468,7 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     private ItemStack insertNeighbours(ServerLevel sl, ItemStack stack, boolean simulate) {
         for (Direction dir : Direction.values()) {
             if (stack.isEmpty()) break;
+            if (!sides.mode(dir).output) continue;
             IItemHandler handler = sl.getCapability(Capabilities.ItemHandler.BLOCK, worldPosition.relative(dir), dir.getOpposite());
             if (handler == null) continue;
             stack = ItemHandlerHelper.insertItem(handler, stack, simulate);
@@ -526,15 +580,18 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         tag.put("pending", list);
         if (owner != null) tag.putUUID("owner", owner);
         tag.putBoolean("showArea", showArea);
+        tag.put("sides", sides.save());
         saveExtra(tag, registries);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        if (tag.contains("energy")) {
+            energy.deserializeNBT(registries, tag.get("energy"));
+            energy.setEnergy(energy.getEnergyStored()); // clamp to this Mk's buffer
+        }
         if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
-        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
         if (tag.contains("buffer")) buffer.deserializeNBT(registries, tag.getCompound("buffer"));
         if (tag.contains("pending")) {
             pending.clear();
@@ -542,6 +599,18 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
                 ItemStack.parse(registries, t).ifPresent(pending::add);
             }
         }
+        if (tag.contains("upgrades")) {
+            // Slot by slot, so a different slot count (next Mk, or a save from before the Mk tiers) never resizes the
+            // handler; cards that no longer have a slot come out like any other output.
+            ItemStackHandler saved = new ItemStackHandler();
+            saved.deserializeNBT(registries, tag.getCompound("upgrades"));
+            for (int i = 0; i < Math.max(upgrades.getSlots(), saved.getSlots()); i++) {
+                ItemStack stack = i < saved.getSlots() ? saved.getStackInSlot(i) : ItemStack.EMPTY;
+                if (i < upgrades.getSlots()) upgrades.setStackInSlot(i, stack);
+                else if (!stack.isEmpty()) pending.add(stack.copy());
+            }
+        }
+        if (tag.contains("sides")) sides.load(tag.getCompound("sides"));
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
         if (tag.contains("showArea")) showArea = tag.getBoolean("showArea");
         if (tag.contains("previewUntil")) previewUntil = tag.getLong("previewUntil");

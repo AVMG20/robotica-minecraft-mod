@@ -79,7 +79,7 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
         int size = menu.size();
         Component info = Component.translatable("gui.robotica.area", size, size);
         drawLabelRight(g, info, x + imageWidth - 8, y + 6, 40);
-        Component tierTip = isFarmBot()
+        Component tierTip = isFarmBot() || menu.be instanceof com.arno.robotica.automation.entity.ExcavatorBlockEntity
                 ? Component.translatable("gui.robotica.tier_area", menu.be.tier(), size, size)
                 : Component.translatable("gui.robotica.area", size, size);
         addTooltip(x + imageWidth - 50, y + 4, 44, 11, tierTip);

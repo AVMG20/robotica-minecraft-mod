@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " N ",
+    "PXP",
+    "ECE"
+  ],
+  "key": {
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "X": {
+      "item": "robotica:survey_rig_mk3"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "C": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:survey_rig_mk4",
+    "count": 1
+  }
+}

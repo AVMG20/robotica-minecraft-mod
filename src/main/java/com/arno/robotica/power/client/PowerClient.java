@@ -42,6 +42,7 @@ public final class PowerClient {
         event.register(PowerRegistry.METAL_PRESS_MENU.get(), MetalPressScreen::new);
         event.register(PowerRegistry.SOLAR_PANEL_MENU.get(), com.arno.robotica.power.client.screen.SolarPanelScreen::new);
         event.register(PowerRegistry.ENERGY_INFO_MENU.get(), com.arno.robotica.power.client.screen.EnergyInfoScreen::new);
+        event.register(PowerRegistry.WIRELESS_CHARGER_MENU.get(), com.arno.robotica.power.client.screen.WirelessChargerScreen::new);
     }
 
     /** Accumulator items show their charge like the placed block: robotica:charge = lit cells / 5. */
@@ -58,6 +59,7 @@ public final class PowerClient {
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(PowerRegistry.TESLA_COIL_BE.get(), TeslaCoilRenderer::new);
+        event.registerBlockEntityRenderer(PowerRegistry.WIRELESS_CHARGER_BE.get(), WirelessChargerRenderer::new);
     }
 
     /** The Metal Press has no recipe book, but the client still looks every recipe up by category; avoid the "Unknown recipe category" warnings. */

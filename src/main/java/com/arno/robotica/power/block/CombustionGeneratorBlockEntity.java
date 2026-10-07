@@ -65,6 +65,8 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
     public final MachineEnergyStorage energy = new MachineEnergyStorage(PowerConfig.generatorBuffer(), 0, MAX_OUTPUT, this::setChanged);
 
     private final IItemHandler automation = new ItemAccess(fuel, (slot, stack) -> isFuel(stack), (slot, stack) -> !isFuel(stack));
+    /** Per-face item config (fuel in, empty buckets out); every face both ways by default. */
+    public final com.arno.robotica.core.side.SideConfig sides = new com.arno.robotica.core.side.SideConfig(this, () -> automation);
 
     private int burnTime;
     private int burnTotal;
@@ -103,6 +105,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
 
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
+        sides.tick(level);
         int gen = output();
         if (burnTime == 0 && gen > 0 && energy.getSpace() >= gen) ignite();
         if (burnTime > 0 && energy.getSpace() >= gen) {
@@ -156,6 +159,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         tag.putInt("burnTotal", burnTotal);
         tag.putFloat("burnDebt", burnDebt);
         tag.put("upgrades", upgrades.serializeNBT(registries));
+        tag.put("sides", sides.save());
     }
 
     @Override
@@ -167,5 +171,6 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         burnTotal = tag.getInt("burnTotal");
         burnDebt = tag.getFloat("burnDebt");
         if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
+        sides.load(tag.getCompound("sides"));
     }
 }

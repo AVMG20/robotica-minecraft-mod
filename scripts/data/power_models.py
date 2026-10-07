@@ -103,6 +103,29 @@ for name, (top, top_on, top_glow) in MACHINES.items():
     item_model(name, f'robotica:block/{name}')
     loot(name)
 
+# ---------- wireless charger: the machine cube plus an emitter mast with a ball on top (full bright when lit) ----------
+for lit in (False, True):
+    name = 'wireless_charger' + ('_on' if lit else '')
+    faces = {'north': 'wireless_charger_front' + ('_on' if lit else ''), 'up': 'wireless_charger_top',
+             'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
+             'east': 'power_machine_side'}
+    model = machine_model(faces, {'north': 'wireless_charger_front_glow'} if lit else None)
+    model['textures']['mast'] = tex('wireless_charger_mast')
+    model['textures']['ball'] = tex('tesla_coil_tip')
+    sides = ('north', 'south', 'west', 'east')
+    model['elements'] += [
+        {'from': [6, 16, 6], 'to': [10, 17, 10], 'faces': {d: {'texture': '#mast'} for d in sides + ('up',)}},
+        {'from': [7.25, 17, 7.25], 'to': [8.75, 19.5, 8.75], 'faces': {d: {'texture': '#mast'} for d in sides}},
+        {'from': [6.75, 19.5, 6.75], 'to': [9.25, 22, 9.25], 'shade': not lit,
+         'faces': {d: dict({'texture': '#ball', 'uv': [5, 5, 11, 11]}, **({'neoforge_data': GLOW} if lit else {}))
+                   for d in DIRS}},
+    ]
+    block_model(name, model)
+blockstate('wireless_charger', {'variants': facing_variants(lambda c: 'wireless_charger' + ('_on' if c['lit'] else ''),
+                                                            [('lit', [False, True])])})
+item_model('wireless_charger', 'robotica:block/wireless_charger')
+loot('wireless_charger')
+
 # ---------- accumulators: the gauge shows the charge (block state `charge` 0-5, one lit cell per level) ----------
 ACC_CELLS = 5
 for tier in (1, 2, 3):

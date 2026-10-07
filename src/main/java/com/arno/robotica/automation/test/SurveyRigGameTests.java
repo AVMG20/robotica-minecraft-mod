@@ -92,7 +92,10 @@ public class SurveyRigGameTests {
         });
     }
 
-    /** Base: one ore per 400 ticks at 200 FE/t. Speed cards cut the time but the FE per tick climbs steeply. */
+    /**
+     * Mk1: one ore per 400 ticks at 200 FE/t. Speed cards cut the time but the FE per tick climbs steeply. Mk4 (x3 speed
+     * at x3 FE/t) takes all 8 speed cards.
+     */
     @GameTest(template = "empty")
     public static void surveyRigEnergyAndSpeedMath(GameTestHelper helper) {
         helper.setBlock(RIG, AutomationContent.SURVEY_RIG.get());
@@ -100,17 +103,20 @@ public class SurveyRigGameTests {
         helper.assertTrue(rig.actionInterval() == 400, "base interval 400, is " + rig.actionInterval());
         helper.assertTrue(rig.energyPerTick() == 200, "base 200 FE/t, is " + rig.energyPerTick());
         helper.assertTrue(rig.energyPerOre() == 80_000, "base 80,000 FE per ore, is " + rig.energyPerOre());
-        helper.assertTrue(rig.upgrades.cap(UpgradeKind.SPEED) == 8, "speed cap 8");
+        helper.assertTrue(rig.upgrades.cap(UpgradeKind.SPEED) == 2, "Mk1 speed cap 2");
         helper.assertTrue(rig.upgrades.cap(UpgradeKind.RANGE) == 0, "no range cards");
         rig.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 1));
         helper.assertTrue(rig.actionInterval() == 200 && rig.energyPerTick() == 700, "1 card: x2 speed, x3.5 FE/t, is " + rig.energyPerTick());
-        rig.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 8));
-        helper.assertTrue(rig.actionInterval() == 20, "8 cards: x20, is " + rig.actionInterval());
-        helper.assertTrue(rig.energyPerTick() == 84_000, "8 cards: x420 FE/t, is " + rig.energyPerTick());
-        helper.assertTrue(rig.energyPerOre() == 21 * 80_000, "8 cards: x21 FE per ore, is " + rig.energyPerOre());
-        rig.upgrades.setStackInSlot(1, CoreItems.cards(UpgradeKind.EFFICIENCY, 4));
-        helper.assertTrue(rig.energyPerTick() == 33_600, "8 speed + 4 efficiency, is " + rig.energyPerTick());
-        helper.assertTrue(rig.energy.getMaxEnergyStored() >= 84_000 * 20, "the buffer holds at least one top speed ore");
+
+        helper.setBlock(RIG, AutomationContent.SURVEY_RIG_MK4.get());
+        SurveyRigBlockEntity mk4 = helper.getBlockEntity(RIG);
+        helper.assertTrue(mk4.upgrades.cap(UpgradeKind.SPEED) == 8, "Mk4 speed cap 8");
+        mk4.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 8));
+        helper.assertTrue(mk4.actionInterval() == 6, "Mk4 + 8 cards: 133 / 20 ticks, is " + mk4.actionInterval());
+        helper.assertTrue(mk4.energyPerTick() == 252_000, "Mk4 + 8 cards: 600 x 420 FE/t, is " + mk4.energyPerTick());
+        mk4.upgrades.setStackInSlot(1, CoreItems.cards(UpgradeKind.EFFICIENCY, 4));
+        helper.assertTrue(mk4.energyPerTick() == 100_800, "8 speed + 4 efficiency, is " + mk4.energyPerTick());
+        helper.assertTrue(mk4.energy.getMaxEnergyStored() >= 252_000 * 6, "the buffer holds at least one top speed ore");
         helper.succeed();
     }
 

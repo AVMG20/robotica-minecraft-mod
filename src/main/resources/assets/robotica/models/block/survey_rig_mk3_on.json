@@ -1,0 +1,8 @@
+{
+  "parent": "robotica:block/survey_rig",
+  "textures": {
+    "accent": "robotica:block/automation_mk3",
+    "scan": "robotica:block/survey_rig_scan_on",
+    "glow": "robotica:block/survey_rig_glow_on"
+  }
+}

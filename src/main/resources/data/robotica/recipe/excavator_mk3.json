@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " Q ",
+    "PXP",
+    " B "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "X": {
+      "item": "robotica:excavator_mk2"
+    },
+    "B": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:excavator_mk3",
+    "count": 1
+  }
+}
