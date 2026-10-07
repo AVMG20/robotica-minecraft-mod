@@ -209,7 +209,7 @@
         },
         {
           "title": "Mk1 to Mk4",
-          "text": "- Speed x1, x2, x3, x5.\n- Card slots 2 to 5. Fortune from Mk2.\nRight-click a placed machine with the next Mk: it swaps in, keeps everything, and gives the old one back.",
+          "text": "- Speed x1, x2, x3, x5.\n- Card slots 2 to 5 (the Mk rule).\nRight-click a placed machine with the next Mk: it swaps in, keeps everything, and gives the old one back.",
           "items": [
             "robotica:alloy_smelter_mk1",
             "robotica:alloy_smelter_mk2",
@@ -355,7 +355,7 @@
         },
         {
           "title": "Farm tiers",
-          "text": "Right-click a placed robot with a Farm Kit.\n- Mk1: 9x9 (Stumpy 7x7)\n- Mk2: 13x13, faster\n- Mk3: 17x17\n- Mk4: 25x25\nEach Mk: one more speed, range and growth card.",
+          "text": "Right-click a placed robot with a Farm Kit.\n- Mk1: 9x9 (Stumpy 7x7)\n- Mk2: 13x13, faster\n- Mk3: 17x17\n- Mk4: 25x25\nEach Mk: one more card slot, higher caps.",
           "items": [
             "robotica:farm_kit_mk2",
             "robotica:farm_kit_mk3",
@@ -402,7 +402,7 @@
       "pages": [
         {
           "title": "Upgrade cards",
-          "text": "Right-click a machine or robot with a card.\n- Speed: up to x20 (8 cards), more FE each.\n- Efficiency: -15% FE each.\n- Range, Growth, Fortune stack.\n- Silk, Void: one card.\nEach machine has its own caps.",
+          "text": "Cards upgrade machines. Right-click one with a card.\n- Speed: up to x20, more FE per action.\n- Efficiency: -15% FE each.\n- Range, Growth, Fortune stack.\n- Silk, Void: one card.",
           "items": [
             "robotica:upgrade_speed",
             "robotica:upgrade_range",
@@ -414,10 +414,18 @@
           ]
         },
         {
-          "title": "Other cards",
-          "text": "- Auto-Pickup: power tools, at a Tinker's Bench.\n- Height: taller Architect buildings.\n- Carry: Storage Terminal keeps its items when picked up.",
+          "title": "The Mk rule",
+          "text": "A machine with a Mk:\n- Mk + 1 card slots\n- Speed 2 per Mk\n- Efficiency, Range, Growth 1 per Mk\n- Fortune up to 3\nOthers have fixed slots.",
           "items": [
-            "robotica:upgrade_pickup",
+            "robotica:grinder_mk1",
+            "robotica:excavator",
+            "robotica:farm_kit_mk2"
+          ]
+        },
+        {
+          "title": "Other cards",
+          "text": "- Height: taller Architect buildings.\n- Carry: Storage Terminal keeps its items when picked up.",
+          "items": [
             "robotica:upgrade_height",
             "robotica:upgrade_carry"
           ]

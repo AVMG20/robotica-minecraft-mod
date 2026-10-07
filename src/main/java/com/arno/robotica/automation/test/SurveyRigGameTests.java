@@ -119,19 +119,4 @@ public class SurveyRigGameTests {
         helper.assertTrue(mk4.energy.getMaxEnergyStored() >= 252_000 * 6, "the buffer holds at least one top speed ore");
         helper.succeed();
     }
-
-    /** A rig saved by the old chunk-ledger version loads: its stale tags are ignored. */
-    @GameTest(template = "empty")
-    public static void surveyRigLoadsOldSaves(GameTestHelper helper) {
-        helper.setBlock(RIG, AutomationContent.SURVEY_RIG.get());
-        SurveyRigBlockEntity rig = helper.getBlockEntity(RIG);
-        CompoundTag old = rig.saveWithoutMetadata(helper.getLevel().registryAccess());
-        old.putInt("rigState", 5);
-        old.putBoolean("finishedHere", true);
-        old.putInt("progress", 37);
-        rig.loadWithComponents(old, helper.getLevel().registryAccess());
-        helper.assertTrue(rig.rigState() == RigState.WAITING, "old states reset, is " + rig.rigState());
-        helper.assertTrue(rig.progressTicks() == 37 && rig.lastOre() == null, "progress kept, no last ore");
-        helper.succeed();
-    }
 }

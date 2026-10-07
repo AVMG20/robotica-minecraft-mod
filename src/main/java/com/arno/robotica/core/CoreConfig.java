@@ -15,6 +15,10 @@ public final class CoreConfig {
     public static final ModConfigSpec.DoubleValue GENERATION_MULTIPLIER;
     public static final ModConfigSpec.IntValue SIDE_TRANSFER_INTERVAL;
     public static final ModConfigSpec.IntValue SIDE_TRANSFER_ITEMS;
+    public static final ModConfigSpec.IntValue SPEED_CAP_PER_MK;
+    public static final ModConfigSpec.IntValue EFFICIENCY_CAP_PER_MK;
+    public static final ModConfigSpec.IntValue RANGE_CAP_PER_MK;
+    public static final ModConfigSpec.IntValue FORTUNE_CAP_MAX;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -32,6 +36,16 @@ public final class CoreConfig {
         SIDE_TRANSFER_ITEMS = b.comment("Items a machine moves per transfer, each way.")
                 .defineInRange("sideTransferItems", 16, 1, 64);
         b.pop();
+        b.comment("Upgrade cards in machines with a Mk (card slots are always Mk + 1).").push("upgrades");
+        SPEED_CAP_PER_MK = b.comment("Speed cards that count per Mk (2: Mk1 2 ... Mk4 8).")
+                .defineInRange("speedCapPerMk", 2, 0, 8);
+        EFFICIENCY_CAP_PER_MK = b.comment("Efficiency cards that count per Mk.")
+                .defineInRange("efficiencyCapPerMk", 1, 0, 4);
+        RANGE_CAP_PER_MK = b.comment("Range cards that count per Mk.")
+                .defineInRange("rangeCapPerMk", 1, 0, 4);
+        FORTUNE_CAP_MAX = b.comment("Fortune cards that count: the Mk, at most this.")
+                .defineInRange("fortuneCapMax", 3, 0, 3);
+        b.pop();
         SPEC = b.build();
     }
 
@@ -41,6 +55,22 @@ public final class CoreConfig {
 
     public static int sideTransferItems() {
         return SPEC.isLoaded() ? SIDE_TRANSFER_ITEMS.get() : 16;
+    }
+
+    public static int speedCapPerMk() {
+        return SPEC.isLoaded() ? SPEED_CAP_PER_MK.get() : 2;
+    }
+
+    public static int efficiencyCapPerMk() {
+        return SPEC.isLoaded() ? EFFICIENCY_CAP_PER_MK.get() : 1;
+    }
+
+    public static int rangeCapPerMk() {
+        return SPEC.isLoaded() ? RANGE_CAP_PER_MK.get() : 1;
+    }
+
+    public static int fortuneCapMax() {
+        return SPEC.isLoaded() ? FORTUNE_CAP_MAX.get() : 3;
     }
 
     public static double energyUse() {

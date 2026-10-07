@@ -84,7 +84,7 @@ public class ProcessingBlock extends IndustryMachineBlock {
         tooltip.add(Component.translatable("tooltip.robotica." + machine.id()).withStyle(ChatFormatting.GRAY));
         double speed = IndustryConfig.tierSpeed(tier);
         String x = speed == Math.rint(speed) ? String.valueOf((int) speed) : String.format(Locale.ROOT, "%.1f", speed);
-        tooltip.add(Component.translatable("tooltip.robotica.industry_tier", tier, x, tier + 1).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.industry_tier", tier, x, com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier)).withStyle(ChatFormatting.DARK_GRAY));
         if (tier < Machine.TIERS) tooltip.add(Component.translatable("tooltip.robotica.industry_upgrade").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

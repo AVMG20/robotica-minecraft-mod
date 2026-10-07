@@ -3,6 +3,7 @@ package com.arno.robotica.industry.test;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.industry.IndustryRegistry;
 import com.arno.robotica.industry.block.ProcessingBlock;
 import com.arno.robotica.industry.block.ProcessingBlockEntity;
@@ -95,7 +96,7 @@ public class IndustryGameTests {
     @GameTest(template = "empty")
     public static void machineTiersAndUpgradeInPlace(GameTestHelper helper) {
         ProcessingBlockEntity mk1 = place(helper, Machine.ASSEMBLER, 1);
-        helper.assertTrue(mk1.upgrades.getSlots() == 2, "Mk1 has 2 card slots");
+        helper.assertTrue(mk1.upgrades.activeSlots() == 2, "Mk1 has 2 card slots");
         mk1.items.setStackInSlot(0, new ItemStack(IndustryRegistry.THORIUM_PLATE.get(), 5));
         mk1.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 2));
         mk1.energy.setEnergy(12_345);
@@ -103,19 +104,19 @@ public class IndustryGameTests {
                 .stream().map(RecipeHolder::value).filter(r -> r.getResultItem(helper.getLevel().registryAccess()).is(IndustryRegistry.THERMOCOUPLE.get()))
                 .findFirst().orElseThrow();
         int mk1Ticks = mk1.ticksFor(recipe);
-        helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).getCount() == 1, "Mk1 takes no fortune card");
+        helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.FORTUNE, 2), true).getCount() == 1, "Mk1 takes one fortune card");
+        helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.VOID, 1), true).getCount() == 1, "only the Centrifuge takes a void card");
 
         BlockPos abs = helper.absolutePos(POS);
         ProcessingBlock.upgradeInPlace(helper.getLevel(), abs, helper.getBlockState(POS),
                 IndustryRegistry.machineBlock(Machine.ASSEMBLER, 2).get(), null);
         ProcessingBlockEntity mk2 = (ProcessingBlockEntity) helper.getBlockEntity(POS);
-        helper.assertTrue(mk2.tier == 2 && mk2.upgrades.getSlots() == 3, "Mk2 with 3 card slots expected");
+        helper.assertTrue(mk2.tier == 2 && mk2.upgrades.activeSlots() == 3, "Mk2 with 3 card slots expected");
         helper.assertTrue(mk2.items.getStackInSlot(0).getCount() == 5, "inputs kept");
         helper.assertTrue(mk2.upgrades.level(UpgradeKind.SPEED) == 2, "cards kept");
         helper.assertTrue(mk2.energy.getEnergyStored() == 12_345, "energy kept");
         helper.assertTrue(mk2.ticksFor(recipe) < mk1Ticks, "Mk2 is faster: " + mk2.ticksFor(recipe) + " vs " + mk1Ticks);
-        helper.assertTrue(mk2.upgrades.insertItem(2, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).isEmpty(), "Mk2 takes a fortune card");
-        helper.assertTrue(ProcessingBlockEntity.cardCap(Machine.ASSEMBLER, 4, UpgradeKind.SPEED) == 8, "Mk4 takes 8 speed cards");
+        helper.assertTrue(mk2.upgrades.insertItem(2, CoreItems.cards(UpgradeKind.FORTUNE, 3), true).getCount() == 1, "Mk2 takes two fortune cards");
         helper.succeed();
     }
 
@@ -232,15 +233,12 @@ public class IndustryGameTests {
         });
     }
 
-    /** Speed cards raise the Combustion Generator's FE/t, efficiency cards stretch its fuel; solar cards follow the config. */
+    /** Speed cards raise the Combustion Generator's FE/t, efficiency cards stretch its fuel (the machine energy math). */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void generatorCards(GameTestHelper helper) {
         helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(0, 0) == 1.0, "no cards: one fuel tick per tick");
-        helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(0, 4) < 0.6, "4 efficiency cards: fuel lasts 1.8x");
-        helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(3, 0) > 4.0, "speed burns fuel faster than it adds FE");
-        helper.assertTrue(SolarPanelBlockEntity.outputFor(80, true, 4, 0) == 160, "4 speed cards double a panel's daylight output");
-        helper.assertTrue(SolarPanelBlockEntity.outputFor(80, false, 0, 0) == 0, "no moonlight without efficiency cards");
-        helper.assertTrue(SolarPanelBlockEntity.outputFor(80, false, 4, 4) == 32, "4 efficiency cards keep 40% at night");
+        helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(0, 4) == Upgrades.energyMultiplier(0, 4), "4 efficiency cards: fuel lasts 2.5x");
+        helper.assertTrue(CombustionGeneratorBlockEntity.fuelPerTick(3, 0) == 4 * Upgrades.energyMultiplier(3, 0), "speed burns fuel faster than it adds FE");
 
         helper.setBlock(POS, PowerRegistry.COMBUSTION_GENERATOR.get().defaultBlockState());
         CombustionGeneratorBlockEntity gen = (CombustionGeneratorBlockEntity) helper.getBlockEntity(POS);

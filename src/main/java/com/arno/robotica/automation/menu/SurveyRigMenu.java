@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Survey Rig GUI (176 x 176): energy bar, battery and Magma Core slots, progress bar, scanner screen with the last ore,
- * upgrade slots, 3x3 buffer. Slot order: 0 battery, 1 core, 2-5 upgrades, 6-14 buffer, then the player inventory.
+ * upgrade slots, 3x3 buffer. Slot order: 0 battery, 1 core, 2-6 upgrades (the Mk opens Mk + 1), 7-15 buffer, then the player inventory.
  */
 public class SurveyRigMenu extends MachineMenu {
     public static final int SLOT_CORE = 1;
@@ -48,9 +48,7 @@ public class SurveyRigMenu extends MachineMenu {
         this.be = be;
         addSlot(new SlotItemHandler(be.battery, 0, 26, 18));
         addSlot(new SlotItemHandler(be.core, 0, 44, 18));
-        for (int i = 0; i < be.upgradeSlotCount(); i++) {
-            addSlot(new SlotItemHandler(be.upgrades, i, 26 + i * 18, 52));
-        }
+        for (int i = 0; i < be.upgrades.getSlots(); i++) addSlot(be.upgrades.slot(i, 26 + i * 18, 52));
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 3; c++) {
                 addSlot(new SlotItemHandler(be.buffer, c + r * 3, 117 + c * 18, 18 + r * 18));

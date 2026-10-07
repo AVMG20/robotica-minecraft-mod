@@ -872,7 +872,7 @@ public class ArchitectGameTests {
         ArchitectTableBlockEntity table = (ArchitectTableBlockEntity) helper.getBlockEntity(high(band));
         table.setMatter(new Matter(5000, 5000, 5000));
         table.energy.setEnergy(table.energy.getMaxEnergyStored());
-        table.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 4).get()));
+        table.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 1));
         if (clear) table.handleAction(null, ArchitectTableBlockEntity.ACTION_CLEAR, 1, 0);
         return table;
     }

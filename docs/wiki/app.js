@@ -99,6 +99,7 @@ function directive(name, arg) {
     case 'multiblock': return D.multiblocks[arg] ? viewerHtml(arg) : '';
     case 'upgrades': return upgradesFor(arg, true);
     case 'cards': return cardMatrix();
+    case 'mkrule': return mkRuleTable();
     case 'guide': { const g = D.guides.find(x => x.slug === arg); return g ? `<div class="grid-cards">${guideCard(g)}</div>` : ''; }
     case 'image': { const [src, alt] = arg.split('|'); return `<img class="frame" style="max-width:640px;margin:12px 0" src="${esc(src.trim())}" alt="${esc((alt || '').trim())}" loading="lazy">`; }
     case 'orechart': return oreChart();
@@ -158,7 +159,7 @@ function plain(src) {
 
 /* ------------------------------------------------------------ upgrade cards */
 
-const KIND_ORDER = ['speed', 'efficiency', 'range', 'fortune', 'silk', 'growth', 'void', 'height', 'pickup', 'carry'];
+const KIND_ORDER = ['speed', 'efficiency', 'range', 'fortune', 'silk', 'growth', 'void', 'height', 'carry'];
 function rowOf(id) { return D.upgrades.machines.find(m => m.items.includes(id) || (m.tierItems || []).includes(id)); }
 function capAt(v, t) { return Array.isArray(v) ? v[t] : v; }
 function capText(v) {
@@ -189,6 +190,15 @@ function upgradesFor(id, withTitle) {
   h += '</tbody></table></div>';
   if (m.tierItems) h += `<p>Mk2-Mk4 via ${m.tierItems.filter(Boolean).map(t => ilink(t)).join(', ')} on the placed block.</p>`;
   return h;
+}
+/* The Mk rule: card slots and caps per Mk, from the Java code. */
+function mkRuleTable() {
+  const r = D.upgrades.mkRule;
+  if (!r) return '';
+  let h = '<div class="tbl"><table><thead><tr><th>Card</th>' + r.tiers.map(t => `<th class="num">${esc(t)}</th>`).join('') + '</tr></thead><tbody>';
+  h += `<tr><td>Card slots</td>${r.slots.map(s => `<td class="num">${s}</td>`).join('')}</tr>`;
+  for (const k of KIND_ORDER.filter(k => k in r.caps)) h += `<tr><td>${ilink(cardItem(k))}</td>${r.caps[k].map(c => `<td class="num">${c}</td>`).join('')}</tr>`;
+  return h + '</tbody></table></div>';
 }
 /* Every machine that takes a card kind. */
 function machinesForCard(kind) {
@@ -506,7 +516,8 @@ function machinesPage() {
 }
 function upgradesPage() {
   const cards = KIND_ORDER.filter(k => D.upgrades.cards[k]).map(k => [k, D.upgrades.cards[k]]);
-  return `<h1>Upgrade cards</h1><p class="lead">Right-click a machine with a card, or put it in an upgrade slot. One kind per slot; stackable kinds stack in their slot up to the machine's limit.</p>
+  return `<h1>Upgrade cards</h1><p class="lead">Cards upgrade machines. Right-click a machine with a card, or put it in an upgrade slot. One kind per slot; stackable kinds stack in their slot up to the machine's limit.</p>
+    ${D.upgrades.rule ? `<p>${esc(D.upgrades.rule)}</p>` : ''}
     <div class="grid-cards">${cards.map(([k, c]) => `<a class="card" href="#/item/${c.item}">${icon(c.item)}<div><b>${esc(c.name)}</b><span>${esc(c.summary)} Max ${c.maxStack}.</span></div></a>`).join('')}</div>
     <h2>Which machine takes what</h2>${cardMatrix()}`;
 }

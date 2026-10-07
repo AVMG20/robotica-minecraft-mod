@@ -161,7 +161,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             setChanged();
         }
     };
-    public final Upgrades upgrades = new Upgrades(2, Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.HEIGHT), this::setChanged);
+    public final Upgrades upgrades = Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.ARCHITECT_TABLE, this::setChanged);
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ArchitectConfig.energyBuffer(), ArchitectConfig.energyReceive(), 0, this::setChanged);
     private final IItemHandler automation = new InputOnlyHandler(input);
 

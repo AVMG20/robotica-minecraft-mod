@@ -3,7 +3,7 @@ package com.arno.robotica.storage.block;
 import com.arno.robotica.core.CoreComponents;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
-import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.UpgradeRules;
 import com.arno.robotica.storage.StorageContent;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
@@ -110,7 +110,7 @@ public class StorageTerminalBlock extends BaseEntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (!(stack.getItem() instanceof UpgradeCardItem card) || card.getKind() != UpgradeKind.CARRY) {
+        if (!(stack.getItem() instanceof UpgradeCardItem card) || UpgradeRules.Fixed.STORAGE_TERMINAL.cap(card.getKind()) <= 0) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!(level.getBlockEntity(pos) instanceof StorageTerminalBlockEntity terminal)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

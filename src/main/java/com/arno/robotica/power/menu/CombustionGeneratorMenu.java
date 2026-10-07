@@ -23,8 +23,8 @@ public class CombustionGeneratorMenu extends MachineMenu {
 
     /** Client side. */
     public CombustionGeneratorMenu(int id, Inventory inv, BlockPos pos) {
-        this(id, inv, pos, new ItemStackHandler(1), new com.arno.robotica.core.upgrade.Upgrades(2,
-                java.util.Map.of(com.arno.robotica.core.upgrade.UpgradeKind.SPEED, 3, com.arno.robotica.core.upgrade.UpgradeKind.EFFICIENCY, 4), () -> {}), null);
+        this(id, inv, pos, new ItemStackHandler(1), com.arno.robotica.core.upgrade.Upgrades.fixed(
+                com.arno.robotica.core.upgrade.UpgradeRules.Fixed.COMBUSTION_GENERATOR, () -> {}), null);
     }
 
     /** Server side. */

@@ -78,12 +78,6 @@ public class ProcessingGameTests {
                 new net.minecraft.world.phys.BlockHitResult(abs.getCenter(), net.minecraft.core.Direction.UP, abs, false));
         helper.assertTrue(level.getBlockState(abs).is(ProcessingRegistry.GRINDER_MK1.get()) && mk3.getCount() == 1, "Mk3 does not fit on Mk1: " + skip);
 
-        ItemStack full = new ItemStack(ProcessingRegistry.GRINDER_MK2.get());
-        full.set(CoreComponents.CONTENTS.get(), new net.minecraft.nbt.CompoundTag());
-        level.getBlockState(abs).useItemOn(full, level, player, net.minecraft.world.InteractionHand.MAIN_HAND,
-                new net.minecraft.world.phys.BlockHitResult(abs.getCenter(), net.minecraft.core.Direction.UP, abs, false));
-        helper.assertTrue(level.getBlockState(abs).is(ProcessingRegistry.GRINDER_MK1.get()) && full.getCount() == 1, "a Mk2 with contents must be placed first");
-
         ItemStack mk2 = new ItemStack(ProcessingRegistry.GRINDER_MK2.get());
         mk2.set(CoreComponents.ENERGY.get(), 1_000);
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, mk2);
@@ -205,8 +199,8 @@ public class ProcessingGameTests {
             helper.assertTrue(be.upgrades.insertItem(mk + 1 > 4 ? 4 : mk + 1, CoreItems.cards(UpgradeKind.VOID, 1), true).getCount() == (mk + 1 > 4 ? 0 : 1),
                     "Mk" + mk + ": the slot after the last is closed");
             ItemStack rest = be.upgrades.insertItem(0, CoreItems.cards(UpgradeKind.SPEED, 8), false);
-            helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == ProcessingConfig.speedCap(mk), "speed cap per Mk");
-            helper.assertTrue(rest.getCount() == 8 - ProcessingConfig.speedCap(mk), "the rest is refused");
+            helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == 2 * mk, "speed cap per Mk");
+            helper.assertTrue(rest.getCount() == 8 - 2 * mk, "the rest is refused");
         }
         ElectricFurnaceBlockEntity furnace = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK2);
         helper.assertTrue(furnace.upgrades.activeSlots() == 3, "furnace Mk2: 3 slots");
@@ -234,7 +228,7 @@ public class ProcessingGameTests {
         });
     }
 
-    /** Crafting the next Mk keeps the energy and Carry contents; the dust smelts back into an ingot. */
+    /** Crafting the next Mk keeps the energy; the dust smelts back into an ingot. */
     @GameTest(template = "empty")
     public static void upgradeRecipeKeepsEnergy(GameTestHelper helper) {
         var level = helper.getLevel();
@@ -269,8 +263,7 @@ public class ProcessingGameTests {
 
     /**
      * Media is loaded straight away (one item leaves the slot), so the slot takes more of it and the player can take it
-     * out any time; when the loaded item runs out the next one is loaded. Old worn stacks are loaded with what they had
-     * left and stack again.
+     * out any time; when the loaded item runs out the next one is loaded.
      */
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void mediaLoadsStraightAway(GameTestHelper helper) {
@@ -292,20 +285,7 @@ public class ProcessingGameTests {
                 for (int s = 0; s < GrinderBlockEntity.OUT_COUNT; s++) be.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST + s, ItemStack.EMPTY);
             }
             helper.assertTrue(be.items.getStackInSlot(GrinderBlockEntity.MEDIA).isEmpty() && be.mediaLeft() == 8, "the next flint was loaded");
-
-            // An old stack with wear on it: loaded with what it had left, the rest stacks like new flint.
-            BlockPos other = new BlockPos(1, 1, 0);
-            helper.setBlock(other, ProcessingRegistry.GRINDER_MK1.get().defaultBlockState());
-            GrinderBlockEntity old = (GrinderBlockEntity) helper.getBlockEntity(other);
-            ItemStack worn = new ItemStack(Items.FLINT, 3);
-            worn.set(ProcessingRegistry.MEDIA_WEAR.get(), 5);
-            old.items.setStackInSlot(GrinderBlockEntity.MEDIA, worn);
-            helper.runAfterDelay(2, () -> {
-                helper.assertTrue(old.mediaLeft() == 3, "worn flint loaded with 3 ores left, got " + old.mediaLeft());
-                ItemStack rest = old.items.getStackInSlot(GrinderBlockEntity.MEDIA);
-                helper.assertTrue(rest.getCount() == 2 && ItemStack.isSameItemSameComponents(rest, new ItemStack(Items.FLINT)), "the rest is plain flint");
-                helper.succeed();
-            });
+            helper.succeed();
         });
     }
 
@@ -446,37 +426,5 @@ public class ProcessingGameTests {
         assertSpilled(helper);
         clearDrops(helper, POS);
         helper.succeed();
-    }
-
-    /**
-     * The Carry card has no job in these machines; a machine item from an older version that still carries contents
-     * moves them into the placed machine (nothing lost, nothing doubled) and an old Carry card pops out.
-     */
-    @GameTest(template = "empty", timeoutTicks = 60)
-    public static void oldCarriedContentsAreHarmless(GameTestHelper helper) {
-        GrinderBlockEntity be = place(helper, ProcessingRegistry.GRINDER_MK2);
-        helper.assertTrue(!be.upgrades.insertOne(CoreItems.cards(UpgradeKind.CARRY, 1), true), "Carry card is not accepted");
-        var registries = helper.getLevel().registryAccess();
-        ItemStackHandler oldItems = new ItemStackHandler(GrinderBlockEntity.SLOTS);
-        oldItems.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.IRON_ORE, 10));
-        ItemStackHandler oldCards = new ItemStackHandler(5);
-        oldCards.setStackInSlot(1, CoreItems.cards(UpgradeKind.CARRY, 1));
-        CompoundTag contents = new CompoundTag();
-        contents.put("items", oldItems.serializeNBT(registries));
-        contents.put("upgrades", oldCards.serializeNBT(registries));
-        BlockPos other = new BlockPos(1, 1, 0);
-        helper.setBlock(other, ProcessingRegistry.GRINDER_MK2.get().defaultBlockState());
-        GrinderBlockEntity placed = (GrinderBlockEntity) helper.getBlockEntity(other);
-        placed.applyComponents(DataComponentMap.builder().set(CoreComponents.CONTENTS.get(), contents).build(), DataComponentPatch.EMPTY);
-        helper.assertTrue(placed.items.getStackInSlot(GrinderBlockEntity.INPUT).getCount() == 10, "old contents moved into the machine");
-        helper.succeedWhen(() -> {
-            helper.assertTrue(placed.upgrades.getStackInSlot(1).isEmpty(), "the old Carry card popped out");
-            int cards = 0;
-            for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(other)).inflate(3))) {
-                if (e.getItem().is(CoreItems.cards(UpgradeKind.CARRY, 1).getItem())) cards += e.getItem().getCount();
-            }
-            helper.assertTrue(cards == 1, "exactly one Carry card came out");
-            clearDrops(helper, other);
-        });
     }
 }

@@ -25,8 +25,7 @@
               "robotica:upgrade_speed",
               "robotica:upgrade_efficiency",
               "robotica:upgrade_growth",
-              "robotica:upgrade_void",
-              "robotica:upgrade_pickup"
+              "robotica:upgrade_void"
             ]
           }
         ]

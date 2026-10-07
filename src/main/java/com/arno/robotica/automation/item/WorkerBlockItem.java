@@ -36,12 +36,12 @@ public class WorkerBlockItem extends BlockItem implements HasDetails {
         if (getBlock() instanceof ExcavatorBlock) {
             int size = AutomationConfig.excavatorSize(tier);
             tooltip.add(Component.translatable("tooltip.robotica.excavator_mk", tier, size, size,
-                    CoreConfig.scaleInterval(AutomationConfig.excavatorInterval(tier)), AutomationConfig.excavatorSlots(tier))
+                    CoreConfig.scaleInterval(AutomationConfig.excavatorInterval(tier)), com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier))
                     .withStyle(ChatFormatting.DARK_GRAY));
         } else if (getBlock() instanceof SurveyRigBlock) {
             String speed = String.format(Locale.ROOT, "%.1f", AutomationConfig.surveySpeed(tier) / 100.0);
             tooltip.add(Component.translatable("tooltip.robotica.survey_rig_mk", tier, speed, AutomationConfig.surveyRareBonus(tier),
-                    AutomationConfig.surveySlots(tier)).withStyle(ChatFormatting.DARK_GRAY));
+                    com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier)).withStyle(ChatFormatting.DARK_GRAY));
         }
         if (tier > 1) tooltip.add(Component.translatable("tooltip.robotica.worker_upgrade", tier - 1).withStyle(ChatFormatting.DARK_GRAY));
     }

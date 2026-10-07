@@ -88,7 +88,7 @@ public class ProcessingScreen extends MachineScreen<ProcessingMenu> {
         drawFitted(g, font, use, x + 168, y + 58, 50, menu.lastUse() > 0 ? TEXT : TEXT_MUTED, 1, false, 1.0F);
         addTooltip(x + 118, y + 56, 50, 12, Component.translatable("gui.robotica.industry_use_tip"));
 
-        int n = menu.tier + 1;
+        int n = com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(menu.tier);
         int first = 152 - 18 * (n - 1);
         drawLabelRight(g, Component.translatable("gui.robotica.upgrades"), x + first - 3, y + ProcessingMenu.UPGRADE_Y + 4, first - 34);
     }

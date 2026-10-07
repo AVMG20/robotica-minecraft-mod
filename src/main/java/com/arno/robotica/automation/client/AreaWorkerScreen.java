@@ -51,14 +51,14 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     @Override
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
-        if (slot.index <= menu.be.upgradeSlotCount()) return icon("upgrade_speed");
+        if (slot.index <= menu.be.upgrades.getSlots()) return icon("upgrade_speed");
         return ItemStack.EMPTY;
     }
 
     @Override
     protected Component slotHint(Slot slot) {
         if (slot.index == 0) return Component.translatable("gui.robotica.slot_battery");
-        if (slot.index <= menu.be.upgradeSlotCount()) return Component.translatable("gui.robotica.slot_upgrade");
+        if (slot.index <= menu.be.upgrades.getSlots()) return Component.translatable("gui.robotica.slot_upgrade");
         return null;
     }
 

@@ -3,30 +3,34 @@ package com.arno.robotica.core.upgrade;
 import java.util.Locale;
 
 /**
- * Upgrade card kinds. There is one card item per kind ({@code robotica:upgrade_<kind>}). Stackable kinds go into one
- * upgrade slot as a stack and every card in the stack adds one step; the machine decides how many it accepts
- * ({@link Upgrades#cap}). {@link #maxStack} is the most any machine can take, {@link #age} the age of the card recipe.
+ * Upgrade card kinds: cards upgrade machines. One card item per kind ({@code robotica:upgrade_<kind>}); stackable kinds
+ * stack in one slot and every card adds a step, up to the machine's cap ({@link UpgradeRules}). {@link #maxStack} is
+ * the most any machine takes, {@link #age} the age of the card recipe.
  */
 public enum UpgradeKind {
-    /** Faster work. Steps: x2, x3, x4, x6, x8, x11, x15, x20 (see {@link Upgrades#speedMultiplier}). */
+    /** Faster work, more FE per action: x2, x3, x4, x6, x8, x11, x15, x20 ({@link Upgrades#speedMultiplier}). */
     SPEED(8, 1),
-    /** Bigger area. What a step means is up to the machine (robots +2 radius, Excavator 16/32/48/64). */
+    /** Bigger area or reach; one step is up to the machine (robots +2 radius, Excavator +10 wide). */
     RANGE(4, 2),
-    /** -15% energy per action per card, never below 40%. */
+    /** -15% FE per action per card, never below 40% ({@link Upgrades#energyMultiplier}). */
     EFFICIENCY(4, 1),
-    /** Fortune I-III for mined blocks, Looting I-III in the replicator. Excludes silk. */
+    /** Fortune I-III on mined blocks, more output in ore machines, Looting in the replicator. Not with silk. */
     FORTUNE(3, 2),
-    /** Mined blocks drop themselves. Single card, excludes fortune. */
+    /** Mined blocks drop themselves. Single card, not with fortune. */
     SILK(1, 2),
-    /** +50% crop and sapling growth per card. */
+    /** +50% crop and sapling growth per card (farm bots). */
     GROWTH(4, 1),
-    /** Deletes junk (tag robotica:voidable). Single card. Also the void filter module of a tool (Tinker's Bench). */
+    /** Deletes junk (tag robotica:voidable) or outputs that do not fit. Single card. */
     VOID(1, 1),
-    /** Auto-pickup module of a tool (Tinker's Bench): drops go straight into the inventory. Single card, no machine takes it. */
+    /**
+     * @deprecated no machine takes it: Auto-Pickup becomes a tool module (gear). Kept only until gear stops using
+     * it; then delete this constant, its lang keys and texture. No recipe.
+     */
+    @Deprecated
     PICKUP(1, 1),
     /** Architect Table: one block taller buildings per card (6 cards: 12 high). */
     HEIGHT(6, 1),
-    /** Utility blocks (Storage Terminal): keeps everything inside when picked up. Single card, installed by right-click. */
+    /** Storage Terminal: keeps everything inside when picked up. Single card, installed by right-click. */
     CARRY(1, 1);
 
     /** Most cards of this kind any machine accepts in its slot. 1 = not stackable. */

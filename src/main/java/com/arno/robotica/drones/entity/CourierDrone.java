@@ -77,7 +77,7 @@ public class CourierDrone extends DroneBase {
             return slot < capacityStacks();
         }
     };
-    public final Upgrades upgrades = new Upgrades(2, EnumSet.of(UpgradeKind.SPEED, UpgradeKind.RANGE, UpgradeKind.EFFICIENCY), () -> {});
+    public final Upgrades upgrades = Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.COURIER_DRONE, () -> {});
 
     private List<CourierRoute> routes = new ArrayList<>();
     private boolean whitelist = true;
@@ -203,7 +203,7 @@ public class CourierDrone extends DroneBase {
     }
 
     private double flightSpeed() {
-        return Math.min(3.0, 1.1 * (1.0 + 0.5 * upgrades.level(UpgradeKind.SPEED)) * (tier() >= 2 ? 1.25 : 1.0));
+        return Math.min(3.0, 1.1 * Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)) * (tier() >= 2 ? 1.25 : 1.0));
     }
 
     // ---------------------------------------------------------------- filter

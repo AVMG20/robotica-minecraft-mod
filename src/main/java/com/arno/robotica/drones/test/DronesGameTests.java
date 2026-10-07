@@ -221,7 +221,7 @@ public class DronesGameTests {
         drone.setEnergy(77_777);
         drone.toggleStance();
         drone.cycleRadius();
-        drone.upgrades.setStackInSlot(0, new ItemStack(CoreItems.card(UpgradeKind.SPEED, 1).get()));
+        drone.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 1));
         ItemStack stack = drone.toItemStack(false);
         helper.assertTrue(ItemEnergy.get(stack) == 77_777, "energy kept");
         SentryDrone again = DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel());

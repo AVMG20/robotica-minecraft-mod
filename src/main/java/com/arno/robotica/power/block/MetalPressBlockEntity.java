@@ -57,7 +57,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
             setChanged();
         }
     };
-    public final Upgrades upgrades = new Upgrades(2, java.util.Map.of(UpgradeKind.SPEED, 4, UpgradeKind.EFFICIENCY, 4), this::setChanged);
+    public final Upgrades upgrades = Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.METAL_PRESS, this::setChanged);
     @Override
     public net.neoforged.neoforge.items.IItemHandler quickInsertTarget() {
         return new net.neoforged.neoforge.items.wrapper.RangedWrapper(items, 0, 1);

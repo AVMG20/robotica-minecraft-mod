@@ -19,12 +19,13 @@ Guides: scripts/wiki/guides/<slug>.md
     {{multiblock fission_reactor_5}}                               structure viewer (id from multiblocks.json)
     {{upgrades grinder_mk1}}                                       "upgrades that fit" table for a machine
     {{cards}}                                                      full card x machine table
+    {{mkrule}}                                                     card slots and caps per Mk (from UpgradeRules.java)
     {{image shots/08_replicator.jpg|Alt text}}                     picture from docs/
     {{guide power-ladder}}                                         link card to another guide
     {{orechart}} {{ores}} {{structures}}                           world data from the worldgen files
   Routes: #/item/<id>, #/codex/<n>, #/machines, #/items, #/multiblocks, #/progression, #/guide/<slug>, #/multiblock/<id>, #/age/<0-4>, #/module/<name>, #/upgrades.
 
-Curated files that must follow the code: upgrades.json (card caps/effects), multiblocks.json (checked by
+Curated files that must follow the code: upgrades.json (card effects; caps come from the code), multiblocks.json (checked by
 multiblock_check.py against the structure rules), items/*.json (what/use/stats), guides/*.md.
 
 Item facts: scripts/wiki/items/*.json (merged; an item id may appear in only one entry)
