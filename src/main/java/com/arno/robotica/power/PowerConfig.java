@@ -66,7 +66,7 @@ public final class PowerConfig {
         b.pop();
         b.push("tesla");
         int[] rates = {4_000, 16_000, 64_000, 256_000, 1_000_000};
-        int[] ranges = {8, 12, 16, 24, 32};
+        int[] ranges = {12, 16, 20, 28, 36};
         for (int i = 0; i < 5; i++) {
             TESLA_RATE[i] = b.comment("Tesla Coil " + (i + 1) + ": FE/t the coil sends in total, split over its links.")
                     .defineInRange("teslaRate" + (i + 1), rates[i], 1, Integer.MAX_VALUE / 2);

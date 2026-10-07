@@ -289,19 +289,19 @@ public class PowerGameTests {
         });
     }
 
-    /** Range is checked per tier: Tier I reaches 8 blocks, Tier V 32. */
+    /** Range is checked per tier: Tier I reaches 12 blocks, Tier V 36. */
     @GameTest(template = "empty")
     public static void teslaRangeLimit(GameTestHelper helper) {
         helper.setBlock(new BlockPos(1, 0, 1), Blocks.IRON_BLOCK);
         TeslaCoilBlockEntity small = coil(helper, new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_1.get());
         BlockPos at = small.getBlockPos();
-        helper.assertTrue(TeslaNetwork.toggle(small, at.above(9), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "9 blocks is out of range");
-        helper.assertTrue(TeslaNetwork.toggle(small, at.above(8), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "8 blocks is in range (air there; straight up, away from other tests)");
+        helper.assertTrue(TeslaNetwork.toggle(small, at.above(13), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "13 blocks is out of range");
+        helper.assertTrue(TeslaNetwork.toggle(small, at.above(12), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "12 blocks is in range (air there; straight up, away from other tests)");
         helper.assertTrue(TeslaNetwork.toggle(small, at.below(), Direction.UP) == TeslaNetwork.LinkResult.OWN_SUPPORT, "not the block it sits on");
         helper.setBlock(new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_5.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
         TeslaCoilBlockEntity big = (TeslaCoilBlockEntity) helper.getBlockEntity(new BlockPos(1, 1, 1));
         helper.assertTrue(TeslaNetwork.toggle(big, at.above(20), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "Tier V reaches 20 blocks");
-        helper.assertTrue(TeslaNetwork.toggle(big, at.above(33), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "but not 33");
+        helper.assertTrue(TeslaNetwork.toggle(big, at.above(37), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "but not 37");
         helper.succeed();
     }
 

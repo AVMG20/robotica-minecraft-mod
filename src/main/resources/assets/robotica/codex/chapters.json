@@ -143,7 +143,7 @@
         },
         {
           "title": "Tesla Coils",
-          "text": "Wireless FE. Put a coil on a generator or Accumulator.\n- Tesla Linker: sneak-right-click the coil, then right-click a machine.\n- Coil to coil: further, -5% per hop.\n- Tier I-V: 4-32 links, 8-32 blocks, 4k-1M FE/t.",
+          "text": "Wireless FE. Put a coil on a generator or Accumulator.\n- Tesla Linker: sneak-right-click the coil, then right-click a machine.\n- Coil to coil: further, -5% per hop.\n- Tier I-V: 4-32 links, 12-36 blocks, 4k-1M FE/t.",
           "items": [
             "robotica:tesla_linker",
             "robotica:tesla_coil_1",
