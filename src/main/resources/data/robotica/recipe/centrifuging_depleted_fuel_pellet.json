@@ -11,7 +11,7 @@
   "results": [
     {
       "id": "robotica:radiant_isotope",
-      "chance": 0.1
+      "chance": 0.2
     },
     {
       "id": "robotica:thorium_dust"

@@ -26,6 +26,7 @@ public final class EnergyConfig {
     private static final ModConfigSpec.IntValue REACTOR_RESET_TEMP;
     private static final ModConfigSpec.DoubleValue REACTOR_HEAT_RATE;
     private static final ModConfigSpec.DoubleValue REACTOR_MIN_THROTTLE;
+    private static final ModConfigSpec.BooleanValue REACTOR_SCRAM_VOIDS_FUEL;
 
     private static final ModConfigSpec.IntValue BANK_MIN_SIZE;
     private static final ModConfigSpec.IntValue BANK_MAX_SIZE;
@@ -55,7 +56,7 @@ public final class EnergyConfig {
         REACTOR_BUFFER = b.comment("FE the reactor holds before its Power Ports send it on. Fuel only burns while there is room.")
                 .defineInRange("reactorBuffer", 5_000_000, 10_000, Integer.MAX_VALUE);
         REACTOR_ROD_EXPONENT = b.comment("Every extra fuel rod adds a bit less: the reactor burns rods^exponent units at once (1 = linear).")
-                .defineInRange("reactorRodExponent", 0.8, 0.1, 1.0);
+                .defineInRange("reactorRodExponent", 0.75, 0.1, 1.0);
         REACTOR_PASSIVE_COOLING = b.comment("Heat per tick one (effective) rod sheds without coolant.")
                 .defineInRange("reactorPassiveCooling", 100, 0, 1_000_000);
         REACTOR_COOLANT_CAPACITY = b.comment("Heat per tick one point of coolant next to a rod carries away (water 1, ice 1.5, packed ice 2, blue ice 3, Cryo Coolant 4).")
@@ -72,6 +73,8 @@ public final class EnergyConfig {
                 .defineInRange("reactorHeatRate", 0.02, 0.001, 1.0);
         REACTOR_MIN_THROTTLE = b.comment("Output share left just before the SCRAM point (linear from 100% at the safe temperature).")
                 .defineInRange("reactorMinThrottle", 0.25, 0.0, 1.0);
+        REACTOR_SCRAM_VOIDS_FUEL = b.comment("A SCRAM loses the pellet that is burning: it turns into its waste.")
+                .define("reactorScramVoidsFuel", true);
         b.pop();
 
         b.push("capacitor_bank");
@@ -95,7 +98,7 @@ public final class EnergyConfig {
 
         b.push("fusion_reactor");
         FUSION_IGNITION = b.comment("FE the Fusion Reactor needs in one charge to ignite (used up on ignition).")
-                .defineInRange("fusionIgnitionEnergy", 20_000_000, 0, Integer.MAX_VALUE);
+                .defineInRange("fusionIgnitionEnergy", 100_000_000, 0, Integer.MAX_VALUE);
         FUSION_BUFFER = b.comment("FE the Fusion Reactor holds before its Power Ports send it on.")
                 .defineInRange("fusionBuffer", 20_000_000, 10_000, Integer.MAX_VALUE);
         FUSION_WARMUP = b.comment("Ticks the plasma takes from ignition to full output.")
@@ -120,6 +123,10 @@ public final class EnergyConfig {
         return SPEC.isLoaded() ? value.get() : value.getDefault();
     }
 
+    private static boolean get(ModConfigSpec.BooleanValue value) {
+        return SPEC.isLoaded() ? value.get() : value.getDefault();
+    }
+
     public static int scanCooldown() { return get(SCAN_COOLDOWN); }
     public static int rescanInterval() { return get(RESCAN_INTERVAL); }
 
@@ -135,6 +142,7 @@ public final class EnergyConfig {
     public static int reactorResetTemp() { return get(REACTOR_RESET_TEMP); }
     public static double reactorHeatRate() { return get(REACTOR_HEAT_RATE); }
     public static double reactorMinThrottle() { return get(REACTOR_MIN_THROTTLE); }
+    public static boolean reactorScramVoidsFuel() { return get(REACTOR_SCRAM_VOIDS_FUEL); }
 
     public static int bankMinSize() { return get(BANK_MIN_SIZE); }
     public static int bankMaxSize() { return Math.max(bankMinSize(), get(BANK_MAX_SIZE)); }

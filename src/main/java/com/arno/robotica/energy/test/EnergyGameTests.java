@@ -1,6 +1,7 @@
 package com.arno.robotica.energy.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.energy.EnergyConfig;
 import com.arno.robotica.energy.EnergyDataMaps;
 import com.arno.robotica.energy.EnergyRegistry;
 import com.arno.robotica.energy.block.BankControllerBlockEntity;
@@ -45,7 +46,7 @@ public class EnergyGameTests {
 
     static {
         EnergyDataMaps.registerTestFuel(Items.BARRIER, TEST_FUEL);
-        EnergyDataMaps.registerTestFusionFuel(Items.STRUCTURE_VOID, new EnergyDataMaps.FusionFuel(200_000, 2_400));
+        EnergyDataMaps.registerTestFusionFuel(Items.STRUCTURE_VOID, new EnergyDataMaps.FusionFuel(200_000, 6_000));
     }
 
     // ---------------------------------------------------------------- builders
@@ -195,7 +196,7 @@ public class EnergyGameTests {
 
     // ---------------------------------------------------------------- reactor
 
-    /** Packed ice: heat 400 x 3^0.8 = 964, cooling 5,061, efficiency 1.4: about 1,350 FE/t, waste comes out, rods throttle. */
+    /** Packed ice: heat 400 x 3^0.75 = 912, cooling 4,787, efficiency 1.4: about 1,280 FE/t, waste comes out, rods throttle. */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void reactorMakesPowerAndWaste(GameTestHelper helper) {
         ReactorControllerBlockEntity be = reactor(helper, Blocks.PACKED_ICE.defaultBlockState());
@@ -203,13 +204,13 @@ public class EnergyGameTests {
         be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 8));
         be.simulate(100);
         helper.assertTrue(be.state() == ReactorControllerBlockEntity.State.RUNNING, "should run, is " + be.state());
-        double expectedHeat = 400 * Math.pow(3, 0.8);
+        double expectedHeat = 400 * Math.pow(3, 0.75);
         helper.assertTrue(Math.abs(be.heat() - expectedHeat) < 1, "heat " + be.heat() + " expected " + expectedHeat);
-        helper.assertTrue(be.fePerTick() > 1_250 && be.fePerTick() < 1_450, "about 1,350 FE/t, got " + be.fePerTick());
+        helper.assertTrue(be.fePerTick() > 1_180 && be.fePerTick() < 1_380, "about 1,280 FE/t, got " + be.fePerTick());
         helper.assertTrue(be.temperature() < 1000, "well cooled reactor stays under the safe temperature, got " + be.temperature());
         int waste = 0;
         for (int i = 0; i < be.waste.getSlots(); i++) waste += be.waste.getStackInSlot(i).is(Items.GUNPOWDER) ? be.waste.getStackInSlot(i).getCount() : 0;
-        helper.assertTrue(waste >= 2, "100 ticks burn 100 * 2.41 / 100 = 2.4 units, waste " + waste);
+        helper.assertTrue(waste >= 2, "100 ticks burn 100 * 2.28 / 100 = 2.3 units, waste " + waste);
 
         // Access Port: fuel goes in, waste comes out, fuel can not be pulled.
         IItemHandler access = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(new BlockPos(2, 3, 5)), Direction.SOUTH);
@@ -240,12 +241,15 @@ public class EnergyGameTests {
         helper.assertTrue(be.isFormed(), "reactor with air around the rods still forms");
         be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 64));
         boolean throttled = false;
+        int wasteBefore = 0;
         for (int i = 0; i < 600 && !be.isScrammed(); i++) {
+            wasteBefore = gunpowder(be);
             be.simulate(1);
             if (be.temperature() > 1000 && be.throttle() < 1.0) throttled = true;
         }
         helper.assertTrue(throttled, "output should throttle above the safe temperature");
         helper.assertTrue(be.isScrammed(), "load 4x cooling must SCRAM, temperature " + be.temperature());
+        helper.assertTrue(be.burnLeft() == 0 && gunpowder(be) > wasteBefore, "a SCRAM turns the burning pellet into waste");
         be.simulate(1);
         helper.assertTrue(be.heat() == 0 && be.fePerTick() == 0, "a SCRAMed reactor makes no heat");
         helper.assertFalse(be.resetScram(), "no reset while hot");
@@ -261,13 +265,19 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    private static int gunpowder(ReactorControllerBlockEntity be) {
+        int n = 0;
+        for (int i = 0; i < be.waste.getSlots(); i++) n += be.waste.getStackInSlot(i).is(Items.GUNPOWDER) ? be.waste.getStackInSlot(i).getCount() : 0;
+        return n;
+    }
+
     /** With room for only part of a tick's output the reactor burns only that share of fuel; full, it burns none. */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void reactorBurnsOnlyWhatFits(GameTestHelper helper) {
         ReactorControllerBlockEntity be = reactor(helper, Blocks.PACKED_ICE.defaultBlockState());
         be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 8));
         be.simulate(20);
-        double perTick = Math.pow(3, 0.8);
+        double perTick = Math.pow(3, 0.75);
         int max = be.energy.getMaxEnergyStored();
         be.energy.setEnergy(max - 100);
         double before = be.burnLeft();
@@ -424,7 +434,7 @@ public class EnergyGameTests {
 
     // ---------------------------------------------------------------- fusion
 
-    /** 7x3x7 fusion reactor: charge 20M FE through a Power Port, ignite with fuel, ramp up to 200k FE/t. */
+    /** 7x3x7 fusion reactor: charge 100M FE through a Power Port, ignite with fuel, ramp up to 200k FE/t. */
     @GameTest(template = ARENA, timeoutTicks = 60)
     public static void fusionIgnitesAndBurns(GameTestHelper helper) {
         BlockPos min = new BlockPos(1, 1, 1);
@@ -457,7 +467,7 @@ public class EnergyGameTests {
         helper.assertTrue(fusion.state() == FusionControllerBlockEntity.State.CHARGING, "charging");
         helper.assertTrue(port.receiveEnergy(Integer.MAX_VALUE, false) == 1_000_000, "charging is limited to 1M FE/t per tick");
         helper.assertTrue(port.receiveEnergy(Integer.MAX_VALUE, false) == 0, "shared by all ports within a tick");
-        fusion.setCharge(20_000_000);
+        fusion.setCharge(EnergyConfig.fusionIgnitionEnergy());
         fusion.step();
         helper.assertFalse(fusion.ignited(), "no fuel, no ignition");
         helper.assertTrue(fusion.state() == FusionControllerBlockEntity.State.NO_FUEL, "waits for fuel");

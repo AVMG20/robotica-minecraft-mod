@@ -37,7 +37,7 @@ The Assembler also makes circuits, motors and casings for about a quarter less m
 
 | Input | Output |
 |---|---|
-| [[depleted_fuel_pellet]] | [[thorium_dust]], [[graphite_dust]] 50%, [[radiant_isotope]] 10% |
+| [[depleted_fuel_pellet]] | [[thorium_dust]], [[graphite_dust]] 50%, [[radiant_isotope]] 20% |
 | [[pyrolite_dust]] | 2 glowstone dust, blaze powder 25% |
 | [[minecraft:magma_cream]] | slime ball, blaze powder |
 | [[minecraft:glistering_melon_slice]] | melon slice, 4 gold nuggets |

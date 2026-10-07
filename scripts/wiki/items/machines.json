@@ -148,7 +148,7 @@
      ],
      [
       "SCRAM",
-      "1,800 C (reset below 200 C)"
+      "1,800 C (reset below 200 C), loses the burning pellet"
      ]
     ]
    },
@@ -218,14 +218,14 @@
    "what": "Brain of the Fusion Reactor: ignition charge, plasma and fuel.",
    "use": [
     "Build the 7x3x7 around it.",
-    "Charge 20M FE through the Power Ports.",
-    "Add [[fusion_fuel_pellet]] and switch it on."
+    "Charge 100M FE through the Power Ports.",
+    "Add [[fusion_fuel_pellet]]; the button shows Running."
    ],
    "stats": {
     "rows": [
      [
       "Ignition",
-      "20,000,000 FE, at most 1M FE/t in"
+      "100,000,000 FE, at most 1M FE/t in"
      ],
      [
       "Output",
@@ -238,6 +238,10 @@
      [
       "Without fuel",
       "collapses after 5 s"
+     ],
+     [
+      "Fuel",
+      "one pellet lasts 5 minutes"
      ]
     ]
    },

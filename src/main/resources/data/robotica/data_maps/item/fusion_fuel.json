@@ -2,7 +2,7 @@
   "values": {
     "robotica:fusion_fuel_pellet": {
       "power": 200000,
-      "ticks": 2400
+      "ticks": 6000
     }
   }
 }
