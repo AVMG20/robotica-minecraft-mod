@@ -265,6 +265,22 @@ def cube(textures, glow=None):
     return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': tv, 'elements': elements}
 
 
+ORE_HOSTS = {'thorium_ore': 'stone', 'deepslate_thorium_ore': 'deepslate', 'pyrolite_ore': 'netherrack',
+             'resonite_ore': 'end_stone'}
+
+
+def ore_model(name, glow):
+    """Two-layer ore: the vanilla host rock, our cutout overlay with the ore pieces, and an optional full-bright layer."""
+    tv = {'host': f'minecraft:block/{ORE_HOSTS[name]}', 'ore': tex(name), 'particle': f'minecraft:block/{ORE_HOSTS[name]}'}
+    elements = [{'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {d: {'texture': '#host', 'cullface': d} for d in DIRS}},
+                {'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {d: {'texture': '#ore', 'cullface': d} for d in DIRS}}]
+    if glow:
+        tv['glow'] = tex(name + '_glow')
+        elements.append({'from': [0, 0, 0], 'to': [16, 16, 16], 'shade': False,
+                         'faces': {d: {'texture': '#glow', 'cullface': d, 'neoforge_data': dict(GLOW)} for d in DIRS}})
+    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': tv, 'elements': elements}
+
+
 def block_model(name, obj):
     write(ASSETS / 'models/block' / f'{name}.json', obj)
 
@@ -311,7 +327,9 @@ def loot_ore(name, drop):
 
 def models():
     for name in ORES + STORAGE:
-        if name in GLOW_ORES:
+        if name in ORES:
+            block_model(name, ore_model(name, name in GLOW_ORES))
+        elif name in GLOW_ORES:
             block_model(name, cube({d: name for d in DIRS}, {d: name + '_glow' for d in DIRS}))
         else:
             block_model(name, {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(name)}})
