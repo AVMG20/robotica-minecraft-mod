@@ -304,6 +304,15 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
         return out;
     }
 
+    /** A stored stack of this item with any components (a worn tool, a charged item), or empty. */
+    public ItemStack findSameItem(ItemStack template) {
+        for (int i = MAX_SLOTS - 1; i >= 0; i--) {
+            ItemStack in = items.getStackInSlot(i);
+            if (!in.isEmpty() && ItemStack.isSameItem(in, template)) return in.copyWithCount(1);
+        }
+        return ItemStack.EMPTY;
+    }
+
     /** Total count of an item in the terminal. */
     public int count(ItemStack template) {
         int n = 0;

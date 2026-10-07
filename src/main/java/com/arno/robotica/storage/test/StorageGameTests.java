@@ -332,6 +332,27 @@ public class StorageGameTests {
         helper.succeed();
     }
 
+    /** JEI shows a new Tinker's Hammer; the grid still takes a worn one (from the player here) for the plate recipe. */
+    @GameTest(template = "empty")
+    public static void fillGridTakesWornTool(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.getInventory().clearContent();
+        StorageMenu menu = new StorageMenu(1, player.getInventory(), be);
+        ItemStack worn = new ItemStack(com.arno.robotica.gear.GearItems.TINKERS_HAMMER.get());
+        worn.setDamageValue(5);
+        player.getInventory().add(worn);
+        be.insert(new ItemStack(Items.IRON_INGOT, 4), false);
+        List<ItemStack> hammer = List.of(new ItemStack(com.arno.robotica.gear.GearItems.TINKERS_HAMMER.get()));
+        List<ItemStack> iron = List.of(new ItemStack(Items.IRON_INGOT));
+        menu.fillGrid(List.of(hammer, iron, iron), false);
+        helper.assertTrue(be.craft.get(0).is(com.arno.robotica.gear.GearItems.TINKERS_HAMMER.get()) && be.craft.get(0).getDamageValue() == 5,
+                "the worn hammer went in, got " + be.craft.get(0));
+        helper.assertTrue(player.getInventory().countItem(com.arno.robotica.gear.GearItems.TINKERS_HAMMER.get()) == 0, "taken from the player");
+        helper.assertTrue(menu.resultItem().is(com.arno.robotica.core.item.CoreItems.IRON_PLATE.get()), "plate recipe complete, got " + menu.resultItem());
+        helper.succeed();
+    }
+
     /** With a Carry card the terminal drops as one item that holds everything; without it the items spill out. */
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void carryCardKeepsItemsWhenBroken(GameTestHelper helper) {

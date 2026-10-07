@@ -274,14 +274,20 @@ public class StorageMenu extends MachineMenu {
         }
         List<ItemStack> items = grid.getItems();
         for (int i = 0; i < wanted.size(); i++) {
+            ItemStack got = ItemStack.EMPTY;
             for (ItemStack option : wanted.get(i)) {
                 if (!StorageTerminalBlockEntity.canStore(option)) continue;
-                ItemStack got = take(option, 1);
-                if (!got.isEmpty()) {
-                    items.set(i, got);
-                    break;
-                }
+                got = take(option, 1);
+                if (!got.isEmpty()) break;
             }
+            // JEI shows plain items (a new Tinker's Hammer); a plain option also takes a worn or charged one
+            for (ItemStack option : wanted.get(i)) {
+                if (!got.isEmpty()) break;
+                if (!option.getComponentsPatch().isEmpty()) continue;
+                ItemStack variant = sameItem(option);
+                if (!variant.isEmpty() && StorageTerminalBlockEntity.canStore(variant)) got = take(variant, 1);
+            }
+            if (!got.isEmpty()) items.set(i, got);
         }
         // Shift: add one more craft at a time while every filled slot can grow, so the slots stay even.
         while (max) {
@@ -308,6 +314,16 @@ public class StorageMenu extends MachineMenu {
         }
         grid.setChanged();
         viewDirty = true;
+    }
+
+    /** One stack of the option's item with any components, from the terminal first, then the player's inventory. */
+    private ItemStack sameItem(ItemStack option) {
+        ItemStack stored = be.findSameItem(option);
+        if (!stored.isEmpty()) return stored;
+        for (ItemStack in : player.getInventory().items) {
+            if (!in.isEmpty() && ItemStack.isSameItem(in, option)) return in.copyWithCount(1);
+        }
+        return ItemStack.EMPTY;
     }
 
     /** Up to {@code amount} of the item, from the terminal first, then from the player's inventory. */
