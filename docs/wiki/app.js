@@ -438,6 +438,7 @@ function itemPage(id) {
   h += `<div class="ihead">${slot(id)}<div><h1>${esc(it.n)}</h1><div class="chips">${ageChip(it.a)}<a class="chip" href="#/module/${it.m}">${esc(moduleName(it.m))}</a>${isMachine(id) ? '<a class="chip" href="#/machines">Machine</a>' : ''}</div></div></div>`;
   const what = f && f.what ? f.what : it.t;
   if (what) h += `<p class="lead">${inline(what)}</p>`;
+  if (f && f.image) h += directive('image', f.image);
   if (it.d && (!f || !f.use)) h += `<p>${inline(it.d).replace(/\n/g, '<br>')}</p>`;
   if (f && f.items.length > 1) h += `<div class="hotbar" aria-label="All tiers">${f.items.map(i => i === id ? slot(i).replace('class="slot"', 'class="slot" style="background:#b8d98f" aria-current="true"') : slot(i)).join('')}</div>`;
   if (f && f.use && f.use.length) h += `<h2>How to use it</h2><ol class="use">${f.use.map(u => `<li>${inline(u)}</li>`).join('')}</ol>`;

@@ -34,6 +34,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew runClient           # dev client with the mod (offline player "Dev")
 ./gradlew runGameTestServer   # headless server + game tests
 ./gradlew runShowcase         # screenshots of every block and GUI, then quits
+scripts/showcase.sh           # runShowcase, then the chosen shots as JPGs in docs/shots (scripts/shots.py)
 python3 scripts/audit_assets.py   # models, textures, names, loot tables (run after the game tests)
 ```
 

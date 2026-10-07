@@ -116,7 +116,8 @@
     "Place it with open sky above.",
     "Machines touching it get power, or put a [[tesla_coil_1]] on it.",
     "Mk2-Mk4: craft two panels of the tier below with that age's circuit (Mk2: four Mk1)."
-   ]
+   ],
+   "image": "shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4"
   },
   {
    "items": [
@@ -279,7 +280,8 @@
    },
    "see": [
     "guide:power-ladder"
-   ]
+   ],
+   "image": "shots/22_wireless_charger.jpg|A Wireless Charger charging a player in an Exo-Frame"
   },
   {
    "items": [
@@ -367,7 +369,8 @@
    },
    "see": [
     "guide:industry-alloys"
-   ]
+   ],
+   "image": "shots/15_industry_machines.jpg|Industry machines, Mk1 to Mk4"
   },
   {
    "items": [
@@ -421,7 +424,8 @@
    },
    "see": [
     "guide:industry-alloys"
-   ]
+   ],
+   "image": "shots/15_industry_machines.jpg|Industry machines, Mk1 to Mk4"
   },
   {
    "items": [
@@ -475,7 +479,8 @@
    },
    "see": [
     "guide:industry-alloys"
-   ]
+   ],
+   "image": "shots/15_industry_machines.jpg|Industry machines, Mk1 to Mk4"
   },
   {
    "items": [

@@ -24,7 +24,8 @@
    "see": [
     "guide:capacitor-bank",
     "multiblock:capacitor_bank_5"
-   ]
+   ],
+   "image": "shots/gui_bank_formed.jpg|Capacitor Bank Controller, formed"
   },
   {
    "items": [
@@ -153,7 +154,8 @@
    },
    "see": [
     "guide:fission-reactor"
-   ]
+   ],
+   "image": "shots/gui_fission_formed.jpg|Fission Reactor Controller, formed"
   },
   {
    "items": [
@@ -241,7 +243,8 @@
    },
    "see": [
     "guide:fusion-reactor"
-   ]
+   ],
+   "image": "shots/gui_fusion_formed.jpg|Fusion Reactor Controller, formed"
   },
   {
    "items": [
@@ -322,7 +325,8 @@
    },
    "see": [
     "guide:ore-processing"
-   ]
+   ],
+   "image": "shots/16_grinder_furnace.jpg|Grinders and Electric Furnaces, Mk1 to Mk4"
   },
   {
    "items": [
@@ -377,7 +381,8 @@
    },
    "see": [
     "guide:ore-processing"
-   ]
+   ],
+   "image": "shots/16_grinder_furnace.jpg|Grinders and Electric Furnaces, Mk1 to Mk4"
   },
   {
    "items": [
@@ -636,7 +641,8 @@
    },
    "see": [
     "guide:upgrade-cards"
-   ]
+   ],
+   "image": "shots/23_excavators_survey_rigs.jpg|Excavators and Survey Rigs, Mk1 to Mk4"
   },
   {
    "items": [
@@ -713,7 +719,8 @@
    },
    "see": [
     "guide:finding-ores"
-   ]
+   ],
+   "image": "shots/23_excavators_survey_rigs.jpg|Excavators and Survey Rigs, Mk1 to Mk4"
   },
   {
    "items": [

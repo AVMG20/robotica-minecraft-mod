@@ -8,6 +8,8 @@ Pipes move items instantly between chests and machines. Nothing travels visibly 
 
 {{items item_pipe item_pipe_mk2 grinder_mk1 electric_furnace_mk1}}
 
+{{image shots/17_item_pipes.jpg|Item Pipes from a chest through a Grinder and an Electric Furnace into a chest}}
+
 ## Pipes
 
 | Pipe | Moves |

@@ -34,6 +34,8 @@ A variable-size cuboid from 3x3x3 to 9x9x9 (outside size) that stores FE. Age 1 
 
 The sum of all coils limits input and, separately, output per tick, shared by all ports.
 
+{{image shots/20_capacitor_bank.jpg|A formed 5x5x5 Capacitor Bank}}
+
 ## Ports
 
 - A [[bank_port]] is input or output: **sneak + right-click** toggles it (the face shows an arrow).
@@ -44,6 +46,8 @@ The sum of all coils limits input and, separately, output per tick, shared by al
 - The energy lives in the controller: it stays when the structure breaks.
 - Mined, the controller item keeps its energy (it always drops, explosions included).
 - Formed smaller than its energy, the part above the new capacity is lost.
+
+{{image shots/gui_bank_formed.jpg|Capacitor Bank Controller, formed}}
 
 {{multiblock capacitor_bank_small}}
 

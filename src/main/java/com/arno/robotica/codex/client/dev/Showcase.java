@@ -9,9 +9,22 @@ import com.arno.robotica.architect.plan.ShellPlacer;
 import com.arno.robotica.architect.style.BuildStyle;
 import com.arno.robotica.codex.client.CodexScreen;
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.GearComponents;
+import com.arno.robotica.gear.bench.TinkersBenchMenu;
 import com.arno.robotica.gear.client.ToggleScreen;
+import com.arno.robotica.gear.lamp.SparkLampBlock;
 import com.arno.robotica.gear.tool.AreaMode;
+import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
+import com.arno.robotica.logistics.pipe.PipeMode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.minecraft.client.CameraType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.replicator.logic.Essence;
@@ -54,8 +67,13 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.items.IItemHandler;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -101,6 +119,10 @@ public final class Showcase {
             }
             return;
         }
+        // no advancement toasts and no hover tooltips from wherever the real mouse is
+        mc.getToasts().clear();
+        mc.gui.getChat().clearMessages(false);
+        parkMouse(mc);
         if (wait > 0) {
             wait--;
             return;
@@ -113,6 +135,27 @@ public final class Showcase {
             Robotica.LOGGER.error("Showcase step {} failed", stepIndex - 1, e);
         }
         wait = step.delay();
+    }
+
+    private static java.lang.reflect.Field mouseX, mouseY;
+    private static boolean mouseFailed;
+
+    /** Puts the GUI mouse in the top-left corner, away from every slot and button. */
+    private static void parkMouse(Minecraft mc) {
+        if (mouseFailed) return;
+        try {
+            if (mouseX == null) {
+                mouseX = net.minecraft.client.MouseHandler.class.getDeclaredField("xpos");
+                mouseY = net.minecraft.client.MouseHandler.class.getDeclaredField("ypos");
+                mouseX.setAccessible(true);
+                mouseY.setAccessible(true);
+            }
+            mouseX.setDouble(mc.mouseHandler, 0);
+            mouseY.setDouble(mc.mouseHandler, 0);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            mouseFailed = true;
+            Robotica.LOGGER.warn("Showcase could not move the mouse; tooltips may show in GUI shots", e);
+        }
     }
 
     private static void createWorld() {
@@ -417,6 +460,8 @@ public final class Showcase {
         step(80, () -> {});
         shot("13_rusted_foundry");
 
+        newScenes();
+
         // Scene 10: a Storage Terminal with things in it.
         step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
@@ -444,6 +489,8 @@ public final class Showcase {
         step(30, () -> {});
         shot("gui_95_storage_terminal_full");
         step(5, () -> { if (mc().player != null && mc().screen != null) mc().player.closeContainer(); });
+
+        newGuis();
 
         // GUIs: every block entity that is a menu provider.
         step(10, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
@@ -531,8 +578,10 @@ public final class Showcase {
         // Codex pages and lab.
         step(20, () -> mc().setScreen(new CodexScreen()));
         shot("codex_01_start");
-        step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devSelect(3); });
+        step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devSelect(7); });
         shot("codex_02_robots");
+        step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devSelect(5); });
+        shot("codex_05_big_energy");
         step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devShowRecipe(new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("stumpy")))); });
         shot("codex_03_recipe");
         step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devLab(); });
@@ -550,5 +599,365 @@ public final class Showcase {
             Robotica.LOGGER.info("Robotica showcase finished.");
             mc().stop();
         });
+    }
+
+    // ------------------------------------------------------------------ 0.3 / 0.4 content
+
+    private static Item item(String name) {
+        return BuiltInRegistries.ITEM.get(Robotica.id(name));
+    }
+
+    private static void command(ServerPlayer sp, String cmd) {
+        MinecraftServer s = sp.server;
+        s.getCommands().performPrefixedCommand(s.createCommandSourceStack().withSuppressedOutput(), cmd);
+    }
+
+    private static void fillEnergy(ServerLevel level, BlockPos pos) {
+        var cap = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, null);
+        for (int i = 0; i < 64 && cap != null && cap.receiveEnergy(Integer.MAX_VALUE, false) > 0; i++) {}
+    }
+
+    /** Recomputes a block's shape from its neighbours (pipes placed with setBlock). */
+    private static void reshape(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        level.setBlock(pos, Block.updateFromNeighbourShapes(state, level, pos), 3);
+    }
+
+    private record Multiblock(List<String[]> layers, Map<Character, String> legend) {
+        int h() { return layers.size(); }
+        int d() { return layers.get(0).length; }
+        int w() { return layers.get(0)[0].length(); }
+    }
+
+    /** A structure from scripts/wiki/multiblocks.json (the showcase runs in run-showcase, next to scripts). */
+    private static Multiblock multiblock(String id) {
+        Path file = mc().gameDirectory.toPath().resolve("../scripts/wiki/multiblocks.json");
+        try {
+            JsonObject root = JsonParser.parseString(Files.readString(file)).getAsJsonObject().getAsJsonObject(id);
+            List<String[]> layers = new ArrayList<>();
+            for (JsonElement layer : root.getAsJsonArray("layers")) {
+                JsonArray rows = layer.getAsJsonArray();
+                String[] out = new String[rows.size()];
+                for (int z = 0; z < out.length; z++) out[z] = rows.get(z).getAsString();
+                layers.add(out);
+            }
+            Map<Character, String> legend = new HashMap<>();
+            for (var e : root.getAsJsonObject("legend").entrySet()) legend.put(e.getKey().charAt(0), e.getValue().getAsString());
+            return new Multiblock(layers, legend);
+        } catch (IOException | RuntimeException e) {
+            throw new IllegalStateException("Showcase could not read multiblock " + id + " from " + file, e);
+        }
+    }
+
+    /**
+     * Places a multiblock with its north-west-bottom corner at {@code origin}, mirrored north-south so the controller
+     * (in the north wall in multiblocks.json) sits in the south wall and faces south, towards the cameras.
+     */
+    private static void placeMultiblock(ServerLevel level, Multiblock mb, BlockPos origin) {
+        for (int y = 0; y < mb.h(); y++) for (int z = 0; z < mb.d(); z++) for (int x = 0; x < mb.w(); x++) {
+            String id = mb.legend().get(mb.layers().get(y)[z].charAt(x));
+            BlockPos pos = origin.offset(x, y, mb.d() - 1 - z);
+            if (id == null || id.equals("air")) {
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                continue;
+            }
+            setFacing(level, pos, BuiltInRegistries.BLOCK.get(id.contains(":") ? ResourceLocation.parse(id) : Robotica.id(id)), Direction.SOUTH);
+        }
+    }
+
+    private static final String[] MACHINES = {"assembler", "centrifuge", "alloy_smelter", "electric_furnace", "grinder"};
+    private static final BlockPos FISSION = new BlockPos(42, Y + 2, 104), BANK = new BlockPos(50, Y + 2, 104), FUSION = new BlockPos(59, Y + 1, 106);
+    private static final BlockPos CHARGER = new BlockPos(82, Y, 100);
+    private static final BlockPos TABLE = new BlockPos(170, Y, 160);
+    private static final BlockPos BENCH = new BlockPos(200, Y, 100);
+    private static final BlockPos TYRANT = new BlockPos(230, Y, 100);
+    private static final EquipmentSlot[] ARMOR = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
+    private static final String[] ARMOR_NAMES = {"boots", "leggings", "chestplate", "helmet"};
+
+    private static void newScenes() {
+        // Exo-Frame Mk1 to Mk4 on armor stands.
+        step(20, () -> server(sp -> {
+            for (int mk = 1; mk <= 4; mk++) {
+                StringBuilder armor = new StringBuilder();
+                for (int i = 0; i < 4; i++) {
+                    if (i > 0) armor.append(',');
+                    armor.append("{id:\"robotica:exo_").append(ARMOR_NAMES[i]).append("_mk").append(mk).append("\",count:1}");
+                }
+                sp.serverLevel().setBlock(new BlockPos(mk * 2 - 2, Y - 1, 100), Blocks.POLISHED_DEEPSLATE.defaultBlockState(), 3);
+                command(sp, "summon minecraft:armor_stand " + (mk * 2 - 1.5) + " " + Y + " 100.5 {Rotation:[0f,0f],NoBasePlate:1b,ShowArms:1b,ArmorItems:[" + armor + "]}");
+            }
+        }));
+        camera(3, Y + 1.2, 104.6, 180, 6);
+        step(20, () -> {});
+        shot("14_exo_frames");
+
+        // Industry machines Mk1 to Mk4, one row per machine, each working on something.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            for (int row = 0; row < MACHINES.length; row++) for (int mk = 1; mk <= 4; mk++) {
+                BlockPos pos = new BlockPos(18 + mk * 2, Y, 100 + row * 2);
+                setFacing(level, pos, block(MACHINES[row] + "_mk" + mk), Direction.SOUTH);
+                fillEnergy(level, pos);
+                IItemHandler items = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+                Item input = switch (MACHINES[row]) {
+                    case "grinder", "electric_furnace" -> Items.RAW_IRON;
+                    case "alloy_smelter" -> Items.COPPER_INGOT;
+                    case "centrifuge" -> Items.GRAVEL;
+                    default -> Items.IRON_INGOT;
+                };
+                if (items != null) ItemHandlerHelper.insertItem(items, new ItemStack(input, 32), false);
+            }
+        }));
+        camera(23.5, Y + 5, 113.5, 180, 32);
+        step(40, () -> {});
+        shot("15_industry_machines");
+        camera(23.5, Y + 2.2, 112.4, 180, 16);
+        step(10, () -> {});
+        shot("16_grinder_furnace");
+
+        // Item pipes: chest, Grinder, Electric Furnace, chest.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            int z = 124;
+            setFacing(level, new BlockPos(20, Y, z), Blocks.CHEST, Direction.SOUTH);
+            setFacing(level, new BlockPos(24, Y, z), block("grinder_mk2"), Direction.SOUTH);
+            setFacing(level, new BlockPos(29, Y, z), block("electric_furnace_mk2"), Direction.SOUTH);
+            setFacing(level, new BlockPos(33, Y, z), Blocks.CHEST, Direction.SOUTH);
+            List<BlockPos> pipes = new ArrayList<>();
+            for (int x : new int[]{21, 22, 23}) pipes.add(new BlockPos(x, Y, z));
+            pipes.add(new BlockPos(24, Y + 1, z));
+            for (int x : new int[]{24, 25, 26, 27, 28, 29}) pipes.add(new BlockPos(x, Y + 2, z));
+            pipes.add(new BlockPos(29, Y + 1, z));
+            for (int x : new int[]{30, 31, 32}) pipes.add(new BlockPos(x, Y, z));
+            for (int i = 0; i < pipes.size(); i++) level.setBlock(pipes.get(i), block(i >= 4 && i < 10 ? "item_pipe_mk2" : "item_pipe").defaultBlockState(), 3);
+            for (BlockPos p : pipes) reshape(level, p);
+            // extract from the chest, the Grinder's top and the Furnace's east side
+            BlockPos[] extract = {new BlockPos(21, Y, z), new BlockPos(24, Y + 1, z), new BlockPos(30, Y, z)};
+            Direction[] from = {Direction.WEST, Direction.DOWN, Direction.WEST};
+            for (int i = 0; i < extract.length; i++) {
+                if (level.getBlockEntity(extract[i]) instanceof ItemPipeBlockEntity pipe) pipe.setMode(from[i], PipeMode.EXTRACT);
+                reshape(level, extract[i]);
+            }
+            fillEnergy(level, new BlockPos(24, Y, z));
+            fillEnergy(level, new BlockPos(29, Y, z));
+        }));
+        camera(26.5, Y + 3.2, 130, 180, 16);
+        step(20, () -> {});
+        shot("17_item_pipes");
+
+        // Fission Reactor, Capacitor Bank and Fusion Reactor, built from the wiki's multiblock examples.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            placeMultiblock(level, multiblock("fission_reactor_5"), new BlockPos(40, Y, 100));
+            placeMultiblock(level, multiblock("capacitor_bank_5"), new BlockPos(48, Y, 100));
+            placeMultiblock(level, multiblock("fusion_reactor"), new BlockPos(56, Y, 100));
+        }));
+        step(100, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            // fuel through the access ports, energy into the bank through its ports
+            for (BlockPos p : BlockPos.betweenClosed(40, Y, 100, 62, Y + 4, 106)) {
+                BlockState state = level.getBlockState(p);
+                if (state.is(block("bank_port"))) fillEnergy(level, p.immutable());
+                if (!state.is(block("reactor_access_port"))) continue;
+                IItemHandler items = level.getCapability(Capabilities.ItemHandler.BLOCK, p.immutable(), null);
+                if (items != null) ItemHandlerHelper.insertItem(items, new ItemStack(item(p.getX() < 48 ? "thorium_fuel_pellet" : "fusion_fuel_pellet"), 16), false);
+            }
+        }));
+        camera(51.5, Y + 6, 119, 180, 16);
+        shot("18_energy_multiblocks");
+        camera(42.5, Y + 3, 108.6, 180, 10);
+        shot("19_fission_reactor");
+        camera(50.5, Y + 3, 108.6, 180, 10);
+        shot("20_capacitor_bank");
+        camera(59.5, Y + 4.5, 113, 180, 22);
+        shot("21_fusion_reactor");
+
+        // Wireless Charger feeding a player in an empty Exo-Frame Mk4 (third person, from the front).
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            setFacing(level, CHARGER, block("wireless_charger"), Direction.SOUTH);
+            setFacing(level, CHARGER.north(), block("accumulator_3"), Direction.SOUTH);
+            fillEnergy(level, CHARGER.north());
+            fillEnergy(level, CHARGER);
+            for (int i = 0; i < 4; i++) {
+                ItemStack piece = new ItemStack(item("exo_" + ARMOR_NAMES[i] + "_mk4"));
+                ItemEnergy.set(piece, 0);
+                sp.setItemSlot(ARMOR[i], piece);
+            }
+            sp.getAbilities().flying = false;
+            sp.onUpdateAbilities();
+            sp.teleportTo(level, CHARGER.getX() - 2.5, Y, CHARGER.getZ() + 0.5, 20, -12);
+        }));
+        step(5, () -> mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT));
+        step(80, () -> {});
+        shot("22_wireless_charger");
+        step(5, () -> mc().options.setCameraType(CameraType.FIRST_PERSON));
+        step(5, () -> server(sp -> {
+            for (EquipmentSlot slot : ARMOR) sp.setItemSlot(slot, ItemStack.EMPTY);
+        }));
+
+        // Excavator and Survey Rig, Mk1 to Mk4.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            String[] tiers = {"", "_mk2", "_mk3", "_mk4"};
+            for (int i = 0; i < 4; i++) {
+                setFacing(level, new BlockPos(20 + i * 2, Y, 140), block("excavator" + tiers[i]), Direction.SOUTH);
+                setFacing(level, new BlockPos(29 + i * 2, Y, 140), block("survey_rig" + tiers[i]), Direction.SOUTH);
+            }
+        }));
+        camera(28, Y + 3, 147.5, 180, 15);
+        step(20, () -> {});
+        shot("23_excavators_survey_rigs");
+
+        // Spark Lamps lighting a closed stone cave.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            BlockState[] rock = {Blocks.STONE.defaultBlockState(), Blocks.STONE.defaultBlockState(), Blocks.ANDESITE.defaultBlockState(),
+                    Blocks.TUFF.defaultBlockState(), Blocks.STONE.defaultBlockState(), Blocks.DIORITE.defaultBlockState(),
+                    Blocks.STONE.defaultBlockState(), Blocks.COAL_ORE.defaultBlockState(), Blocks.STONE.defaultBlockState(),
+                    Blocks.IRON_ORE.defaultBlockState(), Blocks.ANDESITE.defaultBlockState(), Blocks.COPPER_ORE.defaultBlockState(), Blocks.STONE.defaultBlockState()};
+            int x0 = 100, z0 = 120, size = 16, height = 7;
+            for (int x = -1; x <= size; x++) for (int y = -1; y <= height; y++) for (int z = -1; z <= size; z++) {
+                boolean shell = x < 0 || x >= size || y < 0 || y >= height || z < 0 || z >= size;
+                boolean edge = x == 0 || x == size - 1 || z == 0 || z == size - 1;
+                // a few bulges so the walls and roof look less flat
+                boolean bulge = !shell && (edge && (x * 5 + y * 11 + z * 3) % 4 == 0 || y == height - 1 && (x * 3 + z * 5) % 3 == 0);
+                BlockState state = shell || bulge ? rock[Math.floorMod(x * 31 + y * 17 + z * 7, rock.length)] : Blocks.AIR.defaultBlockState();
+                level.setBlock(new BlockPos(x0 + x, Y + y, z0 + z), state, 3);
+            }
+            SparkLampBlock lamp = (SparkLampBlock) block("spark_lamp");
+            for (int[] l : new int[][]{{5, 5}, {12, 11}, {3, 12}}) {
+                level.setBlock(new BlockPos(x0 + l[0], Y, z0 + l[1]), lamp.facing(Direction.UP), 3);
+            }
+            for (int[] c : new int[][]{{9, 4}}) {
+                BlockPos pos = new BlockPos(x0 + c[0], Y + height - 2, z0 + c[1]);
+                level.setBlock(pos.above(), rock[0], 3);
+                level.setBlock(pos, lamp.facing(Direction.DOWN), 3);
+            }
+        }));
+        camera(101.5, Y + 2.6, 134.5, -135, 8);
+        step(60, () -> {});
+        shot("24_spark_lamp_cave");
+
+        // Architect Table: a built plan in all four styles around the table, one more plot queued.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            setFacing(level, TABLE, block("architect_table"), Direction.SOUTH);
+            if (!(level.getBlockEntity(TABLE) instanceof ArchitectTableBlockEntity table)) return;
+            Layout layout = table.layout();
+            int[][] plots = {{0, 0}, {1, 0}, {0, 1}, {1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}, {-1, 1}};
+            BuildStyle[] styles = {BuildStyle.STEEL_LAB, BuildStyle.STEEL_LAB, BuildStyle.STEEL_LAB, BuildStyle.STEEL_LAB,
+                    BuildStyle.COPPER_WORKS, BuildStyle.COPPER_WORKS, BuildStyle.TIMBERFRAME, BuildStyle.NULL_SPIRE, BuildStyle.TIMBERFRAME};
+            for (int i = 0; i < plots.length; i++) layout.queue(Plots.index(plots[i][0], plots[i][1]), styles[i]);
+            ShellPlacer.placeAll(level, TABLE, layout);
+            for (int[] p : plots) {
+                int plot = Plots.index(p[0], p[1]);
+                layout.markBuilt(plot, layout.signature(plot));
+            }
+            layout.queue(Plots.index(2, 0), BuildStyle.NULL_SPIRE);
+            table.setMatter(new Matter(820, 360, 140));
+            table.setChanged();
+        }));
+        camera(TABLE.getX() - 19, Y + 8, TABLE.getZ() - 21, -45, 15);
+        step(40, () -> {});
+        shot("25_architect_build");
+
+        // Solar Panels Mk1 to Mk4.
+        step(20, () -> server(sp -> {
+            for (int mk = 1; mk <= 4; mk++) setFacing(sp.serverLevel(), new BlockPos(58 + mk * 2, Y, 140), block("solar_panel_mk" + mk), Direction.SOUTH);
+        }));
+        camera(63.5, Y + 2.2, 143.8, 180, 26);
+        step(20, () -> {});
+        shot("26_solar_panels");
+
+        // The Forge Tyrant by its Forge Altar on a scorched floor, venting with its furnace doors open (no AI, for the photo).
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            BlockState[] floor = {Blocks.NETHERRACK.defaultBlockState(), Blocks.BLACKSTONE.defaultBlockState(), Blocks.NETHERRACK.defaultBlockState(),
+                    Blocks.MAGMA_BLOCK.defaultBlockState(), Blocks.BASALT.defaultBlockState(), Blocks.NETHERRACK.defaultBlockState(), Blocks.POLISHED_BLACKSTONE.defaultBlockState()};
+            for (int x = -7; x <= 7; x++) for (int z = -7; z <= 7; z++) {
+                BlockPos p = TYRANT.offset(x, -1, z);
+                boolean lava = (x == -5 || x == 5) && (z == -3 || z == -4) || x == 4 && z == 3;
+                level.setBlock(p, lava ? Blocks.LAVA.defaultBlockState() : floor[Math.floorMod((x * 73856093) ^ (z * 19349663), floor.length)], 3);
+            }
+            setFacing(level, TYRANT.offset(-4, 0, -2), block("forge_altar"), Direction.SOUTH);
+            command(sp, "summon robotica:forge_tyrant " + (TYRANT.getX() + 0.5) + " " + Y + " " + (TYRANT.getZ() + 0.5)
+                    + " {NoAI:1b,PersistenceRequired:1b,Rotation:[20f,0f]}");
+            for (var e : level.getEntitiesOfClass(com.arno.robotica.boss.entity.ForgeTyrant.class, new net.minecraft.world.phys.AABB(TYRANT).inflate(4))) {
+                e.setYHeadRot(20);
+                e.setYBodyRot(20);
+                e.startVent();
+            }
+        }));
+        camera(TYRANT.getX() - 1.5, Y + 2.4, TYRANT.getZ() + 6.5, 198, 6);
+        step(40, () -> {});
+        shot("27_forge_tyrant");
+        step(10, () -> server(sp -> command(sp, "kill @e[type=robotica:forge_tyrant]")));
+    }
+
+    private static void openGui(BlockPos pos, String file) {
+        step(10, () -> server(sp -> {
+            sp.teleportTo(sp.serverLevel(), pos.getX() + 0.5, pos.getY() - 1, pos.getZ() + 2.5, 180, 20);
+            sp.setShiftKeyDown(false);
+            sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(pos), Direction.SOUTH, pos, false));
+        }));
+        step(30, () -> Screenshot.grab(mc().gameDirectory, file + ".png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> {
+            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+        });
+    }
+
+    private static void newGuis() {
+        // The formed energy multiblocks.
+        openGui(FISSION, "gui_98_fission_formed");
+        openGui(BANK, "gui_99_bank_formed");
+        openGui(FUSION, "gui_100_fusion_formed");
+
+        // The Architect Table with built plots: the Demolish button shows.
+        step(10, () -> server(sp -> {
+            sp.teleportTo(sp.serverLevel(), TABLE.getX() + 0.5, Y, TABLE.getZ() + 2.5, 180, 30);
+            sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(TABLE), Direction.SOUTH, TABLE, false));
+        }));
+        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_96_architect_demolish.png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> {
+            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+        });
+
+        // Tinker's Bench with a Null Drill full of modules, a few more modules in the inventory.
+        step(10, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            setFacing(level, BENCH, block("tinkers_bench"), Direction.SOUTH);
+            sp.teleportTo(level, BENCH.getX() + 0.5, Y, BENCH.getZ() + 2.5, 180, 30);
+            String[] spare = {"silk_touch_module", "night_vision_module_2", "jet_assist_module_2", "kinetic_shield_module", "step_assist_module"};
+            for (int i = 0; i < spare.length; i++) sp.getInventory().setItem(9 + i, new ItemStack(item(spare[i])));
+            sp.gameMode.useItemOn(sp, level, ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(BENCH), Direction.SOUTH, BENCH, false));
+        }));
+        step(10, () -> server(sp -> {
+            if (!(sp.containerMenu instanceof TinkersBenchMenu menu)) return;
+            ItemStack drill = new ItemStack(item("null_drill"));
+            ItemEnergy.fill(drill);
+            String[] candidates = {"fortune_module_3", "overclock_module_3", "power_regulator_module_3", "magnet_module_3", "auto_pickup_module",
+                    "lamp_placer_module", "void_filter_module", "sonar_pulse_module_3"};
+            List<String> used = new ArrayList<>();
+            for (int slot = 0; slot < Modules.slots(drill); slot++) {
+                for (String c : candidates) {
+                    ItemStack module = new ItemStack(item(c));
+                    if (used.contains(c) || module.isEmpty() || Modules.refusal(drill, slot, module, List.of()) != null) continue;
+                    Modules.setModule(drill, slot, module);
+                    used.add(c);
+                    break;
+                }
+            }
+            menu.getSlot(TinkersBenchMenu.TOOL_SLOT).set(drill);
+            menu.broadcastChanges();
+        }));
+        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_97_tinkers_bench.png", mc().getMainRenderTarget(), m -> {}));
+        step(5, () -> {
+            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+        });
+        step(5, () -> server(sp -> sp.getInventory().clearContent()));
     }
 }

@@ -20,6 +20,8 @@ Forge Energy (FE) is the only unit. Every port works with other mods' cables too
 | Fission Reactor | 2-3 | about 1,150 to 45,000 FE/t | 5x5x5 to 7x7x7, see [fission](#/guide/fission-reactor) |
 | Fusion Reactor | 4 | 200,000 FE/t | per fusion pellet, see [fusion](#/guide/fusion-reactor) |
 
+{{image shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4}}
+
 ## Storage
 
 | Store | Capacity |
@@ -53,7 +55,11 @@ Forge Energy (FE) is the only unit. Every port works with other mods' cables too
 
 {{image shots/11_tesla_network.jpg|A Tesla Coil network}}
 
+{{image shots/18_energy_multiblocks.jpg|Fission Reactor, Capacitor Bank and Fusion Reactor}}
+
 ## Charging your gear
 
 - [[charger]]: one item at 2,000 FE/t. Right-click it with the item.
 - [[wireless_charger]] (Age 2): everything you carry within 8 blocks, 1,000 FE/t per player. Worn armor first, then your hands, then the inventory. Only you and your team. Range cards +4 blocks, speed cards up to x6. Wireless costs 10% extra FE.
+
+{{image shots/gui_wireless_charger.jpg|Wireless Charger menu}}

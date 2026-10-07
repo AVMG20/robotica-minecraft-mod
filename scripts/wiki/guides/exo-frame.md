@@ -8,6 +8,8 @@ Four pieces, four marks. The armor never breaks; empty, it keeps its protection 
 
 {{items exo_helmet_mk1 exo_chestplate_mk1 exo_leggings_mk1 exo_boots_mk1}}
 
+{{image shots/14_exo_frames.jpg|Exo-Frame Mk1 to Mk4}}
+
 ## Marks
 
 | Mark | Age | Upgrade at the smithing table | Protection (boots / legs / chest / helmet) | Module slots | Battery |
@@ -56,6 +58,8 @@ Chestplate Mk2 and up holds one core. The bonus needs all four pieces worn, Mk2 
 | [[servo_core]] | key O: Haste II + Speed I for 10 s (60 s cooldown, 50,000 FE) |
 | [[magma_core]] | fire immunity, hits set targets on fire, lava doesn't slow you |
 | [[antigrav_core]] | no fall damage, Flight costs half, Dash cooldown halved |
+
+{{image shots/22_wireless_charger.jpg|A Wireless Charger charging an Exo-Frame}}
 
 ## Keys and energy
 

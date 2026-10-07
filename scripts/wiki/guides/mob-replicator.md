@@ -39,7 +39,7 @@ Slow, powerful mob farming without mobs. Age 2 on.
 | Harvest (default) | Rolls the mob's loot into an 18-slot output. No entity spawns. XP is stored and drops when you open the GUI. |
 | Spawn | Spawns the real mob in front of the controller. Waits while 8 of that type (or 32 mobs) are within 8 blocks. |
 
-{{image shots/gui_92_replicator_formed.jpg|Replicator Controller GUI, formed}}
+{{image shots/gui_replicator_formed.jpg|Replicator Controller GUI, formed}}
 
 ## Tier gates
 

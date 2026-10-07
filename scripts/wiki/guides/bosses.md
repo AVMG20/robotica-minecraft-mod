@@ -17,6 +17,8 @@ Each boss guards an age core. Both wake at an altar, drop their core every time,
 
 {{items signal_flare colossus_altar servo_core}}
 
+{{image shots/12_scrap_colossus.jpg|The Scrap Colossus on its altar}}
+
 - Find a Rusted Foundry (plains, deserts, badlands) or craft a [[colossus_altar]].
 - Right-click the altar with a [[signal_flare]].
 - Arms up: ground slam. Jump or back off. Arm back: thrown scrap.
@@ -25,6 +27,8 @@ Each boss guards an age core. Both wake at an altar, drop their core every time,
 ## Forge Tyrant (Age 3)
 
 {{items ignition_charge forge_altar magma_core}}
+
+{{image shots/27_forge_tyrant.jpg|The Forge Tyrant venting next to its Forge Altar}}
 
 - Find a Cinder Forge (blackstone ruins in Nether caves) or craft a [[forge_altar]].
 - Right-click the altar with an [[ignition_charge]].

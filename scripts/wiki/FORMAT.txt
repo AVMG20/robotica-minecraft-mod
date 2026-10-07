@@ -35,7 +35,8 @@ Item facts: scripts/wiki/items/*.json (merged; an item id may appear in only one
      "use": ["Short imperative step.", "..."],                       optional, <= 5 steps
      "stats": {"columns": ["Mk1","Mk2","Mk3","Mk4"],                  optional; columns optional
                "rows": [["Speed","x1","x1.5","x2","x3"], ["Power","20 FE/t", ...]]},
-     "see": ["guide:ore-processing", "multiblock:fission_reactor_5", "item:iron_grinding_balls"]}   optional links
+     "see": ["guide:ore-processing", "multiblock:fission_reactor_5", "item:iron_grinding_balls"],   optional links
+     "image": "shots/16_grinder_furnace.jpg|Alt text"}                                optional picture from docs/
   ]}
   Without "columns", rows are [label, value] pairs.
   Inline [[id]] links and **bold** work in what/use/stat values.
