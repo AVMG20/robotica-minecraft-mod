@@ -45,3 +45,4 @@ robotica-audit/
 
 .claude/
 run-showcase/
+__pycache__/
