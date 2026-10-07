@@ -9,7 +9,7 @@ A NeoForge 1.21.1 mod about robots, drones, farms, machines, power tools and pow
 
 ## Play it
 
-1. Build the jar: `./gradlew build` → `build/libs/robotica-0.5.0.jar`.
+1. Build the jar: `./gradlew build` → `build/libs/robotica-0.5.1.jar`.
 2. Install NeoForge 21.1.252 for Minecraft 1.21.1 (installer from neoforged.net, "Install client").
 3. Copy the jar into `~/Library/Application Support/minecraft/mods` (Windows: `%APPDATA%\.minecraft\mods`).
 4. Start the "neoforge" installation in the Minecraft Launcher.
