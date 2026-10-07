@@ -261,7 +261,7 @@ public class GearModuleGameTests {
 
     /**
      * Lamp Rod: places a Spark Lamp on the clicked face for FE, refuses without FE or build rights; the lamp breaks
-     * instantly, drops nothing, falls off when its block goes, and a sneak-right-click takes it away.
+     * instantly, drops nothing, stays when its block goes, and a sneak-right-click takes it away.
      */
     @GameTest(template = "empty")
     public static void lampRodPlacesLamps(GameTestHelper helper) {
@@ -296,7 +296,7 @@ public class GearModuleGameTests {
         helper.assertTrue(level.getBlockState(wallLamp).is(GearBlocks.SPARK_LAMP.get())
                 && level.getBlockState(wallLamp).getValue(SparkLampBlock.FACING) == Direction.WEST, "facing away from the wall");
         level.setBlock(wall, Blocks.AIR.defaultBlockState(), 3);
-        helper.assertTrue(level.getBlockState(wallLamp).isAir(), "falls off when its block goes");
+        helper.assertTrue(level.getBlockState(wallLamp).is(GearBlocks.SPARK_LAMP.get()), "floats on when its block goes");
 
         player.setShiftKeyDown(true);
         BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(floor.above()), Direction.UP, floor.above(), false);

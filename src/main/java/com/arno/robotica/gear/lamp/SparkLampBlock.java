@@ -5,10 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -21,8 +18,8 @@ import java.util.Map;
 
 /**
  * Spark Lamp: a small floating electric wisp with torch light (14), no collision, breaks instantly and drops nothing.
- * Only the Lamp Rod and the Lamp Placer module put it down. {@link #FACING} points away from the block it hangs on
- * (up = floor, down = ceiling, a side = wall). The look is an animated model; sparks, crackles and hum come from
+ * Only the Lamp Rod and the Lamp Placer module put it down. It needs no supporting block. {@link #FACING} only sets where
+ * in the block the wisp floats (up = low, down = high, a side = against that wall). The look is an animated model; sparks, crackles and hum come from
  * {@link #ambientFx}, set by the client (gear.client.SparkLampFx) and limited to the player's surroundings.
  */
 public class SparkLampBlock extends Block {
@@ -68,21 +65,6 @@ public class SparkLampBlock extends Block {
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
         return SHAPES.get(state.getValue(FACING));
-    }
-
-    @Override
-    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        Direction facing = state.getValue(FACING);
-        BlockPos support = pos.relative(facing.getOpposite());
-        BlockState on = level.getBlockState(support);
-        if (facing == Direction.UP) return Block.canSupportCenter(level, support, Direction.UP);
-        return on.isFaceSturdy(level, support, facing);
-    }
-
-    @Override
-    protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        if (dir == state.getValue(FACING).getOpposite() && !canSurvive(state, level, pos)) return Blocks.AIR.defaultBlockState();
-        return super.updateShape(state, dir, neighbor, level, pos, neighborPos);
     }
 
     /** Client only (called by the level renderer for blocks near the player). */

@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -24,8 +23,7 @@ import java.util.UUID;
 
 /**
  * Lamp Placer module (drills): a moment after you mine a block, if the spot is dark (light at or below
- * {@link GearConfig#lampLight}, sky or block light), a Spark Lamp goes on the floor, a wall or the ceiling there, or at
- * your feet. For an area break the spot is the bottom row of the mined area (nearest the origin), so the lamp sits on
+ * {@link GearConfig#lampLight}, sky or block light), a floating Spark Lamp goes there, or at your feet. For an area break the spot is the bottom row of the mined area (nearest the origin), so the lamp sits on
  * the floor instead of at eye level. Paid in FE from the drill, at most one lamp per {@link GearConfig#lampCooldown}
  * ticks. Placement goes through {@link SparkLamps} (build rights, spawn protection, world border, place event). State is per player UUID and
  * dropped on logout.
@@ -92,9 +90,8 @@ public final class LampPlacer {
     }
 
     /**
-     * Places a lamp near {@code pos} without looking at the light (the caller did): the spot itself, the block below it,
-     * then the origin of the break, then the player's feet; on the floor first, then a wall (facing the player first),
-     * then the ceiling. Returns true when placed.
+     * Places a lamp near {@code pos} without looking at the light (the caller did): the spot itself, then the origin of
+     * the break, then the player's feet; the first free one. Returns true when placed.
      */
     public static boolean tryPlace(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos pos, BlockPos origin) {
         if (!player.mayBuild()) return false;
@@ -104,28 +101,14 @@ public final class LampPlacer {
         boolean creative = player.getAbilities().instabuild;
         int cost = Modules.regulated(tool, GearConfig.lampCost());
         if (!creative && ItemEnergy.get(tool) < cost) return false;
-        for (BlockPos spot : new LinkedHashSet<>(List.of(pos, pos.below(), origin, player.blockPosition()))) {
-            for (Direction facing : facings(player, spot)) {
-                if (!SparkLamps.canPlace(player, level, spot, facing)) continue;
-                if (!SparkLamps.place(player, level, spot, facing)) return false;
-                if (!creative) ItemEnergy.drain(tool, cost);
-                LAST.put(player.getUUID(), now);
-                return true;
-            }
+        for (BlockPos spot : new LinkedHashSet<>(List.of(pos, origin, player.blockPosition()))) {
+            if (!SparkLamps.canPlace(player, level, spot)) continue;
+            if (!SparkLamps.place(player, level, spot, Direction.UP)) return false;
+            if (!creative) ItemEnergy.drain(tool, cost);
+            LAST.put(player.getUUID(), now);
+            return true;
         }
         return false;
-    }
-
-    private static List<Direction> facings(ServerPlayer player, BlockPos spot) {
-        List<Direction> out = new ArrayList<>();
-        out.add(Direction.UP);
-        Direction toPlayer = Direction.getNearest(player.getX() - (spot.getX() + 0.5), 0, player.getZ() - (spot.getZ() + 0.5));
-        if (toPlayer.getAxis().isHorizontal()) out.add(toPlayer);
-        for (Direction d : Direction.Plane.HORIZONTAL) {
-            if (d != toPlayer) out.add(d);
-        }
-        out.add(Direction.DOWN);
-        return out;
     }
 
     public static void forget(UUID player) {

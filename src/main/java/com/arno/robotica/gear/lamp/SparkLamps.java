@@ -21,13 +21,12 @@ import net.neoforged.neoforge.event.EventHooks;
 public final class SparkLamps {
     private SparkLamps() {}
 
-    /** True when {@code spot} is free (air or replaceable) and a lamp facing {@code facing} may hang there for this player. */
-    public static boolean canPlace(ServerPlayer player, ServerLevel level, BlockPos spot, Direction facing) {
+    /** True when {@code spot} is free (air or replaceable) and this player may put a lamp there. */
+    public static boolean canPlace(ServerPlayer player, ServerLevel level, BlockPos spot) {
         if (!player.mayBuild() || !level.isLoaded(spot) || !level.getWorldBorder().isWithinBounds(spot)) return false;
         if (!level.mayInteract(player, spot)) return false;
         BlockState here = level.getBlockState(spot);
-        if (!here.isAir() && !(here.canBeReplaced() && here.getFluidState().isEmpty())) return false;
-        return GearBlocks.SPARK_LAMP.get().facing(facing).canSurvive(level, spot);
+        return here.isAir() || (here.canBeReplaced() && here.getFluidState().isEmpty());
     }
 
     /**
@@ -35,7 +34,7 @@ public final class SparkLamps {
      * claim mod cancels it) and plays the zap. Returns true when the lamp stays.
      */
     public static boolean place(ServerPlayer player, ServerLevel level, BlockPos spot, Direction facing) {
-        if (!canPlace(player, level, spot, facing)) return false;
+        if (!canPlace(player, level, spot)) return false;
         BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, spot);
         if (!level.setBlock(spot, GearBlocks.SPARK_LAMP.get().facing(facing), Block.UPDATE_ALL)) return false;
         if (EventHooks.onBlockPlace(player, snapshot, facing)) {
