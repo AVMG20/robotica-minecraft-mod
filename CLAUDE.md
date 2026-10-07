@@ -5,7 +5,7 @@ tools, built as a grind loop: better gear needs machine-made parts, which need m
 Mekanism/Thermal/Create, so balance should be similar to those mods (ours may be a bit better or worse) and use `c:` tags.
 The user is the only developer.
 
-## Find things fast
+## Project structure
 - `docs/DESIGN.md`: the spec, one section per module. Read the section you need, not the whole file.
 - `docs/AGENT_BRIEF.md`: engineering rules (server safety, payloads, config, textures, tests).
 - Code: `src/main/java/com/arno/robotica/<module>/` (`core` is shared; `client/` subpackages are client-only).
@@ -17,8 +17,6 @@ The user is the only developer.
   `scripts/data/codex_guide.py`.
 - Wiki site (GitHub Pages, `docs/`): sources in `scripts/wiki/` (`items/*.json`, `upgrades.json`, `guides/*.md`,
   `multiblocks.json`, format in `FORMAT.txt`); run `python3 scripts/wiki/build_wiki.py`.
-- Save tokens: grep for a symbol before opening files, read line ranges, and don't read generated files
-  (`docs/wiki/data.json`, recipe/model JSON, `docs/COSTS.md`) unless needed.
 
 ## Build and test
 - No local JDK: `scripts/docker-build.sh runGameTestServer` (all required game tests must pass) and
