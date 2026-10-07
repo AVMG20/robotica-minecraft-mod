@@ -4,7 +4,7 @@
     "Grinder / Electric Furnace: processing/block/GrinderBlockEntity.KINDS, ElectricFurnaceBlockEntity.KINDS; caps ProcessingMachineBlockEntity.cap -> ProcessingConfig defaults upgradeSlotsMk 2/3/4/5, speedCapMk 2/4/6/8, efficiencyCapMk 2/3/4/4, fortuneCapMk 0/1/2/3, rangeCapMk 0/1/2/3; void 1; fortuneBonus 0.10, xpPerFortune 0.5.",
     "Alloy Smelter / Centrifuge / Assembler: industry/block/ProcessingBlockEntity.acceptedKinds + cardCap (slots tier+1, speed 2*tier, efficiency min(4,tier), fortune tier-1, void 1 Centrifuge only); fortune only on recipes with fortune (alloying by default).",
     "Metal Press: power/block/MetalPressBlockEntity (2 slots, speed 4, efficiency 4). Combustion Generator: CombustionGeneratorBlockEntity (2 slots, speed 3, efficiency 4). Solar Panels: SolarPanelBlockEntity / SolarPanelMenu (2 slots, speed 4, efficiency 4, solarSpeedBonus, solarNightPerCard).",
-    "Stumpy / Sprout: automation/entity/FarmBotBlockEntity (4 slots; speed, range, growth capped at the Mk tier; efficiency 4). Excavator: ExcavatorBlockEntity (5 slots, kind maxStack caps, RANGE_SIZES 16/32/48/64). Survey Rig: SurveyRigBlockEntity (UPGRADE_SLOTS 4, kind maxStack caps).",
+    "Stumpy / Sprout: automation/entity/FarmBotBlockEntity (4 slots; speed, range, growth capped at the Mk tier; efficiency 4). Excavator Mk1-4: ExcavatorBlockEntity.upgradeCap -> AutomationConfig excavatorSlotsMk 2/3/4/5, excavatorSpeedCapMk 2/4/6/8, excavatorRangeCapMk 1/2/3/4, excavatorEfficiencyCapMk 1/2/3/4, excavatorFortuneCapMk 1/2/3/3, excavatorRangeStep 10. Survey Rig Mk1-4: SurveyRigBlockEntity.upgradeCap -> surveyRigSlotsMk 1/2/3/4, surveyRigSpeedCapMk 2/4/6/8, surveyRigEfficiencyCapMk 1/2/3/4, surveyRigFortuneCapMk 1/2/3/3. Wireless Charger: power/block/WirelessChargerBlockEntity (2 slots, wirelessSpeedCap 4, wirelessRangeCap 4).",
     "Mob Replicator: replicator/block/ReplicatorControllerBlockEntity (UPGRADE_SLOTS 3, MAX_SPEED_LEVEL 3, fortune 3, efficiency 4).",
     "Architect Table: architect/block/ArchitectTableBlockEntity (2 slots; speed, efficiency, height at kind maxStack).",
     "Sentry / Courier Drone: drones/entity/SentryDrone, CourierDrone (2 slots; speed, range, efficiency at kind maxStack). Sentry: range +4 blocks per card, attack interval / (1 + 0.4 per speed card). Courier: route +32 blocks per range card, flight speed +50% per speed card (max 3 blocks/tick).",
@@ -501,41 +501,115 @@
       "source": "automation/entity/FarmBotBlockEntity.upgradeCap (Mk tier)"
     },
     {
+      "id": "wireless_charger",
+      "name": "Wireless Charger",
+      "items": [
+        "wireless_charger"
+      ],
+      "slots": 2,
+      "caps": {
+        "speed": 4,
+        "range": 4
+      },
+      "effects": {
+        "speed": "Charges faster: x2, x3, x4, x6 FE/t per player.",
+        "range": "+4 blocks of range per card (8 without, 24 with 4)."
+      },
+      "source": "power/block/WirelessChargerBlockEntity, PowerConfig wireless*"
+    },
+    {
       "id": "excavator",
       "name": "Excavator",
       "items": [
-        "excavator"
+        "excavator",
+        "excavator_mk2",
+        "excavator_mk3",
+        "excavator_mk4"
       ],
-      "slots": 5,
+      "slots": [
+        2,
+        3,
+        4,
+        5
+      ],
       "caps": {
-        "speed": 8,
-        "range": 4,
-        "efficiency": 4,
-        "fortune": 3,
+        "speed": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "range": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "efficiency": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "fortune": [
+          1,
+          2,
+          3,
+          3
+        ],
         "silk": 1,
         "void": 1
       },
       "effects": {
         "speed": "Digs faster (x2, x3, x4, x6, x8, x11, x15, x20); FE per block x1.75 / x3 / x7 / x21 at 1 / 2 / 4 / 8 cards.",
-        "range": "Hole 16, 32, 48, 64 blocks wide (8 without cards).",
+        "range": "Hole +10 blocks wide per card (Mk1 8 -> 18, Mk4 24 -> 64).",
         "efficiency": "-15% FE per block per card.",
         "fortune": "Fortune I-III on mined blocks.",
         "silk": "Blocks drop themselves.",
         "void": "Deletes cobblestone, dirt, gravel and other junk."
       },
-      "source": "automation/entity/ExcavatorBlockEntity"
+      "source": "automation/entity/ExcavatorBlockEntity, AutomationConfig excavator*Mk1-4",
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ]
     },
     {
       "id": "survey_rig",
       "name": "Survey Rig",
       "items": [
-        "survey_rig"
+        "survey_rig",
+        "survey_rig_mk2",
+        "survey_rig_mk3",
+        "survey_rig_mk4"
       ],
-      "slots": 4,
+      "slots": [
+        1,
+        2,
+        3,
+        4
+      ],
       "caps": {
-        "speed": 8,
-        "efficiency": 4,
-        "fortune": 3,
+        "speed": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "efficiency": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "fortune": [
+          1,
+          2,
+          3,
+          3
+        ],
         "silk": 1,
         "void": 1
       },
@@ -546,7 +620,13 @@
         "silk": "Ores come out as ore blocks.",
         "void": "Deletes junk drops."
       },
-      "source": "automation/entity/SurveyRigBlockEntity"
+      "source": "automation/entity/SurveyRigBlockEntity, AutomationConfig surveyRig*Mk1-4",
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ]
     },
     {
       "id": "replicator",

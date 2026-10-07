@@ -25,6 +25,15 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue TESLA_HOP_LOSS;
     private static final ModConfigSpec.IntValue CHARGER_RATE;
     private static final ModConfigSpec.IntValue PRESS_POWER;
+    private static final ModConfigSpec.IntValue WIRELESS_RATE;
+    private static final ModConfigSpec.IntValue WIRELESS_RANGE;
+    private static final ModConfigSpec.IntValue WIRELESS_RANGE_PER_CARD;
+    private static final ModConfigSpec.IntValue WIRELESS_SPEED_CAP;
+    private static final ModConfigSpec.IntValue WIRELESS_RANGE_CAP;
+    private static final ModConfigSpec.IntValue WIRELESS_LOSS;
+    private static final ModConfigSpec.IntValue WIRELESS_BUFFER;
+    private static final ModConfigSpec.IntValue WIRELESS_INPUT;
+    private static final ModConfigSpec.BooleanValue WIRELESS_ANYONE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -68,6 +77,26 @@ public final class PowerConfig {
         CHARGER_RATE = b.comment("FE/t the Charger pushes into the item (never more than the item accepts).")
                 .defineInRange("chargerRate", 2_000, 1, 100_000_000);
         b.pop();
+        b.push("wireless_charger");
+        WIRELESS_RATE = b.comment("Wireless Charger: FE/t it pushes into each player in range (worn armor first, then held items, then the inventory), before speed cards.")
+                .defineInRange("wirelessRate", 1_000, 1, 100_000_000);
+        WIRELESS_RANGE = b.comment("Wireless Charger: range in blocks without range cards.")
+                .defineInRange("wirelessRange", 8, 1, 64);
+        WIRELESS_RANGE_PER_CARD = b.comment("Wireless Charger: blocks of range each range card adds.")
+                .defineInRange("wirelessRangePerCard", 4, 0, 32);
+        WIRELESS_SPEED_CAP = b.comment("Wireless Charger: speed cards that count (each multiplies the rate: x2, x3, x4, x6).")
+                .defineInRange("wirelessSpeedCap", 4, 0, 8);
+        WIRELESS_RANGE_CAP = b.comment("Wireless Charger: range cards that count.")
+                .defineInRange("wirelessRangeCap", 4, 0, 4);
+        WIRELESS_LOSS = b.comment("Wireless Charger: percent extra FE drawn from its buffer for every FE that reaches an item.")
+                .defineInRange("wirelessLoss", 10, 0, 500);
+        WIRELESS_BUFFER = b.comment("Wireless Charger: internal FE buffer.")
+                .defineInRange("wirelessBuffer", 200_000, 1_000, 1_000_000_000);
+        WIRELESS_INPUT = b.comment("Wireless Charger: FE/t it accepts from cables and Tesla Coils.")
+                .defineInRange("wirelessInput", 20_000, 1, 1_000_000_000);
+        WIRELESS_ANYONE = b.comment("Wireless Charger: charge every player in range, not only the owner and the owner's team.")
+                .define("wirelessChargeAnyone", false);
+        b.pop();
         b.push("metal_press");
         PRESS_POWER = b.comment("Base FE/t while pressing (recipes take 100 ticks by default).")
                 .defineInRange("pressPower", 20, 1, 1_000_000);
@@ -94,4 +123,13 @@ public final class PowerConfig {
     public static int teslaHopLoss() { return get(TESLA_HOP_LOSS); }
     public static int chargerRate() { return get(CHARGER_RATE); }
     public static int pressPower() { return get(PRESS_POWER); }
+    public static int wirelessRate() { return get(WIRELESS_RATE); }
+    public static int wirelessRange() { return get(WIRELESS_RANGE); }
+    public static int wirelessRangePerCard() { return get(WIRELESS_RANGE_PER_CARD); }
+    public static int wirelessSpeedCap() { return get(WIRELESS_SPEED_CAP); }
+    public static int wirelessRangeCap() { return get(WIRELESS_RANGE_CAP); }
+    public static int wirelessLoss() { return get(WIRELESS_LOSS); }
+    public static int wirelessBuffer() { return get(WIRELESS_BUFFER); }
+    public static int wirelessInput() { return get(WIRELESS_INPUT); }
+    public static boolean wirelessChargeAnyone() { return SPEC.isLoaded() ? WIRELESS_ANYONE.get() : WIRELESS_ANYONE.getDefault(); }
 }

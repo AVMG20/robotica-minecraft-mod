@@ -53,6 +53,9 @@ shaped('metal_press', ['PPP', 'GSG', 'PMP'],
        {'P': IRON_PLATE, 'G': 'copper_gear', 'S': 'minecraft:piston', 'M': 'electric_motor'})
 
 # Age 2: each tier consumes the previous one
+# Wireless Charger: a Charger with a Tesla Coil II as emitter, an advanced circuit to pick the players.
+shaped('wireless_charger', [' T ', 'ACA', 'QXQ'], {'T': 'tesla_coil_2', 'A': 'advanced_circuit', 'C': 'charger', 'Q': QUARTZ,
+                                                 'X': 'reinforced_casing'})
 shaped('solar_panel_mk2', ['SQS', 'QAQ', 'SQS'], {'S': 'solar_panel_mk1', 'Q': QUARTZ, 'A': 'advanced_circuit'})
 shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'advanced_circuit', 'A': 'accumulator_1', 'X': 'reinforced_casing'})

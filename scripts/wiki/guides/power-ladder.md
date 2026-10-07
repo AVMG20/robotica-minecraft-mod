@@ -50,3 +50,8 @@ Forge Energy (FE) is the only unit. Every port works with other mods' cables too
 4. Click the same face again to unlink. Sneak-right-click air clears the selection.
 
 {{image shots/11_tesla_network.jpg|A Tesla Coil network}}
+
+## Charging your gear
+
+- [[charger]]: one item at 2,000 FE/t. Right-click it with the item.
+- [[wireless_charger]] (Age 2): everything you carry within 8 blocks, 1,000 FE/t per player. Worn armor first, then your hands, then the inventory. Only you and your team. Range cards +4 blocks, speed cards up to x6. Wireless costs 10% extra FE.

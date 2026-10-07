@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "robotica:block/excavator_mk3"
+    },
+    "lit=true": {
+      "model": "robotica:block/excavator_mk3_on"
+    }
+  }
+}

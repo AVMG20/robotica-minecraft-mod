@@ -49,7 +49,6 @@ import java.util.Set;
 public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.FORTUNE,
             UpgradeKind.SILK, UpgradeKind.VOID);
-    public static final int UPGRADE_SLOTS = 4;
 
     /** What the rig is doing, for the GUI. */
     public enum RigState {
@@ -87,13 +86,37 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     private ItemStack toolStack = ItemStack.EMPTY;
 
     public SurveyRigBlockEntity(BlockPos pos, BlockState state) {
-        super(AutomationContent.SURVEY_RIG_BE.get(), pos, state, KINDS, UPGRADE_SLOTS,
-                AutomationConfig.surveyEnergyBuffer(), AutomationConfig.surveyMaxInput());
+        super(AutomationContent.SURVEY_RIG_BE.get(), pos, state, KINDS, AutomationConfig.surveySlots(tierOf(state)),
+                (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.surveyEnergyBuffer() * tierOf(state)),
+                (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.surveyMaxInput() * tierOf(state)));
     }
 
     @Override
     public String blockKey() {
-        return "block.robotica.survey_rig";
+        return getBlockState().getBlock().getDescriptionId();
+    }
+
+    /** Card caps grow with the Mk (server config): speed 2/4/6/8, efficiency 1-4, fortune 1/2/3/3, silk and void 1. */
+    @Override
+    protected int upgradeCap(UpgradeKind kind) {
+        int tier = tier();
+        return switch (kind) {
+            case SPEED -> AutomationConfig.surveySpeedCap(tier);
+            case EFFICIENCY -> AutomationConfig.surveyEfficiencyCap(tier);
+            case FORTUNE -> AutomationConfig.surveyFortuneCap(tier);
+            default -> kind.maxStack;
+        };
+    }
+
+    /** Percent more weight this Mk gives rare ore kinds. */
+    public int rareBonus() {
+        return AutomationConfig.surveyRareBonus(tier());
+    }
+
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        super.collectInfo(level, info);
+        if (lastOre() != null) info.lastOre = BuiltInRegistries.ITEM.getKey(lastOre()).toString();
     }
 
     // ---- no area: the rig works in place ----
@@ -145,8 +168,8 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     }
 
     public int actionInterval() {
-        int base = CoreConfig.scaleInterval(AutomationConfig.surveyInterval());
-        return Math.max(1, base / Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
+        long base = (long) CoreConfig.scaleInterval(AutomationConfig.surveyInterval()) * 100 / AutomationConfig.surveySpeed(tier());
+        return (int) Math.max(1, base / Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
     }
 
     /**
@@ -156,8 +179,8 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     public int energyPerTick() {
         int speed = upgrades.level(UpgradeKind.SPEED);
         int eff = upgrades.level(UpgradeKind.EFFICIENCY);
-        double value = CoreConfig.scaleEnergy(AutomationConfig.surveyFePerTick()) * (double) Upgrades.speedMultiplier(speed)
-                * Upgrades.steepEnergyMultiplier(speed, eff);
+        double value = CoreConfig.scaleEnergy(AutomationConfig.surveyFePerTick()) * (AutomationConfig.surveySpeed(tier()) / 100.0)
+                * Upgrades.speedMultiplier(speed) * Upgrades.steepEnergyMultiplier(speed, eff);
         return (int) Math.min(Integer.MAX_VALUE, Math.round(value));
     }
 
@@ -199,7 +222,7 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
             return Status.WORKING;
         }
         progress = 0;
-        Item ore = pool.roll(sl.random, core);
+        Item ore = pool.roll(sl.random, core, rareBonus(), AutomationConfig.surveyRareWeight());
         if (ore != null) mine(sl, ore);
         setChanged();
         return Status.WORKING;

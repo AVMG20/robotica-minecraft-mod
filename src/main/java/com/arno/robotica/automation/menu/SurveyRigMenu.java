@@ -66,6 +66,7 @@ public class SurveyRigMenu extends MachineMenu {
         idxInterval = track(be::actionInterval);
         idxLastOre = track(be::lastOreId);
         idxChance = track(() -> chanceBasisPoints(be));
+        trackSides(inv.player.level().isClientSide ? null : be.sides);
     }
 
     public int energy() {
@@ -90,7 +91,8 @@ public class SurveyRigMenu extends MachineMenu {
         if (ore == null) return 0;
         SurveyOrePool pool = SurveyOrePool.get();
         SurveyOrePool.Kind kind = pool.kind(ore);
-        return kind == null ? 0 : (int) Math.round(pool.chance(kind, be.hasCore()) * 10_000);
+        return kind == null ? 0 : (int) Math.round(pool.chance(kind, be.hasCore(), be.rareBonus(),
+                com.arno.robotica.automation.AutomationConfig.surveyRareWeight()) * 10_000);
     }
 
     /** Percent of the way to the next ore. */

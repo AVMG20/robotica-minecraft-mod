@@ -35,7 +35,13 @@ public final class AutomationModule {
         RoboticaTab.add(AutomationContent.FARM_KIT_MK3);
         RoboticaTab.add(AutomationContent.FARM_KIT_MK4);
         RoboticaTab.add(AutomationContent.EXCAVATOR_ITEM);
+        RoboticaTab.add(AutomationContent.EXCAVATOR_MK2_ITEM);
+        RoboticaTab.add(AutomationContent.EXCAVATOR_MK3_ITEM);
+        RoboticaTab.add(AutomationContent.EXCAVATOR_MK4_ITEM);
         RoboticaTab.add(AutomationContent.SURVEY_RIG_ITEM);
+        RoboticaTab.add(AutomationContent.SURVEY_RIG_MK2_ITEM);
+        RoboticaTab.add(AutomationContent.SURVEY_RIG_MK3_ITEM);
+        RoboticaTab.add(AutomationContent.SURVEY_RIG_MK4_ITEM);
         RoboticaTab.add(AutomationContent.SUPPLY_CRATE_ITEM);
     }
 
@@ -50,6 +56,6 @@ public final class AutomationModule {
     /** FE from cables on every side (receive only) and the buffer as an item handler for pipes and hoppers. */
     private static <T extends AreaWorkerBlockEntity> void registerWorker(RegisterCapabilitiesEvent event, BlockEntityType<T> type) {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, type, (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (be, side) -> be.externalBuffer);
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (be, side) -> be.sides.access(side));
     }
 }

@@ -25,7 +25,10 @@
             "predicate": {
               "block": {
                 "blocks": [
-                  "robotica:excavator"
+                  "robotica:excavator",
+                  "robotica:excavator_mk2",
+                  "robotica:excavator_mk3",
+                  "robotica:excavator_mk4"
                 ]
               }
             }
@@ -40,6 +43,9 @@
     ]
   ],
   "rewards": {
+    "recipes": [
+      "robotica:excavator_mk2"
+    ],
     "experience": 10
   }
 }

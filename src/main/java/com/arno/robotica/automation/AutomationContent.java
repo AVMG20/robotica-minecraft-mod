@@ -45,14 +45,27 @@ public final class AutomationContent {
         return BlockBehaviour.Properties.of().mapColor(color).strength(2.0F, 6.0F).sound(SoundType.COPPER).noOcclusion();
     }
 
+    private static DeferredBlock<ExcavatorBlock> excavator(String id, int tier) {
+        return BLOCKS.registerBlock(id, p -> new ExcavatorBlock(p, tier), BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
+                .strength(3.5F, 8.0F).sound(SoundType.METAL).noOcclusion().lightLevel(s -> s.getValue(ExcavatorBlock.LIT) ? 6 : 0));
+    }
+
+    private static DeferredBlock<SurveyRigBlock> surveyRig(String id, int tier) {
+        return BLOCKS.registerBlock(id, p -> new SurveyRigBlock(p, tier), BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
+                .strength(4.0F, 10.0F).sound(SoundType.METAL).noOcclusion().lightLevel(s -> s.getValue(SurveyRigBlock.LIT) ? 9 : 4));
+    }
+
     // ---- blocks ----
     public static final DeferredBlock<StumpyBlock> STUMPY = BLOCKS.registerBlock("stumpy", StumpyBlock::new, robot(MapColor.COLOR_ORANGE));
     public static final DeferredBlock<SproutBlock> SPROUT = BLOCKS.registerBlock("sprout", SproutBlock::new, robot(MapColor.COLOR_YELLOW));
-    public static final DeferredBlock<ExcavatorBlock> EXCAVATOR = BLOCKS.registerBlock("excavator", ExcavatorBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5F, 8.0F).sound(SoundType.METAL).noOcclusion());
-    public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG = BLOCKS.registerBlock("survey_rig", SurveyRigBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 10.0F).sound(SoundType.METAL).noOcclusion()
-                    .lightLevel(s -> 4));
+    public static final DeferredBlock<ExcavatorBlock> EXCAVATOR = excavator("excavator", 1);
+    public static final DeferredBlock<ExcavatorBlock> EXCAVATOR_MK2 = excavator("excavator_mk2", 2);
+    public static final DeferredBlock<ExcavatorBlock> EXCAVATOR_MK3 = excavator("excavator_mk3", 3);
+    public static final DeferredBlock<ExcavatorBlock> EXCAVATOR_MK4 = excavator("excavator_mk4", 4);
+    public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG = surveyRig("survey_rig", 1);
+    public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG_MK2 = surveyRig("survey_rig_mk2", 2);
+    public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG_MK3 = surveyRig("survey_rig_mk3", 3);
+    public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG_MK4 = surveyRig("survey_rig_mk4", 4);
     public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE = BLOCKS.registerBlock("supply_crate", SupplyCrateBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD));
 
@@ -63,8 +76,20 @@ public final class AutomationContent {
             p -> new WorkerBlockItem(SPROUT.get(), p, 0, "tooltip.robotica.sprout"));
     public static final DeferredItem<BlockItem> EXCAVATOR_ITEM = ITEMS.registerItem("excavator",
             p -> new WorkerBlockItem(EXCAVATOR.get(), p, 2, "tooltip.robotica.excavator"));
+    public static final DeferredItem<BlockItem> EXCAVATOR_MK2_ITEM = ITEMS.registerItem("excavator_mk2",
+            p -> new WorkerBlockItem(EXCAVATOR_MK2.get(), p, 2, "tooltip.robotica.excavator"));
+    public static final DeferredItem<BlockItem> EXCAVATOR_MK3_ITEM = ITEMS.registerItem("excavator_mk3",
+            p -> new WorkerBlockItem(EXCAVATOR_MK3.get(), p.rarity(Rarity.UNCOMMON), 3, "tooltip.robotica.excavator"));
+    public static final DeferredItem<BlockItem> EXCAVATOR_MK4_ITEM = ITEMS.registerItem("excavator_mk4",
+            p -> new WorkerBlockItem(EXCAVATOR_MK4.get(), p.rarity(Rarity.RARE), 4, "tooltip.robotica.excavator"));
     public static final DeferredItem<BlockItem> SURVEY_RIG_ITEM = ITEMS.registerItem("survey_rig",
             p -> new WorkerBlockItem(SURVEY_RIG.get(), p.rarity(Rarity.UNCOMMON), 2, "tooltip.robotica.survey_rig"));
+    public static final DeferredItem<BlockItem> SURVEY_RIG_MK2_ITEM = ITEMS.registerItem("survey_rig_mk2",
+            p -> new WorkerBlockItem(SURVEY_RIG_MK2.get(), p.rarity(Rarity.UNCOMMON), 2, "tooltip.robotica.survey_rig"));
+    public static final DeferredItem<BlockItem> SURVEY_RIG_MK3_ITEM = ITEMS.registerItem("survey_rig_mk3",
+            p -> new WorkerBlockItem(SURVEY_RIG_MK3.get(), p.rarity(Rarity.RARE), 3, "tooltip.robotica.survey_rig"));
+    public static final DeferredItem<BlockItem> SURVEY_RIG_MK4_ITEM = ITEMS.registerItem("survey_rig_mk4",
+            p -> new WorkerBlockItem(SURVEY_RIG_MK4.get(), p.rarity(Rarity.EPIC), 4, "tooltip.robotica.survey_rig"));
     public static final DeferredItem<BlockItem> SUPPLY_CRATE_ITEM = ITEMS.registerItem("supply_crate",
             p -> new WorkerBlockItem(SUPPLY_CRATE.get(), p, 0, "tooltip.robotica.supply_crate"));
 
@@ -83,9 +108,11 @@ public final class AutomationContent {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SproutBlockEntity>> SPROUT_BE = BLOCK_ENTITIES.register("sprout",
             () -> BlockEntityType.Builder.of(SproutBlockEntity::new, SPROUT.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ExcavatorBlockEntity>> EXCAVATOR_BE = BLOCK_ENTITIES.register("excavator",
-            () -> BlockEntityType.Builder.of(ExcavatorBlockEntity::new, EXCAVATOR.get()).build(null));
+            () -> BlockEntityType.Builder.of(ExcavatorBlockEntity::new, EXCAVATOR.get(), EXCAVATOR_MK2.get(), EXCAVATOR_MK3.get(),
+                    EXCAVATOR_MK4.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SurveyRigBlockEntity>> SURVEY_RIG_BE = BLOCK_ENTITIES.register("survey_rig",
-            () -> BlockEntityType.Builder.of(SurveyRigBlockEntity::new, SURVEY_RIG.get()).build(null));
+            () -> BlockEntityType.Builder.of(SurveyRigBlockEntity::new, SURVEY_RIG.get(), SURVEY_RIG_MK2.get(), SURVEY_RIG_MK3.get(),
+                    SURVEY_RIG_MK4.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SupplyCrateBlockEntity>> SUPPLY_CRATE_BE = BLOCK_ENTITIES.register("supply_crate",
             () -> BlockEntityType.Builder.of(SupplyCrateBlockEntity::new, SUPPLY_CRATE.get()).build(null));
 

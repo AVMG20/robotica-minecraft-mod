@@ -1,0 +1,8 @@
+{
+  "parent": "robotica:block/excavator",
+  "textures": {
+    "accent": "robotica:block/automation_mk3",
+    "drill": "robotica:block/excavator_drill_on",
+    "light": "robotica:block/excavator_light_on"
+  }
+}

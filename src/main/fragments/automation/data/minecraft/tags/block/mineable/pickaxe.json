@@ -4,6 +4,12 @@
     "robotica:stumpy",
     "robotica:sprout",
     "robotica:excavator",
-    "robotica:survey_rig"
+    "robotica:excavator_mk2",
+    "robotica:excavator_mk3",
+    "robotica:excavator_mk4",
+    "robotica:survey_rig",
+    "robotica:survey_rig_mk2",
+    "robotica:survey_rig_mk3",
+    "robotica:survey_rig_mk4"
   ]
 }

@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,lit=false": {
       "model": "robotica:block/survey_rig"
     },
-    "facing=east": {
+    "facing=east,lit=false": {
       "model": "robotica:block/survey_rig",
       "y": 90
     },
-    "facing=south": {
+    "facing=south,lit=false": {
       "model": "robotica:block/survey_rig",
       "y": 180
     },
-    "facing=west": {
+    "facing=west,lit=false": {
       "model": "robotica:block/survey_rig",
+      "y": 270
+    },
+    "facing=north,lit=true": {
+      "model": "robotica:block/survey_rig_on"
+    },
+    "facing=east,lit=true": {
+      "model": "robotica:block/survey_rig_on",
+      "y": 90
+    },
+    "facing=south,lit=true": {
+      "model": "robotica:block/survey_rig_on",
+      "y": 180
+    },
+    "facing=west,lit=true": {
+      "model": "robotica:block/survey_rig_on",
       "y": 270
     }
   }

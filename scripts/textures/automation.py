@@ -11,7 +11,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, Canvas, grain, material, write_block, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, Canvas, grain, material, write_anim, write_block, write_item, write_png  # noqa: E402
 
 CU, BR, ST, DK, WD, GR, AC = '01234', '56789', 'abcde', 'fghij', 'uvwxy', 'lmnop', 'ABCDE'
 BASE = {'k': '#16191B', 'V': '#0C1418', 'W': '#3A5560',
@@ -242,12 +242,39 @@ def drill():
     return c
 
 
+def drill_spin(frame_no):
+    """Working drill: the flutes shift one step a frame, so the cones seem to turn."""
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            band = (x + y * 2 + frame_no) % 6
+            c.set(x, y, 'e' if band == 0 else 'd' if band < 2 else 'c' if band < 4 else 'b' if band < 5 else 'a')
+    return c
+
+
 def light():
     """Excavator work lamp (the model samples texels 5-8 x 5-7 and draws them full bright)."""
     c = Canvas()
     c.rect(0, 0, 16, 16, 'T')
     c.draw(5, 5, ['zY9', '9TT'])
     c.frame(4, 4, 5, 4, '6')
+    return c
+
+
+def light_off():
+    """Idle lamp: dark amber, no glare."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, '6')
+    c.draw(5, 5, ['876', '766'])
+    c.frame(4, 4, 5, 4, '5')
+    return c
+
+
+def light_on(frame_no):
+    """Working lamp: a slow amber blink with a moving glare."""
+    c = light()
+    if frame_no % 4 in (2, 3):
+        c.draw(5, 5, ['YzT', 'TzT'] if frame_no % 4 == 2 else ['TYz', 'TTz'])
     return c
 
 
@@ -331,7 +358,9 @@ def main():
     write_block('automation_saw', saw().rows(), pal())
     write_block('automation_leaf', leaf().rows(), pal())
     write_block('excavator_drill', drill().rows(), pal())
-    write_block('excavator_light', light().rows(), pal())
+    write_block('excavator_light', light_off().rows(), pal())
+    write_anim('block', 'excavator_drill_on', [drill_spin(i) for i in range(6)], pal(), frametime=1)
+    write_anim('block', 'excavator_light_on', [light_on(i) for i in range(4)], pal(), frametime=5)
     write_block('excavator_side', excavator_side().rows(), pal())
     write_block('supply_crate_side', crate_side().rows(), pal())
     write_block('supply_crate_top', crate_top().rows(), pal())

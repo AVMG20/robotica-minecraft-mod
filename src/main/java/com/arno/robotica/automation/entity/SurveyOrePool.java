@@ -66,22 +66,48 @@ public final class SurveyOrePool {
         return total;
     }
 
+    /**
+     * Weight of a kind in hundredths, with a higher Mk's rare bonus: kinds of at most {@code rareWeight} weigh
+     * {@code rareBonus} percent more (Mk4 +200%: diamonds three times as often).
+     */
+    public static long weight(Kind kind, int rareBonus, int rareWeight) {
+        long w = kind.weight() * 100L;
+        return kind.weight() <= rareWeight ? w * (100L + Math.max(0, rareBonus)) / 100L : w;
+    }
+
+    private long total(boolean core, int rareBonus, int rareWeight) {
+        long total = 0;
+        for (Kind k : kinds) if (core || !k.needsCore()) total += weight(k, rareBonus, rareWeight);
+        return total;
+    }
+
     /** Chance in [0, 1] that one roll gives this kind. */
     public double chance(Kind kind, boolean core) {
-        int total = totalWeight(core);
+        return chance(kind, core, 0, 0);
+    }
+
+    /** Same, with a Mk's rare bonus (see {@link #weight}). */
+    public double chance(Kind kind, boolean core, int rareBonus, int rareWeight) {
+        long total = total(core, rareBonus, rareWeight);
         if (total <= 0 || kind.weight() <= 0 || (kind.needsCore() && !core)) return 0.0;
-        return (double) kind.weight() / total;
+        return (double) weight(kind, rareBonus, rareWeight) / total;
     }
 
     /** A random ore item by weight, or null when nothing can be rolled. */
     @Nullable
     public Item roll(RandomSource random, boolean core) {
-        int total = totalWeight(core);
+        return roll(random, core, 0, 0);
+    }
+
+    /** Same, with a Mk's rare bonus (see {@link #weight}). */
+    @Nullable
+    public Item roll(RandomSource random, boolean core, int rareBonus, int rareWeight) {
+        long total = total(core, rareBonus, rareWeight);
         if (total <= 0) return null;
-        int r = random.nextInt(total);
+        long r = (long) (random.nextDouble() * total);
         for (Kind k : kinds) {
             if (!core && k.needsCore()) continue;
-            r -= k.weight();
+            r -= weight(k, rareBonus, rareWeight);
             if (r < 0) return k.items().get(random.nextInt(k.items().size()));
         }
         return null;

@@ -44,6 +44,7 @@ public class ChargerMenu extends MachineMenu {
         addPlayerInventory(inv, 8, 84);
         energyIndex = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());
+        trackSides(be == null ? null : be.sides);
     }
 
     public int energy() {

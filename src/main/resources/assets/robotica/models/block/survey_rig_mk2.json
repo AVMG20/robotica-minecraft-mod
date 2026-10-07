@@ -1,0 +1,6 @@
+{
+  "parent": "robotica:block/survey_rig",
+  "textures": {
+    "accent": "robotica:block/automation_mk2"
+  }
+}

@@ -9,7 +9,8 @@
     "scan": "robotica:block/survey_rig_scan",
     "dish": "robotica:block/survey_rig_dish",
     "glow": "robotica:block/survey_rig_glow",
-    "particle": "robotica:block/survey_rig_panel"
+    "particle": "robotica:block/survey_rig_panel",
+    "accent": "robotica:block/automation_brass"
   },
   "elements": [
     {
@@ -57,22 +58,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "south": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "east": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "west": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "up": {
-          "texture": "#brass"
+          "texture": "#accent"
         },
         "down": {
-          "texture": "#brass"
+          "texture": "#accent"
         }
       }
     },

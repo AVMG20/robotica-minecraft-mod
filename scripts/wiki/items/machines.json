@@ -570,31 +570,67 @@
   },
   {
    "items": [
-    "excavator"
+    "excavator",
+    "excavator_mk2",
+    "excavator_mk3",
+    "excavator_mk4"
    ],
    "what": "A real quarry: digs everything below it down to bedrock.",
    "use": [
     "Place it where the hole should start.",
     "Power it with a cell or a [[tesla_coil_1]].",
-    "Put a chest next to it for the drops."
+    "Put a chest next to it for the drops.",
+    "Right-click it with the next Mk to upgrade it in place; cards, battery and progress stay."
    ],
    "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
     "rows": [
      [
-      "Area",
-      "8x8 (16 to 64 with range cards)"
+      "Base hole",
+      "8x8",
+      "12x12",
+      "16x16",
+      "24x24"
      ],
      [
       "Speed",
-      "1 block per 60 ticks"
-     ],
-     [
-      "Power",
-      "40 FE per block"
+      "1 block / 60 ticks",
+      "1 / 40 ticks",
+      "1 / 30 ticks",
+      "1 / 20 ticks"
      ],
      [
       "Card slots",
+      "2",
+      "3",
+      "4",
       "5"
+     ],
+     [
+      "Speed cards",
+      "2",
+      "4",
+      "6",
+      "8"
+     ],
+     [
+      "Range cards (+10 wide)",
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     [
+      "Power",
+      "40 FE per block",
+      "40 FE per block",
+      "40 FE per block",
+      "40 FE per block"
      ]
     ]
    },
@@ -604,35 +640,74 @@
   },
   {
    "items": [
-    "survey_rig"
+    "survey_rig",
+    "survey_rig_mk2",
+    "survey_rig_mk3",
+    "survey_rig_mk4"
    ],
    "what": "Place it once and power it: it turns FE into random ores, as if mined with a pickaxe. No hole, no lag.",
    "use": [
     "Place it anywhere and power it.",
     "Put a chest next to it (or pipe from it).",
-    "A [[magma_core]] in its core slot adds ancient debris and resonite."
+    "A [[magma_core]] in its core slot adds ancient debris and resonite.",
+    "Right-click it with the next Mk to upgrade it in place."
    ],
    "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
     "rows": [
      [
       "Speed",
-      "1 ore every 20 s"
+      "1 ore / 20 s",
+      "1 / 13.3 s",
+      "1 / 10 s",
+      "1 / 6.7 s"
      ],
      [
       "Power",
-      "200 FE/t (80,000 FE per ore)"
+      "200 FE/t",
+      "300 FE/t",
+      "400 FE/t",
+      "600 FE/t"
      ],
      [
-      "8 speed cards",
-      "x20 speed, x420 FE/t"
+      "FE per ore",
+      "80,000",
+      "80,000",
+      "80,000",
+      "80,000"
+     ],
+     [
+      "Rare ores (weight 20 or less)",
+      "+0%",
+      "+50%",
+      "+100%",
+      "+200%"
+     ],
+     [
+      "Card slots",
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     [
+      "Speed cards",
+      "2",
+      "4",
+      "6",
+      "8"
      ],
      [
       "Buffer",
-      "2,000,000 FE, input 100,000 FE/t"
-     ],
-     [
-      "Diamonds",
-      "about 1.5% of rolls (vanilla ores)"
+      "2M FE",
+      "4M FE",
+      "6M FE",
+      "8M FE"
      ]
     ]
    },

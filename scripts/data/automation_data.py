@@ -146,7 +146,7 @@ def excavator_elements():
         box((13.5, 5, 13.5), (16, 13, 16), 'dark'),
         # motor on top
         box((3, 13, 3), (13, 14, 13), 'dark'),
-        box((4, 14, 4), (12, 16, 12), 'brass'),
+        box((4, 14, 4), (12, 16, 12), 'accent'),    # motor housing: brass on Mk1, the Mk colour above
         # vents and indicator light
         box((3, 6, 0.7), (13, 8, 1), 'dark', faces=('north',)),
         box((3, 6, 15), (13, 8, 15.3), 'dark', faces=('south',)),
@@ -236,12 +236,24 @@ def main():
     robot('stumpy', stumpy_elements(), 'automation_copper', 'automation_mk1')
     robot('sprout', sprout_elements(), 'automation_brass', 'automation_mk1')
 
-    # Excavator
+    # Excavator Mk1-4: one base model; the Mk swaps the motor housing colour, LIT swaps in the spinning drill and the
+    # blinking lamp. Mk1 keeps the id "excavator".
     tex = {'steel': 'robotica:block/automation_steel', 'dark': 'robotica:block/automation_dark',
            'brass': 'robotica:block/automation_brass', 'drill': 'robotica:block/excavator_drill',
-           'light': 'robotica:block/excavator_light', 'side': 'robotica:block/excavator_side'}
+           'light': 'robotica:block/excavator_light', 'side': 'robotica:block/excavator_side',
+           'accent': 'robotica:block/automation_brass'}
     write(ASSETS / 'models/block/excavator.json', model(tex, excavator_elements(), 'robotica:block/automation_steel'))
-    single('excavator', 'excavator')
+    working = {'drill': 'robotica:block/excavator_drill_on', 'light': 'robotica:block/excavator_light_on'}
+    for tier in range(1, 5):
+        name = 'excavator' if tier == 1 else f'excavator_mk{tier}'
+        accent = {} if tier == 1 else {'accent': f'robotica:block/automation_mk{tier}'}
+        if tier > 1:
+            write(ASSETS / f'models/block/{name}.json', {'parent': 'robotica:block/excavator', 'textures': accent})
+        write(ASSETS / f'models/block/{name}_on.json', {'parent': 'robotica:block/excavator', 'textures': dict(accent, **working)})
+        write(ASSETS / f'blockstates/{name}.json', {'variants': {
+            'lit=false': {'model': f'robotica:block/{name}'}, 'lit=true': {'model': f'robotica:block/{name}_on'}}})
+        write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})
+        loot(name)
 
     # Supply crate
     write(ASSETS / 'models/block/supply_crate.json', {
@@ -249,7 +261,7 @@ def main():
         'textures': {'end': 'robotica:block/supply_crate_top', 'side': 'robotica:block/supply_crate_side'}})
     single('supply_crate', 'supply_crate')
 
-    for name in ('stumpy', 'sprout', 'excavator', 'supply_crate'):
+    for name in ('stumpy', 'sprout', 'supply_crate'):
         loot(name)
 
     # Recipes (component ladder: Age 0 bots, Age 1 excavator and Mk2 kit, Age 2 Mk3 kit, Age 4 Mk4 kit)
@@ -258,6 +270,14 @@ def main():
     # The real quarry waits for the first diamonds: a diamond pickaxe is its drill head.
     shaped('excavator', ['PBP', 'MXM', 'PIP'], {'P': '#c:plates/iron', 'B': 'basic_circuit', 'M': 'electric_motor',
                                              'X': 'minecraft:diamond_pickaxe', 'I': 'iron_casing'})
+    # Excavator Mk2-4: each consumes the Mk before it plus that age's circuit, actuator and casing. Right-click the
+    # placed machine with the next Mk to upgrade it in place (the old block comes back).
+    shaped('excavator_mk2', [' A ', 'SXS', ' R '], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'X': 'excavator',
+                                                  'R': 'reinforced_casing'})
+    shaped('excavator_mk3', [' Q ', 'PXP', ' B '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'X': 'excavator_mk2',
+                                                  'B': 'blazing_casing'})
+    shaped('excavator_mk4', [' N ', 'PXP', 'ECE'], {'N': 'null_circuit', 'P': 'plasma_actuator', 'X': 'excavator_mk3',
+                                                  'E': '#c:ender_pearls', 'C': 'null_casing'})
     shaped('supply_crate', ['PPP', 'C C', 'PPP'], {'P': '#minecraft:planks', 'C': '#c:ingots/copper'})
     shaped('farm_kit_mk2', ['BMB', 'PIP'], {'B': 'basic_circuit', 'M': 'electric_motor', 'P': '#c:plates/iron', 'I': 'iron_casing'})
     shaped('farm_kit_mk3', ['ASA', 'GRG'], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'G': '#c:plates/gold', 'R': 'reinforced_casing'})

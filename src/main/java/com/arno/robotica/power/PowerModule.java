@@ -53,7 +53,7 @@ public final class PowerModule {
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.WINDING_CRANK_BE.get(), (be, side) -> be.automation());
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.COMBUSTION_GENERATOR_BE.get(), (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.COMBUSTION_GENERATOR_BE.get(), (be, side) -> be.automation());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.COMBUSTION_GENERATOR_BE.get(), (be, side) -> be.sides.access(side));
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK1_BE.get(), (be, side) -> be.energy);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK2_BE.get(), (be, side) -> be.energy);
@@ -61,7 +61,9 @@ public final class PowerModule {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.ACCUMULATOR_BE.get(), (be, side) -> be.energyFor(side));
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.CHARGER_BE.get(), (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.CHARGER_BE.get(), (be, side) -> be.automation());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.CHARGER_BE.get(), (be, side) -> be.sides.access(side));
+
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.WIRELESS_CHARGER_BE.get(), (be, side) -> be.energy);
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.METAL_PRESS_BE.get(), (be, side) -> be.energy);
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.METAL_PRESS_BE.get(), (be, side) -> be.automation(side));

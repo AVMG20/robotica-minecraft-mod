@@ -39,8 +39,6 @@ import java.util.Set;
 public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.RANGE, UpgradeKind.EFFICIENCY,
             UpgradeKind.FORTUNE, UpgradeKind.SILK, UpgradeKind.VOID);
-    /** Square side per number of range cards 0-4 (0 cards: the config size). */
-    public static final int[] RANGE_SIZES = {8, 16, 32, 48, 64};
     public static final TagKey<Item> VOIDABLE = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(Robotica.MODID, "voidable"));
     private static final int SKIP_PER_TICK = 256;
 
@@ -58,12 +56,32 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     private ItemStack toolStack = ItemStack.EMPTY;
 
     public ExcavatorBlockEntity(BlockPos pos, BlockState state) {
-        super(AutomationContent.EXCAVATOR_BE.get(), pos, state, KINDS, 5);
+        super(AutomationContent.EXCAVATOR_BE.get(), pos, state, KINDS, AutomationConfig.excavatorSlots(tierOf(state)),
+                (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.energyBuffer() * tierOf(state)),
+                (int) Math.min(Integer.MAX_VALUE, (long) AutomationConfig.excavatorInput() * tierOf(state)));
     }
 
     @Override
     public String blockKey() {
-        return "block.robotica.excavator";
+        return getBlockState().getBlock().getDescriptionId();
+    }
+
+    /** Card caps grow with the Mk (server config): speed 2/4/6/8, range and efficiency 1-4, fortune 1/2/3/3, silk and void 1. */
+    @Override
+    protected int upgradeCap(UpgradeKind kind) {
+        int tier = tier();
+        return switch (kind) {
+            case SPEED -> AutomationConfig.excavatorSpeedCap(tier);
+            case RANGE -> AutomationConfig.excavatorRangeCap(tier);
+            case EFFICIENCY -> AutomationConfig.excavatorEfficiencyCap(tier);
+            case FORTUNE -> AutomationConfig.excavatorFortuneCap(tier);
+            default -> kind.maxStack;
+        };
+    }
+
+    /** Square side without range cards for this Mk. */
+    public int baseSize() {
+        return AutomationConfig.excavatorSize(tier());
     }
 
     public void setSizeOverride(int size) {
@@ -74,7 +92,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     @Override
     protected void recalc() {
         int range = upgrades.level(UpgradeKind.RANGE);
-        int size = range <= 0 ? AutomationConfig.excavatorSize() : RANGE_SIZES[Math.min(range, 4)];
+        int size = Math.min(128, baseSize() + AutomationConfig.excavatorRangeStep() * range);
         if (sizeOverride > 0) size = sizeOverride;
         if (cursorSize != -1 && size != cursorSize) done = false;
         areaSize = size;
@@ -117,7 +135,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     }
 
     public int actionInterval() {
-        int base = CoreConfig.scaleInterval(AutomationConfig.excavatorInterval());
+        int base = CoreConfig.scaleInterval(AutomationConfig.excavatorInterval(tier()));
         return Math.max(1, base / Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
     }
 

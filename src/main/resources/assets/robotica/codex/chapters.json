@@ -131,6 +131,15 @@
           ]
         },
         {
+          "title": "Wireless Charger",
+          "text": "Charges your FE items within 8 blocks, 1,000 FE/t each: armor first, then hands, then inventory.\n- Owner and team only.\n- Range and speed cards.",
+          "items": [
+            "robotica:wireless_charger",
+            "robotica:upgrade_range",
+            "robotica:upgrade_speed"
+          ]
+        },
+        {
           "title": "Tesla Coils",
           "text": "Wireless FE. Put a coil on a generator or Accumulator.\n- Tesla Linker: sneak-right-click the coil, then right-click a machine.\n- Coil to coil: further, -5% per hop.\n- Tier I-V: 4-32 links, 8-32 blocks, 4k-1M FE/t.",
           "items": [
@@ -421,14 +430,17 @@
       "pages": [
         {
           "title": "Excavator",
-          "text": "Mines everything below it to bedrock: 8x8, 1 block every 3 s.\nSeals fluids, skips chests and other block entities.",
+          "text": "Mines everything below it to bedrock: 8x8, 1 block every 3 s.\nSeals fluids, skips chests and other block entities.\nMk2-4: right-click it with the next Mk.",
           "items": [
-            "robotica:excavator"
+            "robotica:excavator",
+            "robotica:excavator_mk2",
+            "robotica:excavator_mk3",
+            "robotica:excavator_mk4"
           ]
         },
         {
           "title": "Making it fast",
-          "text": "- Speed: 8 cards = x20, but 21x the FE per block.\n- Range: 4 cards, 16 to 64 wide.\n- Efficiency, Fortune or Silk, Void.",
+          "text": "- Speed: 8 cards (Mk4) = x20, but 21x the FE per block.\n- Range: +10 wide per card.\n- Efficiency, Fortune or Silk, Void.\nEach Mk: one more card slot, higher caps.",
           "items": [
             "robotica:upgrade_speed",
             "robotica:upgrade_range",
@@ -441,13 +453,14 @@
           "text": "Place once, power it: it turns FE into random ores, as if mined. No hole, no lag.\nAny c:ores ore: coal, copper, iron often, diamonds rarely.",
           "items": [
             "robotica:survey_rig",
-            "robotica:servo_actuator",
-            "robotica:reinforced_casing"
+            "robotica:survey_rig_mk2",
+            "robotica:survey_rig_mk3",
+            "robotica:survey_rig_mk4"
           ]
         },
         {
           "title": "Survey rules",
-          "text": "- 1 ore per 20 s at 200 FE/t.\n- 8 speed cards: x20 speed, 420x the FE/t.\n- Fortune or Silk, Efficiency, Void.\n- Magma Core: adds ancient debris and resonite.",
+          "text": "- 1 ore per 20 s at 200 FE/t.\n- Mk2-4: faster, more slots, rare ores more often.\n- 8 speed cards (Mk4): x20 speed, 420x the FE/t.\n- Magma Core: adds ancient debris and resonite.",
           "items": [
             "robotica:survey_rig",
             "robotica:upgrade_speed",

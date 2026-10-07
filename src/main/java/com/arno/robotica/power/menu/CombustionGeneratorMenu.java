@@ -49,6 +49,7 @@ public class CombustionGeneratorMenu extends MachineMenu {
         burnIndex = track(be == null ? () -> 0 : be::burnTime);
         totalIndex = track(be == null ? () -> 0 : be::burnTotal);
         outputIndex = track(be == null ? () -> 0 : be::output);
+        trackSides(be == null ? null : be.sides);
     }
 
     /** FE/t while burning, with the installed speed cards. */

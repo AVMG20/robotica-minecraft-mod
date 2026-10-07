@@ -30,7 +30,7 @@ def elements():
     els = [
         # plinth with a brass trim
         box((0, 0, 0), (16, 3, 16), 'dark'),
-        box((0.5, 3, 0.5), (15.5, 4, 15.5), 'brass'),
+        box((0.5, 3, 0.5), (15.5, 4, 15.5), 'accent'),     # trim: brass on Mk1, the Mk colour above
         # the tower and its corner posts
         box((2, 4, 2), (14, 13, 14), 'panel'),
         box((1.5, 4, 1.5), (3.5, 13, 3.5), 'dark'),
@@ -58,27 +58,44 @@ def main():
     textures = {'panel': 'robotica:block/survey_rig_panel', 'dark': 'robotica:block/automation_dark',
                 'steel': 'robotica:block/automation_steel', 'brass': 'robotica:block/automation_brass',
                 'scan': 'robotica:block/survey_rig_scan', 'dish': 'robotica:block/survey_rig_dish',
-                'glow': 'robotica:block/survey_rig_glow', 'particle': 'robotica:block/survey_rig_panel'}
+                'glow': 'robotica:block/survey_rig_glow', 'particle': 'robotica:block/survey_rig_panel',
+                'accent': 'robotica:block/automation_brass'}
     write(ASSETS / 'models/block/survey_rig.json', {
         'render_type': 'minecraft:cutout',
         'parent': 'minecraft:block/block',
         'textures': textures,
         'elements': elements(),
     })
-    variants = {}
-    for i, facing in enumerate(('north', 'east', 'south', 'west')):
-        v = {'model': 'robotica:block/survey_rig'}
-        if i:
-            v['y'] = 90 * i
-        variants[f'facing={facing}'] = v
-    write(ASSETS / 'blockstates/survey_rig.json', {'variants': variants})
-    write(ASSETS / 'models/item/survey_rig.json', {'parent': 'robotica:block/survey_rig'})
-    loot('survey_rig')
+    # Mk1-4 share the model: the Mk colours the trim, LIT (working) swaps in the sweeping scan and the pulsing band.
+    working = {'scan': 'robotica:block/survey_rig_scan_on', 'glow': 'robotica:block/survey_rig_glow_on'}
+    for tier in range(1, 5):
+        name = 'survey_rig' if tier == 1 else f'survey_rig_mk{tier}'
+        accent = {} if tier == 1 else {'accent': f'robotica:block/automation_mk{tier}'}
+        if tier > 1:
+            write(ASSETS / f'models/block/{name}.json', {'parent': 'robotica:block/survey_rig', 'textures': accent})
+        write(ASSETS / f'models/block/{name}_on.json', {'parent': 'robotica:block/survey_rig', 'textures': dict(accent, **working)})
+        variants = {}
+        for lit in (False, True):
+            for i, facing in enumerate(('north', 'east', 'south', 'west')):
+                v = {'model': f'robotica:block/{name}' + ('_on' if lit else '')}
+                if i:
+                    v['y'] = 90 * i
+                variants[f'facing={facing},lit={str(lit).lower()}'] = v
+        write(ASSETS / f'blockstates/{name}.json', {'variants': variants})
+        write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})
+        loot(name)
     # Age 2 and clearly above the Excavator: Servo parts, a diamond pickaxe as the sampling head, ender pearls for
     # "pulling ores out of thin air".
     shaped('survey_rig', ['EAE', 'SXS', 'RCR'], {'E': '#c:ender_pearls', 'A': 'advanced_circuit', 'S': 'servo_actuator',
                                               'X': 'minecraft:diamond_pickaxe', 'R': 'reinforced_casing',
                                               'C': 'copper_coil'})
+    # Mk2-4 consume the Mk before; a diamond-studded Mk2 at Age 2, then that age's circuit, actuator and casing.
+    shaped('survey_rig_mk2', ['DAD', 'SXS', ' R '], {'D': '#c:gems/diamond', 'A': 'advanced_circuit', 'S': 'servo_actuator',
+                                                   'X': 'survey_rig', 'R': 'reinforced_casing'})
+    shaped('survey_rig_mk3', [' Q ', 'PXP', ' B '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'X': 'survey_rig_mk2',
+                                                   'B': 'blazing_casing'})
+    shaped('survey_rig_mk4', [' N ', 'PXP', 'ECE'], {'N': 'null_circuit', 'P': 'plasma_actuator', 'X': 'survey_rig_mk3',
+                                                   'E': '#c:ender_pearls', 'C': 'null_casing'})
     print('survey rig data written')
 
 

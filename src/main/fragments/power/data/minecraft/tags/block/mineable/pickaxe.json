@@ -13,6 +13,7 @@
     "robotica:tesla_coil_4",
     "robotica:tesla_coil_5",
     "robotica:charger",
+    "robotica:wireless_charger",
     "robotica:metal_press"
   ]
 }
