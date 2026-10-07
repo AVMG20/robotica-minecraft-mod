@@ -92,6 +92,12 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GATE_OPEN = reg("gate_open");
     public static final DeferredHolder<SoundEvent, SoundEvent> GATE_CLOSE = reg("gate_close");
     public static final DeferredHolder<SoundEvent, SoundEvent> GATE_AMBIENT = reg("gate_ambient");
+    /** Spark Lamp lighting up / going out. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPARK_LAMP_ON = reg("spark_lamp_on");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPARK_LAMP_OFF = reg("spark_lamp_off");
+    /** Spark Lamp ambience, played client side by its block (quiet: the volumes live in sounds.json). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPARK_LAMP_CRACKLE = reg("spark_lamp_crackle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPARK_LAMP_HUM = reg("spark_lamp_hum");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {

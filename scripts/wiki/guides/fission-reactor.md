@@ -27,12 +27,14 @@ A variable-size cuboid from 5x5x5 to 7x7x7 (outside size). Age 2-3 power.
 | [[minecraft:blue_ice]] | 3 |
 | [[cryo_coolant]] | 4 |
 
-| Fuel | Heat | Burn time | Waste |
+| Fuel | Heat per rod | Lasts | Waste |
 |---|---|---|---|
-| [[thorium_fuel_pellet]] | 400 | 12,000 ticks | [[depleted_fuel_pellet]] |
-| [[enriched_fuel_pellet]] | 1,000 | 12,000 ticks | [[depleted_fuel_pellet]] |
+| [[thorium_fuel_pellet]] | 400 | 12,000 ticks / active rods | [[depleted_fuel_pellet]] |
+| [[enriched_fuel_pellet]] | 1,000 | 12,000 ticks / active rods | [[depleted_fuel_pellet]] |
 
-> Access Ports take fuel in and hand waste out: hoppers and pipes work.
+> Access Ports take fuel in and hand waste out: hoppers and pipes work. A full waste slot stops the reactor.
+
+Every rod needs coolant beside it. In a 5x5x5, put rods in an X (corners and centre) with coolant in the four gaps.
 
 {{multiblock fission_reactor_5}}
 
@@ -47,7 +49,9 @@ A variable-size cuboid from 5x5x5 to 7x7x7 (outside size). Age 2-3 power.
 - Up to **1,000 C**: full output.
 - Above it the output throttles down to 25%; at **1,800 C** it SCRAMs. Reset from the GUI below 200 C.
 
-Control rods (0-100%) are set with the GUI slider. Fuel only burns while the 5M FE buffer has room.
+Control rods (0-100%) are set with the GUI slider; 100% stops the reactor. Heat above the cooling is wasted fuel. Fuel only burns while the 5M FE buffer has room.
+
+After a SCRAM, push rods in or add coolant first, then Reset: with the same setup it SCRAMs again.
 
 ## Example outputs
 

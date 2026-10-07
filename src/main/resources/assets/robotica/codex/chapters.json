@@ -264,7 +264,7 @@
         },
         {
           "title": "Fission Reactor",
-          "text": "5x5x5 to 7x7x7.\n- Fuel Rods: full columns.\n- Coolant beside rods: water 1, ice 1.5, packed 2, blue 3, Cryo 4.\n- Pellets: controller or Access Port.\n- FE out: Power Port.\n5x5x5, 1 rod column: about 1,150 FE/t.",
+          "text": "5x5x5 to 7x7x7.\n- Fuel Rods: full columns.\n- Coolant beside rods: water 1, ice 1.5, packed 2, blue 3, Cryo 4. Every rod needs some: in a 5x5x5 put rods in an X, coolant in the gaps.\n- Pellets: controller or Access Port.\n- FE out: Power Port.\n- Take the Depleted Pellets out: a full waste slot stops it.\n5x5x5, 1 rod column: about 1,150 FE/t.",
           "items": [
             "robotica:reactor_casing",
             "robotica:reactor_glass",
@@ -276,7 +276,7 @@
         },
         {
           "title": "Heat and SCRAM",
-          "text": "- Over 1,000 C: less output.\n- 1,800 C: SCRAM, it shuts down.\nFix the cooling, let it cool below 200 C, press Reset. The slider pushes rods in for less heat.",
+          "text": "- Over 1,000 C: less output.\n- 1,800 C: SCRAM, it shuts down.\nHeat above the cooling is wasted fuel. Rods at 100% stop it.\nAfter a SCRAM: push rods in or add coolant, let it cool below 200 C, press Reset.",
           "items": [
             "robotica:reactor_controller",
             "robotica:reactor_fuel_rod",
@@ -285,7 +285,7 @@
         },
         {
           "title": "Fusion Reactor",
-          "text": "7x3x7 of Fusion Casing; inside, 16 Fusion Coils ring an empty 3x3.\n- Charge 20M FE through a Power Port.\n- Add fusion fuel: about 200,000 FE/t.\nIt burns fuel even when nobody takes the power.",
+          "text": "7x3x7 of Fusion Casing; inside, 16 Fusion Coils ring an empty 3x3.\n- Charge 20M FE through a Power Port.\n- Add fusion fuel: about 200,000 FE/t. Its Radiant Isotopes come from centrifuged Depleted Pellets (10%).\nIt burns fuel even when nobody takes the power.",
           "items": [
             "robotica:fusion_casing",
             "robotica:fusion_coil",

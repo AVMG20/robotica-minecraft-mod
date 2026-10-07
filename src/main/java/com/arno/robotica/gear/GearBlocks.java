@@ -29,7 +29,7 @@ public final class GearBlocks {
     public static final DeferredItem<BlockItem> TINKERS_BENCH_ITEM = GearItems.ITEMS.registerSimpleBlockItem(TINKERS_BENCH);
 
     public static final DeferredBlock<SparkLampBlock> SPARK_LAMP = BLOCKS.registerBlock("spark_lamp", SparkLampBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noCollission().instabreak().sound(SoundType.COPPER_BULB)
+            BlockBehaviour.Properties.of().noCollission().instabreak().sound(SoundType.SMALL_AMETHYST_BUD)
                     .lightLevel(s -> SparkLampBlock.LIGHT).pushReaction(PushReaction.DESTROY).noLootTable());
 
     public static final DeferredHolder<MenuType<?>, MenuType<TinkersBenchMenu>> TINKERS_BENCH_MENU =

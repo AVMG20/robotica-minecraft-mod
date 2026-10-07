@@ -12,12 +12,15 @@ public final class GearClientConfig {
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.BooleanValue LAMP_PARTICLES;
     private static final ModConfigSpec.BooleanValue LAMP_SOUNDS;
+    private static final ModConfigSpec.IntValue LAMP_FX_RANGE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("sparkLamp");
         LAMP_PARTICLES = b.comment("Small spark particles at Spark Lamps.").define("sparkLampParticles", true);
-        LAMP_SOUNDS = b.comment("A rare soft buzz at Spark Lamps.").define("sparkLampSounds", true);
+        LAMP_SOUNDS = b.comment("Quiet crackle and hum at Spark Lamps.").define("sparkLampSounds", true);
+        LAMP_FX_RANGE = b.comment("Spark Lamp particles and sounds only play within this many blocks of the camera.")
+                .defineInRange("sparkLampFxRange", 20, 4, 32);
         b.pop();
         SPEC = b.build();
     }
@@ -28,5 +31,9 @@ public final class GearClientConfig {
 
     public static boolean lampSounds() {
         return !SPEC.isLoaded() || LAMP_SOUNDS.get();
+    }
+
+    public static int lampFxRange() {
+        return SPEC.isLoaded() ? LAMP_FX_RANGE.get() : 20;
     }
 }

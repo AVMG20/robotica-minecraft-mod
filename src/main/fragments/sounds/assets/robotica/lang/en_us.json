@@ -55,5 +55,9 @@
   "subtitles.robotica.area_rumble": "Ground rumbles",
   "subtitles.robotica.area_debris": "Debris clatters",
   "subtitles.robotica.drill_spinup": "Drill spins up",
-  "subtitles.robotica.tree_fall": "Tree crashes down"
+  "subtitles.robotica.tree_fall": "Tree crashes down",
+  "subtitles.robotica.spark_lamp_on": "Spark Lamp lights",
+  "subtitles.robotica.spark_lamp_off": "Spark Lamp fizzles out",
+  "subtitles.robotica.spark_lamp_crackle": "Spark Lamp crackles",
+  "subtitles.robotica.spark_lamp_hum": "Spark Lamp hums"
 }

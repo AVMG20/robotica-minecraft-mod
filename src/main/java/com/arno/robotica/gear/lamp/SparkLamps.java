@@ -7,7 +7,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -55,15 +54,14 @@ public final class SparkLamps {
         return true;
     }
 
-    /** A mechanical click and a small burst of sparks (on) or a soft click (off). */
+    /** A rising charge and a burst of sparks (on) or a falling fizz and a few sparks (off). */
     public static void zap(ServerLevel level, BlockPos pos, boolean on) {
         double x = pos.getX() + 0.5, y = pos.getY() + 0.5, z = pos.getZ() + 0.5;
         if (on) {
-            level.playSound(null, pos, SoundEvents.COPPER_BULB_TURN_ON, SoundSource.BLOCKS, 0.6F, 1.5F);
-            CoreSounds.play(level, pos, CoreSounds.SHOCK_ZAP, SoundSource.BLOCKS, 0.2F, 1.9F);
+            CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_ON, SoundSource.BLOCKS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 10, 0.12, 0.12, 0.12, 0.25);
         } else {
-            level.playSound(null, pos, SoundEvents.COPPER_BULB_TURN_OFF, SoundSource.BLOCKS, 0.6F, 1.3F);
+            CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 4, 0.1, 0.1, 0.1, 0.1);
         }
     }

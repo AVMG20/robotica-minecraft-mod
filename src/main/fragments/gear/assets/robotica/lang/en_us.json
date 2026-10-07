@@ -208,5 +208,6 @@
   "robotica.configuration.lampRodCooldown": "Lamp Rod: ticks between uses",
   "robotica.configuration.sparkLamp": "Spark Lamp",
   "robotica.configuration.sparkLampParticles": "Spark Lamp particles",
-  "robotica.configuration.sparkLampSounds": "Spark Lamp buzz"
+  "robotica.configuration.sparkLampSounds": "Spark Lamp crackle and hum",
+  "robotica.configuration.sparkLampFxRange": "Spark Lamp effect range"
 }

@@ -1,11 +1,7 @@
 package com.arno.robotica.gear.lamp;
 
-import com.arno.robotica.gear.GearClientConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -24,23 +20,35 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Spark Lamp: a small electric lamp with torch light (14), no collision, breaks instantly and drops nothing. Only the
- * Lamp Rod and the Lamp Placer module put it down. {@link #FACING} points away from the block it hangs on (up = floor,
- * down = ceiling, a side = wall). Client flair in {@link #animateTick}: a rare spark and a soft buzz.
+ * Spark Lamp: a small floating electric wisp with torch light (14), no collision, breaks instantly and drops nothing.
+ * Only the Lamp Rod and the Lamp Placer module put it down. {@link #FACING} points away from the block it hangs on
+ * (up = floor, down = ceiling, a side = wall). The look is an animated model; sparks, crackles and hum come from
+ * {@link #ambientFx}, set by the client (gear.client.SparkLampFx) and limited to the player's surroundings.
  */
 public class SparkLampBlock extends Block {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final int LIGHT = 14;
 
+    /** Distance of the wisp's core from the block centre, along FACING (the model floats it 5 px off its surface). */
+    public static final double CORE_OFFSET = -3 / 16.0;
+
+    /** Client-only ambient effects (no-op on a dedicated server); replaced by the client module at startup. */
+    public static AmbientFx ambientFx = (state, level, pos, random) -> {};
+
+    @FunctionalInterface
+    public interface AmbientFx {
+        void tick(BlockState state, Level level, BlockPos pos, RandomSource random);
+    }
+
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
     static {
-        SHAPES.put(Direction.UP, Block.box(5, 0, 5, 11, 8, 11));
-        SHAPES.put(Direction.DOWN, Block.box(5, 8, 5, 11, 16, 11));
-        SHAPES.put(Direction.NORTH, Block.box(5, 5, 8, 11, 11, 16));
-        SHAPES.put(Direction.SOUTH, Block.box(5, 5, 0, 11, 11, 8));
-        SHAPES.put(Direction.WEST, Block.box(8, 5, 5, 16, 11, 11));
-        SHAPES.put(Direction.EAST, Block.box(0, 5, 5, 8, 11, 11));
+        SHAPES.put(Direction.UP, Block.box(5, 1, 5, 11, 9, 11));
+        SHAPES.put(Direction.DOWN, Block.box(5, 7, 5, 11, 15, 11));
+        SHAPES.put(Direction.NORTH, Block.box(5, 5, 7, 11, 11, 15));
+        SHAPES.put(Direction.SOUTH, Block.box(5, 5, 1, 11, 11, 9));
+        SHAPES.put(Direction.WEST, Block.box(7, 5, 5, 15, 11, 11));
+        SHAPES.put(Direction.EAST, Block.box(1, 5, 5, 9, 11, 11));
     }
 
     public SparkLampBlock(Properties props) {
@@ -77,24 +85,9 @@ public class SparkLampBlock extends Block {
         return super.updateShape(state, dir, neighbor, level, pos, neighborPos);
     }
 
-    /** Client only (called by the level renderer): now and then a tiny spark at the bulb, rarely a soft buzz. */
+    /** Client only (called by the level renderer for blocks near the player). */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        Direction facing = state.getValue(FACING);
-        double x = pos.getX() + 0.5 - facing.getStepX() * 0.15;
-        double y = pos.getY() + 0.5 - facing.getStepY() * 0.15;
-        double z = pos.getZ() + 0.5 - facing.getStepZ() * 0.15;
-        if (GearClientConfig.lampParticles() && random.nextInt(14) == 0) {
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + (random.nextDouble() - 0.5) * 0.15, y + (random.nextDouble() - 0.5) * 0.15,
-                    z + (random.nextDouble() - 0.5) * 0.15, (random.nextDouble() - 0.5) * 0.04, 0.02, (random.nextDouble() - 0.5) * 0.04);
-        }
-        if (GearClientConfig.lampSounds() && random.nextInt(260) == 0) {
-            level.playLocalSound(x, y, z, SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 0.06F, 1.8F + random.nextFloat() * 0.2F, false);
-            if (GearClientConfig.lampParticles()) {
-                for (int i = 0; i < 3; i++) {
-                    level.addParticle(ParticleTypes.ELECTRIC_SPARK, x, y, z, (random.nextDouble() - 0.5) * 0.08, 0.03, (random.nextDouble() - 0.5) * 0.08);
-                }
-            }
-        }
+        ambientFx.tick(state, level, pos, random);
     }
 }

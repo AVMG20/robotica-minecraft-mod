@@ -190,7 +190,8 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
             return;
         }
         if (result.formed() && result.visitor() instanceof Visitor visitor) {
-            boolean was = formed;
+            // the block state keeps FORMED over a reload, so a reactor that was already standing stays quiet on chunk load
+            boolean was = formed || (state.hasProperty(ControllerBlock.FORMED) && state.getValue(ControllerBlock.FORMED));
             setPorts(visitor.ports);
             formed = true;
             problem = null;

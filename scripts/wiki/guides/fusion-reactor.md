@@ -23,8 +23,8 @@ A fixed 7x3x7 structure (Age 4). It needs a 20M FE charge to start and burns fue
 
 ## Running it
 
-1. **Charge**: Power Ports take FE in, at most **1,000,000 FE/t** in total, until the **20,000,000 FE** ignition charge is full. Use a Capacitor Bank or Tesla Coils.
-2. **Fuel**: put [[fusion_fuel_pellet]] in the controller or an Access Port.
+1. **Charge**: Power Ports take FE in (and send the output out), at most **1,000,000 FE/t** in total, until the **20,000,000 FE** ignition charge is full. Use a Capacitor Bank or Tesla Coils.
+2. **Fuel**: put [[fusion_fuel_pellet]] in the controller or an Access Port. Its [[radiant_isotope]] comes from centrifuging [[depleted_fuel_pellet]] (10% chance), so run a fission reactor first.
 3. **Ignite**: switch it on; the charge is spent and the plasma lights.
 
 | Fuel | Output | Burn time |

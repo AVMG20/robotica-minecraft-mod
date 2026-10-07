@@ -18,6 +18,7 @@ public final class GearClient {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, com.arno.robotica.gear.GearClientConfig.SPEC, "robotica-gear-client.toml");
+        SparkLampFx.install();
         modBus.addListener(RegisterKeyMappingsEvent.class, GearKeys::register);
         modBus.addListener(RegisterGuiLayersEvent.class, GearHud::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GearKeys::onClientTick);

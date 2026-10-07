@@ -161,6 +161,7 @@ public class ReactorScreen extends ControllerScreen<ReactorMenu> {
     }
 
     private void send(int value) {
+        menu.data().putInt("rodsIn", value);   // keeps the knob in place until the next sync
         PacketDistributor.sendToServer(new ControllerActionPayload(menu.pos(), ControllerActionPayload.SET_RODS, value));
         lastSent = System.currentTimeMillis();
     }

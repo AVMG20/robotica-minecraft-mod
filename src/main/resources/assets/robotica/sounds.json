@@ -1467,5 +1467,97 @@
         "pitch": 0.5
       }
     ]
+  },
+  "spark_lamp_on": {
+    "subtitle": "subtitles.robotica.spark_lamp_on",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.9
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.8
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge3",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 2.0
+      }
+    ]
+  },
+  "spark_lamp_off": {
+    "subtitle": "subtitles.robotica.spark_lamp_off",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 2.0
+      },
+      {
+        "name": "minecraft:random/fizz",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 2.0
+      }
+    ]
+  },
+  "spark_lamp_crackle": {
+    "subtitle": "subtitles.robotica.spark_lamp_crackle",
+    "sounds": [
+      {
+        "name": "minecraft:random/fizz",
+        "type": "file",
+        "volume": 0.08,
+        "pitch": 2.0
+      },
+      {
+        "name": "minecraft:mob/bee/sting",
+        "type": "file",
+        "volume": 0.07,
+        "pitch": 2.0
+      },
+      {
+        "name": "minecraft:item/trident/thunder1",
+        "type": "file",
+        "volume": 0.03,
+        "pitch": 2.0
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.1,
+        "pitch": 2.0
+      }
+    ]
+  },
+  "spark_lamp_hum": {
+    "subtitle": "subtitles.robotica.spark_lamp_hum",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "type": "file",
+        "volume": 0.06,
+        "pitch": 2.0
+      },
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "type": "file",
+        "volume": 0.08,
+        "pitch": 1.8
+      },
+      {
+        "name": "minecraft:block/amethyst/shimmer",
+        "type": "file",
+        "volume": 0.12,
+        "pitch": 1.6
+      }
+    ]
   }
 }

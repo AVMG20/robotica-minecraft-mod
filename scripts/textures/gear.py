@@ -7,7 +7,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import MATERIALS, Canvas, write_block, write_item  # noqa: E402
+from pixelart import MATERIALS, Canvas, write_anim, write_block, write_item  # noqa: E402
 
 # '12345' tier material (deep -> highlight), 'abcde' steel, '678' brass, 'w W v' wood, 'y Y z' tier glow
 TIER = {
@@ -344,57 +344,66 @@ def write_modules():
 
 # ---------------------------------------------------------------- Lamp Rod and Spark Lamp
 
+WISP = {'k': '#1E1A1A', 'W': '#FFFFFF', 'Y': '#E6FCFF', 'y': '#A8EEF8', 'z': '#6FCDE0',
+        'a': '#A8EEF828', 'b': '#BFF3FF50', 'c': '#D8FBFF88', 'A': '#F4FEFFD0', 'B': '#A8EEF890'}
+
+
 def lamp_rod():
-    """Lamp Rod: a steel rod with a copper grip and a brass collar; at the tip a small brass cage around a warm bulb."""
+    """Lamp Rod: a steel rod with a copper grip and a brass collar; a small pale spark floats at the tip."""
     c = Canvas()
     stamp(c, 2, 13, 8, 7, 'c', 2)                                        # steel rod
     stamp(c, 2, 13, 4, 11, '3', 2)                                       # copper grip
     c.rect(8, 6, 3, 3, '7')                                              # brass collar
-    c.disc(11.5, 4.5, 2.3, 'y')                                          # bulb
-    c.rect(9, 2, 1, 5, '7').rect(14, 2, 1, 5, '7').rect(10, 1, 4, 1, '7').set(12, 0, '7')   # brass cage
+    c.rect(9, 5, 2, 1, '6').set(10, 4, '6')                              # prong
     c.auto_shade(SHADE)
-    c.set(11, 3, 'z').set(12, 4, 'z').set(11, 5, 'z').set(12, 3, 'Y').set(11, 4, 'Y').set(12, 5, 'Y')   # filament
     c.set(3, 12, '4').set(5, 10, '4')                                    # grip bands
     c.outline('k')
+    c.rect(11, 2, 3, 3, 'i').rect(12, 1, 1, 5, 'j').rect(10, 3, 5, 1, 'j').set(12, 3, 'W')   # wisp
+    c.set(10, 1, 'i').set(14, 5, 'i').set(15, 0, 'i')                    # stray sparks
     return c.rows()
 
 
-def lamp_body():
-    """Spark Lamp housing atlas (UVs in scripts/data/gear_models.py): copper plate 0-5, its rim row 6, brass band
-    8-10 x 0-1, brass cap 8-10 x 2-4, steel cage wire column 12; copper elsewhere (break particles)."""
+def lamp_core(frame):
+    """Spark Lamp core (full-bright, the model uses the middle 2x2): a pale cyan flicker, white at its brightest."""
+    shades = 'YWYyYWWY'
+    c = Canvas(fill='y')
+    c.rect(6, 6, 4, 4, 'Y').rect(7, 7, 2, 2, shades[frame % len(shades)])
+    c.set(7, 7, 'W')
+    return c
+
+
+def lamp_glow(frame):
+    """Spark Lamp halo (full-bright, translucent, the model uses the middle 8x8): soft haze that breathes, with a
+    short crackle arc in some frames."""
+    pulse = (1.0, 1.08, 1.15, 1.08, 1.0, 0.93, 0.88, 0.93)[frame % 8]
     c = Canvas()
-    c.rect(0, 0, 16, 16, '3')
-    c.speckle(0, 0, 16, 16, '24', density=0.12, seed=7)
-    c.rect(0, 0, 6, 6, '3').rect(0, 0, 6, 1, '4').rect(0, 0, 1, 6, '4').rect(0, 5, 6, 1, '2').rect(5, 0, 1, 6, '2')
-    c.set(0, 0, '5').set(1, 1, 'K').set(4, 1, 'K').set(1, 4, 'K').set(4, 4, 'K')       # rivets
-    c.rect(0, 6, 6, 1, '1')
-    c.rect(8, 0, 3, 1, '8').rect(8, 1, 3, 1, '6')
-    c.rect(8, 2, 3, 3, '7').set(9, 3, '6').set(8, 2, '8')
-    c.rect(12, 0, 1, 4, 'b').set(12, 0, 'd')
-    return c.rows()
-
-
-def lamp_bulb():
-    """Spark Lamp bulb (full-bright): warm glass with a white-hot zigzag filament."""
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'y')
-    c.rect(5, 2, 6, 12, 'Y')
-    for i, y in enumerate(range(5, 11)):
-        c.set(7 + (i % 2), y, 'z')
-    return c.rows()
-
-
-def lamp_pal():
-    p = pal('copper')
-    g = MATERIALS['amber']
-    p.update({'Z': g[1], 'y': g[2], 'Y': g[3], 'z': g[4]})
-    return p
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x + 0.5 - 8, y + 0.5 - 8) / pulse
+            if d < 1.6:
+                c.set(x, y, 'c')
+            elif d < 2.7:
+                c.set(x, y, 'b')
+            elif d < 3.8:
+                c.set(x, y, 'a')
+    arcs = {1: [(10, 6), (11, 5), (11, 4)], 4: [(5, 9), (4, 10)], 6: [(9, 10), (10, 11), (9, 12)]}
+    for i, (x, y) in enumerate(arcs.get(frame, [])):
+        c.set(x, y, 'A' if i == 0 else 'B')
+    return c
 
 
 def write_lamp():
-    write_item('lamp_rod', lamp_rod(), lamp_pal(), handheld=True)
-    write_block('spark_lamp', lamp_body(), lamp_pal())
-    write_block('spark_lamp_bulb', lamp_bulb(), lamp_pal())
+    write_item('lamp_rod', lamp_rod(), {**lamp_pal(), 'i': '#A8EEF8', 'j': '#E6FCFF', 'W': '#FFFFFF'}, handheld=True)
+    write_anim('block', 'spark_lamp_core', [lamp_core(f) for f in range(8)], WISP, frametime=2)
+    write_anim('block', 'spark_lamp_glow', [lamp_glow(f) for f in range(8)], WISP, frametime=3)
+    for old in ('spark_lamp', 'spark_lamp_bulb'):
+        stale = pathlib.Path(__file__).resolve().parents[2] / f'src/main/resources/assets/robotica/textures/block/{old}.png'
+        if stale.exists():
+            stale.unlink()
+
+
+def lamp_pal():
+    return pal('copper')
 
 
 # ---------------------------------------------------------------- Rivet Gun projectile (entity texture)

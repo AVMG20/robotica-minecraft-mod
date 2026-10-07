@@ -918,7 +918,7 @@
    "items": [
     "lamp_rod"
    ],
-   "what": "FE tool that places Spark Lamps: light 14, walk-through, break instantly.",
+   "what": "FE tool that places Spark Lamps: small floating wisps with light 14, walk-through, break instantly.",
    "use": [
     "Right-click a block face to place a lamp on the floor, a wall or the ceiling.",
     "Sneak-right-click a lamp to remove it.",
