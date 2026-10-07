@@ -23,7 +23,6 @@ The user is the only developer.
 ## Build and test
 - No local JDK: `scripts/docker-build.sh runGameTestServer` (all required game tests must pass) and
   `python3 scripts/audit_assets.py`. Stale `run/config/robotica-*-server.toml` files can make tests fail; delete them.
-- No game client is available; say so when a change is only checked by tests.
 
 ## Every change
 - Keep the Codex and the wiki up to date with the feature: Codex chapter, guide unlocks, wiki item/upgrade/guide
