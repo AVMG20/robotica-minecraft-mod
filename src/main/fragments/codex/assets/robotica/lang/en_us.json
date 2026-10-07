@@ -42,7 +42,7 @@
   "advancements.robotica.guide.basic_circuit.title": "Wired",
   "advancements.robotica.guide.basic_circuit.description": "Craft a Basic Circuit (needs gold). It opens solar, cards, farm kits, warp pads and more.",
   "advancements.robotica.guide.exo.title": "Suit Up",
-  "advancements.robotica.guide.exo.description": "Craft an Exo-Frame piece. J opens its module screen.",
+  "advancements.robotica.guide.exo.description": "Craft an Exo-Frame piece. %s opens its module screen.",
   "advancements.robotica.guide.drones.title": "Air Support",
   "advancements.robotica.guide.drones.description": "Craft a Sentry Drone Mk1 to guard, or a Courier Drone Mk1 to move items.",
   "advancements.robotica.guide.grinder.title": "Grind It Down",

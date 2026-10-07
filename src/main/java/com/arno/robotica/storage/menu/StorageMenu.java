@@ -316,12 +316,17 @@ public class StorageMenu extends MachineMenu {
         viewDirty = true;
     }
 
-    /** One stack of the option's item with any components, from the terminal first, then the player's inventory. */
+    /**
+     * One stack of the option's item with any components, from the terminal first, then the player's inventory (not an
+     * enchanted or named one there).
+     */
     private ItemStack sameItem(ItemStack option) {
         ItemStack stored = be.findSameItem(option);
         if (!stored.isEmpty()) return stored;
         for (ItemStack in : player.getInventory().items) {
-            if (!in.isEmpty() && ItemStack.isSameItem(in, option)) return in.copyWithCount(1);
+            if (in.isEmpty() || !ItemStack.isSameItem(in, option) || in.isEnchanted()
+                    || in.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)) continue;
+            return in.copyWithCount(1);
         }
         return ItemStack.EMPTY;
     }
@@ -342,7 +347,6 @@ public class StorageMenu extends MachineMenu {
         return got;
     }
 
-    /** The persistent 3 x 3 grid of the block entity (a throwaway one on the client). */
     /** A crafting grid slot: the grid travels with a carried terminal, so it takes what the storage takes. */
     private static final class GridSlot extends Slot {
         GridSlot(net.minecraft.world.Container container, int index, int x, int y) {
@@ -355,6 +359,7 @@ public class StorageMenu extends MachineMenu {
         }
     }
 
+    /** The persistent 3 x 3 grid of the block entity (a throwaway one on the client). */
     private final class Grid implements CraftingContainer {
         private final NonNullList<ItemStack> list;
 

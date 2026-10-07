@@ -23,7 +23,7 @@
   "tooltip.robotica.gear.kit.3": "Smithing template: Servo Drill to Magma Drill, Shock Baton to Arc Blade",
   "tooltip.robotica.gear.kit.4": "Smithing template: Magma Drill to Null Drill, Rivet Gun to Null Lance",
   "item.robotica.shock_baton.tooltip": "7 damage, Slowness II, %s FE per hit",
-  "item.robotica.rivet_gun.tooltip": "Right-click: fast rivet, 2 shots/s, %s FE per shot",
+  "item.robotica.rivet_gun.tooltip": "Right-click: fast rivet, %s FE per shot",
   "item.robotica.arc_blade.tooltip": "Arcs half damage to 3 nearby hostiles, %s FE per hit",
   "item.robotica.null_lance.tooltip": "Hold 1 s, release: piercing beam, %s FE per shot",
   "tooltip.robotica.gear.mode": "Mode: %s",

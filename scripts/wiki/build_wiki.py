@@ -247,7 +247,8 @@ def criterion_items(crit):
 
 
 # Key mappings named in guide steps ({key:<mapping>} in codex_guide.py): how the wiki names them.
-KEY_NAMES = {'key.robotica.exo.toggle_flight': 'the Flight key (default K)'}
+KEY_NAMES = {'key.robotica.exo.toggle_flight': 'the Flight key (default K)',
+             'key.robotica.exo.open_modules': 'the Exo Modules key (default J)'}
 
 
 def step_text(lang, key, desc):

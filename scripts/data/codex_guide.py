@@ -137,7 +137,7 @@ STEPS = [
       'armor_pierce_module', 'overclock_module', 'fortune_module', 'silk_touch_module', 'auto_pickup_module',
       'void_filter_module', 'sharpened_edge_module', 'looting_module', 'thermal_edge_module'] + cards('speed', 'efficiency', 'growth', 'void', 'height', 'carry'), 20),
     ('exo', 'basic_circuit', 'exo_chestplate_mk1', 'task', 1, 'Suit Up',
-     'Craft an Exo-Frame piece. J opens its module screen.',
+     'Craft an Exo-Frame piece. {key:key.robotica.exo.open_modules} opens its module screen.',
      has('exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1'), [], 10),
     ('drones', 'basic_circuit', 'sentry_drone', 'task', 1, 'Air Support',
      'Craft a Sentry Drone Mk1 to guard, or a Courier Drone Mk1 to move items.',

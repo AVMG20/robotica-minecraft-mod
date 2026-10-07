@@ -560,7 +560,7 @@ Balance pass 0.5 (`docs/COSTS.md` now sorts every item into its age):
 | Shock Baton attack speed | 1.8 | 1.6 | in line with a sword |
 
 Reviewed and left as they are: Grinder 4,000 FE per ore and Electric Furnace 2,000 FE per item (Thermal's numbers), RTG
-150 FE/t, fission 1,150 to 45,000 FE/t, fusion 200,000 FE/t, Tesla Coil and transfer rates, Wireless Charger 1,000 FE/t
+150 FE/t, fission 1,150 to 45,000 FE/t (1,100 to 37,000 after the reactor pass), fusion 200,000 FE/t, Tesla Coil and transfer rates, Wireless Charger 1,000 FE/t
 per player, Exo marks (225 / 840 / 5,450 / 17,700 IE per set; the Mk3 jump comes from the temporary Magma Core recipe in
 the Blazing Casing) and module costs, Excavator / Survey Rig Mks, item pipes.
 
