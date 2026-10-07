@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "NLN",
+    " U "
+  ],
+  "key": {
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "L": {
+      "item": "minecraft:lightning_rod"
+    },
+    "U": {
+      "item": "robotica:chain_lightning_module_2"
+    }
+  },
+  "result": {
+    "id": "robotica:chain_lightning_module_3",
+    "count": 1
+  }
+}

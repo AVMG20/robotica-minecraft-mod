@@ -2,6 +2,9 @@ package com.arno.robotica.gear.weapon;
 
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.gear.module.GearModuleKind;
+import com.arno.robotica.gear.module.GearModules;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -29,19 +32,34 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem {
         this.age = age;
     }
 
-    /** FE for one hit or shot. */
+    /** Base FE for one hit or shot, without modules. */
     public int cost() {
         return cost.getAsInt();
     }
 
+    /** FE for one hit or shot of this stack: the base cost plus what its switched-on modules add per use. */
+    public int cost(ItemStack stack) {
+        return cost() + GearConfig.pierceCost(GearModules.active(stack, GearModuleKind.ARMOR_PIERCE))
+                + GearConfig.ricochetCost(GearModules.active(stack, GearModuleKind.RICOCHET));
+    }
+
+    public int age() {
+        return age;
+    }
+
+    /** True when a melee hit with this weapon costs FE (Shock Baton, Arc Blade); only those get module effects in melee. */
+    public boolean paidMelee() {
+        return false;
+    }
+
     public boolean hasCharge(ItemStack stack) {
-        return ItemEnergy.get(stack) >= cost();
+        return ItemEnergy.get(stack) >= cost(stack);
     }
 
     /** Pays one use. Creative players use no energy. Returns false (and pays nothing) when there is not enough. */
     protected boolean pay(ItemStack stack, LivingEntity user) {
         if (user instanceof Player p && p.getAbilities().instabuild) return true;
-        return ItemEnergy.tryUse(stack, cost());
+        return ItemEnergy.tryUse(stack, cost(stack));
     }
 
     @Override
@@ -101,7 +119,10 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem {
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age))
                 .withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable(getDescriptionId() + ".tooltip", cost()).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable(getDescriptionId() + ".tooltip", cost(stack)).withStyle(ChatFormatting.GRAY));
+        var modules = GearModules.describe(stack);
+        tooltip.add(modules != null ? Component.translatable("tooltip.robotica.gear.modules", modules).withStyle(ChatFormatting.GRAY)
+                : Component.translatable("tooltip.robotica.gear.weapon_modules", GearModules.slots(stack)).withStyle(ChatFormatting.DARK_GRAY));
         ItemEnergy.appendTooltip(stack, tooltip);
     }
 

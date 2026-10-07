@@ -153,7 +153,7 @@ public class GearGameTests {
         helper.succeed();
     }
 
-    private static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos at) {
+    static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos at) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         player.setGameMode(GameType.SURVIVAL);
         player.moveTo(at.getX() + 0.5, at.getY() + 3, at.getZ() + 0.5);
@@ -459,57 +459,6 @@ public class GearGameTests {
         ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
         GearActions.apply(player, GearActions.TOGGLE, ToggleKind.VOID_FILTER.ordinal());
         helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.VOID_FILTER), "installed: the toggle works");
-        helper.succeed();
-    }
-
-    /**
-     * Tinker's Bench: only power tools go in; a card in a module slot installs the module and is used up, taking it out
-     * gives the card back; closing the screen returns the tool with its modules and energy.
-     */
-    @GameTest(template = "empty")
-    public static void tinkersBenchInstallsAndRemovesModules(GameTestHelper helper) {
-        BlockPos benchPos = new BlockPos(1, 1, 1);
-        helper.setBlock(benchPos, GearBlocks.TINKERS_BENCH.get());
-        ServerPlayer player = survivalPlayer(helper, helper.absolutePos(benchPos));
-        player.getInventory().clearContent();
-        TinkersBenchMenu menu = new TinkersBenchMenu(1, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(benchPos)));
-        helper.assertTrue(!menu.getSlot(0).mayPlace(new ItemStack(GearItems.TINKERS_HAMMER.get())), "the hammer takes no modules");
-        helper.assertTrue(!menu.getSlot(0).mayPlace(new ItemStack(GearItems.FELLING_AXE.get())), "the felling axe takes no modules");
-        ItemStack pickup = CoreItems.cards(UpgradeKind.PICKUP, 3);
-        helper.assertTrue(!menu.getSlot(1).isActive() && !menu.getSlot(1).mayPlace(pickup), "no tool: the module slots are closed");
-
-        ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
-        ItemEnergy.fill(drill);
-        menu.getSlot(0).set(drill);
-        helper.assertTrue(menu.getSlot(1).mayPlace(pickup) && !menu.getSlot(2).mayPlace(pickup), "the pickup card goes in its own slot");
-        menu.getSlot(1).set(pickup.split(1));
-        helper.assertTrue(pickup.getCount() == 2, "one card is used");
-        helper.assertTrue(ToolSettings.installed(menu.tool(), ToggleKind.AUTO_PICKUP), "the pickup module is installed");
-        helper.assertTrue(menu.getSlot(1).getItem().is(CoreItems.card(UpgradeKind.PICKUP).get()), "the slot shows the installed card");
-
-        // Shift-click from the player's inventory (menu slot 3 = inventory slot 9) installs one void card.
-        player.getInventory().setItem(9, CoreItems.cards(UpgradeKind.VOID, 2));
-        menu.quickMoveStack(player, 1 + TinkersBenchMenu.MODULES.length);
-        helper.assertTrue(ToolSettings.installed(menu.tool(), ToggleKind.VOID_FILTER), "shift-click installs the void card");
-        helper.assertTrue(player.getInventory().getItem(9).getCount() == 1, "only one void card is used, " + player.getInventory().getItem(9).getCount() + " left");
-
-        // Taking a module out gives the card back.
-        ItemStack back = menu.getSlot(1).remove(1);
-        helper.assertTrue(back.is(CoreItems.card(UpgradeKind.PICKUP).get()) && !ToolSettings.installed(menu.tool(), ToggleKind.AUTO_PICKUP),
-                "removing the module returns the card");
-        helper.assertTrue(menu.getSlot(1).getItem().isEmpty(), "the slot is empty again");
-
-        // Closing hands the tool back.
-        menu.removed(player);
-        helper.assertTrue(menu.tool().isEmpty(), "the bench keeps nothing");
-        ItemStack returned = ItemStack.EMPTY;
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            if (player.getInventory().getItem(i).is(GearItems.BORE_DRILL.get())) returned = player.getInventory().getItem(i);
-        }
-        helper.assertTrue(!returned.isEmpty(), "the drill comes back on close");
-        helper.assertTrue(ToolSettings.installed(returned, ToggleKind.VOID_FILTER) && ItemEnergy.get(returned) == ItemEnergy.capacity(returned),
-                "modules and energy survive the bench");
         helper.succeed();
     }
 

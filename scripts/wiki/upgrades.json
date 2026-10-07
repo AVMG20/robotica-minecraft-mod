@@ -70,7 +70,7 @@
       "maxStack": 1,
       "age": 1,
       "summary": "Deletes junk or outputs that don't fit.",
-      "rules": "Single card. Also the void filter module of power tools."
+      "rules": "Single card. Also the void filter of power tools (Tinker's Bench card slot, no module slot used)."
     },
     "pickup": {
       "item": "upgrade_pickup",
@@ -78,7 +78,7 @@
       "maxStack": 1,
       "age": 1,
       "summary": "Power tool module: drops go to your inventory.",
-      "rules": "Installed at a Tinker's Bench. No machine takes it."
+      "rules": "Tinker's Bench card slot (uses no module slot). No machine takes it."
     },
     "height": {
       "item": "upgrade_height",

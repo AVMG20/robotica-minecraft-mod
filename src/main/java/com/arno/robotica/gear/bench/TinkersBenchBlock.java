@@ -18,8 +18,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import java.util.List;
 
 /**
- * Tinker's Bench (Age 1): installs and removes tool modules in power tools (Auto-Pickup card, Void Filter card).
- * Like a crafting table it stores nothing: the tool goes back to the player when the screen closes.
+ * Tinker's Bench (Age 1): installs and removes cards (Auto-Pickup, Void Filter) and modules in power tools and FE
+ * weapons (see {@link TinkersBenchMenu}). Like a crafting table it stores nothing: the item goes back to the player when
+ * the screen closes.
  */
 public class TinkersBenchBlock extends Block {
     private static final Component TITLE = Component.translatable("container.robotica.tinkers_bench");

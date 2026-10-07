@@ -3,6 +3,8 @@ package com.arno.robotica.gear;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.RoboticaTab;
 import com.arno.robotica.gear.item.UpgradeKitItem;
+import com.arno.robotica.gear.module.GearModuleItem;
+import com.arno.robotica.gear.module.GearModuleKind;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.GearEnergyToolItem;
 import com.arno.robotica.gear.tool.GearToolItem;
@@ -29,7 +31,9 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.UnaryOperator;
 
 /** Tools, weapons and upgrade kits. Recipes: data/robotica/recipe (scripts/data/gear_recipes.py). */
@@ -116,11 +120,37 @@ public final class GearItems {
     public static final DeferredItem<UpgradeKitItem> KIT_3 = kit(3, Rarity.RARE);
     public static final DeferredItem<UpgradeKitItem> KIT_4 = kit(4, Rarity.EPIC);
 
+    /** Module items per kind, index level - 1. */
+    private static final Map<GearModuleKind, List<DeferredItem<GearModuleItem>>> MODULES = new EnumMap<>(GearModuleKind.class);
+
+    static {
+        for (GearModuleKind kind : GearModuleKind.values()) {
+            List<DeferredItem<GearModuleItem>> levels = new ArrayList<>();
+            for (int level = 1; level <= kind.maxLevel(); level++) {
+                Rarity rarity = switch (kind.minAge(level)) {
+                    case 1 -> Rarity.COMMON;
+                    case 2 -> Rarity.UNCOMMON;
+                    case 3 -> Rarity.RARE;
+                    default -> Rarity.EPIC;
+                };
+                final int lv = level;
+                levels.add(ITEMS.registerItem(kind.itemName(level), p -> new GearModuleItem(p.rarity(rarity), kind, lv)));
+            }
+            MODULES.put(kind, List.copyOf(levels));
+        }
+    }
+
+    public static DeferredItem<GearModuleItem> module(GearModuleKind kind, int level) {
+        List<DeferredItem<GearModuleItem>> levels = MODULES.get(kind);
+        return levels.get(Math.max(0, Math.min(levels.size(), level) - 1));
+    }
+
     static {
         for (DeferredItem<? extends Item> item : List.of(TINKERS_HAMMER, FELLING_AXE, BORE_DRILL, CHAINSAW, SERVO_DRILL, MAGMA_DRILL,
                 NULL_DRILL, GEARBLADE, SHOCK_BATON, RIVET_GUN, ARC_BLADE, NULL_LANCE, KIT_1, KIT_2, KIT_3, KIT_4)) {
             TAB_ORDER.add(item);
         }
+        MODULES.values().forEach(TAB_ORDER::addAll);
     }
 
     /** Attack damage and speed as the player sees them (base damage is 1, base attack speed 4). */

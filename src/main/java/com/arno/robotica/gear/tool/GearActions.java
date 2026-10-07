@@ -1,6 +1,8 @@
 package com.arno.robotica.gear.tool;
 
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.gear.module.GearModuleKind;
+import com.arno.robotica.gear.module.GearModules;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -13,9 +15,15 @@ public final class GearActions {
     public static final int CYCLE_MODE = 0;
     public static final int CYCLE_ENCHANT = 1;
     public static final int TOGGLE = 2;
+    /** Switches an installed module (tools and weapons) on or off; arg = GearModuleKind ordinal. */
+    public static final int MODULE_TOGGLE = 3;
 
     public static void apply(ServerPlayer player, int action, int arg) {
         ItemStack stack = player.getMainHandItem();
+        if (action == MODULE_TOGGLE) {
+            toggleModule(player, stack, arg);
+            return;
+        }
         if (!(stack.getItem() instanceof GearToolItem tool)) return;
         switch (action) {
             case CYCLE_MODE -> cycleMode(player, stack, tool, arg);
@@ -67,6 +75,16 @@ public final class GearActions {
         ToolSettings.set(stack, kind, on);
         click(player, on ? 1.2F : 0.85F);
         player.displayClientMessage(Component.translatable("gear.robotica.toggle.changed", kind.displayName(),
+                Component.translatable(on ? "gear.robotica.on" : "gear.robotica.off")), true);
+    }
+
+    public static void toggleModule(ServerPlayer player, ItemStack stack, int ordinal) {
+        GearModuleKind kind = GearModuleKind.byOrdinal(ordinal);
+        if (kind == null || !GearModules.acceptsModules(stack) || GearModules.level(stack, kind) <= 0) return;
+        boolean on = !GearModules.enabled(stack, kind);
+        GearModules.setEnabled(stack, kind, on);
+        click(player, on ? 1.2F : 0.85F);
+        player.displayClientMessage(Component.translatable("gear.robotica.toggle.changed", kind.displayName(GearModules.level(stack, kind)),
                 Component.translatable(on ? "gear.robotica.on" : "gear.robotica.off")), true);
     }
 }

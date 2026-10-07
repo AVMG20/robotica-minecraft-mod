@@ -8,6 +8,8 @@ import com.arno.robotica.gear.tool.BreakQueue;
 import com.arno.robotica.gear.tool.GearSounds;
 import com.arno.robotica.gear.tool.GearToolItem;
 import com.arno.robotica.gear.tool.ToggleKind;
+import com.arno.robotica.gear.tool.TorchPlacer;
+import com.arno.robotica.gear.weapon.Lifesteal;
 import com.arno.robotica.gear.weapon.EnergyWeaponItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -65,6 +67,7 @@ public final class GearEvents {
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof GearToolItem tool)) return;
         BlockPos origin = event.getPos();
+        TorchPlacer.schedule(player, level, stack, origin);
         Direction face = BreakQueue.faceFor(player, origin);
         List<BlockPos> targets = AreaBreaker.collect(level, player, stack, tool, origin, face);
         AreaMode mode = tool.activeMode(stack, player);
@@ -144,17 +147,22 @@ public final class GearEvents {
     @SubscribeEvent
     public static void onTick(ServerTickEvent.Post event) {
         BreakQueue.tick(event.getServer());
+        TorchPlacer.tick(event.getServer());
     }
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         BreakQueue.clear(event.getEntity().getUUID());
         GearSounds.forget(event.getEntity().getUUID());
+        TorchPlacer.forget(event.getEntity().getUUID());
+        Lifesteal.forget(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         BreakQueue.clearAll();
         GearSounds.clearAll();
+        TorchPlacer.clearAll();
+        Lifesteal.clearAll();
     }
 }

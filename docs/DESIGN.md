@@ -287,8 +287,8 @@ Controls and settings (stored per tool as data components, changed through a cli
 - V cycles mode (sneak + V or sneak + scroll goes back). The HUD shows "1x1 [3x3] 5x5 [V]"; the tooltip shows every mode with the current one highlighted. A mode tick sounds higher for bigger modes.
 - Holding sneak always mines 1×1.
 - B: Silk Touch / Fortune / off (Servo and up).
-- G: settings screen. Only four toggles: keep floor (off by default), auto-pickup (on by default once installed), void filter, auto-smelt (Magma and Null). The Age 0 hammer and axe only have keep floor (hammer).
-- Tool modules (power tools only): auto-pickup needs a Auto-Pickup Upgrade (`upgrade_pickup`: ender pearls, redstone, iron plates, Basic Circuit) and the void filter a Void Filter Upgrade, installed at a Tinker's Bench (Age 1: iron plates, copper gears, crafting table, planks). The bench stores nothing: one tool slot and one slot per module; a card put in is used up and stored on the tool (`gear_modules` component, kept through smithing), taking it out gives the card back. Machines do not take the Auto-Pickup card. Light placer, leaves and replant toggles were removed: tree tools always replant from your saplings and the Chainsaw always clears leaves.
+- G: settings screen of the tool or FE weapon in hand. Four toggles: keep floor (off by default), auto-pickup (on by default once installed), void filter, auto-smelt (Magma and Null); below them an on/off switch per installed module. The Age 0 hammer and axe only have keep floor (hammer).
+- Cards and modules: see Modules below. Light placer, leaves and replant toggles were removed: tree tools always replant from your saplings and the Chainsaw always clears leaves.
 - Area outline rendered client side before breaking.
 - Sounds scale with the break: 3×3 crunch, 5×5/3×3×3 heavy crunch, more than 27 blocks a drill spin-up, a rumble and debris while the queue drains, a crash for whole trees.
 
@@ -297,11 +297,23 @@ Weapons:
 |---|---|---|---|
 | Gearblade | 0 | durability 400 | copper sword, 6 damage, fast swing |
 | Shock Baton | 1 | 200k FE | 7 damage, Slowness II 2s, 250 FE per hit |
-| Rivet Gun | 2 | 1M FE | right-click fires a fast arrow-like rivet, 8 damage, 4 shots/s, 400 FE per shot, no ammo |
+| Rivet Gun | 2 | 1M FE | right-click fires a glowing rivet (own projectile with a tracer; sticks in a block for 1 s, then shatters; never an item), 8 damage, 4 shots/s, 400 FE per shot, no ammo |
 | Arc Blade | 3 | 4M FE | 11 damage, arcs 50% damage to 3 nearby hostiles, 800 FE per hit |
 | Null Lance | 4 | 16M FE | hold to charge 1s, beam pierces all mobs in 32 blocks for 30 damage, 20,000 FE per shot |
 
 Weapon upgrade path through smithing: Gearblade → Shock Baton → Arc Blade. Rivet Gun → Null Lance.
+
+Modules (one system with the Exo-Frame's: one item per kind and level, a minimum Age per level, refusals that say why). The Tinker's Bench (Age 1: iron plates, copper gears, crafting table, planks) takes power tools (FE drills, Chainsaw) and FE weapons; it stores nothing. Slots: one tool slot, two card slots on power tools (Auto-Pickup and Void Filter Upgrades, `upgrade_pickup` / `upgrade_void`; they use no module slot) and four module slots of which the item's Age opens 1 / 2 / 3 / 4 (`moduleSlotsAge1-4`). A module put in is used up and stored on the item (`gear_installed` component, kept through smithing), taking it out gives it back. Refusals: not a module, wrong tool or weapon, Age too low, slot locked (says which Age opens it), kind already installed. G switches every installed module; tooltips and the HUD list them (dimmed when off). Tools from 0.3 kept their cards as bits in `gear_modules`: they keep working and move into the new component the first time they tick in an inventory or go into the bench. Machines do not take the Auto-Pickup card.
+
+| Module | Fits | Levels: min. Age | Effect | Energy |
+|---|---|---|---|---|
+| Torch Placer | drills | 1 | after mining, if the spot has light 7 or less (`torchPlacerLight`), a torch from your inventory goes on the floor or a wall there (or at your feet); one per 10 ticks | 25 FE per torch |
+| Armor Pierce | FE weapons | 1 / 2 / 3 | 20 / 35 / 50 % of the armor reduction is ignored (paid hits only: baton, Arc Blade and its arcs, rivets, the lance beam) | +50 / 100 / 150 FE per use |
+| Chain Lightning | Arc Blade | 3 / 3 / 3 | +2 / 4 / 6 arcs, jump range 8 / 10 / 12 | 150 FE per extra arc that lands |
+| Ricochet Rivets | Rivet Gun | 2 / 2 | the rivet bounces on to 1 / 2 more monsters in sight within 10 blocks, 75 % of the previous hit each | +100 / 200 FE per shot |
+| Lifesteal | Age 4 weapons (Null Lance beam) | 4 | heals 10 % of the damage dealt, at most 3 health per second; reaching the cap starts a 5 s cooldown without healing (at most about 0.6 health per second over time); no healing at full health | 2,000 FE per health point |
+
+Recipes follow the ladder: Torch Placer and Armor Pierce I at Age 1 (Basic Circuit), Pierce II and Ricochet I at Age 2, Pierce III, Ricochet II, Chain Lightning I-II at Age 3, Chain Lightning III and Lifesteal at Age 4 (Lifesteal: 2 Null Circuits, a Null Casing, a Totem of Undying, 2 ghast tears). Weapon visuals: the Arc Blade's arcs are jagged bolts that jump target to target, the Null Lance beam has a bright core, a violet spiral and an impact flash, rivets ping and spark when they ricochet.
 
 ## Base builder (module `architect`)
 

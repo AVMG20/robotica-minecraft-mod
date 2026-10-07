@@ -272,8 +272,101 @@ def write_bench():
     write_block('tinkers_bench_side', bench_side(), pal('copper'))
 
 
+# ---------------------------------------------------------------- tool and weapon modules (16x16 cards)
+# Same card shape as the Exo modules (one module system), but with a notched steel frame: tool modules on a brass card,
+# weapon modules on a crimson card. A glyph window, gold contacts, one pip per level.
+
+MOD_BASE = {'k': '#1E1A1A', 'f': '#4D5558', 'F': '#8D9599', 'o': '#FFB21E', 'Y': '#FFE08A',
+            'A': '#FFF4D8', 'a': '#FFB86A'}
+TOOL_CARD = {'m': '#B98A2E', 'M': '#E8C46A', 'n': '#3A2A10'}
+WEAPON_CARD = {'m': '#9A2A30', 'M': '#E0606A', 'n': '#2A0C10'}
+
+# 6 wide, 8 tall glyphs; X = glyph, x = dim glyph
+MOD_GLYPHS = {
+    'torch_placer': ['...X..', '..XX..', '..XXX.', '..XX..', '..xx..', '..xx..', '..xx..', '..xx..'],
+    'armor_pierce': ['..X...', '.XXX..', 'xxXxx.', 'xxXxx.', 'xxXxx.', '.xXx..', '..X...', '..X...'],
+    'chain_lightning': ['...XX.', '..XX..', '.XXXX.', '...XX.', '..XX..', '.XX...', '.X....', '......'],
+    'ricochet': ['......', 'X....X', 'X....X', '.X..X.', '.X..X.', '..XX..', 'xxxxxx', '......'],
+    'lifesteal': ['.X..X.', 'XXXXXX', 'XXXXXX', '.XXXX.', '..XX..', '..x...', '..x...', '..x...'],
+}
+MOD_LEVELS = {'torch_placer': 1, 'armor_pierce': 3, 'chain_lightning': 3, 'ricochet': 2, 'lifesteal': 1}
+MOD_WEAPON = {'armor_pierce', 'chain_lightning', 'ricochet', 'lifesteal'}
+
+
+def gear_module(name, level=0):
+    c = Canvas()
+    c.rect(3, 1, 10, 14, 'm').bevel(3, 1, 10, 14, 'M', 'n').frame(2, 0, 12, 16, 'k')
+    # notched steel corners: the gear modules' mark
+    for x, y in ((3, 1), (12, 1), (3, 14), (12, 14)):
+        c.set(x, y, 'F')
+    c.set(2, 0, '.').set(13, 0, '.').set(2, 15, '.').set(13, 15, '.')
+    c.rect(4, 2, 8, 9, 'k').rect(5, 3, 6, 8, 'n')
+    for gy, row in enumerate(MOD_GLYPHS[name]):
+        for gx, ch in enumerate(row):
+            if ch == 'X':
+                c.set(5 + gx, 3 + gy, 'A')
+            elif ch == 'x':
+                c.set(5 + gx, 3 + gy, 'a')
+    for x in (4, 6, 8, 10):
+        c.rect(x, 12, 1, 2, 'o')
+    for i in range(level):
+        c.set(5 + 2 * i, 11, 'A')
+    return c.rows()
+
+
+def module_files():
+    """(file name, glyph, level pips) for every tool and weapon module item."""
+    out = []
+    for name, levels in MOD_LEVELS.items():
+        if levels == 1:
+            out.append((f'{name}_module', name, 0))
+        else:
+            for level in range(1, levels + 1):
+                out.append((f'{name}_module' if level == 1 else f'{name}_module_{level}', name, level))
+    return out
+
+
+def write_modules():
+    for fname, name, level in module_files():
+        colors = WEAPON_CARD if name in MOD_WEAPON else TOOL_CARD
+        write_item(fname, gear_module(name, level), {**MOD_BASE, **colors})
+
+
+# ---------------------------------------------------------------- Rivet Gun projectile (entity texture)
+
+def rivet_texture():
+    """16x16 entity texture. Top half: the shaft along u (back left, tip right), steel with two grooves and a white-hot
+    tip. Bottom-left quarter: the head, a steel cap with a dark rim and a bright centre."""
+    rows = [['.'] * 16 for _ in range(16)]
+    shaft = ['G', 'G', 'g', 'g', 'g', 's', 's', 'k']           # light top -> dark bottom
+    for y in range(8):
+        for x in range(16):
+            ch = shaft[y]
+            if x in (4, 9) and 1 <= y <= 6:
+                ch = 's'                                           # grooves
+            if x >= 12:
+                ch = 'o' if x < 14 else ('O' if x == 14 else 'Y')  # glowing tip
+                if y in (0, 7):
+                    ch = 'o'
+            rows[y][x] = ch
+    for y in range(8, 16):
+        for x in range(8):
+            edge = x in (0, 7) or y in (8, 15)
+            centre = 2 <= x <= 5 and 10 <= y <= 13
+            rows[y][x] = 's' if edge else ('Y' if centre and 3 <= x <= 4 and 11 <= y <= 12 else ('G' if centre else 'g'))
+    return [''.join(r) for r in rows]
+
+
+def write_rivet():
+    from pixelart import ASSETS, PALETTE, write_png
+    pal_rivet = {**PALETTE, 'Y': '#FFFBEA', 'O': '#FFE08A', 'o': '#FFB21E'}
+    write_png(ASSETS / 'textures/entity/rivet.png', rivet_texture(), pal_rivet)
+
+
 def main():
     write_bench()
+    write_modules()
+    write_rivet()
     write_item('tinkers_hammer', hammer(), pal('copper'), handheld=True)
     write_item('felling_axe', axe(), pal('copper'), handheld=True)
     write_item('bore_drill', drill(1), pal('copper'), handheld=True)

@@ -4,7 +4,11 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.util.Fmt;
+import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.gear.module.GearModuleKind;
+import com.arno.robotica.gear.module.GearModules;
 import com.arno.robotica.gear.tool.AreaMode;
+import com.arno.robotica.gear.weapon.Lifesteal;
 import com.arno.robotica.gear.tool.GearToolItem;
 import com.arno.robotica.gear.tool.ToolSettings;
 import com.arno.robotica.gear.weapon.EnergyWeaponItem;
@@ -50,6 +54,8 @@ final class GearHud {
                 lines.add(Component.translatable("gear.robotica.hud.durability", stack.getMaxDamage() - stack.getDamageValue(), stack.getMaxDamage()));
             }
         }
+        Component modules = moduleLine(stack, mc);
+        if (modules != null) lines.add(modules);
         int capacity = stack.getItem() instanceof EnergyItem ? ItemEnergy.capacity(stack) : 0;
         int stored = ItemEnergy.get(stack);
 
@@ -73,6 +79,26 @@ final class GearHud {
             String text = empty ? Component.translatable("gear.robotica.hud.empty").getString() : Fmt.energy(stored) + " / " + Fmt.energy(capacity);
             graphics.drawString(font, text, right - font.width(text), y + 9, empty ? 0xFFFF6B5E : 0xFFD8FBFF, true);
         }
+    }
+
+    /** Installed modules, dimmed when switched off, plus the Lifesteal cooldown. Null when none. */
+    private static Component moduleLine(ItemStack stack, Minecraft mc) {
+        MutableComponent line = null;
+        for (GearModuleKind kind : GearModuleKind.values()) {
+            int level = GearModules.level(stack, kind);
+            if (level <= 0) continue;
+            ChatFormatting color = GearModules.enabled(stack, kind) ? ChatFormatting.AQUA : ChatFormatting.DARK_GRAY;
+            MutableComponent name = kind.displayName(level).copy().withStyle(color);
+            if (kind == GearModuleKind.LIFESTEAL && mc.player != null) {
+                float cd = mc.player.getCooldowns().getCooldownPercent(Lifesteal.cooldownItem(), 0.0F);
+                if (cd > 0.0F) {
+                    int seconds = (int) Math.ceil(cd * GearConfig.lifestealCooldown() / 20.0F);
+                    name = Component.translatable("gear.robotica.hud.cooldown", kind.displayName(), seconds).withStyle(ChatFormatting.RED);
+                }
+            }
+            line = line == null ? name : line.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY)).append(name);
+        }
+        return line;
     }
 
     /** "1x1 [3x3] 5x5  [V]": the active mode between its neighbours, then the key. Sneaking or empty shows 1x1. */

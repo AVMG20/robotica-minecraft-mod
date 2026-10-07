@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "robotica:item/chain_lightning_module_2"
+  }
+}

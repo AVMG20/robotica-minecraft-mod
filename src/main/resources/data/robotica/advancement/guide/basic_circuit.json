@@ -74,6 +74,8 @@
       "robotica:fall_dampener_module",
       "robotica:capacitor_plating_module",
       "robotica:item_pipe_mk2",
+      "robotica:torch_placer_module",
+      "robotica:armor_pierce_module",
       "robotica:upgrade_speed",
       "robotica:upgrade_efficiency",
       "robotica:upgrade_growth",

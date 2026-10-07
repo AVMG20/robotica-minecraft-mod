@@ -474,7 +474,17 @@
         },
         {
           "title": "Controls",
-          "text": "- V: next mode. Sneak+V: back.\n- Hold sneak: 1 block.\n- B: Silk / Fortune / off (Servo+).\n- G: settings.\n\nTinker's Bench: add Auto-Pickup or Void Filter Upgrades to a power tool."
+          "text": "- V: next mode. Sneak+V: back.\n- Hold sneak: 1 block.\n- B: Silk / Fortune / off (Servo+).\n- G: settings and modules."
+        },
+        {
+          "title": "Tinker's Bench",
+          "text": "Fits cards and modules into power tools and FE weapons.\n- Module slots: Age 1-4 = 1-4\n- Cards (Auto-Pickup, Void Filter) need no slot\n- Torch Placer: a torch where you mine in the dark\nG switches each one.",
+          "items": [
+            "robotica:tinkers_bench",
+            "robotica:upgrade_pickup",
+            "robotica:upgrade_void",
+            "robotica:torch_placer_module"
+          ]
         },
         {
           "title": "Trees",
@@ -509,6 +519,16 @@
             "robotica:rivet_gun",
             "robotica:arc_blade",
             "robotica:null_lance"
+          ]
+        },
+        {
+          "title": "Weapon modules",
+          "text": "Tinker's Bench, slots = Age.\n- Armor Pierce: ignores armor\n- Chain Lightning: more Arc Blade arcs\n- Ricochet: rivets bounce on\n- Lifesteal (Age 4): heals a bit, FE, capped\nG switches them.",
+          "items": [
+            "robotica:armor_pierce_module",
+            "robotica:chain_lightning_module",
+            "robotica:ricochet_module",
+            "robotica:lifesteal_module"
           ]
         }
       ]

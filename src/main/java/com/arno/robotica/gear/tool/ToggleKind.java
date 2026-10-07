@@ -9,8 +9,9 @@ import org.jetbrains.annotations.Nullable;
  * placer, leaves and replant toggles are gone (tree tools now always replant from your saplings, the Chainsaw always
  * clears the leaves). Bits 16, 32 and 64 belonged to them and are ignored on old stacks.
  *
- * <p>Auto-pickup and the void filter are modules: they only work once their upgrade card is installed in the tool at a
- * Tinker's Bench (see {@link ToolSettings#installed}).
+ * <p>Auto-pickup and the void filter only work once their upgrade card is installed in the tool's card slot at a
+ * Tinker's Bench (see {@link ToolSettings#installed}). The real modules (Torch Placer, weapon modules) are
+ * {@link com.arno.robotica.gear.module.GearModuleKind}; their on/off switches live in {@code gear_modules_off}.
  */
 public enum ToggleKind {
     KEEP_FLOOR("keep_floor", 1, null),
