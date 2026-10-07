@@ -109,7 +109,7 @@ public class ProcessingGameTests {
         });
     }
 
-    /** Media: bonus output, wear and consumption, and a media above the Mk does not fit. */
+    /** Media: bonus output, loading and using up, and a media above the Mk does not fit. */
     @GameTest(template = "empty")
     public static void mediaBonusWearAndTierGate(GameTestHelper helper) {
         GrinderBlockEntity mk1 = place(helper, ProcessingRegistry.GRINDER_MK1);
@@ -119,7 +119,7 @@ public class ProcessingGameTests {
         helper.assertTrue(mk1.items.insertItem(GrinderBlockEntity.MEDIA, new ItemStack(ProcessingRegistry.RESONANT_GRINDING_BALLS.get()), true).getCount() == 1,
                 "resonant balls do not go into a Mk1");
 
-        // Flint lasts 8 ores, then one flint is used up.
+        // Flint lasts 8 ores: the first grind loads one flint, after 8 the next one is loaded.
         GrindingMedia flint = GrindingMedia.of(new ItemStack(Items.FLINT));
         helper.assertTrue(flint != null && flint.uses() == 8, "flint data map entry");
         mk1.items.setStackInSlot(GrinderBlockEntity.MEDIA, new ItemStack(Items.FLINT, 2));
@@ -130,8 +130,8 @@ public class ProcessingGameTests {
             helper.assertTrue(mk1.grindOne(random, plan), "grind " + i);
             for (int s = 0; s < GrinderBlockEntity.OUT_COUNT; s++) mk1.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST + s, ItemStack.EMPTY);
         }
-        helper.assertTrue(mk1.items.getStackInSlot(GrinderBlockEntity.MEDIA).getCount() == 1, "one flint worn out after 8 ores");
-        helper.assertTrue(mk1.wear() == 0, "wear reset");
+        helper.assertTrue(mk1.items.getStackInSlot(GrinderBlockEntity.MEDIA).isEmpty(), "the second flint is loaded after 8 ores");
+        helper.assertTrue(mk1.mediaLeft() == 8 && mk1.loadedMedia() == Items.FLINT, "a fresh flint is loaded");
 
         // Resonant balls (+150%) in a Mk4: an ore's 2 dust become exactly 5.
         BlockPos other = new BlockPos(1, 1, 0);
@@ -142,7 +142,8 @@ public class ProcessingGameTests {
         GrindingLogic.Plan plan = GrindingLogic.find(helper.getLevel(), new ItemStack(Items.IRON_ORE), 4).plan();
         helper.assertTrue(mk4.grindOne(random, plan), "mk4 grind");
         helper.assertTrue(count(mk4, ProcessingRegistry.IRON_DUST.get()) == 5, "2 dust +150% = 5, got " + count(mk4, ProcessingRegistry.IRON_DUST.get()));
-        helper.assertTrue(mk4.wear() == 1 && mk4.mediaLeft() == 127, "one use of 128 worn");
+        helper.assertTrue(mk4.mediaLeft() == 127 && mk4.mediaUses() == 128, "one use of 128 used");
+        helper.assertTrue(mk4.items.getStackInSlot(GrinderBlockEntity.MEDIA).isEmpty(), "the ball was loaded into the machine");
         helper.succeed();
     }
 
@@ -220,31 +221,46 @@ public class ProcessingGameTests {
         helper.succeed();
     }
 
-    /** Media wear rides on the stack: taking the media out and putting it back does not reset it. */
-    @GameTest(template = "empty")
-    public static void mediaWearSurvivesTakingItOut(GameTestHelper helper) {
+    /**
+     * Media is loaded straight away (one item leaves the slot), so the slot takes more of it and the player can take it
+     * out any time; when the loaded item runs out the next one is loaded. Old worn stacks are loaded with what they had
+     * left and stack again.
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void mediaLoadsStraightAway(GameTestHelper helper) {
         GrinderBlockEntity be = place(helper, ProcessingRegistry.GRINDER_MK1);
-        be.items.setStackInSlot(GrinderBlockEntity.MEDIA, new ItemStack(Items.FLINT, 2));
-        be.items.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.RAW_IRON, 16));
-        var random = helper.getLevel().random;
-        GrindingLogic.Plan plan = GrindingLogic.find(helper.getLevel(), new ItemStack(Items.RAW_IRON), 1).plan();
-        for (int i = 0; i < 3; i++) {
-            helper.assertTrue(be.grindOne(random, plan), "grind " + i);
-            for (int s = 0; s < GrinderBlockEntity.OUT_COUNT; s++) be.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST + s, ItemStack.EMPTY);
-        }
-        helper.assertTrue(be.wear() == 3, "three ores worn, got " + be.wear());
-        ItemStack taken = be.items.extractItem(GrinderBlockEntity.MEDIA, 64, false);
-        helper.assertTrue(be.wear() == 0 && GrinderBlockEntity.wearOf(taken) == 3, "the wear left with the stack");
-        helper.assertTrue(be.items.insertItem(GrinderBlockEntity.MEDIA, taken, false).isEmpty(), "media goes back in");
-        helper.assertTrue(be.wear() == 3 && be.mediaLeft() == 5, "wear is back: 3 used, 5 left");
-        for (int i = 0; i < 5; i++) {
-            helper.assertTrue(be.grindOne(random, plan), "grind " + (i + 3));
-            for (int s = 0; s < GrinderBlockEntity.OUT_COUNT; s++) be.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST + s, ItemStack.EMPTY);
-        }
-        ItemStack left = be.items.getStackInSlot(GrinderBlockEntity.MEDIA);
-        helper.assertTrue(left.getCount() == 1 && GrinderBlockEntity.wearOf(left) == 0, "after 8 ores one flint is gone, the next is fresh");
-        helper.assertTrue(ItemStack.isSameItemSameComponents(left, new ItemStack(Items.FLINT)), "a fresh flint stacks with new flint again");
-        helper.succeed();
+        be.items.setStackInSlot(GrinderBlockEntity.MEDIA, new ItemStack(Items.FLINT, 3));
+        helper.runAfterDelay(2, () -> {
+            helper.assertTrue(be.items.getStackInSlot(GrinderBlockEntity.MEDIA).getCount() == 2, "one flint loaded without any ore");
+            helper.assertTrue(be.mediaLeft() == 8, "a full flint loaded");
+            helper.assertTrue(be.items.insertItem(GrinderBlockEntity.MEDIA, new ItemStack(Items.FLINT, 10), false).isEmpty(), "more flint stacks in");
+            helper.assertTrue(be.items.extractItem(GrinderBlockEntity.MEDIA, 64, false).getCount() == 12, "and comes out again");
+            helper.assertTrue(be.mediaLeft() == 8, "the loaded one stays");
+
+            be.items.setStackInSlot(GrinderBlockEntity.MEDIA, new ItemStack(Items.FLINT, 1));
+            be.items.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.RAW_IRON, 16));
+            var random = helper.getLevel().random;
+            GrindingLogic.Plan plan = GrindingLogic.find(helper.getLevel(), new ItemStack(Items.RAW_IRON), 1).plan();
+            for (int i = 0; i < 8; i++) {
+                helper.assertTrue(be.grindOne(random, plan), "grind " + i);
+                for (int s = 0; s < GrinderBlockEntity.OUT_COUNT; s++) be.items.setStackInSlot(GrinderBlockEntity.OUT_FIRST + s, ItemStack.EMPTY);
+            }
+            helper.assertTrue(be.items.getStackInSlot(GrinderBlockEntity.MEDIA).isEmpty() && be.mediaLeft() == 8, "the next flint was loaded");
+
+            // An old stack with wear on it: loaded with what it had left, the rest stacks like new flint.
+            BlockPos other = new BlockPos(1, 1, 0);
+            helper.setBlock(other, ProcessingRegistry.GRINDER_MK1.get().defaultBlockState());
+            GrinderBlockEntity old = (GrinderBlockEntity) helper.getBlockEntity(other);
+            ItemStack worn = new ItemStack(Items.FLINT, 3);
+            worn.set(ProcessingRegistry.MEDIA_WEAR.get(), 5);
+            old.items.setStackInSlot(GrinderBlockEntity.MEDIA, worn);
+            helper.runAfterDelay(2, () -> {
+                helper.assertTrue(old.mediaLeft() == 3, "worn flint loaded with 3 ores left, got " + old.mediaLeft());
+                ItemStack rest = old.items.getStackInSlot(GrinderBlockEntity.MEDIA);
+                helper.assertTrue(rest.getCount() == 2 && ItemStack.isSameItemSameComponents(rest, new ItemStack(Items.FLINT)), "the rest is plain flint");
+                helper.succeed();
+            });
+        });
     }
 
     /**

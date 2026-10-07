@@ -3,7 +3,7 @@ Run: python3 scripts/data/drones_recipes.py   (overwrites data/robotica/recipe/<
 
 Ladder: the Mining Drone is an early helper (iron pickaxe, clockwork mechanism, copper coil, a little iron and redstone, no gold
 or diamond), the Sentry Drone is Age 1 parts (motor, casing, circuit), the Courier Drone Age 1 parts too. Mk2 are Age 2 smithing
-upgrades that keep energy, inventory and settings. Item models come from scripts/textures/drones.py.
+upgrades that keep energy, inventory and settings; the Mining Drone Mk3 is an Age 3 smithing upgrade of the Mk2. Item models come from scripts/textures/drones.py.
 """
 import json
 import pathlib
@@ -47,6 +47,8 @@ shaped('courier_drone', [' H ', 'BIM', ' R '],
        {'H': 'minecraft:hopper', 'B': 'basic_circuit', 'I': 'iron_casing', 'M': 'electric_motor', 'R': 'minecraft:redstone'})
 # Mk2: smithing keeps the data components of the base (energy, inventory, settings)
 smithing('mining_drone_mk2', 'advanced_circuit', 'mining_drone', 'servo_actuator', 'mining_drone_mk2')
+# Mk3 (Age 3, mining only): 5x5 tunnel and Fortune I, again by smithing so nothing is lost
+smithing('mining_drone_mk3', 'quantum_circuit', 'mining_drone_mk2', 'plasma_actuator', 'mining_drone_mk3')
 # Courier Remote: a circuit and a little redstone in an iron shell
 shaped('courier_remote', [' R ', 'ICI'], {'R': 'minecraft:redstone', 'I': IRON, 'C': 'basic_circuit'})
 smithing('courier_drone_mk2', 'advanced_circuit', 'courier_drone', 'servo_actuator', 'courier_drone_mk2')

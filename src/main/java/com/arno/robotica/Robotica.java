@@ -11,6 +11,7 @@ import com.arno.robotica.energy.EnergyModule;
 import com.arno.robotica.exo.ExoModule;
 import com.arno.robotica.gear.GearModule;
 import com.arno.robotica.industry.IndustryModule;
+import com.arno.robotica.logistics.LogisticsModule;
 import com.arno.robotica.power.PowerModule;
 import com.arno.robotica.processing.ProcessingModule;
 import com.arno.robotica.replicator.ReplicatorModule;
@@ -48,6 +49,7 @@ public class Robotica {
         ExoModule.init(modBus, container);
         BossModule.init(modBus, container);
         StorageModule.init(modBus, container);
+        LogisticsModule.init(modBus, container);
     }
 
     public static ResourceLocation id(String path) {

@@ -22,11 +22,18 @@ public final class DroneRenderers {
     public static class Renderer<T extends DroneBase, M extends EntityModel<T>> extends MobRenderer<T, M> {
         private final ResourceLocation tier1;
         private final ResourceLocation tier2;
+        private final ResourceLocation tier3;
 
         public Renderer(EntityRendererProvider.Context ctx, M model, String name, float shadow) {
+            this(ctx, model, name, shadow, false);
+        }
+
+        /** {@code mk3}: the drone has its own Mk3 texture ({@code <name>_mk3.png}), else Mk3 looks like Mk2. */
+        public Renderer(EntityRendererProvider.Context ctx, M model, String name, float shadow, boolean mk3) {
             super(ctx, model, shadow);
             this.tier1 = Robotica.id("textures/entity/" + name + ".png");
             this.tier2 = Robotica.id("textures/entity/" + name + "_mk2.png");
+            this.tier3 = mk3 ? Robotica.id("textures/entity/" + name + "_mk3.png") : tier2;
             ResourceLocation glow = Robotica.id("textures/entity/" + name + "_glow.png");
             addLayer(new EyesLayer<T, M>(this) {
                 @Override
@@ -38,7 +45,7 @@ public final class DroneRenderers {
 
         @Override
         public ResourceLocation getTextureLocation(T entity) {
-            return entity.tier() >= 2 ? tier2 : tier1;
+            return entity.tier() >= 3 ? tier3 : entity.tier() >= 2 ? tier2 : tier1;
         }
 
         @Override
@@ -48,7 +55,7 @@ public final class DroneRenderers {
     }
 
     public static Renderer<MiningDrone, MiningDroneModel> mining(EntityRendererProvider.Context ctx) {
-        return new Renderer<>(ctx, new MiningDroneModel(ctx.bakeLayer(MiningDroneModel.LAYER)), "mining_drone", 0.25F);
+        return new Renderer<>(ctx, new MiningDroneModel(ctx.bakeLayer(MiningDroneModel.LAYER)), "mining_drone", 0.25F, true);
     }
 
     public static Renderer<SentryDrone, SentryDroneModel> sentry(EntityRendererProvider.Context ctx) {

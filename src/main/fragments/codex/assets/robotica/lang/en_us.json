@@ -1,6 +1,6 @@
 {
   "item.robotica.codex": "Robotica Codex",
-  "tooltip.robotica.codex": "Right-click to read. The first page shows your next steps.",
+  "tooltip.robotica.codex": "Shows your next steps",
   "robotica.configuration.giveCodexOnFirstJoin": "Give Codex on first join",
   "robotica.configuration.creativeLabEnabled": "Creative Lab for operators",
   "codex.robotica.guide.title": "Your next steps",
@@ -68,7 +68,7 @@
   "advancements.robotica.guide.excavator.title": "Dig Deep",
   "advancements.robotica.guide.excavator.description": "Place an Excavator with a chest next to it. It digs a hole down to bedrock, slowly, unless you feed it speed cards and power.",
   "advancements.robotica.guide.survey_rig.title": "No Holes Barred",
-  "advancements.robotica.guide.survey_rig.description": "Servo parts make a Survey Rig: it counts the ores in its chunk and pulls them out without digging. Slow, and hungry for power.",
+  "advancements.robotica.guide.survey_rig.description": "Servo parts make a Survey Rig: place it once and it turns power into random ores. Slow, and very hungry for power.",
   "advancements.robotica.guide.age2.title": "Servo Age",
   "advancements.robotica.guide.age2.description": "Craft an Advanced Circuit or a Reinforced Casing: diamonds, obsidian and quartz.",
   "advancements.robotica.guide.assembler.title": "Machine Made",

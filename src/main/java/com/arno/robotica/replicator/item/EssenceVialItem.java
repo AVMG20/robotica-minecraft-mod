@@ -114,7 +114,6 @@ public class EssenceVialItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         if (!Essence.isBound(stack)) {
             tooltip.add(Component.translatable("tooltip.robotica.essence_vial").withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.translatable("tooltip.robotica.essence_vial_bosses").withStyle(ChatFormatting.DARK_GRAY));
             return;
         }
         int samples = Essence.samples(stack);

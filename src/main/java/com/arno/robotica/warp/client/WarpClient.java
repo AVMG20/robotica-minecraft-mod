@@ -19,5 +19,6 @@ public final class WarpClient {
     private static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(WarpRegistry.PAD_MENU.get(), PadScreen::new);
         event.register(WarpRegistry.DESTINATION_MENU.get(), DestinationScreen::new);
+        event.register(WarpRegistry.RIFT_REMOTE_MENU.get(), RiftRemoteScreen::new);
     }
 }

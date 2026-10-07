@@ -115,6 +115,7 @@ public class ElectricFurnaceMenu extends MachineMenu {
         statusIndex = track(be == null ? () -> 0 : () -> be.status().ordinal());
         useIndex = track(be == null ? () -> 0 : be::lastUse);
         xpIndex = track(be == null ? () -> 0 : () -> (int) be.storedXp());
+        trackSides(be == null ? null : be.sides);
         for (int i = 0; i < ElectricFurnaceBlockEntity.MAX_LANES; i++) {
             final int lane = i;
             laneIndex[i] = track(be == null ? () -> 0 : () -> be.needed(lane) <= 0 ? 0 : be.progress(lane) * 1000 / be.needed(lane));

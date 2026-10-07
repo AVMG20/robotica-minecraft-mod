@@ -424,30 +424,23 @@ NAMES = {
 }
 MACHINE_NAMES = {'alloy_smelter': 'Alloy Smelter', 'centrifuge': 'Centrifuge', 'assembler': 'Assembler'}
 
+# Shift details: one short line, only what the name and the normal tooltip do not say.
 DETAILS = {
-    'thorium_ore': 'Overworld, Y -48 to 32, most around Y -8.\nDrops Raw Thorium. Smelt it, or grind it for more.',
-    'deepslate_thorium_ore': 'Overworld, Y -48 to 32, most around Y -8.\nDrops Raw Thorium. Smelt it, or grind it for more.',
-    'pyrolite_ore': 'Nether netherrack, richest in basalt deltas.\nDrops a Pyrolite Shard. Needs an iron pickaxe.',
-    'resonite_ore': 'End stone on the outer End islands. Rare.\nDrops a Resonite Crystal. Needs a diamond pickaxe.',
-    'thorium_dust': 'Smelts into a Thorium Ingot. Two make a Thorium Fuel Pellet in the Assembler.',
-    'graphite_dust': 'Ground coal or charcoal (Grinder, or a Tinker\'s Hammer in the crafting grid).\nModerator for fuel pellets, part of the Superconductor Coil.',
-    'ferrothorium_ingot': 'Alloy Smelter: iron + thorium. The Age 2 alloy.',
-    'pyrosteel_ingot': 'Alloy Smelter: ferrothorium + pyrolite + blaze powder. The Age 3 alloy.',
-    'resonant_alloy_ingot': 'Alloy Smelter: pyrosteel + resonite + ender pearl. The Age 4 alloy.',
-    'thermocouple': 'Made only in the Assembler. Turns heat into power: the heart of the RTG.',
-    'superconductor_coil': 'Made only in the Assembler. Age 3.',
-    'resonant_lattice': 'Made only in the Assembler. Age 4.',
-    'thorium_fuel_pellet': 'Burns in the RTG (150 FE/t for 20 minutes) or a fission reactor.\nLeaves a Depleted Fuel Pellet.',
-    'enriched_fuel_pellet': 'Reactor fuel: two and a half times the heat of a thorium pellet.\nLeaves a Depleted Fuel Pellet.',
-    'depleted_fuel_pellet': 'Waste of the RTG and the reactor.\nThe Centrifuge gets thorium dust back, and sometimes a Radiant Isotope.',
-    'radiant_isotope': 'A rare Centrifuge result from Depleted Fuel Pellets (10%).\nNeeded for Fusion Fuel Pellets.',
-    'fusion_fuel_pellet': 'Fuel of the fusion reactor.',
-    'rtg': 'Put Thorium Fuel Pellets in. One decays at a time, quietly, for 150 FE/t.\nPushes FE into blocks touching it; a Tesla Coil on it sends it further.',
-}
-MACHINE_DETAILS = {
-    'alloy_smelter': 'Makes the Robotica alloys: up to three inputs, one result.\nRight-click it with ingots, or feed it with hoppers (one item kind per input slot).',
-    'centrifuge': 'Splits one input into up to four results, some by chance.\nDepleted Fuel Pellets give thorium back and, rarely, a Radiant Isotope.',
-    'assembler': 'Builds parts from up to six inputs: some exist only here, others cost less than at the crafting table.\nThe bigger parts need a lot of FE.',
+    'thorium_ore': 'Overworld, Y -48 to 32',
+    'deepslate_thorium_ore': 'Overworld, Y -48 to 32',
+    'pyrolite_ore': 'Nether, richest in basalt deltas',
+    'resonite_ore': 'Outer End islands. Rare',
+    'graphite_dust': 'Ground coal or charcoal',
+    'ferrothorium_ingot': 'Alloy Smelter: iron + thorium',
+    'pyrosteel_ingot': 'Alloy Smelter: ferrothorium + pyrolite + blaze powder',
+    'resonant_alloy_ingot': 'Alloy Smelter: pyrosteel + resonite + ender pearl',
+    'thermocouple': 'Assembler only',
+    'superconductor_coil': 'Assembler only',
+    'resonant_lattice': 'Assembler only',
+    'thorium_fuel_pellet': 'RTG: 150 FE/t for 20 minutes. Also reactor fuel',
+    'enriched_fuel_pellet': '2.5x the heat of a thorium pellet',
+    'depleted_fuel_pellet': 'Centrifuge: thorium dust, rarely a Radiant Isotope',
+    'radiant_isotope': 'Centrifuge: 10% from Depleted Fuel Pellets',
 }
 
 
@@ -459,7 +452,6 @@ def lang():
     for m, name in MACHINE_NAMES.items():
         for t in TIERS:
             out[f'block.robotica.{m}_mk{t}'] = f'{name} Mk{t}'
-            out[f'tooltip.robotica.{m}_mk{t}.details'] = MACHINE_DETAILS[m] + '\nCards: speed, efficiency' + ((', fortune' if m == 'alloy_smelter' else ', fortune (recipes that allow it)') if t > 1 else '') + (', void' if m == 'centrifuge' else '') + '.'
     for k, v in DETAILS.items():
         out[f'tooltip.robotica.{k}.details'] = v
     out.update({
@@ -467,8 +459,8 @@ def lang():
         'tooltip.robotica.centrifuge': 'Separates materials',
         'tooltip.robotica.assembler': 'Builds parts from plates and circuits',
         'tooltip.robotica.industry_tier': 'Mk%s: %sx speed, %s upgrade slots',
-        'tooltip.robotica.industry_upgrade': 'Right-click the placed previous Mk with this to upgrade it in place',
-        'tooltip.robotica.rtg': 'Thorium Fuel Pellets: %s FE/t, passive and quiet',
+        'tooltip.robotica.industry_upgrade': 'Right-click the placed previous Mk to upgrade it',
+        'tooltip.robotica.rtg': 'Burns Thorium Fuel Pellets: %s FE/t',
         'tooltip.robotica.rtg_pellet': 'One pellet lasts %s minutes',
         'message.robotica.machine_upgraded': 'Upgraded to %s',
         'gui.robotica.industry_using': 'Using %s FE/t',

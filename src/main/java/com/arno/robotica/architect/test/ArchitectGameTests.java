@@ -560,6 +560,51 @@ public class ArchitectGameTests {
         });
     }
 
+    /**
+     * Running out of matter mid-build stops it for good: the status holds "needs rustic" on every tick (it used to flicker
+     * with "building"), the drone goes, and new matter does nothing until Build is pressed again.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void runningOutOfMatterStopsWithoutFlicker(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, 7, false);
+        // no speed card: one block every few ticks, the ticks in between used to report "building" again
+        table.upgrades.setStackInSlot(0, ItemStack.EMPTY);
+        table.setMatter(new Matter(12, 0, 0));
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        int[] stoppedAt = {-1};
+        int[] tick = {0};
+        boolean[] droneSeen = {false};
+        net.minecraft.world.phys.AABB around = new net.minecraft.world.phys.AABB(table.getBlockPos()).inflate(32);
+        helper.onEachTick(() -> {
+            tick[0]++;
+            if (!helper.getLevel().getEntitiesOfClass(com.arno.robotica.architect.entity.BuilderDrone.class, around).isEmpty()) {
+                droneSeen[0] = true;
+            }
+            if (stoppedAt[0] < 0) {
+                if (table.status() == ArchitectTableBlockEntity.ST_NO_RUSTIC) stoppedAt[0] = tick[0];
+                return;
+            }
+            int since = tick[0] - stoppedAt[0];
+            if (since <= 80) {
+                helper.assertTrue(table.status() == ArchitectTableBlockEntity.ST_NO_RUSTIC,
+                        "status must hold while matter is missing, tick " + since + " was " + table.status());
+                helper.assertTrue(!table.running() && table.needs() == ArchitectTableBlockEntity.ST_NO_RUSTIC, "the build is stopped");
+                helper.assertTrue(!table.isBuilding(), "never building while stopped");
+            }
+            if (since == 5) {
+                helper.assertTrue(helper.getLevel().getEntitiesOfClass(com.arno.robotica.architect.entity.BuilderDrone.class, around).isEmpty(),
+                        "the drone is gone while the table waits");
+            }
+            if (since == 40) table.setMatter(new Matter(5000, 5000, 5000));
+            if (since == 81) table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+            if (since > 85 && table.isBuilding() && table.needs() == 0) {
+                helper.assertTrue(droneSeen[0], "a drone flew while the table built");
+                helper.succeed();
+            }
+        });
+    }
+
     /** The table never builds outside the world border; a skipped block costs nothing and does not stall the build. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void buildSkipsBlocksOutsideTheWorldBorder(GameTestHelper helper) {

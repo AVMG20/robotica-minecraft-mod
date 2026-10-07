@@ -51,6 +51,7 @@ public class MetalPressMenu extends MachineMenu {
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());
         progressIndex = track(be == null ? () -> 0 : be::progress);
         neededIndex = track(be == null ? () -> 0 : be::needed);
+        trackSides(be == null ? null : be.sides);
     }
 
     public int energy() {

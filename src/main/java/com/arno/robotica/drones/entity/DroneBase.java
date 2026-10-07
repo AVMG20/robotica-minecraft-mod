@@ -60,7 +60,7 @@ import java.util.UUID;
 
 /**
  * Shared part of the Mining Drone and the Sentry Drone: a small flying robot with an owner (UUID), an internal FE
- * buffer that a battery slot refills, a tier (1 or 2), hit points and the pick-up/deploy round trip through the item.
+ * buffer that a battery slot refills, a tier (1 to 3; only the Mining Drone has a Mk3), hit points and the pick-up/deploy round trip through the item.
  * All logic runs on the server; the client only renders what the synced data says.
  */
 public abstract class DroneBase extends PathfinderMob {
@@ -124,12 +124,15 @@ public abstract class DroneBase extends PathfinderMob {
         builder.define(DATA_ACTIVE, false);
     }
 
+    /** Highest tier of any drone (the Mining Drone Mk3). */
+    public static final int MAX_TIER = 3;
+
     public int tier() {
         return entityData.get(DATA_TIER);
     }
 
     public void setTier(int tier) {
-        entityData.set(DATA_TIER, Mth.clamp(tier, 1, 2));
+        entityData.set(DATA_TIER, Mth.clamp(tier, 1, MAX_TIER));
         var attr = getAttribute(Attributes.MAX_HEALTH);
         if (attr != null) attr.setBaseValue(maxHealthFor(tier()));
     }

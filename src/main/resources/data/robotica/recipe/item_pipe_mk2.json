@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    "PMP",
+    "PPP"
+  ],
+  "key": {
+    "P": {
+      "item": "robotica:item_pipe"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    }
+  },
+  "result": {
+    "id": "robotica:item_pipe_mk2",
+    "count": 8
+  }
+}

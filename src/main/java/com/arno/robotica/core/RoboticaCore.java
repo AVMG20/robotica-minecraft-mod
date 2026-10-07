@@ -24,6 +24,7 @@ public final class RoboticaCore {
         CoreItems.addToTab();
         container.registerConfig(ModConfig.Type.SERVER, CoreConfig.SPEC, "robotica-core-server.toml");
         modBus.addListener(RoboticaCore::registerCapabilities);
+        modBus.addListener(com.arno.robotica.core.side.SideConfigPayload::register);
     }
 
     /** Every item implementing {@link EnergyItem} (from any module) gets the FE item capability. */

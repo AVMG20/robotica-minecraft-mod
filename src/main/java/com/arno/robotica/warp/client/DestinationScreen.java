@@ -1,20 +1,27 @@
 package com.arno.robotica.warp.client;
 
+import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.warp.WarpPayloads;
 import com.arno.robotica.warp.menu.DestinationEntry;
 import com.arno.robotica.warp.menu.DestinationMenu;
+import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.Locale;
 
-/** Destination list: name, owner, distance or dimension and FE cost per row. Click a row to travel (scroll for more). */
+/**
+ * Destination list: name, owner, distance or dimension and FE cost per row. Click a row to travel (scroll for more).
+ * Players who may edit the departure pad get a name box in the title row instead of the "From" label.
+ */
 public class DestinationScreen extends MachineScreen<DestinationMenu> {
     private static final int ROW_H = 24;
     private static final int ROWS = 5;
@@ -23,6 +30,7 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
     private static final int LIST_W = 224;
 
     private int scroll;
+    private EditBox nameBox;
 
     public DestinationScreen(DestinationMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -31,7 +39,38 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
     }
 
     @Override
+    protected void init() {
+        super.init();
+        if (!menu.canEdit()) return;
+        nameBox = new EditBox(font, leftPos + 8, topPos + 4, 178, 14, Component.translatable("gui.robotica.warp.name"));
+        nameBox.setMaxLength(WarpPadBlockEntity.MAX_NAME);
+        nameBox.setValue(menu.padName());
+        nameBox.setHint(Component.translatable("gui.robotica.warp.name_hint"));
+        addRenderableWidget(nameBox);
+        addRenderableWidget(new FitButton(leftPos + 190, topPos + 4, 42, 14, Component.translatable("gui.robotica.warp.save"), b -> saveName()));
+    }
+
+    private void saveName() {
+        if (nameBox != null) PacketDistributor.sendToServer(new WarpPayloads.Rename(menu.pos(), nameBox.getValue()));
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (nameBox == null || !nameBox.isFocused()) return super.keyPressed(keyCode, scanCode, modifiers);
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            onClose();
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            saveName();
+            return true;
+        }
+        return nameBox.keyPressed(keyCode, scanCode, modifiers) || nameBox.canConsumeInput() || super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+        if (nameBox != null) return;
         drawFitted(g, font, Component.translatable("gui.robotica.warp.from", menu.padName()), titleLabelX, titleLabelY, imageWidth - 16, TEXT, -1, false, 1.0F);
     }
 

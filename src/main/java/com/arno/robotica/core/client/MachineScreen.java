@@ -1,19 +1,29 @@
 package com.arno.robotica.core.client;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.menu.MachineMenu;
+import com.arno.robotica.core.side.RelativeSide;
+import com.arno.robotica.core.side.SideConfig;
+import com.arno.robotica.core.side.SideConfigPayload;
+import com.arno.robotica.core.side.SideMode;
 import com.arno.robotica.core.util.Fmt;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,6 +36,7 @@ import java.util.List;
  * {@link #drawProgress} and {@link #drawArrow}. All helper coordinates are absolute screen coordinates.
  * Layout rules: 8 px margins, section labels in {@link #TEXT}, nothing but slots below y = 70 on a 166 px high panel
  * (the "Inventory" label sits at y = 72).
+ * Menus that call {@code MachineMenu.trackSides} get a side config tab on the right edge of the panel, drawn here.
  */
 public abstract class MachineScreen<M extends AbstractContainerMenu> extends AbstractContainerScreen<M> {
     public static final int PANEL = 0xFFC6C6C6;
@@ -95,6 +106,7 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
             }
         }
         renderMachine(g, leftPos, topPos, mouseX, mouseY);
+        renderSideTab(g);
     }
 
     /** True for machine slots, false for the player's inventory. */
@@ -171,6 +183,114 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
             }
         }
+    }
+
+    // ---------------------------------------------------------------- side config tab
+
+    /** Open or closed, shared by every machine screen so it stays the way the player left it. */
+    private static boolean sideTabOpen;
+    private static final int TAB_CLOSED = 22, TAB_W = 64, TAB_H = 94, CELL = 14, GRID_X = 11, GRID_Y = 22, TOGGLE_Y = 68;
+    /** Grid position (column, row) of each face: Thermal's layout, the front in the middle. */
+    private static final int[][] CELLS = {{1, 1}, {2, 2}, {0, 1}, {2, 1}, {1, 0}, {1, 2}};
+
+    @Nullable
+    private SideConfig sideConfig() {
+        return menu instanceof MachineMenu machine ? machine.sides() : null;
+    }
+
+    /** The tab's rectangle (absolute), or null when this machine has no side config. */
+    @Nullable
+    private Rect2i sideTab() {
+        if (sideConfig() == null) return null;
+        int w = sideTabOpen ? TAB_W : TAB_CLOSED, h = sideTabOpen ? TAB_H : TAB_CLOSED;
+        return new Rect2i(leftPos + imageWidth, topPos + 4, w, h);
+    }
+
+    /** Areas outside the panel this screen draws on (for JEI, so it does not cover them). */
+    public List<Rect2i> extraAreas() {
+        Rect2i tab = sideTab();
+        return tab == null ? List.of() : List.of(tab);
+    }
+
+    private void renderSideTab(GuiGraphics g) {
+        SideConfig sides = sideConfig();
+        Rect2i tab = sideTab();
+        if (sides == null || tab == null) return;
+        int x = tab.getX(), y = tab.getY();
+        drawPanel(g, x - 3, y, tab.getWidth() + 3, tab.getHeight());
+        g.fill(x - 3, y + 1, x, y + tab.getHeight() - 3, PANEL);
+        g.renderItem(new ItemStack(Items.HOPPER), x + 2, y + 3);
+        if (!sideTabOpen) {
+            addTooltip(x, y, TAB_CLOSED, TAB_CLOSED, Component.translatable("gui.robotica.sides"));
+            return;
+        }
+        drawFitted(g, font, Component.translatable("gui.robotica.sides"), x + 20, y + 7, TAB_W - 24, TEXT, -1, false, 1.0F);
+        for (RelativeSide side : RelativeSide.values()) {
+            int cx = x + GRID_X + CELLS[side.ordinal()][0] * CELL, cy = y + GRID_Y + CELLS[side.ordinal()][1] * CELL;
+            SideMode mode = sides.mode(side);
+            drawInset(g, cx, cy, CELL - 2, CELL - 2);
+            g.fill(cx, cy, cx + CELL - 2, cy + CELL - 2, mode.color);
+            g.fill(cx, cy, cx + CELL - 2, cy + 1, 0x50FFFFFF);
+            if (side == RelativeSide.FRONT) g.fill(cx + 4, cy + 4, cx + 8, cy + 8, 0xC0FFFFFF);
+            addTooltip(cx, cy, CELL - 2, CELL - 2,
+                    Component.translatable(side.translationKey()).append(": ").append(Component.translatable(mode.translationKey())),
+                    Component.translatable("gui.robotica.sides.click").withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
+        drawToggle(g, x + 6, y + TOGGLE_Y, sides.autoInput(), "gui.robotica.sides.auto_input");
+        drawToggle(g, x + 6, y + TOGGLE_Y + 12, sides.autoEject(), "gui.robotica.sides.auto_eject");
+    }
+
+    private void drawToggle(GuiGraphics g, int x, int y, boolean on, String key) {
+        drawInset(g, x, y, 8, 8);
+        g.fill(x, y, x + 8, y + 8, on ? Tone.GOOD.dot : SLOT);
+        if (on) g.fill(x + 2, y + 2, x + 6, y + 6, 0xFFFFFFFF);
+        drawFitted(g, font, Component.translatable(key), x + 11, y, TAB_W - 20, TEXT, -1, false, 0.75F);
+        addTooltip(x - 1, y - 1, TAB_W - 8, 10, Component.translatable(key + ".hint"));
+    }
+
+    /** Side tab click: header opens or closes it, faces cycle (right-click backwards), boxes toggle. */
+    private boolean clickSideTab(double mouseX, double mouseY, int button) {
+        SideConfig sides = sideConfig();
+        Rect2i tab = sideTab();
+        if (sides == null || tab == null || !tab.contains((int) mouseX, (int) mouseY)) return false;
+        int mx = (int) mouseX - tab.getX(), my = (int) mouseY - tab.getY();
+        int action = -1;
+        if (!sideTabOpen || my < GRID_Y - 2) {
+            sideTabOpen = !sideTabOpen;
+            playClick();
+            return true;
+        }
+        for (RelativeSide side : RelativeSide.values()) {
+            int cx = GRID_X + CELLS[side.ordinal()][0] * CELL, cy = GRID_Y + CELLS[side.ordinal()][1] * CELL;
+            if (mx >= cx - 1 && mx < cx + CELL - 1 && my >= cy - 1 && my < cy + CELL - 1) {
+                action = button == 1 ? SideConfig.ACTION_PREVIOUS + side.ordinal() : side.ordinal();
+            }
+        }
+        if (my >= TOGGLE_Y - 2 && my < TOGGLE_Y + 10) action = SideConfig.ACTION_AUTO_INPUT;
+        else if (my >= TOGGLE_Y + 10 && my < TOGGLE_Y + 22) action = SideConfig.ACTION_AUTO_EJECT;
+        if (action >= 0) {
+            sides.handleAction(action);   // the client copy shows it at once, the server sync confirms
+            PacketDistributor.sendToServer(new SideConfigPayload(menu.containerId, action));
+            playClick();
+        }
+        return true;
+    }
+
+    private void playClick() {
+        if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if ((button == 0 || button == 1) && clickSideTab(mouseX, mouseY, button)) return true;
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int left, int top, int button) {
+        Rect2i tab = sideTab();
+        if (tab != null && tab.contains((int) mouseX, (int) mouseY)) return false;
+        return super.hasClickedOutside(mouseX, mouseY, left, top, button);
     }
 
     // ---------------------------------------------------------------- frames

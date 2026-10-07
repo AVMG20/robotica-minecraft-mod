@@ -22,11 +22,12 @@ public final class MachineInfo {
     public String owner;
     /** Percent of the wound Mainspring, -1 not applicable, {@link #SPRING_NONE} when empty. */
     public int spring = -1;
-    public int oresLeft = -1;
-    public int oresTotal = -1;
+    /** Survey Rig: item id of the last ore it made. */
+    @Nullable
+    public String lastOre;
 
     public boolean isEmpty() {
-        return status == null && progress < 0 && tier <= 0 && owner == null && spring == -1 && oresTotal < 0;
+        return status == null && progress < 0 && tier <= 0 && owner == null && spring == -1 && lastOre == null;
     }
 
     public void write(CompoundTag tag) {
@@ -35,10 +36,7 @@ public final class MachineInfo {
         if (tier > 0) tag.putByte("mk", (byte) tier);
         if (owner != null && !owner.isEmpty()) tag.putString("ow", owner);
         if (spring != -1) tag.putByte("sp", (byte) spring);
-        if (oresTotal >= 0) {
-            tag.putInt("ol", oresLeft);
-            tag.putInt("ot", oresTotal);
-        }
+        if (lastOre != null) tag.putString("lo", lastOre);
     }
 
     public static MachineInfo read(CompoundTag tag) {
@@ -48,10 +46,7 @@ public final class MachineInfo {
         info.tier = tag.getByte("mk");
         if (tag.contains("ow")) info.owner = tag.getString("ow");
         if (tag.contains("sp")) info.spring = tag.getByte("sp");
-        if (tag.contains("ot")) {
-            info.oresLeft = tag.getInt("ol");
-            info.oresTotal = tag.getInt("ot");
-        }
+        if (tag.contains("lo")) info.lastOre = tag.getString("lo");
         return info;
     }
 }

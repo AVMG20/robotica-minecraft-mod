@@ -103,16 +103,26 @@ for name, (top, top_on, top_glow) in MACHINES.items():
     item_model(name, f'robotica:block/{name}')
     loot(name)
 
-# ---------- accumulators: the charge gauge glows always ----------
+# ---------- accumulators: the gauge shows the charge (block state `charge` 0-5, one lit cell per level) ----------
+ACC_CELLS = 5
 for tier in (1, 2, 3):
     name = f'accumulator_{tier}'
     faces = {'north': f'{name}_front', 'up': f'{name}_top', 'down': 'power_machine_bottom',
              'south': f'{name}_side', 'west': f'{name}_side', 'east': f'{name}_side'}
-    glow = {'north': 'accumulator_front_glow', 'south': 'accumulator_side_glow', 'west': 'accumulator_side_glow',
-            'east': 'accumulator_side_glow'}
-    block_model(name, machine_model(faces, glow))
-    blockstate(name, {'variants': facing_variants(lambda c, n=name: n)})
-    item_model(name, f'robotica:block/{name}')
+    for level in range(ACC_CELLS + 1):
+        glow = None
+        if level:
+            side_glow = f'accumulator_side_glow_{level}'
+            glow = {'north': f'accumulator_front_glow_{level}', 'south': side_glow, 'west': side_glow, 'east': side_glow}
+        block_model(f'{name}_{level}', machine_model(faces, glow))
+    blockstate(name, {'variants': facing_variants(lambda c, n=name: f"{n}_{c['charge']}",
+                                                  [('charge', list(range(ACC_CELLS + 1)))])})
+    # The item shows the stored charge too (item property robotica:charge = level / 5, see PowerClient).
+    write(ASSETS / 'models/item' / f'{name}.json', {
+        'parent': f'robotica:block/{name}_0',
+        'overrides': [{'predicate': {'robotica:charge': level / ACC_CELLS}, 'model': f'robotica:block/{name}_{level}'}
+                      for level in range(1, ACC_CELLS + 1)],
+    })
     loot(name, copy_energy=True)
 
 # ---------- solar panels: a 6 px slab, cells catch a faint glow ----------
@@ -177,14 +187,15 @@ for tier in range(1, 6):
         'elements': elements,
     })
     blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
-    # The coil is small: show it bigger in the inventory and in hand.
+    # The coil is 15 high: a little bigger than a block (0.625) in the slot, but no more, or it sticks out of the slot.
+    # In the GUI view it spans about 12 px at 0.75, lifted 1 px so the tip and the foot sit evenly in the slot.
     write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, -1, 0], 'scale': [1.0, 1.0, 1.0]},
-        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
-        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [1.0, 1.0, 1.0]},
-        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.6, 0.6, 0.6]},
-        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
-        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, 1, 0], 'scale': [0.75, 0.75, 0.75]},
+        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.4, 0.4, 0.4]},
+        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [0.6, 0.6, 0.6]},
+        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.45, 0.45, 0.45]},
+        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
+        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
     }})
     loot(name)
 

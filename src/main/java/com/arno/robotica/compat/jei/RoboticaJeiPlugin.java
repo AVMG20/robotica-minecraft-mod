@@ -37,6 +37,18 @@ public class RoboticaJeiPlugin implements IModPlugin {
         return Robotica.id("jei");
     }
 
+    /** Machine screens draw a side config tab right of the panel: keep JEI's item list clear of it. */
+    @Override
+    public void registerGuiHandlers(mezz.jei.api.registration.IGuiHandlerRegistration registration) {
+        registration.addGenericGuiContainerHandler(com.arno.robotica.core.client.MachineScreen.class,
+                new mezz.jei.api.gui.handlers.IGuiContainerHandler<com.arno.robotica.core.client.MachineScreen<?>>() {
+                    @Override
+                    public java.util.List<net.minecraft.client.renderer.Rect2i> getGuiExtraAreas(com.arno.robotica.core.client.MachineScreen<?> screen) {
+                        return screen.extraAreas();
+                    }
+                });
+    }
+
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
         registration.addRecipeCategories(new PressingCategory(registration.getJeiHelpers().getGuiHelper()));

@@ -8,6 +8,9 @@ import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
+import com.arno.robotica.core.side.RelativeSide;
+import com.arno.robotica.core.side.SideConfig;
+import com.arno.robotica.core.side.SideMode;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
@@ -48,6 +51,8 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
     protected final int tier;
     public final MachineEnergyStorage energy;
     public final MachineUpgrades upgrades;
+    /** Per-face item access and auto-transfer. Defaults match the old rules: in and out on top and sides, only out below. */
+    public final SideConfig sides = new SideConfig(this, this::automationRules).with(RelativeSide.BOTTOM, SideMode.OUTPUT);
     protected Status status = Status.IDLE;
     /** FE used in the last tick, for the GUI. */
     protected int lastUse;
@@ -88,8 +93,14 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
     /** Index of the battery slot in {@link #items()}. */
     public abstract int batterySlot();
 
-    /** Pipes and hoppers: input on the top and sides, output taken from any side, nothing goes in from below. */
-    public abstract IItemHandler automation(@Nullable Direction side);
+    /** What pipes and hoppers may do on any face that allows both ways: put inputs in, take outputs (and empty batteries) out. */
+    protected abstract IItemHandler automationRules();
+
+    /** The item capability of a face, as the side config allows; a null side (probes, some pipes) gets the plain rules. */
+    @Nullable
+    public IItemHandler automation(@Nullable Direction side) {
+        return sides.access(side);
+    }
 
     /** Where a right-click with an item puts it. */
     public abstract IItemHandler quickInsertTarget();
@@ -113,6 +124,7 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
         if ((level.getGameTime() + pos.asLong()) % 20 == 0) tidyHiddenSlots(level, pos);
         lastUse = 0;
         work(level);
+        sides.tick(level);
         if (status == Status.WORKING) {
             idleTicks = 0;
             setLit(true);
@@ -256,6 +268,7 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
         super.saveAdditional(tag, registries);
         writeContents(tag, registries);
         tag.put("energy", energy.serializeNBT(registries));
+        tag.put("sides", sides.save());
     }
 
     @Override
@@ -263,6 +276,7 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
         super.loadAdditional(tag, registries);
         readContents(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        sides.load(tag.getCompound("sides"));
     }
 
     @Override

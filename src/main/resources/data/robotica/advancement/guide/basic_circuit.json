@@ -73,6 +73,7 @@
       "robotica:magnet_module",
       "robotica:fall_dampener_module",
       "robotica:capacitor_plating_module",
+      "robotica:item_pipe_mk2",
       "robotica:upgrade_speed",
       "robotica:upgrade_efficiency",
       "robotica:upgrade_growth",

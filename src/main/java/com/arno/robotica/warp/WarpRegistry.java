@@ -9,6 +9,7 @@ import com.arno.robotica.warp.item.RemoteItem;
 import com.arno.robotica.warp.item.RiftUpgradeItem;
 import com.arno.robotica.warp.menu.DestinationMenu;
 import com.arno.robotica.warp.menu.PadMenu;
+import com.arno.robotica.warp.menu.RiftRemoteMenu;
 import com.arno.robotica.warp.pad.WarpPadBlock;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import net.minecraft.core.registries.Registries;
@@ -67,6 +68,8 @@ public final class WarpRegistry {
             MENUS.register("warp_pad", () -> IMenuTypeExtension.create((id, inv, buf) -> new PadMenu(id, inv, buf)));
     public static final DeferredHolder<MenuType<?>, MenuType<DestinationMenu>> DESTINATION_MENU =
             MENUS.register("warp_destinations", () -> IMenuTypeExtension.create((id, inv, buf) -> new DestinationMenu(id, inv, buf)));
+    public static final DeferredHolder<MenuType<?>, MenuType<RiftRemoteMenu>> RIFT_REMOTE_MENU =
+            MENUS.register("rift_remote", () -> IMenuTypeExtension.create((id, inv, buf) -> new RiftRemoteMenu(id, inv, buf)));
 
     /** Registers everything and adds the items to the creative tab in progression order. */
     public static void register(IEventBus modBus) {

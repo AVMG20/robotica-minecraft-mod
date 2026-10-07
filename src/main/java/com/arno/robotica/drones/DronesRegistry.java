@@ -46,6 +46,8 @@ public final class DronesRegistry {
             p -> new DroneItem(p.rarity(Rarity.COMMON), Kind.MINING, 1));
     public static final DeferredItem<DroneItem> MINING_DRONE_MK2 = ITEMS.registerItem("mining_drone_mk2",
             p -> new DroneItem(p.rarity(Rarity.UNCOMMON), Kind.MINING, 2));
+    public static final DeferredItem<DroneItem> MINING_DRONE_MK3 = ITEMS.registerItem("mining_drone_mk3",
+            p -> new DroneItem(p.rarity(Rarity.RARE), Kind.MINING, 3));
     public static final DeferredItem<DroneItem> SENTRY_DRONE = ITEMS.registerItem("sentry_drone",
             p -> new DroneItem(p.rarity(Rarity.COMMON), Kind.SENTRY, 1));
     public static final DeferredItem<DroneItem> SENTRY_DRONE_MK2 = ITEMS.registerItem("sentry_drone_mk2",
@@ -99,5 +101,6 @@ public final class DronesRegistry {
         RoboticaTab.add(MINING_DRONE_MK2);
         RoboticaTab.add(SENTRY_DRONE_MK2);
         RoboticaTab.add(COURIER_DRONE_MK2);
+        RoboticaTab.add(MINING_DRONE_MK3);
     }
 }

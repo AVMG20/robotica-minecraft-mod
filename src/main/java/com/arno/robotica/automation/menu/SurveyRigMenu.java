@@ -2,17 +2,21 @@ package com.arno.robotica.automation.menu;
 
 import com.arno.robotica.automation.AutomationContent;
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
+import com.arno.robotica.automation.entity.SurveyOrePool;
 import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.core.menu.MachineMenu;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Survey Rig GUI (176 x 176): energy bar, battery and Magma Core slots, ledger bar, scanner screen, upgrade slots,
- * 3x3 buffer. Slot order: 0 battery, 1 core, 2-5 upgrades, 6-14 buffer, then the player inventory.
+ * Survey Rig GUI (176 x 176): energy bar, battery and Magma Core slots, progress bar, scanner screen with the last ore,
+ * upgrade slots, 3x3 buffer. Slot order: 0 battery, 1 core, 2-5 upgrades, 6-14 buffer, then the player inventory.
  */
 public class SurveyRigMenu extends MachineMenu {
     public static final int SLOT_CORE = 1;
@@ -23,10 +27,11 @@ public class SurveyRigMenu extends MachineMenu {
     private final int idxCapacity;
     private final int idxStatus;
     private final int idxState;
-    private final int idxLeft;
-    private final int idxTotal;
-    private final int idxScan;
+    private final int idxProgress;
     private final int idxCost;
+    private final int idxInterval;
+    private final int idxLastOre;
+    private final int idxChance;
 
     public SurveyRigMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv, resolve(inv, buf));
@@ -56,10 +61,11 @@ public class SurveyRigMenu extends MachineMenu {
         idxCapacity = track(() -> be.energy.getMaxEnergyStored());
         idxStatus = track(() -> be.status().ordinal());
         idxState = track(() -> be.rigState().ordinal());
-        idxLeft = track(be::ledgerLeft);
-        idxTotal = track(be::ledgerTotal);
-        idxScan = track(be::scanPercent);
-        idxCost = track(be::energyPerOre);
+        idxProgress = track(be::guiProgress);
+        idxCost = track(be::energyPerTick);
+        idxInterval = track(be::actionInterval);
+        idxLastOre = track(be::lastOreId);
+        idxChance = track(() -> chanceBasisPoints(be));
     }
 
     public int energy() {
@@ -78,20 +84,37 @@ public class SurveyRigMenu extends MachineMenu {
         return SurveyRigBlockEntity.RigState.byOrdinal(synced(idxState));
     }
 
-    public int left() {
-        return synced(idxLeft);
+    /** Server side: chance of the last ore's kind per roll, in 1/10000. */
+    private static int chanceBasisPoints(SurveyRigBlockEntity be) {
+        Item ore = be.lastOre();
+        if (ore == null) return 0;
+        SurveyOrePool pool = SurveyOrePool.get();
+        SurveyOrePool.Kind kind = pool.kind(ore);
+        return kind == null ? 0 : (int) Math.round(pool.chance(kind, be.hasCore()) * 10_000);
     }
 
-    public int total() {
-        return synced(idxTotal);
+    /** Percent of the way to the next ore. */
+    public int progress() {
+        return synced(idxProgress);
     }
 
-    public int scanPercent() {
-        return synced(idxScan);
-    }
-
-    public int energyPerOre() {
+    public int energyPerTick() {
         return synced(idxCost);
+    }
+
+    public int interval() {
+        return synced(idxInterval);
+    }
+
+    @Nullable
+    public Item lastOre() {
+        int id = synced(idxLastOre);
+        return id < 0 ? null : BuiltInRegistries.ITEM.byId(id);
+    }
+
+    /** Chance of the last ore's kind per roll, in 1/10000. */
+    public int lastOreChance() {
+        return synced(idxChance);
     }
 
     @Override

@@ -25,10 +25,10 @@
   "jade.robotica.progress": "%s%%",
   "jade.robotica.spring": "Spring wound: %s%%",
   "jade.robotica.no_spring": "No Mainspring",
-  "jade.robotica.ores_left": "Ores left: %s of %s",
   "jade.robotica.owner": "Owner: %s",
   "jade.robotica.mode": "Mode: %s",
   "jade.robotica.energy": "%s / %s FE",
   "config.jade.plugin_robotica.machine": "Robotica machines",
-  "config.jade.plugin_robotica.drone": "Robotica drones"
+  "config.jade.plugin_robotica.drone": "Robotica drones",
+  "jade.robotica.last_ore": "Last ore: %s"
 }

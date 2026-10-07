@@ -1,5 +1,6 @@
 package com.arno.robotica.core.menu;
 
+import com.arno.robotica.core.side.SideConfig;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -8,6 +9,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,8 @@ import java.util.function.IntSupplier;
 public abstract class MachineMenu extends AbstractContainerMenu {
     private final List<int[]> synced = new ArrayList<>();
     private int machineSlotCount = -1;
+    @Nullable
+    private SideConfig sides;
 
     protected MachineMenu(MenuType<?> type, int containerId) {
         super(type, containerId);
@@ -69,6 +73,32 @@ public abstract class MachineMenu extends AbstractContainerMenu {
             }
         });
         return index;
+    }
+
+    /**
+     * Gives the menu a side config tab ({@code MachineScreen} draws it). Server: pass the machine's config; client:
+     * pass null, a copy is kept in sync through one data slot. Call on both sides in the same order as {@link #track}.
+     */
+    protected void trackSides(@Nullable SideConfig server) {
+        SideConfig target = server != null ? server : SideConfig.client();
+        this.sides = target;
+        addDataSlot(new DataSlot() {
+            @Override
+            public int get() {
+                return target.pack();
+            }
+
+            @Override
+            public void set(int value) {
+                if (!target.isServer()) target.unpack(value);
+            }
+        });
+    }
+
+    /** The machine's side config (server) or its synced copy (client); null for menus without one. */
+    @Nullable
+    public SideConfig sides() {
+        return sides;
     }
 
     /** Client side only: the last synced value. On the server, read the block entity directly. */

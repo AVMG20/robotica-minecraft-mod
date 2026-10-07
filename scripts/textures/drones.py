@@ -1,6 +1,6 @@
 """Drones module textures: Mining Drone (copper body, steel drill) and Sentry Drone (steel orb, cyan eye), tier 1 and tier 2.
 Run: python3 scripts/textures/drones.py
-Writes textures/entity/{mining,sentry}_drone[_mk2].png (64x64 model sheets), the matching *_glow.png (only the lamp and eye
+Writes textures/entity/{mining,sentry}_drone[_mk2].png, mining_drone_mk3.png (64x64 model sheets), the matching *_glow.png (only the lamp and eye
 pixels, drawn full bright by a render layer) and the four item icons (models are written by scripts/data/drones_data.py).
 The model sheets follow the box layout of the models in drones/client: texOffs(u, v), box w x h x d unfolds as
     top (u+d, v)  bottom (u+d+w, v)  west (u, v+d)  north/front (u+d, v+d)  east (u+d+w, v+d)  south (u+2d+w, v+d)
@@ -25,6 +25,12 @@ MK2 = dict(MK1)
 MK2.update({
     '1': '#7E8A90', '2': '#566067', '3': '#3F484E', '4': '#2A3034',      # dark steel body
     'r': '#F0B030', 'R': '#FFE08A',                                      # gold trim
+})
+MK3 = dict(MK1)
+MK3.update({
+    '1': '#6A5A62', '2': '#4A3C44', '3': '#33282F', '4': '#211A1F',      # blackened pyrosteel body
+    'a': '#D8C0B0', 'b': '#A8826E', 'c': '#5E4034',                      # heat-tinted trim
+    'r': '#FF7A1A', 'R': '#FFC266',                                      # blaze orange rivets
 })
 
 SENTRY1 = {
@@ -398,6 +404,9 @@ def main():
         if tier == 1:
             write_png(ENTITY / 'sentry_drone_glow.png', g.rows(), pal_s, 64)
 
+    c, _ = mining_sheet(3)
+    write_png(ENTITY / 'mining_drone_mk3.png', c.rows(), MK3, 64)
+
     for pal, suffix in ((COURIER1, ''), (COURIER2, '_mk2')):
         c, g = courier_sheet(1 if not suffix else 2)
         write_png(ENTITY / f'courier_drone{suffix}.png', c.rows(), pal, 64)
@@ -408,6 +417,7 @@ def main():
     write_item('courier_remote', courier_remote_icon().rows(), COURIER_ICON1)
     write_item('mining_drone', icon(mining_icon(MK1, '2', '1', '3')).rows(), MK1)
     write_item('mining_drone_mk2', icon(mining_icon(MK2, '2', '1', '3')).rows(), MK2)
+    write_item('mining_drone_mk3', icon(mining_icon(MK3, '2', '1', '3')).rows(), MK3)
     write_item('sentry_drone', icon(sentry_icon(False)).rows(), SENTRY_ICON1)
     write_item('sentry_drone_mk2', icon(sentry_icon(True)).rows(), SENTRY_ICON2)
     print('drone textures written')

@@ -25,6 +25,5 @@ public final class AutomationClient {
         event.registerBlockEntityRenderer(AutomationContent.STUMPY_BE.get(), ctx -> new AreaOutlineRenderer<>());
         event.registerBlockEntityRenderer(AutomationContent.SPROUT_BE.get(), ctx -> new AreaOutlineRenderer<>());
         event.registerBlockEntityRenderer(AutomationContent.EXCAVATOR_BE.get(), ctx -> new AreaOutlineRenderer<>());
-        event.registerBlockEntityRenderer(AutomationContent.SURVEY_RIG_BE.get(), ctx -> new AreaOutlineRenderer<>());
     }
 }

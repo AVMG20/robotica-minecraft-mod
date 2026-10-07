@@ -12,6 +12,12 @@ import net.neoforged.fml.ModContainer;
 import net.minecraft.client.RecipeBookCategories;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterRecipeBookCategoriesEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraft.client.renderer.item.ItemProperties;
+import com.arno.robotica.Robotica;
+import com.arno.robotica.power.block.AccumulatorBlock;
+import com.arno.robotica.core.energy.ItemEnergy;
+import java.util.List;
 
 /** Client-only entry point of the power module. Called from RoboticaClient. */
 public final class PowerClient {
@@ -26,6 +32,7 @@ public final class PowerClient {
         };
         modBus.addListener(PowerClient::registerRecipeCategories);
         modBus.addListener(PowerClient::registerRenderers);
+        modBus.addListener(PowerClient::itemProperties);
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC, "robotica-power-client.toml");
     }
 
@@ -35,6 +42,18 @@ public final class PowerClient {
         event.register(PowerRegistry.METAL_PRESS_MENU.get(), MetalPressScreen::new);
         event.register(PowerRegistry.SOLAR_PANEL_MENU.get(), com.arno.robotica.power.client.screen.SolarPanelScreen::new);
         event.register(PowerRegistry.ENERGY_INFO_MENU.get(), com.arno.robotica.power.client.screen.EnergyInfoScreen::new);
+    }
+
+    /** Accumulator items show their charge like the placed block: robotica:charge = lit cells / 5. */
+    private static void itemProperties(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            for (var item : List.of(PowerRegistry.ACCUMULATOR_1_ITEM, PowerRegistry.ACCUMULATOR_2_ITEM, PowerRegistry.ACCUMULATOR_3_ITEM)) {
+                ItemProperties.register(item.get(), Robotica.id("charge"),
+                        (stack, level, entity, seed) -> (float) AccumulatorBlock.chargeLevel(
+                                ItemEnergy.get(stack), ItemEnergy.capacity(stack))
+                                / AccumulatorBlock.CHARGE_LEVELS);
+            }
+        });
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

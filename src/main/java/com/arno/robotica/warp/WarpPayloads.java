@@ -2,7 +2,9 @@ package com.arno.robotica.warp;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.warp.menu.DestinationMenu;
+import com.arno.robotica.warp.item.RiftTargets;
 import com.arno.robotica.warp.menu.PadMenu;
+import com.arno.robotica.warp.menu.RiftRemoteMenu;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -64,15 +66,46 @@ public final class WarpPayloads {
         }
     }
 
+    /** Travel to a pad of the open Rift Remote list (starts the 3 second charge). */
+    public record RiftTravel(UUID pad) implements CustomPacketPayload {
+        public static final Type<RiftTravel> TYPE = new Type<>(Robotica.id("warp_rift_travel"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RiftTravel> CODEC = StreamCodec.composite(
+                UUIDUtil.STREAM_CODEC, RiftTravel::pad,
+                RiftTravel::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** Remove a pad from the open Rift Remote list. */
+    public record RiftForget(UUID pad) implements CustomPacketPayload {
+        public static final Type<RiftForget> TYPE = new Type<>(Robotica.id("warp_rift_forget"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RiftForget> CODEC = StreamCodec.composite(
+                UUIDUtil.STREAM_CODEC, RiftForget::pad,
+                RiftForget::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
         registrar.playToServer(Rename.TYPE, Rename.CODEC, WarpPayloads::onRename);
         registrar.playToServer(SetPublic.TYPE, SetPublic.CODEC, WarpPayloads::onSetPublic);
         registrar.playToServer(Travel.TYPE, Travel.CODEC, WarpPayloads::onTravel);
+        registrar.playToServer(RiftTravel.TYPE, RiftTravel.CODEC, WarpPayloads::onRiftTravel);
+        registrar.playToServer(RiftForget.TYPE, RiftForget.CODEC, WarpPayloads::onRiftForget);
     }
 
+    /** The pad of the open Pad or Destination GUI at {@code pos}, when the player may edit it. */
     private static WarpPadBlockEntity editablePad(ServerPlayer player, BlockPos pos) {
-        if (!(player.containerMenu instanceof PadMenu menu) || !menu.pos().equals(pos) || !menu.stillValid(player)) return null;
+        boolean open = player.containerMenu instanceof PadMenu menu && menu.pos().equals(pos) && menu.stillValid(player)
+                || player.containerMenu instanceof DestinationMenu dest && dest.pos().equals(pos) && dest.stillValid(player);
+        if (!open) return null;
         if (!(player.level().getBlockEntity(pos) instanceof WarpPadBlockEntity pad)) return null;
         return pad.canEdit(player) ? pad : null;
     }
@@ -102,5 +135,17 @@ public final class WarpPayloads {
         if (!(player.containerMenu instanceof DestinationMenu menu) || !menu.stillValid(player)) return;
         if (!(player.level().getBlockEntity(menu.pos()) instanceof WarpPadBlockEntity pad)) return;
         if (WarpTravel.travelFromPad(player, pad, payload.destination())) player.closeContainer();
+    }
+
+    private static void onRiftTravel(RiftTravel payload, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        if (!(player.containerMenu instanceof RiftRemoteMenu menu) || !menu.stillValid(player)) return;
+        if (WarpTravel.requestRiftTrip(player, menu.hand(), payload.pad())) player.closeContainer();
+    }
+
+    private static void onRiftForget(RiftForget payload, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        if (!(player.containerMenu instanceof RiftRemoteMenu menu) || !menu.stillValid(player)) return;
+        RiftTargets.remove(player.getItemInHand(menu.hand()), payload.pad());
     }
 }

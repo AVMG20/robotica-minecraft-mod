@@ -101,6 +101,49 @@ public class DronesGameTests {
         });
     }
 
+    /** Mk3 digs a 5x5 slice (floor at foot level, so 2 to each side and 3 above the drone's line) and rolls drops with Fortune I. */
+    @GameTest(template = "drones_arena", batch = "dronesTunnel5", timeoutTicks = 800)
+    public static void miningDroneMk3CarvesFiveByFive(GameTestHelper helper) {
+        fill(helper, 0, 8, -2, 8, Blocks.AIR);
+        fill(helper, 1, 5, -2, 4, Blocks.STONE);
+        MiningDrone drone = miner(helper);
+        drone.setTier(3);
+        helper.assertTrue(drone.radius() == 2, "Mk3 digs 5x5");
+        var fortune = helper.getLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FORTUNE);
+        helper.assertTrue(drone.tool().getEnchantmentLevel(fortune) == 1, "Mk3 mines with Fortune I");
+        drone.setTier(2);
+        helper.assertTrue(drone.radius() == 1 && drone.tool().getEnchantmentLevel(fortune) == 0, "Mk2 stays 3x3 without Fortune");
+        drone.setTier(3);
+        helper.assertTrue(drone.getEnergyCapacity() >= DronesConfig.miningBuffer(2), "Mk3 holds at least the Mk2 buffer");
+        drone.setEnergy(drone.getEnergyCapacity());
+        helper.runAfterDelay(2, () -> drone.startTunnel(Direction.EAST, 3, helper.absolutePos(p(0, 1, 1))));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(drone.lastStop() == MiningDrone.Stop.DONE, "tunnel should finish with DONE, is " + drone.lastStop());
+            for (int x = 1; x <= 3; x++) {
+                for (int y = 1; y <= 5; y++) {
+                    for (int z = -1; z <= 3; z++) helper.assertBlockNotPresent(Blocks.STONE, p(x, y, z));
+                }
+            }
+            helper.assertBlockPresent(Blocks.STONE, p(4, 3, 1));
+            helper.assertBlockPresent(Blocks.STONE, p(2, 6, 1));
+            helper.assertBlockPresent(Blocks.STONE, p(2, 3, 4));
+            helper.assertBlockPresent(Blocks.STONE, p(2, 3, -2));
+            helper.assertBlockPresent(Blocks.STONE, p(2, 0, 1));
+            helper.assertTrue(drone.count(Items.COBBLESTONE) == 75, "3 slices of 25 stone give 75 cobblestone, has " + drone.count(Items.COBBLESTONE));
+            fill(helper, 0, 8, -2, 8, Blocks.AIR);
+        });
+    }
+
+    /** Fills x {@code x0..x1}, y 0..6, z {@code z0..z1} (test coordinates). */
+    private static void fill(GameTestHelper helper, int x0, int x1, int z0, int z1, net.minecraft.world.level.block.Block block) {
+        for (int x = x0; x <= x1; x++) {
+            for (int y = 0; y <= 6; y++) {
+                for (int z = z0; z <= z1; z++) helper.setBlock(p(x, y, z), block);
+            }
+        }
+    }
+
     @GameTest(template = "drones_arena", batch = "dronesLava", timeoutTicks = 600)
     public static void lavaAheadStopsTunnel(GameTestHelper helper) {
         rock(helper);

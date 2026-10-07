@@ -1,3 +1,35 @@
 {
-  "parent": "robotica:block/accumulator_1"
+  "parent": "robotica:block/accumulator_1_0",
+  "overrides": [
+    {
+      "predicate": {
+        "robotica:charge": 0.2
+      },
+      "model": "robotica:block/accumulator_1_1"
+    },
+    {
+      "predicate": {
+        "robotica:charge": 0.4
+      },
+      "model": "robotica:block/accumulator_1_2"
+    },
+    {
+      "predicate": {
+        "robotica:charge": 0.6
+      },
+      "model": "robotica:block/accumulator_1_3"
+    },
+    {
+      "predicate": {
+        "robotica:charge": 0.8
+      },
+      "model": "robotica:block/accumulator_1_4"
+    },
+    {
+      "predicate": {
+        "robotica:charge": 1.0
+      },
+      "model": "robotica:block/accumulator_1_5"
+    }
+  ]
 }

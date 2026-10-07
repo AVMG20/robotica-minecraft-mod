@@ -9,6 +9,7 @@ import com.arno.robotica.warp.gate.PortalProjectorBlock;
 import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.gate.GateLinks;
 import com.arno.robotica.warp.gate.PortalGeometry;
+import com.arno.robotica.warp.item.RiftTargets;
 import com.arno.robotica.warp.pad.PadRecord;
 import com.arno.robotica.warp.pad.WarpCosts;
 import com.arno.robotica.warp.pad.WarpPadBlock;
@@ -25,6 +26,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -482,6 +484,73 @@ public class WarpGameTests {
         BlockState state = WarpRegistry.WARP_PAD.get().defaultBlockState();
         helper.assertTrue(!state.getValue(WarpPadBlock.RIFT), "pads start without rift");
         helper.assertTrue(state.getShape(helper.getLevel(), BlockPos.ZERO).max(Direction.Axis.Y) == 0.5, "pad is slab height");
+        helper.succeed();
+    }
+
+    // ---- Rift Remote list ----
+
+    @GameTest(template = "empty")
+    public static void riftRemoteStoresTenPadsWithoutDuplicates(GameTestHelper helper) {
+        ItemStack remote = new ItemStack(WarpRegistry.RIFT_REMOTE.get());
+        UUID owner = UUID.randomUUID();
+        List<PadRecord> recs = new java.util.ArrayList<>();
+        for (int i = 0; i < WarpComponents.MAX_RIFT_PADS + 1; i++) recs.add(pad("Pad " + i, owner, "Owner", false));
+        for (int i = 0; i < WarpComponents.MAX_RIFT_PADS; i++) {
+            helper.assertTrue(RiftTargets.add(remote, recs.get(i)) == RiftTargets.AddResult.ADDED, "pad " + i + " is added");
+        }
+        helper.assertTrue(RiftTargets.add(remote, recs.get(3)) == RiftTargets.AddResult.ALREADY_STORED, "a stored pad is not added twice");
+        helper.assertTrue(RiftTargets.list(remote).size() == WarpComponents.MAX_RIFT_PADS, "ten pads stored");
+        PadRecord extra = recs.get(WarpComponents.MAX_RIFT_PADS);
+        helper.assertTrue(RiftTargets.add(remote, extra) == RiftTargets.AddResult.FULL, "the eleventh pad does not fit");
+        helper.assertTrue(RiftTargets.find(RiftTargets.list(remote), extra.id()) == null, "a full remote stays unchanged");
+        helper.assertTrue(RiftTargets.remove(remote, recs.get(0).id()), "a pad can be forgotten");
+        helper.assertTrue(!RiftTargets.remove(remote, recs.get(0).id()), "forgetting twice is harmless");
+        helper.assertTrue(RiftTargets.add(remote, extra) == RiftTargets.AddResult.ADDED, "after forgetting one there is room again");
+        WarpComponents.BoundPad stored = RiftTargets.find(RiftTargets.list(remote), extra.id());
+        helper.assertTrue(stored != null && stored.pos().isPresent() && stored.pos().get().pos().equals(extra.pos()), "position is stored");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void riftRemoteMigratesTheOldSingleBinding(GameTestHelper helper) {
+        ItemStack remote = new ItemStack(WarpRegistry.RIFT_REMOTE.get());
+        PadRecord old = pad("Old", UUID.randomUUID(), "Owner", false);
+        remote.set(WarpComponents.BOUND_PAD.get(), new WarpComponents.BoundPad(old.id(), old.name()));
+        helper.assertTrue(RiftTargets.list(remote).size() == 1, "the old binding shows in the list before migration");
+        RiftTargets.migrate(remote);
+        helper.assertTrue(!remote.has(WarpComponents.BOUND_PAD.get()), "the old component is removed");
+        helper.assertTrue(RiftTargets.list(remote).size() == 1 && RiftTargets.list(remote).get(0).id().equals(old.id()), "the old pad moved into the list");
+        helper.assertTrue(RiftTargets.add(remote, old) == RiftTargets.AddResult.ALREADY_STORED, "the migrated pad is known");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void renamedPadShowsItsNewNameInTheRemote(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(1, 1, 1);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        helper.setBlock(pos, WarpRegistry.WARP_PAD.get().defaultBlockState());
+        WarpPadBlockEntity be = (WarpPadBlockEntity) helper.getBlockEntity(pos);
+        be.initPlacement(player);
+        WarpPads pads = WarpPads.get(helper.getLevel().getServer());
+        PadRecord rec = be.ensureRegistered();
+        ItemStack remote = new ItemStack(WarpRegistry.RIFT_REMOTE.get());
+        RiftTargets.add(remote, rec);
+
+        helper.assertTrue(be.canEdit(player), "the owner may rename the pad");
+        helper.assertTrue(!be.canEdit(helper.makeMockPlayer(GameType.SURVIVAL)), "somebody else may not");
+        Optional<String> name = WarpTravel.sanitizeName("  Base  ");
+        helper.assertTrue(name.isPresent() && name.get().equals("Base"), "names are trimmed");
+        helper.assertTrue(WarpTravel.sanitizeName("x".repeat(WarpPadBlockEntity.MAX_NAME + 1)).isEmpty(), "too long names are refused");
+        be.rename(name.get());
+
+        WarpComponents.BoundPad stored = RiftTargets.list(remote).get(0);
+        helper.assertTrue(stored.name().equals(rec.name()), "the snapshot still holds the old name");
+        helper.assertTrue(RiftTargets.currentName(pads, stored).equals("Base"), "the list shows the current name");
+        RiftTargets.refresh(remote, pads);
+        helper.assertTrue(RiftTargets.list(remote).get(0).name().equals("Base"), "refresh updates the snapshot");
+
+        helper.setBlock(pos, Blocks.AIR);
+        helper.assertTrue(RiftTargets.currentName(pads, stored).equals(rec.name()), "a broken pad falls back to the stored name");
         helper.succeed();
     }
 }

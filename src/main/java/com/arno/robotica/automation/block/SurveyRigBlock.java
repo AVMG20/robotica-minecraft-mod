@@ -2,7 +2,6 @@ package com.arno.robotica.automation.block;
 
 import com.arno.robotica.automation.AutomationContent;
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
-import com.arno.robotica.automation.entity.SurveyLedgers;
 import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.item.CoreItems;
@@ -10,18 +9,14 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -36,7 +31,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-/** Survey Rig: mines its chunk's ore ledger without digging. Owner, team and operators only. */
+/** Survey Rig: turns FE into random ores without digging. Owner, team and operators only. */
 public class SurveyRigBlock extends AreaWorkerBlock {
     public static final MapCodec<SurveyRigBlock> CODEC = simpleCodec(SurveyRigBlock::new);
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
@@ -76,22 +71,6 @@ public class SurveyRigBlock extends AreaWorkerBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new SurveyRigBlockEntity(pos, state);
-    }
-
-    /** Tells the placer at once when this chunk is already surveyed or another rig works it. */
-    @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        super.setPlacedBy(level, pos, state, placer, stack);
-        if (!(level instanceof ServerLevel sl) || !(placer instanceof ServerPlayer player)) return;
-        if (!(level.getBlockEntity(pos) instanceof SurveyRigBlockEntity rig)) return;
-        SurveyLedgers data = SurveyLedgers.get(sl);
-        String key = null;
-        if (data.isSurveyed(new ChunkPos(pos))) key = "message.robotica.survey_surveyed";
-        else if (rig.chunkTakenByOther(sl, data.get(new ChunkPos(pos)))) key = "message.robotica.survey_busy";
-        if (key != null) {
-            player.displayClientMessage(Component.translatable(key), true);
-            CoreSounds.play(level, pos, CoreSounds.ROBOT_ERROR, SoundSource.BLOCKS, 0.8F, 1.0F);
-        }
     }
 
     @Override

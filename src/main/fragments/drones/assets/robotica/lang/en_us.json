@@ -1,6 +1,7 @@
 {
   "item.robotica.mining_drone": "Mining Drone",
   "item.robotica.mining_drone_mk2": "Mining Drone Mk2",
+  "item.robotica.mining_drone_mk3": "Mining Drone Mk3",
   "item.robotica.sentry_drone": "Sentry Drone",
   "item.robotica.sentry_drone_mk2": "Sentry Drone Mk2",
   "item.robotica.courier_drone": "Courier Drone",
@@ -11,17 +12,15 @@
   "entity.robotica.courier_drone": "Courier Drone",
   "death.attack.robotica.energy_bolt": "%1$s was shot by a sentry drone",
   "death.attack.robotica.energy_bolt.player": "%1$s was shot by %2$s's sentry drone",
-
-  "tooltip.robotica.drone.mining": "Right-click a block to deploy. Digs 3x3 tunnels, lights them and comes back.",
-  "tooltip.robotica.drone.sentry": "Right-click a block to deploy. Shoots hostile mobs, guards or follows you.",
-  "tooltip.robotica.drone.courier": "Right-click a block to deploy. Carries items along linked routes.",
-  "tooltip.robotica.drone.pickup": "Sneak-right-click the drone to pick it up again",
+  "tooltip.robotica.drone.mining": "Digs 3x3 tunnels and brings the loot back",
+  "tooltip.robotica.drone.mining_mk3": "Digs 5x5 tunnels with Fortune I",
+  "tooltip.robotica.drone.sentry": "Shoots hostile mobs",
+  "tooltip.robotica.drone.courier": "Carries items along linked routes",
   "tooltip.robotica.drone.stored": "Carrying %s items",
-  "tooltip.robotica.drone.courier_link": "Sneak-right-click a source inventory, then a target inventory, to link a route",
-  "tooltip.robotica.courier_remote": "Right-click a Courier Drone to bind it, then sneak-right-click a source and a target inventory",
+  "tooltip.robotica.drone.courier_link": "Sneak-click a source, then a target, to link a route",
+  "tooltip.robotica.courier_remote": "Bind it to a Courier Drone, then sneak-click a source and a target",
   "tooltip.robotica.courier_remote.bound": "Bound to a drone",
   "tooltip.robotica.courier_remote.pending": "Source set, now click the target",
-
   "message.robotica.drone.say": "%s: %s",
   "message.robotica.drone.not_yours": "This drone belongs to %s",
   "message.robotica.drone.repaired": "Repaired: %s / %s",
@@ -53,7 +52,6 @@
   "message.robotica.courier.bound": "Remote bound to the drone",
   "message.robotica.courier.no_drone": "Bind the remote to a Courier Drone first (right-click it)",
   "message.robotica.courier.far": "The bound drone is not loaded or too far away",
-
   "gui.robotica.drone.tunnel": "Dig a tunnel in the direction the drill points",
   "gui.robotica.drone.follow": "Follow me",
   "gui.robotica.drone.stay": "Stay here",
@@ -92,10 +90,8 @@
   "gui.robotica.courier.state.deliver": "Delivering",
   "gui.robotica.courier.state.back": "Returning cargo",
   "gui.robotica.courier.state.low": "Energy low",
-
   "key.categories.robotica.drones": "Robotica Drones",
   "key.robotica.drones.command": "Drones: dig where I look / return (sneak: call all back)",
-
   "robotica.configuration.mining_drone": "Mining Drone",
   "robotica.configuration.miningFePerBlock": "FE per mined block",
   "robotica.configuration.miningDigTicks": "Ticks per mined block",
@@ -104,6 +100,7 @@
   "robotica.configuration.torchSpacing": "Slices between torches",
   "robotica.configuration.miningBuffer": "Energy buffer (FE)",
   "robotica.configuration.miningBufferMk2": "Mk2 energy buffer (FE)",
+  "robotica.configuration.miningBufferMk3": "Mk3 energy buffer (FE)",
   "robotica.configuration.miningHealth": "Hit points",
   "robotica.configuration.sentry_drone": "Sentry Drone",
   "robotica.configuration.sentryDamage": "Bolt damage",
@@ -122,6 +119,7 @@
   "robotica.configuration.both": "All drones",
   "robotica.configuration.lowEnergyPercent": "Low energy threshold (%)",
   "robotica.configuration.mk2Speed": "Mk2 speed multiplier",
+  "robotica.configuration.mk3Speed": "Mk3 dig speed multiplier",
   "robotica.configuration.mk2Damage": "Mk2 damage multiplier",
   "robotica.configuration.repairAmount": "HP per iron ingot",
   "robotica.configuration.commandDistance": "Command key distance"
