@@ -1,6 +1,7 @@
 package com.arno.robotica.codex.client;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.codex.CodexLayout;
 import com.arno.robotica.codex.CodexModule;
 import com.arno.robotica.codex.LabActionPayload;
 import com.google.gson.JsonArray;
@@ -38,13 +39,14 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Two-page technical manual. Left page: chapter list. Right page: chapter text, item icons
- * (click one to see its recipe; click recipe ingredients to follow the ladder down).
+ * Two-page technical manual. Left page: chapter list (paged with arrows when it is longer than the page). Right page:
+ * chapter text, item icons (click one to see its recipe; click recipe ingredients to follow the ladder down).
  * Operators also get the Creative Lab: an item grid (click = 1, shift-click = stack) and test actions.
  * Content: assets/robotica/codex/chapters.json (resource pack overridable).
+ * Geometry lives in {@link CodexLayout}; the whole book is scaled down when the GUI scale leaves too little room.
  */
 public class CodexScreen extends Screen {
-    private static final int W = 320, H = 210, PAGE_W = 140;
+    private static final int W = CodexLayout.W, H = CodexLayout.H, PAGE_W = CodexLayout.PAGE_W;
     private static final int COVER = 0xFF23292B, TRIM = 0xFFC87533, PAPER = 0xFFE9EDEA, GRID = 0xFFDCE3E0;
     private static final int INK = 0xFF1E2A2A, HEAD = 0xFFA4521C, MUTED = 0xFF5D6B67, LINK = 0xFF0F7488, SLOT = 0xFFC9D2CE;
 
@@ -61,10 +63,12 @@ public class CodexScreen extends Screen {
     private final List<Step> steps = new ArrayList<>();
     /** Clickable icons drawn on the guide page this frame: x, y and the stack. */
     private final List<Object[]> guideHits = new ArrayList<>();
-    private static final int GUIDE_LIST_LINES = 14;
+    private static final int GUIDE_LIST_LINES = CodexLayout.checklistLines();
 
     private final List<Chapter> chapters = new ArrayList<>();
-    private int chapter = 0, page = 0, subPage = 0, labScroll = 0;
+    private int chapter = 0, page = 0, subPage = 0, labScroll = 0, listPage = 0;
+    /** Book scale (1 unless the screen is smaller than the book); layout and mouse work in unscaled book pixels. */
+    private float scale = 1F;
     private boolean lab = false;
     private ItemStack recipeItem = ItemStack.EMPTY;
     private final Deque<ItemStack> recipeHistory = new ArrayDeque<>();
@@ -174,12 +178,23 @@ public class CodexScreen extends Screen {
 
     @Override
     protected void init() {
-        left = (width - W) / 2;
-        top = (height - H) / 2;
+        scale = CodexLayout.fitScale(width, height);
+        int vw = (int) (width / scale), vh = (int) (height / scale);
+        left = (vw - W) / 2;
+        top = (vh - H) / 2;
         wrapCache.clear();
         labItemList = buildLabItems();
         chapter = Math.min(chapter, Math.max(0, chapters.size() - 1));
         rebuild();
+    }
+
+    private CodexLayout.ListLayout listLayout() {
+        return CodexLayout.list(chapters.size() + (labAllowed() ? 1 : 0));
+    }
+
+    /** Shows the list page that holds the open chapter. */
+    private void followChapter() {
+        listPage = chapter / listLayout().perPage();
     }
 
     private void rebuild() {
@@ -206,14 +221,28 @@ public class CodexScreen extends Screen {
             }, BookButton.Kind.LABEL));
             return;
         }
-        int ny = top + H - 24;
-        BookButton prev = addRenderableWidget(new BookButton(rx, ny, 22, 16, Component.literal("Previous page"), b -> turn(-1), BookButton.Kind.PREV));
-        BookButton next = addRenderableWidget(new BookButton(rx + PAGE_W - 22, ny, 22, 16, Component.literal("Next page"), b -> turn(1), BookButton.Kind.NEXT));
+        int ny = top + CodexLayout.NAV_Y, nh = CodexLayout.NAV_H;
+        CodexLayout.ListLayout list = listLayout();
+        listPage = Math.max(0, Math.min(listPage, list.pages() - 1));
+        if (list.paged()) {
+            int lx = left + CodexLayout.MARGIN - 2;
+            BookButton lp = addRenderableWidget(new BookButton(lx, ny, 22, nh, Component.literal("Previous chapters"), b -> turnList(-1), BookButton.Kind.PREV));
+            BookButton ln = addRenderableWidget(new BookButton(lx + PAGE_W - 22, ny, 22, nh, Component.literal("More chapters"), b -> turnList(1), BookButton.Kind.NEXT));
+            lp.active = listPage > 0;
+            ln.active = listPage + 1 < list.pages();
+        }
+        BookButton prev = addRenderableWidget(new BookButton(rx, ny, 22, nh, Component.literal("Previous page"), b -> turn(-1), BookButton.Kind.PREV));
+        BookButton next = addRenderableWidget(new BookButton(rx + PAGE_W - 22, ny, 22, nh, Component.literal("Next page"), b -> turn(1), BookButton.Kind.NEXT));
         prev.active = !chapters.isEmpty() && (subPage > 0 || page > 0 || chapter > 0);
         next.active = !chapters.isEmpty() && (subPage + 1 < subPageCount() || page + 1 < chapters.get(chapter).pages().size() || chapter + 1 < chapters.size());
         if (!recipeItem.isEmpty()) {
-            addRenderableWidget(new BookButton(rx + PAGE_W / 2 - 22, ny, 44, 16, Component.literal("Back"), b -> back(), BookButton.Kind.LABEL));
+            addRenderableWidget(new BookButton(rx + PAGE_W / 2 - 22, ny, 44, nh, Component.literal("Back"), b -> back(), BookButton.Kind.LABEL));
         }
+    }
+
+    private void turnList(int dir) {
+        listPage += dir;
+        rebuild();
     }
 
     private void sendLab(String action, String arg, int count) {
@@ -233,8 +262,14 @@ public class CodexScreen extends Screen {
         } else {
             if (subPage > 0) subPage--;
             else if (page > 0) { page--; subPage = 0; }
-            else if (chapter > 0) { chapter--; page = chapters.get(chapter).pages().size() - 1; subPage = 0; }
+            else if (chapter > 0) {
+                chapter--;
+                page = chapters.get(chapter).pages().size() - 1;
+                subPage = 0;
+                subPage = subPageCount() - 1;
+            }
         }
+        followChapter();
         rebuild();
     }
 
@@ -243,16 +278,21 @@ public class CodexScreen extends Screen {
         rebuild();
     }
 
-    /** Dev hooks for the screenshot showcase. */
-    public void devSelect(int chapterIndex) {
-        if (chapterIndex < 0 || chapterIndex >= chapters.size()) return;
+    private void openChapter(int index) {
         lab = false;
-        chapter = chapterIndex;
+        chapter = index;
         page = 0;
         subPage = 0;
         recipeItem = ItemStack.EMPTY;
         recipeHistory.clear();
+        followChapter();
         rebuild();
+    }
+
+    /** Dev hooks for the screenshot showcase. */
+    public void devSelect(int chapterIndex) {
+        if (chapterIndex < 0 || chapterIndex >= chapters.size()) return;
+        openChapter(chapterIndex);
     }
 
     public void devShowRecipe(ItemStack stack) {
@@ -273,21 +313,34 @@ public class CodexScreen extends Screen {
 
     // ---------------------------------------------------------------- rendering
 
+    private int bookX(double mx) {
+        return (int) Math.floor(mx / scale);
+    }
+
+    private int bookY(double my) {
+        return (int) Math.floor(my / scale);
+    }
+
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         long now = Util.getMillis();
         frameTick = (int) (now / 1000);
         frameRecipeSlot = now / 3000;
-        super.render(g, mx, my, pt); // draws the book (renderBackground) first, then the buttons on top of it
-        ItemStack hovered = lab ? renderLab(g, mx, my) : renderManual(g, mx, my);
-        if (!lab) renderChapterList(g, mx, my);
+        if (!chapters.isEmpty() && !lab && recipeItem.isEmpty()) subPage = Math.min(subPage, subPageCount() - 1);
+        renderTransparentBackground(g);
+        int bx = bookX(mx), by = bookY(my);
+        g.pose().pushPose();
+        g.pose().scale(scale, scale, 1F);
+        super.render(g, bx, by, pt); // draws the book (renderBackground) first, then the buttons on top of it
+        ItemStack hovered = lab ? renderLab(g, bx, by) : renderManual(g, bx, by);
+        if (!lab) renderChapterList(g, bx, by);
+        g.pose().popPose();
         if (!hovered.isEmpty()) g.renderTooltip(font, hovered, mx, my);
     }
 
     @Override
     public void renderBackground(GuiGraphics g, int mx, int my, float pt) {
-        renderTransparentBackground(g);
-        drawBook(g);
+        drawBook(g); // the dimmed screen behind it is drawn unscaled in render()
     }
 
     private void drawBook(GuiGraphics g) {
@@ -311,40 +364,46 @@ public class CodexScreen extends Screen {
     }
 
     private void renderChapterList(GuiGraphics g, int mx, int my) {
-        int x = left + 10, y = top + 10;
-        g.drawString(font, Component.literal("ROBOTICA CODEX").withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
-        y += 16;
-        int row = rowH();
+        int x = left + CodexLayout.MARGIN;
+        g.drawString(font, Component.literal("ROBOTICA CODEX").withStyle(ChatFormatting.BOLD), x, top + CodexLayout.TITLE_Y, HEAD, false);
+        CodexLayout.ListLayout list = listLayout();
+        int row = list.rowH();
         float iconScale = row / 16F;
-        for (int i = 0; i < chapters.size(); i++) {
-            Chapter c = chapters.get(i);
-            boolean active = !lab && i == chapter && recipeItem.isEmpty();
+        int first = listPage * list.perPage(), rows = chapters.size() + (labAllowed() ? 1 : 0);
+        for (int i = first; i < Math.min(rows, first + list.perPage()); i++) {
+            int y = top + CodexLayout.LIST_TOP + (i - first) * row;
             boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + row;
+            if (i >= chapters.size()) {
+                if (hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + row - 1, GRID);
+                MachineScreenFit.draw(g, font, Component.literal("Creative Lab (OP)"), x + row + 4, y + (row - 8) / 2, PAGE_W - row - 8, 0xFFB8860B);
+                continue;
+            }
+            Chapter c = chapters.get(i);
+            boolean active = i == chapter && recipeItem.isEmpty();
             if (active || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + row - 1, active ? SLOT : GRID);
             g.pose().pushPose();
             g.pose().translate(x, y - 1, 0);
             g.pose().scale(iconScale, iconScale, 1F);
             g.renderItem(c.icon(), 0, 0);
             g.pose().popPose();
-            g.drawString(font, c.title(), x + row + 4, y + (row - 8) / 2, active ? HEAD : INK, false);
-            y += row;
+            MachineScreenFit.draw(g, font, Component.literal(c.title()), x + row + 4, y + (row - 8) / 2, PAGE_W - row - 8, active ? HEAD : INK);
         }
-        if (labAllowed()) {
-            y += 4;
-            boolean hover = mx >= x && mx < x + PAGE_W && my >= y && my < y + row;
-            if (lab || hover) g.fill(x - 2, y - 1, x + PAGE_W - 4, y + row - 1, lab ? SLOT : GRID);
-            g.drawString(font, Component.literal("Creative Lab (OP)"), x + row + 4, y + (row - 8) / 2, 0xFFB8860B, false);
+        if (list.paged()) {
+            g.drawCenteredString(font, Component.literal((listPage + 1) + "/" + list.pages()), x - 2 + PAGE_W / 2, top + H - 20, MUTED);
         }
     }
 
-    /** Row height of the chapter list: 16 when it fits, smaller (with smaller icons) when there are many chapters. */
-    private int rowH() {
+    /** Index of the list row under the mouse (chapters, then the Creative Lab), or -1. */
+    private int listRowAt(double mx, double my) {
+        CodexLayout.ListLayout list = listLayout();
+        int x = left + CodexLayout.MARGIN;
+        if (mx < x || mx >= x + PAGE_W) return -1;
+        double rel = my - (top + CodexLayout.LIST_TOP);
+        if (rel < 0) return -1;
+        int r = (int) (rel / list.rowH());
+        int index = listPage * list.perPage() + r;
         int rows = chapters.size() + (labAllowed() ? 1 : 0);
-        return Math.max(11, Math.min(16, (H - 26 - 12) / Math.max(1, rows)));
-    }
-
-    private int listY(int index) {
-        return top + 26 + index * rowH();
+        return r < list.perPage() && index < rows ? index : -1;
     }
 
     private List<FormattedCharSequence> wrappedText() {
@@ -354,26 +413,24 @@ public class CodexScreen extends Screen {
             List<FormattedCharSequence> lines = new ArrayList<>();
             for (String para : p.text().split("\n")) {
                 if (para.isBlank()) { lines.add(FormattedCharSequence.EMPTY); continue; }
-                lines.addAll(font.split(FormattedText.of(para), PAGE_W - 4));
+                lines.addAll(font.split(FormattedText.of(para), CodexLayout.TEXT_W));
             }
             return lines;
         });
     }
 
     private int linesPerSubPage() {
-        Page p = chapters.get(chapter).pages().get(page);
-        int textTop = 24 + (p.items().isEmpty() ? 0 : 22);
-        return (H - textTop - 30) / 10;
+        return CodexLayout.linesPerSubPage(chapters.get(chapter).pages().get(page).items().size());
     }
 
     private int subPageCount() {
         if (chapters.isEmpty()) return 1;
-        if (chapters.get(chapter).guide()) return 1 + Math.max(1, (steps.size() + GUIDE_LIST_LINES - 1) / GUIDE_LIST_LINES);
-        return Math.max(1, (wrappedText().size() + linesPerSubPage() - 1) / linesPerSubPage());
+        if (chapters.get(chapter).guide()) return guidePages().size() + Math.max(1, (steps.size() + GUIDE_LIST_LINES - 1) / GUIDE_LIST_LINES);
+        return CodexLayout.subPages(wrappedText().size(), chapters.get(chapter).pages().get(page).items().size());
     }
 
     private ItemStack renderManual(GuiGraphics g, int mx, int my) {
-        int x = left + W / 2 + 10, y = top + 10;
+        int x = left + W / 2 + CodexLayout.MARGIN, y = top + CodexLayout.TITLE_Y;
         if (chapters.isEmpty()) {
             g.drawString(font, "Codex content missing.", x, y, INK, false);
             return ItemStack.EMPTY;
@@ -382,84 +439,103 @@ public class CodexScreen extends Screen {
         if (chapters.get(chapter).guide()) return renderGuide(g, x, y, mx, my);
         Page p = chapters.get(chapter).pages().get(page);
         ItemStack hovered = ItemStack.EMPTY;
-        g.drawString(font, Component.literal(p.title().isEmpty() ? chapters.get(chapter).title() : p.title()).withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
-        y += 14;
-        if (!p.items().isEmpty()) {
-            int ix = x;
-            for (ItemStack s : p.items()) {
-                if (ix + 18 > x + PAGE_W) break;
-                g.fill(ix, y, ix + 18, y + 18, SLOT);
-                g.renderItem(s, ix + 1, y + 1);
-                if (mx >= ix && mx < ix + 18 && my >= y && my < y + 18) hovered = s;
-                ix += 20;
-            }
-            y += 22;
+        String title = p.title().isEmpty() ? chapters.get(chapter).title() : p.title();
+        MachineScreenFit.draw(g, font, Component.literal(title).withStyle(ChatFormatting.BOLD), x, y, PAGE_W, HEAD);
+        for (int i = 0; i < Math.min(p.items().size(), CodexLayout.MAX_ITEMS); i++) {
+            ItemStack s = p.items().get(i);
+            int ix = x + CodexLayout.itemX(i), iy = top + CodexLayout.itemY(i);
+            g.fill(ix, iy, ix + 18, iy + 18, SLOT);
+            g.renderItem(s, ix + 1, iy + 1);
+            if (mx >= ix && mx < ix + 18 && my >= iy && my < iy + 18) hovered = s;
         }
+        y = top + CodexLayout.textTop(p.items().size());
         List<FormattedCharSequence> lines = wrappedText();
         int per = linesPerSubPage();
         for (int i = subPage * per; i < Math.min(lines.size(), (subPage + 1) * per); i++) {
             g.drawString(font, lines.get(i), x, y, INK, false);
-            y += 10;
+            y += CodexLayout.LINE_H;
         }
         String counter = (page + 1) + "/" + chapters.get(chapter).pages().size() + (subPageCount() > 1 ? " (" + (subPage + 1) + "/" + subPageCount() + ")" : "");
         g.drawCenteredString(font, Component.literal(counter).withStyle(s -> s.withColor(MUTED)), x + PAGE_W / 2, top + H - 20, MUTED);
         if (!hovered.isEmpty()) {
-            g.drawString(font, Component.literal("Click an item to see its recipe"), x, top + H - 36, MUTED, false);
+            MachineScreenFit.draw(g, font, Component.literal("Click an item to see its recipe"), x, top + CodexLayout.HINT_Y, PAGE_W, MUTED);
         }
         return hovered;
     }
 
     // ---------------------------------------------------------------- guide
 
-    /** Sub-page 0: the steps you can do now, with icon, title and description. Then a checklist of every step. */
+    /** The steps you can do now, split into pages that fit under the heading. Always at least one (maybe empty) page. */
+    private List<List<Step>> guidePages() {
+        List<Step> next = nextSteps();
+        if (next.isEmpty()) return List.of(List.of());
+        int[] heights = new int[next.size()];
+        for (int i = 0; i < next.size(); i++) {
+            Step step = next.get(i);
+            heights[i] = CodexLayout.stepHeight(stepTitle(step).size(), stepDescription(step).size());
+        }
+        List<List<Step>> pages = new ArrayList<>();
+        for (int[] range : CodexLayout.paginate(heights, CodexLayout.guideSpace())) pages.add(next.subList(range[0], range[1]));
+        return pages;
+    }
+
+    private List<FormattedCharSequence> stepTitle(Step step) {
+        return font.split(Component.translatable(step.key() + ".title").withStyle(ChatFormatting.BOLD), CodexLayout.GUIDE_TITLE_W);
+    }
+
+    private List<FormattedCharSequence> stepDescription(Step step) {
+        return font.split(Component.translatable(step.key() + ".description"), CodexLayout.TEXT_W);
+    }
+
+    /** First the steps you can do now (icon, title, description), then a checklist of every step. */
     private ItemStack renderGuide(GuiGraphics g, int x, int y, int mx, int my) {
         guideHits.clear();
         ItemStack hovered = ItemStack.EMPTY;
         int done = 0;
         for (Step step : steps) if (stepDone(step)) done++;
-        if (subPage == 0) {
+        List<List<Step>> pages = guidePages();
+        int bottom = top + CodexLayout.CONTENT_BOTTOM;
+        if (subPage < pages.size()) {
             g.drawString(font, Component.translatable("codex.robotica.guide.title").withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
-            g.drawString(font, Component.translatable("codex.robotica.guide.progress", done, steps.size()), x, y + 11, MUTED, false);
-            y += 26;
-            List<Step> next = nextSteps();
-            int bottom = top + H - 30;
+            MachineScreenFit.draw(g, font, Component.translatable("codex.robotica.guide.progress", done, steps.size()), x, y + 11, PAGE_W, MUTED);
+            y = top + CodexLayout.GUIDE_TOP;
+            List<Step> shown = pages.get(subPage);
             if (steps.isEmpty()) {
                 drawWrapped(g, Component.translatable("codex.robotica.guide.missing"), x, y, INK);
-            } else if (next.isEmpty()) {
+            } else if (shown.isEmpty()) {
                 drawWrapped(g, Component.translatable("codex.robotica.guide.all_done"), x, y, INK);
             }
-            for (Step step : next) {
-                List<FormattedCharSequence> title = font.split(Component.translatable(step.key() + ".title").withStyle(ChatFormatting.BOLD), PAGE_W - 24);
-                List<FormattedCharSequence> desc = font.split(Component.translatable(step.key() + ".description"), PAGE_W - 4);
-                int needed = Math.max(18, title.size() * 10) + desc.size() * 10 + 6;
-                if (y + needed > bottom) break;
+            for (Step step : shown) {
+                List<FormattedCharSequence> title = stepTitle(step);
                 g.fill(x, y, x + 18, y + 18, SLOT);
                 g.renderItem(step.icon(), x + 1, y + 1);
                 guideHits.add(new Object[]{x, y, step.icon()});
                 if (mx >= x && mx < x + 18 && my >= y && my < y + 18) hovered = step.icon();
                 int ty = y + (title.size() == 1 ? 5 : 0);
                 for (FormattedCharSequence line : title) {
+                    if (ty + 9 > bottom) break;
                     g.drawString(font, line, x + 22, ty, HEAD, false);
-                    ty += 10;
+                    ty += CodexLayout.LINE_H;
                 }
-                y += Math.max(20, title.size() * 10 + 2);
-                for (FormattedCharSequence line : desc) {
+                y += Math.max(20, title.size() * CodexLayout.LINE_H + 2);
+                for (FormattedCharSequence line : stepDescription(step)) {
+                    if (y + 9 > bottom) break; // a step taller than a page (long translation) is clipped, never drawn off the page
                     g.drawString(font, line, x, y, INK, false);
-                    y += 10;
+                    y += CodexLayout.LINE_H;
                 }
                 y += 6;
             }
-            if (!next.isEmpty()) g.drawString(font, Component.translatable("codex.robotica.guide.click"), x, top + H - 36, MUTED, false);
+            if (!shown.isEmpty()) MachineScreenFit.draw(g, font, Component.translatable("codex.robotica.guide.click"), x, top + CodexLayout.HINT_Y, PAGE_W, MUTED);
         } else {
             g.drawString(font, Component.translatable("codex.robotica.guide.checklist").withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
             y += 14;
-            int from = (subPage - 1) * GUIDE_LIST_LINES;
+            int from = (subPage - pages.size()) * GUIDE_LIST_LINES;
             for (int i = from; i < Math.min(steps.size(), from + GUIDE_LIST_LINES); i++) {
                 Step step = steps.get(i);
                 boolean ok = stepDone(step);
-                Component line = Component.literal(ok ? "\u2714 " : "\u2022 ").append(Component.translatable(step.key() + ".title"));
-                MachineScreenFit.draw(g, font, line, x, y, PAGE_W - 4, ok ? 0xFF2E7D32 : INK);
-                y += 10;
+                Component line = Component.literal(ok ? "✔ " : "• ").append(Component.translatable(step.key() + ".title"));
+                MachineScreenFit.draw(g, font, line, x, y, CodexLayout.TEXT_W, ok ? 0xFF2E7D32 : INK);
+                y += CodexLayout.LINE_H;
             }
         }
         String counter = (subPage + 1) + "/" + subPageCount();
@@ -468,9 +544,10 @@ public class CodexScreen extends Screen {
     }
 
     private void drawWrapped(GuiGraphics g, Component text, int x, int y, int color) {
-        for (FormattedCharSequence line : font.split(text, PAGE_W - 4)) {
+        for (FormattedCharSequence line : font.split(text, CodexLayout.TEXT_W)) {
+            if (y + 9 > top + CodexLayout.CONTENT_BOTTOM) return;
             g.drawString(font, line, x, y, color, false);
-            y += 10;
+            y += CodexLayout.LINE_H;
         }
     }
 
@@ -514,16 +591,18 @@ public class CodexScreen extends Screen {
         return recipe.getIngredients();
     }
 
+    /** Ingredient slots drawn (and clickable): never more rows than fit above the hint and the arrows. */
+    private static int shownSlots(int ingredients, int gw) {
+        return Math.min(Math.max(ingredients, 1), CodexLayout.recipeMaxRows() * gw);
+    }
+
     private ItemStack renderRecipe(GuiGraphics g, int x, int y, int mx, int my) {
         ItemStack hovered = ItemStack.EMPTY;
-        g.drawString(font, recipeItem.getHoverName().copy().withStyle(ChatFormatting.BOLD), x, y, HEAD, false);
+        MachineScreenFit.draw(g, font, recipeItem.getHoverName().copy().withStyle(ChatFormatting.BOLD), x, y, PAGE_W, HEAD);
         y += 16;
         List<RecipeHolder<?>> recipes = recipesFor(recipeItem);
         if (recipes.isEmpty()) {
-            for (FormattedCharSequence line : font.split(FormattedText.of("No recipe. This item drops from a boss or is found in the world."), PAGE_W - 4)) {
-                g.drawString(font, line, x, y, INK, false);
-                y += 10;
-            }
+            drawWrapped(g, Component.literal("No recipe. This item drops from a boss or is found in the world."), x, y, INK);
             return ItemStack.EMPTY;
         }
         int index = (int) (frameRecipeSlot % recipes.size());
@@ -533,11 +612,12 @@ public class CodexScreen extends Screen {
         int gw = gridWidth(recipe);
         String kind = recipe instanceof SmithingRecipe ? "Smithing table" :
                 BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()) == null ? "" : BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType()).getPath().replace('_', ' ');
-        g.drawString(font, Component.literal(kind + (recipes.size() > 1 ? "  (" + (index + 1) + "/" + recipes.size() + ")" : "")), x, y, MUTED, false);
+        MachineScreenFit.draw(g, font, Component.literal(kind + (recipes.size() > 1 ? "  (" + (index + 1) + "/" + recipes.size() + ")" : "")), x, y, PAGE_W, MUTED);
         y += 12;
         int gx = x + 4, gy = y;
-        for (int i = 0; i < Math.max(ingredients.size(), 1); i++) {
-            int sx = gx + (i % gw) * 19, sy = gy + (i / gw) * 19;
+        int slots = shownSlots(ingredients.size(), gw);
+        for (int i = 0; i < slots; i++) {
+            int sx = gx + (i % gw) * CodexLayout.RECIPE_STEP, sy = gy + (i / gw) * CodexLayout.RECIPE_STEP;
             g.fill(sx, sy, sx + 18, sy + 18, SLOT);
             if (i >= ingredients.size()) continue;
             ItemStack[] options = ingredients.get(i).getItems();
@@ -546,17 +626,17 @@ public class CodexScreen extends Screen {
             g.renderItem(s, sx + 1, sy + 1);
             if (mx >= sx && mx < sx + 18 && my >= sy && my < sy + 18) hovered = s;
         }
-        int rows = (ingredients.size() + gw - 1) / gw;
-        int ax = gx + gw * 19 + 6, ay = gy + Math.max(0, rows - 1) * 19 / 2 + 5;
+        int rows = (slots + gw - 1) / gw;
+        int ax = gx + gw * CodexLayout.RECIPE_STEP + 6, ay = gy + Math.max(0, rows - 1) * CodexLayout.RECIPE_STEP / 2 + 5;
         g.drawString(font, "->", ax, ay, INK, false);
         ItemStack result = recipe.getResultItem(minecraft.level.registryAccess());
         g.fill(ax + 18, ay - 5, ax + 36, ay + 13, SLOT);
         g.renderItem(result, ax + 19, ay - 4);
         g.renderItemDecorations(font, result, ax + 19, ay - 4);
-        int ty = gy + Math.max(rows, 1) * 19 + 8;
-        for (FormattedCharSequence line : font.split(FormattedText.of("Click an ingredient to see how it is made."), PAGE_W - 4)) {
+        int ty = gy + Math.max(rows, 1) * CodexLayout.RECIPE_STEP + 8;
+        for (FormattedCharSequence line : font.split(FormattedText.of("Click an ingredient to see how it is made."), CodexLayout.TEXT_W)) {
             g.drawString(font, line, x, ty, MUTED, false);
-            ty += 10;
+            ty += CodexLayout.LINE_H;
         }
         return hovered;
     }
@@ -627,28 +707,19 @@ public class CodexScreen extends Screen {
         return hovered;
     }
 
-    // ---------------------------------------------------------------- input
+    // ---------------------------------------------------------------- input (screen pixels in, book pixels inside)
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    public boolean mouseClicked(double screenX, double screenY, int button) {
+        double mx = screenX / scale, my = screenY / scale;
         if (super.mouseClicked(mx, my, button)) return true;
-        int x = left + 10;
-        for (int i = 0; i < chapters.size() && !lab; i++) {
-            int y = listY(i);
-            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + rowH()) {
-                lab = false;
-                chapter = i;
-                page = 0;
-                subPage = 0;
-                recipeItem = ItemStack.EMPTY;
-                recipeHistory.clear();
-                rebuild();
+        if (!lab) {
+            int row = listRowAt(mx, my);
+            if (row >= 0 && row < chapters.size()) {
+                openChapter(row);
                 return true;
             }
-        }
-        if (labAllowed() && !lab) {
-            int y = listY(chapters.size()) + 4;
-            if (mx >= x && mx < x + PAGE_W && my >= y && my < y + rowH()) {
+            if (row >= 0 && labAllowed()) {
                 lab = true;
                 rebuild();
                 return true;
@@ -670,12 +741,22 @@ public class CodexScreen extends Screen {
             return false;
         }
         // Item icons on a manual page, or ingredients in the recipe view.
-        ItemStack clicked = hoveredManualItem((int) mx, (int) my);
+        ItemStack clicked = hoveredManualItem((int) Math.floor(mx), (int) Math.floor(my));
         if (!clicked.isEmpty()) {
             showRecipe(clicked);
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean mouseReleased(double screenX, double screenY, int button) {
+        return super.mouseReleased(screenX / scale, screenY / scale, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double screenX, double screenY, int button, double dragX, double dragY) {
+        return super.mouseDragged(screenX / scale, screenY / scale, button, dragX / scale, dragY / scale);
     }
 
     private ItemStack hoveredManualItem(int mx, int my) {
@@ -690,12 +771,10 @@ public class CodexScreen extends Screen {
             return ItemStack.EMPTY;
         }
         Page p = chapters.get(chapter).pages().get(page);
-        int x = left + W / 2 + 10, y = top + 24;
-        int ix = x;
-        for (ItemStack s : p.items()) {
-            if (ix + 18 > x + PAGE_W) break;
-            if (mx >= ix && mx < ix + 18 && my >= y && my < y + 18) return s;
-            ix += 20;
+        int x = left + W / 2 + CodexLayout.MARGIN;
+        for (int i = 0; i < Math.min(p.items().size(), CodexLayout.MAX_ITEMS); i++) {
+            int ix = x + CodexLayout.itemX(i), iy = top + CodexLayout.itemY(i);
+            if (mx >= ix && mx < ix + 18 && my >= iy && my < iy + 18) return p.items().get(i);
         }
         return ItemStack.EMPTY;
     }
@@ -708,10 +787,10 @@ public class CodexScreen extends Screen {
             RecipeHolder<?> holder = recipes.get((int) (frameRecipeSlot % recipes.size()));
             List<Ingredient> ingredients = ingredientsOf(holder);
             int gw = gridWidth(holder.value());
-            int gx = left + W / 2 + 14, gy = top + 10 + 16 + 12;
+            int gx = left + W / 2 + CodexLayout.MARGIN + 4, gy = top + CodexLayout.RECIPE_GRID_Y;
             int tick = frameTick;
-            for (int i = 0; i < ingredients.size(); i++) {
-                int sx = gx + (i % gw) * 19, sy = gy + (i / gw) * 19;
+            for (int i = 0; i < Math.min(ingredients.size(), shownSlots(ingredients.size(), gw)); i++) {
+                int sx = gx + (i % gw) * CodexLayout.RECIPE_STEP, sy = gy + (i / gw) * CodexLayout.RECIPE_STEP;
                 if (mx >= sx && mx < sx + 18 && my >= sy && my < sy + 18) {
                     ItemStack[] options = ingredients.get(i).getItems();
                     return options.length == 0 ? ItemStack.EMPTY : options[tick % options.length];
@@ -722,9 +801,19 @@ public class CodexScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double screenX, double screenY, double scrollX, double scrollY) {
+        double mx = screenX / scale;
         if (lab) {
             labScroll = Math.max(0, labScroll - (int) Math.signum(scrollY));
+            return true;
+        }
+        CodexLayout.ListLayout list = listLayout();
+        if (list.paged() && mx < left + W / 2) {
+            int to = Math.max(0, Math.min(list.pages() - 1, listPage + (scrollY < 0 ? 1 : -1)));
+            if (to != listPage) {
+                listPage = to;
+                rebuild();
+            }
             return true;
         }
         turn(scrollY < 0 ? 1 : -1);
