@@ -39,7 +39,7 @@ Optional second input. One item is loaded straight into the Grinder and lasts it
 | [[iron_grinding_balls]] | +25% | 5% | 16 | Mk1 |
 | [[ferrothorium_grinding_balls]] | +50% | 10% | 32 | Mk2 |
 | [[pyrosteel_grinding_balls]] | +100% | 20% | 64 | Mk3 |
-| [[resonant_grinding_balls]] | +150% | 25% | 128 | Mk4 |
+| [[resonant_grinding_balls]] | +120% | 25% | 128 | Mk4 |
 
 {{image shots/16_grinder_furnace.jpg|Grinders and Electric Furnaces, Mk1 to Mk4}}
 

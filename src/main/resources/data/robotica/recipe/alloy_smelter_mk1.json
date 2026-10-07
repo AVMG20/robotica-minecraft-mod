@@ -14,7 +14,7 @@
       "item": "robotica:copper_coil"
     },
     "F": {
-      "item": "minecraft:furnace"
+      "tag": "c:player_workstations/furnaces"
     },
     "C": {
       "item": "robotica:iron_casing"

@@ -173,7 +173,7 @@ public class ProcessingGameTests {
         helper.assertTrue(mk1.items.getStackInSlot(GrinderBlockEntity.MEDIA).isEmpty(), "the second flint is loaded after 8 ores");
         helper.assertTrue(mk1.mediaLeft() == 8 && mk1.loadedMedia() == Items.FLINT, "a fresh flint is loaded");
 
-        // Resonant balls (+150%) in a Mk4: an ore's 2 dust become exactly 5.
+        // Resonant balls (+120%) in a Mk4: an ore's 2 dust become 4.4 (4 or 5).
         BlockPos other = new BlockPos(1, 1, 0);
         helper.setBlock(other, ProcessingRegistry.GRINDER_MK4.get().defaultBlockState());
         GrinderBlockEntity mk4 = (GrinderBlockEntity) helper.getBlockEntity(other);
@@ -181,7 +181,8 @@ public class ProcessingGameTests {
         mk4.items.setStackInSlot(GrinderBlockEntity.INPUT, new ItemStack(Items.IRON_ORE));
         GrindingLogic.Plan plan = GrindingLogic.find(helper.getLevel(), new ItemStack(Items.IRON_ORE), 4).plan();
         helper.assertTrue(mk4.grindOne(random, plan), "mk4 grind");
-        helper.assertTrue(count(mk4, ProcessingRegistry.IRON_DUST.get()) == 5, "2 dust +150% = 5, got " + count(mk4, ProcessingRegistry.IRON_DUST.get()));
+        int dust = count(mk4, ProcessingRegistry.IRON_DUST.get());
+        helper.assertTrue(dust == 4 || dust == 5, "2 dust +120% = 4 or 5, got " + dust);
         helper.assertTrue(mk4.mediaLeft() == 127 && mk4.mediaUses() == 128, "one use of 128 used");
         helper.assertTrue(mk4.items.getStackInSlot(GrinderBlockEntity.MEDIA).isEmpty(), "the ball was loaded into the machine");
         helper.succeed();

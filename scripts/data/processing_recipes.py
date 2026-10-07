@@ -67,7 +67,7 @@ IRON_PLATE = '#c:plates/iron'
 shaped('grinder_mk1', ['PFP', 'GMG', 'PBP'],
        {'P': IRON_PLATE, 'F': 'minecraft:flint', 'G': 'copper_gear', 'M': 'electric_motor', 'B': 'basic_circuit'})
 shaped('electric_furnace_mk1', ['PCP', 'CFC', 'PBP'],
-       {'P': IRON_PLATE, 'C': 'copper_coil', 'F': 'minecraft:furnace', 'B': 'basic_circuit'})
+       {'P': IRON_PLATE, 'C': 'copper_coil', 'F': '#c:player_workstations/furnaces', 'B': 'basic_circuit'})
 
 TIERS = {
     2: ('advanced_circuit', 'reinforced_casing', '#c:gems/diamond', '#c:obsidians'),
@@ -84,8 +84,8 @@ for mk, (circuit, casing, grinder_extra, furnace_extra) in TIERS.items():
 # Only 0.1 experience: an ingot grinds back into dust, so ore-like experience here would be an endless experience farm
 # (the Electric Furnace's Fortune cards never boost dusts either). The ore's experience comes when the ore is mined.
 for metal in ('iron', 'gold', 'copper'):
-    cooking(f'{metal}_ingot_from_smelting_{metal}_dust', 'smelting', f'{metal}_dust', f'minecraft:{metal}_ingot', 0.1, 200)
-    cooking(f'{metal}_ingot_from_blasting_{metal}_dust', 'blasting', f'{metal}_dust', f'minecraft:{metal}_ingot', 0.1, 100)
+    cooking(f'{metal}_ingot_from_smelting_{metal}_dust', 'smelting', f'#c:dusts/{metal}', f'minecraft:{metal}_ingot', 0.1, 200)
+    cooking(f'{metal}_ingot_from_blasting_{metal}_dust', 'blasting', f'#c:dusts/{metal}', f'minecraft:{metal}_ingot', 0.1, 100)
 
 # ---------------------------------------------------------------- grinding media
 # Iron balls: one ingot and four nuggets make two, each lasts 16 ores at +25%: worth it from the first stack of ore.
@@ -108,7 +108,7 @@ for metal in ('iron', 'gold', 'copper'):
 
 # Special cases the tag rules can not know.
 grinding('cobblestone_to_gravel', '#c:cobblestones', 'minecraft:gravel')
-grinding('gravel_to_sand', 'minecraft:gravel', 'minecraft:sand', extras=[('minecraft:flint', 1, 0.1)])
+grinding('gravel_to_sand', '#c:gravels', 'minecraft:sand', extras=[('minecraft:flint', 1, 0.1)])
 grinding('blaze_rod_to_powder', '#c:rods/blaze', 'minecraft:blaze_powder', 3, extras=[('minecraft:blaze_powder', 1, 0.5)])
 grinding('bone_to_bone_meal', '#c:bones', 'minecraft:bone_meal', 6)
 grinding('glowstone_to_dust', 'minecraft:glowstone', 'minecraft:glowstone_dust', 4)
@@ -126,7 +126,7 @@ write(DATA / 'data_maps/item/grinding_media.json', {'values': {
     'robotica:iron_grinding_balls': {'bonus': 0.25, 'secondary': 0.05, 'uses': 16, 'tier': 1},
     'robotica:ferrothorium_grinding_balls': {'bonus': 0.5, 'secondary': 0.1, 'uses': 32, 'tier': 2},
     'robotica:pyrosteel_grinding_balls': {'bonus': 1.0, 'secondary': 0.2, 'uses': 64, 'tier': 3},
-    'robotica:resonant_grinding_balls': {'bonus': 1.5, 'secondary': 0.25, 'uses': 128, 'tier': 4},
+    'robotica:resonant_grinding_balls': {'bonus': 1.2, 'secondary': 0.25, 'uses': 128, 'tier': 4},
 }})
 
 # Byproducts of grinding media: first entry that exists in the pack wins (nickel/silver/tin come from other mods).

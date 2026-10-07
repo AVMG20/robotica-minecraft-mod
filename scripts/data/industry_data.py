@@ -213,7 +213,7 @@ def recipes():
                [result('reinforced_casing')], time=300, power=160)
     processing('assembling', 'quantum_circuit', [('advanced_circuit', 3), ('#c:rods/blaze', 2), '#c:ingots/netherite', (PYRO, 2)],
                [result('quantum_circuit')], time=400, power=400)
-    processing('assembling', 'plasma_actuator', [('servo_actuator', 2), ('minecraft:prismarine_crystals', 2), 'minecraft:blaze_powder',
+    processing('assembling', 'plasma_actuator', [('servo_actuator', 2), ('#c:gems/prismarine', 2), 'minecraft:blaze_powder',
                                                  'quantum_circuit', (PYRO, 2)],
                [result('plasma_actuator')], time=400, power=400)
     processing('assembling', 'blazing_casing', [('reinforced_casing', 3), ('minecraft:netherite_scrap', 2), 'magma_core', (PYRO, 2)],
@@ -225,11 +225,11 @@ def recipes():
 
     # ---- machines
     shaped('alloy_smelter_mk1', ['PKP', 'FCF', 'PBP'],
-           {'P': IRON_PLATE, 'K': 'copper_coil', 'F': 'minecraft:furnace', 'C': 'iron_casing', 'B': 'basic_circuit'})
+           {'P': IRON_PLATE, 'K': 'copper_coil', 'F': '#c:player_workstations/furnaces', 'C': 'iron_casing', 'B': 'basic_circuit'})
     shaped('centrifuge_mk1', ['PAP', 'MGM', 'PXP'],
            {'P': FERRO, 'A': 'advanced_circuit', 'M': 'electric_motor', 'G': 'minecraft:cauldron', 'X': 'iron_casing'})
     shaped('assembler_mk1', ['PAP', 'MTM', 'PSP'],
-           {'P': FERRO, 'A': 'advanced_circuit', 'M': 'electric_motor', 'T': 'minecraft:crafting_table', 'S': 'servo_actuator'})
+           {'P': FERRO, 'A': 'advanced_circuit', 'M': 'electric_motor', 'T': '#c:player_workstations/crafting_tables', 'S': 'servo_actuator'})
     for machine in MACHINES:
         for tier in TIERS[1:]:
             age = min(4, BASE_AGE[machine] + tier - 1)

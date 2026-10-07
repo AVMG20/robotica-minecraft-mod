@@ -311,7 +311,7 @@
         },
         {
           "title": "Grinding media",
-          "text": "Optional second slot: more dust and a byproduct chance.\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +150%.\nThe bar shows what is left. Better balls need a higher Mk.",
+          "text": "Optional second slot: more dust and a byproduct chance.\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +120%.\nThe bar shows what is left. Better balls need a higher Mk.",
           "items": [
             "minecraft:flint",
             "robotica:iron_grinding_balls",
@@ -372,7 +372,7 @@
       "pages": [
         {
           "title": "Mining Drone",
-          "text": "Right-click a block to deploy, sneak-right-click to pick up.\n- Add a battery and torches. Menu: direction, length, then the pickaxe button.\n- Digs a lit 3x3 tunnel (Mk3: 5x5, Fortune I).\nH: dig where you look. Sneak+H: all come back.",
+          "text": "Right-click a block to deploy, sneak-right-click to pick up.\n- Add a battery and torches. Menu: direction, length, then the pickaxe button.\n- Digs a lit 3x3 tunnel (Mk3: 5x5, Fortune I).\nDrone key (default H): dig where you look. With sneak: all come back.",
           "items": [
             "robotica:mining_drone",
             "robotica:mining_drone_mk2",
@@ -486,7 +486,7 @@
       "pages": [
         {
           "title": "Modules",
-          "text": "Modules upgrade what you carry: power tools, FE weapons and Exo armor. Cards upgrade machines.\n- Tinker's Bench: put the item in, drop modules in.\n- One of each kind per item.\n- G (held) or J (worn armor) switches them.",
+          "text": "Modules upgrade what you carry: power tools, FE weapons and Exo armor. Cards upgrade machines.\n- Tinker's Bench: put the item in, drop modules in.\n- One of each kind per item.\n- Tool settings key (default G) or Exo modules key (default J) switches them.",
           "items": [
             "robotica:tinkers_bench",
             "robotica:overclock_module",
@@ -521,11 +521,11 @@
         },
         {
           "title": "Controls",
-          "text": "- V: next mode. Sneak+V: back.\n- Hold sneak: 1 block.\n- B: Fortune / Silk Touch / off.\n- G: settings and modules."
+          "text": "- Mode key (default V): next mode, with sneak: back.\n- Hold sneak: 1 block.\n- Enchant key (default B): Fortune / Silk Touch / off.\n- Tool settings key (default G): settings and modules."
         },
         {
           "title": "Tool modules",
-          "text": "- Overclock I-III: +50/100/200% speed\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Lamp Placer: lamps in the dark\n- Power Regulator: less FE\nOverclock, Fortune, Silk Touch and Looting need FE in the item.",
+          "text": "- Overclock I-III: +50/100/200% speed\n- Fortune I-III, Silk Touch: the Enchant key picks one\n- Auto-Pickup, Void Filter\n- Lamp Placer: lamps in the dark\n- Power Regulator: less FE\nOverclock, Fortune, Silk Touch and Looting need FE in the item.",
           "items": [
             "robotica:overclock_module",
             "robotica:fortune_module",
@@ -545,7 +545,7 @@
         },
         {
           "title": "Trees",
-          "text": "Fell the whole tree and replant from your saplings. The Chainsaw also clears leaves. V: 1x1.",
+          "text": "Fell the whole tree and replant from your saplings. The Chainsaw also clears leaves. Mode key (default V): 1x1.",
           "items": [
             "robotica:felling_axe",
             "robotica:chainsaw"
@@ -663,7 +663,7 @@
         },
         {
           "title": "Modules",
-          "text": "J: module screen (or sneak-right-click a piece, or a Tinker's Bench). Drop modules in; the switch turns one off.\nEach kind works once per suit.",
+          "text": "Exo modules key (default J): module screen (or sneak-right-click a piece, or a Tinker's Bench). Drop modules in; the switch turns one off.\nEach kind works once per suit.",
           "items": [
             "robotica:night_vision_module",
             "robotica:step_assist_module",
@@ -703,7 +703,7 @@
         },
         {
           "title": "Servo and Deep",
-          "text": "- Helmet: Solar Weave, Sonar (N), Rebreather, Robot HUD\n- Chest: Jet Assist, Med Injector, Hazard Seal, Kinetic Shield\n- Legs/boots: Dash (R)\n- Boots: Hydro Fins\n- Any: Power Regulator",
+          "text": "- Helmet: Solar Weave, Sonar (Sonar key, default N), Rebreather, Robot HUD\n- Chest: Jet Assist, Med Injector, Hazard Seal, Kinetic Shield\n- Legs/boots: Dash (Dash key, default R)\n- Boots: Hydro Fins\n- Any: Power Regulator",
           "items": [
             "robotica:sonar_pulse_module",
             "robotica:med_injector_module",
@@ -715,7 +715,7 @@
         },
         {
           "title": "Flight",
-          "text": "Mk3 chestplate. Crafted with an Antigrav Core.\nK: on/off. 2,400 FE/s while flying.",
+          "text": "Mk3 chestplate. Crafted with an Antigrav Core.\nFlight key (default K): on/off. 2,400 FE/s while flying.",
           "items": [
             "robotica:flight_module",
             "robotica:jet_assist_module"
@@ -723,7 +723,7 @@
         },
         {
           "title": "Core socket",
-          "text": "Mk2+ chestplate, all 4 pieces Mk2+. Never used up.\n- Servo: O, Haste II + Speed\n- Magma: fireproof, burning hits\n- Antigrav: no fall damage, cheaper Flight",
+          "text": "Mk2+ chestplate, all 4 pieces Mk2+. Never used up.\n- Servo: Overclock key (default O), Haste II + Speed\n- Magma: fireproof, burning hits\n- Antigrav: no fall damage, cheaper Flight",
           "items": [
             "robotica:servo_core",
             "robotica:magma_core",

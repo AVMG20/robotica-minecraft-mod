@@ -356,7 +356,8 @@ public final class ExoConfig {
     /** Format arguments of a core's set bonus description ({@code exo.robotica.bonus.<id>.desc}). */
     public static Object[] bonusArgs(String id) {
         return switch (id) {
-            case "servo" -> new Object[]{net.minecraft.network.chat.Component.translatable("enchantment.level." + overclockHaste()),
+            case "servo" -> new Object[]{com.arno.robotica.core.item.HasDetails.key("key.robotica.exo.overclock"),
+                    net.minecraft.network.chat.Component.translatable("enchantment.level." + overclockHaste()),
                     net.minecraft.network.chat.Component.translatable("enchantment.level." + overclockSpeed()),
                     Math.round(overclockDuration() / 20.0), Math.round(overclockCooldown() / 20.0)};
             case "magma" -> new Object[]{magmaBurnSeconds()};

@@ -17,7 +17,7 @@
       "item": "robotica:electric_motor"
     },
     "T": {
-      "item": "minecraft:crafting_table"
+      "tag": "c:player_workstations/crafting_tables"
     },
     "S": {
       "item": "robotica:servo_actuator"

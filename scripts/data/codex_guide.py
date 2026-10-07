@@ -10,6 +10,7 @@ Every Robotica recipe except the Architect's (owned by the architect module) mus
 script fails otherwise, so new recipes get a place in the guide.
 """
 import json
+import re
 import pathlib
 import sys
 
@@ -109,7 +110,7 @@ STEPS = [
       'tool_upgrade_kit_1', 'bore_drill_from_tinkers_hammer', 'chainsaw_from_felling_axe', 'tesla_coil_1', 'tesla_linker',
       'mining_drone', 'signal_flare', 'tinkers_bench', 'item_pipe', 'lamp_placer_module'], 10),
     ('mining_drone', 'first_iron', 'mining_drone', 'task', 1, 'Dig Buddy',
-     'Craft a Mining Drone. Give it a battery and torches: it digs a 3x3 tunnel and brings the loot back.',
+     'Craft a Mining Drone Mk1. Give it a battery and torches: it digs a 3x3 tunnel and brings the loot back.',
      has('mining_drone'), [], 10),
     ('generator', 'first_iron', 'combustion_generator', 'task', 1, 'Fire It Up',
      'Place a Combustion Generator and right-click it with coal or logs.',
@@ -139,7 +140,7 @@ STEPS = [
      'Craft an Exo-Frame piece. J opens its module screen.',
      has('exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1'), [], 10),
     ('drones', 'basic_circuit', 'sentry_drone', 'task', 1, 'Air Support',
-     'Craft a Sentry Drone to guard, or a Courier Drone to move items.',
+     'Craft a Sentry Drone Mk1 to guard, or a Courier Drone Mk1 to move items.',
      has('sentry_drone', 'courier_drone'), [], 10),
     ('grinder', 'basic_circuit', 'grinder_mk1', 'task', 1, 'Grind It Down',
      'Place a Grinder: 1 ore = 2 dusts. Flint in the media slot adds 10%.',
@@ -173,7 +174,7 @@ STEPS = [
      'Make Ferrothorium in an Alloy Smelter. Its plates build Age 2 machines.',
      has('ferrothorium_ingot'), INDUSTRY_FERROTHORIUM, 10),
     ('diamonds', 'basic_circuit', 'minecraft:diamond', 'goal', 2, 'Diamonds!',
-     'Find diamonds: they make the Excavator and the Age 2 parts.',
+     'Find diamonds: they make the Excavator Mk1 and the Age 2 parts.',
      has('minecraft:diamond'), ['excavator', 'reinforced_casing', 'advanced_circuit'], 20),
     ('excavator', 'diamonds', 'excavator', 'task', 2, 'Dig Deep',
      'Place an Excavator with a chest next to it. It digs to bedrock; speed cards and power make it fast.',
@@ -265,7 +266,7 @@ STEPS = [
      'Build the 7x3x7 Fusion Reactor, charge it with FE and add fusion fuel.',
      milestone('fusion_ignited'), [], 100),
     ('flight', 'antigrav_core', 'flight_module', 'challenge', 4, 'Lift Off',
-     'Put a Flight Module in an Exo chestplate and press K to fly.',
+     'Put a Flight Module in an Exo chestplate and press {key:key.robotica.exo.toggle_flight} to fly.',
      has('flight_module'), [], 50),
     ('exo_mk4', 'antigrav_core', 'exo_chestplate_mk4', 'challenge', 4, 'Null Frame',
      'Smith an Exo piece to Mk4 (Null Casing, Resonant Lattice). One more slot, fireproof.',
@@ -302,8 +303,14 @@ def main():
     for name, parent, icon, frame, age, title, desc, crit, recipes, xp in STEPS:
         key = f'advancements.robotica.guide.{name}'
         icon = icon if ':' in icon else f'robotica:{icon}'
+        # {key:<key mapping>} in a description shows the player's binding for that key mapping
+        keys = re.findall(r'\{key:([a-z0-9_.]+)\}', desc)
+        desc = re.sub(r'\{key:[a-z0-9_.]+\}', '%s', desc)
+        description = {'translate': key + '.description'}
+        if keys:
+            description['with'] = [{'keybind': k} for k in keys]
         display = {'icon': {'id': icon}, 'title': {'translate': key + '.title'},
-                   'description': {'translate': key + '.description'}, 'frame': frame,
+                   'description': description, 'frame': frame,
                    'show_toast': parent is not None, 'announce_to_chat': False, 'hidden': False}
         if parent is None:
             display['background'] = 'minecraft:textures/block/cut_copper.png'
@@ -324,8 +331,11 @@ def main():
         (ADV / f'{name}.json').write_text(json.dumps(adv, indent=2) + '\n')
         lang[key + '.title'] = title
         lang[key + '.description'] = desc
-        guide.append({'id': f'robotica:guide/{name}', 'parent': f'robotica:guide/{parent}' if parent else None,
-                      'icon': icon, 'age': age})
+        step = {'id': f'robotica:guide/{name}', 'parent': f'robotica:guide/{parent}' if parent else None,
+                'icon': icon, 'age': age}
+        if keys:
+            step['keys'] = keys
+        guide.append(step)
     GUIDE.write_text(json.dumps({'steps': guide}, indent=2) + '\n')
     LANG.write_text(json.dumps(lang, indent=2, ensure_ascii=False) + '\n')
     print(f'{len(STEPS)} guide steps, {len(unlocked)} recipes unlocked')

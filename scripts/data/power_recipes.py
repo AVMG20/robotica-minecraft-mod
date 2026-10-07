@@ -33,12 +33,12 @@ IRON_PLATE, COPPER_PLATE = '#c:plates/iron', '#c:plates/copper'
 REDSTONE_BLOCK, COBBLE, QUARTZ = '#c:storage_blocks/redstone', '#c:cobblestones', '#c:gems/quartz'
 
 # Age 0: copper, wood, stone only
-shaped('winding_crank', [' S ', 'CGC', 'BBB'], {'S': 'minecraft:stick', 'C': COPPER, 'G': 'copper_gear', 'B': COBBLE})
+shaped('winding_crank', [' S ', 'CGC', 'BBB'], {'S': '#c:rods/wooden', 'C': COPPER, 'G': 'copper_gear', 'B': COBBLE})
 
 # Age 1
 # Early power: a furnace in a copper shell, one iron ingot. Craftable the moment you smelt your first iron.
 shaped('combustion_generator', ['CCC', 'GFG', 'CIC'],
-       {'C': COPPER, 'F': 'minecraft:furnace', 'G': 'copper_gear', 'I': '#c:ingots/iron'})
+       {'C': COPPER, 'F': '#c:player_workstations/furnaces', 'G': 'copper_gear', 'I': '#c:ingots/iron'})
 shaped('solar_panel_mk1', ['GGG', 'CBC', 'PPP'],
        {'G': '#c:glass_blocks', 'C': COPPER_PLATE, 'B': 'basic_circuit', 'P': IRON_PLATE})
 shaped('accumulator_1', ['PRP', 'CIC', 'PRP'],

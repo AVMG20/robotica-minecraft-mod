@@ -8,7 +8,7 @@
   ],
   "key": {
     "A": {
-      "item": "minecraft:obsidian"
+      "tag": "c:obsidians"
     },
     "B": {
       "tag": "c:ender_pearls"

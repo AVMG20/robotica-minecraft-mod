@@ -7,7 +7,7 @@
   ],
   "key": {
     "Z": {
-      "item": "minecraft:amethyst_shard"
+      "tag": "c:gems/amethyst"
     },
     "A": {
       "item": "robotica:advanced_circuit"

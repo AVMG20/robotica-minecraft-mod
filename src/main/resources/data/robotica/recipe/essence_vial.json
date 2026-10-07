@@ -17,7 +17,7 @@
       "item": "minecraft:glass_bottle"
     },
     "S": {
-      "item": "minecraft:slime_ball"
+      "tag": "c:slime_balls"
     }
   },
   "result": {

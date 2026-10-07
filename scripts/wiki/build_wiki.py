@@ -246,6 +246,19 @@ def criterion_items(crit):
     return [short(i) for i in items]
 
 
+# Key mappings named in guide steps ({key:<mapping>} in codex_guide.py): how the wiki names them.
+KEY_NAMES = {'key.robotica.exo.toggle_flight': 'the Flight key (default K)'}
+
+
+def step_text(lang, key, desc):
+    text = lang.get(key + '.description', desc)
+    for k in re.findall(r'\{key:([a-z0-9_.]+)\}', desc):
+        if k not in KEY_NAMES:
+            warn(f'{key}: no wiki name for key mapping {k}')
+        text = text.replace('%s', KEY_NAMES.get(k, k), 1)
+    return text
+
+
 def build_steps(lang, recipes):
     steps, age_of, step_of = [], {}, {}
     for name, parent, icon, frame, age, title, desc, crit, unlocks, xp in load_codex_guide():
@@ -261,7 +274,7 @@ def build_steps(lang, recipes):
                     step_of[o] = name
         steps.append({'id': name, 'parent': parent, 'icon': short(icon if ':' in icon else f'robotica:{icon}'),
                       'age': age, 'goal': frame != 'task', 'title': lang.get(key + '.title', title),
-                      'text': lang.get(key + '.description', desc), 'unlocks': made, 'needs': criterion_items(crit)})
+                      'text': step_text(lang, key, desc), 'unlocks': made, 'needs': criterion_items(crit)})
     # Items no recipe makes (boss drops, ores) take the age of the first step that asks for them.
     for s in steps:
         for i in s['needs']:

@@ -20,7 +20,7 @@
       "item": "robotica:electric_motor"
     },
     "R": {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     }
   },
   "result": {

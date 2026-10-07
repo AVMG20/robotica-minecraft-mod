@@ -405,7 +405,7 @@
       "+25%",
       "+50%",
       "+100%",
-      "+150%"
+      "+120%"
      ],
      [
       "Byproduct",
@@ -733,7 +733,7 @@
     "Right-click a block to deploy it.",
     "Give it a cell or [[mainspring]] and torches.",
     "Pick a direction and length, press the pickaxe.",
-    "H: nearest drone digs where you look. Sneak + H: all come back."
+    "Drone key (default H): nearest drone digs where you look. With sneak: all come back."
    ],
    "stats": {
     "columns": [
@@ -750,7 +750,7 @@
      ],
      [
       "Dig speed",
-      "x1",
+      "1 block / 12 ticks",
       "x1.5",
       "x2.5"
      ],

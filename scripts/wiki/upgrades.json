@@ -14,19 +14,19 @@
     "efficiency": {
       "item": "upgrade_efficiency",
       "name": "Efficiency Upgrade",
-      "summary": "Machines use 15% less FE per action per card.",
+      "summary": "Machines use 15% less FE per action per card. Combustion Generator: 10% less fuel per card.",
       "rules": "Never below 40% of the base cost."
     },
     "range": {
       "item": "upgrade_range",
       "name": "Range Upgrade",
-      "summary": "Bigger work area or range.",
+      "summary": "Bigger work area or range, more items per Electric Furnace lane.",
       "rules": "What a step means depends on the machine."
     },
     "fortune": {
       "item": "upgrade_fortune",
       "name": "Fortune Upgrade",
-      "summary": "Fortune I-III on mined blocks, more ore output, Looting in the Replicator.",
+      "summary": "Fortune I-III on mined blocks, more Grinder and Alloy Smelter output, more Electric Furnace experience, Looting in the Replicator.",
       "rules": "Not together with a Silk Touch card."
     },
     "silk": {

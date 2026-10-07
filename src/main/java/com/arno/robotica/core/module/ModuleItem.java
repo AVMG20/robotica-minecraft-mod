@@ -1,5 +1,6 @@
 package com.arno.robotica.core.module;
 
+import com.arno.robotica.core.item.HasDetails;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -31,7 +32,9 @@ public class ModuleItem extends Item {
         tooltip.add(kind.needsLine(level).withStyle(ChatFormatting.DARK_AQUA));
         Component cost = ModuleText.cost(kind, level);
         if (cost != null) tooltip.add(cost.copy().withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.translatable(kind.armorOnly() ? "module.robotica.install_armor" : "module.robotica.install")
+        tooltip.add((kind.armorOnly()
+                ? Component.translatable("module.robotica.install_armor", HasDetails.key("key.robotica.exo.open_modules"))
+                : Component.translatable("module.robotica.install", HasDetails.key("key.robotica.gear.open_toggles")))
                 .withStyle(ChatFormatting.DARK_GRAY));
     }
 }

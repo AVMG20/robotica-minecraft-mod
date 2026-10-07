@@ -29,7 +29,7 @@ GLASS, OBSIDIAN = '#c:glass_blocks', '#c:obsidians'
 
 # Age 2: vial = glass bottle + basic circuit + quartz + slime (a sample item, not a machine part)
 shaped('essence_vial', [' A ', 'QBQ', ' S '],
-       {'A': 'basic_circuit', 'Q': QUARTZ, 'B': 'minecraft:glass_bottle', 'S': 'minecraft:slime_ball'})
+       {'A': 'basic_circuit', 'Q': QUARTZ, 'B': 'minecraft:glass_bottle', 'S': '#c:slime_balls'})
 # 4 frames per reinforced casing
 shaped('replicator_frame', ['POP', 'ORO', 'POP'],
        {'P': IRON_PLATE, 'O': OBSIDIAN, 'R': 'reinforced_casing'}, count=4)

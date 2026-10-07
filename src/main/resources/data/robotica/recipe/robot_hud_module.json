@@ -6,10 +6,10 @@
       "item": "robotica:advanced_circuit"
     },
     {
-      "item": "minecraft:glass_pane"
+      "tag": "c:glass_panes"
     },
     {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     },
     {
       "item": "robotica:copper_coil"

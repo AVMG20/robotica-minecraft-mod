@@ -3,10 +3,10 @@
   "category": "equipment",
   "ingredients": [
     {
-      "item": "minecraft:slime_block"
+      "tag": "c:storage_blocks/slime"
     },
     {
-      "item": "minecraft:slime_block"
+      "tag": "c:storage_blocks/slime"
     },
     {
       "item": "robotica:electric_motor"

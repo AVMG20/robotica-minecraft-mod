@@ -8,7 +8,7 @@
   ],
   "key": {
     "X": {
-      "item": "minecraft:crossbow"
+      "tag": "c:tools/crossbow"
     },
     "B": {
       "item": "robotica:basic_circuit"
@@ -20,7 +20,7 @@
       "item": "robotica:electric_motor"
     },
     "R": {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     }
   },
   "result": {

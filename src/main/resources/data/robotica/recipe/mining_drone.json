@@ -17,7 +17,7 @@
       "item": "robotica:clockwork_mechanism"
     },
     "R": {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     },
     "W": {
       "item": "robotica:copper_coil"

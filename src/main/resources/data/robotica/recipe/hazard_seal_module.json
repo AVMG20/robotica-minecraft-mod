@@ -7,7 +7,7 @@
   ],
   "key": {
     "G": {
-      "item": "minecraft:glass"
+      "tag": "c:glass_blocks"
     },
     "Q": {
       "item": "robotica:quantum_circuit"
@@ -16,7 +16,7 @@
       "tag": "c:plates/iron"
     },
     "M": {
-      "item": "minecraft:milk_bucket"
+      "tag": "c:buckets/milk"
     }
   },
   "result": {

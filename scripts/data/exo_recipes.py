@@ -78,20 +78,20 @@ for piece in ('helmet', 'chestplate', 'leggings', 'boots'):
 # ---- Helmet modules
 shapeless('night_vision_module', ['basic_circuit', 'copper_coil', 'minecraft:golden_carrot', PLATE])
 level2('night_vision', 'minecraft:spider_eye')
-level3('night_vision', 'minecraft:blaze_rod')
+level3('night_vision', '#c:rods/blaze')
 shapeless('rebreather_module', ['advanced_circuit', 'minecraft:heart_of_the_sea', 'copper_coil', PLATE])
-shapeless('rebreather_module_from_prismarine', ['advanced_circuit', 'minecraft:prismarine_crystals', 'minecraft:prismarine_crystals',
-                                                'minecraft:prismarine_crystals', 'copper_coil'], 'rebreather_module')
-shapeless('robot_hud_module', ['advanced_circuit', 'minecraft:glass_pane', 'minecraft:redstone', 'copper_coil'])
+shapeless('rebreather_module_from_prismarine', ['advanced_circuit', '#c:gems/prismarine', '#c:gems/prismarine',
+                                                '#c:gems/prismarine', 'copper_coil'], 'rebreather_module')
+shapeless('robot_hud_module', ['advanced_circuit', '#c:glass_panes', '#c:dusts/redstone', 'copper_coil'])
 shapeless('auto_feeder_module', ['basic_circuit', 'electric_motor', 'minecraft:hopper', PLATE])
 shaped('solar_weave_module', ['SAS', 'CPC'], {'S': 'solar_panel_mk1', 'A': 'advanced_circuit', 'C': 'copper_coil', 'P': PLATE})
-shaped('sonar_pulse_module', ['ZAZ', 'CNC'], {'Z': 'minecraft:amethyst_shard', 'A': 'advanced_circuit', 'C': 'copper_coil', 'N': 'minecraft:note_block'})
+shaped('sonar_pulse_module', ['ZAZ', 'CNC'], {'Z': '#c:gems/amethyst', 'A': 'advanced_circuit', 'C': 'copper_coil', 'N': 'minecraft:note_block'})
 # Sonar levels run one age later: II is Age 3, III Age 4.
-level3('sonar_pulse', 'minecraft:prismarine_crystals', 'sonar_pulse_module', 'sonar_pulse_module_2')
+level3('sonar_pulse', '#c:gems/prismarine', 'sonar_pulse_module', 'sonar_pulse_module_2')
 level_null('sonar_pulse_module_3', 'sonar_pulse_module_2', 'minecraft:ender_eye')
 
 # ---- Chest modules
-shaped('jet_assist_module', ['FAF', 'PSP'], {'F': 'minecraft:feather', 'A': 'advanced_circuit', 'S': 'servo_actuator', 'P': PLATE})
+shaped('jet_assist_module', ['FAF', 'PSP'], {'F': '#c:feathers', 'A': 'advanced_circuit', 'S': 'servo_actuator', 'P': PLATE})
 shaped('jet_assist_module_2', ['QCQ', ' U '], {'Q': 'quantum_circuit', 'C': 'plasma_actuator', 'U': 'jet_assist_module'})
 level_null('jet_assist_module_3', 'jet_assist_module_2', 'minecraft:shulker_shell')
 shaped('flight_module', ['NCN', 'PJP'], {'N': 'null_circuit', 'C': 'antigrav_core', 'P': 'plasma_actuator', 'J': 'jet_assist_module'})
@@ -102,7 +102,7 @@ shaped('med_injector_module', ['GAG', 'CBC'], {'G': 'minecraft:glistering_melon_
                                                 'B': 'minecraft:glass_bottle'})
 level3('med_injector', 'minecraft:golden_apple', 'med_injector_module', 'med_injector_module_2')
 level_null('med_injector_module_3', 'med_injector_module_2', 'minecraft:ghast_tear')
-shaped('hazard_seal_module', ['GQG', 'PMP'], {'G': 'minecraft:glass', 'Q': 'quantum_circuit', 'P': PLATE, 'M': 'minecraft:milk_bucket'})
+shaped('hazard_seal_module', ['GQG', 'PMP'], {'G': '#c:glass_blocks', 'Q': 'quantum_circuit', 'P': PLATE, 'M': '#c:buckets/milk'})
 
 # ---- Leg modules
 shaped('servo_stride_module_1', ['CMC', 'PBP'], {'C': 'copper_coil', 'M': 'electric_motor', 'B': 'basic_circuit', 'P': PLATE})
@@ -114,23 +114,23 @@ shaped('dash_thrusters_module', ['BPB', 'FCF'], {'B': 'minecraft:blaze_powder', 
 
 # ---- Boot modules
 shaped('step_assist_module', ['PIP', 'C C'], {'P': PLATE, 'I': 'minecraft:piston', 'C': 'copper_coil'})
-shapeless('spring_heels_module', ['minecraft:slime_block', 'electric_motor', 'copper_coil', 'basic_circuit'])
-level2('spring_heels', 'minecraft:slime_block')
-level3('spring_heels', 'minecraft:slime_block')
-shapeless('fall_dampener_module', ['minecraft:slime_block', 'minecraft:slime_block', 'electric_motor', 'basic_circuit'])
+shapeless('spring_heels_module', ['#c:storage_blocks/slime', 'electric_motor', 'copper_coil', 'basic_circuit'])
+level2('spring_heels', '#c:storage_blocks/slime')
+level3('spring_heels', '#c:storage_blocks/slime')
+shapeless('fall_dampener_module', ['#c:storage_blocks/slime', '#c:storage_blocks/slime', 'electric_motor', 'basic_circuit'])
 level2('fall_dampener', 'servo_actuator')
 level3('fall_dampener', 'minecraft:phantom_membrane')
-shaped('magnet_module', ['ICI', 'RBR'], {'I': '#c:ingots/iron', 'C': 'copper_coil', 'R': 'minecraft:redstone', 'B': 'basic_circuit'})
-level2('magnet', 'minecraft:iron_block')
+shaped('magnet_module', ['ICI', 'RBR'], {'I': '#c:ingots/iron', 'C': 'copper_coil', 'R': '#c:dusts/redstone', 'B': 'basic_circuit'})
+level2('magnet', '#c:storage_blocks/iron')
 level3('magnet', 'minecraft:lodestone')
 # Age 2 like its mark: kelp fins on a Servo Actuator (prismarine is Age 3).
-shaped('hydro_fins_module', ['KAK', 'PSP'], {'K': 'minecraft:dried_kelp_block', 'A': 'advanced_circuit', 'P': PLATE, 'S': 'servo_actuator'})
+shaped('hydro_fins_module', ['KAK', 'PSP'], {'K': '#c:storage_blocks/dried_kelp', 'A': 'advanced_circuit', 'P': PLATE, 'S': 'servo_actuator'})
 
 # ---- Any piece
-shaped('capacitor_plating_module', ['PCP', 'RBR'], {'P': PLATE, 'C': 'copper_cell', 'R': 'minecraft:redstone', 'B': 'basic_circuit'})
+shaped('capacitor_plating_module', ['PCP', 'RBR'], {'P': PLATE, 'C': 'copper_cell', 'R': '#c:dusts/redstone', 'B': 'basic_circuit'})
 level2('capacitor_plating', 'redstone_cell')
 level3('capacitor_plating', 'redstone_cell')
 shaped('power_regulator_module', ['GAG', 'CRC'], {'G': GOLD_PLATE, 'A': 'advanced_circuit', 'C': 'copper_coil', 'R': 'minecraft:comparator'})
-shaped('power_regulator_module_2', ['QRQ', ' U '], {'Q': 'quantum_circuit', 'R': 'minecraft:redstone_block', 'U': 'power_regulator_module'})
-level_null('power_regulator_module_3', 'power_regulator_module_2', 'minecraft:redstone_block')
+shaped('power_regulator_module_2', ['QRQ', ' U '], {'Q': 'quantum_circuit', 'R': '#c:storage_blocks/redstone', 'U': 'power_regulator_module'})
+level_null('power_regulator_module_3', 'power_regulator_module_2', '#c:storage_blocks/redstone')
 print('exo recipes written to', OUT)

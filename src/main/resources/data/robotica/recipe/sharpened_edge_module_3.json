@@ -10,7 +10,7 @@
       "item": "robotica:quantum_circuit"
     },
     "B": {
-      "item": "minecraft:blaze_rod"
+      "tag": "c:rods/blaze"
     },
     "U": {
       "item": "robotica:sharpened_edge_module_2"

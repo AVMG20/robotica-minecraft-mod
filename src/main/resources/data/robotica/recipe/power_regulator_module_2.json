@@ -10,7 +10,7 @@
       "item": "robotica:quantum_circuit"
     },
     "R": {
-      "item": "minecraft:redstone_block"
+      "tag": "c:storage_blocks/redstone"
     },
     "U": {
       "item": "robotica:power_regulator_module"

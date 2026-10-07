@@ -9,7 +9,7 @@
     },
     {
       "ingredient": {
-        "item": "minecraft:prismarine_crystals"
+        "tag": "c:gems/prismarine"
       },
       "count": 2
     },

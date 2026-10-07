@@ -12,7 +12,7 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 
 1. Put the tool, weapon or Exo piece in a [[tinkers_bench]].
 2. Drop modules in the open slots. Take one out to get it back.
-3. G switches the modules of the tool or weapon in your hand, J those of your worn armor (J also installs).
+3. The Tool settings key (default G) switches the modules of the tool or weapon in your hand, the Exo modules key (default J) those of your worn armor (it also installs).
 
 - One of each kind per item. On Exo armor a kind works once per suit ([[capacitor_plating_module]] once per piece).
 - Level II and III are crafted from the level below and need a higher Age or Mk.
@@ -36,7 +36,7 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 | [[void_filter_module]] | drills, Chainsaw | 1 | deletes junk drops |
 | [[lamp_placer_module]] | drills | 1 | Spark Lamps where you mine in the dark, 10 FE each |
 
-> B cycles Fortune, Silk Touch and off. Overclock, Fortune and Silk Touch only work while the tool has FE.
+> The Enchant key (default B) cycles Fortune, Silk Touch and off. Overclock, Fortune and Silk Touch only work while the tool has FE.
 
 ## Weapon modules
 

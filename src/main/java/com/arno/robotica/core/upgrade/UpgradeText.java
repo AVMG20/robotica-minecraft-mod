@@ -17,6 +17,10 @@ public final class UpgradeText {
 
     public static final String EXCAVATOR_RANGE_STEP = "excavatorRangeStep";
     public static final String WIRELESS_RANGE_STEP = "wirelessRangePerCard";
+    /** Percent less fuel per efficiency card in the Combustion Generator. */
+    public static final String GENERATOR_EFFICIENCY = "generatorEfficiencyPerCard";
+    /** Percent more experience per Fortune card in the Electric Furnace. */
+    public static final String FURNACE_XP_PER_FORTUNE = "xpPerFortune";
     /** Architect buildings without Height cards (floor, 4 wall layers, roof). */
     public static final int BASE_BUILDING_HEIGHT = 6;
 
@@ -36,6 +40,8 @@ public final class UpgradeText {
     public static Object[] args(UpgradeKind kind) {
         return switch (kind) {
             case RANGE -> new Object[]{value(EXCAVATOR_RANGE_STEP, 10), value(WIRELESS_RANGE_STEP, 4)};
+            case EFFICIENCY -> new Object[]{value(GENERATOR_EFFICIENCY, 10)};
+            case FORTUNE -> new Object[]{value(FURNACE_XP_PER_FORTUNE, 50)};
             case HEIGHT -> {
                 int cap = UpgradeRules.Fixed.ARCHITECT_TABLE.cap(UpgradeKind.HEIGHT);
                 yield new Object[]{cap, BASE_BUILDING_HEIGHT + cap};

@@ -47,7 +47,7 @@ shaped('temp_servo_core', ['DSD', 'SAS', 'DSD'], {'D': '#c:storage_blocks/diamon
 # Age 3
 shaped('blazing_casing', ['NRN', 'RMR', 'NRN'], {'N': 'minecraft:netherite_scrap', 'R': 'reinforced_casing', 'M': 'magma_core'}, count=2)
 shaped('quantum_circuit', ['ABA', 'BNB', 'ABA'], {'A': 'advanced_circuit', 'B': '#c:rods/blaze', 'N': '#c:ingots/netherite'})
-shaped('plasma_actuator', ['PBP', 'SQS', 'PBP'], {'P': 'minecraft:prismarine_crystals', 'B': 'minecraft:blaze_powder', 'S': 'servo_actuator', 'Q': 'quantum_circuit'})
+shaped('plasma_actuator', ['PBP', 'SQS', 'PBP'], {'P': '#c:gems/prismarine', 'B': 'minecraft:blaze_powder', 'S': 'servo_actuator', 'Q': 'quantum_circuit'})
 # The Forge Tyrant (boss module) is the real source of Magma Cores. This fallback stays for Peaceful worlds and servers
 # that turn the Cinder Forge off, but it costs 2 netherite ingots and a Plasma Actuator on top (an Ignition Charge is ~1 Servo Actuator).
 shaped('temp_magma_core', ['SQS', 'NPN', 'SQS'], {'S': 'servo_actuator', 'Q': 'quantum_circuit', 'N': '#c:ingots/netherite', 'P': 'plasma_actuator'}, result='magma_core')
@@ -64,7 +64,7 @@ shaped('temp_antigrav_core', ['PCP', 'CNC', 'PCP'], {'P': 'plasma_actuator', 'C'
 CARDS = {
     'speed': (1, 'minecraft:sugar', REDSTONE),
     'efficiency': (1, GOLD, GOLD),
-    'growth': (1, 'minecraft:bone_block', 'minecraft:bone_block'),
+    'growth': (1, '#c:storage_blocks/bone_meal', '#c:storage_blocks/bone_meal'),
     'void': (1, 'minecraft:cactus', '#c:obsidians'),
     'carry': (1, '#c:chests/wooden', '#c:leathers'),
     'range': (2, '#c:ender_pearls', '#c:gems/lapis'),

@@ -310,7 +310,10 @@
       "id": "robotica:guide/flight",
       "parent": "robotica:guide/antigrav_core",
       "icon": "robotica:flight_module",
-      "age": 4
+      "age": 4,
+      "keys": [
+        "key.robotica.exo.toggle_flight"
+      ]
     },
     {
       "id": "robotica:guide/exo_mk4",

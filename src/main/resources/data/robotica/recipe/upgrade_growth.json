@@ -8,10 +8,10 @@
   ],
   "key": {
     "A": {
-      "item": "minecraft:bone_block"
+      "tag": "c:storage_blocks/bone_meal"
     },
     "B": {
-      "item": "minecraft:bone_block"
+      "tag": "c:storage_blocks/bone_meal"
     },
     "P": {
       "tag": "c:plates/iron"

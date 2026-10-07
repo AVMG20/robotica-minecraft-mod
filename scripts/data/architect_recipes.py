@@ -32,7 +32,7 @@ IRON_PLATE = '#c:plates/iron'
 
 # Age 0: a starter machine, no iron. Copper, cobble, a crafting table and a Clockwork Mechanism for the drafting arm.
 shaped('architect_table', ['CTC', 'GMG', 'SSS'],
-       {'C': '#c:ingots/copper', 'T': 'minecraft:crafting_table', 'G': 'copper_gear', 'M': 'clockwork_mechanism',
+       {'C': '#c:ingots/copper', 'T': '#c:player_workstations/crafting_tables', 'G': 'copper_gear', 'M': 'clockwork_mechanism',
         'S': '#c:cobblestones/normal'},
        category='misc')
 
@@ -65,8 +65,8 @@ HAND = {
     'null_spire': {
         'wall': ('minecraft:blackstone', '#c:ender_pearls'),
         'floor': ('minecraft:polished_blackstone', '#c:ender_pearls'),
-        'roof': ('minecraft:cobbled_deepslate', '#c:ender_pearls'),
-        'pillar': ('minecraft:obsidian', '#c:ender_pearls'),
+        'roof': ('#c:cobblestones/deepslate', '#c:ender_pearls'),
+        'pillar': ('#c:obsidians', '#c:ender_pearls'),
         'window': ('#c:glass_blocks', '#c:ender_pearls'),
         'light': ('minecraft:blackstone', 'minecraft:sea_lantern'),
     },

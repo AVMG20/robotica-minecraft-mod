@@ -1,10 +1,10 @@
 {
-  "item.robotica.mining_drone": "Mining Drone",
+  "item.robotica.mining_drone": "Mining Drone Mk1",
   "item.robotica.mining_drone_mk2": "Mining Drone Mk2",
   "item.robotica.mining_drone_mk3": "Mining Drone Mk3",
-  "item.robotica.sentry_drone": "Sentry Drone",
+  "item.robotica.sentry_drone": "Sentry Drone Mk1",
   "item.robotica.sentry_drone_mk2": "Sentry Drone Mk2",
-  "item.robotica.courier_drone": "Courier Drone",
+  "item.robotica.courier_drone": "Courier Drone Mk1",
   "item.robotica.courier_drone_mk2": "Courier Drone Mk2",
   "item.robotica.courier_remote": "Courier Remote",
   "entity.robotica.mining_drone": "Mining Drone",

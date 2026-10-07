@@ -25,7 +25,7 @@
       "tier": 3
     },
     "robotica:resonant_grinding_balls": {
-      "bonus": 1.5,
+      "bonus": 1.2,
       "secondary": 0.25,
       "uses": 128,
       "tier": 4

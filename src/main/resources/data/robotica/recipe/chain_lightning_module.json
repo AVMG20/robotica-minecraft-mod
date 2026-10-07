@@ -16,7 +16,7 @@
       "item": "robotica:copper_coil"
     },
     "B": {
-      "item": "minecraft:blaze_rod"
+      "tag": "c:rods/blaze"
     }
   },
   "result": {

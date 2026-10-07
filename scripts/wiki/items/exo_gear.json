@@ -9,7 +9,7 @@
    ],
    "what": "Exo-Frame helmet: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
-    "Press J to open the module screen (all worn pieces).",
+    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
     "Upgrade the mark at a smithing table: modules, energy and core are kept."
    ],
@@ -65,7 +65,7 @@
    ],
    "what": "Exo-Frame chestplate: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
-    "Press J to open the module screen (all worn pieces).",
+    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
     "Upgrade the mark at a smithing table: modules, energy and core are kept."
    ],
@@ -128,7 +128,7 @@
    ],
    "what": "Exo-Frame leggings: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
-    "Press J to open the module screen (all worn pieces).",
+    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
     "Upgrade the mark at a smithing table: modules, energy and core are kept."
    ],
@@ -184,7 +184,7 @@
    ],
    "what": "Exo-Frame boots: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
-    "Press J to open the module screen (all worn pieces).",
+    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
     "Upgrade the mark at a smithing table: modules, energy and core are kept."
    ],
@@ -364,7 +364,7 @@
     "sonar_pulse_module_2",
     "sonar_pulse_module_3"
    ],
-   "what": "Exo module (helmet). Key N: outlines ores and mobs around you for 10 s (16 / 24 / 32 blocks).",
+   "what": "Exo module (helmet). Sonar key (default N): outlines ores and mobs around you for 10 s (16 / 24 / 32 blocks).",
    "stats": {
     "rows": [
      [
@@ -416,7 +416,7 @@
    "items": [
     "flight_module"
    ],
-   "what": "Exo module (chestplate). Creative flight. K toggles it.",
+   "what": "Exo module (chestplate). Creative flight. The Flight key (default K) toggles it.",
    "stats": {
     "rows": [
      [
@@ -572,7 +572,7 @@
    "items": [
     "dash_thrusters_module"
    ],
-   "what": "Exo module (leggings or boots). Key R: a quick burst where you look; 3 s cooldown.",
+   "what": "Exo module (leggings or boots). Dash key (default R): a quick burst where you look; 3 s cooldown.",
    "stats": {
     "rows": [
      [
@@ -857,7 +857,7 @@
    ],
    "what": "First FE drill: iron pickaxe speed and tier, 1x1 or 3x3.",
    "use": [
-    "V switches mode.",
+    "The Mode key (default V) switches mode.",
     "Keep a [[copper_cell]] in your inventory: it recharges the drill.",
     "Add modules at a [[tinkers_bench]]: [[overclock_module]], [[fortune_module]], [[auto_pickup_module]]..."
    ],
@@ -1150,7 +1150,7 @@
     "Put the tool, weapon or Exo piece in.",
     "Drop modules in the slots: Age 1-4 opens 2-5, Mk1-4 opens 1-4.",
     "Take a module out to get it back.",
-    "G (held tool or weapon) or J (worn armor) switches them."
+    "The Tool settings key (default G, held tool or weapon) or the Exo modules key (default J, worn armor) switches them."
    ],
    "see": [
     "guide:modules"
@@ -1216,7 +1216,7 @@
     "fortune_module_2",
     "fortune_module_3"
    ],
-   "what": "Drill module: mined blocks drop as with Fortune I / II / III. B switches Fortune, Silk Touch or off.",
+   "what": "Drill module: mined blocks drop as with Fortune I / II / III. The Enchant key (default B) switches Fortune, Silk Touch or off.",
    "stats": {
     "columns": [
      "I",
@@ -1243,7 +1243,7 @@
    "items": [
     "silk_touch_module"
    ],
-   "what": "Drill module: mined blocks drop themselves. B switches Fortune, Silk Touch or off.",
+   "what": "Drill module: mined blocks drop themselves. The Enchant key (default B) switches Fortune, Silk Touch or off.",
    "stats": {
     "rows": [
      [

@@ -17,7 +17,7 @@
       "tag": "c:ingots/copper"
     },
     "T": {
-      "item": "minecraft:crafting_table"
+      "tag": "c:player_workstations/crafting_tables"
     },
     "B": {
       "item": "robotica:basic_circuit"

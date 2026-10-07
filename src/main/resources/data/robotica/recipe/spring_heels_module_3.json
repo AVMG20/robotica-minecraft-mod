@@ -10,7 +10,7 @@
       "item": "robotica:quantum_circuit"
     },
     "C": {
-      "item": "minecraft:slime_block"
+      "tag": "c:storage_blocks/slime"
     },
     "U": {
       "item": "robotica:spring_heels_module_2"

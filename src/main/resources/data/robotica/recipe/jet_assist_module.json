@@ -7,7 +7,7 @@
   ],
   "key": {
     "F": {
-      "item": "minecraft:feather"
+      "tag": "c:feathers"
     },
     "A": {
       "item": "robotica:advanced_circuit"

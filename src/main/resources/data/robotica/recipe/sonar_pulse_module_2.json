@@ -10,7 +10,7 @@
       "item": "robotica:quantum_circuit"
     },
     "C": {
-      "item": "minecraft:prismarine_crystals"
+      "tag": "c:gems/prismarine"
     },
     "U": {
       "item": "robotica:sonar_pulse_module"

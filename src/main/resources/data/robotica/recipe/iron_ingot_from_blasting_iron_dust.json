@@ -2,7 +2,7 @@
   "type": "minecraft:blasting",
   "category": "misc",
   "ingredient": {
-    "item": "robotica:iron_dust"
+    "tag": "c:dusts/iron"
   },
   "result": {
     "id": "minecraft:iron_ingot"
