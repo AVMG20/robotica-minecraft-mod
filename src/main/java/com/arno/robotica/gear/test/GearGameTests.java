@@ -5,7 +5,9 @@ import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.gear.GearComponents;
 import com.arno.robotica.gear.GearConfig;
-import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.GearBlocks;
 import com.arno.robotica.gear.GearItems;
 import com.arno.robotica.gear.bench.TinkersBenchMenu;
@@ -294,24 +296,22 @@ public class GearGameTests {
         ServerPlayer player = survivalPlayer(helper, pos);
         ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
         ItemEnergy.fill(drill);
-        ToolSettings.set(drill, ToggleKind.AUTO_PICKUP, true);
-        ToolSettings.set(drill, ToggleKind.VOID_FILTER, true);
         player.setItemInHand(InteractionHand.MAIN_HAND, drill);
-        // Switched on, but no modules installed: the drop lands on the ground.
+        // No modules installed: the drop lands on the ground.
         level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
         helper.assertTrue(player.gameMode.destroyBlock(pos), "stone should break");
         helper.assertTrue(player.getInventory().countItem(Items.COBBLESTONE) == 0, "auto-pickup needs the Auto-Pickup module");
         List<ItemEntity> dropped = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3));
         helper.assertTrue(!dropped.isEmpty(), "without the void module the drop stays");
         dropped.forEach(ItemEntity::discard);
-        ToolSettings.set(player.getMainHandItem(), ToggleKind.VOID_FILTER, false);
-        ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.AUTO_PICKUP, true);
-        ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
+        Modules.setModule(player.getMainHandItem(), 0, new ItemStack(ModuleItems.get(ModuleKind.AUTO_PICKUP, 1).get()));
+        Modules.setModule(player.getMainHandItem(), 1, new ItemStack(ModuleItems.get(ModuleKind.VOID_FILTER, 1).get()));
+        Modules.setEnabled(player.getMainHandItem(), ModuleKind.VOID_FILTER, false);
         level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
         helper.assertTrue(player.gameMode.destroyBlock(pos), "stone should break");
         helper.assertTrue(player.getInventory().countItem(Items.COBBLESTONE) == 1, "auto-pickup should put the cobblestone in the inventory");
         helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3)).isEmpty(), "nothing should drop on the ground");
-        ToolSettings.set(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
+        Modules.setEnabled(player.getMainHandItem(), ModuleKind.VOID_FILTER, true);
         level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
         helper.assertTrue(player.gameMode.destroyBlock(pos), "stone should break again");
         helper.assertTrue(player.getInventory().countItem(Items.COBBLESTONE) == 1, "void filter should delete the second cobblestone");
@@ -319,35 +319,49 @@ public class GearGameTests {
         helper.succeed();
     }
 
+    /**
+     * Fortune and Silk Touch are modules: the switched-on one counts as the enchantment for drops, only one is on at a
+     * time, and B (CYCLE_DROPS) steps off, Fortune, Silk Touch, off. Silk Touch really drops stone as stone.
+     */
     @GameTest(template = "empty")
-    public static void enchantSwapKeepsPlayerEnchantments(GameTestHelper helper) {
+    public static void fortuneAndSilkTouchModules(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, pos);
+        player.getInventory().clearContent();
         var lookup = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
         var silk = lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH);
         var fortune = lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FORTUNE);
-        GearToolItem tool = GearItems.MAGMA_DRILL.get();
-        ItemStack drill = new ItemStack(tool);
-        // Player applied Fortune I on an anvil; the swap wants Fortune II in fortune mode.
-        drill.enchant(fortune, 1);
-        ToolSettings.setEnchantMode(drill, ToolSettings.ENCHANT_FORTUNE);
-        ToolSettings.syncEnchantments(drill, tool, level.registryAccess());
-        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 2, "fortune mode should top up to level 2");
-        ToolSettings.setEnchantMode(drill, ToolSettings.ENCHANT_SILK);
-        ToolSettings.syncEnchantments(drill, tool, level.registryAccess());
-        helper.assertTrue(drill.getEnchantmentLevel(silk) == 1, "silk mode should add silk touch");
-        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 1, "the player's Fortune I must survive, got " + drill.getEnchantmentLevel(fortune));
-        ToolSettings.setEnchantMode(drill, ToolSettings.ENCHANT_NONE);
-        ToolSettings.syncEnchantments(drill, tool, level.registryAccess());
-        helper.assertTrue(drill.getEnchantmentLevel(silk) == 0, "injected silk touch should be removed");
-        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 1, "the player's Fortune I must survive the none mode");
-        // A player-applied Silk Touch stays when the swap switches away from silk.
-        ItemStack other = new ItemStack(tool);
-        other.enchant(silk, 1);
-        ToolSettings.setEnchantMode(other, ToolSettings.ENCHANT_SILK);
-        ToolSettings.syncEnchantments(other, tool, level.registryAccess());
-        ToolSettings.setEnchantMode(other, ToolSettings.ENCHANT_NONE);
-        ToolSettings.syncEnchantments(other, tool, level.registryAccess());
-        helper.assertTrue(other.getEnchantmentLevel(silk) == 1, "the player's Silk Touch must survive");
+        ItemStack drill = new ItemStack(GearItems.MAGMA_DRILL.get());
+        ItemEnergy.fill(drill);
+        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 0, "no built-in fortune any more");
+        Modules.setModule(drill, 0, new ItemStack(ModuleItems.get(ModuleKind.FORTUNE, 3).get()));
+        Modules.setModule(drill, 1, new ItemStack(ModuleItems.get(ModuleKind.SILK_TOUCH, 1).get()));
+        helper.assertTrue(drill.getEnchantmentLevel(fortune) == 3 && drill.getEnchantmentLevel(silk) == 0,
+                "Fortune III is on; Silk Touch went in switched off (one of the two at a time)");
+        helper.assertTrue(net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(fortune, drill) == 3,
+                "loot sees Fortune III");
+        helper.assertTrue(drill.getTagEnchantments().isEmpty(), "nothing is written as a real enchantment");
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        GearActions.apply(player, GearActions.CYCLE_DROPS, 0);
+        ItemStack held = player.getMainHandItem();
+        helper.assertTrue(held.getEnchantmentLevel(silk) == 1 && held.getEnchantmentLevel(fortune) == 0, "B: Fortune -> Silk Touch");
+        level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+        player.getMainHandItem().set(GearComponents.MODE.get(), AreaMode.SINGLE);
+        helper.assertTrue(player.gameMode.destroyBlock(pos), "stone breaks");
+        List<ItemEntity> drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3));
+        helper.assertTrue(drops.stream().anyMatch(e -> e.getItem().is(Items.STONE)), "Silk Touch drops stone");
+        drops.forEach(ItemEntity::discard);
+        GearActions.apply(player, GearActions.CYCLE_DROPS, 0);
+        held = player.getMainHandItem();
+        helper.assertTrue(held.getEnchantmentLevel(silk) == 0 && held.getEnchantmentLevel(fortune) == 0, "B: Silk Touch -> off");
+        GearActions.apply(player, GearActions.CYCLE_DROPS, 0);
+        helper.assertTrue(player.getMainHandItem().getEnchantmentLevel(fortune) == 3, "B: off -> Fortune");
+        // The G switch keeps the rule: switching Silk Touch on turns Fortune off.
+        GearActions.apply(player, GearActions.MODULE_TOGGLE, ModuleKind.SILK_TOUCH.ordinal());
+        helper.assertTrue(Modules.active(player.getMainHandItem(), ModuleKind.SILK_TOUCH) == 1
+                && Modules.active(player.getMainHandItem(), ModuleKind.FORTUNE) == 0, "G: Silk Touch on, Fortune off");
+        BreakQueue.clear(player.getUUID());
         helper.succeed();
     }
 
@@ -363,13 +377,7 @@ public class GearGameTests {
             ItemStack stack = new ItemStack(tool);
             AreaMode expected = tool.spec.isAxe() ? AreaMode.TREE : AreaMode.AREA_3;
             helper.assertTrue(tool.mode(stack) == expected, tool + " should start in " + expected + ", got " + tool.mode(stack));
-            helper.assertTrue(!tool.toggleActive(stack, ToggleKind.AUTO_PICKUP), tool + ": no auto-pickup without the Auto-Pickup module");
-            helper.assertTrue(tool.spec.isEnergy() == tool.spec.toggles.contains(ToggleKind.AUTO_PICKUP)
-                    && tool.spec.isEnergy() == tool.spec.toggles.contains(ToggleKind.VOID_FILTER), tool + ": only power tools take modules");
-            ItemStack withPickup = stack.copy();
-            ToolSettings.setInstalled(withPickup, ToggleKind.AUTO_PICKUP, true);
-            helper.assertTrue(tool.toggleActive(withPickup, ToggleKind.AUTO_PICKUP) == tool.spec.isEnergy(),
-                    tool + ": with the Auto-Pickup card installed auto-pickup is on by default");
+            helper.assertTrue(Modules.accepts(stack) == tool.spec.isEnergy(), tool + ": only power tools take modules");
             player.setItemInHand(InteractionHand.MAIN_HAND, stack);
             java.util.Set<AreaMode> seen = new java.util.HashSet<>();
             for (int i = 0; i < tool.spec.modes.size(); i++) {
@@ -418,22 +426,80 @@ public class GearGameTests {
         helper.succeed();
     }
 
-    /** Unbreaking on an FE tool lowers the FE per block (III: 40 %); Mending is not offered for FE tools. */
+    /**
+     * No enchanting on FE tools, FE weapons and Exo armor: not on the table (no enchantability, nothing rolls), no anvil
+     * books, not in the vanilla enchantable tags. The Age 0 durability tools stay enchantable.
+     */
     @GameTest(template = "empty")
-    public static void unbreakingSavesEnergy(GameTestHelper helper) {
+    public static void noEnchantingOnFeGear(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var lookup = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
-        GearToolItem tool = GearItems.BORE_DRILL.get();
+        var all = List.of(net.minecraft.world.item.enchantment.Enchantments.EFFICIENCY, net.minecraft.world.item.enchantment.Enchantments.UNBREAKING,
+                net.minecraft.world.item.enchantment.Enchantments.MENDING, net.minecraft.world.item.enchantment.Enchantments.SHARPNESS,
+                net.minecraft.world.item.enchantment.Enchantments.PROTECTION, net.minecraft.world.item.enchantment.Enchantments.FORTUNE,
+                net.minecraft.world.item.enchantment.Enchantments.LOOTING);
+        ItemStack book = new ItemStack(Items.ENCHANTED_BOOK);
+        List<net.minecraft.world.item.Item> fe = new java.util.ArrayList<>(List.of(GearItems.BORE_DRILL.get(), GearItems.CHAINSAW.get(),
+                GearItems.SERVO_DRILL.get(), GearItems.MAGMA_DRILL.get(), GearItems.NULL_DRILL.get(), GearItems.SHOCK_BATON.get(),
+                GearItems.RIVET_GUN.get(), GearItems.ARC_BLADE.get(), GearItems.NULL_LANCE.get()));
+        for (int mk = 1; mk <= 4; mk++) {
+            for (var slot : com.arno.robotica.exo.ExoSuit.SLOTS) fe.add(com.arno.robotica.exo.ExoItems.piece(mk, slot).get());
+        }
+        var random = net.minecraft.util.RandomSource.create(42);
+        for (var item : fe) {
+            ItemStack stack = new ItemStack(item);
+            helper.assertTrue(!stack.isEnchantable() && stack.getItem().getEnchantmentValue() == 0, item + " must not go on an enchanting table");
+            for (var key : all) {
+                var e = lookup.getOrThrow(key);
+                helper.assertTrue(!stack.supportsEnchantment(e) && !stack.isPrimaryItemFor(e), item + " must not take " + key.location());
+            }
+            helper.assertTrue(!stack.isBookEnchantable(book), item + " takes no anvil books");
+            ItemStack rolled = net.minecraft.world.item.enchantment.EnchantmentHelper.enchantItem(random, stack.copy(), 30, level.registryAccess(),
+                    Optional.empty());
+            helper.assertTrue(rolled.getTagEnchantments().isEmpty(), item + ": enchanted loot rolls nothing");
+            for (var tag : List.of(net.minecraft.tags.ItemTags.MINING_ENCHANTABLE, net.minecraft.tags.ItemTags.DURABILITY_ENCHANTABLE,
+                    net.minecraft.tags.ItemTags.WEAPON_ENCHANTABLE, net.minecraft.tags.ItemTags.SWORD_ENCHANTABLE,
+                    net.minecraft.tags.ItemTags.ARMOR_ENCHANTABLE, net.minecraft.tags.ItemTags.EQUIPPABLE_ENCHANTABLE)) {
+                helper.assertTrue(!stack.is(tag), item + " must not be in " + tag.location());
+            }
+        }
+        for (var item : List.of(GearItems.TINKERS_HAMMER.get(), GearItems.FELLING_AXE.get(), GearItems.GEARBLADE.get())) {
+            ItemStack stack = new ItemStack(item);
+            helper.assertTrue(stack.isEnchantable() && stack.getItem().getEnchantmentValue() > 0, item + " stays enchantable");
+            helper.assertTrue(stack.supportsEnchantment(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING)),
+                    item + " takes Unbreaking");
+        }
+        helper.succeed();
+    }
+
+    /** Overclock mines faster (and costs a bit more FE per block); the Power Regulator lowers the cost of tools and weapons. */
+    @GameTest(template = "empty")
+    public static void overclockAndPowerRegulator(GameTestHelper helper) {
+        var stone = Blocks.STONE.defaultBlockState();
+        GearToolItem tool = GearItems.SERVO_DRILL.get();
         ItemStack drill = new ItemStack(tool);
-        int base = tool.cost(drill, Blocks.STONE.defaultBlockState());
-        drill.enchant(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING), 3);
-        int cheaper = tool.cost(drill, Blocks.STONE.defaultBlockState());
-        helper.assertTrue(cheaper == (int) Math.ceil(base / 2.5), "Unbreaking III should cost 40%: " + base + " -> " + cheaper);
-        helper.assertTrue(!drill.supportsEnchantment(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.MENDING)), "no Mending on FE tools");
-        helper.assertTrue(drill.supportsEnchantment(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.EFFICIENCY)), "Efficiency works");
-        helper.assertTrue(new ItemStack(GearItems.TINKERS_HAMMER.get()).supportsEnchantment(lookup.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.MENDING)),
-                "the hammer has durability, so Mending works");
-        helper.assertTrue(new ItemStack(tool).isEnchantable(), "drills go on an enchanting table");
+        ItemEnergy.fill(drill);
+        float speed = drill.getDestroySpeed(stone);
+        int cost = tool.cost(drill, stone);
+        Modules.setModule(drill, 0, new ItemStack(ModuleItems.get(ModuleKind.OVERCLOCK, 2).get()));
+        float fast = drill.getDestroySpeed(stone);
+        helper.assertTrue(Math.abs(fast - speed * (1.0 + GearConfig.overclockSpeed(2))) < 1.0E-3, "Overclock II: " + speed + " -> " + fast);
+        helper.assertTrue(tool.cost(drill, stone) == (int) Math.round(cost * (1.0 + GearConfig.overclockCost(2))), "Overclock costs more FE");
+        helper.assertTrue(drill.getDestroySpeed(Blocks.OAK_PLANKS.defaultBlockState()) <= 1.0F, "no speed on blocks the drill is not for");
+        Modules.setEnabled(drill, ModuleKind.OVERCLOCK, false);
+        helper.assertTrue(drill.getDestroySpeed(stone) == speed, "switched off: normal speed");
+
+        Modules.setModule(drill, 1, new ItemStack(ModuleItems.get(ModuleKind.POWER_REGULATOR, 1).get()));
+        double keep = 1.0 - com.arno.robotica.core.module.ModuleConfig.regulatorSaving(1);
+        helper.assertTrue(tool.cost(drill, stone) == (int) Math.round(cost * keep), "the regulator lowers the FE per block");
+        var lance = GearItems.NULL_LANCE.get();
+        ItemStack weapon = new ItemStack(lance);
+        Modules.setModule(weapon, 0, new ItemStack(ModuleItems.get(ModuleKind.POWER_REGULATOR, 3).get()));
+        double keep3 = 1.0 - com.arno.robotica.core.module.ModuleConfig.regulatorSaving(3);
+        helper.assertTrue(lance.cost(weapon) == (int) Math.round(lance.cost() * keep3), "the regulator lowers the FE per shot");
+        ItemStack bore = new ItemStack(GearItems.BORE_DRILL.get());
+        helper.assertTrue(Modules.refusal(bore, 0, new ItemStack(ModuleItems.get(ModuleKind.POWER_REGULATOR, 1).get()), List.of()) != null,
+                "Power Regulator I needs Age 2");
         helper.succeed();
     }
 
@@ -447,18 +513,20 @@ public class GearGameTests {
         helper.succeed();
     }
 
-    /** A module toggle cannot be switched on before its card is installed; plain settings work right away. */
+    /** Plain settings toggle right away; a module switch only works once the module is installed. */
     @GameTest(template = "empty")
-    public static void moduleTogglesNeedTheirCard(GameTestHelper helper) {
+    public static void settingsAndModuleSwitches(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper, helper.absolutePos(new BlockPos(1, 1, 1)));
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(GearItems.BORE_DRILL.get()));
-        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.VOID_FILTER.ordinal());
-        helper.assertTrue(!ToolSettings.has(player.getMainHandItem(), ToggleKind.VOID_FILTER), "the void filter needs its card first");
         GearActions.apply(player, GearActions.TOGGLE, ToggleKind.KEEP_FLOOR.ordinal());
-        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.KEEP_FLOOR), "keep floor (off by default) toggles on without a card");
-        ToolSettings.setInstalled(player.getMainHandItem(), ToggleKind.VOID_FILTER, true);
-        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.VOID_FILTER.ordinal());
-        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.VOID_FILTER), "installed: the toggle works");
+        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.KEEP_FLOOR), "keep floor (off by default) toggles on");
+        GearActions.apply(player, GearActions.MODULE_TOGGLE, ModuleKind.VOID_FILTER.ordinal());
+        helper.assertTrue(!player.getMainHandItem().has(com.arno.robotica.core.module.ModuleComponents.MODULES_OFF.get()),
+                "no Void Filter installed: nothing to switch");
+        Modules.setModule(player.getMainHandItem(), 0, new ItemStack(ModuleItems.get(ModuleKind.VOID_FILTER, 1).get()));
+        helper.assertTrue(Modules.active(player.getMainHandItem(), ModuleKind.VOID_FILTER) == 1, "a new module starts on");
+        GearActions.apply(player, GearActions.MODULE_TOGGLE, ModuleKind.VOID_FILTER.ordinal());
+        helper.assertTrue(Modules.active(player.getMainHandItem(), ModuleKind.VOID_FILTER) == 0, "installed: the switch works");
         helper.succeed();
     }
 

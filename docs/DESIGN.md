@@ -133,6 +133,19 @@ API (`core.upgrade`): `Upgrades.forMk(mk, kinds, onChanged)` (always 5 slots ins
 - Metal Press (Age 1): 1 ingot → 1 plate, 20 FE/t, 100 ticks. Right-click with ingots or upgrade cards.
 - Cells in a player's inventory recharge the FE tool or weapon in their hands at the cell's output rate.
 
+## Modules (core `core.module`)
+
+One rule: cards upgrade machines, modules upgrade what you carry (power tools, FE weapons, Exo armor), and the item's Age or Mk sets the limits. FE gear takes no enchantments (no table, no anvil books, no enchanted loot; not in the `minecraft:enchantable/*` tags); the Age 0 durability tools (Tinker's Hammer, Felling Axe, Gearblade) stay normal enchantable tools.
+
+- A module is one item per kind and level. A kind fits certain targets (drill, chainsaw, each weapon, each Exo piece) and needs a minimum Age or Mk per level. A module that fits several kinds of item is one item (Power Regulator: tools, weapons and armor).
+- Slots: power tools and FE weapons Age 1-4 = 2 / 3 / 4 / 5, Exo pieces Mk1-4 = 1 / 2 / 3 / 4 (`robotica-modules-server.toml`: `toolSlotsAge1-4`, `armorSlotsMk1-4`).
+- Rules (one check for everything, with a reason): not a module holder, not a module, wrong item, Age or Mk too low, slot locked (says which tier opens it), kind already in the item, kind already in the worn suit (armor; Capacitor Plating works per piece). A module that got in anyway does nothing.
+- Every module starts switched on. Fortune and Silk Touch are alternatives: at most one of them is on (B cycles Fortune, Silk Touch, off).
+- Installing: the Tinker's Bench takes tools, weapons and Exo pieces (the item goes back when the screen closes). The J screen installs and switches modules in the worn suit; G switches the modules of the held tool or weapon.
+- Power Regulator I-III (Age/Mk 2 / 3 / 4): saves 15 / 25 / 35 % FE (`powerRegulatorSaving1-3`): per block on tools, per hit or shot on weapons, every module of the Exo suit.
+- Data: components `robotica:modules` (installed items by slot) and `robotica:modules_off` (off bits by slot), kept through smithing. Fortune, Silk Touch and Looting are reported to vanilla loot through NeoForge's `getEnchantmentLevel` / `getAllEnchantments` item hooks; nothing is written as a real enchantment.
+- API: `ModuleHolder` (items: `moduleTarget`, `moduleTier`), `ModuleKind`, `ModuleTarget`, `Modules` (`slots`, `setModule`, `level`, `active`, `setEnabled`, `cycleGroup`, `refusal`, `regulated`), `ModuleItems.get(kind, level)`, `ModuleText` (tooltip lines registered by gear and exo).
+
 ## Exo-Frame (module `exo`)
 
 Powered armor: four pieces in four marks, modules that are real items installed in the pieces, a core socket for boss cores. The armor never breaks and keeps its base protection when empty; only the modules stop. Every number below is a server config value in `robotica-exo-server.toml` (energy values pass through the global energy multiplier, Solar Weave and the Kinetic Generator through the generation multiplier).
@@ -149,7 +162,7 @@ Raw cost per full set: Mk1 about 225 IE, Mk2 840, Mk3 5,450, Mk4 17,700. Protect
 
 Energy: with all four pieces worn every module draws from all four batteries (most charged first); a partial set draws from the module's own piece. Cells and Mainsprings in the inventory top the suit up (2,000 FE/s for all cells together). Other mods' chargers fill the pieces at any rate.
 
-Modules: one item per kind and level. A kind fits certain pieces and needs a minimum mark per level; the module screen refuses anything else and says why (wrong piece, mark too low, already in the suit). A kind works once per suit (the highest switched-on level counts if two get in anyway); Capacitor Plating is the exception, it works per piece. Level upgrades are crafted from the level below plus the next age's circuits (Age 2 Advanced, Age 3 Quantum, Age 4 Null Circuits).
+Modules (see Modules above): one item per kind and level. A kind fits certain pieces and needs a minimum mark per level; the module screen and the Tinker's Bench refuse anything else and say why (wrong piece, mark too low, already in the suit). Exo armor takes no enchantments. A kind works once per suit (the highest switched-on level counts if two get in anyway); Capacitor Plating is the exception, it works per piece. Level upgrades are crafted from the level below plus the next age's circuits (Age 2 Advanced, Age 3 Quantum, Age 4 Null Circuits).
 | Module | Piece | Levels: min. mark | Effect | Energy (I / II / III) |
 |---|---|---|---|---|
 | Night Vision | helmet | Mk1 / Mk2 / Mk3 | night vision; II and III thermal sight: hostile mobs within 24 / 48 blocks show through walls (client outline) | 10 / 20 / 30 FE/s |
@@ -172,14 +185,14 @@ Modules: one item per kind and level. A kind fits certain pieces and needs a min
 | Magnet | boots | Mk1 / Mk2 / Mk3 | pulls items within 6 / 10 / 16 blocks | 40 / 60 / 80 FE/s pulling |
 | Hydro Fins | boots | Mk2 | swim speed +50 %, full mining speed under water | 20 FE/s in water |
 | Capacitor Plating | any | Mk1 / Mk2 / Mk3 | +50 / 100 / 200 % battery for its piece (removing it caps the stored energy) | none |
-| Power Regulator | any | Mk2 / Mk3 / Mk4 | every module in the suit uses 10 / 20 / 30 % less FE | none |
+| Power Regulator | any (also tools and weapons) | Mk2 / Mk3 / Mk4 | every module in the suit uses 15 / 25 / 35 % less FE | none |
 
 Core socket: chestplates from Mk2 on hold one Servo, Magma or Antigrav Core (never consumed, removable, kept through smithing). The bonus needs all four pieces worn at Mk2 or better (`setBonusMinMark`):
 - Servo Core, Overclock: key O gives Haste II and Speed I for 10 s, 60 s cooldown, 50,000 FE.
 - Magma Core: fire immunity (ambient Fire Resistance, fire damage ignored), melee hits set the target on fire for 4 s, lava does not slow you (client movement).
 - Antigrav Core: no fall damage, Flight costs half, Dash cooldown halved.
 
-Screen and controls: J opens the module screen for all four worn pieces (rows; absent pieces show an empty row), sneak + right-click a piece in hand opens that piece alone. Per row: the piece, its battery, four slot positions (slots the mark does not have yet are locked and say which mark opens them), a switch and level pips per module, the core socket on the chestplate; the pooled suit battery on the right and the set bonus next to the title. Tooltips give cost, requirement and whether a module is shadowed by a duplicate. Switches are menu buttons validated on the server. Keys: J screen, K flight, R dash, N sonar, O overclock (no clash with V, B, G, H or vanilla defaults); a second jump in mid air is the Jet Assist double jump.
+Screen and controls: J opens the module screen for all four worn pieces (the Tinker's Bench also takes a piece) (rows; absent pieces show an empty row), sneak + right-click a piece in hand opens that piece alone. Per row: the piece, its battery, four slot positions (slots the mark does not have yet are locked and say which mark opens them), a switch and level pips per module, the core socket on the chestplate; the pooled suit battery on the right and the set bonus next to the title. Tooltips give cost, requirement and whether a module is shadowed by a duplicate. Switches are menu buttons validated on the server. Keys: J screen, K flight, R dash, N sonar, O overclock (no clash with V, B, G, H or vanilla defaults); a second jump in mid air is the Jet Assist double jump.
 
 HUD (client config `robotica-exo-client.toml`: on/off, corner, offsets, outlines, flight sound): suit energy bar, one icon per installed module (dimmed when off, empty or a duplicate), cooldown rings (Dash, Med Injector, Sonar, Overclock; vanilla item cooldowns, so they sync by themselves), sonar results, the Robot HUD's drone list.
 
@@ -298,7 +311,7 @@ Usability: right-click with a battery swaps it in, with a card installs one card
 
 ## Tools and weapons (module `gear`)
 
-Tools from Age 1 on use FE instead of durability and never break. Empty tool: mining speed of a wooden pickaxe, no area mode, weapons deal 1 damage. Every tool tier upgrades at the smithing table: template = the tier's upgrade kit, base = previous tool, addition = a part or core. Smithing keeps data components, so energy, mode and toggles carry over. Tools take normal enchantments (tags `minecraft:enchantable/mining`, `/durability`; batons `/sharp_weapon`, `/weapon`, `/fire_aspect`); Unbreaking lowers the FE per block (III: 40%), Mending is not offered on FE tools.
+Tools from Age 1 on use FE instead of durability and never break. Empty tool: mining speed of a wooden pickaxe, no area mode, weapons deal 1 damage. Every tool tier upgrades at the smithing table: template = the tier's upgrade kit, base = previous tool, addition = a part or core. Smithing keeps data components, so energy, mode, settings and modules carry over. Only the Age 0 tools take enchantments; FE tools and weapons take modules instead (see Modules).
 
 Mining tools:
 | Tool | Age | Energy | Modes (default first in bold) | Notes |
@@ -318,9 +331,9 @@ Tool Upgrade Kit I is cheap (iron plates, redstone, a copper coil): the Bore Dri
 Controls and settings (stored per tool as data components, changed through a client → server payload validated against the held tool):
 - V cycles mode (sneak + V or sneak + scroll goes back). The HUD shows "1x1 [3x3] 5x5 [V]"; the tooltip shows every mode with the current one highlighted. A mode tick sounds higher for bigger modes.
 - Holding sneak always mines 1×1.
-- B: Silk Touch / Fortune / off (Servo and up).
-- G: settings screen of the tool or FE weapon in hand. Four toggles: keep floor (off by default), auto-pickup (on by default once installed), void filter, auto-smelt (Magma and Null); below them an on/off switch per installed module. The Age 0 hammer and axe only have keep floor (hammer).
-- Cards and modules: see Modules below. Light placer, leaves and replant toggles were removed: tree tools always replant from your saplings and the Chainsaw always clears leaves.
+- B: Fortune / Silk Touch / off, over the installed Fortune and Silk Touch modules.
+- G: settings screen of the tool or FE weapon in hand. Two settings: keep floor and auto-smelt (Magma and Null), both off by default; below them an on/off switch per installed module. The Age 0 hammer and axe only have keep floor (hammer).
+- Modules: see the table below. Light placer, leaves and replant toggles were removed: tree tools always replant from your saplings and the Chainsaw always clears leaves.
 - Area outline rendered client side before breaking.
 - Sounds scale with the break: 3×3 crunch, 5×5/3×3×3 heavy crunch, more than 27 blocks a drill spin-up, a rumble and debris while the queue drains, a crash for whole trees.
 
@@ -335,17 +348,26 @@ Weapons:
 
 Weapon upgrade path through smithing: Gearblade → Shock Baton → Arc Blade. Rivet Gun → Null Lance.
 
-Modules (one system with the Exo-Frame's: one item per kind and level, a minimum Age per level, refusals that say why). The Tinker's Bench (Age 1: iron plates, copper gears, crafting table, planks) takes power tools (FE drills, Chainsaw) and FE weapons; it stores nothing. Slots: one tool slot, two card slots on power tools (Auto-Pickup and Void Filter Upgrades, `upgrade_pickup` / `upgrade_void`; they use no module slot) and four module slots of which the item's Age opens 1 / 2 / 3 / 4 (`moduleSlotsAge1-4`). A module put in is used up and stored on the item (`gear_installed` component, kept through smithing), taking it out gives it back. Refusals: not a module, wrong tool or weapon, Age too low, slot locked (says which Age opens it), kind already installed. G switches every installed module; tooltips and the HUD list them (dimmed when off). Tools from 0.3 kept their cards as bits in `gear_modules`: they keep working and move into the new component the first time they tick in an inventory or go into the bench. Machines do not take the Auto-Pickup card.
+Modules (the shared framework, see Modules): the Tinker's Bench (Age 1: iron plates, copper gears, crafting table, planks) takes power tools (FE drills, Chainsaw), FE weapons and Exo pieces and stores nothing. Slots: Age 1-4 = 2 / 3 / 4 / 5. A module put in is used up and stored on the item, taking it out gives it back. G switches every installed module; tooltips and the HUD list them (dimmed when off).
 
 | Module | Fits | Levels: min. Age | Effect | Energy |
 |---|---|---|---|---|
+| Overclock I-III | drills, Chainsaw | 1 / 2 / 3 | mining speed +50 / 100 / 200 % (`overclockSpeed1-3`) | +20 / 40 / 60 % FE per block |
+| Fortune I-III | drills | 1 / 2 / 3 | drops as with Fortune I / II / III | none |
+| Silk Touch | drills | 1 | blocks drop themselves; B picks Fortune, Silk Touch or off | none |
+| Auto-Pickup | drills, Chainsaw | 1 | drops go into the inventory | none |
+| Void Filter | drills, Chainsaw | 1 | deletes `robotica:voidable` drops | none |
 | Torch Placer | drills | 1 | after mining, if the spot has light 7 or less (`torchPlacerLight`), a torch from your inventory goes on the floor or a wall there (or at your feet); one per 10 ticks | 25 FE per torch |
+| Sharpened Edge I-III | FE weapons | 1 / 2 / 3 | +15 / 30 / 45 % damage on paid hits (`sharpenedEdgeDamage1-3`) | +50 / 100 / 150 FE per use |
+| Looting I-III | FE weapons | 1 / 2 / 3 | mob drops as with Looting I / II / III | none |
+| Thermal Edge | FE weapons | 1 | paid hits and rivets set the target on fire for 4 s | +100 FE per use |
 | Armor Pierce | FE weapons | 1 / 2 / 3 | 20 / 35 / 50 % of the armor reduction is ignored (paid hits only: baton, Arc Blade and its arcs, rivets, the lance beam) | +50 / 100 / 150 FE per use |
 | Chain Lightning | Arc Blade | 3 / 3 / 3 | +2 / 4 / 6 arcs, jump range 8 / 10 / 12 | 150 FE per extra arc that lands |
 | Ricochet Rivets | Rivet Gun | 2 / 2 | the rivet bounces on to 1 / 2 more monsters in sight within 10 blocks, 75 % of the previous hit each | +100 / 200 FE per shot |
 | Lifesteal | Age 4 weapons (Null Lance beam) | 4 | heals 10 % of the damage dealt from a 3 health pool that refills in 5 s (0.6 health per second over time), never more than 3 health in any second; an empty pool starts a 5 s cooldown while it refills; no healing at full health | 2,000 FE per health point |
+| Power Regulator | tools, weapons, Exo pieces | 2 / 3 / 4 | 15 / 25 / 35 % less FE per block or use | none |
 
-Recipes follow the ladder: Torch Placer and Armor Pierce I at Age 1 (Basic Circuit), Pierce II and Ricochet I at Age 2, Pierce III, Ricochet II, Chain Lightning I-II at Age 3, Chain Lightning III and Lifesteal at Age 4 (Lifesteal: 2 Null Circuits, a Null Casing, a Totem of Undying, 2 ghast tears). Weapon visuals: the Arc Blade's arcs are jagged bolts that jump target to target, the Null Lance beam has a bright core, a violet spiral and an impact flash, rivets ping and spark when they ricochet.
+Recipes follow the ladder (each level consumes the one below): level I of Overclock, Fortune, Sharpened Edge, Looting, Armor Pierce and Silk Touch, Auto-Pickup, Void Filter, Thermal Edge, Torch Placer at Age 1 (Basic Circuit), level II and Ricochet I at Age 2 (Advanced Circuit), level III, Ricochet II, Chain Lightning I-II at Age 3, Chain Lightning III and Lifesteal at Age 4 (Lifesteal: 2 Null Circuits, a Null Casing, a Totem of Undying, 2 ghast tears). Weapon visuals: the Arc Blade's arcs are jagged bolts that jump target to target, the Null Lance beam has a bright core, a violet spiral and an impact flash, rivets ping and spark when they ricochet.
 
 ## Base builder (module `architect`)
 

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ASA",
+    " U "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "U": {
+      "item": "robotica:overclock_module"
+    }
+  },
+  "result": {
+    "id": "robotica:overclock_module_2",
+    "count": 1
+  }
+}

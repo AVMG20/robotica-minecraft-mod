@@ -2,10 +2,9 @@ package com.arno.robotica.gear.client;
 
 import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.MachineScreen;
-import com.arno.robotica.core.item.CoreItems;
-import com.arno.robotica.gear.module.GearModuleItem;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.ModuleText;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.tool.GearActions;
 import com.arno.robotica.gear.tool.GearToolItem;
 import com.arno.robotica.gear.tool.ToggleKind;
@@ -56,19 +55,19 @@ public class ToggleScreen extends Screen {
         List<Component> hints = new ArrayList<>();
         List<BooleanSupplier> enabled = new ArrayList<>();
         if (stack.getItem() instanceof GearToolItem tool) toolRows(tool, labels, actions, hints, enabled);
-        for (GearModuleKind kind : GearModuleKind.values()) {
-            int level = GearModules.level(stack, kind);
+        for (ModuleKind kind : ModuleKind.values()) {
+            int level = Modules.level(stack, kind);
             if (level <= 0) continue;
-            labels.add(() -> Component.empty().append(kind.displayName(GearModules.level(held(), kind))).append(": ")
-                    .append(Component.translatable(GearModules.enabled(held(), kind) ? "gear.robotica.on" : "gear.robotica.off")));
+            labels.add(() -> Component.empty().append(kind.displayName(Modules.level(held(), kind))).append(": ")
+                    .append(Component.translatable(Modules.enabled(held(), kind) ? "gear.robotica.on" : "gear.robotica.off")));
             actions.add(() -> GearKeys.send(GearActions.MODULE_TOGGLE, kind.ordinal()));
-            hints.add(GearModuleItem.descLine(kind, level));
-            enabled.add(() -> GearModules.level(held(), kind) > 0);
+            hints.add(ModuleText.describe(kind, level));
+            enabled.add(() -> Modules.level(held(), kind) > 0);
         }
         if (labels.isEmpty()) {
             labels.add(() -> Component.translatable("gear.robotica.screen.no_modules"));
             actions.add(() -> {});
-            hints.add(Component.translatable("gear.robotica.screen.no_modules.desc", GearModules.slots(stack)));
+            hints.add(Component.translatable("gear.robotica.screen.no_modules.desc", Modules.slots(stack)));
             enabled.add(() -> false);
         }
         int total = labels.size() * (HEIGHT + GAP) - GAP;
@@ -91,7 +90,7 @@ public class ToggleScreen extends Screen {
 
     /** Tools with settings and FE weapons (they have module slots). */
     static boolean usable(ItemStack stack) {
-        return stack.getItem() instanceof GearToolItem || GearModules.acceptsModules(stack);
+        return stack.getItem() instanceof GearToolItem || (Modules.accepts(stack) && !Modules.target(stack).isArmor());
     }
 
     private void toolRows(GearToolItem tool, List<Supplier<Component>> labels, List<Runnable> actions, List<Component> hints,
@@ -102,32 +101,14 @@ public class ToggleScreen extends Screen {
             hints.add(Component.translatable("gear.robotica.screen.mode.desc"));
             enabled.add(() -> true);
         }
-        if (tool.spec.fortuneLevel > 0) {
-            labels.add(() -> Component.translatable("gear.robotica.screen.enchant", enchantName(ToolSettings.enchantMode(held()))));
-            actions.add(() -> GearKeys.send(GearActions.CYCLE_ENCHANT, 0));
-            hints.add(Component.translatable("gear.robotica.screen.enchant.desc"));
-            enabled.add(() -> true);
-        }
         for (ToggleKind kind : ToggleKind.values()) {
             if (!tool.spec.toggles.contains(kind)) continue;
-            labels.add(() -> Component.empty().append(kind.displayName()).append(": ").append(ToolSettings.installed(held(), kind)
-                    ? Component.translatable(ToolSettings.has(held(), kind) ? "gear.robotica.on" : "gear.robotica.off")
-                    : Component.translatable("gear.robotica.screen.needs_card", CoreItems.card(kind.module).get().getDescription())));
+            labels.add(() -> Component.empty().append(kind.displayName()).append(": ")
+                    .append(Component.translatable(ToolSettings.has(held(), kind) ? "gear.robotica.on" : "gear.robotica.off")));
             actions.add(() -> GearKeys.send(GearActions.TOGGLE, kind.ordinal()));
-            hints.add(kind.isModule()
-                    ? Component.empty().append(kind.description()).append("\n").append(Component.translatable("gear.robotica.screen.module_hint",
-                            CoreItems.card(kind.module).get().getDescription()))
-                    : kind.description());
-            enabled.add(() -> ToolSettings.installed(held(), kind));
+            hints.add(kind.description());
+            enabled.add(() -> true);
         }
-    }
-
-    private static Component enchantName(int mode) {
-        return Component.translatable(switch (mode) {
-            case ToolSettings.ENCHANT_FORTUNE -> "gear.robotica.enchant.short.fortune";
-            case ToolSettings.ENCHANT_SILK -> "gear.robotica.enchant.short.silk";
-            default -> "gear.robotica.enchant.short.none";
-        });
     }
 
     @Override

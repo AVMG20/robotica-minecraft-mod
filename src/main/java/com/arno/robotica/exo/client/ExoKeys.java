@@ -2,8 +2,9 @@ package com.arno.robotica.exo.client;
 
 import com.arno.robotica.exo.ExoActions;
 import com.arno.robotica.exo.ExoConfig;
-import com.arno.robotica.exo.ExoItems;
-import com.arno.robotica.exo.ExoModuleKind;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.net.ExoActionPayload;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -75,8 +76,8 @@ final class ExoKeys {
         }
         while (DASH.consumeClick()) {
             // No prediction: the server applies the burst and sends the motion, so a refused dash moves nothing.
-            if (free && ExoSuit.isActive(player, ExoModuleKind.DASH_THRUSTERS)
-                    && !player.getCooldowns().isOnCooldown(ExoItems.module(ExoModuleKind.DASH_THRUSTERS).get())
+            if (free && ExoSuit.isActive(player, ModuleKind.DASH_THRUSTERS)
+                    && !player.getCooldowns().isOnCooldown(ModuleItems.get(ModuleKind.DASH_THRUSTERS, 1).get())
                     && !player.isPassenger() && !player.isFallFlying()) {
                 send(ExoActions.DASH);
             }
@@ -90,7 +91,7 @@ final class ExoKeys {
         if (jumpDown && !jumpWasDown && !grounded && worn) {
             // Predicted only under the server's own rules: count, spacing and the energy the jump costs.
             ExoSuit.Active active = ExoSuit.active(player);
-            int jet = active.level(ExoModuleKind.JET_ASSIST);
+            int jet = active.level(ModuleKind.JET_ASSIST);
             if (jet > 0 && airJumps < ExoConfig.airJumps(jet) && player.tickCount - lastAirJump >= ExoSuit.AIR_JUMP_GAP
                     && ExoSuit.canPayAirJump(player, active)) {
                 airJumps++;

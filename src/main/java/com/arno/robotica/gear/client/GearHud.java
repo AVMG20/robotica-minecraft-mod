@@ -5,12 +5,11 @@ import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.gear.GearConfig;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.weapon.Lifesteal;
 import com.arno.robotica.gear.tool.GearToolItem;
-import com.arno.robotica.gear.tool.ToolSettings;
 import com.arno.robotica.gear.weapon.EnergyWeaponItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
@@ -27,7 +26,7 @@ import java.util.List;
 
 /**
  * HUD layer for the Robotica tool or weapon in the main hand, bottom right: the mode with its neighbours and the key
- * that switches it ("1x1 [3x3] 5x5  V"), silk/fortune, durability and an energy bar.
+ * that switches it ("1x1 [3x3] 5x5  V"), the installed modules, durability and an energy bar.
  */
 final class GearHud {
     private GearHud() {}
@@ -45,11 +44,6 @@ final class GearHud {
         List<Component> lines = new ArrayList<>();
         if (stack.getItem() instanceof GearToolItem tool) {
             if (tool.spec.hasAreaModes()) lines.add(modeLine(tool, stack, mc));
-            int enchant = ToolSettings.enchantMode(stack);
-            if (tool.spec.fortuneLevel > 0 && enchant != ToolSettings.ENCHANT_NONE) {
-                lines.add(Component.translatable("gear.robotica.enchant." + (enchant == ToolSettings.ENCHANT_SILK ? "silk" : "fortune"))
-                        .withStyle(ChatFormatting.LIGHT_PURPLE));
-            }
             if (!tool.spec.isEnergy()) {
                 lines.add(Component.translatable("gear.robotica.hud.durability", stack.getMaxDamage() - stack.getDamageValue(), stack.getMaxDamage()));
             }
@@ -84,12 +78,12 @@ final class GearHud {
     /** Installed modules, dimmed when switched off, plus the Lifesteal cooldown. Null when none. */
     private static Component moduleLine(ItemStack stack, Minecraft mc) {
         MutableComponent line = null;
-        for (GearModuleKind kind : GearModuleKind.values()) {
-            int level = GearModules.level(stack, kind);
+        for (ModuleKind kind : ModuleKind.values()) {
+            int level = Modules.level(stack, kind);
             if (level <= 0) continue;
-            ChatFormatting color = GearModules.enabled(stack, kind) ? ChatFormatting.AQUA : ChatFormatting.DARK_GRAY;
+            ChatFormatting color = Modules.enabled(stack, kind) ? ChatFormatting.AQUA : ChatFormatting.DARK_GRAY;
             MutableComponent name = kind.displayName(level).copy().withStyle(color);
-            if (kind == GearModuleKind.LIFESTEAL && mc.player != null) {
+            if (kind == ModuleKind.LIFESTEAL && mc.player != null) {
                 float cd = mc.player.getCooldowns().getCooldownPercent(Lifesteal.cooldownItem(), 0.0F);
                 if (cd > 0.0F) {
                     int seconds = (int) Math.ceil(cd * GearConfig.lifestealCooldown() / 20.0F);

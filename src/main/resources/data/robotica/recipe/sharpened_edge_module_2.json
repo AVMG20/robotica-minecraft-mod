@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "ADA",
+    " U "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "D": {
+      "tag": "c:gems/diamond"
+    },
+    "U": {
+      "item": "robotica:sharpened_edge_module"
+    }
+  },
+  "result": {
+    "id": "robotica:sharpened_edge_module_2",
+    "count": 1
+  }
+}

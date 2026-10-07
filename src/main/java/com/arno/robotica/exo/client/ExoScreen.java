@@ -6,10 +6,12 @@ import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
 import com.arno.robotica.exo.ExoItems;
-import com.arno.robotica.exo.ExoModuleKind;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.item.ExoArmorItem;
-import com.arno.robotica.exo.item.ExoModuleItem;
+import com.arno.robotica.core.module.ModuleItem;
+import com.arno.robotica.core.module.ModuleTarget;
+import com.arno.robotica.core.module.ModuleText;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.menu.ExoMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -90,13 +92,13 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
             ExoArmorItem armor = (ExoArmorItem) piece.getItem();
             g.renderItem(piece, x + 8, ry + 3);
             addTooltip(x + 8, ry + 3, 16, 16, piece.getHoverName(),
-                    Component.translatable("exo.robotica.tooltip.slots", armor.mk, armor.moduleSlots()).withStyle(ChatFormatting.GRAY));
+                    Component.translatable("exo.robotica.tooltip.slots", armor.mk, Modules.slots(piece)).withStyle(ChatFormatting.GRAY));
             drawEnergyBar(g, x + 27, ry + 3, 3, 16, ItemEnergy.get(piece), ItemEnergy.capacity(piece));
             for (int i = 0; i < ExoArmorItem.MAX_SLOTS; i++) {
                 int fx = x + ExoMenu.SLOT_X + i * ExoMenu.SLOT_STEP - 1;
                 if (i >= section.count()) {
                     drawLocked(g, fx, ry + 2);
-                    addTooltip(fx, ry + 2, 18, 18, Component.translatable("exo.robotica.locked", i + 1).withStyle(ChatFormatting.GRAY));
+                    addTooltip(fx, ry + 2, 18, 18, Component.translatable("exo.robotica.locked", Modules.tierForSlot(ModuleTarget.armor(section.slot()), i)).withStyle(ChatFormatting.GRAY));
                     continue;
                 }
                 renderModule(g, piece, r, i, fx, ry);
@@ -110,9 +112,9 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
     }
 
     private void renderModule(GuiGraphics g, ItemStack piece, int row, int slot, int fx, int ry) {
-        ItemStack module = ExoData.module(piece, slot);
-        if (!(module.getItem() instanceof ExoModuleItem m)) return;
-        boolean on = ExoData.isEnabled(piece, slot);
+        ItemStack module = Modules.module(piece, slot);
+        if (!(module.getItem() instanceof ModuleItem m)) return;
+        boolean on = Modules.enabled(piece, slot);
         boolean shadowed = menu.isShadowed(row, slot);
         boolean misplaced = menu.isMisplaced(row, slot);
         // Level pips under the slot.
@@ -134,10 +136,10 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         List<Component> lines = new ArrayList<>();
         lines.add(module.getHoverName());
         lines.add(Component.translatable(on ? "exo.robotica.on" : "exo.robotica.off").withStyle(on ? ChatFormatting.GREEN : ChatFormatting.GRAY));
-        Component cost = ExoModuleItem.costLine(m.kind, m.level);
+        Component cost = ModuleText.cost(m.kind, m.level);
         if (cost != null) lines.add(cost.copy().withStyle(ChatFormatting.AQUA));
-        lines.add(ExoModuleItem.descLine(m.kind, m.level).withStyle(ChatFormatting.GRAY));
-        lines.add(Component.translatable("exo.robotica.needs_mark", m.minMark()).withStyle(ChatFormatting.DARK_AQUA));
+        lines.add(ModuleText.describe(m.kind, m.level).withStyle(ChatFormatting.GRAY));
+        lines.add(m.kind.needsLine(m.level).withStyle(ChatFormatting.DARK_AQUA));
         if (misplaced) lines.add(Component.translatable("exo.robotica.misplaced").withStyle(ChatFormatting.RED));
         if (shadowed) lines.add(Component.translatable("exo.robotica.shadowed").withStyle(ChatFormatting.GOLD));
         lines.add(Component.translatable("exo.robotica.click_toggle").withStyle(ChatFormatting.DARK_GRAY));
@@ -208,7 +210,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
                 ExoMenu.Section section = menu.sections.get(r);
                 ItemStack piece = section.resolve(player);
                 for (int i = 0; i < section.count(); i++) {
-                    if (piece.isEmpty() || ExoData.kind(piece, i) == null) continue;
+                    if (piece.isEmpty() || Modules.kind(piece, i) == null) continue;
                     int sx = switchX(i);
                     int sy = rowY(r) + 2;
                     if (mouseX >= sx && mouseX < sx + SWITCH_W && mouseY >= sy && mouseY < sy + SWITCH_H) {

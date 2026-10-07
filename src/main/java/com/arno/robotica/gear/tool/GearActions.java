@@ -1,8 +1,8 @@
 package com.arno.robotica.gear.tool;
 
 import com.arno.robotica.core.CoreSounds;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -13,9 +13,11 @@ public final class GearActions {
     private GearActions() {}
 
     public static final int CYCLE_MODE = 0;
-    public static final int CYCLE_ENCHANT = 1;
+    /** B: cycles the installed Fortune / Silk Touch modules and off. */
+    public static final int CYCLE_DROPS = 1;
+    /** Flips a plain tool setting; arg = ToggleKind ordinal. */
     public static final int TOGGLE = 2;
-    /** Switches an installed module (tools and weapons) on or off; arg = GearModuleKind ordinal. */
+    /** Switches an installed module (tools and weapons) on or off; arg = ModuleKind ordinal. */
     public static final int MODULE_TOGGLE = 3;
 
     public static void apply(ServerPlayer player, int action, int arg) {
@@ -27,7 +29,7 @@ public final class GearActions {
         if (!(stack.getItem() instanceof GearToolItem tool)) return;
         switch (action) {
             case CYCLE_MODE -> cycleMode(player, stack, tool, arg);
-            case CYCLE_ENCHANT -> cycleEnchant(player, stack, tool);
+            case CYCLE_DROPS -> cycleDrops(player, stack);
             case TOGGLE -> toggle(player, stack, tool, arg);
             default -> {
             }
@@ -49,28 +51,21 @@ public final class GearActions {
         player.displayClientMessage(tool.modeStrip(next), true);
     }
 
-    public static void cycleEnchant(ServerPlayer player, ItemStack stack, GearToolItem tool) {
-        if (tool.spec.fortuneLevel <= 0) return;
-        int next = ToolSettings.nextEnchantMode(ToolSettings.enchantMode(stack));
-        ToolSettings.setEnchantMode(stack, next);
-        ToolSettings.syncEnchantments(stack, tool, player.level().registryAccess());
-        click(player, 1.0F);
-        String key = switch (next) {
-            case ToolSettings.ENCHANT_FORTUNE -> "gear.robotica.enchant.fortune";
-            case ToolSettings.ENCHANT_SILK -> "gear.robotica.enchant.silk";
-            default -> "gear.robotica.enchant.none";
-        };
-        player.displayClientMessage(Component.translatable(key), true);
+    /** Off, Fortune, Silk Touch, off... over the drop modules the tool has. */
+    public static void cycleDrops(ServerPlayer player, ItemStack stack) {
+        if (!GearToolItem.hasDropModules(stack)) {
+            player.displayClientMessage(Component.translatable("gear.robotica.enchant.needs_module"), true);
+            return;
+        }
+        ModuleKind on = Modules.cycleGroup(stack, ModuleKind.Group.DROPS);
+        click(player, on != null ? 1.2F : 0.85F);
+        player.displayClientMessage(on == null ? Component.translatable("gear.robotica.enchant.none")
+                : Component.translatable("gear.robotica.enchant.active", on.displayName(Modules.level(stack, on))), true);
     }
 
     public static void toggle(ServerPlayer player, ItemStack stack, GearToolItem tool, int ordinal) {
         ToggleKind kind = ToggleKind.byOrdinal(ordinal);
         if (kind == null || !tool.spec.toggles.contains(kind)) return;
-        if (!ToolSettings.installed(stack, kind)) {
-            player.displayClientMessage(Component.translatable("gear.robotica.toggle.needs_module", kind.displayName(),
-                    com.arno.robotica.core.item.CoreItems.card(kind.module).get().getDescription()), true);
-            return;
-        }
         boolean on = !ToolSettings.has(stack, kind);
         ToolSettings.set(stack, kind, on);
         click(player, on ? 1.2F : 0.85F);
@@ -79,12 +74,12 @@ public final class GearActions {
     }
 
     public static void toggleModule(ServerPlayer player, ItemStack stack, int ordinal) {
-        GearModuleKind kind = GearModuleKind.byOrdinal(ordinal);
-        if (kind == null || !GearModules.acceptsModules(stack) || GearModules.level(stack, kind) <= 0) return;
-        boolean on = !GearModules.enabled(stack, kind);
-        GearModules.setEnabled(stack, kind, on);
+        ModuleKind kind = ModuleKind.byOrdinal(ordinal);
+        if (kind == null || Modules.target(stack) == null || Modules.target(stack).isArmor() || Modules.level(stack, kind) <= 0) return;
+        boolean on = !Modules.enabled(stack, kind);
+        Modules.setEnabled(stack, kind, on);
         click(player, on ? 1.2F : 0.85F);
-        player.displayClientMessage(Component.translatable("gear.robotica.toggle.changed", kind.displayName(GearModules.level(stack, kind)),
+        player.displayClientMessage(Component.translatable("gear.robotica.toggle.changed", kind.displayName(Modules.level(stack, kind)),
                 Component.translatable(on ? "gear.robotica.on" : "gear.robotica.off")), true);
     }
 }

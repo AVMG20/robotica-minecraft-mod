@@ -47,7 +47,7 @@ shaped('tinkers_hammer', ['CCC', 'CGC', ' S '], {'C': COPPER, 'G': 'copper_gear'
 shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 
-# Age 1: Tinker's Bench fits cards (Auto-Pickup, Void Filter) and the tool and weapon modules into FE tools and weapons.
+# Age 1: Tinker's Bench fits modules into FE tools, FE weapons and Exo armor.
 shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': 'copper_gear', 'T': 'minecraft:crafting_table', 'W': '#minecraft:planks'})
 
 # Age 1: the Age 0 tools upgrade at a smithing table (kit I + tool + Electric Motor), like every later tier.
@@ -85,4 +85,22 @@ shaped('chain_lightning_module_2', ['QPQ', ' U '], {'Q': 'quantum_circuit', 'P':
 shaped('chain_lightning_module_3', ['NLN', ' U '], {'N': 'null_circuit', 'L': 'minecraft:lightning_rod', 'U': 'chain_lightning_module_2'})
 shaped('lifesteal_module', ['NTN', 'GCG'], {'N': 'null_circuit', 'T': 'minecraft:totem_of_undying', 'G': 'minecraft:ghast_tear',
                                             'C': 'null_casing'})
+# Tool modules: they replace enchanting (Efficiency, Fortune, Silk Touch, Unbreaking).
+shaped('overclock_module', ['RMR', 'PBP'], {'R': '#c:dusts/redstone', 'M': 'electric_motor', 'P': IRON_PLATE, 'B': 'basic_circuit'})
+shaped('overclock_module_2', ['ASA', ' U '], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'U': 'overclock_module'})
+shaped('overclock_module_3', ['QPQ', ' U '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'U': 'overclock_module_2'})
+shaped('fortune_module', ['LGL', 'PBP'], {'L': '#c:gems/lapis', 'G': GOLD, 'P': IRON_PLATE, 'B': 'basic_circuit'})
+shaped('fortune_module_2', ['ADA', ' U '], {'A': 'advanced_circuit', 'D': '#c:gems/diamond', 'U': 'fortune_module'})
+shaped('fortune_module_3', ['QEQ', ' U '], {'Q': 'quantum_circuit', 'E': '#c:gems/emerald', 'U': 'fortune_module_2'})
+shaped('silk_touch_module', ['SGS', 'PBP'], {'S': '#c:strings', 'G': GOLD, 'P': IRON_PLATE, 'B': 'basic_circuit'})
+shaped('auto_pickup_module', ['PHP', 'CBC'], {'P': IRON_PLATE, 'H': 'minecraft:hopper', 'C': 'copper_coil', 'B': 'basic_circuit'})
+shaped('void_filter_module', ['POP', 'CBC'], {'P': IRON_PLATE, 'O': '#c:obsidians', 'C': 'copper_coil', 'B': 'basic_circuit'})
+# Weapon modules: they replace Sharpness, Looting and Fire Aspect.
+shaped('sharpened_edge_module', ['PSP', 'CBC'], {'P': IRON_PLATE, 'S': 'minecraft:iron_sword', 'C': 'copper_coil', 'B': 'basic_circuit'})
+shaped('sharpened_edge_module_2', ['ADA', ' U '], {'A': 'advanced_circuit', 'D': '#c:gems/diamond', 'U': 'sharpened_edge_module'})
+shaped('sharpened_edge_module_3', ['QBQ', ' U '], {'Q': 'quantum_circuit', 'B': 'minecraft:blaze_rod', 'U': 'sharpened_edge_module_2'})
+shaped('looting_module', ['LEL', 'PBP'], {'L': '#c:gems/lapis', 'E': '#c:gems/emerald', 'P': IRON_PLATE, 'B': 'basic_circuit'})
+shaped('looting_module_2', ['AGA', ' U '], {'A': 'advanced_circuit', 'G': '#c:storage_blocks/gold', 'U': 'looting_module'})
+shaped('looting_module_3', ['QDQ', ' U '], {'Q': 'quantum_circuit', 'D': '#c:gems/diamond', 'U': 'looting_module_2'})
+shaped('thermal_edge_module', ['PFP', 'CBC'], {'P': IRON_PLATE, 'F': 'minecraft:flint_and_steel', 'C': 'copper_coil', 'B': 'basic_circuit'})
 print('gear recipes written to', OUT)

@@ -3,12 +3,10 @@ package com.arno.robotica.exo;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.exo.menu.ExoMenu;
-import com.mojang.serialization.Codec;
 import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ArmorItem;
@@ -22,7 +20,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.EnumMap;
 import java.util.List;
 
-/** Registries of the exo module: data components, armor materials and the module menu. */
+/** Registries of the exo module: the core socket component, armor materials and the module menu. */
 public final class ExoRegistry {
     private ExoRegistry() {}
 
@@ -30,15 +28,6 @@ public final class ExoRegistry {
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Robotica.MODID);
     public static final DeferredRegister<ArmorMaterial> MATERIALS = DeferredRegister.create(Registries.ARMOR_MATERIAL, Robotica.MODID);
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
-
-    /** Installed module items of an armor piece (one entry per module slot). Survives smithing upgrades. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> MODULES =
-            COMPONENTS.registerComponentType("exo_modules",
-                    b -> b.persistent(ItemContainerContents.CODEC).networkSynchronized(ItemContainerContents.STREAM_CODEC));
-
-    /** Bit i set: the module in slot i is switched off. Absent means everything is on. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MODULES_OFF =
-            COMPONENTS.registerComponentType("exo_modules_off", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
     /** The core in the chestplate's core socket (Mk2+): one Servo, Magma or Antigrav Core, never consumed. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> CORE =

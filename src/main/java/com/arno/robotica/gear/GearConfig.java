@@ -25,7 +25,12 @@ public final class GearConfig {
     public static final ModConfigSpec.DoubleValue RIVET_SPEED;
     public static final ModConfigSpec.IntValue RIVET_FLIGHT_TICKS;
     // modules
-    public static final ModConfigSpec.IntValue[] MODULE_SLOTS = new ModConfigSpec.IntValue[4];
+    public static final ModConfigSpec.DoubleValue[] OVERCLOCK_SPEED = new ModConfigSpec.DoubleValue[3];
+    public static final ModConfigSpec.DoubleValue[] OVERCLOCK_COST = new ModConfigSpec.DoubleValue[3];
+    public static final ModConfigSpec.DoubleValue[] EDGE_DAMAGE = new ModConfigSpec.DoubleValue[3];
+    public static final ModConfigSpec.IntValue[] EDGE_COST = new ModConfigSpec.IntValue[3];
+    public static final ModConfigSpec.IntValue THERMAL_SECONDS;
+    public static final ModConfigSpec.IntValue THERMAL_COST;
     public static final ModConfigSpec.IntValue TORCH_LIGHT;
     public static final ModConfigSpec.IntValue TORCH_COST;
     public static final ModConfigSpec.IntValue TORCH_COOLDOWN;
@@ -43,7 +48,10 @@ public final class GearConfig {
     public static final ModConfigSpec.IntValue LIFESTEAL_COOLDOWN;
     public static final ModConfigSpec.IntValue LIFESTEAL_COST;
 
-    private static final int[] SLOT_DEFAULTS = {1, 2, 3, 4};
+    private static final double[] OVERCLOCK_SPEED_DEFAULTS = {0.5, 1.0, 2.0};
+    private static final double[] OVERCLOCK_COST_DEFAULTS = {0.2, 0.4, 0.6};
+    private static final double[] EDGE_DAMAGE_DEFAULTS = {0.15, 0.3, 0.45};
+    private static final int[] EDGE_COST_DEFAULTS = {50, 100, 150};
     private static final double[] PIERCE_SHARE_DEFAULTS = {0.2, 0.35, 0.5};
     private static final int[] PIERCE_COST_DEFAULTS = {50, 100, 150};
     private static final int[] CHAIN_ARC_DEFAULTS = {2, 4, 6};
@@ -78,10 +86,20 @@ public final class GearConfig {
         RIVET_FLIGHT_TICKS = b.comment("Ticks a rivet flies before it drops out of the air.").defineInRange("rivetFlightTicks", 100, 10, 1200);
         b.pop();
         b.push("modules");
-        for (int age = 1; age <= 4; age++) {
-            MODULE_SLOTS[age - 1] = b.comment("Module slots of an Age " + age + " power tool or FE weapon (Auto-Pickup and Void Filter cards do not use one).")
-                    .defineInRange("moduleSlotsAge" + age, SLOT_DEFAULTS[age - 1], 0, 4);
+        for (int lv = 1; lv <= 3; lv++) {
+            OVERCLOCK_SPEED[lv - 1] = b.comment("Overclock " + lv + ": extra mining speed (1.0 = twice as fast).")
+                    .defineInRange("overclockSpeed" + lv, OVERCLOCK_SPEED_DEFAULTS[lv - 1], 0.0, 20.0);
+            OVERCLOCK_COST[lv - 1] = b.comment("Overclock " + lv + ": extra FE per block as a share of the tool's cost (0.2 = +20%).")
+                    .defineInRange("overclockCost" + lv, OVERCLOCK_COST_DEFAULTS[lv - 1], 0.0, 10.0);
         }
+        for (int lv = 1; lv <= 3; lv++) {
+            EDGE_DAMAGE[lv - 1] = b.comment("Sharpened Edge " + lv + ": extra damage of a paid hit or shot (0.15 = +15%).")
+                    .defineInRange("sharpenedEdgeDamage" + lv, EDGE_DAMAGE_DEFAULTS[lv - 1], 0.0, 10.0);
+            EDGE_COST[lv - 1] = b.comment("Sharpened Edge " + lv + ": extra FE per hit or shot.")
+                    .defineInRange("sharpenedEdgeCost" + lv, EDGE_COST_DEFAULTS[lv - 1], 0, 1_000_000);
+        }
+        THERMAL_SECONDS = b.comment("Thermal Edge: seconds a paid hit or shot sets the target on fire.").defineInRange("thermalEdgeSeconds", 4, 1, 60);
+        THERMAL_COST = b.comment("Thermal Edge: extra FE per hit or shot.").defineInRange("thermalEdgeCost", 100, 0, 1_000_000);
         TORCH_LIGHT = b.comment("Torch Placer: places a torch where you mined when the light there is this or lower (sky or block light).")
                 .defineInRange("torchPlacerLight", 7, 0, 14);
         TORCH_COST = b.comment("Torch Placer: FE per torch placed.").defineInRange("torchPlacerCost", 25, 0, 1_000_000);
@@ -129,9 +147,35 @@ public final class GearConfig {
         return SPEC.isLoaded() && AREA_BREAKS_BLOCK_ENTITIES.get();
     }
 
-    public static int moduleSlots(int age) {
-        if (age < 1 || age > 4) return 0;
-        return SPEC.isLoaded() ? MODULE_SLOTS[age - 1].get() : SLOT_DEFAULTS[age - 1];
+    /** Overclock: extra mining speed share (0 without). */
+    public static double overclockSpeed(int level) {
+        if (level <= 0) return 0.0;
+        return SPEC.isLoaded() ? OVERCLOCK_SPEED[lv(level, 3)].get() : OVERCLOCK_SPEED_DEFAULTS[lv(level, 3)];
+    }
+
+    /** Overclock: extra FE per block as a share of the tool's cost (0 without). */
+    public static double overclockCost(int level) {
+        if (level <= 0) return 0.0;
+        return SPEC.isLoaded() ? OVERCLOCK_COST[lv(level, 3)].get() : OVERCLOCK_COST_DEFAULTS[lv(level, 3)];
+    }
+
+    /** Sharpened Edge: extra damage share (0 without). */
+    public static double edgeDamage(int level) {
+        if (level <= 0) return 0.0;
+        return SPEC.isLoaded() ? EDGE_DAMAGE[lv(level, 3)].get() : EDGE_DAMAGE_DEFAULTS[lv(level, 3)];
+    }
+
+    public static int edgeCost(int level) {
+        if (level <= 0) return 0;
+        return fe(EDGE_COST[lv(level, 3)], EDGE_COST_DEFAULTS[lv(level, 3)]);
+    }
+
+    public static int thermalSeconds() {
+        return SPEC.isLoaded() ? THERMAL_SECONDS.get() : 4;
+    }
+
+    public static int thermalCost(int level) {
+        return level <= 0 ? 0 : fe(THERMAL_COST, 100);
     }
 
     public static float rivetDamage() {

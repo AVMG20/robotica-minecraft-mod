@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntSupplier;
 
-/** Static description of a mining tool: harvest tier, effective block tags, modes, toggles and costs. */
+/** Static description of a mining tool: harvest tier, effective block tags, modes, settings and costs. */
 public final class ToolSpec {
     public final Tier tier;
     public final float speed;
@@ -29,8 +29,6 @@ public final class ToolSpec {
     public final IntSupplier costPerBlock;
     public final int maxLogs;
     public final Set<ToggleKind> toggles;
-    /** Fortune level used by the silk/fortune swap, 0 = no swap. */
-    public final int fortuneLevel;
     /**
      * Mining speed factor in box modes (3x3 and up). Early tools pay for the area with speed: the hammer and Bore Drill
      * dig a 3x3 at half speed, which is still four times faster than nine single blocks. Later drills lose less.
@@ -50,7 +48,6 @@ public final class ToolSpec {
         this.costPerBlock = b.cost;
         this.maxLogs = b.maxLogs;
         this.toggles = b.toggles.isEmpty() ? EnumSet.noneOf(ToggleKind.class) : EnumSet.copyOf(b.toggles);
-        this.fortuneLevel = b.fortuneLevel;
         this.areaSpeed = b.areaSpeed;
         this.age = b.age;
     }
@@ -98,7 +95,6 @@ public final class ToolSpec {
         private IntSupplier cost = () -> 0;
         private int maxLogs = 64;
         private final Set<ToggleKind> toggles = EnumSet.noneOf(ToggleKind.class);
-        private int fortuneLevel;
         private float areaSpeed = 1.0F;
         private int age;
 
@@ -147,11 +143,6 @@ public final class ToolSpec {
 
         public Builder toggles(ToggleKind... t) {
             toggles.addAll(List.of(t));
-            return this;
-        }
-
-        public Builder fortune(int level) {
-            this.fortuneLevel = level;
             return this;
         }
 

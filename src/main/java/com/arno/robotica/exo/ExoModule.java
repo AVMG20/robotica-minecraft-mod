@@ -17,6 +17,7 @@ public final class ExoModule {
         ExoItems.ITEMS.register(modBus);
         ExoItems.addToTab();
         container.registerConfig(ModConfig.Type.SERVER, ExoConfig.SPEC, "robotica-exo-server.toml");
+        ExoModuleText.register();
         modBus.addListener(RegisterPayloadHandlersEvent.class, ExoActionPayload::register);
     }
 }

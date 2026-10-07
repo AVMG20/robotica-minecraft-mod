@@ -245,7 +245,6 @@ CARD_GLYPHS = {
     'silk': ['yyyyyyy', '.......', 'yyyyyyy'],
     'growth': ['...y...', '.yyyyy.', '...y...'],
     'void': ['y.....y', '..y.y..', 'y.....y'],
-    'pickup': ['y.....y', 'y.....y', '.yyyyy.'],
     'height': ['...y...', '..y.y..', '.y...y.'],
     'carry': ['..y.y..', 'yyyyyyy', 'yyyyyyy'],
 }
@@ -271,7 +270,7 @@ def card(kind):
 
 CARD_COLORS = {
     'speed': 'red', 'range': 'cyan', 'efficiency': 'green', 'fortune': 'gold', 'silk': 'white', 'growth': 'green',
-    'void': 'purple', 'pickup': 'teal', 'height': 'amber', 'carry': 'wood',
+    'void': 'purple', 'height': 'amber', 'carry': 'wood',
 }
 
 

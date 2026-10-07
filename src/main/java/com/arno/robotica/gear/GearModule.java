@@ -19,6 +19,7 @@ public final class GearModule {
         RoboticaTab.add(GearBlocks.TINKERS_BENCH_ITEM);
         GearItems.addToTab();
         container.registerConfig(ModConfig.Type.SERVER, GearConfig.SPEC, "robotica-gear-server.toml");
+        GearModuleText.register();
         modBus.addListener(RegisterPayloadHandlersEvent.class, GearActionPayload::register);
     }
 }

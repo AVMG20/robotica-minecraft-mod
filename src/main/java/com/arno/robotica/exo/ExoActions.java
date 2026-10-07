@@ -1,6 +1,9 @@
 package com.arno.robotica.exo;
 
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.exo.menu.ExoMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,13 +38,13 @@ public final class ExoActions {
     /** Flips the Flight module of the worn chestplate. Returns false when there is none. */
     public static boolean toggleFlight(ServerPlayer player) {
         ItemStack chest = ExoSuit.piece(player, EquipmentSlot.CHEST);
-        int slot = chest.isEmpty() ? -1 : ExoData.slotOf(chest, ExoModuleKind.FLIGHT);
+        int slot = chest.isEmpty() ? -1 : Modules.slotOf(chest, ModuleKind.FLIGHT);
         if (slot < 0) {
             player.displayClientMessage(Component.translatable("exo.robotica.no_flight"), true);
             return false;
         }
-        boolean on = !ExoData.isEnabled(chest, slot);
-        ExoData.setEnabled(chest, slot, on);
+        boolean on = !Modules.enabled(chest, slot);
+        Modules.setEnabled(chest, slot, on);
         player.displayClientMessage(Component.translatable("exo.robotica.flight", Component.translatable(on ? "exo.robotica.on" : "exo.robotica.off")), true);
         ExoTicker.notifySound(player, CoreSounds.TOOL_MODE.get(), 0.6F, on ? 1.3F : 0.8F);
         return true;

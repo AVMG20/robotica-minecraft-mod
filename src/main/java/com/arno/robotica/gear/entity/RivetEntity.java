@@ -40,7 +40,7 @@ import java.util.Comparator;
  * (arrow damage type, so it counts as a projectile), never drops as an item. In a block it sticks for a moment and then
  * shatters into sparks. With Ricochet Rivets it bounces off a hit monster to the next one (up to its bounce count),
  * each bounce dealing a share of the hit before it. Armor Pierce is carried as {@link #pierce()} and read by the damage
- * hook. Rendered by {@code gear.client.RivetRenderer}.
+ * hook; Thermal Edge sets hit targets on fire. Rendered by {@code gear.client.RivetRenderer}.
  */
 public class RivetEntity extends ThrowableProjectile {
     private static final EntityDataAccessor<Boolean> STUCK = SynchedEntityData.defineId(RivetEntity.class, EntityDataSerializers.BOOLEAN);
@@ -49,6 +49,7 @@ public class RivetEntity extends ThrowableProjectile {
     private float damage = 8.0F;
     private float pierce;
     private int bounces;
+    private int fireSeconds;
     private int bouncesDone;
     private int stuckTicks;
     private boolean clientStuck;
@@ -73,6 +74,11 @@ public class RivetEntity extends ThrowableProjectile {
 
     public float damage() {
         return damage;
+    }
+
+    /** Thermal Edge: seconds a hit sets the target on fire (0 = none). */
+    public void setFireSeconds(int seconds) {
+        this.fireSeconds = seconds;
     }
 
     /** Share of the armor reduction this rivet ignores (Armor Pierce). */
@@ -153,6 +159,7 @@ public class RivetEntity extends ThrowableProjectile {
         Entity target = result.getEntity();
         hit.add(target.getId());
         boolean hurt = target.hurt(damageSource(), damage);
+        if (hurt && fireSeconds > 0) target.igniteForSeconds(fireSeconds);
         Vec3 at = result.getLocation();
         level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 8, 0.15, 0.15, 0.15, 0.3);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 6, 0.1, 0.1, 0.1, 0.2);

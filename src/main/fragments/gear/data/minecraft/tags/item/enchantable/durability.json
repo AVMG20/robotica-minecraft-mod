@@ -1,11 +1,6 @@
 {
   "values": [
     "robotica:tinkers_hammer",
-    "robotica:felling_axe",
-    "robotica:bore_drill",
-    "robotica:chainsaw",
-    "robotica:servo_drill",
-    "robotica:magma_drill",
-    "robotica:null_drill"
+    "robotica:felling_axe"
   ]
 }

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "AGA",
+    " U "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "G": {
+      "tag": "c:storage_blocks/gold"
+    },
+    "U": {
+      "item": "robotica:looting_module"
+    }
+  },
+  "result": {
+    "id": "robotica:looting_module_2",
+    "count": 1
+  }
+}

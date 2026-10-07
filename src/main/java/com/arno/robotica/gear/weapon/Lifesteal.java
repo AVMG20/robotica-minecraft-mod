@@ -2,9 +2,9 @@ package com.arno.robotica.gear.weapon;
 
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.gear.GearConfig;
-import com.arno.robotica.gear.GearItems;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
+import com.arno.robotica.core.module.ModuleItems;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -80,7 +80,7 @@ public final class Lifesteal {
     private static final Map<UUID, Budget> BUDGETS = new HashMap<>();
 
     public static Item cooldownItem() {
-        return GearItems.module(GearModuleKind.LIFESTEAL, 1).get();
+        return ModuleItems.get(ModuleKind.LIFESTEAL, 1).get();
     }
 
     /** Health healed in the player's last second (tests, HUD). */
@@ -94,7 +94,7 @@ public final class Lifesteal {
      * health healed (0 when the module is missing or off, on cooldown, at full health or the weapon is empty).
      */
     public static float onHit(ServerPlayer player, ItemStack weapon, LivingEntity target, float dealt) {
-        if (dealt <= 0 || GearModules.active(weapon, GearModuleKind.LIFESTEAL) <= 0) return 0.0F;
+        if (dealt <= 0 || Modules.active(weapon, ModuleKind.LIFESTEAL) <= 0) return 0.0F;
         Item cd = cooldownItem();
         if (player.getCooldowns().isOnCooldown(cd)) return 0.0F;
         float missing = player.getMaxHealth() - player.getHealth();
@@ -104,7 +104,7 @@ public final class Lifesteal {
         float cap = GearConfig.lifestealMaxPerSecond();
         int cooldown = GearConfig.lifestealCooldown();
         float amount = Math.min(dealt * GearConfig.lifestealShare(), Math.min(budget.room(now, cap, cooldown), missing));
-        int costPer = GearConfig.lifestealCost();
+        int costPer = Modules.regulated(weapon, GearConfig.lifestealCost());
         boolean creative = player.getAbilities().instabuild;
         if (!creative && costPer > 0) amount = Math.min(amount, ItemEnergy.get(weapon) / (float) costPer);
         if (amount < 0.01F) return 0.0F;

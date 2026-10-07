@@ -2,8 +2,8 @@ package com.arno.robotica.gear.tool;
 
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.gear.GearConfig;
-import com.arno.robotica.gear.module.GearModuleKind;
-import com.arno.robotica.gear.module.GearModules;
+import com.arno.robotica.core.module.ModuleKind;
+import com.arno.robotica.core.module.Modules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -50,7 +50,7 @@ public final class TorchPlacer {
 
     /** Called when the player breaks a block with a drill (origin of the break only). */
     public static void schedule(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos pos) {
-        if (GearModules.active(tool, GearModuleKind.TORCH_PLACER) <= 0) return;
+        if (Modules.active(tool, ModuleKind.TORCH_PLACER) <= 0) return;
         PENDING.put(player.getUUID(), new Pending(level.dimension(), pos.immutable(), level.getGameTime() + DELAY));
     }
 
@@ -69,7 +69,7 @@ public final class TorchPlacer {
             if (level.getGameTime() < p.due()) continue;
             it.remove();
             ItemStack tool = player.getMainHandItem();
-            if (GearModules.active(tool, GearModuleKind.TORCH_PLACER) <= 0 || !level.isLoaded(p.pos())) continue;
+            if (Modules.active(tool, ModuleKind.TORCH_PLACER) <= 0 || !level.isLoaded(p.pos())) continue;
             if (isDark(level, p.pos())) tryPlace(player, level, tool, p.pos());
         }
     }
@@ -91,7 +91,7 @@ public final class TorchPlacer {
         boolean creative = player.getAbilities().instabuild;
         ItemStack torches = findTorch(player.getInventory());
         if (torches.isEmpty() && !creative) return false;
-        int cost = GearConfig.torchCost();
+        int cost = Modules.regulated(tool, GearConfig.torchCost());
         if (!creative && ItemEnergy.get(tool) < cost) return false;
         for (BlockPos spot : List.of(pos, pos.below(), player.blockPosition())) {
             for (BlockState state : candidates(player, spot)) {
