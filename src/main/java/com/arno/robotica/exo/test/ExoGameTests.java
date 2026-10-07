@@ -307,7 +307,8 @@ public class ExoGameTests {
         return item;
     }
 
-    @GameTest(template = "empty")
+    // own batch: items and magnets of tests running next to it would otherwise pull or merge these drops
+    @GameTest(template = "empty", batch = "exo_magnet")
     public static void magnetRadiusGrowsWithLevel(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         int start = 50_000;
