@@ -5,6 +5,7 @@ import com.arno.robotica.automation.block.AreaWorkerBlock;
 import com.arno.robotica.automation.block.ExcavatorBlock;
 import com.arno.robotica.automation.block.SurveyRigBlock;
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.item.HasDetails;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Locale;
 
 /** Block item of the automation machines: shows the age, a one-line description and, for Mk'd machines, the Mk stats. */
-public class WorkerBlockItem extends BlockItem {
+public class WorkerBlockItem extends BlockItem implements HasDetails {
     private final int age;
     private final String descriptionKey;
 
@@ -43,5 +44,10 @@ public class WorkerBlockItem extends BlockItem {
                     AutomationConfig.surveySlots(tier)).withStyle(ChatFormatting.DARK_GRAY));
         }
         if (tier > 1) tooltip.add(Component.translatable("tooltip.robotica.worker_upgrade", tier - 1).withStyle(ChatFormatting.DARK_GRAY));
+    }
+
+    @Override
+    public void appendDetails(ItemStack stack, TooltipContext ctx, List<Component> lines) {
+        if (getBlock() instanceof ExcavatorBlock) lines.add(HasDetails.line("tooltip.robotica.excavator_details", AutomationConfig.excavatorRangeStep()));
     }
 }

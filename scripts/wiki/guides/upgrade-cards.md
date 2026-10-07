@@ -29,7 +29,7 @@ One card item per kind. Machines only take the kinds they have a use for.
 | [[upgrade_pickup]] | 1 | power tools only, at a [[tinkers_bench]] |
 | [[upgrade_carry]] | 1 | Storage Terminal keeps its items when picked up |
 
-> Speed is never free: every card costs more FE than the one before. Quarries pay the steep price: 8 cards cost 21x the FE per block in the [[excavator_mk4]]. Excavator and Survey Rig take more cards with every Mk.
+> Every speed card costs more FE than the one before. Quarries pay the steep price: 8 cards cost 21x the FE per block in the [[excavator_mk4]]. Excavator and Survey Rig take more cards with every Mk.
 
 ## Which machine takes what
 

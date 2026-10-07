@@ -40,6 +40,13 @@ public class ArcBladeItem extends EnergyWeaponItem {
         return true;
     }
 
+    /** The blade whose paid swing is arcing right now (server thread), so its arcs count as paid whatever FE is left. */
+    private static ItemStack arcing = ItemStack.EMPTY;
+
+    static boolean arcing(ItemStack stack) {
+        return !arcing.isEmpty() && arcing == stack;
+    }
+
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         if (!pay(stack, attacker) || !(attacker.level() instanceof ServerLevel level)) return true;
@@ -52,18 +59,23 @@ public class ArcBladeItem extends EnergyWeaponItem {
         done.add(target);
         LivingEntity from = target;
         int hit = 0;
-        while (hit < arcs) {
-            LivingEntity next = nextTarget(level, from, attacker, done, range);
-            if (next == null) break;
-            // Arcs beyond the blade's own 3 come from Chain Lightning and cost extra.
-            if (hit >= CHAIN_TARGETS && !creative && !ItemEnergy.tryUse(stack, GearConfig.chainCostPerArc())) break;
-            done.add(next);
-            next.hurt(source, BASE_DAMAGE * 0.5F);
-            arc(level, from.getBoundingBox().getCenter(), next.getBoundingBox().getCenter());
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, next.getX(), next.getY(0.6), next.getZ(), 10, 0.3, 0.4, 0.3, 0.15);
-            CoreSounds.play(level, next.blockPosition(), CoreSounds.ARC_STRIKE, SoundSource.PLAYERS, 0.4F, 1.1F + hit * 0.08F);
-            from = next;
-            hit++;
+        arcing = stack;
+        try {
+            while (hit < arcs) {
+                LivingEntity next = nextTarget(level, from, attacker, done, range);
+                if (next == null) break;
+                // Arcs beyond the blade's own 3 come from Chain Lightning and cost extra.
+                if (hit >= CHAIN_TARGETS && !creative && !ItemEnergy.tryUse(stack, GearConfig.chainCostPerArc())) break;
+                done.add(next);
+                next.hurt(source, BASE_DAMAGE * 0.5F);
+                arc(level, from.getBoundingBox().getCenter(), next.getBoundingBox().getCenter());
+                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, next.getX(), next.getY(0.6), next.getZ(), 10, 0.3, 0.4, 0.3, 0.15);
+                CoreSounds.play(level, next.blockPosition(), CoreSounds.ARC_STRIKE, SoundSource.PLAYERS, 0.4F, 1.1F + hit * 0.08F);
+                from = next;
+                hit++;
+            }
+        } finally {
+            arcing = ItemStack.EMPTY;
         }
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY(0.6), target.getZ(), 14, 0.3, 0.4, 0.3, 0.2);
         CoreSounds.play(level, target.blockPosition(), CoreSounds.ARC_STRIKE, SoundSource.PLAYERS, 0.8F, 0.95F + level.random.nextFloat() * 0.1F);

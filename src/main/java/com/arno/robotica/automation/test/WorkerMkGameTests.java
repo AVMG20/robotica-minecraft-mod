@@ -68,6 +68,11 @@ public class WorkerMkGameTests {
 
         ItemStack mk2 = new ItemStack(AutomationContent.EXCAVATOR_MK2_ITEM.get());
         use(helper, player, mk2);
+        helper.assertTrue(helper.getBlockState(POS).is(AutomationContent.EXCAVATOR.get()) && mk2.getCount() == 1, "a stranger may not upgrade it");
+
+        owner = player.getUUID();
+        old.setOwner(owner);
+        use(helper, player, mk2);
         helper.assertTrue(helper.getBlockState(POS).is(AutomationContent.EXCAVATOR_MK2.get()), "the block is now Mk2");
         helper.assertTrue(mk2.isEmpty(), "the Mk2 item was used");
         helper.assertTrue(has(player, AutomationContent.EXCAVATOR_ITEM.get()), "the Mk1 comes back");

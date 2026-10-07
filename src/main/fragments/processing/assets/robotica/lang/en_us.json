@@ -106,5 +106,6 @@
   "gui.robotica.processing.card.electric_furnace.speed": "In this Electric Furnace: smelts faster (FE/t rises with it)",
   "gui.robotica.processing.card.electric_furnace.efficiency": "In this Electric Furnace: less FE per item",
   "gui.robotica.processing.card.electric_furnace.fortune": "In this Electric Furnace: +%s%% experience per card (not for dusts)",
-  "gui.robotica.processing.card.electric_furnace.range": "In this Electric Furnace: each lane smelts one more item per cycle, for one more item's FE"
+  "gui.robotica.processing.card.electric_furnace.range": "In this Electric Furnace: each lane smelts one more item per cycle, for one more item's FE",
+  "message.robotica.machine_place_first": "Place this %s first, then upgrade"
 }

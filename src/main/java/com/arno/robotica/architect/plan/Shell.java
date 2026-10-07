@@ -117,6 +117,12 @@ public final class Shell {
         public static int heightOf(int signature) {
             return Plots.HEIGHT + ((signature >> 20) & 15);
         }
+
+        /** The shape a signature was made from (style bits ignored): builds the same blocks as the original. */
+        public static Shape fromSignature(int signature) {
+            return new Shape(signature & 15, (signature >> 4) & 15, (signature >> 8) & 15, heightOf(signature),
+                    (signature >> 12) & 15, (signature >> 16) & 15, (signature >> 24) & 15);
+        }
     }
 
     /** A lone building with one door. */

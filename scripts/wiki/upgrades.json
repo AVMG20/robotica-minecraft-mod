@@ -78,7 +78,7 @@
       "maxStack": 1,
       "age": 1,
       "summary": "Power tool module: drops go to your inventory.",
-      "rules": "Tinker's Bench card slot (uses no module slot). No machine takes it."
+      "rules": "Tinker's Bench card slot (uses no module slot)."
     },
     "height": {
       "item": "upgrade_height",

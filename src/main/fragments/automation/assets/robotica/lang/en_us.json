@@ -50,7 +50,7 @@
   "robotica.configuration.excavatorFePerBlock": "Excavator FE per block",
   "tooltip.robotica.stumpy.details": "Drops go into a touching chest or Supply Crate",
   "tooltip.robotica.sprout.details": "Tills dirt near water. Drops go into a touching chest",
-  "tooltip.robotica.excavator.details": "Seals fluids with cobblestone. Range cards: +10 wide each",
+  "tooltip.robotica.excavator_details": "Seals fluids with cobblestone. Range cards: +%s wide each",
   "message.robotica.robot_status": "%s %sx%s: %s, battery %s%%",
   "message.robotica.robot_no_energy": "%s is out of energy: right-click it with a wound Mainspring or a charged cell",
   "message.robotica.robot_full": "%s is full: put a chest or Supply Crate next to it",
@@ -103,6 +103,7 @@
   "tooltip.robotica.survey_rig_mk": "Mk%s: x%s speed, rare ores +%s%%, %s card slots",
   "tooltip.robotica.worker_upgrade": "Right-click a placed Mk%s with it to upgrade in place",
   "message.robotica.worker_upgraded": "Upgraded to %s",
+  "message.robotica.worker_locked": "Only the owner, their team or an operator can upgrade this",
   "message.robotica.worker_order": "Upgrade it to Mk%s first",
   "robotica.configuration.excavatorSizeMk1": "Excavator Mk1 size",
   "robotica.configuration.excavatorIntervalMk1": "Excavator Mk1 ticks per block",
@@ -157,6 +158,7 @@
   "robotica.configuration.surveyRigSpeedMk4": "Survey Rig Mk4 speed (%)",
   "robotica.configuration.surveyRigRareBonusMk4": "Survey Rig Mk4 rare ore bonus (%)",
   "robotica.configuration.excavatorRangeStep": "Excavator width per range card",
+  "robotica.configuration.excavatorMaxSize": "Excavator max width",
   "robotica.configuration.excavatorInputPerTick": "Excavator Mk1 max FE input per tick",
   "robotica.configuration.surveyRigRareWeight": "Survey Rig rare ore weight limit"
 }

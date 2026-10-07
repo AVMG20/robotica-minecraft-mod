@@ -1,5 +1,6 @@
 package com.arno.robotica.processing.block;
 
+import com.arno.robotica.core.CoreComponents;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.processing.ProcessingRegistry;
@@ -110,7 +111,13 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
                 && next.kind == kind && next.tier == tier + 1) {
             // Swapping the block is building: adventure mode and protected spots may not.
             if (!player.mayBuild() || !level.mayInteract(player, pos)) return ItemInteractionResult.FAIL;
-            if (!level.isClientSide && upgradeInPlace(level, pos, state, next, player) && !player.getAbilities().instabuild) stack.shrink(1);
+            if (stack.has(CoreComponents.CONTENTS.get())) {
+                // an old item with contents inside: placing it moves them into the machine, a swap would lose them
+                if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.robotica.machine_place_first", stack.getHoverName()), true);
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            }
+            if (!level.isClientSide && upgradeInPlace(level, pos, state, next, player, stack.getOrDefault(CoreComponents.ENERGY.get(), 0))
+                    && !player.getAbilities().instabuild) stack.shrink(1);
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
         if (stack.isEmpty() || player.isShiftKeyDown() || !(level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity be)) {
@@ -140,17 +147,23 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    public static boolean upgradeInPlace(Level level, BlockPos pos, BlockState state, ProcessingMachineBlock next, @Nullable Player player) {
+        return upgradeInPlace(level, pos, state, next, player, 0);
+    }
+
     /**
      * Swaps the placed machine for the next Mk, keeping inputs, outputs, media, battery, cards, side config, energy,
-     * progress and stored experience, and gives the old machine back (like the industry machines).
+     * progress and stored experience, and gives the old machine back (like the industry machines). {@code heldEnergy}:
+     * the energy the next Mk's item carried, added to the machine's up to its capacity.
      */
-    public static boolean upgradeInPlace(Level level, BlockPos pos, BlockState state, ProcessingMachineBlock next, @Nullable Player player) {
+    public static boolean upgradeInPlace(Level level, BlockPos pos, BlockState state, ProcessingMachineBlock next, @Nullable Player player, int heldEnergy) {
         if (!(level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity old)) return false;
         CompoundTag saved = old.saveWithoutMetadata(level.registryAccess());
         old.keepContents = true;
         level.setBlock(pos, next.defaultBlockState().setValue(FACING, state.getValue(FACING)).setValue(LIT, state.getValue(LIT)), Block.UPDATE_ALL);
         if (level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity fresh) {
             fresh.loadCustomOnly(saved, level.registryAccess());
+            if (heldEnergy > 0) fresh.energy.setEnergy((int) Math.min(Integer.MAX_VALUE, (long) fresh.energy.getEnergyStored() + heldEnergy));
             fresh.setChanged();
         }
         if (player != null) {

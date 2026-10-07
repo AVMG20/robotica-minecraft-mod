@@ -22,6 +22,8 @@ public final class GearConfig {
     public static final ModConfigSpec.IntValue NULL_LANCE_COST;
     public static final ModConfigSpec.DoubleValue RIVET_DAMAGE;
     public static final ModConfigSpec.IntValue RIVET_STICK_TICKS;
+    public static final ModConfigSpec.DoubleValue RIVET_SPEED;
+    public static final ModConfigSpec.IntValue RIVET_FLIGHT_TICKS;
     // modules
     public static final ModConfigSpec.IntValue[] MODULE_SLOTS = new ModConfigSpec.IntValue[4];
     public static final ModConfigSpec.IntValue TORCH_LIGHT;
@@ -72,6 +74,8 @@ public final class GearConfig {
         b.push("rivet");
         RIVET_DAMAGE = b.comment("Damage of one Rivet Gun rivet.").defineInRange("rivetDamage", 8.0, 0.0, 1000.0);
         RIVET_STICK_TICKS = b.comment("Ticks a rivet stays stuck in a block before it shatters.").defineInRange("rivetStickTicks", 20, 1, 1200);
+        RIVET_SPEED = b.comment("Rivet speed in blocks per tick (an arrow from a full bow is 3).").defineInRange("rivetSpeed", 4.5, 0.5, 10.0);
+        RIVET_FLIGHT_TICKS = b.comment("Ticks a rivet flies before it drops out of the air.").defineInRange("rivetFlightTicks", 100, 10, 1200);
         b.pop();
         b.push("modules");
         for (int age = 1; age <= 4; age++) {
@@ -105,9 +109,9 @@ public final class GearConfig {
         RICOCHET_DAMAGE = b.comment("Ricochet Rivets: damage of each bounce as a share of the hit before it.")
                 .defineInRange("ricochetDamage", 0.75, 0.0, 1.0);
         LIFESTEAL_SHARE = b.comment("Lifesteal: share of the damage dealt that heals you.").defineInRange("lifestealShare", 0.10, 0.0, 1.0);
-        LIFESTEAL_MAX_PER_SECOND = b.comment("Lifesteal: hard cap of health points healed per second. Reaching it starts the cooldown.")
+        LIFESTEAL_MAX_PER_SECOND = b.comment("Lifesteal: healing budget in health points, also the most healed in any one second.")
                 .defineInRange("lifestealMaxPerSecond", 3.0, 0.0, 100.0);
-        LIFESTEAL_COOLDOWN = b.comment("Lifesteal: ticks without healing after the cap was reached.").defineInRange("lifestealCooldown", 100, 0, 12_000);
+        LIFESTEAL_COOLDOWN = b.comment("Lifesteal: ticks for an empty budget to refill (at least 20), without healing once it ran empty. Long-run healing is at most budget / this.").defineInRange("lifestealCooldown", 100, 0, 12_000);
         LIFESTEAL_COST = b.comment("Lifesteal: FE per health point healed (half a heart).").defineInRange("lifestealCostPerHealth", 2_000, 0, 10_000_000);
         b.pop();
         SPEC = b.build();
@@ -136,6 +140,14 @@ public final class GearConfig {
 
     public static int rivetStickTicks() {
         return SPEC.isLoaded() ? RIVET_STICK_TICKS.get() : 20;
+    }
+
+    public static float rivetSpeed() {
+        return SPEC.isLoaded() ? RIVET_SPEED.get().floatValue() : 4.5F;
+    }
+
+    public static int rivetFlightTicks() {
+        return SPEC.isLoaded() ? RIVET_FLIGHT_TICKS.get() : 100;
     }
 
     public static int torchLight() {

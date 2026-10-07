@@ -96,7 +96,7 @@
   "robotica.configuration.builderDrones": "Builder drones",
   "gui.robotica.architect_status_9": "Demolishing",
   "gui.robotica.architect_demolish": "Demolish",
-  "gui.robotica.architect_demolish_tip": "Take down every built plot, everything inside included. Building blocks turn back into matter, the rest goes into a chest touching the table. Click twice",
+  "gui.robotica.architect_demolish_tip": "Take down every built plot, everything inside included. The table's own building blocks turn back into matter, the rest goes into a chest touching the table. Click twice",
   "gui.robotica.architect_demolish_confirm": "Click again",
   "gui.robotica.architect_demolish_confirm_tip": "Click again to demolish every building of this table",
   "gui.robotica.architect_demolish_progress": "Demolishing: %s%%",

@@ -440,7 +440,7 @@
         },
         {
           "title": "Making it fast",
-          "text": "- Speed: 8 cards (Mk4) = x20, but 21x the FE per block.\n- Range: +10 wide per card.\n- Efficiency, Fortune or Silk, Void.\nEach Mk: one more card slot, higher caps.",
+          "text": "- Speed: 8 cards (Mk4) = x20, 21x the FE per block.\n- Range: +10 wide per card.\n- Efficiency, Fortune or Silk, Void.\nEach Mk: one more card slot, higher caps.",
           "items": [
             "robotica:upgrade_speed",
             "robotica:upgrade_range",
@@ -460,7 +460,7 @@
         },
         {
           "title": "Survey rules",
-          "text": "- 1 ore per 20 s at 200 FE/t.\n- Mk2-4: faster, more slots, rare ores more often.\n- 8 speed cards (Mk4): x20 speed, 420x the FE/t.\n- Magma Core: adds ancient debris and resonite.",
+          "text": "- 1 ore per 20 s at 200 FE/t.\n- Mk2-4: faster, more slots, rare ores more often.\n- 8 speed cards (Mk4): x20 speed, 21x the FE per ore.\n- Magma Core: adds ancient debris and resonite.",
           "items": [
             "robotica:survey_rig",
             "robotica:upgrade_speed",
@@ -700,7 +700,7 @@
         },
         {
           "title": "Demolish",
-          "text": "Click Demolish twice: every built plot comes down, all inside.\n- Building blocks: 75% matter back.\n- The rest: into a chest touching the table.",
+          "text": "Click Demolish twice: every built plot comes down, all inside.\n- Its own building blocks: 75% matter back.\n- The rest: into a chest touching the table.",
           "items": [
             "robotica:architect_table",
             "minecraft:chest"

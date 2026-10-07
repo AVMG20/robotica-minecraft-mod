@@ -630,7 +630,7 @@
     "Feed it cobble, wood, ingots (matter).",
     "Pick plots in the GUI, then Build.",
     "A casing in the style slot opens higher styles.",
-    "Demolish (click twice) clears every built plot: building blocks back as matter, the rest into a chest touching the table."
+    "Demolish (click twice) clears every built plot: the table's own building blocks back as matter, the rest into a chest touching the table."
    ],
    "stats": {
     "rows": [
@@ -793,7 +793,7 @@
    "items": [
     "upgrade_pickup"
    ],
-   "what": "Power tool module: drops go to your inventory. Installed at a Tinker's Bench. No machine takes it.",
+   "what": "Power tool module: drops go to your inventory. Installed at a Tinker's Bench.",
    "see": [
     "guide:upgrade-cards"
    ]

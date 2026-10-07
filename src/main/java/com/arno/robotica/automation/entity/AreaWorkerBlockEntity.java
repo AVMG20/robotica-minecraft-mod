@@ -17,6 +17,10 @@ import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.world.scores.Team;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -49,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -255,6 +260,29 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     public void setOwner(@Nullable UUID uuid) {
         this.owner = uuid;
         setChanged();
+    }
+
+    // ---- access: owner, team, operators ----
+
+    /** Owner, a player on the owner's team or an operator (no owner: anyone). */
+    public boolean canUse(Player player) {
+        if (owner() == null || owner().equals(player.getUUID()) || player.hasPermissions(2)) return true;
+        Team mine = player.getTeam();
+        if (mine == null || !(level instanceof ServerLevel sl)) return false;
+        String name = ownerName(sl.getServer());
+        if (name == null) return false;
+        Team theirs = level.getScoreboard().getPlayersTeam(name);
+        return theirs != null && mine.isAlliedTo(theirs);
+    }
+
+    @Nullable
+    private String ownerName(MinecraftServer server) {
+        ServerPlayer online = server.getPlayerList().getPlayer(owner());
+        if (online != null) return online.getGameProfile().getName();
+        GameProfileCache cache = server.getProfileCache();
+        if (cache == null) return null;
+        Optional<GameProfile> profile = cache.get(owner());
+        return profile.map(GameProfile::getName).filter(n -> !n.isEmpty()).orElse(null);
     }
 
     public int upgradeSlotCount() {

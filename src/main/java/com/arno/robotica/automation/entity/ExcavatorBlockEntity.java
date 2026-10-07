@@ -92,7 +92,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
     @Override
     protected void recalc() {
         int range = upgrades.level(UpgradeKind.RANGE);
-        int size = Math.min(128, baseSize() + AutomationConfig.excavatorRangeStep() * range);
+        int size = Math.min(AutomationConfig.excavatorMaxSize(), baseSize() + AutomationConfig.excavatorRangeStep() * range);
         if (sizeOverride > 0) size = sizeOverride;
         if (cursorSize != -1 && size != cursorSize) done = false;
         areaSize = size;
