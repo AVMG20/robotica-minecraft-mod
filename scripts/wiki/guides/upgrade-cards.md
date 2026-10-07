@@ -4,7 +4,7 @@ icon: upgrade_speed
 order: 70
 summary: What each card does, how they stack, and which machine takes which card.
 ---
-Cards upgrade machines. One card item per kind; a machine only takes the kinds it has a use for.
+Cards upgrade machines. A machine takes only the kinds it can use.
 
 {{items upgrade_speed upgrade_efficiency upgrade_range upgrade_fortune upgrade_silk upgrade_growth upgrade_void upgrade_height upgrade_carry}}
 

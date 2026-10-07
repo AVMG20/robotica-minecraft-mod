@@ -4,7 +4,7 @@ icon: fusion_controller
 order: 50
 summary: The fixed 7x3x7 Age 4 Fusion Reactor: ignition charge, fusion fuel and how the plasma behaves.
 ---
-A fixed 7x3x7 structure (Age 4). It needs a big charge to start and burns fuel nonstop once lit.
+A fixed 7x3x7 structure (Age 4). It needs a 20M FE charge to start and burns fuel nonstop once lit.
 
 ## Parts
 
@@ -34,7 +34,6 @@ A fixed 7x3x7 structure (Age 4). It needs a big charge to start and burns fuel n
 - **Warmup**: output ramps from 0 to full over 10 s.
 - **No throttle**: it burns fuel whether or not the power is taken (20M FE buffer).
 - **Starve**: without fuel the plasma survives 5 s, then collapses and needs a new charge. Switching off or breaking the structure collapses it too.
-- No explosions, no block damage.
 
 {{image shots/gui_fusion_formed.jpg|Fusion Reactor Controller, formed}}
 

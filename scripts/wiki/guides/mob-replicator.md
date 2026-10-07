@@ -4,7 +4,7 @@ icon: replicator_controller
 order: 55
 summary: Sample a mob with an Essence Vial, then farm its drops (or spawn it) in a 3x3x3 Mob Replicator.
 ---
-Slow, powerful mob farming without mobs. Age 2 on.
+Farms a mob's drops without the mob. Age 2 on.
 
 {{image shots/08_replicator.jpg|A formed Mob Replicator with its mob hologram}}
 
@@ -43,7 +43,7 @@ Slow, powerful mob farming without mobs. Age 2 on.
 
 ## Tier gates
 
-Catalyst slot, never consumed:
+Catalyst slot (kept):
 
 | Mobs | Needs |
 |---|---|

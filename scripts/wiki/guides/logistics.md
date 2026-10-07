@@ -4,7 +4,7 @@ icon: item_pipe
 order: 65
 summary: Move items with pipes and set which machine face takes items in or gives them out.
 ---
-Pipes move items instantly between chests and machines. Nothing travels visibly through them.
+Pipes move items instantly between chests and machines.
 
 {{items item_pipe item_pipe_mk2 grinder_mk1 electric_furnace_mk1}}
 
@@ -23,7 +23,7 @@ Pipes move items instantly between chests and machines. Nothing travels visibly 
 4. Extract arms pull items and hand them to the Insert arms of the same line, in turn.
 
 - A plain right-click shows an arm's mode.
-- No filters yet. One network holds up to 4,096 pipes.
+- No filters. One network holds up to 4,096 pipes.
 
 ## Machine sides
 

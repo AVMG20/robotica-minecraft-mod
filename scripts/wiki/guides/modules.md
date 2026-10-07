@@ -29,7 +29,7 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 
 | Module | Fits | Min. Age | Does |
 |---|---|---|---|
-| [[overclock_module]] I-III | drills, Chainsaw | 1 / 2 / 3 | +50 / 100 / 200% mining speed, a bit more FE |
+| [[overclock_module]] I-III | drills, Chainsaw | 1 / 2 / 3 | +50 / 100 / 200% mining speed, +20 / 40 / 60% FE |
 | [[fortune_module]] I-III | drills | 1 / 2 / 3 | Fortune I-III on drops |
 | [[silk_touch_module]] | drills | 1 | blocks drop themselves |
 | [[auto_pickup_module]] | drills, Chainsaw | 1 | drops go into your inventory |
@@ -48,7 +48,7 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 | [[armor_pierce_module]] I-III | FE weapons | 1 / 2 / 3 | ignores 20 / 35 / 50% of armor |
 | [[chain_lightning_module]] I-III | Arc Blade | 3 | more arcs, longer jumps |
 | [[ricochet_module]] I-II | Rivet Gun | 2 | rivets bounce to 1 / 2 more monsters |
-| [[lifesteal_module]] | FE weapons | 4 | heals a bit of the damage, capped |
+| [[lifesteal_module]] | FE weapons | 4 | heals 10% of damage dealt, from a 3-health pool |
 
 ## Everything
 

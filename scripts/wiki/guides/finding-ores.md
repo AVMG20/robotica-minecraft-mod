@@ -4,7 +4,7 @@ icon: thorium_ore
 order: 32
 summary: Where Robotica's ores spawn, the best height to dig, and where to find the boss ruins.
 ---
-Three ores, one per dimension. Every number here is read from the world generation files.
+Three ores, one per dimension.
 
 {{orechart}}
 

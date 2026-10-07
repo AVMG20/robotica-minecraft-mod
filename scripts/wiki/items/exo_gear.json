@@ -7,7 +7,7 @@
     "exo_helmet_mk3",
     "exo_helmet_mk4"
    ],
-   "what": "Exo-Frame helmet: powered armor with module slots. Never breaks; modules run on its battery.",
+   "what": "Exo-Frame helmet: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
     "Press J to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
@@ -63,7 +63,7 @@
     "exo_chestplate_mk3",
     "exo_chestplate_mk4"
    ],
-   "what": "Exo-Frame chestplate: powered armor with module slots. Never breaks; modules run on its battery.",
+   "what": "Exo-Frame chestplate: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
     "Press J to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
@@ -126,7 +126,7 @@
     "exo_leggings_mk3",
     "exo_leggings_mk4"
    ],
-   "what": "Exo-Frame leggings: powered armor with module slots. Never breaks; modules run on its battery.",
+   "what": "Exo-Frame leggings: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
     "Press J to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
@@ -182,7 +182,7 @@
     "exo_boots_mk3",
     "exo_boots_mk4"
    ],
-   "what": "Exo-Frame boots: powered armor with module slots. Never breaks; modules run on its battery.",
+   "what": "Exo-Frame boots: powered armor with module slots. No durability; modules run on its battery.",
    "use": [
     "Press J to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
@@ -855,7 +855,7 @@
    "items": [
     "bore_drill"
    ],
-   "what": "First FE drill: iron pickaxe speed and tier, 1x1 or 3x3. Never breaks.",
+   "what": "First FE drill: iron pickaxe speed and tier, 1x1 or 3x3.",
    "use": [
     "V switches mode.",
     "Keep a [[copper_cell]] in your inventory: it recharges the drill.",
@@ -918,7 +918,7 @@
    "items": [
     "lamp_rod"
    ],
-   "what": "Small FE tool that places Spark Lamps: torch light (14), no collision, breaks instantly, drops nothing.",
+   "what": "FE tool that places Spark Lamps: light 14, walk-through, break instantly.",
    "use": [
     "Right-click a block face to place a lamp on the floor, a wall or the ceiling.",
     "Sneak-right-click a lamp to remove it.",
@@ -1053,7 +1053,7 @@
    "items": [
     "rivet_gun"
    ],
-   "what": "Rapid fire, no ammo: right-click fires glowing rivets that stick in walls, then shatter.",
+   "what": "Hold right-click: rapid fire, no ammo, runs on FE.",
    "stats": {
     "rows": [
      [
@@ -1175,7 +1175,7 @@
     "overclock_module_2",
     "overclock_module_3"
    ],
-   "what": "Tool module: mines faster, uses a bit more FE per block.",
+   "what": "Tool module: mines faster for more FE per block.",
    "stats": {
     "columns": [
      "I",
@@ -1361,7 +1361,7 @@
    "items": [
     "lamp_placer_module"
    ],
-   "what": "Drill module: when the spot you mined is dark, places a Spark Lamp there for a little FE.",
+   "what": "Drill module: places a Spark Lamp where you mine in the dark.",
    "use": [
     "Install at a [[tinkers_bench]] in a drill."
    ],
@@ -1499,7 +1499,7 @@
    "items": [
     "lifesteal_module"
    ],
-   "what": "Age 4 weapon module ([[null_lance]]): the beam heals you a little, paid in FE and hard capped.",
+   "what": "Age 4 weapon module ([[null_lance]]): heals you for part of the damage, paid in FE.",
    "stats": {
     "rows": [
      [
@@ -1509,10 +1509,6 @@
      [
       "Pool",
       "3 health, refills in 5 s"
-     ],
-     [
-      "Cap",
-      "3 health per second"
      ],
      [
       "Cost",

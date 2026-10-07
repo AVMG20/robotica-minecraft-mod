@@ -34,7 +34,7 @@
   "tooltip.robotica.reactor_glass": "Window for Fission and Fusion Reactor walls",
   "tooltip.robotica.reactor_controller": "Controller of a Fission Reactor",
   "tooltip.robotica.reactor_controller_shape": "Hollow box %1$sx%1$sx%1$s to %2$sx%2$sx%2$s, in a side wall",
-  "tooltip.robotica.reactor_controller.details": "Fuel Rods in full columns, coolant beside them. Never explodes",
+  "tooltip.robotica.reactor_controller.details": "Fuel Rods in full columns, coolant beside them",
   "tooltip.robotica.reactor_power_port": "Sends a reactor's FE out. A Tesla Coil can sit on it",
   "tooltip.robotica.reactor_access_port": "Fuel in, waste out",
   "tooltip.robotica.reactor_fuel_rod": "Inside a Fission Reactor, in full columns floor to roof",

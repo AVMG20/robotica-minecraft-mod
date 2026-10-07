@@ -4,7 +4,7 @@
    "items": [
     "winding_crank"
    ],
-   "what": "Winds a Mainspring by hand. Your power on day one.",
+   "what": "Winds a Mainspring by hand. Age 0 power.",
    "use": [
     "Right-click the crank with a [[mainspring]] to put it in.",
     "Hold right-click on the crank with an empty hand.",
@@ -34,7 +34,7 @@
    "items": [
     "combustion_generator"
    ],
-   "what": "Burns any furnace fuel for FE. The first real generator.",
+   "what": "Burns any furnace fuel for FE.",
    "use": [
     "Right-click it with coal, charcoal or logs.",
     "Machines touching it get power, or put a [[tesla_coil_1]] on top."
@@ -70,7 +70,7 @@
     "solar_panel_mk3",
     "solar_panel_mk4"
    ],
-   "what": "Free FE by day under open sky.",
+   "what": "Makes FE by day under open sky.",
    "stats": {
     "columns": [
      "Mk1",
@@ -91,7 +91,7 @@
       "20 FE/t",
       "80 FE/t",
       "200 FE/t",
-      "500 FE/t"
+      "320 FE/t"
      ],
      [
       "Night",
@@ -248,11 +248,11 @@
    "items": [
     "wireless_charger"
    ],
-   "what": "Charges the FE items of you and your team in range, without plugging anything in: worn armor first, then held items, then the inventory.",
+   "what": "Charges the FE items of you and your team in range: worn armor first, then held items, then the inventory.",
    "use": [
     "Place it and feed it FE by cable or a [[tesla_coil_1]] link.",
     "Stand within range: arcs show who it charges.",
-    "Add range and speed cards for more reach and rate."
+    "Range and speed cards: more reach and rate."
    ],
    "stats": {
     "rows": [
@@ -316,7 +316,7 @@
     "alloy_smelter_mk3",
     "alloy_smelter_mk4"
    ],
-   "what": "Makes the Robotica alloys from up to three inputs. Only this machine makes them.",
+   "what": "Makes the Robotica alloys from up to three inputs. The only source of alloys.",
    "use": [
     "Right-click it with ingots or dusts, or pipe them in.",
     "Power it with FE or a cell in its battery slot.",
@@ -437,7 +437,7 @@
    "what": "Builds parts from up to six inputs. Some parts exist only here; others cost about a quarter less than by hand.",
    "use": [
     "Put every input in its own slot.",
-    "Power it: big parts need a lot of FE."
+    "Power it: big parts take a lot of FE per craft."
    ],
    "stats": {
     "columns": [
@@ -486,7 +486,7 @@
    "items": [
     "rtg"
    ],
-   "what": "Radioisotope Generator: burns Thorium Fuel Pellets one at a time. Quiet, steady power.",
+   "what": "Radioisotope Generator: burns Thorium Fuel Pellets one at a time for steady FE.",
    "use": [
     "Put [[thorium_fuel_pellet]] in.",
     "It pushes power into touching blocks; a [[tesla_coil_1]] on it sends it on.",

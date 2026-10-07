@@ -4,7 +4,7 @@ icon: exo_chestplate_mk1
 order: 60
 summary: Powered armor in four marks, with modules, a core socket and its own keys.
 ---
-Four pieces, four marks. The armor never breaks; empty, it keeps its protection and only the modules stop.
+Four pieces, four marks. No durability: empty, it keeps its protection and only the modules stop.
 
 {{items exo_helmet_mk1 exo_chestplate_mk1 exo_leggings_mk1 exo_boots_mk1}}
 

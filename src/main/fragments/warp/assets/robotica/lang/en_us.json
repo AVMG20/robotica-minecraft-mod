@@ -7,7 +7,7 @@
   "item.robotica.linking_card": "Linking Card",
   "tooltip.robotica.warp_pad": "Teleports between pads",
   "tooltip.robotica.warp_pad_use": "Stand on it and right-click to travel",
-  "tooltip.robotica.rift_upgrade": "Lets a Warp Pad send travellers to other dimensions for a flat %s",
+  "tooltip.robotica.rift_upgrade": "Lets a Warp Pad reach other dimensions: %s per trip",
   "tooltip.robotica.rift_upgrade_use": "Right-click a Warp Pad you own",
   "tooltip.robotica.remote_unbound": "Not bound. Sneak-right-click a Warp Pad",
   "tooltip.robotica.remote_bound": "Bound to: %s",
