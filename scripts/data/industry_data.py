@@ -513,7 +513,14 @@ def lang():
     })
     for t in TIERS:
         out[f'robotica.configuration.tierSpeedMk{t}'] = f'Mk{t} speed'
-    write(FRAG / 'assets/robotica/lang/en_us.json', dict(sorted(out.items())))
+    # lines that take config arguments are edited by hand in the fragment: keep those
+    lang_file = FRAG / 'assets/robotica/lang/en_us.json'
+    if lang_file.exists():
+        old = json.loads(lang_file.read_text())
+        for k, v in old.items():
+            if '%' in v:
+                out[k] = v
+    write(lang_file, dict(sorted(out.items())))
 
 
 if __name__ == '__main__':

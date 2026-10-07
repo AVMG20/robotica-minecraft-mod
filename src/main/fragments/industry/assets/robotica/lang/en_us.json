@@ -79,7 +79,7 @@
   "robotica.configuration.tierSpeedMk4": "Mk4 speed",
   "tooltip.robotica.alloy_smelter": "Smelts Robotica alloys",
   "tooltip.robotica.assembler": "Builds parts from plates and circuits",
-  "tooltip.robotica.centrifuge": "Splits one input into up to 4 outputs",
+  "tooltip.robotica.centrifuge": "Separates materials",
   "tooltip.robotica.deepslate_thorium_ore.details": "Overworld, Y -48 to 32",
   "tooltip.robotica.depleted_fuel_pellet.details": "Centrifuge: thorium dust, rarely a Radiant Isotope",
   "tooltip.robotica.enriched_fuel_pellet.details": "2.5x the heat of a thorium pellet",
