@@ -264,7 +264,7 @@
         },
         {
           "title": "Fission Reactor",
-          "text": "5x5x5 to 7x7x7.\n- Fuel Rods: full columns.\n- Coolant beside rods: water 1, ice 1.5, packed 2, blue 3, Cryo 4. Every rod needs some: in a 5x5x5 put rods in an X, coolant in the gaps.\n- Pellets: controller or Access Port.\n- FE out: Power Port.\n- Take the Depleted Pellets out: a full waste slot stops it.\n5x5x5, 1 rod column: about 1,150 FE/t.",
+          "text": "5x5x5 to 7x7x7.\n- Fuel Rods: full columns.\n- Coolant beside every rod: water 1, ice 1.5, packed 2, blue 3, Cryo 4. 5x5x5: rods in an X.\n- Pellets in, waste out: controller or Access Port. Full waste stops it.\n- FE out: Power Port.",
           "items": [
             "robotica:reactor_casing",
             "robotica:reactor_glass",
