@@ -1,0 +1,674 @@
+{
+  "_sources": [
+    "cards.maxStack / age: core/upgrade/UpgradeKind.java (enum constructor args). Speed steps: Upgrades.speedMultiplier. Efficiency: Upgrades.energyMultiplier (-15% per card, floor 40%).",
+    "Grinder / Electric Furnace: processing/block/GrinderBlockEntity.KINDS, ElectricFurnaceBlockEntity.KINDS; caps ProcessingMachineBlockEntity.cap -> ProcessingConfig defaults upgradeSlotsMk 2/3/4/5, speedCapMk 2/4/6/8, efficiencyCapMk 2/3/4/4, fortuneCapMk 0/1/2/3, rangeCapMk 0/1/2/3; void 1; fortuneBonus 0.10, xpPerFortune 0.5.",
+    "Alloy Smelter / Centrifuge / Assembler: industry/block/ProcessingBlockEntity.acceptedKinds + cardCap (slots tier+1, speed 2*tier, efficiency min(4,tier), fortune tier-1, void 1 Centrifuge only); fortune only on recipes with fortune (alloying by default).",
+    "Metal Press: power/block/MetalPressBlockEntity (2 slots, speed 4, efficiency 4). Combustion Generator: CombustionGeneratorBlockEntity (2 slots, speed 3, efficiency 4). Solar Panels: SolarPanelBlockEntity / SolarPanelMenu (2 slots, speed 4, efficiency 4, solarSpeedBonus, solarNightPerCard).",
+    "Stumpy / Sprout: automation/entity/FarmBotBlockEntity (4 slots; speed, range, growth capped at the Mk tier; efficiency 4). Excavator: ExcavatorBlockEntity (5 slots, kind maxStack caps, RANGE_SIZES 16/32/48/64). Survey Rig: SurveyRigBlockEntity (UPGRADE_SLOTS 4, kind maxStack caps).",
+    "Mob Replicator: replicator/block/ReplicatorControllerBlockEntity (UPGRADE_SLOTS 3, MAX_SPEED_LEVEL 3, fortune 3, efficiency 4).",
+    "Architect Table: architect/block/ArchitectTableBlockEntity (2 slots; speed, efficiency, height at kind maxStack).",
+    "Sentry / Courier Drone: drones/entity/SentryDrone, CourierDrone (2 slots; speed, range, efficiency at kind maxStack). Sentry: range +4 blocks per card, attack interval / (1 + 0.4 per speed card). Courier: route +32 blocks per range card, flight speed +50% per speed card (max 3 blocks/tick).",
+    "Power tools: gear/GearItems toggles + gear/tool/ToggleKind (AUTO_PICKUP needs PICKUP, VOID_FILTER needs VOID), installed at gear/bench/TinkersBenchMenu.",
+    "Storage Terminal: storage/block/StorageTerminalBlock (Carry card by right-click).",
+    "Survey Rig rework (edf9936): 1 ore / 400 ticks at 200 FE/t, steep speed factor; DESIGN.md 'Survey Rig'."
+  ],
+  "_notes": [
+    "The Mining Drone takes no cards (no Upgrades object in drones/entity/MiningDrone).",
+    "The Mining Drone (Mk1-Mk3) takes no cards."
+  ],
+  "cards": {
+    "speed": {
+      "item": "upgrade_speed",
+      "name": "Speed Upgrade",
+      "maxStack": 8,
+      "age": 1,
+      "summary": "Work faster; costs more FE per action.",
+      "rules": "Each card is one step: x2, x3, x4, x6, x8, x11, x15, x20."
+    },
+    "efficiency": {
+      "item": "upgrade_efficiency",
+      "name": "Efficiency Upgrade",
+      "maxStack": 4,
+      "age": 1,
+      "summary": "-15% energy per action per card.",
+      "rules": "Never below 40% of the base cost."
+    },
+    "range": {
+      "item": "upgrade_range",
+      "name": "Range Upgrade",
+      "maxStack": 4,
+      "age": 2,
+      "summary": "Bigger work area.",
+      "rules": "What a step means depends on the machine."
+    },
+    "fortune": {
+      "item": "upgrade_fortune",
+      "name": "Fortune Upgrade",
+      "maxStack": 3,
+      "age": 2,
+      "summary": "Fortune I-III; Looting in the Replicator.",
+      "rules": "Not together with a Silk Touch card."
+    },
+    "silk": {
+      "item": "upgrade_silk",
+      "name": "Silk Touch Upgrade",
+      "maxStack": 1,
+      "age": 2,
+      "summary": "Mined blocks drop themselves.",
+      "rules": "Single card. Not together with Fortune."
+    },
+    "growth": {
+      "item": "upgrade_growth",
+      "name": "Growth Upgrade",
+      "maxStack": 4,
+      "age": 1,
+      "summary": "+50% crop and sapling growth per card."
+    },
+    "void": {
+      "item": "upgrade_void",
+      "name": "Void Upgrade",
+      "maxStack": 1,
+      "age": 1,
+      "summary": "Deletes junk or outputs that don't fit.",
+      "rules": "Single card. Also the void filter module of power tools."
+    },
+    "pickup": {
+      "item": "upgrade_pickup",
+      "name": "Auto-Pickup Upgrade",
+      "maxStack": 1,
+      "age": 1,
+      "summary": "Power tool module: drops go to your inventory.",
+      "rules": "Installed at a Tinker's Bench. No machine takes it."
+    },
+    "height": {
+      "item": "upgrade_height",
+      "name": "Height Upgrade",
+      "maxStack": 6,
+      "age": 1,
+      "summary": "Architect Table: buildings one block taller per card."
+    },
+    "carry": {
+      "item": "upgrade_carry",
+      "name": "Carry Upgrade",
+      "maxStack": 1,
+      "age": 1,
+      "summary": "Storage Terminal keeps its items when picked up.",
+      "rules": "Right-click the terminal with it. It stays in for good."
+    }
+  },
+  "machines": [
+    {
+      "id": "grinder",
+      "name": "Grinder",
+      "items": [
+        "grinder_mk1",
+        "grinder_mk2",
+        "grinder_mk3",
+        "grinder_mk4"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ],
+      "slots": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "caps": {
+        "speed": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "efficiency": [
+          2,
+          3,
+          4,
+          4
+        ],
+        "fortune": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "void": 1
+      },
+      "effects": {
+        "speed": "Grinds faster (x2, x3, x4, x6, x8, x11, x15, x20); FE/t rises with it.",
+        "efficiency": "-15% FE per item per card.",
+        "fortune": "+10% main output per card on ores and raw ores, not gem ores.",
+        "void": "Extra outputs that don't fit are deleted instead of stalling."
+      },
+      "source": "processing/block/GrinderBlockEntity, ProcessingConfig"
+    },
+    {
+      "id": "electric_furnace",
+      "name": "Electric Furnace",
+      "items": [
+        "electric_furnace_mk1",
+        "electric_furnace_mk2",
+        "electric_furnace_mk3",
+        "electric_furnace_mk4"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ],
+      "slots": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "caps": {
+        "speed": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "efficiency": [
+          2,
+          3,
+          4,
+          4
+        ],
+        "range": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fortune": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "effects": {
+        "speed": "Smelts faster (x2, x3, x4, x6, x8, x11, x15, x20).",
+        "efficiency": "-15% FE per item per card.",
+        "range": "+1 item per lane and cycle per card.",
+        "fortune": "+50% experience per card (not for dusts)."
+      },
+      "source": "processing/block/ElectricFurnaceBlockEntity, ProcessingConfig"
+    },
+    {
+      "id": "alloy_smelter",
+      "name": "Alloy Smelter",
+      "items": [
+        "alloy_smelter_mk1",
+        "alloy_smelter_mk2",
+        "alloy_smelter_mk3",
+        "alloy_smelter_mk4"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ],
+      "slots": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "caps": {
+        "speed": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "efficiency": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "fortune": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "effects": {
+        "speed": "Faster crafts (x2, x3, x4, x6, x8, x11, x15, x20); FE/t rises.",
+        "efficiency": "-15% FE per craft per card.",
+        "fortune": "10% chance per card of one more alloy; +25% FE/t each."
+      },
+      "source": "industry/block/ProcessingBlockEntity, IndustryConfig"
+    },
+    {
+      "id": "centrifuge",
+      "name": "Centrifuge",
+      "items": [
+        "centrifuge_mk1",
+        "centrifuge_mk2",
+        "centrifuge_mk3",
+        "centrifuge_mk4"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ],
+      "slots": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "caps": {
+        "speed": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "efficiency": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "fortune": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "void": 1
+      },
+      "effects": {
+        "speed": "Faster crafts (x2, x3, x4, x6, x8, x11, x15, x20); FE/t rises.",
+        "efficiency": "-15% FE per craft per card.",
+        "fortune": "Only on recipes that allow it (none by default).",
+        "void": "Chance results that don't fit vanish instead of stalling."
+      },
+      "source": "industry/block/ProcessingBlockEntity, IndustryConfig"
+    },
+    {
+      "id": "assembler",
+      "name": "Assembler",
+      "items": [
+        "assembler_mk1",
+        "assembler_mk2",
+        "assembler_mk3",
+        "assembler_mk4"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ],
+      "slots": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "caps": {
+        "speed": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "efficiency": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "fortune": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "effects": {
+        "speed": "Faster crafts (x2, x3, x4, x6, x8, x11, x15, x20); FE/t rises.",
+        "efficiency": "-15% FE per craft per card.",
+        "fortune": "Only on recipes that allow it (none by default)."
+      },
+      "source": "industry/block/ProcessingBlockEntity, IndustryConfig"
+    },
+    {
+      "id": "metal_press",
+      "name": "Metal Press",
+      "items": [
+        "metal_press"
+      ],
+      "slots": 2,
+      "caps": {
+        "speed": 4,
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "Presses faster (x2, x3, x4, x6).",
+        "efficiency": "-15% FE per plate per card."
+      },
+      "source": "power/block/MetalPressBlockEntity"
+    },
+    {
+      "id": "combustion_generator",
+      "name": "Combustion Generator",
+      "items": [
+        "combustion_generator"
+      ],
+      "slots": 2,
+      "caps": {
+        "speed": 3,
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "FE/t x2, x3, x4; fuel burns faster (fewer FE per item).",
+        "efficiency": "+20% FE per fuel item per card; burns slower."
+      },
+      "source": "power/block/CombustionGeneratorBlockEntity"
+    },
+    {
+      "id": "solar_panel",
+      "name": "Solar Panel",
+      "items": [
+        "solar_panel_mk1",
+        "solar_panel_mk2"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2"
+      ],
+      "slots": 2,
+      "caps": {
+        "speed": 4,
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "+25% daylight output per card.",
+        "efficiency": "10% of the daylight output at night per card (open sky)."
+      },
+      "source": "power/block/SolarPanelBlockEntity, PowerConfig solarSpeedBonus / solarNightPerCard"
+    },
+    {
+      "id": "stumpy",
+      "name": "Stumpy",
+      "items": [
+        "stumpy"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ],
+      "tierItems": [
+        "",
+        "farm_kit_mk2",
+        "farm_kit_mk3",
+        "farm_kit_mk4"
+      ],
+      "slots": 4,
+      "caps": {
+        "speed": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "range": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "growth": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "Shorter rest between trees.",
+        "range": "+2 radius per card.",
+        "growth": "+50% sapling growth in the area per card.",
+        "efficiency": "-15% FE per log per card."
+      },
+      "source": "automation/entity/FarmBotBlockEntity.upgradeCap (Mk tier)"
+    },
+    {
+      "id": "sprout",
+      "name": "Sprout",
+      "items": [
+        "sprout"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2",
+        "Mk3",
+        "Mk4"
+      ],
+      "tierItems": [
+        "",
+        "farm_kit_mk2",
+        "farm_kit_mk3",
+        "farm_kit_mk4"
+      ],
+      "slots": 4,
+      "caps": {
+        "speed": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "range": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "growth": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "Harvests more often.",
+        "range": "+2 radius per card.",
+        "growth": "+50% crop growth in the area per card.",
+        "efficiency": "-15% FE per harvest per card."
+      },
+      "source": "automation/entity/FarmBotBlockEntity.upgradeCap (Mk tier)"
+    },
+    {
+      "id": "excavator",
+      "name": "Excavator",
+      "items": [
+        "excavator"
+      ],
+      "slots": 5,
+      "caps": {
+        "speed": 8,
+        "range": 4,
+        "efficiency": 4,
+        "fortune": 3,
+        "silk": 1,
+        "void": 1
+      },
+      "effects": {
+        "speed": "Digs faster (x2, x3, x4, x6, x8, x11, x15, x20); FE per block x1.75 / x3 / x7 / x21 at 1 / 2 / 4 / 8 cards.",
+        "range": "Hole 16, 32, 48, 64 blocks wide (8 without cards).",
+        "efficiency": "-15% FE per block per card.",
+        "fortune": "Fortune I-III on mined blocks.",
+        "silk": "Blocks drop themselves.",
+        "void": "Deletes cobblestone, dirt, gravel and other junk."
+      },
+      "source": "automation/entity/ExcavatorBlockEntity"
+    },
+    {
+      "id": "survey_rig",
+      "name": "Survey Rig",
+      "items": [
+        "survey_rig"
+      ],
+      "slots": 4,
+      "caps": {
+        "speed": 8,
+        "efficiency": 4,
+        "fortune": 3,
+        "silk": 1,
+        "void": 1
+      },
+      "effects": {
+        "speed": "More ores (x2 ... x20); FE/t climbs much faster: x3.5 / x9 / x42 / x420 at 1 / 2 / 4 / 8 cards.",
+        "efficiency": "Takes 15% per card off the steep speed factor.",
+        "fortune": "Fortune I-III on every ore roll.",
+        "silk": "Ores come out as ore blocks.",
+        "void": "Deletes junk drops."
+      },
+      "source": "automation/entity/SurveyRigBlockEntity"
+    },
+    {
+      "id": "replicator",
+      "name": "Mob Replicator",
+      "items": [
+        "replicator_controller"
+      ],
+      "slots": 3,
+      "caps": {
+        "speed": 3,
+        "fortune": 3,
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "Shorter cycles (x2, x3, x4).",
+        "fortune": "Looting I-III on the mob's loot.",
+        "efficiency": "-15% FE per cycle per card."
+      },
+      "source": "replicator/block/ReplicatorControllerBlockEntity"
+    },
+    {
+      "id": "architect_table",
+      "name": "Architect Table",
+      "items": [
+        "architect_table"
+      ],
+      "slots": 2,
+      "caps": {
+        "speed": 8,
+        "efficiency": 4,
+        "height": 6
+      },
+      "effects": {
+        "speed": "Places blocks faster.",
+        "efficiency": "-15% FE per block per card.",
+        "height": "Buildings one block taller per card (up to 12)."
+      },
+      "source": "architect/block/ArchitectTableBlockEntity"
+    },
+    {
+      "id": "sentry_drone",
+      "name": "Sentry Drone",
+      "items": [
+        "sentry_drone",
+        "sentry_drone_mk2"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2"
+      ],
+      "slots": 2,
+      "caps": {
+        "speed": 8,
+        "range": 4,
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "Shoots more often (+40% rate per card).",
+        "range": "+4 blocks guard and attack range per card.",
+        "efficiency": "-15% FE per shot per card."
+      },
+      "source": "drones/entity/SentryDrone"
+    },
+    {
+      "id": "courier_drone",
+      "name": "Courier Drone",
+      "items": [
+        "courier_drone",
+        "courier_drone_mk2"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2"
+      ],
+      "slots": 2,
+      "caps": {
+        "speed": 8,
+        "range": 4,
+        "efficiency": 4
+      },
+      "effects": {
+        "speed": "Flies faster (+50% per card, max 3 blocks/tick).",
+        "range": "+32 blocks route length per card.",
+        "efficiency": "-15% FE per trip per card."
+      },
+      "source": "drones/entity/CourierDrone"
+    },
+    {
+      "id": "power_tools",
+      "name": "Power tools (Tinker's Bench)",
+      "items": [
+        "bore_drill",
+        "chainsaw",
+        "servo_drill",
+        "magma_drill",
+        "null_drill"
+      ],
+      "slots": 2,
+      "caps": {
+        "pickup": 1,
+        "void": 1
+      },
+      "effects": {
+        "pickup": "Drops go straight to your inventory.",
+        "void": "Void filter: junk blocks are deleted."
+      },
+      "source": "gear/GearItems toggles, gear/tool/ToggleKind, gear/bench/TinkersBenchMenu"
+    },
+    {
+      "id": "storage_terminal",
+      "name": "Storage Terminal",
+      "items": [
+        "storage_terminal"
+      ],
+      "slots": 1,
+      "caps": {
+        "carry": 1
+      },
+      "effects": {
+        "carry": "Keeps every item inside when picked up."
+      },
+      "source": "storage/block/StorageTerminalBlock"
+    }
+  ]
+}

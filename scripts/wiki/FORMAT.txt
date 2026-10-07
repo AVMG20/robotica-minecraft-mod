@@ -1,0 +1,40 @@
+Robotica wiki source formats (read by scripts/wiki/build_wiki.py)
+
+Item references
+  Robotica items use the bare id: grinder_mk1, reactor_casing.
+  Vanilla items: minecraft:water, minecraft:iron_ingot. Tags: #c:plates/iron.
+
+Guides: scripts/wiki/guides/<slug>.md
+  ---
+  title: Build the Fission Reactor
+  icon: reactor_controller
+  order: 40
+  summary: One line shown in lists and search.
+  ---
+  Markdown subset: # / ## / ### headings, paragraphs, "- " bullets, "1. " lists, | tables |
+  (header row + |---| row), **bold**, *italic*, `code`, [text](#/item/grinder_mk1), > tip line.
+  Inline item link with icon: [[grinder_mk1]] or [[grinder_mk1|Grinder]] or [[minecraft:water]].
+  Block directives, each alone on a line:
+    {{items grinder_mk1 electric_furnace_mk1 iron_grinding_balls}}   hotbar of slots, each links to its page
+    {{multiblock fission_reactor_5}}                               structure viewer (id from multiblocks.json)
+    {{upgrades grinder_mk1}}                                       "upgrades that fit" table for a machine
+    {{cards}}                                                      full card x machine table
+    {{image shots/08_replicator.jpg|Alt text}}                     picture from docs/
+    {{guide power-ladder}}                                         link card to another guide
+    {{orechart}} {{ores}} {{structures}}                           world data from the worldgen files
+  Routes: #/item/<id>, #/codex/<n>, #/machines, #/items, #/multiblocks, #/progression, #/guide/<slug>, #/multiblock/<id>, #/age/<0-4>, #/module/<name>, #/upgrades.
+
+Curated files that must follow the code: upgrades.json (card caps/effects), multiblocks.json (checked by
+multiblock_check.py against the structure rules), items/*.json (what/use/stats), guides/*.md.
+
+Item facts: scripts/wiki/items/*.json (merged; an item id may appear in only one entry)
+  {"entries": [
+    {"items": ["grinder_mk1","grinder_mk2","grinder_mk3","grinder_mk4"],
+     "what": "One or two short sentences: what it is for.",
+     "use": ["Short imperative step.", "..."],                       optional, <= 5 steps
+     "stats": {"columns": ["Mk1","Mk2","Mk3","Mk4"],                  optional; columns optional
+               "rows": [["Speed","x1","x1.5","x2","x3"], ["Power","20 FE/t", ...]]},
+     "see": ["guide:ore-processing", "multiblock:fission_reactor_5", "item:iron_grinding_balls"]}   optional links
+  ]}
+  Without "columns", rows are [label, value] pairs.
+  Inline [[id]] links and **bold** work in what/use/stat values.

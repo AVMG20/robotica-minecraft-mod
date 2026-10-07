@@ -1,0 +1,456 @@
+{
+ "entries": [
+  {
+   "items": [
+    "winding_crank"
+   ],
+   "what": "Winds a Mainspring by hand. Your power on day one.",
+   "use": [
+    "Right-click the crank with a [[mainspring]] to put it in.",
+    "Hold right-click on the crank with an empty hand.",
+    "Left-click pops the spring out."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "By hand",
+      "400 FE per turn, 5 turns/s (100 FE/t)"
+     ],
+     [
+      "Full Mainspring",
+      "about 2 minutes"
+     ],
+     [
+      "From cables",
+      "charges any FE item at 200 FE/t"
+     ]
+    ]
+   },
+   "see": [
+    "guide:getting-started"
+   ]
+  },
+  {
+   "items": [
+    "combustion_generator"
+   ],
+   "what": "Burns any furnace fuel for FE. The first real generator.",
+   "use": [
+    "Right-click it with coal, charcoal or logs.",
+    "Machines touching it get power, or put a [[tesla_coil_1]] on top."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Output",
+      "80 FE/t"
+     ],
+     [
+      "Buffer",
+      "40,000 FE"
+     ],
+     [
+      "Coal",
+      "128,000 FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
+    "solar_panel_mk1",
+    "solar_panel_mk2"
+   ],
+   "what": "Free FE by day under open sky.",
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Age",
+      "1",
+      "2"
+     ],
+     [
+      "Daylight",
+      "20 FE/t",
+      "80 FE/t"
+     ],
+     [
+      "Speed card",
+      "+25% each",
+      "+25% each"
+     ],
+     [
+      "Efficiency card",
+      "10% at night each",
+      "10% at night each"
+     ]
+    ]
+   },
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
+    "accumulator_1",
+    "accumulator_2",
+    "accumulator_3"
+   ],
+   "what": "A battery block. Gives FE out on its front; the front gauge shows the charge. Keeps its charge when mined.",
+   "use": [
+    "Feed it from a generator or cable.",
+    "Put a [[tesla_coil_1]] on it to send its FE wirelessly."
+   ],
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
+    "rows": [
+     [
+      "Capacity",
+      "1M FE",
+      "4M FE",
+      "16M FE"
+     ],
+     [
+      "In / out",
+      "1,000 FE/t",
+      "4,000 FE/t",
+      "16,000 FE/t"
+     ]
+    ]
+   },
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
+    "tesla_coil_1",
+    "tesla_coil_2",
+    "tesla_coil_3",
+    "tesla_coil_4",
+    "tesla_coil_5"
+   ],
+   "what": "Wireless power. On a generator or battery it sends that block's FE; anywhere else it relays.",
+   "use": [
+    "Place it on a generator, [[accumulator_1]] or panel.",
+    "Sneak-right-click it with a [[tesla_linker]].",
+    "Right-click machines (the face you click is where power goes in) or other coils."
+   ],
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III",
+     "IV",
+     "V"
+    ],
+    "rows": [
+     [
+      "Links",
+      "4",
+      "8",
+      "12",
+      "16",
+      "32"
+     ],
+     [
+      "Range",
+      "8",
+      "12",
+      "16",
+      "24",
+      "32"
+     ],
+     [
+      "FE/t",
+      "4,000",
+      "16,000",
+      "64,000",
+      "256,000",
+      "1,000,000"
+     ]
+    ]
+   },
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
+    "tesla_linker"
+   ],
+   "what": "Links Tesla Coils to machines and to other coils.",
+   "use": [
+    "Sneak-right-click a coil to select it.",
+    "Right-click a machine face or another coil to link.",
+    "Click a linked face again to unlink. Sneak-right-click air clears the selection."
+   ],
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
+    "charger"
+   ],
+   "what": "Charges FE items: cells, tools, drills, armor.",
+   "use": [
+    "Place it touching a generator, or feed it FE.",
+    "Right-click it with the item."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Rate",
+      "2,000 FE/t"
+     ],
+     [
+      "Slots",
+      "1"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "metal_press"
+   ],
+   "what": "Presses 1 ingot into 1 plate: twice what the hammer gives.",
+   "use": [
+    "Right-click it with ingots or feed it with a hopper or pipe.",
+    "Set its faces in the Sides tab."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Power",
+      "20 FE/t"
+     ],
+     [
+      "Time",
+      "100 ticks per plate"
+     ],
+     [
+      "Card slots",
+      "2"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "alloy_smelter_mk1",
+    "alloy_smelter_mk2",
+    "alloy_smelter_mk3",
+    "alloy_smelter_mk4"
+   ],
+   "what": "Makes the Robotica alloys from up to three inputs. Only this machine makes them.",
+   "use": [
+    "Right-click it with ingots or dusts, or pipe them in.",
+    "Power it with FE or a cell in its battery slot.",
+    "Right-click it with the next Mk to upgrade in place."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Age",
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     [
+      "Speed",
+      "x1",
+      "x2",
+      "x3",
+      "x5"
+     ],
+     [
+      "Base power",
+      "40 FE/t",
+      "40 FE/t",
+      "40 FE/t",
+      "40 FE/t"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     [
+      "Buffer",
+      "200k",
+      "400k",
+      "600k",
+      "800k FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "centrifuge_mk1",
+    "centrifuge_mk2",
+    "centrifuge_mk3",
+    "centrifuge_mk4"
+   ],
+   "what": "Splits one input into up to four results, some by chance. Recycles Depleted Fuel Pellets.",
+   "use": [
+    "Put the input in, power it.",
+    "Take results from the output or pipe them out."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Age",
+      "2",
+      "3",
+      "4",
+      "4"
+     ],
+     [
+      "Speed",
+      "x1",
+      "x2",
+      "x3",
+      "x5"
+     ],
+     [
+      "Base power",
+      "60 FE/t",
+      "60 FE/t",
+      "60 FE/t",
+      "60 FE/t"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    ]
+   },
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "assembler_mk1",
+    "assembler_mk2",
+    "assembler_mk3",
+    "assembler_mk4"
+   ],
+   "what": "Builds parts from up to six inputs. Some parts exist only here; others cost about a quarter less than by hand.",
+   "use": [
+    "Put every input in its own slot.",
+    "Power it: big parts need a lot of FE."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Age",
+      "2",
+      "3",
+      "4",
+      "4"
+     ],
+     [
+      "Speed",
+      "x1",
+      "x2",
+      "x3",
+      "x5"
+     ],
+     [
+      "Base power",
+      "80 FE/t",
+      "80 FE/t",
+      "80 FE/t",
+      "80 FE/t"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    ]
+   },
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "rtg"
+   ],
+   "what": "Radioisotope Generator: burns Thorium Fuel Pellets one at a time. Quiet, steady power.",
+   "use": [
+    "Put [[thorium_fuel_pellet]] in.",
+    "It pushes power into touching blocks; a [[tesla_coil_1]] on it sends it on.",
+    "Take out the [[depleted_fuel_pellet]] waste."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Output",
+      "150 FE/t"
+     ],
+     [
+      "Per pellet",
+      "24,000 ticks (3.6M FE)"
+     ],
+     [
+      "Buffer",
+      "100,000 FE"
+     ],
+     [
+      "Pushes out",
+      "up to 1,000 FE/t"
+     ]
+    ]
+   },
+   "see": [
+    "guide:power-ladder"
+   ]
+  }
+ ]
+}

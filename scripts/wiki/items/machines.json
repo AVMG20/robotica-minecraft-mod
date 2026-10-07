@@ -1,0 +1,785 @@
+{
+ "entries": [
+  {
+   "items": [
+    "bank_controller"
+   ],
+   "what": "Brain of the Capacitor Bank: stores all its FE. Keeps the energy when mined.",
+   "use": [
+    "Build the bank around it, controller in a side wall.",
+    "Open it to see stored FE, in/out per second and problems."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Size",
+      "3x3x3 to 9x9x9"
+     ],
+     [
+      "9x9x9 of Ender Capacitors",
+      "about 175G FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:capacitor-bank",
+    "multiblock:capacitor_bank_5"
+   ]
+  },
+  {
+   "items": [
+    "bank_casing"
+   ],
+   "what": "Frame and wall block of the Capacitor Bank.",
+   "see": [
+    "guide:capacitor-bank"
+   ]
+  },
+  {
+   "items": [
+    "bank_glass"
+   ],
+   "what": "Wall block of the Capacitor Bank you can see through. Not on edges.",
+   "see": [
+    "guide:capacitor-bank"
+   ]
+  },
+  {
+   "items": [
+    "bank_port"
+   ],
+   "what": "Moves FE in or out of a Capacitor Bank. Sneak-right-click to switch input/output.",
+   "see": [
+    "guide:capacitor-bank"
+   ]
+  },
+  {
+   "items": [
+    "capacitor_copper",
+    "capacitor_redstone",
+    "capacitor_ender",
+    "capacitor_resonant"
+   ],
+   "what": "Goes inside a Capacitor Bank. Each one adds storage.",
+   "stats": {
+    "columns": [
+     "Copper",
+     "Redstone",
+     "Ender",
+     "Resonant"
+    ],
+    "rows": [
+     [
+      "Stores",
+      "8M FE",
+      "64M FE",
+      "512M FE",
+      "4G FE"
+     ],
+     [
+      "Age",
+      "1",
+      "2",
+      "4",
+      "4"
+     ]
+    ]
+   },
+   "see": [
+    "guide:capacitor-bank"
+   ]
+  },
+  {
+   "items": [
+    "transfer_coil_basic",
+    "transfer_coil_advanced",
+    "transfer_coil_elite"
+   ],
+   "what": "Goes inside a Capacitor Bank. The coils together set how fast FE goes in and out.",
+   "stats": {
+    "columns": [
+     "Basic",
+     "Advanced",
+     "Elite"
+    ],
+    "rows": [
+     [
+      "Adds",
+      "64,000 FE/t",
+      "512,000 FE/t",
+      "4,000,000 FE/t"
+     ],
+     [
+      "Age",
+      "1",
+      "2",
+      "3"
+     ]
+    ]
+   },
+   "see": [
+    "guide:capacitor-bank"
+   ]
+  },
+  {
+   "items": [
+    "reactor_controller"
+   ],
+   "what": "Brain of the Fission Reactor: fuel, temperature and control rods.",
+   "use": [
+    "Build the reactor around it, controller in a side wall.",
+    "Put fuel pellets in.",
+    "Set the control rods with the slider to keep it under 1,000 C."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Size",
+      "5x5x5 to 7x7x7"
+     ],
+     [
+      "Buffer",
+      "5,000,000 FE"
+     ],
+     [
+      "Safe",
+      "up to 1,000 C"
+     ],
+     [
+      "SCRAM",
+      "1,800 C (reset below 200 C)"
+     ]
+    ]
+   },
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "reactor_casing"
+   ],
+   "what": "Frame and wall block of the Fission Reactor. Also goes into Fusion Casing.",
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "reactor_glass"
+   ],
+   "what": "See-through wall block for both reactors. Not on edges.",
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "reactor_power_port"
+   ],
+   "what": "Wall block that sends reactor FE out. On the Fusion Reactor it also takes the ignition charge in.",
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "reactor_access_port"
+   ],
+   "what": "Wall block for fuel in and waste out. Hoppers and pipes work.",
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "reactor_fuel_rod"
+   ],
+   "what": "Goes inside a Fission Reactor in full columns, floor to roof.",
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "cryo_coolant"
+   ],
+   "what": "The best reactor coolant: 4 points per side next to a fuel rod.",
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "fusion_controller"
+   ],
+   "what": "Brain of the Fusion Reactor: ignition charge, plasma and fuel.",
+   "use": [
+    "Build the 7x3x7 around it.",
+    "Charge 20M FE through the Power Ports.",
+    "Add [[fusion_fuel_pellet]] and switch it on."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Ignition",
+      "20,000,000 FE, at most 1M FE/t in"
+     ],
+     [
+      "Output",
+      "200,000 FE/t per pellet"
+     ],
+     [
+      "Warmup",
+      "10 s"
+     ],
+     [
+      "Without fuel",
+      "collapses after 5 s"
+     ]
+    ]
+   },
+   "see": [
+    "guide:fusion-reactor"
+   ]
+  },
+  {
+   "items": [
+    "fusion_casing"
+   ],
+   "what": "Frame and wall block of the Fusion Reactor.",
+   "see": [
+    "guide:fusion-reactor"
+   ]
+  },
+  {
+   "items": [
+    "fusion_coil"
+   ],
+   "what": "Sixteen of these make the ring inside the Fusion Reactor.",
+   "see": [
+    "guide:fusion-reactor"
+   ]
+  },
+  {
+   "items": [
+    "grinder_mk1",
+    "grinder_mk2",
+    "grinder_mk3",
+    "grinder_mk4"
+   ],
+   "what": "Doubles ores: 1 ore becomes 2 dusts. Works with every mod's ores by tag.",
+   "use": [
+    "Put ores, raw ores or ingots in.",
+    "Add grinding media for a bonus.",
+    "Smelt the dusts in an [[electric_furnace_mk1]]."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Speed",
+      "x1",
+      "x1.5",
+      "x2",
+      "x3"
+     ],
+     [
+      "Power",
+      "20 FE/t",
+      "30 FE/t",
+      "40 FE/t",
+      "60 FE/t"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     [
+      "Buffer",
+      "20k",
+      "80k",
+      "320k",
+      "1.28M FE"
+     ],
+     [
+      "Input",
+      "4k",
+      "16k",
+      "64k",
+      "256k FE/t"
+     ]
+    ]
+   },
+   "see": [
+    "guide:ore-processing"
+   ]
+  },
+  {
+   "items": [
+    "electric_furnace_mk1",
+    "electric_furnace_mk2",
+    "electric_furnace_mk3",
+    "electric_furnace_mk4"
+   ],
+   "what": "Smelts every furnace recipe in half the time, on several lanes at once.",
+   "use": [
+    "Put items in the lanes.",
+    "Take results by hand to get the stored experience."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Lanes",
+      "1",
+      "2",
+      "4",
+      "8"
+     ],
+     [
+      "Speed",
+      "x1",
+      "x1.5",
+      "x2",
+      "x3"
+     ],
+     [
+      "Power per lane",
+      "20 FE/t",
+      "30 FE/t",
+      "40 FE/t",
+      "60 FE/t"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    ]
+   },
+   "see": [
+    "guide:ore-processing"
+   ]
+  },
+  {
+   "items": [
+    "iron_grinding_balls",
+    "ferrothorium_grinding_balls",
+    "pyrosteel_grinding_balls",
+    "resonant_grinding_balls"
+   ],
+   "what": "Grinding media: more dust per ore and a chance of a byproduct. One loads into the Grinder and lasts its uses.",
+   "stats": {
+    "columns": [
+     "Iron",
+     "Ferrothorium",
+     "Pyrosteel",
+     "Resonant"
+    ],
+    "rows": [
+     [
+      "Bonus",
+      "+25%",
+      "+50%",
+      "+100%",
+      "+150%"
+     ],
+     [
+      "Byproduct",
+      "5%",
+      "10%",
+      "20%",
+      "25%"
+     ],
+     [
+      "Uses",
+      "16",
+      "32",
+      "64",
+      "128"
+     ],
+     [
+      "Grinder",
+      "Mk1",
+      "Mk2",
+      "Mk3",
+      "Mk4"
+     ]
+    ]
+   },
+   "see": [
+    "guide:ore-processing"
+   ]
+  },
+  {
+   "items": [
+    "iron_dust",
+    "gold_dust",
+    "copper_dust"
+   ],
+   "what": "Ground ore. Smelt it into an ingot.",
+   "see": [
+    "guide:ore-processing"
+   ]
+  },
+  {
+   "items": [
+    "stumpy"
+   ],
+   "what": "Lumber bot: fells whole trees, replants and collects drops.",
+   "use": [
+    "Place it among trees with a chest or [[supply_crate]] touching it.",
+    "Right-click it with a wound [[mainspring]] or a cell.",
+    "Sneak-right-click: status and work area."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Area",
+      "7x7",
+      "11x11",
+      "15x15",
+      "23x23"
+     ],
+     [
+      "Power",
+      "4 FE/t + 250 FE per log",
+      "",
+      "",
+      ""
+     ]
+    ]
+   },
+   "see": [
+    "guide:getting-started",
+    "item:farm_kit_mk2"
+   ]
+  },
+  {
+   "items": [
+    "sprout"
+   ],
+   "what": "Crop bot: harvests and replants crops, tills dirt near water.",
+   "use": [
+    "Place it in your field with a chest or [[supply_crate]] touching it.",
+    "Right-click it with a wound [[mainspring]] or a cell."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Area",
+      "9x9",
+      "13x13",
+      "17x17",
+      "25x25"
+     ],
+     [
+      "Growth",
+      "x1.5",
+      "x2",
+      "x3",
+      "x5"
+     ],
+     [
+      "Power",
+      "3 FE/t + 30 FE per crop",
+      "",
+      "",
+      ""
+     ]
+    ]
+   },
+   "see": [
+    "guide:getting-started",
+    "item:farm_kit_mk2"
+   ]
+  },
+  {
+   "items": [
+    "farm_kit_mk2",
+    "farm_kit_mk3",
+    "farm_kit_mk4"
+   ],
+   "what": "Upgrades a placed Stumpy or Sprout to the next Mk: bigger, faster, one more card of each kind.",
+   "use": [
+    "Right-click the placed robot with the kit."
+   ],
+   "stats": {
+    "columns": [
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Age",
+      "1",
+      "2",
+      "4"
+     ],
+     [
+      "Sprout area",
+      "13x13",
+      "17x17",
+      "25x25"
+     ],
+     [
+      "Interval",
+      "20 ticks",
+      "5 ticks",
+      "1 tick"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "supply_crate"
+   ],
+   "what": "A 27-slot crate. Robots and machines next to it put their drops in."
+  },
+  {
+   "items": [
+    "excavator"
+   ],
+   "what": "A real quarry: digs everything below it down to bedrock.",
+   "use": [
+    "Place it where the hole should start.",
+    "Power it with a cell or a [[tesla_coil_1]].",
+    "Put a chest next to it for the drops."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Area",
+      "8x8 (16 to 64 with range cards)"
+     ],
+     [
+      "Speed",
+      "1 block per 60 ticks"
+     ],
+     [
+      "Power",
+      "40 FE per block"
+     ],
+     [
+      "Card slots",
+      "5"
+     ]
+    ]
+   },
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "survey_rig"
+   ],
+   "what": "Place it once and power it: it turns FE into random ores, as if mined with a pickaxe. No hole, no lag.",
+   "use": [
+    "Place it anywhere and power it.",
+    "Put a chest next to it (or pipe from it).",
+    "A [[magma_core]] in its core slot adds ancient debris and resonite."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Speed",
+      "1 ore every 20 s"
+     ],
+     [
+      "Power",
+      "200 FE/t (80,000 FE per ore)"
+     ],
+     [
+      "8 speed cards",
+      "x20 speed, x420 FE/t"
+     ],
+     [
+      "Buffer",
+      "2,000,000 FE, input 100,000 FE/t"
+     ],
+     [
+      "Diamonds",
+      "about 1.5% of rolls (vanilla ores)"
+     ]
+    ]
+   },
+   "see": [
+    "guide:finding-ores"
+   ]
+  },
+  {
+   "items": [
+    "mining_drone",
+    "mining_drone_mk2",
+    "mining_drone_mk3"
+   ],
+   "what": "Flying miner: digs a tunnel, lights it, bridges gaps and brings the loot back.",
+   "use": [
+    "Right-click a block to deploy it.",
+    "Give it a cell or [[mainspring]] and torches.",
+    "Pick a direction and length, press the pickaxe.",
+    "H: nearest drone digs where you look. Sneak + H: all come back."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3"
+    ],
+    "rows": [
+     [
+      "Tunnel",
+      "3x3",
+      "3x3",
+      "5x5"
+     ],
+     [
+      "Dig speed",
+      "x1",
+      "x1.5",
+      "x2.5"
+     ],
+     [
+      "Buffer",
+      "500k FE",
+      "2M FE",
+      "8M FE"
+     ],
+     [
+      "Extra",
+      "",
+      "",
+      "Fortune I"
+     ],
+     [
+      "Power",
+      "80 FE per block",
+      "",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "sentry_drone",
+    "sentry_drone_mk2"
+   ],
+   "what": "Shoots energy bolts at monsters, never at players, pets or villagers.",
+   "use": [
+    "Deploy it and set Guard, Follow or Stay in its menu.",
+    "Repair it with iron."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Damage",
+      "5",
+      "x1.5"
+     ],
+     [
+      "Range",
+      "16 blocks",
+      "20 blocks"
+     ],
+     [
+      "Per shot",
+      "200 FE",
+      ""
+     ],
+     [
+      "Buffer",
+      "400k FE",
+      "1.6M FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "courier_drone",
+    "courier_drone_mk2"
+   ],
+   "what": "Carries items between inventories along up to 4 routes, with a filter.",
+   "use": [
+    "Sneak-click a source, then a target, with the drone or a [[courier_remote]].",
+    "Set an allow or block list in its menu."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Per trip",
+      "1 stack",
+      "3 stacks"
+     ],
+     [
+      "Route",
+      "up to 64 blocks",
+      "up to 64 blocks"
+     ],
+     [
+      "Per trip",
+      "100 FE",
+      ""
+     ],
+     [
+      "Buffer",
+      "300k FE",
+      "1.2M FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "courier_remote"
+   ],
+   "what": "Links Courier Drone routes from a distance: sneak-click a source, then a target."
+  }
+ ]
+}

@@ -1,0 +1,329 @@
+{
+  "fission_reactor_5": {
+    "title": "Fission Reactor 5x5x5",
+    "controller": "reactor_controller",
+    "guide": "fission-reactor",
+    "check": "fission",
+    "about": "Smallest reactor: one Fuel Rod column with water on all four sides. About 1,150 FE/t on thorium pellets.",
+    "notes": [
+      "Fuel Rods fill the whole column, floor to roof.",
+      "Only the 4 horizontal neighbours of a rod cool it.",
+      "Swap the water for packed ice for about 1,350 FE/t."
+    ],
+    "legend": {
+      "C": "reactor_casing",
+      "G": "reactor_glass",
+      "K": "reactor_controller",
+      "P": "reactor_power_port",
+      "A": "reactor_access_port",
+      "R": "reactor_fuel_rod",
+      "W": "minecraft:water",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "CCCCC",
+        "CCCCC",
+        "CCCCC",
+        "CCCCC",
+        "CCCCC"
+      ],
+      [
+        "CCCCC",
+        "C.W.C",
+        "AWRWP",
+        "C.W.C",
+        "CCCCC"
+      ],
+      [
+        "CGKGC",
+        "C.W.C",
+        "CWRWC",
+        "C.W.C",
+        "CCCCC"
+      ],
+      [
+        "CCGCC",
+        "C.W.C",
+        "CWRWC",
+        "C.W.C",
+        "CCCCC"
+      ],
+      [
+        "CCCCC",
+        "CCCCC",
+        "CCGCC",
+        "CCCCC",
+        "CCCCC"
+      ]
+    ]
+  },
+  "fission_reactor_7": {
+    "title": "Fission Reactor 7x7x7",
+    "controller": "reactor_controller",
+    "guide": "fission-reactor",
+    "check": "fission",
+    "about": "Biggest default reactor: 13 Fuel Rod columns in a Cryo Coolant checkerboard. About 45,000 FE/t on enriched pellets at 32% load.",
+    "notes": [
+      "Every rod has Cryo Coolant on its four sides (or the wall).",
+      "Runs hot at full power: set the control rods so it stays under 1,000 C.",
+      "Two Power Ports, one Access Port for fuel and waste."
+    ],
+    "legend": {
+      "C": "reactor_casing",
+      "G": "reactor_glass",
+      "K": "reactor_controller",
+      "P": "reactor_power_port",
+      "A": "reactor_access_port",
+      "R": "reactor_fuel_rod",
+      "Q": "cryo_coolant",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC"
+      ],
+      [
+        "CCCCCCC",
+        "CRQRQRC",
+        "CQRQRQC",
+        "CRQRQRC",
+        "CQRQRQC",
+        "CRQRQRC",
+        "CCCCCCC"
+      ],
+      [
+        "CGGGGGC",
+        "CRQRQRC",
+        "CQRQRQC",
+        "CRQRQRP",
+        "CQRQRQC",
+        "CRQRQRC",
+        "CCCCCCC"
+      ],
+      [
+        "CCCKCCC",
+        "CRQRQRC",
+        "CQRQRQC",
+        "ARQRQRC",
+        "CQRQRQC",
+        "CRQRQRC",
+        "CCCCCCC"
+      ],
+      [
+        "CGGGGGC",
+        "CRQRQRC",
+        "CQRQRQC",
+        "CRQRQRP",
+        "CQRQRQC",
+        "CRQRQRC",
+        "CCCCCCC"
+      ],
+      [
+        "CCCCCCC",
+        "CRQRQRC",
+        "CQRQRQC",
+        "CRQRQRC",
+        "CQRQRQC",
+        "CRQRQRC",
+        "CCCCCCC"
+      ],
+      [
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC",
+        "CCCCCCC"
+      ]
+    ]
+  },
+  "capacitor_bank_small": {
+    "title": "Capacitor Bank 4x3x3",
+    "controller": "bank_controller",
+    "guide": "capacitor-bank",
+    "check": "bank",
+    "about": "Smallest working bank: one Copper Capacitor and one Basic Transfer Coil. 8M FE, 64,000 FE/t in and out.",
+    "notes": [
+      "A 3x3x3 is a legal size but has room for one part only, and a bank needs a capacitor and a coil.",
+      "Sneak + right-click a Bank Port to switch it between input and output."
+    ],
+    "legend": {
+      "B": "bank_casing",
+      "G": "bank_glass",
+      "K": "bank_controller",
+      "I": "bank_port",
+      "O": "bank_port",
+      "C": "capacitor_copper",
+      "T": "transfer_coil_basic",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "BBBB",
+        "BBBB",
+        "BBBB"
+      ],
+      [
+        "BKGB",
+        "ICTO",
+        "BBBB"
+      ],
+      [
+        "BBBB",
+        "BBBB",
+        "BBBB"
+      ]
+    ]
+  },
+  "capacitor_bank_5": {
+    "title": "Capacitor Bank 5x5x5",
+    "controller": "bank_controller",
+    "guide": "capacitor-bank",
+    "check": "bank",
+    "about": "22 Redstone Capacitors and 5 Advanced Transfer Coils: about 1.4G FE, 2.56M FE/t in and out.",
+    "notes": [
+      "Coils and capacitors can go anywhere inside, in any mix.",
+      "The coils' sum limits input and output per tick, shared by all ports.",
+      "Glass is fine on walls, never on edges."
+    ],
+    "legend": {
+      "B": "bank_casing",
+      "G": "bank_glass",
+      "K": "bank_controller",
+      "I": "bank_port",
+      "O": "bank_port",
+      "R": "capacitor_redstone",
+      "T": "transfer_coil_advanced",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "BBBBB",
+        "BBBBB",
+        "BBBBB",
+        "BBBBB",
+        "BBBBB"
+      ],
+      [
+        "BGGGB",
+        "BRRRB",
+        "BRRRB",
+        "BRRRB",
+        "BBBBB"
+      ],
+      [
+        "BGKGB",
+        "BRTRB",
+        "ITTTO",
+        "BRTRB",
+        "BBBBB"
+      ],
+      [
+        "BGGGB",
+        "BRRRB",
+        "BRRRB",
+        "BRRRB",
+        "BBBBB"
+      ],
+      [
+        "BBBBB",
+        "BBBBB",
+        "BBBBB",
+        "BBBBB",
+        "BBBBB"
+      ]
+    ]
+  },
+  "fusion_reactor": {
+    "title": "Fusion Reactor 7x3x7",
+    "controller": "fusion_controller",
+    "guide": "fusion-reactor",
+    "check": "fusion",
+    "about": "Fixed size. A ring of 16 Fusion Coils around an empty 3x3 plasma chamber, one layer high.",
+    "notes": [
+      "The 3x3 middle must stay empty: that is where the plasma burns.",
+      "Power Ports take the 20M FE ignition charge in and send power out.",
+      "Access Ports only take fuel in."
+    ],
+    "legend": {
+      "F": "fusion_casing",
+      "G": "reactor_glass",
+      "K": "fusion_controller",
+      "P": "reactor_power_port",
+      "A": "reactor_access_port",
+      "O": "fusion_coil",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF"
+      ],
+      [
+        "FFGKGFF",
+        "FOOOOOF",
+        "FO...OF",
+        "AO...OP",
+        "FO...OF",
+        "FOOOOOF",
+        "FFFFFFF"
+      ],
+      [
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFGGGFF",
+        "FFGGGFF",
+        "FFGGGFF",
+        "FFFFFFF",
+        "FFFFFFF"
+      ]
+    ]
+  },
+  "mob_replicator": {
+    "title": "Mob Replicator 3x3x3",
+    "controller": "replicator_controller",
+    "guide": "mob-replicator",
+    "check": "replicator",
+    "about": "Controller in the middle of one face, Replicator Frames around it, at least one Replicator Glass, the center empty.",
+    "notes": [
+      "Any frame block may be swapped for glass, edges and corners too.",
+      "The center block stays air: the mob hologram spins there."
+    ],
+    "legend": {
+      "F": "replicator_frame",
+      "G": "replicator_glass",
+      "K": "replicator_controller",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "FFF",
+        "FFF",
+        "FFF"
+      ],
+      [
+        "FKF",
+        "G.G",
+        "FGF"
+      ],
+      [
+        "FFF",
+        "FGF",
+        "FFF"
+      ]
+    ]
+  }
+}

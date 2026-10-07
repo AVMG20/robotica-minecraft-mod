@@ -1,0 +1,815 @@
+{
+ "entries": [
+  {
+   "items": [
+    "copper_gear"
+   ],
+   "what": "Your first part: 4 copper ingots around a cobblestone. Goes into almost every Age 0 item.",
+   "see": [
+    "guide:getting-started"
+   ]
+  },
+  {
+   "items": [
+    "mainspring"
+   ],
+   "what": "Age 0 battery. Wind it at a [[winding_crank]], then right-click a robot with it.",
+   "stats": {
+    "rows": [
+     [
+      "Holds",
+      "240,000 FE"
+     ],
+     [
+      "Runs Stumpy",
+      "about 2 hours"
+     ]
+    ]
+   },
+   "see": [
+    "guide:getting-started"
+   ]
+  },
+  {
+   "items": [
+    "clockwork_mechanism"
+   ],
+   "what": "Age 0 moving part. The heart of the first robots and machines."
+  },
+  {
+   "items": [
+    "wooden_chassis"
+   ],
+   "what": "Age 0 body for Stumpy and Sprout."
+  },
+  {
+   "items": [
+    "iron_plate",
+    "copper_plate",
+    "gold_plate"
+   ],
+   "what": "Plate for Age 1 recipes. [[tinkers_hammer]] + 2 ingots by hand, or 1 ingot in the [[metal_press]]. Other mods' plates work too."
+  },
+  {
+   "items": [
+    "copper_coil"
+   ],
+   "what": "Age 1 part: 8 copper around an iron ingot. Goes into motors, coils and Tesla Coils."
+  },
+  {
+   "items": [
+    "iron_casing"
+   ],
+   "what": "Age 1 casing. The base of Wired machines."
+  },
+  {
+   "items": [
+    "basic_circuit"
+   ],
+   "what": "Age 1 circuit. Unlocks the Grinder, Electric Furnace and most Wired machines."
+  },
+  {
+   "items": [
+    "electric_motor"
+   ],
+   "what": "Age 1 moving part. Powers drills, drones and machines."
+  },
+  {
+   "items": [
+    "copper_cell",
+    "redstone_cell",
+    "ender_cell"
+   ],
+   "what": "Batteries for robots, machines and suits. A cell in your inventory recharges the FE tool in your hand.",
+   "use": [
+    "Right-click a robot or machine to swap it into the battery slot.",
+    "Charge it in a [[charger]]."
+   ],
+   "stats": {
+    "columns": [
+     "Copper",
+     "Redstone",
+     "Ender"
+    ],
+    "rows": [
+     [
+      "Holds",
+      "800,000 FE",
+      "3,200,000 FE",
+      "20,736,000 FE"
+     ],
+     [
+      "Age",
+      "1",
+      "2",
+      "4"
+     ],
+     [
+      "Runs Stumpy",
+      "about 8 h",
+      "about 24 h",
+      "about 72 h"
+     ]
+    ]
+   },
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
+    "reinforced_casing"
+   ],
+   "what": "Age 2 casing: iron casings, obsidian and a diamond."
+  },
+  {
+   "items": [
+    "advanced_circuit"
+   ],
+   "what": "Age 2 circuit."
+  },
+  {
+   "items": [
+    "servo_actuator"
+   ],
+   "what": "Age 2 moving part."
+  },
+  {
+   "items": [
+    "blazing_casing"
+   ],
+   "what": "Age 3 casing. Needs a Magma Core."
+  },
+  {
+   "items": [
+    "quantum_circuit"
+   ],
+   "what": "Age 3 circuit."
+  },
+  {
+   "items": [
+    "plasma_actuator"
+   ],
+   "what": "Age 3 moving part. Also the speed boost of the Mob Replicator (x2)."
+  },
+  {
+   "items": [
+    "null_casing"
+   ],
+   "what": "Age 4 casing. Needs an Antigrav Core."
+  },
+  {
+   "items": [
+    "null_circuit"
+   ],
+   "what": "Age 4 circuit."
+  },
+  {
+   "items": [
+    "servo_core"
+   ],
+   "what": "Opens Age 2. Drops from the Scrap Colossus. In an Exo chestplate: Overclock (key O).",
+   "see": [
+    "item:colossus_altar"
+   ]
+  },
+  {
+   "items": [
+    "magma_core"
+   ],
+   "what": "Opens Age 3. Survey Rig core slot: ancient debris and resonite. Exo chestplate: fire immunity.",
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "antigrav_core"
+   ],
+   "what": "Opens Age 4. Exo chestplate: no fall damage, cheaper flight.",
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "thorium_ore",
+    "deepslate_thorium_ore"
+   ],
+   "what": "Overworld ore deep underground. Drops Raw Thorium.",
+   "see": [
+    "guide:finding-ores"
+   ]
+  },
+  {
+   "items": [
+    "pyrolite_ore"
+   ],
+   "what": "Nether ore. Drops Pyrolite Shards and some experience.",
+   "see": [
+    "guide:finding-ores"
+   ]
+  },
+  {
+   "items": [
+    "resonite_ore"
+   ],
+   "what": "Rare ore on the outer End islands. Drops Resonite Crystals.",
+   "see": [
+    "guide:finding-ores"
+   ]
+  },
+  {
+   "items": [
+    "raw_thorium",
+    "raw_thorium_block"
+   ],
+   "what": "Raw thorium from the ore. Smelt it, or grind it for more.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "thorium_ingot",
+    "thorium_block",
+    "thorium_dust",
+    "thorium_plate"
+   ],
+   "what": "Thorium: for ferrothorium, fuel pellets and Thermocouples.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "pyrolite_shard",
+    "pyrolite_dust",
+    "pyrolite_block"
+   ],
+   "what": "Pyrolite from the Nether: goes into pyrosteel and Enriched Fuel.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "resonite_crystal",
+    "resonite_dust",
+    "resonite_block"
+   ],
+   "what": "Resonite from the End: goes into resonant alloy and Fusion Fuel.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "ferrothorium_ingot",
+    "ferrothorium_plate"
+   ],
+   "what": "Age 2 alloy: iron + thorium in the [[alloy_smelter_mk1]].",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "pyrosteel_ingot",
+    "pyrosteel_plate"
+   ],
+   "what": "Age 3 alloy: ferrothorium + pyrolite + blaze powder.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "resonant_alloy_ingot",
+    "resonant_alloy_plate"
+   ],
+   "what": "Age 4 alloy: pyrosteel + resonite + ender pearl.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "graphite_dust"
+   ],
+   "what": "Ground coal or charcoal. For fuel pellets, fuel rods and coils."
+  },
+  {
+   "items": [
+    "thermocouple"
+   ],
+   "what": "Age 2 part, made only in the Assembler. For the RTG and Mk2 machines.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "superconductor_coil"
+   ],
+   "what": "Age 3 part, made only in the Assembler. For Mk3 machines, Exo Mk3 and fusion parts.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "resonant_lattice"
+   ],
+   "what": "Age 4 part, made only in the Assembler. For Mk4 machines and Exo Mk4.",
+   "see": [
+    "guide:industry-alloys"
+   ]
+  },
+  {
+   "items": [
+    "thorium_fuel_pellet",
+    "enriched_fuel_pellet"
+   ],
+   "what": "Fission fuel. The thorium pellet also runs the [[rtg]].",
+   "stats": {
+    "columns": [
+     "Thorium",
+     "Enriched"
+    ],
+    "rows": [
+     [
+      "Reactor heat",
+      "400",
+      "1,000"
+     ],
+     [
+      "Burn time",
+      "12,000 ticks",
+      "12,000 ticks"
+     ],
+     [
+      "RTG",
+      "3.6M FE",
+      "\u2013"
+     ]
+    ]
+   },
+   "see": [
+    "guide:fission-reactor"
+   ]
+  },
+  {
+   "items": [
+    "depleted_fuel_pellet"
+   ],
+   "what": "Spent fuel. The Centrifuge turns it back into thorium and graphite, sometimes a Radiant Isotope."
+  },
+  {
+   "items": [
+    "radiant_isotope"
+   ],
+   "what": "Rare Centrifuge result from spent fuel. Goes into Fusion Fuel."
+  },
+  {
+   "items": [
+    "fusion_fuel_pellet"
+   ],
+   "what": "Fusion Reactor fuel: 200,000 FE/t for 2,400 ticks.",
+   "see": [
+    "guide:fusion-reactor"
+   ]
+  },
+  {
+   "items": [
+    "replicator_controller"
+   ],
+   "what": "Brain of the Mob Replicator: insert a full Essence Vial and power it to get that mob's loot.",
+   "use": [
+    "Build the 3x3x3 around it.",
+    "Insert a full [[essence_vial]].",
+    "Pick Harvest (loot) or Spawn (real mob)."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Power",
+      "160 FE/t"
+     ],
+     [
+      "Cycle",
+      "1,200 ticks"
+     ],
+     [
+      "Output",
+      "18 slots"
+     ],
+     [
+      "Buffer",
+      "1,000,000 FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:mob-replicator"
+   ]
+  },
+  {
+   "items": [
+    "replicator_frame",
+    "replicator_glass"
+   ],
+   "what": "Shell blocks of the Mob Replicator. At least one glass.",
+   "see": [
+    "guide:mob-replicator"
+   ]
+  },
+  {
+   "items": [
+    "essence_vial"
+   ],
+   "what": "Takes samples from a hostile mob. 8 samples fill it.",
+   "use": [
+    "Right-click a mob (2 damage, 3 s cooldown)."
+   ],
+   "see": [
+    "guide:mob-replicator"
+   ]
+  },
+  {
+   "items": [
+    "item_pipe",
+    "item_pipe_mk2"
+   ],
+   "what": "Moves items between chests and machines, instantly. Arms are Insert by default.",
+   "use": [
+    "Place pipes from the source to the target.",
+    "Sneak-right-click the arm at the source with an empty hand: Extract.",
+    "Machines follow their Sides settings."
+   ],
+   "stats": {
+    "columns": [
+     "Pipe",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Moves",
+      "8 items per second",
+      "32 items per 0.5 s"
+     ]
+    ]
+   },
+   "see": [
+    "guide:logistics"
+   ]
+  },
+  {
+   "items": [
+    "storage_terminal"
+   ],
+   "what": "A big sorted chest with search and a crafting grid.",
+   "use": [
+    "Shift-click items in or out.",
+    "Search with @mod or #tag.",
+    "Add Storage Expansions for more room."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Slots",
+      "81, up to 648"
+     ],
+     [
+      "Power",
+      "2 FE/t + 1 per expansion"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "storage_expansion_mk1",
+    "storage_expansion_mk2",
+    "storage_expansion_mk3"
+   ],
+   "what": "More slots for the Storage Terminal (3 expansion slots).",
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3"
+    ],
+    "rows": [
+     [
+      "Adds",
+      "81",
+      "162",
+      "324"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "warp_pad"
+   ],
+   "what": "Teleport pad. Name it, stand on it and right-click to travel to any of your pads (or public ones).",
+   "use": [
+    "Place and name it.",
+    "Stand on it, right-click, pick a destination."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Cost",
+      "5,000 FE + 20 FE per block"
+     ],
+     [
+      "Buffer",
+      "1,000,000 FE"
+     ],
+     [
+      "Other dimensions",
+      "with a [[rift_upgrade]]: 100,000 FE"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "rift_upgrade"
+   ],
+   "what": "Lets a Warp Pad jump between dimensions."
+  },
+  {
+   "items": [
+    "recall_remote"
+   ],
+   "what": "Hold right-click 3 s to go home to its bound pad. Getting hit cancels.",
+   "use": [
+    "Sneak-right-click a Warp Pad to bind it."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Cost",
+      "20,000 FE"
+     ],
+     [
+      "Cooldown",
+      "30 s"
+     ],
+     [
+      "Range",
+      "same dimension"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "rift_remote"
+   ],
+   "what": "Stores up to 10 Warp Pads in a list and works across dimensions.",
+   "use": [
+    "Sneak-right-click pads to add them.",
+    "Right-click: pick a pad from the list."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Cost",
+      "150,000 FE"
+     ],
+     [
+      "Pads",
+      "10"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "gate_controller"
+   ],
+   "what": "Portal Projector: throws a floating portal to its linked projector, in any dimension.",
+   "use": [
+    "Link two with a [[linking_card]].",
+    "Power both and walk through."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Idle",
+      "200 FE/t"
+     ],
+     [
+      "Per entity",
+      "10,000 FE"
+     ],
+     [
+      "Buffer",
+      "4,000,000 FE"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "linking_card"
+   ],
+   "what": "Links two Portal Projectors: sneak-right-click A, then B."
+  },
+  {
+   "items": [
+    "architect_table"
+   ],
+   "what": "Builds whole halls for you from cheap matter. Pick plots on a grid and press Build.",
+   "use": [
+    "Feed it cobble, wood, ingots (matter).",
+    "Pick plots in the GUI, then Build.",
+    "A casing in the style slot opens higher styles."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Buildings",
+      "9x9, 6 high (12 with Height cards)"
+     ],
+     [
+      "Speed",
+      "1 block per 4 ticks"
+     ],
+     [
+      "Power",
+      "20 FE per block x style"
+     ],
+     [
+      "Buffer",
+      "200,000 FE"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "timberframe_wall",
+    "timberframe_floor",
+    "timberframe_roof",
+    "timberframe_pillar",
+    "timberframe_window",
+    "timberframe_light"
+   ],
+   "what": "A building style of the Architect Table (Age 0). Also craftable by hand, 8 at a time."
+  },
+  {
+   "items": [
+    "copper_works_wall",
+    "copper_works_floor",
+    "copper_works_roof",
+    "copper_works_pillar",
+    "copper_works_window",
+    "copper_works_light"
+   ],
+   "what": "A building style of the Architect Table (Age 1). Also craftable by hand, 8 at a time."
+  },
+  {
+   "items": [
+    "steel_lab_wall",
+    "steel_lab_floor",
+    "steel_lab_roof",
+    "steel_lab_pillar",
+    "steel_lab_window",
+    "steel_lab_light"
+   ],
+   "what": "A building style of the Architect Table (Age 2). Also craftable by hand, 8 at a time."
+  },
+  {
+   "items": [
+    "null_spire_wall",
+    "null_spire_floor",
+    "null_spire_roof",
+    "null_spire_pillar",
+    "null_spire_window",
+    "null_spire_light"
+   ],
+   "what": "A building style of the Architect Table (Age 4). Also craftable by hand, 8 at a time."
+  },
+  {
+   "items": [
+    "codex"
+   ],
+   "what": "The in-game guide. Every new player gets one; it shows your next steps and recipes."
+  },
+  {
+   "items": [
+    "colossus_altar"
+   ],
+   "what": "Wakes the Scrap Colossus boss. Found in Rusted Foundries, or craft your own.",
+   "use": [
+    "Right-click it with a [[signal_flare]].",
+    "Needs 3x3x4 air above. 5 min cooldown."
+   ],
+   "see": [
+    "guide:finding-ores"
+   ]
+  },
+  {
+   "items": [
+    "signal_flare"
+   ],
+   "what": "Summons the Scrap Colossus at an altar. It drops the [[servo_core]]."
+  },
+  {
+   "items": [
+    "upgrade_speed"
+   ],
+   "what": "Work faster; costs more FE per action. Each card is one step: x2, x3, x4, x6, x8, x11, x15, x20.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_efficiency"
+   ],
+   "what": "-15% energy per action per card. Never below 40% of the base cost.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_range"
+   ],
+   "what": "Bigger work area. What a step means depends on the machine.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_fortune"
+   ],
+   "what": "Fortune I-III; Looting in the Replicator. Not together with a Silk Touch card.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_silk"
+   ],
+   "what": "Mined blocks drop themselves. Single card. Not together with Fortune.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_growth"
+   ],
+   "what": "+50% crop and sapling growth per card.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_void"
+   ],
+   "what": "Deletes junk or outputs that don't fit. Single card. Also the void filter module of power tools.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_pickup"
+   ],
+   "what": "Power tool module: drops go to your inventory. Installed at a Tinker's Bench. No machine takes it.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_height"
+   ],
+   "what": "Architect Table: buildings one block taller per card.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "upgrade_carry"
+   ],
+   "what": "Storage Terminal keeps its items when picked up. Right-click the terminal with it. It stays in for good.",
+   "see": [
+    "guide:upgrade-cards"
+   ]
+  }
+ ]
+}
