@@ -4,7 +4,7 @@ icon: alloy_smelter_mk1
 order: 35
 summary: From ore to alloy to plate to part: the Alloy Smelter, Centrifuge and Assembler chain.
 ---
-Three new ores, three alloys that only Robotica makes, and parts that only the Assembler builds.
+Three ores, three alloys from the Alloy Smelter, and parts only the Assembler builds.
 
 {{items thorium_ore pyrolite_ore resonite_ore alloy_smelter_mk1 centrifuge_mk1 assembler_mk1 metal_press}}
 

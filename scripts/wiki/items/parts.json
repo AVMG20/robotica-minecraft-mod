@@ -4,7 +4,7 @@
    "items": [
     "copper_gear"
    ],
-   "what": "Your first part: 4 copper ingots around a cobblestone. Goes into almost every Age 0 item.",
+   "what": "First part: 4 copper ingots around a cobblestone. Used in almost every Age 0 item.",
    "see": [
     "guide:getting-started"
    ]
@@ -21,8 +21,8 @@
       "240,000 FE"
      ],
      [
-      "Runs Stumpy",
-      "about 2 hours"
+      "Stumpy",
+      "about 850 logs"
      ]
     ]
    },
@@ -34,7 +34,7 @@
    "items": [
     "clockwork_mechanism"
    ],
-   "what": "Age 0 moving part. The heart of the first robots and machines."
+   "what": "Age 0 moving part for the first robots and machines."
   },
   {
    "items": [
@@ -66,7 +66,7 @@
    "items": [
     "basic_circuit"
    ],
-   "what": "Age 1 circuit. Unlocks the Grinder, Electric Furnace and most Wired machines."
+   "what": "Age 1 circuit (needs gold). Used in the Grinder, Electric Furnace and most Wired machines."
   },
   {
    "items": [
@@ -105,10 +105,10 @@
       "4"
      ],
      [
-      "Runs Stumpy",
-      "about 8 h",
-      "about 24 h",
-      "about 72 h"
+      "Stumpy",
+      "about 2,800 logs",
+      "about 11,000 logs",
+      "about 73,000 logs"
      ]
     ]
    },
@@ -126,7 +126,7 @@
    "items": [
     "advanced_circuit"
    ],
-   "what": "Age 2 circuit."
+   "what": "Age 2 circuit (needs a diamond)."
   },
   {
    "items": [
@@ -144,7 +144,7 @@
    "items": [
     "quantum_circuit"
    ],
-   "what": "Age 3 circuit."
+   "what": "Age 3 circuit (needs blaze rods and netherite)."
   },
   {
    "items": [
@@ -162,7 +162,7 @@
    "items": [
     "null_circuit"
    ],
-   "what": "Age 4 circuit."
+   "what": "Age 4 circuit (needs a nether star)."
   },
   {
    "items": [
@@ -387,7 +387,7 @@
    "items": [
     "replicator_controller"
    ],
-   "what": "Brain of the Mob Replicator: insert a full Essence Vial and power it to get that mob's loot.",
+   "what": "Controller of the Mob Replicator: insert a full Essence Vial and power it to get that mob's loot.",
    "use": [
     "Build the 3x3x3 around it.",
     "Insert a full [[essence_vial]].",
@@ -629,7 +629,7 @@
    "items": [
     "architect_table"
    ],
-   "what": "Builds whole halls for you from cheap matter, and takes them down again. Pick plots on a grid and press Build.",
+   "what": "Builds halls from matter and takes them down again. Pick plots on a grid and press Build.",
    "use": [
     "Feed it cobble, wood, ingots (matter).",
     "Pick plots in the GUI, then Build.",
@@ -710,7 +710,7 @@
    "items": [
     "codex"
    ],
-   "what": "The in-game guide. Every new player gets one; it shows your next steps and recipes."
+   "what": "The in-game guide: your next steps and every recipe. New players get one."
   },
   {
    "items": [
@@ -830,7 +830,7 @@
    "items": [
     "upgrade_carry"
    ],
-   "what": "Storage Terminal keeps its items when picked up. Right-click the terminal with it. It stays in for good.",
+   "what": "Storage Terminal keeps its items when picked up. Right-click the terminal with it; it stays in.",
    "see": [
     "guide:upgrade-cards"
    ]

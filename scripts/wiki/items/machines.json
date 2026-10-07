@@ -535,7 +535,7 @@
     "farm_kit_mk3",
     "farm_kit_mk4"
    ],
-   "what": "Upgrades a placed Stumpy or Sprout to the next Mk: bigger, faster, one more card slot and higher card caps.",
+   "what": "Upgrades a placed Stumpy or Sprout to the next Mk: bigger area, faster, one more card slot, higher card caps.",
    "use": [
     "Right-click the placed robot with the kit."
    ],
@@ -571,7 +571,7 @@
    "items": [
     "supply_crate"
    ],
-   "what": "A 27-slot crate. Robots and machines next to it put their drops in."
+   "what": "27-slot crate. Robots and machines touching it put their drops in."
   },
   {
    "items": [
@@ -580,7 +580,7 @@
     "excavator_mk3",
     "excavator_mk4"
    ],
-   "what": "A real quarry: digs everything below it down to bedrock.",
+   "what": "Quarry: digs everything below it down to bedrock. Seals fluids, skips chests and other block entities.",
    "use": [
     "Place it where the hole should start.",
     "Power it with a cell or a [[tesla_coil_1]].",
@@ -651,7 +651,7 @@
     "survey_rig_mk3",
     "survey_rig_mk4"
    ],
-   "what": "Place it once and power it: it turns FE into random ores, as if mined with a pickaxe. No hole, no lag.",
+   "what": "Turns FE into random ores, as if mined with a pickaxe. No hole.",
    "use": [
     "Place it anywhere and power it.",
     "Put a chest next to it (or pipe from it).",
@@ -780,7 +780,7 @@
     "sentry_drone",
     "sentry_drone_mk2"
    ],
-   "what": "Shoots energy bolts at monsters, never at players, pets or villagers.",
+   "what": "Shoots energy bolts at monsters only.",
    "use": [
     "Deploy it and set Guard, Follow or Stay in its menu.",
     "Repair it with iron."
@@ -794,7 +794,12 @@
      [
       "Damage",
       "5",
-      "x1.5"
+      "7.5"
+     ],
+     [
+      "Fire rate",
+      "1 shot/s",
+      "1.5 shots/s"
      ],
      [
       "Range",

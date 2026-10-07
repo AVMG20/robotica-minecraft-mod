@@ -46,7 +46,6 @@ A variable-size cuboid from 5x5x5 to 7x7x7 (outside size). Age 2-3 power.
 
 - Up to **1,000 C**: full output.
 - Above it the output throttles down to 25%; at **1,800 C** it SCRAMs. Reset from the GUI below 200 C.
-- It **never explodes** and never changes blocks.
 
 Control rods (0-100%) are set with the GUI slider. Fuel only burns while the 5M FE buffer has room.
 

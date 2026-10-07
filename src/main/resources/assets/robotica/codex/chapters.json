@@ -12,7 +12,7 @@
       "pages": [
         {
           "title": "1. Copper day",
-          "text": "No iron needed yet.\n- Copper Gear: 4 copper ingots around a cobblestone.\n- Winding Crank and Mainspring.\nPut the spring in the crank, then hold right-click on the crank. Full in about 2 minutes.",
+          "text": "No iron needed.\n- Copper Gear: 4 copper ingots around a cobblestone.\n- Winding Crank and Mainspring.\nPut the spring in the crank, then hold right-click on the crank. Full in about 2 minutes.",
           "items": [
             "robotica:copper_gear",
             "robotica:winding_crank",
@@ -70,11 +70,11 @@
       "pages": [
         {
           "title": "Five ages",
-          "text": "0 Clockwork: copper, wood\n1 Wired: iron, redstone, gold\n2 Servo: diamond, obsidian\n3 Deep: netherite, blaze\n4 Antigrav: pearls, nether star\n\nServo Core: Scrap Colossus. Magma Core: Forge Tyrant. Antigrav Core: a pricey recipe for now."
+          "text": "0 Clockwork: copper, wood\n1 Wired: iron, redstone, gold\n2 Servo: diamond, obsidian\n3 Deep: netherite, blaze\n4 Antigrav: pearls, nether star\n\nServo Core: Scrap Colossus. Magma Core: Forge Tyrant. Antigrav Core: crafted (nether star)."
         },
         {
           "title": "The parts ladder",
-          "text": "Each age has a casing, a circuit and a motor part, made from parts of the age before.\nA Reinforced Casing takes 4 Iron Casings.\nCheap to start, expensive to upgrade.",
+          "text": "Each age has a casing, a circuit and a motor part, made from parts of the age before.\nA Reinforced Casing takes 4 Iron Casings.",
           "items": [
             "robotica:iron_casing",
             "robotica:reinforced_casing",
@@ -84,7 +84,7 @@
         },
         {
           "title": "Plates and circuits",
-          "text": "- Plates: hammer (2 ingots) or Metal Press (1 ingot). Other mods' plates work too.\n- Circuits and motors climb the same ladder.",
+          "text": "- Plates: hammer (2 ingots) or Metal Press (1 ingot). Other mods' plates work too.\n- Circuits: gold (Basic), diamond (Advanced), blaze rods + netherite (Quantum), nether star (Null).",
           "items": [
             "robotica:iron_plate",
             "robotica:basic_circuit",
@@ -276,7 +276,7 @@
         },
         {
           "title": "Heat and SCRAM",
-          "text": "- Over 1,000 C: less output.\n- 1,800 C: SCRAM, it shuts down.\nNever explodes. Let it cool, fix the cooling, press Reset. The slider pushes rods in for less heat.",
+          "text": "- Over 1,000 C: less output.\n- 1,800 C: SCRAM, it shuts down.\nFix the cooling, let it cool below 200 C, press Reset. The slider pushes rods in for less heat.",
           "items": [
             "robotica:reactor_controller",
             "robotica:reactor_fuel_rod",
@@ -381,7 +381,7 @@
         },
         {
           "title": "Sentry Drone",
-          "text": "Shoots monsters, never players, pets or villagers.\n- Guard, Follow or Stay.\n- Aggressive or Defensive.\nRepair it with iron.",
+          "text": "Shoots monsters only.\n- Guard, Follow or Stay.\n- Aggressive or Defensive.\nRepair it with iron.",
           "items": [
             "robotica:sentry_drone",
             "robotica:sentry_drone_mk2"
@@ -460,7 +460,7 @@
         },
         {
           "title": "Survey Rig",
-          "text": "Place once, power it: it turns FE into random ores, as if mined. No hole, no lag.\nAny c:ores ore: coal, copper, iron often, diamonds rarely.",
+          "text": "Place it, power it: it turns FE into random ores, as if mined. No hole.\nAny c:ores ore: coal, copper, iron often, diamonds rarely.",
           "items": [
             "robotica:survey_rig",
             "robotica:survey_rig_mk2",
@@ -510,7 +510,7 @@
       "pages": [
         {
           "title": "Mining tools",
-          "text": "- Hammer (Age 0): 3x3\n- Bore Drill (1): 3x3\n- Servo Drill (2): 5x5, vein\n- Magma Drill (3): 9x9, smelt\n- Null Drill (4): 12x12x12\nFE tools never break.",
+          "text": "- Hammer (Age 0): 3x3\n- Bore Drill (1): 3x3\n- Servo Drill (2): 5x5, vein\n- Magma Drill (3): 9x9, smelt\n- Null Drill (4): 12x12x12\nFE tools have no durability.",
           "items": [
             "robotica:tinkers_hammer",
             "robotica:bore_drill",
@@ -525,7 +525,7 @@
         },
         {
           "title": "Tool modules",
-          "text": "- Overclock I-III: mines faster\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Lamp Placer: lamps in the dark\n- Power Regulator: less FE\nOverclock, Fortune, Silk Touch and Looting need FE in the item.",
+          "text": "- Overclock I-III: +50/100/200% speed\n- Fortune I-III, Silk Touch: B picks one\n- Auto-Pickup, Void Filter\n- Lamp Placer: lamps in the dark\n- Power Regulator: less FE\nOverclock, Fortune, Silk Touch and Looting need FE in the item.",
           "items": [
             "robotica:overclock_module",
             "robotica:fortune_module",
@@ -580,7 +580,7 @@
         },
         {
           "title": "Weapon modules",
-          "text": "- Sharpened Edge I-III: more damage\n- Looting I-III\n- Thermal Edge: sets on fire\n- Armor Pierce: ignores 20-50% of armor\n- Chain Lightning: Arc Blade\n- Ricochet: Rivet Gun\n- Lifesteal (Age 4): heals a bit, capped",
+          "text": "- Sharpened Edge I-III: more damage\n- Looting I-III\n- Thermal Edge: sets on fire\n- Armor Pierce: ignores 20-50% of armor\n- Chain Lightning: Arc Blade\n- Ricochet: Rivet Gun\n- Lifesteal (Age 4): heals 10% of damage",
           "items": [
             "robotica:sharpened_edge_module",
             "robotica:looting_module",
@@ -653,7 +653,7 @@
       "pages": [
         {
           "title": "The suit",
-          "text": "Powered armor that never breaks.\n- Charge it in a Charger, or carry a cell.\n- All 4 worn: they share energy.\n- Empty: still armor, modules stop.",
+          "text": "Powered armor, no durability.\n- Charge it in a Charger, or carry a cell.\n- All 4 worn: they share energy.\n- Empty: still armor, modules stop.",
           "items": [
             "robotica:exo_helmet_mk1",
             "robotica:exo_chestplate_mk1",
@@ -784,7 +784,7 @@
         },
         {
           "title": "The replicator",
-          "text": "3x3x3 of Frame, controller in a side, 1+ Glass, empty centre. Add a full vial and FE.\n- Harvest: drops loot.\n- Spawn: the real mob.\nAbout 1 cycle a minute. Blaze, enderman and co: Magma Core. Shulker: Antigrav Core.",
+          "text": "3x3x3 of Frame, controller in a side, 1+ Glass, empty centre. Add a full vial and FE.\n- Harvest: drops loot.\n- Spawn: the real mob.\nAbout 1 cycle a minute. Blaze, enderman, ghast and more: Magma Core. Shulker: Antigrav Core.",
           "items": [
             "robotica:replicator_controller",
             "robotica:replicator_frame",
@@ -829,7 +829,7 @@
       "pages": [
         {
           "title": "Storage Terminal",
-          "text": "A big sorted chest: 81 slots, search (@mod, #tag), 3x3 crafting grid.\nHoppers and pipes reach it from every side. No network, no autocrafting.",
+          "text": "A big sorted chest: 81 slots, search (@mod, #tag), 3x3 crafting grid.\nHoppers and pipes work on every side.",
           "items": [
             "robotica:storage_terminal"
           ]
