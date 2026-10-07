@@ -6,6 +6,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -25,8 +26,19 @@ public final class GearComponents {
             REGISTER.registerComponentType("gear_toggles", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
     /**
-     * Installed tool modules (Tinker's Bench), as the bits of the {@link com.arno.robotica.gear.tool.ToggleKind} they
-     * unlock. Absent means none. Carries over through smithing like every other component.
+     * Everything installed at the Tinker's Bench, by position: 0 = Auto-Pickup card, 1 = Void Filter card, 2.. = module
+     * slots (see {@link com.arno.robotica.gear.module.GearModules}). Absent means nothing installed.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> INSTALLED =
+            REGISTER.registerComponentType("gear_installed", b -> b.persistent(ItemContainerContents.CODEC).networkSynchronized(ItemContainerContents.STREAM_CODEC));
+
+    /** Bit set of the {@link com.arno.robotica.gear.module.GearModuleKind} ordinals switched off in the G screen. Absent means all on. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MODULES_OFF =
+            REGISTER.registerComponentType("gear_modules_off", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
+
+    /**
+     * Legacy (0.3): installed cards as the bits of the {@link com.arno.robotica.gear.tool.ToggleKind} they
+     * unlock. Only read: old tools move it into {@link #INSTALLED} ({@code GearModules.migrate}).
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MODULES =
             REGISTER.registerComponentType("gear_modules", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));

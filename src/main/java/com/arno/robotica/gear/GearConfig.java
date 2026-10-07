@@ -20,6 +20,33 @@ public final class GearConfig {
     public static final ModConfigSpec.IntValue RIVET_GUN_COST;
     public static final ModConfigSpec.IntValue ARC_BLADE_COST;
     public static final ModConfigSpec.IntValue NULL_LANCE_COST;
+    public static final ModConfigSpec.DoubleValue RIVET_DAMAGE;
+    public static final ModConfigSpec.IntValue RIVET_STICK_TICKS;
+    // modules
+    public static final ModConfigSpec.IntValue[] MODULE_SLOTS = new ModConfigSpec.IntValue[4];
+    public static final ModConfigSpec.IntValue TORCH_LIGHT;
+    public static final ModConfigSpec.IntValue TORCH_COST;
+    public static final ModConfigSpec.IntValue TORCH_COOLDOWN;
+    public static final ModConfigSpec.DoubleValue[] PIERCE_SHARE = new ModConfigSpec.DoubleValue[3];
+    public static final ModConfigSpec.IntValue[] PIERCE_COST = new ModConfigSpec.IntValue[3];
+    public static final ModConfigSpec.IntValue[] CHAIN_EXTRA_ARCS = new ModConfigSpec.IntValue[3];
+    public static final ModConfigSpec.DoubleValue CHAIN_RANGE_PER_LEVEL;
+    public static final ModConfigSpec.IntValue CHAIN_COST_PER_ARC;
+    public static final ModConfigSpec.IntValue[] RICOCHET_BOUNCES = new ModConfigSpec.IntValue[2];
+    public static final ModConfigSpec.IntValue[] RICOCHET_COST = new ModConfigSpec.IntValue[2];
+    public static final ModConfigSpec.DoubleValue RICOCHET_RANGE;
+    public static final ModConfigSpec.DoubleValue RICOCHET_DAMAGE;
+    public static final ModConfigSpec.DoubleValue LIFESTEAL_SHARE;
+    public static final ModConfigSpec.DoubleValue LIFESTEAL_MAX_PER_SECOND;
+    public static final ModConfigSpec.IntValue LIFESTEAL_COOLDOWN;
+    public static final ModConfigSpec.IntValue LIFESTEAL_COST;
+
+    private static final int[] SLOT_DEFAULTS = {1, 2, 3, 4};
+    private static final double[] PIERCE_SHARE_DEFAULTS = {0.2, 0.35, 0.5};
+    private static final int[] PIERCE_COST_DEFAULTS = {50, 100, 150};
+    private static final int[] CHAIN_ARC_DEFAULTS = {2, 4, 6};
+    private static final int[] RICOCHET_BOUNCE_DEFAULTS = {1, 2};
+    private static final int[] RICOCHET_COST_DEFAULTS = {100, 200};
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -42,6 +69,47 @@ public final class GearConfig {
         ARC_BLADE_COST = b.comment("FE per hit, Arc Blade.").defineInRange("arcBladePerHit", 800, 0, 1_000_000);
         NULL_LANCE_COST = b.comment("FE per shot, Null Lance.").defineInRange("nullLancePerShot", 8_000, 0, 100_000_000);
         b.pop();
+        b.push("rivet");
+        RIVET_DAMAGE = b.comment("Damage of one Rivet Gun rivet.").defineInRange("rivetDamage", 8.0, 0.0, 1000.0);
+        RIVET_STICK_TICKS = b.comment("Ticks a rivet stays stuck in a block before it shatters.").defineInRange("rivetStickTicks", 20, 1, 1200);
+        b.pop();
+        b.push("modules");
+        for (int age = 1; age <= 4; age++) {
+            MODULE_SLOTS[age - 1] = b.comment("Module slots of an Age " + age + " power tool or FE weapon (Auto-Pickup and Void Filter cards do not use one).")
+                    .defineInRange("moduleSlotsAge" + age, SLOT_DEFAULTS[age - 1], 0, 4);
+        }
+        TORCH_LIGHT = b.comment("Torch Placer: places a torch where you mined when the light there is this or lower (sky or block light).")
+                .defineInRange("torchPlacerLight", 7, 0, 14);
+        TORCH_COST = b.comment("Torch Placer: FE per torch placed.").defineInRange("torchPlacerCost", 25, 0, 1_000_000);
+        TORCH_COOLDOWN = b.comment("Torch Placer: ticks between two torches.").defineInRange("torchPlacerCooldown", 10, 0, 1200);
+        for (int lv = 1; lv <= 3; lv++) {
+            PIERCE_SHARE[lv - 1] = b.comment("Armor Pierce " + lv + ": share of the armor reduction that is ignored.")
+                    .defineInRange("armorPierceShare" + lv, PIERCE_SHARE_DEFAULTS[lv - 1], 0.0, 1.0);
+            PIERCE_COST[lv - 1] = b.comment("Armor Pierce " + lv + ": extra FE per hit or shot.")
+                    .defineInRange("armorPierceCost" + lv, PIERCE_COST_DEFAULTS[lv - 1], 0, 1_000_000);
+        }
+        for (int lv = 1; lv <= 3; lv++) {
+            CHAIN_EXTRA_ARCS[lv - 1] = b.comment("Chain Lightning " + lv + ": extra arcs on top of the Arc Blade's 3.")
+                    .defineInRange("chainLightningArcs" + lv, CHAIN_ARC_DEFAULTS[lv - 1], 0, 32);
+        }
+        CHAIN_RANGE_PER_LEVEL = b.comment("Chain Lightning: blocks of extra jump range per level (the Arc Blade jumps 6).")
+                .defineInRange("chainLightningRangePerLevel", 2.0, 0.0, 16.0);
+        CHAIN_COST_PER_ARC = b.comment("Chain Lightning: FE per extra arc that hits.").defineInRange("chainLightningCostPerArc", 150, 0, 1_000_000);
+        for (int lv = 1; lv <= 2; lv++) {
+            RICOCHET_BOUNCES[lv - 1] = b.comment("Ricochet Rivets " + lv + ": bounces after the first hit.")
+                    .defineInRange("ricochetBounces" + lv, RICOCHET_BOUNCE_DEFAULTS[lv - 1], 0, 8);
+            RICOCHET_COST[lv - 1] = b.comment("Ricochet Rivets " + lv + ": extra FE per shot.")
+                    .defineInRange("ricochetCost" + lv, RICOCHET_COST_DEFAULTS[lv - 1], 0, 1_000_000);
+        }
+        RICOCHET_RANGE = b.comment("Ricochet Rivets: how far a rivet looks for the next monster.").defineInRange("ricochetRange", 10.0, 1.0, 32.0);
+        RICOCHET_DAMAGE = b.comment("Ricochet Rivets: damage of each bounce as a share of the hit before it.")
+                .defineInRange("ricochetDamage", 0.75, 0.0, 1.0);
+        LIFESTEAL_SHARE = b.comment("Lifesteal: share of the damage dealt that heals you.").defineInRange("lifestealShare", 0.10, 0.0, 1.0);
+        LIFESTEAL_MAX_PER_SECOND = b.comment("Lifesteal: hard cap of health points healed per second. Reaching it starts the cooldown.")
+                .defineInRange("lifestealMaxPerSecond", 3.0, 0.0, 100.0);
+        LIFESTEAL_COOLDOWN = b.comment("Lifesteal: ticks without healing after the cap was reached.").defineInRange("lifestealCooldown", 100, 0, 12_000);
+        LIFESTEAL_COST = b.comment("Lifesteal: FE per health point healed (half a heart).").defineInRange("lifestealCostPerHealth", 2_000, 0, 10_000_000);
+        b.pop();
         SPEC = b.build();
     }
 
@@ -55,6 +123,92 @@ public final class GearConfig {
 
     public static boolean areaBreaksBlockEntities() {
         return SPEC.isLoaded() && AREA_BREAKS_BLOCK_ENTITIES.get();
+    }
+
+    public static int moduleSlots(int age) {
+        if (age < 1 || age > 4) return 0;
+        return SPEC.isLoaded() ? MODULE_SLOTS[age - 1].get() : SLOT_DEFAULTS[age - 1];
+    }
+
+    public static float rivetDamage() {
+        return SPEC.isLoaded() ? RIVET_DAMAGE.get().floatValue() : 8.0F;
+    }
+
+    public static int rivetStickTicks() {
+        return SPEC.isLoaded() ? RIVET_STICK_TICKS.get() : 20;
+    }
+
+    public static int torchLight() {
+        return SPEC.isLoaded() ? TORCH_LIGHT.get() : 7;
+    }
+
+    public static int torchCost() {
+        return fe(TORCH_COST, 25);
+    }
+
+    public static int torchCooldown() {
+        return SPEC.isLoaded() ? TORCH_COOLDOWN.get() : 10;
+    }
+
+    private static int lv(int level, int max) {
+        return Math.max(1, Math.min(max, level)) - 1;
+    }
+
+    public static double pierceShare(int level) {
+        if (level <= 0) return 0.0;
+        return SPEC.isLoaded() ? PIERCE_SHARE[lv(level, 3)].get() : PIERCE_SHARE_DEFAULTS[lv(level, 3)];
+    }
+
+    public static int pierceCost(int level) {
+        if (level <= 0) return 0;
+        return fe(PIERCE_COST[lv(level, 3)], PIERCE_COST_DEFAULTS[lv(level, 3)]);
+    }
+
+    public static int chainExtraArcs(int level) {
+        if (level <= 0) return 0;
+        return SPEC.isLoaded() ? CHAIN_EXTRA_ARCS[lv(level, 3)].get() : CHAIN_ARC_DEFAULTS[lv(level, 3)];
+    }
+
+    public static double chainRangeBonus(int level) {
+        return Math.max(0, level) * (SPEC.isLoaded() ? CHAIN_RANGE_PER_LEVEL.get() : 2.0);
+    }
+
+    public static int chainCostPerArc() {
+        return fe(CHAIN_COST_PER_ARC, 150);
+    }
+
+    public static int ricochetBounces(int level) {
+        if (level <= 0) return 0;
+        return SPEC.isLoaded() ? RICOCHET_BOUNCES[lv(level, 2)].get() : RICOCHET_BOUNCE_DEFAULTS[lv(level, 2)];
+    }
+
+    public static int ricochetCost(int level) {
+        if (level <= 0) return 0;
+        return fe(RICOCHET_COST[lv(level, 2)], RICOCHET_COST_DEFAULTS[lv(level, 2)]);
+    }
+
+    public static double ricochetRange() {
+        return SPEC.isLoaded() ? RICOCHET_RANGE.get() : 10.0;
+    }
+
+    public static float ricochetDamage() {
+        return SPEC.isLoaded() ? RICOCHET_DAMAGE.get().floatValue() : 0.75F;
+    }
+
+    public static float lifestealShare() {
+        return SPEC.isLoaded() ? LIFESTEAL_SHARE.get().floatValue() : 0.10F;
+    }
+
+    public static float lifestealMaxPerSecond() {
+        return SPEC.isLoaded() ? LIFESTEAL_MAX_PER_SECOND.get().floatValue() : 3.0F;
+    }
+
+    public static int lifestealCooldown() {
+        return SPEC.isLoaded() ? LIFESTEAL_COOLDOWN.get() : 100;
+    }
+
+    public static int lifestealCost() {
+        return fe(LIFESTEAL_COST, 2_000);
     }
 
     /** Value of an energy entry, scaled by the global energy multiplier. */

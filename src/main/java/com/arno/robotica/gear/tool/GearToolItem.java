@@ -1,7 +1,7 @@
 package com.arno.robotica.gear.tool;
 
 import com.arno.robotica.core.energy.ItemEnergy;
-import com.arno.robotica.core.item.CoreItems;
+import com.arno.robotica.gear.module.GearModules;
 import com.arno.robotica.core.item.HasDetails;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -169,6 +169,8 @@ public class GearToolItem extends Item implements HasDetails {
         }
         // A drill smithed from a worn hammer inherits its damage value; FE tools have no durability, so drop it.
         if (!level.isClientSide && spec.isEnergy() && stack.has(DataComponents.DAMAGE)) stack.remove(DataComponents.DAMAGE);
+        // 0.3 tools kept their cards as bits; move them into the module layout.
+        if (!level.isClientSide) GearModules.migrate(stack);
     }
 
     @Override
@@ -183,7 +185,11 @@ public class GearToolItem extends Item implements HasDetails {
                         .withStyle(ChatFormatting.LIGHT_PURPLE));
             }
         }
-        if (spec.isEnergy()) ItemEnergy.appendTooltip(stack, tooltip);
+        if (spec.isEnergy()) {
+            MutableComponent modules = GearModules.describe(stack);
+            if (modules != null) tooltip.add(Component.translatable("tooltip.robotica.gear.modules", modules).withStyle(ChatFormatting.GRAY));
+            ItemEnergy.appendTooltip(stack, tooltip);
+        }
     }
 
     /** "Mode: 1x1 [3x3] 5x5 Vein" with the current mode highlighted. Shared by the tooltip and the HUD. */
@@ -215,17 +221,8 @@ public class GearToolItem extends Item implements HasDetails {
         if (!spec.toggles.isEmpty()) {
             MutableComponent on = Component.empty();
             boolean first = true;
-            MutableComponent modules = Component.empty();
-            boolean anyModule = false, anyInstalled = false;
             for (ToggleKind kind : ToggleKind.values()) {
-                if (!spec.toggles.contains(kind)) continue;
-                if (kind.isModule()) {
-                    anyModule = true;
-                    if (!ToolSettings.installed(stack, kind)) continue;
-                    if (anyInstalled) modules.append(", ");
-                    anyInstalled = true;
-                    modules.append(CoreItems.card(kind.module).get().getDescription());
-                }
+                if (!spec.toggles.contains(kind) || !ToolSettings.installed(stack, kind)) continue;
                 if (!first) on.append(", ");
                 first = false;
                 on.append(kind.displayName().copy().withStyle(ToolSettings.has(stack, kind) ? ChatFormatting.DARK_AQUA : ChatFormatting.DARK_GRAY));
@@ -234,9 +231,9 @@ public class GearToolItem extends Item implements HasDetails {
                 lines.add(Component.translatable("tooltip.robotica.gear.key_settings", HasDetails.key("key.robotica.gear.open_toggles"), on)
                         .withStyle(ChatFormatting.GRAY));
             }
-            if (anyModule) {
-                lines.add(anyInstalled ? HasDetails.line("tooltip.robotica.gear.modules", modules) : HasDetails.line("tooltip.robotica.gear.no_modules"));
-            }
+        }
+        if (spec.isEnergy() && GearModules.describe(stack) == null) {
+            lines.add(HasDetails.line("tooltip.robotica.gear.no_modules", GearModules.slots(stack)));
         }
     }
 }

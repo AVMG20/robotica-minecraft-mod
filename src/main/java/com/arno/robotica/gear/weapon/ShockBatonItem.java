@@ -18,6 +18,11 @@ public class ShockBatonItem extends EnergyWeaponItem {
     }
 
     @Override
+    public boolean paidMelee() {
+        return true;
+    }
+
+    @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         if (pay(stack, attacker)) {
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1), attacker);

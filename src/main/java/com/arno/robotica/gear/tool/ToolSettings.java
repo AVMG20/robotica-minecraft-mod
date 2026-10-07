@@ -32,15 +32,12 @@ public final class ToolSettings {
 
     /** True for a plain setting, or for a module toggle whose card is installed in the tool. */
     public static boolean installed(ItemStack stack, ToggleKind kind) {
-        return !kind.isModule() || (stack.getOrDefault(GearComponents.MODULES.get(), 0) & kind.bit) != 0;
+        return !kind.isModule() || com.arno.robotica.gear.module.GearModules.cardInstalled(stack, kind);
     }
 
     /** Installs or removes the module card of a toggle (Tinker's Bench). */
     public static void setInstalled(ItemStack stack, ToggleKind kind, boolean on) {
-        int m = stack.getOrDefault(GearComponents.MODULES.get(), 0);
-        m = on ? m | kind.bit : m & ~kind.bit;
-        if (m == 0) stack.remove(GearComponents.MODULES.get());
-        else stack.set(GearComponents.MODULES.get(), m);
+        com.arno.robotica.gear.module.GearModules.setCard(stack, kind, on);
     }
 
     public static int enchantMode(ItemStack stack) {

@@ -15,7 +15,7 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
-/** Keybinds: V cycles the mode, B swaps silk/fortune, G opens the toggle screen. Sneak + scroll also cycles the mode. */
+/** Keybinds: V cycles the mode, B swaps silk/fortune, G opens the settings and module switches of the tool or FE weapon in hand. Sneak + scroll also cycles the mode. */
 final class GearKeys {
     private GearKeys() {}
 
@@ -54,7 +54,7 @@ final class GearKeys {
             if (tool != null && tool.spec.fortuneLevel > 0) send(GearActions.CYCLE_ENCHANT, 0);
         }
         while (OPEN_TOGGLES.consumeClick()) {
-            if (tool != null && mc.screen == null) mc.setScreen(new ToggleScreen());
+            if (ToggleScreen.usable(player.getMainHandItem()) && mc.screen == null) mc.setScreen(new ToggleScreen());
         }
     }
 

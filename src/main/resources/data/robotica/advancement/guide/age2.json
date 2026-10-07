@@ -86,6 +86,8 @@
       "robotica:capacitor_plating_module_2",
       "robotica:power_regulator_module",
       "robotica:colossus_altar",
+      "robotica:armor_pierce_module_2",
+      "robotica:ricochet_module",
       "robotica:upgrade_range",
       "robotica:upgrade_fortune",
       "robotica:upgrade_silk",

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QPQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "U": {
+      "item": "robotica:chain_lightning_module"
+    }
+  },
+  "result": {
+    "id": "robotica:chain_lightning_module_2",
+    "count": 1
+  }
+}

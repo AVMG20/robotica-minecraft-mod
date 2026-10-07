@@ -106,7 +106,7 @@
      ],
      [
       "Core socket",
-      "\u2013",
+      "–",
       "yes",
       "yes",
       "yes"
@@ -843,7 +843,7 @@
    "use": [
     "V switches mode.",
     "Keep a [[copper_cell]] in your inventory: it recharges the drill.",
-    "Add Auto-Pickup or Void Filter at a [[tinkers_bench]]."
+    "Add cards and a module at a [[tinkers_bench]]: Auto-Pickup, Void Filter, [[torch_placer_module]]."
    ],
    "stats": {
     "rows": [
@@ -974,6 +974,10 @@
      [
       "Per hit",
       "250 FE"
+     ],
+     [
+      "Module slots",
+      "1"
      ]
     ]
    }
@@ -982,7 +986,7 @@
    "items": [
     "rivet_gun"
    ],
-   "what": "Rapid fire, no ammo: right-click to fire rivets.",
+   "what": "Rapid fire, no ammo: right-click fires glowing rivets that stick in walls and shatter. Never drop as items.",
    "stats": {
     "rows": [
      [
@@ -1000,15 +1004,23 @@
      [
       "Per shot",
       "400 FE"
+     ],
+     [
+      "Module slots",
+      "2"
      ]
     ]
-   }
+   },
+   "see": [
+    "item:ricochet_module",
+    "item:armor_pierce_module"
+   ]
   },
   {
    "items": [
     "arc_blade"
    ],
-   "what": "Lightning arcs 50% damage to 3 nearby monsters.",
+   "what": "Lightning jumps from the target to 3 more monsters for 50% damage each.",
    "stats": {
     "rows": [
      [
@@ -1022,9 +1034,16 @@
      [
       "Per hit",
       "800 FE"
+     ],
+     [
+      "Module slots",
+      "3"
      ]
     ]
-   }
+   },
+   "see": [
+    "item:chain_lightning_module"
+   ]
   },
   {
    "items": [
@@ -1044,18 +1063,27 @@
      [
       "Per shot",
       "8,000 FE"
+     ],
+     [
+      "Module slots",
+      "4"
      ]
     ]
-   }
+   },
+   "see": [
+    "item:lifesteal_module"
+   ]
   },
   {
    "items": [
     "tinkers_bench"
    ],
-   "what": "Puts Auto-Pickup and Void Filter cards into power tools. Stores nothing.",
+   "what": "Fits upgrade cards and modules into power tools and FE weapons. Stores nothing.",
    "use": [
-    "Put the tool in.",
-    "Put the card in its module slot; take it out to get it back."
+    "Put the tool or weapon in.",
+    "Cards (Auto-Pickup, Void Filter) go in the two card slots and need no module slot.",
+    "Modules go in the module slots: Age 1-4 opens 1-4 of them.",
+    "Take a card or module out to get it back. G in hand switches them."
    ],
    "see": [
     "guide:upgrade-cards"
@@ -1072,6 +1100,163 @@
    "use": [
     "Smithing table: kit + old tool + the part or core."
    ]
+  },
+  {
+   "items": [
+    "torch_placer_module"
+   ],
+   "what": "Drill module: when the spot you mined is dark, places a torch from your inventory there.",
+   "use": [
+    "Install at a [[tinkers_bench]] in a drill.",
+    "Carry torches."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "drills, Age 1+"
+     ],
+     [
+      "Light",
+      "7 or less"
+     ],
+     [
+      "Per torch",
+      "25 FE"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "armor_pierce_module",
+    "armor_pierce_module_2",
+    "armor_pierce_module_3"
+   ],
+   "what": "Weapon module: part of every paid hit ignores armor.",
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
+    "rows": [
+     [
+      "Min. Age",
+      "1",
+      "2",
+      "3"
+     ],
+     [
+      "Armor ignored",
+      "20%",
+      "35%",
+      "50%"
+     ],
+     [
+      "Extra FE per use",
+      "50",
+      "100",
+      "150"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "chain_lightning_module",
+    "chain_lightning_module_2",
+    "chain_lightning_module_3"
+   ],
+   "what": "[[arc_blade]] module: more arcs that jump further.",
+   "stats": {
+    "columns": [
+     "I",
+     "II",
+     "III"
+    ],
+    "rows": [
+     [
+      "Arcs",
+      "5",
+      "7",
+      "9"
+     ],
+     [
+      "Jump range",
+      "8",
+      "10",
+      "12"
+     ],
+     [
+      "Per extra arc",
+      "150 FE",
+      "150 FE",
+      "150 FE"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "ricochet_module",
+    "ricochet_module_2"
+   ],
+   "what": "[[rivet_gun]] module: a rivet that hits bounces on to the next monster in sight.",
+   "stats": {
+    "columns": [
+     "I",
+     "II"
+    ],
+    "rows": [
+     [
+      "Bounces",
+      "1",
+      "2"
+     ],
+     [
+      "Bounce damage",
+      "75%",
+      "75%"
+     ],
+     [
+      "Range",
+      "10",
+      "10"
+     ],
+     [
+      "Extra FE per shot",
+      "100",
+      "200"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
+    "lifesteal_module"
+   ],
+   "what": "Age 4 weapon module ([[null_lance]]): the beam heals you a little, paid in FE and hard capped.",
+   "stats": {
+    "rows": [
+     [
+      "Heal",
+      "10% of damage dealt"
+     ],
+     [
+      "Cap",
+      "3 health per second"
+     ],
+     [
+      "Then",
+      "5 s cooldown"
+     ],
+     [
+      "Cost",
+      "2,000 FE per health point"
+     ]
+    ]
+   }
   }
  ]
 }

@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import com.arno.robotica.core.CoreSounds;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -29,6 +30,13 @@ public class NullLanceItem extends EnergyWeaponItem {
     public static final float DAMAGE = 30.0F;
     public static final int COOLDOWN_TICKS = 20;
 
+    /** True while the beam deals its damage (server thread), so module hooks can tell the beam from a club hit. */
+    private static boolean firing;
+
+    public static boolean firing() {
+        return firing;
+    }
+
     public NullLanceItem(Properties props, int capacity, IntSupplier cost) {
         super(props, capacity, cost, 4);
     }
@@ -47,7 +55,7 @@ public class NullLanceItem extends EnergyWeaponItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack lance = player.getItemInHand(hand);
         if (!hasCharge(lance) && !player.getAbilities().instabuild) {
-            if (!level.isClientSide) player.displayClientMessage(Component.translatable("gear.robotica.lance.no_energy", cost()), true);
+            if (!level.isClientSide) player.displayClientMessage(Component.translatable("gear.robotica.lance.no_energy", cost(lance)), true);
             return InteractionResultHolder.fail(lance);
         }
         player.startUsingItem(hand);
@@ -83,24 +91,53 @@ public class NullLanceItem extends EnergyWeaponItem {
         Vec3 look = shooter.getLookAngle();
         Vec3 end = start.add(look.scale(RANGE));
         BlockHitResult block = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
-        if (block.getType() != HitResult.Type.MISS) end = block.getLocation();
+        boolean hitBlock = block.getType() != HitResult.Type.MISS;
+        if (hitBlock) end = block.getLocation();
         int hits = 0;
         List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(1.5),
                 e -> e != shooter && e.isAlive() && !e.isSpectator());
-        for (LivingEntity e : candidates) {
-            AABB box = e.getBoundingBox().inflate(0.3);
-            if (box.contains(start) || box.clip(start, end).isPresent()) {
-                if (e.hurt(level.damageSources().playerAttack(shooter), DAMAGE)) hits++;
+        firing = true;
+        try {
+            for (LivingEntity e : candidates) {
+                AABB box = e.getBoundingBox().inflate(0.3);
+                if (box.contains(start) || box.clip(start, end).isPresent()) {
+                    if (e.hurt(level.damageSources().playerAttack(shooter), DAMAGE)) {
+                        hits++;
+                        Vec3 c = e.getBoundingBox().getCenter();
+                        level.sendParticles(ParticleTypes.REVERSE_PORTAL, c.x, c.y, c.z, 12, 0.25, 0.35, 0.25, 0.05);
+                        level.sendParticles(ParticleTypes.END_ROD, c.x, c.y, c.z, 4, 0.2, 0.3, 0.2, 0.08);
+                    }
+                }
             }
+        } finally {
+            firing = false;
         }
-        double length = start.distanceTo(end);
-        Vec3 muzzle = start.add(0, -0.2, 0);
-        for (double d = 1.0; d <= length; d += 0.5) {
-            Vec3 p = muzzle.add(look.scale(d));
-            level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0.0);
-            if (((int) (d * 2)) % 4 == 0) level.sendParticles(ParticleTypes.PORTAL, p.x, p.y, p.z, 2, 0.15, 0.15, 0.15, 0.2);
+        beam(level, start, look, start.distanceTo(end));
+        if (hitBlock) {
+            Vec3 p = end;
+            level.sendParticles(ParticleTypes.FLASH, p.x, p.y, p.z, 1, 0.0, 0.0, 0.0, 0.0);
+            level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 14, 0.1, 0.1, 0.1, 0.12);
+            level.playSound(null, p.x, p.y, p.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.8F, 0.6F);
         }
         CoreSounds.play(level, shooter.blockPosition(), CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 0.9F, 1.0F);
         return hits;
+    }
+
+    /** Bright core with a slow purple spiral around it and a burst at the muzzle. */
+    private static void beam(ServerLevel level, Vec3 start, Vec3 look, double length) {
+        Vec3 muzzle = start.add(0, -0.2, 0).add(look.scale(0.8));
+        Vec3 side = look.cross(new Vec3(0, 1, 0));
+        if (side.lengthSqr() < 1.0E-4) side = new Vec3(1, 0, 0);
+        side = side.normalize().scale(0.3);
+        Vec3 up = side.cross(look).normalize().scale(0.3);
+        level.sendParticles(ParticleTypes.REVERSE_PORTAL, muzzle.x, muzzle.y, muzzle.z, 10, 0.1, 0.1, 0.1, 0.08);
+        for (double d = 0.5; d <= length; d += 0.5) {
+            Vec3 p = muzzle.add(look.scale(d));
+            level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 1, 0.01, 0.01, 0.01, 0.0);
+            double a = d * 1.4;
+            Vec3 s = p.add(side.scale(Math.cos(a))).add(up.scale(Math.sin(a)));
+            level.sendParticles(ParticleTypes.WITCH, s.x, s.y, s.z, 1, 0.0, 0.0, 0.0, 0.0);
+            if (((int) (d * 2)) % 4 == 0) level.sendParticles(ParticleTypes.PORTAL, p.x, p.y, p.z, 2, 0.15, 0.15, 0.15, 0.2);
+        }
     }
 }

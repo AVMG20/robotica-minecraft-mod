@@ -47,7 +47,7 @@ shaped('tinkers_hammer', ['CCC', 'CGC', ' S '], {'C': COPPER, 'G': 'copper_gear'
 shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
 
-# Age 1: Tinker's Bench installs tool modules (Magnet and Void Filter Upgrades) in the FE tools.
+# Age 1: Tinker's Bench fits cards (Auto-Pickup, Void Filter) and the tool and weapon modules into FE tools and weapons.
 shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': 'copper_gear', 'T': 'minecraft:crafting_table', 'W': '#minecraft:planks'})
 
 # Age 1: the Age 0 tools upgrade at a smithing table (kit I + tool + Electric Motor), like every later tier.
@@ -71,4 +71,18 @@ smithing('null_drill_from_magma_drill', 'tool_upgrade_kit_4', 'magma_drill', 'an
 smithing('shock_baton_from_gearblade', 'tool_upgrade_kit_1', 'gearblade', 'electric_motor', 'shock_baton')
 smithing('arc_blade_from_shock_baton', 'tool_upgrade_kit_3', 'shock_baton', 'magma_core', 'arc_blade')
 smithing('null_lance_from_rivet_gun', 'tool_upgrade_kit_4', 'rivet_gun', 'antigrav_core', 'null_lance')
+# Tool and weapon modules (Tinker's Bench). Like the Exo modules: one item per level, each level consumes the one below
+# plus the next age's circuits. Lifesteal is the late-game capstone: Null Circuits, a Null Casing and a Totem of Undying.
+shaped('torch_placer_module', ['TBT', 'PCP'], {'T': 'minecraft:torch', 'B': 'basic_circuit', 'P': IRON_PLATE, 'C': 'copper_coil'})
+shaped('armor_pierce_module', ['PFP', 'CBC'], {'P': IRON_PLATE, 'F': 'minecraft:flint', 'C': 'copper_coil', 'B': 'basic_circuit'})
+shaped('armor_pierce_module_2', ['ADA', ' U '], {'A': 'advanced_circuit', 'D': '#c:gems/diamond', 'U': 'armor_pierce_module'})
+shaped('armor_pierce_module_3', ['QNQ', ' U '], {'Q': 'quantum_circuit', 'N': 'minecraft:netherite_scrap', 'U': 'armor_pierce_module_2'})
+shaped('ricochet_module', ['SAS', 'PRP'], {'S': 'minecraft:slime_ball', 'A': 'advanced_circuit', 'P': IRON_PLATE, 'R': 'servo_actuator'})
+shaped('ricochet_module_2', ['QSQ', ' U '], {'Q': 'quantum_circuit', 'S': 'minecraft:slime_block', 'U': 'ricochet_module'})
+shaped('chain_lightning_module', ['QLQ', 'CBC'], {'Q': 'quantum_circuit', 'L': 'minecraft:lightning_rod', 'C': 'copper_coil',
+                                                  'B': 'minecraft:blaze_rod'})
+shaped('chain_lightning_module_2', ['QPQ', ' U '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'U': 'chain_lightning_module'})
+shaped('chain_lightning_module_3', ['NLN', ' U '], {'N': 'null_circuit', 'L': 'minecraft:lightning_rod', 'U': 'chain_lightning_module_2'})
+shaped('lifesteal_module', ['NTN', 'GCG'], {'N': 'null_circuit', 'T': 'minecraft:totem_of_undying', 'G': 'minecraft:ghast_tear',
+                                            'C': 'null_casing'})
 print('gear recipes written to', OUT)

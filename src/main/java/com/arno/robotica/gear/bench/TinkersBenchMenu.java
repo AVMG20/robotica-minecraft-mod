@@ -1,12 +1,13 @@
 package com.arno.robotica.gear.bench;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.menu.MachineMenu;
-import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.gear.GearBlocks;
-import com.arno.robotica.gear.tool.GearToolItem;
+import com.arno.robotica.gear.module.GearModules;
 import com.arno.robotica.gear.tool.ToggleKind;
-import com.arno.robotica.gear.tool.ToolSettings;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -14,16 +15,20 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Tinker's Bench screen: one tool slot and one slot per module. The module slots are a view of the tool's
- * {@code gear_modules} component: putting a card in installs it (the card is used up), taking it out removes the module
- * and gives the card back. The tool returns to the player when the screen closes.
+ * Tinker's Bench screen: one slot for a power tool or FE weapon, two card slots (Auto-Pickup, Void Filter; power tools
+ * only, they use no module slot) and four module slots, of which the item's Age opens 1 to 4. The card and module slots
+ * are a view of the item's {@code gear_installed} component: putting something in installs it (used up), taking it out
+ * gives it back. Anything the item cannot take is refused with a reason ({@link GearModules#refusal}). The bench stores
+ * nothing: the item returns to the player when the screen closes.
  */
 public class TinkersBenchMenu extends MachineMenu {
-    /** Module slot order. */
-    public static final ToggleKind[] MODULES = {ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER};
-    public static final int TOOL_X = 44, SLOT_Y = 35, MODULE_X = 98;
+    /** Card slot order. */
+    public static final ToggleKind[] CARDS = {ToggleKind.AUTO_PICKUP, ToggleKind.VOID_FILTER};
+    public static final int TOOL_SLOT = 0, FIRST_CARD = 1, FIRST_MODULE = 1 + CARDS.length, MACHINE_SLOTS = FIRST_MODULE + GearModules.MAX_MODULES;
+    public static final int TOOL_X = 17, TOOL_Y = 35, CARD_X = 62, CARD_Y = 24, MODULE_X = 98, MODULE_Y = 35;
 
     private final ContainerLevelAccess access;
     private final SimpleContainer tools = new SimpleContainer(1);
@@ -36,7 +41,8 @@ public class TinkersBenchMenu extends MachineMenu {
     public TinkersBenchMenu(int id, Inventory inv, ContainerLevelAccess access) {
         super(GearBlocks.TINKERS_BENCH_MENU.get(), id);
         this.access = access;
-        addSlot(new Slot(tools, 0, TOOL_X, SLOT_Y) {
+        tools.addListener(c -> GearModules.migrate(tools.getItem(0)));
+        addSlot(new Slot(tools, 0, TOOL_X, TOOL_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return acceptsTool(stack);
@@ -47,45 +53,19 @@ public class TinkersBenchMenu extends MachineMenu {
                 return 1;
             }
         });
-        Modules modules = new Modules();
-        for (int i = 0; i < MODULES.length; i++) {
-            ToggleKind kind = MODULES[i];
-            addSlot(new Slot(modules, i, MODULE_X + i * 18, SLOT_Y) {
-                @Override
-                public boolean mayPlace(ItemStack stack) {
-                    return supports(kind) && stack.getItem() instanceof UpgradeCardItem card && card.getKind() == kind.module;
-                }
-
-                @Override
-                public boolean isActive() {
-                    return supports(kind);
-                }
-
-                @Override
-                public int getMaxStackSize() {
-                    return 1;
-                }
-            });
-        }
+        Installed installed = new Installed();
+        for (int i = 0; i < CARDS.length; i++) addSlot(new CardSlot(installed, i, CARDS[i]));
+        for (int i = 0; i < GearModules.MAX_MODULES; i++) addSlot(new ModuleSlot(installed, i));
         addPlayerInventory(inv, 8, 84);
     }
 
-    /** Power tools only (FE drills and chainsaw) with at least one module toggle. */
+    /** Power tools (FE drills and the Chainsaw) and FE weapons. */
     public static boolean acceptsTool(ItemStack stack) {
-        if (!(stack.getItem() instanceof GearToolItem tool) || !tool.spec.isEnergy()) return false;
-        for (ToggleKind kind : MODULES) {
-            if (tool.spec.toggles.contains(kind)) return true;
-        }
-        return false;
+        return GearModules.acceptsModules(stack);
     }
 
     public ItemStack tool() {
         return tools.getItem(0);
-    }
-
-    /** True when the tool in the bench can take this module. */
-    public boolean supports(ToggleKind kind) {
-        return tool().getItem() instanceof GearToolItem tool && tool.spec.toggles.contains(kind);
     }
 
     @Override
@@ -99,40 +79,109 @@ public class TinkersBenchMenu extends MachineMenu {
         access.execute((level, pos) -> clearContainer(player, tools));
     }
 
-    /** The module slots: reads and writes the modules of the tool in the bench, holds no items of its own. */
-    private class Modules implements Container {
-        private boolean installed(int slot) {
-            return slot >= 0 && slot < MODULES.length && supports(MODULES[slot]) && ToolSettings.installed(tool(), MODULES[slot]);
+    private void installed() {
+        tools.setChanged();
+        access.execute((level, pos) -> CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.6F, 1.1F));
+    }
+
+    /** A card slot: only the matching card, only on power tools. */
+    public class CardSlot extends Slot {
+        public final ToggleKind kind;
+
+        CardSlot(Container container, int index, ToggleKind kind) {
+            super(container, index, CARD_X, CARD_Y + index * 20);
+            this.kind = kind;
         }
 
-        private ItemStack card(int slot) {
-            return new ItemStack(CoreItems.card(MODULES[slot].module).get());
+        @Nullable
+        public Component refusal(ItemStack stack) {
+            return GearModules.cardRefusal(tool(), kind, stack);
         }
 
         @Override
+        public boolean mayPlace(ItemStack stack) {
+            return refusal(stack) == null;
+        }
+
+        @Override
+        public boolean isActive() {
+            return GearModules.hasCardSlots(tool());
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return 1;
+        }
+    }
+
+    /** A module slot: opens with the item's Age, takes modules that fit (see {@link GearModules#refusal}). */
+    public class ModuleSlot extends Slot {
+        public final int module;
+
+        ModuleSlot(Container container, int module) {
+            super(container, GearModules.FIRST_MODULE + module, MODULE_X + module * 18, MODULE_Y);
+            this.module = module;
+        }
+
+        @Nullable
+        public Component refusal(ItemStack stack) {
+            return GearModules.refusal(tool(), module, stack);
+        }
+
+        public boolean locked() {
+            return module >= GearModules.slots(tool());
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return refusal(stack) == null;
+        }
+
+        @Override
+        public boolean isActive() {
+            return acceptsTool(tool());
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return 1;
+        }
+    }
+
+    /** The card and module slots: reads and writes the item in the bench, holds nothing of its own. */
+    private class Installed implements Container {
+        @Override
         public int getContainerSize() {
-            return MODULES.length;
+            return GearModules.SIZE;
         }
 
         @Override
         public boolean isEmpty() {
-            for (int i = 0; i < MODULES.length; i++) {
-                if (installed(i)) return false;
+            for (int i = 0; i < GearModules.SIZE; i++) {
+                if (!getItem(i).isEmpty()) return false;
             }
             return true;
         }
 
         @Override
         public ItemStack getItem(int slot) {
-            return installed(slot) ? card(slot) : ItemStack.EMPTY;
+            if (!acceptsTool(tool())) return ItemStack.EMPTY;
+            if (slot == GearModules.CARD_PICKUP || slot == GearModules.CARD_VOID) {
+                ToggleKind kind = CARDS[slot];
+                if (!GearModules.hasCardSlots(tool()) || !GearModules.cardInstalled(tool(), kind)) return ItemStack.EMPTY;
+                return new ItemStack(CoreItems.card(kind.module).get());
+            }
+            return GearModules.get(tool(), slot).copy();
         }
 
         @Override
         public ItemStack removeItem(int slot, int amount) {
-            if (amount <= 0 || !installed(slot)) return ItemStack.EMPTY;
-            ToolSettings.setInstalled(tool(), MODULES[slot], false);
+            ItemStack current = getItem(slot);
+            if (amount <= 0 || current.isEmpty()) return ItemStack.EMPTY;
+            GearModules.migrate(tool());
+            GearModules.set(tool(), slot, ItemStack.EMPTY);
             tools.setChanged();
-            return card(slot);
+            return current;
         }
 
         @Override
@@ -142,9 +191,12 @@ public class TinkersBenchMenu extends MachineMenu {
 
         @Override
         public void setItem(int slot, ItemStack stack) {
-            if (slot < 0 || slot >= MODULES.length || !supports(MODULES[slot])) return;
-            ToolSettings.setInstalled(tool(), MODULES[slot], !stack.isEmpty());
-            tools.setChanged();
+            if (!acceptsTool(tool()) || slot < 0 || slot >= GearModules.SIZE) return;
+            GearModules.migrate(tool());
+            boolean wasEmpty = GearModules.get(tool(), slot).isEmpty();
+            GearModules.set(tool(), slot, stack);
+            if (wasEmpty && !stack.isEmpty()) installed();
+            else tools.setChanged();
         }
 
         @Override
@@ -161,7 +213,7 @@ public class TinkersBenchMenu extends MachineMenu {
             return true;
         }
 
-        /** Never wipes the tool's modules. */
+        /** Never wipes the item's modules. */
         @Override
         public void clearContent() {
         }

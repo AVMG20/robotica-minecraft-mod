@@ -66,7 +66,11 @@
       "robotica:power_regulator_module_2",
       "robotica:mining_drone_mk3",
       "robotica:excavator_mk3",
-      "robotica:survey_rig_mk3"
+      "robotica:survey_rig_mk3",
+      "robotica:armor_pierce_module_3",
+      "robotica:ricochet_module_2",
+      "robotica:chain_lightning_module",
+      "robotica:chain_lightning_module_2"
     ],
     "experience": 50
   }

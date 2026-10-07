@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "QSQ",
+    " U "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "S": {
+      "item": "minecraft:slime_block"
+    },
+    "U": {
+      "item": "robotica:ricochet_module"
+    }
+  },
+  "result": {
+    "id": "robotica:ricochet_module_2",
+    "count": 1
+  }
+}

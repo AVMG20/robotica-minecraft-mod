@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "SAS",
+    "PRP"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:slime_ball"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "R": {
+      "item": "robotica:servo_actuator"
+    }
+  },
+  "result": {
+    "id": "robotica:ricochet_module",
+    "count": 1
+  }
+}
