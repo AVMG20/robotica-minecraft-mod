@@ -474,7 +474,7 @@ def lang():
         out[f'tooltip.robotica.{k}.details'] = v
     out.update({
         'tooltip.robotica.alloy_smelter': 'Smelts Robotica alloys',
-        'tooltip.robotica.centrifuge': 'Separates materials',
+        'tooltip.robotica.centrifuge': 'Splits one input into up to 4 outputs',
         'tooltip.robotica.assembler': 'Builds parts from plates and circuits',
         'tooltip.robotica.industry_tier': 'Mk%s: %sx speed, %s upgrade slots',
         'tooltip.robotica.industry_upgrade': 'Right-click the placed previous Mk to upgrade it',
