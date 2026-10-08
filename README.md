@@ -35,6 +35,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew runGameTestServer   # headless server + game tests
 ./gradlew runShowcase         # screenshots of every block and GUI, then quits
 scripts/showcase.sh           # runShowcase, then the chosen shots as JPGs in docs/shots (scripts/shots.py)
+scripts/trailer/record.sh [ids] # records scripted gameplay scenes into run-trailer/footage (60 fps clips)
 python3 scripts/audit_assets.py   # models, textures, names, loot tables (run after the game tests)
 ```
 
