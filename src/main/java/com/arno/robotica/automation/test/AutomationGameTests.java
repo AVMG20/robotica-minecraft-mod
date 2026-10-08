@@ -223,6 +223,37 @@ public class AutomationGameTests {
         });
     }
 
+    private static int bufferLogs(StumpyBlockEntity stumpy) {
+        int n = 0;
+        for (int i = 0; i < stumpy.buffer.getSlots(); i++) {
+            if (stumpy.buffer.getStackInSlot(i).is(Items.OAK_LOG)) n += stumpy.buffer.getStackInSlot(i).getCount();
+        }
+        return n;
+    }
+
+    /** Two Stumpys reaching the same tree: one fells and pays for it, the other leaves its logs alone. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void overlappingStumpysFellATreeOnce(GameTestHelper helper) {
+        int height = 6;
+        columnTree(helper, 1, 2, height);
+        helper.setBlock(new BlockPos(1, 1, 0), AutomationContent.STUMPY.get());
+        helper.setBlock(new BlockPos(1, 1, 4), AutomationContent.STUMPY.get());
+        StumpyBlockEntity a = helper.getBlockEntity(new BlockPos(1, 1, 0));
+        StumpyBlockEntity b = helper.getBlockEntity(new BlockPos(1, 1, 4));
+        int start = a.energy.getMaxEnergyStored() - 1_000;
+        a.energy.setEnergy(start);
+        b.energy.setEnergy(start);
+        int cost = height * CoreConfig.scaleEnergy(AutomationConfig.stumpyFePerLog());
+        helper.onEachTick(() -> helper.assertFalse(a.waveActive() && b.waveActive(), "Only one Stumpy fells the tree"));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(standingLogs(helper, 1, 2, height) == 0, "All logs felled");
+            helper.assertFalse(a.waveActive() || b.waveActive(), "Wave finished");
+            helper.assertTrue(bufferLogs(a) + bufferLogs(b) == height, "Logs felled once: " + (bufferLogs(a) + bufferLogs(b)));
+            int paid = (start - a.energy.getEnergyStored() >= cost ? 1 : 0) + (start - b.energy.getEnergyStored() >= cost ? 1 : 0);
+            helper.assertTrue(paid == 1, "Exactly one Stumpy pays for the tree, " + paid + " did");
+        });
+    }
+
     /** Every log costs FE: with too little in the buffer and no battery Stumpy leaves the tree standing. */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void stumpyPaysPerLog(GameTestHelper helper) {

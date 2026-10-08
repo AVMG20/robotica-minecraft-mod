@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -28,10 +27,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
- * Lumber bot: fells whole trees (with their natural leaves) as one paid action. The tree comes down in a wave over about
- * a second, logs bottom-up and then leaves; then it replants saplings from its buffer and rests. Picks up drops.
+ * Lumber bot: fells whole trees (with their natural leaves) as one paid action. The tree comes down bottom-up in a wave
+ * over about a second, leaves along with their level; then it replants saplings from its buffer and rests. Picks up drops.
  */
 public class StumpyBlockEntity extends FarmBotBlockEntity {
     /** Log clusters without natural leaves (player builds). Transient. */
@@ -40,15 +41,25 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
 
     /** Effect kind of a chop (the event's other kind is the plain sparkle). */
     private static final int CHOP = 0;
-    /** Ticks the logs of a tree take to come down (more logs per tick for big trees), then the leaves. */
-    private static final int WAVE_TICKS = 20;
-    private static final int LEAF_TICKS = 6;
+    /** Ticks a tree takes to come down (more blocks per tick for big trees). */
+    private static final int WAVE_TICKS = 24;
     private static final long[] NO_WAVE = new long[0];
+    /**
+     * Logs of the trees being felled right now, per level, so two overlapping Stumpys never fell (and pay for) the same
+     * tree twice. Server thread only.
+     */
+    private static final Map<Level, LongOpenHashSet> CLAIMED = new WeakHashMap<>();
 
-    /** The felling wave: logs, then leaves (from {@link #waveLeafStart}), broken a few per tick. Saved. */
-    private long[] wave = NO_WAVE;
-    private int waveCursor;
-    private int waveLeafStart;
+    /**
+     * The felling wave: logs and leaves, each sorted bottom-up, broken a few per tick and merged by height so the leaves
+     * go with their level (none is left cut off long enough to decay). Saved.
+     */
+    private long[] waveLogs = NO_WAVE;
+    private long[] waveLeaves = NO_WAVE;
+    private int logCursor;
+    private int leafCursor;
+    /** True while this bot's remaining logs are in {@link #CLAIMED}. Transient: claimed again after a load. */
+    private boolean claimed;
     private int waveFelled;
     private float waveCarry;
     private long[] waveBases = NO_WAVE;
@@ -86,7 +97,7 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
 
     @Override
     protected boolean isTarget(ServerLevel level, BlockPos pos, BlockState state) {
-        return state.is(BlockTags.LOGS) && !ignored.contains(pos.asLong());
+        return state.is(BlockTags.LOGS) && !ignored.contains(pos.asLong()) && !isClaimed(level, pos);
     }
 
     @Override
@@ -119,6 +130,10 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
             if (ignored.size() > 8192) ignored.clear();
             return false;
         }
+        // Part of a tree another Stumpy is felling right now.
+        for (BlockPos p : tree.logs) {
+            if (isClaimed(sl, p)) return false;
+        }
         // Every log costs FE when the tree comes down. A huge tree is capped at half the buffer: the buffer drains a
         // little every working tick, so it is never exactly full and a full-buffer price could never be paid.
         // Not enough yet: skip this round, the battery tops the buffer up and the next scan finds the tree again.
@@ -132,24 +147,64 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
 
     // ---- felling wave ----
 
-    /** Queues the paid-for tree: logs bottom-up (nearest the trunk first on a level), then the leaves bottom-up. */
+    /** Queues the paid-for tree: logs bottom-up (nearest the trunk first on a level) and leaves bottom-up. */
     private void startWave(TreeScan tree, BlockPos start, String logPath) {
         List<BlockPos> logs = new ArrayList<>(tree.logs);
         logs.sort(Comparator.<BlockPos>comparingInt(BlockPos::getY)
                 .thenComparingInt(p -> (p.getX() - start.getX()) * (p.getX() - start.getX()) + (p.getZ() - start.getZ()) * (p.getZ() - start.getZ())));
         List<BlockPos> leaves = new ArrayList<>(tree.leaves);
         leaves.sort(Comparator.comparingInt(BlockPos::getY));
-        wave = new long[logs.size() + leaves.size()];
-        for (int i = 0; i < logs.size(); i++) wave[i] = logs.get(i).asLong();
-        for (int i = 0; i < leaves.size(); i++) wave[logs.size() + i] = leaves.get(i).asLong();
-        waveLeafStart = logs.size();
-        waveCursor = 0;
+        waveLogs = logs.stream().mapToLong(BlockPos::asLong).toArray();
+        waveLeaves = leaves.stream().mapToLong(BlockPos::asLong).toArray();
+        logCursor = 0;
+        leafCursor = 0;
         waveFelled = 0;
         waveCarry = 0;
         waveBases = trunkBases(logs);
         wavePrefix = logPath.replace("stripped_", "").replace("_log", "").replace("_wood", "")
                 .replace("_stem", "").replace("_hyphae", "");
+        claimRemaining();
         setChanged();
+    }
+
+    // ---- claims ----
+
+    private static boolean isClaimed(Level level, BlockPos pos) {
+        LongOpenHashSet set = CLAIMED.get(level);
+        return set != null && set.contains(pos.asLong());
+    }
+
+    private void claimRemaining() {
+        if (level == null || level.isClientSide) return;
+        LongOpenHashSet set = CLAIMED.computeIfAbsent(level, l -> new LongOpenHashSet());
+        for (int i = logCursor; i < waveLogs.length; i++) set.add(waveLogs[i]);
+        claimed = true;
+    }
+
+    private void releaseRemaining() {
+        if (!claimed) return;
+        claimed = false;
+        LongOpenHashSet set = level == null ? null : CLAIMED.get(level);
+        if (set == null) return;
+        for (int i = logCursor; i < waveLogs.length; i++) set.remove(waveLogs[i]);
+        if (set.isEmpty()) CLAIMED.remove(level);
+    }
+
+    private void release(long pos) {
+        LongOpenHashSet set = level == null ? null : CLAIMED.get(level);
+        if (set != null) set.remove(pos);
+    }
+
+    @Override
+    public void setRemoved() {
+        releaseRemaining();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        releaseRemaining();
+        super.onChunkUnloaded();
     }
 
     /** The lowest logs on dirt inside the area: where saplings go after the wave. */
@@ -167,49 +222,49 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
     }
 
     public boolean waveActive() {
-        return waveCursor < wave.length;
+        return logCursor < waveLogs.length || leafCursor < waveLeaves.length;
     }
 
     @Override
     protected boolean busyTick(ServerLevel sl) {
         if (!waveActive()) return false;
+        if (!claimed) claimRemaining();
         stepWave(sl);
         return true;
     }
 
-    /** Breaks the next few blocks of the wave. Logs that are gone or protected by now are skipped. */
+    /**
+     * Breaks the next few blocks of the wave, lowest first (a log before a leaf on the same level). Blocks that are gone
+     * or protected by now are skipped.
+     */
     private void stepWave(ServerLevel sl) {
-        int budget;
-        if (waveCursor < waveLeafStart) {
-            waveCarry += Math.max(waveLeafStart / (float) WAVE_TICKS, 1.0F / 3.0F);
-            budget = (int) waveCarry;
-            waveCarry -= budget;
-        } else {
-            budget = Math.max(1, Mth.ceil((wave.length - waveLeafStart) / (float) LEAF_TICKS));
-        }
+        int total = waveLogs.length + waveLeaves.length;
+        waveCarry += Math.max(total / (float) WAVE_TICKS, 1.0F / 3.0F);
+        int budget = (int) waveCarry;
+        waveCarry -= budget;
         ItemStack tool = new ItemStack(Items.IRON_AXE);
         List<ItemStack> drops = new ArrayList<>();
         int shown = 0;
-        while (budget-- > 0 && waveCursor < wave.length) {
-            boolean log = waveCursor < waveLeafStart;
-            BlockPos p = BlockPos.of(wave[waveCursor++]);
-            if (sl.isLoaded(p)) {
-                BlockState state = sl.getBlockState(p);
-                if (log && state.is(BlockTags.LOGS) && mayBreak(sl, p, state)) {
-                    for (ItemStack drop : Block.getDrops(state, sl, p, sl.getBlockEntity(p), null, tool)) Drops.merge(drops, drop);
-                    if (shown++ < 2) {
-                        if (shown == 1) sl.levelEvent(2001, p, Block.getId(state));
-                        sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 3, 0.3, 0.3, 0.3, 0.05);
-                    }
-                    sl.removeBlock(p, false);
-                    waveFelled++;
-                } else if (!log && TreeScan.isLeafLike(state) && TreeScan.isNatural(state) && mayBreak(sl, p, state)) {
-                    for (ItemStack drop : Block.getDrops(state, sl, p, sl.getBlockEntity(p), null, tool)) Drops.merge(drops, drop);
-                    sl.removeBlock(p, false);
+        while (budget-- > 0 && waveActive()) {
+            boolean log = leafCursor >= waveLeaves.length || (logCursor < waveLogs.length
+                    && BlockPos.getY(waveLogs[logCursor]) <= BlockPos.getY(waveLeaves[leafCursor]));
+            long packed = log ? waveLogs[logCursor++] : waveLeaves[leafCursor++];
+            if (log) release(packed);
+            BlockPos p = BlockPos.of(packed);
+            if (!sl.isLoaded(p)) continue;
+            BlockState state = sl.getBlockState(p);
+            if (log && state.is(BlockTags.LOGS) && mayBreak(sl, p, state)) {
+                for (ItemStack drop : Block.getDrops(state, sl, p, sl.getBlockEntity(p), null, tool)) Drops.merge(drops, drop);
+                if (shown++ < 2) {
+                    if (shown == 1) sl.levelEvent(2001, p, Block.getId(state));
+                    sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 3, 0.3, 0.3, 0.3, 0.05);
                 }
+                sl.removeBlock(p, false);
+                waveFelled++;
+            } else if (!log && TreeScan.isLeafLike(state) && TreeScan.isNatural(state) && mayBreak(sl, p, state)) {
+                for (ItemStack drop : Block.getDrops(state, sl, p, sl.getBlockEntity(p), null, tool)) Drops.merge(drops, drop);
+                sl.removeBlock(p, false);
             }
-            // The leaves start on the next tick.
-            if (log && waveCursor == waveLeafStart) break;
         }
         for (ItemStack drop : drops) output(drop);
         if (!waveActive()) finishWave(sl);
@@ -226,10 +281,18 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
             if (inArea(p) && sl.isLoaded(p) && sl.getBlockState(p).isAir() && sl.getBlockState(p.below()).is(BlockTags.DIRT)
                     && plantSapling(sl, p, wavePrefix)) planted++;
         }
-        wave = NO_WAVE;
-        waveCursor = 0;
-        waveLeafStart = 0;
+        clearWave();
+    }
+
+    private void clearWave() {
+        releaseRemaining();
+        waveLogs = NO_WAVE;
+        waveLeaves = NO_WAVE;
+        logCursor = 0;
+        leafCursor = 0;
         waveBases = NO_WAVE;
+        waveFelled = 0;
+        waveCarry = 0;
     }
 
     private boolean plantSapling(ServerLevel sl, BlockPos pos, String prefix) {
@@ -277,8 +340,10 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
         super.saveExtra(tag, registries);
         if (waveActive()) {
             CompoundTag w = new CompoundTag();
-            w.putLongArray("left", Arrays.copyOfRange(wave, waveCursor, wave.length));
-            w.putInt("leafStart", Math.max(0, waveLeafStart - waveCursor));
+            // Absolute positions: only valid for a bot that is still where it started the wave.
+            w.putLong("at", worldPosition.asLong());
+            w.putLongArray("logs", Arrays.copyOfRange(waveLogs, logCursor, waveLogs.length));
+            w.putLongArray("leaves", Arrays.copyOfRange(waveLeaves, leafCursor, waveLeaves.length));
             w.putInt("felled", waveFelled);
             w.putFloat("carry", waveCarry);
             w.putLongArray("bases", waveBases);
@@ -290,14 +355,13 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
     @Override
     protected void loadExtra(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadExtra(tag, registries);
-        wave = NO_WAVE;
-        waveCursor = 0;
-        waveLeafStart = 0;
-        waveBases = NO_WAVE;
+        clearWave();
         if (tag.contains("wave")) {
             CompoundTag w = tag.getCompound("wave");
-            wave = w.getLongArray("left");
-            waveLeafStart = Math.min(wave.length, w.getInt("leafStart"));
+            // A bot moved with its data (pick-block with NBT, carry or contraption mods) drops the old site's wave.
+            if (w.getLong("at") != worldPosition.asLong()) return;
+            waveLogs = w.getLongArray("logs");
+            waveLeaves = w.getLongArray("leaves");
             waveFelled = w.getInt("felled");
             waveCarry = w.getFloat("carry");
             waveBases = w.getLongArray("bases");

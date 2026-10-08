@@ -260,12 +260,13 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
         int bits = layerBits();
         int kind = v >>> (12 + bits);
         int rawDx = v & 63;
-        fxTarget = rawDx == 0 ? null : new BlockPos(worldPosition.getX() + rawDx - 32, layerBase() + ((v >>> 12) & ((1 << bits) - 1)),
+        BlockPos target = rawDx == 0 ? null : new BlockPos(worldPosition.getX() + rawDx - 32, layerBase() + ((v >>> 12) & ((1 << bits) - 1)),
                 worldPosition.getZ() + ((v >>> 6) & 63) - 32);
         if (kind == sparkleKind()) {
-            if (fxTarget != null) BotFx.sparkle(level, fxTarget);
+            if (target != null) BotFx.sparkle(level, target);
             return true;
         }
+        fxTarget = target;
         fxKind = kind;
         fxStart = level.getGameTime();
         fxHitPending = true;
