@@ -37,6 +37,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -81,6 +82,7 @@ public final class Trailer {
     private static long recordStartGameTime;
     private static double sceneTime;
     private static int nextAction;
+    private static long lastSwing = -1;
 
     public static void init(IEventBus modBus) {
         if (!Boolean.getBoolean("robotica.trailer")) return;
@@ -97,6 +99,7 @@ public final class Trailer {
         NeoForge.EVENT_BUS.addListener(Trailer::renderPre);
         NeoForge.EVENT_BUS.addListener(Trailer::renderPost);
         NeoForge.EVENT_BUS.addListener(Trailer::fov);
+        NeoForge.EVENT_BUS.addListener(Trailer::gui);
     }
 
     private static Minecraft mc() {
@@ -112,6 +115,8 @@ public final class Trailer {
             mc.getToasts().clear();
             mc.gui.getChat().clearMessages(false);
         }
+        // the hand only renders with hideGui off, so first-person scenes cancel the GUI itself (see gui)
+        if (scene != null && phase.ordinal() >= Phase.SETUP.ordinal() && phase != Phase.DONE) mc.options.hideGui = !scene.firstPerson;
         switch (phase) {
             case TITLE -> {
                 if (mc.getOverlay() == null && mc.screen != null && ++idleTicks > 40) {
@@ -146,6 +151,7 @@ public final class Trailer {
                     recordStartGameTime = mc.level.getGameTime();
                     sceneTime = 0;
                     nextAction = 0;
+                    lastSwing = -1;
                     try {
                         Path out = Path.of(System.getProperty("robotica.trailer.out", "footage"));
                         recorder = new FrameRecorder(out.isAbsolute() ? out : mc.gameDirectory.toPath().resolve(out), scene.id, mc.getMainRenderTarget().width, mc.getMainRenderTarget().height);
@@ -246,6 +252,17 @@ public final class Trailer {
             }
             if (center == null) center = guess;
             usedSites.add(center);
+            if (scene.firstPerson) {
+                sp.setGameMode(GameType.SURVIVAL);
+                sp.setInvulnerable(true);
+                sp.getAbilities().mayfly = true;
+                sp.getAbilities().flying = true;
+                sp.onUpdateAbilities();
+            } else {
+                sp.setInvulnerable(false);
+                sp.setGameMode(GameType.SPECTATOR);
+                sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+            }
             // the camera needs the area loaded first; flatten also loads the chunks it touches
             sp.teleportTo(level, center.getX() + 0.5, 100, center.getZ() + 0.5, 0, 0);
             BlockPos origin = flatten(level, center.getX(), center.getZ(), scene.width, scene.depth);
@@ -278,6 +295,10 @@ public final class Trailer {
         while (nextAction < scene.actions.size() && scene.actions.get(nextAction).tick() <= tick) {
             TrailerScene.Action action = scene.actions.get(nextAction++).action();
             server(server -> action.run(server.overworld(), server.getPlayerList().getPlayers().get(0), currentSite));
+        }
+        if (scene.firstPerson && scene.swingEvery > 0 && tick != lastSwing && tick % scene.swingEvery == 0 && mc.player != null) {
+            lastSwing = tick;
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         }
         follow(tick);
         if (tick >= scene.durationTicks) {
@@ -343,6 +364,11 @@ public final class Trailer {
     private static void fov(ViewportEvent.ComputeFov event) {
         if (!rendering() || !event.usedConfiguredFov()) return;
         event.setFOV(path.at(sceneTime).fov());
+    }
+
+    /** First-person scenes show the hand but never the hotbar, crosshair or other GUI. */
+    private static void gui(RenderGuiEvent.Pre event) {
+        if (scene != null && scene.firstPerson && phase != Phase.TITLE && phase != Phase.CREATING) event.setCanceled(true);
     }
 
     private static void renderPost(RenderFrameEvent.Post event) {
