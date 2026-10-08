@@ -200,8 +200,9 @@ BLOCKS.append('spire_crown')
 # The pipe is centred at y 8 (ColliderRenderer.PIPE_Y = 0.5).
 ARMS = {'north': ([6, 6, 0], [10, 10, 6]), 'south': ([6, 6, 10], [10, 10, 16]),
         'west': ([0, 6, 6], [6, 10, 10]), 'east': ([10, 6, 6], [16, 10, 10])}
-COILS = {'x': [([4, 4, 1], [12, 12, 5]), ([4, 4, 11], [12, 12, 15])],     # beam along x: magnets north and south
-         'z': [([1, 4, 4], [5, 12, 12]), ([11, 4, 4], [15, 12, 12])]}     # beam along z: magnets west and east
+# Straights: a square magnet collar round the pipe (four bars framing its 6..10 cross-section).
+COILS = {'x': [([5, 4, 4], [11, 6, 12]), ([5, 10, 4], [11, 12, 12]), ([5, 6, 4], [11, 10, 6]), ([5, 6, 10], [11, 10, 12])],
+         'z': [([4, 4, 5], [12, 6, 11]), ([4, 10, 5], [12, 12, 11]), ([4, 6, 5], [6, 10, 11]), ([10, 6, 5], [12, 10, 11])]}
 for name in ('accelerator_segment', 'resonant_segment'):
     textures = {'base': tex(f'{name}_base'), 'coil': tex(f'{name}_coil'), 'glow': tex(f'{name}_coil_glow'),
                 'pipe': tex(f'{name}_pipe'), 'particle': tex(f'{name}_base')}

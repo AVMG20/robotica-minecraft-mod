@@ -33,7 +33,7 @@ public class AcceleratorSegmentBlock extends Block {
     public static final BooleanProperty SOUTH = BlockStateProperties.SOUTH;
     public static final BooleanProperty EAST = BlockStateProperties.EAST;
     public static final BooleanProperty WEST = BlockStateProperties.WEST;
-    private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 13, 16);
+    private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 12, 16);
 
     private final int tier;
 
