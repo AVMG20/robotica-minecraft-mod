@@ -991,15 +991,15 @@ public final class Showcase {
             level.setBlock(HAUL.offset(3, 0, -2), Blocks.HAY_BLOCK.defaultBlockState(), 3);
             level.setBlock(HAUL.offset(-4, 0, -2), Blocks.OAK_FENCE.defaultBlockState(), 3);
             level.setBlock(HAUL.offset(-4, 0, -1), Blocks.OAK_FENCE.defaultBlockState(), 3);
-            haul(sp, level, EntityType.COW, 1, HAUL.getX() - 1.5, HAUL.getZ() + 0.5, Y + 1.6, 25.0F);
-            haul(sp, level, EntityType.VILLAGER, 2, HAUL.getX() + 2.0, HAUL.getZ() - 0.5, Y + 1.3, -20.0F);
+            haul(sp, level, EntityType.COW, 1, HAUL.getX() - 1.5, HAUL.getZ() + 0.5, Y + 0.8, 25.0F);
+            haul(sp, level, EntityType.VILLAGER, 2, HAUL.getX() + 2.0, HAUL.getZ() - 0.5, Y + 0.7, -20.0F);
             var empty = spawn(level, com.arno.robotica.drones.DronesRegistry.HAULER_DRONE_ENTITY.get(), HAUL.getX() - 4.0, HAUL.getZ() + 1.5, Y + 2.0);
             if (empty != null) {
                 empty.setOwner(sp);
                 face(empty, HAUL.getX(), HAUL.getZ() + 9);
             }
         }));
-        camera(HAUL.getX() - 0.5, Y, HAUL.getZ() + 5.6, 180, -6);
+        camera(HAUL.getX() - 0.5, Y + 0.4, HAUL.getZ() + 6.8, 180, -9);
         step(20, () -> {});
         shot("hauler_drone");
     }
@@ -1018,7 +1018,7 @@ public final class Showcase {
     private static void haul(ServerPlayer sp, ServerLevel level, EntityType<? extends net.minecraft.world.entity.Mob> type, int tier, double x, double z,
                              double feetY, float yaw) {
         var mob = spawn(level, type, x, z, feetY);
-        var drone = spawn(level, com.arno.robotica.drones.DronesRegistry.HAULER_DRONE_ENTITY.get(), x, z, feetY + (mob != null ? mob.getBbHeight() : 1.0) + 0.05);
+        var drone = spawn(level, com.arno.robotica.drones.DronesRegistry.HAULER_DRONE_ENTITY.get(), x, z, feetY + (mob != null ? mob.getBbHeight() : 1.0) + com.arno.robotica.drones.entity.HaulerDrone.HANG_GAP);
         if (mob == null || drone == null) return;
         drone.setTier(tier);
         drone.setOwner(sp);

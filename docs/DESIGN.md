@@ -534,6 +534,8 @@ Drone digs where you look; sneak + key calls all drones back.
   highest safe floor below (lava and dangerous blocks skipped, water surface allowed). Death, pick-up (sneak-right-click) and removal release it the same way.
 - Out of FE: it stops following and hovers in place, still carrying (no FE used), checks once a second for a safe floor below
   and sets the mob down there. A charge or the owner's release ends the wait.
+- Cable: the mob hangs 0.85 blocks below the drone (shorter when there is no room above the mob at capture, let out
+  once there is room); the follow height grows with it.
 - Looks and sounds: a cable lowers the claw onto the mob and reels it back in when empty; the body tilts with speed, more
   with a load, and its lights glow brighter while carrying. Mk2: bigger rotors, side winch drums, antenna. Grab, release
   and winch sounds, an error beep on a refused mob; sparks on capture, a puff where the mob is set down.

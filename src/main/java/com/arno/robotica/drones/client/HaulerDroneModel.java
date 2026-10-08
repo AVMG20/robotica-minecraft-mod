@@ -24,7 +24,7 @@ public class HaulerDroneModel extends EntityModel<HaulerDrone> {
     /** Prong offsets (x, z) around the claw collar: north, south, west, east. */
     private static final float[][] PRONGS = {{0.0F, -1.5F}, {0.0F, 1.5F}, {-1.5F, 0.0F}, {1.5F, 0.0F}};
     private static final float ROOT_Y = 16.0F;
-    /** Claw collar height (relative to the root) when reeled in and when lowered onto the mob. */
+    /** Claw collar height (relative to the root) when reeled in, and when lowered onto a mob that hangs right under the feet. */
     private static final float CLAW_IN = 3.0F, CLAW_OUT = 6.0F;
 
     private final ModelPart root;
@@ -117,13 +117,19 @@ public class HaulerDroneModel extends EntityModel<HaulerDrone> {
         antenna.xRot = -tiltX * 0.8F + Mth.sin(ageInTicks * 0.2F) * 0.04F;
         antenna.zRot = -tiltZ * 0.8F;
 
-        float clawY = Mth.lerp(winch, CLAW_IN, CLAW_OUT - bob);
-        claw.y = clawY;
-        claw.xRot = -tiltX;
-        claw.zRot = -tiltZ - sway;
-        float length = clawY - CLAW_IN;
+        // the cable hangs plumb from the hub while the body tilts; the claw sits on the mob's head
+        float out = CLAW_OUT + (drone.gap() - HaulerDrone.MIN_GAP) * 16.0F;
+        float length = Mth.lerp(winch, 0.0F, out - CLAW_IN - bob);
+        float rx = -tiltX, rz = -tiltZ - sway;
+        cable.xRot = rx;
+        cable.zRot = rz;
         cable.visible = length > 0.05F;
         cable.yScale = Math.max(0.01F, length);
+        claw.x = -length * Mth.sin(rz);
+        claw.y = CLAW_IN + length * Mth.cos(rx) * Mth.cos(rz);
+        claw.z = length * Mth.sin(rx);
+        claw.xRot = rx;
+        claw.zRot = rz;
         // positive flare spreads the tips outward; closed they bite slightly inward
         float flare = -0.18F + 0.78F * open;
         prongs[0].xRot = -flare;

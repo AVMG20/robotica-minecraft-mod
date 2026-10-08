@@ -592,7 +592,7 @@ public class DronesGameTests {
     @GameTest(template = "drones_arena", batch = "dronesHauler5", timeoutTicks = 200)
     public static void haulerUsesEnergyOnlyWhileCarrying(GameTestHelper helper) {
         floor(helper);
-        HaulerDrone drone = hauler(helper, 1, 3, 4, 3);
+        HaulerDrone drone = hauler(helper, 1, 3, 5, 3);
         drone.setEnergy(10_000);
         var cow = helper.spawn(EntityType.COW, p(3, 1, 3));
         int[] start = new int[1];

@@ -14,6 +14,9 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -57,8 +60,10 @@ public class HaulerDrone extends DroneBase {
     public static final float MK1_WIDTH = 1.5F, MK1_HEIGHT = 2.0F, MK2_WIDTH = 2.0F, MK2_HEIGHT = 3.0F;
     /** Beyond this distance (or in another dimension) the drone hovers in place until the owner comes back. */
     public static final double LEASH_RANGE = 64.0;
-    /** Gap between the drone's feet and the top of the carried mob. */
-    private static final double HANG_GAP = 0.05;
+    /** Cable length: gap between the drone's feet and the top of the carried mob. Shorter where there is no room, then let out. */
+    public static final float HANG_GAP = 0.85F, MIN_GAP = 0.05F;
+    private static final float GAP_STEP = 0.03F;
+    private static final EntityDataAccessor<Float> DATA_GAP = SynchedEntityData.defineId(HaulerDrone.class, EntityDataSerializers.FLOAT);
 
     private boolean lowNotified;
     /** Ticks spent carrying with an empty buffer; the drone hovers and looks for a safe spot every second. */
@@ -76,6 +81,26 @@ public class HaulerDrone extends DroneBase {
 
     public HaulerDrone(EntityType<? extends HaulerDrone> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_GAP, HANG_GAP);
+    }
+
+    /** Current cable length in blocks. */
+    public float gap() {
+        return entityData.get(DATA_GAP);
+    }
+
+    private void setGap(float gap) {
+        entityData.set(DATA_GAP, Mth.clamp(gap, MIN_GAP, HANG_GAP));
+    }
+
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return super.getBoundingBoxForCulling().expandTowards(0.0, -gap() - 0.5, 0.0);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -166,8 +191,17 @@ public class HaulerDrone extends DroneBase {
         HaulerDrone drone = no == null ? DronesRegistry.HAULER_DRONE_ENTITY.get().create(level) : null;
         if (no == null && drone == null) no = msg("hauler.cant");
         if (drone != null) {
-            drone.moveTo(target.getX(), target.getY() + target.getBbHeight() + HANG_GAP, target.getZ(), player.getYRot(), 0.0F);
-            if (!level.noCollision(drone, drone.getBoundingBox())) no = msg("hauler.no_room");
+            // longest cable that fits above the mob; it is let out later where there is room
+            boolean room = false;
+            for (float gap = HANG_GAP; !room && gap >= MIN_GAP - 1.0E-4F; gap -= 0.15F) {
+                float g = Math.max(MIN_GAP, gap);
+                drone.moveTo(target.getX(), target.getY() + target.getBbHeight() + g, target.getZ(), player.getYRot(), 0.0F);
+                if (level.noCollision(drone, drone.getBoundingBox())) {
+                    drone.setGap(g);
+                    room = true;
+                }
+            }
+            if (!room) no = msg("hauler.no_room");
         }
         if (no != null) {
             refuse(player, target, no);
@@ -303,12 +337,12 @@ public class HaulerDrone extends DroneBase {
 
     @Override
     protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
-        callback.accept(passenger, getX(), getY() - passenger.getBbHeight() - HANG_GAP, getZ());
+        callback.accept(passenger, getX(), getY() - passenger.getBbHeight() - gap(), getZ());
     }
 
     @Override
     public Vec3 getPassengerRidingPosition(Entity passenger) {
-        return new Vec3(getX(), getY() - passenger.getBbHeight() - HANG_GAP, getZ());
+        return new Vec3(getX(), getY() - passenger.getBbHeight() - gap(), getZ());
     }
 
     @Override
@@ -486,6 +520,11 @@ public class HaulerDrone extends DroneBase {
             } else {
                 emptyTicks = 0;
                 ticksCarried++;
+                if (gap() < HANG_GAP) {
+                    float next = Math.min(HANG_GAP, gap() + GAP_STEP);
+                    AABB box = mob.getDimensions(mob.getPose()).makeBoundingBox(new Vec3(getX(), getY() - mob.getBbHeight() - next, getZ()));
+                    if (sl.noCollision(mob, box)) setGap(next);
+                }
                 if ((tickCount + getId()) % 40 == 0) CoreSounds.play(this, CoreSounds.HAULER_WINCH, SoundSource.NEUTRAL, 0.6F, 1.0F);
                 if (tickCount % 8 == 0) {
                     sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() - 0.05, getZ(), 1, 0.08, 0.02, 0.08, 0.0);
@@ -510,7 +549,7 @@ public class HaulerDrone extends DroneBase {
             setDeltaMovement(getDeltaMovement().scale(0.5));
             return;
         }
-        double up = Math.max(1.9, (mob != null ? mob.getBbHeight() : 0.0) + 1.0);
+        double up = Math.max(1.9, (mob != null ? mob.getBbHeight() + gap() - MIN_GAP : 0.0) + 1.0);
         followOwner(o, up, flySpeed());
     }
 
@@ -527,7 +566,7 @@ public class HaulerDrone extends DroneBase {
             double y = target.y + (i == 0 ? 0 : random.nextInt(3) - 1);
             double z = target.z + (i == 0 ? 0 : random.nextInt(5) - 2);
             AABB self = getBoundingBox().move(x - getX(), y - getY(), z - getZ());
-            AABB hang = mob.getDimensions(mob.getPose()).makeBoundingBox(new Vec3(x, y - mob.getBbHeight() - HANG_GAP, z));
+            AABB hang = mob.getDimensions(mob.getPose()).makeBoundingBox(new Vec3(x, y - mob.getBbHeight() - gap(), z));
             if (level().noCollision(this, self) && level().noCollision(mob, hang)) {
                 navigation.stop();
                 setPos(x, y, z);
@@ -541,6 +580,18 @@ public class HaulerDrone extends DroneBase {
 
     @Override
     protected void writeSettings(CompoundTag tag, HolderLookup.Provider registries) {
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putFloat("Gap", gap());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("Gap")) setGap(tag.getFloat("Gap"));
     }
 
     @Override
