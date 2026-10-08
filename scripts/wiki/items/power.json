@@ -46,6 +46,10 @@
       "80 FE/t"
      ],
      [
+      "Push",
+      "up to 400 FE/t, shared by all sides"
+     ],
+     [
       "Buffer",
       "40,000 FE"
      ],
@@ -106,6 +110,13 @@
       "16,000 FE",
       "40,000 FE",
       "100,000 FE"
+     ],
+     [
+      "Push (all sides)",
+      "160 FE/t",
+      "640 FE/t",
+      "1,600 FE/t",
+      "2,560 FE/t"
      ]
     ]
    },
