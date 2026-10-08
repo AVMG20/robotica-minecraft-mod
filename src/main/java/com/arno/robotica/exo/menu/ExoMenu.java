@@ -11,6 +11,7 @@ import com.arno.robotica.core.module.ModuleItem;
 import com.arno.robotica.core.module.Modules;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
@@ -84,6 +85,9 @@ public class ExoMenu extends MachineMenu {
     /** Server only (null on the client): the piece stack of each row at open time. Reads and writes require it. */
     @Nullable
     private final ItemStack[] expected;
+    /** Server only: what the client last got for each row's piece (see {@link #broadcastChanges}). */
+    @Nullable
+    private final ItemStack[] sent;
 
     public ExoMenu(int id, Inventory inv, List<Section> sections, boolean server) {
         super(ExoRegistry.EXO_MENU.get(), id);
@@ -91,6 +95,7 @@ public class ExoMenu extends MachineMenu {
         this.sections = List.copyOf(sections);
         this.firstSlot = new int[sections.size()];
         this.expected = server ? new ItemStack[sections.size()] : null;
+        this.sent = server ? new ItemStack[sections.size()] : null;
         if (expected != null) {
             for (int r = 0; r < sections.size(); r++) {
                 Section section = sections.get(r);
@@ -193,6 +198,27 @@ public class ExoMenu extends MachineMenu {
             if (sections.get(r).hasPiece() && piece(r).isEmpty()) return false;
         }
         return true;
+    }
+
+    /**
+     * Worn armor and the offhand are not slots of this menu, and vanilla only syncs them through the player's own
+     * inventory menu, which is idle while this one is open. Without this the client keeps the piece it had at open
+     * time: switches and new modules would not show until the screen is reopened. The main hand is a slot here already.
+     */
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        if (sent == null || !(player instanceof ServerPlayer sp)) return;
+        for (int r = 0; r < sections.size(); r++) {
+            Section section = sections.get(r);
+            if (section.source() == 1) continue;
+            ItemStack piece = piece(r);
+            if (piece.isEmpty() || (sent[r] != null && ItemStack.matches(sent[r], piece))) continue;
+            sent[r] = piece.copy();
+            int index = section.source() == 2 ? Inventory.SLOT_OFFHAND : Inventory.INVENTORY_SIZE + section.slot().getIndex();
+            // Container id -2 writes straight into the client's inventory, whatever menu is open.
+            sp.connection.send(new ClientboundContainerSetSlotPacket(-2, 0, index, piece.copy()));
+        }
     }
 
     /** Refuses every click that would move a held piece the menu edits (its hotbar slot, number keys, the offhand key). */

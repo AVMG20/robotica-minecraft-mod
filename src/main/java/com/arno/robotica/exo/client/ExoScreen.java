@@ -214,7 +214,10 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
                     int sx = switchX(i);
                     int sy = rowY(r) + 2;
                     if (mouseX >= sx && mouseX < sx + SWITCH_W && mouseY >= sy && mouseY < sy + SWITCH_H) {
-                        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, r * ExoArmorItem.MAX_SLOTS + i);
+                        // Flip the client copy too (like the stonecutter), so the switch moves right away.
+                        int id = r * ExoArmorItem.MAX_SLOTS + i;
+                        menu.clickMenuButton(player, id);
+                        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
                         minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                         return true;
                     }
