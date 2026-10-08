@@ -8,6 +8,8 @@ The [[rancher]] is a walking robot for passive mobs. It works every animal in th
 
 {{items rancher rancher_mk2}}
 
+{{image shots/rancher_pen.jpg|Two Ranchers feeding and shearing in a fenced pen with a chest}}
+
 ## Set up
 
 1. Build a pen. A Mk1 works 9x9 around its home (Mk2 13x13), from 2 blocks below to 3 above.
@@ -41,4 +43,4 @@ Each feed, shear or milk costs 200 FE, each cull 500 FE. Charge it from its batt
 
 Smithing table: [[advanced_circuit]] template + Rancher Mk1 + [[servo_actuator]]. Energy and settings stay.
 
-> Status in its menu and in Jade: Working, Idle, No energy, Storage full, No feed or No storage.
+> Status in its menu and in Jade: Working, Idle, No energy, Storage full, No feed or No storage. The lamp on its chest shows it too: green working, dim green idle, amber no feed, blinking red for the rest.

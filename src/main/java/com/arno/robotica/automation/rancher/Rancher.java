@@ -21,7 +21,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
@@ -92,7 +91,7 @@ public class Rancher extends PathfinderMob {
         }
     }
 
-    enum Kind { FEED, SHEAR, MILK, CULL }
+    public enum Kind { FEED, SHEAR, MILK, CULL }
 
     /** One walk-and-act job: the animal, an optional second animal to feed right after, and the item shown in hand. */
     static final class Job {
@@ -114,6 +113,10 @@ public class Rancher extends PathfinderMob {
     private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(Rancher.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_STATUS = SynchedEntityData.defineId(Rancher.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<BlockPos> DATA_HOME = SynchedEntityData.defineId(Rancher.class, EntityDataSerializers.BLOCK_POS);
+    /** Last action for the model: (count << 3) | (kind + 1), so a repeat of the same job still changes the value. */
+    private static final EntityDataAccessor<Integer> DATA_ACTION = SynchedEntityData.defineId(Rancher.class, EntityDataSerializers.INT);
+    /** Length of the job pose on the client. */
+    public static final int ACTION_TICKS = 16;
 
     public static final int MIN_TARGET = 2;
     public static final int MAX_TARGET = 64;
@@ -150,6 +153,11 @@ public class Rancher extends PathfinderMob {
     private long lastStallTick;
     private final Map<UUID, Long> milkedAt = new HashMap<>();
     private final Map<UUID, Long> skipUntil = new HashMap<>();
+    private int actions;
+    /** Client side: the job pose playing ({@link Kind}, null for none) and its ticks left. */
+    @Nullable
+    public Kind actionKind;
+    public int actionTicks;
 
     /** Any FE item (cell, Mainspring). Its charge refills the internal buffer. */
     public final ItemStackHandler battery = new ItemStackHandler(1) {
@@ -185,6 +193,25 @@ public class Rancher extends PathfinderMob {
         builder.define(DATA_TIER, 1);
         builder.define(DATA_STATUS, Status.IDLE.ordinal());
         builder.define(DATA_HOME, BlockPos.ZERO);
+        builder.define(DATA_ACTION, 0);
+    }
+
+    /** Shows a job pose and a status without doing the job (showcase). */
+    public void showAction(Kind kind, Status status) {
+        entityData.set(DATA_STATUS, status.ordinal());
+        entityData.set(DATA_ACTION, ((++actions & 0xFFFF) << 3) | (kind.ordinal() + 1));
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_ACTION.equals(key) && level().isClientSide) {
+            int kind = (entityData.get(DATA_ACTION) & 7) - 1;
+            if (kind >= 0 && kind < Kind.values().length) {
+                actionKind = Kind.values()[kind];
+                actionTicks = ACTION_TICKS;
+            }
+        }
     }
 
     // ---------------------------------------------------------------- tier, numbers
@@ -561,16 +588,33 @@ public class Rancher extends PathfinderMob {
     public void aiStep() {
         updateSwingTime();
         super.aiStep();
+        if (level().isClientSide && actionTicks > 0 && --actionTicks == 0) actionKind = null;
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.IRON_GOLEM_DAMAGE;
+        return CoreSounds.RANCHER_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.IRON_GOLEM_DEATH;
+        return CoreSounds.RANCHER_DEATH.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return status() == Status.NO_ENERGY ? null : CoreSounds.RANCHER_HUM.get();
+    }
+
+    @Override
+    public int getAmbientSoundInterval() {
+        return 200;
+    }
+
+    @Override
+    protected void playStepSound(BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        playSound(CoreSounds.RANCHER_STEP.get(), 0.35F, 0.95F + random.nextFloat() * 0.1F);
     }
 
     @Override
@@ -706,6 +750,7 @@ public class Rancher extends PathfinderMob {
         }
         consume(cost);
         swing(InteractionHand.MAIN_HAND);
+        entityData.set(DATA_ACTION, ((++actions & 0xFFFF) << 3) | (j.kind.ordinal() + 1));
         lastWorking = tickCount;
         setStatus(sl, Status.WORKING);
         if (j.kind == Kind.FEED && j.partner != null && j.partner.isAlive() && canBreedNow(j.partner)) {
@@ -727,7 +772,9 @@ public class Rancher extends PathfinderMob {
             if (taken.isEmpty()) continue;
             hold(taken);
             a.setInLove(null);
-            sl.playSound(null, a, SoundEvents.GENERIC_EAT, SoundSource.NEUTRAL, 0.6F, 1.0F);
+            CoreSounds.play(a, CoreSounds.RANCHER_FEED, SoundSource.NEUTRAL, 0.8F, 1.0F);
+            sparkle(sl, a, ParticleTypes.HAPPY_VILLAGER, 6);
+            sparkle(sl, a, ParticleTypes.COMPOSTER, 4);
             return true;
         }
         setStatus(sl, Status.NO_FEED);
@@ -739,6 +786,8 @@ public class Rancher extends PathfinderMob {
         if (!(a instanceof IShearable s) || a.isBaby() || !s.isShearable(null, shears, sl, a.blockPosition())) return false;
         List<ItemStack> drops = s.onSheared(null, shears, sl, a.blockPosition());
         for (ItemStack drop : drops) store(sl, store, drop, a);
+        CoreSounds.play(a, CoreSounds.RANCHER_SHEAR, SoundSource.NEUTRAL, 0.8F, 1.0F);
+        sparkle(sl, a, ParticleTypes.WAX_OFF, 5);
         return true;
     }
 
@@ -759,7 +808,8 @@ public class Rancher extends PathfinderMob {
                 return false;
             }
             milkedAt.put(a.getUUID(), sl.getGameTime());
-            sl.playSound(null, a, a instanceof Goat ? SoundEvents.GOAT_MILK : SoundEvents.COW_MILK, SoundSource.NEUTRAL, 1.0F, 1.0F);
+            CoreSounds.play(a, CoreSounds.RANCHER_MILK, SoundSource.NEUTRAL, 0.9F, a instanceof Goat ? 1.15F : 1.0F);
+            sparkle(sl, a, ParticleTypes.WAX_OFF, 4);
             hold(new ItemStack(Items.MILK_BUCKET));
             return true;
         }
@@ -774,10 +824,17 @@ public class Rancher extends PathfinderMob {
         if (NeoForge.EVENT_BUS.post(new AttackEntityEvent(fake, a)).isCanceled()) return false;
         float damage = Math.max(a.getMaxHealth(), a.getHealth()) * 4.0F + 20.0F;
         a.hurt(damageSources().mobAttack(this), damage);
-        sl.playSound(null, a, SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.NEUTRAL, 0.7F, 1.0F);
+        CoreSounds.play(a, CoreSounds.RANCHER_CULL, SoundSource.NEUTRAL, 0.9F, 1.0F);
+        sl.sendParticles(ParticleTypes.SWEEP_ATTACK, a.getX(), a.getY() + a.getBbHeight() * 0.5, a.getZ(), 1, 0.0, 0.0, 0.0, 0.0);
+        sl.sendParticles(ParticleTypes.CLOUD, a.getX(), a.getY() + 0.2, a.getZ(), 6, a.getBbWidth() * 0.4, 0.1, a.getBbWidth() * 0.4, 0.02);
         if (a.isAlive()) return false;
         collectDrops(sl, store);
         return true;
+    }
+
+    private static void sparkle(ServerLevel sl, Animal a, net.minecraft.core.particles.SimpleParticleType type, int count) {
+        double w = a.getBbWidth() * 0.4;
+        sl.sendParticles(type, a.getX(), a.getY() + a.getBbHeight() * 0.7, a.getZ(), count, w, a.getBbHeight() * 0.25, w, 0.02);
     }
 
     /** Into storage; what does not fit drops at the animal and is picked up once there is room. */

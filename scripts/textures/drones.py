@@ -405,10 +405,26 @@ HAULER2.update({
 })
 
 
+def rotor(c, u, v, n):
+    """Rotor n x 1 x n: transparent disc with a plus shaped blade and a darker hub."""
+    f = box(c, u, v, n, 1, n, ('a', 'b', 'c', 'k'))
+    m = n // 2 - 1
+    for name in ('top', 'bottom'):
+        x, y, rw, rh = f[name]
+        c.rect(x, y, rw, rh, '.')
+        c.rect(x, y + m, rw, 2, 'b')
+        c.rect(x + m, y, 2, rh, 'b')
+        c.rect(x + m, y + m, 2, 2, 'c')
+        c.rect(x, y + m, rw, 1, 'a')
+        c.set(x, y + m, 'c').set(x + rw - 1, y + m + 1, 'c')
+
+
 def hauler_sheet(tier):
-    """Flat body with hazard stripes, a winch hub, four clamp fingers, rotors on posts and a cyan sensor."""
+    """Flat body with hazard stripes and status lights, a winch hub, a cable and claw, rotors on posts and a cyan sensor.
+    Returns (main, glow, active glow): the active sheet lights the status lights and the hub ring while it carries."""
     c = Canvas(64)
     g = Canvas(64)
+    ga = Canvas(64)
     # body 8x3x8 at (0,0): hazard stripes round the sides, rivets on top, a hatch underneath
     f = box(c, 0, 0, 8, 3, 8)
     for name in ('west', 'east', 'north', 'south'):
@@ -419,10 +435,27 @@ def hauler_sheet(tier):
     for dx, dy in ((1, 1), (6, 1), (1, 6), (6, 6)):
         put(c, f['top'], dx, dy, 'R')
     block(c, f['bottom'], 2, 2, 4, 4, 'c')
-    # hub 4x2x4 at (0,14): steel drum with a dark band
+    for name, xs in (('west', (3, 4)), ('east', (3, 4)), ('south', (2, 5))):   # status lights, lit while carrying
+        for dx in xs:
+            put(c, f[name], dx, 1, 'y')
+            put(ga, f[name], dx, 1, 'Y')
+    # hub 4x2x4 at (0,14): steel drum with a dark band of light dots
     f = box(c, 0, 14, 4, 2, 4, ('a', 'b', 'c', 'k'))
     for name in ('west', 'east', 'north', 'south'):
         block(c, f[name], 0, 1, 4, 1, 'c')
+        for dx in (1, 2):
+            put(c, f[name], dx, 1, 'y')
+            put(ga, f[name], dx, 1, 'Y' if dx == 1 else 'z')
+    block(c, f['bottom'], 1, 1, 2, 2, 'k')
+    # claw collar 3x1x3 at (16,14), cable 1x1x1 at (28,14)
+    f = box(c, 16, 14, 3, 1, 3, ('a', 'b', 'c', 'k'))
+    put(c, f['bottom'], 1, 1, 'k')
+    for name in ('north', 'south', 'west', 'east'):
+        put(c, f[name], 1, 0, 'y')
+        put(ga, f[name], 1, 0, 'Y')
+    f = rects(28, 14, 1, 1, 1)
+    for name, (x, y, rw, rh) in f.items():
+        c.rect(x, y, rw, rh, 'k' if name in ('north', 'south') else 'c')
     # fingers 1x5x1 at (32,0): trim with a dark hooked tip
     f = box(c, 32, 0, 1, 5, 1, ('a', 'b', 'c', 'k'))
     for name in ('west', 'east', 'north', 'south'):
@@ -437,16 +470,28 @@ def hauler_sheet(tier):
     put(c, f['north'], 1, 0, 'z')
     block(g, f['north'], 0, 0, 3, 1, 'Y')
     put(g, f['north'], 1, 0, 'z')
-    # rotors 6x1x6 at (0,26): plus shaped blade
-    f = box(c, 0, 26, 6, 1, 6, ('a', 'b', 'c', 'k'))
-    for name in ('top', 'bottom'):
+    # rotors 6x1x6 at (0,26) (Mk1) and 8x1x8 at (0,36) (Mk2)
+    rotor(c, 0, 26, 6)
+    rotor(c, 0, 36, 8)
+    # Mk2 winch drums 2x2x3 at (36,14): trim drums with cable wound round them
+    f = box(c, 36, 14, 2, 2, 3, ('a', 'b', 'c', 'k'))
+    for name in ('top', 'bottom', 'north', 'south'):
         x, y, rw, rh = f[name]
-        c.rect(x, y, rw, rh, '.')
-        c.rect(x, y + 2, rw, 2, 'b')
-        c.rect(x + 2, y, 2, rh, 'b')
-        c.rect(x + 2, y + 2, 2, 2, 'c')
-        c.rect(x, y + 2, rw, 1, 'a')
-    return c, g
+        for yy in range(rh):
+            for xx in range(rw):
+                if (xx + yy) % 2 == 0:
+                    c.set(x + xx, y + yy, 'k')
+    # Mk2 antenna: rod 1x4x1 at (48,0), cyan tip 2x1x2 at (52,0)
+    box(c, 48, 0, 1, 4, 1, ('b', 'c', 'c', 'k'))
+    f = rects(52, 0, 2, 1, 2)
+    for name, (x, y, rw, rh) in f.items():
+        c.rect(x, y, rw, rh, 'Y')
+        g.rect(x, y, rw, rh, 'Y')
+        ga.rect(x, y, rw, rh, 'z')
+    # the sensor stays lit in the active sheet too
+    sx, sy, _, _ = rects(40, 0, 3, 2, 1)['north']
+    ga.rect(sx, sy, 3, 1, 'Y').set(sx + 1, sy, 'z')
+    return c, g, ga
 
 
 HAULER_YELLOW = ('#5E4210', '#9C6E14', '#D9A62E', '#F2C94C', '#FFF0B0')
@@ -474,10 +519,11 @@ def hauler_icon(mk2):
 def main():
     ENTITY.mkdir(parents=True, exist_ok=True)
     for pal, suffix in ((HAULER1, ''), (HAULER2, '_mk2')):
-        c, g = hauler_sheet(1 if not suffix else 2)
+        c, g, ga = hauler_sheet(1 if not suffix else 2)
         write_png(ENTITY / f'hauler_drone{suffix}.png', c.rows(), pal, 64)
         if not suffix:
             write_png(ENTITY / 'hauler_drone_glow.png', g.rows(), pal, 64)
+            write_png(ENTITY / 'hauler_drone_glow_active.png', ga.rows(), pal, 64)
     write_item('hauler_drone', icon(hauler_icon(False)).rows(), HAULER_ICON1)
     write_item('hauler_drone_mk2', icon(hauler_icon(True)).rows(), HAULER_ICON2)
     for tier, pal_m, pal_s, suffix in ((1, MK1, SENTRY1, ''), (2, MK2, SENTRY2, '_mk2')):

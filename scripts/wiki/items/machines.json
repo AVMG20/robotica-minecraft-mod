@@ -620,7 +620,8 @@
    },
    "see": [
     "guide:animal-farm"
-   ]
+   ],
+   "image": "shots/rancher_close.jpg|Rancher Mk1 feeding a cow, Mk2 shearing a sheep"
   },
   {
    "items": [
@@ -959,7 +960,8 @@
       "400k FE"
      ]
     ]
-   }
+   },
+   "image": "shots/hauler_drone.jpg|Hauler Drones carrying a cow and a villager"
   }
  ]
 }

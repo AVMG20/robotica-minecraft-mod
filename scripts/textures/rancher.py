@@ -1,9 +1,11 @@
 """Rancher textures (automation module): the 64x64 model sheets of Mk1 and Mk2, the glow sheet (eyes only) and both item icons.
 Run: python3 scripts/textures/rancher.py
-Writes textures/entity/rancher.png, rancher_mk2.png, rancher_glow.png and textures/item/rancher[_mk2].png (+ item models when missing).
+Writes textures/entity/rancher.png, rancher_mk2.png, rancher_glow.png (eyes), rancher_light.png (status lamps, white: the renderer
+tints them by status) and textures/item/rancher[_mk2].png (+ item models when missing).
 The sheet follows automation/client/RancherModel: texOffs(u, v), box w x h x d unfolds as
     top (u+d, v)  bottom (u+d+w, v)  west (u, v+d)  north/front (u+d, v+d)  east (u+d+w, v+d)  south (u+2d+w, v+d)
-Mk1: steel head, blue overall body, copper trim, straw hat. Mk2: dark steel, green body, gold trim, hat with a red band.
+Mk1: steel head, blue overall body, copper trim, straw hat. Mk2: dark steel, green body, gold trim, hat with a red band, and its
+own parts (twin tanks, antenna, badge) on the same sheet.
 """
 import pathlib
 import sys
@@ -20,6 +22,7 @@ MK1 = {
     'a': '#E8A060', 'b': '#C87533', 'c': '#8A4A22',
     'h': '#F2D27A', 'H': '#D4A73A', 'j': '#9C7A22', 'd': '#8A4A22',
     'k': '#1E1A1A', 'y': '#2FB8CC', 'Y': '#5FE3F0', 'z': '#D8FBFF',
+    'g': '#3A4A3E', 'W': '#FFFFFF',
 }
 MK2 = dict(MK1)
 MK2.update({
@@ -80,8 +83,10 @@ def straw(c, face, seed):
 
 
 def sheet():
+    """Returns (main, eye glow, lamp light) canvases."""
     c = Canvas(64)
     g = Canvas(64)
+    lt = Canvas(64)
     # head 6x5x6 at (0,0): steel, a visor with two round cyan eyes, a little speaker grille
     f = box(c, 0, 0, 6, 5, 6, ('1', '2', '3', '4'))
     block(c, f['north'], 0, 1, 6, 2, 'k')
@@ -143,7 +148,34 @@ def sheet():
     block(c, f['south'], 1, 1, 4, 3, 'k')
     block(c, f['south'], 2, 2, 2, 2, 'H')
     put(c, f['south'], 2, 2, 'h')
-    return c, g
+    # status lamp 2x1x1 at (48,6) on the chest: copper housing, dark glass, white in the light sheet
+    f = box(c, 48, 6, 2, 1, 1, ('a', 'b', 'c', 'c'))
+    for name in ('north', 'top', 'west', 'east'):
+        x, y, rw, rh = f[name]
+        c.rect(x, y, rw, rh, 'g')
+        lt.rect(x, y, rw, rh, 'W')
+    # eyelid 6x2x1 at (26,16): steel, darker lower edge
+    f = box(c, 26, 16, 6, 2, 1, ('1', '2', '3', '4'))
+    x, y, rw, rh = f['north']
+    c.rect(x, y, rw, 1, '2').rect(x, y + 1, rw, 1, '3')
+    # Mk2 twin tanks 3x6x3 at (44,24): trim tanks with a glass strip of grain
+    f = box(c, 44, 24, 3, 6, 3, ('a', 'b', 'c', 'c'))
+    for name in ('south', 'west', 'east'):
+        block(c, f[name], 1, 1, 1, 4, 'k')
+        block(c, f[name], 1, 3, 1, 2, 'H')
+    for name in ('north', 'south', 'west', 'east'):
+        x, y, rw, rh = f[name]
+        c.rect(x, y, rw, 1, 'a')
+    # Mk2 antenna: rod 1x4x1 at (48,0), lamp bulb 2x2x2 at (52,0)
+    box(c, 48, 0, 1, 4, 1, ('2', '3', '4', '4'))
+    for name, (x, y, rw, rh) in rects(52, 0, 2, 2, 2).items():
+        c.rect(x, y, rw, rh, 'g')
+        lt.rect(x, y, rw, rh, 'W')
+    # Mk2 badge 2x2x1 at (26,12): trim star plate
+    f = box(c, 26, 12, 2, 2, 1, ('a', 'b', 'c', 'c'))
+    x, y, rw, rh = f['north']
+    c.set(x, y, 'a').set(x + 1, y, 'b').set(x, y + 1, 'b').set(x + 1, y + 1, 'c')
+    return c, g, lt
 
 
 def icon(mk2):
@@ -168,10 +200,11 @@ def icon(mk2):
 
 def main():
     ENTITY.mkdir(parents=True, exist_ok=True)
-    c, g = sheet()
+    c, g, lt = sheet()
     write_png(ENTITY / 'rancher.png', c.rows(), MK1, 64)
     write_png(ENTITY / 'rancher_mk2.png', c.rows(), MK2, 64)
     write_png(ENTITY / 'rancher_glow.png', g.rows(), MK1, 64)
+    write_png(ENTITY / 'rancher_light.png', lt.rows(), MK1, 64)
     write_item('rancher', icon(False).rows(), MK1)
     write_item('rancher_mk2', icon(True).rows(), MK2)
     print('rancher textures written')

@@ -10,15 +10,16 @@ import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.item.DroneItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -64,6 +65,14 @@ public class HaulerDrone extends DroneBase {
     private int emptyTicks;
     /** Ticks spent carrying since the drone was created or loaded (tests, stats). */
     public int ticksCarried;
+
+    // Client side animation state, eased every tick and lerped with the partial tick by the model.
+    /** Claw: 0 closed, 1 open. Winch: 0 reeled in, 1 lowered onto the mob. */
+    public float claw = 1.0F, clawO = 1.0F, winch, winchO;
+    /** Body tilt from velocity (radians, pitch and roll). */
+    public float tiltX, tiltXO, tiltZ, tiltZO;
+    /** Rotor angle and its spin speed. */
+    public float rotor, rotorO, rotorSpeed = 1.6F;
 
     public HaulerDrone(EntityType<? extends HaulerDrone> type, Level level) {
         super(type, level);
@@ -161,20 +170,35 @@ public class HaulerDrone extends DroneBase {
             if (!level.noCollision(drone, drone.getBoundingBox())) no = msg("hauler.no_room");
         }
         if (no != null) {
-            player.displayClientMessage(no, true);
+            refuse(player, target, no);
             return false;
         }
         drone.initFromStack(stack, player);
         level.addFreshEntity(drone);
         if (!drone.grab(target)) {
             drone.discard();
-            player.displayClientMessage(msg("hauler.cant"), true);
+            refuse(player, target, msg("hauler.cant"));
             return false;
         }
-        CoreSounds.play(drone, CoreSounds.ROBOT_BEEP, SoundSource.NEUTRAL, 0.7F, 1.1F);
-        drone.playSound(SoundEvents.CHAIN_PLACE, 0.8F, 1.2F);
+        CoreSounds.play(drone, CoreSounds.HAULER_GRAB, SoundSource.NEUTRAL, 0.9F, 1.0F);
+        CoreSounds.play(drone, CoreSounds.ROBOT_BEEP, SoundSource.NEUTRAL, 0.5F, 1.2F);
+        grabParticles(level, drone, target);
         if (!player.hasInfiniteMaterials()) stack.shrink(1);
         return true;
+    }
+
+    private static void refuse(ServerPlayer player, Mob target, Component why) {
+        player.displayClientMessage(why, true);
+        CoreSounds.play(target.level(), target.getX(), target.getY() + target.getBbHeight(), target.getZ(), CoreSounds.ROBOT_ERROR,
+                SoundSource.NEUTRAL, 0.5F, 1.0F);
+    }
+
+    /** Sparks around the mob and the claw, a puff at the claw. */
+    private static void grabParticles(ServerLevel level, HaulerDrone drone, Mob mob) {
+        double w = mob.getBbWidth() * 0.5, h = mob.getBbHeight();
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, mob.getX(), mob.getY() + h * 0.5, mob.getZ(), 14, w, h * 0.4, w, 0.08);
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, drone.getX(), drone.getY(), drone.getZ(), 8, 0.2, 0.05, 0.2, 0.05);
+        level.sendParticles(ParticleTypes.CLOUD, drone.getX(), drone.getY() - 0.05, drone.getZ(), 4, 0.15, 0.02, 0.15, 0.01);
     }
 
     /** Hangs the mob under this drone and switches its AI off. Returns false when the mob could not be mounted. */
@@ -202,7 +226,12 @@ public class HaulerDrone extends DroneBase {
         if (mob.getVehicle() == this) return false;
         restoreAi(mob);
         setActive(false);
-        playSound(SoundEvents.CHAIN_BREAK, 0.6F, 1.3F);
+        CoreSounds.play(this, CoreSounds.HAULER_RELEASE, SoundSource.NEUTRAL, 0.8F, 1.0F);
+        if (level() instanceof ServerLevel sl) {
+            double w = mob.getBbWidth() * 0.5;
+            sl.sendParticles(ParticleTypes.POOF, mob.getX(), mob.getY() + 0.1, mob.getZ(), 10, w, 0.05, w, 0.02);
+            sl.sendParticles(ParticleTypes.CLOUD, mob.getX(), mob.getY() + 0.05, mob.getZ(), 4, w * 0.6, 0.02, w * 0.6, 0.01);
+        }
         return true;
     }
 
@@ -399,6 +428,42 @@ public class HaulerDrone extends DroneBase {
     // ---------------------------------------------------------------- tick
 
     @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide) animTick();
+    }
+
+    private void animTick() {
+        boolean carrying = isVehicle();
+        clawO = claw;
+        winchO = winch;
+        tiltXO = tiltX;
+        tiltZO = tiltZ;
+        rotorO = rotor;
+        // lower the claw first, then close it; on release open first, then reel in
+        winch = Mth.approach(winch, carrying ? 1.0F : (claw > 0.9F ? 0.0F : winch), 0.2F);
+        claw = Mth.approach(claw, carrying && winch > 0.6F ? 0.0F : carrying ? claw : 1.0F, 0.25F);
+        double dx = getX() - xo, dz = getZ() - zo;
+        float yaw = getYRot() * Mth.DEG_TO_RAD;
+        double forward = -dx * Mth.sin(yaw) + dz * Mth.cos(yaw);
+        double side = dx * Mth.cos(yaw) + dz * Mth.sin(yaw);
+        float speed = (float) Math.sqrt(dx * dx + dz * dz);
+        float gain = carrying ? 1.6F : 1.0F;
+        float ease = carrying ? 0.12F : 0.3F;
+        float wantX = Mth.clamp((float) forward * 1.4F * gain, -0.35F, 0.35F);
+        float wantZ = Mth.clamp((float) side * 1.2F * gain, -0.3F, 0.3F);
+        tiltX += (wantX - tiltX) * ease;
+        tiltZ += (wantZ - tiltZ) * ease;
+        float wantSpin = 1.6F + (carrying ? 0.9F : 0.0F) + Math.min(speed * 4.0F, 1.0F);
+        rotorSpeed += (wantSpin - rotorSpeed) * 0.15F;
+        rotor += rotorSpeed;
+        if (rotor > Mth.TWO_PI * 64.0F) {
+            rotor -= Mth.TWO_PI * 64.0F;
+            rotorO -= Mth.TWO_PI * 64.0F;
+        }
+    }
+
+    @Override
     protected void droneTick(ServerLevel sl) {
         Mob mob = cargo();
         setActive(mob != null);
@@ -421,6 +486,10 @@ public class HaulerDrone extends DroneBase {
             } else {
                 emptyTicks = 0;
                 ticksCarried++;
+                if ((tickCount + getId()) % 40 == 0) CoreSounds.play(this, CoreSounds.HAULER_WINCH, SoundSource.NEUTRAL, 0.6F, 1.0F);
+                if (tickCount % 8 == 0) {
+                    sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() - 0.05, getZ(), 1, 0.08, 0.02, 0.08, 0.0);
+                }
                 if (!mob.isNoAi()) {
                     if (!mob.getPersistentData().contains(PREV_NO_AI)) mob.getPersistentData().putBoolean(PREV_NO_AI, false);
                     mob.setNoAi(true);

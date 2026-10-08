@@ -895,6 +895,141 @@ public final class Showcase {
         step(40, () -> {});
         shot("27_forge_tyrant");
         step(10, () -> server(sp -> command(sp, "kill @e[type=robotica:forge_tyrant]")));
+        robotScenes();
+    }
+
+    private static final BlockPos PEN = new BlockPos(-70, Y, 40);
+    private static final BlockPos HAUL = new BlockPos(-70, Y, 80);
+
+    /** Turns a mob (no AI) to look at a point. */
+    private static void face(net.minecraft.world.entity.Mob mob, double x, double z) {
+        float yaw = (float) (Math.toDegrees(Math.atan2(z - mob.getZ(), x - mob.getX())) - 90.0);
+        mob.setYRot(yaw);
+        mob.yRotO = yaw;
+        mob.setYBodyRot(yaw);
+        mob.setYHeadRot(yaw);
+    }
+
+    private static <T extends net.minecraft.world.entity.Mob> T spawn(ServerLevel level, EntityType<T> type, double x, double z, double y) {
+        T mob = type.create(level);
+        if (mob == null) return null;
+        mob.moveTo(x, y, z, 0.0F, 0.0F);
+        mob.setNoAi(true);
+        mob.setPersistenceRequired();
+        level.addFreshEntity(mob);
+        return mob;
+    }
+
+    /** Ranchers at work in a fenced pen with a chest, and Hauler Drones carrying a cow and a villager. */
+    private static void robotScenes() {
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) {
+                BlockPos p = PEN.offset(x, 0, z);
+                boolean edge = Math.abs(x) == 6 || Math.abs(z) == 6;
+                level.setBlock(p.below(), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
+                if (edge) level.setBlock(p, (x == 0 && z == 6 ? Blocks.OAK_FENCE_GATE : Blocks.OAK_FENCE).defaultBlockState(), 3);
+            }
+            BlockPos chest = PEN.offset(-4, 0, -4);
+            level.setBlock(chest, Blocks.CHEST.defaultBlockState(), 3);
+            if (level.getBlockEntity(chest) instanceof net.minecraft.world.Container c) {
+                c.setItem(0, new ItemStack(Items.WHEAT, 48));
+                c.setItem(1, new ItemStack(Items.BUCKET, 8));
+            }
+            level.setBlock(PEN.offset(-3, 0, -5), Blocks.HAY_BLOCK.defaultBlockState(), 3);
+            level.setBlock(PEN.offset(-5, 0, -2), Blocks.HAY_BLOCK.defaultBlockState(), 3);
+            level.setBlock(PEN.offset(-5, 1, -2), Blocks.HAY_BLOCK.defaultBlockState(), 3);
+            level.setBlock(PEN.offset(4, 0, -5), Blocks.COMPOSTER.defaultBlockState(), 3);
+            level.setBlock(PEN.offset(5, 0, -5), Blocks.WATER_CAULDRON.defaultBlockState(), 3);
+
+            var cow = spawn(level, EntityType.COW, PEN.getX() - 0.5, PEN.getZ() + 1.5, Y);
+            var cow2 = spawn(level, EntityType.COW, PEN.getX() + 3.5, PEN.getZ() - 2.5, Y);
+            var sheep = spawn(level, EntityType.SHEEP, PEN.getX() + 4.6, PEN.getZ() + 3.2, Y);
+            var sheep2 = spawn(level, EntityType.SHEEP, PEN.getX() + 0.5, PEN.getZ() - 3.5, Y);
+            var pig = spawn(level, EntityType.PIG, PEN.getX() - 3.5, PEN.getZ() + 3.5, Y);
+            var chick = spawn(level, EntityType.CHICKEN, PEN.getX() + 1.5, PEN.getZ() + 4.5, Y);
+            var chick2 = spawn(level, EntityType.CHICKEN, PEN.getX() - 1.5, PEN.getZ() - 1.5, Y);
+            if (sheep2 != null) sheep2.setColor(net.minecraft.world.item.DyeColor.BROWN);
+            if (cow != null) face(cow, PEN.getX() + 3, PEN.getZ() + 4);
+            if (cow2 != null) face(cow2, PEN.getX() - 3, PEN.getZ() + 2);
+            if (sheep != null) face(sheep, PEN.getX(), PEN.getZ() + 8);
+            if (sheep2 != null) face(sheep2, PEN.getX() + 5, PEN.getZ());
+            if (pig != null) face(pig, PEN.getX() + 2, PEN.getZ() + 9);
+            if (chick != null) face(chick, PEN.getX() - 4, PEN.getZ() + 9);
+            if (chick2 != null) face(chick2, PEN.getX() + 4, PEN.getZ() + 2);
+
+            var mk1 = spawn(level, com.arno.robotica.automation.rancher.RancherContent.RANCHER_ENTITY.get(), PEN.getX() - 1.9, PEN.getZ() + 3.0, Y);
+            var mk2 = spawn(level, com.arno.robotica.automation.rancher.RancherContent.RANCHER_ENTITY.get(), PEN.getX() + 2.5, PEN.getZ() + 3.4, Y);
+            if (mk1 != null) {
+                mk1.setOwner(sp);
+                mk1.setHome(PEN);
+                mk1.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.WHEAT));
+                if (cow != null) face(mk1, cow.getX(), cow.getZ());
+            }
+            if (mk2 != null) {
+                mk2.setTier(2);
+                mk2.setOwner(sp);
+                mk2.setHome(PEN);
+                mk2.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.SHEARS));
+                if (sheep != null) face(mk2, sheep.getX(), sheep.getZ());
+            }
+        }));
+        hud(false);
+        camera(PEN.getX() + 0.5, Y + 5.5, PEN.getZ() + 12.5, 180, 24);
+        rancherPoses();
+        shot("rancher_pen");
+        camera(PEN.getX() + 1.6, Y + 1.6, PEN.getZ() + 7.6, 180, 12);
+        rancherPoses();
+        shot("rancher_close");
+
+        // Hauler Drones: Mk1 with a cow, Mk2 with a villager; an empty Mk1 with its claw open.
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            for (int x = -5; x <= 5; x++) for (int z = -3; z <= 3; z++) {
+                level.setBlock(HAUL.offset(x, -1, z), (Math.floorMod(x * 7 + z * 3, 5) == 0 ? Blocks.COARSE_DIRT : Blocks.GRASS_BLOCK).defaultBlockState(), 3);
+            }
+            level.setBlock(HAUL.offset(3, 0, -2), Blocks.HAY_BLOCK.defaultBlockState(), 3);
+            level.setBlock(HAUL.offset(-4, 0, -2), Blocks.OAK_FENCE.defaultBlockState(), 3);
+            level.setBlock(HAUL.offset(-4, 0, -1), Blocks.OAK_FENCE.defaultBlockState(), 3);
+            haul(sp, level, EntityType.COW, 1, HAUL.getX() - 1.5, HAUL.getZ() + 0.5, Y + 1.6, 25.0F);
+            haul(sp, level, EntityType.VILLAGER, 2, HAUL.getX() + 2.0, HAUL.getZ() - 0.5, Y + 1.3, -20.0F);
+            var empty = spawn(level, com.arno.robotica.drones.DronesRegistry.HAULER_DRONE_ENTITY.get(), HAUL.getX() - 4.0, HAUL.getZ() + 1.5, Y + 2.0);
+            if (empty != null) {
+                empty.setOwner(sp);
+                face(empty, HAUL.getX(), HAUL.getZ() + 9);
+            }
+        }));
+        camera(HAUL.getX() - 0.5, Y, HAUL.getZ() + 5.6, 180, -6);
+        step(20, () -> {});
+        shot("hauler_drone");
+    }
+
+    /** Restarts the job poses so the next shot catches them mid-move. */
+    private static void rancherPoses() {
+        step(6, () -> server(sp -> {
+            for (var r : sp.serverLevel().getEntitiesOfClass(com.arno.robotica.automation.rancher.Rancher.class, new net.minecraft.world.phys.AABB(PEN).inflate(8))) {
+                r.showAction(r.tier() >= 2 ? com.arno.robotica.automation.rancher.Rancher.Kind.SHEAR : com.arno.robotica.automation.rancher.Rancher.Kind.FEED,
+                        com.arno.robotica.automation.rancher.Rancher.Status.WORKING);
+            }
+        }));
+    }
+
+    /** A Hauler Drone (no AI) holding a mob with its feet at {@code feetY}. */
+    private static void haul(ServerPlayer sp, ServerLevel level, EntityType<? extends net.minecraft.world.entity.Mob> type, int tier, double x, double z,
+                             double feetY, float yaw) {
+        var mob = spawn(level, type, x, z, feetY);
+        var drone = spawn(level, com.arno.robotica.drones.DronesRegistry.HAULER_DRONE_ENTITY.get(), x, z, feetY + (mob != null ? mob.getBbHeight() : 1.0) + 0.05);
+        if (mob == null || drone == null) return;
+        drone.setTier(tier);
+        drone.setOwner(sp);
+        drone.setYRot(yaw);
+        drone.yRotO = yaw;
+        drone.setYBodyRot(yaw);
+        drone.setYHeadRot(yaw);
+        mob.setYRot(yaw + 30.0F);
+        mob.setYBodyRot(yaw + 30.0F);
+        mob.setYHeadRot(yaw + 30.0F);
+        drone.grab(mob);
     }
 
     private static void openGui(BlockPos pos, String file) {

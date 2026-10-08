@@ -1559,5 +1559,306 @@
         "pitch": 1.6
       }
     ]
+  },
+  "hauler_grab": {
+    "subtitle": "subtitles.robotica.hauler_grab",
+    "sounds": [
+      {
+        "name": "minecraft:block/chain/break1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/chain/break2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/chain/break3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:item/crossbow/loading_end",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:item/crossbow/loading_start",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "hauler_release": {
+    "subtitle": "subtitles.robotica.hauler_release",
+    "sounds": [
+      {
+        "name": "minecraft:block/chain/break2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block/chain/break4",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:random/click",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "hauler_winch": {
+    "subtitle": "subtitles.robotica.hauler_winch",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "type": "file",
+        "volume": 0.18,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "type": "file",
+        "volume": 0.12,
+        "pitch": 1.9
+      },
+      {
+        "name": "minecraft:block/chain/step3",
+        "type": "file",
+        "volume": 0.15,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "rancher_feed": {
+    "subtitle": "subtitles.robotica.rancher_feed",
+    "sounds": [
+      {
+        "name": "minecraft:dig/grass1",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:dig/grass3",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:random/eat1",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:random/eat2",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.25
+      },
+      {
+        "name": "minecraft:block/composter/fill1",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "rancher_shear": {
+    "subtitle": "subtitles.robotica.rancher_shear",
+    "sounds": [
+      {
+        "name": "minecraft:mob/sheep/shear",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.25
+      },
+      {
+        "name": "minecraft:block/beehive/shear",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:mob/sheep/shear",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "rancher_milk": {
+    "subtitle": "subtitles.robotica.rancher_milk",
+    "sounds": [
+      {
+        "name": "minecraft:entity/cow/milk1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:entity/cow/milk2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:item/bucket/fill1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:item/bucket/fill2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "rancher_cull": {
+    "subtitle": "subtitles.robotica.rancher_cull",
+    "sounds": [
+      {
+        "name": "minecraft:entity/player/attack/strong1",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:entity/player/attack/strong3",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:entity/player/attack/strong5",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:mob/irongolem/throw",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "rancher_step": {
+    "subtitle": "subtitles.robotica.rancher_step",
+    "sounds": [
+      {
+        "name": "minecraft:block/copper/step1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/copper/step3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block/copper/step5",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:mob/irongolem/walk1",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 1.9
+      },
+      {
+        "name": "minecraft:mob/irongolem/walk3",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 1.9
+      }
+    ]
+  },
+  "rancher_hum": {
+    "subtitle": "subtitles.robotica.rancher_hum",
+    "sounds": [
+      {
+        "name": "minecraft:item/spyglass/use",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone2",
+        "type": "file",
+        "volume": 0.15,
+        "pitch": 1.9
+      },
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "type": "file",
+        "volume": 0.2,
+        "pitch": 1.9
+      }
+    ]
+  },
+  "rancher_hurt": {
+    "subtitle": "subtitles.robotica.rancher_hurt",
+    "sounds": [
+      {
+        "name": "minecraft:mob/irongolem/hit1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.8
+      },
+      {
+        "name": "minecraft:note/bit",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "rancher_death": {
+    "subtitle": "subtitles.robotica.rancher_death",
+    "sounds": [
+      {
+        "name": "minecraft:mob/irongolem/death",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:random/fizz",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      }
+    ]
   }
 }

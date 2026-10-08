@@ -319,7 +319,8 @@ Usability: right-click with a battery swaps it in, with a card installs one card
   - Shear toggle (default on): `IShearable` animals (not mooshrooms) are sheared and kept. Milk toggle (default on): cows, mooshrooms and goats fill one empty bucket from storage each, at most once a minute per animal, and are kept. With no free slot the bucket comes from a slot holding a single bucket; the milk bucket always lands in storage. A toggle off: that species is bred and culled like the rest.
   - It walks (path finding) to each animal holding the feed, shears, bucket or a sword, swings, and walks home when idle. One entity scan every 30 ticks (Mk2 20), one action, then 40 ticks rest (Mk2 20).
   - Energy: 400k FE buffer (Mk2 1.6M), charged from its battery slot, a right-click with a cell, FE capability or a Charger (item form). `rancherFePerAction` 200 FE per feed, shear or milk, `rancherFePerCull` 500 FE, 0.2 FE/t idle.
-  - Status: Working, Idle, No energy, Storage full (no culling, shearing or milking), No feed, No storage. Stalls puff smoke or a sign and tell a nearby owner once.
+  - Status: Working, Idle, No energy, Storage full (no culling, shearing or milking), No feed, No storage. Stalls puff smoke or a sign and tell a nearby owner once. A lamp on its chest (Mk2 also on its antenna) shows it: green working, dim green idle, amber no feed, blinking red for the other stalls.
+  - Looks and sounds: a pose per job (arm out low to feed, two-hand snip, crouch to milk, overhead swing to cull), idle bob, wobbling tank and blinking eyes. Mk2: wider brim, twin tanks, antenna, badge. Own sounds for each job, metal steps, a servo whir, hurt and death; particles on each job.
   - Recipe (Age 1): shears, Basic Circuit, bucket / Electric Motor, Iron Casing, Electric Motor / 2 iron plates (one motor more than the Sentry Drone). Mk2 (Age 2): smithing, Advanced Circuit template + Rancher + Servo Actuator. Guide step "Home on the Range" after Wired unlocks the Mk2.
 - Excavator (Age 2: a diamond pickaxe as drill head, plus Electric Motors, Iron Casing, Basic Circuit): mines a real hole below itself. 40 FE per block, stops at bedrock and leaves fluids alone (replaces fluid source blocks with cobblestone as it goes, so no flooding). Cards by the Mk rule: speed at a steep FE price (see Upgrade cards), range +10 wide each (`excavatorRangeStep`, square side capped at `excavatorMaxSize` 128), efficiency, fortune, silk, void. Never breaks blocks with an unbreakable hardness or block entities. The GUI shows depth, percent dug and a progress bar.
   - Mk1-4 (one block each; Mk2 Age 2: Advanced Circuit, 2 Servo Actuators, Reinforced Casing; Mk3: Quantum Circuit, 2 Plasma Actuators, Blazing Casing; Mk4: Null Circuit, 2 Plasma Actuators, 2 ender pearls, Null Casing; each consumes the Mk before): base hole 8/12/16/24 wide, 60/40/30/20 ticks per block (Mk4 with 4 range and 8 speed cards: 64 wide, a block per tick). Buffer 20,000 FE and input 1,000 FE/t times the Mk.
@@ -533,6 +534,9 @@ Drone digs where you look; sneak + key calls all drones back.
   highest safe floor below (lava and dangerous blocks skipped, water surface allowed). Death, pick-up (sneak-right-click) and removal release it the same way.
 - Out of FE: it stops following and hovers in place, still carrying (no FE used), checks once a second for a safe floor below
   and sets the mob down there. A charge or the owner's release ends the wait.
+- Looks and sounds: a cable lowers the claw onto the mob and reels it back in when empty; the body tilts with speed, more
+  with a load, and its lights glow brighter while carrying. Mk2: bigger rotors, side winch drums, antenna. Grab, release
+  and winch sounds, an error beep on a refused mob; sparks on capture, a puff where the mob is set down.
 
 ## Onboarding (module `codex`)
 

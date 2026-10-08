@@ -8,7 +8,11 @@ import com.arno.robotica.drones.entity.MiningDrone;
 import com.arno.robotica.drones.entity.SentryDrone;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.EyesLayer;
@@ -63,8 +67,25 @@ public final class DroneRenderers {
         return new Renderer<>(ctx, new SentryDroneModel(ctx.bakeLayer(SentryDroneModel.LAYER)), "sentry_drone", 0.25F);
     }
 
-    public static Renderer<com.arno.robotica.drones.entity.HaulerDrone, HaulerDroneModel> hauler(EntityRendererProvider.Context ctx) {
-        return new Renderer<>(ctx, new HaulerDroneModel(ctx.bakeLayer(HaulerDroneModel.LAYER)), "hauler_drone", 0.25F);
+    public static Renderer<HaulerDrone, HaulerDroneModel> hauler(EntityRendererProvider.Context ctx) {
+        return new HaulerRenderer(ctx);
+    }
+
+    /** Hauler: extra status lights glow while it carries a mob. */
+    public static class HaulerRenderer extends Renderer<HaulerDrone, HaulerDroneModel> {
+        private static final ResourceLocation ACTIVE = Robotica.id("textures/entity/hauler_drone_glow_active.png");
+
+        public HaulerRenderer(EntityRendererProvider.Context ctx) {
+            super(ctx, new HaulerDroneModel(ctx.bakeLayer(HaulerDroneModel.LAYER)), "hauler_drone", 0.25F);
+            addLayer(new RenderLayer<>(this) {
+                @Override
+                public void render(PoseStack pose, MultiBufferSource buffers, int light, HaulerDrone drone, float limbSwing, float limbSwingAmount,
+                                   float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
+                    if (!drone.isActive()) return;
+                    getParentModel().renderToBuffer(pose, buffers.getBuffer(RenderType.eyes(ACTIVE)), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                }
+            });
+        }
     }
 
     public static Renderer<CourierDrone, CourierDroneModel> courier(EntityRendererProvider.Context ctx) {

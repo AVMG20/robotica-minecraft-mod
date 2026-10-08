@@ -59,5 +59,16 @@
   "subtitles.robotica.spark_lamp_on": "Spark Lamp lights",
   "subtitles.robotica.spark_lamp_off": "Spark Lamp fizzles out",
   "subtitles.robotica.spark_lamp_crackle": "Spark Lamp crackles",
-  "subtitles.robotica.spark_lamp_hum": "Spark Lamp hums"
+  "subtitles.robotica.spark_lamp_hum": "Spark Lamp hums",
+  "subtitles.robotica.hauler_grab": "Hauler Drone clamps on",
+  "subtitles.robotica.hauler_release": "Hauler Drone lets go",
+  "subtitles.robotica.hauler_winch": "Hauler Drone winch hums",
+  "subtitles.robotica.rancher_feed": "Rancher feeds an animal",
+  "subtitles.robotica.rancher_shear": "Rancher shears",
+  "subtitles.robotica.rancher_milk": "Rancher milks",
+  "subtitles.robotica.rancher_cull": "Rancher strikes",
+  "subtitles.robotica.rancher_step": "Rancher clanks",
+  "subtitles.robotica.rancher_hum": "Rancher whirs",
+  "subtitles.robotica.rancher_hurt": "Rancher clangs",
+  "subtitles.robotica.rancher_death": "Rancher breaks down"
 }

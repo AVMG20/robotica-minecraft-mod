@@ -98,6 +98,19 @@ public final class CoreSounds {
     /** Spark Lamp ambience, played client side by its block (quiet: the volumes live in sounds.json). */
     public static final DeferredHolder<SoundEvent, SoundEvent> SPARK_LAMP_CRACKLE = reg("spark_lamp_crackle");
     public static final DeferredHolder<SoundEvent, SoundEvent> SPARK_LAMP_HUM = reg("spark_lamp_hum");
+    /** Hauler Drone: claw clamps on a mob, lets it go, winch hum while carrying. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAULER_GRAB = reg("hauler_grab");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAULER_RELEASE = reg("hauler_release");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAULER_WINCH = reg("hauler_winch");
+    /** Rancher jobs, steps, servo hum, hurt and death. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_FEED = reg("rancher_feed");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_SHEAR = reg("rancher_shear");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_MILK = reg("rancher_milk");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_CULL = reg("rancher_cull");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_STEP = reg("rancher_step");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_HUM = reg("rancher_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_HURT = reg("rancher_hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_DEATH = reg("rancher_death");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {
