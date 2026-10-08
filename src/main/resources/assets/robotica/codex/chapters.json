@@ -263,7 +263,7 @@
         },
         {
           "title": "Fission Reactor",
-          "text": "5x5x5 to 7x7x7.\n- Fuel Rods in full columns, coolant beside each: water 1, ice 1.5, packed 2, blue 3, Cryo Coolant 4.\n- Pellets in, waste out: controller or Access Port. Full waste stops it.\n- FE out: Power Port.",
+          "text": "5x5x5 to 7x7x7 (5x5x5: rods in an X).\n- Fuel Rods in full columns. Coolant beside: water 1, ice 1.5, packed 2, blue 3, Cryo Coolant 4.\n- Fuel and waste: controller or Access Port. Full waste stops it.\n- Power Port: FE out.",
           "items": [
             "robotica:reactor_casing",
             "robotica:reactor_glass",
@@ -809,7 +809,7 @@
         },
         {
           "title": "The replicator",
-          "text": "3x3x3 of Frame, controller in a side, 1+ Glass, empty center. Add a full vial and FE.\n- Harvest: loot, about 1 a minute.\n- Spawn: the real mob.\nBlaze, enderman, ghast and more: Magma Core. Shulker: Antigrav Core.",
+          "text": "3x3x3 of Frame, controller in a side, 1+ Glass, empty center. Add a full vial and FE. About 1 cycle a minute:\n- Harvest: loot.\n- Spawn: the real mob.\nBlaze, enderman, ghast and more: Magma Core. Shulker: Antigrav Core.",
           "items": [
             "robotica:replicator_controller",
             "robotica:replicator_frame",
@@ -839,7 +839,7 @@
         },
         {
           "title": "Remotes",
-          "text": "- Recall Remote: sneak-right-click a pad to bind it. Hold right-click 3 s: 20k FE. Damage cancels.\n- Rift Remote: stores 10 pads, any dimension (150k FE). Right-click to pick one.",
+          "text": "- Recall Remote: sneak-right-click a pad to bind it. Hold right-click 3 s: 20k FE. Damage cancels.\n- Rift Remote: stores 10 pads, 20k FE, 150k across dimensions. Right-click to pick one.",
           "items": [
             "robotica:recall_remote",
             "robotica:rift_remote"

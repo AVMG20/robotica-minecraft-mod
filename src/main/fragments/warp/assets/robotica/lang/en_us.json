@@ -52,7 +52,7 @@
   "message.robotica.warp.stand_on_pad": "Stand on the pad first",
   "message.robotica.warp.no_destinations": "No other pads you may use",
   "message.robotica.warp.cooldown": "Wait %s s before traveling again",
-  "message.robotica.warp.destination_gone": "That pad is gone",
+  "message.robotica.warp.destination_gone": "That pad is not available",
   "message.robotica.warp.needs_rift": "This pad needs a Rift Upgrade for other dimensions",
   "message.robotica.warp.pad_no_energy": "The pad needs %s, it holds %s",
   "message.robotica.warp.no_safe_spot": "No safe place to arrive, nothing was spent",

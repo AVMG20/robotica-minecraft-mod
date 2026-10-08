@@ -41,7 +41,7 @@
   "jei.robotica.grinding.energy": "%s FE at Mk1",
   "jei.robotica.grinding.min_tier": "Mk%s+",
   "jei.robotica.grinding.boostable": "Media bonus",
-  "jei.robotica.info.grinding_media": "Grinder second slot (Mk%4$s and up). Ores and raw ores give %1$s%% more output and a %2$s%% chance at a byproduct dust. One item lasts %3$s ores.",
+  "jei.robotica.info.grinding_media": "Grinder second slot (Mk%4$s and up). Ores and raw ores (not gem ores) give %1$s%% more output and a %2$s%% chance at a byproduct dust. One item lasts %3$s ores.",
   "robotica.configuration.processing_tiers": "Grinder and Electric Furnace tiers",
   "robotica.configuration.grinder": "Grinder",
   "robotica.configuration.electric_furnace": "Electric Furnace",

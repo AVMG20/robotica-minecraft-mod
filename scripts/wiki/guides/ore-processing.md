@@ -30,7 +30,7 @@ Two machine lines, Mk1 (Age 1, needs a Basic Circuit) to Mk4. Both work on `c:` 
 
 ## Grinding media
 
-Optional second input. Each item lasts its uses (media bar). The bonus applies to ores and raw ores.
+Optional second input. Each item lasts its uses (media bar). The bonus applies to ores and raw ores (not gem ores).
 
 | Media | Bonus | Byproduct | Uses | Min Mk |
 |---|---|---|---|---|
