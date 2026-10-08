@@ -112,6 +112,12 @@
       "age": 1
     },
     {
+      "id": "robotica:guide/rancher",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:rancher",
+      "age": 1
+    },
+    {
       "id": "robotica:guide/grinder",
       "parent": "robotica:guide/basic_circuit",
       "icon": "robotica:grinder_mk1",

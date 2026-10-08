@@ -23,6 +23,7 @@ public final class AutomationModule {
         AutomationContent.ITEMS.register(modBus);
         AutomationContent.BLOCK_ENTITIES.register(modBus);
         AutomationContent.MENUS.register(modBus);
+        com.arno.robotica.automation.rancher.RancherContent.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, AutomationConfig.SPEC, "robotica-automation-server.toml");
         modBus.addListener(AutomationModule::registerCapabilities);
         // the Survey Rig's ore pool comes from the c:ores tag and the config: rebuild it after either changes
@@ -32,6 +33,7 @@ public final class AutomationModule {
 
         RoboticaTab.add(AutomationContent.STUMPY_ITEM);
         RoboticaTab.add(AutomationContent.SPROUT_ITEM);
+        RoboticaTab.add(com.arno.robotica.automation.rancher.RancherContent.RANCHER);
         RoboticaTab.add(AutomationContent.FARM_KIT_MK2);
         RoboticaTab.add(AutomationContent.FARM_KIT_MK3);
         RoboticaTab.add(AutomationContent.FARM_KIT_MK4);
@@ -39,6 +41,7 @@ public final class AutomationModule {
         RoboticaTab.add(AutomationContent.EXCAVATOR_MK2_ITEM);
         RoboticaTab.add(AutomationContent.EXCAVATOR_MK3_ITEM);
         RoboticaTab.add(AutomationContent.EXCAVATOR_MK4_ITEM);
+        RoboticaTab.add(com.arno.robotica.automation.rancher.RancherContent.RANCHER_MK2);
         RoboticaTab.add(AutomationContent.SURVEY_RIG_ITEM);
         RoboticaTab.add(AutomationContent.SURVEY_RIG_MK2_ITEM);
         RoboticaTab.add(AutomationContent.SURVEY_RIG_MK3_ITEM);
@@ -64,6 +67,10 @@ public final class AutomationModule {
     private static void registerTextArgs() {
         com.arno.robotica.core.upgrade.UpgradeText.register(com.arno.robotica.core.upgrade.UpgradeText.EXCAVATOR_RANGE_STEP,
                 AutomationConfig::excavatorRangeStep);
+        com.arno.robotica.core.item.DetailArgs.register("rancher", () -> new Object[]{com.arno.robotica.automation.rancher.Rancher.actionFe(),
+                com.arno.robotica.automation.rancher.Rancher.cullFe()});
+        com.arno.robotica.core.item.DetailArgs.register("rancher_mk2", () -> new Object[]{com.arno.robotica.automation.rancher.Rancher.actionFe(),
+                com.arno.robotica.automation.rancher.Rancher.cullFe()});
         com.arno.robotica.core.item.DetailArgs.register("survey_rig", () -> {
             boolean loaded = AutomationConfig.SPEC.isLoaded();
             int fePerTick = loaded ? AutomationConfig.SURVEY_FE_PER_TICK.get() : 200;

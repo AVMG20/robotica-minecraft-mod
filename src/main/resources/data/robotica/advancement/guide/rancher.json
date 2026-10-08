@@ -1,0 +1,44 @@
+{
+  "parent": "robotica:guide/basic_circuit",
+  "display": {
+    "icon": {
+      "id": "robotica:rancher"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.rancher.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.rancher.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:rancher",
+              "robotica:rancher_mk2"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:rancher_mk2"
+    ],
+    "experience": 10
+  }
+}

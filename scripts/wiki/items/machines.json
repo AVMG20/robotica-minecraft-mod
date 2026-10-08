@@ -578,6 +578,51 @@
   },
   {
    "items": [
+    "rancher",
+    "rancher_mk2"
+   ],
+   "what": "Walking farm robot: keeps your animals at a set herd size, shears sheep and milks cows.",
+   "use": [
+    "Right-click a block among your animals to place it; that spot is its home.",
+    "Put a chest within 3 blocks of home with feed and empty buckets.",
+    "Give it a cell in its menu or charge it in a [[charger]].",
+    "Set the herd size with - and +; it is split evenly over the species in the area.",
+    "Sneak-right-click: pick it up with its energy and settings."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Area",
+      "9x9",
+      "13x13"
+     ],
+     [
+      "Rest between actions",
+      "2 s",
+      "1 s"
+     ],
+     [
+      "Buffer",
+      "400k FE",
+      "1.6M FE"
+     ],
+     [
+      "Power",
+      "200 FE per feed, shear or milk, 500 FE per cull",
+      ""
+     ]
+    ]
+   },
+   "see": [
+    "guide:animal-farm"
+   ]
+  },
+  {
+   "items": [
     "excavator",
     "excavator_mk2",
     "excavator_mk3",

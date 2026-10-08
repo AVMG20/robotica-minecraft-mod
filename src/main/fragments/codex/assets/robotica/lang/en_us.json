@@ -47,6 +47,8 @@
   "advancements.robotica.guide.exo.description": "Craft an Exo-Frame piece. %s opens its module screen.",
   "advancements.robotica.guide.drones.title": "Air Support",
   "advancements.robotica.guide.drones.description": "Craft a Sentry Drone Mk1 to guard, or a Courier Drone Mk1 to move items.",
+  "advancements.robotica.guide.rancher.title": "Home on the Range",
+  "advancements.robotica.guide.rancher.description": "Craft a Rancher Mk1 and place it among your animals with a chest near it. It breeds, culls, shears and milks.",
   "advancements.robotica.guide.grinder.title": "Grind It Down",
   "advancements.robotica.guide.grinder.description": "Place a Grinder: 1 ore = 2 dusts. Flint in the media slot adds 10%.",
   "advancements.robotica.guide.metal_press.title": "Press Ahead",

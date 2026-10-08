@@ -24,6 +24,8 @@ public final class AutomationConfig {
     public static final ModConfigSpec.IntValue SPROUT_FE_PER_TICK;
     public static final ModConfigSpec.IntValue SPROUT_FE_PER_HARVEST;
     public static final ModConfigSpec.IntValue MAX_LOGS;
+    private static final ModConfigSpec.IntValue RANCHER_FE_PER_ACTION;
+    private static final ModConfigSpec.IntValue RANCHER_FE_PER_CULL;
     private static final int[] DEF_EXC_SIZE = {8, 12, 16, 24};
     private static final int[] DEF_EXC_INTERVAL = {60, 40, 30, 20};
     private static final int[] DEF_SURVEY_SPEED = {100, 150, 200, 300};
@@ -128,11 +130,25 @@ public final class AutomationConfig {
         SURVEY_CORE_ORES = b.comment("Ore kinds (\"#tag\" or item id) the rig only makes with a Magma Core in its core slot.")
                 .defineListAllowEmpty("surveyRigCoreOres", DEFAULT_CORE_ORES, () -> "#c:ores/example", o -> o instanceof String);
         b.pop();
+        b.comment("Rancher: walking robot that breeds, culls, shears and milks the animals around its home.").push("rancher");
+        RANCHER_FE_PER_ACTION = b.comment("Rancher FE per feed, shear or milk action.")
+                .defineInRange("rancherFePerAction", 200, 0, 1_000_000);
+        RANCHER_FE_PER_CULL = b.comment("Rancher FE per culled animal.")
+                .defineInRange("rancherFePerCull", 500, 0, 1_000_000);
+        b.pop();
         SPEC = b.build();
     }
 
     private static int tierIndex(int tier) {
         return Math.max(0, Math.min(3, tier - 1));
+    }
+
+    public static int rancherFePerAction() {
+        return SPEC.isLoaded() ? RANCHER_FE_PER_ACTION.get() : 200;
+    }
+
+    public static int rancherFePerCull() {
+        return SPEC.isLoaded() ? RANCHER_FE_PER_CULL.get() : 500;
     }
 
     public static int energyBuffer() {
