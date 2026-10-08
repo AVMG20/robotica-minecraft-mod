@@ -554,9 +554,12 @@ public class ExoGameTests {
         helper.assertTrue(player.getFoodData().getFoodLevel() == 8 + 5, "the Auto-Feeder eats a bread, food " + player.getFoodData().getFoodLevel());
         helper.assertTrue(player.getInventory().countItem(Items.BREAD) == 2 && player.getInventory().countItem(Items.ROTTEN_FLESH) == 3,
                 "bread is eaten, rotten flesh never");
-        player.getFoodData().setFoodLevel(19);
+        player.getFoodData().setFoodLevel(18);
         ticks(player, 20);
-        helper.assertTrue(player.getFoodData().getFoodLevel() == 20, "it feeds after the first lost hunger point, food " + player.getFoodData().getFoodLevel());
+        helper.assertTrue(player.getFoodData().getFoodLevel() == 18, "it waits at food 18, food " + player.getFoodData().getFoodLevel());
+        player.getFoodData().setFoodLevel(17);
+        ticks(player, 20);
+        helper.assertTrue(player.getFoodData().getFoodLevel() == 20, "it feeds at food 17, food " + player.getFoodData().getFoodLevel());
         helper.succeed();
     }
 

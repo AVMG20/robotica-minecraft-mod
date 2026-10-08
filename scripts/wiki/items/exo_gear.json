@@ -308,7 +308,7 @@
    "items": [
     "auto_feeder_module"
    ],
-   "what": "Eats plain food from your inventory as soon as you lose a hunger point.",
+   "what": "Eats plain food from your inventory once 1.5 hunger icons are gone.",
    "stats": {
     "rows": [
      [
