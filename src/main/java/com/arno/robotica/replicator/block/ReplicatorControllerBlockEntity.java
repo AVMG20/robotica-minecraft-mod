@@ -187,6 +187,11 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     private boolean revalidate = true;
     private int age;
     private int lastCycleSound = -20;
+    // spawn mode: mobs around the replicator, counted at most once a second (speed cards may spawn every tick)
+    @Nullable
+    private EntityType<?> countedType;
+    private int countedAt = -100;
+    private int nearbySame, nearbyTotal;
     @Nullable
     private EntityType<?> activeType;
 
@@ -476,13 +481,19 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (level.getDifficulty() == Difficulty.PEACEFUL && type.getCategory() == MobCategory.MONSTER) return Pause.PEACEFUL;
 
         BlockPos center = ReplicatorStructure.center(pos, state.getValue(ReplicatorControllerBlock.FACING));
-        AABB box = new AABB(pos).inflate(ReplicatorConfig.spawnRadius());
-        List<Mob> nearby = level.getEntitiesOfClass(Mob.class, box);
-        int same = 0;
-        for (Mob mob : nearby) {
-            if (mob.getType() == type) same++;
+        if (type != countedType || age - countedAt >= 20) {
+            AABB box = new AABB(pos).inflate(ReplicatorConfig.spawnRadius());
+            List<Mob> nearby = level.getEntitiesOfClass(Mob.class, box);
+            int same = 0;
+            for (Mob mob : nearby) {
+                if (mob.getType() == type) same++;
+            }
+            countedType = type;
+            countedAt = age;
+            nearbySame = same;
+            nearbyTotal = nearby.size();
         }
-        if (same >= ReplicatorConfig.spawnMaxSameType() || nearby.size() >= ReplicatorConfig.spawnMaxTotal()) return Pause.SPAWN_CAP;
+        if (nearbySame >= ReplicatorConfig.spawnMaxSameType() || nearbyTotal >= ReplicatorConfig.spawnMaxTotal()) return Pause.SPAWN_CAP;
 
         Direction facing = state.getValue(ReplicatorControllerBlock.FACING);
         BlockPos front = pos.relative(facing);
@@ -493,6 +504,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             if (entity == null) return Pause.NO_SPACE;
             level.addFreshEntityWithPassengers(entity);
             level.gameEvent(null, net.minecraft.world.level.gameevent.GameEvent.ENTITY_PLACE, candidate);
+            nearbySame++;
+            nearbyTotal++;
             return Pause.NONE;
         }
         return Pause.NO_SPACE;
