@@ -137,20 +137,25 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         }
     }
 
-    /** Ring neighbours of a position: the loop blocks north, south, east and west of it. */
+    /** Ring neighbours of a position: the loop blocks north, south, east and west of it. Null if one is unloaded. */
     private static List<Direction> ringSides(Level level, BlockPos pos) {
         List<Direction> sides = new ArrayList<>(2);
         for (Direction dir : Direction.Plane.HORIZONTAL) {
-            if (AcceleratorSegmentBlock.isRing(level.getBlockState(pos.relative(dir)))) sides.add(dir);
+            BlockPos n = pos.relative(dir);
+            if (!level.isLoaded(n)) return null;
+            if (AcceleratorSegmentBlock.isRing(level.getBlockState(n))) sides.add(dir);
         }
         return sides;
     }
+
+    private static final CuboidScanner.Result UNLOADED = new CuboidScanner.Result(CuboidScanner.Status.UNLOADED, null, null, null);
 
     /** Walks the loop from the controller back to it. */
     @Override
     protected CuboidScanner.Result scanStructure(ServerLevel level) {
         int max = EnergyConfig.colliderMaxLength(), min = EnergyConfig.colliderMinLength();
         List<Direction> start = ringSides(level, worldPosition);
+        if (start == null) return UNLOADED;
         if (start.size() != 2) {
             return invalid(StructureProblem.of(null, start.isEmpty() ? "multiblock.robotica.collider_alone" : "multiblock.robotica.collider_controller_sides", start.size()));
         }
@@ -159,7 +164,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         BlockPos prev = worldPosition;
         BlockPos cur = worldPosition.relative(start.get(0));
         while (true) {
-            if (!level.isLoaded(cur)) return new CuboidScanner.Result(CuboidScanner.Status.UNLOADED, null, null, null);
+            if (!level.isLoaded(cur)) return UNLOADED;
             if (cur.equals(worldPosition)) break;
             BlockState state = level.getBlockState(cur);
             if (!(state.getBlock() instanceof AcceleratorSegmentBlock segment)) {
@@ -167,6 +172,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
             }
             if (v.ring.size() >= max) return invalid(StructureProblem.of(cur, "multiblock.robotica.collider_too_long", max));
             List<Direction> sides = ringSides(level, cur);
+            if (sides == null) return UNLOADED;
             if (sides.size() != 2) {
                 return invalid(StructureProblem.of(cur, sides.size() > 2 ? "multiblock.robotica.collider_branch" : "multiblock.robotica.collider_open",
                         StructureProblem.at(cur)));
@@ -197,7 +203,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
 
     @Override
     protected BoundingBox searchArea() {
-        int r = Math.max(8, EnergyConfig.colliderMaxLength() / 4);
+        int r = Math.max(8, EnergyConfig.colliderMaxLength() / 2);
         return new BoundingBox(worldPosition.getX() - r, worldPosition.getY(), worldPosition.getZ() - r,
                 worldPosition.getX() + r, worldPosition.getY(), worldPosition.getZ() + r);
     }
@@ -377,9 +383,9 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
             CoreSounds.play(level, worldPosition, CoreSounds.COLLIDER_HUM, SoundSource.BLOCKS, 1.2F, 0.7F + 0.5F * (float) beam);
         }
         if (now % 10 == 0) {
-            double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 0.6, z = worldPosition.getZ() + 0.5;
+            double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 1.05, z = worldPosition.getZ() + 0.5;
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, (int) (4 + 8 * beam), 0.3, 0.2, 0.3, 0.25);
-            level.sendParticles(ParticleTypes.END_ROD, x, y + 0.3, z, (int) (1 + 2 * beam), 0.1, 0.1, 0.1, 0.05);
+            level.sendParticles(ParticleTypes.END_ROD, x, y + 0.2, z, (int) (1 + 2 * beam), 0.1, 0.1, 0.1, 0.05);
         }
         if (beam >= 1.0 && CoreSounds.due(level, worldPosition, 37)) {
             CoreSounds.play(level, worldPosition, CoreSounds.COLLIDER_COLLIDE, SoundSource.BLOCKS, 0.7F, 0.8F + level.random.nextFloat() * 0.4F);

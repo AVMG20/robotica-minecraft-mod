@@ -200,9 +200,10 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
             nextPeriodic = now + 20;
             return;
         }
+        // the block state keeps FORMED over a reload, so a reactor that was already standing stays quiet on chunk load,
+        // and one broken while unloaded still resets its saved run state
+        boolean was = formed || (state.hasProperty(ControllerBlock.FORMED) && state.getValue(ControllerBlock.FORMED));
         if (result.formed() && result.visitor() instanceof Visitor visitor) {
-            // the block state keeps FORMED over a reload, so a reactor that was already standing stays quiet on chunk load
-            boolean was = formed || (state.hasProperty(ControllerBlock.FORMED) && state.getValue(ControllerBlock.FORMED));
             setPorts(visitor.ports);
             formed = true;
             problem = null;
@@ -214,7 +215,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
                 if (milestone != null) Milestones.awardOwner(serverLevel, worldPosition, owner, milestone);
             }
         } else {
-            if (formed) {
+            if (was) {
                 clearPorts();
                 formed = false;
                 onUnformed();

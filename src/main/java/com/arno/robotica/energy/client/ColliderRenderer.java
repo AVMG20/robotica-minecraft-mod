@@ -44,7 +44,7 @@ public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockE
         }
         VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
         Matrix4f m = pose.last().pose();
-        float time = level.getGameTime() + partialTick;
+        float time = level.getGameTime() % 24000L + partialTick;
 
         if (beamStep == 0) {
             // spinning up: the pipe glows in step with the charge

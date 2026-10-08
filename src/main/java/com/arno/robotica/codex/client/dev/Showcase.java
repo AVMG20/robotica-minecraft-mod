@@ -663,6 +663,12 @@ public final class Showcase {
             }
             setFacing(level, pos, BuiltInRegistries.BLOCK.get(id.contains(":") ? ResourceLocation.parse(id) : Robotica.id(id)), Direction.SOUTH);
         }
+        // connect blocks that shape to their neighbours (collider segments) to the ones placed before them
+        for (BlockPos pos : BlockPos.betweenClosed(origin, origin.offset(mb.w() - 1, mb.h() - 1, mb.d() - 1))) {
+            BlockState state = level.getBlockState(pos);
+            BlockState shaped = Block.updateFromNeighbourShapes(state, level, pos);
+            if (shaped != state) level.setBlock(pos, shaped, 2);
+        }
     }
 
     private static final String[] MACHINES = {"assembler", "centrifuge", "alloy_smelter", "electric_furnace", "grinder"};
