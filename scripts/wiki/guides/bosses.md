@@ -8,12 +8,9 @@ Each boss guards an age core. Both wake at an altar, drop their core every time,
 
 ## Rules for both
 
-- Only hits from a living attacker within 32 blocks hurt them. Traps, lava, fire, suffocation and sniping from further away do nothing.
 - A target they can't reach for 3 seconds gets hit from range, out to 40 blocks.
-- Their attacks hit players, pets and whatever fights them. Other mobs are left alone.
 - With no player within 32 blocks for 30 seconds they heal.
-- They never break blocks. Not on Peaceful.
-- An altar cools down for 5 minutes after a summon and can't be mined while it cools. It stays dark while a boss of its kind is alive within 32 blocks.
+- An altar cools down for 5 minutes after a summon.
 
 ## Scrap Colossus (Age 2)
 
@@ -32,8 +29,7 @@ Each boss guards an age core. Both wake at an altar, drop their core every time,
 
 {{image shots/27_forge_tyrant.jpg|The Forge Tyrant venting next to its Forge Altar}}
 
-- Find a Cinder Forge (blackstone ruins in Nether caves, not in basalt deltas) or craft a [[forge_altar]].
-- It walks over lava, so a lava moat won't stop it.
+- Find a Cinder Forge (blackstone ruins in Nether caves) or craft a [[forge_altar]].
 - Right-click the altar with an [[ignition_charge]].
 
 | Tell | Attack | Answer |
@@ -43,4 +39,4 @@ Each boss guards an age core. Both wake at an altar, drop their core every time,
 | Hammer goes up | Glowing rings, then eruptions | Get off the rings |
 | Doors swing open | Vent, after every 3 attacks | Hit it: double damage |
 
-> Below half health it rings itself with eruptions and attacks faster. Fire Resistance helps against the burning.
+> Below half health it rings itself with eruptions and attacks faster. Fire Resistance helps.

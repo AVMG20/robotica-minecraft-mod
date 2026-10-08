@@ -2,17 +2,17 @@
 title: Exo-Frame Armor
 icon: exo_chestplate_mk1
 order: 60
-summary: Powered armor in four marks, with modules, a core socket and its own keys.
+summary: Powered armor, Mk1 to Mk4, with modules, a core socket and its own keys.
 ---
-Four pieces, four marks. No durability: empty, it keeps its protection and only the modules stop.
+Four pieces, Mk1 to Mk4. No durability: empty, it still protects; modules stop.
 
 {{items exo_helmet_mk1 exo_chestplate_mk1 exo_leggings_mk1 exo_boots_mk1}}
 
 {{image shots/14_exo_frames.jpg|Exo-Frame Mk1 to Mk4}}
 
-## Marks
+## Mk1 to Mk4
 
-| Mark | Age | Upgrade at the smithing table | Protection (boots / legs / chest / helmet) | Module slots | Battery |
+| Mk | Age | Upgrade at the smithing table | Protection (boots / legs / chest / helmet) | Module slots | Battery |
 |---|---|---|---|---|---|
 | Mk1 | 1 | iron armor piece + parts | 2 / 5 / 6 / 2 | 1 | helmet 200k, chest 1M, legs 400k, boots 200k FE |
 | Mk2 | 2 | [[reinforced_casing]] template + [[servo_actuator]] | 3 / 6 / 8 / 3 | 2 | x4 |
@@ -23,16 +23,16 @@ Smithing keeps energy, modules, switches and the core.
 
 ## Modules
 
-One kind works once per suit. Higher levels need a higher mark.
+One of each kind per suit. Higher levels need a higher Mk.
 
-| Module | Piece | Min. mark per level | Effect |
+| Module | Piece | Min. Mk per level | Effect |
 |---|---|---|---|
 | [[night_vision_module]] | helmet | Mk1 / Mk2 / Mk3 | night vision; II-III see mobs through walls |
 | [[rebreather_module]] | helmet | Mk2 | breathe under water |
 | [[robot_hud_module]] | helmet | Mk2 | your drones on the HUD |
 | [[auto_feeder_module]] | helmet | Mk1 | eats when hungry |
 | [[solar_weave_module]] | helmet | Mk2 | 200 FE/s by day |
-| [[sonar_pulse_module]] | helmet | Mk2 / Mk3 / Mk4 | Sonar key (default N): outline ores and mobs |
+| [[sonar_pulse_module]] | helmet | Mk2 / Mk3 / Mk4 | Sonar key (default N): outlines ores and mobs |
 | [[jet_assist_module]] | chest | Mk2 / Mk3 / Mk4 | soft landings, 1-3 air jumps |
 | [[flight_module]] | chest | Mk3 | creative flight, Flight key (default K) |
 | [[kinetic_shield_module]] | chest | Mk3 / Mk4 / Mk4 | absorbs 75-95% of each hit with FE |

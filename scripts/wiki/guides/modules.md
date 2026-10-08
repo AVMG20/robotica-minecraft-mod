@@ -16,7 +16,6 @@ Cards upgrade machines. Modules upgrade what you carry: power tools, FE weapons 
 
 - One of each kind per item. On Exo armor a kind works once per suit ([[capacitor_plating_module]] once per piece).
 - Level II and III are crafted from the level below and need a higher Age or Mk.
-- Every module starts switched on.
 
 | Item | Slots |
 |---|---|

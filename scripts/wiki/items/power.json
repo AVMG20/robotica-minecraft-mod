@@ -22,7 +22,7 @@
      ],
      [
       "From cables",
-      "charges any FE item at 200 FE/t"
+      "charges any chargeable FE item at 200 FE/t"
      ]
     ]
    },
@@ -298,7 +298,7 @@
    "items": [
     "metal_press"
    ],
-   "what": "Presses 1 ingot into 1 plate: twice what the hammer gives.",
+   "what": "Presses 1 ingot into 1 plate. Other mods' ingots work when a matching plate exists.",
    "use": [
     "Right-click it with ingots or feed it with a hopper or pipe.",
     "Set its faces in the Sides tab."
@@ -327,7 +327,7 @@
     "alloy_smelter_mk3",
     "alloy_smelter_mk4"
    ],
-   "what": "Makes the Robotica alloys from up to three inputs. The only source of alloys.",
+   "what": "Makes the Robotica alloys from up to three inputs.",
    "use": [
     "Right-click it with ingots or dusts, or pipe them in.",
     "Power it with FE or a cell in its battery slot.",
@@ -445,7 +445,7 @@
     "assembler_mk3",
     "assembler_mk4"
    ],
-   "what": "Builds parts from up to six inputs. Some parts exist only here; others cost about a quarter less than by hand.",
+   "what": "Builds parts from up to six inputs: Thermocouples, Superconductor Coils, Resonant Lattices, and ladder parts for about a quarter less.",
    "use": [
     "Put every input in its own slot.",
     "Power it: big parts take a lot of FE per craft."

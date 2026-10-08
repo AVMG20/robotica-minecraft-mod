@@ -261,7 +261,7 @@
     "resonite_dust",
     "resonite_block"
    ],
-   "what": "Resonite from the End: goes into resonant alloy and Fusion Fuel.",
+   "what": "Resonite from the End: goes into Resonant Alloy and Fusion Fuel Pellets.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -306,7 +306,7 @@
    "items": [
     "thermocouple"
    ],
-   "what": "Age 2 part, made only in the Assembler. For the RTG and Mk2 machines.",
+   "what": "Age 2 part, made in the Assembler. For the RTG and Mk2 machines.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -315,7 +315,7 @@
    "items": [
     "superconductor_coil"
    ],
-   "what": "Age 3 part, made only in the Assembler. For Mk3 machines, Exo Mk3 and fusion parts.",
+   "what": "Age 3 part, made in the Assembler. For Mk3 machines, Exo Mk3 and fusion parts.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -324,7 +324,7 @@
    "items": [
     "resonant_lattice"
    ],
-   "what": "Age 4 part, made only in the Assembler. For Mk4 machines and Exo Mk4.",
+   "what": "Age 4 part, made in the Assembler. For Mk4 machines and Exo Mk4.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -372,7 +372,7 @@
    "items": [
     "radiant_isotope"
    ],
-   "what": "Centrifuge result from spent fuel (20%). Goes into Fusion Fuel."
+   "what": "Centrifuge result from Depleted Fuel Pellets (20%). Goes into Fusion Fuel Pellets."
   },
   {
    "items": [
@@ -452,7 +452,7 @@
    "use": [
     "Place pipes from the source to the target.",
     "Sneak-right-click the arm at the source with an empty hand: Extract.",
-    "Right-click an arm: mode, a 9-slot filter (whitelist or blacklist) and the Extract order (Round robin or Closest first) and the Insert priority (Highest to Lowest).",
+    "Right-click an arm: mode, a 9-slot filter, the Extract order and the Insert priority.",
     "Machines follow their Sides settings.",
     "Mk2 to Mk4: 8 pipes of the tier below around an Electric Motor, Servo Actuator or Plasma Actuator."
    ],
@@ -820,7 +820,7 @@
    "items": [
     "upgrade_silk"
    ],
-   "what": "Mined blocks drop themselves. Single card. Not together with Fortune.",
+   "what": "Mined blocks drop themselves. One card. Not with Fortune.",
    "see": [
     "guide:upgrade-cards"
    ]

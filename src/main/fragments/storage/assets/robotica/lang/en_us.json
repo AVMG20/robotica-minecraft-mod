@@ -28,7 +28,7 @@
   "gui.robotica.storage.no_power": "No power",
   "gui.robotica.storage.slots": "Slots %s / %s",
   "gui.robotica.storage.drain": "Uses %s FE/t",
-  "gui.robotica.storage.no_power_hint": "No power: nothing new goes in. Taking items out and crafting still work.",
+  "gui.robotica.storage.no_power_hint": "No power: items can be taken out, not inserted. Crafting works.",
   "robotica.configuration.storage": "Storage Terminal",
   "robotica.configuration.idleFePerTick": "Idle FE per tick",
   "robotica.configuration.fePerExpansion": "Extra FE per tick per expansion",

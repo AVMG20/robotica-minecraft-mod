@@ -4,7 +4,7 @@ icon: tesla_coil_1
 order: 20
 summary: Every generator from the crank to fusion, where to store FE and how Tesla Coils move it wirelessly.
 ---
-Forge Energy (FE) is the only unit. Every port works with other mods' cables too. Numbers are the config defaults.
+All power is Forge Energy (FE): other mods' cables and generators work. Numbers are the config defaults.
 
 ## Generators
 
@@ -37,11 +37,11 @@ Forge Energy (FE) is the only unit. Every port works with other mods' cables too
 
 | Tier | Links | Range | FE/t |
 |---|---|---|---|
-| [[tesla_coil_1]] | 4 | 8 | 4,000 |
-| [[tesla_coil_2]] | 8 | 12 | 16,000 |
-| [[tesla_coil_3]] | 12 | 16 | 64,000 |
-| [[tesla_coil_4]] | 16 | 24 | 256,000 |
-| [[tesla_coil_5]] | 32 | 32 | 1,000,000 |
+| [[tesla_coil_1]] | 4 | 12 | 4,000 |
+| [[tesla_coil_2]] | 8 | 16 | 16,000 |
+| [[tesla_coil_3]] | 12 | 20 | 64,000 |
+| [[tesla_coil_4]] | 16 | 28 | 256,000 |
+| [[tesla_coil_5]] | 32 | 36 | 1,000,000 |
 
 - A coil on a block that outputs FE (generator, Accumulator, panel) is a source. Any other coil is a relay.
 - Each coil-to-coil hop loses 5%.

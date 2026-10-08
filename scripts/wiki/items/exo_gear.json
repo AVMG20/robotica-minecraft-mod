@@ -11,7 +11,7 @@
    "use": [
     "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
-    "Upgrade the mark at a smithing table: modules, energy and core are kept."
+    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
    ],
    "stats": {
     "columns": [
@@ -67,7 +67,7 @@
    "use": [
     "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
-    "Upgrade the mark at a smithing table: modules, energy and core are kept."
+    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
    ],
    "stats": {
     "columns": [
@@ -130,7 +130,7 @@
    "use": [
     "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
-    "Upgrade the mark at a smithing table: modules, energy and core are kept."
+    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
    ],
    "stats": {
     "columns": [
@@ -186,7 +186,7 @@
    "use": [
     "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
     "Put modules in the slots; switch them on or off.",
-    "Upgrade the mark at a smithing table: modules, energy and core are kept."
+    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
    ],
    "stats": {
     "columns": [
@@ -245,7 +245,7 @@
       "Exo helmet"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
      ],
      [
@@ -270,7 +270,7 @@
       "Exo helmet"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk2"
      ],
      [
@@ -295,7 +295,7 @@
       "Exo helmet"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk2"
      ],
      [
@@ -320,7 +320,7 @@
       "Exo helmet"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk1"
      ],
      [
@@ -345,7 +345,7 @@
       "Exo helmet"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk2"
      ],
      [
@@ -372,7 +372,7 @@
       "Exo helmet"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk2 / Mk3 / Mk4"
      ],
      [
@@ -399,7 +399,7 @@
       "Exo chestplate"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk2 / Mk3 / Mk4"
      ],
      [
@@ -424,7 +424,7 @@
       "Exo chestplate"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk3"
      ],
      [
@@ -451,7 +451,7 @@
       "Exo chestplate"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk3 / Mk4 / Mk4"
      ],
      [
@@ -478,7 +478,7 @@
       "Exo chestplate"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk2 / Mk3 / Mk4"
      ],
      [
@@ -503,7 +503,7 @@
       "Exo chestplate"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk3"
      ],
      [
@@ -530,7 +530,7 @@
       "Exo leggings"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
      ],
      [
@@ -555,7 +555,7 @@
       "Exo leggings"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk1"
      ],
      [
@@ -580,7 +580,7 @@
       "Exo leggings or boots"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk3"
      ],
      [
@@ -605,7 +605,7 @@
       "Exo boots"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk1"
      ],
      [
@@ -632,7 +632,7 @@
       "Exo boots"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
      ],
      [
@@ -659,7 +659,7 @@
       "Exo boots"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
      ],
      [
@@ -686,7 +686,7 @@
       "Exo boots"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
      ],
      [
@@ -711,7 +711,7 @@
       "Exo boots"
      ],
      [
-      "Min. mark",
+      "Min. Mk",
       "Mk2"
      ],
      [
@@ -738,7 +738,7 @@
       "Exo any piece"
      ],
      [
-      "Min. mark (I / II / III)",
+      "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
      ],
      [

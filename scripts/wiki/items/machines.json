@@ -13,7 +13,7 @@
     "rows": [
      [
       "Size",
-      "3x3x3 to 9x9x9"
+      "4x3x3 to 9x9x9"
      ],
      [
       "9x9x9 of Ender Capacitors",
@@ -40,7 +40,7 @@
    "items": [
     "bank_glass"
    ],
-   "what": "Wall block of the Capacitor Bank you can see through. Not on edges.",
+   "what": "See-through wall block for the Capacitor Bank. Walls only, not edges.",
    "see": [
     "guide:capacitor-bank"
    ]
@@ -170,7 +170,7 @@
    "items": [
     "reactor_glass"
    ],
-   "what": "See-through wall block for both reactors. Not on edges.",
+   "what": "See-through wall block for both reactors. Walls only, not edges.",
    "see": [
     "guide:fission-reactor"
    ]
@@ -491,7 +491,7 @@
    "items": [
     "sprout"
    ],
-   "what": "Crop bot: harvests and replants crops (pitcher plants and torchflowers from seeds in its buffer), picks sweet and glow berries, melons and pumpkins, cuts sugar cane, cactus, bamboo and kelp, tills dirt near water.",
+   "what": "Crop bot: harvests and replants crops, picks berries, melons and pumpkins, cuts sugar cane, cactus, bamboo and kelp, tills dirt near water.",
    "use": [
     "Place it in your field with a chest or [[supply_crate]] touching it.",
     "Right-click it with a wound [[mainspring]] or a cell."
@@ -581,13 +581,12 @@
     "rancher",
     "rancher_mk2"
    ],
-   "what": "Walking farm robot: keeps your animals at a set herd size, shears sheep and milks cows.",
+   "what": "Walking farm robot: keeps your animals at a set herd size, shears sheep, milks cows and collects drops.",
    "use": [
     "Right-click a block among your animals to place it; that spot is its home.",
     "Put a chest within 3 blocks of home with feed and empty buckets.",
     "Give it a cell in its menu or charge it in a [[charger]].",
     "Set the herd size with - and +; it is split evenly over the species with 2 or more adults.",
-    "Collects drops in its area into the chest.",
     "Sneak-right-click: pick it up with its energy and settings."
    ],
    "stats": {
@@ -830,7 +829,7 @@
     "sentry_drone",
     "sentry_drone_mk2"
    ],
-   "what": "Shoots energy bolts at monsters only.",
+   "what": "Shoots energy bolts at hostile mobs.",
    "use": [
     "Deploy it and set Guard, Follow or Stay in its menu.",
     "Repair it with iron."

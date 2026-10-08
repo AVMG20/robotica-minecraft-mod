@@ -44,7 +44,6 @@
   "gear.robotica.off": "Off",
   "gear.robotica.screen.title": "Tool settings",
   "gear.robotica.screen.mode": "Mode: %s",
-  "gear.robotica.hud.mode": "Mode: %s",
   "gear.robotica.hud.durability": "Durability %s / %s",
   "gear.robotica.lance.no_energy": "Not enough energy (%s FE needed)",
   "key.categories.robotica.gear": "Robotica Tools",

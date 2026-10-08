@@ -65,7 +65,7 @@
   "tooltip.robotica.upgrade.fortune": "Fortune I-III on mined blocks, more ore and alloy output, Looting in the Replicator",
   "tooltip.robotica.upgrade.silk": "Mined blocks drop themselves. Not with Fortune",
   "tooltip.robotica.upgrade.growth": "Farm bots: +50% crop and sapling growth per card",
-  "tooltip.robotica.upgrade.void": "Deletes junk and outputs that do not fit",
+  "tooltip.robotica.upgrade.void": "Deletes junk and outputs that don't fit",
   "tooltip.robotica.upgrade.height": "Architect Table: buildings one block taller per card",
   "tooltip.robotica.upgrade.carry": "Storage Terminal: keeps every item inside when picked up",
   "tooltip.robotica.upgrade.speed.steps": "Cards: 1 = x2, 2 = x3, 3 = x4, 4 = x6, 5 = x8, 6 = x11, 7 = x15, 8 = x20",

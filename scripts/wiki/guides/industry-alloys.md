@@ -4,7 +4,7 @@ icon: alloy_smelter_mk1
 order: 35
 summary: From ore to alloy to plate to part: the Alloy Smelter, Centrifuge and Assembler chain.
 ---
-Three ores, three alloys from the Alloy Smelter, and parts only the Assembler builds.
+Three ores, three alloys and the parts the Assembler makes.
 
 {{items thorium_ore pyrolite_ore resonite_ore alloy_smelter_mk1 centrifuge_mk1 assembler_mk1 metal_press}}
 
@@ -23,7 +23,7 @@ Three ores, three alloys from the Alloy Smelter, and parts only the Assembler bu
 | [[pyrosteel_ingot]] | 3 | ferrothorium + pyrolite + [[minecraft:blaze_powder]] | 300 ticks | 120 FE/t |
 | [[resonant_alloy_ingot]] | 4 | pyrosteel + resonite + [[minecraft:ender_pearl]] | 400 ticks | 400 FE/t |
 
-## Assembler-only parts
+## Assembler parts
 
 | Part | Age | Used for |
 |---|---|---|
@@ -57,6 +57,6 @@ Made in the Assembler. Burned pellets leave a [[depleted_fuel_pellet]]; the Cent
 | Speed | x1 | x2 | x3 | x5 |
 | Card slots | 2 | 3 | 4 | 5 |
 
-Right-click a placed machine with the next Mk: it swaps in place and keeps everything.
+Upgrade: see [The Mk rule](#/guide/upgrade-cards).
 
 {{upgrades alloy_smelter_mk1}}

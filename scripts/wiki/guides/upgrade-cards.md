@@ -19,6 +19,8 @@ Every machine with a Mk (Alloy Smelter, Centrifuge, Assembler, Grinder, Electric
 
 {{mkrule}}
 
+Right-click a placed machine with the next Mk: it swaps in place and keeps its contents, cards and energy.
+
 Machines without a Mk (Metal Press, Combustion Generator, Wireless Charger, Replicator, Architect Table, drones) have fixed slots, listed below.
 
 ## The cards

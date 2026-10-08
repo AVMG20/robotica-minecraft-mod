@@ -7,7 +7,7 @@
     "about": "Smallest reactor: one Fuel Rod column with water on all four sides. About 1,100 FE/t on thorium pellets.",
     "notes": [
       "Fuel Rods fill the whole column, floor to roof.",
-      "Only the 4 horizontal neighbours of a rod cool it.",
+      "Only the 4 horizontal neighbors of a rod cool it.",
       "Swap the water for packed ice for about 1,280 FE/t."
     ],
     "legend": {
@@ -152,7 +152,7 @@
     "check": "bank",
     "about": "Smallest working bank: one Copper Capacitor and one Basic Transfer Coil. 4M FE, 16,000 FE/t in and out.",
     "notes": [
-      "A 3x3x3 is a legal size but has room for one part only, and a bank needs a capacitor and a coil.",
+      
       "Sneak + right-click a Bank Port to switch it between input and output."
     ],
     "legend": {
@@ -192,7 +192,7 @@
     "notes": [
       "Coils and capacitors can go anywhere inside, in any mix.",
       "The coils' sum limits input and output per tick, shared by all ports.",
-      "Glass is fine on walls, never on edges."
+      "Glass goes in walls, not on edges."
     ],
     "legend": {
       "B": "bank_casing",
@@ -249,7 +249,7 @@
     "check": "fusion",
     "about": "Fixed size. A ring of 16 Fusion Coils around an empty 3x3 plasma chamber, one layer high.",
     "notes": [
-      "The 3x3 middle must stay empty: that is where the plasma burns.",
+      "The 3x3 middle stays empty.",
       "Power Ports take the 100M FE ignition charge in and send power out.",
       "Access Ports only take fuel in."
     ],
@@ -299,8 +299,7 @@
     "check": "replicator",
     "about": "Controller in the middle of one face, Replicator Frames around it, at least one Replicator Glass, the center empty.",
     "notes": [
-      "Any frame block may be swapped for glass, edges and corners too.",
-      "The center block stays air: the mob hologram spins there."
+      "Any frame block may be swapped for glass, edges and corners too."
     ],
     "legend": {
       "F": "replicator_frame",

@@ -2,9 +2,9 @@
 title: Build the Capacitor Bank
 icon: bank_controller
 order: 45
-summary: Multiblock FE storage from 3x3x3 to 9x9x9, its capacitor tiers, transfer coils and ports.
+summary: Multiblock FE storage from 4x3x3 to 9x9x9, its capacitor tiers, transfer coils and ports.
 ---
-A variable-size cuboid from 3x3x3 to 9x9x9 (outside size) that stores FE. Age 1 on.
+Stores FE. 4x3x3 to 9x9x9 (outside size). Age 1 on.
 
 ## Parts
 
@@ -16,8 +16,6 @@ A variable-size cuboid from 3x3x3 to 9x9x9 (outside size) that stores FE. Age 1 
 2. Fill the walls with [[bank_casing]], [[bank_glass]] and at least one [[bank_port]].
 3. Put the [[bank_controller]] in a side wall.
 4. Fill the inside with any mix of Capacitors and Transfer Coils (at least one of each); the rest stays air.
-
-> Smallest working bank: 4x3x3. A 3x3x3 has room for one part only.
 
 | Capacitor | FE per block | Age |
 |---|---|---|
@@ -44,7 +42,7 @@ The sum of all coils limits input and, separately, output per tick, shared by al
 ## Keeping the energy
 
 - The energy lives in the controller: it stays when the structure breaks.
-- Mined, the controller item keeps its energy (it always drops, explosions included).
+- Mined, the controller item keeps its energy.
 - Formed smaller than its energy, the part above the new capacity is lost.
 
 {{image shots/gui_bank_formed.jpg|Capacitor Bank Controller, formed}}

@@ -15,7 +15,6 @@ Farms a mob's drops without the mob. Age 2 on.
 - Right-click a hostile mob with an [[essence_vial]]: 2 damage, 3 s cooldown.
 - The first sample binds the vial to that mob type.
 - **8 samples** complete it.
-- Bosses and blacklisted mobs can not be sampled.
 
 ## 2. Build the structure
 
@@ -23,7 +22,7 @@ Farms a mob's drops without the mob. Age 2 on.
 
 - A 3x3x3 cube: [[replicator_controller]] in the middle of one face.
 - The rest of the shell is [[replicator_frame]] and [[replicator_glass]] (at least 1 glass).
-- The center block stays air.
+- The center block is air.
 
 {{multiblock mob_replicator}}
 
@@ -31,7 +30,7 @@ Farms a mob's drops without the mob. Age 2 on.
 
 - Insert the complete vial and feed FE: **160 FE/t** base.
 - One cycle takes **1,200 ticks** (1 min).
-- Speed cards: max 3. A [[plasma_actuator]] in the boost slot doubles speed (not consumed, costs extra FE).
+- Speed cards: max 3. A [[plasma_actuator]] in the boost slot doubles speed for extra FE.
 - Fortune cards act as **Looting** (up to III).
 
 | Mode | What it does |
@@ -58,10 +57,8 @@ Catalyst slot (kept):
 | Blaze, enderman, guardian, ghast, wither skeleton, piglin brute | [[magma_core]] |
 | Shulker | [[antigrav_core]] |
 
-## Never duplicated
+## Blocked drops
 
-- Boss drops
-- [[minecraft:nether_star]] and [[minecraft:dragon_egg]]
-- Anything in the blacklist tags
+Boss drops, [[minecraft:nether_star]], [[minecraft:dragon_egg]] and the blacklist tags.
 
 {{upgrades replicator_controller}}

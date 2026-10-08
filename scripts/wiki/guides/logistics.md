@@ -32,11 +32,11 @@ Right-click an arm to open its screen: mode buttons, 9 filter slots and two swit
 
 {{image shots/gui_item_pipe.jpg|The screen of a pipe arm: Extract, a whitelist of raw ores, Closest first}}
 
-- Click a filter slot with an item to add it, or shift-click the item in your inventory. The item stays in your inventory. Click the slot again to clear it.
+- Click a filter slot with an item to add it, or shift-click the item in your inventory. Click the slot again to clear it.
 - **Blacklist** (default): listed items do not pass. **Whitelist**: only listed items pass. An empty filter lets everything through.
 - On an Extract arm the filter picks what gets pulled; on an Insert arm it picks what goes in.
 - Extract arms have an order: **Round robin** spreads items over every Insert arm in turn, **Closest first** fills the nearest Insert arm (fewest pipes away) and only sends the rest on.
-- Insert arms have a priority: **Highest**, **High** (default), **Normal**, **Low** or **Lowest**. Click to lower it, shift-click to raise it. Items go to the highest priority that takes them; lower ones only get what is left. Round robin spreads within one priority.
+- Insert arms have a priority: **Highest**, **High** (default), **Normal**, **Low** or **Lowest**. Click to lower it, shift-click to raise it. Items go to the highest priority that takes them; lower ones get the rest. Round robin spreads within one priority.
 - Filters match the item, not its damage or enchantments.
 
 Example: one chest feeds a Grinder and a Furnace. Whitelist ores on the Grinder arm, raw food on the Furnace arm.

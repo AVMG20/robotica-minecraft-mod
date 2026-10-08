@@ -19,7 +19,6 @@ Two machine lines, Mk1 (Age 1, needs a Basic Circuit) to Mk4. Both work on `c:` 
 | raw ore | 1 dust + 25% chance of one more |
 | ingot | 1 dust |
 
-- Ancient debris does not grind.
 - Dusts smelt into ingots.
 
 {{image shots/gui_grinder.jpg|Grinder Mk2 menu}}
@@ -31,7 +30,7 @@ Two machine lines, Mk1 (Age 1, needs a Basic Circuit) to Mk4. Both work on `c:` 
 
 ## Grinding media
 
-Optional second input. One item is loaded straight into the Grinder and lasts its uses (media bar); then the next one loads. Bonus only on ores and raw ores, never on gem ores or ingots.
+Optional second input. Each item lasts its uses (media bar). The bonus applies to ores and raw ores.
 
 | Media | Bonus | Byproduct | Uses | Min Mk |
 |---|---|---|---|---|
@@ -45,7 +44,7 @@ Optional second input. One item is loaded straight into the Grinder and lasts it
 
 ## Mk tiers
 
-Right-click a placed machine with the next Mk to swap it in place (inputs, outputs, media, cards, sides and energy stay; the old Mk comes back), or craft the next Mk around the previous one (stored energy is kept).
+Right-click a placed machine with the next Mk ([the Mk rule](#/guide/upgrade-cards)), or craft the next Mk around the previous one.
 
 | | Mk1 | Mk2 | Mk3 | Mk4 |
 |---|---|---|---|---|
@@ -61,6 +60,6 @@ Right-click a placed machine with the next Mk to swap it in place (inputs, outpu
 
 ## By hand
 
-The [[tinkers_hammer]] cracks raw thorium, pyrolite shards, resonite crystals and coal into one dust each: no gain. Use the Grinder to double.
+The [[tinkers_hammer]] cracks raw thorium, pyrolite shards, resonite crystals and coal into one dust each. The Grinder doubles.
 
 {{guide industry-alloys}}

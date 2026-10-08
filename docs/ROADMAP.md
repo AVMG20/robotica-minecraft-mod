@@ -1,6 +1,6 @@
 # Robotica roadmap
 
-Last updated 2026-10-07 (0.5). `./gradlew runGameTestServer` passes and `python3 scripts/audit_assets.py` reports 0
+Last updated 2026-10-08 (0.6). `./gradlew runGameTestServer` passes and `python3 scripts/audit_assets.py` reports 0
 problems. Specs per module in `docs/DESIGN.md`; plans per release in `docs/plans/`.
 
 ## What's in the mod
@@ -12,9 +12,9 @@ problems. Specs per module in `docs/DESIGN.md`; plans per release in `docs/plans
 | Big energy | Capacitor Bank, Fission Reactor, Fusion Reactor |
 | Industry | Thorium, pyrolite and resonite ores, alloys, Alloy Smelter / Centrifuge / Assembler Mk1-Mk4 |
 | Ore processing | Grinder and Electric Furnace Mk1-Mk4, grinding media |
-| Logistics | Item pipes Mk1-Mk2 |
-| Automation | Stumpy, Sprout (farm kits), Excavator and Survey Rig Mk1-Mk4, Supply Crate |
-| Drones | Mining Drone Mk1-Mk3, Sentry, Courier |
+| Logistics | Item pipes Mk1-Mk4 |
+| Automation | Stumpy, Sprout (farm kits), Rancher Mk1-Mk2, Excavator and Survey Rig Mk1-Mk4, Supply Crate |
+| Drones | Mining Drone Mk1-Mk3, Sentry, Courier and Hauler Mk1-Mk2 |
 | Gear | Drills, Chainsaw, five FE weapons, Rivet Gun projectiles, Tinker's Bench modules, Lamp Rod and Spark Lamps |
 | Exo-Frame | Armor Mk1-Mk4, modules with levels, core socket set bonuses, HUD |
 | Architect | Architect Table: plot grid, inner walls and doorways, four styles, demolish |
