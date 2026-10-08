@@ -481,7 +481,9 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (level.getDifficulty() == Difficulty.PEACEFUL && type.getCategory() == MobCategory.MONSTER) return Pause.PEACEFUL;
 
         BlockPos center = ReplicatorStructure.center(pos, state.getValue(ReplicatorControllerBlock.FACING));
-        if (type != countedType || age - countedAt >= 20) {
+        // A count at the cap is checked again right away: mobs killed since then free room.
+        boolean capped = nearbySame >= ReplicatorConfig.spawnMaxSameType() || nearbyTotal >= ReplicatorConfig.spawnMaxTotal();
+        if (type != countedType || age - countedAt >= 20 || capped) {
             AABB box = new AABB(pos).inflate(ReplicatorConfig.spawnRadius());
             List<Mob> nearby = level.getEntitiesOfClass(Mob.class, box);
             int same = 0;
