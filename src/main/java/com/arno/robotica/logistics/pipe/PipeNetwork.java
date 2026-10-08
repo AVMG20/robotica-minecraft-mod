@@ -7,9 +7,11 @@ import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +36,8 @@ public final class PipeNetwork {
     /** Closest First order per Extract pipe, built on first use and kept until the network is rebuilt. */
     private final Map<BlockPos, List<Endpoint>> nearest = new HashMap<>();
     private final Set<BlockPos> members = new HashSet<>();
+    /** Priority group ends of each sorted endpoint list handed out, so a pull never re-scans them. */
+    private final Map<List<Endpoint>, int[]> groupEnds = new IdentityHashMap<>();
     private int pipes;
     private boolean valid = true;
 
@@ -76,6 +80,21 @@ public final class PipeNetwork {
             }
             order.sort(BY_PRIORITY);
             return order;
+        });
+    }
+
+    /**
+     * For a list from {@link #destinations()} or {@link #byDistance}: the exclusive end index of each priority group,
+     * in order. Computed once per list.
+     */
+    public int[] groupEnds(List<Endpoint> sorted) {
+        return groupEnds.computeIfAbsent(sorted, list -> {
+            int[] ends = new int[list.size()];
+            int groups = 0;
+            for (int i = 1; i <= list.size(); i++) {
+                if (i == list.size() || list.get(i).priority() != list.get(i - 1).priority()) ends[groups++] = i;
+            }
+            return Arrays.copyOf(ends, groups);
         });
     }
 

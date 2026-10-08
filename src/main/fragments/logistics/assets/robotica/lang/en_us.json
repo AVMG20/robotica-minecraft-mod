@@ -37,5 +37,7 @@
   "gui.robotica.pipe.priority.normal": "Normal",
   "gui.robotica.pipe.priority.low": "Low",
   "gui.robotica.pipe.priority.lowest": "Lowest",
-  "gui.robotica.pipe.slot_filter": "Filter: click with an item to add it, click again to clear. Shift-click items in your inventory to add them."
+  "gui.robotica.pipe.slot_filter": "Filter: click with an item to add it, click again to clear. Shift-click items in your inventory to add them.",
+  "robotica.configuration.pipeInsertChecks": "Insert checks per pull",
+  "robotica.configuration.pipeTargetVisits": "Insert connections looked at per pull"
 }

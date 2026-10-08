@@ -14,6 +14,8 @@ public final class LogisticsConfig {
     private static final ModConfigSpec.IntValue[] INTERVAL = new ModConfigSpec.IntValue[TIERS];
     private static final ModConfigSpec.IntValue[] ITEMS = new ModConfigSpec.IntValue[TIERS];
     private static final ModConfigSpec.IntValue MAX_PIPES;
+    private static final ModConfigSpec.IntValue MAX_TRIES;
+    private static final ModConfigSpec.IntValue MAX_VISITS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -24,6 +26,10 @@ public final class LogisticsConfig {
             ITEMS[i] = b.comment("Item Pipe Mk" + mk + ": items per pull.").defineInRange("pipeItems" + mk, DEFAULT_ITEMS[i], 1, 256);
         }
         MAX_PIPES = b.comment("Largest pipe network; pipes beyond it are not reached.").defineInRange("pipeNetworkMax", 4096, 16, 65536);
+        MAX_TRIES = b.comment("Insert checks one Extract connection makes per pull at most.")
+                .defineInRange("pipeInsertChecks", 64, 1, 4096);
+        MAX_VISITS = b.comment("Insert connections one Extract connection looks at per pull at most (filters included). Round robin resumes where it stopped.")
+                .defineInRange("pipeTargetVisits", 256, 1, 65536);
         b.pop();
         SPEC = b.build();
     }
@@ -42,5 +48,13 @@ public final class LogisticsConfig {
 
     public static int maxPipes() {
         return SPEC.isLoaded() ? MAX_PIPES.get() : 4096;
+    }
+
+    public static int maxInsertTries() {
+        return SPEC.isLoaded() ? MAX_TRIES.get() : 64;
+    }
+
+    public static int maxTargetVisits() {
+        return SPEC.isLoaded() ? MAX_VISITS.get() : 256;
     }
 }

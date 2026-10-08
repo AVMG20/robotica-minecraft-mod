@@ -31,8 +31,6 @@ import java.util.List;
  * inventories decide what fits. Items move instantly and never go back into the inventory they came from.
  */
 public class ItemPipeBlockEntity extends BlockEntity {
-    /** Insert simulations per pull at most, so a full network costs little; the start slot rotates when stuck. */
-    private static final int MAX_TRIES = 64;
     public static final int FILTER_SLOTS = 9;
 
     private final PipeMode[] modes = new PipeMode[6];
@@ -237,29 +235,38 @@ public class ItemPipeBlockEntity extends BlockEntity {
         List<PipeNetwork.Endpoint> targets = closest ? net.byDistance(level, this) : net.destinations();
         int count = targets.size();
         if (count == 0) return;
+        int[] ends = net.groupEnds(targets);
         BlockPos from = worldPosition.relative(side);
         int budget = LogisticsConfig.items(tier());
-        int moved = 0, tries = 0, slots = source.getSlots();
-        for (int s = 0; s < slots && moved < budget && tries < MAX_TRIES; s++) {
+        int maxTries = LogisticsConfig.maxInsertTries(), maxVisits = LogisticsConfig.maxTargetVisits();
+        int moved = 0, tries = 0, visits = 0, slots = source.getSlots();
+        for (int s = 0; s < slots && moved < budget && tries < maxTries && visits < maxVisits; s++) {
             int slot = (nextSlot + s) % slots;
             ItemStack inSlot = source.getStackInSlot(slot);
             if (inSlot.isEmpty() || !passes(side, inSlot)) continue;
+            ItemStack item = inSlot.copyWithCount(1);
+            ItemStack offer = null;
             groups:
-            for (int group = 0, end; group < count && moved < budget && tries < MAX_TRIES; group = end) {
+            for (int g = 0, group = 0; group < count && moved < budget; group = ends[g++]) {
+                int end = ends[g];
                 int rank = targets.get(group).priority().ordinal();
-                end = group + 1;
-                while (end < count && targets.get(end).priority().ordinal() == rank) end++;
                 int size = end - group;
                 int start = closest ? 0 : Math.floorMod(nextDestination[rank], size);
-                for (int k = 0; k < size && moved < budget && tries < MAX_TRIES; k++) {
-                    int index = group + (start + k) % size;
-                    PipeNetwork.Endpoint target = targets.get(index);
-                    if (target.target().equals(from) || target.pipe().isRemoved()) continue;
+                for (int k = 0; k < size && moved < budget; k++) {
+                    if (tries >= maxTries || visits >= maxVisits) {
+                        // Out of checks: this priority's round robin resumes here on the next pull.
+                        if (!closest) nextDestination[rank] = (start + k) % size;
+                        break groups;
+                    }
+                    visits++;
+                    PipeNetwork.Endpoint target = targets.get(group + (start + k) % size);
+                    if (target.target().equals(from) || target.pipe().isRemoved() || !target.pipe().passes(target.side(), item)) continue;
                     IItemHandler dest = target.pipe().handler(target.side());
                     if (dest == null) continue;
-                    ItemStack offer = source.extractItem(slot, budget - moved, true);
-                    if (offer.isEmpty()) break groups;
-                    if (!target.pipe().passes(target.side(), offer)) continue;
+                    if (offer == null) {
+                        offer = source.extractItem(slot, budget - moved, true);
+                        if (offer.isEmpty()) break groups;
+                    }
                     tries++;
                     int fits = offer.getCount() - ItemHandlerHelper.insertItemStacked(dest, offer, true).getCount();
                     if (fits <= 0) continue;
@@ -268,6 +275,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
                     ItemStack left = ItemHandlerHelper.insertItemStacked(dest, taken, false);
                     moved += taken.getCount() - left.getCount();
                     if (!left.isEmpty()) giveBack(level, source, slot, left);
+                    offer = null;
                     if (!closest) nextDestination[rank] = (start + k + 1) % size;
                 }
             }
