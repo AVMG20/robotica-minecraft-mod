@@ -161,18 +161,19 @@ for name, (prefix, extra) in CONTROLLERS.items():
     loot(name, ['robotica:bank_energy'] if prefix == 'bank' else None)
     BLOCKS.append(name)
 
-# ---------- Spire Crown: copper stem and toroid, a caged glass orb with a core that lights up ----------
+# ---------- Spire Crown: copper-wound neck, steel toroid, discharge sphere that lights up ----------
 for lit in (False, True):
     core = 'spire_crown_core_lit' if lit else 'spire_crown_core'
-    model = {'parent': 'minecraft:block/block', 'render_type': 'minecraft:translucent', 'ambient_occlusion': False,
-             'textures': {'copper': tex('spire_crown_copper'), 'coil': tex('spire_crown_coil'),
-                          'orb': tex('spire_crown_orb'), 'core': tex(core), 'particle': tex('spire_crown_copper')},
+    ring = {'down': '#ring', 'up': '#ring', 'north': '#ring', 'south': '#ring', 'west': '#ring', 'east': '#ring'}
+    model = {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+             'textures': {'coil': tex('spire_crown_coil'), 'ring': tex('spire_crown_ring'), 'core': tex(core),
+                          'particle': tex('spire_crown_ring')},
              'elements': [
-                 box([5, 0, 5], [11, 4, 11], all_faces('#copper')),
-                 box([1, 4, 1], [15, 8, 15], {'down': '#copper', 'up': '#copper', 'north': '#coil', 'south': '#coil',
-                                              'west': '#coil', 'east': '#coil'}),
-                 box([6, 9, 6], [10, 13, 10], all_faces('#core'), shade=not lit, glow=lit),
-                 box([3, 8, 3], [13, 16, 13], all_faces('#orb')),
+                 box([6, 0, 6], [10, 7, 10], all_faces('#coil')),
+                 box([1, 6, 1], [15, 10, 4], ring), box([1, 6, 12], [15, 10, 15], ring),
+                 box([1, 6, 4], [4, 10, 12], ring), box([12, 6, 4], [15, 10, 12], ring),
+                 box([5, 9, 5], [11, 15, 11], all_faces('#core'), shade=not lit, glow=lit),
+                 box([7, 15, 7], [9, 16, 9], all_faces('#ring')),
              ]}
     write(ASSETS / 'models/block' / f'spire_crown{"_lit" if lit else ""}.json', model)
 write(ASSETS / 'blockstates/spire_crown.json', {'variants': {

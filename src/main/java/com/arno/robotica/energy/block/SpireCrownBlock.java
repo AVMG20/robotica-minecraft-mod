@@ -22,15 +22,15 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.List;
 
 /**
- * Top of a Tesla Spire: a copper crown around a glass sphere. LIT while its spire runs (set by the Spire Base); it
+ * Top of a Tesla Spire: a copper-wound neck, a steel toroid and a discharge sphere. LIT while its spire runs (set by the Spire Base); it
  * then glows and throws sparks. The arcs and the strike bolt are drawn by the base's renderer.
  */
 public class SpireCrownBlock extends Block {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
     private static final VoxelShape SHAPE = Shapes.or(
-            Block.box(5, 0, 5, 11, 4, 11),
-            Block.box(1, 4, 1, 15, 8, 15),
-            Block.box(3, 8, 3, 13, 16, 13));
+            Block.box(6, 0, 6, 10, 6, 10),
+            Block.box(1, 6, 1, 15, 10, 15),
+            Block.box(5, 10, 5, 11, 16, 11));
 
     public SpireCrownBlock(Properties props) {
         super(props);

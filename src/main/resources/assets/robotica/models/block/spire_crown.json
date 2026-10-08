@@ -1,90 +1,184 @@
 {
   "parent": "minecraft:block/block",
-  "render_type": "minecraft:translucent",
-  "ambient_occlusion": false,
+  "render_type": "minecraft:cutout",
   "textures": {
-    "copper": "robotica:block/spire_crown_copper",
     "coil": "robotica:block/spire_crown_coil",
-    "orb": "robotica:block/spire_crown_orb",
+    "ring": "robotica:block/spire_crown_ring",
     "core": "robotica:block/spire_crown_core",
-    "particle": "robotica:block/spire_crown_copper"
+    "particle": "robotica:block/spire_crown_ring"
   },
   "elements": [
     {
       "from": [
-        5,
+        6,
         0,
-        5
+        6
       ],
       "to": [
-        11,
-        4,
-        11
+        10,
+        7,
+        10
       ],
       "faces": {
         "down": {
-          "texture": "#copper",
+          "texture": "#coil",
           "cullface": "down"
         },
         "up": {
-          "texture": "#copper"
+          "texture": "#coil"
         },
         "north": {
-          "texture": "#copper"
+          "texture": "#coil"
         },
         "south": {
-          "texture": "#copper"
+          "texture": "#coil"
         },
         "west": {
-          "texture": "#copper"
+          "texture": "#coil"
         },
         "east": {
-          "texture": "#copper"
+          "texture": "#coil"
         }
       }
     },
     {
       "from": [
         1,
-        4,
+        6,
         1
       ],
       "to": [
         15,
-        8,
+        10,
+        4
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ring"
+        },
+        "up": {
+          "texture": "#ring"
+        },
+        "north": {
+          "texture": "#ring"
+        },
+        "south": {
+          "texture": "#ring"
+        },
+        "west": {
+          "texture": "#ring"
+        },
+        "east": {
+          "texture": "#ring"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        6,
+        12
+      ],
+      "to": [
+        15,
+        10,
         15
       ],
       "faces": {
         "down": {
-          "texture": "#copper"
+          "texture": "#ring"
         },
         "up": {
-          "texture": "#copper"
+          "texture": "#ring"
         },
         "north": {
-          "texture": "#coil"
+          "texture": "#ring"
         },
         "south": {
-          "texture": "#coil"
+          "texture": "#ring"
         },
         "west": {
-          "texture": "#coil"
+          "texture": "#ring"
         },
         "east": {
-          "texture": "#coil"
+          "texture": "#ring"
         }
       }
     },
     {
       "from": [
+        1,
         6,
-        9,
-        6
+        4
       ],
       "to": [
+        4,
         10,
-        13,
-        10
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ring"
+        },
+        "up": {
+          "texture": "#ring"
+        },
+        "north": {
+          "texture": "#ring"
+        },
+        "south": {
+          "texture": "#ring"
+        },
+        "west": {
+          "texture": "#ring"
+        },
+        "east": {
+          "texture": "#ring"
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        6,
+        4
+      ],
+      "to": [
+        15,
+        10,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ring"
+        },
+        "up": {
+          "texture": "#ring"
+        },
+        "north": {
+          "texture": "#ring"
+        },
+        "south": {
+          "texture": "#ring"
+        },
+        "west": {
+          "texture": "#ring"
+        },
+        "east": {
+          "texture": "#ring"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        9,
+        5
+      ],
+      "to": [
+        11,
+        15,
+        11
       ],
       "faces": {
         "down": {
@@ -109,34 +203,34 @@
     },
     {
       "from": [
-        3,
-        8,
-        3
+        7,
+        15,
+        7
       ],
       "to": [
-        13,
+        9,
         16,
-        13
+        9
       ],
       "faces": {
         "down": {
-          "texture": "#orb"
+          "texture": "#ring"
         },
         "up": {
-          "texture": "#orb",
+          "texture": "#ring",
           "cullface": "up"
         },
         "north": {
-          "texture": "#orb"
+          "texture": "#ring"
         },
         "south": {
-          "texture": "#orb"
+          "texture": "#ring"
         },
         "west": {
-          "texture": "#orb"
+          "texture": "#ring"
         },
         "east": {
-          "texture": "#orb"
+          "texture": "#ring"
         }
       }
     }

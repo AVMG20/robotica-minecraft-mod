@@ -44,7 +44,6 @@ P.update({
     '-': '#7FE8FF70', '_': '#E6FAFFC8',      # accelerator pipe tint and glint
     ':': '#B48CFF70', ';': '#F0E2FFC8',      # resonant pipe tint and glint
     '|': '#3A8FA0C8', '?': '#7A50C0C8',      # pipe walls (accelerator, resonant)
-    '`': '#9FF0FF60',                        # spire crown orb glass
 })
 GRAIN = {DK: 'vw', SL: 'xy', NU: '!#', ST: '$%'}
 
@@ -401,43 +400,38 @@ def spire_base_top():
     return c
 
 
-def crown_copper():
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, CU, 190, bevel=False, density=0.1)
-    for x, y in ((2, 2), (12, 2), (2, 12), (12, 12)):
-        c.rivet(x, y, CU)
-    return c
-
-
 def crown_coil():
-    """Toroid windings: tight copper turns with dark gaps."""
+    """Secondary winding of the neck: tight copper turns with dark gaps."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, CU[1])
-    for x in range(16):
-        c.rect(x, 0, 1, 16, CU[2] if x % 2 else CU[1])
-        c.set(x, 8, CU[3] if x % 2 else CU[2]).set(x, 12, CU[0])
-    for y in (0, 15):
-        c.rect(0, y, 16, 1, CU[0])
+    for y in range(16):
+        c.rect(0, y, 16, 1, CU[2] if y % 2 else CU[1])
+        c.set(0, y, CU[3] if y % 2 else CU[2]).set(15, y, CU[0])
+    for x in (4, 11):                                                    # insulating straps
+        c.rect(x, 0, 1, 16, 'k').set(x, 0, ST[3])
     return c
 
 
-def crown_orb():
-    """Glass discharge sphere caged in copper bands."""
+def crown_ring():
+    """Polished steel toroid: a bright band where it faces the light, darker towards the edges."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, '`')
-    c.frame(0, 0, 16, 16, CU[1])
-    c.rect(7, 0, 2, 16, CU[2]).rect(7, 0, 1, 16, CU[3])
-    c.line(2, 5, 5, 2, ']').line(2, 6, 6, 2, ']').line(11, 13, 13, 11, ']')
+    for y in range(16):
+        band = abs(y - 6) / 9.0
+        ch = ST[4] if band < 0.12 else ST[3] if band < 0.4 else ST[2] if band < 0.75 else ST[1]
+        c.rect(0, y, 16, 1, ch)
+    for x in range(0, 16, 5):                                            # panel seams
+        c.rect(x, 0, 1, 16, ST[1])
+    c.set(2, 5, '&').set(7, 6, '&').set(12, 5, '&')
     return c
 
 
 def crown_core(lit):
+    """Discharge sphere: dark glass with a cold core, white-hot while the spire runs."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'z' if not lit else CY[2])
-    c.disc(7.5, 7.5, 6.0, CY[0] if not lit else CY[3])
-    c.disc(7.5, 7.5, 3.5, CY[1] if not lit else CY[4])
-    if lit:
-        c.disc(7.5, 7.5, 1.8, '&')
+    c.rect(0, 0, 16, 16, CY[0] if not lit else CY[2])
+    c.disc(7.5, 7.5, 6.5, 'k' if not lit else CY[3])
+    c.disc(7.5, 7.5, 4.5, CY[0] if not lit else CY[4])
+    c.disc(7.5, 7.5, 2.2, CY[1] if not lit else '&')
+    c.set(4, 4, CY[3] if not lit else '&').set(5, 4, CY[2] if not lit else '&')
     return c
 
 
@@ -559,9 +553,8 @@ def main():
     write_block('spire_base', spire_base_side().rows(), P)
     write_block('spire_base_glow', spire_base_side_glow().rows(), P)
     write_block('spire_base_top', spire_base_top().rows(), P)
-    write_block('spire_crown_copper', crown_copper().rows(), P)
     write_block('spire_crown_coil', crown_coil().rows(), P)
-    write_block('spire_crown_orb', crown_orb().rows(), P)
+    write_block('spire_crown_ring', crown_ring().rows(), P)
     write_block('spire_crown_core', crown_core(False).rows(), P)
     write_block('spire_crown_core_lit', crown_core(True).rows(), P)
 

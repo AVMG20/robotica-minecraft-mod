@@ -46,7 +46,7 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
 
         VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
         Matrix4f m = pose.last().pose();
-        Vec3 crown = new Vec3(0.5, n + 1.75, 0.5);
+        Vec3 crown = new Vec3(0.5, n + 1.75, 0.5); // the discharge sphere of the crown
         float pulse = 0.5F + 0.5F * Mth.sin(time * 0.35F);
 
         // ball of light on the crown
