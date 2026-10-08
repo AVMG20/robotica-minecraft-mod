@@ -53,4 +53,8 @@ smithing('mining_drone_mk3', 'quantum_circuit', 'mining_drone_mk2', 'plasma_actu
 shaped('courier_remote', [' R ', 'ICI'], {'R': '#c:dusts/redstone', 'I': IRON, 'C': 'basic_circuit'})
 smithing('courier_drone_mk2', 'advanced_circuit', 'courier_drone', 'servo_actuator', 'courier_drone_mk2')
 smithing('sentry_drone_mk2', 'advanced_circuit', 'sentry_drone', 'servo_actuator', 'sentry_drone_mk2')
+# Hauler Drone (first iron hour, like the Mining Drone): a lead as the winch line, clockwork and a copper coil, two iron plates
+shaped('hauler_drone', [' C ', 'PWP', ' L '],
+       {'C': 'clockwork_mechanism', 'P': '#c:plates/iron', 'W': 'copper_coil', 'L': 'minecraft:lead'})
+smithing('hauler_drone_mk2', 'advanced_circuit', 'hauler_drone', 'servo_actuator', 'hauler_drone_mk2')
 print('drone recipes written to', OUT)

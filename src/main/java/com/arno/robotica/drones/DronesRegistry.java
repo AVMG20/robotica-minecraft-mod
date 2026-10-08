@@ -3,6 +3,7 @@ package com.arno.robotica.drones;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.RoboticaTab;
 import com.arno.robotica.drones.entity.CourierDrone;
+import com.arno.robotica.drones.entity.HaulerDrone;
 import com.arno.robotica.drones.entity.MiningDrone;
 import com.arno.robotica.drones.entity.SentryDrone;
 import com.arno.robotica.drones.item.CourierRemoteItem;
@@ -28,9 +29,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class DronesRegistry {
     private DronesRegistry() {}
 
-    /** The two drone families. */
+    /** The drone families. */
     public enum Kind {
-        MINING, SENTRY, COURIER
+        MINING, SENTRY, COURIER, HAULER
     }
 
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Robotica.MODID);
@@ -57,8 +58,13 @@ public final class DronesRegistry {
             p -> new DroneItem(p.rarity(Rarity.COMMON), Kind.COURIER, 1));
     public static final DeferredItem<DroneItem> COURIER_DRONE_MK2 = ITEMS.registerItem("courier_drone_mk2",
             p -> new DroneItem(p.rarity(Rarity.UNCOMMON), Kind.COURIER, 2));
+    public static final DeferredItem<DroneItem> HAULER_DRONE = ITEMS.registerItem("hauler_drone",
+            p -> new DroneItem(p.rarity(Rarity.COMMON), Kind.HAULER, 1));
+    public static final DeferredItem<DroneItem> HAULER_DRONE_MK2 = ITEMS.registerItem("hauler_drone_mk2",
+            p -> new DroneItem(p.rarity(Rarity.UNCOMMON), Kind.HAULER, 2));
     public static final DeferredItem<CourierRemoteItem> COURIER_REMOTE = ITEMS.registerItem("courier_remote",
             p -> new CourierRemoteItem(p));
+
 
     /** Pending link source and bound drone of the Courier Remote. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> COURIER_LINK =
@@ -79,6 +85,11 @@ public final class DronesRegistry {
                     .sized(0.6F, 0.5F).eyeHeight(0.3F).fireImmune().clientTrackingRange(10).updateInterval(2)
                     .build(Robotica.MODID + ":courier_drone"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<HaulerDrone>> HAULER_DRONE_ENTITY =
+            ENTITIES.register("hauler_drone", () -> EntityType.Builder.<HaulerDrone>of(HaulerDrone::new, MobCategory.MISC)
+                    .sized(0.6F, 0.5F).eyeHeight(0.3F).fireImmune().clientTrackingRange(10).updateInterval(2)
+                    .build(Robotica.MODID + ":hauler_drone"));
+
     public static final DeferredHolder<MenuType<?>, MenuType<CourierDroneMenu>> COURIER_MENU =
             MENUS.register("courier_drone", () -> IMenuTypeExtension.create((id, inv, buf) -> new CourierDroneMenu(id, inv, buf.readVarInt())));
 
@@ -98,9 +109,11 @@ public final class DronesRegistry {
         RoboticaTab.add(SENTRY_DRONE);
         RoboticaTab.add(COURIER_DRONE);
         RoboticaTab.add(COURIER_REMOTE);
+        RoboticaTab.add(HAULER_DRONE);
         RoboticaTab.add(MINING_DRONE_MK2);
         RoboticaTab.add(SENTRY_DRONE_MK2);
         RoboticaTab.add(COURIER_DRONE_MK2);
+        RoboticaTab.add(HAULER_DRONE_MK2);
         RoboticaTab.add(MINING_DRONE_MK3);
     }
 }

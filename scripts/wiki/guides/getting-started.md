@@ -42,6 +42,7 @@ No gold or diamonds needed.
 | [[charger]] | charges FE items at 2,000 FE/t |
 | [[copper_cell]] | 800,000 FE battery; recharges the tool in your hand |
 | [[bore_drill]] | smithing: [[tool_upgrade_kit_1]] + Tinker's Hammer + [[electric_motor]]; 400k FE, 40 FE per block |
+| [[hauler_drone]] | right-click an animal or villager with it to carry it home; 2 FE/t while carrying |
 
 {{items combustion_generator charger copper_cell tool_upgrade_kit_1 bore_drill}}
 

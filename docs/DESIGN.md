@@ -495,6 +495,35 @@ Getting home and travelling between bases. All teleports run on the server, cost
 - Cinder Forge: a ruined 23x23 Nether forge of blackstone, basalt and gold with a magma ring, lava cauldrons and soul lanterns (template `cinder_forge.nbt`, `scripts/data/boss_structure.py`) around the Forge Altar, with a chest holding an Ignition Charge. Every `#c:is_nether` biome except basalt deltas; on a cave floor between y 33 and 100 (corners within 5 blocks, no lava in the hall's height at the centre, corners and edge midpoints); lava touching the hall's sides or roof turns to blackstone when it is placed; random spread 32 chunks, separation 12, kept 7 chunks from fortresses and bastions.
 - Server config `robotica-boss-server.toml`: `bossHealthMultiplier` (max 3.4), `bossDamageMultiplier`, `colossusMinionCap` (Colossus); `tyrantHealth` (max 1024), `tyrantArmor`, `tyrantMeleeDamage`, `tyrantBreathDamage`, `tyrantMortarDamage`, `tyrantEruptionDamage`, `tyrantAttackCooldown`, `tyrantAttackCooldownPhaseTwo`, `tyrantAttacksPerVent`, `tyrantVentTicks`, `tyrantVentDamageMultiplier` (Tyrant); `maxAttackerDistance`, `regenDelaySeconds`, `regenRadius`, `regenPercentPerSecond` (fight); `altarCooldownSeconds`, `lootLockSeconds`; `foundryEnabled`, `cinderForgeEnabled`.
 
+## Drones (module `drones`)
+
+Small flying robots with an owner, an FE buffer (Charger, cell right-click, or FE pushed into the entity) and a
+pick-up/deploy round trip through the item (energy, contents and settings kept). Mining Drone (tunnels), Sentry Drone
+(shoots monsters), Courier Drone (item routes), Hauler Drone (carries mobs). Drone key (default H): the nearest Mining
+Drone digs where you look; sneak + key calls all drones back.
+
+### Hauler Drone
+
+| | Mk1 | Mk2 |
+|---|---|---|
+| Recipe | Lead, Clockwork Mechanism, Copper Coil, 2 iron plates (first iron hour) | smithing: Advanced Circuit template + Mk1 + Servo Actuator |
+| Mobs | not `Enemy`: animals, villagers | also hostile mobs |
+| Size (bounding box) | up to 1.5 wide, 2.0 tall (horse, villager) | up to 2.0 wide, 3.0 tall (Iron Golem, Ravager) |
+| FE | 2 FE/t while carrying (`haulerFePerTick`), 100k buffer | 4 FE/t, 400k buffer, 1.5x flight speed |
+
+- Capture: right-click a mob with the item (`PlayerInteractEvent.EntityInteract` at LOW priority, cancelled events
+  skipped, so claim mods keep their mobs). The drone spawns above the mob and the mob rides it as a passenger, hanging
+  under it. It stays the same entity and is saved with the drone (vanilla `Passengers`).
+- Never: players, bosses (`c:bosses`, Wither, Ender Dragon, Elder Guardian, Warden, Robotica bosses), the
+  `robotica:hauler_blacklist` tag, drones, another player's pets, mobs that ride or are ridden.
+- While carried: AI off (the old no-AI flag is kept in the mob's persistent data and restored on every dismount), no
+  fall, in-wall, cramming or drowning damage, nothing can mount it, right-clicks on it go to the drone.
+- Follows the owner (teleports along when more than 32 blocks behind), flying high enough that the mob clears the
+  ground. Owner more than 64 blocks away or in another dimension: it hovers in place.
+- Release: right-click the drone or the mob with an empty hand (owner, team, operator). The mob is set down on the
+  highest safe floor below (lava and dangerous blocks skipped, water surface allowed). Running out of FE, death,
+  pick-up (sneak-right-click) and removal release it the same way.
+
 ## Onboarding (module `codex`)
 
 - Guide advancements `robotica:guide/*` (tab "Robotica", written by `scripts/data/codex_guide.py`): copper gear → craft a robot → wind a Mainspring → place a robot → robot working; hammer → first iron → generator, Charger, Copper Cell, Tesla Coil, power tools → Basic Circuit → press, cards, farm kit, warp → diamonds → Excavator → Survey Rig, Servo Age → Rusted Foundry or Signal Flare → Scrap Colossus → Servo Core → replicator, Deep Age → Cinder Forge or Ignition Charge → Forge Tyrant → Magma Core → Antigrav Age → Antigrav Core → Null Drill, portal. Rewards unlock the next recipes in the vanilla recipe book (the script fails if a Robotica recipe, except the Architect's, has no step).
@@ -581,3 +610,5 @@ Text and tag pass:
 - Tooltips, the module and set bonus lines and the Flight guide step show the player's real key binding (`Component.keybind`); the Codex and wiki name keys with their default ("Flight key (default K)"). Guide steps mark a binding as `{key:<mapping>}` in `codex_guide.py`.
 - Fortune card: Grinder and Alloy Smelter output. Range card: +1 item per Electric Furnace lane. Efficiency card: Combustion Generator `generatorEfficiencyPerCard`. Card texts read these numbers.
 - Mk1 display names: Excavator, Survey Rig, Item Pipe, Mining, Courier and Sentry Drone carry "Mk1" (ids unchanged).
+
+Hauler Drone (new): Mk1 13 IE plus a lead (Mining Drone Mk1: 17 IE), Mk2 167 IE by smithing. 2 FE/t only while carrying, 100k FE buffer (about 40 minutes of carrying); Mk2 4 FE/t, 400k FE. A Charger fills a Mk1 in under a minute.

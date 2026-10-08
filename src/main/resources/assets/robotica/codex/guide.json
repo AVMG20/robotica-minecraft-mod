@@ -55,6 +55,12 @@
       "age": 1
     },
     {
+      "id": "robotica:guide/hauler_drone",
+      "parent": "robotica:guide/first_iron",
+      "icon": "robotica:hauler_drone",
+      "age": 1
+    },
+    {
       "id": "robotica:guide/generator",
       "parent": "robotica:guide/first_iron",
       "icon": "robotica:combustion_generator",

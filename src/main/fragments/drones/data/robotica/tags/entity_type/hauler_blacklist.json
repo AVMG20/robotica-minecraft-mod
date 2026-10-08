@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:wither",
+    "minecraft:ender_dragon",
+    "minecraft:warden",
+    "minecraft:elder_guardian",
+    "robotica:scrap_colossus",
+    "robotica:forge_tyrant"
+  ]
+}

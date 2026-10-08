@@ -10,6 +10,7 @@ import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.entity.CourierDrone;
 import com.arno.robotica.drones.entity.CourierRoute;
+import com.arno.robotica.drones.entity.HaulerDrone;
 import com.arno.robotica.drones.entity.MiningDrone;
 import com.arno.robotica.drones.entity.SentryDrone;
 import net.minecraft.core.BlockPos;
@@ -413,5 +414,201 @@ public class DronesGameTests {
             clear(helper);
             helper.succeed();
         });
+    }
+
+    // ---------------------------------------------------------------- Hauler Drone
+
+    /** Clears the arena and lays a stone floor at y 0 (x, z 0..8). */
+    private static void floor(GameTestHelper helper) {
+        clear(helper);
+        for (int x = 0; x <= 8; x++) {
+            for (int z = 0; z <= 8; z++) helper.setBlock(p(x, 0, z), Blocks.STONE);
+        }
+    }
+
+    private static ItemStack haulerItem(int tier, int energy) {
+        ItemStack stack = new ItemStack(tier >= 2 ? DronesRegistry.HAULER_DRONE_MK2.get() : DronesRegistry.HAULER_DRONE.get());
+        ItemEnergy.set(stack, energy);
+        return stack;
+    }
+
+    private static HaulerDrone hauler(GameTestHelper helper, int tier, int x, int y, int z) {
+        HaulerDrone drone = helper.spawn(DronesRegistry.HAULER_DRONE_ENTITY.get(), p(x, y, z));
+        drone.setTier(tier);
+        drone.setHealth(drone.getMaxHealth());
+        drone.setOwnerUUID(UUID.randomUUID());
+        drone.setEnergy(drone.getEnergyCapacity());
+        return drone;
+    }
+
+    private static String key(@org.jetbrains.annotations.Nullable Component c) {
+        return c != null && c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t ? t.getKey() : String.valueOf(c);
+    }
+
+    /** Item on a villager: the drone deploys, the villager hangs under it without AI; an empty-hand click sets it down on the floor. */
+    @GameTest(template = "drones_arena", batch = "dronesHauler1", timeoutTicks = 200)
+    public static void haulerCarriesAndReleasesVillager(GameTestHelper helper) {
+        floor(helper);
+        Villager villager = helper.spawn(EntityType.VILLAGER, p(3, 1, 3));
+        villager.setCustomName(Component.literal("Bob"));
+        villager.setVillagerData(villager.getVillagerData().setProfession(net.minecraft.world.entity.npc.VillagerProfession.FARMER).setLevel(2));
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        BlockPos stand = helper.absolutePos(p(3, 1, 6));
+        player.moveTo(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5);
+        ItemStack stack = haulerItem(1, 50_000);
+        helper.assertTrue(HaulerDrone.capture(player, stack, villager), "a Mk1 takes a villager");
+        helper.assertTrue(villager.getVehicle() instanceof HaulerDrone, "the villager rides the drone");
+        HaulerDrone drone = (HaulerDrone) villager.getVehicle();
+        helper.assertTrue(villager.isNoAi(), "no AI while carried");
+        helper.assertTrue(drone.getEnergy() == 50_000 && drone.tier() == 1, "energy and tier come from the item");
+        helper.assertTrue(player.getUUID().equals(drone.getOwnerUUID()), "the player owns the drone");
+        double floorY = helper.absolutePos(p(0, 1, 0)).getY();
+        helper.runAfterDelay(4, () -> {
+            helper.assertTrue(villager.isPassenger(), "still carried");
+            helper.assertTrue(villager.getY() < drone.getY() - villager.getBbHeight() + 0.01, "the villager hangs under the drone");
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            drone.interactFrom(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            helper.assertTrue(!villager.isPassenger() && !drone.isCarrying(), "released");
+            helper.assertTrue(!villager.isNoAi(), "AI back after release");
+            helper.assertTrue(villager.isAlive() && Math.abs(villager.getY() - floorY) < 0.01, "set down on the floor, y " + villager.getY());
+            helper.assertTrue(villager.getCustomName() != null && villager.getCustomName().getString().equals("Bob"), "name kept");
+            helper.assertTrue(villager.getVillagerData().getProfession() == net.minecraft.world.entity.npc.VillagerProfession.FARMER
+                    && villager.getVillagerData().getLevel() == 2, "profession kept");
+            helper.assertTrue(drone.isAlive(), "the drone stays");
+            drone.discard();
+            villager.discard();
+            player.discard();
+            clear(helper);
+            helper.succeed();
+        });
+    }
+
+    /** Mk1 refuses hostile and Iron Golem sized mobs, Mk2 takes them. */
+    @GameTest(template = "drones_arena", batch = "dronesHauler2", timeoutTicks = 100)
+    public static void haulerMk1RefusesZombieMk2TakesIt(GameTestHelper helper) {
+        floor(helper);
+        net.minecraft.world.entity.monster.Zombie zombie = helper.spawn(EntityType.ZOMBIE, p(3, 1, 3));
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ItemStack mk1 = haulerItem(1, 50_000);
+        helper.assertTrue(key(HaulerDrone.refusal(zombie, player, 1)).equals("message.robotica.hauler.hostile"), "Mk1: hostile mobs need a Mk2");
+        helper.assertTrue(!HaulerDrone.capture(player, mk1, zombie) && !zombie.isPassenger() && mk1.getCount() == 1, "Mk1 refuses the zombie");
+        var golem = EntityType.IRON_GOLEM.create(helper.getLevel());
+        helper.assertTrue(key(HaulerDrone.refusal(golem, player, 1)).equals("message.robotica.hauler.too_big_mk1"), "an Iron Golem is too big for Mk1");
+        helper.assertTrue(HaulerDrone.refusal(golem, player, 2) == null, "Mk2 takes an Iron Golem");
+        helper.assertTrue(HaulerDrone.refusal(EntityType.RAVAGER.create(helper.getLevel()), player, 2) == null, "Mk2 takes a Ravager");
+        helper.assertTrue(HaulerDrone.refusal(EntityType.HORSE.create(helper.getLevel()), player, 1) == null, "Mk1 takes a horse");
+        helper.assertTrue(HaulerDrone.refusal(EntityType.GHAST.create(helper.getLevel()), player, 2) != null, "a Ghast is too big");
+        ItemStack mk2 = haulerItem(2, 50_000);
+        helper.assertTrue(HaulerDrone.capture(player, mk2, zombie), "Mk2 takes the zombie");
+        helper.assertTrue(zombie.getVehicle() instanceof HaulerDrone h && h.tier() == 2 && zombie.isNoAi(), "carried by a Mk2");
+        HaulerDrone drone = (HaulerDrone) zombie.getVehicle();
+        helper.assertTrue(HaulerDrone.capture(player, haulerItem(2, 50_000), zombie) == false, "a carried mob is not taken twice");
+        drone.releaseCargo();
+        helper.assertTrue(!zombie.isNoAi(), "AI back");
+        drone.discard();
+        zombie.discard();
+        player.discard();
+        clear(helper);
+        helper.succeed();
+    }
+
+    /** Players, bosses, blacklisted types, other players' pets and drones are never taken; your own pet is. */
+    @GameTest(template = "empty")
+    public static void haulerRefusesForbiddenMobs(GameTestHelper helper) {
+        var level = helper.getLevel();
+        net.minecraft.world.entity.player.Player player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        var wolf = EntityType.WOLF.create(level);
+        wolf.setTame(true, false);
+        wolf.setOwnerUUID(UUID.randomUUID());
+        helper.assertTrue(key(HaulerDrone.refusal(wolf, player, 2)).equals("message.robotica.hauler.cant"), "another player's wolf is refused");
+        wolf.setOwnerUUID(player.getUUID());
+        helper.assertTrue(HaulerDrone.refusal(wolf, player, 1) == null, "your own wolf is fine");
+        helper.assertTrue(HaulerDrone.refusal(EntityType.WITHER.create(level), player, 2) != null, "never the Wither");
+        helper.assertTrue(HaulerDrone.refusal(EntityType.WARDEN.create(level), player, 2) != null, "never the Warden");
+        helper.assertTrue(HaulerDrone.refusal(com.arno.robotica.boss.BossRegistry.SCRAP_COLOSSUS.get().create(level), player, 2) != null, "never a Robotica boss");
+        helper.assertTrue(EntityType.ELDER_GUARDIAN.is(HaulerDrone.BLACKLIST), "bosses are in robotica:hauler_blacklist");
+        helper.assertTrue(HaulerDrone.refusal(helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL), player, 2) != null, "never a player");
+        helper.assertTrue(HaulerDrone.refusal(DronesRegistry.SENTRY_DRONE_ENTITY.get().create(level), player, 2) != null, "never a drone");
+        helper.succeed();
+    }
+
+    /** The carried mob is saved inside the drone (vanilla Passengers) and comes back riding it, still without AI. */
+    @GameTest(template = "drones_arena", batch = "dronesHauler3", timeoutTicks = 100)
+    public static void haulerCargoSurvivesSaveAndLoad(GameTestHelper helper) {
+        floor(helper);
+        ServerLevel level = helper.getLevel();
+        Villager villager = helper.spawn(EntityType.VILLAGER, p(3, 1, 3));
+        villager.setCustomName(Component.literal("Carried"));
+        HaulerDrone drone = hauler(helper, 1, 3, 4, 3);
+        helper.assertTrue(drone.grab(villager), "grabbed");
+        CompoundTag tag = new CompoundTag();
+        helper.assertTrue(drone.save(tag) && tag.contains("Passengers"), "the drone saves its passenger");
+        helper.assertTrue(!villager.save(new CompoundTag()), "the passenger is not saved on its own");
+        drone.remove(net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK);
+        villager.remove(net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK);
+        helper.assertTrue(villager.isNoAi(), "unloading does not wake the mob");
+        net.minecraft.world.entity.Entity loaded = EntityType.loadEntityRecursive(tag, level, e -> e);
+        helper.assertTrue(loaded instanceof HaulerDrone, "the drone loads");
+        helper.assertTrue(level.tryAddFreshEntityWithPassengers(loaded), "added back to the level");
+        HaulerDrone again = (HaulerDrone) loaded;
+        helper.assertTrue(again.cargo() instanceof Villager v && v.getCustomName() != null && v.getCustomName().getString().equals("Carried"),
+                "the villager comes back riding the drone");
+        Villager back = (Villager) again.cargo();
+        helper.assertTrue(back.isNoAi() && back.getPersistentData().contains(HaulerDrone.PREV_NO_AI), "still without AI, old flag kept");
+        again.releaseCargo();
+        helper.assertTrue(!back.isNoAi() && !back.isPassenger(), "released after loading");
+        again.discard();
+        back.discard();
+        clear(helper);
+        helper.succeed();
+    }
+
+    /** A destroyed drone sets the mob down alive on the floor, AI on. */
+    @GameTest(template = "drones_arena", batch = "dronesHauler4", timeoutTicks = 100)
+    public static void haulerDeathSetsMobDown(GameTestHelper helper) {
+        floor(helper);
+        var cow = helper.spawn(EntityType.COW, p(3, 1, 3));
+        HaulerDrone drone = hauler(helper, 1, 3, 4, 3);
+        helper.assertTrue(drone.grab(cow) && cow.isNoAi(), "grabbed");
+        double floorY = helper.absolutePos(p(0, 1, 0)).getY();
+        helper.runAfterDelay(3, () -> {
+            drone.kill();
+            helper.assertTrue(!cow.isPassenger() && cow.isAlive() && !cow.isNoAi(), "the cow is set down alive with AI");
+            helper.assertTrue(Math.abs(cow.getY() - floorY) < 0.01, "on the floor, y " + cow.getY());
+            cow.discard();
+            helper.killAllEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class);
+            clear(helper);
+            helper.succeed();
+        });
+    }
+
+    /** No FE while empty, fePerTick while carrying, and an empty buffer sets the mob down. */
+    @GameTest(template = "drones_arena", batch = "dronesHauler5", timeoutTicks = 200)
+    public static void haulerUsesEnergyOnlyWhileCarrying(GameTestHelper helper) {
+        floor(helper);
+        HaulerDrone drone = hauler(helper, 1, 3, 4, 3);
+        drone.setEnergy(10_000);
+        var cow = helper.spawn(EntityType.COW, p(3, 1, 3));
+        int[] start = new int[1];
+        helper.startSequence()
+                .thenExecuteAfter(10, () -> {
+                    helper.assertTrue(drone.getEnergy() == 10_000, "an empty drone uses no FE, has " + drone.getEnergy());
+                    helper.assertTrue(drone.grab(cow), "grabbed");
+                    start[0] = drone.getEnergy();
+                })
+                .thenExecuteAfter(20, () -> {
+                    int spent = start[0] - drone.getEnergy();
+                    helper.assertTrue(drone.ticksCarried > 0 && spent == drone.ticksCarried * drone.fePerTick(),
+                            "carrying costs " + drone.fePerTick() + " FE/t, spent " + spent + " in " + drone.ticksCarried + " ticks");
+                    helper.assertTrue(drone.fePerTick() == CoreConfig.scaleEnergy(DronesConfig.haulerFePerTick()), "Mk1 rate");
+                    drone.setEnergy(0);
+                })
+                .thenExecuteAfter(3, () -> {
+                    helper.assertTrue(!cow.isPassenger() && !cow.isNoAi() && cow.isAlive(), "out of FE: the cow is set down");
+                    drone.discard();
+                    cow.discard();
+                    clear(helper);
+                })
+                .thenSucceed();
     }
 }

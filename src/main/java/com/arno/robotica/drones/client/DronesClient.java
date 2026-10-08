@@ -46,12 +46,14 @@ public final class DronesClient {
         event.registerEntityRenderer(DronesRegistry.MINING_DRONE_ENTITY.get(), DroneRenderers::mining);
         event.registerEntityRenderer(DronesRegistry.SENTRY_DRONE_ENTITY.get(), DroneRenderers::sentry);
         event.registerEntityRenderer(DronesRegistry.COURIER_DRONE_ENTITY.get(), DroneRenderers::courier);
+        event.registerEntityRenderer(DronesRegistry.HAULER_DRONE_ENTITY.get(), DroneRenderers::hauler);
     }
 
     private static void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(MiningDroneModel.LAYER, MiningDroneModel::createLayer);
         event.registerLayerDefinition(SentryDroneModel.LAYER, SentryDroneModel::createLayer);
         event.registerLayerDefinition(CourierDroneModel.LAYER, CourierDroneModel::createLayer);
+        event.registerLayerDefinition(HaulerDroneModel.LAYER, HaulerDroneModel::createLayer);
     }
 
     private static void onClientTick(ClientTickEvent.Post event) {

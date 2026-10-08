@@ -29,6 +29,8 @@
   "advancements.robotica.guide.first_iron.description": "Smelt iron: it makes a generator, a battery and power tools.",
   "advancements.robotica.guide.mining_drone.title": "Dig Buddy",
   "advancements.robotica.guide.mining_drone.description": "Craft a Mining Drone Mk1. Give it a battery and torches: it digs a 3x3 tunnel and brings the loot back.",
+  "advancements.robotica.guide.hauler_drone.title": "Airlift",
+  "advancements.robotica.guide.hauler_drone.description": "Craft a Hauler Drone Mk1 and right-click a mob with it. The drone carries the mob and follows you.",
   "advancements.robotica.guide.generator.title": "Fire It Up",
   "advancements.robotica.guide.generator.description": "Place a Combustion Generator and right-click it with coal or logs.",
   "advancements.robotica.guide.charger.title": "Topped Up",

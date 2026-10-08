@@ -73,6 +73,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `step_assist_module` | 5 | 16 |  | 1 |  |  |  |  | planks 3, cobblestone 4 | 12 |
 | `solar_panel_mk1` | 6 | 4 | 1 | 3 |  |  |  |  | glass 3 | 12.1 |
 | `upgrade_speed` | 7 | 2 | 1 | 5 |  |  |  |  | sugar 2 | 13 |
+| `hauler_drone` | 3 | 24 |  |  |  |  |  |  | lead 1, planks 4, cobblestone 5 | 13.4 |
 | `raw_thorium_block` |  |  |  |  |  |  |  |  | thorium 9 | 13.5 |
 | `thorium_block` |  |  |  |  |  |  |  |  | thorium 9 | 13.5 |
 | `night_vision_module` | 5 | 10 | 1 | 3 |  |  |  |  | golden_carrot 1 | 13.7 |
@@ -83,6 +84,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `magnet_module` | 6 | 10 | 1 | 5 |  |  |  |  |  | 15 |
 | `upgrade_void` | 7 | 2 | 1 | 3 |  |  |  |  | obsidian 2, cactus 2 | 15.2 |
 | `capacitor_plating_module` | 7 | 6 | 1 | 8 |  |  |  |  |  | 15.6 |
+| `item_pipe_mk3` | 4 | 13.75 | 1.25 | 2.38 | 0.12 |  |  |  | quartz 0.25, planks 1.5, cobblestone 1.88, glass 0.25 | 15.8 |
 | `mining_drone` | 6 | 24 |  | 2 |  |  |  |  | planks 4, cobblestone 5, stick 2 | 16.7 |
 | `looting_module` | 5 | 2 | 1 | 3 |  |  |  |  | emerald 1, lapis 2 | 17 |
 | `storage_terminal` | 11 | 4 | 1 | 4 |  |  |  |  | chest 2, planks 4 | 18.4 |
@@ -123,6 +125,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `exo_boots_mk1` | 22 | 80 |  | 5 |  |  |  |  | iron_boots 1, planks 8, cobblestone 10 | 57.1 |
 | `exo_leggings_mk1` | 22 | 80 |  | 5 |  |  |  |  | iron_leggings 1, planks 8, cobblestone 10 | 57.1 |
 | `exo_chestplate_mk1` | 39 | 88 |  | 7 |  |  |  |  | iron_chestplate 1, planks 8, cobblestone 10 | 78.1 |
+| `item_pipe_mk4` | 16.5 | 35.75 | 6.75 | 12.38 | 0.88 | 0.12 |  |  | blaze_rod 0.5, quartz 1.75, prismarine_crystals 0.5, blaze_powder 0.25, planks 3.5, cobblestone 4.38, glass 0.25 | 78.9 |
 
 ## Age 2 - Servo
 
@@ -179,6 +182,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `hydro_fins_module` | 40 | 80 | 16 | 28 | 2 |  |  |  | quartz 4, dried_kelp_block 2, planks 8, cobblestone 10 | 156.8 |
 | `jet_assist_module` | 40 | 80 | 16 | 28 | 2 |  |  |  | quartz 4, feather 2, planks 8, cobblestone 10 | 156.8 |
 | `ricochet_module` | 40 | 80 | 16 | 28 | 2 |  |  |  | slime_ball 2, quartz 4, planks 8, cobblestone 10 | 159.8 |
+| `hauler_drone_mk2` smithing | 41 | 104 | 16 | 28 | 2 |  |  |  | quartz 4, planks 12, lead 1, cobblestone 15 | 167.2 |
 | `mining_drone_mk2` smithing | 44 | 104 | 16 | 30 | 2 |  |  |  | quartz 4, planks 12, cobblestone 15, stick 2 | 170.5 |
 | `wireless_charger` | 65 | 45 | 15 | 34 | 3 |  |  |  | quartz 6, obsidian 4, cobblestone 1 | 183.6 |
 | `exo_helmet_mk2` smithing | 74 | 92 | 12 | 27 | 2 |  |  |  | obsidian 4, quartz 2, iron_helmet 1, planks 8, cobblestone 10 | 186.7 |

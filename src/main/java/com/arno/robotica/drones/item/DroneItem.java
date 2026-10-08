@@ -54,6 +54,7 @@ public class DroneItem extends Item implements EnergyItem {
             case MINING -> DronesConfig.miningBuffer(tier);
             case SENTRY -> DronesConfig.sentryBuffer(tier);
             case COURIER -> DronesConfig.courierBuffer(tier);
+            case HAULER -> DronesConfig.haulerBuffer(tier);
         };
     }
 
@@ -82,6 +83,7 @@ public class DroneItem extends Item implements EnergyItem {
             case MINING -> DronesRegistry.MINING_DRONE_ENTITY.get();
             case SENTRY -> DronesRegistry.SENTRY_DRONE_ENTITY.get();
             case COURIER -> DronesRegistry.COURIER_DRONE_ENTITY.get();
+            case HAULER -> DronesRegistry.HAULER_DRONE_ENTITY.get();
         };
     }
 
@@ -132,6 +134,11 @@ public class DroneItem extends Item implements EnergyItem {
         String key = kind.name().toLowerCase(java.util.Locale.ROOT) + (kind == DronesRegistry.Kind.MINING && tier >= 3 ? "_mk3" : "");
         tooltip.add(Component.translatable("tooltip.robotica.drone." + key).withStyle(ChatFormatting.GRAY));
         CompoundTag state = stack.get(DronesRegistry.DRONE_STATE.get());
+        if (kind == DronesRegistry.Kind.HAULER) {
+            tooltip.add(Component.translatable("tooltip.robotica.drone.hauler_use").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.translatable(tier >= 2 ? "tooltip.robotica.drone.hauler_mk2" : "tooltip.robotica.drone.hauler_mk1",
+                    com.arno.robotica.drones.entity.HaulerDrone.fePerTick(tier)).withStyle(ChatFormatting.DARK_GRAY));
+        }
         if (kind == DronesRegistry.Kind.COURIER) {
             tooltip.add(Component.translatable("tooltip.robotica.drone.courier_link").withStyle(ChatFormatting.DARK_GRAY));
             if (state != null) tooltip.add(Component.literal(CourierRoute.loadList(state).size() + " / " + CourierRoute.MAX_ROUTES).withStyle(ChatFormatting.DARK_AQUA));

@@ -392,8 +392,94 @@ def courier_remote_icon():
     return c
 
 
+HAULER1 = {
+    '1': '#F2C94C', '2': '#D9A62E', '3': '#B07F1E', '4': '#7A5512',      # safety yellow body
+    'a': '#C4CBCE', 'b': '#8D9599', 'c': '#4D5558', 'k': '#1E1A1A',      # steel clamp
+    'r': '#D4A73A', 'R': '#F2D27A',
+    'y': '#2FB8CC', 'Y': '#5FE3F0', 'z': '#D8FBFF',                      # cyan sensor
+}
+HAULER2 = dict(HAULER1)
+HAULER2.update({
+    '1': '#7E8A90', '2': '#566067', '3': '#3F484E', '4': '#2A3034',      # dark steel body
+    'a': '#FFE08A', 'b': '#F0B030', 'c': '#9A6A10',                      # gold clamp
+})
+
+
+def hauler_sheet(tier):
+    """Flat body with hazard stripes, a winch hub, four clamp fingers, rotors on posts and a cyan sensor."""
+    c = Canvas(64)
+    g = Canvas(64)
+    # body 8x3x8 at (0,0): hazard stripes round the sides, rivets on top, a hatch underneath
+    f = box(c, 0, 0, 8, 3, 8)
+    for name in ('west', 'east', 'north', 'south'):
+        x, y, rw, rh = f[name]
+        for dx in range(rw):
+            if (dx + (0 if tier == 1 else 1)) % 4 < 2:
+                c.set(x + dx, y + 1, 'k')
+    for dx, dy in ((1, 1), (6, 1), (1, 6), (6, 6)):
+        put(c, f['top'], dx, dy, 'R')
+    block(c, f['bottom'], 2, 2, 4, 4, 'c')
+    # hub 4x2x4 at (0,14): steel drum with a dark band
+    f = box(c, 0, 14, 4, 2, 4, ('a', 'b', 'c', 'k'))
+    for name in ('west', 'east', 'north', 'south'):
+        block(c, f[name], 0, 1, 4, 1, 'c')
+    # fingers 1x5x1 at (32,0): trim with a dark hooked tip
+    f = box(c, 32, 0, 1, 5, 1, ('a', 'b', 'c', 'k'))
+    for name in ('west', 'east', 'north', 'south'):
+        put(c, f[name], 0, 4, 'k')
+        put(c, f[name], 0, 0, 'a')
+    # posts 2x3x2 at (32,8)
+    box(c, 32, 8, 2, 3, 2, ('a', 'b', 'c', 'k'))
+    # sensor 3x2x1 at (40,0): cyan lens
+    f = box(c, 40, 0, 3, 2, 1, ('4', 'c', 'c', 'k'))
+    block(c, f['north'], 0, 0, 3, 2, 'k')
+    block(c, f['north'], 0, 0, 3, 1, 'Y')
+    put(c, f['north'], 1, 0, 'z')
+    block(g, f['north'], 0, 0, 3, 1, 'Y')
+    put(g, f['north'], 1, 0, 'z')
+    # rotors 6x1x6 at (0,26): plus shaped blade
+    f = box(c, 0, 26, 6, 1, 6, ('a', 'b', 'c', 'k'))
+    for name in ('top', 'bottom'):
+        x, y, rw, rh = f[name]
+        c.rect(x, y, rw, rh, '.')
+        c.rect(x, y + 2, rw, 2, 'b')
+        c.rect(x + 2, y, 2, rh, 'b')
+        c.rect(x + 2, y + 2, 2, 2, 'c')
+        c.rect(x, y + 2, rw, 1, 'a')
+    return c, g
+
+
+HAULER_YELLOW = ('#5E4210', '#9C6E14', '#D9A62E', '#F2C94C', '#FFF0B0')
+HAULER_ICON1 = ipal(HAULER_YELLOW, 'steel')
+HAULER_ICON2 = ipal(DSTEEL, 'gold')
+
+
+def hauler_icon(mk2):
+    """Front view: two rotors on posts, a flat hull with hazard stripes and a cyan sensor, a winch hub and an open clamp."""
+    def draw(c):
+        for x0 in (1, 10):                                                    # rotor blades and posts
+            c.rect(x0, 2, 5, 1, 'c').rect(x0, 2, 2, 1, 'd')
+            c.rect(x0 + 2, 3, 1, 2, 'b')
+        c.rect(2, 5, 12, 3, '3')                                              # hull
+        c.auto_shade({'3': ('2', '4')})
+        for x in range(3, 13, 3):                                             # hazard stripes
+            c.set(x, 7, 'k')
+        c.rect(6, 5, 4, 2, 'K').rect(7, 5, 2, 1, 'Y').set(7, 5, 'z')          # sensor
+        c.rect(6, 8, 4, 2, 'c').rect(6, 8, 4, 1, 'd')                         # winch hub
+        c.set(7, 9, 'y' if mk2 else 'b').set(8, 9, 'y' if mk2 else 'b')
+        c.draw(3, 10, ['bccccccccb', 'c........c', 'c........c', '.d......d.'])   # open clamp
+    return draw
+
+
 def main():
     ENTITY.mkdir(parents=True, exist_ok=True)
+    for pal, suffix in ((HAULER1, ''), (HAULER2, '_mk2')):
+        c, g = hauler_sheet(1 if not suffix else 2)
+        write_png(ENTITY / f'hauler_drone{suffix}.png', c.rows(), pal, 64)
+        if not suffix:
+            write_png(ENTITY / 'hauler_drone_glow.png', g.rows(), pal, 64)
+    write_item('hauler_drone', icon(hauler_icon(False)).rows(), HAULER_ICON1)
+    write_item('hauler_drone_mk2', icon(hauler_icon(True)).rows(), HAULER_ICON2)
     for tier, pal_m, pal_s, suffix in ((1, MK1, SENTRY1, ''), (2, MK2, SENTRY2, '_mk2')):
         c, g = mining_sheet(tier)
         write_png(ENTITY / f'mining_drone{suffix}.png', c.rows(), pal_m, 64)
