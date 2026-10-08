@@ -66,6 +66,7 @@ public abstract class ControllerMenu extends MachineMenu {
         if (be == null || viewer == null || ticks++ % SYNC_INTERVAL != 0) return;
         CompoundTag tag = new CompoundTag();
         be.writeSync(tag, registries);
+        tag.putBoolean("control", be.canControl(viewer));
         if (!tag.equals(lastSent)) {
             lastSent = tag;
             PacketDistributor.sendToPlayer(viewer, new ControllerSyncPayload(containerId, tag));
@@ -82,6 +83,11 @@ public abstract class ControllerMenu extends MachineMenu {
     }
 
     // ---- common readers (client) ----
+
+    /** Whether this player may change the controller (owner, team or operator); others only watch. */
+    public boolean canControl() {
+        return data.getBoolean("control");
+    }
 
     public boolean formed() {
         return data.getBoolean("formed");

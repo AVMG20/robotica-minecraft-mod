@@ -53,7 +53,7 @@ public class ReactorScreen extends ControllerScreen<ReactorMenu> {
         super.containerTick();
         if (resetButton != null) {
             resetButton.visible = menu.scrammed();
-            resetButton.active = menu.temperature() <= menu.resetTemp();
+            resetButton.active = menu.canControl() && menu.temperature() <= menu.resetTemp();
         }
     }
 
@@ -95,8 +95,13 @@ public class ReactorScreen extends ControllerScreen<ReactorMenu> {
         // Control rods
         small(g, Component.translatable("gui.robotica.energy.control_rods", shownRods()), x + SLIDER_X, y + 56, SLIDER_W);
         drawSlider(g, x + SLIDER_X, y + SLIDER_Y);
-        addTooltip(x + SLIDER_X, y + SLIDER_Y - 1, SLIDER_W, SLIDER_H + 2, Component.translatable("gui.robotica.energy.rods_slider_tip"),
-                Component.translatable("gui.robotica.energy.rods_slider_tip2").withStyle(ChatFormatting.GRAY));
+        if (menu.canControl()) {
+            addTooltip(x + SLIDER_X, y + SLIDER_Y - 1, SLIDER_W, SLIDER_H + 2, Component.translatable("gui.robotica.energy.rods_slider_tip"),
+                    Component.translatable("gui.robotica.energy.rods_slider_tip2").withStyle(ChatFormatting.GRAY));
+        } else {
+            addTooltip(x + SLIDER_X, y + SLIDER_Y - 1, SLIDER_W, SLIDER_H + 2, Component.translatable("gui.robotica.energy.rods_slider_tip"),
+                    Component.translatable("gui.robotica.energy.not_allowed").withStyle(ChatFormatting.RED));
+        }
 
         // Fuel burn bar under the fuel column, labels above the slots
         drawProgress(g, x + ReactorMenu.FUEL_X, y + 74, 16, 3, menu.burn());
@@ -168,7 +173,7 @@ public class ReactorScreen extends ControllerScreen<ReactorMenu> {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
-        if (button == 0 && onSlider(mx, my)) {
+        if (button == 0 && onSlider(mx, my) && menu.canControl()) {
             dragValue = sliderValue(mx);
             return true;
         }
@@ -197,7 +202,7 @@ public class ReactorScreen extends ControllerScreen<ReactorMenu> {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
-        if (onSlider(mx, my) && scrollY != 0) {
+        if (onSlider(mx, my) && scrollY != 0 && menu.canControl()) {
             int step = hasShiftDown() ? 1 : 5;
             int next = Math.max(0, Math.min(100, menu.rodInsertion() + (scrollY > 0 ? step : -step)));
             menu.data().putInt("rodsIn", next);

@@ -88,7 +88,7 @@ public class ControllerBlock extends Block implements EntityBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!level.isClientSide && placer instanceof Player player && level.getBlockEntity(pos) instanceof StructureControllerBlockEntity be) {
-            be.setOwner(player.getUUID());
+            be.setOwner(player.getUUID(), player.getGameProfile().getName());
         }
     }
 

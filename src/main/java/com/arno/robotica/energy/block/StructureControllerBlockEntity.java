@@ -65,6 +65,8 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
 
     @Nullable
     private UUID owner;
+    /** Owner's name at placement, for the team check while the owner is offline. */
+    private String ownerName = "";
     private boolean formed;
     @Nullable
     private BoundingBox box;
@@ -124,8 +126,27 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
     }
 
     public void setOwner(@Nullable UUID owner) {
+        setOwner(owner, "");
+    }
+
+    public void setOwner(@Nullable UUID owner, String name) {
         this.owner = owner;
+        this.ownerName = name == null ? "" : name;
         setChanged();
+    }
+
+    /**
+     * Whether the player may change the controller (rods, reset, on/off): the owner, the owner's team or an operator.
+     * Without an owner (placed by commands) everyone. Anyone in reach may still open the GUI and watch.
+     */
+    public boolean canControl(net.minecraft.world.entity.player.Player player) {
+        if (player.hasPermissions(2)) return true;
+        String name = ownerName;
+        if (name.isEmpty() && owner != null && level instanceof ServerLevel sl) {
+            String known = com.arno.robotica.compat.OwnerNames.name(sl.getServer(), owner);
+            if (known != null) name = known;
+        }
+        return com.arno.robotica.power.util.Owners.allied(level, owner, name, player);
     }
 
     @Nullable
@@ -385,12 +406,14 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         if (owner != null) tag.putUUID("owner", owner);
+        if (!ownerName.isEmpty()) tag.putString("ownerName", ownerName);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
+        ownerName = tag.getString("ownerName");
     }
 
     /** Called when the controller block is broken: drop what it holds. */
