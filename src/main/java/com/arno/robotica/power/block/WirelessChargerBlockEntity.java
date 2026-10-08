@@ -67,6 +67,8 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     /** Server: players in range at the last scan, and what they got since. */
     private final List<Player> targets = new ArrayList<>();
     private long[] deliveredSince = new long[0];
+    /** Players whose items took nothing this scan window (all full or none): skipped until the next scan. */
+    private boolean[] satisfied = new boolean[0];
     private long window;
     private int fePerTick;
     private long totalDelivered;
@@ -147,10 +149,12 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         if ((age + pos.asLong()) % SCAN_INTERVAL == 0) scan(level, pos);
         int rate = ratePerPlayer();
         long tickTotal = 0;
-        for (int i = 0; i < targets.size(); i++) {
+        // an empty buffer charges nothing: skip the item lookups
+        for (int i = 0; i < targets.size() && energy.getEnergyStored() > 0; i++) {
             Player player = targets.get(i);
-            if (states[i] == DENIED || player.isRemoved() || !player.isAlive()) continue;
+            if (satisfied[i] || states[i] == DENIED || player.isRemoved() || !player.isAlive()) continue;
             long got = chargePlayer(player, rate);
+            if (got <= 0) satisfied[i] = true;
             deliveredSince[i] += got;
             tickTotal += got;
         }
@@ -209,6 +213,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         targets.clear();
         targets.addAll(found);
         deliveredSince = new long[found.size()];
+        satisfied = new boolean[found.size()];
         boolean changed = !Arrays.equals(newIds, ids) || !Arrays.equals(newStates, states);
         ids = newIds;
         states = newStates;

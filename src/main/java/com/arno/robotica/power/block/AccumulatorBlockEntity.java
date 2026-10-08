@@ -11,13 +11,12 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.level.block.Block;
 
 /** FE buffer. The energy travels with the item through the core ENERGY data component. */
-public class AccumulatorBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source {
+public class AccumulatorBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source, com.arno.robotica.compat.InfoSource {
     private static final int KIND = com.arno.robotica.power.menu.EnergyInfoMenu.KIND_STORAGE;
     private int lastStored = -1, netRate;
     public final MachineEnergyStorage energy;
@@ -25,6 +24,9 @@ public class AccumulatorBlockEntity extends PowerBlockEntity implements net.mine
     private final IEnergyStorage outputView;
     private final int io;
     private int lastSignal = -1;
+    /** Game time of the last tick it pushed energy out of its front. */
+    private long lastFlow = Long.MIN_VALUE / 2;
+    private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
 
     public AccumulatorBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.ACCUMULATOR_BE.get(), pos, state);
@@ -91,11 +93,14 @@ public class AccumulatorBlockEntity extends PowerBlockEntity implements net.mine
         }
         if (energy.getEnergyStored() > 0) {
             Direction front = state.getValue(PowerBlock.FACING);
-            IEnergyStorage target = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos.relative(front), front.getOpposite());
+            IEnergyStorage target = neighbors.get(level, pos, front);
             if (target != null && target.canReceive()) {
                 int offer = Math.min(io, energy.getEnergyStored());
                 int accepted = target.receiveEnergy(offer, false);
-                if (accepted > 0) energy.consume(accepted);
+                if (accepted > 0) {
+                    energy.consume(accepted);
+                    lastFlow = level.getGameTime();
+                }
             }
         }
         updateGauge(level, pos);
@@ -143,5 +148,11 @@ public class AccumulatorBlockEntity extends PowerBlockEntity implements net.mine
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+    }
+
+    /** Jade: working while energy moved in or out during the last second, else idle. */
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        info.status = netRate != 0 || level.getGameTime() - lastFlow < 20 ? "working" : "idle";
     }
 }

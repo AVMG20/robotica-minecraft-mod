@@ -10,6 +10,7 @@ import com.arno.robotica.energy.block.FusionControllerBlockEntity;
 import com.arno.robotica.energy.block.PortBlock;
 import com.arno.robotica.energy.block.PortBlockEntity;
 import com.arno.robotica.energy.block.ReactorControllerBlockEntity;
+import com.arno.robotica.energy.net.ControllerActionPayload;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.block.ChargerBlockEntity;
 import com.arno.robotica.power.tesla.TeslaCoilBlock;
@@ -494,4 +495,45 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /**
+     * Controller GUI actions (rods, reset, on/off) only work for the owner and the owner's team; a stranger with the
+     * GUI open may watch but changes nothing.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void controllerActionsNeedOwner(GameTestHelper helper) {
+        BlockPos rel = new BlockPos(2, 2, 2);
+        helper.setBlock(rel, EnergyRegistry.REACTOR_CONTROLLER.get());
+        ReactorControllerBlockEntity reactor = (ReactorControllerBlockEntity) helper.getBlockEntity(rel);
+        BlockPos pos = reactor.getBlockPos();
+        var owner = net.neoforged.neoforge.common.util.FakePlayerFactory.get(helper.getLevel(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.fromString("5e1d2c3b-0000-4000-8000-00000000e001"), "reactor_owner"));
+        var stranger = net.neoforged.neoforge.common.util.FakePlayerFactory.get(helper.getLevel(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.fromString("5e1d2c3b-0000-4000-8000-00000000e002"), "reactor_stranger"));
+        reactor.setOwner(owner.getUUID(), owner.getGameProfile().getName());
+        var scoreboard = helper.getLevel().getScoreboard();
+        var team = scoreboard.addPlayerTeam("robotica_reactor_test");
+        try {
+            for (var p : java.util.List.of(owner, stranger)) {
+                p.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 2.5);
+                p.containerMenu = new com.arno.robotica.energy.menu.ReactorMenu(1, p.getInventory(), reactor);
+            }
+            var rods = new ControllerActionPayload(pos, ControllerActionPayload.SET_RODS, 40);
+            helper.assertTrue(ControllerActionPayload.process(owner, rods) && reactor.rodInsertion() == 40, "the owner sets the rods");
+            var stray = new ControllerActionPayload(pos, ControllerActionPayload.SET_RODS, 90);
+            helper.assertTrue(!reactor.canControl(stranger), "a stranger may not control it");
+            helper.assertTrue(!ControllerActionPayload.process(stranger, stray) && reactor.rodInsertion() == 40, "a stranger changes nothing");
+            helper.assertTrue(stranger.containerMenu.stillValid(stranger), "a stranger may still watch");
+            scoreboard.addPlayerToTeam(owner.getScoreboardName(), team);
+            scoreboard.addPlayerToTeam(stranger.getScoreboardName(), team);
+            helper.assertTrue(ControllerActionPayload.process(stranger, stray) && reactor.rodInsertion() == 90, "a team mate may");
+            scoreboard.removePlayerFromTeam(stranger.getScoreboardName(), team);
+            reactor.setOwner(null);
+            helper.assertTrue(reactor.canControl(stranger), "without an owner everyone may");
+        } finally {
+            scoreboard.removePlayerTeam(team);
+            owner.containerMenu = owner.inventoryMenu;
+            stranger.containerMenu = stranger.inventoryMenu;
+        }
+        helper.succeed();
+    }
 }

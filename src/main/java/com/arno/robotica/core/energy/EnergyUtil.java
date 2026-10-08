@@ -6,25 +6,51 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
+import org.jetbrains.annotations.Nullable;
 
 /** FE transfer helpers for block entities (server side). */
 public final class EnergyUtil {
     private EnergyUtil() {}
 
-    /** Pushes up to maxPerSide FE from source into every neighbouring FE receiver. Returns total sent. */
-    public static int pushToNeighbors(ServerLevel level, BlockPos pos, MachineEnergyStorage source, int maxPerSide) {
-        int sent = 0;
-        for (Direction dir : Direction.values()) {
-            if (source.getEnergyStored() <= 0) break;
-            IEnergyStorage target = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos.relative(dir), dir.getOpposite());
-            if (target == null || !target.canReceive()) continue;
-            int offer = Math.min(maxPerSide, source.getEnergyStored());
-            int accepted = target.receiveEnergy(offer, false);
-            if (accepted > 0) {
-                source.consume(accepted);
-                sent += accepted;
-            }
+    private static final Direction[] DIRECTIONS = Direction.values();
+
+    /**
+     * Pushes up to {@code maxPerTick} FE in total from source into the neighbouring FE receivers: one budget shared by
+     * all six faces, split evenly over the receivers (what one does not take goes to the next). The face that goes
+     * first turns every tick, so remainders even out. Returns total sent.
+     */
+    public static int pushToNeighbors(ServerLevel level, BlockPos pos, MachineEnergyStorage source, int maxPerTick) {
+        return pushToNeighbors(level, pos, source, maxPerTick, null);
+    }
+
+    /** As {@link #pushToNeighbors(ServerLevel, BlockPos, MachineEnergyStorage, int)}, with cached neighbour lookups. */
+    public static int pushToNeighbors(ServerLevel level, BlockPos pos, MachineEnergyStorage source, int maxPerTick, @Nullable EnergyNeighbors cache) {
+        int budget = Math.min(maxPerTick, source.getEnergyStored());
+        if (budget <= 0) return 0;
+        IEnergyStorage[] targets = new IEnergyStorage[6];
+        int count = 0;
+        int start = (int) Math.floorMod(level.getGameTime(), 6L);
+        for (int i = 0; i < 6; i++) {
+            Direction dir = DIRECTIONS[(start + i) % 6];
+            IEnergyStorage target = cache != null ? cache.get(level, pos, dir)
+                    : level.getCapability(Capabilities.EnergyStorage.BLOCK, pos.relative(dir), dir.getOpposite());
+            if (target != null && target.canReceive()) targets[count++] = target;
         }
+        int left = budget;
+        // each pass splits what is left over the receivers that took their whole share last time (at most 6 passes)
+        while (left > 0 && count > 0) {
+            int active = 0;
+            for (int i = 0; i < count && left > 0; i++) {
+                int share = Math.max(1, left / (count - i));
+                int accepted = Math.min(share, targets[i].receiveEnergy(share, false));
+                if (accepted > 0) left -= accepted;
+                if (accepted >= share) targets[active++] = targets[i];
+            }
+            if (active == count) break;
+            count = active;
+        }
+        int sent = budget - left;
+        if (sent > 0) source.consume(sent);
         return sent;
     }
 

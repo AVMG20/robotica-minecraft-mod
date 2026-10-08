@@ -54,6 +54,10 @@ Control rods (0-100%) are set with the GUI slider; 100% stops the reactor. Heat 
 
 After a SCRAM, push rods in or add coolant first, then Reset: with the same setup it SCRAMs again.
 
+Only the owner, their team or an operator can move the rods or Reset. Other players can open the GUI and watch.
+
+JEI shows the heat, burn time and waste of every fuel and the points of every coolant, including datapack changes.
+
 ## Example outputs
 
 | Build | Output |

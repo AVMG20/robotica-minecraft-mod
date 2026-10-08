@@ -17,6 +17,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class FusionScreen extends ControllerScreen<FusionMenu> {
     private FitButton powerButton;
     private Boolean shownEnabled;
+    private boolean shownAllowed;
 
     public FusionScreen(FusionMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -36,15 +37,20 @@ public class FusionScreen extends ControllerScreen<FusionMenu> {
         powerButton = addRenderableWidget(new FitButton(leftPos + 98, topPos + 92, 48, 18, Component.empty(),
                 b -> PacketDistributor.sendToServer(new ControllerActionPayload(menu.pos(), ControllerActionPayload.SET_ENABLED, menu.enabled() ? 0 : 1))));
         shownEnabled = null;
+        shownAllowed = false;
         updateButton();
     }
 
     private void updateButton() {
         boolean on = menu.enabled();
-        if (shownEnabled != null && shownEnabled == on) return;
+        boolean allowed = menu.canControl();
+        if (shownEnabled != null && shownEnabled == on && shownAllowed == allowed) return;
         shownEnabled = on;
+        shownAllowed = allowed;
+        powerButton.active = allowed;
         powerButton.setMessage(Component.translatable(on ? "gui.robotica.energy.fusion_on" : "gui.robotica.energy.fusion_off"));
-        powerButton.setTooltip(Tooltip.create(Component.translatable(on ? "gui.robotica.energy.fusion_power_tip_on" : "gui.robotica.energy.fusion_power_tip_off")));
+        powerButton.setTooltip(Tooltip.create(Component.translatable(!allowed ? "gui.robotica.energy.not_allowed"
+                : on ? "gui.robotica.energy.fusion_power_tip_on" : "gui.robotica.energy.fusion_power_tip_off")));
     }
 
     @Override

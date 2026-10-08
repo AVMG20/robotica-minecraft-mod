@@ -75,6 +75,7 @@
   "gui.robotica.energy.show_hint": "The spyglass button outlines it in the world",
   "gui.robotica.energy.reset": "Reset",
   "gui.robotica.energy.reset_tip": "Restart after a SCRAM. Possible once it has cooled down",
+  "gui.robotica.energy.not_allowed": "Only the owner, their team or an operator can change this",
   "gui.robotica.energy.slot_fuel": "Fuel (thorium or enriched fuel pellets)",
   "gui.robotica.energy.slot_waste": "Waste: take it out, or pull it through an Access Port",
   "gui.robotica.energy.slot_fusion_fuel": "Fusion fuel",
@@ -176,5 +177,9 @@
   "robotica.configuration.fusionBuffer": "Fusion FE buffer",
   "robotica.configuration.fusionWarmupTicks": "Plasma warm-up (ticks)",
   "robotica.configuration.fusionStarveTicks": "Plasma survives without fuel (ticks)",
-  "robotica.configuration.fusionChargeRate": "Charging FE/t (all ports together)"
+  "robotica.configuration.fusionChargeRate": "Charging FE/t (all ports together)",
+  "jei.robotica.info.reactor_fuel": "Fission Reactor fuel. %s heat per rod, lasts %s s in one rod.",
+  "jei.robotica.info.reactor_fuel_waste": "Leaves %s.",
+  "jei.robotica.info.fusion_fuel": "Fusion Reactor fuel. %s FE/t for %s s.",
+  "jei.robotica.info.reactor_coolant": "Fission Reactor coolant: %s points per Fuel Rod side. More points cool more and raise efficiency."
 }

@@ -3,6 +3,7 @@ package com.arno.robotica.energy.net;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.energy.block.FusionControllerBlockEntity;
 import com.arno.robotica.energy.block.ReactorControllerBlockEntity;
+import com.arno.robotica.energy.block.StructureControllerBlockEntity;
 import com.arno.robotica.energy.menu.ControllerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -15,7 +16,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
  * Client to server: a button or slider in a controller GUI. Only accepted when the player's open menu belongs to that
- * position and is still valid (in reach), so it can not be used remotely.
+ * position and is still valid (in reach), so it can not be used remotely, and only from the owner, the owner's team or
+ * an operator ({@link StructureControllerBlockEntity#canControl}). Other players may watch.
  */
 public record ControllerActionPayload(BlockPos pos, int action, int value) implements CustomPacketPayload {
     public static final int SET_RODS = 0, RESET_SCRAM = 1, SET_ENABLED = 2;
@@ -39,9 +41,14 @@ public record ControllerActionPayload(BlockPos pos, int action, int value) imple
     }
 
     private static void handle(ControllerActionPayload payload, IPayloadContext context) {
-        if (!(context.player() instanceof ServerPlayer player)) return;
-        if (!(player.containerMenu instanceof ControllerMenu menu) || !menu.pos().equals(payload.pos()) || !menu.stillValid(player)) return;
+        if (context.player() instanceof ServerPlayer player) process(player, payload);
+    }
+
+    /** Applies the action when the player may; returns whether it reached the controller. Public for game tests. */
+    public static boolean process(ServerPlayer player, ControllerActionPayload payload) {
+        if (!(player.containerMenu instanceof ControllerMenu menu) || !menu.pos().equals(payload.pos()) || !menu.stillValid(player)) return false;
         var be = player.level().getBlockEntity(payload.pos());
+        if (!(be instanceof StructureControllerBlockEntity controller) || !controller.canControl(player)) return false;
         switch (payload.action()) {
             case SET_RODS -> {
                 if (be instanceof ReactorControllerBlockEntity reactor) reactor.setRodInsertion(payload.value());
@@ -53,7 +60,9 @@ public record ControllerActionPayload(BlockPos pos, int action, int value) imple
                 if (be instanceof FusionControllerBlockEntity fusion) fusion.setEnabled(payload.value() != 0);
             }
             default -> {
+                return false;
             }
         }
+        return true;
     }
 }

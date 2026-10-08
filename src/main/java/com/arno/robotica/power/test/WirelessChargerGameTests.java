@@ -147,4 +147,29 @@ public class WirelessChargerGameTests {
             helper.succeed();
         });
     }
+
+    /**
+     * A player with nothing to charge is skipped until the next scan, and an empty buffer skips everyone: a cell picked
+     * up later still gets charged after the next scan, and nothing is drawn while there is nothing to charge.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void wirelessChargerSkipsFullPlayers(GameTestHelper helper) {
+        ServerPlayer owner = player(helper, 2);
+        WirelessChargerBlockEntity be = charger(helper, owner);
+        int start = be.energy.getEnergyStored();
+        ItemStack cell = emptyCell();
+        helper.runAfterDelay(15, () -> {
+            helper.assertTrue(be.energy.getEnergyStored() == start && be.totalDelivered() == 0, "nothing to charge, nothing drawn");
+            owner.setItemInHand(InteractionHand.MAIN_HAND, cell);
+        });
+        helper.runAfterDelay(15 + WirelessChargerBlockEntity.SCAN_INTERVAL + 3, () -> {
+            helper.assertTrue(ItemEnergy.get(cell) > 0, "the new cell is charged after the next scan");
+            be.energy.setEnergy(0);
+            long delivered = be.totalDelivered();
+            helper.runAfterDelay(3, () -> {
+                helper.assertTrue(be.totalDelivered() == delivered, "an empty buffer charges nothing");
+                helper.succeed();
+            });
+        });
+    }
 }

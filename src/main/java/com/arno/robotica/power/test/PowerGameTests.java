@@ -354,4 +354,45 @@ public class PowerGameTests {
             helper.succeed();
         });
     }
+
+    /**
+     * A generator's push rate is one budget for all six faces, split evenly over the receivers, with or without the
+     * neighbour cache; what one receiver does not take goes to the others.
+     */
+    @GameTest(template = "empty")
+    public static void pushToNeighborsSharesOneBudget(GameTestHelper helper) {
+        BlockPos center = new BlockPos(1, 2, 1);
+        java.util.List<AccumulatorBlockEntity> receivers = new java.util.ArrayList<>();
+        for (Direction dir : Direction.values()) {
+            BlockPos at = center.relative(dir);
+            // the front (output face, horizontal) points away, so the face touching the centre takes FE in
+            Direction front = dir.getAxis().isHorizontal() ? dir : Direction.NORTH;
+            helper.setBlock(at, PowerRegistry.ACCUMULATOR_1.get().defaultBlockState().setValue(PowerBlock.FACING, front));
+            receivers.add((AccumulatorBlockEntity) helper.getBlockEntity(at));
+        }
+        var source = new com.arno.robotica.core.energy.MachineEnergyStorage(1_000_000, 0, 1_000_000, () -> {});
+        source.setEnergy(1_000_000);
+        var level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(center);
+        int sent = com.arno.robotica.core.energy.EnergyUtil.pushToNeighbors(level, abs, source, 600);
+        helper.assertTrue(sent == 600, "600 FE in total, not per face: sent " + sent);
+        helper.assertTrue(source.getEnergyStored() == 1_000_000 - 600, "the source paid what was sent");
+        for (AccumulatorBlockEntity r : receivers) helper.assertTrue(r.stored() == 100, "an even share each, got " + r.stored());
+
+        var cache = new com.arno.robotica.core.energy.EnergyNeighbors();
+        sent = com.arno.robotica.core.energy.EnergyUtil.pushToNeighbors(level, abs, source, 6_000, cache);
+        int total = receivers.stream().mapToInt(AccumulatorBlockEntity::stored).sum();
+        helper.assertTrue(sent == 6_000 && total == 6_600, "cached lookups share the budget too: sent " + sent + ", stored " + total);
+
+        // a full receiver leaves its share to the others
+        receivers.get(0).energy.setEnergy(receivers.get(0).capacity());
+        sent = com.arno.robotica.core.energy.EnergyUtil.pushToNeighbors(level, abs, source, 500, cache);
+        helper.assertTrue(sent == 500, "the rest take the full budget: sent " + sent);
+
+        // never more than the source holds
+        source.setEnergy(50);
+        sent = com.arno.robotica.core.energy.EnergyUtil.pushToNeighbors(level, abs, source, 600, cache);
+        helper.assertTrue(sent == 50 && source.getEnergyStored() == 0, "only what the source holds: sent " + sent);
+        helper.succeed();
+    }
 }

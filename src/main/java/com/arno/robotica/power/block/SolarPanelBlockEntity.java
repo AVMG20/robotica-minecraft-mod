@@ -11,15 +11,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Generates while it is day and the sky is visible (checked once per second). Pushes into every neighbour. Takes no
+ * Generates while it is day and the sky is visible (checked once per second). Pushes into its neighbours (one shared rate for all faces). Takes no
  * cards.
  */
-public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source {
+public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source, com.arno.robotica.compat.InfoSource {
     public final MachineEnergyStorage energy;
     private final SolarPanelBlock.Tier tier;
     private final int pushRate;
     private boolean sunny;
     private boolean openSky;
+    private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
 
     private int currentOutput() {
         return sunny ? CoreConfig.scaleGeneration(tier.output()) : 0;
@@ -83,7 +84,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         }
         int gen = currentOutput();
         if (gen > 0) energy.generate(gen);
-        if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, pushRate);
+        if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, pushRate, neighbors);
     }
 
     @Override
@@ -96,5 +97,12 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+    }
+
+    /** Jade: generating, generating into a full buffer, or idle (night, no sky). */
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        if (!sunny) info.status = "idle";
+        else info.status = energy.getEnergyStored() >= energy.getMaxEnergyStored() ? "output_full" : "working";
     }
 }

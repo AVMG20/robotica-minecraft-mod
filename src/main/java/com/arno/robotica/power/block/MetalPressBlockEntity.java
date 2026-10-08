@@ -40,7 +40,7 @@ import net.minecraft.core.Direction;
  * Base cost is {@link PowerConfig#pressPower()} FE/t over the recipe time. A speed card divides the time and multiplies
  * the FE/t by the same factor (so the cost per plate only rises by the card's energy penalty); an efficiency card lowers it.
  */
-public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvider {
+public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
     public static final int ENERGY_CAPACITY = 20_000;
     public static final int MAX_RECEIVE = 1_000;
 
@@ -193,5 +193,18 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         progress = tag.getInt("progress");
         sides.load(tag.getCompound("sides"));
+    }
+
+    /** Jade: working, output full, no energy or idle, and the plate progress. */
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        boolean lit = getBlockState().hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT)
+                && getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT);
+        PressingRecipe recipe = findRecipe(items.getStackInSlot(0));
+        if (lit) info.status = "working";
+        else if (recipe != null && !canOutput(recipe)) info.status = "output_full";
+        else if (recipe != null && energy.getEnergyStored() <= 0) info.status = "no_energy";
+        else info.status = "idle";
+        if (needed > 0 && progress > 0) info.progress = (int) Math.min(100, 100L * progress / needed);
     }
 }
