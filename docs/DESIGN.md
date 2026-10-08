@@ -548,6 +548,8 @@ Drone digs where you look; sneak + key calls all drones back.
 - The server syncs finished guide steps to the client (`robotica:codex_guide_progress`); the Codex's first chapter "Next steps" lists the steps you can do now and a checklist.
 - Age goal steps are titled like the item tooltips ("Age 2: Servo"); Codex and wiki say "Age 2", and Mk (never "mark") for tiers. Text uses US spelling.
 - When a guide step is done, chat names the next one or two steps (config `guideChatTips`).
+- Codex layout pages (`"layout": "<id>"` in chapters.json) draw an example build one layer per sub-page, bottom first; hover a block for its name, click it for its recipe. The builds come from `scripts/wiki/multiblocks.json` (checked by `multiblock_check.py`) through `scripts/data/codex_multiblocks.py`.
+- Codex pages and guide steps never repeat what a tooltip, the recipe view or another page already says: no stats, recipes or compat lines. A page holds only tips you would not find otherwise (one line, or none, is fine).
 - Tooltips: one or two short lines; Shift shows details (keys as bound, FE per block, settings) from `HasDetails` or lang keys `tooltip.robotica.<id>.details`.
 - Config-true text: every in-game line that shows a configurable number gets it as a translation argument from the
   config (`DetailArgs` for `.details` keys, `UpgradeText` for cards). Guide advancement texts carry no config numbers;

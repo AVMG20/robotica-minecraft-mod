@@ -2,33 +2,17 @@
 title: Item Pipes and Machine Sides
 icon: item_pipe
 order: 65
-summary: Move items with pipes and set which machine face takes items in or gives them out.
+summary: Filters, order and priority on pipe arms, and which machine face takes items in or gives them out.
 ---
-Pipes move items instantly between chests and machines.
-
-{{items item_pipe item_pipe_mk2 item_pipe_mk3 item_pipe_mk4 grinder_mk1 electric_furnace_mk1}}
+{{items item_pipe item_pipe_mk2 item_pipe_mk3 item_pipe_mk4}}
 
 {{image shots/17_item_pipes.jpg|Item Pipes from a chest through a Grinder and an Electric Furnace into a chest}}
 
-## Pipes
-
-| Pipe | Age | Moves | Items/s |
-|---|---|---|---|
-| [[item_pipe]] | 1 | 8 items every second | 8 |
-| [[item_pipe_mk2]] | 1 | 32 items every half second | 64 |
-| [[item_pipe_mk3]] | 2 | 64 items every 5 ticks | 256 |
-| [[item_pipe_mk4]] | 3 | 128 items every 4 ticks | 640 |
-
-1. Lay pipes from the source to the target. Pipes of every tier connect; each Extract arm pulls at its own pipe's rate.
-2. Every arm into a chest or machine starts as **Insert**.
-3. Sneak-right-click the arm at the source with an empty hand: **Extract**. Again: **Off**.
-4. Extract arms pull items and hand them to the Insert arms of the same line, in turn.
-
-- One network holds up to 4,096 pipes.
+Pipes of every tier connect; each Extract arm pulls at its own pipe's rate. Extract arms hand items to the Insert arms of the same line.
 
 ## Filters, order and priority
 
-Right-click an arm to open its screen: mode buttons, 9 filter slots and two switches.
+Right-click an arm to open its screen.
 
 {{image shots/gui_item_pipe.jpg|The screen of a pipe arm: Extract, a whitelist of raw ores, Closest first}}
 
@@ -45,7 +29,6 @@ Example: one chest feeds a Grinder and a Furnace. Whitelist ores on the Grinder 
 
 Grinder, Electric Furnace, Alloy Smelter, Centrifuge, Assembler, RTG and Metal Press have a **Sides** tab right of their screen.
 
-- Faces: Front, Back, Left, Right, Top, Bottom.
 - Click a face: Input, Output, Input + Output or None. Right-click goes back.
 - **Auto-input** pulls from chests on Input faces, **auto-eject** pushes results into chests on Output faces: up to 16 items every 10 ticks. Both start off.
 - Pipes and hoppers follow the same rules. None means pipes do not connect.

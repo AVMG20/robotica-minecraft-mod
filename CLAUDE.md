@@ -14,7 +14,8 @@ The user is the only developer.
 - Generated data: `scripts/data/*.py` (recipes, models, guide steps) and `scripts/textures/*.py`. Edit the script, run
   it, commit both. Don't hand-edit generated JSON.
 - Codex (in-game book): `src/main/resources/assets/robotica/codex/chapters.json`; guide steps in
-  `scripts/data/codex_guide.py`.
+  `scripts/data/codex_guide.py`. Layout pages (`"layout": "<id>"`) draw a build from `scripts/wiki/multiblocks.json`,
+  copied by `scripts/data/codex_multiblocks.py`.
 - Wiki site (GitHub Pages, `docs/`): sources in `scripts/wiki/` (`items/*.json`, `upgrades.json`, `guides/*.md`,
   `multiblocks.json`, format in `FORMAT.txt`); run `python3 scripts/wiki/build_wiki.py`.
 
@@ -29,6 +30,8 @@ The user is the only developer.
 - Text everywhere (tooltips, Codex, wiki, lang) is short and direct. Item descriptions only add useful info:
   "Right-click to X", "Does Y", "Used for Z". No reasoning, design decisions or what it does not do
   ("never drops items", "will not X").
+- Say each thing once. The Codex and the wiki never repeat what a tooltip, the recipe view or another page already
+  says: no stat lists, recipes or "works with other mods" lines. Keep only real tips; an empty page beats filler.
 
 ## Git
 - Commit and push to `main` freely. Plain imperative commit subjects, no `Co-Authored-By` or tool advertising.

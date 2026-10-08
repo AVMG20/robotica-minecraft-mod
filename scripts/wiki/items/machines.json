@@ -4,11 +4,7 @@
    "items": [
     "bank_controller"
    ],
-   "what": "Brain of the Capacitor Bank: stores all its FE. Keeps the energy when mined.",
-   "use": [
-    "Build the bank around it, controller in a side wall.",
-    "Open it to see stored FE, in/out per second and problems."
-   ],
+   "what": "Brain of the Capacitor Bank: all its FE lives here. Keeps the energy when mined.",
    "stats": {
     "rows": [
      [
@@ -49,7 +45,7 @@
    "items": [
     "bank_port"
    ],
-   "what": "Moves FE in or out of a Capacitor Bank. Sneak-right-click to switch input/output.",
+   "what": "Moves FE in or out of a Capacitor Bank. Sneak-right-click to switch input/output. Output ports push into the block outside them, or into a [[tesla_coil_1]] on top.",
    "see": [
     "guide:capacitor-bank"
    ]
@@ -96,7 +92,7 @@
     "transfer_coil_advanced",
     "transfer_coil_elite"
    ],
-   "what": "Goes inside a Capacitor Bank. The coils together set how fast FE goes in and out.",
+   "what": "Goes inside a Capacitor Bank. All coils added up set how much FE goes in, and separately out, per tick.",
    "stats": {
     "columns": [
      "Basic",
@@ -128,8 +124,7 @@
    ],
    "what": "Brain of the Fission Reactor: fuel, temperature and control rods.",
    "use": [
-    "Build the reactor around it, controller in a side wall.",
-    "Put fuel pellets in.",
+    "Put fuel pellets in it or in a [[reactor_access_port]].",
     "Set the control rods with the slider to keep it under 1,000 C."
    ],
    "stats": {
@@ -188,7 +183,7 @@
    "items": [
     "reactor_access_port"
    ],
-   "what": "Wall block for fuel in and waste out. Hoppers and pipes work.",
+   "what": "Wall block for fuel in and waste out. Hoppers and pipes work. A full waste slot stops the reactor.",
    "see": [
     "guide:fission-reactor"
    ]
@@ -218,8 +213,9 @@
    "what": "Brain of the Fusion Reactor: ignition charge, plasma and fuel.",
    "use": [
     "Build the 7x3x7 around it.",
-    "Charge 100M FE through the Power Ports.",
-    "Add [[fusion_fuel_pellet]]; the button shows Running."
+    "Charge 100M FE into a [[reactor_power_port]], from a Capacitor Bank or Tesla Coils.",
+    "Put [[fusion_fuel_pellet]] in it or in a [[reactor_access_port]].",
+    "Set the button to Running: the charge is spent and the plasma lights."
    ],
    "stats": {
     "rows": [
@@ -234,10 +230,6 @@
      [
       "Warmup",
       "10 s"
-     ],
-     [
-      "Without fuel",
-      "collapses after 5 s"
      ],
      [
       "Fuel",
@@ -275,12 +267,11 @@
     "grinder_mk3",
     "grinder_mk4"
    ],
-   "what": "Doubles ores: 1 ore becomes 2 dusts. Works with every mod's ores by tag.",
+   "what": "Grinds an ore into 2 dusts (a gem ore into 2 gems), a raw ore into 1 dust with a 25% chance of a second, an ingot into 1 dust.",
    "use": [
-    "Put ores, raw ores or ingots in.",
-    "Add grinding media for a bonus.",
+    "Add grinding media in the second slot for more dust.",
     "Smelt the dusts in an [[electric_furnace_mk1]].",
-    "Right-click it with the next Mk to upgrade in place; everything inside stays."
+    "Right-click it with the next Mk to upgrade it in place; everything inside stays."
    ],
    "stats": {
     "columns": [
@@ -303,13 +294,6 @@
       "30 FE/t",
       "40 FE/t",
       "60 FE/t"
-     ],
-     [
-      "Card slots",
-      "2",
-      "3",
-      "4",
-      "5"
      ],
      [
       "Buffer",
@@ -341,8 +325,7 @@
    ],
    "what": "Smelts every furnace recipe in half the time, on several lanes at once.",
    "use": [
-    "Put items in the lanes.",
-    "Right-click it with the next Mk to upgrade in place; everything inside stays."
+    "Right-click it with the next Mk to upgrade it in place; everything inside stays."
    ],
    "stats": {
     "columns": [
@@ -372,13 +355,6 @@
       "30 FE/t",
       "40 FE/t",
       "60 FE/t"
-     ],
-     [
-      "Card slots",
-      "2",
-      "3",
-      "4",
-      "5"
      ]
     ]
    },
@@ -394,9 +370,10 @@
     "pyrosteel_grinding_balls",
     "resonant_grinding_balls"
    ],
-   "what": "Grinding media: more dust per ore and a chance of a byproduct. One loads into the Grinder and lasts its uses.",
+   "what": "Grinding media for the Grinder's second slot: more dust and a chance of a byproduct, on ores and raw ores (not gem ores). Each one lasts its uses.",
    "stats": {
     "columns": [
+     "Flint",
      "Iron",
      "Ferrothorium",
      "Pyrosteel",
@@ -405,6 +382,7 @@
     "rows": [
      [
       "Bonus",
+      "+10%",
       "+25%",
       "+50%",
       "+100%",
@@ -412,6 +390,7 @@
      ],
      [
       "Byproduct",
+      "2%",
       "5%",
       "10%",
       "20%",
@@ -419,6 +398,7 @@
      ],
      [
       "Uses",
+      "8",
       "16",
       "32",
       "64",
@@ -426,6 +406,7 @@
      ],
      [
       "Grinder",
+      "any",
       "Mk1",
       "Mk2",
       "Mk3",
@@ -443,7 +424,7 @@
     "gold_dust",
     "copper_dust"
    ],
-   "what": "Ground ore. Smelt it into an ingot.",
+   "what": "Smelt it into an ingot.",
    "see": [
     "guide:ore-processing"
    ]
@@ -494,7 +475,8 @@
    "what": "Crop bot: harvests and replants crops, picks berries, melons and pumpkins, cuts sugar cane, cactus, bamboo and kelp, tills dirt near water.",
    "use": [
     "Place it in your field with a chest or [[supply_crate]] touching it.",
-    "Right-click it with a wound [[mainspring]] or a cell."
+    "Right-click it with a wound [[mainspring]] or a cell.",
+    "Sneak-right-click: status and work area."
    ],
    "stats": {
     "columns": [
@@ -583,10 +565,10 @@
    ],
    "what": "Walking farm robot: keeps your animals at a set herd size, shears sheep, milks cows and collects drops.",
    "use": [
-    "Right-click a block among your animals to place it; that spot is its home.",
-    "Put a chest within 3 blocks of home with feed and empty buckets.",
-    "Give it a cell in its menu or charge it in a [[charger]].",
-    "Set the herd size with - and +; it is split evenly over the species with 2 or more adults.",
+    "Right-click a block in your pen with it: that spot is its home.",
+    "Put a chest within 3 blocks of home with feed and empty buckets. With several, it uses the biggest.",
+    "Power it with a cell in its battery slot, or charge it in a [[charger]].",
+    "Set the herd size in its menu.",
     "Sneak-right-click: pick it up with its energy and settings."
    ],
    "stats": {
@@ -597,7 +579,7 @@
     "rows": [
      [
       "Area",
-      "9x9",
+      "9x9, 2 below to 3 above",
       "13x13"
      ],
      [
@@ -629,10 +611,8 @@
     "excavator_mk3",
     "excavator_mk4"
    ],
-   "what": "Quarry: digs everything below it down to bedrock. Seals fluids, skips chests and other block entities.",
+   "what": "Quarry: digs everything below it down to bedrock. Seals fluids and skips chests and other block entities.",
    "use": [
-    "Place it where the hole should start.",
-    "Power it with a cell or a [[tesla_coil_1]].",
     "Put a chest next to it for the drops.",
     "Right-click it with the next Mk to upgrade it in place; cards, battery and progress stay."
    ],
@@ -659,32 +639,11 @@
       "1 / 20 ticks"
      ],
      [
-      "Card slots",
-      "2",
-      "3",
-      "4",
-      "5"
-     ],
-     [
-      "Speed cards",
-      "2",
-      "4",
-      "6",
-      "8"
-     ],
-     [
-      "Range cards (+10 wide)",
-      "1",
-      "2",
-      "3",
-      "4"
-     ],
-     [
       "Power",
       "40 FE per block",
-      "40 FE per block",
-      "40 FE per block",
-      "40 FE per block"
+      "",
+      "",
+      ""
      ]
     ]
    },
@@ -700,10 +659,9 @@
     "survey_rig_mk3",
     "survey_rig_mk4"
    ],
-   "what": "Turns FE into random ores, as if mined with a pickaxe. No hole.",
+   "what": "Turns FE into random ores, as if mined with a pickaxe.",
    "use": [
-    "Place it anywhere and power it.",
-    "Put a chest next to it (or pipe from it).",
+    "Put a chest next to it, or pipe from it.",
     "A [[magma_core]] in its core slot adds ancient debris and resonite.",
     "Right-click it with the next Mk to upgrade it in place."
    ],
@@ -732,9 +690,9 @@
      [
       "FE per ore",
       "80,000",
-      "80,000",
-      "80,000",
-      "80,000"
+      "",
+      "",
+      ""
      ],
      [
       "Rare ores (weight 20 or less)",
@@ -742,20 +700,6 @@
       "+50%",
       "+100%",
       "+200%"
-     ],
-     [
-      "Card slots",
-      "2",
-      "3",
-      "4",
-      "5"
-     ],
-     [
-      "Speed cards",
-      "2",
-      "4",
-      "6",
-      "8"
      ],
      [
       "Buffer",
@@ -927,10 +871,9 @@
    "what": "Carries one mob hanging under it and follows you. The mob keeps its name, trades and stats.",
    "use": [
     "Right-click a mob with the drone to pick it up.",
-    "Right-click the drone or the mob with an empty hand to set the mob down. Sneak-right-click to pick up the drone.",
-    "Charge it in a Charger or right-click it with a cell.",
-    "Farther than 64 blocks from you or in another dimension, it waits in place.",
-    "Out of FE it hovers in place until there is safe ground below, then sets the mob down."
+    "Right-click the drone or the mob with an empty hand to set it down. Sneak-right-click to pick up the drone.",
+    "More than 64 blocks away or in another dimension, it waits in place.",
+    "Out of FE, it hovers until there is safe ground below, then sets the mob down."
    ],
    "stats": {
     "columns": [

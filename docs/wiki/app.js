@@ -488,7 +488,7 @@ function codexPage(i) {
   const c = D.codex[i];
   if (!c) return notFound();
   return crumbs([['Guides', '#/guides'], ['Codex'], [c.title]]) + `<h1>${esc(c.title)}</h1><p class="lead">From the in-game Codex.</p>` +
-    c.pages.map(p => `<div class="codexpg"><b>${esc(p.title)}</b><p>${esc(p.text)}</p>${p.items.length ? hotbar(p.items) : ''}</div>`).join('');
+    c.pages.map(p => `<div class="codexpg"><b>${esc(p.title)}</b><p>${esc(p.text)}</p>${p.items.length ? hotbar(p.items) : ''}${p.layout ? `<p><a href="#/multiblock/${p.layout}">See the build layer by layer</a></p>` : ''}</div>`).join('');
 }
 function itemsPage(mod) {
   const mods = D.modules.filter(m => !mod || m.id === mod);

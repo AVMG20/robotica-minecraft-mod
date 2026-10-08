@@ -11,56 +11,8 @@
       "icon": "robotica:copper_gear",
       "pages": [
         {
-          "title": "1. Copper day",
-          "text": "No iron needed.\n- Copper Gear: 4 copper ingots around a cobblestone.\n- Winding Crank and Mainspring.\nPut the spring in the crank and hold right-click on it: full in about 2 minutes.",
-          "items": [
-            "robotica:copper_gear",
-            "robotica:winding_crank",
-            "robotica:mainspring"
-          ]
-        },
-        {
-          "title": "2. First robot",
-          "text": "Craft Stumpy (trees) or Sprout (crops).\n- Place it with a chest or Supply Crate touching it.\n- Right-click it with the wound Mainspring.\nSneak-right-click: status and work area.",
-          "items": [
-            "robotica:clockwork_mechanism",
-            "robotica:wooden_chassis",
-            "robotica:stumpy",
-            "robotica:supply_crate"
-          ]
-        },
-        {
-          "title": "3. First iron",
-          "text": "- Tinker's Hammer: 2 ingots in the grid = 1 plate.\n- Combustion Generator: coal or logs, 80 FE/t.\n- Charger next to it: right-click it with a cell or tool.\n- Copper Cell: your first battery.",
-          "items": [
-            "robotica:tinkers_hammer",
-            "robotica:combustion_generator",
-            "robotica:charger",
-            "robotica:copper_cell"
-          ]
-        },
-        {
-          "title": "4. Power tools",
-          "text": "Smithing table, Tool Upgrade Kit I + Electric Motor:\n- Tinker's Hammer: Bore Drill\n- Felling Axe: Chainsaw\nV switches 1x1 / 3x3. A Copper Cell in your inventory recharges the drill.",
-          "items": [
-            "robotica:tool_upgrade_kit_1",
-            "robotica:electric_motor",
-            "robotica:bore_drill",
-            "robotica:chainsaw"
-          ]
-        },
-        {
-          "title": "5. Diamonds",
-          "text": "Diamonds open Age 2.\n- Excavator: digs a hole to bedrock. Speed cards and power make it fast.\n- Advanced Circuit, Reinforced Casing: the Servo parts.",
-          "items": [
-            "robotica:excavator",
-            "robotica:advanced_circuit",
-            "robotica:reinforced_casing"
-          ]
-        },
-        {
-          "title": "Where to look",
-          "text": "- Click an item: its recipe. Click ingredients to go down the ladder.\n- Shift on an item: details and keys.\n- Each guide step (Next steps, or L) unlocks the next recipes."
+          "title": "Using the book",
+          "text": "Copper, wood and cobblestone are all you need to start.\nNext steps shows what to do now. Each step you finish unlocks new recipes.\nClick an icon for its recipe. Hover it for stats, hold Shift for more."
         }
       ]
     },
@@ -70,28 +22,20 @@
       "pages": [
         {
           "title": "Five ages",
-          "text": "0 Clockwork: copper, wood\n1 Wired: iron, redstone, gold\n2 Servo: diamond, obsidian\n3 Deep: netherite, blaze\n4 Antigrav: pearls, nether star\nCores: Servo (Scrap Colossus), Magma (Forge Tyrant), Antigrav (crafted)."
+          "text": "Each age starts with a new material.\n0 Clockwork: copper, wood\n1 Wired: iron, gold, redstone\n2 Servo: diamond, obsidian\n3 Deep: netherite, blaze rods\n4 Antigrav: ender pearls, nether star"
         },
         {
           "title": "The parts ladder",
-          "text": "Each age has a casing, a circuit and a motor part, made from parts of the age before.\nA Reinforced Casing takes 4 Iron Casings.",
+          "text": "Every age has its own casing, circuit and motor, made from the parts of the age before.\nA Metal Press gets twice the plates out of your ingots that the Tinker's Hammer does.",
           "items": [
             "robotica:iron_casing",
             "robotica:reinforced_casing",
             "robotica:blazing_casing",
-            "robotica:null_casing"
-          ]
-        },
-        {
-          "title": "Plates and circuits",
-          "text": "- Plates: Tinker's Hammer (2 ingots) or Metal Press (1 ingot). Other mods' plates work too.\n- Circuits: gold (Basic), diamond (Advanced), blaze rods + netherite (Quantum), nether star (Null).",
-          "items": [
-            "robotica:iron_plate",
+            "robotica:null_casing",
             "robotica:basic_circuit",
             "robotica:advanced_circuit",
             "robotica:quantum_circuit",
-            "robotica:electric_motor",
-            "robotica:servo_actuator"
+            "robotica:null_circuit"
           ]
         }
       ]
@@ -102,19 +46,18 @@
       "pages": [
         {
           "title": "Making FE",
-          "text": "Other mods' generators and cables work.\n- Winding Crank: winds Mainsprings by hand.\n- Combustion Generator: 80 FE/t. Speed: more FE/t; Efficiency: -10% fuel each.\n- Solar Panel Mk1-4: 20 / 80 / 200 / 320 FE/t by day.",
+          "text": "Start with the Winding Crank: wind a Mainspring by hand to run your first robots.\nOnce you have iron, build a Combustion Generator and feed it coal or logs.\nIn Age 1, add Solar Panels: no fuel to keep up.\nAfter that come the RTG and reactors.",
           "items": [
             "robotica:winding_crank",
             "robotica:combustion_generator",
             "robotica:solar_panel_mk1",
-            "robotica:solar_panel_mk2",
-            "robotica:solar_panel_mk3",
-            "robotica:solar_panel_mk4"
+            "robotica:rtg",
+            "robotica:reactor_controller"
           ]
         },
         {
           "title": "Batteries",
-          "text": "- Mainspring: 240k FE\n- Copper Cell: 800k\n- Redstone Cell: 3.2M\n- Ender Cell: 20.7M\nRight-click a robot to swap one in. A cell in your inventory recharges the tool in your hand.",
+          "text": "Right-click a robot with a cell or Mainspring to swap it in.\nA cell anywhere in your inventory recharges the FE tool in your hand and your Exo suit.",
           "items": [
             "robotica:mainspring",
             "robotica:copper_cell",
@@ -123,43 +66,13 @@
           ]
         },
         {
-          "title": "Storing FE",
-          "text": "Accumulator I, II, III: 1M, 16M, 128M FE.\n- Output on the front.\n- Keeps its charge when broken.",
+          "title": "Moving FE",
+          "text": "Tesla Coils can link to other coils to reach further. Each hop loses 5%.",
           "items": [
-            "robotica:accumulator_1",
-            "robotica:accumulator_2",
-            "robotica:accumulator_3"
-          ]
-        },
-        {
-          "title": "Wireless Charger",
-          "text": "Charges your FE items within 8 blocks, 1,000 FE/t each: armor first, then hands, then inventory.\n- Owner and team only.\n- Range and speed cards.",
-          "items": [
-            "robotica:wireless_charger",
-            "robotica:upgrade_range",
-            "robotica:upgrade_speed"
-          ]
-        },
-        {
-          "title": "Tesla Coils",
-          "text": "Wireless FE. Put a coil on a generator or Accumulator.\n- Tesla Linker: sneak-right-click the coil, then right-click a machine.\n- Coil to coil: further, -5% per hop.\n- Tier I-V: 4-32 links, 12-36 blocks, 4k-1M FE/t.",
-          "items": [
-            "robotica:tesla_linker",
             "robotica:tesla_coil_1",
-            "robotica:tesla_coil_2",
-            "robotica:tesla_coil_3",
-            "robotica:tesla_coil_4",
-            "robotica:tesla_coil_5"
-          ]
-        },
-        {
-          "title": "Metal Press",
-          "text": "1 ingot = 1 plate, other mods' ingots too. Right-click it with ingots or feed it by hopper or pipe.",
-          "items": [
-            "robotica:metal_press",
-            "robotica:iron_plate",
-            "robotica:copper_plate",
-            "robotica:gold_plate"
+            "robotica:tesla_linker",
+            "robotica:accumulator_1",
+            "robotica:wireless_charger"
           ]
         }
       ]
@@ -169,19 +82,11 @@
       "icon": "robotica:alloy_smelter_mk1",
       "pages": [
         {
-          "title": "New ores",
-          "text": "- Thorium: Overworld, Y -48 to 32.\n- Pyrolite: Nether, most in basalt deltas.\n- Resonite: outer End islands, rare, diamond pickaxe.\nTinker's Hammer: cracks them into dust; the Grinder doubles.",
+          "title": "New metals",
           "items": [
             "robotica:thorium_ore",
-            "robotica:raw_thorium",
-            "robotica:pyrolite_shard",
-            "robotica:resonite_crystal"
-          ]
-        },
-        {
-          "title": "Alloy Smelter",
-          "text": "Makes alloys.\n- Ferrothorium: iron + thorium\n- Pyrosteel: ferrothorium + pyrolite + blaze powder\n- Resonant: pyrosteel + resonite + ender pearl",
-          "items": [
+            "robotica:pyrolite_ore",
+            "robotica:resonite_ore",
             "robotica:alloy_smelter_mk1",
             "robotica:ferrothorium_ingot",
             "robotica:pyrosteel_ingot",
@@ -190,7 +95,7 @@
         },
         {
           "title": "Assembler",
-          "text": "Up to 6 inputs, 1 part.\n- Makes Thermocouples, Superconductor Coils, Resonant Lattices.\n- Circuits, motors, casings: about a quarter cheaper than crafting.",
+          "text": "It makes circuits, motors and casings for about a quarter less than crafting them. Build one early in Age 2.",
           "items": [
             "robotica:assembler_mk1",
             "robotica:thermocouple",
@@ -199,32 +104,14 @@
           ]
         },
         {
-          "title": "Centrifuge",
-          "text": "1 input, up to 4 outputs, some by chance.\nDepleted Fuel Pellet: thorium dust back, 20% a Radiant Isotope.",
+          "title": "Fuel",
+          "text": "Keep your spent pellets: they end up as fusion fuel.",
           "items": [
-            "robotica:centrifuge_mk1",
-            "robotica:depleted_fuel_pellet",
-            "robotica:radiant_isotope",
-            "robotica:thorium_dust"
-          ]
-        },
-        {
-          "title": "Mk1 to Mk4",
-          "text": "- Speed x1, x2, x3, x5.\n- Card slots 2 to 5.\nUpgrading: see Upgrades, The Mk rule.",
-          "items": [
-            "robotica:alloy_smelter_mk1",
-            "robotica:alloy_smelter_mk2",
-            "robotica:alloy_smelter_mk3",
-            "robotica:alloy_smelter_mk4"
-          ]
-        },
-        {
-          "title": "Fuel and the RTG",
-          "text": "Assembler: 4 thorium dust + graphite + 2 ferrothorium plates = Thorium Fuel Pellet.\nRTG: 150 FE/t for 20 minutes per pellet. Reactors burn pellets faster and hotter.",
-          "items": [
-            "robotica:rtg",
             "robotica:thorium_fuel_pellet",
-            "robotica:enriched_fuel_pellet",
+            "robotica:rtg",
+            "robotica:depleted_fuel_pellet",
+            "robotica:centrifuge_mk1",
+            "robotica:radiant_isotope",
             "robotica:fusion_fuel_pellet"
           ]
         }
@@ -236,71 +123,67 @@
       "pages": [
         {
           "title": "Multiblocks",
-          "text": "Hollow boxes:\n- casing on every edge\n- walls: casing, glass, ports\n- controller in a side wall, screen out\nThe controller names a wrong block; its spyglass button outlines it.",
+          "text": "Each one is a hollow box: casing on every edge, and casing, glass or ports in the walls. The controller goes in a side wall, facing out.\nOpen the controller to see which block is wrong. Its spyglass button outlines that block in the world.",
           "items": [
             "robotica:bank_casing",
-            "robotica:bank_glass",
-            "robotica:bank_controller",
             "robotica:reactor_casing",
-            "robotica:reactor_controller",
             "robotica:fusion_casing",
+            "robotica:bank_controller",
+            "robotica:reactor_controller",
             "robotica:fusion_controller"
           ]
         },
         {
           "title": "Capacitor Bank",
-          "text": "4x3x3 to 9x9x9. Inside: 1+ Capacitor and 1+ Transfer Coil.\n- Capacitors: 4M, 64M, 512M, 4G FE\n- Coils: 16k, 512k, 4M FE/t\nSneak-right-click a port: in or out.",
+          "text": "Bank Ports: FE in or out, one direction each.\nCapacitors: hold the FE.\nTransfer Coils: how fast FE moves in and out, shared by all ports.\nMix Capacitors and Coils inside however you like.",
           "items": [
+            "robotica:bank_casing",
+            "robotica:bank_glass",
+            "robotica:bank_controller",
             "robotica:bank_port",
             "robotica:capacitor_copper",
-            "robotica:capacitor_redstone",
-            "robotica:capacitor_ender",
-            "robotica:capacitor_resonant",
-            "robotica:transfer_coil_basic",
-            "robotica:transfer_coil_advanced",
-            "robotica:transfer_coil_elite"
+            "robotica:transfer_coil_basic"
           ]
+        },
+        {
+          "title": "Smallest bank",
+          "layout": "capacitor_bank_small",
+          "text": "Glass goes in the walls, never on an edge."
         },
         {
           "title": "Fission Reactor",
-          "text": "5x5x5 to 7x7x7 (5x5x5: rods in an X).\n- Fuel Rods in full columns. Coolant beside: water 1, ice 1.5, packed 2, blue 3, Cryo Coolant 4.\n- Fuel and waste: controller or Access Port. Full waste stops it.\n- Power Port: FE out.",
+          "text": "Fuel Rods: full columns, floor to roof.\nCoolant: only the four blocks beside a rod cool it. Worst to best: water, ice, packed ice, blue ice, Cryo Coolant.\nAccess Port: fuel in, waste out. Full waste stops it.\nPower Port: FE out.\nToo hot: it shuts down and loses its pellet.",
           "items": [
             "robotica:reactor_casing",
             "robotica:reactor_glass",
+            "robotica:reactor_controller",
             "robotica:reactor_fuel_rod",
-            "robotica:reactor_power_port",
             "robotica:reactor_access_port",
+            "robotica:reactor_power_port",
             "robotica:cryo_coolant"
           ]
         },
         {
-          "title": "Heat and SCRAM",
-          "text": "- Over 1,000 C: less output.\n- 1,800 C: SCRAM. The burning pellet turns to waste.\n- Rods at 100%: off.\nAfter a SCRAM: rods in or more coolant, cool below 200 C, press Reset.",
-          "items": [
-            "robotica:reactor_controller",
-            "robotica:reactor_fuel_rod",
-            "robotica:cryo_coolant"
-          ]
+          "title": "Smallest reactor",
+          "layout": "fission_reactor_5",
+          "text": "One rod column with water on all four sides."
         },
         {
           "title": "Fusion Reactor",
-          "text": "7x3x7 of Fusion Casing; inside, 16 Fusion Coils around an empty 3x3.\n1. Charge 100M FE into a Power Port.\n2. Add Fusion Fuel Pellets.\n3. Set the button to Running: 200,000 FE/t out the same port.",
+          "text": "Fusion Coils: a ring of 16 around the empty middle.\nPower Port: takes the ignition charge in and sends power out. Build a Capacitor Bank first.\nAccess Port: fuel in.\nKeep it fueled: if it runs dry the plasma collapses and you have to charge it again.",
           "items": [
             "robotica:fusion_casing",
-            "robotica:fusion_coil",
+            "robotica:reactor_glass",
             "robotica:fusion_controller",
-            "robotica:reactor_power_port"
+            "robotica:fusion_coil",
+            "robotica:reactor_power_port",
+            "robotica:reactor_access_port",
+            "robotica:fusion_fuel_pellet"
           ]
         },
         {
-          "title": "Fusion fuel",
-          "text": "- One pellet lasts 5 minutes, power taken or not.\n- No fuel for 5 s, or Stopped: the plasma collapses. Charge it again.\n- Fusion Fuel Pellets need Radiant Isotopes (Centrifuge).",
-          "items": [
-            "robotica:fusion_fuel_pellet",
-            "robotica:radiant_isotope",
-            "robotica:depleted_fuel_pellet",
-            "robotica:centrifuge_mk1"
-          ]
+          "title": "Fusion layout",
+          "layout": "fusion_reactor"
         }
       ]
     },
@@ -309,44 +192,12 @@
       "icon": "robotica:grinder_mk1",
       "pages": [
         {
-          "title": "Grinder",
-          "text": "- Ore: 2 dusts. Raw ore: 1 dust, 25% one more.\n- Every mod's ores work.\nSmelt the dust anywhere. Cobblestone, bones, blaze rods and more grind too.",
+          "title": "Grinder and furnace",
           "items": [
             "robotica:grinder_mk1",
             "robotica:iron_dust",
-            "robotica:gold_dust",
-            "robotica:copper_dust"
-          ]
-        },
-        {
-          "title": "Grinding media",
-          "text": "Optional second slot: more dust and a byproduct chance.\nFlint +10%, Iron +25%, Ferrothorium +50%, Pyrosteel +100%, Resonant +120%.\nThe bar shows what is left. Better balls need a higher Mk.",
-          "items": [
-            "minecraft:flint",
             "robotica:iron_grinding_balls",
-            "robotica:ferrothorium_grinding_balls",
-            "robotica:pyrosteel_grinding_balls",
-            "robotica:resonant_grinding_balls"
-          ]
-        },
-        {
-          "title": "Electric Furnace",
-          "text": "A furnace on FE, twice as fast. Lanes per Mk: 1, 2, 4, 8.",
-          "items": [
-            "robotica:electric_furnace_mk1",
-            "robotica:electric_furnace_mk2",
-            "robotica:electric_furnace_mk3",
-            "robotica:electric_furnace_mk4"
-          ]
-        },
-        {
-          "title": "Mk tiers and cards",
-          "text": "Mk1-4 speed: x1, x1.5, x2, x3. The next Mk also crafts around the old one.\n- Grinder cards: Speed, Efficiency, Fortune, Void\n- Furnace cards: Speed, Efficiency, Range",
-          "items": [
-            "robotica:grinder_mk1",
-            "robotica:grinder_mk2",
-            "robotica:grinder_mk3",
-            "robotica:grinder_mk4"
+            "robotica:electric_furnace_mk1"
           ]
         }
       ]
@@ -357,17 +208,11 @@
       "pages": [
         {
           "title": "Stumpy and Sprout",
-          "text": "- Stumpy: fells trees, replants.\n- Sprout: harvests, replants, tills. Also berries, melons, pumpkins, cane, cactus, bamboo, kelp.\nBoth fill a chest or Supply Crate they touch. A stalled robot smokes and says why.",
+          "text": "Sprout also picks berries, melons, pumpkins, sugar cane, cactus, bamboo and kelp.\nSneak-right-click a robot to see its status and work area. A robot that smokes is stuck; its status says why.",
           "items": [
             "robotica:stumpy",
             "robotica:sprout",
-            "robotica:supply_crate"
-          ]
-        },
-        {
-          "title": "Farm tiers",
-          "text": "Right-click a placed robot with a Farm Kit.\n- Mk1: 9x9 (Stumpy 7x7)\n- Mk2: 13x13, faster\n- Mk3: 17x17\n- Mk4: 25x25",
-          "items": [
+            "robotica:supply_crate",
             "robotica:farm_kit_mk2",
             "robotica:farm_kit_mk3",
             "robotica:farm_kit_mk4"
@@ -375,7 +220,7 @@
         },
         {
           "title": "Rancher",
-          "text": "Place it in a pen, a chest within 3 blocks.\n- Breeds and culls to the herd size.\n- Shears, milks, collects drops.\n- Name or leash an animal to keep it.\nLamp: green working, amber no feed, red stalled.\nMk1 9x9, Mk2 13x13.",
+          "text": "Name or leash an animal to keep it from being culled.\nIts lamp is green while working, amber with no feed and red when stuck.",
           "items": [
             "robotica:rancher",
             "robotica:rancher_mk2"
@@ -389,7 +234,7 @@
       "pages": [
         {
           "title": "Mining Drone",
-          "text": "Right-click a block: deploy. Sneak-right-click: pick up.\n- Battery and torches in; set direction and length, press the pickaxe.\n- Digs a lit 3x3 tunnel (Mk3: 5x5).\nDrone key (default H): dig where you look; sneak: recall.",
+          "text": "Right-click a block to deploy it, sneak-right-click to pick it up. Give it a battery and torches.\nDrone key (default H): dig where you look. With sneak: call it back.",
           "items": [
             "robotica:mining_drone",
             "robotica:mining_drone_mk2",
@@ -398,25 +243,19 @@
         },
         {
           "title": "Sentry Drone",
-          "text": "Shoots hostile mobs.\n- Guard, Follow or Stay.\n- Aggressive or Defensive.\nRepair it with iron.",
+          "text": "Repair it with iron.",
           "items": [
             "robotica:sentry_drone",
             "robotica:sentry_drone_mk2"
           ]
         },
         {
-          "title": "Courier Drone",
-          "text": "Moves items between inventories.\n- Sneak-click a source, then a target: one route (max 4).\n- Filter in its menu.\n- 1 stack per trip, Mk2 3.",
+          "title": "Courier and Hauler",
+          "text": "A Courier Drone can run up to 4 routes.",
           "items": [
             "robotica:courier_drone",
             "robotica:courier_drone_mk2",
-            "robotica:courier_remote"
-          ]
-        },
-        {
-          "title": "Hauler Drone",
-          "text": "Right-click a mob with it: the drone lifts it and follows you.\n- Right-click the drone: set it down.\n- Mk1: animals, villagers. Mk2: hostile and big mobs, faster.\nUses FE only while carrying.",
-          "items": [
+            "robotica:courier_remote",
             "robotica:hauler_drone",
             "robotica:hauler_drone_mk2"
           ]
@@ -429,30 +268,15 @@
       "pages": [
         {
           "title": "Upgrade cards",
-          "text": "Cards upgrade machines. Right-click one with a card.\n- Speed: up to x20, more FE per action.\n- Efficiency: -15% FE each.\n- Range, Growth, Fortune stack.\n- Silk, Void: one card.",
+          "text": "Pair Speed cards with Efficiency cards: speed makes every action cost more FE.\nUpgrading a placed machine to the next Mk keeps everything inside it.",
           "items": [
             "robotica:upgrade_speed",
-            "robotica:upgrade_range",
             "robotica:upgrade_efficiency",
+            "robotica:upgrade_range",
             "robotica:upgrade_growth",
             "robotica:upgrade_fortune",
             "robotica:upgrade_silk",
-            "robotica:upgrade_void"
-          ]
-        },
-        {
-          "title": "The Mk rule",
-          "text": "A machine with a Mk:\n- Mk + 1 card slots\n- Speed 2 per Mk\n- Efficiency, Range, Growth 1 per Mk\n- Fortune up to 3\nRight-click it with the next Mk: swaps in place, keeps contents.\nOthers have fixed slots.",
-          "items": [
-            "robotica:grinder_mk1",
-            "robotica:excavator",
-            "robotica:farm_kit_mk2"
-          ]
-        },
-        {
-          "title": "Other cards",
-          "text": "- Height: taller Architect buildings.\n- Carry: Storage Terminal keeps its items when picked up.",
-          "items": [
+            "robotica:upgrade_void",
             "robotica:upgrade_height",
             "robotica:upgrade_carry"
           ]
@@ -465,7 +289,7 @@
       "pages": [
         {
           "title": "Excavator",
-          "text": "Mines everything below it to bedrock: 8x8, 1 block every 3 s.\nSeals fluids, skips chests and other block entities.",
+          "text": "It skips chests and other block entities in its way.",
           "items": [
             "robotica:excavator",
             "robotica:excavator_mk2",
@@ -474,32 +298,13 @@
           ]
         },
         {
-          "title": "Making it fast",
-          "text": "- Speed: 8 cards (Mk4) = x20, 21x the FE per block.\n- Range: +10 wide per card.\n- Efficiency, Fortune or Silk, Void.",
-          "items": [
-            "robotica:upgrade_speed",
-            "robotica:upgrade_range",
-            "robotica:upgrade_fortune",
-            "robotica:upgrade_void"
-          ]
-        },
-        {
           "title": "Survey Rig",
-          "text": "Turns FE into random ores, no digging.\nAny c:ores ore: coal, copper, iron often, diamonds rarely.",
+          "text": "A Magma Core in its core slot adds ancient debris and resonite.",
           "items": [
             "robotica:survey_rig",
             "robotica:survey_rig_mk2",
             "robotica:survey_rig_mk3",
-            "robotica:survey_rig_mk4"
-          ]
-        },
-        {
-          "title": "Survey rules",
-          "text": "- 1 ore per 20 s at 200 FE/t.\n- Mk2-4: faster, more slots, rare ores more often.\n- 8 speed cards (Mk4): x20 speed, 21x the FE per ore.\n- Magma Core: adds ancient debris and resonite.",
-          "items": [
-            "robotica:survey_rig",
-            "robotica:upgrade_speed",
-            "robotica:upgrade_fortune",
+            "robotica:survey_rig_mk4",
             "robotica:magma_core"
           ]
         }
@@ -511,18 +316,10 @@
       "pages": [
         {
           "title": "Modules",
-          "text": "Modules upgrade power tools, FE weapons and Exo armor.\n- Tinker's Bench: put the item in, drop modules in.\n- One of each kind per item.\n- Tool settings key (default G) or Exo modules key (default J) switches them.",
+          "text": "FE gear can't be enchanted. Modules take the place of enchantments.\nHigher module levels need a higher Age or Mk.",
           "items": [
             "robotica:tinkers_bench",
             "robotica:overclock_module",
-            "robotica:sharpened_edge_module",
-            "robotica:power_regulator_module"
-          ]
-        },
-        {
-          "title": "Slots and levels",
-          "text": "- Tools, weapons: Age 1-4 = 2-5 slots\n- Exo pieces: Mk1-4 = 1-4 slots\n- Higher levels need a higher Age or Mk.\n- Level II and III: craft from the level below.\n- No enchanting on FE gear.",
-          "items": [
             "robotica:overclock_module_2",
             "robotica:overclock_module_3"
           ]
@@ -534,56 +331,36 @@
       "icon": "robotica:bore_drill",
       "pages": [
         {
-          "title": "Mining tools",
-          "text": "- Tinker's Hammer (Age 0): 3x3\n- Bore Drill (1): 3x3\n- Servo Drill (2): 5x5, vein\n- Magma Drill (3): 9x9, smelt\n- Null Drill (4): 12x12x12\nFE tools have no durability.",
+          "title": "Drills",
+          "text": "Hold sneak to mine a single block.\nSmithing a tool up keeps its energy, settings and modules.",
           "items": [
             "robotica:tinkers_hammer",
             "robotica:bore_drill",
             "robotica:servo_drill",
             "robotica:magma_drill",
-            "robotica:null_drill"
+            "robotica:null_drill",
+            "robotica:tool_upgrade_kit_1"
           ]
         },
         {
-          "title": "Controls",
-          "text": "- Mode key (default V): next mode, with sneak: back.\n- Hold sneak: 1 block.\n- Enchant key (default B): Fortune / Silk Touch / off.\n- Tool settings key (default G): settings and modules."
-        },
-        {
           "title": "Tool modules",
-          "text": "- Overclock I-III: +50/100/200% speed\n- Fortune I-III, Silk Touch: the Enchant key picks one\n- Auto-Pickup, Void Filter\n- Power Regulator: less FE\nOverclock, Fortune and Silk Touch need FE in the tool.",
+          "text": "Overclock, Fortune and Silk Touch only work while the tool has FE.",
           "items": [
             "robotica:overclock_module",
             "robotica:fortune_module",
             "robotica:silk_touch_module",
             "robotica:auto_pickup_module",
             "robotica:void_filter_module",
-            "robotica:lamp_placer_module"
-          ]
-        },
-        {
-          "title": "Lights",
-          "text": "Lamp Rod: right-click a block for a Spark Lamp (torch light, paid in FE). Sneak-right-click a lamp to remove it. The Lamp Placer module puts lamps where you mine in the dark.",
-          "items": [
-            "robotica:lamp_rod",
-            "robotica:lamp_placer_module"
+            "robotica:lamp_placer_module",
+            "robotica:lamp_rod"
           ]
         },
         {
           "title": "Trees",
-          "text": "Fell the whole tree and replant from your saplings. The Chainsaw also clears leaves. Mode key (default V): 1x1.",
+          "text": "They replant from saplings in your inventory.",
           "items": [
             "robotica:felling_axe",
             "robotica:chainsaw"
-          ]
-        },
-        {
-          "title": "Upgrading tools",
-          "text": "Smithing table: Upgrade Kit + old tool + a part or core. Energy, settings and modules carry over.",
-          "items": [
-            "robotica:tool_upgrade_kit_1",
-            "robotica:tool_upgrade_kit_2",
-            "robotica:tool_upgrade_kit_3",
-            "robotica:tool_upgrade_kit_4"
           ]
         }
       ]
@@ -593,25 +370,20 @@
       "icon": "robotica:shock_baton",
       "pages": [
         {
-          "title": "Arsenal",
-          "text": "- Gearblade (0): fast sword\n- Shock Baton (1): slows\n- Rivet Gun (2): no ammo\n- Arc Blade (3): arcs to 3\n- Null Lance (4): charged beam\nSmithing: Gearblade > Baton > Arc Blade; Rivet Gun > Lance.",
+          "title": "Weapons",
+          "text": "Chain Lightning fits the Arc Blade, Ricochet the Rivet Gun.",
           "items": [
             "robotica:gearblade",
             "robotica:shock_baton",
-            "robotica:rivet_gun",
             "robotica:arc_blade",
-            "robotica:null_lance"
-          ]
-        },
-        {
-          "title": "Weapon modules",
-          "text": "- Sharpened Edge I-III: more damage\n- Looting I-III\n- Thermal Edge: sets on fire\n- Armor Pierce: ignores 20-50% of armor\n- Chain Lightning: Arc Blade\n- Ricochet: Rivet Gun\n- Lifesteal (Age 4): heals 10% of damage",
-          "items": [
+            "robotica:rivet_gun",
+            "robotica:null_lance",
             "robotica:sharpened_edge_module",
             "robotica:looting_module",
             "robotica:thermal_edge_module",
             "robotica:armor_pierce_module",
             "robotica:chain_lightning_module",
+            "robotica:ricochet_module",
             "robotica:lifesteal_module"
           ]
         }
@@ -623,48 +395,33 @@
       "pages": [
         {
           "title": "Scrap Colossus",
-          "text": "Always drops a Servo Core.\n- Below half health: drones, and it overheats.\n- Loot is locked to the killer for 2 minutes.",
+          "text": "The chest in a Rusted Foundry holds a Signal Flare. Later you can craft flares and your own altar.\nThe altar has a 5 minute cooldown. The loot is locked to the killer for 2 minutes.",
           "items": [
-            "robotica:servo_core",
-            "robotica:signal_flare"
-          ]
-        },
-        {
-          "title": "Summoning",
-          "text": "Rusted Foundry: copper ruins in plains, deserts, badlands. Its chest has a Signal Flare.\nRight-click the altar with a flare. 5 minute cooldown.",
-          "items": [
+            "robotica:colossus_altar",
             "robotica:signal_flare",
-            "robotica:colossus_altar"
+            "robotica:servo_core"
           ]
         },
         {
-          "title": "The fight",
-          "text": "- Arms up: slam. Jump, or get 5 blocks away.\n- Arm back: thrown scrap. Keep moving.\n- Furnace open: double damage. Hit it.",
+          "title": "Colossus fight",
+          "text": "Arms up: it slams. Jump, or get 5 blocks away.\nArm back: it throws scrap. Keep moving.\nBelow half health it calls drones and overheats. When its furnace opens, hit it for double damage.",
           "items": [
             "robotica:shock_baton",
             "robotica:rivet_gun"
           ]
         },
         {
-          "title": "Farming it",
-          "text": "Craft Signal Flares and your own Colossus Altar (Age 2).",
-          "items": [
-            "robotica:signal_flare",
-            "robotica:colossus_altar"
-          ]
-        },
-        {
           "title": "Forge Tyrant",
-          "text": "Age 3, in the Nether. Always drops a Magma Core.\nCinder Forge: blackstone ruins in Nether caves. Its chest has an Ignition Charge.\nRight-click the Forge Altar with it.",
+          "text": "The chest in a Cinder Forge holds an Ignition Charge.",
           "items": [
-            "robotica:magma_core",
+            "robotica:forge_altar",
             "robotica:ignition_charge",
-            "robotica:forge_altar"
+            "robotica:magma_core"
           ]
         },
         {
           "title": "Tyrant fight",
-          "text": "- Doors glow: flame breath. Step aside.\n- Crucible back: magma globs. Keep moving.\n- Hammer up: glowing rings. Get off them.\n- Doors open: it vents. Double damage.",
+          "text": "Doors glow: flame breath. Step aside.\nCrucible back: magma globs. Keep moving.\nHammer up: glowing rings on the ground. Get off them.\nDoors open: it vents. Hit it for double damage.",
           "items": [
             "robotica:arc_blade",
             "robotica:rivet_gun"
@@ -678,7 +435,7 @@
       "pages": [
         {
           "title": "The suit",
-          "text": "Powered armor, no durability.\n- Charge it in a Charger, or carry a cell.\n- All 4 worn: they share energy.\n- Empty: still armor, modules stop.",
+          "text": "Out of FE it still works as armor, but its modules stop.\nSmithing a piece up keeps its energy and modules. Mk4 pieces are fireproof.",
           "items": [
             "robotica:exo_helmet_mk1",
             "robotica:exo_chestplate_mk1",
@@ -687,68 +444,27 @@
           ]
         },
         {
-          "title": "Modules",
-          "text": "Exo modules key (default J): module screen (or sneak-right-click a piece, or a Tinker's Bench). Drop modules in; the switch turns one off.\nEach kind works once per suit.",
+          "title": "Exo modules",
           "items": [
             "robotica:night_vision_module",
             "robotica:step_assist_module",
             "robotica:auto_feeder_module",
-            "robotica:kinetic_generator_module",
-            "robotica:servo_stride_module_1",
-            "robotica:magnet_module"
-          ]
-        },
-        {
-          "title": "Early modules",
-          "text": "- Helmet: Night Vision, Auto-Feeder\n- Legs: Servo Stride, Kinetic Generator\n- Boots: Step Assist, Spring Heels, Fall Dampener, Magnet\n- Any: Capacitor Plating",
-          "items": [
+            "robotica:magnet_module",
             "robotica:spring_heels_module",
             "robotica:fall_dampener_module",
-            "robotica:capacitor_plating_module"
-          ]
-        },
-        {
-          "title": "Mk2 to Mk4",
-          "text": "Smithing; keeps energy and modules.\n- Mk2: Servo Actuator, 2 slots\n- Mk3: Superconductor Coil, 3 slots\n- Mk4: Resonant Lattice, 4 slots, fireproof\nEach Mk: 4x the battery.",
-          "items": [
-            "robotica:exo_chestplate_mk2",
-            "robotica:exo_chestplate_mk3",
-            "robotica:exo_chestplate_mk4"
-          ]
-        },
-        {
-          "title": "Levels",
-          "text": "Levels I-III: craft from the level below + next age's circuits.\nHigher levels do more and need a higher Mk. Gold pips show the level.",
-          "items": [
-            "robotica:magnet_module_2",
-            "robotica:magnet_module_3",
-            "robotica:night_vision_module_2",
-            "robotica:power_regulator_module"
-          ]
-        },
-        {
-          "title": "Servo and Deep",
-          "text": "- Helmet: Solar Weave, Sonar Pulse (default N), Rebreather, Robot HUD\n- Chest: Jet Assist, Med Injector, Hazard Seal, Kinetic Shield\n- Legs/boots: Dash Thrusters (default R)\n- Boots: Hydro Fins\n- Any: Power Regulator",
-          "items": [
+            "robotica:kinetic_generator_module",
+            "robotica:servo_stride_module_1",
+            "robotica:capacitor_plating_module",
             "robotica:sonar_pulse_module",
             "robotica:med_injector_module",
-            "robotica:hazard_seal_module",
             "robotica:dash_thrusters_module",
-            "robotica:hydro_fins_module",
-            "robotica:kinetic_shield_module"
-          ]
-        },
-        {
-          "title": "Flight",
-          "text": "Mk3 chestplate. Crafted with an Antigrav Core.\nFlight key (default K): on/off. 2,400 FE/s while flying.",
-          "items": [
-            "robotica:flight_module",
-            "robotica:jet_assist_module"
+            "robotica:kinetic_shield_module",
+            "robotica:flight_module"
           ]
         },
         {
           "title": "Core socket",
-          "text": "Mk2+ chestplate, all 4 pieces Mk2+.\n- Servo: Overclock key (default O), Haste II + Speed\n- Magma: fireproof, burning hits\n- Antigrav: no fall damage, cheaper Flight",
+          "text": "Needs a Mk2 chestplate and all four pieces at Mk2 or higher.\nServo: Haste and Speed on the Overclock key (default O).\nMagma: fireproof, burning hits.\nAntigrav: no fall damage, cheaper Flight.",
           "items": [
             "robotica:servo_core",
             "robotica:magma_core",
@@ -763,24 +479,17 @@
       "pages": [
         {
           "title": "Architect Table",
-          "text": "Day one. Feed it cobblestone, wood, glass, ingots or gems: they become matter.\nPower: a wound Mainspring or any FE. Pick plots, press Build.",
+          "text": "It runs on a wound Mainspring from day one, or on any FE.\nPlots next to each other join into one hall. Click a plot edge for a door, a seam for an inner wall. Shift-click forgets a plot.",
           "items": [
             "robotica:architect_table",
             "robotica:mainspring"
           ]
         },
         {
-          "title": "Buildings",
-          "text": "Every plot: one 9x9 building. Neighbors join into a hall.\n- Click a plot edge: door.\n- Click a seam: inner wall.\n- Shift-click: forget a plot.",
+          "title": "Styles",
+          "text": "An Iron, Reinforced or Null Casing in the casing slot opens the next style.\nThe stonecutter turns style blocks into other shapes.",
           "items": [
             "robotica:timberframe_wall",
-            "robotica:timberframe_light"
-          ]
-        },
-        {
-          "title": "Styles",
-          "text": "- Clean Stone: from the start.\n- Smooth Panel, Detailed Stone, Tech Stone: Iron, Reinforced or Null Casing in the casing slot.\nStyle blocks also craft by hand; the stonecutter swaps their shapes.",
-          "items": [
             "robotica:copper_works_wall",
             "robotica:steel_lab_wall",
             "robotica:null_spire_wall"
@@ -788,7 +497,7 @@
         },
         {
           "title": "Clear and Demolish",
-          "text": "- Clear terrain: breaks blocks in the way (slow). Junk is voided, the rest goes to a chest touching the table.\n- Demolish (click twice): every built plot comes down. Its own blocks: 75% matter; the rest: to the chest.",
+          "text": "Clearing voids junk and puts the rest in a chest touching the table.\nDemolish gives back 75% of the matter for its own blocks.",
           "items": [
             "robotica:architect_table",
             "minecraft:chest"
@@ -801,27 +510,19 @@
       "icon": "robotica:replicator_controller",
       "pages": [
         {
-          "title": "Capturing essence",
-          "text": "Right-click a hostile mob with an Essence Vial. 8 samples of one mob fill it.",
+          "title": "Mob Replicator",
+          "text": "Harvest mode gives loot and stores the mob's experience; Spawn mode makes the real mob.\nBlazes, endermen and ghasts need a Magma Core in the controller, shulkers an Antigrav Core.",
           "items": [
-            "robotica:essence_vial"
-          ]
-        },
-        {
-          "title": "The replicator",
-          "text": "3x3x3 of Frame, controller in a side, 1+ Glass, empty center. Add a full vial and FE. About 1 cycle a minute:\n- Harvest: loot.\n- Spawn: the real mob.\nBlaze, enderman, ghast and more: Magma Core. Shulker: Antigrav Core.",
-          "items": [
+            "robotica:essence_vial",
             "robotica:replicator_controller",
             "robotica:replicator_frame",
             "robotica:replicator_glass"
           ]
         },
         {
-          "title": "Experience and output",
-          "text": "Harvest stores the mob's experience.\n- To Lv: claim up to the level you pick (-/+, shift for 10).\n- All: claim everything.\nSides tab: auto-eject the output.",
-          "items": [
-            "robotica:replicator_controller"
-          ]
+          "title": "Replicator layout",
+          "layout": "mob_replicator",
+          "text": "Any frame block can be glass, edges and corners too."
         }
       ]
     },
@@ -830,25 +531,13 @@
       "icon": "robotica:warp_pad",
       "pages": [
         {
-          "title": "Warp Pads",
-          "text": "Name a pad, stand on it, right-click: go to your pads or public ones.\n- 5,000 FE + 20 per block.\n- Rift Upgrade: other dimensions, 100,000 FE.",
+          "title": "Warp",
+          "text": "Taking damage cancels a remote teleport.\nPortal Projectors work across dimensions.",
           "items": [
             "robotica:warp_pad",
-            "robotica:rift_upgrade"
-          ]
-        },
-        {
-          "title": "Remotes",
-          "text": "- Recall Remote: sneak-right-click a pad to bind it. Hold right-click 3 s: 20k FE. Damage cancels.\n- Rift Remote: stores 10 pads, 20k FE, 150k across dimensions. Right-click to pick one.",
-          "items": [
+            "robotica:rift_upgrade",
             "robotica:recall_remote",
-            "robotica:rift_remote"
-          ]
-        },
-        {
-          "title": "Portals",
-          "text": "Portal Projectors (Age 4): link two with a Linking Card, power them, walk through. Any dimension.\n- Open: 200 FE/t\n- 10k FE per traveler",
-          "items": [
+            "robotica:rift_remote",
             "robotica:gate_controller",
             "robotica:linking_card"
           ]
@@ -861,18 +550,13 @@
       "pages": [
         {
           "title": "Storage Terminal",
-          "text": "A big sorted chest: 81 slots, search (@mod, #tag), 3x3 crafting grid.\nHoppers and pipes work on every side.\nShulker boxes and bundles: empty only.\nJ button: sync search with JEI.",
+          "text": "Search with @mod or #tag. The J button syncs the search with JEI.\nShulker boxes and bundles only go in empty.",
           "items": [
-            "robotica:storage_terminal"
-          ]
-        },
-        {
-          "title": "Expansions and power",
-          "text": "- 3 expansion slots: +81, +162, +324 slots.\n- 2 FE/t, +1 per expansion.\n- No power: items can be taken out, not inserted.",
-          "items": [
+            "robotica:storage_terminal",
             "robotica:storage_expansion_mk1",
             "robotica:storage_expansion_mk2",
-            "robotica:storage_expansion_mk3"
+            "robotica:storage_expansion_mk3",
+            "robotica:upgrade_carry"
           ]
         }
       ]
@@ -883,7 +567,7 @@
       "pages": [
         {
           "title": "Item pipes",
-          "text": "Pipes connect to pipes, chests and machines.\n- Right-click an arm: mode, filter, order and priority.\n- Sneak-right-click an arm (empty hand): Insert, Extract or Off.\n- Items/s: Mk1 8, Mk2 64, Mk3 256, Mk4 640.",
+          "text": "Items go to the highest priority arm that has room. Round robin only spreads them between arms of the same priority.",
           "items": [
             "robotica:item_pipe",
             "robotica:item_pipe_mk2",
@@ -892,24 +576,8 @@
           ]
         },
         {
-          "title": "Pipe filters",
-          "text": "Click a filter slot with an item, or shift-click the item.\n- Blacklist: listed items stop. Whitelist: only they pass.\n- Extract: what gets pulled. Insert: what goes in.\n- Order: Round robin or Closest first.",
-          "items": [
-            "robotica:item_pipe",
-            "robotica:item_pipe_mk2"
-          ]
-        },
-        {
-          "title": "Pipe priority",
-          "text": "Insert arms: Highest to Lowest, default High. Click: lower. Shift-click: higher.\n- Items go to the highest priority that takes them; lower ones get the rest.\n- Round robin spreads within one priority.",
-          "items": [
-            "robotica:item_pipe",
-            "robotica:item_pipe_mk2"
-          ]
-        },
-        {
           "title": "Machine sides",
-          "text": "Sides tab: click a face for Input, Output, both or None.\nAuto-input pulls from Input faces, auto-eject pushes to Output faces.",
+          "text": "Set each face in a machine's Sides tab. Auto-input pulls from Input faces, auto-eject pushes out of Output faces.",
           "items": [
             "robotica:grinder_mk1",
             "robotica:alloy_smelter_mk1",
