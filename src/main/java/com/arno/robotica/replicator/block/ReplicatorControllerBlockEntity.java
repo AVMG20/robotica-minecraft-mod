@@ -1,9 +1,15 @@
 package com.arno.robotica.replicator.block;
 
+import com.arno.robotica.compat.InfoSource;
+import com.arno.robotica.compat.MachineInfo;
+import com.arno.robotica.compat.OwnerNames;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
+import com.arno.robotica.core.side.RelativeSide;
+import com.arno.robotica.core.side.SideConfig;
+import com.arno.robotica.core.side.SideMode;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
@@ -56,14 +62,13 @@ import java.util.UUID;
 /**
  * Brain of the Mob Replicator. One vial slot, one boost slot, one catalyst slot, three upgrade slots, an 18 slot output and a 1M FE buffer.
  * Every cycle it either rolls the vial mob's loot table into the output (Harvest) or spawns the mob (Spawn).
- * Ticks on the server only.
+ * Harvest stores the mob's experience; players claim it in the GUI ({@link #claimXp}). Ticks on the server only.
  */
-public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implements MenuProvider {
+public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implements MenuProvider, InfoSource {
     public static final int OUTPUT_SLOTS = 18;
     public static final int UPGRADE_SLOTS = UpgradeRules.Fixed.REPLICATOR.slots;
     /** Extra FE cost of the plasma boost, on top of the speed it gives. */
     private static final double BOOST_ENERGY_FACTOR = 1.25;
-    private static final int MAX_XP = 1_000_000;
     private static final int VALIDATE_INTERVAL = 40;
 
     public enum Mode {
@@ -165,6 +170,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     public final MachineEnergyStorage energy = new MachineEnergyStorage(ReplicatorConfig.energyBuffer(), ReplicatorConfig.maxReceive(), 0, this::setChanged);
 
     private final IItemHandler automation = new OutputAccess(output);
+    /** Per-face item access and auto-eject; every face output only by default. */
+    public final SideConfig sides = outputOnly(new SideConfig(this, () -> automation));
 
     // ---- state ----
     @Nullable
@@ -193,10 +200,22 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         super(ReplicatorRegistry.CONTROLLER_BE.get(), pos, state);
     }
 
+    private static SideConfig outputOnly(SideConfig config) {
+        for (RelativeSide side : RelativeSide.values()) config.with(side, SideMode.OUTPUT);
+        return config;
+    }
+
     // ---- accessors ----
 
+    /** Extract-only view of the output (null side). */
     public IItemHandler automation() {
         return automation;
+    }
+
+    /** The item capability of a face, as the side config allows. */
+    @Nullable
+    public IItemHandler automation(@Nullable Direction side) {
+        return sides.access(side);
     }
 
     public MachineEnergyStorage energy() {
@@ -394,6 +413,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         }
         pause = nextPause;
         setWorking(level, pos, state, working);
+        sides.tick(level);
         if (working && age % 80 == 0) {
             CoreSounds.play(level, pos, CoreSounds.REPLICATOR_HUM, SoundSource.BLOCKS, 0.8F, 1.0F);
         }
@@ -419,7 +439,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
                     ItemStack rest = ItemHandlerHelper.insertItemStacked(output, drop, false);
                     if (!rest.isEmpty()) pending.add(rest);
                 }
-                if (ReplicatorConfig.harvestXp()) xpStored = Math.min(MAX_XP, xpStored + result.xp());
+                if (ReplicatorConfig.harvestXp()) xpStored = (int) Math.min(ReplicatorConfig.maxXp(), (long) xpStored + result.xp());
             }
             cycleSound(level, pos, CoreSounds.REPLICATOR_CYCLE);
         }
@@ -479,8 +499,52 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
 
     // ---- xp ----
 
-    /** Hands the stored experience to a player as an orb at their feet. Called when the GUI opens or the block breaks. */
-    public void releaseXp(Level level, net.minecraft.world.phys.Vec3 at) {
+    /** Highest target level the GUI can ask for. */
+    public static final int MAX_CLAIM_LEVEL = 1000;
+
+    /** Points vanilla needs to go from {@code level} to the next level. */
+    public static int xpForLevel(int level) {
+        if (level >= 30) return 112 + (level - 30) * 9;
+        if (level >= 15) return 37 + (level - 15) * 5;
+        return 7 + level * 2;
+    }
+
+    /** Points the player needs to reach {@code target}, from their current level and progress (0 when already there). */
+    public static long pointsToReach(Player player, int target) {
+        int level = player.experienceLevel;
+        if (level >= target) return 0;
+        int need = xpForLevel(level);
+        long total = Math.max(0, need - Math.round(player.experienceProgress * need));
+        for (int l = level + 1; l < target; l++) total += xpForLevel(l);
+        return total;
+    }
+
+    /**
+     * Gives the player stored experience: everything when {@code target} is negative, else at most what they need to
+     * reach that level. Returns the points given. Server side, after the caller validated the player.
+     */
+    public int claimXp(Player player, int target) {
+        if (xpStored <= 0) return 0;
+        long want = target < 0 ? xpStored : pointsToReach(player, Math.min(target, MAX_CLAIM_LEVEL));
+        int give = (int) Math.min(xpStored, want);
+        if (give <= 0) return 0;
+        player.giveExperiencePoints(give);
+        // Float progress can land a point short of the target level.
+        for (int i = 0; i < 4 && target >= 0 && player.experienceLevel < target && give < xpStored; i++) {
+            player.giveExperiencePoints(1);
+            give++;
+        }
+        xpStored -= give;
+        setChanged();
+        if (level != null) {
+            level.playSound(null, player.blockPosition(), net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS,
+                    0.3F, 0.9F + level.random.nextFloat() * 0.2F);
+        }
+        return give;
+    }
+
+    /** Drops the stored experience as orbs (the block broke). */
+    private void dropXp(Level level, net.minecraft.world.phys.Vec3 at) {
         if (xpStored > 0 && level instanceof ServerLevel serverLevel) {
             ExperienceOrb.award(serverLevel, at, xpStored);
             xpStored = 0;
@@ -500,7 +564,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
         }
         pending.clear();
-        releaseXp(level, net.minecraft.world.phys.Vec3.atCenterOf(pos));
+        dropXp(level, net.minecraft.world.phys.Vec3.atCenterOf(pos));
     }
 
     private static void drop(Level level, BlockPos pos, IItemHandler handler) {
@@ -538,6 +602,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         tag.putInt("cycles", cycles);
         tag.putInt("xp", xpStored);
         tag.putInt("mode", mode.ordinal());
+        tag.put("sides", sides.save());
         if (owner != null) tag.putUUID("owner", owner);
         ListTag list = new ListTag();
         for (ItemStack stack : pending) list.add(stack.save(registries));
@@ -551,11 +616,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (tag.contains("boost")) boost.deserializeNBT(registries, tag.getCompound("boost"));
         if (tag.contains("catalyst")) catalyst.deserializeNBT(registries, tag.getCompound("catalyst"));
         if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
-        if (tag.contains("output")) {
-            output.deserializeNBT(registries, tag.getCompound("output"));
-            // Saved by an older config with more or fewer slots: keep the handler at 18.
-            if (output.getSlots() != OUTPUT_SLOTS) output.setSize(OUTPUT_SLOTS);
-        }
+        if (tag.contains("output")) loadInto(output, registries, tag.getCompound("output"));
+        if (tag.contains("sides")) sides.load(tag.getCompound("sides"));
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         if (tag.contains("progress")) progress = tag.getInt("progress");
         // activeType is transient: restore it from the vial, or the first tick after a reload would reset the progress.
@@ -584,6 +646,30 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             clientVial = id.isEmpty() ? null : ResourceLocation.tryParse(id);
         }
         revalidate = true;
+    }
+
+    /** Loads a saved inventory slot by slot, keeping the handler's size (extra saved slots are dropped). */
+    private static void loadInto(ItemStackHandler handler, HolderLookup.Provider registries, CompoundTag tag) {
+        ItemStackHandler saved = new ItemStackHandler();
+        saved.deserializeNBT(registries, tag);
+        for (int i = 0; i < handler.getSlots(); i++) {
+            handler.setStackInSlot(i, i < saved.getSlots() ? saved.getStackInSlot(i) : ItemStack.EMPTY);
+        }
+    }
+
+    // ---- Jade ----
+
+    @Override
+    public void collectInfo(ServerLevel level, MachineInfo info) {
+        info.owner = OwnerNames.name(level.getServer(), owner);
+        info.status = switch (pause) {
+            case NONE -> isFormed() ? "working" : "idle";
+            case NO_ENERGY -> "no_energy";
+            case OUTPUT_FULL -> "output_full";
+            default -> "idle";
+        };
+        if (isFormed() && needed > 0) info.progress = Math.min(100, progress * 100 / needed);
+        if (xpStored > 0) info.xp = xpStored;
     }
 
     @Override

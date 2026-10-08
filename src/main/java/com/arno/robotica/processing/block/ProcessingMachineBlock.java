@@ -148,7 +148,7 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
 
     /**
      * Swaps the placed machine for the next Mk, keeping inputs, outputs, media, battery, cards, side config, energy,
-     * progress and stored experience, and gives the old machine back (like the industry machines). {@code heldEnergy}:
+     * and progress, and gives the old machine back (like the industry machines). {@code heldEnergy}:
      * the energy the next Mk's item carried, added to the machine's up to its capacity.
      */
     public static boolean upgradeInPlace(Level level, BlockPos pos, BlockState state, ProcessingMachineBlock next, @Nullable Player player, int heldEnergy) {

@@ -24,8 +24,6 @@ public final class ProcessingModule {
 
     public static void init(IEventBus modBus, ModContainer container) {
         ProcessingRegistry.register(modBus);
-        com.arno.robotica.core.upgrade.UpgradeText.register(com.arno.robotica.core.upgrade.UpgradeText.FURNACE_XP_PER_FORTUNE,
-                () -> (int) Math.round(ProcessingConfig.xpPerFortune() * 100));
         container.registerConfig(ModConfig.Type.SERVER, ProcessingConfig.SPEC, "robotica-processing-server.toml");
         modBus.addListener(ProcessingModule::registerCapabilities);
         modBus.addListener(ProcessingModule::registerDataMaps);

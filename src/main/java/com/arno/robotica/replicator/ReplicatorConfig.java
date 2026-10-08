@@ -17,6 +17,7 @@ public final class ReplicatorConfig {
     private static final ModConfigSpec.IntValue MAX_RECEIVE;
     private static final ModConfigSpec.IntValue BOOST_MULTIPLIER;
     private static final ModConfigSpec.BooleanValue HARVEST_XP;
+    private static final ModConfigSpec.IntValue MAX_XP;
     private static final ModConfigSpec.BooleanValue ALLOW_SPAWN_MODE;
     private static final ModConfigSpec.IntValue SPAWN_MAX_SAME_TYPE;
     private static final ModConfigSpec.IntValue SPAWN_MAX_TOTAL;
@@ -35,8 +36,10 @@ public final class ReplicatorConfig {
                 .defineInRange("replicatorMaxReceive", 20_000, 1, 100_000_000);
         BOOST_MULTIPLIER = b.comment("Speed multiplier of a Plasma Actuator in the boost slot.")
                 .defineInRange("replicatorBoostMultiplier", 2, 1, 20);
-        HARVEST_XP = b.comment("Harvest mode stores the experience of every cycle; it drops as orbs when a player opens the GUI.")
+        HARVEST_XP = b.comment("Harvest mode stores the experience of every cycle; players claim it in the GUI.")
                 .define("replicatorHarvestXp", true);
+        MAX_XP = b.comment("Most experience points the controller stores.")
+                .defineInRange("replicatorMaxXp", 1_000_000, 0, 100_000_000);
         b.pop();
         b.push("replicator_spawn");
         ALLOW_SPAWN_MODE = b.comment("Allow Spawn mode (spawns real mobs). When false the controller waits in that mode.")
@@ -65,6 +68,7 @@ public final class ReplicatorConfig {
     public static int maxReceive() { return get(MAX_RECEIVE); }
     public static int boostMultiplier() { return get(BOOST_MULTIPLIER); }
     public static boolean harvestXp() { return get(HARVEST_XP); }
+    public static int maxXp() { return get(MAX_XP); }
     public static boolean allowSpawnMode() { return get(ALLOW_SPAWN_MODE); }
     public static int spawnMaxSameType() { return get(SPAWN_MAX_SAME_TYPE); }
     public static int spawnMaxTotal() { return get(SPAWN_MAX_TOTAL); }

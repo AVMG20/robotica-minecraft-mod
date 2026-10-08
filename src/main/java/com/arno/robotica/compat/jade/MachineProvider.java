@@ -19,7 +19,7 @@ import snownee.jade.api.ui.BoxStyle;
 import snownee.jade.api.ui.IElementHelper;
 
 /**
- * Status, progress, Mk tier, owner, spring charge and last ore of any Robotica block entity. The server half builds a
+ * Status, progress, Mk tier, owner, spring charge, last ore and stored experience of any Robotica block entity. The server half builds a
  * {@link MachineInfo} (a few bytes); the client half draws it. Works on dedicated servers.
  */
 enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
@@ -79,6 +79,9 @@ enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<Blo
                 tooltip.add(Component.translatable("jade.robotica.last_ore",
                         Component.translatable(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(id).getDescriptionId())));
             }
+        }
+        if (info.xp >= 0) {
+            tooltip.add(Component.translatable("jade.robotica.xp", com.arno.robotica.core.util.Fmt.compact(info.xp)));
         }
         if (info.owner != null) {
             tooltip.add(Component.translatable("jade.robotica.owner", info.owner));

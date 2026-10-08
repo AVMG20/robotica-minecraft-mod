@@ -37,7 +37,6 @@
   "gui.robotica.processing.slot_grind": "Ore, raw ore, ingot, or anything else that grinds",
   "gui.robotica.processing.slot_media": "Grinding media (optional): flint or grinding balls",
   "gui.robotica.processing.slot_smelt": "Anything a furnace smelts",
-  "gui.robotica.processing.xp": "%s XP stored",
   "jei.robotica.category.grinding": "Grinder",
   "jei.robotica.grinding.energy": "%s FE at Mk1",
   "jei.robotica.grinding.min_tier": "Mk%s+",
@@ -57,7 +56,6 @@
   "robotica.configuration.fallbackByproducts": "Fallback media byproducts",
   "robotica.configuration.furnaceTimeFactor": "Cooking time factor (Mk1)",
   "robotica.configuration.furnacePower": "Power use per lane (FE/t, Mk1)",
-  "robotica.configuration.xpPerFortune": "Fortune card experience bonus",
   "robotica.configuration.tierSpeedMk1": "Mk1 speed",
   "robotica.configuration.bufferMk1": "Mk1 energy buffer (FE)",
   "robotica.configuration.maxInputMk1": "Mk1 max input (FE/t)",
@@ -75,7 +73,7 @@
   "robotica.configuration.maxInputMk4": "Mk4 max input (FE/t)",
   "robotica.configuration.lanesMk4": "Mk4 furnace lanes",
   "gui.robotica.processing.slot_upgrade_grinder": "Upgrade card: Speed, Efficiency, Fortune (more dust from ores), Void (deletes extra outputs that do not fit). Hover a card for what it does here.",
-  "gui.robotica.processing.slot_upgrade_furnace": "Upgrade card: Speed, Efficiency, Range (one more item per lane and cycle), Fortune (more experience). Hover a card for what it does here.",
+  "gui.robotica.processing.slot_upgrade_furnace": "Upgrade card: Speed, Efficiency, Range (one more item per lane and cycle). Hover a card for what it does here.",
   "gui.robotica.processing.card.unused": "Does nothing in this machine",
   "gui.robotica.processing.card.cap": "Up to %s count in this Mk%s",
   "gui.robotica.processing.card.grinder.speed": "In this Grinder: grinds faster (FE/t rises with it)",
@@ -84,6 +82,5 @@
   "gui.robotica.processing.card.grinder.void": "In this Grinder: extra outputs and byproducts that do not fit are deleted instead of stopping the machine",
   "gui.robotica.processing.card.electric_furnace.speed": "In this Electric Furnace: smelts faster (FE/t rises with it)",
   "gui.robotica.processing.card.electric_furnace.efficiency": "In this Electric Furnace: less FE per item",
-  "gui.robotica.processing.card.electric_furnace.fortune": "In this Electric Furnace: +%s%% experience per card (not for dusts)",
   "gui.robotica.processing.card.electric_furnace.range": "In this Electric Furnace: each lane smelts one more item per cycle, for one more item's FE"
 }

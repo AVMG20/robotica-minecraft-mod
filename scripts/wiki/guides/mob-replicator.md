@@ -36,10 +36,18 @@ Farms a mob's drops without the mob. Age 2 on.
 
 | Mode | What it does |
 |---|---|
-| Harvest (default) | Rolls the mob's loot into an 18-slot output. No entity spawns. XP is stored and drops when you open the GUI. |
+| Harvest (default) | Rolls the mob's loot into an 18-slot output. No entity spawns. The mob's XP is stored (up to 1,000,000 points). |
 | Spawn | Spawns the real mob in front of the controller. Waits while 8 of that type (or 32 mobs) are within 8 blocks. |
 
 {{image shots/gui_replicator_formed.jpg|Replicator Controller GUI, formed}}
+
+## Experience and output
+
+- The row above the output shows the stored XP.
+- Set a target level with **-** and **+** (shift-click: 10 at a time, default 30), then press **To Lv** to get exactly enough XP to reach it.
+- **All** claims everything.
+- Breaking the controller drops the stored XP as orbs.
+- Sides tab: every face is Output. Turn on auto-eject to push the output into a chest or pipe next to it.
 
 ## Tier gates
 
