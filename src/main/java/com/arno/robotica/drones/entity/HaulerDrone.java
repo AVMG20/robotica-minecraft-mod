@@ -46,6 +46,8 @@ import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.DoublePredicate;
+
 /**
  * Hauler Drone: carries one mob hanging under it and follows its owner. Right-click a mob with the drone item to deploy it
  * onto that mob; right-click the drone (or the mob) with an empty hand to set the mob down. The mob stays the real entity,
@@ -192,16 +194,11 @@ public class HaulerDrone extends DroneBase {
         if (no == null && drone == null) no = msg("hauler.cant");
         if (drone != null) {
             // longest cable that fits above the mob; it is let out later where there is room
-            boolean room = false;
-            for (float gap = HANG_GAP; !room && gap >= MIN_GAP - 1.0E-4F; gap -= 0.15F) {
-                float g = Math.max(MIN_GAP, gap);
+            float gap = longestGap(g -> {
                 drone.moveTo(target.getX(), target.getY() + target.getBbHeight() + g, target.getZ(), player.getYRot(), 0.0F);
-                if (level.noCollision(drone, drone.getBoundingBox())) {
-                    drone.setGap(g);
-                    room = true;
-                }
-            }
-            if (!room) no = msg("hauler.no_room");
+                return level.noCollision(drone, drone.getBoundingBox());
+            });
+            if (gap < 0.0F) no = msg("hauler.no_room");
         }
         if (no != null) {
             refuse(player, target, no);
@@ -235,10 +232,26 @@ public class HaulerDrone extends DroneBase {
         level.sendParticles(ParticleTypes.CLOUD, drone.getX(), drone.getY() - 0.05, drone.getZ(), 4, 0.15, 0.02, 0.15, 0.01);
     }
 
-    /** Hangs the mob under this drone and switches its AI off. Returns false when the mob could not be mounted. */
+    /** Longest cable from HANG_GAP down to MIN_GAP that fits, or -1 when none does. */
+    private static float longestGap(DoublePredicate fits) {
+        for (float gap = HANG_GAP; ; gap -= 0.15F) {
+            float g = Math.max(MIN_GAP, gap);
+            if (fits.test(g)) return g;
+            if (g <= MIN_GAP) return -1.0F;
+        }
+    }
+
+    /**
+     * Hangs the mob under this drone on the longest cable that fits and switches its AI off. Returns false when there is no
+     * room below or the mob could not be mounted.
+     */
     public boolean grab(Mob mob) {
         if (isCarrying() || level().isClientSide) return false;
         if (mob.isSleeping()) mob.stopSleeping();
+        float gap = longestGap(g -> level().noCollision(mob,
+                mob.getDimensions(mob.getPose()).makeBoundingBox(new Vec3(getX(), getY() - mob.getBbHeight() - g, getZ()))));
+        if (gap < 0.0F) return false;
+        setGap(gap);
         if (mob.isLeashed()) mob.dropLeash(true, true);
         boolean prevNoAi = mob.isNoAi();
         if (!mob.startRiding(this, true) || mob.getVehicle() != this) return false;
@@ -260,6 +273,7 @@ public class HaulerDrone extends DroneBase {
         if (mob.getVehicle() == this) return false;
         restoreAi(mob);
         setActive(false);
+        setGap(MIN_GAP);
         CoreSounds.play(this, CoreSounds.HAULER_RELEASE, SoundSource.NEUTRAL, 0.8F, 1.0F);
         if (level() instanceof ServerLevel sl) {
             double w = mob.getBbWidth() * 0.5;
@@ -591,7 +605,7 @@ public class HaulerDrone extends DroneBase {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("Gap")) setGap(tag.getFloat("Gap"));
+        setGap(tag.contains("Gap") ? tag.getFloat("Gap") : MIN_GAP);
     }
 
     @Override

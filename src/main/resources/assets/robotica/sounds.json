@@ -853,8 +853,8 @@
     "subtitle": "subtitles.robotica.replicator_spawn",
     "sounds": [
       {
-        "name": "minecraft:entity.evoker.prepare_summon",
-        "type": "event",
+        "name": "minecraft:mob/evocation_illager/prepare_summon",
+        "type": "file",
         "volume": 0.5,
         "pitch": 1.2
       },
