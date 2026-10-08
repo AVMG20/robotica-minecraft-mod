@@ -29,7 +29,6 @@ The user is the only developer.
 - Text everywhere (tooltips, Codex, wiki, lang) is short and direct. Item descriptions only add useful info:
   "Right-click to X", "Does Y", "Used for Z". No reasoning, design decisions or what it does not do
   ("never drops items", "will not X").
-- Every balance number goes in the module's server config.
 
 ## Git
 - Commit and push to `main` freely. Plain imperative commit subjects, no `Co-Authored-By` or tool advertising.
