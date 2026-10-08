@@ -30,5 +30,7 @@
   "config.jade.plugin_robotica.machine": "Robotica machines",
   "config.jade.plugin_robotica.drone": "Robotica drones",
   "jade.robotica.last_ore": "Last ore: %s",
-  "jade.robotica.xp": "Stored XP: %s"
+  "jade.robotica.xp": "Stored XP: %s",
+  "config.jade.plugin_robotica.rancher": "Robotica Rancher",
+  "jade.robotica.herd": "Adults: %s / %s"
 }

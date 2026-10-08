@@ -373,6 +373,14 @@
             "robotica:farm_kit_mk3",
             "robotica:farm_kit_mk4"
           ]
+        },
+        {
+          "title": "Rancher",
+          "text": "Place it among your animals with a chest within 3 blocks.\n- Herd size, split evenly per species: breeds with feed from the chest, culls extra adults.\n- Shears sheep, milks cows into buckets.\nMk1 9x9, Mk2 13x13 and faster.",
+          "items": [
+            "robotica:rancher",
+            "robotica:rancher_mk2"
+          ]
         }
       ]
     },

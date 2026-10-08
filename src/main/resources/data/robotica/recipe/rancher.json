@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "SCB",
+    "MIM",
+    "P P"
+  ],
+  "key": {
+    "S": {
+      "tag": "c:tools/shear"
+    },
+    "C": {
+      "item": "robotica:basic_circuit"
+    },
+    "B": {
+      "tag": "c:buckets/empty"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    }
+  },
+  "result": {
+    "id": "robotica:rancher",
+    "count": 1
+  }
+}
