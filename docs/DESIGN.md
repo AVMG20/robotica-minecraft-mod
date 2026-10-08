@@ -178,7 +178,7 @@ Modules (see Modules above): one item per kind and level. A kind fits certain pi
 | Night Vision | helmet | Mk1 / Mk2 / Mk3 | night vision; II and III thermal sight: hostile mobs within 24 / 48 blocks show through walls (client outline) | 10 / 20 / 30 FE/s |
 | Rebreather | helmet | Mk2 | breathe under water | 60 FE/s submerged |
 | Robot HUD | helmet | Mk2 | nearby drones on the HUD (distance, health) | 5 FE/s |
-| Auto-Feeder | helmet | Mk1 | eats the best fitting plain food (no effects) at food level 14 or less | 500 FE per food |
+| Auto-Feeder | helmet | Mk1 | eats the best fitting plain food (no effects) as soon as food drops below full (server config `autoFeederHunger`, default 19) | 500 FE per food |
 | Solar Weave | helmet | Mk2 | charges the suit by day under open sky, not in rain | makes 200 FE/s |
 | Sonar Pulse | helmet | Mk2 / Mk3 / Mk4 | key N: ores (`c:ores`) and mobs within 16 / 24 / 32 blocks are outlined for 10 s; the client scans its loaded sections, the server charges and cools down (5 s) | 4,000 / 6,000 / 8,000 per ping |
 | Jet Assist | chest | Mk2 / Mk3 / Mk4 | slows long falls; 1 / 2 / 3 extra jumps in the air | 40 / 30 / 20 FE/s gliding, 400 / 350 / 300 per jump |

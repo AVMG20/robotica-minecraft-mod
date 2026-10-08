@@ -308,7 +308,7 @@
    "items": [
     "auto_feeder_module"
    ],
-   "what": "Eats plain food from your inventory at food level 14 or less.",
+   "what": "Eats plain food from your inventory as soon as you lose a hunger point.",
    "stats": {
     "rows": [
      [
