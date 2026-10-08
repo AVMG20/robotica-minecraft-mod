@@ -1,0 +1,50 @@
+{
+  "render_type": "minecraft:cutout",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "atlas": "robotica:block/stumpy_body",
+    "brass": "robotica:block/automation_brass",
+    "dark": "robotica:block/automation_dark",
+    "steel": "robotica:block/automation_steel",
+    "wood": "robotica:block/automation_wood",
+    "eye": "robotica:block/automation_eye",
+    "saw": "robotica:block/automation_saw",
+    "leaf": "robotica:block/automation_leaf",
+    "accent": "robotica:block/automation_mk1",
+    "particle": "robotica:block/automation_copper"
+  },
+  "elements": [
+    {
+      "from": [
+        14.2,
+        2.5,
+        4
+      ],
+      "to": [
+        15.2,
+        10.5,
+        12
+      ],
+      "faces": {
+        "east": {
+          "texture": "#saw",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#saw",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        }
+      }
+    }
+  ]
+}

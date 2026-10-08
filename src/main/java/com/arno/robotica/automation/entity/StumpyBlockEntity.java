@@ -15,8 +15,11 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,9 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
     /** Log clusters without natural leaves (player builds). Transient. */
     private final LongOpenHashSet ignored = new LongOpenHashSet();
     private int wraps;
+
+    /** Effect kind of a chop (the event's other kind is the plain sparkle). */
+    private static final int CHOP = 0;
 
     public StumpyBlockEntity(BlockPos pos, BlockState state) {
         super(AutomationContent.STUMPY_BE.get(), pos, state);
@@ -116,6 +122,7 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
         }
         rest = felled * AutomationConfig.stumpyTicksPerLog() / Math.max(1, effectiveSpeedMultiplier());
         workSound(sl, start, CoreSounds.STUMPY_CHOP, 1.0F, 0.9F + sl.random.nextFloat() * 0.2F);
+        workFx(sl, start, CHOP);
         for (ItemStack drop : drops) output(drop);
         replant(sl, tree, BuiltInRegistries.BLOCK.getKey(startState.getBlock()).getPath());
         return true;
@@ -163,6 +170,21 @@ public class StumpyBlockEntity extends FarmBotBlockEntity {
         sl.setBlock(pos, bestState, Block.UPDATE_ALL);
         buffer.extractItem(bestSlot, 1, false);
         return true;
+    }
+
+    // ---- effects (client side, from the block event) ----
+
+    @Override
+    protected void playHitFx(Level level, int kind, @Nullable BlockPos target) {
+        BotFx.whoosh(level, worldPosition, 0.2F);
+        if (target == null) return;
+        // At the trunk's face on the bot's side, not hidden inside the log.
+        double[] face = BotFx.faceToward(worldPosition, target.getX() + 0.5, target.getZ() + 0.5, 0.6);
+        double x = face[0], y = target.getY() + 0.4, z = face[1];
+        BotFx.sparkLine(level, worldPosition, x, y, z);
+        BotFx.slash(level, x, y, z, 0.7F);
+        BotFx.burst(level, x, y, z, 3, BotFx.CYAN, 2);
+        BotFx.sound(level, x, y, z, CoreSounds.SHOCK_ZAP.get(), 0.3F, 1.3F + level.random.nextFloat() * 0.3F);
     }
 
     @Override

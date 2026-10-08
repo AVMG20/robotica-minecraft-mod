@@ -1,0 +1,178 @@
+{
+  "render_type": "minecraft:cutout",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "atlas": "robotica:block/sprout_body",
+    "brass": "robotica:block/automation_brass",
+    "dark": "robotica:block/automation_dark",
+    "steel": "robotica:block/automation_steel",
+    "wood": "robotica:block/automation_wood",
+    "eye": "robotica:block/automation_eye",
+    "saw": "robotica:block/automation_saw",
+    "leaf": "robotica:block/automation_leaf",
+    "accent": "robotica:block/automation_mk1",
+    "particle": "robotica:block/automation_brass"
+  },
+  "elements": [
+    {
+      "from": [
+        12,
+        6,
+        6.5
+      ],
+      "to": [
+        13.4,
+        8.5,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "down": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        13.4,
+        2,
+        7.5
+      ],
+      "to": [
+        14.4,
+        12.5,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "down": {
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "from": [
+        13.2,
+        11.8,
+        3.5
+      ],
+      "to": [
+        14.6,
+        12.8,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#steel"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        13.2,
+        11,
+        2
+      ],
+      "to": [
+        14.6,
+        11.9,
+        4.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#steel"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        13.2,
+        10.2,
+        1
+      ],
+      "to": [
+        14.6,
+        11.1,
+        2.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#steel"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    }
+  ]
+}

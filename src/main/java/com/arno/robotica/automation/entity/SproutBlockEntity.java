@@ -13,6 +13,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AttachedStemBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -29,6 +30,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +43,9 @@ import java.util.List;
  */
 public class SproutBlockEntity extends FarmBotBlockEntity {
     private enum Kind {NONE, HARVEST, FRUIT, CUT, PLANT, TILL}
+
+    /** Effect kinds of the block event (the top value, 3, is the plain sparkle). */
+    private static final int FX_HARVEST = 0, FX_PLANT = 1, FX_TILL = 2;
 
     public SproutBlockEntity(BlockPos pos, BlockState state) {
         super(AutomationContent.SPROUT_BE.get(), pos, state);
@@ -237,6 +243,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
             }
             sl.setBlock(pos, paid ? freshState(state) : Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
+        workFx(sl, pos, FX_HARVEST);
         for (ItemStack drop : drops) output(drop);
         return true;
     }
@@ -252,6 +259,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         sl.levelEvent(2001, pos, Block.getId(fruit));
         workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
         sl.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        workFx(sl, pos, FX_HARVEST);
         for (ItemStack drop : drops) output(drop);
         return true;
     }
@@ -288,6 +296,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         }
         sl.levelEvent(2001, pos, Block.getId(state));
         workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
+        workFx(sl, pos, FX_HARVEST);
         for (ItemStack drop : drops) output(drop);
         return true;
     }
@@ -320,6 +329,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         sl.setBlock(plantPos, crop, Block.UPDATE_ALL);
         buffer.extractItem(slot, 1, false);
         workSound(sl, plantPos, () -> SoundEvents.CROP_PLANTED, 0.8F, 1.0F);
+        workFx(sl, plantPos, FX_PLANT);
         return true;
     }
 
@@ -330,7 +340,36 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         if (!aboveState.isAir()) sl.setBlock(above, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         sl.setBlock(pos, Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7), Block.UPDATE_ALL);
         workSound(sl, pos, () -> SoundEvents.HOE_TILL, 0.8F, 1.0F);
+        workFx(sl, pos, FX_TILL);
         plant(sl, above);
         return true;
+    }
+
+    // ---- effects (client side, from the block event) ----
+
+    @Override
+    protected void playHitFx(Level level, int kind, @Nullable BlockPos target) {
+        BotFx.whoosh(level, worldPosition, kind == FX_PLANT ? 0.1F : 0.15F);
+        if (target == null) return;
+        double x = target.getX() + 0.5, z = target.getZ() + 0.5;
+        switch (kind) {
+            case FX_HARVEST -> {
+                double y = target.getY() + 0.35;
+                BotFx.sparkLine(level, worldPosition, x, y, z);
+                BotFx.slash(level, x, y, z, 0.35F);
+                BotFx.burst(level, x, y + 0.1, z, 2, BotFx.CYAN, 2);
+            }
+            case FX_PLANT -> {
+                double y = target.getY() + 0.2;
+                BotFx.sparkLine(level, worldPosition, x, y, z);
+                BotFx.burst(level, x, y, z, 2, BotFx.MINT, 3);
+            }
+            default -> {
+                double y = target.getY() + 1.05;
+                BotFx.sparkLine(level, worldPosition, x, y, z);
+                BotFx.puffs(level, target, level.getBlockState(target), 4);
+                BotFx.burst(level, x, y, z, 1, BotFx.CYAN, 1);
+            }
+        }
     }
 }

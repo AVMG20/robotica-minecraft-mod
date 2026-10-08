@@ -14,6 +14,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -191,6 +192,101 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
 
     /** Called every tick the bot spends on a target (before the action itself); used for the ambient work sound. */
     protected void onWorkTick(ServerLevel sl) {
+    }
+
+    // ---- work effects ----
+    // An action fires one block event; the client swings the arms and spawns the sparks (so they follow its particle
+    // setting). The two event bytes pack the target: dx and dz (6 bits each, 0 = no target), the target layer of the
+    // scan area, and the effect kind in the bits the layer leaves free. The top kind value is a small sparkle without a
+    // swing, used when actions come faster than a swing.
+
+    /** Ticks of a whole arm swing and the tick at which it hits. */
+    public static final int SWING_TICKS = 7;
+    public static final int HIT_TICK = 2;
+    /** Minimum gap between swings, and between plain sparkles. */
+    private static final int SWING_GAP = 8;
+    private static final int SPARKLE_GAP = 2;
+
+    private long lastSwing = -100;
+    private long lastSparkle = -100;
+    // client side animation state
+    private long fxStart = Long.MIN_VALUE;
+    private int fxKind;
+    private boolean fxHitPending;
+    @Nullable
+    private BlockPos fxTarget;
+
+    private int layerBits() {
+        return Math.max(1, 32 - Integer.numberOfLeadingZeros(layerCount() - 1));
+    }
+
+    /** Kind value of the plain sparkle (the highest kind the event can carry). */
+    public int sparkleKind() {
+        return (1 << (4 - layerBits())) - 1;
+    }
+
+    /** Fires the work effect of an action at {@code at}. Server side; rate limited per bot. */
+    public void workFx(ServerLevel sl, BlockPos at, int kind) {
+        if (age - lastSwing >= SWING_GAP) {
+            lastSwing = age;
+        } else if (age - lastSparkle >= SPARKLE_GAP && age - lastSwing >= SPARKLE_GAP) {
+            kind = sparkleKind();
+        } else {
+            return;
+        }
+        lastSparkle = age;
+        int bits = layerBits();
+        int dx = at.getX() - worldPosition.getX();
+        int dz = at.getZ() - worldPosition.getZ();
+        int layer = at.getY() - layerBase();
+        int v = Math.min(kind, sparkleKind()) << (12 + bits);
+        if (Math.abs(dx) <= 31 && Math.abs(dz) <= 31 && layer >= 0 && layer < 1 << bits) {
+            v |= (dx + 32) | (dz + 32) << 6 | layer << 12;
+        }
+        sl.blockEvent(worldPosition, getBlockState().getBlock(), v >>> 8, v & 0xFF);
+    }
+
+    @Override
+    public boolean triggerEvent(int id, int param) {
+        if (level == null) return false;
+        if (!level.isClientSide) return true;
+        int v = (id & 0xFF) << 8 | (param & 0xFF);
+        int bits = layerBits();
+        int kind = v >>> (12 + bits);
+        int rawDx = v & 63;
+        fxTarget = rawDx == 0 ? null : new BlockPos(worldPosition.getX() + rawDx - 32, layerBase() + ((v >>> 12) & ((1 << bits) - 1)),
+                worldPosition.getZ() + ((v >>> 6) & 63) - 32);
+        if (kind == sparkleKind()) {
+            if (fxTarget != null) BotFx.sparkle(level, fxTarget);
+            return true;
+        }
+        fxKind = kind;
+        fxStart = level.getGameTime();
+        fxHitPending = true;
+        return true;
+    }
+
+    /** Client tick: plays the hit effects when the swing lands. */
+    public void clientTick() {
+        if (fxHitPending && level != null && level.getGameTime() - fxStart >= HIT_TICK) {
+            fxHitPending = false;
+            playHitFx(level, fxKind, fxTarget);
+        }
+    }
+
+    /** Client side: particles and sounds of an action as the swing lands. {@code target} is null when it did not fit the event. */
+    protected abstract void playHitFx(Level level, int kind, @Nullable BlockPos target);
+
+    /** Client side: ticks (with partial tick) since the current swing started, or -1 when the arms rest. */
+    public float swingTime(float partialTick) {
+        if (level == null || fxStart == Long.MIN_VALUE) return -1;
+        float t = level.getGameTime() - fxStart + partialTick;
+        return t >= 0 && t < SWING_TICKS ? t : -1;
+    }
+
+    /** Client side: kind of the current or last swing. */
+    public int swingKind() {
+        return fxKind;
     }
 
     // ---- growth boost ----

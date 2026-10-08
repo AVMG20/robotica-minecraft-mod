@@ -1,0 +1,114 @@
+{
+  "render_type": "minecraft:cutout",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "atlas": "robotica:block/stumpy_body",
+    "brass": "robotica:block/automation_brass",
+    "dark": "robotica:block/automation_dark",
+    "steel": "robotica:block/automation_steel",
+    "wood": "robotica:block/automation_wood",
+    "eye": "robotica:block/automation_eye",
+    "saw": "robotica:block/automation_saw",
+    "leaf": "robotica:block/automation_leaf",
+    "accent": "robotica:block/automation_mk1",
+    "particle": "robotica:block/automation_copper"
+  },
+  "elements": [
+    {
+      "from": [
+        2.6,
+        6,
+        6.5
+      ],
+      "to": [
+        4,
+        8.5,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "down": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        1.2,
+        3,
+        7.6
+      ],
+      "to": [
+        2.2,
+        10,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "down": {
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "from": [
+        0.4,
+        7.5,
+        6
+      ],
+      "to": [
+        2.2,
+        10,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#steel"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    }
+  ]
+}

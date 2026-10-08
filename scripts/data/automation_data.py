@@ -95,19 +95,45 @@ def antenna(stalk='brass'):
     ]
 
 
-def stumpy_elements():
-    els = chassis() + antenna()
-    els += [
-        # right arm with a circular saw
+# Arms are separate models drawn by the block entity renderer (FarmBotRenderer), which swings them around the shoulder
+# pivot on every action. The block models carry the body only; the item models show the whole robot.
+# Pivots (model px) must match FarmBotRenderer.
+STUMPY_ARMS = {
+    # right arm: shoulder and hub; the saw blade is its own part so it can spin
+    'saw_arm': [
         box((12, 6, 6.5), (13.4, 8.5, 9.5), 'brass'),
         box((13.4, 6.2, 7.2), (14.2, 7.4, 8.8), 'steel'),
+    ],
+    'saw_blade': [
         box((14.2, 2.5, 4), (15.2, 10.5, 12), 'saw', faces=('east', 'west'), uv=SAW_UV),
-        # left arm with an axe
+    ],
+    # left arm with an axe
+    'axe_arm': [
         box((2.6, 6, 6.5), (4, 8.5, 9.5), 'brass'),
         box((1.2, 3, 7.6), (2.2, 10, 8.4), 'wood'),
         box((0.4, 7.5, 6), (2.2, 10, 10), 'steel'),
-    ]
-    return els
+    ],
+}
+
+SPROUT_ARMS = {
+    # right arm with a scythe
+    'scythe_arm': [
+        box((12, 6, 6.5), (13.4, 8.5, 9.5), 'brass'),
+        box((13.4, 2, 7.5), (14.4, 12.5, 8.5), 'wood'),
+        box((13.2, 11.8, 3.5), (14.6, 12.8, 8.5), 'steel'),
+        box((13.2, 11, 2), (14.6, 11.9, 4.5), 'steel'),
+        box((13.2, 10.2, 1), (14.6, 11.1, 2.6), 'steel'),
+    ],
+    # left arm with a pouch
+    'pouch_arm': [
+        box((2.6, 6, 6.5), (4, 8.5, 9.5), 'brass'),
+        box((1.6, 4.5, 6.8), (3.2, 7, 9.2), 'dark'),
+    ],
+}
+
+
+def stumpy_elements():
+    return chassis() + antenna()
 
 
 def sprout_elements():
@@ -122,15 +148,6 @@ def sprout_elements():
         # harvest basket on the back
         box((4.5, 2.5, 13.5), (11.5, 7.5, 15.5), 'wood'),
         box((4.2, 7.5, 13.2), (11.8, 8.3, 15.8), 'wood'),
-        # right arm with a scythe
-        box((12, 6, 6.5), (13.4, 8.5, 9.5), 'brass'),
-        box((13.4, 2, 7.5), (14.4, 12.5, 8.5), 'wood'),
-        box((13.2, 11.8, 3.5), (14.6, 12.8, 8.5), 'steel'),
-        box((13.2, 11, 2), (14.6, 11.9, 4.5), 'steel'),
-        box((13.2, 10.2, 1), (14.6, 11.1, 2.6), 'steel'),
-        # left arm with a pouch
-        box((2.6, 6, 6.5), (4, 8.5, 9.5), 'brass'),
-        box((1.6, 4.5, 6.8), (3.2, 7, 9.2), 'dark'),
     ]
     return els
 
@@ -173,14 +190,15 @@ def model(textures, elements, particle):
     }
 
 
-def robot(name, elements, body, mk_tex):
+def robot(name, elements, arms, body):
     base = f'robotica:block/{name}_base'
     textures = {'atlas': f'robotica:block/{name}_body', 'brass': 'robotica:block/automation_brass',
                 'dark': 'robotica:block/automation_dark', 'steel': 'robotica:block/automation_steel',
                 'wood': 'robotica:block/automation_wood', 'eye': 'robotica:block/automation_eye',
                 'saw': 'robotica:block/automation_saw', 'leaf': 'robotica:block/automation_leaf',
                 'accent': 'robotica:block/automation_mk1'}
-    write(ASSETS / f'models/block/{name}_base.json', model(textures, elements, f'robotica:block/{body}'))
+    particle = f'robotica:block/{body}'
+    write(ASSETS / f'models/block/{name}_base.json', model(textures, elements, particle))
     variants = {}
     for tier in range(1, 5):
         write(ASSETS / f'models/block/{name}_mk{tier}.json',
@@ -191,7 +209,13 @@ def robot(name, elements, body, mk_tex):
                 v['y'] = 90 * i
             variants[f'facing={facing},tier={tier}'] = v
     write(ASSETS / f'blockstates/{name}.json', {'variants': variants})
-    write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}_mk1'})
+    # Arm parts carry no accent, so one model each serves every Mk.
+    all_arms = []
+    for part, els in arms.items():
+        write(ASSETS / f'models/block/{name}_{part}.json', model(textures, els, particle))
+        all_arms += els
+    # The item shows the whole robot, arms included.
+    write(ASSETS / f'models/item/{name}.json', model(textures, elements + all_arms, particle))
 
 
 def single(name, model_name):
@@ -233,8 +257,8 @@ def shapeless(name, items):
 
 def main():
     # Robots: copper Stumpy, brass Sprout
-    robot('stumpy', stumpy_elements(), 'automation_copper', 'automation_mk1')
-    robot('sprout', sprout_elements(), 'automation_brass', 'automation_mk1')
+    robot('stumpy', stumpy_elements(), STUMPY_ARMS, 'automation_copper')
+    robot('sprout', sprout_elements(), SPROUT_ARMS, 'automation_brass')
 
     # Excavator Mk1-4: one base model; the Mk swaps the motor housing colour, LIT swaps in the spinning drill and the
     # blinking lamp. Mk1 keeps the id "excavator".
