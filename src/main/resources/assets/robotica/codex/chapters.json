@@ -276,7 +276,7 @@
         },
         {
           "title": "Heat and SCRAM",
-          "text": "- Over 1,000 C: less output.\n- 1,800 C: SCRAM, it shuts down. The burning pellet turns to waste.\nHeat above the cooling is wasted fuel. Rods at 100% stop it.\nAfter a SCRAM: rods in or more coolant, cool below 200 C, press Reset.\nOnly the owner, their team or an operator can move the rods or Reset.",
+          "text": "- Over 1,000 C: less output.\n- 1,800 C: SCRAM, it shuts down. The burning pellet turns to waste.\nHeat above the cooling is wasted fuel. Rods at 100% stop it.\nAfter a SCRAM: rods in or more coolant, cool below 200 C, press Reset.",
           "items": [
             "robotica:reactor_controller",
             "robotica:reactor_fuel_rod",
@@ -285,7 +285,7 @@
         },
         {
           "title": "Fusion Reactor",
-          "text": "7x3x7 of Fusion Casing; inside, 16 Fusion Coils ring an empty 3x3.\n1. Charge 100M FE into a Power Port.\n2. Add fusion fuel.\n3. Button on Running: it lights. About 200,000 FE/t out the same port.\nIt burns fuel even when nobody takes the power. Only the owner, their team or an operator can switch it.",
+          "text": "7x3x7 of Fusion Casing; inside, 16 Fusion Coils ring an empty 3x3.\n1. Charge 100M FE into a Power Port.\n2. Add fusion fuel.\n3. Button on Running: it lights. About 200,000 FE/t out the same port.\nIt burns fuel even when nobody takes the power.",
           "items": [
             "robotica:fusion_casing",
             "robotica:fusion_coil",
