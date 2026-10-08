@@ -754,7 +754,7 @@ public class MiningDrone extends DroneBase {
         minedTotal++;
         if (minedTotal % 2 == 0) sl.levelEvent(2001, pos, Block.getId(state));
         sl.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-        state.spawnAfterBreak(sl, pos, tool(), true);
+        state.spawnAfterBreak(sl, pos, tool(), false);
         for (ItemStack drop : drops) collect(drop);
         drillTicks = 8;
         setActive(true);
