@@ -432,14 +432,14 @@ final class TrailerScenesMachines {
 
     // ------------------------------------------------------------------ reactor_power
 
-    private static final Map<Character, String> FISSION_LEGEND = Map.of('C', "reactor_casing", 'G', "reactor_glass", 'K', "reactor_controller",
-            'P', "reactor_power_port", 'A', "reactor_access_port", 'R', "reactor_fuel_rod", 'W', "water", '.', "air");
-    private static final String[][] FISSION = {
-            {"CCCCC", "CCCCC", "CCCCC", "CCCCC", "CCCCC"},
-            {"CCCCC", "C.W.C", "AWRWP", "C.W.C", "CCCCC"},
-            {"CGKGC", "C.W.C", "CWRWC", "C.W.C", "CCCCC"},
-            {"CCGCC", "C.W.C", "CWRWC", "C.W.C", "CCCCC"},
-            {"CCCCC", "CCCCC", "CCGCC", "CCCCC", "CCCCC"}};
+    private static final Map<Character, String> CORE_LEGEND = Map.of('C', "reactor_casing", 'G', "reactor_glass", 'K', "reactor_controller",
+            'P', "reactor_power_port", 'A', "reactor_access_port", 'F', "flux_amplifier", 'D', "graphite_damper", '.', "air");
+    private static final String[][] CORE = {
+            {"CCCCC", "CGGGC", "CGGGC", "CGGGC", "CCCCC"},
+            {"CGGGC", "GD.DG", "AF.FP", "GD.DG", "CGGGC"},
+            {"CGKGC", "G.F.G", "GF.FG", "G.F.G", "CGGGC"},
+            {"CGGGC", "GD.DG", "G...G", "GD.DG", "CGGGC"},
+            {"CCCCC", "CGGGC", "CGGGC", "CGGGC", "CCCCC"}};
     private static final Map<Character, String> BANK_LEGEND = Map.of('B', "bank_casing", 'G', "bank_glass", 'K', "bank_controller",
             'I', "bank_port", 'O', "bank_port", 'R', "capacitor_redstone", 'T', "transfer_coil_advanced", '.', "air");
     private static final String[][] BANK = {
@@ -449,7 +449,7 @@ final class TrailerScenesMachines {
             {"BGGGB", "BRRRB", "BRRRB", "BRRRB", "BBBBB"},
             {"BBBBB", "BBBBB", "BBBBB", "BBBBB", "BBBBB"}};
 
-    /** A running Fission Reactor feeding a Capacitor Bank through Tesla Coils, which in turn power furnaces. */
+    /** A running Core Reactor feeding a Capacitor Bank through Tesla Coils, which in turn power furnaces. */
     private static TrailerScene reactorPower() {
         return TrailerScene.builder("reactor_power")
                 .site(64, 44)
@@ -460,14 +460,15 @@ final class TrailerScenesMachines {
                     holdLinker(player);
                     BlockPos reactor = site.offset(-20, 0, -5);
                     BlockPos bank = site.offset(-8, 0, -5);
-                    multiblock(level, reactor, FISSION, FISSION_LEGEND);
+                    multiblock(level, reactor, CORE, CORE_LEGEND);
                     multiblock(level, bank, BANK, BANK_LEGEND);
                     for (BlockPos p : new BlockPos[]{reactor.offset(2, 2, 4), bank.offset(2, 2, 4)}) {
                         if (level.getBlockEntity(p) instanceof com.arno.robotica.energy.block.StructureControllerBlockEntity c) c.scanNow();
                     }
                     BlockPos access = reactor.offset(0, 1, 2);
                     insert(level, access, new ItemStack(item("thorium_fuel_pellet"), 32));
-                    if (level.getBlockEntity(reactor.offset(2, 2, 4)) instanceof com.arno.robotica.energy.block.ReactorControllerBlockEntity r) {
+                    insert(level, access, new ItemStack(item("servo_core")));
+                    if (level.getBlockEntity(reactor.offset(2, 2, 4)) instanceof com.arno.robotica.energy.block.CoreReactorBlockEntity r) {
                         r.energy.setEnergy(r.energy.getMaxEnergyStored());
                     }
                     // reactor power port (east wall) -> coil -> bank input (west wall)

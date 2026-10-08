@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "RLR",
+    "AAA",
+    "RLR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "L": {
+      "item": "robotica:resonant_lattice"
+    },
+    "A": {
+      "item": "robotica:accelerator_segment"
+    }
+  },
+  "result": {
+    "id": "robotica:resonant_segment",
+    "count": 3
+  }
+}

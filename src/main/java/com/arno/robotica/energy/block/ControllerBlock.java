@@ -84,6 +84,14 @@ public class ControllerBlock extends Block implements EntityBlock {
         return (lvl, pos, st, be) -> ((StructureControllerBlockEntity) be).serverTick((ServerLevel) lvl, pos, st);
     }
 
+    /** Block events reach the controller's block entity (the Tesla Spire's lightning strike). */
+    @Override
+    protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
+        super.triggerEvent(state, level, pos, id, param);
+        BlockEntity be = level.getBlockEntity(pos);
+        return be != null && be.triggerEvent(id, param);
+    }
+
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
@@ -116,7 +124,8 @@ public class ControllerBlock extends Block implements EntityBlock {
         tooltip.add(Component.translatable("tooltip.robotica." + id).withStyle(ChatFormatting.GRAY));
         Object[] size = switch (id) {
             case "bank_controller" -> new Object[]{com.arno.robotica.energy.EnergyConfig.bankMinSize(), com.arno.robotica.energy.EnergyConfig.bankMaxSize()};
-            case "reactor_controller" -> new Object[]{com.arno.robotica.energy.EnergyConfig.reactorMinSize(), com.arno.robotica.energy.EnergyConfig.reactorMaxSize()};
+            case "spire_base" -> new Object[]{com.arno.robotica.energy.EnergyConfig.spireMinConductors(), com.arno.robotica.energy.EnergyConfig.spireMaxConductors()};
+            case "collider_controller" -> new Object[]{com.arno.robotica.energy.EnergyConfig.colliderMinLength(), com.arno.robotica.energy.EnergyConfig.colliderMaxLength()};
             default -> new Object[0];
         };
         tooltip.add(Component.translatable("tooltip.robotica." + id + "_shape", size).withStyle(ChatFormatting.DARK_GRAY));

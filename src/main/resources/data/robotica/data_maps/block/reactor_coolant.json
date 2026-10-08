@@ -1,9 +1,0 @@
-{
-  "values": {
-    "minecraft:water": {"cooling": 1.0},
-    "minecraft:ice": {"cooling": 1.5},
-    "minecraft:packed_ice": {"cooling": 2.0},
-    "minecraft:blue_ice": {"cooling": 3.0},
-    "robotica:cryo_coolant": {"cooling": 4.0}
-  }
-}

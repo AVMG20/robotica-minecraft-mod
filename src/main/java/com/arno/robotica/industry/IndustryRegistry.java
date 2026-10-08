@@ -101,7 +101,7 @@ public final class IndustryRegistry {
     public static final DeferredItem<PartItem> SUPERCONDUCTOR_COIL = part("superconductor_coil", 3, Rarity.UNCOMMON);
     public static final DeferredItem<PartItem> RESONANT_LATTICE = part("resonant_lattice", 4, Rarity.RARE);
 
-    // Reactor fuel (stats in data/robotica/data_maps/item/reactor_fuel.json and fusion_fuel.json)
+    // Big energy fuel (stats in data/robotica/data_maps/item/spire_fuel.json, reactor_fuel.json and collider_fuel.json)
     public static final DeferredItem<PartItem> THORIUM_FUEL_PELLET = part("thorium_fuel_pellet", 2);
     public static final DeferredItem<PartItem> ENRICHED_FUEL_PELLET = part("enriched_fuel_pellet", 3, Rarity.UNCOMMON);
     public static final DeferredItem<PartItem> DEPLETED_FUEL_PELLET = part("depleted_fuel_pellet", 2);

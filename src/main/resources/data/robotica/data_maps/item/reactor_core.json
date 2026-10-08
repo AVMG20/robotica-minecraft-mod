@@ -1,0 +1,16 @@
+{
+  "values": {
+    "robotica:servo_core": {
+      "power": 2.0,
+      "life": 12096000
+    },
+    "robotica:magma_core": {
+      "power": 6.0,
+      "life": 12096000
+    },
+    "robotica:antigrav_core": {
+      "power": 16.0,
+      "life": 12096000
+    }
+  }
+}

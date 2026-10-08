@@ -1,150 +1,4 @@
 {
-  "fission_reactor_5": {
-    "title": "Fission Reactor 5x5x5",
-    "controller": "reactor_controller",
-    "guide": "fission-reactor",
-    "check": "fission",
-    "about": "Smallest reactor: one Fuel Rod column with water on all four sides. About 1,100 FE/t on thorium pellets.",
-    "notes": [
-      "Fuel Rods fill the whole column, floor to roof.",
-      "Only the 4 horizontal neighbors of a rod cool it.",
-      "Swap the water for packed ice for about 1,280 FE/t."
-    ],
-    "legend": {
-      "C": "reactor_casing",
-      "G": "reactor_glass",
-      "K": "reactor_controller",
-      "P": "reactor_power_port",
-      "A": "reactor_access_port",
-      "R": "reactor_fuel_rod",
-      "W": "minecraft:water",
-      ".": "air"
-    },
-    "layers": [
-      [
-        "CCCCC",
-        "CCCCC",
-        "CCCCC",
-        "CCCCC",
-        "CCCCC"
-      ],
-      [
-        "CCCCC",
-        "C.W.C",
-        "AWRWP",
-        "C.W.C",
-        "CCCCC"
-      ],
-      [
-        "CGKGC",
-        "C.W.C",
-        "CWRWC",
-        "C.W.C",
-        "CCCCC"
-      ],
-      [
-        "CCGCC",
-        "C.W.C",
-        "CWRWC",
-        "C.W.C",
-        "CCCCC"
-      ],
-      [
-        "CCCCC",
-        "CCCCC",
-        "CCGCC",
-        "CCCCC",
-        "CCCCC"
-      ]
-    ]
-  },
-  "fission_reactor_7": {
-    "title": "Fission Reactor 7x7x7",
-    "controller": "reactor_controller",
-    "guide": "fission-reactor",
-    "check": "fission",
-    "about": "Biggest default reactor: 13 Fuel Rod columns in a Cryo Coolant checkerboard. About 37,000 FE/t on enriched pellets at 32% load.",
-    "notes": [
-      "Every rod has Cryo Coolant on its four sides (or the wall).",
-      "Runs hot at full power: set the control rods so it stays under 1,000 C.",
-      "Two Power Ports, one Access Port for fuel and waste."
-    ],
-    "legend": {
-      "C": "reactor_casing",
-      "G": "reactor_glass",
-      "K": "reactor_controller",
-      "P": "reactor_power_port",
-      "A": "reactor_access_port",
-      "R": "reactor_fuel_rod",
-      "Q": "cryo_coolant",
-      ".": "air"
-    },
-    "layers": [
-      [
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC"
-      ],
-      [
-        "CCCCCCC",
-        "CRQRQRC",
-        "CQRQRQC",
-        "CRQRQRC",
-        "CQRQRQC",
-        "CRQRQRC",
-        "CCCCCCC"
-      ],
-      [
-        "CGGGGGC",
-        "CRQRQRC",
-        "CQRQRQC",
-        "CRQRQRP",
-        "CQRQRQC",
-        "CRQRQRC",
-        "CCCCCCC"
-      ],
-      [
-        "CCCKCCC",
-        "CRQRQRC",
-        "CQRQRQC",
-        "ARQRQRC",
-        "CQRQRQC",
-        "CRQRQRC",
-        "CCCCCCC"
-      ],
-      [
-        "CGGGGGC",
-        "CRQRQRC",
-        "CQRQRQC",
-        "CRQRQRP",
-        "CQRQRQC",
-        "CRQRQRC",
-        "CCCCCCC"
-      ],
-      [
-        "CCCCCCC",
-        "CRQRQRC",
-        "CQRQRQC",
-        "CRQRQRC",
-        "CQRQRQC",
-        "CRQRQRC",
-        "CCCCCCC"
-      ],
-      [
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC",
-        "CCCCCCC"
-      ]
-    ]
-  },
   "capacitor_bank_small": {
     "title": "Capacitor Bank 4x3x3",
     "controller": "bank_controller",
@@ -152,7 +6,6 @@
     "check": "bank",
     "about": "Smallest working bank: one Copper Capacitor and one Basic Transfer Coil. 4M FE, 16,000 FE/t in and out.",
     "notes": [
-      
       "Sneak + right-click a Bank Port to switch it between input and output."
     ],
     "legend": {
@@ -242,53 +95,259 @@
       ]
     ]
   },
-  "fusion_reactor": {
-    "title": "Fusion Reactor 7x3x7",
-    "controller": "fusion_controller",
-    "guide": "fusion-reactor",
-    "check": "fusion",
-    "about": "Fixed size. A ring of 16 Fusion Coils around an empty 3x3 plasma chamber, one layer high.",
+  "tesla_spire": {
+    "title": "Tesla Spire (copper)",
+    "controller": "spire_base",
+    "guide": "tesla-spire",
+    "check": "spire",
+    "about": "12 Blocks of Copper: about 370 FE/t at Y 70 in clear weather. A Thorium Fuel Pellet lasts about 9 minutes.",
     "notes": [
-      "The 3x3 middle stays empty.",
-      "Power Ports take the 100M FE ignition charge in and send power out.",
-      "Access Ports only take fuel in."
+      "The crown needs open sky: nothing above it.",
+      "Every other spire within 64 blocks weakens both.",
+      "Build it high and wait for a thunderstorm."
     ],
     "legend": {
-      "F": "fusion_casing",
-      "G": "reactor_glass",
-      "K": "fusion_controller",
-      "P": "reactor_power_port",
-      "A": "reactor_access_port",
-      "O": "fusion_coil",
+      "K": "spire_base",
+      "U": "minecraft:copper_block",
+      "T": "spire_crown",
       ".": "air"
     },
     "layers": [
       [
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF"
+        "K"
       ],
       [
-        "FFGKGFF",
-        "FOOOOOF",
-        "FO...OF",
-        "AO...OP",
-        "FO...OF",
-        "FOOOOOF",
-        "FFFFFFF"
+        "U"
       ],
       [
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFGGGFF",
-        "FFGGGFF",
-        "FFGGGFF",
-        "FFFFFFF",
-        "FFFFFFF"
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "U"
+      ],
+      [
+        "T"
+      ]
+    ]
+  },
+  "tesla_spire_mixed": {
+    "title": "Tesla Spire (iron and diamond)",
+    "controller": "spire_base",
+    "guide": "tesla-spire",
+    "check": "spire",
+    "about": "8 Blocks of Iron under 8 Blocks of Diamond: about 1,340 FE/t at Y 70, x1.8 efficiency. A Thorium Fuel Pellet lasts about 4.5 minutes.",
+    "notes": [
+      "Efficiency is the power-weighted average of the column."
+    ],
+    "legend": {
+      "K": "spire_base",
+      "I": "minecraft:iron_block",
+      "D": "minecraft:diamond_block",
+      "T": "spire_crown",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "K"
+      ],
+      [
+        "I"
+      ],
+      [
+        "I"
+      ],
+      [
+        "I"
+      ],
+      [
+        "I"
+      ],
+      [
+        "I"
+      ],
+      [
+        "I"
+      ],
+      [
+        "I"
+      ],
+      [
+        "I"
+      ],
+      [
+        "D"
+      ],
+      [
+        "D"
+      ],
+      [
+        "D"
+      ],
+      [
+        "D"
+      ],
+      [
+        "D"
+      ],
+      [
+        "D"
+      ],
+      [
+        "D"
+      ],
+      [
+        "D"
+      ],
+      [
+        "T"
+      ]
+    ]
+  },
+  "core_reactor": {
+    "title": "Core Reactor 5x5x5",
+    "controller": "reactor_controller",
+    "guide": "core-reactor",
+    "check": "core_reactor",
+    "about": "Four Flux Amplifiers and eight Graphite Dampers: power x1.08, burn x0.84. With a Servo Core and thorium pellets about 1,300 FE/t, and the core lasts over 8 days.",
+    "notes": [
+      "The middle block stays empty: the core floats there.",
+      "Swap the dampers for amplifiers for more power and a faster burn."
+    ],
+    "legend": {
+      "C": "reactor_casing",
+      "G": "reactor_glass",
+      "K": "reactor_controller",
+      "P": "reactor_power_port",
+      "A": "reactor_access_port",
+      "F": "flux_amplifier",
+      "D": "graphite_damper",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "CCCCC",
+        "CGGGC",
+        "CGGGC",
+        "CGGGC",
+        "CCCCC"
+      ],
+      [
+        "CGGGC",
+        "GD.DG",
+        "G...G",
+        "GD.DG",
+        "CGGGC"
+      ],
+      [
+        "CGKGC",
+        "G.F.G",
+        "AF.FP",
+        "G.F.G",
+        "CGGGC"
+      ],
+      [
+        "CGGGC",
+        "GD.DG",
+        "G...G",
+        "GD.DG",
+        "CGGGC"
+      ],
+      [
+        "CCCCC",
+        "CGGGC",
+        "CGGGC",
+        "CGGGC",
+        "CCCCC"
+      ]
+    ]
+  },
+  "ring_collider": {
+    "title": "Ring Collider 7x7",
+    "controller": "collider_controller",
+    "guide": "ring-collider",
+    "check": "collider",
+    "about": "Smallest ring: 23 Accelerator Segments and the controller. 23,000 FE/t after a 12M FE spin-up, one Strange Matter about every 28 minutes.",
+    "notes": [
+      "Any closed flat loop works; each segment joins exactly two others.",
+      "Feed the spin-up charge into the controller."
+    ],
+    "legend": {
+      "S": "accelerator_segment",
+      "K": "collider_controller",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "SSSKSSS",
+        "S.....S",
+        "S.....S",
+        "S.....S",
+        "S.....S",
+        "S.....S",
+        "SSSSSSS"
+      ]
+    ]
+  },
+  "ring_collider_resonant": {
+    "title": "Ring Collider 17x17 (resonant)",
+    "controller": "collider_controller",
+    "guide": "ring-collider",
+    "check": "collider",
+    "about": "63 Resonant Segments: 157,500 FE/t, a Fusion Fuel Pellet and a Strange Matter about every 5 minutes. Spin-up 32M FE.",
+    "notes": [
+      "Longer rings burn a pellet faster but make more power and matter per pellet."
+    ],
+    "legend": {
+      "R": "resonant_segment",
+      "K": "collider_controller",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "RRRRRRRRKRRRRRRRR",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "R...............R",
+        "RRRRRRRRRRRRRRRRR"
       ]
     ]
   },

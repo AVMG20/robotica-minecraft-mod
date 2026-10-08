@@ -1,131 +1,5 @@
 {
   "multiblocks": {
-    "fission_reactor_5": {
-      "layers": [
-        [
-          "CCCCC",
-          "CCCCC",
-          "CCCCC",
-          "CCCCC",
-          "CCCCC"
-        ],
-        [
-          "CCCCC",
-          "C.W.C",
-          "AWRWP",
-          "C.W.C",
-          "CCCCC"
-        ],
-        [
-          "CGKGC",
-          "C.W.C",
-          "CWRWC",
-          "C.W.C",
-          "CCCCC"
-        ],
-        [
-          "CCGCC",
-          "C.W.C",
-          "CWRWC",
-          "C.W.C",
-          "CCCCC"
-        ],
-        [
-          "CCCCC",
-          "CCCCC",
-          "CCGCC",
-          "CCCCC",
-          "CCCCC"
-        ]
-      ],
-      "legend": {
-        "C": "robotica:reactor_casing",
-        "G": "robotica:reactor_glass",
-        "K": "robotica:reactor_controller",
-        "P": "robotica:reactor_power_port",
-        "A": "robotica:reactor_access_port",
-        "R": "robotica:reactor_fuel_rod",
-        "W": "minecraft:water_bucket",
-        ".": ""
-      }
-    },
-    "fission_reactor_7": {
-      "layers": [
-        [
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC"
-        ],
-        [
-          "CCCCCCC",
-          "CRQRQRC",
-          "CQRQRQC",
-          "CRQRQRC",
-          "CQRQRQC",
-          "CRQRQRC",
-          "CCCCCCC"
-        ],
-        [
-          "CGGGGGC",
-          "CRQRQRC",
-          "CQRQRQC",
-          "CRQRQRP",
-          "CQRQRQC",
-          "CRQRQRC",
-          "CCCCCCC"
-        ],
-        [
-          "CCCKCCC",
-          "CRQRQRC",
-          "CQRQRQC",
-          "ARQRQRC",
-          "CQRQRQC",
-          "CRQRQRC",
-          "CCCCCCC"
-        ],
-        [
-          "CGGGGGC",
-          "CRQRQRC",
-          "CQRQRQC",
-          "CRQRQRP",
-          "CQRQRQC",
-          "CRQRQRC",
-          "CCCCCCC"
-        ],
-        [
-          "CCCCCCC",
-          "CRQRQRC",
-          "CQRQRQC",
-          "CRQRQRC",
-          "CQRQRQC",
-          "CRQRQRC",
-          "CCCCCCC"
-        ],
-        [
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC",
-          "CCCCCCC"
-        ]
-      ],
-      "legend": {
-        "C": "robotica:reactor_casing",
-        "G": "robotica:reactor_glass",
-        "K": "robotica:reactor_controller",
-        "P": "robotica:reactor_power_port",
-        "A": "robotica:reactor_access_port",
-        "R": "robotica:reactor_fuel_rod",
-        "Q": "robotica:cryo_coolant",
-        ".": ""
-      }
-    },
     "capacitor_bank_small": {
       "layers": [
         [
@@ -204,43 +78,215 @@
         ".": ""
       }
     },
-    "fusion_reactor": {
+    "tesla_spire": {
       "layers": [
         [
-          "FFFFFFF",
-          "FFFFFFF",
-          "FFFFFFF",
-          "FFFFFFF",
-          "FFFFFFF",
-          "FFFFFFF",
-          "FFFFFFF"
+          "K"
         ],
         [
-          "FFGKGFF",
-          "FOOOOOF",
-          "FO...OF",
-          "AO...OP",
-          "FO...OF",
-          "FOOOOOF",
-          "FFFFFFF"
+          "U"
         ],
         [
-          "FFFFFFF",
-          "FFFFFFF",
-          "FFGGGFF",
-          "FFGGGFF",
-          "FFGGGFF",
-          "FFFFFFF",
-          "FFFFFFF"
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "U"
+        ],
+        [
+          "T"
         ]
       ],
       "legend": {
-        "F": "robotica:fusion_casing",
+        "K": "robotica:spire_base",
+        "U": "minecraft:copper_block",
+        "T": "robotica:spire_crown",
+        ".": ""
+      }
+    },
+    "tesla_spire_mixed": {
+      "layers": [
+        [
+          "K"
+        ],
+        [
+          "I"
+        ],
+        [
+          "I"
+        ],
+        [
+          "I"
+        ],
+        [
+          "I"
+        ],
+        [
+          "I"
+        ],
+        [
+          "I"
+        ],
+        [
+          "I"
+        ],
+        [
+          "I"
+        ],
+        [
+          "D"
+        ],
+        [
+          "D"
+        ],
+        [
+          "D"
+        ],
+        [
+          "D"
+        ],
+        [
+          "D"
+        ],
+        [
+          "D"
+        ],
+        [
+          "D"
+        ],
+        [
+          "D"
+        ],
+        [
+          "T"
+        ]
+      ],
+      "legend": {
+        "K": "robotica:spire_base",
+        "I": "minecraft:iron_block",
+        "D": "minecraft:diamond_block",
+        "T": "robotica:spire_crown",
+        ".": ""
+      }
+    },
+    "core_reactor": {
+      "layers": [
+        [
+          "CCCCC",
+          "CGGGC",
+          "CGGGC",
+          "CGGGC",
+          "CCCCC"
+        ],
+        [
+          "CGGGC",
+          "GD.DG",
+          "G...G",
+          "GD.DG",
+          "CGGGC"
+        ],
+        [
+          "CGKGC",
+          "G.F.G",
+          "AF.FP",
+          "G.F.G",
+          "CGGGC"
+        ],
+        [
+          "CGGGC",
+          "GD.DG",
+          "G...G",
+          "GD.DG",
+          "CGGGC"
+        ],
+        [
+          "CCCCC",
+          "CGGGC",
+          "CGGGC",
+          "CGGGC",
+          "CCCCC"
+        ]
+      ],
+      "legend": {
+        "C": "robotica:reactor_casing",
         "G": "robotica:reactor_glass",
-        "K": "robotica:fusion_controller",
+        "K": "robotica:reactor_controller",
         "P": "robotica:reactor_power_port",
         "A": "robotica:reactor_access_port",
-        "O": "robotica:fusion_coil",
+        "F": "robotica:flux_amplifier",
+        "D": "robotica:graphite_damper",
+        ".": ""
+      }
+    },
+    "ring_collider": {
+      "layers": [
+        [
+          "SSSKSSS",
+          "S.....S",
+          "S.....S",
+          "S.....S",
+          "S.....S",
+          "S.....S",
+          "SSSSSSS"
+        ]
+      ],
+      "legend": {
+        "S": "robotica:accelerator_segment",
+        "K": "robotica:collider_controller",
+        ".": ""
+      }
+    },
+    "ring_collider_resonant": {
+      "layers": [
+        [
+          "RRRRRRRRKRRRRRRRR",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "R...............R",
+          "RRRRRRRRRRRRRRRRR"
+        ]
+      ],
+      "legend": {
+        "R": "robotica:resonant_segment",
+        "K": "robotica:collider_controller",
         ".": ""
       }
     },

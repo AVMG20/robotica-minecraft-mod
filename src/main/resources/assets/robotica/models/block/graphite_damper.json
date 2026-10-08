@@ -1,0 +1,53 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "f_north": "robotica:block/graphite_damper",
+    "f_south": "robotica:block/graphite_damper",
+    "f_west": "robotica:block/graphite_damper",
+    "f_east": "robotica:block/graphite_damper",
+    "f_up": "robotica:block/graphite_damper_top",
+    "f_down": "robotica:block/graphite_damper_top",
+    "particle": "robotica:block/graphite_damper"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#f_north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#f_south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#f_west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#f_east",
+          "cullface": "east"
+        },
+        "up": {
+          "texture": "#f_up",
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#f_down",
+          "cullface": "down"
+        }
+      }
+    }
+  ]
+}

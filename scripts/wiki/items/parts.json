@@ -160,31 +160,34 @@
    "items": [
     "servo_core"
    ],
-   "what": "Opens Age 2. Drops from the Scrap Colossus.",
+   "what": "Opens Age 2. Drops from the Scrap Colossus. Burns in a Core Reactor (x2 power).",
    "see": [
     "item:colossus_altar",
     "guide:bosses",
-    "guide:exo-frame"
+    "guide:exo-frame",
+    "guide:core-reactor"
    ]
   },
   {
    "items": [
     "magma_core"
    ],
-   "what": "Opens Age 3. Drops from the Forge Tyrant. Also fits the core slot of the Survey Rig and the Exo chestplate.",
+   "what": "Opens Age 3. Drops from the Forge Tyrant. Also fits the core slot of the Survey Rig and the Exo chestplate, and burns in a Core Reactor (x6 power).",
    "see": [
     "item:forge_altar",
     "guide:bosses",
-    "guide:exo-frame"
+    "guide:exo-frame",
+    "guide:core-reactor"
    ]
   },
   {
    "items": [
     "antigrav_core"
    ],
-   "what": "Opens Age 4.",
+   "what": "Opens Age 4. Burns in a Core Reactor (x16 power). The Assembler makes it from [[strange_matter]].",
    "see": [
-    "guide:exo-frame"
+    "guide:exo-frame",
+    "guide:core-reactor"
    ]
   },
   {
@@ -305,7 +308,7 @@
    "items": [
     "superconductor_coil"
    ],
-   "what": "For Mk3 machines, Exo Mk3 and fusion parts.",
+   "what": "For Mk3 machines, Exo Mk3 and Accelerator Segments.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -324,7 +327,7 @@
     "thorium_fuel_pellet",
     "enriched_fuel_pellet"
    ],
-   "what": "Fission fuel. The thorium pellet also runs the [[rtg]].",
+   "what": "Fuel for the Tesla Spire and the Core Reactor. The thorium pellet also runs the [[rtg]].",
    "stats": {
     "columns": [
      "Thorium",
@@ -332,14 +335,19 @@
     ],
     "rows": [
      [
-      "Reactor heat",
-      "400",
-      "1,000"
+      "Core Reactor",
+      "600 FE/t",
+      "1,500 FE/t"
      ],
      [
-      "Burn time",
-      "12,000 ticks / active rods",
-      "12,000 ticks / active rods"
+      "Core Reactor burn",
+      "12,000 ticks",
+      "12,000 ticks"
+     ],
+     [
+      "Tesla Spire",
+      "4M FE",
+      "12M FE"
      ],
      [
       "RTG",
@@ -349,7 +357,8 @@
     ]
    },
    "see": [
-    "guide:fission-reactor"
+    "guide:core-reactor",
+    "guide:tesla-spire"
    ]
   },
   {
@@ -368,9 +377,9 @@
    "items": [
     "fusion_fuel_pellet"
    ],
-   "what": "Fusion Reactor fuel: 200,000 FE/t for 6,000 ticks (5 minutes).",
+   "what": "Ring Collider fuel: 6,000 ticks (5 minutes) in a 64 block ring.",
    "see": [
-    "guide:fusion-reactor"
+    "guide:ring-collider"
    ]
   },
   {
@@ -839,6 +848,15 @@
    ],
    "see": [
     "guide:upgrade-cards"
+   ]
+  },
+  {
+   "items": [
+    "strange_matter"
+   ],
+   "what": "Made by the Ring Collider. Replaces the nether star in [[null_circuit]]s and makes [[antigrav_core]]s in the Assembler.",
+   "see": [
+    "guide:ring-collider"
    ]
   }
  ]

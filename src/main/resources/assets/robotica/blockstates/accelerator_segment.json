@@ -1,0 +1,94 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "robotica:block/accelerator_segment_core"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "robotica:block/accelerator_segment_pipe_north"
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "robotica:block/accelerator_segment_pipe_south"
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "robotica:block/accelerator_segment_pipe_west"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "robotica:block/accelerator_segment_pipe_east"
+      }
+    },
+    {
+      "when": {
+        "north": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "robotica:block/accelerator_segment_coil_x"
+      }
+    },
+    {
+      "when": {
+        "OR": [
+          {
+            "east": "false",
+            "west": "false",
+            "north": "true"
+          },
+          {
+            "east": "false",
+            "west": "false",
+            "south": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "robotica:block/accelerator_segment_coil_z"
+      }
+    },
+    {
+      "when": {
+        "OR": [
+          {
+            "north": "true",
+            "east": "true"
+          },
+          {
+            "north": "true",
+            "west": "true"
+          },
+          {
+            "south": "true",
+            "east": "true"
+          },
+          {
+            "south": "true",
+            "west": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "robotica:block/accelerator_segment_corner"
+      }
+    }
+  ]
+}

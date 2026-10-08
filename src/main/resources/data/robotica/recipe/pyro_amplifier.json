@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SPS",
+    "FQF",
+    "SPS"
+  ],
+  "key": {
+    "S": {
+      "tag": "c:plates/pyrosteel"
+    },
+    "P": {
+      "item": "robotica:pyrolite_shard"
+    },
+    "F": {
+      "item": "robotica:flux_amplifier"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:pyro_amplifier",
+    "count": 2
+  }
+}

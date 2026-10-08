@@ -2,7 +2,7 @@
 title: The Power Ladder
 icon: tesla_coil_1
 order: 20
-summary: Every generator from the crank to fusion, where to store FE and how to move it without cables.
+summary: Every generator from the crank to the Ring Collider, where to store FE and how to move it without cables.
 ---
 ## Generators
 
@@ -12,8 +12,9 @@ summary: Every generator from the crank to fusion, where to store FE and how to 
 | [[combustion_generator]] | 1 | 80 |
 | [[solar_panel_mk1]] to [[solar_panel_mk4]] | 1-4 | 20 to 320, by day |
 | [[rtg]] | 2 | 150 |
-| [Fission Reactor](#/guide/fission-reactor) | 2-3 | about 1,100 to 37,000 |
-| [Fusion Reactor](#/guide/fusion-reactor) | 4 | 200,000 |
+| [Tesla Spire](#/guide/tesla-spire) | 2+ | about 500 to 27,000, plus lightning |
+| [Core Reactor](#/guide/core-reactor) | 2-4 | 1,200 to 180,000 |
+| [Ring Collider](#/guide/ring-collider) | 4 | 24,000 to 640,000 |
 
 {{image shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4}}
 
@@ -31,7 +32,6 @@ Put a [[tesla_coil_1]] on a generator or battery and link it to machines with th
 
 {{image shots/11_tesla_network.jpg|A Tesla Coil network}}
 
-{{image shots/18_energy_multiblocks.jpg|Fission Reactor, Capacitor Bank and Fusion Reactor}}
 
 ## Charging your gear
 

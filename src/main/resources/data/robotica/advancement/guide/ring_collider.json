@@ -1,0 +1,38 @@
+{
+  "parent": "robotica:guide/age4",
+  "display": {
+    "icon": {
+      "id": "robotica:collider_controller"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.ring_collider.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.ring_collider.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "robotica:milestone",
+      "conditions": {
+        "milestone": "collider_running"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:assembling_null_circuit_from_strange_matter",
+      "robotica:assembling_antigrav_core_from_strange_matter"
+    ],
+    "experience": 100
+  }
+}

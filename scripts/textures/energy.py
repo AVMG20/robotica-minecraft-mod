@@ -1,10 +1,12 @@
-"""Energy module textures (big power): Fission Reactor, Capacitor Bank, Fusion Reactor.
-Run: python3 scripts/textures/energy.py   (writes textures/block/*.png; models come from scripts/data/energy_models.py)
+"""Energy module textures (big power): Capacitor Bank, Tesla Spire, Core Reactor, Ring Collider, Strange Matter.
+Run: python3 scripts/textures/energy.py   (writes textures/block/*.png and textures/item/strange_matter.png; models
+come from scripts/data/energy_models.py)
 
-Three families, one construction (top-left light, bevelled plates, riveted corners, glow on separate overlays):
-- Fission Reactor: dark graphite plating with hazard amber trim and a green glow (rods, gauges).
+Four families, one construction (top-left light, bevelled plates, riveted corners, glow on separate overlays):
+- Core Reactor: dark graphite plating with hazard amber trim and a green glow; amplifiers glow in their tier colour.
 - Capacitor Bank: slate blue plating with cyan energy glow; capacitors show their cell metal, coils their windings.
-- Fusion Reactor: null violet plating with a white-hot plasma glow.
+- Tesla Spire: brushed steel with copper windings and a cyan arc glow.
+- Ring Collider: null violet plating with a white-hot plasma glow; segments are a glass beam pipe between magnets.
 Casing faces tile seamlessly: the frame of a casing is drawn as half-width seams so walls read as one surface.
 """
 import math
@@ -16,6 +18,7 @@ from pixelart import Canvas, grain, material, write_anim, write_block  # noqa: E
 
 DK, ST, SL, NU = 'abcde', 'fghij', 'lmnop', 'qrstu'
 CU, RD, TE, CY, GR, PU, AM = '01234', '56789', 'ABCDE', 'FGHIJ', 'KLMNO', 'PQRST', 'UVWXY'
+MG = '*+=~/'
 P = {'k': '#121417', 'z': '#08090B', '.': '#00000000'}
 P.update(material(DK, 'dark'))
 P.update(material(ST, 'steel'))
@@ -28,6 +31,7 @@ P.update(material(CY, 'cyan'))
 P.update(material(GR, 'green'))
 P.update(material(PU, 'purple'))
 P.update(material(AM, 'amber'))
+P.update(material(MG, 'magma'))
 P.update(grain('vw', 'dark', 0.22))
 P.update(grain('xy', 'slate', 0.22))
 P.update({'!': '#2A2142', '#': '#382D55'})  # subtle grain of the violet plating
@@ -37,11 +41,15 @@ P.update({
     '[': '#5FE3F038', ']': '#E6FAFFA8',      # bank glass tint and glint
     '{': '#9CF2FF', '}': '#D9FBFF', '<': '#5CC8E6', '>': '#2C7FA8', '^': '#F4FFFF',  # cryo ice
     '&': '#FFFFFF', '@': '#FFE6FF',          # white-hot plasma
+    '-': '#7FE8FF70', '_': '#E6FAFFC8',      # accelerator pipe tint and glint
+    ':': '#B48CFF70', ';': '#F0E2FFC8',      # resonant pipe tint and glint
+    '|': '#3A8FA0C8', '?': '#7A50C0C8',      # pipe walls (accelerator, resonant)
+    '`': '#9FF0FF60',                        # spire crown orb glass
 })
 GRAIN = {DK: 'vw', SL: 'xy', NU: '!#', ST: '$%'}
 
-ACCENT = {DK: AM, SL: CY, NU: PU}
-GLOW = {DK: GR, SL: CY, NU: PU}
+ACCENT = {DK: AM, SL: CY, NU: PU, ST: CU}
+GLOW = {DK: GR, SL: CY, NU: PU, ST: CY}
 
 
 def plate(c, x, y, w, h, r, seed=0, **kw):
@@ -191,42 +199,85 @@ def bank_port_glow(output):
     return c
 
 
-# ---------------------------------------------------------------- fission inside
+# ---------------------------------------------------------------- core reactor inside
 
-def fuel_rod_side():
-    """Zircaloy tube between steel collars; a glowing green core shows through a slot. Tiles vertically."""
+def sprite(rows, ramp):
+    """Rows of '1'..'4' (ramp steps) and '.', mapped onto a ramp."""
+    return [''.join(ramp[int(ch)] if ch.isdigit() else ch for ch in row) for row in rows]
+
+
+CRYSTAL = ['..43..', '.4332.', '433321', '433221', '.3221.', '..21..']
+AMP = {1: RD, 2: MG, 3: CY}
+
+
+def amplifier_side(tier):
+    """Modulator plate: graphite collars around a window holding a crystal in the tier colour, fed by coil bands."""
+    m = AMP[tier]
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'k')
-    plate(c, 3, 0, 10, 16, ST, 51, bevel=False, vertical=True, density=0.3)
-    c.rect(3, 0, 1, 16, ST[3]).rect(12, 0, 1, 16, ST[1])
-    c.rect(2, 0, 12, 2, ST[1]).rect(2, 0, 12, 1, ST[3])                 # collar (top, half of a seam)
-    c.rect(2, 14, 12, 2, ST[1]).rect(2, 15, 12, 1, ST[0])
-    c.rect(6, 3, 4, 10, 'z').rect(7, 4, 2, 8, GR[1])                     # core slot
-    c.set(6, 3, 'k')
+    plate(c, 0, 0, 16, 16, DK, 130 + tier, bevel=False, density=0.28)
+    c.rect(0, 0, 16, 1, DK[3]).rect(0, 0, 1, 16, DK[3]).rect(0, 15, 16, 1, DK[0]).rect(15, 0, 1, 16, DK[0])
+    for y in (1, 12):                                                    # collars
+        c.rect(1, y, 14, 3, DK[2]).bevel(1, y, 14, 3, DK[4], DK[0])
+        c.rivet(2, y + 1, ST).rivet(12, y + 1, ST)
+    c.rect(2, 4, 12, 8, 'k')                                             # window
+    for x in (2, 3, 12, 13):                                             # coil bands
+        for y in range(4, 12):
+            c.set(x, y, m[1] if (y + x) % 2 else m[0])
+    c.rect(4, 4, 8, 8, 'z')
+    c.draw(5, 5, sprite(CRYSTAL, m))
+    for i in range(tier):                                                # tier pips on the lower collar
+        c.set(6 + i * 2, 13, m[2])
     return c
 
 
-def fuel_rod_glow():
+def amplifier_glow(tier):
+    m = AMP[tier]
     c = Canvas()
-    c.rect(7, 4, 2, 8, GR[3])
-    c.rect(7, 6, 1, 4, GR[4])
+    c.draw(5, 5, sprite(CRYSTAL, m[:1] + m[2:] + m[4]))
+    c.set(7, 6, '&').set(7, 7, m[4])
+    for i in range(tier):
+        c.set(6 + i * 2, 13, m[3])
     return c
 
 
-def fuel_rod_top():
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'k')
-    c.disc(7.5, 7.5, 6.2, ST[1]).disc(7.5, 7.5, 5.4, ST[2])
-    c.ring(7.5, 7.5, 3.0, 3.9, ST[0])
-    c.disc(7.5, 7.5, 2.6, GR[1])
-    c.set(5, 5, ST[4])
+def amplifier_top(tier):
+    m = AMP[tier]
+    c = casing(DK, 140 + tier)
+    c.disc(7.5, 7.5, 5.6, 'k')
+    c.ring(7.5, 7.5, 3.4, 5.1, m[0]).ring(7.5, 7.5, 4.0, 4.6, m[1])
+    c.disc(7.5, 7.5, 2.6, m[2])
     return c
 
 
-def fuel_rod_top_glow():
+def amplifier_top_glow(tier):
+    m = AMP[tier]
     c = Canvas()
-    c.disc(7.5, 7.5, 2.6, GR[3])
-    c.disc(7.5, 7.5, 1.2, GR[4])
+    c.disc(7.5, 7.5, 2.6, m[3])
+    c.disc(7.5, 7.5, 1.2, m[4])
+    c.set(7, 7, '&')
+    return c
+
+
+def damper_side():
+    """Stacked graphite moderator bricks with cold cyan channels between the courses."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, DK, 151, bevel=False, density=0.4)
+    for y in (5, 10):                                                    # cooling channels
+        c.rect(0, y, 16, 1, CY[0])
+    for row, y in enumerate((1, 6, 11)):                                 # brick joints, offset per course
+        off = 0 if row % 2 == 0 else 4
+        for x in range(off, 16, 8):
+            c.rect(x, y, 1, 4, 'k').rect((x + 1) % 16, y, 1, 4, DK[3])
+    c.rect(0, 0, 16, 1, DK[2]).rect(0, 15, 16, 1, DK[0])
+    return c
+
+
+def damper_top():
+    c = casing(DK, 160)
+    c.recess(2, 2, 12, 12, DK, fill=DK[1])
+    for x in range(3, 13, 3):                                            # moderator channel grid
+        for y in range(3, 13, 3):
+            c.rect(x, y, 2, 2, 'z').set(x, y, CY[0])
     return c
 
 
@@ -318,41 +369,157 @@ def coil_top(tier):
     return c
 
 
-# ---------------------------------------------------------------- fusion
+# ---------------------------------------------------------------- tesla spire
 
-def fusion_coil_side():
-    """Superconducting magnet: violet windings in a null frame with a plasma-facing slot."""
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, NU, 101, bevel=False, density=0.25)
-    c.rect(0, 0, 16, 1, NU[3]).rect(0, 15, 16, 1, NU[0])
-    c.rect(1, 2, 14, 12, 'k')
-    for x in range(2, 14):
-        c.rect(x, 3, 1, 10, PU[2] if x % 2 else PU[1])
-        c.set(x, 3, PU[3])
-    c.rect(2, 7, 12, 2, 'z').rect(3, 7, 10, 2, PU[1])
+def spire_base_side():
+    """Steel housing with a copper winding band and ceramic insulators: the foot of the column."""
+    c = casing(ST, 170)
+    c.rect(1, 5, 14, 6, 'k')
+    for y in range(5, 11):
+        c.rect(2, y, 12, 1, CU[2] if y % 2 else CU[1])
+        c.set(2, y, CU[3] if y % 2 else CU[2]).set(13, y, CU[0])
+    for x in (4, 8, 11):                                                 # insulators
+        c.rect(x, 4, 1, 8, 'k').set(x, 4, ST[4])
+    c.rect(2, 7, 12, 2, 'z').rect(3, 7, 10, 1, CY[1])
     return c
 
 
-def fusion_coil_glow(frame_no):
+def spire_base_side_glow():
     c = Canvas()
-    for x in range(3, 13):
-        lvl = 0.5 + 0.5 * math.sin(frame_no * 0.8 + x * 0.7)
-        c.set(x, 7, '&' if lvl > 0.85 else PU[4] if lvl > 0.5 else PU[3])
-        c.set(x, 8, PU[3] if lvl > 0.5 else PU[2])
+    c.rect(3, 7, 10, 1, CY[3])
+    c.set(5, 7, CY[4]).set(10, 7, CY[4])
     return c
 
 
-def fusion_coil_top():
-    c = casing(NU, 110)
+def spire_base_top():
+    """Copper terminal plate the column stands on."""
+    c = casing(ST, 180)
     c.disc(7.5, 7.5, 5.8, 'k')
-    c.ring(7.5, 7.5, 2.6, 5.3, PU[1]).ring(7.5, 7.5, 3.4, 4.4, PU[2])
-    c.disc(7.5, 7.5, 2.0, 'z')
+    c.disc(7.5, 7.5, 5.2, CU[1]).disc(7.5, 7.5, 4.4, CU[2])
+    c.ring(7.5, 7.5, 2.2, 3.0, CU[0])
+    c.set(5, 5, CU[4]).set(6, 5, CU[3])
     return c
 
 
-def fusion_casing():
+def crown_copper():
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, CU, 190, bevel=False, density=0.1)
+    for x, y in ((2, 2), (12, 2), (2, 12), (12, 12)):
+        c.rivet(x, y, CU)
+    return c
+
+
+def crown_coil():
+    """Toroid windings: tight copper turns with dark gaps."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, CU[1])
+    for x in range(16):
+        c.rect(x, 0, 1, 16, CU[2] if x % 2 else CU[1])
+        c.set(x, 8, CU[3] if x % 2 else CU[2]).set(x, 12, CU[0])
+    for y in (0, 15):
+        c.rect(0, y, 16, 1, CU[0])
+    return c
+
+
+def crown_orb():
+    """Glass discharge sphere caged in copper bands."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, '`')
+    c.frame(0, 0, 16, 16, CU[1])
+    c.rect(7, 0, 2, 16, CU[2]).rect(7, 0, 1, 16, CU[3])
+    c.line(2, 5, 5, 2, ']').line(2, 6, 6, 2, ']').line(11, 13, 13, 11, ']')
+    return c
+
+
+def crown_core(lit):
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'z' if not lit else CY[2])
+    c.disc(7.5, 7.5, 6.0, CY[0] if not lit else CY[3])
+    c.disc(7.5, 7.5, 3.5, CY[1] if not lit else CY[4])
+    if lit:
+        c.disc(7.5, 7.5, 1.8, '&')
+    return c
+
+
+# ---------------------------------------------------------------- ring collider
+
+SEG = {1: (SL, CU, CY, '-', '_', '|'), 2: (NU, PU, PU, ':', ';', '?')}
+
+
+def segment_base(tier):
+    """Mounting slab of a ring segment: riveted plate with a cable channel along the beam."""
+    r, m, g = SEG[tier][:3]
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, r, 200 + tier, density=0.25)
+    c.rivets(0, 0, 16, 16, r, inset=1)
+    c.rect(1, 12, 14, 3, r[1]).bevel(1, 12, 14, 3, r[3], r[0])           # side face (the slab is 4 px tall)
+    c.rect(3, 13, 10, 1, 'k').rect(4, 13, 8, 1, g[0])
+    return c
+
+
+def segment_coil(tier):
+    """Dipole magnet: windings of the tier metal around a yoke, a charge line through the middle."""
+    r, m, g = SEG[tier][:3]
+    c = Canvas()
+    c.rect(0, 0, 16, 16, r[1])
+    for y in range(16):
+        c.rect(0, y, 16, 1, m[2] if y % 2 else m[1])
+        c.set(0, y, m[3]).set(15, y, m[0])
+    c.rect(0, 0, 16, 1, r[3]).rect(0, 15, 16, 1, r[0])
+    c.rect(0, 7, 16, 2, 'z').rect(1, 7, 14, 1, g[1])
+    if tier == 2:
+        for x in (3, 8, 12):
+            c.set(x, 4, '&').set(x, 11, PU[4])
+    return c
+
+
+def segment_coil_glow(tier):
+    g = SEG[tier][2]
+    c = Canvas()
+    c.rect(1, 7, 14, 1, g[3])
+    for x in (2, 7, 12):
+        c.set(x, 7, g[4])
+    return c
+
+
+def segment_pipe(tier):
+    """Glass beam pipe: tinted pane with darker walls along the edges and long glints."""
+    tint, glint, wall = SEG[tier][3:]
+    c = Canvas()
+    c.rect(0, 0, 16, 16, tint)
+    for i in (6, 9):
+        c.rect(0, i, 16, 1, wall).rect(i, 0, 1, 16, wall)
+    for x in range(0, 16, 4):
+        c.set(x, 7, glint).set(7, x + 1, glint)
+    return c
+
+
+def collider_casing():
     c = casing(NU, 120)
     c.set(7, 7, PU[2]).set(8, 8, PU[2])
+    return c
+
+
+def strange_matter(frame_no):
+    """A dark sphere of quark matter wrapped in a violet swirl, teal sparks orbiting it."""
+    c = Canvas()
+    c.disc(7.5, 7.5, 6.2, 'k')
+    c.disc(7.5, 7.5, 5.4, NU[1])
+    c.disc(6.8, 6.8, 3.6, NU[2])
+    c.disc(6.2, 6.2, 1.6, NU[3])
+    a0 = frame_no * math.pi / 4
+    for arm in (0, math.pi):                                             # two swirl arms
+        for i in range(16):
+            t = i / 15
+            a = a0 + arm + t * math.pi * 1.4
+            rr = 0.8 + t * 4.4
+            x, y = 7.5 + math.cos(a) * rr, 7.5 + math.sin(a) * rr
+            c.set(int(round(x)), int(round(y)), PU[4] if t < 0.3 else PU[3] if t < 0.7 else PU[2])
+    for k in range(3):                                                   # orbiting sparks
+        a = -a0 * 0.5 + k * 2 * math.pi / 3
+        x, y = 7.5 + math.cos(a) * 6.6, 7.5 + math.sin(a) * 6.6
+        c.set(int(round(x)), int(round(y)), TE[4] if k == frame_no % 3 else TE[3])
+    c.set(5, 5, '&')
     return c
 
 
@@ -364,11 +531,14 @@ def main():
     write_block('reactor_power_port', power_port(DK).rows(), P)
     write_block('reactor_power_port_glow', power_port_glow(DK).rows(), P)
     write_block('reactor_access_port', access_port(DK).rows(), P)
-    write_block('reactor_fuel_rod', fuel_rod_side().rows(), P)
-    write_block('reactor_fuel_rod_glow', fuel_rod_glow().rows(), P)
-    write_block('reactor_fuel_rod_top', fuel_rod_top().rows(), P)
-    write_block('reactor_fuel_rod_top_glow', fuel_rod_top_glow().rows(), P)
     write_anim('block', 'cryo_coolant', [cryo_coolant(i) for i in range(8)], P, frametime=6, interpolate=True)
+    for tier, name in ((1, 'flux'), (2, 'pyro'), (3, 'resonant')):
+        write_block(f'{name}_amplifier', amplifier_side(tier).rows(), P)
+        write_block(f'{name}_amplifier_glow', amplifier_glow(tier).rows(), P)
+        write_block(f'{name}_amplifier_top', amplifier_top(tier).rows(), P)
+        write_block(f'{name}_amplifier_top_glow', amplifier_top_glow(tier).rows(), P)
+    write_block('graphite_damper', damper_side().rows(), P)
+    write_block('graphite_damper_top', damper_top().rows(), P)
 
     write_block('bank_casing', casing(SL, 3).rows(), P)
     write_block('bank_glass', glass(SL, '[', ']', 4).rows(), P)
@@ -385,12 +555,25 @@ def main():
         write_block(f'transfer_coil_{name}_glow', coil_glow(tier).rows(), P)
         write_block(f'transfer_coil_{name}_top', coil_top(tier).rows(), P)
 
-    write_block('fusion_casing', fusion_casing().rows(), P)
-    write_block('fusion_coil', fusion_coil_side().rows(), P)
-    write_anim('block', 'fusion_coil_glow', [fusion_coil_glow(i) for i in range(8)], P, frametime=3)
-    write_block('fusion_coil_top', fusion_coil_top().rows(), P)
+    write_block('spire_casing', casing(ST, 5).rows(), P)
+    write_block('spire_base', spire_base_side().rows(), P)
+    write_block('spire_base_glow', spire_base_side_glow().rows(), P)
+    write_block('spire_base_top', spire_base_top().rows(), P)
+    write_block('spire_crown_copper', crown_copper().rows(), P)
+    write_block('spire_crown_coil', crown_coil().rows(), P)
+    write_block('spire_crown_orb', crown_orb().rows(), P)
+    write_block('spire_crown_core', crown_core(False).rows(), P)
+    write_block('spire_crown_core_lit', crown_core(True).rows(), P)
 
-    for prefix, r in (('reactor', DK), ('bank', SL), ('fusion', NU)):
+    write_block('collider_casing', collider_casing().rows(), P)
+    for tier, name in ((1, 'accelerator'), (2, 'resonant')):
+        write_block(f'{name}_segment_base', segment_base(tier).rows(), P)
+        write_block(f'{name}_segment_coil', segment_coil(tier).rows(), P)
+        write_block(f'{name}_segment_coil_glow', segment_coil_glow(tier).rows(), P)
+        write_block(f'{name}_segment_pipe', segment_pipe(tier).rows(), P)
+    write_anim('item', 'strange_matter', [strange_matter(i) for i in range(8)], P, frametime=3)
+
+    for prefix, r in (('reactor', DK), ('bank', SL), ('spire', ST), ('collider', NU)):
         for state in ('off', 'formed', 'on'):
             write_block(f'{prefix}_controller_{state}', controller_front(r, state).rows(), P)
             write_block(f'{prefix}_controller_{state}_glow', controller_glow(r, state).rows(), P)

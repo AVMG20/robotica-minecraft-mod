@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CNC",
+    "AXA",
+    "CRC"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:reactor_casing"
+    },
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "A": {
+      "item": "robotica:plasma_actuator"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    },
+    "R": {
+      "item": "robotica:reactor_controller"
+    }
+  },
+  "result": {
+    "id": "robotica:collider_controller",
+    "count": 1
+  }
+}

@@ -111,6 +111,19 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_HUM = reg("rancher_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_HURT = reg("rancher_hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_DEATH = reg("rancher_death");
+    /** Tesla Spire: crown hum while it runs, a lightning strike on the crown. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPIRE_HUM = reg("spire_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPIRE_STRIKE = reg("spire_strike");
+    /** Core Reactor: a core loads, a core burns out, the chamber's throb while it runs. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CORE_INSERT = reg("core_insert");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CORE_BURNOUT = reg("core_burnout");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CORE_REACTOR_HUM = reg("core_reactor_hum");
+    /** Ring Collider: beam lights and dies, hum, collisions at full beam, a Strange Matter forming. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_START = reg("collider_start");
+    public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_STOP = reg("collider_stop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_HUM = reg("collider_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_COLLIDE = reg("collider_collide");
+    public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_MATTER = reg("collider_matter");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {

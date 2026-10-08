@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "GTG",
+    "KAK",
+    "GKG"
+  ],
+  "key": {
+    "G": {
+      "tag": "c:ingots/gold"
+    },
+    "T": {
+      "item": "robotica:tesla_coil_2"
+    },
+    "K": {
+      "item": "robotica:copper_coil"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:spire_crown",
+    "count": 1
+  }
+}

@@ -122,142 +122,75 @@
    "items": [
     "reactor_controller"
    ],
-   "what": "Brain of the Fission Reactor: fuel, temperature and control rods.",
+   "what": "Brain of the Core Reactor: core, fuel and modulators.",
    "use": [
-    "Put fuel pellets in it or in a [[reactor_access_port]].",
-    "Set the control rods with the slider to keep it under 1,000 C."
+    "Build the 5x5x5 around it.",
+    "Put a core in the core slot and fuel pellets in the fuel slots, or pipe them into a [[reactor_access_port]]."
    ],
    "stats": {
     "rows": [
      [
       "Size",
-      "5x5x5 to 7x7x7"
+      "5x5x5"
      ],
      [
       "Buffer",
-      "5,000,000 FE"
+      "10,000,000 FE"
      ],
      [
-      "Safe",
-      "up to 1,000 C"
-     ],
-     [
-      "SCRAM",
-      "1,800 C (reset below 200 C), loses the burning pellet"
+      "Output",
+      "pellet FE/t x core power x modulators"
      ]
     ]
    },
    "see": [
-    "guide:fission-reactor"
-   ],
-   "image": "shots/gui_fission_formed.jpg|Fission Reactor Controller, formed"
+    "guide:core-reactor",
+    "multiblock:core_reactor"
+   ]
   },
   {
    "items": [
     "reactor_casing"
    ],
-   "what": "Frame and wall block of the Fission Reactor. Also goes into Fusion Casing.",
+   "what": "Frame and wall block of the Core Reactor.",
    "see": [
-    "guide:fission-reactor"
+    "guide:core-reactor"
    ]
   },
   {
    "items": [
     "reactor_glass"
    ],
-   "what": "See-through wall block for both reactors. Walls only, not edges.",
+   "what": "See-through wall block of the Core Reactor. Walls only, not edges.",
    "see": [
-    "guide:fission-reactor"
+    "guide:core-reactor"
    ]
   },
   {
    "items": [
     "reactor_power_port"
    ],
-   "what": "Wall block that sends reactor FE out. On the Fusion Reactor it also takes the ignition charge in.",
+   "what": "Wall block that sends the Core Reactor's FE out.",
    "see": [
-    "guide:fission-reactor"
+    "guide:core-reactor"
    ]
   },
   {
    "items": [
     "reactor_access_port"
    ],
-   "what": "Wall block for fuel in and waste out. Hoppers and pipes work. A full waste slot stops the reactor.",
+   "what": "Wall block for fuel and cores in, waste out. Hoppers and pipes work. Full waste slots pause the reactor.",
    "see": [
-    "guide:fission-reactor"
-   ]
-  },
-  {
-   "items": [
-    "reactor_fuel_rod"
-   ],
-   "what": "Goes inside a Fission Reactor in full columns, floor to roof.",
-   "see": [
-    "guide:fission-reactor"
+    "guide:core-reactor"
    ]
   },
   {
    "items": [
     "cryo_coolant"
    ],
-   "what": "The best reactor coolant: 4 points per side next to a fuel rod.",
+   "what": "The strongest Core Reactor stabilizer: -4% power, -12% burn.",
    "see": [
-    "guide:fission-reactor"
-   ]
-  },
-  {
-   "items": [
-    "fusion_controller"
-   ],
-   "what": "Brain of the Fusion Reactor: ignition charge, plasma and fuel.",
-   "use": [
-    "Build the 7x3x7 around it.",
-    "Charge 100M FE into a [[reactor_power_port]], from a Capacitor Bank or Tesla Coils.",
-    "Put [[fusion_fuel_pellet]] in it or in a [[reactor_access_port]].",
-    "Set the button to Running: the charge is spent and the plasma lights."
-   ],
-   "stats": {
-    "rows": [
-     [
-      "Ignition",
-      "100,000,000 FE, at most 1M FE/t in"
-     ],
-     [
-      "Output",
-      "200,000 FE/t per pellet"
-     ],
-     [
-      "Warmup",
-      "10 s"
-     ],
-     [
-      "Fuel",
-      "one pellet lasts 5 minutes"
-     ]
-    ]
-   },
-   "see": [
-    "guide:fusion-reactor"
-   ],
-   "image": "shots/gui_fusion_formed.jpg|Fusion Reactor Controller, formed"
-  },
-  {
-   "items": [
-    "fusion_casing"
-   ],
-   "what": "Frame and wall block of the Fusion Reactor.",
-   "see": [
-    "guide:fusion-reactor"
-   ]
-  },
-  {
-   "items": [
-    "fusion_coil"
-   ],
-   "what": "Sixteen of these make the ring inside the Fusion Reactor.",
-   "see": [
-    "guide:fusion-reactor"
+    "guide:core-reactor"
    ]
   },
   {
@@ -904,6 +837,144 @@
     ]
    },
    "image": "shots/hauler_drone.jpg|Hauler Drones carrying a cow and a villager"
+  },
+  {
+   "items": [
+    "flux_amplifier",
+    "pyro_amplifier",
+    "resonant_amplifier"
+   ],
+   "what": "Core Reactor amplifiers: more power, but fuel and the core burn faster.",
+   "stats": {
+    "columns": [
+     "Flux",
+     "Pyro",
+     "Resonant"
+    ],
+    "rows": [
+     [
+      "Power",
+      "+8%",
+      "+15%",
+      "+25%"
+     ],
+     [
+      "Burn",
+      "+12%",
+      "+18%",
+      "+22%"
+     ]
+    ]
+   },
+   "see": [
+    "guide:core-reactor"
+   ]
+  },
+  {
+   "items": [
+    "graphite_damper"
+   ],
+   "what": "Core Reactor stabilizer: -3% power, -8% burn. Cheap way to stretch a core.",
+   "see": [
+    "guide:core-reactor"
+   ]
+  },
+  {
+   "items": [
+    "spire_base"
+   ],
+   "what": "Bottom of a Tesla Spire: burns thorium and sends FE out of its sides and bottom.",
+   "use": [
+    "Stack 8 to 24 conductor blocks on it and a [[spire_crown]] on top.",
+    "Feed it thorium ingots, thorium blocks or fuel pellets."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Buffer",
+      "4,000,000 FE"
+     ],
+     [
+      "Strike",
+      "30 s of full output"
+     ]
+    ]
+   },
+   "see": [
+    "guide:tesla-spire",
+    "multiblock:tesla_spire"
+   ]
+  },
+  {
+   "items": [
+    "spire_crown"
+   ],
+   "what": "Top of a Tesla Spire. Needs open sky; catches the lightning.",
+   "see": [
+    "guide:tesla-spire"
+   ]
+  },
+  {
+   "items": [
+    "collider_controller"
+   ],
+   "what": "Brain of the Ring Collider: spin-up charge, beam, fuel and Strange Matter.",
+   "use": [
+    "Put it in a closed loop of segments.",
+    "Charge it with FE, add [[fusion_fuel_pellet]]s and press Running."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Ring",
+      "24 to 256 blocks"
+     ],
+     [
+      "Spin-up",
+      "500,000 FE per ring block, at most 2M FE/t in"
+     ],
+     [
+      "Buffer",
+      "50,000,000 FE"
+     ],
+     [
+      "Warm-up",
+      "10 s"
+     ]
+    ]
+   },
+   "see": [
+    "guide:ring-collider",
+    "multiblock:ring_collider"
+   ]
+  },
+  {
+   "items": [
+    "accelerator_segment",
+    "resonant_segment"
+   ],
+   "what": "Ring Collider loop blocks. Resonant Segments make more power and twice the Strange Matter.",
+   "stats": {
+    "columns": [
+     "Accelerator",
+     "Resonant"
+    ],
+    "rows": [
+     [
+      "Power",
+      "1,000 FE/t",
+      "2,500 FE/t"
+     ],
+     [
+      "Strange Matter",
+      "x1",
+      "x2"
+     ]
+    ]
+   },
+   "see": [
+    "guide:ring-collider"
+   ]
   }
  ]
 }
