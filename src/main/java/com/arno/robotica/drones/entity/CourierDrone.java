@@ -426,7 +426,11 @@ public class CourierDrone extends DroneBase {
             ItemStack taken = from.extractItem(slot, fits.getCount(), false);
             if (taken.isEmpty()) continue;
             ItemStack rest = ItemHandlerHelper.insertItem(cargo, taken, false);
-            if (!rest.isEmpty()) ItemHandlerHelper.insertItem(from, rest, false);
+            if (!rest.isEmpty()) {
+                // cargo full: back where it came from, dropped as a last resort
+                rest = ItemHandlerHelper.insertItem(from, from.insertItem(slot, rest, false), false);
+                if (!rest.isEmpty()) Containers.dropItemStack(level(), getX(), getY(), getZ(), rest);
+            }
             slotsUsed++;
         }
         return cargoNotEmpty();
