@@ -4,6 +4,7 @@ import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.AutomationContent;
 import com.arno.robotica.core.CoreSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.BlockTags;
@@ -12,26 +13,33 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.AttachedStemBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CaveVines;
+import net.minecraft.world.level.block.CaveVinesBlock;
 import net.minecraft.world.level.block.CocoaBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.NetherWartBlock;
+import net.minecraft.world.level.block.PitcherCropBlock;
 import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Crop bot: harvests mature crops (CropBlock including modded ones via isMaxAge, nether wart, sweet berries, cocoa),
- * replants from the drops, plants seeds from its buffer on empty farmland and tills dirt or grass next to water. Cactus
- * and sugar cane are cut above their bottom block, which stays and grows back.
+ * Crop bot: harvests mature crops (CropBlock including modded ones via isMaxAge, nether wart, cocoa, pitcher plants,
+ * torchflowers on farmland), replants from the drops or its buffer, picks sweet and glow berries, breaks melons and
+ * pumpkins next to their attached stem, plants seeds from its buffer on empty farmland and tills dirt or grass next to
+ * water. Cactus, sugar cane, bamboo and kelp are cut above their bottom block, which stays and grows back.
  */
 public class SproutBlockEntity extends FarmBotBlockEntity {
-    private enum Kind {NONE, HARVEST, CUT, PLANT, TILL}
+    private enum Kind {NONE, HARVEST, FRUIT, CUT, PLANT, TILL}
 
     public SproutBlockEntity(BlockPos pos, BlockState state) {
         super(AutomationContent.SPROUT_BE.get(), pos, state);
@@ -65,27 +73,44 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         if (block instanceof NetherWartBlock) return state.getValue(NetherWartBlock.AGE) >= 3;
         if (block instanceof SweetBerryBushBlock) return state.getValue(SweetBerryBushBlock.AGE) >= 3;
         if (block instanceof CocoaBlock) return state.getValue(CocoaBlock.AGE) >= 2;
+        if (block instanceof CaveVines) return state.getValue(CaveVines.BERRIES);
+        if (block instanceof PitcherCropBlock) return state.getValue(PitcherCropBlock.AGE) >= PitcherCropBlock.MAX_AGE
+                && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER;
         return false;
     }
 
-    /** Cactus and sugar cane: plants that grow as a column from one bottom block. */
+    /** Cactus, sugar cane, bamboo and kelp: plants that grow as a column from one bottom block. */
     private static boolean isTallPlant(BlockState state) {
-        return state.is(Blocks.CACTUS) || state.is(Blocks.SUGAR_CANE);
+        return state.is(Blocks.CACTUS) || state.is(Blocks.SUGAR_CANE) || state.is(Blocks.BAMBOO) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT);
+    }
+
+    /** The column a tall plant belongs to (kelp body and tip count as one), AIR for anything else. */
+    private static Block column(BlockState state) {
+        if (state.is(Blocks.KELP_PLANT)) return Blocks.KELP;
+        return isTallPlant(state) ? state.getBlock() : Blocks.AIR;
     }
 
     private static boolean isHarvestable(BlockState state) {
         Block block = state.getBlock();
-        return block instanceof CropBlock || block instanceof NetherWartBlock || block instanceof SweetBerryBushBlock || block instanceof CocoaBlock;
+        return block instanceof CropBlock || block instanceof NetherWartBlock || block instanceof SweetBerryBushBlock || block instanceof CocoaBlock
+                || block instanceof CaveVines || block instanceof PitcherCropBlock;
     }
 
-    /** Seeds that the bot keeps and replants (crop, nether wart, berries, cocoa beans). */
+    /** Berry plants: picked in place, nothing to replant. */
+    private static boolean isBerryPlant(Block block) {
+        return block instanceof SweetBerryBushBlock || block instanceof CaveVines;
+    }
+
+    /** Seeds that the bot keeps and replants (crop seeds, nether wart, cocoa beans, pitcher pods). */
     public static boolean isFarmSeed(ItemStack stack) {
-        return stack.getItem() instanceof BlockItem bi && isHarvestable(bi.getBlock().defaultBlockState());
+        if (!(stack.getItem() instanceof BlockItem bi)) return false;
+        Block block = bi.getBlock();
+        return isHarvestable(block.defaultBlockState()) && !isBerryPlant(block);
     }
 
     /** Seeds that can be planted on farmland. */
     private static boolean isFarmlandSeed(ItemStack stack) {
-        return stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof CropBlock;
+        return stack.getItem() instanceof BlockItem bi && (bi.getBlock() instanceof CropBlock || bi.getBlock() instanceof PitcherCropBlock);
     }
 
     @Override
@@ -96,7 +121,10 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
     @Override
     protected boolean isGrowable(BlockState state) {
         Block block = state.getBlock();
-        return block instanceof CropBlock || block instanceof StemBlock || block instanceof NetherWartBlock
+        // Only the pitcher's growing bottom half: a random tick on the top half would grow a third block.
+        if (block instanceof PitcherCropBlock) return state.isRandomlyTicking();
+        if (state.is(Blocks.KELP_PLANT)) return false;
+        return block instanceof CaveVinesBlock || state.is(Blocks.BAMBOO_SAPLING) || block instanceof CropBlock || block instanceof StemBlock || block instanceof NetherWartBlock
                 || block instanceof SweetBerryBushBlock || block instanceof CocoaBlock || state.is(BlockTags.CROPS) || isTallPlant(state);
     }
 
@@ -128,24 +156,41 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         return false;
     }
 
+    /** Ground next to a melon or pumpkin stem stays free for the fruit. */
+    private static boolean nextToStem(ServerLevel sl, BlockPos pos) {
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            BlockPos n = pos.relative(d);
+            if (!sl.isLoaded(n)) continue;
+            Block block = sl.getBlockState(n).getBlock();
+            if (block instanceof StemBlock || block instanceof AttachedStemBlock) return true;
+        }
+        return false;
+    }
+
     private static boolean replaceable(BlockState state) {
         return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty() && !isHarvestable(state) && !isTallPlant(state));
     }
 
     private Kind classify(ServerLevel sl, BlockPos pos, BlockState state) {
         if (isHarvestable(state)) return isMature(state) ? Kind.HARVEST : Kind.NONE;
+        // An attached stem always points at its grown melon or pumpkin.
+        if (state.getBlock() instanceof AttachedStemBlock) return Kind.FRUIT;
+        // A torchflower crop turns into the flower when grown.
+        if (state.is(Blocks.TORCHFLOWER)) return sl.getBlockState(pos.below()).is(Blocks.FARMLAND) ? Kind.HARVEST : Kind.NONE;
         // The second block of a column is the cut point: the bottom block stays and grows back.
-        if (isTallPlant(state)) return sl.getBlockState(pos.below()).is(state.getBlock()) && !sl.getBlockState(pos.below(2)).is(state.getBlock())
-                ? Kind.CUT : Kind.NONE;
+        if (isTallPlant(state)) {
+            Block col = column(state);
+            return column(sl.getBlockState(pos.below())) == col && column(sl.getBlockState(pos.below(2))) != col ? Kind.CUT : Kind.NONE;
+        }
         boolean farmland = state.is(Blocks.FARMLAND);
         boolean tillable = state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK);
         if (!farmland && !tillable) return Kind.NONE;
         BlockPos above = pos.above();
         BlockState aboveState = sl.getBlockState(above);
         if (farmland) {
-            return aboveState.isAir() && findSeed(sl, above) >= 0 ? Kind.PLANT : Kind.NONE;
+            return aboveState.isAir() && findSeed(sl, above) >= 0 && !nextToStem(sl, above) ? Kind.PLANT : Kind.NONE;
         }
-        if (!replaceable(aboveState) || !hasFarmlandSeed() || sl.getRawBrightness(above, 0) < 8) return Kind.NONE;
+        if (!replaceable(aboveState) || !hasFarmlandSeed() || sl.getRawBrightness(above, 0) < 8 || nextToStem(sl, above)) return Kind.NONE;
         scanCost += 24;
         return nearWater(sl, pos) ? Kind.TILL : Kind.NONE;
     }
@@ -162,6 +207,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         BlockState state = sl.getBlockState(pos);
         return switch (classify(sl, pos, state)) {
             case HARVEST -> harvest(sl, pos, state);
+            case FRUIT -> pickFruit(sl, pos, state);
             case CUT -> cut(sl, pos, state);
             case PLANT -> plant(sl, pos.above());
             case TILL -> till(sl, pos);
@@ -176,25 +222,48 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         Block block = state.getBlock();
         List<ItemStack> drops = new ArrayList<>();
         for (ItemStack drop : Block.getDrops(state, sl, pos, null, null, new ItemStack(Items.STONE_HOE))) Drops.merge(drops, drop);
-        if (block instanceof SweetBerryBushBlock) {
-            sl.setBlock(pos, state.setValue(SweetBerryBushBlock.AGE, 1), Block.UPDATE_CLIENTS);
+        if (isBerryPlant(block)) {
+            BlockState picked = block instanceof CaveVines ? state.setValue(CaveVines.BERRIES, false) : state.setValue(SweetBerryBushBlock.AGE, 1);
+            sl.setBlock(pos, picked, Block.UPDATE_CLIENTS);
             workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
         } else {
             sl.levelEvent(2001, pos, Block.getId(state));
             workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
-            ItemStack seed = block.getCloneItemStack(sl, pos, state);
+            ItemStack seed = state.is(Blocks.TORCHFLOWER) ? new ItemStack(Items.TORCHFLOWER_SEEDS) : block.getCloneItemStack(sl, pos, state);
             boolean paid = !seed.isEmpty() && (Drops.takeOne(drops, seed.getItem()) || takeFromBuffer(seed.getItem()));
+            // The pitcher's top half goes first without shape updates, otherwise it would pop the bottom half loose.
+            if (block instanceof PitcherCropBlock && sl.getBlockState(pos.above()).is(block)) {
+                sl.setBlock(pos.above(), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            }
             sl.setBlock(pos, paid ? freshState(state) : Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
         for (ItemStack drop : drops) output(drop);
         return true;
     }
 
-    /** Breaks the column from {@code pos} up, top first, so nothing pops loose. One harvest's FE for the whole column. */
+    /** Breaks the melon or pumpkin the attached stem points at; the stem stays and grows a new one. */
+    private boolean pickFruit(ServerLevel sl, BlockPos stemPos, BlockState stem) {
+        BlockPos pos = stemPos.relative(stem.getValue(AttachedStemBlock.FACING));
+        if (!sl.isLoaded(pos)) return false;
+        BlockState fruit = sl.getBlockState(pos);
+        if (fruit.isAir() || fruit.getDestroySpeed(sl, pos) < 0 || !mayBreak(sl, pos, fruit)) return false;
+        if (!energy.consume(scaledDrain(AutomationConfig.sproutFePerHarvest(), 1))) return false;
+        List<ItemStack> drops = Block.getDrops(fruit, sl, pos, sl.getBlockEntity(pos));
+        sl.levelEvent(2001, pos, Block.getId(fruit));
+        workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
+        sl.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        for (ItemStack drop : drops) output(drop);
+        return true;
+    }
+
+    /**
+     * Breaks the column from {@code pos} up, top first, so nothing pops loose. One harvest's FE for the whole column.
+     * Kelp leaves water behind.
+     */
     private boolean cut(ServerLevel sl, BlockPos pos, BlockState state) {
-        Block block = state.getBlock();
+        Block col = column(state);
         BlockPos top = pos;
-        while (top.getY() - pos.getY() < 16 && sl.getBlockState(top.above()).is(block)) top = top.above();
+        while (top.getY() - pos.getY() < 16 && column(sl.getBlockState(top.above())) == col) top = top.above();
         for (BlockPos p = top; p.getY() >= pos.getY(); p = p.below()) {
             if (!mayBreak(sl, p, sl.getBlockState(p))) return false;
         }
@@ -203,7 +272,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         for (BlockPos p = top; p.getY() >= pos.getY(); p = p.below()) {
             BlockState at = sl.getBlockState(p);
             for (ItemStack drop : Block.getDrops(at, sl, p, null)) Drops.merge(drops, drop);
-            sl.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            sl.setBlock(p, at.getFluidState().createLegacyBlock(), Block.UPDATE_ALL);
         }
         sl.levelEvent(2001, pos, Block.getId(state));
         workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
@@ -216,6 +285,8 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         if (block instanceof CropBlock crop) return crop.getStateForAge(0);
         if (block instanceof NetherWartBlock) return state.setValue(NetherWartBlock.AGE, 0);
         if (block instanceof CocoaBlock) return state.setValue(CocoaBlock.AGE, 0);
+        if (block instanceof PitcherCropBlock) return state.setValue(PitcherCropBlock.AGE, 0);
+        if (state.is(Blocks.TORCHFLOWER)) return Blocks.TORCHFLOWER_CROP.defaultBlockState();
         return Blocks.AIR.defaultBlockState();
     }
 

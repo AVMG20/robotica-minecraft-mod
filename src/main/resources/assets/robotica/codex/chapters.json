@@ -358,7 +358,7 @@
       "pages": [
         {
           "title": "Stumpy and Sprout",
-          "text": "- Stumpy: fells trees, replants.\n- Sprout: harvests, replants, tills. Cuts cane and cactus.\nBoth fill a chest or Supply Crate they touch. A stalled robot smokes and says why.",
+          "text": "- Stumpy: fells trees, replants.\n- Sprout: harvests, replants, tills. Picks berries, melons and pumpkins. Cuts cane, cactus, bamboo and kelp.\nBoth fill a chest or Supply Crate they touch. A stalled robot smokes and says why.",
           "items": [
             "robotica:stumpy",
             "robotica:sprout",
