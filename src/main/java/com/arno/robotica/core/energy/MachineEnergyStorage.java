@@ -1,5 +1,7 @@
 package com.arno.robotica.core.energy;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.Tag;
 import net.neoforged.neoforge.energy.EnergyStorage;
 
 /**
@@ -27,6 +29,13 @@ public class MachineEnergyStorage extends EnergyStorage {
         int r = super.extractEnergy(toExtract, simulate);
         if (r > 0 && !simulate) onChanged.run();
         return r;
+    }
+
+    /** Loads the saved amount, clamped to the current capacity (it can shrink between saves, e.g. by config). */
+    @Override
+    public void deserializeNBT(HolderLookup.Provider provider, Tag nbt) {
+        super.deserializeNBT(provider, nbt);
+        energy = Math.max(0, Math.min(capacity, energy));
     }
 
     public void setEnergy(int value) {

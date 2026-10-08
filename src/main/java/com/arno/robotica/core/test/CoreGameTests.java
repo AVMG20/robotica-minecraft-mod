@@ -3,8 +3,10 @@ package com.arno.robotica.core.test;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
+import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.item.CoreItems;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.IntTag;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -62,6 +64,19 @@ public class CoreGameTests {
         ItemStack spring = new ItemStack(CoreItems.MAINSPRING.get());
         IEnergyStorage springCap = spring.getCapability(Capabilities.EnergyStorage.ITEM);
         helper.assertTrue(springCap != null && springCap.receiveEnergy(1000, false) == 0, "Mainspring must only be wound at the crank");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void machineEnergyClampsOnLoad(GameTestHelper helper) {
+        var registries = helper.getLevel().registryAccess();
+        MachineEnergyStorage storage = new MachineEnergyStorage(1000, 100, 100, () -> {});
+        storage.deserializeNBT(registries, IntTag.valueOf(5000));
+        helper.assertTrue(storage.getEnergyStored() == 1000, "Saved FE above the capacity is cut to it, is " + storage.getEnergyStored());
+        storage.deserializeNBT(registries, IntTag.valueOf(-50));
+        helper.assertTrue(storage.getEnergyStored() == 0, "Negative saved FE loads as 0, is " + storage.getEnergyStored());
+        storage.deserializeNBT(registries, IntTag.valueOf(400));
+        helper.assertTrue(storage.getEnergyStored() == 400, "FE within the capacity loads as saved");
         helper.succeed();
     }
 
