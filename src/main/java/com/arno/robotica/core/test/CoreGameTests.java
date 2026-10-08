@@ -39,8 +39,9 @@ public class CoreGameTests {
 
     /** Items that are intentionally not craftable. Keep this short and justify each entry. */
     private static final Set<String> NO_RECIPE_OK = Set.of(
-            // industry: ores only come from world generation, the depleted pellet is the waste of the RTG and reactors
-            "thorium_ore", "deepslate_thorium_ore", "pyrolite_ore", "resonite_ore", "depleted_fuel_pellet");
+            // industry: ores only come from world generation, the depleted pellet is the waste of the RTG and reactors;
+            // energy: Strange Matter only comes out of a running Ring Collider
+            "thorium_ore", "deepslate_thorium_ore", "pyrolite_ore", "resonite_ore", "depleted_fuel_pellet", "strange_matter");
 
     @GameTest(template = "empty")
     public static void energyItemsExposeCapability(GameTestHelper helper) {
