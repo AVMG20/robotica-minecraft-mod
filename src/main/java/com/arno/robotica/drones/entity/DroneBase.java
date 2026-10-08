@@ -719,7 +719,8 @@ public abstract class DroneBase extends PathfinderMob {
         super.readAdditionalSaveData(tag);
         owner = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
         ownerName = tag.getString("OwnerName");
-        entityData.set(DATA_TIER, Mth.clamp(tag.getInt("Tier"), 1, 2));
+        setTier(tag.getInt("Tier"));
+        if (getHealth() > getMaxHealth()) setHealth(getMaxHealth());
         readSettings(tag, registryAccess());
         energy = Mth.clamp(tag.getInt("Energy"), 0, getEnergyCapacity());
         readRuntime(tag);

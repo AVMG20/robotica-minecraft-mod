@@ -216,6 +216,23 @@ public class DronesGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void mk3DroneKeepsTierOnLoad(GameTestHelper helper) {
+        MiningDrone drone = DronesRegistry.MINING_DRONE_ENTITY.get().create(helper.getLevel());
+        drone.setTier(3);
+        drone.setHealth(drone.getMaxHealth());
+        drone.setEnergy(drone.getEnergyCapacity());
+        CompoundTag saved = drone.saveWithoutId(new CompoundTag());
+
+        MiningDrone again = DronesRegistry.MINING_DRONE_ENTITY.get().create(helper.getLevel());
+        again.load(saved);
+        helper.assertTrue(again.tier() == 3, "Mk3 stays Mk3 after a reload, is Mk" + again.tier());
+        helper.assertTrue(again.getEnergy() == DronesConfig.miningBuffer(3), "Mk3 buffer kept, is " + again.getEnergy());
+        helper.assertTrue(again.getMaxHealth() == DronesConfig.miningHealth(3) && again.getHealth() == again.getMaxHealth(),
+                "Mk3 health kept, is " + again.getHealth() + "/" + again.getMaxHealth());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void sentryPickUpKeepsSettings(GameTestHelper helper) {
         SentryDrone drone = DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel());
         drone.setTier(1);
