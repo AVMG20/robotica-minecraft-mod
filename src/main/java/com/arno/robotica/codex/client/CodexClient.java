@@ -11,5 +11,6 @@ public final class CodexClient {
     public static void init(IEventBus modBus, ModContainer container) {
         CodexItem.openScreen = () -> Minecraft.getInstance().setScreen(new CodexScreen());
         com.arno.robotica.codex.client.dev.Showcase.init(modBus);
+        com.arno.robotica.codex.client.dev.trailer.Trailer.init(modBus);
     }
 }

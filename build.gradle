@@ -84,6 +84,15 @@ neoForge {
             programArguments.addAll '--width', '1280', '--height', '800'
         }
 
+        // Dev only: records gameplay scenes frame by frame into run-trailer/footage. ./gradlew runTrailer -Ptrailer.scenes=a,b
+        trailer {
+            client()
+            gameDirectory = project.file('run-trailer')
+            systemProperty 'robotica.trailer', 'true'
+            if (project.hasProperty('trailer.scenes')) systemProperty 'robotica.trailer.scenes', project.property('trailer.scenes').toString()
+            programArguments.addAll '--width', '960', '--height', '540'
+        }
+
         server {
             server()
             programArgument '--nogui'
