@@ -2,6 +2,7 @@ package com.arno.robotica.exo;
 
 import com.arno.robotica.Robotica;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
@@ -60,8 +61,10 @@ public final class ExoEvents {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onJump(player);
     }
 
-    @SubscribeEvent
+    /** Last, so a change another mod cancels (or one to the same mode, which vanilla skips) keeps the flight grant. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onGameModeChange(PlayerEvent.PlayerChangeGameModeEvent event) {
+        if (event.getNewGameMode() == event.getCurrentGameMode()) return;
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onGameModeChange(player);
     }
 
