@@ -20,7 +20,7 @@
   "tooltip.robotica.processing_energy": "Stored: %s",
   "tooltip.robotica.processing_power": "Uses %s FE/t at base speed",
   "tooltip.robotica.grinder_cards": "Cards: Speed (%1$s), Efficiency (%2$s), Fortune (%3$s), Void",
-  "tooltip.robotica.electric_furnace_cards": "Cards: Speed (%1$s), Efficiency (%2$s), Fortune (%3$s), Range (%4$s)",
+  "tooltip.robotica.electric_furnace_cards": "Cards: Speed (%1$s), Efficiency (%2$s), Range (%3$s)",
   "tooltip.robotica.grinder_help": "Grinding media in the second slot: more dust and byproducts",
   "tooltip.robotica.electric_furnace_help": "Each lane smelts its own stack",
   "tooltip.robotica.processing_sides": "Pipes: in from top and sides, out from any side",

@@ -2,6 +2,7 @@ package com.arno.robotica.processing.block;
 
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.util.RecipeAcceptCache;
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.processing.ProcessingConfig;
 import com.arno.robotica.processing.ProcessingRegistry;
@@ -11,6 +12,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -22,6 +24,7 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +73,8 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
     private final IItemHandler quickInsert = new SidedItems(items,
             (slot, stack) -> slot < MAX_LANES || (slot == BATTERY && GrinderBlockEntity.isBattery(stack)), SidedItems.NEVER);
 
+    /** Experience a furnace saved before 0.5.5 still held: popped as orbs on its next tidy. */
+    private float legacyXp;
     private final int[] progress = new int[MAX_LANES];
     private final int[] needed = new int[MAX_LANES];
     /** Items the lane's running cycle smelts, fixed when the cycle starts (0 = no cycle running). */
@@ -186,9 +191,24 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         status = worked ? Status.WORKING : noEnergy ? Status.NO_ENERGY : full ? Status.OUTPUT_FULL : Status.IDLE;
     }
 
-    /** Lanes closed by a lowered {@code lanesMk}: inputs and outputs move to open lanes, or pop out on top. */
+    /**
+     * Lanes closed by a lowered {@code lanesMk}: inputs and outputs move to open lanes, or pop out on top. Furnaces from
+     * before 0.5.5 also pop their stored experience and any Fortune cards here, once.
+     */
     @Override
     protected void tidyHiddenSlots(ServerLevel level, BlockPos pos) {
+        if (legacyXp >= 1) {
+            ExperienceOrb.award(level, Vec3.atCenterOf(pos).add(0, 0.6, 0), (int) legacyXp);
+            legacyXp = 0;
+            setChanged();
+        }
+        for (int i = 0; i < upgrades.getSlots(); i++) {
+            ItemStack card = upgrades.getStackInSlot(i);
+            if (card.getItem() instanceof UpgradeCardItem item && !KINDS.contains(item.getKind())) {
+                upgrades.setStackInSlot(i, ItemStack.EMPTY);
+                popOut(level, pos, card);
+            }
+        }
         int lanes = lanes();
         for (int lane = lanes; lane < MAX_LANES; lane++) {
             for (int slot : new int[]{lane, OUT_FIRST + lane}) {
@@ -235,11 +255,13 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         super.writeContents(tag, registries);
         tag.putIntArray("progress", progress);
         tag.putIntArray("cycleItems", cycleItems);
+        if (legacyXp > 0) tag.putFloat("xp", legacyXp);
     }
 
     @Override
     protected void readContents(CompoundTag tag, HolderLookup.Provider registries) {
         super.readContents(tag, registries);
+        legacyXp = tag.getFloat("xp");
         int[] saved = tag.getIntArray("progress");
         for (int i = 0; i < MAX_LANES; i++) progress[i] = i < saved.length ? saved[i] : 0;
         int[] cycle = tag.getIntArray("cycleItems");

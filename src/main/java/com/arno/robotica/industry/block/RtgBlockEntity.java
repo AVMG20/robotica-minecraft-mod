@@ -3,6 +3,7 @@ package com.arno.robotica.industry.block;
 import com.arno.robotica.compat.InfoSource;
 import com.arno.robotica.compat.MachineInfo;
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.energy.EnergyNeighbors;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.industry.IndustryConfig;
@@ -50,6 +51,7 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
         }
     };
     public final MachineEnergyStorage energy = new MachineEnergyStorage(IndustryConfig.rtgBuffer(), 0, IndustryConfig.rtgOutput(), this::setChanged);
+    private final EnergyNeighbors neighbors = new EnergyNeighbors();
     private final IItemHandler automation = new IItemHandler() {
         @Override
         public int getSlots() {
@@ -148,7 +150,7 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
             }
         }
         setLit(working);
-        if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, IndustryConfig.rtgOutput());
+        if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, IndustryConfig.rtgOutput(), neighbors);
         sides.tick(level);
     }
 

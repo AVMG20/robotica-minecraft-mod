@@ -340,20 +340,33 @@ public class ProcessingGameTests {
     /** The Electric Furnace gives no experience: no orbs, no Fortune cards, an old save with stored experience loads. */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void furnaceGivesNoExperience(GameTestHelper helper) {
-        var registries = helper.getLevel().registryAccess();
         ElectricFurnaceBlockEntity be = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4);
         helper.assertTrue(be.upgrades.insertItem(0, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).getCount() == 1, "Fortune cards do not fit");
         be.items.setStackInSlot(0, new ItemStack(Items.RAW_GOLD, 4));
-        CompoundTag old = be.saveWithFullMetadata(registries);
-        old.putFloat("xp", 1234F);
-        be.loadWithComponents(old, registries);
-        helper.assertTrue(be.items.getStackInSlot(0).is(Items.RAW_GOLD), "the old save keeps its items");
-        helper.assertTrue(!be.saveWithFullMetadata(registries).contains("xp"), "stored experience is dropped");
         helper.succeedWhen(() -> {
             ItemStack out = be.items.getStackInSlot(ElectricFurnaceBlockEntity.OUT_FIRST);
             helper.assertTrue(out.is(Items.GOLD_INGOT) && out.getCount() == 4, "four gold ingots");
             AABB box = new AABB(helper.absolutePos(POS)).inflate(8);
             helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, box).isEmpty(), "no experience orbs");
+        });
+    }
+
+    /** A furnace saved before 0.5.5 pops its stored experience and Fortune cards once, then keeps no experience. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void oldFurnacePopsStoredExperience(GameTestHelper helper) {
+        var registries = helper.getLevel().registryAccess();
+        ElectricFurnaceBlockEntity be = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4);
+        be.items.setStackInSlot(0, new ItemStack(Items.RAW_GOLD, 4));
+        CompoundTag old = be.saveWithFullMetadata(registries);
+        old.putFloat("xp", 1234F);
+        be.loadWithComponents(old, registries);
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, 1));
+        helper.assertTrue(be.items.getStackInSlot(0).is(Items.RAW_GOLD), "the old save keeps its items");
+        helper.succeedWhen(() -> {
+            AABB box = new AABB(helper.absolutePos(POS)).inflate(8);
+            helper.assertTrue(!helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, box).isEmpty(), "stored experience popped");
+            helper.assertTrue(be.upgrades.getStackInSlot(0).isEmpty(), "the Fortune card popped out");
+            helper.assertTrue(!be.saveWithFullMetadata(registries).contains("xp"), "no experience left in the save");
         });
     }
 

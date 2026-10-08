@@ -1,6 +1,7 @@
 package com.arno.robotica.energy.menu;
 
 import com.arno.robotica.core.menu.MachineMenu;
+import com.arno.robotica.core.menu.MachineSlot;
 import com.arno.robotica.energy.block.StructureControllerBlockEntity;
 import com.arno.robotica.energy.net.ControllerSyncPayload;
 import net.minecraft.core.BlockPos;
@@ -13,9 +14,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +38,7 @@ public abstract class ControllerMenu extends MachineMenu {
     private final StructureControllerBlockEntity be;
     @Nullable
     private final ServerPlayer viewer;
+    private final Player player;
     private final HolderLookup.Provider registries;
     private CompoundTag data = new CompoundTag();
     @Nullable
@@ -48,6 +52,7 @@ public abstract class ControllerMenu extends MachineMenu {
         this.block = inv.player.level().getBlockState(pos).getBlock();
         this.be = be;
         this.viewer = inv.player instanceof ServerPlayer sp ? sp : null;
+        this.player = inv.player;
         this.registries = inv.player.level().registryAccess();
     }
 
@@ -87,6 +92,28 @@ public abstract class ControllerMenu extends MachineMenu {
     /** Whether this player may change the controller (owner, team or operator); others only watch. */
     public boolean canControl() {
         return data.getBoolean("control");
+    }
+
+    /** Whether this menu's player may move items in the controller's slots: checked on the server, synced to the client. */
+    protected boolean mayEdit() {
+        return be != null ? be.canControl(player) : canControl();
+    }
+
+    /** A controller slot only the owner, their team or an operator can take from or put into. */
+    public class ControlledSlot extends MachineSlot {
+        public ControlledSlot(IItemHandler handler, int index, int x, int y) {
+            super(handler, index, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return mayEdit() && super.mayPlace(stack);
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return mayEdit() && super.mayPickup(player);
+        }
     }
 
     public boolean formed() {

@@ -439,7 +439,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
                     ItemStack rest = ItemHandlerHelper.insertItemStacked(output, drop, false);
                     if (!rest.isEmpty()) pending.add(rest);
                 }
-                if (ReplicatorConfig.harvestXp()) xpStored = (int) Math.min(ReplicatorConfig.maxXp(), (long) xpStored + result.xp());
+                // A lowered cap stops new XP but keeps what is already stored.
+                if (ReplicatorConfig.harvestXp()) xpStored = (int) Math.max(xpStored, Math.min(ReplicatorConfig.maxXp(), (long) xpStored + result.xp()));
             }
             cycleSound(level, pos, CoreSounds.REPLICATOR_CYCLE);
         }

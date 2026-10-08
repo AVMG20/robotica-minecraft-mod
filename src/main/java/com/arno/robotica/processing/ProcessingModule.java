@@ -5,7 +5,9 @@ import com.arno.robotica.processing.media.GrindingMedia;
 import com.arno.robotica.processing.recipe.GrindingLogic;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import com.arno.robotica.core.util.RecipeAcceptCache;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -26,6 +28,10 @@ public final class ProcessingModule {
         ProcessingRegistry.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, ProcessingConfig.SPEC, "robotica-processing-server.toml");
         modBus.addListener(ProcessingModule::registerCapabilities);
+        // Grinder input checks depend on config counts (gem ores, dusts per ingot): forget cached answers on a config edit.
+        modBus.addListener(ModConfigEvent.Reloading.class, e -> {
+            if (e.getConfig().getSpec() == ProcessingConfig.SPEC) RecipeAcceptCache.bump();
+        });
         modBus.addListener(ProcessingModule::registerDataMaps);
         NeoForge.EVENT_BUS.addListener(ProcessingModule::onTagsUpdated);
         NeoForge.EVENT_BUS.addListener(ProcessingModule::mediaTooltip);
