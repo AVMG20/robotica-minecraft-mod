@@ -108,9 +108,6 @@ cube_all('cryo_coolant')
 cube_all('reactor_access_port')
 
 # ---------- columns: amplifiers, damper, capacitors, coils ----------
-for n in ('flux', 'pyro', 'resonant'):
-    column(f'{n}_amplifier', f'{n}_amplifier', f'{n}_amplifier_top', f'{n}_amplifier_glow', f'{n}_amplifier_top_glow')
-column('graphite_damper', 'graphite_damper', 'graphite_damper_top')
 for n in ('copper', 'redstone', 'ender', 'resonant'):
     column(f'capacitor_{n}', f'capacitor_{n}', f'capacitor_{n}_top', 'capacitor_glow')
 for n in ('basic', 'advanced', 'elite'):
@@ -160,6 +157,22 @@ for name, (prefix, extra) in CONTROLLERS.items():
     write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}_formed'})
     loot(name, ['robotica:bank_energy'] if prefix == 'bank' else None)
     BLOCKS.append(name)
+
+# ---------- Core Reactor modulators: open cages, so the core and its beams show through a packed chamber ----------
+def cage_model(name, plate_side, plate_top, inner_tex, frm, to, glow):
+    plate = {'down': '#top', 'up': '#top', 'north': '#side', 'south': '#side', 'west': '#side', 'east': '#side'}
+    elements = [box([0, 0, 0], [16, 2, 16], plate), box([0, 14, 0], [16, 16, 16], plate)]
+    for x, z in ((0, 0), (14, 0), (0, 14), (14, 14)):
+        elements.append(box([x, 2, z], [x + 2, 14, z + 2], all_faces('#side')))
+    elements.append(box(frm, to, all_faces('#inner'), shade=not glow, glow=glow))
+    simple(name, {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+                  'textures': {'side': tex(plate_side), 'top': tex(plate_top), 'inner': tex(inner_tex), 'particle': tex(plate_side)},
+                  'elements': elements})
+
+
+for n in ('flux', 'pyro', 'resonant'):
+    cage_model(f'{n}_amplifier', f'{n}_amplifier', f'{n}_amplifier_top', f'{n}_amplifier_crystal', [5, 4, 5], [11, 12, 11], True)
+cage_model('graphite_damper', 'graphite_damper', 'graphite_damper_top', 'graphite_damper', [4, 2, 4], [12, 14, 12], False)
 
 # ---------- Spire Crown: copper-wound neck, steel toroid, discharge sphere that lights up ----------
 for lit in (False, True):

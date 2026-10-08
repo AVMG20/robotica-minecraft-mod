@@ -31,6 +31,19 @@ public class CoreReactorRenderer extends ControllerHighlightRenderer<CoreReactor
     }
 
     /** Shell colour per core: Servo cyan, Magma orange, Antigrav violet, anything else white. */
+    /** Per reactor: spin angle, its speed and the time it was last drawn, so the core speeds up and slows down smoothly. */
+    private final java.util.Map<CoreReactorBlockEntity, float[]> spins = new java.util.WeakHashMap<>();
+
+    private float spin(CoreReactorBlockEntity be, float time, boolean running) {
+        float[] s = spins.computeIfAbsent(be, k -> new float[]{0F, 0.8F, time});
+        float dt = time - s[2];
+        if (dt < 0 || dt > 40) dt = 0; // wrapped, or not drawn for a while
+        s[1] += ((running ? 4.0F : 0.8F) - s[1]) * Math.min(1F, dt * 0.05F);
+        s[0] = (s[0] + s[1] * dt) % 360F;
+        s[2] = time;
+        return s[0];
+    }
+
     private static int coreColor(ItemStack core) {
         String id = BuiltInRegistries.ITEM.getKey(core.getItem()).getPath();
         if (id.contains("magma")) return 0xFF7A2A;
@@ -48,14 +61,15 @@ public class CoreReactorRenderer extends ControllerHighlightRenderer<CoreReactor
         if (level == null || center == null || core.isEmpty()) return;
         BlockPos origin = be.getBlockPos();
         Vec3 c = new Vec3(center.getX() - origin.getX() + 0.5, center.getY() - origin.getY() + 0.5, center.getZ() - origin.getZ() + 0.5);
-        float time = level.getGameTime() + partialTick;
+        // wrapped so the float keeps the partial tick; 72,000 ticks is a whole number of turns of every motion below
+        float time = (level.getGameTime() % 72000L) + partialTick;
         boolean running = be.running();
         float throb = running ? 0.5F + 0.5F * Mth.sin(time * 0.25F) : 0.0F;
 
         // the core itself, full bright, bobbing and spinning (faster while it runs)
         pose.pushPose();
         pose.translate(c.x, c.y + Mth.sin(time * 0.06F) * 0.08F, c.z);
-        pose.mulPose(Axis.YP.rotationDegrees(time * (running ? 4.0F : 0.8F)));
+        pose.mulPose(Axis.YP.rotationDegrees(spin(be, time, running)));
         pose.mulPose(Axis.XP.rotationDegrees(Mth.sin(time * 0.03F) * 15.0F));
         float scale = 0.9F + 0.08F * throb;
         pose.scale(scale, scale, scale);
@@ -71,7 +85,7 @@ public class CoreReactorRenderer extends ControllerHighlightRenderer<CoreReactor
             GlowDraw.cube(vc, m, c, 0.42F, r, g, b, 14);
             return;
         }
-        GlowDraw.cube(vc, m, c, 0.45F + 0.05F * throb, r, g, b, 40);
+        GlowDraw.cube(vc, m, c, 0.44F + 0.05F * throb, r, g, b, 40);
         GlowDraw.cube(vc, m, c, 0.7F + 0.12F * throb, r, g, b, 22);
         GlowDraw.cube(vc, m, c, 1.0F + 0.2F * throb, r, g, b, 10);
 

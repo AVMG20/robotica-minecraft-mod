@@ -181,7 +181,7 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
             if (m == null) return StructureProblem.of(pos, "multiblock.robotica.core_inside", StructureProblem.name(state), StructureProblem.at(pos));
             power += m.power();
             burn += m.burn();
-            modulators.add(new Modulator(pos.immutable(), m.power() >= 0 ? 1 : -1));
+            modulators.add(new Modulator(pos.immutable(), m.power() > 0 || (m.power() == 0 && m.burn() > 0) ? 1 : -1));
             return null;
         }
 
@@ -195,12 +195,14 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
     @Override
     protected void onFormed(Visitor visitor) {
         CoreVisitor v = (CoreVisitor) visitor;
-        boolean changed = powerMod != v.power || burnMod != v.burn || !modulators.equals(v.modulators) || center == null;
+        BlockPos newCenter = box() == null ? null : box().getCenter().immutable();
+        boolean changed = powerMod != v.power || burnMod != v.burn || !modulators.equals(v.modulators)
+                || center == null || !center.equals(newCenter);
         powerMod = v.power;
         burnMod = v.burn;
         modulators.clear();
         modulators.addAll(v.modulators);
-        center = box() == null ? null : box().getCenter().immutable();
+        center = newCenter;
         if (changed) setChangedAndSync();
     }
 
@@ -238,6 +240,7 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         if (!isFormed()) {
             fePerTick = 0;
             state = State.NOT_FORMED;
+            litHold = 0;
             setRunning(false);
             return;
         }
@@ -276,9 +279,14 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
                 if (coreWear >= core.life()) breakCore();
                 state = State.RUNNING;
                 burning = true;
+                // the guide step waits until the owner is around to see it run
                 if (!everRan && level instanceof ServerLevel sl) {
-                    everRan = true;
-                    com.arno.robotica.core.progress.Milestones.awardOwner(sl, worldPosition, owner(), MILESTONE);
+                    var player = com.arno.robotica.core.progress.Milestones.nearbyOwner(sl, worldPosition, owner(), 64);
+                    if (player != null) {
+                        com.arno.robotica.core.progress.Milestones.award(player, MILESTONE);
+                        everRan = true;
+                        setChanged();
+                    }
                 }
             } else {
                 state = ready == 0 ? State.NO_FUEL : State.WASTE_FULL;
@@ -471,7 +479,7 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         tag.putInt("energy", energy.getEnergyStored());
         tag.putInt("capacity", energy.getMaxEnergyStored());
         tag.putFloat("burn", burnTotal > 0 ? (float) (burnLeft / burnTotal) : 0F);
-        tag.putInt("burnPower", burnTotal > 0 ? burnPower : 0);
+        tag.putInt("burnPower", burnTotal > 0 ? (int) Math.round(burnPower * CoreConfig.generation()) : 0);
         tag.putInt("powerPct", (int) Math.round(powerMultiplier() * 100));
         tag.putInt("burnPct", (int) Math.round(burnMultiplier() * 100));
         tag.putInt("amps", (int) modulators.stream().filter(m -> m.sign() > 0).count());
@@ -555,7 +563,8 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         if (!pendingWaste.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), pendingWaste);
         if (!activeCore.isEmpty()) {
             ItemStack core = activeCore.copy();
-            if (coreWear > 0) core.set(EnergyRegistry.CORE_WEAR.get(), (int) Math.min(Integer.MAX_VALUE, Math.round(coreWear)));
+            long wear = Math.round(coreWear);
+            if (wear > 0) core.set(EnergyRegistry.CORE_WEAR.get(), (int) Math.min(Integer.MAX_VALUE, wear));
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), core);
             activeCore = ItemStack.EMPTY;
         }

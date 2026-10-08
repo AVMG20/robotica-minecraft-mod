@@ -257,6 +257,19 @@ def amplifier_top_glow(tier):
     return c
 
 
+def amplifier_crystal(tier):
+    """The floating crystal of an amplifier: facets in the tier colour, drawn full bright."""
+    m = AMP[tier]
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            v = (x * 3 + y * 5) % 11
+            c.set(x, y, m[4] if v == 0 else m[3] if v < 4 else m[2] if v < 8 else m[1])
+    c.line(0, 0, 15, 15, m[4]).line(15, 0, 0, 15, m[3])
+    c.frame(0, 0, 16, 16, m[2])
+    return c
+
+
 def damper_side():
     """Stacked graphite moderator bricks with cold cyan channels between the courses."""
     c = Canvas()
@@ -531,6 +544,7 @@ def main():
         write_block(f'{name}_amplifier_glow', amplifier_glow(tier).rows(), P)
         write_block(f'{name}_amplifier_top', amplifier_top(tier).rows(), P)
         write_block(f'{name}_amplifier_top_glow', amplifier_top_glow(tier).rows(), P)
+        write_block(f'{name}_amplifier_crystal', amplifier_crystal(tier).rows(), P)
     write_block('graphite_damper', damper_side().rows(), P)
     write_block('graphite_damper_top', damper_top().rows(), P)
 

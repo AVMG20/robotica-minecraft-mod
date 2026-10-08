@@ -100,7 +100,7 @@ public final class EnergyRegistry {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(4.0F, 12.0F).sound(SoundType.COPPER)
                     .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 12 : 0));
 
-    // ---- Core Reactor (block ids of the 0.6 Fission Reactor) ----
+    // ---- Core Reactor (block ids of the 0.6 Fission Reactor); modulators are open cages, so the core shows through ----
     public static final DeferredBlock<PartBlock> REACTOR_CASING = block("reactor_casing", PartBlock::new, casing(MapColor.COLOR_GRAY));
     public static final DeferredBlock<StructureGlassBlock> REACTOR_GLASS = block("reactor_glass", StructureGlassBlock::new, glass(MapColor.COLOR_LIGHT_GREEN));
     public static final DeferredBlock<ControllerBlock> REACTOR_CONTROLLER = block("reactor_controller",
@@ -110,12 +110,12 @@ public final class EnergyRegistry {
     public static final DeferredBlock<PortBlock> REACTOR_ACCESS_PORT = block("reactor_access_port",
             p -> new PortBlock(p, PortBlock.Kind.REACTOR_ACCESS), casing(MapColor.COLOR_GRAY));
     public static final DeferredBlock<PartBlock> FLUX_AMPLIFIER = block("flux_amplifier", PartBlock::new,
-            casing(MapColor.COLOR_RED).lightLevel(s -> 4));
+            casing(MapColor.COLOR_RED).lightLevel(s -> 4).noOcclusion());
     public static final DeferredBlock<PartBlock> PYRO_AMPLIFIER = block("pyro_amplifier", PartBlock::new,
-            casing(MapColor.COLOR_ORANGE).lightLevel(s -> 6));
+            casing(MapColor.COLOR_ORANGE).lightLevel(s -> 6).noOcclusion());
     public static final DeferredBlock<PartBlock> RESONANT_AMPLIFIER = block("resonant_amplifier", PartBlock::new,
-            casing(MapColor.COLOR_CYAN).lightLevel(s -> 8));
-    public static final DeferredBlock<PartBlock> GRAPHITE_DAMPER = block("graphite_damper", PartBlock::new, casing(MapColor.COLOR_BLACK));
+            casing(MapColor.COLOR_CYAN).lightLevel(s -> 8).noOcclusion());
+    public static final DeferredBlock<PartBlock> GRAPHITE_DAMPER = block("graphite_damper", PartBlock::new, casing(MapColor.COLOR_BLACK).noOcclusion());
     public static final DeferredBlock<PartBlock> CRYO_COOLANT = block("cryo_coolant", PartBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.ICE).strength(2.0F, 6.0F).sound(SoundType.GLASS).friction(0.98F)
                     .requiresCorrectToolForDrops());
