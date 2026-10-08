@@ -65,7 +65,10 @@ public class ProcessingBlock extends IndustryMachineBlock {
         if (!(level.getBlockEntity(pos) instanceof ProcessingBlockEntity old)) return false;
         CompoundTag saved = old.saveWithoutMetadata(level.registryAccess());
         old.keepContents = true;
-        level.setBlock(pos, next.defaultBlockState().setValue(FACING, state.getValue(FACING)), Block.UPDATE_ALL);
+        if (!level.setBlock(pos, next.defaultBlockState().setValue(FACING, state.getValue(FACING)), Block.UPDATE_ALL)) {
+            old.keepContents = false;
+            return false;
+        }
         if (level.getBlockEntity(pos) instanceof ProcessingBlockEntity fresh) {
             fresh.loadCustomOnly(saved, level.registryAccess());
             fresh.setChanged();

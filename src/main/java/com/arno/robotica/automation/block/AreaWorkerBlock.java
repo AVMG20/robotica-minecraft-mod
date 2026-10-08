@@ -60,7 +60,10 @@ public abstract class AreaWorkerBlock extends BaseEntityBlock {
         for (Property<?> property : state.getProperties()) {
             if (fresh.hasProperty(property)) fresh = copy(state, fresh, property);
         }
-        level.setBlock(pos, fresh, Block.UPDATE_ALL);
+        if (!level.setBlock(pos, fresh, Block.UPDATE_ALL)) {
+            old.keepContents = false;
+            return false;
+        }
         if (level.getBlockEntity(pos) instanceof AreaWorkerBlockEntity worker) {
             worker.loadCustomOnly(saved, level.registryAccess());
             worker.afterUpgrade();

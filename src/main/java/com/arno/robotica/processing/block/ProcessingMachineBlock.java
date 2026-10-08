@@ -155,7 +155,10 @@ public class ProcessingMachineBlock extends Block implements EntityBlock {
         if (!(level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity old)) return false;
         CompoundTag saved = old.saveWithoutMetadata(level.registryAccess());
         old.keepContents = true;
-        level.setBlock(pos, next.defaultBlockState().setValue(FACING, state.getValue(FACING)).setValue(LIT, state.getValue(LIT)), Block.UPDATE_ALL);
+        if (!level.setBlock(pos, next.defaultBlockState().setValue(FACING, state.getValue(FACING)).setValue(LIT, state.getValue(LIT)), Block.UPDATE_ALL)) {
+            old.keepContents = false;
+            return false;
+        }
         if (level.getBlockEntity(pos) instanceof ProcessingMachineBlockEntity fresh) {
             fresh.loadCustomOnly(saved, level.registryAccess());
             if (heldEnergy > 0) fresh.energy.setEnergy((int) Math.min(Integer.MAX_VALUE, (long) fresh.energy.getEnergyStored() + heldEnergy));
