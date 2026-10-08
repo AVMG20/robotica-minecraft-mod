@@ -6,6 +6,7 @@ import com.arno.robotica.logistics.menu.PipeMenu;
 import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
 import com.arno.robotica.logistics.pipe.PipeMode;
 import com.arno.robotica.logistics.pipe.PipeOrder;
+import com.arno.robotica.logistics.pipe.PipePriority;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -13,11 +14,15 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/** GUI of one pipe face: Insert / Extract / Off, nine ghost filter slots, whitelist or blacklist, and the Extract order. */
+/**
+ * GUI of one pipe face: Insert / Extract / Off, nine ghost filter slots, whitelist or blacklist, the Extract order and
+ * the Insert priority (click: lower, shift-click: higher).
+ */
 public class PipeScreen extends MachineScreen<PipeMenu> {
     private final FitButton[] modes = new FitButton[PipeMode.values().length];
     private FitButton list;
     private FitButton order;
+    private FitButton priority;
 
     public PipeScreen(PipeMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -35,6 +40,8 @@ public class PipeScreen extends MachineScreen<PipeMenu> {
         }
         list = addRenderableWidget(new FitButton(leftPos + 8, topPos + 64, 79, 16, Component.empty(), b -> press(PipeMenu.BTN_LIST)));
         order = addRenderableWidget(new FitButton(leftPos + 89, topPos + 64, 79, 16, Component.empty(), b -> press(PipeMenu.BTN_ORDER)));
+        priority = addRenderableWidget(new FitButton(leftPos + 89, topPos + 64, 79, 16, Component.empty(),
+                b -> press(hasShiftDown() ? PipeMenu.BTN_PRIORITY_UP : PipeMenu.BTN_PRIORITY_DOWN)));
         update();
     }
 
@@ -52,6 +59,10 @@ public class PipeScreen extends MachineScreen<PipeMenu> {
         order.visible = current == PipeMode.EXTRACT;
         order.setMessage(Component.translatable(o.translationKey()));
         order.setTooltip(Tooltip.create(Component.translatable(o.translationKey() + ".hint")));
+        PipePriority p = menu.priority();
+        priority.visible = current == PipeMode.INSERT;
+        priority.setMessage(Component.translatable("gui.robotica.pipe.priority", Component.translatable(p.translationKey())));
+        priority.setTooltip(Tooltip.create(Component.translatable("gui.robotica.pipe.priority.hint")));
     }
 
     @Override

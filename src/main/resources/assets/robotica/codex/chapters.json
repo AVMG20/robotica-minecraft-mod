@@ -861,7 +861,7 @@
       "pages": [
         {
           "title": "Item pipes",
-          "text": "Pipes connect to pipes, chests and machines.\n- Right-click an arm: mode, filter and order.\n- Sneak-right-click an arm (empty hand): Insert, Extract or Off.\n- Items/s: Mk1 8, Mk2 64, Mk3 256, Mk4 640.",
+          "text": "Pipes connect to pipes, chests and machines.\n- Right-click an arm: mode, filter, order and priority.\n- Sneak-right-click an arm (empty hand): Insert, Extract or Off.\n- Items/s: Mk1 8, Mk2 64, Mk3 256, Mk4 640.",
           "items": [
             "robotica:item_pipe",
             "robotica:item_pipe_mk2",
@@ -872,6 +872,14 @@
         {
           "title": "Pipe filters",
           "text": "Click a filter slot with an item, or shift-click it in your inventory.\n- Blacklist: listed items stop. Whitelist: only they pass.\n- Extract: what gets pulled. Insert: what goes in.\n- Order: Round robin or Closest first.",
+          "items": [
+            "robotica:item_pipe",
+            "robotica:item_pipe_mk2"
+          ]
+        },
+        {
+          "title": "Pipe priority",
+          "text": "Insert arms have a priority: Highest to Lowest, default High.\n- Items go to the highest priority that takes them.\n- Lower ones get the rest.\n- Round robin spreads within one priority.\n- Click: lower. Shift-click: higher.",
           "items": [
             "robotica:item_pipe",
             "robotica:item_pipe_mk2"

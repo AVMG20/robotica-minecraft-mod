@@ -4,7 +4,7 @@
   "block.robotica.item_pipe_mk3": "Item Pipe Mk3",
   "block.robotica.item_pipe_mk4": "Item Pipe Mk4",
   "tooltip.robotica.item_pipe": "Pulls %s items every %s s",
-  "tooltip.robotica.item_pipe_modes": "Right-click an arm: mode, filter and order. Sneak-right-click: switch mode",
+  "tooltip.robotica.item_pipe_modes": "Right-click an arm: mode, filter, order and priority. Sneak-right-click: switch mode",
   "message.robotica.pipe_mode.insert": "Insert",
   "message.robotica.pipe_mode.extract": "Extract",
   "message.robotica.pipe_mode.disabled": "Off",
@@ -30,5 +30,12 @@
   "gui.robotica.pipe.order.round_robin.hint": "Spreads items over every Insert link in turn",
   "gui.robotica.pipe.order.closest_first": "Closest first",
   "gui.robotica.pipe.order.closest_first.hint": "Fills the nearest Insert link first",
+  "gui.robotica.pipe.priority": "Priority: %s",
+  "gui.robotica.pipe.priority.hint": "Extract links fill higher priorities first. Click: lower. Shift-click: higher.",
+  "gui.robotica.pipe.priority.highest": "Highest",
+  "gui.robotica.pipe.priority.high": "High",
+  "gui.robotica.pipe.priority.normal": "Normal",
+  "gui.robotica.pipe.priority.low": "Low",
+  "gui.robotica.pipe.priority.lowest": "Lowest",
   "gui.robotica.pipe.slot_filter": "Filter: click with an item to add it, click again to clear. Shift-click items in your inventory to add them."
 }

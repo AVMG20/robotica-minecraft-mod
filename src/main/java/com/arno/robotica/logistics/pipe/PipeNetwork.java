@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,8 +20,15 @@ import java.util.Set;
  * pipe that needs it builds a fresh one. Nothing walks the network per tick.
  */
 public final class PipeNetwork {
-    /** An Insert connection: the pipe, its face, and the inventory block behind it. */
-    public record Endpoint(ItemPipeBlockEntity pipe, Direction side, BlockPos target) {}
+    /** An Insert connection: the pipe, its face, the inventory block behind it, and the face's priority. */
+    public record Endpoint(ItemPipeBlockEntity pipe, Direction side, BlockPos target, PipePriority priority) {
+        Endpoint(ItemPipeBlockEntity pipe, Direction side, BlockPos target) {
+            this(pipe, side, target, pipe.priority(side));
+        }
+    }
+
+    /** Highest priority first; the sort is stable, so walk or distance order stays within a priority. */
+    private static final Comparator<Endpoint> BY_PRIORITY = Comparator.comparingInt(e -> e.priority().ordinal());
 
     private final List<Endpoint> destinations = new ArrayList<>();
     /** Closest First order per Extract pipe, built on first use and kept until the network is rebuilt. */
@@ -39,7 +47,7 @@ public final class PipeNetwork {
         valid = false;
     }
 
-    /** Insert connections in walk order (nearest to the pipe that built the network first). */
+    /** Insert connections, highest priority first, then in walk order (nearest to the pipe that built the network first). */
     public List<Endpoint> destinations() {
         return destinations;
     }
@@ -48,7 +56,7 @@ public final class PipeNetwork {
         return pipes;
     }
 
-    /** Insert connections ordered by how many pipes away they are from {@code from}, its own faces first. */
+    /** Insert connections, highest priority first, then by how many pipes away they are from {@code from}, its own faces first. */
     public List<Endpoint> byDistance(ServerLevel level, ItemPipeBlockEntity from) {
         return nearest.computeIfAbsent(from.getBlockPos(), pos -> {
             List<Endpoint> order = new ArrayList<>();
@@ -66,6 +74,7 @@ public final class PipeNetwork {
                     else if (link == PipeConnection.PIPE && members.contains(next) && seen.add(next)) queue.add(next);
                 }
             }
+            order.sort(BY_PRIORITY);
             return order;
         });
     }
@@ -94,6 +103,7 @@ public final class PipeNetwork {
                 }
             }
         }
+        net.destinations.sort(BY_PRIORITY);
         return net;
     }
 }

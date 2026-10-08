@@ -26,7 +26,7 @@ Pipes move items instantly between chests and machines.
 
 - One network holds up to 4,096 pipes.
 
-## Filters and order
+## Filters, order and priority
 
 Right-click an arm to open its screen: mode buttons, 9 filter slots and two switches.
 
@@ -36,6 +36,7 @@ Right-click an arm to open its screen: mode buttons, 9 filter slots and two swit
 - **Blacklist** (default): listed items do not pass. **Whitelist**: only listed items pass. An empty filter lets everything through.
 - On an Extract arm the filter picks what gets pulled; on an Insert arm it picks what goes in.
 - Extract arms have an order: **Round robin** spreads items over every Insert arm in turn, **Closest first** fills the nearest Insert arm (fewest pipes away) and only sends the rest on.
+- Insert arms have a priority: **Highest**, **High** (default), **Normal**, **Low** or **Lowest**. Click to lower it, shift-click to raise it. Items go to the highest priority that takes them; lower ones only get what is left. Round robin spreads within one priority.
 - Filters match the item, not its damage or enchantments.
 
 Example: one chest feeds a Grinder and a Furnace. Whitelist ores on the Grinder arm, raw food on the Furnace arm.

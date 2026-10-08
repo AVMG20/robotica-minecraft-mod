@@ -9,6 +9,7 @@ import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
 import com.arno.robotica.logistics.pipe.PipeConnection;
 import com.arno.robotica.logistics.pipe.PipeMode;
 import com.arno.robotica.logistics.pipe.PipeOrder;
+import com.arno.robotica.logistics.pipe.PipePriority;
 import com.arno.robotica.processing.ProcessingRegistry;
 import com.arno.robotica.processing.block.GrinderBlockEntity;
 import com.arno.robotica.processing.block.ProcessingMachineBlock;
@@ -148,6 +149,36 @@ public class LogisticsGameTests {
             ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
             helper.assertTrue(source.isEmpty(), "source chest empty");
             helper.assertTrue(count(near, Items.COBBLESTONE) > 0 && count(target, Items.COBBLESTONE) > 0, "both links got cobblestone");
+        });
+    }
+
+    /** The far chest at Highest takes everything although round robin would spread items over both links. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void higherPriorityFillsFirst(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        helper.setBlock(NEAR, Blocks.BARREL);
+        pipe(helper, LAST).setPriority(Direction.SOUTH, PipePriority.HIGHEST);
+        helper.succeedWhen(() -> {
+            ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
+            helper.assertTrue(source.isEmpty(), "source chest empty");
+            helper.assertTrue(count(target, Items.COBBLESTONE) == 20 && count(target, Items.IRON_INGOT) == 3, "everything in the Highest chest");
+            helper.assertTrue(((BarrelBlockEntity) helper.getBlockEntity(NEAR)).isEmpty(), "nothing went to the High barrel");
+        });
+    }
+
+    /** A Low link only gets what the High one refuses: the barrel has one free slot, the iron overflows to the chest. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void lowerPriorityTakesOverflow(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        helper.setBlock(NEAR, Blocks.BARREL);
+        BarrelBlockEntity near = (BarrelBlockEntity) helper.getBlockEntity(NEAR);
+        for (int i = 0; i < near.getContainerSize() - 1; i++) near.setItem(i, new ItemStack(Items.DIRT, 64));
+        pipe(helper, LAST).setPriority(Direction.SOUTH, PipePriority.LOW);
+        helper.succeedWhen(() -> {
+            ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
+            helper.assertTrue(source.isEmpty(), "source chest empty");
+            helper.assertTrue(count(near, Items.COBBLESTONE) == 20, "cobblestone filled the High barrel");
+            helper.assertTrue(count(target, Items.IRON_INGOT) == 3 && count(target, Items.COBBLESTONE) == 0, "only the overflow in the Low chest");
         });
     }
 }

@@ -450,7 +450,7 @@
    "use": [
     "Place pipes from the source to the target.",
     "Sneak-right-click the arm at the source with an empty hand: Extract.",
-    "Right-click an arm: mode, a 9-slot filter (whitelist or blacklist) and the Extract order (Round robin or Closest first).",
+    "Right-click an arm: mode, a 9-slot filter (whitelist or blacklist) and the Extract order (Round robin or Closest first) and the Insert priority (Highest to Lowest).",
     "Machines follow their Sides settings.",
     "Mk2 to Mk4: 8 pipes of the tier below around an Electric Motor, Servo Actuator or Plasma Actuator."
    ],

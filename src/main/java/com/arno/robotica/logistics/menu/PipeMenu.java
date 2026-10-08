@@ -5,6 +5,7 @@ import com.arno.robotica.logistics.LogisticsContent;
 import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
 import com.arno.robotica.logistics.pipe.PipeMode;
 import com.arno.robotica.logistics.pipe.PipeOrder;
+import com.arno.robotica.logistics.pipe.PipePriority;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -20,20 +21,22 @@ import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * GUI of one pipe face (the arm that was right-clicked): mode, nine ghost filter slots, whitelist or blacklist, and the
- * order an Extract link sends items in. Buttons 0-2 pick Insert, Extract, Off; 3 flips the list; 4 switches the order.
+ * GUI of one pipe face (the arm that was right-clicked): mode, nine ghost filter slots, whitelist or blacklist, the
+ * order an Extract link sends items in and the priority of an Insert link. Buttons 0-2 pick Insert, Extract, Off; 3 flips
+ * the list; 4 switches the order; 5 and 6 step the priority down and up.
  */
 public class PipeMenu extends MachineMenu {
     public static final int BTN_MODE = 0;
     public static final int BTN_LIST = 3;
     public static final int BTN_ORDER = 4;
+    public static final int BTN_PRIORITY_DOWN = 5, BTN_PRIORITY_UP = 6;
     public static final int FILTER_X = 8, FILTER_Y = 42;
 
     public final BlockPos pos;
     public final Direction side;
     @Nullable
     private final ItemPipeBlockEntity pipe;
-    private final int idxMode, idxList, idxOrder;
+    private final int idxMode, idxList, idxOrder, idxPriority;
 
     /** A filter entry: shows an item but never holds one. Clicks copy the carried item or clear the slot. */
     public static class GhostSlot extends SlotItemHandler {
@@ -72,6 +75,7 @@ public class PipeMenu extends MachineMenu {
         idxMode = track(pipe == null ? () -> 0 : () -> pipe.mode(side).ordinal());
         idxList = track(pipe == null ? () -> 0 : () -> pipe.whitelist(side) ? 1 : 0);
         idxOrder = track(pipe == null ? () -> 0 : () -> pipe.order(side).ordinal());
+        idxPriority = track(pipe == null ? () -> PipePriority.DEFAULT.ordinal() : () -> pipe.priority(side).ordinal());
     }
 
     public PipeMode mode() {
@@ -84,6 +88,10 @@ public class PipeMenu extends MachineMenu {
 
     public PipeOrder order() {
         return PipeOrder.byId(synced(idxOrder));
+    }
+
+    public PipePriority priority() {
+        return PipePriority.byId(synced(idxPriority));
     }
 
     private boolean canEdit(Player player) {
@@ -126,6 +134,8 @@ public class PipeMenu extends MachineMenu {
         if (id >= BTN_MODE && id < BTN_MODE + PipeMode.values().length) pipe.changeMode(side, PipeMode.byId(id - BTN_MODE));
         else if (id == BTN_LIST) pipe.setWhitelist(side, !pipe.whitelist(side));
         else if (id == BTN_ORDER) pipe.setOrder(side, pipe.order(side).next());
+        else if (id == BTN_PRIORITY_DOWN) pipe.setPriority(side, pipe.priority(side).next());
+        else if (id == BTN_PRIORITY_UP) pipe.setPriority(side, pipe.priority(side).previous());
         else return false;
         return true;
     }
