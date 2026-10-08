@@ -4,7 +4,7 @@
    "items": [
     "copper_gear"
    ],
-   "what": "First part: 4 copper ingots around a cobblestone. Used in almost every Age 0 item.",
+   "what": "Goes into almost every Age 0 item.",
    "see": [
     "guide:getting-started"
    ]
@@ -13,7 +13,7 @@
    "items": [
     "mainspring"
    ],
-   "what": "Age 0 battery. Wind it at a [[winding_crank]], then right-click a robot with it.",
+   "what": "First battery. Wind it at a [[winding_crank]], then right-click a robot with it.",
    "stats": {
     "rows": [
      [
@@ -34,13 +34,13 @@
    "items": [
     "clockwork_mechanism"
    ],
-   "what": "Age 0 moving part for the first robots and machines."
+   "what": "Moving part of the first robots and machines."
   },
   {
    "items": [
     "wooden_chassis"
    ],
-   "what": "Age 0 body for Stumpy and Sprout."
+   "what": "Body of Stumpy and Sprout."
   },
   {
    "items": [
@@ -48,31 +48,31 @@
     "copper_plate",
     "gold_plate"
    ],
-   "what": "Plate for Age 1 recipes. [[tinkers_hammer]] + 2 ingots by hand, or 1 ingot in the [[metal_press]]. Other mods' plates work too."
+   "what": "The [[metal_press]] makes one from 1 ingot, the [[tinkers_hammer]] needs 2."
   },
   {
    "items": [
     "copper_coil"
    ],
-   "what": "Age 1 part: 8 copper around an iron ingot. Goes into motors, coils and Tesla Coils."
+   "what": "Goes into motors, coils and Tesla Coils."
   },
   {
    "items": [
     "iron_casing"
    ],
-   "what": "Age 1 casing. The base of Wired machines."
+   "what": "Base of the Wired machines."
   },
   {
    "items": [
     "basic_circuit"
    ],
-   "what": "Age 1 circuit (needs gold). Used in the Grinder, Electric Furnace and most Wired machines."
+   "what": "Goes into the Grinder, Electric Furnace and most Wired machines."
   },
   {
    "items": [
     "electric_motor"
    ],
-   "what": "Age 1 moving part. Powers drills, drones and machines."
+   "what": "Goes into drills, drones and machines."
   },
   {
    "items": [
@@ -82,8 +82,7 @@
    ],
    "what": "Batteries for robots, machines and suits. A cell in your inventory recharges the FE tool in your hand.",
    "use": [
-    "Right-click a robot or machine to swap it into the battery slot.",
-    "Charge it in a [[charger]]."
+    "Right-click a robot or machine to swap it into the battery slot."
    ],
    "stats": {
     "columns": [
@@ -119,66 +118,60 @@
   {
    "items": [
     "reinforced_casing"
-   ],
-   "what": "Age 2 casing: iron casings, obsidian and a diamond."
+   ]
   },
   {
    "items": [
     "advanced_circuit"
-   ],
-   "what": "Age 2 circuit (needs a diamond)."
+   ]
   },
   {
    "items": [
     "servo_actuator"
-   ],
-   "what": "Age 2 moving part."
+   ]
   },
   {
    "items": [
     "blazing_casing"
-   ],
-   "what": "Age 3 casing. Needs a Magma Core."
+   ]
   },
   {
    "items": [
     "quantum_circuit"
-   ],
-   "what": "Age 3 circuit (needs blaze rods and netherite)."
+   ]
   },
   {
    "items": [
     "plasma_actuator"
    ],
-   "what": "Age 3 moving part. Also the speed boost of the Mob Replicator (x2)."
+   "what": "Also the speed boost of the Mob Replicator (x2)."
   },
   {
    "items": [
     "null_casing"
-   ],
-   "what": "Age 4 casing. Needs an Antigrav Core."
+   ]
   },
   {
    "items": [
     "null_circuit"
-   ],
-   "what": "Age 4 circuit (needs a nether star)."
+   ]
   },
   {
    "items": [
     "servo_core"
    ],
-   "what": "Opens Age 2. Drops from the Scrap Colossus. In an Exo chestplate: Overclock (Overclock key, default O).",
+   "what": "Opens Age 2. Drops from the Scrap Colossus.",
    "see": [
     "item:colossus_altar",
-    "guide:bosses"
+    "guide:bosses",
+    "guide:exo-frame"
    ]
   },
   {
    "items": [
     "magma_core"
    ],
-   "what": "Opens Age 3. Drops from the Forge Tyrant. Survey Rig core slot: ancient debris and resonite. Exo chestplate: fire immunity.",
+   "what": "Opens Age 3. Drops from the Forge Tyrant. Also fits the core slot of the Survey Rig and the Exo chestplate.",
    "see": [
     "item:forge_altar",
     "guide:bosses",
@@ -189,7 +182,7 @@
    "items": [
     "antigrav_core"
    ],
-   "what": "Opens Age 4. Exo chestplate: no fall damage, cheaper flight.",
+   "what": "Opens Age 4.",
    "see": [
     "guide:exo-frame"
    ]
@@ -199,7 +192,7 @@
     "thorium_ore",
     "deepslate_thorium_ore"
    ],
-   "what": "Overworld ore deep underground. Drops Raw Thorium.",
+   "what": "Drops Raw Thorium.",
    "see": [
     "guide:finding-ores"
    ]
@@ -208,7 +201,7 @@
    "items": [
     "pyrolite_ore"
    ],
-   "what": "Nether ore. Drops Pyrolite Shards and some experience.",
+   "what": "Drops Pyrolite Shards and some experience.",
    "see": [
     "guide:finding-ores"
    ]
@@ -217,7 +210,7 @@
    "items": [
     "resonite_ore"
    ],
-   "what": "Rare ore on the outer End islands. Drops Resonite Crystals.",
+   "what": "Drops Resonite Crystals.",
    "see": [
     "guide:finding-ores"
    ]
@@ -227,7 +220,7 @@
     "raw_thorium",
     "raw_thorium_block"
    ],
-   "what": "Raw thorium from the ore. Smelt it, or grind it for more.",
+   "what": "Smelt it, or grind it for more.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -271,7 +264,6 @@
     "ferrothorium_ingot",
     "ferrothorium_plate"
    ],
-   "what": "Age 2 alloy: iron + thorium in the [[alloy_smelter_mk1]].",
    "see": [
     "guide:industry-alloys"
    ]
@@ -281,7 +273,6 @@
     "pyrosteel_ingot",
     "pyrosteel_plate"
    ],
-   "what": "Age 3 alloy: ferrothorium + pyrolite + blaze powder.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -291,7 +282,6 @@
     "resonant_alloy_ingot",
     "resonant_alloy_plate"
    ],
-   "what": "Age 4 alloy: pyrosteel + resonite + ender pearl.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -306,7 +296,7 @@
    "items": [
     "thermocouple"
    ],
-   "what": "Age 2 part, made in the Assembler. For the RTG and Mk2 machines.",
+   "what": "For the [[rtg]] and Mk2 machines.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -315,7 +305,7 @@
    "items": [
     "superconductor_coil"
    ],
-   "what": "Age 3 part, made in the Assembler. For Mk3 machines, Exo Mk3 and fusion parts.",
+   "what": "For Mk3 machines, Exo Mk3 and fusion parts.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -324,7 +314,7 @@
    "items": [
     "resonant_lattice"
    ],
-   "what": "Age 4 part, made in the Assembler. For Mk4 machines and Exo Mk4.",
+   "what": "For Mk4 machines and Exo Mk4.",
    "see": [
     "guide:industry-alloys"
    ]
@@ -387,12 +377,10 @@
    "items": [
     "replicator_controller"
    ],
-   "what": "Controller of the Mob Replicator: insert a full Essence Vial and power it to get that mob's loot.",
+   "what": "Controller of the Mob Replicator: put in a full Essence Vial and power it to get that mob's loot.",
    "use": [
-    "Build the 3x3x3 around it.",
-    "Insert a full [[essence_vial]].",
-    "Pick Harvest (loot) or Spawn (real mob).",
-    "Claim stored XP in the GUI: up to a target level, or all.",
+    "Pick Harvest (loot) or Spawn (the real mob).",
+    "Claim the stored XP in its menu: up to a target level, or all.",
     "Sides tab: auto-eject the output."
    ],
    "stats": {
@@ -433,7 +421,7 @@
    "items": [
     "essence_vial"
    ],
-   "what": "Takes samples from a hostile mob. 8 samples fill it.",
+   "what": "Takes samples from a hostile mob. The first sample binds it to that mob type; 8 samples fill it.",
    "use": [
     "Right-click a mob (2 damage, 3 s cooldown)."
    ],
@@ -450,11 +438,8 @@
    ],
    "what": "Moves items between chests and machines, instantly. Arms are Insert by default.",
    "use": [
-    "Place pipes from the source to the target.",
-    "Sneak-right-click the arm at the source with an empty hand: Extract.",
-    "Right-click an arm: mode, a 9-slot filter, the Extract order and the Insert priority.",
-    "Machines follow their Sides settings.",
-    "Mk2 to Mk4: 8 pipes of the tier below around an Electric Motor, Servo Actuator or Plasma Actuator."
+    "Sneak-right-click the arm at the source with an empty hand: Extract. Again: Off.",
+    "Right-click an arm: mode, a 9-slot filter, the Extract order and the Insert priority."
    ],
    "stats": {
     "columns": [
@@ -484,6 +469,13 @@
       "64",
       "256",
       "640"
+     ],
+     [
+      "Network",
+      "up to 4,096 pipes",
+      "",
+      "",
+      ""
      ]
     ]
    },
@@ -498,10 +490,8 @@
    ],
    "what": "A big sorted chest with search and a crafting grid.",
    "use": [
-    "Shift-click items in or out.",
-    "Search with @mod or #tag.",
-    "With JEI: the J button next to the search box syncs it with JEI's search (on by default).",
-    "Add Storage Expansions for more room.",
+    "Search with @mod or #tag. The J button syncs the search with JEI.",
+    "Add [[storage_expansion_mk1|Storage Expansions]] for more room.",
     "Takes empty shulker boxes and bundles only."
    ],
    "stats": {
@@ -544,7 +534,7 @@
    "items": [
     "warp_pad"
    ],
-   "what": "Teleport pad. Name it, stand on it and right-click to travel to any of your pads (or public ones).",
+   "what": "Teleport pad: travel to any of your pads, or public ones.",
    "use": [
     "Place and name it.",
     "Stand on it, right-click, pick a destination."
@@ -657,10 +647,9 @@
    ],
    "what": "Builds halls from matter and takes them down again. Pick plots on a grid and press Build.",
    "use": [
-    "Feed it cobble, wood, ingots (matter).",
-    "Pick plots in the GUI, then Build.",
+    "Feed it cobble, wood or ingots (matter).",
     "A casing in the style slot opens higher styles.",
-    "Demolish (click twice) clears every built plot: the table's own building blocks back as matter, the rest into a chest touching the table."
+    "Demolish (click twice) clears every built plot: the table's own building blocks come back as matter, the rest goes into a chest touching the table."
    ],
    "stats": {
     "rows": [
@@ -697,7 +686,7 @@
     "timberframe_window",
     "timberframe_light"
    ],
-   "what": "A building style of the Architect Table (Age 0). Also craftable by hand, 8 at a time."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand."
   },
   {
    "items": [
@@ -708,7 +697,7 @@
     "copper_works_window",
     "copper_works_light"
    ],
-   "what": "A building style of the Architect Table (Age 1). Also craftable by hand, 8 at a time."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand."
   },
   {
    "items": [
@@ -719,7 +708,7 @@
     "steel_lab_window",
     "steel_lab_light"
    ],
-   "what": "A building style of the Architect Table (Age 2). Also craftable by hand, 8 at a time."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand."
   },
   {
    "items": [
@@ -730,7 +719,7 @@
     "null_spire_window",
     "null_spire_light"
    ],
-   "what": "A building style of the Architect Table (Age 4). Also craftable by hand, 8 at a time."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand."
   },
   {
    "items": [
@@ -784,7 +773,6 @@
    "items": [
     "upgrade_speed"
    ],
-   "what": "Machines work faster and use more FE per action. Each card is one step: x2, x3, x4, x6, x8, x11, x15, x20.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -793,7 +781,6 @@
    "items": [
     "upgrade_efficiency"
    ],
-   "what": "Machines use 15% less FE per action per card, never below 40%. Combustion Generator: 10% less fuel per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -802,7 +789,6 @@
    "items": [
     "upgrade_range"
    ],
-   "what": "Bigger work area or range: robots +2 radius, Excavator +10 wide, Wireless Charger +4 blocks, Electric Furnace +1 item per lane per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -811,7 +797,6 @@
    "items": [
     "upgrade_fortune"
    ],
-   "what": "Fortune I-III on mined blocks, more output in the Grinder and Alloy Smelter, Looting in the Replicator. Not with Silk Touch.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -820,7 +805,6 @@
    "items": [
     "upgrade_silk"
    ],
-   "what": "Mined blocks drop themselves. One card. Not with Fortune.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -829,7 +813,6 @@
    "items": [
     "upgrade_growth"
    ],
-   "what": "Farm bots: +50% crop and sapling growth per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -838,7 +821,6 @@
    "items": [
     "upgrade_void"
    ],
-   "what": "Deletes junk or outputs that don't fit. Single card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -847,7 +829,6 @@
    "items": [
     "upgrade_height"
    ],
-   "what": "Architect Table: buildings one block taller per card.",
    "see": [
     "guide:upgrade-cards"
    ]
@@ -856,7 +837,6 @@
    "items": [
     "upgrade_carry"
    ],
-   "what": "Storage Terminal keeps its items when picked up. Right-click the terminal with it; it stays in.",
    "see": [
     "guide:upgrade-cards"
    ]

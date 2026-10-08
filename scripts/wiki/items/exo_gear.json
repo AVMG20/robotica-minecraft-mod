@@ -7,11 +7,10 @@
     "exo_helmet_mk3",
     "exo_helmet_mk4"
    ],
-   "what": "Exo-Frame helmet: powered armor with module slots. No durability; modules run on its battery.",
+   "what": "Powered armor. No durability: out of FE it still protects, but its modules stop.",
    "use": [
-    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
-    "Put modules in the slots; switch them on or off.",
-    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
+    "Exo modules key (default J): fit modules into every worn piece and switch them on or off.",
+    "Smithing table: upgrade to the next Mk. Modules, energy and core stay."
    ],
    "stats": {
     "columns": [
@@ -63,11 +62,10 @@
     "exo_chestplate_mk3",
     "exo_chestplate_mk4"
    ],
-   "what": "Exo-Frame chestplate: powered armor with module slots. No durability; modules run on its battery.",
+   "what": "Powered armor. No durability: out of FE it still protects, but its modules stop.",
    "use": [
-    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
-    "Put modules in the slots; switch them on or off.",
-    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
+    "Exo modules key (default J): fit modules into every worn piece and switch them on or off.",
+    "Smithing table: upgrade to the next Mk. Modules, energy and core stay."
    ],
    "stats": {
     "columns": [
@@ -126,11 +124,10 @@
     "exo_leggings_mk3",
     "exo_leggings_mk4"
    ],
-   "what": "Exo-Frame leggings: powered armor with module slots. No durability; modules run on its battery.",
+   "what": "Powered armor. No durability: out of FE it still protects, but its modules stop.",
    "use": [
-    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
-    "Put modules in the slots; switch them on or off.",
-    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
+    "Exo modules key (default J): fit modules into every worn piece and switch them on or off.",
+    "Smithing table: upgrade to the next Mk. Modules, energy and core stay."
    ],
    "stats": {
     "columns": [
@@ -182,11 +179,10 @@
     "exo_boots_mk3",
     "exo_boots_mk4"
    ],
-   "what": "Exo-Frame boots: powered armor with module slots. No durability; modules run on its battery.",
+   "what": "Powered armor. No durability: out of FE it still protects, but its modules stop.",
    "use": [
-    "Press the Exo modules key (default J) to open the module screen (all worn pieces).",
-    "Put modules in the slots; switch them on or off.",
-    "Smithing table: upgrade to the next Mk. Modules, energy and core are kept."
+    "Exo modules key (default J): fit modules into every worn piece and switch them on or off.",
+    "Smithing table: upgrade to the next Mk. Modules, energy and core stay."
    ],
    "stats": {
     "columns": [
@@ -237,7 +233,7 @@
     "night_vision_module_2",
     "night_vision_module_3"
    ],
-   "what": "Exo module (helmet). Night vision. Levels II and III also show hostile mobs through walls (24 / 48 blocks).",
+   "what": "Night vision. Levels II and III also show hostile mobs through walls (24 / 48 blocks).",
    "stats": {
     "rows": [
      [
@@ -262,7 +258,7 @@
    "items": [
     "rebreather_module"
    ],
-   "what": "Exo module (helmet). Breathe under water.",
+   "what": "Breathe under water.",
    "stats": {
     "rows": [
      [
@@ -287,7 +283,7 @@
    "items": [
     "robot_hud_module"
    ],
-   "what": "Exo module (helmet). Shows your nearby drones on the HUD: distance and health.",
+   "what": "Shows your nearby drones on the HUD: distance and health.",
    "stats": {
     "rows": [
      [
@@ -312,7 +308,7 @@
    "items": [
     "auto_feeder_module"
    ],
-   "what": "Exo module (helmet). Eats plain food from your inventory at food level 14 or less.",
+   "what": "Eats plain food from your inventory at food level 14 or less.",
    "stats": {
     "rows": [
      [
@@ -337,7 +333,7 @@
    "items": [
     "solar_weave_module"
    ],
-   "what": "Exo module (helmet). Charges the suit by day under open sky.",
+   "what": "Charges the suit by day under open sky.",
    "stats": {
     "rows": [
      [
@@ -364,7 +360,7 @@
     "sonar_pulse_module_2",
     "sonar_pulse_module_3"
    ],
-   "what": "Exo module (helmet). Sonar key (default N): outlines ores and mobs around you for 10 s (16 / 24 / 32 blocks).",
+   "what": "Sonar key (default N): outlines ores and mobs around you for 10 s (16 / 24 / 32 blocks).",
    "stats": {
     "rows": [
      [
@@ -391,7 +387,7 @@
     "jet_assist_module_2",
     "jet_assist_module_3"
    ],
-   "what": "Exo module (chestplate). Slows long falls; 1 / 2 / 3 extra jumps in the air.",
+   "what": "Slows long falls; 1 / 2 / 3 extra jumps in the air.",
    "stats": {
     "rows": [
      [
@@ -416,7 +412,7 @@
    "items": [
     "flight_module"
    ],
-   "what": "Exo module (chestplate). Creative flight. The Flight key (default K) toggles it.",
+   "what": "Creative flight. The Flight key (default K) toggles it.",
    "stats": {
     "rows": [
      [
@@ -443,7 +439,7 @@
     "kinetic_shield_module_2",
     "kinetic_shield_module_3"
    ],
-   "what": "Exo module (chestplate). Absorbs 75 / 85 / 95% of each hit with FE.",
+   "what": "Absorbs 75 / 85 / 95% of each hit with FE.",
    "stats": {
     "rows": [
      [
@@ -470,7 +466,7 @@
     "med_injector_module_2",
     "med_injector_module_3"
    ],
-   "what": "Exo module (chestplate). At 40% health heals 2 / 3 / 4 hearts; cooldown 60 / 45 / 30 s.",
+   "what": "At 40% health heals 2 / 3 / 4 hearts; cooldown 60 / 45 / 30 s.",
    "stats": {
     "rows": [
      [
@@ -495,7 +491,7 @@
    "items": [
     "hazard_seal_module"
    ],
-   "what": "Exo module (chestplate). Clears poison, wither, hunger, nausea and blindness.",
+   "what": "Clears poison, wither, hunger, nausea and blindness.",
    "stats": {
     "rows": [
      [
@@ -522,7 +518,7 @@
     "servo_stride_module_2",
     "servo_stride_module_3"
    ],
-   "what": "Exo module (leggings). +20 / 40 / 60% walking speed.",
+   "what": "+20 / 40 / 60% walking speed.",
    "stats": {
     "rows": [
      [
@@ -547,7 +543,7 @@
    "items": [
     "kinetic_generator_module"
    ],
-   "what": "Exo module (leggings). Walking charges the suit.",
+   "what": "Walking charges the suit.",
    "stats": {
     "rows": [
      [
@@ -572,7 +568,7 @@
    "items": [
     "dash_thrusters_module"
    ],
-   "what": "Exo module (leggings or boots). Dash key (default R): a quick burst where you look; 3 s cooldown.",
+   "what": "Dash key (default R): a quick burst where you look; 3 s cooldown.",
    "stats": {
     "rows": [
      [
@@ -597,7 +593,7 @@
    "items": [
     "step_assist_module"
    ],
-   "what": "Exo module (boots). Walk up full blocks.",
+   "what": "Walk up full blocks.",
    "stats": {
     "rows": [
      [
@@ -624,7 +620,7 @@
     "spring_heels_module_2",
     "spring_heels_module_3"
    ],
-   "what": "Exo module (boots). Jump higher: +0.15 / 0.25 / 0.35.",
+   "what": "Jump higher: +0.15 / 0.25 / 0.35.",
    "stats": {
     "rows": [
      [
@@ -651,7 +647,7 @@
     "fall_dampener_module_2",
     "fall_dampener_module_3"
    ],
-   "what": "Exo module (boots). Absorbs fall damage beyond 3 blocks.",
+   "what": "Absorbs fall damage beyond 3 blocks.",
    "stats": {
     "rows": [
      [
@@ -678,7 +674,7 @@
     "magnet_module_2",
     "magnet_module_3"
    ],
-   "what": "Exo module (boots). Pulls items within 6 / 10 / 16 blocks.",
+   "what": "Pulls items within 6 / 10 / 16 blocks.",
    "stats": {
     "rows": [
      [
@@ -703,7 +699,7 @@
    "items": [
     "hydro_fins_module"
    ],
-   "what": "Exo module (boots). +50% swim speed and full mining speed under water.",
+   "what": "+50% swim speed and full mining speed under water.",
    "stats": {
     "rows": [
      [
@@ -730,20 +726,16 @@
     "capacitor_plating_module_2",
     "capacitor_plating_module_3"
    ],
-   "what": "Exo module (any piece). +50 / 100 / 200% battery for its piece. Works per piece.",
+   "what": "+50 / 100 / 200% battery for its piece.",
    "stats": {
     "rows": [
      [
       "Fits",
-      "Exo any piece"
+      "any Exo piece"
      ],
      [
       "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
-     ],
-     [
-      "Energy",
-      "none"
      ]
     ]
    },
@@ -765,12 +757,6 @@
      "III"
     ],
     "rows": [
-     [
-      "Fits",
-      "tools, weapons, any Exo piece",
-      "",
-      ""
-     ],
      [
       "Min. Age / Mk",
       "2",
@@ -794,7 +780,7 @@
    "items": [
     "tinkers_hammer"
    ],
-   "what": "Age 0 hammer: mines 1x1 or 3x3, and makes plates in the crafting grid (hammer + 2 ingots).",
+   "what": "Mines 1x1 or 3x3. In the crafting grid it turns 2 ingots into a plate, and raw thorium, pyrolite shards, resonite crystals or coal into dust.",
    "use": [
     "V switches 1x1 / 3x3.",
     "Hold sneak to mine one block."
@@ -857,9 +843,7 @@
    ],
    "what": "First FE drill: iron pickaxe speed and tier, 1x1 or 3x3.",
    "use": [
-    "The Mode key (default V) switches mode.",
-    "Keep a [[copper_cell]] in your inventory: it recharges the drill.",
-    "Add modules at a [[tinkers_bench]]: [[overclock_module]], [[fortune_module]], [[auto_pickup_module]]..."
+    "The Mode key (default V) switches mode."
    ],
    "stats": {
     "rows": [
@@ -921,15 +905,10 @@
    "what": "FE tool that places Spark Lamps: small floating wisps with light 14, walk-through, break instantly.",
    "use": [
     "Right-click a block face to place a lamp on the floor, a wall or the ceiling.",
-    "Sneak-right-click a lamp to remove it.",
-    "Charge it like any FE item."
+    "Sneak-right-click a lamp to remove it."
    ],
    "stats": {
     "rows": [
-     [
-      "Age",
-      "1"
-     ],
      [
       "Battery",
       "20,000 FE"
@@ -949,7 +928,7 @@
    "items": [
     "servo_drill"
    ],
-   "what": "Age 2 drill: adds 5x5 and vein mining (64).",
+   "what": "Adds 5x5 and vein mining (up to 64 ores).",
    "stats": {
     "rows": [
      [
@@ -975,7 +954,7 @@
    "items": [
     "magma_drill"
    ],
-   "what": "Age 3 drill: adds 3x3x3 and 9x9, and auto-smelt.",
+   "what": "Adds 3x3x3, 9x9 and auto-smelt.",
    "stats": {
     "rows": [
      [
@@ -1001,7 +980,7 @@
    "items": [
     "null_drill"
    ],
-   "what": "Age 4 drill: up to 12x12x12 at full speed.",
+   "what": "Up to 12x12x12 at full speed.",
    "stats": {
     "rows": [
      [
@@ -1147,10 +1126,9 @@
    ],
    "what": "Fits modules into power tools, FE weapons and Exo armor pieces.",
    "use": [
-    "Put the tool, weapon or Exo piece in.",
-    "Drop modules in the slots: Age 1-4 opens 2-5, Mk1-4 opens 1-4.",
+    "Put the tool, weapon or Exo piece in and drop modules in the slots: Age 1-4 opens 2-5, Mk1-4 opens 1-4.",
     "Take a module out to get it back.",
-    "The Tool settings key (default G, held tool or weapon) or the Exo modules key (default J, worn armor) switches them."
+    "The Tool settings key (default G, held tool or weapon) or the Exo modules key (default J, worn armor) switches them on or off."
    ],
    "see": [
     "guide:modules"
@@ -1164,10 +1142,7 @@
     "tool_upgrade_kit_3",
     "tool_upgrade_kit_4"
    ],
-   "what": "Smithing template for the next tool tier. Energy, mode and settings carry over.",
-   "use": [
-    "Smithing table: kit + old tool + the part or core."
-   ]
+   "what": "Smithing template for the next tool tier. Energy, mode and settings carry over."
   },
   {
    "items": [
@@ -1362,9 +1337,6 @@
     "lamp_placer_module"
    ],
    "what": "Drill module: places a Spark Lamp where you mine in the dark.",
-   "use": [
-    "Install at a [[tinkers_bench]] in a drill."
-   ],
    "stats": {
     "rows": [
      [

@@ -4,7 +4,7 @@
    "items": [
     "winding_crank"
    ],
-   "what": "Winds a Mainspring by hand. Age 0 power.",
+   "what": "Winds a [[mainspring]] by hand.",
    "use": [
     "Right-click the crank with a [[mainspring]] to put it in.",
     "Hold right-click on the crank with an empty hand.",
@@ -56,10 +56,6 @@
      [
       "Coal",
       "128,000 FE"
-     ],
-     [
-      "Cards",
-      "speed x2 / x3 / x4 FE/t; efficiency -10% fuel each (4 cards: 1.67x FE per fuel)"
      ]
     ]
    },
@@ -98,13 +94,6 @@
       "320 FE/t"
      ],
      [
-      "Night",
-      "0",
-      "0",
-      "0",
-      "0"
-     ],
-     [
       "Buffer",
       "4,000 FE",
       "16,000 FE",
@@ -124,9 +113,7 @@
     "guide:power-ladder"
    ],
    "use": [
-    "Place it with open sky above.",
-    "Machines touching it get power, or put a [[tesla_coil_1]] on it.",
-    "Mk2-Mk4: craft two panels of the tier below with that age's circuit (Mk2: four Mk1)."
+    "Machines touching it get power, or put a [[tesla_coil_1]] on it."
    ],
    "image": "shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4"
   },
@@ -136,9 +123,8 @@
     "accumulator_2",
     "accumulator_3"
    ],
-   "what": "A battery block. Gives FE out on its front; the front gauge shows the charge. Keeps its charge when mined.",
+   "what": "Battery block. Takes FE on every side, gives it out on its front. Keeps its charge when mined.",
    "use": [
-    "Feed it from a generator or cable.",
     "Put a [[tesla_coil_1]] on it to send its FE wirelessly."
    ],
    "stats": {
@@ -212,6 +198,14 @@
       "64,000",
       "256,000",
       "1,000,000"
+     ],
+     [
+      "Loss per hop",
+      "5%",
+      "",
+      "",
+      "",
+      ""
      ]
     ]
    },
@@ -239,7 +233,6 @@
    ],
    "what": "Charges FE items: cells, tools, drills, armor.",
    "use": [
-    "Place it touching a generator, or feed it FE.",
     "Right-click it with the item."
    ],
    "stats": {
@@ -247,10 +240,6 @@
      [
       "Rate",
       "2,000 FE/t"
-     ],
-     [
-      "Slots",
-      "1"
      ]
     ]
    }
@@ -261,19 +250,18 @@
    ],
    "what": "Charges the FE items of you and your team in range: worn armor first, then held items, then the inventory.",
    "use": [
-    "Place it and feed it FE by cable or a [[tesla_coil_1]] link.",
-    "Stand within range: arcs show who it charges.",
-    "Range and speed cards: more reach and rate."
+    "Feed it FE by cable or a [[tesla_coil_1]] link.",
+    "Stand within range: arcs show who it charges."
    ],
    "stats": {
     "rows": [
      [
       "Rate",
-      "1,000 FE/t per player (x6 with 4 speed cards)"
+      "1,000 FE/t per player"
      ],
      [
       "Range",
-      "8 blocks (+4 per range card, 24 max)"
+      "8 blocks"
      ],
      [
       "Loss",
@@ -298,10 +286,9 @@
    "items": [
     "metal_press"
    ],
-   "what": "Presses 1 ingot into 1 plate. Other mods' ingots work when a matching plate exists.",
+   "what": "Presses 1 ingot into 1 plate.",
    "use": [
-    "Right-click it with ingots or feed it with a hopper or pipe.",
-    "Set its faces in the Sides tab."
+    "Right-click it with ingots, or feed it with a hopper or pipe."
    ],
    "stats": {
     "rows": [
@@ -330,8 +317,7 @@
    "what": "Makes the Robotica alloys from up to three inputs.",
    "use": [
     "Right-click it with ingots or dusts, or pipe them in.",
-    "Power it with FE or a cell in its battery slot.",
-    "Right-click it with the next Mk to upgrade in place."
+    "Right-click it with the next Mk to upgrade it in place; everything inside stays."
    ],
    "stats": {
     "columns": [
@@ -358,16 +344,9 @@
      [
       "Base power",
       "40 FE/t",
-      "40 FE/t",
-      "40 FE/t",
-      "40 FE/t"
-     ],
-     [
-      "Card slots",
-      "2",
-      "3",
-      "4",
-      "5"
+      "",
+      "",
+      ""
      ],
      [
       "Buffer",
@@ -391,10 +370,6 @@
     "centrifuge_mk4"
    ],
    "what": "Splits one input into up to four results, some by chance. Recycles Depleted Fuel Pellets.",
-   "use": [
-    "Put the input in, power it.",
-    "Take results from the output or pipe them out."
-   ],
    "stats": {
     "columns": [
      "Mk1",
@@ -420,16 +395,9 @@
      [
       "Base power",
       "60 FE/t",
-      "60 FE/t",
-      "60 FE/t",
-      "60 FE/t"
-     ],
-     [
-      "Card slots",
-      "2",
-      "3",
-      "4",
-      "5"
+      "",
+      "",
+      ""
      ]
     ]
    },
@@ -445,10 +413,9 @@
     "assembler_mk3",
     "assembler_mk4"
    ],
-   "what": "Builds parts from up to six inputs: Thermocouples, Superconductor Coils, Resonant Lattices, and ladder parts for about a quarter less.",
+   "what": "Builds Thermocouples, Superconductor Coils and Resonant Lattices. Circuits, motors and casings cost about a quarter less material here than at the crafting table.",
    "use": [
-    "Put every input in its own slot.",
-    "Power it: big parts take a lot of FE per craft."
+    "Put every input in its own slot."
    ],
    "stats": {
     "columns": [
@@ -475,16 +442,9 @@
      [
       "Base power",
       "80 FE/t",
-      "80 FE/t",
-      "80 FE/t",
-      "80 FE/t"
-     ],
-     [
-      "Card slots",
-      "2",
-      "3",
-      "4",
-      "5"
+      "",
+      "",
+      ""
      ]
     ]
    },
@@ -499,8 +459,7 @@
    ],
    "what": "Radioisotope Generator: burns Thorium Fuel Pellets one at a time for steady FE.",
    "use": [
-    "Put [[thorium_fuel_pellet]] in.",
-    "It pushes power into touching blocks; a [[tesla_coil_1]] on it sends it on.",
+    "It powers touching blocks; a [[tesla_coil_1]] on it sends the FE on.",
     "Take out the [[depleted_fuel_pellet]] waste."
    ],
    "stats": {
