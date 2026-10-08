@@ -27,6 +27,10 @@ public final class TrailerScene {
     public final int width, depth;
     public final int timeOfDay, warmupTicks, durationTicks;
     public final Difficulty difficulty;
+    /** First person: the player is in survival with the hand visible (set an item in {@code setup}) instead of a spectator. */
+    public final boolean firstPerson;
+    /** First person only: the hand swings every this many ticks while recording (0 = never). */
+    public final int swingEvery;
     public final Action setup;
     public final Function<BlockPos, CameraPath> camera;
     public final List<Timed> actions;
@@ -39,6 +43,8 @@ public final class TrailerScene {
         this.warmupTicks = b.warmupTicks;
         this.durationTicks = b.durationTicks;
         this.difficulty = b.difficulty;
+        this.firstPerson = b.firstPerson;
+        this.swingEvery = b.swingEvery;
         this.setup = b.setup;
         this.camera = b.camera;
         this.actions = List.copyOf(b.actions);
@@ -52,6 +58,8 @@ public final class TrailerScene {
         private final String id;
         private int width = 40, depth = 40, timeOfDay = 4000, warmupTicks = 40, durationTicks = 120;
         private Difficulty difficulty = Difficulty.PEACEFUL;
+        private boolean firstPerson;
+        private int swingEvery;
         private Action setup = (level, player, site) -> {};
         private Function<BlockPos, CameraPath> camera;
         private final List<Timed> actions = new ArrayList<>();
@@ -86,6 +94,17 @@ public final class TrailerScene {
         /** Peaceful by default; scenes with mobs or bosses ask for NORMAL. */
         public Builder difficulty(Difficulty difficulty) {
             this.difficulty = difficulty;
+            return this;
+        }
+
+        /**
+         * First-person camera: the player is a flying, invulnerable survival player and the hand with the held item shows
+         * (give the item in {@code setup}, e.g. {@code player.setItemInHand}). The hand swings every {@code swingEvery}
+         * ticks while recording (0 = not at all). The camera path still places the player, keep it out of blocks.
+         */
+        public Builder firstPerson(int swingEvery) {
+            this.firstPerson = true;
+            this.swingEvery = swingEvery;
             return this;
         }
 
