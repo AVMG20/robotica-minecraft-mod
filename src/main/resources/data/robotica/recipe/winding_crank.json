@@ -14,7 +14,7 @@
       "tag": "c:ingots/copper"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     },
     "B": {
       "tag": "c:cobblestones"

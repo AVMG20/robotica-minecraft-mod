@@ -33,12 +33,12 @@ IRON_PLATE, COPPER_PLATE = '#c:plates/iron', '#c:plates/copper'
 REDSTONE_BLOCK, COBBLE, QUARTZ = '#c:storage_blocks/redstone', '#c:cobblestones', '#c:gems/quartz'
 
 # Age 0: copper, wood, stone only
-shaped('winding_crank', [' S ', 'CGC', 'BBB'], {'S': '#c:rods/wooden', 'C': COPPER, 'G': 'copper_gear', 'B': COBBLE})
+shaped('winding_crank', [' S ', 'CGC', 'BBB'], {'S': '#c:rods/wooden', 'C': COPPER, 'G': '#c:gears/copper', 'B': COBBLE})
 
 # Age 1
 # Early power: a furnace in a copper shell, one iron ingot. Craftable the moment you smelt your first iron.
 shaped('combustion_generator', ['CCC', 'GFG', 'CIC'],
-       {'C': COPPER, 'F': '#c:player_workstations/furnaces', 'G': 'copper_gear', 'I': '#c:ingots/iron'})
+       {'C': COPPER, 'F': '#c:player_workstations/furnaces', 'G': '#c:gears/copper', 'I': '#c:ingots/iron'})
 shaped('solar_panel_mk1', ['GGG', 'CBC', 'PPP'],
        {'G': '#c:glass_blocks', 'C': COPPER_PLATE, 'B': 'basic_circuit', 'P': IRON_PLATE})
 shaped('accumulator_1', ['PRP', 'CIC', 'PRP'],
@@ -48,9 +48,9 @@ shaped('tesla_linker', ['R', 'C', 'I'], {'R': '#c:dusts/redstone', 'C': COPPER, 
 shaped('tesla_coil_1', [' R ', 'CKC', ' P '], {'R': '#c:dusts/redstone', 'C': COPPER, 'K': 'copper_coil', 'P': IRON_PLATE})
 shaped('tesla_coil_2', [' B ', 'GTG', 'PKP'], {'B': 'basic_circuit', 'G': GOLD, 'T': 'tesla_coil_1', 'P': IRON_PLATE, 'K': 'copper_coil'})
 shaped('charger', ['CPC', 'RGR', 'CCC'],
-       {'C': COPPER, 'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'G': 'copper_gear'})
+       {'C': COPPER, 'P': IRON_PLATE, 'R': '#c:dusts/redstone', 'G': '#c:gears/copper'})
 shaped('metal_press', ['PPP', 'GSG', 'PMP'],
-       {'P': IRON_PLATE, 'G': 'copper_gear', 'S': 'minecraft:piston', 'M': 'electric_motor'})
+       {'P': IRON_PLATE, 'G': '#c:gears/copper', 'S': 'minecraft:piston', 'M': 'electric_motor'})
 
 # Age 2: each tier consumes the previous one
 # Wireless Charger: a Charger with a Tesla Coil II as emitter, an advanced circuit to pick the players.

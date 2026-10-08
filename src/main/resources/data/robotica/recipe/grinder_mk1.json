@@ -14,7 +14,7 @@
       "item": "minecraft:flint"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     },
     "M": {
       "item": "robotica:electric_motor"

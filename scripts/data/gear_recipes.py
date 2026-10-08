@@ -43,12 +43,12 @@ for metal, ingot in (('iron', IRON), ('copper', COPPER), ('gold', GOLD)):
     shapeless(f'{metal}_plate_from_hammer', ['tinkers_hammer', ingot, ingot], f'{metal}_plate')
 
 # Age 0 (copper only)
-shaped('tinkers_hammer', ['CCC', 'CGC', ' S '], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
-shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
-shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': 'copper_gear', 'S': STICK})
+shaped('tinkers_hammer', ['CCC', 'CGC', ' S '], {'C': COPPER, 'G': '#c:gears/copper', 'S': STICK})
+shaped('felling_axe', ['CC', 'GS', ' S'], {'C': COPPER, 'G': '#c:gears/copper', 'S': STICK})
+shaped('gearblade', ['C', 'G', 'S'], {'C': COPPER, 'G': '#c:gears/copper', 'S': STICK})
 
 # Age 1: Tinker's Bench fits modules into FE tools, FE weapons and Exo armor.
-shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': 'copper_gear', 'T': '#c:player_workstations/crafting_tables', 'W': '#minecraft:planks'})
+shaped('tinkers_bench', ['PPP', 'GTG', 'W W'], {'P': IRON_PLATE, 'G': '#c:gears/copper', 'T': '#c:player_workstations/crafting_tables', 'W': '#minecraft:planks'})
 
 # Age 1: the Age 0 tools upgrade at a smithing table (kit I + tool + Electric Motor), like every later tier.
 # Kit I is cheap on purpose (5 iron, some copper and redstone, no gold): the first powered tools come in the first iron hour.

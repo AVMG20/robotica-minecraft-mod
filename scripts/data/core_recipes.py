@@ -26,9 +26,9 @@ IRON_PLATE, GOLD_PLATE = '#c:plates/iron', '#c:plates/gold'
 
 # Age 0
 shaped('copper_gear', [' C ', 'CSC', ' C '], {'C': COPPER, 'S': COBBLE})
-shaped('clockwork_mechanism', ['PGP', 'GSG', 'PGP'], {'P': '#minecraft:planks', 'G': 'copper_gear', 'S': COBBLE})
+shaped('clockwork_mechanism', ['PGP', 'GSG', 'PGP'], {'P': '#minecraft:planks', 'G': '#c:gears/copper', 'S': COBBLE})
 shaped('wooden_chassis', ['LSL', 'SBS', 'LSL'], {'L': '#minecraft:logs', 'S': COBBLE, 'B': '#c:storage_blocks/copper'})
-shaped('mainspring', ['CCC', 'CGC', 'CCC'], {'C': COPPER, 'G': 'copper_gear'}, category='equipment')
+shaped('mainspring', ['CCC', 'CGC', 'CCC'], {'C': COPPER, 'G': '#c:gears/copper'}, category='equipment')
 # Age 1
 shaped('copper_coil', ['CCC', 'CIC', 'CCC'], {'C': COPPER, 'I': IRON})
 shaped('iron_casing', ['III', 'IRI', 'III'], {'I': IRON, 'R': REDSTONE})
@@ -65,7 +65,7 @@ CARDS = {
     'speed': (1, 'minecraft:sugar', REDSTONE),
     'efficiency': (1, GOLD, GOLD),
     'growth': (1, '#c:storage_blocks/bone_meal', '#c:storage_blocks/bone_meal'),
-    'void': (1, 'minecraft:cactus', '#c:obsidians'),
+    'void': (1, '#c:crops/cactus', '#c:obsidians'),
     'carry': (1, '#c:chests/wooden', '#c:leathers'),
     'range': (2, '#c:ender_pearls', '#c:gems/lapis'),
     'fortune': (2, '#c:storage_blocks/lapis', DIAMOND),

@@ -31,7 +31,7 @@ The Servo Core drops from the Scrap Colossus and the Magma Core from the Forge T
 
 Every age has three intermediate parts: a casing, a mechanism (moving part) and a circuit. Each age's parts consume several parts of the age before, so cost multiplies roughly 3-4x per age. Final items (machines, tools, robots, upgrade cards) are built from these parts, never mostly from raw materials.
 
-Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate (hammer loses durability). Metal Press: 1 ingot → 1 plate. Any mod's plates with the common tag also work (Thermal, Mekanism, Immersive Engineering).
+Plates: `c:plates/iron` etc. Hand recipe: Tinker's Hammer + 2 ingots → 1 plate (hammer loses durability). Metal Press: 1 ingot → 1 plate. Any mod's plates with the common tag also work (Thermal, Mekanism, Immersive Engineering). The Metal Press also presses any `c:ingots/<x>` into `c:plates/<x>` when that plate tag has items (see Power).
 
 ### Age 0 parts
 - Copper Gear: 4 copper ingot (plus shape) + 1 cobblestone → 1
@@ -623,7 +623,7 @@ Fuel Pellets 10% -> 20%, fusion pellet 2,400 -> 6,000 ticks (5 minutes), `fusion
 
 Text and tag pass:
 - Resonant Grinding Balls +150% → +120% (Pyrosteel stays +100%). Mining Drone one block per 12 ticks (`miningDigTicks`).
-- Recipes take `c:` tags where NeoForge has one (redstone, slime, blaze rods, glass, obsidian, prismarine, feathers, crafting table, furnace and the like); dust smelting takes `#c:dusts/iron|gold|copper`.
+- Recipes take `c:` tags where NeoForge 1.21.1 has one (redstone, glowstone dust, slime, blaze rods, glass, obsidian, prismarine crystals, cactus, feathers, crafting table, furnace and the like); dust smelting takes `#c:dusts/iron|gold|copper`. Items without a NeoForge tag (blaze powder, netherite scrap, shulker shells, ender eyes, magma cream, ghast tears) stay plain items. The Copper Gear is in `c:gears/copper` (and `c:gears`), and every recipe takes `#c:gears/copper`, so other mods' copper gears work.
 - Tooltips, the module and set bonus lines and the Flight guide step show the player's real key binding (`Component.keybind`); the Codex and wiki name keys with their default ("Flight key (default K)"). Guide steps mark a binding as `{key:<mapping>}` in `codex_guide.py`.
 - Fortune card: Grinder and Alloy Smelter output. Range card: +1 item per Electric Furnace lane. Efficiency card: Combustion Generator `generatorEfficiencyPerCard`. Card texts read these numbers.
 - Mk1 display names: Excavator, Survey Rig, Item Pipe, Mining, Courier and Sentry Drone carry "Mk1" (ids unchanged).

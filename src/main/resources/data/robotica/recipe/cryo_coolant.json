@@ -11,7 +11,7 @@
       "item": "minecraft:blue_ice"
     },
     "P": {
-      "item": "minecraft:prismarine_crystals"
+      "tag": "c:gems/prismarine"
     },
     "S": {
       "item": "minecraft:snow_block"

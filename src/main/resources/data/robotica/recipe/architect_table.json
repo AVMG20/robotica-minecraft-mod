@@ -14,7 +14,7 @@
       "tag": "c:player_workstations/crafting_tables"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     },
     "M": {
       "item": "robotica:clockwork_mechanism"

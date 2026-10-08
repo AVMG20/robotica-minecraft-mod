@@ -16,7 +16,7 @@
       "item": "robotica:copper_coil"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     }
   },
   "result": {

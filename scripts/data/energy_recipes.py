@@ -60,7 +60,7 @@ shaped('reactor_access_port', ['PHP', 'BCB', 'PTP'],
        {'P': IRON_PLATE, 'H': 'minecraft:hopper', 'B': 'basic_circuit', 'C': 'reactor_casing', 'T': '#c:chests'})
 shaped('reactor_fuel_rod', ['PGP', 'PQP', 'PGP'], {'P': '#c:plates/thorium', 'G': GLASS, 'Q': '#c:dusts/graphite'}, count=2)
 # Age 3 coolant: better than blue ice (4 vs 3)
-shaped('cryo_coolant', ['BPB', 'PSP', 'BPB'], {'B': 'minecraft:blue_ice', 'P': 'minecraft:prismarine_crystals', 'S': 'minecraft:snow_block'}, count=4)
+shaped('cryo_coolant', ['BPB', 'PSP', 'BPB'], {'B': 'minecraft:blue_ice', 'P': '#c:gems/prismarine', 'S': 'minecraft:snow_block'}, count=4)
 
 # ---- Fusion Reactor (Age 4) ----
 shaped('fusion_casing', ['ROR', 'OXO', 'ROR'], {'R': 'reactor_casing', 'O': '#c:plates/resonant_alloy', 'X': 'blazing_casing'}, count=8)

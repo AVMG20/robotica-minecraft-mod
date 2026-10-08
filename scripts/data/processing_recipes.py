@@ -65,7 +65,7 @@ IRON_PLATE = '#c:plates/iron'
 # Mk1 (Age 1, after the Basic Circuit like the Metal Press). Every later Mk consumes the one before plus two casings and
 # a circuit of its age, and keeps energy and Carry contents (robotica:machine_upgrade).
 shaped('grinder_mk1', ['PFP', 'GMG', 'PBP'],
-       {'P': IRON_PLATE, 'F': 'minecraft:flint', 'G': 'copper_gear', 'M': 'electric_motor', 'B': 'basic_circuit'})
+       {'P': IRON_PLATE, 'F': 'minecraft:flint', 'G': '#c:gears/copper', 'M': 'electric_motor', 'B': 'basic_circuit'})
 shaped('electric_furnace_mk1', ['PCP', 'CFC', 'PBP'],
        {'P': IRON_PLATE, 'C': 'copper_coil', 'F': '#c:player_workstations/furnaces', 'B': 'basic_circuit'})
 

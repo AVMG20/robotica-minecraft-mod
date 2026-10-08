@@ -108,7 +108,7 @@ shaped('hazard_seal_module', ['GQG', 'PMP'], {'G': '#c:glass_blocks', 'Q': 'quan
 shaped('servo_stride_module_1', ['CMC', 'PBP'], {'C': 'copper_coil', 'M': 'electric_motor', 'B': 'basic_circuit', 'P': PLATE})
 shaped('servo_stride_module_2', ['ASA', ' U '], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'U': 'servo_stride_module_1'})
 shaped('servo_stride_module_3', ['QPQ', ' U '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'U': 'servo_stride_module_2'})
-shaped('kinetic_generator_module', ['PMP', 'CGC'], {'P': PLATE, 'M': 'electric_motor', 'C': 'copper_coil', 'G': 'copper_gear'})
+shaped('kinetic_generator_module', ['PMP', 'CGC'], {'P': PLATE, 'M': 'electric_motor', 'C': 'copper_coil', 'G': '#c:gears/copper'})
 shaped('dash_thrusters_module', ['BPB', 'FCF'], {'B': 'minecraft:blaze_powder', 'P': 'plasma_actuator', 'F': 'minecraft:fire_charge',
                                                   'C': 'copper_coil'})
 

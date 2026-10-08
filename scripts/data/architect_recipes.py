@@ -32,7 +32,7 @@ IRON_PLATE = '#c:plates/iron'
 
 # Age 0: a starter machine, no iron. Copper, cobble, a crafting table and a Clockwork Mechanism for the drafting arm.
 shaped('architect_table', ['CTC', 'GMG', 'SSS'],
-       {'C': '#c:ingots/copper', 'T': '#c:player_workstations/crafting_tables', 'G': 'copper_gear', 'M': 'clockwork_mechanism',
+       {'C': '#c:ingots/copper', 'T': '#c:player_workstations/crafting_tables', 'G': '#c:gears/copper', 'M': 'clockwork_mechanism',
         'S': '#c:cobblestones/normal'},
        category='misc')
 

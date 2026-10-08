@@ -11,7 +11,7 @@
       "tag": "minecraft:planks"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     },
     "S": {
       "tag": "c:cobblestones"

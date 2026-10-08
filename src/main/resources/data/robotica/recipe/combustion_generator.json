@@ -14,7 +14,7 @@
       "tag": "c:player_workstations/furnaces"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     },
     "I": {
       "tag": "c:ingots/iron"

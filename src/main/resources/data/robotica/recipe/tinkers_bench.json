@@ -11,7 +11,7 @@
       "tag": "c:plates/iron"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     },
     "T": {
       "tag": "c:player_workstations/crafting_tables"

@@ -17,7 +17,7 @@
       "tag": "c:dusts/redstone"
     },
     "G": {
-      "item": "robotica:copper_gear"
+      "tag": "c:gears/copper"
     }
   },
   "result": {
