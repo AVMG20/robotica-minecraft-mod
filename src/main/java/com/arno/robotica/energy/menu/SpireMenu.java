@@ -61,4 +61,10 @@ public class SpireMenu extends ControllerMenu {
         SpireBlockEntity.State[] all = SpireBlockEntity.State.values();
         return i >= 0 && i < all.length ? all[i] : SpireBlockEntity.State.NOT_FORMED;
     }
+
+    /** Nothing built yet: the column goes straight up from the base. */
+    @Override
+    public net.minecraft.world.level.levelgen.structure.BoundingBox previewBox(net.minecraft.world.level.block.state.BlockState controllerState) {
+        return net.minecraft.world.level.levelgen.structure.BoundingBox.fromCorners(pos(), pos().above(Math.max(3, data().getInt("minH")) - 1));
+    }
 }

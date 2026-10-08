@@ -89,6 +89,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     public final ItemStackHandler waste = newWasteHandler(this::setChanged);
     public final MachineEnergyStorage energy = new MachineEnergyStorage(EnergyConfig.spireBuffer(), 0, Integer.MAX_VALUE, this::setChanged);
     private final IItemHandler items = new ItemsHandler();
+    private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
 
     // saved
     private double fuelLeft;
@@ -196,12 +197,18 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         efficiency = v.power > 0 ? v.weighted / v.power : 1.0;
         if (level != null) SpireField.add(level, worldPosition);
         refreshSurroundings();
-        if (changed) setChangedAndSync();
+        if (changed) {
+            setCrownLit(running); // the crown moved: light the new one
+            setChangedAndSync();
+        }
     }
 
     @Override
     protected void onUnformed() {
         setCrownLit(false);
+        running = false;
+        litHold = 0;
+        fePerTick = potential = 0;
         conductors = 0;
         basePower = 0;
         efficiency = 1.0;
@@ -243,7 +250,9 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         BlockPos crown = crown();
         if (level == null || crown == null) return;
         sky = level.dimensionType().hasSkyLight() && !level.dimensionType().hasCeiling() && level.canSeeSky(crown.above());
-        weather = !level.isRainingAt(crown.above()) ? 0 : level.isThundering() ? 2 : 1;
+        // isRainingAt is false where it snows (peaks, snowy biomes): a storm counts there too
+        boolean wet = level.isRaining() && level.canSeeSky(crown.above()) && level.getBiome(crown).value().hasPrecipitation();
+        weather = !wet ? 0 : level.isThundering() ? 2 : 1;
         int spacing = EnergyConfig.spireSpacing();
         interference = SpireField.interference(level, worldPosition, spacing);
         neighbours = SpireField.neighbours(level, worldPosition, spacing);
@@ -270,8 +279,9 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
             refreshSurroundings();
             if (sky) rollStrike(level, now);
         }
-        int push = Math.max(4096, potential * 8);
-        EnergyUtil.pushToNeighbors(level, worldPosition, energy, push);
+        if (energy.getEnergyStored() > 0) {
+            EnergyUtil.pushToNeighbors(level, worldPosition, energy, Math.max(4096, potential * 8), neighbors);
+        }
         step();
         if (running && CoreSounds.due(level, worldPosition, 50)) {
             BlockPos crown = crown();
@@ -320,21 +330,25 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         setRunning(litHold > 0);
     }
 
-    /** 1 fuel ready, 0 none, -1 the next item's waste has no room. */
+    /** 1 fuel ready, 0 none, -1 only fuel whose waste has no room. */
     private int ensureFuel() {
         if (fuelLeft > 1e-6 && fuelTotal > 0) return 1;
+        boolean blocked = false;
         for (int slot = 0; slot < fuel.getSlots(); slot++) {
             SpireFuel f = EnergyDataMaps.spireFuel(fuel.getStackInSlot(slot));
             if (f == null) continue;
             Item wasteItem = f.waste().orElse(null);
-            if (wasteItem != null && !ItemHandlerHelper.insertItem(waste, new ItemStack(wasteItem), true).isEmpty()) return -1;
+            if (wasteItem != null && !ItemHandlerHelper.insertItem(waste, new ItemStack(wasteItem), true).isEmpty()) {
+                blocked = true;
+                continue;
+            }
             fuel.extractItem(slot, 1, false);
             fuelTotal = f.energy();
             fuelLeft = f.energy();
             burnWaste = wasteItem;
             return 1;
         }
-        return 0;
+        return blocked ? -1 : 0;
     }
 
     private void finishUnit() {
@@ -517,6 +531,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         tag.put("waste", waste.serializeNBT(registries));
         tag.put("energy", energy.serializeNBT(registries));
         tag.putDouble("fuelLeft", fuelLeft);
+        tag.putLong("lastStrike", lastStrike);
         tag.putInt("fuelTotal", fuelTotal);
         if (burnWaste != null) tag.putString("burnWaste", BuiltInRegistries.ITEM.getKey(burnWaste).toString());
         if (!pendingWaste.isEmpty()) tag.put("pendingWaste", pendingWaste.save(registries));
@@ -530,6 +545,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         if (tag.contains("waste")) waste.deserializeNBT(registries, tag.getCompound("waste"));
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         fuelLeft = tag.getDouble("fuelLeft");
+        if (tag.contains("lastStrike")) lastStrike = tag.getLong("lastStrike");
         fuelTotal = tag.getInt("fuelTotal");
         burnWaste = tag.contains("burnWaste") ? BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(tag.getString("burnWaste"))).orElse(null) : null;
         pendingWaste = tag.contains("pendingWaste") ? ItemStack.parseOptional(registries, tag.getCompound("pendingWaste")) : ItemStack.EMPTY;

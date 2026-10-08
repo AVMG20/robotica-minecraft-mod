@@ -34,8 +34,10 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
         Level level = be.getLevel();
         int n = be.conductors();
         if (level == null || n <= 0) return;
-        float time = level.getGameTime() + partialTick;
-        float sinceStrike = time - be.clientStrike();
+        // float keeps tick precision only up to 2^24: work from the long game time
+        long gameTime = level.getGameTime();
+        float time = (gameTime % 24000L) + partialTick;
+        float sinceStrike = (gameTime - be.clientStrike()) + partialTick;
         boolean striking = sinceStrike >= 0 && sinceStrike < STRIKE_TICKS;
         if (!be.running() && !striking) return;
 
@@ -62,8 +64,8 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
         for (int i = 0; i < down; i++) {
             double y0 = 1 + rnd.nextDouble() * n, y1 = Math.max(1, y0 - 1.5 - rnd.nextDouble() * 3);
             double side = rnd.nextInt(4) * Math.PI / 2;
-            Vec3 a = new Vec3(0.5 + 0.55 * Math.cos(side), y0, 0.5 + 0.55 * Math.sin(side));
-            Vec3 b = new Vec3(0.5 + 0.55 * Math.cos(side + 0.6), y1, 0.5 + 0.55 * Math.sin(side + 0.6));
+            // both ends just outside the conductor's face, so the arc never dips into the block
+            Vec3 a = onSurface(side, y0), b = onSurface(side + 0.6, y1);
             GlowDraw.bolt(vc, m, a, b, rnd.nextLong(), 4, 0.12, 0.012F, 110, 170, 255, 170, 0);
         }
         int leaps = 2 + (int) (pulse * 2);
@@ -81,18 +83,22 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
             // flickers like vanilla lightning: re-rolled every other tick
             long flicker = (long) (sinceStrike / 2);
             GlowDraw.bolt(vc, m, sky, crown, boltSeed + flicker, 18, 1.6, 0.09F, 160, 190, 255, alpha, 4);
-            for (int y = 1; y <= n; y++) {
-                GlowDraw.cube(vc, m, new Vec3(0.5, y + 0.5, 0.5), 0.56F, 150, 200, 255, (int) (70 * fade));
-            }
+            GlowDraw.box(vc, m, -0.06F, 0.94F, -0.06F, 1.06F, n + 1.06F, 1.06F, 150, 200, 255, (int) (70 * fade));
             GlowDraw.cube(vc, m, crown, 1.4F * fade + 0.3F, 220, 240, 255, (int) (90 * fade));
         }
+    }
+
+    /** A point on the column's surface at angle {@code ang}, 0.06 out from the block face. */
+    private static Vec3 onSurface(double ang, double y) {
+        double c = Math.cos(ang), s = Math.sin(ang), k = 0.56 / Math.max(Math.abs(c), Math.abs(s));
+        return new Vec3(0.5 + c * k, y, 0.5 + s * k);
     }
 
     @Override
     public AABB getRenderBoundingBox(SpireBlockEntity be) {
         AABB own = super.getRenderBoundingBox(be);
         var p = be.getBlockPos();
-        return own.minmax(new AABB(p.getX() - 4, p.getY(), p.getZ() - 4, p.getX() + 5, p.getY() + be.conductors() + 4 + BOLT_HEIGHT, p.getZ() + 5));
+        return own.minmax(new AABB(p.getX() - 6, p.getY(), p.getZ() - 6, p.getX() + 7, p.getY() + be.conductors() + 4 + BOLT_HEIGHT, p.getZ() + 7));
     }
 
     @Override

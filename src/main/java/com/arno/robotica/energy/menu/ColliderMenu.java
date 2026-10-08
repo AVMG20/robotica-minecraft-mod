@@ -60,4 +60,13 @@ public class ColliderMenu extends ControllerMenu {
         ColliderBlockEntity.State[] all = ColliderBlockEntity.State.values();
         return i >= 0 && i < all.length ? all[i] : ColliderBlockEntity.State.NOT_FORMED;
     }
+
+    /** Nothing built yet: the smallest ring, a 7x7 square outline behind the controller. */
+    @Override
+    public net.minecraft.world.level.levelgen.structure.BoundingBox previewBox(net.minecraft.world.level.block.state.BlockState controllerState) {
+        net.minecraft.core.Direction out = controllerState.hasProperty(com.arno.robotica.energy.block.ControllerBlock.FACING)
+                ? controllerState.getValue(com.arno.robotica.energy.block.ControllerBlock.FACING) : net.minecraft.core.Direction.NORTH;
+        net.minecraft.core.Direction right = out.getClockWise();
+        return net.minecraft.world.level.levelgen.structure.BoundingBox.fromCorners(pos().relative(right, -3), pos().relative(right, 3).relative(out, -6));
+    }
 }

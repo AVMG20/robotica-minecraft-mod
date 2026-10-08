@@ -33,8 +33,12 @@ final class GlowDraw {
 
     /** A glowing cube of half size {@code h} around c. */
     static void cube(VertexConsumer vc, Matrix4f m, Vec3 c, float h, int r, int g, int bl, int alpha) {
-        float x0 = (float) c.x - h, y0 = (float) c.y - h, z0 = (float) c.z - h;
-        float x1 = (float) c.x + h, y1 = (float) c.y + h, z1 = (float) c.z + h;
+        box(vc, m, (float) c.x - h, (float) c.y - h, (float) c.z - h, (float) c.x + h, (float) c.y + h, (float) c.z + h, r, g, bl, alpha);
+    }
+
+    /** A glowing box between two corners. */
+    static void box(VertexConsumer vc, Matrix4f m, float x0, float y0, float z0, float x1, float y1, float z1,
+                    int r, int g, int bl, int alpha) {
         quad(vc, m, x0, y0, z0, x1, y0, z0, x1, y0, z1, x0, y0, z1, r, g, bl, alpha);
         quad(vc, m, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1, r, g, bl, alpha);
         quad(vc, m, x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, r, g, bl, alpha);
