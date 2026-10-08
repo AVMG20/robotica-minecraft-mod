@@ -1,0 +1,40 @@
+{
+  "parent": "robotica:guide/first_iron",
+  "display": {
+    "icon": {
+      "id": "robotica:hauler_drone"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.hauler_drone.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.hauler_drone.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "robotica:hauler_drone"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 5
+  }
+}

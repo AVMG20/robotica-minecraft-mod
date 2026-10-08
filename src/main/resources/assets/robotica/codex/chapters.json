@@ -405,6 +405,14 @@
             "robotica:courier_drone_mk2",
             "robotica:courier_remote"
           ]
+        },
+        {
+          "title": "Hauler Drone",
+          "text": "Right-click a mob with it: the drone lifts the mob and follows you.\n- Right-click the drone: set it down.\n- Mk1: animals, villagers.\n- Mk2: hostile and big mobs, faster.\nFE only while carrying.",
+          "items": [
+            "robotica:hauler_drone",
+            "robotica:hauler_drone_mk2"
+          ]
         }
       ]
     },

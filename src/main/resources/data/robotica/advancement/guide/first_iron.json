@@ -49,6 +49,7 @@
       "robotica:tesla_coil_1",
       "robotica:tesla_linker",
       "robotica:mining_drone",
+      "robotica:hauler_drone",
       "robotica:signal_flare",
       "robotica:tinkers_bench",
       "robotica:item_pipe",

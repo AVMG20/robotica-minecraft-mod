@@ -872,6 +872,47 @@
     "courier_remote"
    ],
    "what": "Links Courier Drone routes from a distance: sneak-click a source, then a target."
+  },
+  {
+   "items": [
+    "hauler_drone",
+    "hauler_drone_mk2"
+   ],
+   "what": "Carries one mob hanging under it and follows you. The mob keeps its name, trades and stats.",
+   "use": [
+    "Right-click a mob with the drone to pick it up.",
+    "Right-click the drone or the mob with an empty hand to set the mob down. Sneak-right-click to pick up the drone.",
+    "Charge it in a Charger or right-click it with a cell.",
+    "Farther than 64 blocks from you or in another dimension, it waits in place."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Mobs",
+      "animals, villagers",
+      "also hostile mobs"
+     ],
+     [
+      "Size",
+      "up to a horse",
+      "up to an Iron Golem or Ravager"
+     ],
+     [
+      "While carrying",
+      "2 FE/t",
+      "4 FE/t"
+     ],
+     [
+      "Buffer",
+      "100k FE",
+      "400k FE"
+     ]
+    ]
+   }
   }
  ]
 }

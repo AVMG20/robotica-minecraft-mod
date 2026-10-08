@@ -36,6 +36,12 @@ public final class DronesConfig {
     private static final ModConfigSpec.IntValue COURIER_MAX_ROUTE;
     private static final ModConfigSpec.IntValue COURIER_HEALTH;
 
+    private static final ModConfigSpec.IntValue HAULER_FE_PER_TICK;
+    private static final ModConfigSpec.IntValue HAULER_BUFFER;
+    private static final ModConfigSpec.IntValue HAULER_BUFFER_MK2;
+    private static final ModConfigSpec.IntValue HAULER_HEALTH;
+
+
     private static final ModConfigSpec.IntValue LOW_ENERGY_PERCENT;
     private static final ModConfigSpec.DoubleValue MK2_SPEED;
     private static final ModConfigSpec.DoubleValue MK2_DAMAGE;
@@ -73,6 +79,12 @@ public final class DronesConfig {
         COURIER_MAX_ROUTE = b.comment("Longest route (distance between source and target) in blocks, before range cards.")
                 .defineInRange("courierMaxRoute", 64, 4, 1024);
         COURIER_HEALTH = b.comment("Hit points of the Courier Drone.").defineInRange("courierHealth", 20, 1, 1000);
+        b.pop();
+        b.push("hauler_drone");
+        HAULER_FE_PER_TICK = b.comment("FE per tick while carrying a mob (Mk2 x2).").defineInRange("haulerFePerTick", 2, 0, 100_000);
+        HAULER_BUFFER = b.comment("Internal FE buffer of the Hauler Drone.").defineInRange("haulerBuffer", 100_000, 1_000, 100_000_000);
+        HAULER_BUFFER_MK2 = b.comment("Internal FE buffer of the Hauler Drone Mk2.").defineInRange("haulerBufferMk2", 400_000, 1_000, 100_000_000);
+        HAULER_HEALTH = b.comment("Hit points of the Hauler Drone (Mk2 x1.5).").defineInRange("haulerHealth", 20, 1, 1000);
         b.pop();
         b.push("both");
         LOW_ENERGY_PERCENT = b.comment("A drone stops working and returns when its energy falls below this percentage.")
@@ -114,6 +126,11 @@ public final class DronesConfig {
     public static int courierBuffer(int tier) { return tier >= 2 ? i(COURIER_BUFFER_MK2) : i(COURIER_BUFFER); }
     public static int courierMaxRoute() { return i(COURIER_MAX_ROUTE); }
     public static int courierHealth(int tier) { return Math.round(i(COURIER_HEALTH) * (tier >= 2 ? 1.5F : 1.0F)); }
+
+    public static int haulerFePerTick() { return i(HAULER_FE_PER_TICK); }
+    public static int haulerBuffer(int tier) { return tier >= 2 ? i(HAULER_BUFFER_MK2) : i(HAULER_BUFFER); }
+    public static int haulerHealth(int tier) { return Math.round(i(HAULER_HEALTH) * (tier >= 2 ? 1.5F : 1.0F)); }
+
 
     public static int lowEnergyPercent() { return i(LOW_ENERGY_PERCENT); }
     public static double mk2Speed() { return d(MK2_SPEED); }

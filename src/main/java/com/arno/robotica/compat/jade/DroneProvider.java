@@ -69,6 +69,7 @@ enum DroneProvider implements IEntityComponentProvider, IServerDataProvider<Enti
         if (drone instanceof MiningDrone mining) return "gui.robotica.drone.mode." + mining.mode().name().toLowerCase(Locale.ROOT);
         if (drone instanceof SentryDrone sentry) return "gui.robotica.drone.mode." + sentry.mode().name().toLowerCase(Locale.ROOT);
         if (drone instanceof CourierDrone courier) return "gui.robotica.courier.state." + courier.state().name().toLowerCase(Locale.ROOT);
+        if (drone instanceof com.arno.robotica.drones.entity.HaulerDrone hauler) return hauler.isCarrying() ? "gui.robotica.hauler.carrying" : "gui.robotica.drone.mode.follow";
         return null;
     }
 

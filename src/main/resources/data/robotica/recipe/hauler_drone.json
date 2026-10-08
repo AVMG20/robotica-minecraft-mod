@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " C ",
+    "PWP",
+    " L "
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:clockwork_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "W": {
+      "item": "robotica:copper_coil"
+    },
+    "L": {
+      "item": "minecraft:lead"
+    }
+  },
+  "result": {
+    "id": "robotica:hauler_drone",
+    "count": 1
+  }
+}
