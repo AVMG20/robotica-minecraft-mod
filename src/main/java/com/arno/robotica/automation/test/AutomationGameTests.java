@@ -148,6 +148,35 @@ public class AutomationGameTests {
         });
     }
 
+    /** Sugar cane and cactus are cut above their bottom block, which stays to grow back. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutCutsCaneAndCactus(GameTestHelper helper) {
+        // The template is 3x3: the cactus sits in the middle with nothing solid beside it, the chest on top of the bot.
+        BlockPos bot = new BlockPos(0, 1, 0);
+        BlockPos chestPos = new BlockPos(0, 2, 0);
+        BlockPos cane = new BlockPos(2, 1, 2), cactus = new BlockPos(1, 1, 1);
+        helper.setBlock(cane.below(), Blocks.SAND);
+        helper.setBlock(cane.below().north(), Blocks.WATER);
+        helper.setBlock(cactus.below(), Blocks.SAND);
+        for (int i = 0; i < 3; i++) {
+            helper.setBlock(cane.above(i), Blocks.SUGAR_CANE);
+            helper.setBlock(cactus.above(i), Blocks.CACTUS);
+        }
+        helper.setBlock(chestPos, Blocks.CHEST);
+        helper.setBlock(bot, AutomationContent.SPROUT.get());
+        SproutBlockEntity sprout = helper.getBlockEntity(bot);
+        sprout.battery.setStackInSlot(0, chargedCell());
+        helper.succeedWhen(() -> {
+            ChestBlockEntity chest = helper.getBlockEntity(chestPos);
+            helper.assertTrue(count(chest, Items.SUGAR_CANE) >= 2, "sugar cane cut, got " + count(chest, Items.SUGAR_CANE));
+            helper.assertTrue(count(chest, Items.CACTUS) >= 2, "cactus cut, got " + count(chest, Items.CACTUS));
+            helper.assertBlockPresent(Blocks.SUGAR_CANE, cane);
+            helper.assertBlockPresent(Blocks.CACTUS, cactus);
+            helper.assertBlockNotPresent(Blocks.SUGAR_CANE, cane.above());
+            helper.assertBlockNotPresent(Blocks.CACTUS, cactus.above());
+        });
+    }
+
     /** Every harvest costs FE: a buffer that covers the work ticks but not the harvest leaves the crop standing. */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void sproutPaysPerHarvest(GameTestHelper helper) {

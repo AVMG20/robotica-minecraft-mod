@@ -491,7 +491,7 @@
    "items": [
     "sprout"
    ],
-   "what": "Crop bot: harvests and replants crops, tills dirt near water.",
+   "what": "Crop bot: harvests and replants crops, cuts sugar cane and cactus, tills dirt near water.",
    "use": [
     "Place it in your field with a chest or [[supply_crate]] touching it.",
     "Right-click it with a wound [[mainspring]] or a cell."

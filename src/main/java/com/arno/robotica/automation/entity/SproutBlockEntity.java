@@ -27,10 +27,11 @@ import java.util.List;
 
 /**
  * Crop bot: harvests mature crops (CropBlock including modded ones via isMaxAge, nether wart, sweet berries, cocoa),
- * replants from the drops, plants seeds from its buffer on empty farmland and tills dirt or grass next to water.
+ * replants from the drops, plants seeds from its buffer on empty farmland and tills dirt or grass next to water. Cactus
+ * and sugar cane are cut above their bottom block, which stays and grows back.
  */
 public class SproutBlockEntity extends FarmBotBlockEntity {
-    private enum Kind {NONE, HARVEST, PLANT, TILL}
+    private enum Kind {NONE, HARVEST, CUT, PLANT, TILL}
 
     public SproutBlockEntity(BlockPos pos, BlockState state) {
         super(AutomationContent.SPROUT_BE.get(), pos, state);
@@ -67,6 +68,11 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         return false;
     }
 
+    /** Cactus and sugar cane: plants that grow as a column from one bottom block. */
+    private static boolean isTallPlant(BlockState state) {
+        return state.is(Blocks.CACTUS) || state.is(Blocks.SUGAR_CANE);
+    }
+
     private static boolean isHarvestable(BlockState state) {
         Block block = state.getBlock();
         return block instanceof CropBlock || block instanceof NetherWartBlock || block instanceof SweetBerryBushBlock || block instanceof CocoaBlock;
@@ -91,7 +97,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
     protected boolean isGrowable(BlockState state) {
         Block block = state.getBlock();
         return block instanceof CropBlock || block instanceof StemBlock || block instanceof NetherWartBlock
-                || block instanceof SweetBerryBushBlock || block instanceof CocoaBlock || state.is(BlockTags.CROPS);
+                || block instanceof SweetBerryBushBlock || block instanceof CocoaBlock || state.is(BlockTags.CROPS) || isTallPlant(state);
     }
 
     private boolean hasFarmlandSeed() {
@@ -123,11 +129,14 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
     }
 
     private static boolean replaceable(BlockState state) {
-        return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty() && !isHarvestable(state));
+        return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty() && !isHarvestable(state) && !isTallPlant(state));
     }
 
     private Kind classify(ServerLevel sl, BlockPos pos, BlockState state) {
         if (isHarvestable(state)) return isMature(state) ? Kind.HARVEST : Kind.NONE;
+        // The second block of a column is the cut point: the bottom block stays and grows back.
+        if (isTallPlant(state)) return sl.getBlockState(pos.below()).is(state.getBlock()) && !sl.getBlockState(pos.below(2)).is(state.getBlock())
+                ? Kind.CUT : Kind.NONE;
         boolean farmland = state.is(Blocks.FARMLAND);
         boolean tillable = state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK);
         if (!farmland && !tillable) return Kind.NONE;
@@ -153,6 +162,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         BlockState state = sl.getBlockState(pos);
         return switch (classify(sl, pos, state)) {
             case HARVEST -> harvest(sl, pos, state);
+            case CUT -> cut(sl, pos, state);
             case PLANT -> plant(sl, pos.above());
             case TILL -> till(sl, pos);
             case NONE -> false;
@@ -176,6 +186,27 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
             boolean paid = !seed.isEmpty() && (Drops.takeOne(drops, seed.getItem()) || takeFromBuffer(seed.getItem()));
             sl.setBlock(pos, paid ? freshState(state) : Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
+        for (ItemStack drop : drops) output(drop);
+        return true;
+    }
+
+    /** Breaks the column from {@code pos} up, top first, so nothing pops loose. One harvest's FE for the whole column. */
+    private boolean cut(ServerLevel sl, BlockPos pos, BlockState state) {
+        Block block = state.getBlock();
+        BlockPos top = pos;
+        while (top.getY() - pos.getY() < 16 && sl.getBlockState(top.above()).is(block)) top = top.above();
+        for (BlockPos p = top; p.getY() >= pos.getY(); p = p.below()) {
+            if (!mayBreak(sl, p, sl.getBlockState(p))) return false;
+        }
+        if (!energy.consume(scaledDrain(AutomationConfig.sproutFePerHarvest(), 1))) return false;
+        List<ItemStack> drops = new ArrayList<>();
+        for (BlockPos p = top; p.getY() >= pos.getY(); p = p.below()) {
+            BlockState at = sl.getBlockState(p);
+            for (ItemStack drop : Block.getDrops(at, sl, p, null)) Drops.merge(drops, drop);
+            sl.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
+        sl.levelEvent(2001, pos, Block.getId(state));
+        workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
         for (ItemStack drop : drops) output(drop);
         return true;
     }
