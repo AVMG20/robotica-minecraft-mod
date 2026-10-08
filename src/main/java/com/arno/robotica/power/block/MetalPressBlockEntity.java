@@ -8,6 +8,7 @@ import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.menu.MetalPressMenu;
+import com.arno.robotica.power.recipe.PressingLogic;
 import com.arno.robotica.power.recipe.PressingRecipe;
 import com.arno.robotica.power.util.ItemAccess;
 import net.minecraft.core.BlockPos;
@@ -36,7 +37,8 @@ import com.arno.robotica.core.side.SideConfig;
 import net.minecraft.core.Direction;
 
 /**
- * Metal Press: slot 0 input, slot 1 output, two upgrade slots (speed, efficiency).
+ * Metal Press: slot 0 input, slot 1 output, two upgrade slots (speed, efficiency). Recipes: {@link PressingLogic}
+ * ({@code robotica:pressing} recipes, then any {@code c:ingots/<m>} into {@code c:plates/<m>}).
  * Base cost is {@link PowerConfig#pressPower()} FE/t over the recipe time. A speed card divides the time and multiplies
  * the FE/t by the same factor (so the cost per plate only rises by the card's energy penalty); an efficiency card lowers it.
  */
@@ -107,7 +109,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
     private PressingRecipe findRecipe(ItemStack stack) {
         if (level == null || stack.isEmpty()) return null;
         Optional<RecipeHolder<PressingRecipe>> holder = recipeCheck.getRecipeFor(new SingleRecipeInput(stack), level);
-        return holder.map(RecipeHolder::value).orElse(null);
+        return holder.isPresent() ? holder.get().value() : PressingLogic.tagRecipe(stack);
     }
 
     private boolean canOutput(PressingRecipe recipe) {

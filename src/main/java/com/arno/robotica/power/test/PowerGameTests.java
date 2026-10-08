@@ -94,6 +94,26 @@ public class PowerGameTests {
         });
     }
 
+    /** Generic tag rule: a c:ingots/<m> item presses into the c:plates/<m> item; explicit recipes still win. */
+    @GameTest(template = "empty")
+    public static void metalPressTagRule(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var rule = com.arno.robotica.power.recipe.PressingLogic.tagRecipe(new ItemStack(Items.GOLD_INGOT));
+        helper.assertTrue(rule != null && rule.result().is(CoreItems.GOLD_PLATE.get()) && rule.result().getCount() == 1,
+                "gold ingot -> gold plate by the c: tags, got " + (rule == null ? null : rule.result()));
+        helper.assertTrue(com.arno.robotica.power.recipe.PressingLogic.tagRecipe(new ItemStack(Items.NETHERITE_INGOT)) == null,
+                "no c:plates/netherite: no rule");
+        helper.assertTrue(com.arno.robotica.power.recipe.PressingLogic.find(level, new ItemStack(Items.DIRT)) == null, "dirt does not press");
+        var explicit = level.getRecipeManager().getRecipeFor(PowerRegistry.PRESSING_TYPE.get(),
+                new SingleRecipeInput(new ItemStack(Items.IRON_INGOT)), level);
+        helper.assertTrue(explicit.isPresent() && com.arno.robotica.power.recipe.PressingLogic.find(level, new ItemStack(Items.IRON_INGOT))
+                == explicit.get().value(), "the robotica:pressing recipe beats the tag rule");
+        helper.assertTrue(com.arno.robotica.power.recipe.PressingLogic.tagRules(s -> false).stream()
+                .anyMatch(h -> h.value().ingredient().test(new ItemStack(Items.COPPER_INGOT))), "JEI rules list copper");
+        helper.assertTrue(com.arno.robotica.power.recipe.PressingLogic.tagRules(s -> true).isEmpty(), "covered inputs are left out");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void metalPressSpeedCardIsFaster(GameTestHelper helper) {
         BlockPos pos = new BlockPos(1, 1, 1);

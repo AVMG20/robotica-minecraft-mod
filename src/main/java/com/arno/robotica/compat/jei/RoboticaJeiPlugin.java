@@ -59,6 +59,9 @@ public class RoboticaJeiPlugin implements IModPlugin {
         var level = Minecraft.getInstance().level;
         if (level != null) {
             registration.addRecipes(PRESSING, level.getRecipeManager().getAllRecipesFor(PowerRegistry.PRESSING_TYPE.get()));
+            // The ingot -> plate tag rule, for metals no robotica:pressing recipe covers.
+            registration.addRecipes(PRESSING, com.arno.robotica.power.recipe.PressingLogic.tagRules(stack -> level.getRecipeManager()
+                    .getRecipeFor(PowerRegistry.PRESSING_TYPE.get(), new net.minecraft.world.item.crafting.SingleRecipeInput(stack), level).isPresent()));
         }
 
         // Items that have no crafting recipe, or are obtained or used in a special way.

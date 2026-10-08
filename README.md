@@ -20,7 +20,7 @@ New players get the Robotica Codex on first join. Its "Next steps" page and the 
 
 Robotica runs without any of these. If they are installed it picks them up.
 
-- **JEI** (19.x): a Metal Press recipe category (input, output, time and FE), the Metal Press as its catalyst, and info pages for the Servo, Magma and Antigrav Cores, the Essence Vial, the Mainspring and every upgrade card (stacking rules). The Codex keeps its own recipe browser.
+- **JEI** (19.x): recipe categories for the Metal Press (with its ingot-to-plate tag rule), Grinder (with its ore tag rules), Alloy Smelter, Centrifuge and Assembler, with the machines as catalysts (the Electric Furnace for smelting); info pages for the boss cores, Essence Vial, Mainspring, upgrade cards, grinding media, Robotica ores and fuel pellets, reactor fuels and coolants. JEI recipes fill the Storage Terminal's crafting grid, its search can sync with JEI, and JEI keeps clear of the machine Sides tab. The Codex keeps its own recipe browser.
 - **Jade** (15.x): on any Robotica machine it shows status (working, idle, no energy), progress, Mk tier, owner, the Winding Crank's spring charge and the Survey Rig's ores left, next to Jade's own FE bar. On drones it shows an energy bar, mode, tier and owner. The data is built on the server, so it works on dedicated servers.
 
 The dev client, showcase and server runs include both (`optionalMods` in `build.gradle`); the game test server leaves them out. Code is in `src/main/java/com/arno/robotica/compat`; a block entity can describe itself to Jade by implementing `compat.InfoSource`.

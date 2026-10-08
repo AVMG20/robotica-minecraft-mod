@@ -33,6 +33,8 @@ public final class PowerModule {
         modBus.addListener(PowerModule::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(WindingCrankBlock::onLogout);
         NeoForge.EVENT_BUS.addListener(PowerModule::mainspringTooltip);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.TagsUpdatedEvent.class,
+                e -> com.arno.robotica.power.recipe.PressingLogic.invalidate());
     }
 
     /** Mainspring tooltip: how far it is wound, in percent (the core tooltip shows the FE). */
