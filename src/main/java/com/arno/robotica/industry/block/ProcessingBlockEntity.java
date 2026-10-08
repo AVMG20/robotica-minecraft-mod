@@ -133,6 +133,11 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
 
     private record LastHit(RecipeManager manager, RecipeHolder<ProcessingRecipe> recipe) {}
 
+    /** Forgets the last hits on server stop so the closed world's recipe manager is not kept alive. */
+    public static void clearLastHits() {
+        LAST_HIT.clear();
+    }
+
     static {
         for (Machine m : Machine.values()) ACCEPTS.put(m, new RecipeAcceptCache());
     }

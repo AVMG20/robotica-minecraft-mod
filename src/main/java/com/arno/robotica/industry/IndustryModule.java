@@ -1,11 +1,14 @@
 package com.arno.robotica.industry;
 
+import com.arno.robotica.industry.block.ProcessingBlockEntity;
 import com.arno.robotica.industry.recipe.Machine;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 /**
  * Common (both sides) entry point of the industry module. See docs/DESIGN.md, "Industry".
@@ -21,6 +24,7 @@ public final class IndustryModule {
                 com.arno.robotica.core.CoreConfig.scaleGeneration(IndustryConfig.rtgPower()), Math.round(IndustryConfig.rtgPelletTicks() / 1200.0)});
         container.registerConfig(ModConfig.Type.SERVER, IndustryConfig.SPEC, "robotica-industry-server.toml");
         modBus.addListener(IndustryModule::registerCapabilities);
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, e -> ProcessingBlockEntity.clearLastHits());
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
