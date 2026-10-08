@@ -529,6 +529,12 @@ public class DronesGameTests {
         helper.assertTrue(EntityType.ELDER_GUARDIAN.is(HaulerDrone.BLACKLIST), "bosses are in robotica:hauler_blacklist");
         helper.assertTrue(HaulerDrone.refusal(helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL), player, 2) != null, "never a player");
         helper.assertTrue(HaulerDrone.refusal(DronesRegistry.SENTRY_DRONE_ENTITY.get().create(level), player, 2) != null, "never a drone");
+        var rancher = com.arno.robotica.automation.rancher.RancherContent.RANCHER_ENTITY.get().create(level);
+        rancher.setOwnerUUID(UUID.randomUUID());
+        helper.assertTrue(HaulerDrone.refusal(rancher, player, 2) != null, "never another player's Rancher");
+        rancher.setOwnerUUID(player.getUUID());
+        helper.assertTrue(HaulerDrone.refusal(rancher, player, 2) == null, "your own Rancher is fine");
+        helper.assertTrue(rancher.fireImmune(), "a Rancher is fire immune");
         helper.succeed();
     }
 
@@ -582,7 +588,7 @@ public class DronesGameTests {
         });
     }
 
-    /** No FE while empty, fePerTick while carrying, and an empty buffer sets the mob down. */
+    /** No FE while empty, fePerTick while carrying; an empty buffer hovers over lava and sets the mob down once there is safe ground. */
     @GameTest(template = "drones_arena", batch = "dronesHauler5", timeoutTicks = 200)
     public static void haulerUsesEnergyOnlyWhileCarrying(GameTestHelper helper) {
         floor(helper);
@@ -601,10 +607,19 @@ public class DronesGameTests {
                     helper.assertTrue(drone.ticksCarried > 0 && spent == drone.ticksCarried * drone.fePerTick(),
                             "carrying costs " + drone.fePerTick() + " FE/t, spent " + spent + " in " + drone.ticksCarried + " ticks");
                     helper.assertTrue(drone.fePerTick() == CoreConfig.scaleEnergy(DronesConfig.haulerFePerTick()), "Mk1 rate");
+                    for (int x = 0; x <= 6; x++) {
+                        for (int z = 0; z <= 6; z++) helper.setBlock(p(x, 1, z), Blocks.LAVA);
+                    }
                     drone.setEnergy(0);
                 })
-                .thenExecuteAfter(3, () -> {
-                    helper.assertTrue(!cow.isPassenger() && !cow.isNoAi() && cow.isAlive(), "out of FE: the cow is set down");
+                .thenExecuteAfter(40, () -> {
+                    helper.assertTrue(cow.getVehicle() == drone && cow.isNoAi() && cow.isAlive(), "out of FE over lava: the cow stays carried");
+                    for (int x = 0; x <= 8; x++) {
+                        for (int z = 0; z <= 8; z++) helper.setBlock(p(x, 1, z), Blocks.AIR);
+                    }
+                })
+                .thenExecuteAfter(25, () -> {
+                    helper.assertTrue(!cow.isPassenger() && !cow.isNoAi() && cow.isAlive(), "out of FE over safe ground: the cow is set down");
                     drone.discard();
                     cow.discard();
                     clear(helper);

@@ -67,7 +67,7 @@
   "message.robotica.hauler.no_room": "No room above it",
   "message.robotica.hauler.status": "Empty, %s / %s FE",
   "message.robotica.hauler.low": "Energy low",
-  "message.robotica.hauler.empty": "Out of energy, setting it down",
+  "message.robotica.hauler.empty": "Out of energy: sets it down on safe ground",
   "gui.robotica.drone.tunnel": "Dig a tunnel in the direction the drill points",
   "gui.robotica.drone.follow": "Follow me",
   "gui.robotica.drone.stay": "Stay here",

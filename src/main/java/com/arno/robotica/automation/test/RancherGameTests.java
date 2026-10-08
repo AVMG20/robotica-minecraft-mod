@@ -153,6 +153,51 @@ public class RancherGameTests {
     }
 
     @GameTest(template = "rancher_pen", timeoutTicks = 400)
+    public static void rancherIgnoresLoneAnimal(GameTestHelper helper) {
+        rancher(helper, 4);
+        for (int i = 0; i < 4; i++) animal(helper, EntityType.PIG, 2 + i, 3);
+        animal(helper, EntityType.CHICKEN, 5, 7);
+        helper.runAfterDelay(250, () -> {
+            helper.assertTrue(adults(helper, EntityType.PIG) == 4, "A lone chicken takes no share, pigs are " + adults(helper, EntityType.PIG));
+            helper.assertTrue(adults(helper, EntityType.CHICKEN) == 1, "The lone chicken stays");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "rancher_pen", timeoutTicks = 600)
+    public static void rancherMilksIntoFullChest(GameTestHelper helper) {
+        rancher(helper, 2);
+        for (int i = 0; i < 27; i++) chest(helper).setItem(i, new ItemStack(Items.STONE, 64));
+        chest(helper).setItem(0, new ItemStack(Items.BUCKET, 3));
+        chest(helper).setItem(1, new ItemStack(Items.BUCKET, 1));
+        animal(helper, EntityType.COW, 5, 2);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(count(chest(helper), Items.MILK_BUCKET) == 1, "The milk bucket replaces the single bucket");
+            helper.assertTrue(count(chest(helper), Items.BUCKET) == 3, "The stack of 3 buckets stays");
+            helper.assertTrue(helper.getEntities(EntityType.ITEM).isEmpty(), "Nothing drops");
+        });
+    }
+
+    @GameTest(template = "rancher_pen", timeoutTicks = 300)
+    public static void rancherLeavesDisplayItems(GameTestHelper helper) {
+        rancher(helper, 2);
+        var display = new net.minecraft.world.entity.item.ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(Items.DIAMOND));
+        BlockPos at = helper.absolutePos(new BlockPos(3, 2, 3));
+        display.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        display.setNeverPickUp();
+        display.setUnlimitedLifetime();
+        helper.getLevel().addFreshEntity(display);
+        var dropped = new net.minecraft.world.entity.item.ItemEntity(helper.getLevel(), at.getX() + 2.5, at.getY(), at.getZ() + 0.5, new ItemStack(Items.FEATHER));
+        helper.getLevel().addFreshEntity(dropped);
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(display.isAlive(), "Never-pickup items stay");
+            helper.assertTrue(count(chest(helper), Items.FEATHER) == 1, "Loose drops are collected");
+            display.discard();
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "rancher_pen", timeoutTicks = 400)
     public static void rancherStopsWhenStorageFull(GameTestHelper helper) {
         Rancher r = rancher(helper, 2);
         for (int i = 0; i < 27; i++) chest(helper).setItem(i, new ItemStack(Items.STONE, 64));

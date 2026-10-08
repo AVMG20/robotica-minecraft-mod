@@ -742,13 +742,22 @@ public class Rancher extends PathfinderMob {
         return true;
     }
 
+    /** Swaps one empty bucket for a milk bucket. Without a free slot the bucket comes from a single-bucket slot; milk that does not fit puts the bucket back. */
     private boolean milk(ServerLevel sl, IItemHandler store, Animal a) {
-        if (a.isBaby() || !isMilkSpecies(a) || !milkRoom(store)) return false;
+        if (a.isBaby() || !isMilkSpecies(a)) return false;
+        boolean free = hasEmptySlot(store);
         for (int i = 0; i < store.getSlots(); i++) {
-            if (!store.getStackInSlot(i).is(Items.BUCKET)) continue;
+            ItemStack s = store.getStackInSlot(i);
+            if (!s.is(Items.BUCKET) || (!free && s.getCount() != 1)) continue;
             ItemStack bucket = store.extractItem(i, 1, false);
             if (bucket.isEmpty()) continue;
-            store(sl, store, new ItemStack(Items.MILK_BUCKET), a);
+            ItemStack rest = ItemHandlerHelper.insertItemStacked(store, new ItemStack(Items.MILK_BUCKET), false);
+            if (!rest.isEmpty()) {
+                ItemStack back = store.insertItem(i, bucket, false);
+                if (!back.isEmpty()) back = ItemHandlerHelper.insertItemStacked(store, back, false);
+                if (!back.isEmpty()) a.spawnAtLocation(back, 1.0F);
+                return false;
+            }
             milkedAt.put(a.getUUID(), sl.getGameTime());
             sl.playSound(null, a, a instanceof Goat ? SoundEvents.GOAT_MILK : SoundEvents.COW_MILK, SoundSource.NEUTRAL, 1.0F, 1.0F);
             hold(new ItemStack(Items.MILK_BUCKET));
@@ -777,10 +786,10 @@ public class Rancher extends PathfinderMob {
         if (!rest.isEmpty()) at.spawnAtLocation(rest, 1.0F);
     }
 
-    /** Puts item entities in the area into storage. Returns false when something did not fit. */
+    /** Puts item entities in the area into storage, except display items and items players threw. Returns false when something did not fit. */
     private boolean collectDrops(ServerLevel sl, IItemHandler store) {
         boolean allFit = true;
-        for (ItemEntity item : sl.getEntitiesOfClass(ItemEntity.class, areaBox().inflate(1.0), e -> e.isAlive() && !e.getItem().isEmpty())) {
+        for (ItemEntity item : sl.getEntitiesOfClass(ItemEntity.class, areaBox().inflate(1.0), e -> e.isAlive() && !e.getItem().isEmpty() && collectable(sl, e))) {
             ItemStack rest = ItemHandlerHelper.insertItemStacked(store, item.getItem().copy(), false);
             if (rest.isEmpty()) {
                 item.discard();
@@ -792,9 +801,42 @@ public class Rancher extends PathfinderMob {
         return allFit;
     }
 
+    @Nullable
+    private static java.lang.reflect.Field pickupDelayField, throwerField;
+    private static boolean fieldsLooked;
+
+    @Nullable
+    private static Object read(@Nullable java.lang.reflect.Field f, ItemEntity e) {
+        try {
+            return f == null ? null : f.get(e);
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            return null;
+        }
+    }
+
+    /** False for never-pickup items (pickup delay 32767) and for items a player threw. */
+    static boolean collectable(ServerLevel sl, ItemEntity e) {
+        if (!fieldsLooked) {
+            fieldsLooked = true;
+            try {
+                pickupDelayField = net.neoforged.fml.util.ObfuscationReflectionHelper.findField(ItemEntity.class, "pickupDelay");
+                throwerField = net.neoforged.fml.util.ObfuscationReflectionHelper.findField(ItemEntity.class, "thrower");
+            } catch (RuntimeException ex) {
+                pickupDelayField = null;
+                throwerField = null;
+            }
+        }
+        if (read(pickupDelayField, e) instanceof Integer delay && delay == 32767) return false;
+        if (!(read(throwerField, e) instanceof UUID thrower)) return true;
+        if (e.getOwner() instanceof Player) return false;
+        if (sl.getServer().getPlayerList().getPlayer(thrower) != null) return false;
+        var cache = sl.getServer().getProfileCache();
+        return cache == null || cache.get(thrower).isEmpty();
+    }
+
     // ---------------------------------------------------------------- storage
 
-    /** The item handler block within {@link #STORAGE_RANGE} of home, nearest first; cached while it stays there. */
+    /** The item handler block within {@link #STORAGE_RANGE} of home with the most slots (ties: nearest); cached while it stays there. */
     @Nullable
     IItemHandler storage(ServerLevel sl) {
         if (storagePos != null) {
@@ -806,14 +848,18 @@ public class Rancher extends PathfinderMob {
         BlockPos best = null;
         IItemHandler found = null;
         double bestDist = Double.MAX_VALUE;
+        int bestSlots = 0;
         for (BlockPos p : BlockPos.betweenClosed(h.offset(-STORAGE_RANGE, -STORAGE_RANGE, -STORAGE_RANGE), h.offset(STORAGE_RANGE, STORAGE_RANGE, STORAGE_RANGE))) {
-            double d = p.distSqr(h);
-            if (d >= bestDist || !sl.isLoaded(p) || !sl.getBlockState(p).hasBlockEntity()) continue;
+            if (!sl.isLoaded(p) || !sl.getBlockState(p).hasBlockEntity()) continue;
             IItemHandler cap = sl.getCapability(Capabilities.ItemHandler.BLOCK, p, null);
-            if (cap != null) {
+            if (cap == null) continue;
+            int slots = cap.getSlots();
+            double d = p.distSqr(h);
+            if (slots > bestSlots || (slots == bestSlots && d < bestDist)) {
                 best = p.immutable();
                 found = cap;
                 bestDist = d;
+                bestSlots = slots;
             }
         }
         storagePos = best;
@@ -882,6 +928,19 @@ public class Rancher extends PathfinderMob {
                 && !a.isInvulnerable();
     }
 
+    /** Bees, parrots and other flying animals: never counted, bred or culled. */
+    static boolean flying(Animal a) {
+        return a instanceof net.minecraft.world.entity.animal.FlyingAnimal;
+    }
+
+    static boolean isHerd(List<Animal> species) {
+        int adults = 0;
+        for (Animal a : species) {
+            if (!a.isBaby() && ++adults >= 2) return true;
+        }
+        return false;
+    }
+
     /** Even split of the target over {@code n} species, the remainder to the first ones, at least 2 each (a breeding pair). */
     public static int[] shares(int target, int n) {
         int[] out = new int[n];
@@ -901,14 +960,19 @@ public class Rancher extends PathfinderMob {
         milkedAt.values().removeIf(t -> now - t >= MILK_COOLDOWN);
 
         Map<String, List<Animal>> bySpecies = new TreeMap<>();
-        for (Animal a : sl.getEntitiesOfClass(Animal.class, areaBox(), x -> x.isAlive() && !owned(x))) {
+        for (Animal a : sl.getEntitiesOfClass(Animal.class, areaBox(), x -> x.isAlive() && !owned(x) && !flying(x))) {
             bySpecies.computeIfAbsent(BuiltInRegistries.ENTITY_TYPE.getKey(a.getType()).toString(), k -> new ArrayList<>()).add(a);
         }
         Iterator<List<Animal>> it = bySpecies.values().iterator();
         while (it.hasNext()) {
             if (it.next().stream().allMatch(Animal::isBaby)) it.remove();
         }
-        int[] shares = shares(target, Math.max(1, bySpecies.size()));
+        // only herds (2+ adults) split the target; a lone animal is still sheared or milked but never culled or bred
+        int herds = 0;
+        for (List<Animal> list : bySpecies.values()) {
+            if (isHerd(list)) herds++;
+        }
+        int[] herdShares = shares(target, Math.max(1, herds));
         boolean room = hasEmptySlot(store);
         boolean wantOutput = !dropsFit;
         boolean missingFeed = false;
@@ -916,7 +980,7 @@ public class Rancher extends PathfinderMob {
         int adultsTotal = 0;
         int index = 0;
         for (List<Animal> list : bySpecies.values()) {
-            int share = shares[index++];
+            int share = isHerd(list) ? herdShares[index++] : MIN_TARGET;
             List<Animal> adults = new ArrayList<>();
             int babies = 0;
             for (Animal a : list) {

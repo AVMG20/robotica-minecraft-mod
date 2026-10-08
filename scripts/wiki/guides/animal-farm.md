@@ -11,7 +11,7 @@ The [[rancher]] is a walking robot for passive mobs. It works every animal in th
 ## Set up
 
 1. Build a pen. A Mk1 works 9x9 around its home (Mk2 13x13), from 2 blocks below to 3 above.
-2. Put a chest (or any inventory) within 3 blocks of the spot where the Rancher will stand.
+2. Put a chest (or any inventory) within 3 blocks of the spot where the Rancher will stand. With several, it uses the one with the most slots.
 3. Fill the chest with feed for your animals (wheat, carrots, seeds...) and empty buckets.
 4. Right-click a block in the pen with the Rancher: that spot is its home.
 5. Right-click the Rancher: put a charged cell in its battery slot and set the herd size.
@@ -19,8 +19,9 @@ The [[rancher]] is a walking robot for passive mobs. It works every animal in th
 ## What it does
 
 - **Herd size** counts adults. With several species it is split evenly: herd size 12 with cows, pigs and sheep keeps 4 of each.
+- Only species with 2 or more adults get a share. A lone animal is never bred or culled; bees and parrots are left alone.
 - Below the share it feeds two adults with feed from the chest; above it, it culls one adult at a time.
-- Drops, wool and milk go into the chest. When the chest is full it stops culling, shearing and milking.
+- Drops in its area, wool and milk go into the chest. When the chest is full it stops culling, shearing and milking.
 - It culls plain adults only: babies, named, leashed, tamed and ridden animals stay.
 - **Shear** (on by default): sheep are sheared and kept.
 - **Milk** (on by default): cows and goats fill one empty bucket each, once a minute per animal, and are kept.

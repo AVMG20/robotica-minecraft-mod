@@ -60,6 +60,8 @@ public class HaulerDrone extends DroneBase {
     private static final double HANG_GAP = 0.05;
 
     private boolean lowNotified;
+    /** Ticks spent carrying with an empty buffer; the drone hovers and looks for a safe spot every second. */
+    private int emptyTicks;
     /** Ticks spent carrying since the drone was created or loaded (tests, stats). */
     public int ticksCarried;
 
@@ -115,7 +117,7 @@ public class HaulerDrone extends DroneBase {
 
     // ---------------------------------------------------------------- what may be carried
 
-    /** Mobs no hauler takes: players, bosses, blacklisted types, drones, other players' pets and mobs that ride or are ridden. */
+    /** Mobs no hauler takes: players, bosses, blacklisted types, drones, other players' pets and Ranchers, and mobs that ride or are ridden. */
     public static boolean isForbidden(Entity target, @Nullable Player player) {
         if (!(target instanceof Mob mob) || !mob.isAlive() || mob.isRemoved()) return true;
         EntityType<?> type = mob.getType();
@@ -127,6 +129,7 @@ public class HaulerDrone extends DroneBase {
         if (mob instanceof OwnableEntity pet && pet.getOwnerUUID() != null && (player == null || !pet.getOwnerUUID().equals(player.getUUID()))) {
             return true;
         }
+        if (mob instanceof com.arno.robotica.automation.rancher.Rancher rancher && (player == null || !rancher.canInteract(player))) return true;
         return false;
     }
 
@@ -218,6 +221,16 @@ public class HaulerDrone extends DroneBase {
      * blocks down. Falls back to the owner's feet, then to where the mob hangs.
      */
     public Vec3 dropSpot(LivingEntity mob) {
+        Vec3 safe = safeSpot(mob);
+        if (safe != null) return safe;
+        ServerPlayer o = ownerHere();
+        if (o != null && o.distanceToSqr(this) < LEASH_RANGE * LEASH_RANGE) return o.position();
+        return mob.position();
+    }
+
+    /** Highest safe standing spot in the columns under the drone (5x5, up to 64 down), or null when there is none. */
+    @Nullable
+    public Vec3 safeSpot(LivingEntity mob) {
         Level lvl = level();
         int top = (int) Math.floor(getY());
         for (int r = 0; r <= 2; r++) {
@@ -229,9 +242,7 @@ public class HaulerDrone extends DroneBase {
                 }
             }
         }
-        ServerPlayer o = ownerHere();
-        if (o != null && o.distanceToSqr(this) < LEASH_RANGE * LEASH_RANGE) return o.position();
-        return mob.position();
+        return null;
     }
 
     @Nullable
@@ -393,11 +404,22 @@ public class HaulerDrone extends DroneBase {
         setActive(mob != null);
         if (mob != null) {
             if (!consume(fePerTick())) {
-                releaseCargo();
-                say(msg("hauler.empty"), true);
-                CoreSounds.play(this, CoreSounds.ROBOT_BEEP_LOW, SoundSource.NEUTRAL, 0.8F, 1.0F);
-                mob = null;
+                // Out of FE: hover in place and set the mob down only where it can stand safely.
+                if (++emptyTicks == 1) {
+                    say(msg("hauler.empty"), true);
+                    CoreSounds.play(this, CoreSounds.ROBOT_BEEP_LOW, SoundSource.NEUTRAL, 0.8F, 1.0F);
+                }
+                if (emptyTicks % 20 == 1 && safeSpot(mob) != null) {
+                    releaseCargo();
+                    emptyTicks = 0;
+                    mob = null;
+                } else {
+                    navigation.stop();
+                    setDeltaMovement(getDeltaMovement().scale(0.5));
+                    return;
+                }
             } else {
+                emptyTicks = 0;
                 ticksCarried++;
                 if (!mob.isNoAi()) {
                     if (!mob.getPersistentData().contains(PREV_NO_AI)) mob.getPersistentData().putBoolean(PREV_NO_AI, false);

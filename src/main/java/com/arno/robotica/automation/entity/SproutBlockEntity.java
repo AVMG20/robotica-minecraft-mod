@@ -246,7 +246,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         BlockPos pos = stemPos.relative(stem.getValue(AttachedStemBlock.FACING));
         if (!sl.isLoaded(pos)) return false;
         BlockState fruit = sl.getBlockState(pos);
-        if (fruit.isAir() || fruit.getDestroySpeed(sl, pos) < 0 || !mayBreak(sl, pos, fruit)) return false;
+        if (!isFruit(stem, fruit) || fruit.getDestroySpeed(sl, pos) < 0 || !mayBreak(sl, pos, fruit)) return false;
         if (!energy.consume(scaledDrain(AutomationConfig.sproutFePerHarvest(), 1))) return false;
         List<ItemStack> drops = Block.getDrops(fruit, sl, pos, sl.getBlockEntity(pos));
         sl.levelEvent(2001, pos, Block.getId(fruit));
@@ -256,6 +256,18 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         return true;
     }
 
+    private static final net.minecraft.tags.TagKey<Block> MELONS =
+            net.minecraft.tags.BlockTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "melons"));
+
+    /** The stem's own fruit: pumpkin or melon for the vanilla stems, else a pumpkin or melon tagged block. Never a block entity. */
+    private static boolean isFruit(BlockState stem, BlockState fruit) {
+        if (fruit.isAir() || fruit.hasBlockEntity()) return false;
+        if (stem.is(Blocks.ATTACHED_PUMPKIN_STEM)) return fruit.is(Blocks.PUMPKIN);
+        if (stem.is(Blocks.ATTACHED_MELON_STEM)) return fruit.is(Blocks.MELON);
+        return fruit.is(Blocks.PUMPKIN) || fruit.is(Blocks.MELON) || fruit.is(net.neoforged.neoforge.common.Tags.Blocks.PUMPKINS_NORMAL)
+                || fruit.is(MELONS);
+    }
+
     /**
      * Breaks the column from {@code pos} up, top first, so nothing pops loose. One harvest's FE for the whole column.
      * Kelp leaves water behind.
@@ -263,7 +275,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
     private boolean cut(ServerLevel sl, BlockPos pos, BlockState state) {
         Block col = column(state);
         BlockPos top = pos;
-        while (top.getY() - pos.getY() < 16 && column(sl.getBlockState(top.above())) == col) top = top.above();
+        while (top.getY() - pos.getY() < 32 && column(sl.getBlockState(top.above())) == col) top = top.above();
         for (BlockPos p = top; p.getY() >= pos.getY(); p = p.below()) {
             if (!mayBreak(sl, p, sl.getBlockState(p))) return false;
         }

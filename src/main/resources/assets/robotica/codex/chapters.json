@@ -376,7 +376,7 @@
         },
         {
           "title": "Rancher",
-          "text": "Place it among your animals with a chest within 3 blocks.\n- Herd size, split evenly per species: breeds with feed from the chest, culls extra adults.\n- Shears sheep, milks cows into buckets.\nMk1 9x9, Mk2 13x13 and faster.",
+          "text": "Place it among your animals with a chest within 3 blocks.\n- Breeds with feed from the chest and culls to the herd size, split over species with 2+ adults.\n- Shears sheep, milks cows, collects drops in its area.\nMk1 9x9, Mk2 13x13, faster.",
           "items": [
             "robotica:rancher",
             "robotica:rancher_mk2"
@@ -416,7 +416,7 @@
         },
         {
           "title": "Hauler Drone",
-          "text": "Right-click a mob with it: the drone lifts the mob and follows you.\n- Right-click the drone: set it down.\n- Mk1: animals, villagers.\n- Mk2: hostile and big mobs, faster.\nFE only while carrying.",
+          "text": "Right-click a mob with it: the drone lifts the mob and follows you.\n- Right-click the drone: set it down.\n- Mk1: animals, villagers.\n- Mk2: hostile and big mobs, faster.\nFE only while carrying. Out of FE it hovers until there is safe ground below.",
           "items": [
             "robotica:hauler_drone",
             "robotica:hauler_drone_mk2"

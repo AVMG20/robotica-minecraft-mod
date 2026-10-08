@@ -586,7 +586,8 @@
     "Right-click a block among your animals to place it; that spot is its home.",
     "Put a chest within 3 blocks of home with feed and empty buckets.",
     "Give it a cell in its menu or charge it in a [[charger]].",
-    "Set the herd size with - and +; it is split evenly over the species in the area.",
+    "Set the herd size with - and +; it is split evenly over the species with 2 or more adults.",
+    "Collects drops in its area into the chest.",
     "Sneak-right-click: pick it up with its energy and settings."
    ],
    "stats": {
@@ -928,7 +929,8 @@
     "Right-click a mob with the drone to pick it up.",
     "Right-click the drone or the mob with an empty hand to set the mob down. Sneak-right-click to pick up the drone.",
     "Charge it in a Charger or right-click it with a cell.",
-    "Farther than 64 blocks from you or in another dimension, it waits in place."
+    "Farther than 64 blocks from you or in another dimension, it waits in place.",
+    "Out of FE it hovers in place until there is safe ground below, then sets the mob down."
    ],
    "stats": {
     "columns": [

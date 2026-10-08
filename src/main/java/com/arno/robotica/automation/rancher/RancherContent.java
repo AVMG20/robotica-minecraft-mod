@@ -31,12 +31,12 @@ public final class RancherContent {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> STATE =
             COMPONENTS.registerComponentType("rancher_state", b -> b.persistent(CompoundTag.CODEC).networkSynchronized(ByteBufCodecs.COMPOUND_TAG));
 
-    public static final DeferredItem<RancherItem> RANCHER = ITEMS.registerItem("rancher", p -> new RancherItem(p.rarity(Rarity.COMMON), 1));
-    public static final DeferredItem<RancherItem> RANCHER_MK2 = ITEMS.registerItem("rancher_mk2", p -> new RancherItem(p.rarity(Rarity.UNCOMMON), 2));
+    public static final DeferredItem<RancherItem> RANCHER = ITEMS.registerItem("rancher", p -> new RancherItem(p.rarity(Rarity.COMMON).fireResistant(), 1));
+    public static final DeferredItem<RancherItem> RANCHER_MK2 = ITEMS.registerItem("rancher_mk2", p -> new RancherItem(p.rarity(Rarity.UNCOMMON).fireResistant(), 2));
 
     public static final DeferredHolder<EntityType<?>, EntityType<Rancher>> RANCHER_ENTITY =
             ENTITIES.register("rancher", () -> EntityType.Builder.<Rancher>of(Rancher::new, MobCategory.MISC)
-                    .sized(0.7F, 1.3F).eyeHeight(1.0F).clientTrackingRange(10).updateInterval(2)
+                    .sized(0.7F, 1.3F).eyeHeight(1.0F).fireImmune().clientTrackingRange(10).updateInterval(2)
                     .build(Robotica.MODID + ":rancher"));
 
     public static final DeferredHolder<MenuType<?>, MenuType<RancherMenu>> MENU =
