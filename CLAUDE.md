@@ -31,11 +31,7 @@ The user is the only developer.
   ("never drops items", "will not X").
 - Every balance number goes in the module's server config.
 
-## Agents
-- Use subagents for parallel, independent work (separate modules), each in its own worktree, at most 3 at a time. Tell
-  them not to spawn their own subagents and to keep tool calls short.
-- Before every release, audit the changes for bugs and issues (a subagent or the main thread), then fix what it finds.
-
 ## Git
 - Commit and push to `main` freely. Plain imperative commit subjects, no `Co-Authored-By` or tool advertising.
 - Releases (version bump in `gradle.properties` and README, tag `vX.Y.Z`) only when the user asks.
+- Before every release, audit the changes for bugs and issues, then fix what the audit finds.
