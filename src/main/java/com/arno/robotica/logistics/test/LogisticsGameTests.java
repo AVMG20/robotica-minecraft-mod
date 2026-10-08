@@ -174,6 +174,21 @@ public class LogisticsGameTests {
         });
     }
 
+    /** The start slot of the next pull, for a 300 slot source (window of 128 checks) and a small chest. */
+    @GameTest(template = "empty")
+    public static void pipeScanWindowAdvances(GameTestHelper helper) {
+        int w = ItemPipeBlockEntity.SCAN_SLOTS;
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(0, 300, w, true, true, true) == 0, "a full pull keeps its start");
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(0, 300, w, false, true, true) == w, "a trickling item does not hold the window");
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(w, 300, w, false, false, false) == 2 * w, "an empty window moves on");
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(2 * w, 300, w, false, false, false) == 0, "an empty lap starts over at slot 0");
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(2 * w, 300, w, false, false, true) == (3 * w) % 300, "a window with items wraps");
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(5, 27, 27, false, false, false) == 5, "an empty chest keeps its start");
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(5, 27, 27, false, false, true) == 6, "a stuck item moves the start by one");
+        helper.assertTrue(ItemPipeBlockEntity.nextStart(5, 27, 27, false, true, true) == 5, "a partial pull on a chest keeps its start");
+        helper.succeed();
+    }
+
     /**
      * A Low link only gets what the High one refuses: the barrel has one free slot, the iron overflows to the chest.
      * Relies on the pull starting at slot 0 (cobblestone before iron): pulls on the still empty source must not move the

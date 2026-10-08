@@ -285,12 +285,26 @@ public class ItemPipeBlockEntity extends BlockEntity {
                 }
             }
         }
-        // Items there but none could move: start at the next slot next time, so one stuck item does not block the rest.
-        // An empty source must not rotate: pulls on an empty chest used to shift the start slot at random, so the next
-        // items went in a different order (a later stack could take the last free slot of a higher priority link).
-        // Out of slot checks before the end of a big inventory: carry on after the checked slots next time.
-        if (moved == 0 && s < slots && s == scan) nextSlot = (nextSlot + s) % slots;
-        else if (moved == 0 && stuck) nextSlot = (nextSlot + 1) % slots;
+        nextSlot = nextStart(nextSlot, slots, s, moved >= budget, moved > 0, stuck);
+    }
+
+    /**
+     * Start slot of the next pull. {@code checked}: slots looked at, {@code seen}: some of them passed the filter.
+     * A full pull keeps its start, so the same stacks go first again. A big inventory whose {@link #SCAN_SLOTS} window
+     * ran out carries on after it (an item that trickles into a slow machine must not starve the rest); a window that
+     * saw nothing and would wrap starts over at slot 0. Otherwise items there but none could move: start at the next
+     * slot, so one stuck item does not block the rest. An empty source must not rotate: pulls on an empty chest used to
+     * shift the start slot at random, so the next items went in a different order (a later stack could take the last
+     * free slot of a higher priority link).
+     */
+    public static int nextStart(int start, int slots, int checked, boolean budgetUsed, boolean moved, boolean seen) {
+        if (budgetUsed || slots <= 0) return start;
+        if (checked >= SCAN_SLOTS && checked < slots) {
+            if (!seen && start + checked >= slots) return 0;
+            return (start + checked) % slots;
+        }
+        if (!moved && seen) return (start + 1) % slots;
+        return start;
     }
 
     /** What a destination refused after all (it said it would fit): back where it came from, else dropped. */
