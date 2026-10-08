@@ -32,6 +32,8 @@ import java.util.List;
  */
 public class ItemPipeBlockEntity extends BlockEntity {
     public static final int FILTER_SLOTS = 9;
+    /** Source slots checked per pull, filtered or empty ones included: big inventories are walked over several pulls. */
+    public static final int SCAN_SLOTS = 128;
 
     private final PipeMode[] modes = new PipeMode[6];
     private final PipeOrder[] orders = new PipeOrder[6];
@@ -241,7 +243,8 @@ public class ItemPipeBlockEntity extends BlockEntity {
         int maxTries = LogisticsConfig.maxInsertTries(), maxVisits = LogisticsConfig.maxTargetVisits();
         int moved = 0, tries = 0, visits = 0, slots = source.getSlots();
         boolean stuck = false;
-        for (int s = 0; s < slots && moved < budget && tries < maxTries && visits < maxVisits; s++) {
+        int scan = Math.min(slots, SCAN_SLOTS), s = 0;
+        for (; s < scan && moved < budget && tries < maxTries && visits < maxVisits; s++) {
             int slot = (nextSlot + s) % slots;
             ItemStack inSlot = source.getStackInSlot(slot);
             if (inSlot.isEmpty() || !passes(side, inSlot)) continue;
@@ -285,7 +288,9 @@ public class ItemPipeBlockEntity extends BlockEntity {
         // Items there but none could move: start at the next slot next time, so one stuck item does not block the rest.
         // An empty source must not rotate: pulls on an empty chest used to shift the start slot at random, so the next
         // items went in a different order (a later stack could take the last free slot of a higher priority link).
-        if (moved == 0 && stuck) nextSlot = (nextSlot + 1) % slots;
+        // Out of slot checks before the end of a big inventory: carry on after the checked slots next time.
+        if (moved == 0 && s < slots && s == scan) nextSlot = (nextSlot + s) % slots;
+        else if (moved == 0 && stuck) nextSlot = (nextSlot + 1) % slots;
     }
 
     /** What a destination refused after all (it said it would fit): back where it came from, else dropped. */
