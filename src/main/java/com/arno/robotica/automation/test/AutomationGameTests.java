@@ -28,7 +28,12 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.AttachedStemBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CaveVines;
+import net.minecraft.world.level.block.PitcherCropBlock;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -174,6 +179,144 @@ public class AutomationGameTests {
             helper.assertBlockPresent(Blocks.CACTUS, cactus);
             helper.assertBlockNotPresent(Blocks.SUGAR_CANE, cane.above());
             helper.assertBlockNotPresent(Blocks.CACTUS, cactus.above());
+        });
+    }
+
+    /** Puts a charged Sprout at (0,1,0) with a chest on top (room for plants in the rest of the 3x3 template). */
+    private static SproutBlockEntity cornerSprout(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(0, 2, 0), Blocks.CHEST);
+        helper.setBlock(new BlockPos(0, 1, 0), AutomationContent.SPROUT.get());
+        SproutBlockEntity sprout = helper.getBlockEntity(new BlockPos(0, 1, 0));
+        sprout.battery.setStackInSlot(0, chargedCell());
+        return sprout;
+    }
+
+    private static int chestCount(GameTestHelper helper, Item item) {
+        return count(helper.getBlockEntity(new BlockPos(0, 2, 0)), item);
+    }
+
+    private static int bufferCount(SproutBlockEntity sprout, Item item) {
+        int n = 0;
+        for (int i = 0; i < sprout.buffer.getSlots(); i++) {
+            if (sprout.buffer.getStackInSlot(i).is(item)) n += sprout.buffer.getStackInSlot(i).getCount();
+        }
+        return n;
+    }
+
+    /** Melons and pumpkins are broken off their attached stems; the ground beside a stem is not tilled or planted. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutPicksMelonsAndPumpkins(GameTestHelper helper) {
+        BlockPos melonStem = new BlockPos(1, 1, 1), melon = new BlockPos(2, 1, 1);
+        BlockPos pumpkinStem = new BlockPos(1, 1, 2), pumpkin = new BlockPos(0, 1, 2);
+        helper.setBlock(melonStem.below(), Blocks.FARMLAND);
+        helper.setBlock(pumpkinStem.below(), Blocks.FARMLAND);
+        helper.setBlock(melon.below(), Blocks.DIRT);
+        helper.setBlock(pumpkin.below(), Blocks.DIRT);
+        helper.setBlock(new BlockPos(2, 0, 2), Blocks.WATER);
+        helper.setBlock(melon, Blocks.MELON);
+        helper.setBlock(pumpkin, Blocks.PUMPKIN);
+        helper.setBlock(melonStem, Blocks.ATTACHED_MELON_STEM.defaultBlockState().setValue(AttachedStemBlock.FACING, Direction.EAST));
+        helper.setBlock(pumpkinStem, Blocks.ATTACHED_PUMPKIN_STEM.defaultBlockState().setValue(AttachedStemBlock.FACING, Direction.WEST));
+        SproutBlockEntity sprout = cornerSprout(helper);
+        // Seeds and water nearby: without the stem rule Sprout would till the fruit spots and plant wheat there.
+        sprout.buffer.setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 4));
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(chestCount(helper, Items.MELON_SLICE) >= 3, "melon picked, got " + chestCount(helper, Items.MELON_SLICE));
+                    helper.assertTrue(chestCount(helper, Items.PUMPKIN) >= 1, "pumpkin picked, got " + chestCount(helper, Items.PUMPKIN));
+                })
+                .thenIdle(100)
+                .thenExecute(() -> {
+                    helper.assertBlockPresent(Blocks.DIRT, melon.below());
+                    helper.assertBlockPresent(Blocks.DIRT, pumpkin.below());
+                    helper.assertTrue(!helper.getBlockState(melonStem).isAir() && !helper.getBlockState(pumpkinStem).isAir(), "stems stay");
+                })
+                .thenSucceed();
+    }
+
+    /** Bamboo is cut above its bottom block like sugar cane. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutCutsBamboo(GameTestHelper helper) {
+        BlockPos bamboo = new BlockPos(1, 1, 1);
+        helper.setBlock(bamboo.below(), Blocks.DIRT);
+        for (int i = 0; i < 5; i++) helper.setBlock(bamboo.above(i), Blocks.BAMBOO);
+        cornerSprout(helper);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(chestCount(helper, Items.BAMBOO) >= 4, "bamboo cut, got " + chestCount(helper, Items.BAMBOO));
+            helper.assertBlockPresent(Blocks.BAMBOO, bamboo);
+            helper.assertBlockNotPresent(Blocks.BAMBOO, bamboo.above(2));
+        });
+    }
+
+    /** Kelp is cut above its bottom block and leaves water behind. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutCutsKelp(GameTestHelper helper) {
+        BlockPos kelp = new BlockPos(1, 1, 1);
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                for (int y = 1; y <= 3; y++) {
+                    if (x != 0 || z != 0) helper.setBlock(new BlockPos(x, y, z), Blocks.WATER);
+                }
+            }
+        }
+        helper.setBlock(kelp.below(), Blocks.SAND);
+        helper.setBlock(kelp, Blocks.KELP_PLANT);
+        helper.setBlock(kelp.above(), Blocks.KELP_PLANT);
+        helper.setBlock(kelp.above(2), Blocks.KELP);
+        cornerSprout(helper);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(chestCount(helper, Items.KELP) >= 2, "kelp cut, got " + chestCount(helper, Items.KELP));
+            BlockState bottom = helper.getBlockState(kelp);
+            helper.assertTrue(bottom.is(Blocks.KELP) || bottom.is(Blocks.KELP_PLANT), "bottom kelp stays, is " + bottom);
+            helper.assertBlockPresent(Blocks.WATER, kelp.above(2));
+        });
+    }
+
+    /** Glow berries are picked off the vine, which stays; the berries go to the chest, not the seed buffer. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutPicksGlowBerries(GameTestHelper helper) {
+        BlockPos tip = new BlockPos(1, 1, 1), vine = tip.above();
+        helper.setBlock(vine.above(), Blocks.STONE);
+        helper.setBlock(vine, Blocks.CAVE_VINES_PLANT.defaultBlockState().setValue(CaveVines.BERRIES, true));
+        helper.setBlock(tip, Blocks.CAVE_VINES.defaultBlockState().setValue(CaveVines.BERRIES, true));
+        cornerSprout(helper);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(chestCount(helper, Items.GLOW_BERRIES) == 2, "both berries picked, got " + chestCount(helper, Items.GLOW_BERRIES));
+            helper.assertTrue(helper.getBlockState(vine).is(Blocks.CAVE_VINES_PLANT) && !helper.getBlockState(vine).getValue(CaveVines.BERRIES), "vine stays, picked");
+            helper.assertTrue(helper.getBlockState(tip).is(Blocks.CAVE_VINES) && !helper.getBlockState(tip).getValue(CaveVines.BERRIES), "tip stays, picked");
+        });
+    }
+
+    /** A grown pitcher plant is harvested (both halves) and replanted from a pitcher pod in the buffer. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutHarvestsPitcherPlant(GameTestHelper helper) {
+        BlockPos crop = new BlockPos(1, 1, 1);
+        BlockState grown = Blocks.PITCHER_CROP.defaultBlockState().setValue(PitcherCropBlock.AGE, PitcherCropBlock.MAX_AGE);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop, grown.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.LOWER));
+        helper.setBlock(crop.above(), grown.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER));
+        SproutBlockEntity sprout = cornerSprout(helper);
+        sprout.buffer.setStackInSlot(0, new ItemStack(Items.PITCHER_POD, 1));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(chestCount(helper, Items.PITCHER_PLANT) == 1, "pitcher plant harvested, got " + chestCount(helper, Items.PITCHER_PLANT));
+            BlockState state = helper.getBlockState(crop);
+            helper.assertTrue(state.is(Blocks.PITCHER_CROP) && state.getValue(PitcherCropBlock.AGE) < 3, "replanted from the pod, is " + state);
+            helper.assertTrue(bufferCount(sprout, Items.PITCHER_POD) == 0, "pod used");
+            helper.assertTrue(helper.getBlockState(crop.above()).isAir(), "top half removed");
+        });
+    }
+
+    /** A grown torchflower on farmland is harvested and replanted from torchflower seeds in the buffer. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void sproutHarvestsTorchflower(GameTestHelper helper) {
+        BlockPos crop = new BlockPos(1, 1, 1);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop, Blocks.TORCHFLOWER);
+        SproutBlockEntity sprout = cornerSprout(helper);
+        sprout.buffer.setStackInSlot(0, new ItemStack(Items.TORCHFLOWER_SEEDS, 1));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(chestCount(helper, Items.TORCHFLOWER) == 1, "torchflower harvested, got " + chestCount(helper, Items.TORCHFLOWER));
+            helper.assertBlockPresent(Blocks.TORCHFLOWER_CROP, crop);
         });
     }
 
