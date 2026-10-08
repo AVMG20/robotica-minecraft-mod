@@ -152,12 +152,20 @@ public class LogisticsGameTests {
         });
     }
 
-    /** The far chest at Highest takes everything although round robin would spread items over both links. */
+    /**
+     * The far chest at Highest takes everything although round robin would spread items over both links. The items go in
+     * once every arm is linked, so no pull runs before the chest arm exists.
+     */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void higherPriorityFillsFirst(GameTestHelper helper) {
         ChestBlockEntity source = line(helper);
+        ItemStack[] held = {source.removeItemNoUpdate(0), source.removeItemNoUpdate(5)};
         helper.setBlock(NEAR, Blocks.BARREL);
         pipe(helper, LAST).setPriority(Direction.SOUTH, PipePriority.HIGHEST);
+        helper.runAfterDelay(3, () -> {
+            source.setItem(0, held[0]);
+            source.setItem(5, held[1]);
+        });
         helper.succeedWhen(() -> {
             ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
             helper.assertTrue(source.isEmpty(), "source chest empty");
@@ -173,7 +181,12 @@ public class LogisticsGameTests {
         helper.setBlock(NEAR, Blocks.BARREL);
         BarrelBlockEntity near = (BarrelBlockEntity) helper.getBlockEntity(NEAR);
         for (int i = 0; i < near.getContainerSize() - 1; i++) near.setItem(i, new ItemStack(Items.DIRT, 64));
+        ItemStack[] held = {source.removeItemNoUpdate(0), source.removeItemNoUpdate(5)};
         pipe(helper, LAST).setPriority(Direction.SOUTH, PipePriority.LOW);
+        helper.runAfterDelay(3, () -> {
+            source.setItem(0, held[0]);
+            source.setItem(5, held[1]);
+        });
         helper.succeedWhen(() -> {
             ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
             helper.assertTrue(source.isEmpty(), "source chest empty");
