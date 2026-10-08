@@ -29,6 +29,8 @@ The user is the only developer.
 - Text everywhere (tooltips, Codex, wiki, lang) is short and direct. Item descriptions only add useful info:
   "Right-click to X", "Does Y", "Used for Z". No reasoning, design decisions or what it does not do
   ("never drops items", "will not X").
+- Say each thing once. The Codex and the wiki never repeat what a tooltip, the recipe view or another page already
+  says: no stat lists, recipes or "works with other mods" lines. Keep only real tips; an empty page beats filler.
 
 ## Git
 - Commit and push to `main` freely. Plain imperative commit subjects, no `Co-Authored-By` or tool advertising.
