@@ -74,7 +74,7 @@ public final class ExoConfig {
         b.push("exoModules");
         THERMAL_RADIUS = ints(b, "thermalSightRadius", "Night Vision thermal sight radius in blocks (I has none, II, III).", 0, 128, 0, 24, 48);
         AUTO_FEEDER_HUNGER = b.comment("The Auto-Feeder feeds you when your food level is at or below this (20 is full).")
-                .defineInRange("autoFeederHunger", 17, 0, 19);
+                .defineInRange("autoFeederHunger", 18, 0, 19);
         SONAR_RADIUS = ints(b, "sonarPulseRadius", "Sonar Pulse radius in blocks (I, II, III).", 4, 64, 16, 24, 32);
         SONAR_COOLDOWN = b.comment("Ticks between two Sonar Pulse pings.").defineInRange("sonarPulseCooldown", 100, 0, 72_000);
         SONAR_DURATION = b.comment("Ticks the Sonar Pulse outlines stay visible.").defineInRange("sonarPulseDuration", 200, 20, 1_200);
