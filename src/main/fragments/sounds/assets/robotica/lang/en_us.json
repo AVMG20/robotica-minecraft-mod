@@ -70,5 +70,15 @@
   "subtitles.robotica.rancher_step": "Rancher clanks",
   "subtitles.robotica.rancher_hum": "Rancher whirs",
   "subtitles.robotica.rancher_hurt": "Rancher clangs",
-  "subtitles.robotica.rancher_death": "Rancher breaks down"
+  "subtitles.robotica.rancher_death": "Rancher breaks down",
+  "subtitles.robotica.spire_hum": "Tesla Spire hums",
+  "subtitles.robotica.spire_strike": "Lightning hits spire",
+  "subtitles.robotica.core_insert": "Core loads",
+  "subtitles.robotica.core_burnout": "Core burns out",
+  "subtitles.robotica.core_reactor_hum": "Core Reactor throbs",
+  "subtitles.robotica.collider_start": "Collider beam lights",
+  "subtitles.robotica.collider_stop": "Collider beam dies",
+  "subtitles.robotica.collider_hum": "Collider hums",
+  "subtitles.robotica.collider_collide": "Particles collide",
+  "subtitles.robotica.collider_matter": "Strange Matter forms"
 }

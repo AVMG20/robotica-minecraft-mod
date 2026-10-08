@@ -663,10 +663,17 @@ public final class Showcase {
             }
             setFacing(level, pos, BuiltInRegistries.BLOCK.get(id.contains(":") ? ResourceLocation.parse(id) : Robotica.id(id)), Direction.SOUTH);
         }
+        // connect blocks that shape to their neighbours (collider segments) to the ones placed before them
+        for (BlockPos pos : BlockPos.betweenClosed(origin, origin.offset(mb.w() - 1, mb.h() - 1, mb.d() - 1))) {
+            BlockState state = level.getBlockState(pos);
+            BlockState shaped = Block.updateFromNeighbourShapes(state, level, pos);
+            if (shaped != state) level.setBlock(pos, shaped, 2);
+        }
     }
 
     private static final String[] MACHINES = {"assembler", "centrifuge", "alloy_smelter", "electric_furnace", "grinder"};
-    private static final BlockPos FISSION = new BlockPos(42, Y + 2, 104), BANK = new BlockPos(50, Y + 2, 104), FUSION = new BlockPos(59, Y + 1, 106);
+    private static final BlockPos CORE_REACTOR = new BlockPos(42, Y + 2, 104), BANK = new BlockPos(50, Y + 2, 104);
+    private static final BlockPos SPIRE = new BlockPos(57, Y, 103), COLLIDER = new BlockPos(67, Y, 104);
     private static final BlockPos CHARGER = new BlockPos(82, Y, 100);
     private static final BlockPos TABLE = new BlockPos(170, Y, 160);
     private static final BlockPos BENCH = new BlockPos(200, Y, 100);
@@ -745,32 +752,51 @@ public final class Showcase {
         step(20, () -> {});
         shot("17_item_pipes");
 
-        // Fission Reactor, Capacitor Bank and Fusion Reactor, built from the wiki's multiblock examples.
+        // Core Reactor, Capacitor Bank, Tesla Spire and Ring Collider, built from the wiki's multiblock examples.
         step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
-            placeMultiblock(level, multiblock("fission_reactor_5"), new BlockPos(40, Y, 100));
+            placeMultiblock(level, multiblock("core_reactor"), new BlockPos(40, Y, 100));
             placeMultiblock(level, multiblock("capacitor_bank_5"), new BlockPos(48, Y, 100));
-            placeMultiblock(level, multiblock("fusion_reactor"), new BlockPos(56, Y, 100));
+            placeMultiblock(level, multiblock("tesla_spire"), SPIRE);
+            placeMultiblock(level, multiblock("ring_collider"), new BlockPos(64, Y, 98));
         }));
-        step(100, () -> server(sp -> {
+        step(40, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
-            // fuel through the access ports, energy into the bank through its ports
-            for (BlockPos p : BlockPos.betweenClosed(40, Y, 100, 62, Y + 4, 106)) {
+            // fuel and a Servo Core through the access ports, energy into the bank through its ports
+            for (BlockPos p : BlockPos.betweenClosed(40, Y, 100, 54, Y + 4, 106)) {
                 BlockState state = level.getBlockState(p);
                 if (state.is(block("bank_port"))) fillEnergy(level, p.immutable());
                 if (!state.is(block("reactor_access_port"))) continue;
                 IItemHandler items = level.getCapability(Capabilities.ItemHandler.BLOCK, p.immutable(), null);
-                if (items != null) ItemHandlerHelper.insertItem(items, new ItemStack(item(p.getX() < 48 ? "thorium_fuel_pellet" : "fusion_fuel_pellet"), 16), false);
+                if (items != null) {
+                    ItemHandlerHelper.insertItem(items, new ItemStack(item("thorium_fuel_pellet"), 16), false);
+                    ItemHandlerHelper.insertItem(items, new ItemStack(item("servo_core")), false);
+                }
+            }
+            IItemHandler spireItems = level.getCapability(Capabilities.ItemHandler.BLOCK, SPIRE, Direction.NORTH);
+            if (spireItems != null) ItemHandlerHelper.insertItem(spireItems, new ItemStack(item("thorium_fuel_pellet"), 16), false);
+            IItemHandler colliderItems = level.getCapability(Capabilities.ItemHandler.BLOCK, COLLIDER, Direction.NORTH);
+            if (colliderItems != null) ItemHandlerHelper.insertItem(colliderItems, new ItemStack(item("fusion_fuel_pellet"), 16), false);
+            if (level.getBlockEntity(COLLIDER) instanceof com.arno.robotica.energy.block.ColliderBlockEntity collider) {
+                collider.setCharge(collider.chargeNeeded());
             }
         }));
-        camera(51.5, Y + 6, 119, 180, 16);
+        step(240, () -> {});
+        camera(55.5, Y + 9, 124, 180, 22);
         shot("18_energy_multiblocks");
         camera(42.5, Y + 3, 108.6, 180, 10);
-        shot("19_fission_reactor");
+        shot("19_core_reactor");
         camera(50.5, Y + 3, 108.6, 180, 10);
         shot("20_capacitor_bank");
-        camera(59.5, Y + 4.5, 113, 180, 22);
-        shot("21_fusion_reactor");
+        camera(57.5, Y + 5, 112, 180, -25);
+        step(1, () -> server(sp -> {
+            if (sp.serverLevel().getBlockEntity(SPIRE) instanceof com.arno.robotica.energy.block.SpireBlockEntity spire) {
+                spire.strike(sp.serverLevel(), sp.serverLevel().getGameTime());
+            }
+        }));
+        step(3, () -> Screenshot.grab(mc().gameDirectory, "21_tesla_spire.png", mc().getMainRenderTarget(), m -> {}));
+        camera(67.5, Y + 7, 109, 180, 45);
+        shot("28_ring_collider");
 
         // Wireless Charger feeding a player in an empty Exo-Frame Mk4 (third person, from the front).
         step(20, () -> server(sp -> {
@@ -1034,7 +1060,7 @@ public final class Showcase {
 
     private static void openGui(BlockPos pos, String file) {
         step(10, () -> server(sp -> {
-            sp.teleportTo(sp.serverLevel(), pos.getX() + 0.5, pos.getY() - 1, pos.getZ() + 2.5, 180, 20);
+            sp.teleportTo(sp.serverLevel(), pos.getX() + 0.5, Math.max(Y, pos.getY() - 1), pos.getZ() + 2.5, 180, 20);
             sp.setShiftKeyDown(false);
             sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
                     new BlockHitResult(Vec3.atCenterOf(pos), Direction.SOUTH, pos, false));
@@ -1066,9 +1092,10 @@ public final class Showcase {
         });
 
         // The formed energy multiblocks.
-        openGui(FISSION, "gui_98_fission_formed");
+        openGui(CORE_REACTOR, "gui_98_core_reactor_formed");
         openGui(BANK, "gui_99_bank_formed");
-        openGui(FUSION, "gui_100_fusion_formed");
+        openGui(SPIRE, "gui_100_spire_formed");
+        openGui(COLLIDER, "gui_102_collider_formed");
 
         // The Architect Table with built plots: the Demolish button shows.
         step(10, () -> server(sp -> {

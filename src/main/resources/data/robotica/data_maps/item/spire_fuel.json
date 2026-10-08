@@ -1,0 +1,18 @@
+{
+  "values": {
+    "#c:ingots/thorium": {
+      "energy": 400000
+    },
+    "#c:storage_blocks/thorium": {
+      "energy": 3600000
+    },
+    "robotica:thorium_fuel_pellet": {
+      "energy": 4000000,
+      "waste": "robotica:depleted_fuel_pellet"
+    },
+    "robotica:enriched_fuel_pellet": {
+      "energy": 12000000,
+      "waste": "robotica:depleted_fuel_pellet"
+    }
+  }
+}

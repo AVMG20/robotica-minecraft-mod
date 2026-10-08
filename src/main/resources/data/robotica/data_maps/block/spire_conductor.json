@@ -1,0 +1,120 @@
+{
+  "values": {
+    "minecraft:copper_block": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "minecraft:exposed_copper": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "minecraft:weathered_copper": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "minecraft:oxidized_copper": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "minecraft:waxed_copper_block": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "minecraft:waxed_exposed_copper": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "minecraft:waxed_weathered_copper": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "minecraft:waxed_oxidized_copper": {
+      "power": 30,
+      "efficiency": 1.0
+    },
+    "#c:storage_blocks/iron": {
+      "power": 45,
+      "efficiency": 1.25
+    },
+    "#c:storage_blocks/gold": {
+      "power": 90,
+      "efficiency": 0.75
+    },
+    "#c:storage_blocks/emerald": {
+      "power": 60,
+      "efficiency": 1.75
+    },
+    "#c:storage_blocks/diamond": {
+      "power": 120,
+      "efficiency": 2.0
+    },
+    "robotica:pyrolite_block": {
+      "power": 140,
+      "efficiency": 0.8
+    },
+    "robotica:resonite_block": {
+      "power": 200,
+      "efficiency": 3.0
+    },
+    "#c:storage_blocks/netherite": {
+      "power": 500,
+      "efficiency": 3.0
+    },
+    "#robotica:spire_conductors/tin": {
+      "power": 35,
+      "efficiency": 1.1
+    },
+    "#robotica:spire_conductors/aluminum": {
+      "power": 35,
+      "efficiency": 1.0
+    },
+    "#robotica:spire_conductors/lead": {
+      "power": 40,
+      "efficiency": 1.5
+    },
+    "#robotica:spire_conductors/nickel": {
+      "power": 45,
+      "efficiency": 1.3
+    },
+    "#robotica:spire_conductors/bronze": {
+      "power": 45,
+      "efficiency": 1.2
+    },
+    "#robotica:spire_conductors/constantan": {
+      "power": 55,
+      "efficiency": 1.3
+    },
+    "#robotica:spire_conductors/invar": {
+      "power": 55,
+      "efficiency": 1.4
+    },
+    "#robotica:spire_conductors/steel": {
+      "power": 70,
+      "efficiency": 1.5
+    },
+    "#robotica:spire_conductors/osmium": {
+      "power": 75,
+      "efficiency": 1.6
+    },
+    "#robotica:spire_conductors/silver": {
+      "power": 80,
+      "efficiency": 1.0
+    },
+    "#robotica:spire_conductors/electrum": {
+      "power": 100,
+      "efficiency": 1.0
+    },
+    "#robotica:spire_conductors/signalum": {
+      "power": 160,
+      "efficiency": 1.5
+    },
+    "#robotica:spire_conductors/lumium": {
+      "power": 180,
+      "efficiency": 1.6
+    },
+    "#robotica:spire_conductors/enderium": {
+      "power": 300,
+      "efficiency": 2.5
+    }
+  }
+}

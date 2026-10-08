@@ -38,8 +38,8 @@ import java.util.function.LongSupplier;
 import java.util.function.Predicate;
 
 /**
- * Base of the energy multiblock controllers (Fission Reactor, Capacitor Bank, Fusion Reactor). It owns the structure
- * state: it scans through {@link CuboidScanner} when a block in or around the structure changed (reported by
+ * Base of the energy multiblock controllers (Capacitor Bank, Core Reactor, Tesla Spire, Ring Collider). It owns the
+ * structure state: it scans ({@link #scanStructure}, by default a {@link CuboidScanner} cuboid) when a block in or around the structure changed (reported by
  * {@link MultiblockWatcher}, throttled to one scan per {@code multiblockScanCooldown} ticks) and every
  * {@code multiblockRescanInterval} ticks as a safety net. On a successful scan it links the ports it found; the ports
  * forward their capabilities to {@link #portReceive} / {@link #portExtract} / {@link #portItems}.
@@ -84,8 +84,11 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
 
     // ---------------------------------------------------------------- structure
 
+    /** Cuboid rules for the default {@link #scanStructure}; null for shapes that scan themselves. */
+    @Nullable
     protected abstract CuboidSpec spec();
 
+    /** Visitor of a cuboid scan; shapes that scan themselves may return a plain {@link Visitor}. */
     protected abstract Visitor newVisitor();
 
     /** After every successful scan (also re-scans of an already formed structure). */
@@ -192,27 +195,15 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         nextScan = now + EnergyConfig.scanCooldown();
         nextPeriodic = now + EnergyConfig.rescanInterval();
         BlockState state = getBlockState();
-        Direction facing = state.hasProperty(ControllerBlock.FACING) ? state.getValue(ControllerBlock.FACING) : Direction.NORTH;
-        CuboidScanner.Result result = CuboidScanner.scan(level, worldPosition, facing, spec(), this::newVisitor);
-        if (result.status() == CuboidScanner.Status.INVALID) {
-            // The placement facing comes from where the player looked: try the two sideways directions as well and
-            // turn the controller to the one that forms (problems are still reported for its own facing).
-            for (Direction side : new Direction[]{facing.getClockWise(), facing.getCounterClockWise()}) {
-                CuboidScanner.Result alt = CuboidScanner.scan(level, worldPosition, side, spec(), this::newVisitor);
-                if (alt.formed()) {
-                    result = alt;
-                    turnTowards(alt.box());
-                    break;
-                }
-            }
-        }
+        CuboidScanner.Result result = scanStructure(serverLevel);
         if (result.status() == CuboidScanner.Status.UNLOADED) {
             nextPeriodic = now + 20;
             return;
         }
+        // the block state keeps FORMED over a reload, so a reactor that was already standing stays quiet on chunk load,
+        // and one broken while unloaded still resets its saved run state
+        boolean was = formed || (state.hasProperty(ControllerBlock.FORMED) && state.getValue(ControllerBlock.FORMED));
         if (result.formed() && result.visitor() instanceof Visitor visitor) {
-            // the block state keeps FORMED over a reload, so a reactor that was already standing stays quiet on chunk load
-            boolean was = formed || (state.hasProperty(ControllerBlock.FORMED) && state.getValue(ControllerBlock.FORMED));
             setPorts(visitor.ports);
             formed = true;
             problem = null;
@@ -224,7 +215,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
                 if (milestone != null) Milestones.awardOwner(serverLevel, worldPosition, owner, milestone);
             }
         } else {
-            if (formed) {
+            if (was) {
                 clearPorts();
                 formed = false;
                 onUnformed();
@@ -236,6 +227,34 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         watchArea();
         setFormedState(formed);
         setChanged();
+    }
+
+    /**
+     * Finds and checks the structure. Default: a cuboid by {@link #spec()} around the controller in a side wall. The
+     * placement facing comes from where the player looked, so the two sideways directions are tried as well and the
+     * controller turns to the one that forms (problems are still reported for its own facing). Shapes that are no
+     * cuboid (the Tesla Spire's column, the Ring Collider's loop) override this.
+     */
+    protected CuboidScanner.Result scanStructure(ServerLevel level) {
+        BlockState state = getBlockState();
+        Direction facing = state.hasProperty(ControllerBlock.FACING) ? state.getValue(ControllerBlock.FACING) : Direction.NORTH;
+        CuboidScanner.Result result = CuboidScanner.scan(level, worldPosition, facing, spec(), this::newVisitor);
+        if (result.status() == CuboidScanner.Status.INVALID) {
+            for (Direction side : new Direction[]{facing.getClockWise(), facing.getCounterClockWise()}) {
+                CuboidScanner.Result alt = CuboidScanner.scan(level, worldPosition, side, spec(), this::newVisitor);
+                if (alt.formed()) {
+                    turnTowards(alt.box());
+                    return alt;
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Where block changes may affect an unformed structure (watched for re-scans). */
+    protected BoundingBox searchArea() {
+        int r = Math.max(spec().maxWidth().getAsInt(), spec().maxHeight().getAsInt());
+        return new BoundingBox(worldPosition).inflatedBy(r);
     }
 
     /** Turns the controller's screen to the box face it sits in (outward). */
@@ -252,10 +271,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
     private void watchArea() {
         if (level == null || level.isClientSide) return;
         BoundingBox area = box;
-        if (area == null) {
-            int r = Math.max(spec().maxWidth().getAsInt(), spec().maxHeight().getAsInt());
-            area = new BoundingBox(worldPosition).inflatedBy(r);
-        }
+        if (area == null) area = searchArea();
         MultiblockWatcher.watch(level, worldPosition, area, this::markDirty);
         watching = true;
     }
@@ -315,7 +331,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         }
     }
 
-    /** Whether the glow turning on or off plays the machine start / stop sound (the reactor; the bank glows on every flow). */
+    /** Whether the glow turning on or off plays the machine start / stop sound (generators; the bank glows on every flow). */
     protected boolean litSounds() {
         return false;
     }
@@ -395,8 +411,11 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
             if (problem.pos() != null) tag.putLong("problemPos", problem.pos().asLong());
         }
         if (box != null) tag.putIntArray("box", new int[]{box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()});
-        tag.putInt("minW", spec().minWidth().getAsInt());
-        tag.putInt("minH", spec().minHeight().getAsInt());
+        CuboidSpec spec = spec();
+        if (spec != null) {
+            tag.putInt("minW", spec.minWidth().getAsInt());
+            tag.putInt("minH", spec.minHeight().getAsInt());
+        }
         tag.putInt("ports", ports.size());
     }
 

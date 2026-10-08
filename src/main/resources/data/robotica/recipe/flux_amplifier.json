@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PRP",
+    "RAR",
+    "PRP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/ferrothorium"
+    },
+    "R": {
+      "tag": "c:storage_blocks/redstone"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:flux_amplifier",
+    "count": 2
+  }
+}

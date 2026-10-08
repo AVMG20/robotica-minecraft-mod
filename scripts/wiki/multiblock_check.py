@@ -6,9 +6,10 @@ Mirrors the Java code (src/main/java/com/arno/robotica/...):
   core/multiblock/CuboidVisitor.java   order: shell, interior, finish
   energy/block/StructureControllerBlockEntity.java  Visitor.wall (collects ports)
   energy/block/BankControllerBlockEntity.java       SPEC + BankVisitor
-  energy/block/ReactorControllerBlockEntity.java    SPEC + ReactorVisitor
-  energy/block/FusionControllerBlockEntity.java     SPEC + FusionVisitor
-  energy/EnergyConfig.java                          size defaults (reactor 5..7, bank 3..9)
+  energy/block/CoreReactorBlockEntity.java         SPEC + CoreVisitor (fixed 5x5x5)
+  energy/block/SpireBlockEntity.java               scanStructure (column walk)
+  energy/block/ColliderBlockEntity.java            scanStructure (loop walk)
+  energy/EnergyConfig.java                          size defaults (bank 3..9, spire 8..24, collider 24..256)
   replicator/logic/ReplicatorStructure.java         validate (fixed 3x3x3)
 
 Grid convention (multiblocks.json): layers[y][z][x]; y=0 bottom, z=0 north, x=0 west.
@@ -22,7 +23,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-COOLANT_JSON = os.path.join(ROOT, "src/main/resources/data/robotica/data_maps/block/reactor_coolant.json")
+MAPS = os.path.join(ROOT, "src/main/resources/data/robotica/data_maps/block")
 
 AIR = {"air", "minecraft:air", "minecraft:cave_air", "minecraft:void_air"}
 
@@ -44,16 +45,25 @@ def _bare(block_id):
     return block_id[len("robotica:"):] if block_id.startswith("robotica:") else block_id
 
 
-def _coolant_ids():
-    """Blocks with a robotica:reactor_coolant data map entry (EnergyDataMaps.isCoolant)."""
+def _map_ids(name):
+    """Plain block ids of a block data map (tag keys are skipped: the examples use plain blocks)."""
     try:
-        with open(COOLANT_JSON, encoding="utf-8") as f:
-            return {_bare(k) for k in json.load(f)["values"]}
+        with open(os.path.join(MAPS, name + ".json"), encoding="utf-8") as f:
+            return {_bare(k) for k in json.load(f)["values"] if not k.startswith("#")}
     except (OSError, ValueError, KeyError):
-        return {"minecraft:water", "minecraft:ice", "minecraft:packed_ice", "minecraft:blue_ice", "cryo_coolant"}
+        return set()
 
 
-COOLANT = _coolant_ids()
+# Vanilla storage blocks that the data map lists by c: tag (EnergyDataMaps.conductor).
+TAGGED_CONDUCTORS = {"minecraft:iron_block", "minecraft:gold_block", "minecraft:emerald_block", "minecraft:diamond_block",
+                     "minecraft:netherite_block"}
+CONDUCTORS = _map_ids("spire_conductor") | TAGGED_CONDUCTORS
+MODULATORS = _map_ids("core_modulator")
+SPIRE_MIN, SPIRE_MAX = 8, 24          # EnergyConfig.spireMinConductors / spireMaxConductors
+COLLIDER_MIN, COLLIDER_MAX = 24, 256  # EnergyConfig.colliderMinLength / colliderMaxLength
+SEGMENTS = {"accelerator_segment", "resonant_segment"}
+
+
 CAPACITORS = {"capacitor_copper", "capacitor_redstone", "capacitor_ender", "capacitor_resonant"}
 COILS = {"transfer_coil_basic", "transfer_coil_advanced", "transfer_coil_elite"}
 
@@ -70,21 +80,13 @@ SPECS = {
         "controller": "bank_controller",
         "width": (3, 9), "height": (3, 9),
     },
-    # ReactorControllerBlockEntity.SPEC; sizes EnergyConfig.reactorMinSize/reactorMaxSize defaults 5..7.
-    "fission": {
-        "name": "Fission Reactor",
+    # CoreReactorBlockEntity.SPEC: fixed 5x5x5.
+    "core_reactor": {
+        "name": "Core Reactor",
         "frame": {"reactor_casing"},
         "wall": {"reactor_casing", "reactor_glass", "reactor_power_port", "reactor_access_port"},
         "controller": "reactor_controller",
-        "width": (5, 7), "height": (5, 7),
-    },
-    # FusionControllerBlockEntity.SPEC: fixed SIZE=7 wide/deep, HEIGHT=3; walls take Reactor Glass and Reactor Ports.
-    "fusion": {
-        "name": "Fusion Reactor",
-        "frame": {"fusion_casing"},
-        "wall": {"fusion_casing", "reactor_glass", "reactor_power_port", "reactor_access_port"},
-        "controller": "fusion_controller",
-        "width": (7, 7), "height": (3, 3),
+        "width": (5, 5), "height": (5, 5),
     },
 }
 
@@ -266,36 +268,17 @@ def _check_cuboid(mb, kind):
         if caps == 0: out.append("no Capacitor inside (bank_no_capacitor)")
         elif coils == 0: out.append("no Transfer Coil inside (bank_no_coil)")
         elif "BANK" not in port_kinds: out.append("no Bank Port in the walls (bank_no_port)")
-    elif kind == "fission":
-        # ReactorControllerBlockEntity.ReactorVisitor.interior: fuel rods, air, or coolant (data map).
-        rods = set()
+    elif kind == "core_reactor":
+        # CoreReactorBlockEntity.CoreVisitor.interior: the middle stays air, the rest air or modulators (data map).
+        centre = ((x0 + x1) // 2, (y0 + y1) // 2, (z0 + z1) // 2)
         for p in interior:
             blk = grid.get(p)
-            if blk == "reactor_fuel_rod": rods.add(p)
-            elif is_air(blk) or blk in COOLANT: pass
-            else:
-                return [f"{blk} at {p} does not belong inside a reactor (reactor_inside)"]
-        # ReactorVisitor.finish: at least one rod, each rod column full from floor to roof, a Power Port.
-        if not rods:
-            out.append("no Fuel Rods inside (reactor_no_rods)")
-        else:
-            for rod in sorted(rods):
-                missing = [(rod[0], y, rod[2]) for y in range(y0 + 1, y1) if (rod[0], y, rod[2]) not in rods]
-                if missing:
-                    out.append(f"Fuel Rod column at x={rod[0]} z={rod[2]} is not full, missing {missing[0]} (reactor_rod_column)")
-                    break
-            if not out and "REACTOR_POWER" not in port_kinds:
-                out.append("no Reactor Power Port (reactor_no_power_port)")
-    elif kind == "fusion":
-        # FusionControllerBlockEntity.FusionVisitor.interior: outer ring of the inside layer = Fusion Coils, 3x3 middle air.
-        for p in interior:
-            blk = grid.get(p)
-            ring = p[0] in (x0 + 1, x1 - 1) or p[2] in (z0 + 1, z1 - 1)
-            if ring and blk != "fusion_coil":
-                return [f"{blk} at {p}: the ring must be Fusion Coils (fusion_ring)"]
-            if not ring and not is_air(blk):
-                return [f"{blk} at {p}: the plasma chamber must be empty (fusion_chamber)"]
-        # FusionVisitor.finish
+            if p == centre:
+                if not is_air(blk):
+                    return [f"{blk} at {p}: the core chamber in the middle must stay empty (core_chamber)"]
+            elif not is_air(blk) and blk not in MODULATORS:
+                return [f"{blk} at {p} does not belong inside a Core Reactor (core_inside)"]
+        # CoreVisitor.finish
         if "REACTOR_POWER" not in port_kinds:
             out.append("no Reactor Power Port (reactor_no_power_port)")
     return out
@@ -330,10 +313,79 @@ def _check_replicator(mb):
     return []
 
 
+def _check_spire(mb):
+    """SpireBlockEntity.scanStructure: the base, straight above it 8..24 conductor blocks, then the crown. Nothing
+    else may be in the example (the grid is one column)."""
+    grid = Grid(mb)
+    if grid.problems:
+        return grid.problems
+    if (grid.w, grid.d) != (1, 1):
+        return [f"a Tesla Spire is one column, got {grid.w}x{grid.d}"]
+    column = [grid.get((0, y, 0)) for y in range(grid.h)]
+    if column[0] != "spire_base":
+        return [f"the bottom must be the spire_base, got {column[0]}"]
+    if column[-1] != "spire_crown":
+        return ["the top must be the spire_crown (spire_no_crown)"]
+    middle = column[1:-1]
+    for y, blk in enumerate(middle, start=1):
+        if blk not in CONDUCTORS:
+            return [f"{blk} at y={y} is no conductor (spire_column)"]
+    if len(middle) < SPIRE_MIN:
+        return [f"{len(middle)} conductors, needs at least {SPIRE_MIN} (spire_too_short)"]
+    if len(middle) > SPIRE_MAX:
+        return [f"{len(middle)} conductors, at most {SPIRE_MAX} (spire_too_tall)"]
+    return []
+
+
+def _check_collider(mb):
+    """ColliderBlockEntity.scanStructure: from the controller along a flat loop of segments back to it; every loop
+    block joins exactly two (north, south, east, west)."""
+    grid = Grid(mb)
+    if grid.problems:
+        return grid.problems
+    if grid.h != 1:
+        return [f"a Ring Collider is one layer, got {grid.h}"]
+    ctrls = grid.find("collider_controller")
+    if len(ctrls) != 1:
+        return [f"needs exactly one collider_controller, found {len(ctrls)}"]
+    ring = SEGMENTS | {"collider_controller"}
+
+    def sides(p):
+        return [d for d in (NORTH, EAST, SOUTH, WEST) if grid.get(_add(p, d)) in ring]
+
+    c = ctrls[0]
+    start = sides(c)
+    if len(start) != 2:
+        return [f"the controller joins {len(start)} loop blocks, needs 2 (collider_controller_sides)"]
+    seen = [c]
+    prev, cur = c, _add(c, start[0])
+    while cur != c:
+        if grid.get(cur) not in SEGMENTS:
+            return [f"{grid.get(cur)} at {cur} in the loop (collider_stranger)"]
+        if len(seen) >= COLLIDER_MAX:
+            return [f"longer than {COLLIDER_MAX} (collider_too_long)"]
+        s = sides(cur)
+        if len(s) != 2:
+            return [f"loop {'branches' if len(s) > 2 else 'is open'} at {cur} (collider_{'branch' if len(s) > 2 else 'open'})"]
+        seen.append(cur)
+        a, b = _add(cur, s[0]), _add(cur, s[1])
+        prev, cur = cur, (b if a == prev else a)
+    if len(seen) < COLLIDER_MIN:
+        return [f"{len(seen)} blocks, needs at least {COLLIDER_MIN} (collider_too_short)"]
+    stray = [p for p, b in grid.blocks.items() if not is_air(b) and p not in seen]
+    if stray:
+        return [f"{grid.get(stray[0])} at {stray[0]} is not part of the loop"]
+    return []
+
+
 def check(mb: dict) -> list:
     kind = mb.get("check")
     if kind in SPECS:
         return _check_cuboid(mb, kind)
+    if kind == "spire":
+        return _check_spire(mb)
+    if kind == "collider":
+        return _check_collider(mb)
     if kind == "replicator":
         return _check_replicator(mb)
     return [f"unknown check kind {kind!r}"]
@@ -360,26 +412,30 @@ def _set(mb, x, y, z, ch):
 def _negatives(data):
     """Broken copies of the examples; each must fail."""
     cases = []
-    f5 = data.get("fission_reactor_5")
-    if f5:
-        cases.append(("fission_reactor_5 without a corner", _set(f5, 0, 0, 0, ".")))
-        cases.append(("fission_reactor_5 with a broken rod column", _set(f5, 2, 2, 2, "W")))
-        cases.append(("fission_reactor_5 with glass on an edge", _set(f5, 0, 2, 0, "G")))
-        w = len(f5["layers"][0][0])
-        cases.append(("fission_reactor_5 with dirt inside", _set({**f5, "legend": {**f5["legend"], "D": "minecraft:dirt"}}, 1, 1, 1, "D")))
-        no_power = copy.deepcopy(f5)
-        no_power["layers"] = [[row.replace("P", "C") for row in layer] for layer in f5["layers"]]
-        cases.append(("fission_reactor_5 without a power port", no_power))
-        del w
+    cr = data.get("core_reactor")
+    if cr:
+        cases.append(("core_reactor without a corner", _set(cr, 0, 0, 0, ".")))
+        cases.append(("core_reactor with a blocked chamber", _set(cr, 2, 2, 2, "F")))
+        cases.append(("core_reactor with glass on an edge", _set(cr, 0, 2, 0, "G")))
+        cases.append(("core_reactor with dirt inside", _set({**cr, "legend": {**cr["legend"], "X": "minecraft:dirt"}}, 1, 1, 1, "X")))
+        no_power = copy.deepcopy(cr)
+        no_power["layers"] = [[row.replace("P", "C") for row in layer] for layer in cr["layers"]]
+        cases.append(("core_reactor without a power port", no_power))
+    sp = data.get("tesla_spire")
+    if sp:
+        cases.append(("tesla_spire without a crown", {**sp, "layers": sp["layers"][:-1]}))
+        cases.append(("tesla_spire too short", {**sp, "layers": sp["layers"][:5] + sp["layers"][-1:]}))
+        cases.append(("tesla_spire with dirt in the column", {**sp, "legend": {**sp["legend"], "X": "minecraft:dirt"},
+                                                              "layers": sp["layers"][:3] + [["X"]] + sp["layers"][4:]}))
+    rc = data.get("ring_collider")
+    if rc:
+        cases.append(("ring_collider with a gap", _set(rc, 6, 0, 3, ".")))
+        cases.append(("ring_collider with a branch", _set(rc, 3, 0, 5, "S")))
     b3 = data.get("capacitor_bank_small")
     if b3:
         no_coil = copy.deepcopy(b3)
         no_coil["layers"] = [[row.replace("T", ".") for row in layer] for layer in b3["layers"]]
         cases.append(("capacitor_bank_small without a coil", no_coil))
-    fu = data.get("fusion_reactor")
-    if fu:
-        cases.append(("fusion_reactor with a coil missing", _set(fu, 1, 1, 1, ".")))
-        cases.append(("fusion_reactor with a blocked chamber", _set(fu, 3, 1, 3, "F")))
     rep = data.get("mob_replicator")
     if rep:
         no_glass = copy.deepcopy(rep)

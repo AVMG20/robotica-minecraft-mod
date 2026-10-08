@@ -1,8 +1,7 @@
 package com.arno.robotica.energy.net;
 
 import com.arno.robotica.Robotica;
-import com.arno.robotica.energy.block.FusionControllerBlockEntity;
-import com.arno.robotica.energy.block.ReactorControllerBlockEntity;
+import com.arno.robotica.energy.block.ColliderBlockEntity;
 import com.arno.robotica.energy.block.StructureControllerBlockEntity;
 import com.arno.robotica.energy.menu.ControllerMenu;
 import net.minecraft.core.BlockPos;
@@ -15,12 +14,12 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
- * Client to server: a button or slider in a controller GUI. Only accepted when the player's open menu belongs to that
+ * Client to server: a button in a controller GUI (the Ring Collider's on/off switch). Only accepted when the player's open menu belongs to that
  * position and is still valid (in reach), so it can not be used remotely, and only from the owner, the owner's team or
  * an operator ({@link StructureControllerBlockEntity#canControl}). Other players may watch.
  */
 public record ControllerActionPayload(BlockPos pos, int action, int value) implements CustomPacketPayload {
-    public static final int SET_RODS = 0, RESET_SCRAM = 1, SET_ENABLED = 2;
+    public static final int SET_ENABLED = 2;
 
     public static final Type<ControllerActionPayload> TYPE = new Type<>(Robotica.id("energy_controller_action"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ControllerActionPayload> CODEC = StreamCodec.composite(
@@ -50,14 +49,9 @@ public record ControllerActionPayload(BlockPos pos, int action, int value) imple
         var be = player.level().getBlockEntity(payload.pos());
         if (!(be instanceof StructureControllerBlockEntity controller) || !controller.canControl(player)) return false;
         switch (payload.action()) {
-            case SET_RODS -> {
-                if (be instanceof ReactorControllerBlockEntity reactor) reactor.setRodInsertion(payload.value());
-            }
-            case RESET_SCRAM -> {
-                if (be instanceof ReactorControllerBlockEntity reactor) reactor.resetScram();
-            }
             case SET_ENABLED -> {
-                if (be instanceof FusionControllerBlockEntity fusion) fusion.setEnabled(payload.value() != 0);
+                if (be instanceof ColliderBlockEntity collider) collider.setEnabled(payload.value() != 0);
+                else return false;
             }
             default -> {
                 return false;

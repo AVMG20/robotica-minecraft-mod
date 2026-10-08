@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "RGR",
+    "PNP",
+    "RGR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "G": [
+      {
+        "tag": "c:gems/resonite"
+      },
+      {
+        "tag": "c:dusts/resonite"
+      }
+    ],
+    "P": {
+      "item": "robotica:pyro_amplifier"
+    },
+    "N": {
+      "item": "robotica:null_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:resonant_amplifier",
+    "count": 2
+  }
+}

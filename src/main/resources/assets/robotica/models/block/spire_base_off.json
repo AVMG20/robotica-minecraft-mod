@@ -1,0 +1,108 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "f_down": "robotica:block/spire_casing",
+    "f_up": "robotica:block/spire_base_top",
+    "f_north": "robotica:block/spire_controller_off",
+    "f_south": "robotica:block/spire_base",
+    "f_west": "robotica:block/spire_base",
+    "f_east": "robotica:block/spire_base",
+    "g_south": "robotica:block/spire_base_glow",
+    "g_west": "robotica:block/spire_base_glow",
+    "g_east": "robotica:block/spire_base_glow",
+    "g_north": "robotica:block/spire_controller_off_glow",
+    "particle": "robotica:block/spire_casing"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#f_down",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#f_up",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#f_north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#f_south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#f_west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#f_east",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#g_south",
+          "cullface": "south",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#g_west",
+          "cullface": "west",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#g_east",
+          "cullface": "east",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "north": {
+          "texture": "#g_north",
+          "cullface": "north",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      }
+    }
+  ]
+}

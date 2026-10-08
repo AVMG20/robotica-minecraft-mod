@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.Block;
 
 import java.util.List;
 
-/** A plain structure block (casing, fuel rod, coolant, coil) with a one-line tooltip {@code tooltip.robotica.<id>}. */
+/** A plain structure block (casing, amplifier, coolant, coil) with a one-line tooltip {@code tooltip.robotica.<id>}. */
 public class PartBlock extends Block {
     public PartBlock(Properties props) {
         super(props);

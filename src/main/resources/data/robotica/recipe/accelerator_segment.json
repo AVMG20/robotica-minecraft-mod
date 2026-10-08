@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PSP",
+    "GQG",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/pyrosteel"
+    },
+    "S": {
+      "item": "robotica:superconductor_coil"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:accelerator_segment",
+    "count": 4
+  }
+}

@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class PortBlock extends Block implements EntityBlock {
     public enum Kind {
-        /** Reactor Power Port: FE out (the Fusion Reactor also takes its ignition charge in here). */
+        /** Reactor Power Port: FE out of a Core Reactor. */
         REACTOR_POWER,
         /** Reactor Access Port: fuel in, waste out. */
         REACTOR_ACCESS,

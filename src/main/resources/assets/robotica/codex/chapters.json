@@ -46,13 +46,13 @@
       "pages": [
         {
           "title": "Making FE",
-          "text": "Start with the Winding Crank: wind a Mainspring by hand to run your first robots.\nOnce you have iron, build a Combustion Generator and feed it coal or logs.\nIn Age 1, add Solar Panels: no fuel to keep up.\nAfter that come the RTG and reactors.",
+          "text": "Start with the Winding Crank: wind a Mainspring by hand to run your first robots.\nOnce you have iron, build a Combustion Generator and feed it coal or logs.\nIn Age 1, add Solar Panels: no fuel to keep up.\nAfter that come the RTG, the Tesla Spire and the Core Reactor.",
           "items": [
             "robotica:winding_crank",
             "robotica:combustion_generator",
             "robotica:solar_panel_mk1",
             "robotica:rtg",
-            "robotica:reactor_controller"
+            "robotica:spire_base"
           ]
         },
         {
@@ -105,7 +105,7 @@
         },
         {
           "title": "Fuel",
-          "text": "Keep your spent pellets: they end up as fusion fuel.",
+          "text": "Keep your spent pellets: they end up as Ring Collider fuel.",
           "items": [
             "robotica:thorium_fuel_pellet",
             "robotica:rtg",
@@ -119,18 +119,24 @@
     },
     {
       "title": "Big energy",
-      "icon": "robotica:reactor_controller",
+      "icon": "robotica:spire_crown",
       "pages": [
         {
           "title": "Multiblocks",
-          "text": "Each one is a hollow box: casing on every edge, and casing, glass or ports in the walls. The controller goes in a side wall, facing out.\nOpen the controller to see which block is wrong. Its spyglass button outlines that block in the world.",
+          "text": "Open a controller to see what is missing. Its spyglass button outlines the wrong block in the world.",
+          "items": [
+            "robotica:bank_controller",
+            "robotica:spire_base",
+            "robotica:reactor_controller",
+            "robotica:collider_controller"
+          ]
+        },
+        {
+          "title": "Hollow boxes",
+          "text": "The Capacitor Bank and the Core Reactor are hollow boxes: casing on every edge, and casing, glass or ports in the walls. The controller goes in a side wall, facing out.",
           "items": [
             "robotica:bank_casing",
-            "robotica:reactor_casing",
-            "robotica:fusion_casing",
-            "robotica:bank_controller",
-            "robotica:reactor_controller",
-            "robotica:fusion_controller"
+            "robotica:reactor_casing"
           ]
         },
         {
@@ -151,39 +157,48 @@
           "text": "Glass goes in the walls, never on an edge."
         },
         {
-          "title": "Fission Reactor",
-          "text": "Fuel Rods: full columns, floor to roof.\nCoolant: only the four blocks beside a rod cool it. Worst to best: water, ice, packed ice, blue ice, Cryo Coolant.\nAccess Port: fuel in, waste out. Full waste stops it.\nPower Port: FE out.\nToo hot: it shuts down and loses its pellet.",
+          "title": "Tesla Spire",
+          "text": "A column under open sky: Spire Base, conductor blocks, Spire Crown on top.\nEach metal sets power and how far fuel goes; mix them freely.\nBuild it high, and 64 blocks away from other spires.\nStorms bring lightning: every strike fills the buffer with a burst.",
           "items": [
-            "robotica:reactor_casing",
-            "robotica:reactor_glass",
+            "robotica:spire_base",
+            "robotica:spire_crown",
+            "minecraft:copper_block",
+            "minecraft:iron_block",
+            "minecraft:diamond_block",
+            "minecraft:netherite_block"
+          ]
+        },
+        {
+          "title": "Core Reactor",
+          "text": "The middle block stays empty: the core floats there.\nAmplifiers in the other 26 spots raise power but burn fuel and the core faster. Stabilizers do the opposite.\nA core in the core slot waits until the one inside burns out.",
+          "items": [
             "robotica:reactor_controller",
-            "robotica:reactor_fuel_rod",
-            "robotica:reactor_access_port",
-            "robotica:reactor_power_port",
-            "robotica:cryo_coolant"
+            "robotica:flux_amplifier",
+            "robotica:pyro_amplifier",
+            "robotica:resonant_amplifier",
+            "robotica:graphite_damper",
+            "robotica:cryo_coolant",
+            "robotica:servo_core"
           ]
         },
         {
-          "title": "Smallest reactor",
-          "layout": "fission_reactor_5",
-          "text": "One rod column with water on all four sides."
+          "title": "Core Reactor layout",
+          "layout": "core_reactor"
         },
         {
-          "title": "Fusion Reactor",
-          "text": "Fusion Coils: a ring of 16 around the empty middle.\nPower Port: takes the ignition charge in and sends power out. Build a Capacitor Bank first.\nAccess Port: fuel in.\nKeep it fueled: if it runs dry the plasma collapses and you have to charge it again.",
+          "title": "Ring Collider",
+          "text": "A flat loop of segments with the controller in it. Any shape works.\nCharge it with FE (a Capacitor Bank helps), add fuel and press Running.\nDo not let the fuel run out: the beam collapses and needs a new charge.\nBigger rings make Strange Matter faster.",
           "items": [
-            "robotica:fusion_casing",
-            "robotica:reactor_glass",
-            "robotica:fusion_controller",
-            "robotica:fusion_coil",
-            "robotica:reactor_power_port",
-            "robotica:reactor_access_port",
-            "robotica:fusion_fuel_pellet"
+            "robotica:collider_controller",
+            "robotica:accelerator_segment",
+            "robotica:resonant_segment",
+            "robotica:fusion_fuel_pellet",
+            "robotica:strange_matter"
           ]
         },
         {
-          "title": "Fusion layout",
-          "layout": "fusion_reactor"
+          "title": "Smallest ring",
+          "layout": "ring_collider"
         }
       ]
     },

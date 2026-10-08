@@ -55,6 +55,7 @@
       "robotica:servo_stride_module_3",
       "robotica:kinetic_shield_module",
       "robotica:cryo_coolant",
+      "robotica:pyro_amplifier",
       "robotica:night_vision_module_3",
       "robotica:sonar_pulse_module_2",
       "robotica:jet_assist_module_2",

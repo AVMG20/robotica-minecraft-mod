@@ -1,5 +1,5 @@
 """Writes the data of the industry module: recipes, blockstates, block/item models, loot tables, tag fragments and the
-reactor fuel data maps. Worldgen is written by scripts/data/industry_worldgen.py, textures by scripts/textures/industry.py.
+fuel data maps of the big energy machines. Worldgen is written by scripts/data/industry_worldgen.py, textures by scripts/textures/industry.py.
 Run: python3 scripts/data/industry_data.py   (overwrites files named after industry items only)
 
 Recipe families (file name prefix):
@@ -222,6 +222,11 @@ def recipes():
                [result('blazing_casing', 2)], time=400, power=400)
     processing('assembling', 'null_circuit', [('quantum_circuit', 3), ('#c:ender_pearls', 2), '#c:nether_stars', (RESO, 2)],
                [result('null_circuit', 2)], time=600, power=1000)
+    # Strange Matter (Ring Collider) stands in for the nether star and the boss core
+    processing('assembling', 'null_circuit_from_strange_matter', [('quantum_circuit', 3), ('#c:ender_pearls', 2), 'strange_matter', (RESO, 2)],
+               [result('null_circuit', 2)], time=600, power=2000)
+    processing('assembling', 'antigrav_core_from_strange_matter', [('strange_matter', 4), ('plasma_actuator', 2), ('minecraft:end_crystal', 2)],
+               [result('antigrav_core')], time=800, power=2000)
     processing('assembling', 'null_casing', [('blazing_casing', 3), ('minecraft:shulker_shell', 2), 'antigrav_core', (RESO, 2)],
                [result('null_casing', 2)], time=600, power=1000)
 
@@ -410,15 +415,24 @@ def tags():
 
 
 def data_maps():
-    """Fuel stats for the big energy module's reactors (contract: docs/plans/0.3-armor-power.md)."""
+    """Fuel stats for the big energy module (docs/DESIGN.md "Big energy"): Tesla Spire, Core Reactor, Ring Collider."""
     waste = 'robotica:depleted_fuel_pellet'
+    write(DATA / 'data_maps/item/spire_fuel.json', {'values': {
+        '#c:ingots/thorium': {'energy': 400000},
+        '#c:storage_blocks/thorium': {'energy': 3600000},
+        'robotica:thorium_fuel_pellet': {'energy': 4000000, 'waste': waste},
+        'robotica:enriched_fuel_pellet': {'energy': 12000000, 'waste': waste},
+    }})
     write(DATA / 'data_maps/item/reactor_fuel.json', {'values': {
-        'robotica:thorium_fuel_pellet': {'heat': 400, 'ticks': 12000, 'waste': waste},
-        'robotica:enriched_fuel_pellet': {'heat': 1000, 'ticks': 12000, 'waste': waste},
+        'robotica:thorium_fuel_pellet': {'power': 600, 'ticks': 12000, 'waste': waste},
+        'robotica:enriched_fuel_pellet': {'power': 1500, 'ticks': 12000, 'waste': waste},
     }})
-    write(DATA / 'data_maps/item/fusion_fuel.json', {'values': {
-        'robotica:fusion_fuel_pellet': {'power': 200000, 'ticks': 6000},
+    write(DATA / 'data_maps/item/collider_fuel.json', {'values': {
+        'robotica:fusion_fuel_pellet': {'ticks': 6000},
     }})
+    old = DATA / 'data_maps/item/fusion_fuel.json'
+    if old.exists():
+        old.unlink()
 
 
 # =================================================================================================== lang
@@ -457,8 +471,8 @@ DETAILS = {
     'thermocouple': 'Made in the Assembler',
     'superconductor_coil': 'Made in the Assembler',
     'resonant_lattice': 'Made in the Assembler',
-    'thorium_fuel_pellet': 'RTG: 150 FE/t for 20 minutes. Also reactor fuel',
-    'enriched_fuel_pellet': '2.5x the heat of a thorium pellet',
+    'thorium_fuel_pellet': 'RTG: 150 FE/t for 20 minutes. Also Tesla Spire and Core Reactor fuel',
+    'enriched_fuel_pellet': '2.5x the power of a thorium pellet in a Core Reactor, 3x the energy in a Tesla Spire',
     'depleted_fuel_pellet': 'Centrifuge: thorium dust, sometimes a Radiant Isotope',
     'radiant_isotope': 'Centrifuge: 20% from Depleted Fuel Pellets',
 }
@@ -498,8 +512,8 @@ def lang():
         'jei.robotica.info.thorium_ore': 'Overworld, Y -48 to 32 (most around Y -8), in stone and deepslate. Drops Raw Thorium.',
         'jei.robotica.info.pyrolite_ore': 'Nether netherrack, more in basalt deltas. Drops a Pyrolite Shard. Needs an iron pickaxe.',
         'jei.robotica.info.resonite_ore': 'End stone on the outer End islands. Rare. Drops a Resonite Crystal. Needs a diamond pickaxe.',
-        'jei.robotica.info.depleted_fuel_pellet': 'Waste from the RTG or a fission reactor. Centrifuge: thorium dust, sometimes graphite, 20% a Radiant Isotope.',
-        'jei.robotica.info.thorium_fuel_pellet': 'RTG fuel: %s FE/t for %s minutes. Also fission reactor fuel.',
+        'jei.robotica.info.depleted_fuel_pellet': 'Waste from the RTG, Tesla Spire and Core Reactor. Centrifuge: thorium dust, sometimes graphite, 20% a Radiant Isotope.',
+        'jei.robotica.info.thorium_fuel_pellet': 'RTG fuel: %s FE/t for %s minutes. Also Tesla Spire and Core Reactor fuel.',
         'robotica.configuration.machines': 'Industry machines',
         'robotica.configuration.alloySmelterPower': 'Alloy Smelter power (FE/t)',
         'robotica.configuration.centrifugePower': 'Centrifuge power (FE/t)',

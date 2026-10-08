@@ -47,7 +47,7 @@ public final class IndustryConfig {
         b.push("rtg");
         RTG_POWER = b.comment("Radioisotope Generator: FE/t while a pellet decays (before the global generation multiplier).")
                 .defineInRange("rtgPower", 150, 1, 1_000_000);
-        RTG_PELLET_TICKS = b.comment("Ticks one fuel pellet lasts in the RTG (24,000 = 20 minutes, 3.6M FE at 150 FE/t; the fission reactor gets more out of a pellet).")
+        RTG_PELLET_TICKS = b.comment("Ticks one fuel pellet lasts in the RTG (24,000 = 20 minutes, 3.6M FE at 150 FE/t; the Tesla Spire and Core Reactor get more out of a pellet).")
                 .defineInRange("rtgPelletTicks", 24_000, 20, 10_000_000);
         RTG_BUFFER = b.comment("Internal FE buffer of the RTG.")
                 .defineInRange("rtgBuffer", 100_000, 1_000, 100_000_000);

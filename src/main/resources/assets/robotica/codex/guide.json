@@ -205,7 +205,13 @@
       "age": 2
     },
     {
-      "id": "robotica:guide/fission",
+      "id": "robotica:guide/tesla_spire",
+      "parent": "robotica:guide/assembler",
+      "icon": "robotica:spire_crown",
+      "age": 2
+    },
+    {
+      "id": "robotica:guide/core_reactor",
       "parent": "robotica:guide/age2",
       "icon": "robotica:reactor_controller",
       "age": 2
@@ -313,9 +319,9 @@
       "age": 4
     },
     {
-      "id": "robotica:guide/fusion",
+      "id": "robotica:guide/ring_collider",
       "parent": "robotica:guide/age4",
-      "icon": "robotica:fusion_controller",
+      "icon": "robotica:collider_controller",
       "age": 4
     },
     {

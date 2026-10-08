@@ -77,21 +77,41 @@ def column(name, side, end, glow_side=None, glow_end=None):
     simple(name, glow_cube(faces, glow))
 
 
+def box(frm, to, faces, shade=True, glow=False):
+    """Element with face -> texture variable; faces touching the block edge cull against that side."""
+    edge = {'down': frm[1] == 0, 'up': to[1] == 16, 'north': frm[2] == 0, 'south': to[2] == 16,
+            'west': frm[0] == 0, 'east': to[0] == 16}
+    out = {}
+    for d, t in faces.items():
+        face = {'texture': t}
+        if edge[d]:
+            face['cullface'] = d
+        if glow:
+            face['neoforge_data'] = GLOW
+        out[d] = face
+    element = {'from': frm, 'to': to, 'faces': out}
+    if not shade:
+        element['shade'] = False
+    return element
+
+
+def all_faces(t):
+    return {d: t for d in DIRS}
+
+
 # ---------- casings, glass, coolant ----------
-for name in ('reactor_casing', 'bank_casing', 'fusion_casing'):
+for name in ('reactor_casing', 'bank_casing'):
     cube_all(name)
 for name in ('reactor_glass', 'bank_glass'):
     cube_all(name, render_type='minecraft:translucent')
 cube_all('cryo_coolant')
 cube_all('reactor_access_port')
 
-# ---------- columns: fuel rod, capacitors, coils, fusion coil ----------
-column('reactor_fuel_rod', 'reactor_fuel_rod', 'reactor_fuel_rod_top', 'reactor_fuel_rod_glow', 'reactor_fuel_rod_top_glow')
+# ---------- columns: amplifiers, damper, capacitors, coils ----------
 for n in ('copper', 'redstone', 'ender', 'resonant'):
     column(f'capacitor_{n}', f'capacitor_{n}', f'capacitor_{n}_top', 'capacitor_glow')
 for n in ('basic', 'advanced', 'elite'):
     column(f'transfer_coil_{n}', f'transfer_coil_{n}', f'transfer_coil_{n}_top', f'transfer_coil_{n}_glow')
-column('fusion_coil', 'fusion_coil', 'fusion_coil_top', 'fusion_coil_glow')
 
 # ---------- ports ----------
 simple('reactor_power_port', glow_cube({d: 'reactor_power_port' for d in DIRS}, {d: 'reactor_power_port_glow' for d in DIRS}))
@@ -108,11 +128,20 @@ BLOCKS.append('bank_port')
 
 # ---------- controllers: screen front (off / formed / working), casing elsewhere, four facings ----------
 FACING_Y = {'north': 0, 'east': 90, 'south': 180, 'west': 270}
-for prefix in ('reactor', 'bank', 'fusion'):
-    name = f'{prefix}_controller'
+CONTROLLERS = {
+    'reactor_controller': ('reactor', {}),
+    'bank_controller': ('bank', {}),
+    # Spire Base: copper winding band on the sides, the terminal plate on top.
+    'spire_base': ('spire', {'faces': {'south': 'spire_base', 'west': 'spire_base', 'east': 'spire_base',
+                                       'up': 'spire_base_top'},
+                             'glow': {'south': 'spire_base_glow', 'west': 'spire_base_glow', 'east': 'spire_base_glow'}}),
+    'collider_controller': ('collider', {}),
+}
+for name, (prefix, extra) in CONTROLLERS.items():
     for state in ('off', 'formed', 'on'):
-        faces = {d: f'{prefix}_casing' for d in DIRS} | {'north': f'{name}_{state}'}
-        model = glow_cube(faces, {'north': f'{name}_{state}_glow'})
+        faces = {d: f'{prefix}_casing' for d in DIRS} | extra.get('faces', {}) | {'north': f'{prefix}_controller_{state}'}
+        glow = extra.get('glow', {}) | {'north': f'{prefix}_controller_{state}_glow'}
+        model = glow_cube(faces, glow)
         model['textures']['particle'] = tex(f'{prefix}_casing')
         write(ASSETS / 'models/block' / f'{name}_{state}.json', model)
     variants = {}
@@ -129,5 +158,94 @@ for prefix in ('reactor', 'bank', 'fusion'):
     loot(name, ['robotica:bank_energy'] if prefix == 'bank' else None)
     BLOCKS.append(name)
 
+# ---------- Core Reactor modulators: open cages, so the core and its beams show through a packed chamber ----------
+def cage_model(name, plate_side, plate_top, inner_tex, frm, to, glow):
+    plate = {'down': '#top', 'up': '#top', 'north': '#side', 'south': '#side', 'west': '#side', 'east': '#side'}
+    elements = [box([0, 0, 0], [16, 2, 16], plate), box([0, 14, 0], [16, 16, 16], plate)]
+    for x, z in ((0, 0), (14, 0), (0, 14), (14, 14)):
+        elements.append(box([x, 2, z], [x + 2, 14, z + 2], all_faces('#side')))
+    elements.append(box(frm, to, all_faces('#inner'), shade=not glow, glow=glow))
+    simple(name, {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+                  'textures': {'side': tex(plate_side), 'top': tex(plate_top), 'inner': tex(inner_tex), 'particle': tex(plate_side)},
+                  'elements': elements})
+
+
+for n in ('flux', 'pyro', 'resonant'):
+    cage_model(f'{n}_amplifier', f'{n}_amplifier', f'{n}_amplifier_top', f'{n}_amplifier_crystal', [5, 4, 5], [11, 12, 11], True)
+cage_model('graphite_damper', 'graphite_damper', 'graphite_damper_top', 'graphite_damper', [4, 2, 4], [12, 14, 12], False)
+
+# ---------- Spire Crown: copper-wound neck, steel toroid, discharge sphere that lights up ----------
+for lit in (False, True):
+    core = 'spire_crown_core_lit' if lit else 'spire_crown_core'
+    ring = {'down': '#ring', 'up': '#ring', 'north': '#ring', 'south': '#ring', 'west': '#ring', 'east': '#ring'}
+    model = {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+             'textures': {'coil': tex('spire_crown_coil'), 'ring': tex('spire_crown_ring'), 'core': tex(core),
+                          'particle': tex('spire_crown_ring')},
+             'elements': [
+                 box([6, 0, 6], [10, 7, 10], all_faces('#coil')),
+                 box([1, 6, 1], [15, 10, 4], ring), box([1, 6, 12], [15, 10, 15], ring),
+                 box([1, 6, 4], [4, 10, 12], ring), box([12, 6, 4], [15, 10, 12], ring),
+                 box([5, 9, 5], [11, 15, 11], all_faces('#core'), shade=not lit, glow=lit),
+                 box([7, 15, 7], [9, 16, 9], all_faces('#ring')),
+             ]}
+    write(ASSETS / 'models/block' / f'spire_crown{"_lit" if lit else ""}.json', model)
+write(ASSETS / 'blockstates/spire_crown.json', {'variants': {
+    'lit=false': {'model': 'robotica:block/spire_crown'},
+    'lit=true': {'model': 'robotica:block/spire_crown_lit'}}})
+write(ASSETS / 'models/item/spire_crown.json', {'parent': 'robotica:block/spire_crown_lit'})
+loot('spire_crown')
+BLOCKS.append('spire_crown')
+
+# ---------- Ring segments: slab, glass beam pipe joining the neighbours (multipart), magnets on straights ----------
+# The pipe is centred at y 8 (ColliderRenderer.PIPE_Y = 0.5).
+ARMS = {'north': ([6, 6, 0], [10, 10, 6]), 'south': ([6, 6, 10], [10, 10, 16]),
+        'west': ([0, 6, 6], [6, 10, 10]), 'east': ([10, 6, 6], [16, 10, 10])}
+# Straights: a square magnet collar round the pipe (four bars framing its 6..10 cross-section).
+COILS = {'x': [([5, 4, 4], [11, 6, 12]), ([5, 10, 4], [11, 12, 12]), ([5, 6, 4], [11, 10, 6]), ([5, 6, 10], [11, 10, 12])],
+         'z': [([4, 4, 5], [12, 6, 11]), ([4, 10, 5], [12, 12, 11]), ([4, 6, 5], [6, 10, 11]), ([10, 6, 5], [12, 10, 11])]}
+for name in ('accelerator_segment', 'resonant_segment'):
+    textures = {'base': tex(f'{name}_base'), 'coil': tex(f'{name}_coil'), 'glow': tex(f'{name}_coil_glow'),
+                'pipe': tex(f'{name}_pipe'), 'particle': tex(f'{name}_base')}
+
+    def part(suffix, elements):
+        write(ASSETS / 'models/block' / f'{name}_{suffix}.json',
+              {'parent': 'minecraft:block/block', 'render_type': 'minecraft:translucent', 'textures': textures,
+               'elements': elements})
+        return f'robotica:block/{name}_{suffix}'
+
+    core = part('core', [box([0, 0, 0], [16, 4, 16], all_faces('#base')),
+                         box([7, 4, 7], [9, 6, 9], all_faces('#base')),
+                         box([6, 6, 6], [10, 10, 10], all_faces('#pipe'))])
+    arms = {d: part(f'pipe_{d}', [box(a, b, {f: '#pipe' for f in DIRS if f != {'north': 'south', 'south': 'north', 'west': 'east', 'east': 'west'}[d]})])
+            for d, (a, b) in ARMS.items()}
+    coils = {}
+    for axis, boxes in COILS.items():
+        elements = [box(a, b, all_faces('#coil')) for a, b in boxes]
+        elements += [box(a, b, all_faces('#glow'), shade=False, glow=True) for a, b in boxes]
+        coils[axis] = part(f'coil_{axis}', elements)
+    corner = part('corner', [box([5, 5, 5], [11, 11, 11], all_faces('#coil')),
+                             box([5, 5, 5], [11, 11, 11], all_faces('#glow'), shade=False, glow=True)])
+    parts = [{'apply': {'model': core}}]
+    parts += [{'when': {d: 'true'}, 'apply': {'model': arms[d]}} for d in SIDES]
+    parts.append({'when': {'north': 'false', 'south': 'false'}, 'apply': {'model': coils['x']}})
+    parts.append({'when': {'OR': [{'east': 'false', 'west': 'false', 'north': 'true'},
+                                  {'east': 'false', 'west': 'false', 'south': 'true'}]}, 'apply': {'model': coils['z']}})
+    parts.append({'when': {'OR': [{'north': 'true', 'east': 'true'}, {'north': 'true', 'west': 'true'},
+                                  {'south': 'true', 'east': 'true'}, {'south': 'true', 'west': 'true'}]},
+                  'apply': {'model': corner}})
+    write(ASSETS / 'blockstates' / f'{name}.json', {'multipart': parts})
+    # Item: a straight piece along x.
+    item = [box([0, 0, 0], [16, 4, 16], all_faces('#base')), box([7, 4, 7], [9, 6, 9], all_faces('#base')),
+            box([0, 6, 6], [16, 10, 10], all_faces('#pipe'))]
+    item += [box(a, b, all_faces('#coil')) for a, b in COILS['x']]
+    item += [box(a, b, all_faces('#glow'), shade=False, glow=True) for a, b in COILS['x']]
+    write(ASSETS / 'models/item' / f'{name}.json',
+          {'parent': 'minecraft:block/block', 'render_type': 'minecraft:translucent', 'textures': textures, 'elements': item})
+    loot(name)
+    BLOCKS.append(name)
+
 write(FRAG / 'mineable/pickaxe.json', {'replace': False, 'values': [f'robotica:{b}' for b in sorted(BLOCKS)]})
 print(f'{len(BLOCKS)} energy blocks written')
+
+# ---------- items ----------
+write(ASSETS / 'models/item/strange_matter.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'robotica:item/strange_matter'}})

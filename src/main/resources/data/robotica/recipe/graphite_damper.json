@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PGP",
+    "GOG",
+    "PGP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "G": {
+      "tag": "c:dusts/graphite"
+    },
+    "O": {
+      "tag": "c:obsidians"
+    }
+  },
+  "result": {
+    "id": "robotica:graphite_damper",
+    "count": 4
+  }
+}

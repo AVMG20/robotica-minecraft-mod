@@ -5,15 +5,19 @@ import com.arno.robotica.core.RoboticaTab;
 import com.arno.robotica.energy.block.BankControllerBlockEntity;
 import com.arno.robotica.energy.block.CapacitorBlock;
 import com.arno.robotica.energy.block.ControllerBlock;
-import com.arno.robotica.energy.block.FusionControllerBlockEntity;
+import com.arno.robotica.energy.block.AcceleratorSegmentBlock;
+import com.arno.robotica.energy.block.ColliderBlockEntity;
+import com.arno.robotica.energy.block.CoreReactorBlockEntity;
 import com.arno.robotica.energy.block.PartBlock;
 import com.arno.robotica.energy.block.PortBlock;
 import com.arno.robotica.energy.block.PortBlockEntity;
-import com.arno.robotica.energy.block.ReactorControllerBlockEntity;
+import com.arno.robotica.energy.block.SpireBlockEntity;
+import com.arno.robotica.energy.block.SpireCrownBlock;
 import com.arno.robotica.energy.block.StructureGlassBlock;
 import com.arno.robotica.energy.menu.BankMenu;
-import com.arno.robotica.energy.menu.FusionMenu;
-import com.arno.robotica.energy.menu.ReactorMenu;
+import com.arno.robotica.energy.menu.ColliderMenu;
+import com.arno.robotica.energy.menu.CoreReactorMenu;
+import com.arno.robotica.energy.menu.SpireMenu;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
@@ -52,6 +56,9 @@ public final class EnergyRegistry {
     private static final List<DeferredItem<? extends Item>> TAB_ORDER = new ArrayList<>();
 
     // ---- Data components ----
+    /** Ticks a boss core has burned in a Core Reactor; it breaks at its life (data map robotica:reactor_core). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CORE_WEAR =
+            COMPONENTS.registerComponentType("core_wear", b -> b.persistent(Codec.intRange(0, Integer.MAX_VALUE)).networkSynchronized(ByteBufCodecs.VAR_INT));
     /** FE a Capacitor Bank Controller keeps when picked up (a long: banks hold far more than an int). */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> BANK_ENERGY =
             COMPONENTS.registerComponentType("bank_energy", b -> b.persistent(Codec.LONG).networkSynchronized(ByteBufCodecs.VAR_LONG));
@@ -68,7 +75,7 @@ public final class EnergyRegistry {
     }
 
     private static BlockBehaviour.Properties controller(MapColor color) {
-        // Light stays at 7 or less: brighter light inside a reactor would melt its ice coolant.
+        // Light stays at 7 or less: brighter light next to a Core Reactor would melt its ice stabilizers.
         return casing(color).lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 7 : s.getValue(ControllerBlock.FORMED) ? 3 : 0);
     }
 
@@ -86,7 +93,14 @@ public final class EnergyRegistry {
     public static final DeferredBlock<CapacitorBlock> TRANSFER_COIL_ADVANCED = capacitor("transfer_coil_advanced", CapacitorBlock.Kind.COIL, 1);
     public static final DeferredBlock<CapacitorBlock> TRANSFER_COIL_ELITE = capacitor("transfer_coil_elite", CapacitorBlock.Kind.COIL, 2);
 
-    // ---- Fission Reactor ----
+    // ---- Tesla Spire ----
+    public static final DeferredBlock<ControllerBlock> SPIRE_BASE = block("spire_base",
+            p -> new ControllerBlock(p, EnergyRegistry.SPIRE_BE), controller(MapColor.COLOR_LIGHT_BLUE));
+    public static final DeferredBlock<SpireCrownBlock> SPIRE_CROWN = block("spire_crown", SpireCrownBlock::new,
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(4.0F, 12.0F).sound(SoundType.COPPER)
+                    .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 12 : 0));
+
+    // ---- Core Reactor (block ids of the 0.6 Fission Reactor); modulators are open cages, so the core shows through ----
     public static final DeferredBlock<PartBlock> REACTOR_CASING = block("reactor_casing", PartBlock::new, casing(MapColor.COLOR_GRAY));
     public static final DeferredBlock<StructureGlassBlock> REACTOR_GLASS = block("reactor_glass", StructureGlassBlock::new, glass(MapColor.COLOR_LIGHT_GREEN));
     public static final DeferredBlock<ControllerBlock> REACTOR_CONTROLLER = block("reactor_controller",
@@ -95,17 +109,30 @@ public final class EnergyRegistry {
             p -> new PortBlock(p, PortBlock.Kind.REACTOR_POWER), casing(MapColor.COLOR_GRAY));
     public static final DeferredBlock<PortBlock> REACTOR_ACCESS_PORT = block("reactor_access_port",
             p -> new PortBlock(p, PortBlock.Kind.REACTOR_ACCESS), casing(MapColor.COLOR_GRAY));
-    public static final DeferredBlock<PartBlock> REACTOR_FUEL_ROD = block("reactor_fuel_rod", PartBlock::new,
-            casing(MapColor.COLOR_LIGHT_GREEN).noOcclusion());
+    public static final DeferredBlock<PartBlock> FLUX_AMPLIFIER = block("flux_amplifier", PartBlock::new,
+            casing(MapColor.COLOR_RED).lightLevel(s -> 4).noOcclusion());
+    public static final DeferredBlock<PartBlock> PYRO_AMPLIFIER = block("pyro_amplifier", PartBlock::new,
+            casing(MapColor.COLOR_ORANGE).lightLevel(s -> 6).noOcclusion());
+    public static final DeferredBlock<PartBlock> RESONANT_AMPLIFIER = block("resonant_amplifier", PartBlock::new,
+            casing(MapColor.COLOR_CYAN).lightLevel(s -> 8).noOcclusion());
+    public static final DeferredBlock<PartBlock> GRAPHITE_DAMPER = block("graphite_damper", PartBlock::new, casing(MapColor.COLOR_BLACK).noOcclusion());
     public static final DeferredBlock<PartBlock> CRYO_COOLANT = block("cryo_coolant", PartBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.ICE).strength(2.0F, 6.0F).sound(SoundType.GLASS).friction(0.98F)
                     .requiresCorrectToolForDrops());
 
-    // ---- Fusion Reactor ----
-    public static final DeferredBlock<PartBlock> FUSION_CASING = block("fusion_casing", PartBlock::new, casing(MapColor.COLOR_PURPLE));
-    public static final DeferredBlock<PartBlock> FUSION_COIL = block("fusion_coil", PartBlock::new, casing(MapColor.COLOR_PURPLE));
-    public static final DeferredBlock<ControllerBlock> FUSION_CONTROLLER = block("fusion_controller",
-            p -> new ControllerBlock(p, EnergyRegistry.FUSION_BE), controller(MapColor.COLOR_PURPLE));
+    // ---- Ring Collider ----
+    public static final DeferredBlock<ControllerBlock> COLLIDER_CONTROLLER = block("collider_controller",
+            p -> new ControllerBlock(p, EnergyRegistry.COLLIDER_BE), controller(MapColor.COLOR_PURPLE));
+    public static final DeferredBlock<AcceleratorSegmentBlock> ACCELERATOR_SEGMENT = block("accelerator_segment",
+            p -> new AcceleratorSegmentBlock(p, 1), casing(MapColor.COLOR_BLUE).noOcclusion());
+    public static final DeferredBlock<AcceleratorSegmentBlock> RESONANT_SEGMENT = block("resonant_segment",
+            p -> new AcceleratorSegmentBlock(p, 2), casing(MapColor.COLOR_PURPLE).noOcclusion());
+    public static final DeferredItem<com.arno.robotica.core.item.PartItem> STRANGE_MATTER = ITEMS.registerItem("strange_matter",
+            p -> new com.arno.robotica.core.item.PartItem(p.rarity(Rarity.EPIC), 4));
+
+    static {
+        TAB_ORDER.add(STRANGE_MATTER);
+    }
 
     private static <B extends Block> DeferredBlock<B> block(String name, Function<BlockBehaviour.Properties, B> factory, BlockBehaviour.Properties props) {
         DeferredBlock<B> block = BLOCKS.registerBlock(name, factory, props);
@@ -122,23 +149,41 @@ public final class EnergyRegistry {
     }
 
     // ---- Block entities ----
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReactorControllerBlockEntity>> REACTOR_BE =
-            BLOCK_ENTITIES.register("reactor_controller", () -> BlockEntityType.Builder.of(ReactorControllerBlockEntity::new, REACTOR_CONTROLLER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoreReactorBlockEntity>> REACTOR_BE =
+            BLOCK_ENTITIES.register("reactor_controller", () -> BlockEntityType.Builder.of(CoreReactorBlockEntity::new, REACTOR_CONTROLLER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BankControllerBlockEntity>> BANK_BE =
             BLOCK_ENTITIES.register("bank_controller", () -> BlockEntityType.Builder.of(BankControllerBlockEntity::new, BANK_CONTROLLER.get()).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FusionControllerBlockEntity>> FUSION_BE =
-            BLOCK_ENTITIES.register("fusion_controller", () -> BlockEntityType.Builder.of(FusionControllerBlockEntity::new, FUSION_CONTROLLER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SpireBlockEntity>> SPIRE_BE =
+            BLOCK_ENTITIES.register("spire_base", () -> BlockEntityType.Builder.of(SpireBlockEntity::new, SPIRE_BASE.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ColliderBlockEntity>> COLLIDER_BE =
+            BLOCK_ENTITIES.register("collider_controller", () -> BlockEntityType.Builder.of(ColliderBlockEntity::new, COLLIDER_CONTROLLER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PortBlockEntity>> PORT_BE =
             BLOCK_ENTITIES.register("energy_port", () -> BlockEntityType.Builder.of(PortBlockEntity::new,
                     REACTOR_POWER_PORT.get(), REACTOR_ACCESS_PORT.get(), BANK_PORT.get()).build(null));
 
     // ---- Menus ----
-    public static final DeferredHolder<MenuType<?>, MenuType<ReactorMenu>> REACTOR_MENU =
-            MENUS.register("reactor_controller", () -> IMenuTypeExtension.create((id, inv, buf) -> new ReactorMenu(id, inv, buf.readBlockPos())));
+    public static final DeferredHolder<MenuType<?>, MenuType<CoreReactorMenu>> REACTOR_MENU =
+            MENUS.register("reactor_controller", () -> IMenuTypeExtension.create((id, inv, buf) -> new CoreReactorMenu(id, inv, buf.readBlockPos())));
     public static final DeferredHolder<MenuType<?>, MenuType<BankMenu>> BANK_MENU =
             MENUS.register("bank_controller", () -> IMenuTypeExtension.create((id, inv, buf) -> new BankMenu(id, inv, buf.readBlockPos())));
-    public static final DeferredHolder<MenuType<?>, MenuType<FusionMenu>> FUSION_MENU =
-            MENUS.register("fusion_controller", () -> IMenuTypeExtension.create((id, inv, buf) -> new FusionMenu(id, inv, buf.readBlockPos())));
+    public static final DeferredHolder<MenuType<?>, MenuType<SpireMenu>> SPIRE_MENU =
+            MENUS.register("spire_base", () -> IMenuTypeExtension.create((id, inv, buf) -> new SpireMenu(id, inv, buf.readBlockPos())));
+    public static final DeferredHolder<MenuType<?>, MenuType<ColliderMenu>> COLLIDER_MENU =
+            MENUS.register("collider_controller", () -> IMenuTypeExtension.create((id, inv, buf) -> new ColliderMenu(id, inv, buf.readBlockPos())));
+
+    /** 0.6 ids that are gone: worlds keep the blocks as their replacements. */
+    private static void aliases() {
+        alias("reactor_fuel_rod", "flux_amplifier", true);
+        alias("fusion_controller", "collider_controller", true);
+        alias("fusion_coil", "resonant_segment", true);
+        alias("fusion_casing", "reactor_casing", true);
+        BLOCK_ENTITIES.addAlias(Robotica.id("fusion_controller"), Robotica.id("collider_controller"));
+    }
+
+    private static void alias(String from, String to, boolean item) {
+        BLOCKS.addAlias(Robotica.id(from), Robotica.id(to));
+        if (item) ITEMS.addAlias(Robotica.id(from), Robotica.id(to));
+    }
 
     /** Registers everything and adds the items to the creative tab in build order. */
     public static void register(IEventBus modBus) {
@@ -147,6 +192,7 @@ public final class EnergyRegistry {
         BLOCK_ENTITIES.register(modBus);
         MENUS.register(modBus);
         COMPONENTS.register(modBus);
+        aliases();
         TAB_ORDER.forEach(RoboticaTab::add);
     }
 }

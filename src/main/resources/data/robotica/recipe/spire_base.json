@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PHP",
+    "KAK",
+    "PXP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/ferrothorium"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "K": {
+      "item": "robotica:copper_coil"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "X": {
+      "item": "robotica:iron_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:spire_base",
+    "count": 1
+  }
+}

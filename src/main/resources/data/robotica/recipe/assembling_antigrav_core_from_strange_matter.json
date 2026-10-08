@@ -1,0 +1,30 @@
+{
+  "type": "robotica:assembling",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "robotica:strange_matter"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "robotica:plasma_actuator"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:end_crystal"
+      },
+      "count": 2
+    }
+  ],
+  "results": [
+    {
+      "id": "robotica:antigrav_core"
+    }
+  ],
+  "time": 800,
+  "power": 2000
+}
