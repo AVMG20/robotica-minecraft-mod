@@ -76,6 +76,29 @@ public final class CodexLayout {
         return Math.max(1, (lines + per - 1) / per);
     }
 
+    // ------------------------------------------------------------------ layout pages (multiblock example builds)
+
+    /** One layer of the build per sub-page, under the title: cells of at most 20 px, the widest build fills 112 px. */
+    public static final int LAYOUT_W = 112, LAYOUT_MAX_CELL = 20, LAYOUT_MAX_SIDE = 7;
+
+    public static int layoutCell(int width) {
+        return Math.min(LAYOUT_MAX_CELL, LAYOUT_W / Math.max(1, width));
+    }
+
+    /** The "Layer n of m" line under the grid of {@code rows} rows. */
+    public static int layoutCaptionY(int rows, int width) {
+        return ITEMS_Y + rows * layoutCell(width) + 3;
+    }
+
+    public static int layoutTextTop(int rows, int width) {
+        return layoutCaptionY(rows, width) + 12;
+    }
+
+    /** Text lines that fit under the grid and its caption (layout pages never continue on a next sub-page). */
+    public static int layoutLines(int rows, int width) {
+        return Math.max(0, (CONTENT_BOTTOM - layoutTextTop(rows, width)) / LINE_H);
+    }
+
     // ------------------------------------------------------------------ guide ("Next steps")
 
     /** Steps start under the heading and the progress line; the step title sits next to an 18 px icon. */

@@ -14,7 +14,8 @@ The user is the only developer.
 - Generated data: `scripts/data/*.py` (recipes, models, guide steps) and `scripts/textures/*.py`. Edit the script, run
   it, commit both. Don't hand-edit generated JSON.
 - Codex (in-game book): `src/main/resources/assets/robotica/codex/chapters.json`; guide steps in
-  `scripts/data/codex_guide.py`.
+  `scripts/data/codex_guide.py`. Layout pages (`"layout": "<id>"`) draw a build from `scripts/wiki/multiblocks.json`,
+  copied by `scripts/data/codex_multiblocks.py`.
 - Wiki site (GitHub Pages, `docs/`): sources in `scripts/wiki/` (`items/*.json`, `upgrades.json`, `guides/*.md`,
   `multiblocks.json`, format in `FORMAT.txt`); run `python3 scripts/wiki/build_wiki.py`.
 

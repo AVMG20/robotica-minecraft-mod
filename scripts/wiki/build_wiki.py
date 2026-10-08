@@ -306,9 +306,13 @@ def build_codex():
     for c in chapters:
         if c.get('special'):
             continue
-        out.append({'title': c['title'], 'icon': short(c.get('icon', '')),
-                    'pages': [{'title': p.get('title', ''), 'text': p.get('text', ''),
-                               'items': [short(i) for i in p.get('items', [])]} for p in c.get('pages', [])]})
+        pages = []
+        for p in c.get('pages', []):
+            page = {'title': p.get('title', ''), 'text': p.get('text', ''), 'items': [short(i) for i in p.get('items', [])]}
+            if p.get('layout'):
+                page['layout'] = p['layout']
+            pages.append(page)
+        out.append({'title': c['title'], 'icon': short(c.get('icon', '')), 'pages': pages})
     return out
 
 

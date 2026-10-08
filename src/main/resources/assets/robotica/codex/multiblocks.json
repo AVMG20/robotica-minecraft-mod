@@ -1,0 +1,273 @@
+{
+  "multiblocks": {
+    "fission_reactor_5": {
+      "layers": [
+        [
+          "CCCCC",
+          "CCCCC",
+          "CCCCC",
+          "CCCCC",
+          "CCCCC"
+        ],
+        [
+          "CCCCC",
+          "C.W.C",
+          "AWRWP",
+          "C.W.C",
+          "CCCCC"
+        ],
+        [
+          "CGKGC",
+          "C.W.C",
+          "CWRWC",
+          "C.W.C",
+          "CCCCC"
+        ],
+        [
+          "CCGCC",
+          "C.W.C",
+          "CWRWC",
+          "C.W.C",
+          "CCCCC"
+        ],
+        [
+          "CCCCC",
+          "CCCCC",
+          "CCGCC",
+          "CCCCC",
+          "CCCCC"
+        ]
+      ],
+      "legend": {
+        "C": "robotica:reactor_casing",
+        "G": "robotica:reactor_glass",
+        "K": "robotica:reactor_controller",
+        "P": "robotica:reactor_power_port",
+        "A": "robotica:reactor_access_port",
+        "R": "robotica:reactor_fuel_rod",
+        "W": "minecraft:water_bucket",
+        ".": ""
+      }
+    },
+    "fission_reactor_7": {
+      "layers": [
+        [
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC"
+        ],
+        [
+          "CCCCCCC",
+          "CRQRQRC",
+          "CQRQRQC",
+          "CRQRQRC",
+          "CQRQRQC",
+          "CRQRQRC",
+          "CCCCCCC"
+        ],
+        [
+          "CGGGGGC",
+          "CRQRQRC",
+          "CQRQRQC",
+          "CRQRQRP",
+          "CQRQRQC",
+          "CRQRQRC",
+          "CCCCCCC"
+        ],
+        [
+          "CCCKCCC",
+          "CRQRQRC",
+          "CQRQRQC",
+          "ARQRQRC",
+          "CQRQRQC",
+          "CRQRQRC",
+          "CCCCCCC"
+        ],
+        [
+          "CGGGGGC",
+          "CRQRQRC",
+          "CQRQRQC",
+          "CRQRQRP",
+          "CQRQRQC",
+          "CRQRQRC",
+          "CCCCCCC"
+        ],
+        [
+          "CCCCCCC",
+          "CRQRQRC",
+          "CQRQRQC",
+          "CRQRQRC",
+          "CQRQRQC",
+          "CRQRQRC",
+          "CCCCCCC"
+        ],
+        [
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC",
+          "CCCCCCC"
+        ]
+      ],
+      "legend": {
+        "C": "robotica:reactor_casing",
+        "G": "robotica:reactor_glass",
+        "K": "robotica:reactor_controller",
+        "P": "robotica:reactor_power_port",
+        "A": "robotica:reactor_access_port",
+        "R": "robotica:reactor_fuel_rod",
+        "Q": "robotica:cryo_coolant",
+        ".": ""
+      }
+    },
+    "capacitor_bank_small": {
+      "layers": [
+        [
+          "BBBB",
+          "BBBB",
+          "BBBB"
+        ],
+        [
+          "BKGB",
+          "ICTO",
+          "BBBB"
+        ],
+        [
+          "BBBB",
+          "BBBB",
+          "BBBB"
+        ]
+      ],
+      "legend": {
+        "B": "robotica:bank_casing",
+        "G": "robotica:bank_glass",
+        "K": "robotica:bank_controller",
+        "I": "robotica:bank_port",
+        "O": "robotica:bank_port",
+        "C": "robotica:capacitor_copper",
+        "T": "robotica:transfer_coil_basic",
+        ".": ""
+      }
+    },
+    "capacitor_bank_5": {
+      "layers": [
+        [
+          "BBBBB",
+          "BBBBB",
+          "BBBBB",
+          "BBBBB",
+          "BBBBB"
+        ],
+        [
+          "BGGGB",
+          "BRRRB",
+          "BRRRB",
+          "BRRRB",
+          "BBBBB"
+        ],
+        [
+          "BGKGB",
+          "BRTRB",
+          "ITTTO",
+          "BRTRB",
+          "BBBBB"
+        ],
+        [
+          "BGGGB",
+          "BRRRB",
+          "BRRRB",
+          "BRRRB",
+          "BBBBB"
+        ],
+        [
+          "BBBBB",
+          "BBBBB",
+          "BBBBB",
+          "BBBBB",
+          "BBBBB"
+        ]
+      ],
+      "legend": {
+        "B": "robotica:bank_casing",
+        "G": "robotica:bank_glass",
+        "K": "robotica:bank_controller",
+        "I": "robotica:bank_port",
+        "O": "robotica:bank_port",
+        "R": "robotica:capacitor_redstone",
+        "T": "robotica:transfer_coil_advanced",
+        ".": ""
+      }
+    },
+    "fusion_reactor": {
+      "layers": [
+        [
+          "FFFFFFF",
+          "FFFFFFF",
+          "FFFFFFF",
+          "FFFFFFF",
+          "FFFFFFF",
+          "FFFFFFF",
+          "FFFFFFF"
+        ],
+        [
+          "FFGKGFF",
+          "FOOOOOF",
+          "FO...OF",
+          "AO...OP",
+          "FO...OF",
+          "FOOOOOF",
+          "FFFFFFF"
+        ],
+        [
+          "FFFFFFF",
+          "FFFFFFF",
+          "FFGGGFF",
+          "FFGGGFF",
+          "FFGGGFF",
+          "FFFFFFF",
+          "FFFFFFF"
+        ]
+      ],
+      "legend": {
+        "F": "robotica:fusion_casing",
+        "G": "robotica:reactor_glass",
+        "K": "robotica:fusion_controller",
+        "P": "robotica:reactor_power_port",
+        "A": "robotica:reactor_access_port",
+        "O": "robotica:fusion_coil",
+        ".": ""
+      }
+    },
+    "mob_replicator": {
+      "layers": [
+        [
+          "FFF",
+          "FFF",
+          "FFF"
+        ],
+        [
+          "FKF",
+          "G.G",
+          "FGF"
+        ],
+        [
+          "FFF",
+          "FGF",
+          "FFF"
+        ]
+      ],
+      "legend": {
+        "F": "robotica:replicator_frame",
+        "G": "robotica:replicator_glass",
+        "K": "robotica:replicator_controller",
+        ".": ""
+      }
+    }
+  }
+}

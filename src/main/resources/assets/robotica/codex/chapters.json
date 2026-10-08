@@ -123,7 +123,7 @@
       "pages": [
         {
           "title": "Multiblocks",
-          "text": "Each one is a hollow box. Every edge must be casing; the rest of the walls can be casing, glass or ports.\nPut the controller in a side wall, facing out. Open it to see which block is wrong; its spyglass button outlines that block in the world.",
+          "text": "Each one is a hollow box: casing on every edge, and casing, glass or ports in the walls. The controller goes in a side wall, facing out.\nOpen the controller to see which block is wrong. Its spyglass button outlines that block in the world.",
           "items": [
             "robotica:bank_casing",
             "robotica:reactor_casing",
@@ -135,22 +135,27 @@
         },
         {
           "title": "Capacitor Bank",
-          "text": "The inside takes any mix of Capacitors and Transfer Coils.",
+          "text": "Bank Ports: FE in or out, one direction each.\nCapacitors: hold the FE.\nTransfer Coils: how fast FE moves in and out, shared by all ports.\nMix Capacitors and Coils inside however you like.",
           "items": [
+            "robotica:bank_casing",
+            "robotica:bank_glass",
+            "robotica:bank_controller",
             "robotica:bank_port",
             "robotica:capacitor_copper",
-            "robotica:capacitor_redstone",
-            "robotica:capacitor_ender",
-            "robotica:capacitor_resonant",
-            "robotica:transfer_coil_basic",
-            "robotica:transfer_coil_advanced",
-            "robotica:transfer_coil_elite"
+            "robotica:transfer_coil_basic"
           ]
         },
         {
+          "title": "Smallest bank",
+          "layout": "capacitor_bank_small",
+          "text": "Glass goes in the walls, never on an edge."
+        },
+        {
           "title": "Fission Reactor",
-          "text": "Put coolant in the gaps next to the rods. From worst to best: water, ice, packed ice, blue ice, Cryo Coolant.\nIn a 5x5x5, place the rods in an X.\nIf it overheats it shuts down and loses the pellet it was burning.",
+          "text": "Fuel Rods: full columns, floor to roof.\nCoolant: only the four blocks beside a rod cool it. Worst to best: water, ice, packed ice, blue ice, Cryo Coolant.\nAccess Port: fuel in, waste out. Full waste stops it.\nPower Port: FE out.\nToo hot: it shuts down and loses its pellet.",
           "items": [
+            "robotica:reactor_casing",
+            "robotica:reactor_glass",
             "robotica:reactor_controller",
             "robotica:reactor_fuel_rod",
             "robotica:reactor_access_port",
@@ -159,14 +164,26 @@
           ]
         },
         {
+          "title": "Smallest reactor",
+          "layout": "fission_reactor_5",
+          "text": "One rod column with water on all four sides."
+        },
+        {
           "title": "Fusion Reactor",
-          "text": "Lighting it takes a huge FE charge, so build a Capacitor Bank first.\nKeep it fueled: if it runs dry the plasma collapses and you have to charge it again.",
+          "text": "Fusion Coils: a ring of 16 around the empty middle.\nPower Port: takes the ignition charge in and sends power out. Build a Capacitor Bank first.\nAccess Port: fuel in.\nKeep it fueled: if it runs dry the plasma collapses and you have to charge it again.",
           "items": [
+            "robotica:fusion_casing",
+            "robotica:reactor_glass",
             "robotica:fusion_controller",
             "robotica:fusion_coil",
-            "robotica:fusion_casing",
+            "robotica:reactor_power_port",
+            "robotica:reactor_access_port",
             "robotica:fusion_fuel_pellet"
           ]
+        },
+        {
+          "title": "Fusion layout",
+          "layout": "fusion_reactor"
         }
       ]
     },
@@ -501,6 +518,11 @@
             "robotica:replicator_frame",
             "robotica:replicator_glass"
           ]
+        },
+        {
+          "title": "Replicator layout",
+          "layout": "mob_replicator",
+          "text": "Any frame block can be glass, edges and corners too."
         }
       ]
     },

@@ -42,7 +42,8 @@ import java.util.Optional;
  * Two-page technical manual. Left page: chapter list (paged with arrows when it is longer than the page). Right page:
  * chapter text, item icons (click one to see its recipe; click recipe ingredients to follow the ladder down).
  * Operators also get the Creative Lab: an item grid (click = 1, shift-click = stack) and test actions.
- * Content: assets/robotica/codex/chapters.json (resource pack overridable).
+ * Content: assets/robotica/codex/chapters.json (resource pack overridable). A page with {@code "layout": "<id>"} draws that
+ * example build from assets/robotica/codex/multiblocks.json one layer per sub-page (written by codex_multiblocks.py).
  * Geometry lives in {@link CodexLayout}; the whole book is scaled down when the GUI scale leaves too little room.
  */
 public class CodexScreen extends Screen {
@@ -50,7 +51,9 @@ public class CodexScreen extends Screen {
     private static final int COVER = 0xFF23292B, TRIM = 0xFFC87533, PAPER = 0xFFE9EDEA, GRID = 0xFFDCE3E0;
     private static final int INK = 0xFF1E2A2A, HEAD = 0xFFA4521C, MUTED = 0xFF5D6B67, LINK = 0xFF0F7488, SLOT = 0xFFC9D2CE;
 
-    private record Page(String title, String text, List<ItemStack> items) {}
+    private record Page(String title, String text, List<ItemStack> items, Layout layout) {}
+    /** An example build: layers bottom first, each [row north to south][column west to east]; empty stacks are air. */
+    private record Layout(List<ItemStack[][]> layers, int width, int depth) {}
     /** {@code guide}: the "Next steps" chapter, drawn from the guide advancements instead of text. */
     private record Chapter(String title, ItemStack icon, List<Page> pages, boolean guide) {}
     /** One step of the guide (assets/robotica/codex/guide.json, written with the advancements by codex_guide.py). */
@@ -66,6 +69,7 @@ public class CodexScreen extends Screen {
     private static final int GUIDE_LIST_LINES = CodexLayout.checklistLines();
 
     private final List<Chapter> chapters = new ArrayList<>();
+    private final Map<String, Layout> layouts = new HashMap<>();
     private int chapter = 0, page = 0, subPage = 0, labScroll = 0, listPage = 0;
     /** Book scale (1 unless the screen is smaller than the book); layout and mouse work in unscaled book pixels. */
     private float scale = 1F;
@@ -85,6 +89,7 @@ public class CodexScreen extends Screen {
 
     public CodexScreen() {
         super(Component.translatable("item.robotica.codex"));
+        loadLayouts();
         loadChapters();
         loadGuide();
     }
@@ -122,6 +127,40 @@ public class CodexScreen extends Screen {
         return next;
     }
 
+    private void loadLayouts() {
+        try {
+            Optional<Resource> res = net.minecraft.client.Minecraft.getInstance().getResourceManager().getResource(Robotica.id("codex/multiblocks.json"));
+            if (res.isEmpty()) return;
+            try (Reader reader = res.get().openAsReader()) {
+                JsonObject all = JsonParser.parseReader(reader).getAsJsonObject().getAsJsonObject("multiblocks");
+                for (Map.Entry<String, JsonElement> e : all.entrySet()) {
+                    JsonObject mb = e.getValue().getAsJsonObject();
+                    Map<Character, ItemStack> legend = new HashMap<>();
+                    for (Map.Entry<String, JsonElement> l : mb.getAsJsonObject("legend").entrySet()) {
+                        legend.put(l.getKey().charAt(0), l.getValue().getAsString().isEmpty() ? ItemStack.EMPTY : stackOf(l.getValue().getAsString()));
+                    }
+                    List<ItemStack[][]> layers = new ArrayList<>();
+                    int width = 0, depth = 0;
+                    for (JsonElement le : mb.getAsJsonArray("layers")) {
+                        JsonArray rows = le.getAsJsonArray();
+                        ItemStack[][] layer = new ItemStack[rows.size()][];
+                        for (int z = 0; z < rows.size(); z++) {
+                            String row = rows.get(z).getAsString();
+                            layer[z] = new ItemStack[row.length()];
+                            for (int xi = 0; xi < row.length(); xi++) layer[z][xi] = legend.getOrDefault(row.charAt(xi), ItemStack.EMPTY);
+                            width = Math.max(width, row.length());
+                        }
+                        depth = Math.max(depth, rows.size());
+                        layers.add(layer);
+                    }
+                    if (!layers.isEmpty()) layouts.put(e.getKey(), new Layout(layers, width, depth));
+                }
+            }
+        } catch (Exception e) {
+            Robotica.LOGGER.error("Could not read the Robotica codex layouts", e);
+        }
+    }
+
     private void loadChapters() {
         try {
             Optional<Resource> res = net.minecraft.client.Minecraft.getInstance().getResourceManager()
@@ -144,7 +183,7 @@ public class CodexScreen extends Screen {
     }
 
     /** Returns null for a chapter without pages. A page without text gets an empty text, so it never takes the rest down. */
-    private static Chapter readChapter(JsonObject c) {
+    private Chapter readChapter(JsonObject c) {
         List<Page> pages = new ArrayList<>();
         if (c.has("pages")) {
             for (JsonElement pe : c.getAsJsonArray("pages")) {
@@ -156,12 +195,13 @@ public class CodexScreen extends Screen {
                         if (!s.isEmpty()) items.add(s);
                     }
                 }
+                Layout layout = p.has("layout") ? layouts.get(p.get("layout").getAsString()) : null;
                 pages.add(new Page(p.has("title") ? p.get("title").getAsString() : "",
-                        p.has("text") ? p.get("text").getAsString() : "", items));
+                        p.has("text") ? p.get("text").getAsString() : "", items, layout));
             }
         }
         boolean guide = c.has("special") && "guide".equals(c.get("special").getAsString());
-        if (guide && pages.isEmpty()) pages.add(new Page("", "", List.of()));
+        if (guide && pages.isEmpty()) pages.add(new Page("", "", List.of(), null));
         if (pages.isEmpty()) return null;
         String title = c.has("title") ? c.get("title").getAsString() : "?";
         ItemStack icon = c.has("icon") ? stackOf(c.get("icon").getAsString()) : ItemStack.EMPTY;
@@ -428,7 +468,43 @@ public class CodexScreen extends Screen {
     private int subPageCount() {
         if (chapters.isEmpty()) return 1;
         if (chapters.get(chapter).guide()) return guidePages().size() + Math.max(1, (steps.size() + GUIDE_LIST_LINES - 1) / GUIDE_LIST_LINES);
-        return CodexLayout.subPages(wrappedText().size(), chapters.get(chapter).pages().get(page).items().size());
+        Page p = chapters.get(chapter).pages().get(page);
+        if (p.layout() != null) return p.layout().layers().size();
+        return CodexLayout.subPages(wrappedText().size(), p.items().size());
+    }
+
+    /** Left edge of a layout grid: centered on the page. */
+    private int layoutX(Layout layout) {
+        return left + W / 2 + CodexLayout.MARGIN + (PAGE_W - layout.width() * CodexLayout.layoutCell(layout.width())) / 2;
+    }
+
+    /** Draws the layer of the current sub-page, its caption and the page text under it; returns the hovered block. */
+    private ItemStack renderLayout(GuiGraphics g, Page p, int x, int mx, int my) {
+        Layout layout = p.layout();
+        int layer = Math.max(0, Math.min(subPage, layout.layers().size() - 1));
+        int cell = CodexLayout.layoutCell(layout.width()), gx = layoutX(layout), gy = top + CodexLayout.ITEMS_Y;
+        int pad = Math.max(0, (cell - 16) / 2);
+        ItemStack hovered = ItemStack.EMPTY;
+        ItemStack[][] rows = layout.layers().get(layer);
+        for (int z = 0; z < rows.length; z++) {
+            for (int xi = 0; xi < rows[z].length; xi++) {
+                ItemStack s = rows[z][xi];
+                int cx = gx + xi * cell, cy = gy + z * cell;
+                g.fill(cx, cy, cx + cell - 1, cy + cell - 1, s.isEmpty() ? GRID : SLOT);
+                if (s.isEmpty()) continue;
+                g.renderItem(s, cx + pad, cy + pad);
+                if (mx >= cx && mx < cx + cell && my >= cy && my < cy + cell) hovered = s;
+            }
+        }
+        int captionY = top + CodexLayout.layoutCaptionY(layout.depth(), layout.width());
+        MachineScreenFit.draw(g, font, Component.literal("Layer " + (layer + 1) + " of " + layout.layers().size() + ", bottom first"), x, captionY, PAGE_W, MUTED);
+        int y = top + CodexLayout.layoutTextTop(layout.depth(), layout.width());
+        for (FormattedCharSequence line : wrappedText()) {
+            if (y + 9 > top + CodexLayout.CONTENT_BOTTOM) break;
+            g.drawString(font, line, x, y, INK, false);
+            y += CodexLayout.LINE_H;
+        }
+        return hovered;
     }
 
     private ItemStack renderManual(GuiGraphics g, int mx, int my) {
@@ -443,19 +519,23 @@ public class CodexScreen extends Screen {
         ItemStack hovered = ItemStack.EMPTY;
         String title = p.title().isEmpty() ? chapters.get(chapter).title() : p.title();
         MachineScreenFit.draw(g, font, Component.literal(title).withStyle(ChatFormatting.BOLD), x, y, PAGE_W, HEAD);
-        for (int i = 0; i < Math.min(p.items().size(), CodexLayout.MAX_ITEMS); i++) {
-            ItemStack s = p.items().get(i);
-            int ix = x + CodexLayout.itemX(i), iy = top + CodexLayout.itemY(i);
-            g.fill(ix, iy, ix + 18, iy + 18, SLOT);
-            g.renderItem(s, ix + 1, iy + 1);
-            if (mx >= ix && mx < ix + 18 && my >= iy && my < iy + 18) hovered = s;
-        }
-        y = top + CodexLayout.textTop(p.items().size());
-        List<FormattedCharSequence> lines = wrappedText();
-        int per = linesPerSubPage();
-        for (int i = subPage * per; i < Math.min(lines.size(), (subPage + 1) * per); i++) {
-            g.drawString(font, lines.get(i), x, y, INK, false);
-            y += CodexLayout.LINE_H;
+        if (p.layout() != null) {
+            hovered = renderLayout(g, p, x, mx, my);
+        } else {
+            for (int i = 0; i < Math.min(p.items().size(), CodexLayout.MAX_ITEMS); i++) {
+                ItemStack s = p.items().get(i);
+                int ix = x + CodexLayout.itemX(i), iy = top + CodexLayout.itemY(i);
+                g.fill(ix, iy, ix + 18, iy + 18, SLOT);
+                g.renderItem(s, ix + 1, iy + 1);
+                if (mx >= ix && mx < ix + 18 && my >= iy && my < iy + 18) hovered = s;
+            }
+            y = top + CodexLayout.textTop(p.items().size());
+            List<FormattedCharSequence> lines = wrappedText();
+            int per = linesPerSubPage();
+            for (int i = subPage * per; i < Math.min(lines.size(), (subPage + 1) * per); i++) {
+                g.drawString(font, lines.get(i), x, y, INK, false);
+                y += CodexLayout.LINE_H;
+            }
         }
         String counter = (page + 1) + "/" + chapters.get(chapter).pages().size() + (subPageCount() > 1 ? " (" + (subPage + 1) + "/" + subPageCount() + ")" : "");
         g.drawCenteredString(font, Component.literal(counter).withStyle(s -> s.withColor(MUTED)), x + PAGE_W / 2, top + H - 20, MUTED);
@@ -774,6 +854,14 @@ public class CodexScreen extends Screen {
             return ItemStack.EMPTY;
         }
         Page p = chapters.get(chapter).pages().get(page);
+        if (p.layout() != null) {
+            Layout layout = p.layout();
+            int cell = CodexLayout.layoutCell(layout.width()), gx = layoutX(layout), gy = top + CodexLayout.ITEMS_Y;
+            int col = Math.floorDiv(mx - gx, cell), row = Math.floorDiv(my - gy, cell);
+            ItemStack[][] rows = layout.layers().get(Math.max(0, Math.min(subPage, layout.layers().size() - 1)));
+            if (row < 0 || row >= rows.length || col < 0 || col >= rows[row].length) return ItemStack.EMPTY;
+            return rows[row][col];
+        }
         int x = left + W / 2 + CodexLayout.MARGIN;
         for (int i = 0; i < Math.min(p.items().size(), CodexLayout.MAX_ITEMS); i++) {
             int ix = x + CodexLayout.itemX(i), iy = top + CodexLayout.itemY(i);

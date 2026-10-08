@@ -97,6 +97,7 @@ public class CodexGameTests {
         if (CodexLayout.recipeMaxRows() < 3) problems.add("a 3x3 recipe does not fit");
 
         var chapters = readModJson("assets", "robotica", "codex", "chapters.json").getAsJsonArray("chapters");
+        var layouts = readModJson("assets", "robotica", "codex", "multiblocks.json").getAsJsonObject("multiblocks");
         int titleRoom = CodexLayout.PAGE_W - CodexLayout.ROW_PAGED - 8;
         for (var ce : chapters) {
             var c = ce.getAsJsonObject();
@@ -114,6 +115,33 @@ public class CodexGameTests {
                 }
                 if (CodexLayout.estimateWidth(str(p, "title"), true) > CodexLayout.PAGE_W) problems.add(where + ": page title too wide");
                 int lines = CodexLayout.wrap(str(p, "text"), CodexLayout.TEXT_W, plain).size();
+                if (p.has("layout")) {
+                    String id = str(p, "layout");
+                    if (!layouts.has(id)) {
+                        problems.add(where + ": unknown layout " + id);
+                        continue;
+                    }
+                    var mb = layouts.getAsJsonObject(id);
+                    var legend = mb.getAsJsonObject("legend");
+                    for (var le : legend.entrySet()) {
+                        String item = le.getValue().getAsString();
+                        ResourceLocation key = ResourceLocation.tryParse(item);
+                        if (!item.isEmpty() && (key == null || !BuiltInRegistries.ITEM.containsKey(key))) problems.add(where + ": layout item " + item + " does not exist");
+                    }
+                    int width = 0, depth = 0;
+                    for (var layer : mb.getAsJsonArray("layers")) {
+                        depth = Math.max(depth, layer.getAsJsonArray().size());
+                        for (var row : layer.getAsJsonArray()) {
+                            String r = row.getAsString();
+                            width = Math.max(width, r.length());
+                            for (char ch : r.toCharArray()) if (!legend.has(String.valueOf(ch))) problems.add(where + ": layout letter " + ch + " has no legend entry");
+                        }
+                    }
+                    if (width > CodexLayout.LAYOUT_MAX_SIDE || depth > CodexLayout.LAYOUT_MAX_SIDE) problems.add(where + ": layout wider than " + CodexLayout.LAYOUT_MAX_SIDE);
+                    int room = CodexLayout.layoutLines(depth, width);
+                    if (lines > room) problems.add(where + ": " + lines + " lines under the layout, room for " + room);
+                    continue;
+                }
                 int room = CodexLayout.linesPerSubPage(items);
                 if (lines > room) problems.add(where + ": " + lines + " lines, the page holds " + room);
             }
