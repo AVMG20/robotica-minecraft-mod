@@ -101,7 +101,7 @@ public class UpgradeRuleGameTests {
                 EnumSet.of(SPEED, EFFICIENCY, FORTUNE, VOID));
         checkMk(helper, "Grinder", mk -> ProcessingRegistry.GRINDERS.get(mk - 1).get().defaultBlockState(), EnumSet.of(SPEED, EFFICIENCY, FORTUNE, VOID));
         checkMk(helper, "Electric Furnace", mk -> ProcessingRegistry.FURNACES.get(mk - 1).get().defaultBlockState(),
-                EnumSet.of(SPEED, EFFICIENCY, FORTUNE, RANGE));
+                EnumSet.of(SPEED, EFFICIENCY, RANGE));
         Block[] excavators = {AutomationContent.EXCAVATOR.get(), AutomationContent.EXCAVATOR_MK2.get(), AutomationContent.EXCAVATOR_MK3.get(),
                 AutomationContent.EXCAVATOR_MK4.get()};
         checkMk(helper, "Excavator", mk -> excavators[mk - 1].defaultBlockState(), EnumSet.of(SPEED, RANGE, EFFICIENCY, FORTUNE, SILK, VOID));

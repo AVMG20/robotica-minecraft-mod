@@ -31,7 +31,6 @@ public final class ProcessingConfig {
     private static final ModConfigSpec.DoubleValue FURNACE_TIME_FACTOR;
     private static final ModConfigSpec.IntValue FURNACE_POWER;
     private static final ModConfigSpec.IntValue[] LANES = new ModConfigSpec.IntValue[4];
-    private static final ModConfigSpec.DoubleValue XP_PER_FORTUNE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -83,8 +82,6 @@ public final class ProcessingConfig {
             LANES[i] = b.comment("Mk" + (i + 1) + ": lanes that smelt in parallel (each has its own input and output slot).")
                     .defineInRange("lanesMk" + (i + 1), lanes[i], 1, 8);
         }
-        XP_PER_FORTUNE = b.comment("Extra experience per Fortune card (0.5 = +50%). Never for inputs in c:dusts, so ingot -> dust -> ingot farms no experience.")
-                .defineInRange("xpPerFortune", 0.5, 0.0, 10.0);
         b.pop();
         SPEC = b.build();
     }
@@ -121,5 +118,4 @@ public final class ProcessingConfig {
     public static double furnaceTimeFactor() { return get(FURNACE_TIME_FACTOR); }
     public static int furnacePower() { return get(FURNACE_POWER); }
     public static int lanes(int tier) { return get(LANES[mk(tier)]); }
-    public static double xpPerFortune() { return get(XP_PER_FORTUNE); }
 }

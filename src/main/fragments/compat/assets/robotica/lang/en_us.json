@@ -10,7 +10,7 @@
   "jei.robotica.info.upgrade.speed": "Machines work faster and use more FE per action.",
   "jei.robotica.info.upgrade.range": "Bigger work area or range: robots +2 radius per card, the Excavator +%s blocks wide, the Wireless Charger +%s blocks, the Electric Furnace +1 item per lane.",
   "jei.robotica.info.upgrade.efficiency": "Machines use 15%% less FE per action per card, never below 40%%. Combustion Generator: %s%% less fuel per card.",
-  "jei.robotica.info.upgrade.fortune": "Fortune I to III on mined blocks, more output in the Grinder and Alloy Smelter, +%s%% experience in the Electric Furnace, Looting in the Replicator. Not with a Silk Touch card.",
+  "jei.robotica.info.upgrade.fortune": "Fortune I to III on mined blocks, more output in the Grinder and Alloy Smelter, Looting in the Replicator. Not with a Silk Touch card.",
   "jei.robotica.info.upgrade.silk": "Mined blocks drop themselves. Cannot be combined with a Fortune card.",
   "jei.robotica.info.upgrade.growth": "+50% crop and sapling growth per card.",
   "jei.robotica.info.upgrade.void": "Deletes junk (cobblestone, dirt, gravel) and outputs that do not fit.",
@@ -29,5 +29,6 @@
   "jade.robotica.energy": "%s / %s FE",
   "config.jade.plugin_robotica.machine": "Robotica machines",
   "config.jade.plugin_robotica.drone": "Robotica drones",
-  "jade.robotica.last_ore": "Last ore: %s"
+  "jade.robotica.last_ore": "Last ore: %s",
+  "jade.robotica.xp": "Stored XP: %s"
 }

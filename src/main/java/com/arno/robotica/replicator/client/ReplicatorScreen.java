@@ -1,14 +1,19 @@
 package com.arno.robotica.replicator.client;
 
+import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.replicator.ReplicatorModePayload;
+import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity.Mode;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity.Pause;
 import com.arno.robotica.replicator.menu.ReplicatorMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -18,10 +23,17 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * GUI of the Replicator Controller: energy bar, cycle progress, one short status word and a mode icon. Slots carry ghost icons;
- * cycle time, speed, FE/t and looting are in tooltips.
+ * cycle time, speed, FE/t and looting are in tooltips. A row above the output claims the stored experience: up to a
+ * target level (-/+, shift for 10) or all of it, through menu button clicks the server validates.
  */
 public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
+    /** Target level, kept while the game runs. */
+    private static int targetLevel = 30;
+
     private IconButton modeButton;
+    private Button claimButton;
+    private Button allButton;
+    private int shownTarget = -1;
 
     public ReplicatorScreen(ReplicatorMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -42,6 +54,38 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
             PacketDistributor.sendToServer(new ReplicatorModePayload(menu.pos(), next.ordinal()));
         }));
         updateMode();
+
+        int y = topPos + ReplicatorMenu.XP_ROW_Y;
+        addRenderableWidget(new FitButton(leftPos + 62, y, 12, 12, Component.literal("-"), b -> changeTarget(-1),
+                Component.translatable("gui.robotica.replicator.target_tip")));
+        addRenderableWidget(new FitButton(leftPos + 106, y, 12, 12, Component.literal("+"), b -> changeTarget(1),
+                Component.translatable("gui.robotica.replicator.target_tip")));
+        claimButton = addRenderableWidget(new FitButton(leftPos + 120, y, 26, 12, Component.translatable("gui.robotica.replicator.claim"),
+                b -> click(ReplicatorMenu.claimToLevel(targetLevel))));
+        allButton = addRenderableWidget(new FitButton(leftPos + 148, y, 20, 12, Component.translatable("gui.robotica.replicator.claim_all"),
+                b -> click(ReplicatorMenu.CLAIM_ALL), Component.translatable("gui.robotica.replicator.claim_all_tip")));
+        shownTarget = -1;
+        updateXp();
+    }
+
+    private void changeTarget(int dir) {
+        int step = Screen.hasShiftDown() ? 10 : 1;
+        targetLevel = Math.max(1, Math.min(ReplicatorControllerBlockEntity.MAX_CLAIM_LEVEL, targetLevel + dir * step));
+        updateXp();
+    }
+
+    private void click(int id) {
+        if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
+    }
+
+    private void updateXp() {
+        boolean any = menu.xpStored() > 0;
+        claimButton.active = any;
+        allButton.active = any;
+        if (shownTarget != targetLevel) {
+            shownTarget = targetLevel;
+            claimButton.setTooltip(Tooltip.create(Component.translatable("gui.robotica.replicator.claim_tip", targetLevel)));
+        }
     }
 
     private static ItemStack modeIcon(Mode mode) {
@@ -58,6 +102,7 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
     protected void containerTick() {
         super.containerTick();
         if (modeButton != null) updateMode();
+        if (claimButton != null) updateXp();
     }
 
     @Override
@@ -120,5 +165,10 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
         }
         drawStatus(g, shortText, x + 64, y + 35, 70, 2, tone);
         addTooltip(x + 63, y + 33, 70, 18, longText);
+
+        int rowY = y + ReplicatorMenu.XP_ROW_Y;
+        drawFitted(g, font, Component.translatable("gui.robotica.replicator.xp", Fmt.compact(menu.xpStored())), x + 8, rowY + 2, 52, TEXT, -1, false, 1.0F);
+        addTooltip(x + 7, rowY, 54, 12, Component.translatable("gui.robotica.replicator.xp_tip", menu.xpStored()));
+        drawFitted(g, font, Component.translatable("gui.robotica.replicator.target", targetLevel), x + 90, rowY + 2, 30, TEXT, 0, false, 1.0F);
     }
 }

@@ -342,7 +342,6 @@
    "what": "Smelts every furnace recipe in half the time, on several lanes at once.",
    "use": [
     "Put items in the lanes.",
-    "Take results by hand to get the stored experience.",
     "Right-click it with the next Mk to upgrade in place; everything inside stays."
    ],
    "stats": {

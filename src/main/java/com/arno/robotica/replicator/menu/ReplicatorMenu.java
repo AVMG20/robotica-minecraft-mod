@@ -20,8 +20,11 @@ import org.jetbrains.annotations.Nullable;
  * Menu of the Replicator Controller. Slots: 0 vial, 1 boost, 2-4 upgrades, 5-22 output (take only), 23 catalyst, then the player inventory.
  */
 public class ReplicatorMenu extends MachineMenu {
-    public static final int IMAGE_HEIGHT = 218;
-    private static final int PLAYER_Y = 136;
+    public static final int IMAGE_HEIGHT = 226;
+    /** Row of the experience controls, between the machine and the output. */
+    public static final int XP_ROW_Y = 79;
+    private static final int OUTPUT_Y = 96;
+    private static final int PLAYER_Y = 144;
 
     private final ContainerLevelAccess access;
     private final BlockPos pos;
@@ -32,6 +35,9 @@ public class ReplicatorMenu extends MachineMenu {
     private final int statusIndex;
     private final int speedIndex;
     private final int costIndex;
+    private final int xpIndex;
+    @Nullable
+    private final ReplicatorControllerBlockEntity be;
 
     /** Client side. */
     public ReplicatorMenu(int id, Inventory inv, BlockPos pos) {
@@ -49,6 +55,7 @@ public class ReplicatorMenu extends MachineMenu {
                            IItemHandler output, IItemHandler catalyst, @Nullable ReplicatorControllerBlockEntity be) {
         super(ReplicatorRegistry.REPLICATOR_MENU.get(), id);
         this.pos = pos;
+        this.be = be;
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
         addSlot(new SlotItemHandler(vial, 0, 38, 20));
         addSlot(new SlotItemHandler(boost, 0, 38, 48));
@@ -57,7 +64,7 @@ public class ReplicatorMenu extends MachineMenu {
         }
         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new SlotItemHandler(output, col + row * 9, 8 + col * 18, 88 + row * 18) {
+                addSlot(new SlotItemHandler(output, col + row * 9, 8 + col * 18, OUTPUT_Y + row * 18) {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
                         return false;
@@ -76,6 +83,8 @@ public class ReplicatorMenu extends MachineMenu {
                 | (be.status().ordinal() << 2) | (be.pause().ordinal() << 5) | (be.lootingLevel() << 9));
         speedIndex = track(be == null ? () -> 0 : be::speedMultiplier);
         costIndex = track(be == null ? () -> 0 : be::energyPerTick);
+        xpIndex = track(be == null ? () -> 0 : be::xpStored);
+        trackSides(be == null ? null : be.sides);
     }
 
     public BlockPos pos() {
@@ -127,6 +136,27 @@ public class ReplicatorMenu extends MachineMenu {
 
     public int energyPerTick() {
         return synced(costIndex);
+    }
+
+    public int xpStored() {
+        return synced(xpIndex);
+    }
+
+    /** Button id that claims all stored experience. */
+    public static final int CLAIM_ALL = 0;
+
+    /** Button id that claims experience up to {@code level}. */
+    public static int claimToLevel(int level) {
+        return Math.max(1, Math.min(ReplicatorControllerBlockEntity.MAX_CLAIM_LEVEL, level));
+    }
+
+    /** Server side, after vanilla checked the menu is open and still valid: 0 claims all, 1-1000 up to that level. */
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (be == null || be.isRemoved() || id < 0 || id > ReplicatorControllerBlockEntity.MAX_CLAIM_LEVEL) return false;
+        if (!stillValid(player)) return false;
+        be.claimXp(player, id == CLAIM_ALL ? -1 : id);
+        return true;
     }
 
     @Override

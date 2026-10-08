@@ -8,6 +8,7 @@ import com.arno.robotica.core.side.SideConfig;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
+import com.arno.robotica.core.util.RecipeAcceptCache;
 import com.arno.robotica.industry.IndustryConfig;
 import com.arno.robotica.industry.IndustryRegistry;
 import com.arno.robotica.industry.menu.ProcessingMenu;
@@ -30,6 +31,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -37,9 +39,12 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.Direction;
 
 /**
@@ -68,6 +73,9 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
     @Nullable
     private RecipeHolder<ProcessingRecipe> current;
     private boolean inputsChanged = true;
+    /** Cached {@link #canOutput} of the current recipe; cleared when an output slot, the cards or the recipe change. */
+    private boolean roomKnown;
+    private boolean roomOk;
     /** FE (or work units for free recipes) put into the current craft. */
     private long work;
     private int progress;
@@ -89,10 +97,14 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
             @Override
             protected void onContentsChanged(int slot) {
                 if (slot < machine.inputs) inputsChanged = true;
+                else roomKnown = false;
                 setChanged();
             }
         };
-        this.upgrades = Upgrades.forMk(() -> tier, acceptedKinds(machine), this::setChanged);
+        this.upgrades = Upgrades.forMk(() -> tier, acceptedKinds(machine), () -> {
+            roomKnown = false;
+            setChanged();
+        });
         this.energy = new MachineEnergyStorage(scaled(IndustryConfig.machineBuffer(), tier), scaled(IndustryConfig.machineInput(), tier), 0, this::setChanged);
         this.automation = new MachineItemAccess(this);
         this.sides = new SideConfig(this, () -> automation);
@@ -114,11 +126,33 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
 
     // ---------------------------------------------------------------- inputs
 
+    /** Accepted inputs per machine type, cached per recipe reload (hoppers and auto-input ask on every insert). */
+    private static final Map<Machine, RecipeAcceptCache> ACCEPTS = new EnumMap<>(Machine.class);
+    /** Last recipe that took an item, per machine type and recipe manager: tried first. */
+    private static final Map<Machine, LastHit> LAST_HIT = new ConcurrentHashMap<>();
+
+    private record LastHit(RecipeManager manager, RecipeHolder<ProcessingRecipe> recipe) {}
+
+    static {
+        for (Machine m : Machine.values()) ACCEPTS.put(m, new RecipeAcceptCache());
+    }
+
     /** True if some recipe of this machine uses the stack. */
     public boolean acceptsInput(ItemStack stack) {
         if (level == null || stack.isEmpty()) return level == null;
-        for (RecipeHolder<ProcessingRecipe> holder : level.getRecipeManager().getAllRecipesFor(IndustryRegistry.recipeType(machine).get())) {
-            if (holder.value().usesItem(stack)) return true;
+        Level lvl = level;
+        return ACCEPTS.get(machine).test(lvl, stack, s -> findUser(lvl, s));
+    }
+
+    private boolean findUser(Level level, ItemStack stack) {
+        RecipeManager manager = level.getRecipeManager();
+        LastHit last = LAST_HIT.get(machine);
+        if (last != null && last.manager() == manager && last.recipe().value().usesItem(stack)) return true;
+        for (RecipeHolder<ProcessingRecipe> holder : manager.getAllRecipesFor(IndustryRegistry.recipeType(machine).get())) {
+            if (holder.value().usesItem(stack)) {
+                LAST_HIT.put(machine, new LastHit(manager, holder));
+                return true;
+            }
         }
         return false;
     }
@@ -182,6 +216,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         pullBattery();
         if (inputsChanged || (current == null && (level.getGameTime() + pos.asLong()) % 100 == 0)) {
             inputsChanged = false;
+            roomKnown = false;
             ResourceLocation before = current == null ? null : current.id();
             // Hint by id: after /reload the old holder is gone, so a holder hint would keep a stale recipe.
             current = level.getRecipeManager().getRecipeFor(IndustryRegistry.recipeType(machine).get(), input(), level, before).orElse(null);
@@ -195,7 +230,11 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
             lastUse = 0;
         } else {
             ProcessingRecipe recipe = current.value();
-            if (!canOutput(recipe)) {
+            if (!roomKnown) {
+                roomOk = canOutput(recipe);
+                roomKnown = true;
+            }
+            if (!roomOk) {
                 status = OUTPUT_FULL;
                 lastUse = 0;
             } else {
@@ -398,5 +437,6 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         work = tag.getLong("work");
         sides.load(tag.getCompound("sides"));
         inputsChanged = true;
+        roomKnown = false;
     }
 }

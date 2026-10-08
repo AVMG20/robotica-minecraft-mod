@@ -262,7 +262,7 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
 
     /**
      * What a card does in this kind of machine at this Mk, for the GUI tooltips: one line, plus how many count here.
-     * Grinder Fortune adds dust on metal ores, furnace Fortune adds experience, Range adds items per lane and cycle.
+     * Grinder Fortune adds dust on metal ores, Range adds items per lane and cycle.
      */
     public static List<Component> cardHelp(ProcessingMachineBlock.Kind machine, int tier, UpgradeKind kind) {
         String name = machine == ProcessingMachineBlock.Kind.GRINDER ? "grinder" : "electric_furnace";
@@ -271,8 +271,7 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
         if (cap <= 0) return List.of(Component.translatable("gui.robotica.processing.card.unused").withStyle(ChatFormatting.RED));
         String key = "gui.robotica.processing.card." + name + "." + kind.name().toLowerCase(Locale.ROOT);
         Component line = switch (kind) {
-            case FORTUNE -> Component.translatable(key, Math.round((machine == ProcessingMachineBlock.Kind.GRINDER
-                    ? ProcessingConfig.fortuneBonus() : ProcessingConfig.xpPerFortune()) * 100));
+            case FORTUNE -> Component.translatable(key, Math.round(ProcessingConfig.fortuneBonus() * 100));
             default -> Component.translatable(key);
         };
         return List.of(line.copy().withStyle(ChatFormatting.AQUA),

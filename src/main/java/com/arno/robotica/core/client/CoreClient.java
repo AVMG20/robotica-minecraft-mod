@@ -9,5 +9,7 @@ public final class CoreClient {
 
     public static void init(IEventBus modBus, ModContainer container) {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(DetailTooltips::onTooltip);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RecipesUpdatedEvent.class,
+                e -> com.arno.robotica.core.util.RecipeAcceptCache.bump());
     }
 }

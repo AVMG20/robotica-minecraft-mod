@@ -3,6 +3,7 @@ package com.arno.robotica.processing.block;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.item.CellItem;
+import com.arno.robotica.core.util.RecipeAcceptCache;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.processing.ProcessingConfig;
 import com.arno.robotica.processing.ProcessingRegistry;
@@ -186,9 +187,15 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         return lookup.neededTier();
     }
 
+    /** Grindable items per Mk, cached per recipe reload (hoppers and auto-input ask on every insert). */
+    private static final RecipeAcceptCache[] GRINDABLE = {new RecipeAcceptCache(), new RecipeAcceptCache(), new RecipeAcceptCache(),
+            new RecipeAcceptCache(), new RecipeAcceptCache()};
+
     public boolean canGrind(ItemStack stack) {
         if (level == null) return true;
-        return GrindingLogic.find(level, stack, tier).plan() != null;
+        Level lvl = level;
+        return GRINDABLE[Math.max(0, Math.min(GRINDABLE.length - 1, tier))].test(lvl, stack,
+                s -> GrindingLogic.find(lvl, s, tier).plan() != null);
     }
 
     public boolean isMedia(ItemStack stack) {

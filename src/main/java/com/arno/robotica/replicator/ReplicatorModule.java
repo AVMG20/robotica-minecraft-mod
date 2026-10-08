@@ -22,8 +22,8 @@ public final class ReplicatorModule {
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        // FE on every side, items extract-only (the output), so hoppers, pipes and storage networks can empty it.
+        // FE on every side, items extract-only (the output) on the faces the side config allows.
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ReplicatorRegistry.CONTROLLER_BE.get(), (be, side) -> be.energy());
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ReplicatorRegistry.CONTROLLER_BE.get(), (be, side) -> be.automation());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ReplicatorRegistry.CONTROLLER_BE.get(), (be, side) -> be.automation(side));
     }
 }

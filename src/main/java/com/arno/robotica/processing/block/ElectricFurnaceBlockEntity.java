@@ -1,6 +1,7 @@
 package com.arno.robotica.processing.block;
 
 import com.arno.robotica.core.energy.EnergyUtil;
+import com.arno.robotica.core.util.RecipeAcceptCache;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.processing.ProcessingConfig;
 import com.arno.robotica.processing.ProcessingRegistry;
@@ -8,17 +9,11 @@ import com.arno.robotica.processing.menu.ElectricFurnaceMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -27,7 +22,6 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
@@ -38,19 +32,14 @@ import java.util.Set;
 /**
  * Electric Furnace: smelts every vanilla {@code smelting} recipe on FE. Each Mk runs more lanes in parallel
  * (1 / 2 / 4 / 8 by default), each lane with its own input and output slot and its own progress. Range cards smelt
- * one more item per lane and cycle each (fixed when the cycle starts), Fortune cards add experience (never for dusts),
- * which the furnace keeps until a player takes the output by hand.
+ * one more item per lane and cycle each (fixed when the cycle starts). Machines give no experience.
  */
 public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
     public static final int MAX_LANES = 8;
     public static final int OUT_FIRST = MAX_LANES;
     public static final int BATTERY = MAX_LANES * 2;
     public static final int SLOTS = BATTERY + 1;
-    /** Experience kept in the furnace is capped so an automated furnace does not hoard forever. */
-    public static final float MAX_XP = 5_000F;
-
-    public static final Set<UpgradeKind> KINDS = Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.RANGE,
-            UpgradeKind.FORTUNE);
+    public static final Set<UpgradeKind> KINDS = Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.RANGE);
 
     @SuppressWarnings("unchecked")
     private final RecipeManager.CachedCheck<SingleRecipeInput, SmeltingRecipe>[] checks = new RecipeManager.CachedCheck[MAX_LANES];
@@ -85,7 +74,6 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
     private final int[] needed = new int[MAX_LANES];
     /** Items the lane's running cycle smelts, fixed when the cycle starts (0 = no cycle running). */
     private final int[] cycleItems = new int[MAX_LANES];
-    private float storedXp;
 
     public ElectricFurnaceBlockEntity(BlockPos pos, BlockState state) {
         super(ProcessingRegistry.ELECTRIC_FURNACE_BE.get(), pos, state, KINDS);
@@ -119,10 +107,6 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         return needed[lane];
     }
 
-    public float storedXp() {
-        return storedXp;
-    }
-
     @Override
     public ItemStackHandler items() {
         return items;
@@ -143,18 +127,14 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         return quickInsert;
     }
 
+    /** Smeltable items, cached per recipe reload (hoppers and auto-input ask on every insert). */
+    private static final RecipeAcceptCache SMELTABLE = new RecipeAcceptCache();
+    private final RecipeManager.CachedCheck<SingleRecipeInput, SmeltingRecipe> slotCheck = RecipeManager.createCheck(RecipeType.SMELTING);
+
     public boolean canSmelt(ItemStack stack) {
         if (level == null) return true;
-        return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(stack), level).isPresent();
-    }
-
-    /** Inputs Fortune cards never add experience to: dusts, so ingot -> dust -> ingot can not farm experience. */
-    public static final TagKey<Item> DUSTS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "dusts"));
-
-    /** Experience multiplier of the Fortune cards for this input (1 for dusts). */
-    public double xpBoost(ItemStack input) {
-        if (input.is(DUSTS)) return 1.0;
-        return 1.0 + upgrades.level(UpgradeKind.FORTUNE) * ProcessingConfig.xpPerFortune();
+        Level lvl = level;
+        return SMELTABLE.test(lvl, stack, s -> slotCheck.getRecipeFor(new SingleRecipeInput(s), lvl).isPresent());
     }
 
     @Override
@@ -197,11 +177,9 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
             if (++progress[lane] >= needed[lane]) {
                 progress[lane] = 0;
                 cycleItems[lane] = 0;
-                double xp = recipe.getExperience() * count * xpBoost(input);
                 items.extractItem(lane, count, false);
                 if (out.isEmpty()) items.setStackInSlot(OUT_FIRST + lane, result.copyWithCount(total));
                 else out.grow(total);
-                storedXp = Math.min(MAX_XP, storedXp + (float) xp);
                 setChanged();
             }
         }
@@ -236,22 +214,6 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         }
     }
 
-    /** Pops the stored experience as orbs at a position (a player taking the output, or the block breaking). */
-    public void popExperience(ServerLevel level, Vec3 at) {
-        int whole = Mth.floor(storedXp);
-        float frac = storedXp - whole;
-        if (frac > 0 && level.random.nextFloat() < frac) whole++;
-        storedXp = 0;
-        if (whole > 0) ExperienceOrb.award(level, at, whole);
-        setChanged();
-    }
-
-    @Override
-    public void dropContents(Level level, BlockPos pos) {
-        super.dropContents(level, pos);
-        if (level instanceof ServerLevel server) popExperience(server, Vec3.atCenterOf(pos));
-    }
-
     @Override
     protected int progressPercent() {
         if (status != Status.WORKING) return -1;
@@ -273,7 +235,6 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         super.writeContents(tag, registries);
         tag.putIntArray("progress", progress);
         tag.putIntArray("cycleItems", cycleItems);
-        tag.putFloat("xp", storedXp);
     }
 
     @Override
@@ -283,6 +244,5 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
         for (int i = 0; i < MAX_LANES; i++) progress[i] = i < saved.length ? saved[i] : 0;
         int[] cycle = tag.getIntArray("cycleItems");
         for (int i = 0; i < MAX_LANES; i++) cycleItems[i] = i < cycle.length ? cycle[i] : 0;
-        storedXp = tag.getFloat("xp");
     }
 }

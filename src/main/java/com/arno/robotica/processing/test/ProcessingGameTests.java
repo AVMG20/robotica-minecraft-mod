@@ -225,7 +225,6 @@ public class ProcessingGameTests {
                 ItemStack out = be.items.getStackInSlot(ElectricFurnaceBlockEntity.OUT_FIRST + lane);
                 helper.assertTrue(out.is(Items.IRON_INGOT) && out.getCount() == 1, "lane " + lane + " smelted");
             }
-            helper.assertTrue(be.storedXp() > 0, "experience stored");
         });
     }
 
@@ -328,18 +327,34 @@ public class ProcessingGameTests {
         helper.succeed();
     }
 
-    /** Dusts smelt back for 0.1 experience and Fortune cards never boost them: no ingot -> dust -> ingot farm. */
+    /** Dusts smelt back for 0.1 experience: no ingot -> dust -> ingot farm in a vanilla furnace. */
     @GameTest(template = "empty")
     public static void dustSmeltingFarmsNoExperience(GameTestHelper helper) {
         var level = helper.getLevel();
         var smelt = level.getRecipeManager().getRecipeFor(RecipeType.SMELTING,
                 new net.minecraft.world.item.crafting.SingleRecipeInput(new ItemStack(ProcessingRegistry.IRON_DUST.get())), level).orElseThrow();
         helper.assertTrue(smelt.value().getExperience() <= 0.1F + 1e-6, "iron dust smelts for 0.1 experience");
-        ElectricFurnaceBlockEntity be = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4);
-        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, 3));
-        helper.assertTrue(be.xpBoost(new ItemStack(ProcessingRegistry.IRON_DUST.get())) == 1.0, "no Fortune experience for dusts");
-        helper.assertTrue(be.xpBoost(new ItemStack(Items.RAW_IRON)) > 1.0, "Fortune experience for raw iron");
         helper.succeed();
+    }
+
+    /** The Electric Furnace gives no experience: no orbs, no Fortune cards, an old save with stored experience loads. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void furnaceGivesNoExperience(GameTestHelper helper) {
+        var registries = helper.getLevel().registryAccess();
+        ElectricFurnaceBlockEntity be = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4);
+        helper.assertTrue(be.upgrades.insertItem(0, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).getCount() == 1, "Fortune cards do not fit");
+        be.items.setStackInSlot(0, new ItemStack(Items.RAW_GOLD, 4));
+        CompoundTag old = be.saveWithFullMetadata(registries);
+        old.putFloat("xp", 1234F);
+        be.loadWithComponents(old, registries);
+        helper.assertTrue(be.items.getStackInSlot(0).is(Items.RAW_GOLD), "the old save keeps its items");
+        helper.assertTrue(!be.saveWithFullMetadata(registries).contains("xp"), "stored experience is dropped");
+        helper.succeedWhen(() -> {
+            ItemStack out = be.items.getStackInSlot(ElectricFurnaceBlockEntity.OUT_FIRST);
+            helper.assertTrue(out.is(Items.GOLD_INGOT) && out.getCount() == 4, "four gold ingots");
+            AABB box = new AABB(helper.absolutePos(POS)).inflate(8);
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, box).isEmpty(), "no experience orbs");
+        });
     }
 
     /** Pipes on a null side get the sided rules, and a charged tool is never quick-inserted as a battery. */

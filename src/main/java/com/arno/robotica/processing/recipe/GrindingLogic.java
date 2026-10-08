@@ -81,6 +81,8 @@ public final class GrindingLogic {
 
     private static final Map<Item, Optional<TagPlan>> TAG_CACHE = new ConcurrentHashMap<>();
     private static final Map<Item, Material> MATERIAL_CACHE = new ConcurrentHashMap<>();
+    /** {@link #resolve} results by reference (tag walks), cleared with the other caches. */
+    private static final Map<String, Optional<Item>> RESOLVE_CACHE = new ConcurrentHashMap<>();
     private static final AtomicInteger GENERATION = new AtomicInteger();
 
     /** Bumps on every tag or data reload; block entities drop their cached plan when it changes. */
@@ -91,6 +93,7 @@ public final class GrindingLogic {
     public static void invalidate() {
         TAG_CACHE.clear();
         MATERIAL_CACHE.clear();
+        RESOLVE_CACHE.clear();
         GENERATION.incrementAndGet();
     }
 
@@ -256,10 +259,15 @@ public final class GrindingLogic {
         return best;
     }
 
-    /** An item id or a {@code #tag} from data or config, resolved to an item; null when it does not exist. */
+    /** An item id or a {@code #tag} from data or config, resolved to an item; null when it does not exist. Cached until the next reload. */
     @Nullable
     public static Item resolve(String ref) {
         if (ref == null || ref.isBlank()) return null;
+        return RESOLVE_CACHE.computeIfAbsent(ref, r -> Optional.ofNullable(computeResolve(r))).orElse(null);
+    }
+
+    @Nullable
+    private static Item computeResolve(String ref) {
         if (ref.startsWith("#")) {
             ResourceLocation id = ResourceLocation.tryParse(ref.substring(1));
             return id == null ? null : preferred(TagKey.create(Registries.ITEM, id));

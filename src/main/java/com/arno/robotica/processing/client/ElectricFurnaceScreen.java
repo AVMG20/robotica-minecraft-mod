@@ -60,9 +60,6 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
             int lx = x + menu.laneX() + lane * 18;
             drawProgress(g, lx + 1, y + 38, 14, 4, menu.laneProgress(lane));
         }
-        if (menu.storedXp() > 0) {
-            drawFitted(g, font, Component.translatable("gui.robotica.processing.xp", menu.storedXp()), x + 156, y + 94, 50, TEXT_MUTED, 1, false, 0.75F);
-        }
         Tone tone = switch (menu.status()) {
             case WORKING -> Tone.GOOD;
             case NO_ENERGY -> Tone.BAD;

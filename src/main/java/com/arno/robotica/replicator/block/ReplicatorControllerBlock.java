@@ -140,7 +140,6 @@ public class ReplicatorControllerBlock extends Block implements EntityBlock {
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (level.getBlockEntity(pos) instanceof ReplicatorControllerBlockEntity be && player instanceof ServerPlayer serverPlayer) {
-            be.releaseXp(level, serverPlayer.position());
             serverPlayer.openMenu(be, buf -> buf.writeBlockPos(pos));
             return InteractionResult.CONSUME;
         }

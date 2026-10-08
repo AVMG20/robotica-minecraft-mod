@@ -10,6 +10,7 @@ import com.arno.robotica.replicator.item.EssenceVialItem;
 import com.arno.robotica.replicator.logic.Essence;
 import com.arno.robotica.replicator.logic.Harvest;
 import com.arno.robotica.replicator.logic.ReplicatorStructure;
+import com.arno.robotica.replicator.menu.ReplicatorMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -385,6 +386,98 @@ public class ReplicatorGameTests {
                     "the machine waits, pause is " + be.pause());
             level.getEntitiesOfClass(Mob.class, area, m -> m.getType() == EntityType.SPIDER).forEach(Mob::discard);
             helper.succeed();
+        });
+    }
+
+    // ---- experience, output and sides ----
+
+    private static ReplicatorControllerBlockEntity placeController(GameTestHelper helper) {
+        helper.setBlock(CONTROLLER, ReplicatorRegistry.REPLICATOR_CONTROLLER.get().defaultBlockState()
+                .setValue(ReplicatorControllerBlock.FACING, Direction.NORTH));
+        return (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+    }
+
+    private static void setStoredXp(GameTestHelper helper, ReplicatorControllerBlockEntity be, int xp) {
+        var registries = helper.getLevel().registryAccess();
+        net.minecraft.nbt.CompoundTag tag = be.saveWithFullMetadata(registries);
+        tag.putInt("xp", xp);
+        be.loadWithComponents(tag, registries);
+    }
+
+    /** The GUI claims exactly enough experience to reach the target level, or all of it, only from a player in reach. */
+    @GameTest(template = "empty")
+    public static void xpClaimToTargetLevel(GameTestHelper helper) {
+        helper.assertTrue(ReplicatorControllerBlockEntity.xpForLevel(0) == 7 && ReplicatorControllerBlockEntity.xpForLevel(15) == 37
+                && ReplicatorControllerBlockEntity.xpForLevel(30) == 112, "vanilla points per level");
+        ReplicatorControllerBlockEntity be = placeController(helper);
+        setStoredXp(helper, be, 5_000);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.setGameMode(GameType.SURVIVAL);
+        player.moveTo(net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(CONTROLLER).south()));
+        ReplicatorMenu menu = new ReplicatorMenu(1, player.getInventory(), be);
+
+        helper.assertTrue(ReplicatorControllerBlockEntity.pointsToReach(player, 30) == 1_395, "0 -> 30 is 1,395 points");
+        helper.assertTrue(menu.clickMenuButton(player, ReplicatorMenu.claimToLevel(30)), "claim to 30");
+        helper.assertTrue(player.experienceLevel == 30, "player reached level 30, is " + player.experienceLevel);
+        helper.assertTrue(be.xpStored() == 5_000 - 1_395, "1,395 points taken, left " + be.xpStored());
+
+        menu.clickMenuButton(player, ReplicatorMenu.claimToLevel(30));
+        helper.assertTrue(be.xpStored() == 5_000 - 1_395, "already level 30: nothing taken");
+
+        player.giveExperiencePoints(50);
+        long need = ReplicatorControllerBlockEntity.pointsToReach(player, 31);
+        helper.assertTrue(need == 112 - 50, "half a level done: 62 points to 31, got " + need);
+        menu.clickMenuButton(player, ReplicatorMenu.claimToLevel(31));
+        helper.assertTrue(player.experienceLevel == 31 && be.xpStored() == 5_000 - 1_395 - 62, "exactly level 31, left " + be.xpStored());
+
+        player.moveTo(net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(CONTROLLER)).add(0, 0, 20));
+        helper.assertTrue(!menu.clickMenuButton(player, ReplicatorMenu.CLAIM_ALL), "out of reach: refused");
+        helper.assertTrue(be.xpStored() == 5_000 - 1_395 - 62, "nothing taken out of reach");
+
+        player.moveTo(net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(CONTROLLER).south()));
+        int before = player.totalExperience;
+        helper.assertTrue(menu.clickMenuButton(player, ReplicatorMenu.CLAIM_ALL), "claim all");
+        helper.assertTrue(be.xpStored() == 0 && player.totalExperience == before + 5_000 - 1_395 - 62, "all experience claimed");
+        helper.succeed();
+    }
+
+    /** The output survives a save and load, also a save with a different slot count. */
+    @GameTest(template = "empty")
+    public static void outputSurvivesSaveLoad(GameTestHelper helper) {
+        ReplicatorControllerBlockEntity be = placeController(helper);
+        var registries = helper.getLevel().registryAccess();
+        be.output.setStackInSlot(0, new ItemStack(Items.ROTTEN_FLESH, 12));
+        be.output.setStackInSlot(17, new ItemStack(Items.BONE, 5));
+        net.minecraft.nbt.CompoundTag tag = be.saveWithFullMetadata(registries);
+        be.output.setStackInSlot(0, ItemStack.EMPTY);
+        be.output.setStackInSlot(17, ItemStack.EMPTY);
+        be.loadWithComponents(tag, registries);
+        helper.assertTrue(be.output.getStackInSlot(0).is(Items.ROTTEN_FLESH) && be.output.getStackInSlot(0).getCount() == 12, "slot 0 kept");
+        helper.assertTrue(be.output.getStackInSlot(17).is(Items.BONE) && be.output.getStackInSlot(17).getCount() == 5, "slot 17 kept");
+
+        tag.getCompound("output").putInt("Size", 20);
+        be.loadWithComponents(tag, registries);
+        helper.assertTrue(be.output.getSlots() == ReplicatorControllerBlockEntity.OUTPUT_SLOTS, "still 18 slots");
+        helper.assertTrue(be.output.getStackInSlot(0).getCount() == 12 && be.output.getStackInSlot(17).getCount() == 5, "items kept with another saved size");
+        helper.succeed();
+    }
+
+    /** Every face is output only by default; auto-eject pushes the output into a chest. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void sidesAutoEjectOutput(GameTestHelper helper) {
+        ReplicatorControllerBlockEntity be = placeController(helper);
+        for (com.arno.robotica.core.side.RelativeSide side : com.arno.robotica.core.side.RelativeSide.values()) {
+            helper.assertTrue(be.sides.mode(side) == com.arno.robotica.core.side.SideMode.OUTPUT, side + " is output");
+        }
+        IItemHandler top = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(CONTROLLER), Direction.UP);
+        helper.assertTrue(top != null && top.insertItem(0, new ItemStack(Items.DIRT), true).getCount() == 1, "no insertion on a face");
+        helper.setBlock(CONTROLLER.above(), Blocks.CHEST);
+        be.output.setStackInSlot(3, new ItemStack(Items.ROTTEN_FLESH, 8));
+        be.sides.setAutoEject(true);
+        helper.succeedWhen(() -> {
+            IItemHandler chest = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(CONTROLLER.above()), Direction.DOWN);
+            helper.assertTrue(chest != null && chest.getStackInSlot(0).is(Items.ROTTEN_FLESH), "the chest got the output");
+            helper.assertTrue(be.output.getStackInSlot(3).isEmpty(), "the output slot is empty");
         });
     }
 }

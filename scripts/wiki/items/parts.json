@@ -391,7 +391,9 @@
    "use": [
     "Build the 3x3x3 around it.",
     "Insert a full [[essence_vial]].",
-    "Pick Harvest (loot) or Spawn (real mob)."
+    "Pick Harvest (loot) or Spawn (real mob).",
+    "Claim stored XP in the GUI: up to a target level, or all.",
+    "Sides tab: auto-eject the output."
    ],
    "stats": {
     "rows": [
@@ -809,7 +811,7 @@
    "items": [
     "upgrade_fortune"
    ],
-   "what": "Fortune I-III on mined blocks, more output in the Grinder and Alloy Smelter, +50% experience in the Electric Furnace, Looting in the Replicator. Not with Silk Touch.",
+   "what": "Fortune I-III on mined blocks, more output in the Grinder and Alloy Smelter, Looting in the Replicator. Not with Silk Touch.",
    "see": [
     "guide:upgrade-cards"
    ]

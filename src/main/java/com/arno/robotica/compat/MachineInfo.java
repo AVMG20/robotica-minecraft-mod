@@ -25,9 +25,11 @@ public final class MachineInfo {
     /** Survey Rig: item id of the last ore it made. */
     @Nullable
     public String lastOre;
+    /** Stored experience points, -1 when the machine stores none. */
+    public int xp = -1;
 
     public boolean isEmpty() {
-        return status == null && progress < 0 && tier <= 0 && owner == null && spring == -1 && lastOre == null;
+        return status == null && progress < 0 && tier <= 0 && owner == null && spring == -1 && lastOre == null && xp < 0;
     }
 
     public void write(CompoundTag tag) {
@@ -37,6 +39,7 @@ public final class MachineInfo {
         if (owner != null && !owner.isEmpty()) tag.putString("ow", owner);
         if (spring != -1) tag.putByte("sp", (byte) spring);
         if (lastOre != null) tag.putString("lo", lastOre);
+        if (xp >= 0) tag.putInt("xp", xp);
     }
 
     public static MachineInfo read(CompoundTag tag) {
@@ -47,6 +50,7 @@ public final class MachineInfo {
         if (tag.contains("ow")) info.owner = tag.getString("ow");
         if (tag.contains("sp")) info.spring = tag.getByte("sp");
         if (tag.contains("lo")) info.lastOre = tag.getString("lo");
+        if (tag.contains("xp")) info.xp = tag.getInt("xp");
         return info;
     }
 }

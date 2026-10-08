@@ -9,7 +9,6 @@ import com.arno.robotica.processing.block.ElectricFurnaceBlockEntity;
 import com.arno.robotica.processing.block.ProcessingMachineBlock;
 import com.arno.robotica.processing.block.ProcessingMachineBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -33,7 +32,7 @@ public class ElectricFurnaceMenu extends MachineMenu {
     private final int tier;
     private final int lanes;
     private final int laneX;
-    private final int energyIndex, capacityIndex, statusIndex, useIndex, xpIndex;
+    private final int energyIndex, capacityIndex, statusIndex, useIndex;
     private final int[] laneIndex = new int[ElectricFurnaceBlockEntity.MAX_LANES];
 
     /** Client side. */
@@ -84,13 +83,6 @@ public class ElectricFurnaceMenu extends MachineMenu {
                 public boolean mayPlace(ItemStack stack) {
                     return false;
                 }
-
-                /** Taking the output by hand pays out the stored experience, like a vanilla furnace. */
-                @Override
-                public void onTake(Player player, ItemStack stack) {
-                    if (be != null && player.level() instanceof ServerLevel level) be.popExperience(level, player.position());
-                    super.onTake(player, stack);
-                }
             });
         }
         addSlot(new SlotItemHandler(items, ElectricFurnaceBlockEntity.BATTERY, 8, ROW_Y));
@@ -100,7 +92,6 @@ public class ElectricFurnaceMenu extends MachineMenu {
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());
         statusIndex = track(be == null ? () -> 0 : () -> be.status().ordinal());
         useIndex = track(be == null ? () -> 0 : be::lastUse);
-        xpIndex = track(be == null ? () -> 0 : () -> (int) be.storedXp());
         trackSides(be == null ? null : be.sides);
         for (int i = 0; i < ElectricFurnaceBlockEntity.MAX_LANES; i++) {
             final int lane = i;
@@ -136,10 +127,6 @@ public class ElectricFurnaceMenu extends MachineMenu {
 
     public int lastUse() {
         return synced(useIndex);
-    }
-
-    public int storedXp() {
-        return synced(xpIndex);
     }
 
     public float laneProgress(int lane) {

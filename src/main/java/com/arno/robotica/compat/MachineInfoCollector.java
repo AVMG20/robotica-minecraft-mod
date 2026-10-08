@@ -6,7 +6,6 @@ import com.arno.robotica.automation.entity.FarmBotBlockEntity;
 import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.power.block.WindingCrankBlockEntity;
-import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -45,15 +44,6 @@ public final class MachineInfoCollector {
             if (worker instanceof SurveyRigBlockEntity rig && rig.lastOre() != null) {
                 info.lastOre = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(rig.lastOre()).toString();
             }
-        } else if (be instanceof ReplicatorControllerBlockEntity rep) {
-            info.owner = OwnerNames.name(level.getServer(), rep.owner());
-            info.status = switch (rep.pause()) {
-                case NONE -> rep.isFormed() ? "working" : "idle";
-                case NO_ENERGY -> "no_energy";
-                case OUTPUT_FULL -> "output_full";
-                default -> "idle";
-            };
-            if (rep.isFormed() && rep.needed() > 0) info.progress = percent(rep.progress(), rep.needed());
         } else if (be instanceof WindingCrankBlockEntity crank) {
             ItemStack spring = crank.spring.getStackInSlot(0);
             int capacity = ItemEnergy.capacity(spring);

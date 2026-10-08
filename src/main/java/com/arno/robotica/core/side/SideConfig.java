@@ -98,13 +98,15 @@ public final class SideConfig {
         return autoEject;
     }
 
-    /** The owner's front, NORTH without a horizontal FACING (and on the client copy). */
+    /** The owner's front, NORTH without a horizontal FACING (and on the client copy and for up/down facing blocks). */
     public Direction facing() {
         return owner == null ? Direction.NORTH : facing(owner.getBlockState());
     }
 
     public static Direction facing(BlockState state) {
-        return state.getOptionalValue(BlockStateProperties.HORIZONTAL_FACING).orElse(Direction.NORTH);
+        return state.getOptionalValue(BlockStateProperties.HORIZONTAL_FACING)
+                .or(() -> state.getOptionalValue(BlockStateProperties.FACING).filter(d -> d.getAxis().isHorizontal()))
+                .orElse(Direction.NORTH);
     }
 
     // ---------------------------------------------------------------- changing
