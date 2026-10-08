@@ -174,7 +174,11 @@ public class LogisticsGameTests {
         });
     }
 
-    /** A Low link only gets what the High one refuses: the barrel has one free slot, the iron overflows to the chest. */
+    /**
+     * A Low link only gets what the High one refuses: the barrel has one free slot, the iron overflows to the chest.
+     * Relies on the pull starting at slot 0 (cobblestone before iron): pulls on the still empty source must not move the
+     * start slot, or the iron could take the free slot first.
+     */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void lowerPriorityTakesOverflow(GameTestHelper helper) {
         ChestBlockEntity source = line(helper);

@@ -240,10 +240,12 @@ public class ItemPipeBlockEntity extends BlockEntity {
         int budget = LogisticsConfig.items(tier());
         int maxTries = LogisticsConfig.maxInsertTries(), maxVisits = LogisticsConfig.maxTargetVisits();
         int moved = 0, tries = 0, visits = 0, slots = source.getSlots();
+        boolean stuck = false;
         for (int s = 0; s < slots && moved < budget && tries < maxTries && visits < maxVisits; s++) {
             int slot = (nextSlot + s) % slots;
             ItemStack inSlot = source.getStackInSlot(slot);
             if (inSlot.isEmpty() || !passes(side, inSlot)) continue;
+            stuck = true;
             ItemStack item = inSlot.copyWithCount(1);
             ItemStack offer = null;
             groups:
@@ -280,8 +282,10 @@ public class ItemPipeBlockEntity extends BlockEntity {
                 }
             }
         }
-        // Nothing could move: start at the next slot next time, so one stuck item does not block the rest.
-        if (moved == 0) nextSlot = (nextSlot + 1) % slots;
+        // Items there but none could move: start at the next slot next time, so one stuck item does not block the rest.
+        // An empty source must not rotate: pulls on an empty chest used to shift the start slot at random, so the next
+        // items went in a different order (a later stack could take the last free slot of a higher priority link).
+        if (moved == 0 && stuck) nextSlot = (nextSlot + 1) % slots;
     }
 
     /** What a destination refused after all (it said it would fit): back where it came from, else dropped. */
