@@ -171,7 +171,7 @@ public final class WarpTravel {
             message(player, Component.translatable("message.robotica.warp.destination_gone"));
             return false;
         }
-        Optional<Vec3> spot = Teleporter.prepareArrival(destLevel, dest.pos().above());
+        Optional<Vec3> spot = arrivalSpot(destLevel, dest.pos());
         if (spot.isEmpty()) {
             message(player, Component.translatable("message.robotica.warp.no_safe_spot"));
             return false;
@@ -192,6 +192,13 @@ public final class WarpTravel {
     }
 
     // ---- Remotes ----
+
+    /** Safe spot above a destination pad. Empty when that would generate terrain (never on the main thread for a trip). */
+    private static Optional<Vec3> arrivalSpot(ServerLevel destLevel, BlockPos padPos) {
+        BlockPos center = padPos.above();
+        if (!Teleporter.aroundGenerated(destLevel, center)) return Optional.empty();
+        return Teleporter.prepareArrival(destLevel, center);
+    }
 
     public static void bindRemote(ServerPlayer player, ItemStack remote, WarpPadBlockEntity pad) {
         PadRecord rec = pad.ensureRegistered();
@@ -337,7 +344,7 @@ public final class WarpTravel {
             message(player, Component.translatable("message.robotica.warp.remote_pad_gone", dest.name()));
             return false;
         }
-        Optional<Vec3> spot = Teleporter.prepareArrival(destLevel, dest.pos().above());
+        Optional<Vec3> spot = arrivalSpot(destLevel, dest.pos());
         if (spot.isEmpty()) {
             message(player, Component.translatable("message.robotica.warp.no_safe_spot"));
             return false;
