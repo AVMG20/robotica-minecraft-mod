@@ -5,9 +5,6 @@ import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
 import com.arno.robotica.automation.entity.FarmBotBlockEntity;
 import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.core.energy.ItemEnergy;
-import com.arno.robotica.power.block.CombustionGeneratorBlockEntity;
-import com.arno.robotica.power.block.MetalPressBlockEntity;
-import com.arno.robotica.power.block.SolarPanelBlockEntity;
 import com.arno.robotica.power.block.WindingCrankBlockEntity;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
@@ -15,7 +12,6 @@ import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
@@ -49,11 +45,6 @@ public final class MachineInfoCollector {
             if (worker instanceof SurveyRigBlockEntity rig && rig.lastOre() != null) {
                 info.lastOre = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(rig.lastOre()).toString();
             }
-        } else if (be instanceof MetalPressBlockEntity press) {
-            boolean lit = press.getBlockState().hasProperty(BlockStateProperties.LIT) && press.getBlockState().getValue(BlockStateProperties.LIT);
-            boolean hasInput = !press.items.getStackInSlot(0).isEmpty();
-            info.status = lit ? "working" : hasInput && press.energy.getEnergyStored() <= 0 ? "no_energy" : "idle";
-            if (press.needed() > 0 && press.progress() > 0) info.progress = percent(press.progress(), press.needed());
         } else if (be instanceof ReplicatorControllerBlockEntity rep) {
             info.owner = OwnerNames.name(level.getServer(), rep.owner());
             info.status = switch (rep.pause()) {
@@ -67,13 +58,9 @@ public final class MachineInfoCollector {
             ItemStack spring = crank.spring.getStackInSlot(0);
             int capacity = ItemEnergy.capacity(spring);
             info.spring = spring.isEmpty() ? MachineInfo.SPRING_NONE : capacity <= 0 ? 0 : percent(ItemEnergy.get(spring), capacity);
-        } else if (be instanceof CombustionGeneratorBlockEntity generator) {
-            info.status = generator.burnTime() > 0 ? "working" : "idle";
         } else if (be instanceof com.arno.robotica.power.tesla.TeslaCoilBlockEntity coil) {
             // No "Mk" line: the block name already says the tier (Tesla Coil I-V).
             info.status = coil.isActive() ? "working" : "idle";
-        } else if (be instanceof SolarPanelBlockEntity solar) {
-            info.status = solar.isGenerating() ? "working" : "idle";
         } else if (be instanceof ArchitectTableBlockEntity table) {
             int st = table.status();
             info.status = st == ArchitectTableBlockEntity.ST_BUILDING ? "working" : st == ArchitectTableBlockEntity.ST_NO_ENERGY ? "no_energy" : "idle";

@@ -29,12 +29,12 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Fuel slot, FE buffer, lit state. Pushes into every neighbouring FE receiver; Tesla Coils on it pull from the buffer.
+ * Fuel slot, FE buffer, lit state. Pushes up to {@link #MAX_OUTPUT} FE/t in total into the neighbouring FE receivers; Tesla Coils on it pull from the buffer.
  * Two card slots ({@link com.arno.robotica.core.upgrade.UpgradeRules.Fixed#COMBUSTION_GENERATOR}): speed cards multiply
  * the FE/t like a machine's work rate; fuel burns at that rate times {@link Upgrades#energyMultiplier}, the same energy
  * math as every machine (efficiency cards save less here), so speed costs fuel per FE and efficiency saves it.
  */
-public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements MenuProvider {
+public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
     /** FE/t the buffer may be drained at (by neighbours and Tesla Coils). */
     public static final int MAX_OUTPUT = 400;
 
@@ -72,6 +72,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
     private int burnTotal;
     /** Fraction of a fuel tick already burned (cards make the burn rate fractional). */
     private float burnDebt;
+    private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
 
     public CombustionGeneratorBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.COMBUSTION_GENERATOR_BE.get(), pos, state);
@@ -121,7 +122,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
             if (burnTime == 0) setChanged();
         }
         setLit(burnTime > 0);
-        if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, MAX_OUTPUT);
+        if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, MAX_OUTPUT, neighbors);
     }
 
     private void ignite() {
@@ -175,5 +176,13 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         burnDebt = tag.getFloat("burnDebt");
         if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
         sides.load(tag.getCompound("sides"));
+    }
+
+    /** Jade: burning, paused on a full buffer or idle, and how far the current fuel item has burned. */
+    @Override
+    public void collectInfo(ServerLevel level, com.arno.robotica.compat.MachineInfo info) {
+        if (burnTime <= 0) info.status = "idle";
+        else info.status = energy.getSpace() < output() ? "output_full" : "working";
+        if (burnTime > 0 && burnTotal > 0) info.progress = (int) Math.max(0, Math.min(100, 100L - 100L * burnTime / burnTotal));
     }
 }
