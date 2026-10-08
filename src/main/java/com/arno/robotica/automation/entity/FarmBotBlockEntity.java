@@ -135,6 +135,7 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
             if (age % 20 == 0) growthBoost(sl);
             if (age % 60 == 30) pickupDrops(sl);
         }
+        if (busyTick(sl)) return Status.WORKING;
         if (rest > 0) {
             rest--;
             return Status.WORKING;
@@ -192,6 +193,11 @@ public abstract class FarmBotBlockEntity extends AreaWorkerBlockEntity {
 
     /** Called every tick the bot spends on a target (before the action itself); used for the ambient work sound. */
     protected void onWorkTick(ServerLevel sl) {
+    }
+
+    /** Runs a multi-tick action (Stumpy's felling wave) before anything else. True while it is busy. */
+    protected boolean busyTick(ServerLevel sl) {
+        return false;
     }
 
     // ---- work effects ----

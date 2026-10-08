@@ -103,6 +103,126 @@ public class AutomationGameTests {
         helper.succeedWhen(() -> helper.assertBlockNotPresent(Blocks.OAK_LOG, new BlockPos(1, 5, 3)));
     }
 
+    /** A one-log-wide trunk on dirt with a leaf on top. */
+    private static void columnTree(GameTestHelper helper, int x, int z, int height) {
+        helper.setBlock(new BlockPos(x, 0, z), Blocks.DIRT);
+        for (int y = 1; y <= height; y++) helper.setBlock(new BlockPos(x, y, z), Blocks.OAK_LOG);
+        helper.setBlock(new BlockPos(x, height + 1, z), Blocks.OAK_LEAVES);
+    }
+
+    private static int logItems(GameTestHelper helper) {
+        int n = 0;
+        for (ItemEntity item : helper.getLevel().getEntitiesOfClass(ItemEntity.class, helper.getBounds().inflate(12))) {
+            if (item.getItem().is(Items.OAK_LOG)) n += item.getItem().getCount();
+        }
+        return n;
+    }
+
+    private static int standingLogs(GameTestHelper helper, int x, int z, int height) {
+        int n = 0;
+        for (int y = 1; y <= height; y++) {
+            if (helper.getBlockState(new BlockPos(x, y, z)).is(Blocks.OAK_LOG)) n++;
+        }
+        return n;
+    }
+
+    /** The tree comes down bottom-up over several ticks; the FE is paid once before the wave and the logs reach the chest. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void stumpyFellsTreeInAWave(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 0);
+        BlockPos chestPos = new BlockPos(2, 1, 0);
+        int height = 6;
+        columnTree(helper, 1, 2, height);
+        helper.setBlock(chestPos, Blocks.CHEST);
+        helper.setBlock(bot, AutomationContent.STUMPY.get());
+        StumpyBlockEntity stumpy = helper.getBlockEntity(bot);
+        int start = stumpy.energy.getMaxEnergyStored() - 1_000;
+        stumpy.energy.setEnergy(start);
+        int cost = height * CoreConfig.scaleEnergy(AutomationConfig.stumpyFePerLog());
+        int[] waveEnergy = {-1};
+        int[] waveTicks = {0};
+        helper.onEachTick(() -> {
+            if (!stumpy.waveActive()) return;
+            int energy = stumpy.energy.getEnergyStored();
+            if (waveEnergy[0] < 0) {
+                waveEnergy[0] = energy;
+                helper.assertBlockPresent(Blocks.OAK_LOG, new BlockPos(1, height, 2));
+                helper.assertTrue(start - energy >= cost, "The whole tree is paid up front: " + (start - energy) + " < " + cost);
+            }
+            helper.assertTrue(energy == waveEnergy[0], "No FE is paid during the wave");
+            waveTicks[0]++;
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(waveEnergy[0] >= 0, "Wave started");
+            helper.assertFalse(stumpy.waveActive(), "Wave finished");
+            helper.assertTrue(standingLogs(helper, 1, 2, height) == 0, "All logs felled");
+            ChestBlockEntity chest = helper.getBlockEntity(chestPos);
+            helper.assertTrue(count(chest, Items.OAK_LOG) == height, "Chest should hold " + height + " logs, has " + count(chest, Items.OAK_LOG));
+            helper.assertTrue(waveTicks[0] >= 10, "The wave takes a while, took " + waveTicks[0] + " ticks");
+        });
+    }
+
+    /** Breaking Stumpy mid-wave: the felled logs drop with its contents, the rest keeps standing. Nothing lost or duplicated. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void stumpyRemovedMidWaveKeepsEveryLog(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 0);
+        int height = 9;
+        columnTree(helper, 1, 2, height);
+        helper.setBlock(bot, AutomationContent.STUMPY.get());
+        StumpyBlockEntity stumpy = helper.getBlockEntity(bot);
+        stumpy.battery.setStackInSlot(0, chargedCell());
+        boolean[] removed = {false};
+        helper.onEachTick(() -> {
+            if (!removed[0] && stumpy.waveActive() && standingLogs(helper, 1, 2, height) <= height - 3) {
+                removed[0] = true;
+                helper.setBlock(bot, Blocks.AIR);
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(removed[0], "Removed mid-wave");
+            int standing = standingLogs(helper, 1, 2, height);
+            helper.assertTrue(standing > 0, "The rest of the tree stays");
+            helper.assertTrue(standing + logItems(helper) == height,
+                    "Logs standing (" + standing + ") plus dropped (" + logItems(helper) + ") must be " + height);
+        });
+    }
+
+    /** An unloaded or reloaded Stumpy saves its wave and finishes it: every log ends up in the chest exactly once. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void stumpyWaveSurvivesReload(GameTestHelper helper) {
+        BlockPos bot = new BlockPos(1, 1, 0);
+        BlockPos chestPos = new BlockPos(2, 1, 0);
+        int height = 9;
+        columnTree(helper, 1, 2, height);
+        helper.setBlock(chestPos, Blocks.CHEST);
+        helper.setBlock(bot, AutomationContent.STUMPY.get());
+        StumpyBlockEntity first = helper.getBlockEntity(bot);
+        first.battery.setStackInSlot(0, chargedCell());
+        boolean[] reloaded = {false};
+        helper.onEachTick(() -> {
+            if (!reloaded[0] && first.waveActive() && standingLogs(helper, 1, 2, height) <= height - 3) {
+                reloaded[0] = true;
+                var registries = helper.getLevel().registryAccess();
+                var saved = first.saveWithoutMetadata(registries);
+                first.keepContents = true;
+                helper.setBlock(bot, Blocks.AIR);
+                helper.setBlock(bot, AutomationContent.STUMPY.get());
+                StumpyBlockEntity second = helper.getBlockEntity(bot);
+                second.loadCustomOnly(saved, registries);
+                helper.assertTrue(second.waveActive(), "The wave is saved");
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(reloaded[0], "Reloaded mid-wave");
+            StumpyBlockEntity second = helper.getBlockEntity(bot);
+            helper.assertFalse(second.waveActive(), "Wave finished");
+            helper.assertTrue(standingLogs(helper, 1, 2, height) == 0, "All logs felled");
+            ChestBlockEntity chest = helper.getBlockEntity(chestPos);
+            helper.assertTrue(count(chest, Items.OAK_LOG) == height, "Chest should hold " + height + " logs, has " + count(chest, Items.OAK_LOG));
+            helper.assertTrue(logItems(helper) == 0, "Nothing dropped");
+        });
+    }
+
     /** Every log costs FE: with too little in the buffer and no battery Stumpy leaves the tree standing. */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void stumpyPaysPerLog(GameTestHelper helper) {
