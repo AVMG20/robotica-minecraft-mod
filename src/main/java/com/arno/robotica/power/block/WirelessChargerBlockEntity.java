@@ -192,8 +192,10 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         Vec3 center = Vec3.atCenterOf(pos);
         double r = range();
         List<Player> found = new ArrayList<>();
-        for (Player player : level.getEntitiesOfClass(Player.class, new AABB(center, center).inflate(r), p -> !p.isSpectator() && p.isAlive())) {
-            if (player.distanceToSqr(center) <= r * r) found.add(player);
+        // the level's player list, not an entity section lookup: a player just moved into a chunk whose entities are
+        // not loaded yet would be missed there
+        for (Player player : level.players()) {
+            if (!player.isSpectator() && player.isAlive() && player.distanceToSqr(center) <= r * r) found.add(player);
         }
         found.sort((a, b) -> Double.compare(a.distanceToSqr(center), b.distanceToSqr(center)));
         int[] newIds = new int[found.size()];
