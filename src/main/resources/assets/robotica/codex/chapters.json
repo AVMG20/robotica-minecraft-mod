@@ -839,7 +839,7 @@
       "pages": [
         {
           "title": "Storage Terminal",
-          "text": "A big sorted chest: 81 slots, search (@mod, #tag), 3x3 crafting grid.\nHoppers and pipes work on every side.\nShulker boxes and bundles: empty only.",
+          "text": "A big sorted chest: 81 slots, search (@mod, #tag), 3x3 crafting grid.\nHoppers and pipes work on every side.\nShulker boxes and bundles: empty only.\nJ button: sync search with JEI.",
           "items": [
             "robotica:storage_terminal"
           ]

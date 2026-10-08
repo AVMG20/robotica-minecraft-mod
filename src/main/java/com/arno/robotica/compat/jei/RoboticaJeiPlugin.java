@@ -80,9 +80,24 @@ public class RoboticaJeiPlugin implements IModPlugin {
         }
     }
 
-    /** Dev check ({@code -PjeiCheck}): logs whether JEI finds the Storage Terminal's crafting transfer handler. */
+    /**
+     * Hands JEI's search box to the Storage Terminal (search sync), then the dev check ({@code -PjeiCheck}): logs
+     * whether JEI finds the Storage Terminal's crafting transfer handler.
+     */
     @Override
     public void onRuntimeAvailable(mezz.jei.api.runtime.IJeiRuntime runtime) {
+        var filter = runtime.getIngredientFilter();
+        com.arno.robotica.storage.client.ExternalSearch.set(new com.arno.robotica.storage.client.ExternalSearch() {
+            @Override
+            public String getText() {
+                return filter.getFilterText();
+            }
+
+            @Override
+            public void setText(String text) {
+                filter.setFilterText(text);
+            }
+        });
         var player = Minecraft.getInstance().player;
         if (!Boolean.getBoolean("robotica.jeiCheck") || player == null) return;
         var menu = new com.arno.robotica.storage.menu.StorageMenu(0, player.getInventory(),
@@ -90,6 +105,11 @@ public class RoboticaJeiPlugin implements IModPlugin {
         var category = runtime.getRecipeManager().getRecipeCategory(mezz.jei.api.constants.RecipeTypes.CRAFTING);
         boolean found = runtime.getRecipeTransferManager().getRecipeTransferHandler(menu, category).isPresent();
         com.mojang.logging.LogUtils.getLogger().info("[robotica jeiCheck] storage terminal crafting transfer handler found: {}", found);
+    }
+
+    @Override
+    public void onRuntimeUnavailable() {
+        com.arno.robotica.storage.client.ExternalSearch.set(null);
     }
 
     @Override

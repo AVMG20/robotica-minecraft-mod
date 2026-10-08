@@ -2,6 +2,7 @@ package com.arno.robotica.storage.client;
 
 import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.storage.StorageClientConfig;
 import com.arno.robotica.storage.menu.StorageMenu;
 import com.arno.robotica.storage.menu.StorageView;
 import com.arno.robotica.storage.net.StorageViewPayload;
@@ -23,6 +24,8 @@ import java.util.List;
  * Storage Terminal GUI: a 9 x 6 window onto the sorted item list with a scrollbar, a search box and a sort toggle on
  * top, the crafting grid, expansion and battery slots plus the power status on the right, the player inventory below.
  * Scroll, sort and search text go to the server in {@link StorageViewPayload}; clicks are ordinary container clicks.
+ * With JEI installed a toggle next to the search box syncs the search with JEI's (client config, default on): the
+ * terminal takes JEI's text when it opens or when JEI's text changes, and typing here sets JEI's filter.
  */
 public class StorageScreen extends MachineScreen<StorageMenu> {
     private static final int SB_X = 173, SB_Y = StorageMenu.VIEW_Y, SB_W = 10, SB_H = StorageMenu.ROWS * 18;
@@ -30,6 +33,9 @@ public class StorageScreen extends MachineScreen<StorageMenu> {
 
     private EditBox search;
     private FitButton sortButton;
+    private FitButton syncButton;
+    /** JEI's filter text as last seen or set by this screen, to notice edits made in JEI's own box. */
+    private String lastExternal;
     private boolean dragging;
 
     public StorageScreen(StorageMenu menu, Inventory inv, Component title) {
@@ -57,16 +63,64 @@ public class StorageScreen extends MachineScreen<StorageMenu> {
         }));
         sortButton.setTooltip(sortTooltip());
 
-        String old = search != null ? search.getValue() : menu.filter();
-        search = new EditBox(font, leftPos + 56, topPos + 3, 127, 12, Component.translatable("gui.robotica.storage.search"));
+        ExternalSearch external = ExternalSearch.get();
+        boolean first = search == null;
+        String old = first ? menu.filter() : search.getValue();
+        if (first && external != null && StorageClientConfig.jeiSync()) {
+            lastExternal = external.getText();
+            old = lastExternal;
+        }
+        search = new EditBox(font, leftPos + 56, topPos + 3, external != null ? 113 : 127, 12, Component.translatable("gui.robotica.storage.search"));
         search.setMaxLength(StorageView.MAX_FILTER);
         search.setHint(Component.translatable("gui.robotica.storage.search").withStyle(ChatFormatting.DARK_GRAY));
         search.setValue(old);
+        if (!search.getValue().equals(menu.filter())) {
+            menu.setView(0, menu.sort(), search.getValue());
+            send();
+        }
         search.setResponder(text -> {
             menu.setView(0, menu.sort(), text);
             send();
+            pushExternal(text);
         });
         addRenderableWidget(search);
+
+        syncButton = null;
+        if (external != null) {
+            syncButton = addRenderableWidget(new FitButton(leftPos + 171, topPos + 3, 12, 12, syncText(), b -> {
+                StorageClientConfig.setJeiSync(!StorageClientConfig.jeiSync());
+                syncButton.setMessage(syncText());
+                syncButton.setTooltip(syncTooltip());
+                pushExternal(search.getValue());
+            }));
+            syncButton.setTooltip(syncTooltip());
+        }
+    }
+
+    private static Component syncText() {
+        return Component.literal("J").withStyle(StorageClientConfig.jeiSync() ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY);
+    }
+
+    private static Tooltip syncTooltip() {
+        return Tooltip.create(Component.translatable(StorageClientConfig.jeiSync() ? "gui.robotica.storage.jei_sync_on" : "gui.robotica.storage.jei_sync_off"));
+    }
+
+    /** Copies the terminal search into JEI's search box while sync is on. */
+    private void pushExternal(String text) {
+        ExternalSearch external = ExternalSearch.get();
+        if (external == null || !StorageClientConfig.jeiSync() || text.equals(lastExternal)) return;
+        lastExternal = text;
+        external.setText(text);
+    }
+
+    /** Takes over text typed into JEI's own search box while sync is on. */
+    private void pullExternal() {
+        ExternalSearch external = ExternalSearch.get();
+        if (external == null || search == null || !StorageClientConfig.jeiSync()) return;
+        String text = external.getText();
+        if (text == null || text.equals(lastExternal)) return;
+        lastExternal = text;
+        if (!text.equals(search.getValue())) search.setValue(text);
     }
 
     private Component sortText() {
@@ -92,6 +146,7 @@ public class StorageScreen extends MachineScreen<StorageMenu> {
     @Override
     protected void containerTick() {
         super.containerTick();
+        pullExternal();
         if (menu.scrollRow() > menu.maxScroll()) scrollTo(menu.maxScroll());
     }
 

@@ -11,6 +11,8 @@ public final class StorageClient {
 
     public static void init(IEventBus modBus, ModContainer container) {
         modBus.addListener(StorageClient::registerScreens);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,
+                com.arno.robotica.storage.StorageClientConfig.SPEC, "robotica-storage-client.toml");
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {

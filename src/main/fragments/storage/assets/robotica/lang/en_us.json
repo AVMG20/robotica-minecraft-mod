@@ -32,5 +32,9 @@
   "robotica.configuration.storage": "Storage Terminal",
   "robotica.configuration.idleFePerTick": "Idle FE per tick",
   "robotica.configuration.fePerExpansion": "Extra FE per tick per expansion",
-  "robotica.configuration.storageEnergyBuffer": "Terminal energy buffer (FE)"
+  "robotica.configuration.storageEnergyBuffer": "Terminal energy buffer (FE)",
+  "gui.robotica.storage.jei_sync_on": "JEI search sync: on. Click to turn off",
+  "gui.robotica.storage.jei_sync_off": "JEI search sync: off. Click to turn on",
+  "robotica.configuration.storageTerminal": "Storage Terminal",
+  "robotica.configuration.jeiSearchSync": "Sync search with JEI"
 }

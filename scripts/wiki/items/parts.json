@@ -498,6 +498,7 @@
    "use": [
     "Shift-click items in or out.",
     "Search with @mod or #tag.",
+    "With JEI: the J button next to the search box syncs it with JEI's search (on by default).",
     "Add Storage Expansions for more room.",
     "Takes empty shulker boxes and bundles only."
    ],
