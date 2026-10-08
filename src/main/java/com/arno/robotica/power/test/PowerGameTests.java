@@ -135,6 +135,8 @@ public class PowerGameTests {
         // Other FE items fit (an FE source charges them) but only a Mainspring winds by hand.
         helper.assertTrue(items.insertItem(0, new ItemStack(CoreItems.COPPER_CELL.get()), false).isEmpty(), "A cell fits in the crank");
         helper.assertTrue(crank.wind(2000) == 0, "Hand winding only works on a Mainspring");
+        helper.assertTrue(!WindingCrankBlockEntity.isWindable(new ItemStack(PowerRegistry.ACCUMULATOR_1_ITEM.get())),
+                "An item that takes no FE does not fit");
         helper.succeed();
     }
 

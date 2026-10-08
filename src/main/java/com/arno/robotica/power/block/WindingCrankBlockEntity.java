@@ -55,6 +55,7 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
             int accepted = Math.min(toReceive, PowerConfig.crankAutoRate() - used);
             ItemStack stack = spring.getStackInSlot(0);
             accepted = Math.min(accepted, ItemEnergy.capacity(stack) - ItemEnergy.get(stack));
+            accepted = Math.min(accepted, receiveLimit(stack) - used);
             if (accepted <= 0) return 0;
             if (!simulate) {
                 lastReceiveTick = now;
@@ -98,9 +99,16 @@ public class WindingCrankBlockEntity extends PowerBlockEntity {
         super(PowerRegistry.WINDING_CRANK_BE.get(), pos, state);
     }
 
-    /** Any FE item fits: an FE source (water wheel, Create) charges it slowly. Only a Mainspring winds by hand. */
+    /** Any chargeable FE item fits: an FE source (water wheel, Create) charges it slowly. Only a Mainspring winds by hand. */
     public static boolean isWindable(ItemStack stack) {
-        return stack.is(CoreItems.MAINSPRING.get()) || (stack.getItem() instanceof com.arno.robotica.core.energy.EnergyItem && ItemEnergy.capacity(stack) > 0);
+        return stack.is(CoreItems.MAINSPRING.get()) || (stack.getItem() instanceof com.arno.robotica.core.energy.EnergyItem item
+                && ItemEnergy.capacity(stack) > 0 && item.getMaxReceive(stack) > 0);
+    }
+
+    /** FE/t the held item takes from an FE source: a Mainspring is wound here, other items keep their own limit. */
+    private static int receiveLimit(ItemStack stack) {
+        if (stack.is(CoreItems.MAINSPRING.get())) return Integer.MAX_VALUE;
+        return stack.getItem() instanceof com.arno.robotica.core.energy.EnergyItem item ? item.getMaxReceive(stack) : 0;
     }
 
     public IEnergyStorage energy() {
