@@ -168,7 +168,7 @@ lang.update({
     'gui.robotica.architect_cancel_tip': 'Take all queued plots off the plan. Blocks already placed stay.',
     'gui.robotica.architect_clear_on': 'Clear terrain: ON',
     'gui.robotica.architect_clear_off': 'Clear terrain: OFF',
-    'gui.robotica.architect_clear_tip': 'Break blocks in the way, chests too (their items are kept). Slow. Junk like cobble and dirt is voided, the rest goes into a chest touching the table',
+    'gui.robotica.architect_clear_tip': 'Breaks blocks in the way, slowly. Junk is voided; the rest, chest contents too, goes into a chest touching the table',
     'gui.robotica.architect_status_0': 'Idle',
     'gui.robotica.architect_status_1': 'Building',
     'gui.robotica.architect_status_2': 'Needs rustic',

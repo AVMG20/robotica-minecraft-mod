@@ -194,7 +194,9 @@ def recipes():
     processing('assembling', 'resonant_lattice', [(RESO, 4), (RESONITE, 2), 'superconductor_coil', 'null_circuit'],
                [result('resonant_lattice')], time=800, power=1500)
     # ... the reactor fuel ...
-    processing('assembling', 'thorium_fuel_pellet', [('#c:dusts/thorium', 2), '#c:dusts/graphite', FERRO],
+    # RTG fuel: 4 thorium dust + 2 ferrothorium plates (about 11 IE for 3.6M FE in the RTG), so an RTG farm costs real
+    # thorium mining next to solar and the Combustion Generator.
+    processing('assembling', 'thorium_fuel_pellet', [('#c:dusts/thorium', 4), '#c:dusts/graphite', (FERRO, 2)],
                [result('thorium_fuel_pellet')], time=200)
     processing('assembling', 'enriched_fuel_pellet', ['thorium_fuel_pellet', PYROLITE, 'minecraft:magma_cream'],
                [result('enriched_fuel_pellet')], time=300, power=200)
@@ -452,9 +454,9 @@ DETAILS = {
     'ferrothorium_ingot': 'Alloy Smelter: iron + thorium',
     'pyrosteel_ingot': 'Alloy Smelter: ferrothorium + pyrolite + blaze powder',
     'resonant_alloy_ingot': 'Alloy Smelter: pyrosteel + resonite + ender pearl',
-    'thermocouple': 'Assembler only',
-    'superconductor_coil': 'Assembler only',
-    'resonant_lattice': 'Assembler only',
+    'thermocouple': 'Made in the Assembler',
+    'superconductor_coil': 'Made in the Assembler',
+    'resonant_lattice': 'Made in the Assembler',
     'thorium_fuel_pellet': 'RTG: 150 FE/t for 20 minutes. Also reactor fuel',
     'enriched_fuel_pellet': '2.5x the heat of a thorium pellet',
     'depleted_fuel_pellet': 'Centrifuge: thorium dust, sometimes a Radiant Isotope',
@@ -493,11 +495,11 @@ def lang():
         'jei.robotica.category.centrifuging': 'Centrifuge',
         'jei.robotica.category.assembling': 'Assembler',
         'jei.robotica.chance': '%s%% chance',
-        'jei.robotica.info.thorium_ore': 'Found in the Overworld from Y -48 to 32 (most around Y -8), in stone and deepslate. Common enough to mine by hand. Drops Raw Thorium.',
-        'jei.robotica.info.pyrolite_ore': 'Found in Nether netherrack, more of it in basalt deltas. Drops a Pyrolite Shard. Needs an iron pickaxe.',
-        'jei.robotica.info.resonite_ore': 'Found in end stone on the outer End islands (not the main island). Rare. Drops a Resonite Crystal. Needs a diamond pickaxe.',
-        'jei.robotica.info.depleted_fuel_pellet': 'Waste of a burned fuel pellet, from the RTG or a fission reactor. Put it in a Centrifuge: thorium dust back, sometimes graphite, and a 20% chance of a Radiant Isotope.',
-        'jei.robotica.info.thorium_fuel_pellet': 'RTG fuel: %s FE/t for %s minutes, one pellet at a time. Also fuel for the fission reactor, which gets more out of it.',
+        'jei.robotica.info.thorium_ore': 'Overworld, Y -48 to 32 (most around Y -8), in stone and deepslate. Drops Raw Thorium.',
+        'jei.robotica.info.pyrolite_ore': 'Nether netherrack, more in basalt deltas. Drops a Pyrolite Shard. Needs an iron pickaxe.',
+        'jei.robotica.info.resonite_ore': 'End stone on the outer End islands. Rare. Drops a Resonite Crystal. Needs a diamond pickaxe.',
+        'jei.robotica.info.depleted_fuel_pellet': 'Waste from the RTG or a fission reactor. Centrifuge: thorium dust, sometimes graphite, 20% a Radiant Isotope.',
+        'jei.robotica.info.thorium_fuel_pellet': 'RTG fuel: %s FE/t for %s minutes. Also fission reactor fuel.',
         'robotica.configuration.machines': 'Industry machines',
         'robotica.configuration.alloySmelterPower': 'Alloy Smelter power (FE/t)',
         'robotica.configuration.centrifugePower': 'Centrifuge power (FE/t)',

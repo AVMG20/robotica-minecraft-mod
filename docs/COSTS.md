@@ -142,9 +142,9 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `steel_lab_pillar` | 0.12 |  |  |  |  |  |  |  | quartz 4 | 4.1 |
 | `reactor_fuel_rod` |  |  |  |  |  |  |  |  | thorium 3, coal 0.5, glass 1 | 4.8 |
 | `replicator_glass` | 2.25 |  |  | 0.25 | 0.06 |  |  |  | quartz 1, obsidian 0.5, glass 1 | 4.8 |
-| `thorium_fuel_pellet` | 1 |  |  |  |  |  |  |  | thorium 3, coal 1 | 5.8 |
 | `reactor_casing` | 4.5 |  |  | 0.5 | 0.12 |  |  |  | obsidian 1, thorium 0.5 | 8.2 |
 | `reactor_glass` | 4.5 |  |  | 0.5 | 0.12 |  |  |  | obsidian 1, thorium 0.5, quartz 0.25, glass 1 | 8.5 |
+| `thorium_fuel_pellet` | 2 |  |  |  |  |  |  |  | thorium 6, coal 1 | 11.3 |
 | `thermocouple` | 3 | 4 | 1 | 3 |  |  |  |  | thorium 2 | 11.8 |
 | `essence_vial` | 3 | 2 | 1 | 3 |  |  |  |  | quartz 2, slime_ball 1, glass 3 | 12.3 |
 | `replicator_frame` | 9 |  |  | 1 | 0.25 |  |  |  | obsidian 2 | 14.9 |
@@ -220,7 +220,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 | `pyrosteel_ingot` | 1 |  |  |  |  |  |  |  | pyrolite 1, blaze_powder 1, thorium 1 | 8 |
 | `pyrosteel_plate` | 1 |  |  |  |  |  |  |  | pyrolite 1, blaze_powder 1, thorium 1 | 8 |
 | `pyrosteel_grinding_balls` | 1.28 |  |  |  |  |  |  |  | pyrolite 1, blaze_powder 1, thorium 1.25, c:nuggets/iron 0.12 | 8.7 |
-| `enriched_fuel_pellet` | 1 |  |  |  |  |  |  |  | thorium 3, pyrolite 1, magma_cream 1, coal 1 | 11.8 |
+| `enriched_fuel_pellet` | 2 |  |  |  |  |  |  |  | thorium 6, pyrolite 1, magma_cream 1, coal 1 | 17.3 |
 | `pyrolite_block` |  |  |  |  |  |  |  |  | pyrolite 9 | 27 |
 | `quantum_circuit` | 48 | 32 | 24 | 48 | 4 | 1 |  |  | blaze_rod 4, quartz 8 | 280 |
 | `hazard_seal_module` | 50 | 32 | 24 | 48 | 4 | 1 |  |  | blaze_rod 4, quartz 8, milk_bucket 1, glass 2 | 282.7 |
@@ -329,5 +329,7 @@ diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 
 
 | item | iron | copper | gold | redstone | diamond | netherite | ender pearl | nether star | other | IE |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
+| `rancher` | 25 | 66 | 1 | 8 |  |  |  |  | c:tools/shear 1, c:buckets/empty 1, planks 8, cobblestone 10 | 59.2 |
 | `ignition_charge` | 26 | 72 | 14 | 16 | 1 |  |  |  | blaze_rod 2, quartz 2, fire_charge 1, planks 8, cobblestone 10 | 126.3 |
+| `rancher_mk2` smithing | 63 | 146 | 17 | 36 | 2 |  |  |  | quartz 4, planks 16, c:tools/shear 1, c:buckets/empty 1, cobblestone 20 | 213 |
 | `forge_altar` | 276 | 208 | 68 | 144 | 14 | 2.5 |  |  | blaze_rod 8, obsidian 16, quartz 20, prismarine_crystals 4, blaze_powder 2, magma_block 1, planks 16, cobblestone 20 | 1015 |

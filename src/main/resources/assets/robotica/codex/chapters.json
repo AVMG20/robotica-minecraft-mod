@@ -220,7 +220,7 @@
         },
         {
           "title": "Fuel and the RTG",
-          "text": "Assembler: thorium dust + graphite + ferrothorium plate = Thorium Fuel Pellet.\nRTG: 150 FE/t for 20 minutes per pellet, silent. Reactors burn pellets faster and hotter.",
+          "text": "Assembler: 4 thorium dust + graphite + 2 ferrothorium plates = Thorium Fuel Pellet.\nRTG: 150 FE/t for 20 minutes per pellet. Reactors burn pellets faster and hotter.",
           "items": [
             "robotica:rtg",
             "robotica:thorium_fuel_pellet",
