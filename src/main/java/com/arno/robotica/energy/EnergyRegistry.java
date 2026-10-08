@@ -8,6 +8,7 @@ import com.arno.robotica.energy.block.ControllerBlock;
 import com.arno.robotica.energy.block.AcceleratorSegmentBlock;
 import com.arno.robotica.energy.block.ColliderBlockEntity;
 import com.arno.robotica.energy.block.CoreReactorBlockEntity;
+import com.arno.robotica.energy.block.FramedPartBlock;
 import com.arno.robotica.energy.block.PartBlock;
 import com.arno.robotica.energy.block.PortBlock;
 import com.arno.robotica.energy.block.PortBlockEntity;
@@ -32,6 +33,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -56,7 +58,7 @@ public final class EnergyRegistry {
     private static final List<DeferredItem<? extends Item>> TAB_ORDER = new ArrayList<>();
 
     // ---- Data components ----
-    /** Ticks a boss core has burned in a Core Reactor; it breaks at its life (data map robotica:reactor_core). */
+    /** Legacy: ticks a boss core had burned in older versions; a Core Reactor that loads such a core starts from it. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CORE_WEAR =
             COMPONENTS.registerComponentType("core_wear", b -> b.persistent(Codec.intRange(0, Integer.MAX_VALUE)).networkSynchronized(ByteBufCodecs.VAR_INT));
     /** FE a Capacitor Bank Controller keeps when picked up (a long: banks hold far more than an int). */
@@ -74,14 +76,19 @@ public final class EnergyRegistry {
                 .isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false);
     }
 
+    /** Casings and glass carry the formed look in their state: pistons may not move them out of the structure. */
+    private static BlockBehaviour.Properties shell(BlockBehaviour.Properties props) {
+        return props.pushReaction(PushReaction.BLOCK);
+    }
+
     private static BlockBehaviour.Properties controller(MapColor color) {
         // Light stays at 7 or less: brighter light next to a Core Reactor would melt its ice stabilizers.
         return casing(color).lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 7 : s.getValue(ControllerBlock.FORMED) ? 3 : 0);
     }
 
     // ---- Capacitor Bank ----
-    public static final DeferredBlock<PartBlock> BANK_CASING = block("bank_casing", PartBlock::new, casing(MapColor.COLOR_LIGHT_BLUE));
-    public static final DeferredBlock<StructureGlassBlock> BANK_GLASS = block("bank_glass", StructureGlassBlock::new, glass(MapColor.COLOR_LIGHT_BLUE));
+    public static final DeferredBlock<FramedPartBlock> BANK_CASING = block("bank_casing", FramedPartBlock::new, shell(casing(MapColor.COLOR_LIGHT_BLUE)));
+    public static final DeferredBlock<StructureGlassBlock> BANK_GLASS = block("bank_glass", StructureGlassBlock::new, shell(glass(MapColor.COLOR_LIGHT_BLUE)));
     public static final DeferredBlock<ControllerBlock> BANK_CONTROLLER = block("bank_controller",
             p -> new ControllerBlock(p, EnergyRegistry.BANK_BE), controller(MapColor.COLOR_LIGHT_BLUE));
     public static final DeferredBlock<PortBlock.Bank> BANK_PORT = block("bank_port", PortBlock.Bank::new, casing(MapColor.COLOR_LIGHT_BLUE));
@@ -101,8 +108,8 @@ public final class EnergyRegistry {
                     .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 12 : 0));
 
     // ---- Core Reactor (block ids of the 0.6 Fission Reactor); modulators are open cages, so the core shows through ----
-    public static final DeferredBlock<PartBlock> REACTOR_CASING = block("reactor_casing", PartBlock::new, casing(MapColor.COLOR_GRAY));
-    public static final DeferredBlock<StructureGlassBlock> REACTOR_GLASS = block("reactor_glass", StructureGlassBlock::new, glass(MapColor.COLOR_LIGHT_GREEN));
+    public static final DeferredBlock<FramedPartBlock> REACTOR_CASING = block("reactor_casing", FramedPartBlock::new, shell(casing(MapColor.COLOR_GRAY)));
+    public static final DeferredBlock<StructureGlassBlock> REACTOR_GLASS = block("reactor_glass", StructureGlassBlock::new, shell(glass(MapColor.COLOR_LIGHT_GREEN)));
     public static final DeferredBlock<ControllerBlock> REACTOR_CONTROLLER = block("reactor_controller",
             p -> new ControllerBlock(p, EnergyRegistry.REACTOR_BE), controller(MapColor.COLOR_GRAY));
     public static final DeferredBlock<PortBlock> REACTOR_POWER_PORT = block("reactor_power_port",

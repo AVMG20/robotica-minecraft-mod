@@ -148,6 +148,8 @@ td .ilink{white-space:nowrap}
 .mb-body{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;margin-top:10px;align-items:start}
 @media (max-width:760px){.mb-body{grid-template-columns:1fr}}
 .mb canvas{width:100%;height:auto;image-rendering:pixelated;background:linear-gradient(var(--sky),var(--sky2));border:2px solid var(--line)}
+.mb img.formed{display:block;width:100%;height:auto;max-height:560px;object-fit:contain;image-rendering:pixelated;background:linear-gradient(var(--sky),var(--sky2));border:2px solid var(--line)}
+.mb img.formed[hidden],.mb canvas[hidden]{display:none}
 .mb-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}
 .mb-ctl button,.btn{font-family:var(--f-px);font-size:16px;color:#fff;padding:4px 12px;background:#7a7a7a;border:2px solid #000;
   box-shadow:inset -2px -3px 0 #555,inset 2px 2px 0 #aaa;text-shadow:1px 1px 0 #3f3f3f;cursor:pointer}

@@ -197,15 +197,13 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         efficiency = v.power > 0 ? v.weighted / v.power : 1.0;
         if (level != null) SpireField.add(level, worldPosition);
         refreshSurroundings();
-        if (changed) {
-            setCrownLit(running); // the crown moved: light the new one
-            setChangedAndSync();
-        }
+        setCrown(true, running); // also lights a crown that moved
+        if (changed) setChangedAndSync();
     }
 
     @Override
     protected void onUnformed() {
-        setCrownLit(false);
+        setCrown(false, false);
         running = false;
         litHold = 0;
         fePerTick = potential = 0;
@@ -385,18 +383,19 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     private void setRunning(boolean value) {
         if (running != value) {
             running = value;
-            setCrownLit(value);
+            setCrown(true, value);
             setChangedAndSync();
         }
     }
 
-    private void setCrownLit(boolean lit) {
+    /** The crown's formed look (wide toroid) and its glow; only sends an update when one changes. */
+    private void setCrown(boolean formed, boolean lit) {
         BlockPos crown = crown();
         if (level == null || crown == null || !level.isLoaded(crown)) return;
         BlockState state = level.getBlockState(crown);
-        if (state.is(EnergyRegistry.SPIRE_CROWN.get()) && state.getValue(SpireCrownBlock.LIT) != lit) {
-            level.setBlock(crown, state.setValue(SpireCrownBlock.LIT, lit), Block.UPDATE_CLIENTS);
-        }
+        if (!state.is(EnergyRegistry.SPIRE_CROWN.get())) return;
+        BlockState next = state.setValue(SpireCrownBlock.FORMED, formed).setValue(SpireCrownBlock.LIT, lit);
+        if (next != state) level.setBlock(crown, next, Block.UPDATE_CLIENTS);
     }
 
     // ---------------------------------------------------------------- client: strike event
@@ -559,6 +558,5 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
             for (int i = 0; i < handler.getSlots(); i++) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), handler.getStackInSlot(i));
         }
         if (!pendingWaste.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), pendingWaste);
-        setCrownLit(false);
     }
 }

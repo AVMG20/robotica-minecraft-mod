@@ -255,13 +255,17 @@ def depth(p):
     return p[0] * VIEW[0] + p[1] * VIEW[1] + p[2] * VIEW[2]
 
 
-def render_model(img, zbuf, ref, ox, oy, scale, night=False):
+def render_model(img, zbuf, ref, ox, oy, scale, night=False, xform=None, tint=None):
+    """`xform` (scene_preview.py) places the model in a scene: .p(point) and .n(normal) after element rotation;
+    `tint` (r, g, b) multiplies faces with a tintindex."""
     textures, elements = resolve(ref)
     for el in elements or []:
         a, b = el['from'], el['to']
         rot = el.get('rotation')
         for d, f in el['faces'].items():
             n = rotate(NORMALS[d], dict(rot, origin=[0, 0, 0]) if rot else None)
+            if xform:
+                n = xform.n(n)
             dot = sum(n[i] * VIEW[i] for i in range(3))
             if dot <= 0.01:
                 continue
@@ -271,6 +275,9 @@ def render_model(img, zbuf, ref, ox, oy, scale, night=False):
             p0 = rotate(o, rot)
             pu = rotate((o[0] + U[0], o[1] + U[1], o[2] + U[2]), rot)
             pv = rotate((o[0] + V[0], o[1] + V[1], o[2] + V[2]), rot)
+            if xform:
+                p0, pu, pv = xform.p(p0), xform.p(pu), xform.p(pv)
+            tc = tint if tint and 'tintindex' in f else (1.0, 1.0, 1.0)
             s0, su, sv = project(p0, scale, ox, oy), project(pu, scale, ox, oy), project(pv, scale, ox, oy)
             ax, ay = su[0] - s0[0], su[1] - s0[1]
             bx, by = sv[0] - s0[0], sv[1] - s0[1]
@@ -314,7 +321,7 @@ def render_model(img, zbuf, ref, ox, oy, scale, night=False):
                     if z < zbuf[py][px] - 1e-4:
                         continue
                     zbuf[py][px] = z
-                    img[py][px] = (int(r * shade), int(g * shade), int(bb * shade), 255)
+                    img[py][px] = (int(r * shade * tc[0]), int(g * shade * tc[1]), int(bb * shade * tc[2]), 255)
 
 
 def render_flat(img, ref, ox, oy, scale):

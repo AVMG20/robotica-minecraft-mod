@@ -1,10 +1,16 @@
 {
   "variants": {
-    "lit=false": {
+    "formed=false,lit=false": {
       "model": "robotica:block/spire_crown"
     },
-    "lit=true": {
+    "formed=false,lit=true": {
       "model": "robotica:block/spire_crown_lit"
+    },
+    "formed=true,lit=false": {
+      "model": "robotica:block/spire_crown_formed"
+    },
+    "formed=true,lit=true": {
+      "model": "robotica:block/spire_crown_formed_lit"
     }
   }
 }

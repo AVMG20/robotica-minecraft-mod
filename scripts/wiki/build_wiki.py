@@ -13,7 +13,7 @@ Joins the curated sources next to this script
 - multiblocks.json     example structures, checked by multiblock_check.py    (keep in sync with the structure rules)
 - items/*.json         what each item does, how to use it, key numbers       (keep in sync with configs)
 - guides/*.md          the wiki guides
-Writes docs/wiki/data.json and docs/wiki/icons/*.png. Idempotent: files are only rewritten when their bytes change.
+Writes docs/wiki/data.json, docs/wiki/icons/*.png and docs/wiki/formed/*.png. Idempotent: files are only rewritten when their bytes change.
 """
 import importlib.util
 import json
@@ -34,6 +34,7 @@ ICONS = OUT / 'icons'
 sys.path.insert(0, str(ROOT / 'scripts'))
 sys.path.insert(0, str(HERE))
 import model_preview as mp  # noqa: E402  (PNG reader and isometric model renderer)
+import scene_preview  # noqa: E402  (formed multiblock views)
 
 MODULE_NAMES = {
     'core': 'Parts', 'power': 'Power', 'energy': 'Big energy', 'industry': 'Industry', 'processing': 'Ore processing',
@@ -538,6 +539,9 @@ def load_multiblocks(ids):
         out[key] = {k: mb[k] for k in ('title', 'controller', 'guide', 'about', 'notes', 'legend', 'layers') if k in mb}
         out[key]['parts'] = multiblock_check.parts(mb)
         out[key]['size'] = [len(mb['layers'][0][0]), len(mb['layers']), len(mb['layers'][0])]
+        if mb.get('check') in scene_preview.FORMED_CHECKS:      # the finished build, as the game draws it formed
+            write_bytes(OUT / 'formed' / f'{key}.png', scene_preview.render_png(key))
+            out[key]['formed'] = True
     return out
 
 

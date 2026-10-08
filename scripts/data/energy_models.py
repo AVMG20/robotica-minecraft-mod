@@ -100,10 +100,36 @@ def all_faces(t):
 
 
 # ---------- casings, glass, coolant ----------
-for name in ('reactor_casing', 'bank_casing'):
-    cube_all(name)
-for name in ('reactor_glass', 'bank_glass'):
-    cube_all(name, render_type='minecraft:translucent')
+# Formed look: the controller sets frame=wall|x|y|z|corner on its casings (FramedPartBlock) and formed=true on its
+# glass, so a finished structure reads as one machine: beams along the edges, corner caps, plain wall panels and
+# frameless windows. Previewed by scripts/scene_preview.py.
+for prefix in ('reactor', 'bank'):
+    name = f'{prefix}_casing'
+    write(ASSETS / 'models/block' / f'{name}.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(name)}})
+    write(ASSETS / 'models/block' / f'{name}_wall.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(f'{prefix}_panel')}})
+    beam_glow = {d: f'{prefix}_frame_glow' for d in SIDES} if prefix == 'bank' else {}
+    beam = glow_cube({d: f'{prefix}_frame' for d in SIDES} | {'up': f'{prefix}_frame_corner', 'down': f'{prefix}_frame_corner'}, beam_glow)
+    write(ASSETS / 'models/block' / f'{name}_beam.json', beam)
+    write(ASSETS / 'models/block' / f'{name}_corner.json',
+          glow_cube({d: f'{prefix}_frame_corner' for d in DIRS}, {d: f'{prefix}_frame_corner_glow' for d in DIRS}))
+    m = f'robotica:block/{name}'
+    write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {
+        'frame=none': {'model': m}, 'frame=wall': {'model': m + '_wall'}, 'frame=corner': {'model': m + '_corner'},
+        'frame=y': {'model': m + '_beam'}, 'frame=z': {'model': m + '_beam', 'x': 90},
+        'frame=x': {'model': m + '_beam', 'x': 90, 'y': 90}}})
+    write(ASSETS / 'models/item' / f'{name}.json', {'parent': m})
+    loot(name)
+    BLOCKS.append(name)
+
+    name = f'{prefix}_glass'
+    for suffix, texture in (('', name), ('_formed', f'{prefix}_glass_formed')):
+        write(ASSETS / 'models/block' / f'{name}{suffix}.json',
+              {'parent': 'minecraft:block/cube_all', 'render_type': 'minecraft:translucent', 'textures': {'all': tex(texture)}})
+    write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {
+        'formed=false': {'model': f'robotica:block/{name}'}, 'formed=true': {'model': f'robotica:block/{name}_formed'}}})
+    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}'})
+    loot(name)
+    BLOCKS.append(name)
 cube_all('cryo_coolant')
 cube_all('reactor_access_port')
 
@@ -143,6 +169,16 @@ for name, (prefix, extra) in CONTROLLERS.items():
         glow = extra.get('glow', {}) | {'north': f'{prefix}_controller_{state}_glow'}
         model = glow_cube(faces, glow)
         model['textures']['particle'] = tex(f'{prefix}_casing')
+        if name == 'spire_base' and state == 'formed':          # the item keeps the plain block
+            write(ASSETS / 'models/item/spire_base.json', json.loads(json.dumps(model)))
+        if name == 'spire_base' and state != 'off':
+            # formed: four stepped corner feet brace the column (past the block, like the crown's toroid)
+            model['textures']['feet'] = tex('spire_rail')
+            for x, z in ((-3, -3), (13, -3), (-3, 13), (13, 13)):
+                for y0, y1, grow in ((0, 4, 0), (4, 9, 1.5)):
+                    a = [x + grow if x < 0 else x, y0, z + grow if z < 0 else z]
+                    b = [x + 6 - (grow if x > 0 else 0), y1, z + 6 - (grow if z > 0 else 0)]
+                    model['elements'].append(box(a, b, all_faces('#feet')))
         write(ASSETS / 'models/block' / f'{name}_{state}.json', model)
     variants = {}
     for facing, y in FACING_Y.items():
@@ -154,7 +190,8 @@ for name, (prefix, extra) in CONTROLLERS.items():
                     entry['y'] = y
                 variants[f'facing={facing},formed={str(formed).lower()},lit={str(lit).lower()}'] = entry
     write(ASSETS / 'blockstates' / f'{name}.json', {'variants': variants})
-    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}_formed'})
+    if name != 'spire_base':
+        write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}_formed'})
     loot(name, ['robotica:bank_energy'] if prefix == 'bank' else None)
     BLOCKS.append(name)
 
@@ -175,26 +212,99 @@ for n in ('flux', 'pyro', 'resonant'):
 cage_model('graphite_damper', 'graphite_damper', 'graphite_damper_top', 'graphite_damper', [4, 2, 4], [12, 14, 12], False)
 
 # ---------- Spire Crown: copper-wound neck, steel toroid, discharge sphere that lights up ----------
-for lit in (False, True):
-    core = 'spire_crown_core_lit' if lit else 'spire_crown_core'
-    ring = {'down': '#ring', 'up': '#ring', 'north': '#ring', 'south': '#ring', 'west': '#ring', 'east': '#ring'}
-    model = {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
-             'textures': {'coil': tex('spire_crown_coil'), 'ring': tex('spire_crown_ring'), 'core': tex(core),
-                          'particle': tex('spire_crown_ring')},
-             'elements': [
-                 box([6, 0, 6], [10, 7, 10], all_faces('#coil')),
-                 box([1, 6, 1], [15, 10, 4], ring), box([1, 6, 12], [15, 10, 15], ring),
-                 box([1, 6, 4], [4, 10, 12], ring), box([12, 6, 4], [15, 10, 12], ring),
-                 box([5, 9, 5], [11, 15, 11], all_faces('#core'), shade=not lit, glow=lit),
-                 box([7, 15, 7], [9, 16, 9], all_faces('#ring')),
-             ]}
-    write(ASSETS / 'models/block' / f'spire_crown{"_lit" if lit else ""}.json', model)
+# Formed, the crown grows a wide toroid (16 segments, radius 20 px, past the block like a real Tesla coil's top load)
+# on four spokes; the hit box stays the small crown (SpireCrownBlock.SHAPE).
+def toroid(radius, y0, y1, thick, tex_var):
+    """Ring of 16 straight segments around the block centre; element rotations only come in 22.5 degree steps, so
+    each segment is built along x or z and turned by -45..45 to lie along the ring."""
+    import math
+    length = 2 * math.pi * radius / 16 * 1.06
+    out = []
+    for k in range(16):
+        phi = math.radians(k * 22.5)
+        cx, cz = 8 + radius * math.cos(phi), 8 + radius * math.sin(phi)
+        theta = (k * 22.5 + 90) % 180                     # tangent direction, mod 180
+        for along_x in (True, False):
+            # a box along x turned by a points at -a; along z it points at 90 - a (model_preview / FaceBakery sense)
+            a = ((-theta if along_x else 90 - theta) + 90) % 180 - 90
+            if a in (-45, -22.5, 0, 22.5, 45):
+                break
+        hx, hz = (length / 2, thick / 2) if along_x else (thick / 2, length / 2)
+        el = box([round(cx - hx, 3), y0, round(cz - hz, 3)], [round(cx + hx, 3), y1, round(cz + hz, 3)],
+                 {d: tex_var for d in DIRS})
+        for f in el['faces'].values():
+            f.pop('cullface', None)
+            f['uv'] = [0, 0, 16, 16] if f is not None else None
+        if a:
+            el['rotation'] = {'angle': a, 'axis': 'y', 'origin': [round(cx, 3), (y0 + y1) / 2, round(cz, 3)]}
+        out.append(el)
+    return out
+
+
+for formed in (False, True):
+    for lit in (False, True):
+        core = 'spire_crown_core_lit' if lit else 'spire_crown_core'
+        ring = all_faces('#ring')
+        if formed:
+            elements = [box([6, 0, 6], [10, 8, 10], all_faces('#coil')),
+                        box([4, 8, 4], [12, 16, 12], all_faces('#core'), shade=not lit, glow=lit),
+                        box([7, 16, 7], [9, 18, 9], all_faces('#ring'))]
+            elements += toroid(20, 7, 12, 5, '#ring') + toroid(12.5, 9, 11, 2, '#ring')
+            for x0, z0, x1, z1 in ((-12, 7, 4, 9), (12, 7, 28, 9), (7, -12, 9, 4), (7, 12, 9, 28)):   # spokes
+                elements.append(box([x0, 9, z0], [x1, 10.5, z1], all_faces('#ring')))
+            for el in elements:
+                for f in el['faces'].values():
+                    f.pop('cullface', None)
+        else:
+            elements = [
+                box([6, 0, 6], [10, 7, 10], all_faces('#coil')),
+                box([1, 6, 1], [15, 10, 4], ring), box([1, 6, 12], [15, 10, 15], ring),
+                box([1, 6, 4], [4, 10, 12], ring), box([12, 6, 4], [15, 10, 12], ring),
+                box([5, 9, 5], [11, 15, 11], all_faces('#core'), shade=not lit, glow=lit),
+                box([7, 15, 7], [9, 16, 9], all_faces('#ring')),
+            ]
+        model = {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+                 'textures': {'coil': tex('spire_crown_coil'), 'ring': tex('spire_crown_ring'), 'core': tex(core),
+                              'particle': tex('spire_crown_ring')},
+                 'elements': elements}
+        write(ASSETS / 'models/block' / f'spire_crown{"_formed" if formed else ""}{"_lit" if lit else ""}.json', model)
 write(ASSETS / 'blockstates/spire_crown.json', {'variants': {
-    'lit=false': {'model': 'robotica:block/spire_crown'},
-    'lit=true': {'model': 'robotica:block/spire_crown_lit'}}})
+    f'formed={str(f).lower()},lit={str(l).lower()}': {'model': f'robotica:block/spire_crown{"_formed" if f else ""}{"_lit" if l else ""}'}
+    for f in (False, True) for l in (False, True)}})
 write(ASSETS / 'models/item/spire_crown.json', {'parent': 'robotica:block/spire_crown_lit'})
 loot('spire_crown')
 BLOCKS.append('spire_crown')
+
+
+# ---------- Tesla Spire column shell: drawn by SpireRenderer over each metal block while the spire is formed ----------
+def flat(tex_var, uv, tint=False, glow=False):
+    f = {'texture': tex_var, 'uv': uv}
+    if tint:
+        f['tintindex'] = 0
+    if glow:
+        f['neoforge_data'] = GLOW
+    return f
+
+
+E = 0.05      # the shell sits just outside the metal block, so the block itself never shows through
+shell = {'from': [-E, 0, -E], 'to': [16 + E, 16, 16 + E],
+         'faces': {d: flat('#coil', [0, 0, 16, 16], tint=True) for d in DIRS}}
+rails = []
+for x0, z0 in ((-0.45, -0.45), (12.8, -0.45), (-0.45, 12.8), (12.8, 12.8)):
+    rails.append({'from': [x0, 0, z0], 'to': [x0 + 3.65, 16, z0 + 3.65],
+                  'faces': {d: flat('#rail', [0, 0, 4, 16] if d in SIDES else [0, 0, 4, 4]) for d in DIRS}})
+write(ASSETS / 'models/block/spire_coil.json', {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+      'textures': {'coil': tex('spire_coil'), 'rail': tex('spire_rail'), 'particle': tex('spire_rail')},
+      'elements': [shell] + rails})
+G = 0.15
+strips = [{'from': [7, 0, -G], 'to': [9, 16, -G], 'faces': {'north': flat('#glow', [7, 0, 9, 16], True, True)}},
+          {'from': [7, 0, 16 + G], 'to': [9, 16, 16 + G], 'faces': {'south': flat('#glow', [7, 0, 9, 16], True, True)}},
+          {'from': [-G, 0, 7], 'to': [-G, 16, 9], 'faces': {'west': flat('#glow', [7, 0, 9, 16], True, True)}},
+          {'from': [16 + G, 0, 7], 'to': [16 + G, 16, 9], 'faces': {'east': flat('#glow', [7, 0, 9, 16], True, True)}}]
+for el in strips:
+    el['shade'] = False
+write(ASSETS / 'models/block/spire_coil_glow.json', {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+      'textures': {'glow': tex('spire_coil_glow'), 'particle': tex('spire_coil_glow')}, 'elements': strips})
 
 # ---------- Ring segments: slab, glass beam pipe joining the neighbours (multipart), magnets on straights ----------
 # The pipe is centred at y 8 (ColliderRenderer.PIPE_Y = 0.5).

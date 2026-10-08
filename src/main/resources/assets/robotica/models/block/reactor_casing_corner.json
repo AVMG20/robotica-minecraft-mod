@@ -1,0 +1,128 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "f_down": "robotica:block/reactor_frame_corner",
+    "f_up": "robotica:block/reactor_frame_corner",
+    "f_north": "robotica:block/reactor_frame_corner",
+    "f_south": "robotica:block/reactor_frame_corner",
+    "f_west": "robotica:block/reactor_frame_corner",
+    "f_east": "robotica:block/reactor_frame_corner",
+    "g_down": "robotica:block/reactor_frame_corner_glow",
+    "g_up": "robotica:block/reactor_frame_corner_glow",
+    "g_north": "robotica:block/reactor_frame_corner_glow",
+    "g_south": "robotica:block/reactor_frame_corner_glow",
+    "g_west": "robotica:block/reactor_frame_corner_glow",
+    "g_east": "robotica:block/reactor_frame_corner_glow",
+    "particle": "robotica:block/reactor_frame_corner"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#f_down",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#f_up",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#f_north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#f_south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#f_west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#f_east",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#g_down",
+          "cullface": "down",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#g_up",
+          "cullface": "up",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "north": {
+          "texture": "#g_north",
+          "cullface": "north",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "south": {
+          "texture": "#g_south",
+          "cullface": "south",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#g_west",
+          "cullface": "west",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#g_east",
+          "cullface": "east",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      }
+    }
+  ]
+}
