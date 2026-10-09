@@ -14,6 +14,7 @@ public final class GearClientConfig {
     private static final ModConfigSpec.BooleanValue LAMP_PARTICLES;
     private static final ModConfigSpec.BooleanValue LAMP_SOUNDS;
     private static final ModConfigSpec.IntValue LAMP_FX_RANGE;
+    private static final ModConfigSpec.BooleanValue OUTLINE_ANIMATED;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -24,6 +25,9 @@ public final class GearClientConfig {
         LAMP_SOUNDS = b.comment("Quiet crackle and hum at Spark Lamps.").define("sparkLampSounds", true);
         LAMP_FX_RANGE = b.comment("Spark Lamp arcs, sparks and sounds only play within this many blocks of the camera.")
                 .defineInRange("sparkLampFxRange", 20, 4, 32);
+        b.pop();
+        b.push("tools");
+        OUTLINE_ANIMATED = b.comment("Tool area outline fades in and shimmers. Off: a steady glow.").define("areaOutlineAnimated", true);
         b.pop();
         SPEC = b.build();
     }
@@ -42,5 +46,9 @@ public final class GearClientConfig {
 
     public static int lampFxRange() {
         return SPEC.isLoaded() ? LAMP_FX_RANGE.get() : 20;
+    }
+
+    public static boolean outlineAnimated() {
+        return !SPEC.isLoaded() || OUTLINE_ANIMATED.get();
     }
 }

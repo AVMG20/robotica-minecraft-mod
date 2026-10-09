@@ -466,6 +466,21 @@ def lamp_particle():
     return c
 
 
+def area_glow():
+    """Tool area outline, soft parts (32x32, white with alpha, linear filtered, tinted in code). Top (32x16): edge
+    ribbon profile across v, a thin bright thread in a faint glow, even along u so pieces tile. Bottom left (16x16):
+    round corner glow. Bottom right (16x16): flat white for the face tint."""
+    def fn(x, y):
+        if y < 16:
+            d = abs(y - 8)
+            return min(1.0, math.exp(-(d / 1.1) ** 2) + 0.3 * math.exp(-(d / 3.2) ** 2)) * max(0.0, 1 - (d / 8) ** 4)
+        if x < 16:
+            r = math.hypot(x - 8, y - 24) / 7.5
+            return 0 if r >= 1 else ((1 + math.cos(math.pi * r)) / 2) ** 1.5
+        return 1.0
+    return smooth_sheet(32, fn)
+
+
 def write_lamp():
     from pixelart import ASSETS, write_png
     write_anim('item', 'lamp_rod', [lamp_rod(f) for f in range(8)], {**lamp_pal(), **ROD_WISP}, frametime=3)
@@ -519,6 +534,8 @@ def main():
     write_modules()
     write_rivet()
     write_lamp()
+    from pixelart import ASSETS, write_png
+    write_png(ASSETS / 'textures/misc/area_glow.png', area_glow(), ALPHA_PAL, size=None)
     write_item('tinkers_hammer', hammer(), pal('copper'), handheld=True)
     write_item('felling_axe', axe(), pal('copper'), handheld=True)
     write_item('bore_drill', drill(1), pal('copper'), handheld=True)

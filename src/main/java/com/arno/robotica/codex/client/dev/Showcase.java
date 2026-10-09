@@ -433,7 +433,9 @@ public final class Showcase {
         // Scene 6: drill HUD and area outline.
         if (wants("10_drill_hud_outline")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
-            for (int x = -6; x <= 6; x++) for (int y = 0; y < 6; y++) level.setBlock(new BlockPos(x, Y + y, -20), Blocks.STONE.defaultBlockState(), 3);
+            for (int x = -6; x <= 6; x++) for (int y = 0; y < 6; y++) for (int z = -24; z <= -20; z++) {
+                level.setBlock(new BlockPos(x, Y + y, z), Blocks.STONE.defaultBlockState(), 3);
+            }
             ItemStack drill = new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("magma_drill")));
             ItemEnergy.fill(drill);
             drill.set(GearComponents.MODE.get(), AreaMode.CUBE_3);
@@ -446,6 +448,10 @@ public final class Showcase {
         if (wants("10_drill_hud_outline")) {
             step(40, () -> {});
             shot("10_drill_hud_outline");
+            // Dev only: the outline wrapping the top corner of the wall, at an angle.
+            step(5, () -> server(sp -> sp.teleportTo(sp.serverLevel(), 8.5, Y + 6, -16.5, 146.3F, 30.5F)));
+            step(30, () -> {});
+            shot("dev_area_outline_corner");
         }
 
         // Scene 7: a Tesla network on an Accumulator, Linker in hand so the arcs show at full strength.
