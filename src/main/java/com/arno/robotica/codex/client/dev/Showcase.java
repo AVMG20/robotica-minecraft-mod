@@ -431,7 +431,7 @@ public final class Showcase {
         }
 
         // Scene 6: drill HUD and area outline.
-        if (wants("10_drill_hud_outline")) step(20, () -> server(sp -> {
+        if (wants("10_drill_hud_outline", "area_static_frame")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             for (int x = -6; x <= 6; x++) for (int y = 0; y < 6; y++) for (int z = -24; z <= -20; z++) {
                 level.setBlock(new BlockPos(x, Y + y, z), Blocks.STONE.defaultBlockState(), 3);
@@ -452,6 +452,25 @@ public final class Showcase {
             step(5, () -> server(sp -> sp.teleportTo(sp.serverLevel(), 8.5, Y + 6, -16.5, 146.3F, 30.5F)));
             step(30, () -> {});
             shot("dev_area_outline_corner");
+        }
+        // Dev only (not in shots.py): a 5x5 drill break, frames a tick apart to catch the static pops.
+        if (wants("area_static_frame")) {
+            step(5, () -> server(sp -> {
+                sp.getMainHandItem().set(GearComponents.MODE.get(), AreaMode.AREA_5);
+                sp.teleportTo(sp.serverLevel(), 0.5, Y + 2.6, -16.0, 180, 8);
+            }));
+            step(30, () -> {});
+            step(0, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                BlockPos origin = new BlockPos(0, Y + 2, -20);
+                com.arno.robotica.gear.tool.BreakQueue.rememberFace(sp, origin, Direction.SOUTH);
+                // the breaking player's own client gets no break particles from destroyBlock, so send them
+                for (BlockPos p : com.arno.robotica.gear.tool.AreaShape.positions(origin, Direction.SOUTH, AreaMode.AREA_5, 0, false)) {
+                    level.levelEvent(2001, p, net.minecraft.world.level.block.Block.getId(level.getBlockState(p)));
+                }
+                sp.gameMode.destroyBlock(origin);
+            }));
+            for (int i = 0; i < 12; i++) grab(1, "area_static_frame_" + i);
         }
 
         // Scene 7: a Tesla network on an Accumulator, Linker in hand so the arcs show at full strength.

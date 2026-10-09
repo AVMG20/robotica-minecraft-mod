@@ -193,6 +193,15 @@ public class GearGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void areaStaticIsCapped(GameTestHelper helper) {
+        helper.assertTrue(BreakQueue.staticPops(0) == 0 && BreakQueue.staticPops(1) == 1, "no more pops than blocks");
+        helper.assertTrue(BreakQueue.staticPops(8) == 4, "3x3: 4 pops, got " + BreakQueue.staticPops(8));
+        helper.assertTrue(BreakQueue.staticPops(24) == 7, "5x5: 7 pops, got " + BreakQueue.staticPops(24));
+        helper.assertTrue(BreakQueue.staticPops(1727) == 8, "12x12x12: capped at 8");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void bigAreaRunsThroughQueueAndStopsWhenEmpty(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos center = helper.absolutePos(new BlockPos(1, 1, 1));

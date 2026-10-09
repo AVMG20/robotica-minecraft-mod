@@ -1,6 +1,7 @@
 package com.arno.robotica.gear.tool;
 
 import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.gear.GearFxPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -44,12 +45,15 @@ public final class BreakQueue {
         final GearToolItem tool;
         final ArrayDeque<BlockPos> blocks;
         final List<ReplantSpot> replant;
+        final int total;
+        int done, staticSent;
 
         Job(ResourceKey<Level> dimension, GearToolItem tool, ArrayDeque<BlockPos> blocks, List<ReplantSpot> replant) {
             this.dimension = dimension;
             this.tool = tool;
             this.blocks = blocks;
             this.replant = replant;
+            this.total = blocks.size();
         }
     }
 
@@ -68,6 +72,7 @@ public final class BreakQueue {
         ArrayDeque<BlockPos> queue = new ArrayDeque<>(targets);
         if (targets.size() <= AreaBreaker.QUEUE_THRESHOLD) {
             breakBlocks(player, level, tool, queue, Integer.MAX_VALUE);
+            sendStatic(player, level, staticPops(targets.size()));
             if (!replant.isEmpty()) enqueue(player, new Job(level.dimension(), tool, new ArrayDeque<>(), replant));
         } else {
             enqueue(player, new Job(level.dimension(), tool, queue, replant));
@@ -106,6 +111,7 @@ public final class BreakQueue {
     static int breakBlocks(ServerPlayer player, ServerLevel level, GearToolItem tool, ArrayDeque<BlockPos> queue, int budget) {
         UUID id = player.getUUID();
         boolean added = ACTIVE.add(id);
+        broken = 0;
         int consumed = 0;
         try {
             while (consumed < budget && !queue.isEmpty()) {
@@ -133,7 +139,7 @@ public final class BreakQueue {
                         || pos.distSqr(player.blockPosition()) > 48 * 48) {
                     continue;
                 }
-                player.gameMode.destroyBlock(pos);
+                if (player.gameMode.destroyBlock(pos)) pick(level, pos);
             }
         } finally {
             if (added) ACTIVE.remove(id);
@@ -164,7 +170,12 @@ public final class BreakQueue {
                 }
                 if (!job.blocks.isEmpty()) {
                     BlockPos first = job.blocks.peekFirst();
-                    budget -= Math.max(1, breakBlocks(player, level, job.tool, job.blocks, budget));
+                    int consumed = breakBlocks(player, level, job.tool, job.blocks, budget);
+                    budget -= Math.max(1, consumed);
+                    // static pops spread over the job by progress, so a long break crackles all the way through
+                    job.done += consumed;
+                    int due = staticPops(job.total) * job.done / Math.max(1, job.total) - job.staticSent;
+                    if (due > 0) job.staticSent += sendStatic(player, level, due);
                     if (level.getGameTime() % 4 == 0 && level.isLoaded(first)) GearSounds.debris(level, first, job.blocks.size());
                 }
                 if (job.blocks.isEmpty()) {
@@ -174,6 +185,45 @@ public final class BreakQueue {
             }
             if (jobs.isEmpty()) it.remove();
         }
+    }
+
+    // Static pops: a few random blocks of each batch, kept by reservoir sampling while it breaks, sent as one packet.
+    private static final int MAX_STATIC = 8;
+    private static final long[] PICKS = new long[MAX_STATIC];
+    private static int broken;
+
+    /** Static pops for a break of {@code blocks} extra blocks: 4 for a 3x3, 7 for a 5x5, at most {@value #MAX_STATIC}. */
+    public static int staticPops(int blocks) {
+        return Math.min(blocks, Math.min(MAX_STATIC, (int) Math.ceil(Math.sqrt(blocks) * 1.3)));
+    }
+
+    private static void pick(ServerLevel level, BlockPos pos) {
+        if (broken < MAX_STATIC) {
+            PICKS[broken] = pos.asLong();
+        } else {
+            int j = level.random.nextInt(broken + 1);
+            if (j < MAX_STATIC) PICKS[j] = pos.asLong();
+        }
+        broken++;
+    }
+
+    /** Sends up to {@code count} of the blocks picked in the last batch to nearby players. Returns how many were sent. */
+    private static int sendStatic(ServerPlayer player, ServerLevel level, int count) {
+        int n = Math.min(broken, MAX_STATIC), k = Math.min(count, n);
+        if (k <= 0) return 0;
+        float[] points = new float[k * 3];
+        for (int i = 0; i < k; i++) {
+            int j = i + level.random.nextInt(n - i);
+            long p = PICKS[j];
+            PICKS[j] = PICKS[i];
+            PICKS[i] = p;
+            points[i * 3] = BlockPos.getX(p) + 0.5F;
+            points[i * 3 + 1] = BlockPos.getY(p) + 0.5F;
+            points[i * 3 + 2] = BlockPos.getZ(p) + 0.5F;
+        }
+        broken = 0;
+        GearFxPayload.send(level, player.getX(), player.getY(), player.getZ(), new GearFxPayload(GearFxPayload.STATIC, points, new int[0]));
+        return k;
     }
 
     private static void replant(ServerPlayer player, ServerLevel level, List<ReplantSpot> spots) {

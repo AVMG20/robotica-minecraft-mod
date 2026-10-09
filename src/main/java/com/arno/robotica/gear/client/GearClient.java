@@ -54,6 +54,7 @@ public final class GearClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, AreaOutline::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GearFx::onClientTick);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaOutline::onRenderLevel);
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaStatic::onRenderLevel);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerEntityRenderer(com.arno.robotica.gear.GearEntities.RIVET.get(), RivetRenderer::new));
         modBus.addListener(RegisterMenuScreensEvent.class, e -> e.register(com.arno.robotica.gear.GearBlocks.TINKERS_BENCH_MENU.get(), TinkersBenchScreen::new));

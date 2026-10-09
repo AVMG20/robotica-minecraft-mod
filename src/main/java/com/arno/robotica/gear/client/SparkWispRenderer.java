@@ -65,19 +65,20 @@ public final class SparkWispRenderer {
 
     // Sheet regions in 64 px texture units (u0, v0, u1, v1).
     private static final float T = 1 / 64.0F;
-    private static final float[] HALO = {0, 0, 32 * T, 32 * T}, FLARE = {32 * T, 0, 1, 32 * T}, ARC = {1 * T, 32 * T, 31 * T, 48 * T},
+    static final float[] HALO = {0, 0, 32 * T, 32 * T}, FLARE = {32 * T, 0, 1, 32 * T}, ARC = {1 * T, 32 * T, 31 * T, 48 * T},
             RING = {32 * T, 32 * T, 1, 1}, CORE = {0, 32 * T, 15 * T, 47 * T}, SPARK = {16 * T, 32 * T, 19 * T, 35 * T};
 
     // Colours (r, g, b).
-    private static final int[] OUTER = {45, 115, 255}, INNER = {140, 210, 255}, FLARE_C = {160, 220, 255}, THREAD = {110, 195, 255},
+    static final int[] OUTER = {45, 115, 255}, INNER = {140, 210, 255}, FLARE_C = {160, 220, 255}, THREAD = {110, 195, 255},
             THREAD_HOT = {190, 235, 255}, WHITE = {235, 250, 255}, BOLT = {160, 215, 255}, SPARK_C = {200, 240, 255};
 
     private static final List<Wisp> VISIBLE = new ArrayList<>();
     // camera-relative frame state: camera position, sprite axes (right, up)
-    private static double camX, camY, camZ;
     private static float rightX, rightY, rightZ, upX, upY, upZ;
-    private static float time, partial;
-    private static long tick;
+    private static float time;
+    static float partial;
+    static long tick;
+    static double camX, camY, camZ;
 
     static void onRenderLevel(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
@@ -85,21 +86,7 @@ public final class SparkWispRenderer {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null || level != SparkWisps.level) return;
-        Camera camera = event.getCamera();
-        Vec3 cam = camera.getPosition();
-        camX = cam.x;
-        camY = cam.y;
-        camZ = cam.z;
-        Vector3f left = camera.getLeftVector(), up = camera.getUpVector();
-        rightX = -left.x();
-        rightY = -left.y();
-        rightZ = -left.z();
-        upX = up.x();
-        upY = up.y();
-        upZ = up.z();
-        partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        tick = level.getGameTime();
-        time = (tick % 24000L) + partial;
+        beginFrame(event, level);
         boolean animated = GearClientConfig.lampAnimated(), effects = GearClientConfig.lampParticles();
         Frustum frustum = event.getFrustum();
 
@@ -131,6 +118,25 @@ public final class SparkWispRenderer {
         for (int i = 0; i < VISIBLE.size(); i++) drawSprites(vc, VISIBLE.get(i), effects);
         for (int i = 0; i < ghosts.size(); i++) drawGhostSprites(vc, ghosts.get(i));
         buffers.endBatch(SPRITES);
+    }
+
+    /** Sets the camera-relative frame state the drawing helpers use. Also called by {@link AreaStatic}. */
+    static void beginFrame(RenderLevelStageEvent event, ClientLevel level) {
+        Camera camera = event.getCamera();
+        Vec3 cam = camera.getPosition();
+        camX = cam.x;
+        camY = cam.y;
+        camZ = cam.z;
+        Vector3f left = camera.getLeftVector(), up = camera.getUpVector();
+        rightX = -left.x();
+        rightY = -left.y();
+        rightZ = -left.z();
+        upX = up.x();
+        upY = up.y();
+        upZ = up.z();
+        partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        tick = level.getGameTime();
+        time = (tick % 24000L) + partial;
     }
 
     // ------------------------------------------------------------------ per wisp
@@ -353,7 +359,7 @@ public final class SparkWispRenderer {
     // ------------------------------------------------------------------ geometry
 
     /** A camera-facing square of half size {@code half} turned by {@code roll}, centred on a camera-relative point. */
-    private static void sprite(VertexConsumer vc, float x, float y, float z, float half, float roll, float[] uv, int[] rgb, float alpha) {
+    static void sprite(VertexConsumer vc, float x, float y, float z, float half, float roll, float[] uv, int[] rgb, float alpha) {
         int a = (int) (Mth.clamp(alpha, 0, 1) * 255);
         if (a <= 1 || half <= 0) return;
         float c = Mth.cos(roll) * half, s = Mth.sin(roll) * half;
@@ -369,7 +375,7 @@ public final class SparkWispRenderer {
      * A jagged bolt from a to b (world coordinates): five or six kinks off the straight line, most in the middle, each
      * piece a camera-facing ribbon with a bright thread in a faint glow; now and then a short fork.
      */
-    private static void bolt(VertexConsumer vc, double ax, double ay, double az, double bx, double by, double bz, int seed, float width, float alpha) {
+    static void bolt(VertexConsumer vc, double ax, double ay, double az, double bx, double by, double bz, int seed, float width, float alpha) {
         int a = (int) (Mth.clamp(alpha, 0, 1) * 255);
         if (a <= 1) return;
         float sx = (float) (ax - camX), sy = (float) (ay - camY), sz = (float) (az - camZ);

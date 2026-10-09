@@ -14,7 +14,7 @@ public final class GearClientConfig {
     private static final ModConfigSpec.BooleanValue LAMP_PARTICLES;
     private static final ModConfigSpec.BooleanValue LAMP_SOUNDS;
     private static final ModConfigSpec.IntValue LAMP_FX_RANGE;
-    private static final ModConfigSpec.BooleanValue OUTLINE_ANIMATED, WEAPON_PARTICLES;
+    private static final ModConfigSpec.BooleanValue OUTLINE_ANIMATED, AREA_STATIC, WEAPON_PARTICLES;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -28,6 +28,7 @@ public final class GearClientConfig {
         b.pop();
         b.push("tools");
         OUTLINE_ANIMATED = b.comment("Tool area outline fades in and shimmers. Off: a steady glow.").define("areaOutlineAnimated", true);
+        AREA_STATIC = b.comment("A few static sparks on the blocks of an area, vein or tree break.").define("areaStatic", true);
         b.pop();
         b.push("weapons");
         WEAPON_PARTICLES = b.comment("Arc Blade bolts, the Null Lance beam and the Lifesteal stream.").define("weaponParticles", true);
@@ -53,6 +54,10 @@ public final class GearClientConfig {
 
     public static boolean outlineAnimated() {
         return !SPEC.isLoaded() || OUTLINE_ANIMATED.get();
+    }
+
+    public static boolean areaStatic() {
+        return !SPEC.isLoaded() || AREA_STATIC.get();
     }
 
     public static boolean weaponParticles() {

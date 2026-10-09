@@ -223,6 +223,7 @@
   "robotica.configuration.sparkLampFxRange": "Spark Lamp effect range",
   "robotica.configuration.tools": "Tools",
   "robotica.configuration.areaOutlineAnimated": "Animated tool area outline",
+  "robotica.configuration.areaStatic": "Static sparks on area breaks",
   "robotica.configuration.weapons": "Weapons",
   "robotica.configuration.weaponParticles": "Weapon bolts, beams and streams"
 }

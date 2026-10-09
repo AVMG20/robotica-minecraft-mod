@@ -13,7 +13,7 @@ import org.joml.Vector3f;
 
 /**
  * Draws the weapon effects the server sends as one {@link GearFxPayload} each: Arc Blade chains, the Null Lance beam
- * and the Lifesteal stream. Particles only, spawned locally, so the client config and vanilla's particle setting
+ * and the Lifesteal stream; area break static goes to {@link AreaStatic}. Particles only, spawned locally, so the client config and vanilla's particle setting
  * decide how much shows.
  */
 final class GearFx {
@@ -42,6 +42,9 @@ final class GearFx {
                 }
                 case GearFxPayload.DRAIN -> {
                     if (weapons && p.length >= 6) drain(level, p);
+                }
+                case GearFxPayload.STATIC -> {
+                    if (GearClientConfig.areaStatic() && p.length >= 3) AreaStatic.add(level, p);
                 }
                 default -> {}
             }
