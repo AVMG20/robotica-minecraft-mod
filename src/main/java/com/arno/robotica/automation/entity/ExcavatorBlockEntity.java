@@ -228,7 +228,7 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
             }
         }
         List<ItemStack> drops = Block.getDrops(state, sl, pos, null, null, tool(sl));
-        sl.levelEvent(2001, pos, Block.getId(state));
+        breakFx(sl, pos, state);
         workSound(sl, pos, CoreSounds.EXCAVATOR_DIG, 0.7F, 0.9F + sl.random.nextFloat() * 0.2F);
         sl.setBlock(pos, plug ? Blocks.COBBLESTONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         boolean voiding = upgrades.level(UpgradeKind.VOID) > 0;

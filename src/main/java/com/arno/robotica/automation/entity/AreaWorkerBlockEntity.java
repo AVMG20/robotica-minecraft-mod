@@ -412,6 +412,23 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         CoreSounds.play(sl, at, sound, SoundSource.NEUTRAL, volume, pitch);
     }
 
+    private long lastBreakSound = -20;
+
+    /**
+     * Block crumbs where a block was broken, with the vanilla break sound at most twice a second (fast Mk tiers break a
+     * block every tick or two). Between sounds the crumbs go out as plain particles.
+     */
+    protected void breakFx(ServerLevel sl, BlockPos pos, BlockState state) {
+        if (age - lastBreakSound >= 10) {
+            lastBreakSound = age;
+            sl.levelEvent(2001, pos, Block.getId(state));
+            return;
+        }
+        if (state.isAir() || state.getRenderShape() == net.minecraft.world.level.block.RenderShape.INVISIBLE) return;
+        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK, state),
+                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 10, 0.25, 0.25, 0.25, 0.05);
+    }
+
     /** Powers-down beep for a robot that has finished its job for good (the excavator reaching bedrock). */
     protected void finishedSound(ServerLevel sl) {
         CoreSounds.play(sl, worldPosition, CoreSounds.ROBOT_BEEP_LOW, SoundSource.NEUTRAL, 0.7F, 1.0F);

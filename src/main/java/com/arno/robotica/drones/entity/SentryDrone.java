@@ -2,6 +2,7 @@ package com.arno.robotica.drones.entity;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.drones.net.SentryBoltPayload;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.drones.DronesConfig;
@@ -9,8 +10,6 @@ import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.menu.SentryDroneMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
@@ -35,7 +34,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -62,7 +60,6 @@ public class SentryDrone extends DroneBase {
         }
     }
 
-    private static final DustParticleOptions BOLT_DUST = new DustParticleOptions(new Vector3f(0.37F, 0.89F, 0.94F), 0.8F);
 
     /** Speed, range and efficiency cards. */
     public final Upgrades upgrades = Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.SENTRY_DRONE, () -> {});
@@ -71,6 +68,8 @@ public class SentryDrone extends DroneBase {
     private int radiusIdx;
     private BlockPos guardCenter = BlockPos.ZERO;
     private int cooldown;
+    private static final int SHOT_SOUND_GAP = 8;
+    private int lastShotSound = -SHOT_SOUND_GAP;
     private boolean lowNotified;
     @Nullable
     private LivingEntity target;
@@ -326,17 +325,14 @@ public class SentryDrone extends DroneBase {
         Vec3 from = position().add(0, getBbHeight() * 0.45, 0);
         Vec3 dir = aim.subtract(from);
         double len = dir.length();
-        if (len > 1.0E-3) {
-            Vec3 step = dir.scale(1.0 / len);
-            from = from.add(step.scale(0.45));
-            int n = Math.min(24, (int) (len * 1.5));
-            for (int i = 1; i <= n; i++) {
-                Vec3 p = from.add(step.scale(len * i / n));
-                sl.sendParticles(BOLT_DUST, p.x, p.y, p.z, 1, 0, 0, 0, 0);
-            }
+        if (len > 1.0E-3) from = from.add(dir.scale(0.45 / len));
+        // one small packet; the clients draw the trail and the sparks
+        SentryBoltPayload.send(this, from, aim);
+        // fast cards fire every 3 ticks: the shot sound at most every 8
+        if (tickCount - lastShotSound >= SHOT_SOUND_GAP || tickCount < lastShotSound) {
+            lastShotSound = tickCount;
+            CoreSounds.play(this, CoreSounds.RIVET_SHOT, SoundSource.NEUTRAL, 0.6F, 1.3F + random.nextFloat() * 0.2F);
         }
-        sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, aim.x, aim.y, aim.z, 5, 0.15, 0.15, 0.15, 0.1);
-        CoreSounds.play(this, CoreSounds.RIVET_SHOT, SoundSource.NEUTRAL, 0.6F, 1.3F + random.nextFloat() * 0.2F);
         t.hurt(boltSource(sl), damage());
         if (target != null && !target.isAlive()) target = null;
     }

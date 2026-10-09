@@ -604,7 +604,8 @@ public class Rancher extends PathfinderMob {
     @Nullable
     @Override
     protected SoundEvent getAmbientSound() {
-        return status() == Status.NO_ENERGY ? null : CoreSounds.RANCHER_HUM.get();
+        // servos hum while it works; an idle Rancher stays quiet
+        return status() == Status.WORKING ? CoreSounds.RANCHER_HUM.get() : null;
     }
 
     @Override

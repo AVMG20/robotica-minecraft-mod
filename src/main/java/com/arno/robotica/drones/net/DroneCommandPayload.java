@@ -42,7 +42,9 @@ public record DroneCommandPayload(int action) implements CustomPacketPayload {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(TYPE, CODEC, DroneCommandPayload::handle);
+        var registrar = event.registrar("1");
+        registrar.playToServer(TYPE, CODEC, DroneCommandPayload::handle);
+        registrar.playToClient(SentryBoltPayload.TYPE, SentryBoltPayload.CODEC, SentryBoltPayload::handle);
     }
 
     /** Drops the rate limit entry of a player who left. */

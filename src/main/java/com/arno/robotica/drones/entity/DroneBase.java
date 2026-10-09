@@ -672,6 +672,25 @@ public abstract class DroneBase extends PathfinderMob {
 
     // ---------------------------------------------------------------- sound
 
+    /**
+     * True once every {@code period} ticks, at a phase of its own per drone (from its UUID), so a fleet that spawned or
+     * loaded together does not beep, grind or whir in unison.
+     */
+    protected boolean every(int period) {
+        return Math.floorMod(tickCount + getUUID().hashCode(), Math.max(1, period)) == 0;
+    }
+
+    /** Flying, following a path or busy with a job; a parked drone keeps its hum to itself. */
+    protected boolean busy() {
+        Vec3 v = getDeltaMovement();
+        return isActive() || v.x * v.x + v.z * v.z + v.y * v.y > 0.0025 || !getNavigation().isDone();
+    }
+
+    @Override
+    public void playAmbientSound() {
+        if (busy()) super.playAmbientSound();
+    }
+
     @Override
     protected SoundEvent getAmbientSound() {
         return CoreSounds.DRONE_BUZZ.get();

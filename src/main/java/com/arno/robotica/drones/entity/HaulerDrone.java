@@ -539,7 +539,7 @@ public class HaulerDrone extends DroneBase {
                     AABB box = mob.getDimensions(mob.getPose()).makeBoundingBox(new Vec3(getX(), getY() - mob.getBbHeight() - next, getZ()));
                     if (sl.noCollision(mob, box)) setGap(next);
                 }
-                if ((tickCount + getId()) % 40 == 0) CoreSounds.play(this, CoreSounds.HAULER_WINCH, SoundSource.NEUTRAL, 0.6F, 1.0F);
+                if (every(40)) CoreSounds.play(this, CoreSounds.HAULER_WINCH, SoundSource.NEUTRAL, 0.6F, 1.0F);
                 if (tickCount % 8 == 0) {
                     sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() - 0.05, getZ(), 1, 0.08, 0.02, 0.08, 0.0);
                 }

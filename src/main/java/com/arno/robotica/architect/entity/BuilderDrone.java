@@ -56,8 +56,9 @@ public class BuilderDrone extends Entity {
             discard();
             return;
         }
-        if (building && tickCount % 50 == 0) {
-            CoreSounds.play(this, CoreSounds.DRONE_BUZZ, SoundSource.NEUTRAL, 0.5F, 1.0F);
+        // a phase per drone (from its UUID), so the drones of one table do not buzz in unison
+        if (building && Math.floorMod(tickCount + getUUID().hashCode(), 50) == 0) {
+            CoreSounds.play(this, CoreSounds.DRONE_BUZZ, SoundSource.NEUTRAL, 0.5F, 0.92F + random.nextFloat() * 0.16F);
         }
         Vec3 goal = building && target != null ? target : Vec3.atCenterOf(home).add(0, 1.6, 0);
         Vec3 to = goal.subtract(position());

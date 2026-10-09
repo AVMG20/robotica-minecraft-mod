@@ -29,6 +29,7 @@ public final class DronesClient {
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
 
     public static void init(IEventBus modBus, ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, com.arno.robotica.drones.DronesClientConfig.SPEC, "robotica-drones-client.toml");
         modBus.addListener(RegisterMenuScreensEvent.class, DronesClient::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, DronesClient::registerRenderers);
         modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class, DronesClient::registerLayers);

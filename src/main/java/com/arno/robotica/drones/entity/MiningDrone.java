@@ -458,7 +458,7 @@ public class MiningDrone extends DroneBase {
             if (taken <= 0) continue;
             if (rest.isEmpty()) item.discard();
             else item.setItem(rest);
-            if (tickCount % 8 == 0) playSound(SoundEvents.ITEM_PICKUP, 0.2F, 1.4F);
+            if (every(8)) playSound(SoundEvents.ITEM_PICKUP, 0.2F, 1.3F + random.nextFloat() * 0.2F);
         }
     }
 
@@ -538,7 +538,7 @@ public class MiningDrone extends DroneBase {
         faceYaw(t.dir.toYRot());
         Vec3 hover = hoverPoint(t);
         if (t.phase != PHASE_MOVE) flyDirect(hover, 1.0);
-        if (tickCount % 20 == 0) CoreSounds.play(this, CoreSounds.DRILL_GRIND, SoundSource.NEUTRAL, 0.35F, 1.0F);
+        if (every(20)) CoreSounds.play(this, CoreSounds.DRILL_GRIND, SoundSource.NEUTRAL, 0.35F, 0.95F + random.nextFloat() * 0.1F);
         if (tickCount % 12 == 0) {
             Vec3 lamp = position().add(Vec3.atLowerCornerOf(t.dir.getNormal()).scale(0.5)).add(0, 0.35, 0);
             sl.sendParticles(ParticleTypes.END_ROD, lamp.x, lamp.y, lamp.z, 1, 0.02, 0.02, 0.02, 0.0);

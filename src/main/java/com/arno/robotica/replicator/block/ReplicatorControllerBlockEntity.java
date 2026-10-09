@@ -458,7 +458,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             setChangedAndSync();
         }
         sides.tick(level);
-        if (working && age % 80 == 0) {
+        if (working && CoreSounds.due(level, pos, 80)) {
             CoreSounds.play(level, pos, CoreSounds.REPLICATOR_HUM, SoundSource.BLOCKS, 0.8F, 1.0F);
         }
     }

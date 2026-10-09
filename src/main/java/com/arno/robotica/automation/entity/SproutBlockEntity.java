@@ -233,7 +233,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
             sl.setBlock(pos, picked, Block.UPDATE_CLIENTS);
             workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
         } else {
-            sl.levelEvent(2001, pos, Block.getId(state));
+            breakFx(sl, pos, state);
             workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
             ItemStack seed = state.is(Blocks.TORCHFLOWER) ? new ItemStack(Items.TORCHFLOWER_SEEDS) : block.getCloneItemStack(sl, pos, state);
             boolean paid = !seed.isEmpty() && (Drops.takeOne(drops, seed.getItem()) || takeFromBuffer(seed.getItem()));
@@ -256,7 +256,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
         if (!isFruit(stem, fruit) || fruit.getDestroySpeed(sl, pos) < 0 || !mayBreak(sl, pos, fruit)) return false;
         if (!energy.consume(scaledDrain(AutomationConfig.sproutFePerHarvest(), 1))) return false;
         List<ItemStack> drops = Block.getDrops(fruit, sl, pos, sl.getBlockEntity(pos));
-        sl.levelEvent(2001, pos, Block.getId(fruit));
+        breakFx(sl, pos, fruit);
         workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
         sl.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         workFx(sl, pos, FX_HARVEST);
@@ -294,7 +294,7 @@ public class SproutBlockEntity extends FarmBotBlockEntity {
             for (ItemStack drop : Block.getDrops(at, sl, p, null)) Drops.merge(drops, drop);
             sl.setBlock(p, at.getFluidState().createLegacyBlock(), Block.UPDATE_ALL);
         }
-        sl.levelEvent(2001, pos, Block.getId(state));
+        breakFx(sl, pos, state);
         workSound(sl, pos, CoreSounds.SPROUT_SNIP, 0.8F, 0.9F + sl.random.nextFloat() * 0.2F);
         workFx(sl, pos, FX_HARVEST);
         for (ItemStack drop : drops) output(drop);
