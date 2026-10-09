@@ -571,6 +571,37 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /**
+     * A full buffer pauses the beam (no fuel, no Strange Matter progress); a broken ring collapses the beam and the
+     * client stops drawing it.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void colliderPausesWhenFullAndStopsWhenBroken(GameTestHelper helper) {
+        BlockPos min = new BlockPos(1, 1, 1);
+        BlockPos c = ring(helper, min);
+        ColliderBlockEntity be = be(helper, c);
+        be.scanNow();
+        be.setCharge(be.chargeNeeded());
+        be.fuel.setStackInSlot(0, new ItemStack(Items.STRUCTURE_VOID, 2));
+        for (int i = 0; i < 210; i++) be.step();
+        helper.assertTrue(be.beamOn() && be.fePerTick() == 23_000 && be.shownBeam() == 10, "runs at full beam");
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        long lum = be.luminosity();
+        for (int i = 0; i < 50; i++) be.step();
+        helper.assertTrue(be.state() == ColliderBlockEntity.State.BUFFER_FULL && be.fePerTick() == 0 && be.luminosity() == lum && be.beamOn(),
+                "a full buffer pauses the beam, got " + be.state());
+        be.energy.setEnergy(0);
+        be.step();
+        helper.assertTrue(be.state() == ColliderBlockEntity.State.RUNNING && be.luminosity() > lum, "runs again once power is taken");
+
+        helper.setBlock(min.offset(6, 0, 3), Blocks.AIR);
+        be.scanNow();
+        helper.assertTrue(!be.isFormed() && !be.beamOn() && be.ring().isEmpty(), "a broken ring collapses the beam");
+        be.serverTick(helper.getLevel(), be.getBlockPos(), be.getBlockState());
+        helper.assertTrue(be.shownBeam() == 0 && be.shownCharge() == 0, "clients stop drawing the beam");
+        helper.succeed();
+    }
+
     /** Open loop, a branch and a stranger in the loop are named; a short loop is too short. */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void colliderNamesTheWrongBlock(GameTestHelper helper) {

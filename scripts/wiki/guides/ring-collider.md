@@ -28,12 +28,16 @@ A pellet lasts 5 minutes in a 64 block ring; longer rings burn faster. Fuel need
 
 ## Output
 
+The controller counts as one loop block.
+
 | Ring | Output | One Strange Matter every |
 |---|---|---|
-| 24 Accelerator Segments | 24,000 FE/t | 27 minutes |
-| 64 Accelerator Segments | 64,000 FE/t | 10 minutes |
-| 128 Resonant Segments | 320,000 FE/t | 2.5 minutes |
-| 256 Resonant Segments | 640,000 FE/t | 75 s |
+| 24 blocks, Accelerator Segments | 23,000 FE/t | 28 minutes |
+| 64 blocks, Accelerator Segments | 63,000 FE/t | 10 minutes |
+| 128 blocks, Resonant Segments | 317,500 FE/t | 2.5 minutes |
+| 256 blocks, Resonant Segments | 637,500 FE/t | 75 s |
+
+While the buffer is full the beam pauses: no fuel burns and no Strange Matter forms.
 
 [[strange_matter]] goes into [[null_circuit]]s without a nether star and into [[antigrav_core]]s in the Assembler.
 

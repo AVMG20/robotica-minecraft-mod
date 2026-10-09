@@ -30,6 +30,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -110,6 +112,11 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
     private long chargedThisTick;
     /** Synced to clients in steps: beam strength 0-10, charge 0-10 while charging. */
     private int shownBeam, shownCharge;
+    /** Client render cache, rebuilt when the ring changes. */
+    @Nullable
+    private Vec3[] ringCentres;
+    @Nullable
+    private AABB ringBounds;
 
     public ColliderBlockEntity(BlockPos pos, BlockState blockState) {
         super(EnergyRegistry.COLLIDER_BE.get(), pos, blockState);
@@ -217,6 +224,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         segments1 = v.tier1;
         segments2 = v.tier2;
         if (changed) {
+            ringChanged();
             if (beamOn) collapse();
             setChangedAndSync();
         }
@@ -226,8 +234,14 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
     protected void onUnformed() {
         if (beamOn) collapse();
         ring.clear();
+        ringChanged();
         segments1 = segments2 = 0;
         setChangedAndSync();
+    }
+
+    private void ringChanged() {
+        ringCentres = null;
+        ringBounds = null;
     }
 
     // ---------------------------------------------------------------- numbers
@@ -258,6 +272,11 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
             fePerTick = 0;
             state = State.NOT_FORMED;
             setLit(false);
+            // a ring that is unloaded or broken shows no beam
+            if (shownBeam != 0 || shownCharge != 0) {
+                shownBeam = shownCharge = 0;
+                setChangedAndSync();
+            }
             return;
         }
         pushOut(level, now);
@@ -286,9 +305,16 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
             if (beamOn) collapse();
             state = State.OFF;
         } else if (!beamOn) {
-            if (charge < chargeNeeded()) state = State.CHARGING;
-            else if (!hasFuel()) state = State.NO_FUEL;
-            else start();
+            if (charge < chargeNeeded()) {
+                state = State.CHARGING;
+            } else if (!hasFuel()) {
+                if (state == State.CHARGING && level instanceof ServerLevel sl) {
+                    CoreSounds.play(sl, worldPosition, CoreSounds.CHARGE_COMPLETE, SoundSource.BLOCKS, 1.0F, 0.7F);
+                }
+                state = State.NO_FUEL;
+            } else {
+                start();
+            }
         }
         if (beamOn) {
             if (energy.getEnergyStored() >= energy.getMaxEnergyStored()) {
@@ -351,7 +377,8 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
             if (f == null) continue;
             fuel.extractItem(i, 1, false);
             fuelTotal = f.ticks();
-            fuelLeft = f.ticks();
+            // the last tick of the previous unit may have overdrawn it
+            fuelLeft += f.ticks();
             return;
         }
     }
@@ -379,15 +406,16 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
     /** Hum and collision sparks while the beam runs. */
     private void effects(ServerLevel level, long now) {
         if (!beamOn || beam <= 0) return;
-        if (CoreSounds.due(level, worldPosition, 60)) {
-            CoreSounds.play(level, worldPosition, CoreSounds.COLLIDER_HUM, SoundSource.BLOCKS, 1.2F, 0.7F + 0.5F * (float) beam);
+        // the hum lasts about 7 s, so one at a time; a collision now and then, never back to back
+        if (CoreSounds.due(level, worldPosition, 120)) {
+            CoreSounds.play(level, worldPosition, CoreSounds.COLLIDER_HUM, SoundSource.BLOCKS, 1.2F, 1.0F + 0.2F * (float) beam);
         }
         if (now % 10 == 0) {
             double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 1.05, z = worldPosition.getZ() + 0.5;
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, (int) (4 + 8 * beam), 0.3, 0.2, 0.3, 0.25);
             level.sendParticles(ParticleTypes.END_ROD, x, y + 0.2, z, (int) (1 + 2 * beam), 0.1, 0.1, 0.1, 0.05);
         }
-        if (beam >= 1.0 && CoreSounds.due(level, worldPosition, 37)) {
+        if (beam >= 1.0 && CoreSounds.due(level, worldPosition, 80) && level.random.nextBoolean()) {
             CoreSounds.play(level, worldPosition, CoreSounds.COLLIDER_COLLIDE, SoundSource.BLOCKS, 0.7F, 0.8F + level.random.nextFloat() * 0.4F);
         }
     }
@@ -425,6 +453,29 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
     public State state() { return state; }
     public long luminosity() { return luminosity; }
     public List<BlockPos> ring() { return ring; }
+
+    /** Client: the ring block centres relative to the controller's corner, in loop order (cached for the renderer). */
+    public Vec3[] ringCentres() {
+        if (ringCentres == null || ringCentres.length != ring.size()) {
+            Vec3[] pts = new Vec3[ring.size()];
+            for (int i = 0; i < pts.length; i++) {
+                BlockPos p = ring.get(i);
+                pts[i] = new Vec3(p.getX() - worldPosition.getX() + 0.5, p.getY() - worldPosition.getY() + 0.5, p.getZ() - worldPosition.getZ() + 0.5);
+            }
+            ringCentres = pts;
+        }
+        return ringCentres;
+    }
+
+    /** Client: the box around the ring blocks (cached for the renderer's culling). */
+    public AABB ringBounds() {
+        if (ringBounds == null) {
+            AABB box = new AABB(worldPosition);
+            for (BlockPos p : ring) box = box.minmax(new AABB(p));
+            ringBounds = box;
+        }
+        return ringBounds;
+    }
     /** Client: beam strength 0-10 and charge 0-10 as last synced. */
     public int shownBeam() { return shownBeam; }
     public int shownCharge() { return shownCharge; }
@@ -462,7 +513,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
 
         @Override
         public int extractEnergy(int amount, boolean simulate) {
-            int take = Math.min(amount, energy.getEnergyStored());
+            int take = Math.max(0, Math.min(amount, energy.getEnergyStored()));
             if (!simulate && take > 0) energy.consume(take);
             return take;
         }
@@ -604,6 +655,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         if (tag.contains("ring", Tag.TAG_LONG_ARRAY)) {
             ring.clear();
             for (long l : tag.getLongArray("ring")) ring.add(BlockPos.of(l));
+            ringChanged();
         }
         shownBeam = tag.getInt("shownBeam");
         shownCharge = tag.getInt("shownCharge");
