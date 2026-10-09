@@ -713,6 +713,10 @@ public class EnergyGameTests {
             var off = new ControllerActionPayload(pos, ControllerActionPayload.SET_ENABLED, 0);
             helper.assertTrue(ControllerActionPayload.process(owner, off) && !collider.enabled(), "the owner switches it off");
             var on = new ControllerActionPayload(pos, ControllerActionPayload.SET_ENABLED, 1);
+            helper.assertTrue(!ControllerActionPayload.process(owner, new ControllerActionPayload(pos.above(), ControllerActionPayload.SET_ENABLED, 1))
+                    && !collider.enabled(), "a payload for another position than the open menu is refused");
+            helper.assertTrue(!ControllerActionPayload.process(owner, new ControllerActionPayload(pos, 99, 1)) && !collider.enabled(),
+                    "an unknown action is refused");
             helper.assertTrue(!collider.canControl(stranger), "a stranger may not control it");
             helper.assertTrue(!ControllerActionPayload.process(stranger, on) && !collider.enabled(), "a stranger changes nothing");
             helper.assertTrue(stranger.containerMenu.stillValid(stranger), "a stranger may still watch");

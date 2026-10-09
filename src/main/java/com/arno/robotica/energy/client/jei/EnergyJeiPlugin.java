@@ -49,7 +49,7 @@ public class EnergyJeiPlugin implements IModPlugin {
             Item item = BuiltInRegistries.ITEM.get(key);
             if (item == Items.AIR) return;
             registration.addItemStackInfo(new ItemStack(item), Component.translatable("jei.robotica.info.reactor_core",
-                    String.format(Locale.ROOT, "%.0f", core.power()), Fmt.duration(core.life())));
+                    multiplier(core.power()), Fmt.duration(core.life())));
         });
         BuiltInRegistries.ITEM.getDataMap(EnergyDataMaps.REACTOR_FUEL).forEach((key, fuel) -> {
             Item item = BuiltInRegistries.ITEM.get(key);
@@ -75,6 +75,11 @@ public class EnergyJeiPlugin implements IModPlugin {
         lines.add(line);
         waste.ifPresent(w -> lines.add(Component.translatable("jei.robotica.info.fuel_waste", Component.translatable(w.getDescriptionId()))));
         registration.addItemStackInfo(new ItemStack(item), lines.toArray(Component[]::new));
+    }
+
+    /** x2, x1.5, x0.25: no trailing zeros, so a datapack core of x1.5 does not read as x2. */
+    private static String multiplier(float v) {
+        return new java.math.BigDecimal(String.format(Locale.ROOT, "%.2f", v)).stripTrailingZeros().toPlainString();
     }
 
     private static String percent(float v) {

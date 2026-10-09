@@ -229,10 +229,8 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
                 onUnformed();
                 level.playSound(null, worldPosition, SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 0.5F, 1.2F);
             }
-            if (lookBox != null) {
-                dress(lookBox, false);
-                lookBox = null;
-            }
+            // a part in an unloaded chunk keeps its look: the box stays saved and the next scans take it off
+            if (lookBox != null && dress(lookBox, false)) lookBox = null;
             problem = result.problem();
             box = result.box();
         }
@@ -329,10 +327,12 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
     /**
      * Formed look of a cuboid shell: frame beams, corner caps and wall panels on its {@link FramedPartBlock}s and
      * frameless {@link StructureGlassBlock}s, or back to the loose blocks. Sent to clients without neighbour updates, so
-     * it never wakes the {@link MultiblockWatcher}. Scripts/scene_preview.py draws the same look.
+     * it never wakes the {@link MultiblockWatcher}. Scripts/scene_preview.py draws the same look. Returns false when a
+     * part of the shell was not loaded (and so kept its state).
      */
-    private void dress(BoundingBox shell, boolean on) {
-        if (level == null) return;
+    private boolean dress(BoundingBox shell, boolean on) {
+        if (level == null) return false;
+        boolean all = true;
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (int x = shell.minX(); x <= shell.maxX(); x++) {
             boolean ex = x == shell.minX() || x == shell.maxX();
@@ -341,7 +341,10 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
                 for (int z = shell.minZ(); z <= shell.maxZ(); z = ex || ey || z == shell.maxZ() ? z + 1 : shell.maxZ()) {
                     boolean ez = z == shell.minZ() || z == shell.maxZ();
                     p.set(x, y, z);
-                    if (!level.isLoaded(p)) continue;
+                    if (!level.isLoaded(p)) {
+                        all = false;
+                        continue;
+                    }
                     BlockState state = level.getBlockState(p);
                     BlockState next = state;
                     if (state.getBlock() instanceof FramedPartBlock) {
@@ -353,6 +356,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
                 }
             }
         }
+        return all;
     }
 
     /** Corner where three box faces meet, a beam along the one axis that is not on a face, else a wall. */
@@ -500,6 +504,8 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         ownerName = tag.getString("ownerName");
         int[] look = tag.getIntArray("look");
         lookBox = look.length == 6 ? new BoundingBox(look[0], look[1], look[2], look[3], look[4], look[5]) : null;
+        // a controller moved with its data (a mod that carries blocks) must not strip the look off its old spot
+        if (lookBox != null && !lookBox.isInside(worldPosition)) lookBox = null;
     }
 
     /** Called when the controller block is broken: drop what it holds. */
