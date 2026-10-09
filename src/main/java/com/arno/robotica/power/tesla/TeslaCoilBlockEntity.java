@@ -20,6 +20,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -36,8 +37,8 @@ import java.util.UUID;
 
 /**
  * Links of one Tesla Coil plus its per-tick bookkeeping. A coil whose support block gives out FE is a root: every tick it
- * runs {@link TeslaNetwork#pushFromSource}. Every other coil only forwards what roots send it. The links and an
- * "active" flag are synced to the client for the arcs; nothing else is.
+ * runs {@link TeslaNetwork#pushFromSource}. Every other coil only forwards what roots send it. The links and a coarse
+ * flow level (0-4, how hard the coil works) are synced to the client for the link glow; nothing else is.
  */
 public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvider, EnergyInfoMenu.Source {
     private final List<TeslaLink> links = new ArrayList<>();
@@ -55,7 +56,10 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     private int lastRate;
     private boolean root;
     private int rotation;
-    private boolean active;
+    /** Synced: 0 idle, 1-4 how much of the tier rate went out over the last second. */
+    private int flow;
+    /** Server: a new non-zero flow level must show up twice in a row before it is synced, so a rate on an edge does not resend. */
+    private int pendingFlow;
     private long nextHum;
 
     /** Client: area the arcs cover, for frustum culling. */
@@ -88,6 +92,11 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return links.size();
     }
 
+    /** Link {@code index} without the list wrapper (the renderer reads links every frame). */
+    public TeslaLink link(int index) {
+        return links.get(index);
+    }
+
     public int maxLinks() {
         return tier().maxLinks;
     }
@@ -104,7 +113,19 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
 
     /** Synced: energy went out during the last second. */
     public boolean isActive() {
-        return active;
+        return flow > 0;
+    }
+
+    /** Synced: 0 idle, 1-4 how much of the tier rate went out over the last second. */
+    public int flowLevel() {
+        return flow;
+    }
+
+    /** 0 when nothing went out, else 1-4 by the share of {@code max} that {@code rate} uses. */
+    static int flowLevel(int rate, int max) {
+        if (rate <= 0) return 0;
+        double f = (double) rate / Math.max(1, max);
+        return f < 0.1 ? 1 : f < 0.35 ? 2 : f < 0.7 ? 3 : 4;
     }
 
     // ---- owner ----
@@ -242,14 +263,20 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         if (now % 20 == 0) {
             lastRate = (int) Math.min(Integer.MAX_VALUE, windowSent / 20);
             windowSent = 0;
-            boolean nowActive = lastRate > 0;
-            if (nowActive != active) {
-                active = nowActive;
-                setChangedAndSync();
+            // At most one sync per second, only on change; steps between two busy levels need two windows in a row.
+            int target = flowLevel(lastRate, tier().rate());
+            if (target == flow) {
+                pendingFlow = flow;
+            } else if (target == 0 || flow == 0 || target == pendingFlow) {
+                flow = target;
+                pendingFlow = target;
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            } else {
+                pendingFlow = target;
             }
         }
         // A soft hum only for players standing right next to the coil, and rarely. No zaps from idle networks.
-        if (active && now >= nextHum) {
+        if (flow > 0 && now >= nextHum) {
             nextHum = now + 240 + level.random.nextInt(240);
             if (level.getNearestPlayer(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 5.0, false) != null) {
                 CoreSounds.play(level, pos, CoreSounds.CHARGER_HUM, SoundSource.BLOCKS, 0.05F, 1.5F + level.random.nextFloat() * 0.2F);
@@ -271,12 +298,12 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return new Vec3(p.getX() + 0.5 + face.getStepX() * 0.52, p.getY() + 0.5 + face.getStepY() * 0.52, p.getZ() + 0.5 + face.getStepZ() * 0.52);
     }
 
-    /** Client: box around the coil and every link end. */
+    /** Client: box around the coil and every link end, with room for the sag of the strands. */
     public AABB renderBox() {
         if (renderBox == null) {
             AABB box = new AABB(worldPosition);
             for (TeslaLink link : links) box = box.minmax(new AABB(link.pos()));
-            renderBox = box.inflate(0.5);
+            renderBox = box.inflate(0.5).expandTowards(0, -1.0, 0);
         }
         return renderBox;
     }
@@ -339,7 +366,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     @Override
     protected void saveClientData(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("links", saveLinks());
-        tag.putBoolean("active", active);
+        tag.putByte("flow", (byte) flow);
     }
 
     @Override
@@ -362,6 +389,6 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             owner = tag.getUUID("owner");
             ownerName = tag.getString("ownerName");
         }
-        if (tag.contains("active")) active = tag.getBoolean("active");
+        if (tag.contains("flow")) flow = tag.getByte("flow");
     }
 }

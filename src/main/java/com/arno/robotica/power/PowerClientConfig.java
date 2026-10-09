@@ -16,7 +16,7 @@ public final class PowerClientConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("tesla");
-        TESLA_ARCS = b.comment("Draw the animated arcs between Tesla Coils and their targets.").define("teslaArcs", true);
+        TESLA_ARCS = b.comment("Draw the glowing links between Tesla Coils and their targets.").define("teslaArcs", true);
         TESLA_PARTICLES = b.comment("Spark particles at Tesla Coils and their targets.").define("teslaParticles", true);
         b.pop();
         SPEC = b.build();

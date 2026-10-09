@@ -4,96 +4,376 @@ import com.arno.robotica.power.PowerClientConfig;
 import com.arno.robotica.power.tesla.TeslaCoilBlock;
 import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
 import com.arno.robotica.power.tesla.TeslaLink;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
-import java.util.List;
+import java.util.Random;
 
 /**
- * Thin animated arcs from a coil's tip to each link (additive lightning render type, no textures). The jagged path is
- * re-rolled every few ticks from a hash, so nothing is stored per frame. Idle links show one faint arc, links that carry
- * energy a bright core with a soft glow and a second, thinner arc. Culled by the coil's link box and the view distance;
- * the client config {@code teslaArcs} turns them off.
+ * Tesla links as soft energy tethers. Every link is a thin, slightly sagging strand of additive glow: a faint halo with a
+ * brighter core, both fading out at the edges and into the coil tips, with a slow shimmer running along it. While the
+ * coil sends, soft motes with short tails travel the strand towards the target (more and faster the harder the coil
+ * works, from the synced flow level) and now and then a tiny spark crackles off the tip.
+ * <p>
+ * Cheap: camera-facing strips in one batched render type, all geometry from static scratch arrays and one re-seeded
+ * Random (render thread only), nothing allocated per frame. Each link fades with its distance to the camera: motes and
+ * sparks only up close, a coarser strand further out, nothing beyond the fade range (wider while holding a Linker). The
+ * render box spans every link end, so long links stay when the coil itself is off-screen.
  */
 public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEntity> {
-    /** Without a Tesla Linker in hand, arcs only show this close, very faint. */
-    private static final double FAINT_RANGE = 12.0;
+    /** Additive like lightning, but no depth writes (soft edges never hide glow behind them) and no culling (one winding). */
+    private static final RenderType GLOW = RenderType.create("robotica_tesla_glow", DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS, 1536, false, false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(RenderStateShard.RENDERTYPE_LIGHTNING_SHADER)
+                    .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setOutputState(RenderStateShard.WEATHER_TARGET)
+                    .createCompositeState(false));
+
+    /** Links are fully visible this close, then fade out until the second distance. Wider while holding a Linker. */
+    private static final double NEAR = 16, FAR = 26, NEAR_LINKER = 48, FAR_LINKER = 64;
+    /** Motes travel only within this distance, sparks only within the second. Further out a link is just its strand. */
+    private static final double MOTE_RANGE = 28, SPARK_RANGE = 14;
+    /** The strand fades in over this length at both ends. */
+    private static final double END_FADE = 0.45;
+
+    // Strand: halo and core half widths (blocks) and alphas (0-255) of an idle link without a Linker in hand.
+    private static final float HALO_W = 0.065F, CORE_W = 0.011F;
+    private static final int HALO_A = 30, CORE_A = 46;
+    /** Brightness of the strand while the coil sends, and while the player holds a Linker. */
+    private static final float FLOW_GAIN = 1.3F, LINKER_GAIN = 2.0F;
+
+    // Motes per flow level 1-4: speed (blocks per tick) and spacing (blocks).
+    private static final double[] MOTE_SPEED = {0, 0.045, 0.065, 0.09, 0.12};
+    private static final double[] MOTE_SPACING = {0, 3.2, 2.2, 1.5, 1.05};
+    private static final int MAX_MOTES = 16;
+    /** One crackle every this many 3-tick windows on average, per flow level. */
+    private static final int[] SPARK_ODDS = {0, 40, 28, 18, 12};
+
+    /**
+     * Halo colours per tier (0xRRGGBB), after the coil's winding: I copper and II steel a pale ice blue like the Spark Lamp
+     * wisp, III a soft gold, IV a muted ember, V violet. The strand core and inner halo are these pulled towards the
+     * wisp's white. A link between two tiers fades from one colour to the other.
+     */
+    private static final int[] TIER_HALO = {0x6EAAFF, 0x82B9FF, 0xFFBE50, 0xFF7846, 0x965AFF};
+    /** The wisp's core white. */
+    private static final int WHITE = 0xEBFAFF;
+
+    // ---- render-thread scratch, nothing below is allocated per frame ----
+    private static final int MAX_POINTS = 48, TAIL_POINTS = 6, DISC = 10;
+    /** Strand points of the link being drawn, and their arc length from the coil tip. */
+    private static final double[] SX = new double[MAX_POINTS], SY = new double[MAX_POINTS], SZ = new double[MAX_POINTS],
+            SS = new double[MAX_POINTS], SA = new double[MAX_POINTS];
+    /** A second polyline for tails and sparks. */
+    private static final double[] QX = new double[MAX_POINTS], QY = new double[MAX_POINTS], QZ = new double[MAX_POINTS],
+            QA = new double[MAX_POINTS];
+    /** Per-point sideways unit vectors of the strip being emitted. */
+    private static final double[] WX = new double[MAX_POINTS], WY = new double[MAX_POINTS], WZ = new double[MAX_POINTS];
+    private static final double[] COS = new double[DISC + 1], SIN = new double[DISC + 1];
+    private static final Random RNG = new Random();
+    /** Result of {@link #pointAt}. */
+    private static double px, py, pz;
+    /** Camera position in the coil's block space, and the camera's left and up axes. */
+    private static double camX, camY, camZ;
+    private static float leftX, leftY, leftZ, upX, upY, upZ;
+
+    static {
+        for (int i = 0; i <= DISC; i++) {
+            COS[i] = Math.cos(Math.PI * 2 * i / DISC);
+            SIN[i] = Math.sin(Math.PI * 2 * i / DISC);
+        }
+    }
 
     public TeslaCoilRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
     public void render(TeslaCoilBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         Level level = be.getLevel();
-        List<TeslaLink> links = be.links();
-        if (level == null || links.isEmpty() || !PowerClientConfig.teslaArcs()) return;
+        int linkCount = be.linkCount();
+        if (level == null || linkCount == 0 || !PowerClientConfig.teslaArcs()) return;
         BlockState state = be.getBlockState();
         if (!state.hasProperty(TeslaCoilBlock.FACING)) return;
         BlockPos origin = be.getBlockPos();
-        Vec3 from = TeslaCoilBlock.tipOffset(state.getValue(TeslaCoilBlock.FACING));
-        boolean active = be.isActive();
-        // Simple straight lines. Faint and only up close normally; brighter (and visible further) while holding the Linker.
-        boolean configuring = TeslaCoilBlock.isConfiguring();
-        if (!configuring) {
-            var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-            if (cam.distanceToSqr(origin.getX() + 0.5, origin.getY() + 0.5, origin.getZ() + 0.5) > FAINT_RANGE * FAINT_RANGE) return;
-        }
-        float time = level.getGameTime() + partialTick;
-        VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
+        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        Vec3 cam = camera.getPosition();
+        camX = cam.x - origin.getX();
+        camY = cam.y - origin.getY();
+        camZ = cam.z - origin.getZ();
+        Vector3f left = camera.getLeftVector(), up = camera.getUpVector();
+        leftX = left.x();
+        leftY = left.y();
+        leftZ = left.z();
+        upX = up.x();
+        upY = up.y();
+        upZ = up.z();
+
+        boolean linker = TeslaCoilBlock.isConfiguring();
+        double near = linker ? NEAR_LINKER : NEAR, far = linker ? FAR_LINKER : FAR;
+        int flow = Math.min(4, be.flowLevel());
+        int halo = halo(be.tier().ordinal());
+        float gain = (flow > 0 ? FLOW_GAIN : 1F) * (linker ? LINKER_GAIN : 1F);
+        long gameTime = level.getGameTime();
+        double time = gameTime + partialTick;
+
+        Direction facing = state.getValue(TeslaCoilBlock.FACING);
+        double tip = TeslaCoilBlock.TIP - 0.5;
+        double ax = 0.5 + facing.getStepX() * tip, ay = 0.5 + facing.getStepY() * tip, az = 0.5 + facing.getStepZ() * tip;
+
+        VertexConsumer vc = buffers.getBuffer(GLOW);
         Matrix4f m = pose.last().pose();
-        int lineAlpha = configuring ? (active ? 150 : 95) : (active ? 40 : 20);
-        float width = configuring ? 0.018F : 0.012F;
-        for (int i = 0; i < links.size(); i++) {
-            TeslaLink link = links.get(i);
-            Vec3 to = TeslaCoilBlockEntity.endPoint(level, link).subtract(origin.getX(), origin.getY(), origin.getZ());
-            line(vc, m, from, to, width, 120, 210, 255, lineAlpha);
-            if (active) {
-                // A small bright pulse travelling from the coil to the target shows which way the power flows.
-                double len = to.subtract(from).length();
-                if (len < 0.2) continue;
-                double t = ((time * 0.12 + i * 0.37) % len) / len;
-                double seg = Math.min(0.35, len * 0.25) / len;
-                Vec3 a = from.add(to.subtract(from).scale(t));
-                Vec3 b = from.add(to.subtract(from).scale(Math.min(1.0, t + seg)));
-                line(vc, m, a, b, width * 1.8F, 200, 245, 255, configuring ? 210 : 80);
+        double closest = Double.MAX_VALUE;
+        for (int i = 0; i < linkCount; i++) {
+            TeslaLink link = be.link(i);
+            BlockPos p = link.pos();
+            double bx, by, bz;
+            int haloEnd = halo;
+            if (link.coil()) {
+                BlockState other = level.getBlockState(p);
+                if (other.getBlock() instanceof TeslaCoilBlock coil) haloEnd = halo(coil.tier().ordinal());
+                Direction f = other.hasProperty(TeslaCoilBlock.FACING) ? other.getValue(TeslaCoilBlock.FACING) : Direction.UP;
+                bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * tip;
+                by = p.getY() - origin.getY() + 0.5 + f.getStepY() * tip;
+                bz = p.getZ() - origin.getZ() + 0.5 + f.getStepZ() * tip;
+            } else {
+                Direction f = link.face() == null ? Direction.UP : link.face();
+                bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * 0.52;
+                by = p.getY() - origin.getY() + 0.5 + f.getStepY() * 0.52;
+                bz = p.getZ() - origin.getZ() + 0.5 + f.getStepZ() * 0.52;
+            }
+            double dist = segmentDistance(ax, ay, az, bx, by, bz);
+            closest = Math.min(closest, dist);
+            if (dist >= far) continue;
+            float fade = dist <= near ? 1F : (float) smooth((far - dist) / (far - near));
+            double phase = ((p.asLong() * 0x9E3779B97F4A7C15L) >>> 40) / (double) (1 << 24) * Math.PI * 2;
+            int n = strand(ax, ay, az, bx, by, bz, dist, time, phase);
+            if (n < 2) continue;
+            double len = SS[n - 1];
+            float a = fade * gain;
+            strip(vc, m, SX, SY, SZ, SA, n, HALO_W, halo, haloEnd, Math.min(255, (int) (HALO_A * a)));
+            strip(vc, m, SX, SY, SZ, SA, n, CORE_W, pale(halo), pale(haloEnd), Math.min(255, (int) (CORE_A * a)));
+            if (flow > 0 && dist < MOTE_RANGE && len > 0.6) {
+                float moteFade = fade * (float) smooth((MOTE_RANGE - dist) / 6.0) * (linker ? 1.3F : 1F);
+                motes(vc, m, n, len, flow, time, phase, halo, haloEnd, moteFade);
             }
         }
+        if (flow > 0 && closest < SPARK_RANGE) spark(vc, m, origin, ax, ay, az, facing, gameTime, flow, pale(halo));
     }
 
-    /** A straight ribbon from a to b: two crossed quads, both windings. */
-    private static void line(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, float width, int r, int g, int bl, int alpha) {
-        Vec3 d = b.subtract(a);
-        if (d.lengthSqr() < 1.0E-6) return;
-        Vec3 dir = d.normalize();
-        Vec3 ref = Math.abs(dir.y) < 0.95 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
-        Vec3 p1 = dir.cross(ref).normalize();
-        Vec3 p2 = dir.cross(p1).normalize();
-        quad(vc, m, a, b, p1.scale(width), r, g, bl, alpha);
-        quad(vc, m, a, b, p2.scale(width), r, g, bl, alpha);
+    /**
+     * Fills the strand scratch arrays with the sagging curve from a to b and returns its point count. The sag is a
+     * parabola, deeper for long and level links, breathing very slowly. SA holds the end fade times a slow shimmer.
+     */
+    private static int strand(double ax, double ay, double az, double bx, double by, double bz, double dist, double time, double phase) {
+        double dx = bx - ax, dy = by - ay, dz = bz - az;
+        double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len < 0.05) return 0;
+        double level = Math.sqrt(dx * dx + dz * dz) / len;
+        double sag = Math.min(0.06 * len, 0.8) * level * (1 + 0.06 * Math.sin(time * 0.025 + phase));
+        int n = dist < 20 ? (int) Math.ceil(len * 2.0) + 1 : (int) Math.ceil(len * 0.6) + 1;
+        n = Math.max(dist < 20 ? 8 : 4, Math.min(MAX_POINTS, n));
+        double s = 0;
+        for (int i = 0; i < n; i++) {
+            double t = (double) i / (n - 1);
+            double x = ax + dx * t, y = ay + dy * t - sag * 4 * t * (1 - t), z = az + dz * t;
+            if (i > 0) {
+                double ex = x - SX[i - 1], ey = y - SY[i - 1], ez = z - SZ[i - 1];
+                s += Math.sqrt(ex * ex + ey * ey + ez * ez);
+            }
+            SX[i] = x;
+            SY[i] = y;
+            SZ[i] = z;
+            SS[i] = s;
+        }
+        for (int i = 0; i < n; i++) {
+            double end = smooth(Math.min(SS[i], s - SS[i]) / END_FADE);
+            SA[i] = end * (0.78 + 0.22 * Math.sin(SS[i] * 0.9 - time * 0.06 + phase));
+        }
+        return n;
     }
 
-    private static void quad(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, Vec3 w, int r, int g, int bl, int alpha) {
-        float ax0 = (float) (a.x - w.x), ay0 = (float) (a.y - w.y), az0 = (float) (a.z - w.z);
-        float ax1 = (float) (a.x + w.x), ay1 = (float) (a.y + w.y), az1 = (float) (a.z + w.z);
-        float bx0 = (float) (b.x - w.x), by0 = (float) (b.y - w.y), bz0 = (float) (b.z - w.z);
-        float bx1 = (float) (b.x + w.x), by1 = (float) (b.y + w.y), bz1 = (float) (b.z + w.z);
-        vc.addVertex(m, ax0, ay0, az0).setColor(r, g, bl, alpha);
-        vc.addVertex(m, ax1, ay1, az1).setColor(r, g, bl, alpha);
-        vc.addVertex(m, bx1, by1, bz1).setColor(r, g, bl, alpha);
-        vc.addVertex(m, bx0, by0, bz0).setColor(r, g, bl, alpha);
-        vc.addVertex(m, bx0, by0, bz0).setColor(r, g, bl, alpha);
-        vc.addVertex(m, bx1, by1, bz1).setColor(r, g, bl, alpha);
-        vc.addVertex(m, ax1, ay1, az1).setColor(r, g, bl, alpha);
-        vc.addVertex(m, ax0, ay0, az0).setColor(r, g, bl, alpha);
+    /** Point at arc length {@code s} on the current strand, into px/py/pz. */
+    private static void pointAt(int n, double s) {
+        int i = 1;
+        while (i < n - 1 && SS[i] < s) i++;
+        double s0 = SS[i - 1], span = SS[i] - s0;
+        double t = span <= 1.0E-9 ? 0 : Math.max(0, Math.min(1, (s - s0) / span));
+        px = SX[i - 1] + (SX[i] - SX[i - 1]) * t;
+        py = SY[i - 1] + (SY[i] - SY[i - 1]) * t;
+        pz = SZ[i - 1] + (SZ[i] - SZ[i - 1]) * t;
+    }
+
+    /** Soft motes with a short tail, evenly spread so the loop is seamless, moving from the coil to the target. */
+    private static void motes(VertexConsumer vc, Matrix4f m, int n, double len, int flow, double time, double phase,
+                              int halo0, int halo1, float fade) {
+        int count = Math.max(1, Math.min(MAX_MOTES, (int) (len / MOTE_SPACING[flow])));
+        double gap = len / count, tail = 0.45 + 0.12 * flow;
+        double head0 = (time * MOTE_SPEED[flow] + phase / (Math.PI * 2) * gap) % gap;
+        for (int k = 0; k < count; k++) {
+            double s = head0 + k * gap;
+            float a = fade * (float) (smooth(s / 0.5) * smooth((len - s) / 0.5))
+                    * (float) (0.85 + 0.15 * Math.sin(time * 0.3 + k * 1.7 + phase));
+            if (a <= 0.01F) continue;
+            // tail: a tapering strip behind the head
+            double start = Math.max(0, s - tail);
+            for (int j = 0; j < TAIL_POINTS; j++) {
+                double t = (double) j / (TAIL_POINTS - 1);
+                pointAt(n, start + (s - start) * t);
+                QX[j] = px;
+                QY[j] = py;
+                QZ[j] = pz;
+                QA[j] = t * t;
+            }
+            int halo = lerp(halo0, halo1, s / len), inner = pale(halo);
+            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.035F, halo, halo, (int) (80 * a));
+            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.008F, inner, inner, (int) (130 * a));
+            pointAt(n, s);
+            // two-layer halo round a white point, like the Spark Lamp wisp
+            disc(vc, m, px, py, pz, 0.18F, halo, (int) (75 * a));
+            disc(vc, m, px, py, pz, 0.065F, inner, (int) (110 * a));
+            disc(vc, m, px, py, pz, 0.025F, WHITE, (int) (220 * a));
+        }
+    }
+
+    /** Now and then a tiny jagged spark off the coil tip while it sends; each lasts one 3-tick window. */
+    private static void spark(VertexConsumer vc, Matrix4f m, BlockPos origin, double ax, double ay, double az, Direction facing,
+                              long gameTime, int flow, int color) {
+        long window = gameTime / 3;
+        RNG.setSeed(origin.asLong() * 31 + window * 0x9E3779B97F4A7C15L);
+        if (RNG.nextInt(SPARK_ODDS[flow]) != 0) return;
+        // a random direction, leaning away from the block the coil sits on
+        double dx = RNG.nextGaussian(), dy = RNG.nextGaussian(), dz = RNG.nextGaussian();
+        dx += facing.getStepX() * 1.2;
+        dy += facing.getStepY() * 1.2;
+        dz += facing.getStepZ() * 1.2;
+        double dl = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dl < 1.0E-3) return;
+        dx /= dl;
+        dy /= dl;
+        dz /= dl;
+        double r0 = 0.11, length = 0.22 + RNG.nextDouble() * 0.18;
+        int points = 5;
+        for (int i = 0; i < points; i++) {
+            double t = (double) i / (points - 1), d = r0 + length * t, j = i == 0 ? 0 : 0.05;
+            QX[i] = ax + dx * d + (RNG.nextDouble() - 0.5) * 2 * j;
+            QY[i] = ay + dy * d + (RNG.nextDouble() - 0.5) * 2 * j;
+            QZ[i] = az + dz * d + (RNG.nextDouble() - 0.5) * 2 * j;
+            QA[i] = 1 - t * t;
+        }
+        strip(vc, m, QX, QY, QZ, QA, points, 0.03F, color, color, 28);
+        strip(vc, m, QX, QY, QZ, QA, points, 0.006F, color, color, 150);
+    }
+
+    /**
+     * A camera-facing strip along the polyline with soft edges: full {@code alpha} (times the per-point factor) on the
+     * line, zero at {@code halfWidth} to either side. The colour runs from {@code c0} at the first point to {@code c1}.
+     */
+    private static void strip(VertexConsumer vc, Matrix4f m, double[] xs, double[] ys, double[] zs, double[] as, int n,
+                              float halfWidth, int c0, int c1, int alpha) {
+        if (alpha <= 0 || n < 2) return;
+        for (int i = 0; i < n; i++) {
+            int i0 = Math.max(0, i - 1), i1 = Math.min(n - 1, i + 1);
+            double tx = xs[i1] - xs[i0], ty = ys[i1] - ys[i0], tz = zs[i1] - zs[i0];
+            double vx = camX - xs[i], vy = camY - ys[i], vz = camZ - zs[i];
+            double wx = ty * vz - tz * vy, wy = tz * vx - tx * vz, wz = tx * vy - ty * vx;
+            double wl = Math.sqrt(wx * wx + wy * wy + wz * wz);
+            if (wl < 1.0E-9) {
+                // looking straight down the line: any sideways vector will do
+                wx = leftX;
+                wy = leftY;
+                wz = leftZ;
+                wl = 1;
+            }
+            WX[i] = wx / wl * halfWidth;
+            WY[i] = wy / wl * halfWidth;
+            WZ[i] = wz / wl * halfWidth;
+        }
+        for (int i = 0; i + 1 < n; i++) {
+            int a0 = (int) (alpha * as[i]), a1 = (int) (alpha * as[i + 1]);
+            if (a0 <= 0 && a1 <= 0) continue;
+            int k0 = c0 == c1 ? c0 : lerp(c0, c1, (double) i / (n - 1)), k1 = c0 == c1 ? c0 : lerp(c0, c1, (double) (i + 1) / (n - 1));
+            int r = k0 >> 16 & 255, g = k0 >> 8 & 255, b = k0 & 255, r1 = k1 >> 16 & 255, g1 = k1 >> 8 & 255, b1 = k1 & 255;
+            float x0 = (float) xs[i], y0 = (float) ys[i], z0 = (float) zs[i];
+            float x1 = (float) xs[i + 1], y1 = (float) ys[i + 1], z1 = (float) zs[i + 1];
+            float w0x = (float) WX[i], w0y = (float) WY[i], w0z = (float) WZ[i];
+            float w1x = (float) WX[i + 1], w1y = (float) WY[i + 1], w1z = (float) WZ[i + 1];
+            vc.addVertex(m, x0 - w0x, y0 - w0y, z0 - w0z).setColor(r, g, b, 0);
+            vc.addVertex(m, x0, y0, z0).setColor(r, g, b, a0);
+            vc.addVertex(m, x1, y1, z1).setColor(r1, g1, b1, a1);
+            vc.addVertex(m, x1 - w1x, y1 - w1y, z1 - w1z).setColor(r1, g1, b1, 0);
+            vc.addVertex(m, x0, y0, z0).setColor(r, g, b, a0);
+            vc.addVertex(m, x0 + w0x, y0 + w0y, z0 + w0z).setColor(r, g, b, 0);
+            vc.addVertex(m, x1 + w1x, y1 + w1y, z1 + w1z).setColor(r1, g1, b1, 0);
+            vc.addVertex(m, x1, y1, z1).setColor(r1, g1, b1, a1);
+        }
+    }
+
+    /** A camera-facing soft dot: full alpha in the middle, zero at the rim. */
+    private static void disc(VertexConsumer vc, Matrix4f m, double cx, double cy, double cz, float radius, int color, int alpha) {
+        if (alpha <= 0) return;
+        int r = color >> 16 & 255, g = color >> 8 & 255, b = color & 255;
+        float x = (float) cx, y = (float) cy, z = (float) cz;
+        for (int i = 0; i < DISC; i++) {
+            float c0 = (float) COS[i] * radius, s0 = (float) SIN[i] * radius;
+            float c1 = (float) COS[i + 1] * radius, s1 = (float) SIN[i + 1] * radius;
+            float x0 = x + leftX * c0 + upX * s0, y0 = y + leftY * c0 + upY * s0, z0 = z + leftZ * c0 + upZ * s0;
+            float x1 = x + leftX * c1 + upX * s1, y1 = y + leftY * c1 + upY * s1, z1 = z + leftZ * c1 + upZ * s1;
+            vc.addVertex(m, x, y, z).setColor(r, g, b, alpha);
+            vc.addVertex(m, x0, y0, z0).setColor(r, g, b, 0);
+            vc.addVertex(m, x1, y1, z1).setColor(r, g, b, 0);
+            vc.addVertex(m, x1, y1, z1).setColor(r, g, b, 0);
+        }
+    }
+
+    private static int halo(int tier) {
+        return TIER_HALO[Math.max(0, Math.min(TIER_HALO.length - 1, tier))];
+    }
+
+    /** The colour pulled two thirds of the way to the wisp's white: strand core, inner halo, sparks. */
+    private static int pale(int c) {
+        return lerp(c, WHITE, 2 / 3.0);
+    }
+
+    /** Per-channel mix of two 0xRRGGBB colours. */
+    private static int lerp(int c0, int c1, double t) {
+        int r = (int) ((c0 >> 16 & 255) + ((c1 >> 16 & 255) - (c0 >> 16 & 255)) * t);
+        int g = (int) ((c0 >> 8 & 255) + ((c1 >> 8 & 255) - (c0 >> 8 & 255)) * t);
+        int b = (int) ((c0 & 255) + ((c1 & 255) - (c0 & 255)) * t);
+        return r << 16 | g << 8 | b;
+    }
+
+    /** Distance from the camera to the straight segment a-b (block space). */
+    private static double segmentDistance(double ax, double ay, double az, double bx, double by, double bz) {
+        double dx = bx - ax, dy = by - ay, dz = bz - az;
+        double l2 = dx * dx + dy * dy + dz * dz;
+        double t = l2 < 1.0E-9 ? 0 : Math.max(0, Math.min(1, ((camX - ax) * dx + (camY - ay) * dy + (camZ - az) * dz) / l2));
+        double ex = ax + dx * t - camX, ey = ay + dy * t - camY, ez = az + dz * t - camZ;
+        return Math.sqrt(ex * ex + ey * ey + ez * ez);
+    }
+
+    /** 0 below 0, 1 above 1, smooth in between. */
+    private static double smooth(double x) {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        return x * x * (3 - 2 * x);
     }
 
     @Override
@@ -106,8 +386,18 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         return be.renderBox();
     }
 
+    /** By the distance to the whole link box, not the coil, so a link still shows from its far end. */
+    @Override
+    public boolean shouldRender(TeslaCoilBlockEntity be, Vec3 camera) {
+        AABB box = be.renderBox();
+        double dx = Math.max(0, Math.max(box.minX - camera.x, camera.x - box.maxX));
+        double dy = Math.max(0, Math.max(box.minY - camera.y, camera.y - box.maxY));
+        double dz = Math.max(0, Math.max(box.minZ - camera.z, camera.z - box.maxZ));
+        return dx * dx + dy * dy + dz * dz < (double) getViewDistance() * getViewDistance();
+    }
+
     @Override
     public int getViewDistance() {
-        return 64;
+        return (int) FAR_LINKER;
     }
 }

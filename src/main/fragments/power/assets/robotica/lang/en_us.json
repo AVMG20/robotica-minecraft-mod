@@ -116,7 +116,7 @@
   "gui.robotica.tesla_status_tip": "A coil on an Accumulator or generator sends its FE. Any other coil relays what coils send it",
   "robotica.configuration.tesla": "Tesla Coils",
   "robotica.configuration.teslaHopLoss": "Loss per coil-to-coil hop (%)",
-  "robotica.configuration.teslaArcs": "Draw Tesla arcs",
+  "robotica.configuration.teslaArcs": "Draw Tesla links",
   "robotica.configuration.teslaParticles": "Tesla spark particles",
   "robotica.configuration.teslaRate1": "Tier I rate (FE/t)",
   "robotica.configuration.teslaRange1": "Tier I range (blocks)",

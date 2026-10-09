@@ -481,6 +481,67 @@ public final class Showcase {
             shot("11_tesla_network");
         }
 
+        // Dev only (not in shots.py): Tesla links up close without the Linker, by day and night, idle and flowing.
+        // Left a tier I coil runs flat out into a relay and an Accumulator, middle idle tier III and IV coils, right a
+        // tier V coil trickles into a small Accumulator. The dev_ frames are a few ticks apart to check the motes move.
+        if (wants("tesla_links")) {
+            step(20, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                BlockPos src = new BlockPos(145, Y, -46), sink = new BlockPos(152, Y, -46), relay = new BlockPos(149, Y + 2, -50);
+                BlockPos idleA = new BlockPos(155, Y + 2, -49), idleB = new BlockPos(159, Y + 1, -46);
+                BlockPos src2 = new BlockPos(161, Y, -50), sink2 = new BlockPos(164, Y, -45);
+                for (BlockPos acc : new BlockPos[]{src, src2}) {
+                    level.setBlock(acc, block("accumulator_3").defaultBlockState(), 3);
+                    var cap = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK, acc, null);
+                    for (int i = 0; i < 64 && cap != null && cap.receiveEnergy(Integer.MAX_VALUE, false) > 0; i++) {}
+                }
+                level.setBlock(sink, block("accumulator_2").defaultBlockState(), 3);
+                level.setBlock(sink2, block("accumulator_1").defaultBlockState(), 3);
+                for (BlockPos coil : new BlockPos[]{relay, idleA, idleB}) {
+                    for (BlockPos p = coil.below(); p.getY() >= Y; p = p.below()) level.setBlock(p, Blocks.POLISHED_ANDESITE.defaultBlockState(), 3);
+                }
+                BlockPos[] coils = {src.above(), relay, idleA, idleB, src2.above()};
+                String[] tiers = {"tesla_coil_1", "tesla_coil_2", "tesla_coil_3", "tesla_coil_4", "tesla_coil_5"};
+                for (int i = 0; i < coils.length; i++) {
+                    level.setBlock(coils[i], block(tiers[i]).defaultBlockState().setValue(BlockStateProperties.FACING, Direction.UP), 3);
+                }
+                devLink(level, src.above(), new com.arno.robotica.power.tesla.TeslaLink(relay, null, true));
+                devLink(level, relay, new com.arno.robotica.power.tesla.TeslaLink(sink, Direction.UP, false));
+                devLink(level, idleA, new com.arno.robotica.power.tesla.TeslaLink(idleB, null, true));
+                devLink(level, src2.above(), new com.arno.robotica.power.tesla.TeslaLink(sink2, Direction.UP, false));
+                devLink(level, idleB, new com.arno.robotica.power.tesla.TeslaLink(src2, Direction.WEST, false));
+            }));
+            camera(154.5, Y + 3.5, -37, 180, 14);
+            step(60, () -> {});
+            grab(10, "tesla_links_day");
+            camera(148.5, Y + 3, -42.5, 180, 10);
+            step(20, () -> {});
+            for (String f : new String[]{"a", "b", "c", "d"}) grab(3, "tesla_links_dev_day_" + f);
+            camera(158.5, Y + 3, -40.5, 180, 12);
+            step(20, () -> {});
+            grab(10, "tesla_links_dev_day_tiers");
+            step(10, () -> server(sp -> sp.server.getCommands().performPrefixedCommand(sp.server.createCommandSourceStack(), "time set 18000")));
+            camera(154.5, Y + 3.5, -37, 180, 14);
+            step(20, () -> {});
+            grab(10, "tesla_links_night");
+            camera(148.5, Y + 3, -42.5, 180, 10);
+            step(20, () -> {});
+            for (String f : new String[]{"a", "b", "c", "d"}) grab(3, "tesla_links_dev_night_" + f);
+            camera(158.5, Y + 3, -40.5, 180, 12);
+            step(20, () -> {});
+            grab(10, "tesla_links_dev_night_tiers");
+            step(10, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND,
+                    new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("tesla_linker"))))));
+            camera(154.5, Y + 3.5, -37, 180, 14);
+            step(20, () -> {});
+            grab(10, "tesla_links_dev_linker_night");
+            step(10, () -> server(sp -> {
+                sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                sp.server.getCommands().performPrefixedCommand(sp.server.createCommandSourceStack(), "time set 6000");
+            }));
+        }
+
         // Scene 8: the Scrap Colossus on its altar (no AI, for the photo).
         if (wants("12_scrap_colossus")) step(20, () -> server(sp -> {
             MinecraftServer s = sp.server;
