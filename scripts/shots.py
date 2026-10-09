@@ -39,6 +39,7 @@ SHOTS = {
     '22_wireless_charger': ('22_wireless_charger.png', 'scene'),
     '23_excavators_survey_rigs': ('23_excavators_survey_rigs.png', 'scene'),
     '24_spark_lamp_cave': ('24_spark_lamp_cave.png', 'scene'),
+    '29_spark_lamp_close': ('29_spark_lamp_close.png', 'scene'),
     '25_architect_build': ('25_architect_build.png', 'scene'),
     '26_solar_panels': ('26_solar_panels.png', 'scene'),
     '27_forge_tyrant': ('27_forge_tyrant.png', 'scene'),

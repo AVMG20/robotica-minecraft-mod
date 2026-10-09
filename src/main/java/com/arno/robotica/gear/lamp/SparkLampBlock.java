@@ -2,9 +2,7 @@ package com.arno.robotica.gear.lamp;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -19,8 +17,8 @@ import java.util.Map;
 /**
  * Spark Lamp: a small floating electric wisp with torch light (14), no collision, breaks instantly and drops nothing.
  * Only the Lamp Rod and the Lamp Placer module put it down. It needs no supporting block. {@link #FACING} only sets where
- * in the block the wisp floats (up = low, down = high, a side = against that wall). The look is an animated model; sparks, crackles and hum come from
- * {@link #ambientFx}, set by the client (gear.client.SparkLampFx) and limited to the player's surroundings.
+ * in the block the wisp floats (up = low, down = high, a side = against that wall). The model is empty: the wisp, its
+ * arcs, sparks and sounds are drawn client side by gear.client.SparkWisps, so the server keeps no state for it.
  */
 public class SparkLampBlock extends Block {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
@@ -28,14 +26,6 @@ public class SparkLampBlock extends Block {
 
     /** Distance of the wisp's core from the block centre, along FACING (the model floats it 5 px off its surface). */
     public static final double CORE_OFFSET = -3 / 16.0;
-
-    /** Client-only ambient effects (no-op on a dedicated server); replaced by the client module at startup. */
-    public static AmbientFx ambientFx = (state, level, pos, random) -> {};
-
-    @FunctionalInterface
-    public interface AmbientFx {
-        void tick(BlockState state, Level level, BlockPos pos, RandomSource random);
-    }
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
@@ -65,11 +55,5 @@ public class SparkLampBlock extends Block {
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
         return SHAPES.get(state.getValue(FACING));
-    }
-
-    /** Client only (called by the level renderer for blocks near the player). */
-    @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        ambientFx.tick(state, level, pos, random);
     }
 }

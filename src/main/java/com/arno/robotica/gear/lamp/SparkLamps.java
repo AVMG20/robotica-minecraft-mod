@@ -4,7 +4,6 @@ import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.GearBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -53,15 +52,9 @@ public final class SparkLamps {
         return true;
     }
 
-    /** A rising charge and a burst of sparks (on) or a falling fizz and a few sparks (off). */
+    /** A rising charge (on) or a falling fizz (off). The flash and sparks are drawn by each client (gear.client.SparkWisps). */
     public static void zap(ServerLevel level, BlockPos pos, boolean on) {
-        double x = pos.getX() + 0.5, y = pos.getY() + 0.5, z = pos.getZ() + 0.5;
-        if (on) {
-            CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_ON, SoundSource.BLOCKS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 10, 0.12, 0.12, 0.12, 0.25);
-        } else {
-            CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 4, 0.1, 0.1, 0.1, 0.1);
-        }
+        if (on) CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_ON, SoundSource.BLOCKS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
+        else CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
     }
 }
