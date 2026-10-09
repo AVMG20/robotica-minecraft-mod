@@ -45,6 +45,11 @@ final class GlowDraw {
         ribbon(vc, m, ax, ay, az, bx, by, bz, p2x * width, p2y * width, p2z * width, r, g, bl, alpha);
     }
 
+    /** A flat ribbon from a to b, {@code w} out to each side (the collider's ring pipe passes fixed widths). */
+    static void ribbon(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, Vec3 w, int r, int g, int bl, int alpha) {
+        ribbon(vc, m, a.x, a.y, a.z, b.x, b.y, b.z, w.x, w.y, w.z, r, g, bl, alpha);
+    }
+
     private static void ribbon(VertexConsumer vc, Matrix4f m, double ax, double ay, double az, double bx, double by, double bz,
                                double wx, double wy, double wz, int r, int g, int bl, int alpha) {
         quad(vc, m,
