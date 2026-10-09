@@ -7,7 +7,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import MATERIALS, Canvas, write_anim, write_block, write_item  # noqa: E402
+from pixelart import MATERIALS, Canvas, write_anim, write_block, write_item, write_still  # noqa: E402
 
 # '12345' tier material (deep -> highlight), 'abcde' steel, '678' brass, 'w W v' wood, 'y Y z' tier glow
 TIER = {
@@ -344,62 +344,139 @@ def write_modules():
 
 # ---------------------------------------------------------------- Lamp Rod and Spark Lamp
 
-WISP = {'k': '#1E1A1A', 'W': '#FFFFFF', 'Y': '#E6FCFF', 'y': '#A8EEF8', 'z': '#6FCDE0',
-        'a': '#A8EEF828', 'b': '#BFF3FF50', 'c': '#D8FBFF88', 'A': '#F4FEFFD0', 'B': '#A8EEF890'}
+ROD_WISP = {'i': '#A8EEF8', 'j': '#E6FCFF', 'W': '#FFFFFF', 'h': '#7FDFFF44', 'H': '#BFF3FF90', 'q': '#D8FBFFD0'}
 
 
-def lamp_rod():
-    """Lamp Rod: a steel rod with a copper grip and a brass collar; a small pale spark floats at the tip."""
+def lamp_rod(frame):
+    """Lamp Rod (8 frames): a steel rod with a copper grip and a brass fork; a pale wisp floats between the prongs,
+    breathing in a soft halo, with a short arc to a prong now and then."""
     c = Canvas()
     stamp(c, 2, 13, 8, 7, 'c', 2)                                        # steel rod
     stamp(c, 2, 13, 4, 11, '3', 2)                                       # copper grip
-    c.rect(8, 6, 3, 3, '7')                                              # brass collar
-    c.rect(9, 5, 2, 1, '6').set(10, 4, '6')                              # prong
+    c.rect(8, 6, 2, 2, '7')                                              # brass collar
+    c.set(8, 5, '7').set(8, 4, '6').set(9, 3, '6')                       # upper prong
+    c.set(10, 7, '7').set(11, 7, '6').set(12, 6, '6')                    # lower prong
     c.auto_shade(SHADE)
     c.set(3, 12, '4').set(5, 10, '4')                                    # grip bands
     c.outline('k')
-    c.rect(11, 2, 3, 3, 'i').rect(12, 1, 1, 5, 'j').rect(10, 3, 5, 1, 'j').set(12, 3, 'W')   # wisp
-    c.set(10, 1, 'i').set(14, 5, 'i').set(15, 0, 'i')                    # stray sparks
-    return c.rows()
-
-
-def lamp_core(frame):
-    """Spark Lamp core (full-bright, the model uses the middle 2x2): a pale cyan flicker, white at its brightest."""
-    shades = 'YWYyYWWY'
-    c = Canvas(fill='y')
-    c.rect(6, 6, 4, 4, 'Y').rect(7, 7, 2, 2, shades[frame % len(shades)])
-    c.set(7, 7, 'W')
+    cx, cy = 12, 3                                                       # wisp centre
+    reach = (2.3, 2.3, 2.7, 2.7, 2.3, 2.0, 2.3, 2.7)[frame]
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - cx, y - cy)
+            if c.get(x, y) == '.' and d <= reach:
+                c.set(x, y, 'H' if d <= 1.5 else 'h')
+    c.rect(cx - 1, cy, 3, 1, 'i').rect(cx, cy - 1, 1, 3, 'i').set(cx, cy, 'W')
+    c.set(cx + (1 if frame % 4 == 1 else -1 if frame % 4 == 3 else 0), cy + (1 if frame in (2, 6) else 0), 'j')
+    arcs = {1: [(10, 4), (10, 3)], 4: [(11, 5), (12, 5)], 6: [(10, 5)]}
+    for x, y in arcs.get(frame, []):
+        c.set(x, y, 'q')
+    for x, y in {0: [(15, 0)], 3: [(14, 0)], 5: [(15, 2)], 7: [(15, 5)]}.get(frame, []):
+        c.set(x, y, 'i')                                                 # a stray spark
     return c
 
 
-def lamp_glow(frame):
-    """Spark Lamp halo (full-bright, translucent, the model uses the middle 8x8): soft haze that breathes, with a
-    short crackle arc in some frames."""
-    pulse = (1.0, 1.08, 1.15, 1.08, 1.0, 0.93, 0.88, 0.93)[frame % 8]
-    c = Canvas()
-    for y in range(16):
-        for x in range(16):
-            d = math.hypot(x + 0.5 - 8, y + 0.5 - 8) / pulse
-            if d < 1.6:
-                c.set(x, y, 'c')
-            elif d < 2.7:
-                c.set(x, y, 'b')
-            elif d < 3.8:
-                c.set(x, y, 'a')
-    arcs = {1: [(10, 6), (11, 5), (11, 4)], 4: [(5, 9), (4, 10)], 6: [(9, 10), (10, 11), (9, 12)]}
-    for i, (x, y) in enumerate(arcs.get(frame, [])):
-        c.set(x, y, 'A' if i == 0 else 'B')
+def alpha_char(a):
+    """One palette char per alpha level (white): lets smooth gradients go through write_png."""
+    return chr(0x100 + max(0, min(255, int(round(a * 255)))))
+
+
+ALPHA_PAL = {chr(0x100 + a): '#FFFFFF%02X' % a for a in range(256)}
+
+
+def smooth_sheet(size, fn):
+    """Rows of a size x size white texture whose alpha is fn(x, y) (pixel centres), clamped to 0..1."""
+    return [''.join(alpha_char(fn(x + 0.5, y + 0.5)) for x in range(size)) for y in range(size)]
+
+
+def wisp_glow():
+    """Spark Lamp wisp, soft parts (64x64, white with alpha, linear filtered, tinted in code). Top left: round halo.
+    Top right: four-ray flare. Bottom left (32x16): arc ribbon profile across v. Bottom right: thin ring."""
+    def fn(x, y):
+        if y < 32 and x < 32:                                            # halo
+            r = math.hypot(x - 16, y - 16) / 15.0
+            return 0 if r >= 1 else ((1 + math.cos(math.pi * r)) / 2) ** 1.2 * 0.85 + 0.15 * math.exp(-(r / 0.2) ** 2)
+        if y < 32:                                                       # flare: long thin rays, brighter near the middle
+            dx, dy = abs(x - 48), abs(y - 16)
+            ray = lambda along, across: max(0.0, 1 - along / 15.0) ** 1.6 * math.exp(-(across / 0.9) ** 2)
+            return min(1.0, ray(dx, dy) + ray(dy, dx) + 0.5 * math.exp(-(math.hypot(dx, dy) / 2.5) ** 2))
+        if x < 32 and y < 48:                                            # arc ribbon: bright thread in a faint glow
+            d = abs(y - 40)
+            if x < 1 or x > 31:
+                return 0
+            return min(1.0, math.exp(-(d / 1.3) ** 2) + 0.35 * math.exp(-(d / 4.0) ** 2)) * (d < 7.5)
+        if x >= 32 and y >= 32:                                          # ring
+            r = math.hypot(x - 48, y - 48)
+            return math.exp(-((r - 12.5) / 1.6) ** 2) * (r < 15.5)
+        return 0
+    return smooth_sheet(64, fn)
+
+
+def tendrils(seed):
+    """15x15 frame of crackling filaments around the middle (7, 7): 2-3 jagged threads bright near the core, fading at
+    the tips, sometimes forked."""
+    import random
+    rnd = random.Random(seed)
+    c = Canvas(15)
+    base = rnd.random() * math.tau
+    count = 2 + (seed % 2)
+    for k in range(count):
+        ang = base + k * math.tau / count + rnd.uniform(-0.5, 0.5)
+        x, y = 7.0 + math.cos(ang) * 1.5, 7.0 + math.sin(ang) * 1.5
+        length = rnd.randint(4, 6)
+        for step in range(length):
+            ang += rnd.uniform(-0.9, 0.9)
+            x += math.cos(ang)
+            y += math.sin(ang)
+            ch = 'A' if step < 2 else 'B' if step < length - 1 else 'C'
+            c.set(round(x), round(y), ch)
+            if step == 2 and rnd.random() < 0.5:                        # a short fork
+                fa = ang + rnd.choice((-1, 1)) * 1.1
+                c.set(round(x + math.cos(fa)), round(y + math.sin(fa)), 'C')
+    return c
+
+
+def wisp_sprites():
+    """Spark Lamp wisp, pixel parts (64x64, white with alpha, nearest filtered, tinted in code). Eight 15x15 filament
+    frames in 16 px cells (two rows of four), a 15x15 core star at (0, 32) and a 3x3 spark at (16, 32)."""
+    c = Canvas(64)
+    for i in range(8):
+        frame = tendrils(i * 7 + 3)
+        for y in range(15):
+            for x in range(15):
+                if frame.get(x, y) != '.':
+                    c.set(16 * (i % 4) + x, 16 * (i // 4) + y, frame.get(x, y))
+    star = {(0, 0): 'W', (1, 0): 'A', (2, 0): 'B', (3, 0): 'C', (4, 0): 'D', (1, 1): 'C'}
+    for (a, b), ch in star.items():
+        for sx, sy in ((a, b), (b, a)):
+            for mx in (1, -1):
+                for my in (1, -1):
+                    c.set(7 + sx * mx, 32 + 7 + sy * my, ch)
+    c.set(16 + 1, 33, 'W').set(16, 33, 'B').set(18, 33, 'B').set(17, 32, 'B').set(17, 34, 'B')
+    return c
+
+
+WISP_PAL = {'W': '#FFFFFF', 'A': '#FFFFFFE8', 'B': '#FFFFFFA8', 'C': '#FFFFFF60', 'D': '#FFFFFF30'}
+
+
+def lamp_particle():
+    """Spark Lamp block particle (breaking, never seen long): a pale cyan dot on white."""
+    c = Canvas(fill='.')
+    c.rect(6, 6, 4, 4, 'y').rect(7, 7, 2, 2, 'W')
     return c
 
 
 def write_lamp():
-    write_item('lamp_rod', lamp_rod(), {**lamp_pal(), 'i': '#A8EEF8', 'j': '#E6FCFF', 'W': '#FFFFFF'}, handheld=True)
-    write_anim('block', 'spark_lamp_core', [lamp_core(f) for f in range(8)], WISP, frametime=2)
-    write_anim('block', 'spark_lamp_glow', [lamp_glow(f) for f in range(8)], WISP, frametime=3)
-    for old in ('spark_lamp', 'spark_lamp_bulb'):
-        stale = pathlib.Path(__file__).resolve().parents[2] / f'src/main/resources/assets/robotica/textures/block/{old}.png'
-        if stale.exists():
-            stale.unlink()
+    from pixelart import ASSETS, write_png
+    write_anim('item', 'lamp_rod', [lamp_rod(f) for f in range(8)], {**lamp_pal(), **ROD_WISP}, frametime=3)
+    write_still('block', 'spark_lamp_core', lamp_particle(), {'y': '#A8EEF8', 'W': '#FFFFFF'})
+    write_png(ASSETS / 'textures/misc/spark_wisp_glow.png', wisp_glow(), ALPHA_PAL, size=None)
+    write_png(ASSETS / 'textures/misc/spark_wisp.png', wisp_sprites().rows(), WISP_PAL, size=None)
+    for old in ('spark_lamp', 'spark_lamp_bulb', 'spark_lamp_glow'):
+        stale = ASSETS / f'textures/block/{old}.png'
+        for f in (stale, pathlib.Path(str(stale) + '.mcmeta')):
+            if f.exists():
+                f.unlink()
 
 
 def lamp_pal():

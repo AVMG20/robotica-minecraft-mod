@@ -922,8 +922,9 @@ public final class Showcase {
             shot("23_excavators_survey_rigs");
         }
 
-        // Spark Lamps lighting a closed stone cave.
-        if (wants("24_spark_lamp_cave")) step(20, () -> server(sp -> {
+        // Spark Lamps lighting a closed stone cave; a close-up of one, and frames a tick apart with a lamp zapping in.
+        boolean lamps = wants("24_spark_lamp_cave", "29_spark_lamp_close", "spark_lamp_frame");
+        if (lamps) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockState[] rock = {Blocks.STONE.defaultBlockState(), Blocks.STONE.defaultBlockState(), Blocks.ANDESITE.defaultBlockState(),
                     Blocks.TUFF.defaultBlockState(), Blocks.STONE.defaultBlockState(), Blocks.DIORITE.defaultBlockState(),
@@ -947,11 +948,40 @@ public final class Showcase {
                 level.setBlock(pos.above(), rock[0], 3);
                 level.setBlock(pos, lamp.facing(Direction.DOWN), 3);
             }
+            level.setBlock(new BlockPos(x0, Y + 2, z0 + 8), lamp.facing(Direction.EAST), 3);
         }));
         if (wants("24_spark_lamp_cave")) {
             camera(101.5, Y + 2.6, 134.5, -135, 8);
             step(60, () -> {});
             shot("24_spark_lamp_cave");
+        }
+        if (wants("29_spark_lamp_close")) {
+            camera(101.9, Y + 0.9, 129.3, 117, 0);
+            step(60, () -> {});
+            shot("29_spark_lamp_close");
+        }
+        if (wants("spark_lamp_frame")) {
+            camera(105.5, Y, 127.3, 180, 34);
+            step(40, () -> {});
+            // frames a tick apart (not used on the site): arcs, flicker, a new lamp zapping in at frame 4 and popping out at 11
+            for (int i = 0; i < 16; i++) {
+                if (i == 4) step(0, () -> server(sp -> {
+                    BlockPos pos = new BlockPos(104, Y, 125);
+                    sp.serverLevel().setBlock(pos, ((SparkLampBlock) block("spark_lamp")).facing(Direction.UP), 3);
+                    com.arno.robotica.gear.lamp.SparkLamps.zap(sp.serverLevel(), pos, true);
+                }));
+                if (i == 11) step(0, () -> server(sp -> {
+                    BlockPos pos = new BlockPos(104, Y, 125);
+                    sp.serverLevel().setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                    com.arno.robotica.gear.lamp.SparkLamps.zap(sp.serverLevel(), pos, false);
+                }));
+                grab(1, "spark_lamp_frame_" + i);
+            }
+            // the wall lamp from a few blocks away, arcs sped up, a frame every other tick
+            camera(104.5, Y, 128.5, 90, -12);
+            step(20, () -> com.arno.robotica.gear.client.SparkWisps.demo = true);
+            for (int i = 0; i < 24; i++) grab(2, "spark_lamp_frame_wall_" + i);
+            step(1, () -> com.arno.robotica.gear.client.SparkWisps.demo = false);
         }
 
         // Architect Table: four separate buildings, one per style, around the table plot (queued), one joined pair.
