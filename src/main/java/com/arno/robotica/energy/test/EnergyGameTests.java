@@ -500,6 +500,25 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /** Pistons can not move the formed crown off its column; a broken spire still sends its buffer out. */
+    @GameTest(template = ARENA, timeoutTicks = 60)
+    public static void brokenSpireEmptiesItsBuffer(GameTestHelper helper) {
+        BlockPos base = new BlockPos(4, 1, 4);
+        SpireBlockEntity be = spire(helper, base, 8, 0);
+        helper.assertTrue(be.isFormed(), "8 copper forms: " + why(be));
+        helper.assertTrue(helper.getBlockState(base.above(9)).getPistonPushReaction() == net.minecraft.world.level.material.PushReaction.BLOCK,
+                "pistons can not push the crown");
+        helper.setBlock(base.above(9), Blocks.AIR);
+        be.scanNow();
+        helper.assertFalse(be.isFormed(), "no crown, not formed");
+        be.energy.setEnergy(100_000);
+        BlockPos chargerPos = base.east();
+        helper.setBlock(chargerPos, PowerRegistry.CHARGER.get());
+        ChargerBlockEntity charger = be(helper, chargerPos);
+        helper.succeedWhen(() -> helper.assertTrue(charger.energy.getEnergyStored() > 0, "the broken spire's buffer flows out, charger has "
+                + charger.energy.getEnergyStored()));
+    }
+
     // ---------------------------------------------------------------- ring collider
 
     /** A 7x7 square loop of Accelerator Segments with the controller in the middle of the north side. */

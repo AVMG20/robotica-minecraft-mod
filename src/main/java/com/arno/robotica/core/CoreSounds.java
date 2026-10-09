@@ -111,9 +111,10 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_HUM = reg("rancher_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_HURT = reg("rancher_hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> RANCHER_DEATH = reg("rancher_death");
-    /** Tesla Spire: crown hum while it runs, a lightning strike on the crown. */
+    /** Tesla Spire: crown hum while it runs, a lightning strike on the crown, a fuel item loads. */
     public static final DeferredHolder<SoundEvent, SoundEvent> SPIRE_HUM = reg("spire_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> SPIRE_STRIKE = reg("spire_strike");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPIRE_FUEL = reg("spire_fuel");
     /** Core Reactor: a core loads, a core burns out, the chamber's throb while it runs. */
     public static final DeferredHolder<SoundEvent, SoundEvent> CORE_INSERT = reg("core_insert");
     public static final DeferredHolder<SoundEvent, SoundEvent> CORE_BURNOUT = reg("core_burnout");

@@ -267,6 +267,10 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     @Override
     protected void tickController(ServerLevel level, long now) {
         if (!pendingWaste.isEmpty()) pendingWaste = ItemHandlerHelper.insertItem(waste, pendingWaste, false);
+        // a broken spire still empties its buffer into cables
+        if (energy.getEnergyStored() > 0) {
+            EnergyUtil.pushToNeighbors(level, worldPosition, energy, (int) Math.max(4096, Math.min(Integer.MAX_VALUE, potential * 8L)), neighbors);
+        }
         if (!isFormed()) {
             fePerTick = potential = 0;
             state = State.NOT_FORMED;
@@ -277,13 +281,11 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
             refreshSurroundings();
             if (sky) rollStrike(level, now);
         }
-        if (energy.getEnergyStored() > 0) {
-            EnergyUtil.pushToNeighbors(level, worldPosition, energy, Math.max(4096, potential * 8), neighbors);
-        }
         step();
         if (running && CoreSounds.due(level, worldPosition, 50)) {
             BlockPos crown = crown();
-            if (crown != null) CoreSounds.play(level, crown, CoreSounds.SPIRE_HUM, SoundSource.BLOCKS, 0.9F, 0.9F + 0.2F * (float) Math.min(1.0, potential / 10_000.0));
+            // carries down a tall column to the base
+            if (crown != null) CoreSounds.play(level, crown, CoreSounds.SPIRE_HUM, SoundSource.BLOCKS, 1.6F, 0.9F + 0.2F * (float) Math.min(1.0, potential / 10_000.0));
         }
     }
 
@@ -341,6 +343,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
                 continue;
             }
             fuel.extractItem(slot, 1, false);
+            if (level != null) CoreSounds.play(level, worldPosition, CoreSounds.SPIRE_FUEL, SoundSource.BLOCKS, 0.6F, 1.0F);
             fuelTotal = f.energy();
             fuelLeft = f.energy();
             burnWaste = wasteItem;

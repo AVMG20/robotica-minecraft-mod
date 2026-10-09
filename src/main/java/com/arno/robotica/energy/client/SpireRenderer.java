@@ -36,6 +36,7 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
     private long flashedFor = Long.MIN_VALUE;
     private final Vector3f normal = new Vector3f();
     private final int[] lights = new int[4];
+    private final java.util.Random rnd = new java.util.Random();
     private static final float[] FULL = {1.0F, 1.0F, 1.0F, 1.0F};
 
     public SpireRenderer(BlockEntityRendererProvider.Context ctx) {
@@ -74,7 +75,7 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
         // arcs: re-rolled four times a second, a few crawl down the column, a few leap off the crown
         long frame = (long) (time / 5);
         long seed = be.getBlockPos().asLong() * 31 + frame;
-        java.util.Random rnd = new java.util.Random(seed);
+        rnd.setSeed(seed);
         int down = 1 + Math.min(3, n / 6);
         for (int i = 0; i < down; i++) {
             double y0 = 1 + rnd.nextDouble() * n, y1 = Math.max(1, y0 - 1.5 - rnd.nextDouble() * 3);

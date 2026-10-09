@@ -105,7 +105,8 @@ public final class EnergyRegistry {
             p -> new ControllerBlock(p, EnergyRegistry.SPIRE_BE), controller(MapColor.COLOR_LIGHT_BLUE));
     public static final DeferredBlock<SpireCrownBlock> SPIRE_CROWN = block("spire_crown", SpireCrownBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(4.0F, 12.0F).sound(SoundType.COPPER)
-                    .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 12 : 0));
+                    .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 12 : 0)
+                    .pushReaction(PushReaction.BLOCK)); // carries the formed look and glow: pistons may not move it off its column
 
     // ---- Core Reactor (block ids of the 0.6 Fission Reactor); modulators are open cages, so the core shows through ----
     public static final DeferredBlock<FramedPartBlock> REACTOR_CASING = block("reactor_casing", FramedPartBlock::new, shell(casing(MapColor.COLOR_GRAY)));

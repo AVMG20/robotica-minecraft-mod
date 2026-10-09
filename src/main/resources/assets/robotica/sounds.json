@@ -1919,6 +1919,29 @@
       }
     ]
   },
+  "spire_fuel": {
+    "subtitle": "subtitles.robotica.spire_fuel",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.4
+      }
+    ]
+  },
   "core_insert": {
     "subtitle": "subtitles.robotica.core_insert",
     "sounds": [
