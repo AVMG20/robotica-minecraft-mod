@@ -8,6 +8,7 @@ import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CellItem;
 import com.arno.robotica.core.item.CoreItems;
+import com.arno.robotica.exo.net.ExoFxPayload;
 import com.arno.robotica.exo.net.ExoSonarPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -121,6 +122,9 @@ public final class ExoTicker {
         /** Tick of the last hit the Kinetic Shield absorbed completely (its knockback is cancelled). */
         int shieldTick = -100;
         int lastRefusal = -100;
+        /** True while the suit flies the player (told to every client that tracks the player, for the thruster sound). */
+        boolean exoFlying;
+        int lastSpring = -100;
         final int[] lastAction = new int[8];
 
         State() {
@@ -409,22 +413,50 @@ public final class ExoTicker {
                 setFlightGranted(p, st, true);
                 p.onUpdateAbilities();
             }
-            if (ab.flying) {
-                spend(st, ModuleKind.FLIGHT, cost);
-                if ((st.tick & 1) == 0) {
-                    ServerLevel level = p.serverLevel();
-                    level.sendParticles(ParticleTypes.SMALL_FLAME, p.getX(), p.getY() - 0.05, p.getZ(), 2, 0.12, 0.02, 0.12, 0.005);
-                    level.sendParticles(ParticleTypes.SMOKE, p.getX(), p.getY() - 0.2, p.getZ(), 1, 0.1, 0.05, 0.1, 0.01);
-                }
-                // The wearer hears a client loop; everyone else a soft burn now and then.
-                if (st.tick % 20 == 0) {
-                    p.level().playSound(p, p.getX(), p.getY(), p.getZ(), SoundEvents.BLAZE_BURN, SoundSource.PLAYERS, 0.25F, 1.6F);
-                }
+            if (ab.flying) spend(st, ModuleKind.FLIGHT, cost);
+            // Trail and thruster loop are drawn and played by every nearby client (ExoFx).
+            setExoFlying(p, st, ab.flying);
+        } else {
+            if (st.flightGranted) {
+                ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
+                boolean moduleStillWorn = !chest.isEmpty() && Modules.installed(chest, ModuleKind.FLIGHT) > 0;
+                revokeFlight(p, st, moduleStillWorn);
             }
-        } else if (st.flightGranted) {
-            ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
-            boolean moduleStillWorn = !chest.isEmpty() && Modules.installed(chest, ModuleKind.FLIGHT) > 0;
-            revokeFlight(p, st, moduleStillWorn);
+            setExoFlying(p, st, false);
+        }
+    }
+
+    /** Tells the clients when the suit starts or stops flying the player; stopping on the ground is a landing. */
+    private static void setExoFlying(ServerPlayer p, State st, boolean flying) {
+        if (st.exoFlying == flying) return;
+        st.exoFlying = flying;
+        boolean landed = !flying && p.onGround();
+        fx(p, flying ? ExoFxPayload.FLIGHT_ON : landed ? ExoFxPayload.LANDED : ExoFxPayload.FLIGHT_OFF);
+        if (landed) CoreSounds.play(p, CoreSounds.EXO_LAND, SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    /** Players further away than this do not get Exo-Frame effects (they can hardly see them). */
+    private static final double FX_RANGE = 96;
+
+    /** An effect for the wearer and every player near them; each client draws it (ExoFx). Rare, so a plain loop. */
+    private static void fx(ServerPlayer p, byte kind) {
+        ExoFxPayload msg = null;
+        for (ServerPlayer o : p.serverLevel().players()) {
+            if (o.distanceToSqr(p) > FX_RANGE * FX_RANGE || !canReceive(o)) continue;
+            if (msg == null) msg = new ExoFxPayload(p.getId(), kind);
+            PacketDistributor.sendToPlayer(o, msg);
+        }
+    }
+
+    private static boolean canReceive(ServerPlayer o) {
+        return !(o instanceof FakePlayer) && o.connection != null && o.connection.hasChannel(ExoFxPayload.TYPE);
+    }
+
+    /** A player starts seeing {@code target}: tell them when the target's suit is flying. */
+    public static void onStartTracking(ServerPlayer watcher, ServerPlayer target) {
+        State st = STATES.get(target.getUUID());
+        if (st != null && st.exoFlying && canReceive(watcher)) {
+            PacketDistributor.sendToPlayer(watcher, new ExoFxPayload(target.getId(), ExoFxPayload.FLIGHT_ON));
         }
     }
 
@@ -468,8 +500,9 @@ public final class ExoTicker {
         spendNow(p, st, ModuleKind.MED_INJECTOR, cost);
         p.heal(ExoConfig.medHeal(level));
         startCooldown(p, CD_MED, ExoConfig.medCooldown(level));
-        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.5F, 1.8F);
-        p.serverLevel().sendParticles(ParticleTypes.HEART, p.getX(), p.getY() + 1.2, p.getZ(), 4, 0.4, 0.4, 0.4, 0.0);
+        CoreSounds.play(p, CoreSounds.EXO_MED_HISS, SoundSource.PLAYERS, 1.0F, 1.0F);
+        CoreSounds.play(p, CoreSounds.EXO_MED_CHIME, SoundSource.PLAYERS, 1.0F, 1.0F);
+        fx(p, ExoFxPayload.MED);
     }
 
     /** Hazard Seal: clears poison, wither, hunger, nausea and blindness, paying per effect. */
@@ -690,8 +723,9 @@ public final class ExoTicker {
         int cooldown = ExoConfig.dashCooldown();
         if (st.core == ExoData.Core.ANTIGRAV) cooldown = (int) Math.round(cooldown * ExoConfig.antigravDashFactor());
         startCooldown(p, CD_DASH, cooldown);
-        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BREEZE_WIND_CHARGE_BURST.value(), SoundSource.PLAYERS, 0.6F, 1.4F);
-        p.serverLevel().sendParticles(ParticleTypes.POOF, p.getX(), p.getY() + 0.3, p.getZ(), 10, 0.25, 0.1, 0.25, 0.04);
+        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BREEZE_WIND_CHARGE_BURST.value(), SoundSource.PLAYERS, 0.35F, 1.4F);
+        CoreSounds.play(p, CoreSounds.EXO_DASH, SoundSource.PLAYERS, 1.0F, 1.0F);
+        fx(p, ExoFxPayload.DASH);
         return true;
     }
 
@@ -843,14 +877,17 @@ public final class ExoTicker {
         float absorbed = perPoint <= 0 ? cap : (float) Math.min(cap, have / perPoint);
         if (absorbed <= 0) return;
         payNow(p, st, piece, absorbed * perPoint);
+        // i-frames keep this to about two a second, whatever hits the player
         if (absorbed >= damage) {
             event.setNewDamage(0);
             st.shieldTick = p.tickCount;
+            CoreSounds.play(p, CoreSounds.EXO_SHIELD_BLOCK, SoundSource.PLAYERS, 1.0F, 1.0F);
+            fx(p, ExoFxPayload.SHIELD_FULL);
         } else {
             event.setNewDamage(damage - absorbed);
+            CoreSounds.play(p, CoreSounds.EXO_SHIELD_SPARK, SoundSource.PLAYERS, 1.0F, 1.0F);
+            fx(p, ExoFxPayload.SHIELD_PARTIAL);
         }
-        CoreSounds.play(p, CoreSounds.SHOCK_ZAP, SoundSource.PLAYERS, 0.5F, 1.4F);
-        p.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0, p.getZ(), 12, 0.4, 0.6, 0.4, 0.1);
     }
 
     /** A hit the Kinetic Shield absorbed completely pushes nobody around. */
@@ -902,7 +939,13 @@ public final class ExoTicker {
         int level = lvl(st, ModuleKind.SPRING_HEELS);
         if (level <= 0) return;
         double cost = ExoConfig.cost(ModuleKind.SPRING_HEELS, level);
-        if (afford(st, ModuleKind.SPRING_HEELS, cost)) spendNow(p, st, ModuleKind.SPRING_HEELS, cost);
+        if (!afford(st, ModuleKind.SPRING_HEELS, cost)) return;
+        spendNow(p, st, ModuleKind.SPRING_HEELS, cost);
+        if (p.tickCount - st.lastSpring >= 6 || p.tickCount < st.lastSpring) {
+            st.lastSpring = p.tickCount;
+            CoreSounds.play(p, CoreSounds.EXO_SPRING, SoundSource.PLAYERS, 1.0F, 1.0F);
+            fx(p, ExoFxPayload.SPRING);
+        }
     }
 
     // ---------------------------------------------------------------- lifecycle
@@ -969,6 +1012,10 @@ public final class ExoTicker {
         if (st.fireRes) removeOurs(p, MobEffects.FIRE_RESISTANCE);
         if (st.gliding) removeOurs(p, MobEffects.SLOW_FALLING);
         if (revoke && st.flightGranted) revokeFlight(p, st, soft);
+        if (revoke && st.exoFlying) {
+            st.exoFlying = false;
+            fx(p, ExoFxPayload.FLIGHT_OFF);
+        }
         flush(p, st);
     }
 }

@@ -117,7 +117,9 @@ final class ExoHud {
                 g.fill(0, 16 - h, 16, 16, 0x70000000);
             }
             g.pose().popPose();
+            float ready = icon.cooldown() > 0 ? 0 : ExoFx.readyFlash(icon.stack().getItem(), partial);
             if (icon.cooldown() > 0) ring(g, ix - 1, ry - 1, 14, icon.cooldown(), 0xFFE8A020);
+            else if (ready > 0) ring(g, ix - 1, ry - 1, 14, 1.0F, (int) (ready * 255) << 24 | 0xE0FAFF);
             else if (icon.glow()) ring(g, ix - 1, ry - 1, 14, 1.0F, 0xFF5CE07A);
         }
         int ty = iy + iconRows * ICON;

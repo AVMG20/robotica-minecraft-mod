@@ -81,5 +81,15 @@
   "subtitles.robotica.collider_stop": "Collider beam dies",
   "subtitles.robotica.collider_hum": "Collider hums",
   "subtitles.robotica.collider_collide": "Particles collide",
-  "subtitles.robotica.collider_matter": "Strange Matter forms"
+  "subtitles.robotica.collider_matter": "Strange Matter forms",
+  "subtitles.robotica.exo_thruster": "Exo thrusters hum",
+  "subtitles.robotica.exo_land": "Exo-Frame lands",
+  "subtitles.robotica.exo_med_hiss": "Med Injector hisses",
+  "subtitles.robotica.exo_med_chime": "Med Injector chimes",
+  "subtitles.robotica.exo_dash": "Exo-Frame dashes",
+  "subtitles.robotica.exo_spring": "Spring Heels bounce",
+  "subtitles.robotica.exo_ready": "Exo-Frame ability ready",
+  "subtitles.robotica.exo_denied": "Exo-Frame clicks",
+  "subtitles.robotica.exo_shield_block": "Kinetic Shield blocks",
+  "subtitles.robotica.exo_shield_spark": "Kinetic Shield sparks"
 }

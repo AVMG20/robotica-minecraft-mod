@@ -126,6 +126,25 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_COLLIDE = reg("collider_collide");
     public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_MATTER = reg("collider_matter");
 
+    /** Exo-Frame Flight: thruster loop, played client side for every flying suit nearby. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_THRUSTER = reg("exo_thruster");
+    /** Exo-Frame Flight ends on the ground. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_LAND = reg("exo_land");
+    /** Med Injector: the injection hiss, layered with EXO_MED_CHIME. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_MED_HISS = reg("exo_med_hiss");
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_MED_CHIME = reg("exo_med_chime");
+    /** Dash Thrusters whoosh. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_DASH = reg("exo_dash");
+    /** Spring Heels: a charged jump. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SPRING = reg("exo_spring");
+    /** A cooldown ran out (client side, only the wearer hears it). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_READY = reg("exo_ready");
+    /** A key pressed while its ability cools down (client side, only the wearer hears it). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_DENIED = reg("exo_denied");
+    /** Kinetic Shield: a hit absorbed completely / partly. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_BLOCK = reg("exo_shield_block");
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_SPARK = reg("exo_shield_spark");
+
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {
         if (level.isClientSide) return;

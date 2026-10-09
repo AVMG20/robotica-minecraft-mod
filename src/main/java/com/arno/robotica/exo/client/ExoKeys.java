@@ -76,11 +76,9 @@ final class ExoKeys {
         }
         while (DASH.consumeClick()) {
             // No prediction: the server applies the burst and sends the motion, so a refused dash moves nothing.
-            if (free && ExoSuit.isActive(player, ModuleKind.DASH_THRUSTERS)
-                    && !player.getCooldowns().isOnCooldown(ModuleItems.get(ModuleKind.DASH_THRUSTERS, 1).get())
-                    && !player.isPassenger() && !player.isFallFlying()) {
-                send(ExoActions.DASH);
-            }
+            if (!free || !ExoSuit.isActive(player, ModuleKind.DASH_THRUSTERS)) continue;
+            if (player.getCooldowns().isOnCooldown(ModuleItems.get(ModuleKind.DASH_THRUSTERS, 1).get())) ExoFx.denied();
+            else if (!player.isPassenger() && !player.isFallFlying()) send(ExoActions.DASH);
         }
 
         boolean jumpDown = mc.screen == null && mc.options.keyJump.isDown();
