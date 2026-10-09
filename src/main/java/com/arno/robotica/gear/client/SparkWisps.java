@@ -106,10 +106,6 @@ public final class SparkWisps {
             box = new AABB(sx << 4, sy << 4, sz << 4, (sx << 4) + 16, (sy << 4) + 16, (sz << 4) + 16).inflate(1);
         }
 
-        Wisp find(long pos) {
-            for (Wisp w : wisps) if (w.pos == pos) return w;
-            return null;
-        }
     }
 
     private static final Long2ObjectOpenHashMap<Section> BY_KEY = new Long2ObjectOpenHashMap<>();
@@ -123,6 +119,8 @@ public final class SparkWisps {
 
     private static final Predicate<BlockState> IS_LAMP = s -> s.is(GearBlocks.SPARK_LAMP.get());
     private static final LongArrayList FOUND = new LongArrayList();
+    /** The previous lamps of the section being refreshed, by position; what is left afterwards was removed. */
+    private static final Long2ObjectOpenHashMap<Wisp> PREVIOUS = new Long2ObjectOpenHashMap<>();
     private static final List<Direction> FOUND_FACING = new ArrayList<>();
     private static final BlockPos.MutableBlockPos CURSOR = new BlockPos.MutableBlockPos();
 
@@ -168,10 +166,12 @@ public final class SparkWisps {
             }
             return;
         }
+        PREVIOUS.clear();
+        if (old != null) for (Wisp w : old.wisps) PREVIOUS.put(w.pos, w);
         Wisp[] next = new Wisp[FOUND.size()];
         for (int i = 0; i < next.length; i++) {
             long pos = FOUND.getLong(i);
-            Wisp w = old == null ? null : old.find(pos);
+            Wisp w = PREVIOUS.remove(pos);
             if (w == null) {
                 w = new Wisp(pos, FOUND_FACING.get(i), now, current.random);
                 if (seen) w.birth = now;
@@ -183,12 +183,9 @@ public final class SparkWisps {
             BY_KEY.put(key, old);
             SECTIONS.add(old);
         } else if (seen) {
-            for (Wisp w : old.wisps) {
-                boolean kept = false;
-                for (Wisp n : next) kept |= n == w;
-                if (!kept) ghost(w, now);
-            }
+            for (Wisp w : PREVIOUS.values()) ghost(w, now);
         }
+        PREVIOUS.clear();
         old.wisps = next;
     }
 
@@ -217,6 +214,7 @@ public final class SparkWisps {
         SECTIONS.clear();
         SEEN.clear();
         GHOSTS.clear();
+        soundFreeAt = humAt = 0;
         level = current;
     }
 
@@ -253,6 +251,8 @@ public final class SparkWisps {
                     w.react = w.reactPrev = 0;
                     continue;
                 }
+                // a section out of view is not re-meshed, so a lamp removed there (piston, explosion, water) stays listed
+                if (!current.getBlockState(CURSOR.set(w.pos)).is(GearBlocks.SPARK_LAMP.get())) continue;
                 tick(current, w, now, random, animated, particles, sounds);
                 if (d2 < humD2) {
                     humD2 = d2;
