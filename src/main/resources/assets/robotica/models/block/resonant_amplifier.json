@@ -5,7 +5,8 @@
     "side": "robotica:block/resonant_amplifier",
     "top": "robotica:block/resonant_amplifier_top",
     "inner": "robotica:block/resonant_amplifier_crystal",
-    "particle": "robotica:block/resonant_amplifier"
+    "particle": "robotica:block/resonant_amplifier",
+    "top_glow": "robotica:block/resonant_amplifier_top_glow"
   },
   "elements": [
     {
@@ -272,6 +273,54 @@
         },
         "east": {
           "texture": "#inner",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#top_glow",
+          "cullface": "down",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        0,
+        14,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#top_glow",
+          "cullface": "up",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15,

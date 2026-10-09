@@ -91,16 +91,40 @@
           "texture": "#ring"
         },
         "north": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            14,
+            9,
+            16
+          ]
         },
         "south": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            14,
+            9,
+            16
+          ]
         },
         "west": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            14,
+            9,
+            16
+          ]
         },
         "east": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            14,
+            9,
+            16
+          ]
         }
       }
     },
@@ -2509,16 +2533,40 @@
       ],
       "faces": {
         "down": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ]
         },
         "up": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ]
         },
         "north": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         },
         "south": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         },
         "west": {
           "texture": "#ring"
@@ -2541,16 +2589,40 @@
       ],
       "faces": {
         "down": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ]
         },
         "up": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ]
         },
         "north": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         },
         "south": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         },
         "west": {
           "texture": "#ring"
@@ -2573,10 +2645,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
         },
         "up": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
         },
         "north": {
           "texture": "#ring"
@@ -2585,10 +2669,22 @@
           "texture": "#ring"
         },
         "west": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         },
         "east": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         }
       }
     },
@@ -2605,10 +2701,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
         },
         "up": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
         },
         "north": {
           "texture": "#ring"
@@ -2617,10 +2725,22 @@
           "texture": "#ring"
         },
         "west": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         },
         "east": {
-          "texture": "#ring"
+          "texture": "#ring",
+          "uv": [
+            0,
+            5.5,
+            16,
+            7
+          ]
         }
       }
     }

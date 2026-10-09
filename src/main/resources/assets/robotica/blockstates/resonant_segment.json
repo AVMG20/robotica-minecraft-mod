@@ -39,6 +39,38 @@
     },
     {
       "when": {
+        "north": "false"
+      },
+      "apply": {
+        "model": "robotica:block/resonant_segment_pipe_end_north"
+      }
+    },
+    {
+      "when": {
+        "south": "false"
+      },
+      "apply": {
+        "model": "robotica:block/resonant_segment_pipe_end_south"
+      }
+    },
+    {
+      "when": {
+        "west": "false"
+      },
+      "apply": {
+        "model": "robotica:block/resonant_segment_pipe_end_west"
+      }
+    },
+    {
+      "when": {
+        "east": "false"
+      },
+      "apply": {
+        "model": "robotica:block/resonant_segment_pipe_end_east"
+      }
+    },
+    {
+      "when": {
         "north": "false",
         "south": "false"
       },

@@ -77,13 +77,39 @@ def column(name, side, end, glow_side=None, glow_end=None):
     simple(name, glow_cube(faces, glow))
 
 
+def default_uv(d, a, b):
+    """The UV the game derives from an element's position (BlockElement.uvsByFace)."""
+    x1, y1, z1 = a
+    x2, y2, z2 = b
+    return {'down': [x1, 16 - z2, x2, 16 - z1], 'up': [x1, z1, x2, z2], 'north': [16 - x2, 16 - y2, 16 - x1, 16 - y1],
+            'south': [x1, 16 - y2, x2, 16 - y1], 'west': [z1, 16 - y2, z2, 16 - y1], 'east': [16 - z2, 16 - y2, 16 - z1, 16 - y1]}[d]
+
+
+def fit_uv(lo, hi):
+    """A UV span moved back inside 0..16 (squeezed when longer), so a face past the block edge never samples the
+    neighbouring sprite in the atlas."""
+    if 0 <= lo and hi <= 16:
+        return lo, hi
+    span = hi - lo
+    if span >= 16:
+        return 0, 16
+    lo %= 16
+    return (lo, lo + span) if lo + span <= 16 else (16 - span, 16)
+
+
 def box(frm, to, faces, shade=True, glow=False):
-    """Element with face -> texture variable; faces touching the block edge cull against that side."""
+    """Element with face -> texture variable; faces touching the block edge cull against that side. Faces of an
+    element reaching past the block get an explicit UV inside the texture."""
     edge = {'down': frm[1] == 0, 'up': to[1] == 16, 'north': frm[2] == 0, 'south': to[2] == 16,
             'west': frm[0] == 0, 'east': to[0] == 16}
     out = {}
     for d, t in faces.items():
         face = {'texture': t}
+        u0, v0, u1, v1 = default_uv(d, frm, to)
+        if min(u0, v0) < 0 or max(u1, v1) > 16:
+            u0, u1 = fit_uv(u0, u1)
+            v0, v1 = fit_uv(v0, v1)
+            face['uv'] = [round(u0, 3), round(v0, 3), round(u1, 3), round(v1, 3)]
         if edge[d]:
             face['cullface'] = d
         if glow:
@@ -197,13 +223,19 @@ for name, (prefix, extra) in CONTROLLERS.items():
 
 # ---------- Core Reactor modulators: open cages, so the core and its beams show through a packed chamber ----------
 def cage_model(name, plate_side, plate_top, inner_tex, frm, to, glow):
+    """Two plates on four corner posts around a floating inner block; a glowing inner block also lights the plates'
+    outer faces (<plate_top>_glow)."""
     plate = {'down': '#top', 'up': '#top', 'north': '#side', 'south': '#side', 'west': '#side', 'east': '#side'}
     elements = [box([0, 0, 0], [16, 2, 16], plate), box([0, 14, 0], [16, 16, 16], plate)]
     for x, z in ((0, 0), (14, 0), (0, 14), (14, 14)):
         elements.append(box([x, 2, z], [x + 2, 14, z + 2], all_faces('#side')))
     elements.append(box(frm, to, all_faces('#inner'), shade=not glow, glow=glow))
-    simple(name, {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
-                  'textures': {'side': tex(plate_side), 'top': tex(plate_top), 'inner': tex(inner_tex), 'particle': tex(plate_side)},
+    textures = {'side': tex(plate_side), 'top': tex(plate_top), 'inner': tex(inner_tex), 'particle': tex(plate_side)}
+    if glow:
+        textures['top_glow'] = tex(f'{plate_top}_glow')
+        elements.append(box([0, 0, 0], [16, 2, 16], {'down': '#top_glow'}, shade=False, glow=True))
+        elements.append(box([0, 14, 0], [16, 16, 16], {'up': '#top_glow'}, shade=False, glow=True))
+    simple(name, {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures,
                   'elements': elements})
 
 
@@ -287,15 +319,18 @@ def flat(tex_var, uv, tint=False, glow=False):
 
 
 E = 0.05      # the shell sits just outside the metal block, so the block itself never shows through
+# No bottom faces (the column always stands on the base or another conductor). The tops sit a little above the block,
+# so the last conductor's own top face never z-fights with them; below the crown they are hidden in the next block.
 shell = {'from': [-E, 0, -E], 'to': [16 + E, 16, 16 + E],
-         'faces': {d: flat('#coil', [0, 0, 16, 16], tint=True) for d in DIRS}}
+         'faces': {d: flat('#coil', [0, 0, 16, 16], tint=True) for d in SIDES}}
+cap = {'from': [-E, 16.03, -E], 'to': [16 + E, 16.03, 16 + E], 'faces': {'up': flat('#coil', [0, 0, 16, 16], tint=True)}}
 rails = []
 for x0, z0 in ((-0.45, -0.45), (12.8, -0.45), (-0.45, 12.8), (12.8, 12.8)):
-    rails.append({'from': [x0, 0, z0], 'to': [x0 + 3.65, 16, z0 + 3.65],
-                  'faces': {d: flat('#rail', [0, 0, 4, 16] if d in SIDES else [0, 0, 4, 4]) for d in DIRS}})
+    rails.append({'from': [x0, 0, z0], 'to': [x0 + 3.65, 16, z0 + 3.65], 'faces': {d: flat('#rail', [0, 0, 4, 16]) for d in SIDES}})
+    rails.append({'from': [x0, 16.06, z0], 'to': [x0 + 3.65, 16.06, z0 + 3.65], 'faces': {'up': flat('#rail', [0, 0, 4, 4])}})
 write(ASSETS / 'models/block/spire_coil.json', {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
       'textures': {'coil': tex('spire_coil'), 'rail': tex('spire_rail'), 'particle': tex('spire_rail')},
-      'elements': [shell] + rails})
+      'elements': [shell, cap] + rails})
 G = 0.15
 strips = [{'from': [7, 0, -G], 'to': [9, 16, -G], 'faces': {'north': flat('#glow', [7, 0, 9, 16], True, True)}},
           {'from': [7, 0, 16 + G], 'to': [9, 16, 16 + G], 'faces': {'south': flat('#glow', [7, 0, 9, 16], True, True)}},
@@ -308,6 +343,7 @@ write(ASSETS / 'models/block/spire_coil_glow.json', {'parent': 'minecraft:block/
 
 # ---------- Ring segments: slab, glass beam pipe joining the neighbours (multipart), magnets on straights ----------
 # The pipe is centred at y 8 (ColliderRenderer.PIPE_Y = 0.5).
+OPPOSITE = {'north': 'south', 'south': 'north', 'west': 'east', 'east': 'west'}
 ARMS = {'north': ([6, 6, 0], [10, 10, 6]), 'south': ([6, 6, 10], [10, 10, 16]),
         'west': ([0, 6, 6], [6, 10, 10]), 'east': ([10, 6, 6], [16, 10, 10])}
 # Straights: a square magnet collar round the pipe (four bars framing its 6..10 cross-section).
@@ -323,10 +359,13 @@ for name in ('accelerator_segment', 'resonant_segment'):
                'elements': elements})
         return f'robotica:block/{name}_{suffix}'
 
+    # The glass has no faces inside the pipe: the centre piece closes only the sides without a neighbour, an arm has
+    # neither its end (it meets the neighbour's arm) nor its root.
     core = part('core', [box([0, 0, 0], [16, 4, 16], all_faces('#base')),
                          box([7, 4, 7], [9, 6, 9], all_faces('#base')),
-                         box([6, 6, 6], [10, 10, 10], all_faces('#pipe'))])
-    arms = {d: part(f'pipe_{d}', [box(a, b, {f: '#pipe' for f in DIRS if f != {'north': 'south', 'south': 'north', 'west': 'east', 'east': 'west'}[d]})])
+                         box([6, 6, 6], [10, 10, 10], {'up': '#pipe', 'down': '#pipe'})])
+    ends = {d: part(f'pipe_end_{d}', [box([6, 6, 6], [10, 10, 10], {d: '#pipe'})]) for d in SIDES}
+    arms = {d: part(f'pipe_{d}', [box(a, b, {f: '#pipe' for f in DIRS if f not in (d, OPPOSITE[d])})])
             for d, (a, b) in ARMS.items()}
     coils = {}
     for axis, boxes in COILS.items():
@@ -337,6 +376,7 @@ for name in ('accelerator_segment', 'resonant_segment'):
                              box([5, 5, 5], [11, 11, 11], all_faces('#glow'), shade=False, glow=True)])
     parts = [{'apply': {'model': core}}]
     parts += [{'when': {d: 'true'}, 'apply': {'model': arms[d]}} for d in SIDES]
+    parts += [{'when': {d: 'false'}, 'apply': {'model': ends[d]}} for d in SIDES]
     parts.append({'when': {'north': 'false', 'south': 'false'}, 'apply': {'model': coils['x']}})
     parts.append({'when': {'OR': [{'east': 'false', 'west': 'false', 'north': 'true'},
                                   {'east': 'false', 'west': 'false', 'south': 'true'}]}, 'apply': {'model': coils['z']}})

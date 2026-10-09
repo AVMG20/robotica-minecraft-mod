@@ -32,10 +32,6 @@
         },
         "south": {
           "texture": "#pipe"
-        },
-        "east": {
-          "texture": "#pipe",
-          "cullface": "east"
         }
       }
     }

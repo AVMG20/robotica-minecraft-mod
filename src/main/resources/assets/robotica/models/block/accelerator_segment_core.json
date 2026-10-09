@@ -90,22 +90,10 @@
         10
       ],
       "faces": {
-        "down": {
-          "texture": "#pipe"
-        },
         "up": {
           "texture": "#pipe"
         },
-        "north": {
-          "texture": "#pipe"
-        },
-        "south": {
-          "texture": "#pipe"
-        },
-        "west": {
-          "texture": "#pipe"
-        },
-        "east": {
+        "down": {
           "texture": "#pipe"
         }
       }

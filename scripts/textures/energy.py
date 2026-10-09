@@ -311,16 +311,6 @@ def amplifier_side(tier):
     return c
 
 
-def amplifier_glow(tier):
-    m = AMP[tier]
-    c = Canvas()
-    c.draw(5, 5, sprite(CRYSTAL, m[:1] + m[2:] + m[4]))
-    c.set(7, 6, '&').set(7, 7, m[4])
-    for i in range(tier):
-        c.set(6 + i * 2, 13, m[3])
-    return c
-
-
 def amplifier_top(tier):
     m = AMP[tier]
     c = casing(DK, 140 + tier)
@@ -639,8 +629,8 @@ def strange_matter(frame_no):
             rr = 0.8 + t * 4.4
             x, y = 7.5 + math.cos(a) * rr, 7.5 + math.sin(a) * rr
             c.set(int(round(x)), int(round(y)), PU[4] if t < 0.3 else PU[3] if t < 0.7 else PU[2])
-    for k in range(3):                                                   # orbiting sparks
-        a = -a0 * 0.5 + k * 2 * math.pi / 3
+    for k in range(3):                                                   # orbiting sparks, a third of a turn per loop
+        a = -a0 / 3 + k * 2 * math.pi / 3
         x, y = 7.5 + math.cos(a) * 6.6, 7.5 + math.sin(a) * 6.6
         c.set(int(round(x)), int(round(y)), TE[4] if k == frame_no % 3 else TE[3])
     c.set(5, 5, '&')
@@ -658,7 +648,6 @@ def main():
     write_anim('block', 'cryo_coolant', [cryo_coolant(i) for i in range(8)], P, frametime=6, interpolate=True)
     for tier, name in ((1, 'flux'), (2, 'pyro'), (3, 'resonant')):
         write_block(f'{name}_amplifier', amplifier_side(tier).rows(), P)
-        write_block(f'{name}_amplifier_glow', amplifier_glow(tier).rows(), P)
         write_block(f'{name}_amplifier_top', amplifier_top(tier).rows(), P)
         write_block(f'{name}_amplifier_top_glow', amplifier_top_glow(tier).rows(), P)
         write_block(f'{name}_amplifier_crystal', amplifier_crystal(tier).rows(), P)

@@ -27,10 +27,6 @@
         "up": {
           "texture": "#pipe"
         },
-        "south": {
-          "texture": "#pipe",
-          "cullface": "south"
-        },
         "west": {
           "texture": "#pipe"
         },
