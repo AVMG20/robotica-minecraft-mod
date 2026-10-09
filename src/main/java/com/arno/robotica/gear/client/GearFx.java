@@ -4,20 +4,17 @@ import com.arno.robotica.gear.GearClientConfig;
 import com.arno.robotica.gear.GearFxPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.joml.Vector3f;
 
 /**
- * Draws the weapon and mining effects the server sends as one {@link GearFxPayload} each: Arc Blade chains, the Null
- * Lance beam, the Lifesteal stream and the crumbs of quietly broken area blocks. Particles only, spawned locally, so
- * the client config and vanilla's particle setting decide how much shows.
+ * Draws the weapon effects the server sends as one {@link GearFxPayload} each: Arc Blade chains, the Null Lance beam
+ * and the Lifesteal stream. Particles only, spawned locally, so the client config and vanilla's particle setting
+ * decide how much shows.
  */
 final class GearFx {
     private GearFx() {}
@@ -32,7 +29,7 @@ final class GearFx {
             lastLevel = level;
         }
         if (level == null) return;
-        boolean weapons = GearClientConfig.weaponParticles(), crumbs = GearClientConfig.areaBreakParticles();
+        boolean weapons = GearClientConfig.weaponParticles();
         GearFxPayload fx;
         while ((fx = GearFxPayload.poll()) != null) {
             float[] p = fx.points();
@@ -45,9 +42,6 @@ final class GearFx {
                 }
                 case GearFxPayload.DRAIN -> {
                     if (weapons && p.length >= 6) drain(level, p);
-                }
-                case GearFxPayload.CRUMBS -> {
-                    if (crumbs) crumbs(level, fx.ints());
                 }
                 default -> {}
             }
@@ -148,27 +142,5 @@ final class GearFx {
             burst(level, BLOOD, fx + dx * t, fy + dy * t, fz + dz * t, 1, 0.05, 0.05, 0.05, 0);
         }
         burst(level, ParticleTypes.HEART, p[3], p[4] + 0.6, p[5], 1, 0.2, 0.1, 0.2, 0);
-    }
-
-    /** A few block crumbs per broken block, fewer the bigger the batch (vanilla throws up to 64 per block). */
-    private static void crumbs(ClientLevel level, int[] data) {
-        int blocks = data.length / 4;
-        int per = blocks <= 16 ? 4 : blocks <= 48 ? 2 : 1;
-        RandomSource r = level.random;
-        BlockState lastState = null;
-        BlockParticleOption option = null;
-        for (int b = 0; b < blocks; b++) {
-            BlockState state = Block.stateById(data[b * 4 + 3]);
-            if (state.isAir()) continue;
-            if (state != lastState) {
-                lastState = state;
-                option = new BlockParticleOption(ParticleTypes.BLOCK, state);
-            }
-            double x = data[b * 4], y = data[b * 4 + 1], z = data[b * 4 + 2];
-            for (int i = 0; i < per; i++) {
-                level.addParticle(option, x + r.nextDouble(), y + r.nextDouble(), z + r.nextDouble(),
-                        (r.nextDouble() - 0.5) * 0.1, r.nextDouble() * 0.1, (r.nextDouble() - 0.5) * 0.1);
-            }
-        }
     }
 }

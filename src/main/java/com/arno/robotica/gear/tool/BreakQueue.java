@@ -30,9 +30,8 @@ import java.util.UUID;
 
 /**
  * Server side execution of area breaks. Small breaks run immediately, big ones wait in a per-player queue that is
- * drained in the server tick. Every block fires the normal BreakEvent, so claim and protection mods can cancel each one
- * ({@link QuietBreak}: the steps of {@code ServerPlayerGameMode.destroyBlock} without the per-block break effect).
- * State is keyed by player UUID and dropped on logout.
+ * drained in the server tick. Every block goes through {@code ServerPlayerGameMode.destroyBlock}, so claim and
+ * protection mods can cancel each one through the normal BreakEvent. State is keyed by player UUID and dropped on logout.
  */
 public final class BreakQueue {
     private BreakQueue() {}
@@ -108,7 +107,6 @@ public final class BreakQueue {
         UUID id = player.getUUID();
         boolean added = ACTIVE.add(id);
         int consumed = 0;
-        QuietBreak.begin();
         try {
             while (consumed < budget && !queue.isEmpty()) {
                 ItemStack held = player.getMainHandItem();
@@ -135,11 +133,10 @@ public final class BreakQueue {
                         || pos.distSqr(player.blockPosition()) > 48 * 48) {
                     continue;
                 }
-                QuietBreak.destroy(player, level, pos);
+                player.gameMode.destroyBlock(pos);
             }
         } finally {
             if (added) ACTIVE.remove(id);
-            QuietBreak.end(level);
         }
         return consumed;
     }

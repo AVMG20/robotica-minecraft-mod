@@ -59,7 +59,7 @@ public final class GearEvents {
 
     /**
      * Area, vein and tree breaking. Runs after protection mods (which cancel at normal priority); the extra blocks
-     * each get their own BreakEvent (BreakQueue, QuietBreak), so claims can still veto them one by one.
+     * each get their own BreakEvent through destroyBlock, so claims can still veto them one by one.
      */
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onBreak(BlockEvent.BreakEvent event) {
