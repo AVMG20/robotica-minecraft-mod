@@ -22,7 +22,9 @@ The user is the only developer.
 ## Build and test
 - JDK 21 (Homebrew, not on the default path): `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`.
   Tests: `./gradlew runGameTestServer` (or `scripts/docker-build.sh runGameTestServer`; all required game tests must
-  pass) and `python3 scripts/audit_assets.py`. Screenshots: `scripts/showcase.sh` (real client, ~8 min, add new shots to `scripts/shots.py`). Stale `run/config/robotica-*-server.toml` files can make tests fail; delete them.
+  pass) and `python3 scripts/audit_assets.py`. Screenshots: `scripts/showcase.sh` (real client, ~8 min, add new shots to `scripts/shots.py`);
+  `scripts/showcase.sh core_reactor bank` only builds and shoots the shots whose name contains one of the words and
+  leaves the other `docs/shots` alone. Stale `run/config/robotica-*-server.toml` files can make tests fail; delete them.
 
 ## Every change
 - Keep the Codex and the wiki up to date with the feature: Codex chapter, guide unlocks, wiki item/upgrade/guide

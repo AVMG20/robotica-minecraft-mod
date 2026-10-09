@@ -2,7 +2,9 @@
 """Turns the chosen showcase screenshots (run-showcase/screenshots, from scripts/showcase.sh) into docs/shots/*.jpg.
 
 Scenes are scaled to 1600 px wide, GUIs cropped to a centred square and scaled to 1000 px. JPEG quality steps down
-until a file fits MAX_BYTES. Uses macOS sips. Run: python3 scripts/shots.py
+until a file fits MAX_BYTES. Uses macOS sips. Run: python3 scripts/shots.py [word ...]
+With words (as passed to scripts/showcase.sh) only the shots whose name or screenshot contains one of them are
+converted; the other docs/shots files are left alone.
 """
 import glob
 import os
@@ -88,8 +90,11 @@ def convert(src, dst, kind):
 
 
 def main():
+    only = sys.argv[1:]
     missing = []
     for name, (pattern, kind) in SHOTS.items():
+        if only and not any(w in name or w in pattern for w in only):
+            continue
         found = sorted(glob.glob(os.path.join(SRC, pattern)))
         if not found:
             missing.append(pattern)

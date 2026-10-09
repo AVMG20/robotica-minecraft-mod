@@ -77,10 +77,12 @@ neoForge {
         }
 
         // Dev only: opens a flat world, screenshots every block, GUI and the Codex into run-showcase/screenshots, then quits.
+        // ./gradlew runShowcase -Pshowcase.only=a,b takes only the shots whose name contains a or b.
         showcase {
             client()
             gameDirectory = project.file('run-showcase')
             systemProperty 'robotica.showcase', 'true'
+            if (project.hasProperty('showcase.only')) systemProperty 'robotica.showcase.only', project.property('showcase.only').toString()
             programArguments.addAll '--width', '1280', '--height', '800'
         }
 

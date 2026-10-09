@@ -80,6 +80,8 @@ import java.util.function.Consumer;
  * Development tool, inert unless the JVM runs with -Drobotica.showcase=true (./gradlew runShowcase).
  * Creates a flat creative world, builds scenes with every Robotica block, opens every machine GUI,
  * the Codex and an item sheet, saves a screenshot of each into run-showcase/screenshots, then quits.
+ * With -Drobotica.showcase.only=a,b (scripts/showcase.sh a b) it only builds and shoots the scenes and GUIs whose shot
+ * name contains a or b.
  */
 public final class Showcase {
     private Showcase() {}
@@ -87,6 +89,9 @@ public final class Showcase {
     private record Step(int delay, Runnable action) {}
 
     private static final List<Step> STEPS = new ArrayList<>();
+    /** Words a shot name must contain one of (-Drobotica.showcase.only=a,b); empty takes every shot. */
+    private static final List<String> ONLY = java.util.Arrays.stream(System.getProperty("robotica.showcase.only", "").split(","))
+            .map(String::trim).filter(w -> !w.isEmpty()).toList();
     private static int stepIndex = 0, wait = 0, idleTicks = 0;
     private static boolean worldRequested = false, inWorld = false;
 
@@ -191,8 +196,20 @@ public final class Showcase {
         STEPS.add(new Step(delay, action));
     }
 
+    /** Whether any of these shots is wanted: builds a scene only when one of its shots will be taken. */
+    private static boolean wants(String... shots) {
+        if (ONLY.isEmpty()) return true;
+        for (String shot : shots) for (String word : ONLY) if (shot.contains(word)) return true;
+        return false;
+    }
+
     private static void shot(String name) {
-        step(10, () -> Screenshot.grab(mc().gameDirectory, name + ".png", mc().getMainRenderTarget(), msg -> {}));
+        grab(10, name);
+    }
+
+    /** A screenshot named {@code name}.png after {@code delay} ticks, if it is wanted. */
+    private static void grab(int delay, String name) {
+        if (wants(name)) step(delay, () -> Screenshot.grab(mc().gameDirectory, name + ".png", mc().getMainRenderTarget(), msg -> {}));
     }
 
     private static void camera(double x, double y, double z, float yaw, float pitch) {
@@ -282,49 +299,66 @@ public final class Showcase {
             sp.getInventory().clearContent();
         }));
 
-        // Scene 1: every block on a grid, facing the camera (south).
-        step(40, () -> server(sp -> {
-            ServerLevel level = sp.serverLevel();
-            List<Block> blocks = roboticaBlocks();
-            for (int i = 0; i < blocks.size(); i++) {
-                BlockPos pos = new BlockPos((i % 12) * 2, Y, (i / 12) * 2);
-                setFacing(level, pos, blocks.get(i), Direction.SOUTH);
-            }
-        }));
+        // Scene 1: every block on a grid, facing the camera (south). The machine GUIs below open these blocks.
+        List<Block> gridBlocks = roboticaBlocks();
+        boolean gridGuis = false;
+        for (int i = 0; i < gridBlocks.size(); i++) {
+            gridGuis |= wants(String.format("gui_%02d_%s", i, BuiltInRegistries.BLOCK.getKey(gridBlocks.get(i)).getPath()));
+        }
+        if (gridGuis || wants("01_all_blocks", "02_blocks_close_a", "03_blocks_close_b")) {
+            step(40, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                List<Block> blocks = roboticaBlocks();
+                for (int i = 0; i < blocks.size(); i++) {
+                    BlockPos pos = new BlockPos((i % 12) * 2, Y, (i / 12) * 2);
+                    setFacing(level, pos, blocks.get(i), Direction.SOUTH);
+                }
+            }));
+        }
         hud(false);
-        camera(11, Y + 9, 22, 180, 32);
-        shot("01_all_blocks");
-        camera(5, Y + 3, 7, 180, 20);
-        shot("02_blocks_close_a");
-        camera(17, Y + 3, 7, 180, 20);
-        shot("03_blocks_close_b");
+        if (wants("01_all_blocks")) {
+            camera(11, Y + 9, 22, 180, 32);
+            shot("01_all_blocks");
+        }
+        if (wants("02_blocks_close_a")) {
+            camera(5, Y + 3, 7, 180, 20);
+            shot("02_blocks_close_a");
+        }
+        if (wants("03_blocks_close_b")) {
+            camera(17, Y + 3, 7, 180, 20);
+            shot("03_blocks_close_b");
+        }
 
         // Scene 2: a joined pair of buildings in each style, side by side, then a 2x2 hall from the inside.
-        step(40, () -> server(sp -> {
-            ServerLevel level = sp.serverLevel();
-            int i = 0;
-            for (BuildStyle style : BuildStyle.values()) {
+        if (wants("04_styles_halls", "05_style_timberframe_door")) {
+            step(40, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                int i = 0;
+                for (BuildStyle style : BuildStyle.values()) {
+                    Layout layout = new Layout();
+                    layout.queue(Plots.CENTER, style);
+                    layout.queue(Plots.index(1, 0), style);
+                    ShellPlacer.placeAll(level, new BlockPos(64 + i * 20, Y, 4), layout);
+                    i++;
+                }
+            }));
+            camera(98, Y + 10, 44, 180, 14);
+            shot("04_styles_halls");
+            camera(64, Y + 2, 16, 180, 5);
+            shot("05_style_timberframe_door");
+        }
+        if (wants("06_workshop_inside")) {
+            step(20, () -> server(sp -> {
                 Layout layout = new Layout();
-                layout.queue(Plots.CENTER, style);
-                layout.queue(Plots.index(1, 0), style);
-                ShellPlacer.placeAll(level, new BlockPos(64 + i * 20, Y, 4), layout);
-                i++;
-            }
-        }));
-        camera(98, Y + 10, 44, 180, 14);
-        shot("04_styles_halls");
-        camera(64, Y + 2, 16, 180, 5);
-        shot("05_style_timberframe_door");
-        step(20, () -> server(sp -> {
-            Layout layout = new Layout();
-            for (int plot : new int[]{Plots.CENTER, Plots.index(1, 0), Plots.index(0, 1), Plots.index(1, 1)}) layout.queue(plot, BuildStyle.STEEL_LAB);
-            ShellPlacer.placeAll(sp.serverLevel(), new BlockPos(64, Y, 44), layout);
-        }));
-        camera(62, Y + 3, 42, -45, 12);
-        shot("06_workshop_inside");
+                for (int plot : new int[]{Plots.CENTER, Plots.index(1, 0), Plots.index(0, 1), Plots.index(1, 1)}) layout.queue(plot, BuildStyle.STEEL_LAB);
+                ShellPlacer.placeAll(sp.serverLevel(), new BlockPos(64, Y, 44), layout);
+            }));
+            camera(62, Y + 3, 42, -45, 12);
+            shot("06_workshop_inside");
+        }
 
         // Scene 3: robots at work.
-        step(40, () -> server(sp -> {
+        if (wants("07_robots")) step(40, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             MinecraftServer s = sp.server;
             for (int dx = 0; dx < 3; dx++) {
@@ -341,11 +375,14 @@ public final class Showcase {
                 level.setBlock(new BlockPos(x, Y, z), Blocks.WHEAT.defaultBlockState(), 3);
             }
         }));
-        camera(-25, Y + 3, 14, 180, 15);
-        shot("07_robots");
+        if (wants("07_robots")) {
+            camera(-25, Y + 3, 14, 180, 15);
+            shot("07_robots");
+        }
 
         // Scene 4: replicator, formed, with a zombie vial and energy.
-        step(20, () -> server(sp -> {
+        boolean replicator = wants("08_replicator", "gui_92_replicator_formed");
+        if (replicator) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockPos base = new BlockPos(0, Y, 40);
             for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++) for (int z = 0; z < 3; z++) {
@@ -358,18 +395,20 @@ public final class Showcase {
             BlockPos ctrl = base.offset(1, 1, 2);
             setFacing(level, ctrl, block("replicator_controller"), Direction.SOUTH);
         }));
-        step(60, () -> server(sp -> {
+        if (replicator) step(60, () -> server(sp -> {
             if (sp.serverLevel().getBlockEntity(new BlockPos(1, Y + 1, 42)) instanceof ReplicatorControllerBlockEntity be) {
                 be.vial.setStackInSlot(0, Essence.completeVial(EntityType.ZOMBIE));
                 be.energy().setEnergy(1_000_000);
             }
         }));
-        camera(1.5, Y + 2.5, 47, 180, 12);
-        step(100, () -> {});
-        shot("08_replicator");
+        if (wants("08_replicator")) {
+            camera(1.5, Y + 2.5, 47, 180, 12);
+            step(100, () -> {});
+            shot("08_replicator");
+        }
 
         // Scene 5: two linked, powered Portal Projectors (the portal is drawn by the block entity renderer) and a warp pad.
-        step(20, () -> server(sp -> {
+        if (wants("09_gate_and_pad")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockPos a = new BlockPos(20, Y, 40), b = new BlockPos(25, Y, 40);
             setFacing(level, a, block("gate_controller"), Direction.SOUTH);
@@ -385,12 +424,14 @@ public final class Showcase {
             }
             setFacing(level, new BlockPos(29, Y, 40), block("warp_pad"), Direction.SOUTH);
         }));
-        camera(22.5, Y + 3, 47, 180, 8);
-        step(60, () -> {});
-        shot("09_gate_and_pad");
+        if (wants("09_gate_and_pad")) {
+            camera(22.5, Y + 3, 47, 180, 8);
+            step(60, () -> {});
+            shot("09_gate_and_pad");
+        }
 
         // Scene 6: drill HUD and area outline.
-        step(20, () -> server(sp -> {
+        if (wants("10_drill_hud_outline")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             for (int x = -6; x <= 6; x++) for (int y = 0; y < 6; y++) level.setBlock(new BlockPos(x, Y + y, -20), Blocks.STONE.defaultBlockState(), 3);
             ItemStack drill = new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("magma_drill")));
@@ -402,11 +443,13 @@ public final class Showcase {
             sp.teleportTo(sp.serverLevel(), 0.5, Y + 2, -16.5, 180, 0);
         }));
         hud(true);
-        step(40, () -> {});
-        shot("10_drill_hud_outline");
+        if (wants("10_drill_hud_outline")) {
+            step(40, () -> {});
+            shot("10_drill_hud_outline");
+        }
 
         // Scene 7: a Tesla network on an Accumulator, Linker in hand so the arcs show at full strength.
-        step(20, () -> server(sp -> {
+        if (wants("11_tesla_network")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockPos acc = new BlockPos(40, Y, -20);
             level.setBlock(acc, block("accumulator_3").defaultBlockState(), 3);
@@ -432,12 +475,14 @@ public final class Showcase {
             sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("tesla_linker"))));
         }));
         hud(false);
-        camera(41.5, Y + 4, -8, 180, 22);
-        step(60, () -> {});
-        shot("11_tesla_network");
+        if (wants("11_tesla_network")) {
+            camera(41.5, Y + 4, -8, 180, 22);
+            step(60, () -> {});
+            shot("11_tesla_network");
+        }
 
         // Scene 8: the Scrap Colossus on its altar (no AI, for the photo).
-        step(20, () -> server(sp -> {
+        if (wants("12_scrap_colossus")) step(20, () -> server(sp -> {
             MinecraftServer s = sp.server;
             s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "difficulty normal");
             sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
@@ -446,24 +491,27 @@ public final class Showcase {
             s.getCommands().performPrefixedCommand(s.createCommandSourceStack(),
                     "summon robotica:scrap_colossus 70.5 " + (Y + 1) + " -19.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[0f,0f]}");
         }));
-        camera(70.5, Y + 3, -11, 180, 8);
-        step(60, () -> {});
-        shot("12_scrap_colossus");
+        if (wants("12_scrap_colossus")) {
+            camera(70.5, Y + 3, -11, 180, 8);
+            step(60, () -> {});
+            shot("12_scrap_colossus");
+            step(5, () -> server(sp -> command(sp, "kill @e[type=robotica:scrap_colossus]")));
+        }
 
         // Scene 9: a Rusted Foundry.
-        step(20, () -> server(sp -> {
-            MinecraftServer s = sp.server;
-            s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "kill @e[type=robotica:scrap_colossus]");
-            s.getCommands().performPrefixedCommand(s.createCommandSourceStack(), "place structure robotica:rusted_foundry 120 " + Y + " -20");
-        }));
-        camera(120, Y + 22, 6, 180, 42);
-        step(80, () -> {});
-        shot("13_rusted_foundry");
+        if (wants("13_rusted_foundry")) {
+            step(20, () -> server(sp -> command(sp, "place structure robotica:rusted_foundry 120 " + Y + " -20")));
+            camera(120, Y + 22, 6, 180, 42);
+            step(80, () -> {});
+            shot("13_rusted_foundry");
+        }
+        step(5, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
 
         newScenes();
 
         // Scene 10: a Storage Terminal with things in it.
-        step(20, () -> server(sp -> {
+        boolean terminal = wants("gui_95_storage_terminal_full");
+        if (terminal) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockPos t = new BlockPos(0, Y, -40);
             setFacing(level, t, block("storage_terminal"), Direction.SOUTH);
@@ -486,9 +534,11 @@ public final class Showcase {
                     new BlockHitResult(Vec3.atCenterOf(t), Direction.SOUTH, t, false));
         }));
         hud(true);
-        step(30, () -> {});
-        shot("gui_95_storage_terminal_full");
-        step(5, () -> { if (mc().player != null && mc().screen != null) mc().player.closeContainer(); });
+        if (terminal) {
+            step(30, () -> {});
+            shot("gui_95_storage_terminal_full");
+            step(5, () -> { if (mc().player != null && mc().screen != null) mc().player.closeContainer(); });
+        }
 
         newGuis();
 
@@ -499,6 +549,7 @@ public final class Showcase {
             final int idx = i;
             final BlockPos pos = new BlockPos((i % 12) * 2, Y, (i / 12) * 2);
             final String name = BuiltInRegistries.BLOCK.getKey(blocks.get(i)).getPath();
+            if (!wants(String.format("gui_%02d_%s", idx, name))) continue;
             step(10, () -> server(sp -> {
                 if (!(sp.serverLevel().getBlockEntity(pos) instanceof MenuProvider)) return;
                 prepare(name, pos, sp);
@@ -518,7 +569,7 @@ public final class Showcase {
         // Warp pads: owner GUI (sneak, empty hand) and the destination list (standing on a pad, another pad exists).
         final BlockPos padA = new BlockPos(0, Y, 60);
         final BlockPos padB = new BlockPos(10, Y, 60);
-        step(10, () -> server(sp -> {
+        if (wants("gui_90_warp_pad_owner", "gui_91_warp_destinations")) step(10, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             for (BlockPos p : new BlockPos[]{padA, padB}) {
                 setFacing(level, p, block("warp_pad"), Direction.SOUTH);
@@ -530,67 +581,79 @@ public final class Showcase {
             }
             if (level.getBlockEntity(padB) instanceof WarpPadBlockEntity pad) pad.rename("Mining Outpost");
         }));
-        step(20, () -> server(sp -> {
-            sp.teleportTo(sp.serverLevel(), padA.getX() + 0.5, Y, padA.getZ() + 2.5, 180, 30);
-            sp.setShiftKeyDown(true);
-            sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
-                    new BlockHitResult(Vec3.atCenterOf(padA), Direction.SOUTH, padA, false));
-        }));
-        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_90_warp_pad_owner.png", mc().getMainRenderTarget(), m -> {}));
-        step(5, () -> {
-            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
-        });
-        step(10, () -> server(sp -> {
-            sp.setShiftKeyDown(false);
-            sp.teleportTo(sp.serverLevel(), padA.getX() + 0.5, Y + 0.5, padA.getZ() + 0.5, 180, 30);
-        }));
-        step(10, () -> server(sp -> sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
-                new BlockHitResult(Vec3.atCenterOf(padA), Direction.UP, padA, false))));
-        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_91_warp_destinations.png", mc().getMainRenderTarget(), m -> {}));
-        step(5, () -> {
-            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
-        });
+        if (wants("gui_90_warp_pad_owner")) {
+            step(20, () -> server(sp -> {
+                sp.teleportTo(sp.serverLevel(), padA.getX() + 0.5, Y, padA.getZ() + 2.5, 180, 30);
+                sp.setShiftKeyDown(true);
+                sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                        new BlockHitResult(Vec3.atCenterOf(padA), Direction.SOUTH, padA, false));
+            }));
+            grab(25, "gui_90_warp_pad_owner");
+            step(5, () -> {
+                if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+            });
+        }
+        if (wants("gui_91_warp_destinations")) {
+            step(10, () -> server(sp -> {
+                sp.setShiftKeyDown(false);
+                sp.teleportTo(sp.serverLevel(), padA.getX() + 0.5, Y + 0.5, padA.getZ() + 0.5, 180, 30);
+            }));
+            step(10, () -> server(sp -> sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(padA), Direction.UP, padA, false))));
+            grab(25, "gui_91_warp_destinations");
+            step(5, () -> {
+                if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+            });
+        }
+        step(5, () -> server(sp -> sp.setShiftKeyDown(false)));
 
         // The formed replicator from scene 4.
-        step(10, () -> server(sp -> {
+        if (wants("gui_92_replicator_formed")) step(10, () -> server(sp -> {
             sp.teleportTo(sp.serverLevel(), 1.5, Y, 45.5, 180, 30);
             sp.setShiftKeyDown(false);
             BlockPos ctrl = new BlockPos(1, Y + 1, 42);
             sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
                     new BlockHitResult(Vec3.atCenterOf(ctrl), Direction.SOUTH, ctrl, false));
         }));
-        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_92_replicator_formed.png", mc().getMainRenderTarget(), m -> {}));
-        step(5, () -> {
-            if (mc().player != null && mc().screen != null) mc().player.closeContainer();
-        });
+        if (wants("gui_92_replicator_formed")) {
+            grab(25, "gui_92_replicator_formed");
+            step(5, () -> {
+                if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+            });
+        }
 
         // Gear tool settings screen (opened client side, like the G key does).
-        step(10, () -> server(sp -> {
-            ItemStack drill = new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("magma_drill")));
-            ItemEnergy.fill(drill);
-            sp.setItemInHand(InteractionHand.MAIN_HAND, drill);
-        }));
-        step(20, () -> mc().setScreen(new ToggleScreen()));
-        step(15, () -> Screenshot.grab(mc().gameDirectory, "gui_93_gear_settings.png", mc().getMainRenderTarget(), m -> {}));
-        step(5, () -> mc().setScreen(null));
-        step(10, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
+        if (wants("gui_93_gear_settings")) {
+            step(10, () -> server(sp -> {
+                ItemStack drill = new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("magma_drill")));
+                ItemEnergy.fill(drill);
+                sp.setItemInHand(InteractionHand.MAIN_HAND, drill);
+            }));
+            step(20, () -> mc().setScreen(new ToggleScreen()));
+            grab(15, "gui_93_gear_settings");
+            step(5, () -> mc().setScreen(null));
+            step(10, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
+        }
 
         // Codex pages and lab.
-        step(20, () -> mc().setScreen(new CodexScreen()));
-        shot("codex_01_start");
-        step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devSelect(7); });
-        shot("codex_02_robots");
-        step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devSelect(5); });
-        shot("codex_05_big_energy");
-        step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devShowRecipe(new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("stumpy")))); });
-        shot("codex_03_recipe");
-        step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devLab(); });
-        shot("codex_04_lab");
+        if (wants("codex_01_start", "codex_02_robots", "codex_05_big_energy", "codex_03_recipe", "codex_04_lab")) {
+            step(20, () -> mc().setScreen(new CodexScreen()));
+            shot("codex_01_start");
+            step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devSelect(7); });
+            shot("codex_02_robots");
+            step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devSelect(5); });
+            shot("codex_05_big_energy");
+            step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devShowRecipe(new ItemStack(BuiltInRegistries.ITEM.get(Robotica.id("stumpy")))); });
+            shot("codex_03_recipe");
+            step(10, () -> { if (mc().screen instanceof CodexScreen c) c.devLab(); });
+            shot("codex_04_lab");
+        }
 
         // Item sheet.
         int sheetPages = IconSheetScreen.pageCount(mc().getWindow().getGuiScaledWidth(), mc().getWindow().getGuiScaledHeight());
         for (int p = 0; p < sheetPages; p++) {
             final int pageIndex = p;
+            if (!wants("items_" + (p + 1))) continue;
             step(20, () -> mc().setScreen(new IconSheetScreen(pageIndex)));
             shot("items_" + (p + 1));
         }
@@ -683,7 +746,7 @@ public final class Showcase {
 
     private static void newScenes() {
         // Exo-Frame Mk1 to Mk4 on armor stands.
-        step(20, () -> server(sp -> {
+        if (wants("14_exo_frames")) step(20, () -> server(sp -> {
             for (int mk = 1; mk <= 4; mk++) {
                 StringBuilder armor = new StringBuilder();
                 for (int i = 0; i < 4; i++) {
@@ -694,12 +757,14 @@ public final class Showcase {
                 command(sp, "summon minecraft:armor_stand " + (mk * 2 - 1.5) + " " + Y + " 100.5 {Rotation:[0f,0f],NoBasePlate:1b,ShowArms:1b,ArmorItems:[" + armor + "]}");
             }
         }));
-        camera(3, Y + 1.2, 104.6, 180, 6);
-        step(20, () -> {});
-        shot("14_exo_frames");
+        if (wants("14_exo_frames")) {
+            camera(3, Y + 1.2, 104.6, 180, 6);
+            step(20, () -> {});
+            shot("14_exo_frames");
+        }
 
         // Industry machines Mk1 to Mk4, one row per machine, each working on something.
-        step(20, () -> server(sp -> {
+        if (wants("15_industry_machines", "16_grinder_furnace")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             for (int row = 0; row < MACHINES.length; row++) for (int mk = 1; mk <= 4; mk++) {
                 BlockPos pos = new BlockPos(18 + mk * 2, Y, 100 + row * 2);
@@ -715,15 +780,17 @@ public final class Showcase {
                 if (items != null) ItemHandlerHelper.insertItem(items, new ItemStack(input, 32), false);
             }
         }));
-        camera(23.5, Y + 5, 113.5, 180, 32);
-        step(40, () -> {});
-        shot("15_industry_machines");
-        camera(23.5, Y + 2.2, 112.4, 180, 16);
-        step(10, () -> {});
-        shot("16_grinder_furnace");
+        if (wants("15_industry_machines", "16_grinder_furnace")) {
+            camera(23.5, Y + 5, 113.5, 180, 32);
+            step(40, () -> {});
+            shot("15_industry_machines");
+            camera(23.5, Y + 2.2, 112.4, 180, 16);
+            step(10, () -> {});
+            shot("16_grinder_furnace");
+        }
 
         // Item pipes: chest, Grinder, Electric Furnace, chest.
-        step(20, () -> server(sp -> {
+        if (wants("17_item_pipes", "gui_101_item_pipe")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             int z = 124;
             setFacing(level, new BlockPos(20, Y, z), Blocks.CHEST, Direction.SOUTH);
@@ -748,19 +815,23 @@ public final class Showcase {
             fillEnergy(level, new BlockPos(24, Y, z));
             fillEnergy(level, new BlockPos(29, Y, z));
         }));
-        camera(26.5, Y + 3.2, 130, 180, 16);
-        step(20, () -> {});
-        shot("17_item_pipes");
+        if (wants("17_item_pipes")) {
+            camera(26.5, Y + 3.2, 130, 180, 16);
+            step(20, () -> {});
+            shot("17_item_pipes");
+        }
 
         // Core Reactor, Capacitor Bank, Tesla Spire and Ring Collider, built from the wiki's multiblock examples.
-        step(20, () -> server(sp -> {
+        boolean energy = wants("18_energy_multiblocks", "19_core_reactor", "20_capacitor_bank", "21_tesla_spire", "28_ring_collider",
+                "collider_burst", "gui_98_core_reactor_formed", "gui_99_bank_formed", "gui_100_spire_formed", "gui_102_collider_formed");
+        if (energy) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             placeMultiblock(level, multiblock("core_reactor"), new BlockPos(40, Y, 100));
             placeMultiblock(level, multiblock("capacitor_bank_5"), new BlockPos(48, Y, 100));
             placeMultiblock(level, multiblock("tesla_spire"), SPIRE);
             placeMultiblock(level, multiblock("ring_collider"), new BlockPos(64, Y, 98));
         }));
-        step(40, () -> server(sp -> {
+        if (energy) step(40, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             // fuel and a Servo Core through the access ports, energy into the bank through its ports
             for (BlockPos p : BlockPos.betweenClosed(40, Y, 100, 54, Y + 4, 106)) {
@@ -781,25 +852,37 @@ public final class Showcase {
                 collider.setCharge(collider.chargeNeeded());
             }
         }));
-        step(240, () -> {});
-        camera(55.5, Y + 9, 124, 180, 22);
-        shot("18_energy_multiblocks");
-        camera(42.5, Y + 3, 108.6, 180, 10);
-        shot("19_core_reactor");
-        camera(50.5, Y + 3, 108.6, 180, 10);
-        shot("20_capacitor_bank");
-        camera(57.5, Y + 5, 112, 180, -25);
-        step(1, () -> server(sp -> {
-            if (sp.serverLevel().getBlockEntity(SPIRE) instanceof com.arno.robotica.energy.block.SpireBlockEntity spire) {
-                spire.strike(sp.serverLevel(), sp.serverLevel().getGameTime());
-            }
-        }));
-        step(3, () -> Screenshot.grab(mc().gameDirectory, "21_tesla_spire.png", mc().getMainRenderTarget(), m -> {}));
-        camera(67.5, Y + 7, 109, 180, 45);
-        shot("28_ring_collider");
+        if (energy) step(240, () -> {});
+        if (wants("18_energy_multiblocks")) {
+            camera(55.5, Y + 9, 124, 180, 22);
+            shot("18_energy_multiblocks");
+        }
+        if (wants("19_core_reactor")) {
+            camera(42.5, Y + 3, 108.6, 180, 10);
+            shot("19_core_reactor");
+        }
+        if (wants("20_capacitor_bank")) {
+            camera(50.5, Y + 3, 108.6, 180, 10);
+            shot("20_capacitor_bank");
+        }
+        if (wants("21_tesla_spire")) {
+            camera(57.5, Y + 5, 112, 180, -25);
+            step(1, () -> server(sp -> {
+                if (sp.serverLevel().getBlockEntity(SPIRE) instanceof com.arno.robotica.energy.block.SpireBlockEntity spire) {
+                    spire.strike(sp.serverLevel(), sp.serverLevel().getGameTime());
+                }
+            }));
+            grab(3, "21_tesla_spire");
+        }
+        if (wants("28_ring_collider", "collider_burst")) {
+            camera(67.5, Y + 7, 109, 180, 45);
+            shot("28_ring_collider");
+            // a burst a tick apart, for checking the collision flash at the controller (not used on the site)
+            for (int i = 0; i < 12; i++) grab(1, "collider_burst_" + i);
+        }
 
         // Wireless Charger feeding a player in an empty Exo-Frame Mk4 (third person, from the front).
-        step(20, () -> server(sp -> {
+        if (wants("22_wireless_charger")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             setFacing(level, CHARGER, block("wireless_charger"), Direction.SOUTH);
             setFacing(level, CHARGER.north(), block("accumulator_3"), Direction.SOUTH);
@@ -814,16 +897,18 @@ public final class Showcase {
             sp.onUpdateAbilities();
             sp.teleportTo(level, CHARGER.getX() - 2.5, Y, CHARGER.getZ() + 0.5, 20, -12);
         }));
-        step(5, () -> mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT));
-        step(80, () -> {});
-        shot("22_wireless_charger");
-        step(5, () -> mc().options.setCameraType(CameraType.FIRST_PERSON));
-        step(5, () -> server(sp -> {
-            for (EquipmentSlot slot : ARMOR) sp.setItemSlot(slot, ItemStack.EMPTY);
-        }));
+        if (wants("22_wireless_charger")) {
+            step(5, () -> mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT));
+            step(80, () -> {});
+            shot("22_wireless_charger");
+            step(5, () -> mc().options.setCameraType(CameraType.FIRST_PERSON));
+            step(5, () -> server(sp -> {
+                for (EquipmentSlot slot : ARMOR) sp.setItemSlot(slot, ItemStack.EMPTY);
+            }));
+        }
 
         // Excavator and Survey Rig, Mk1 to Mk4.
-        step(20, () -> server(sp -> {
+        if (wants("23_excavators_survey_rigs")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             String[] tiers = {"", "_mk2", "_mk3", "_mk4"};
             for (int i = 0; i < 4; i++) {
@@ -831,12 +916,14 @@ public final class Showcase {
                 setFacing(level, new BlockPos(29 + i * 2, Y, 140), block("survey_rig" + tiers[i]), Direction.SOUTH);
             }
         }));
-        camera(28, Y + 3, 147.5, 180, 15);
-        step(20, () -> {});
-        shot("23_excavators_survey_rigs");
+        if (wants("23_excavators_survey_rigs")) {
+            camera(28, Y + 3, 147.5, 180, 15);
+            step(20, () -> {});
+            shot("23_excavators_survey_rigs");
+        }
 
         // Spark Lamps lighting a closed stone cave.
-        step(20, () -> server(sp -> {
+        if (wants("24_spark_lamp_cave")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockState[] rock = {Blocks.STONE.defaultBlockState(), Blocks.STONE.defaultBlockState(), Blocks.ANDESITE.defaultBlockState(),
                     Blocks.TUFF.defaultBlockState(), Blocks.STONE.defaultBlockState(), Blocks.DIORITE.defaultBlockState(),
@@ -861,12 +948,14 @@ public final class Showcase {
                 level.setBlock(pos, lamp.facing(Direction.DOWN), 3);
             }
         }));
-        camera(101.5, Y + 2.6, 134.5, -135, 8);
-        step(60, () -> {});
-        shot("24_spark_lamp_cave");
+        if (wants("24_spark_lamp_cave")) {
+            camera(101.5, Y + 2.6, 134.5, -135, 8);
+            step(60, () -> {});
+            shot("24_spark_lamp_cave");
+        }
 
         // Architect Table: four separate buildings, one per style, around the table plot (queued), one joined pair.
-        step(20, () -> server(sp -> {
+        if (wants("25_architect_build", "gui_96_architect_demolish")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             setFacing(level, TABLE, block("architect_table"), Direction.SOUTH);
             if (!(level.getBlockEntity(TABLE) instanceof ArchitectTableBlockEntity table)) return;
@@ -886,20 +975,24 @@ public final class Showcase {
             table.setMatter(new Matter(820, 360, 140));
             table.setChanged();
         }));
-        camera(TABLE.getX() - 24, Y + 17, TABLE.getZ() - 26, -40, 30);
-        step(40, () -> {});
-        shot("25_architect_build");
+        if (wants("25_architect_build")) {
+            camera(TABLE.getX() - 24, Y + 17, TABLE.getZ() - 26, -40, 30);
+            step(40, () -> {});
+            shot("25_architect_build");
+        }
 
         // Solar Panels Mk1 to Mk4.
-        step(20, () -> server(sp -> {
+        if (wants("26_solar_panels")) step(20, () -> server(sp -> {
             for (int mk = 1; mk <= 4; mk++) setFacing(sp.serverLevel(), new BlockPos(58 + mk * 2, Y, 140), block("solar_panel_mk" + mk), Direction.SOUTH);
         }));
-        camera(63.5, Y + 2.2, 143.8, 180, 26);
-        step(20, () -> {});
-        shot("26_solar_panels");
+        if (wants("26_solar_panels")) {
+            camera(63.5, Y + 2.2, 143.8, 180, 26);
+            step(20, () -> {});
+            shot("26_solar_panels");
+        }
 
         // The Forge Tyrant by its Forge Altar on a scorched floor, venting with its furnace doors open (no AI, for the photo).
-        step(20, () -> server(sp -> {
+        if (wants("27_forge_tyrant")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockState[] floor = {Blocks.NETHERRACK.defaultBlockState(), Blocks.BLACKSTONE.defaultBlockState(), Blocks.NETHERRACK.defaultBlockState(),
                     Blocks.MAGMA_BLOCK.defaultBlockState(), Blocks.BASALT.defaultBlockState(), Blocks.NETHERRACK.defaultBlockState(), Blocks.POLISHED_BLACKSTONE.defaultBlockState()};
@@ -917,10 +1010,12 @@ public final class Showcase {
                 e.startVent();
             }
         }));
-        camera(TYRANT.getX() - 1.5, Y + 2.4, TYRANT.getZ() + 6.5, 198, 6);
-        step(40, () -> {});
-        shot("27_forge_tyrant");
-        step(10, () -> server(sp -> command(sp, "kill @e[type=robotica:forge_tyrant]")));
+        if (wants("27_forge_tyrant")) {
+            camera(TYRANT.getX() - 1.5, Y + 2.4, TYRANT.getZ() + 6.5, 198, 6);
+            step(40, () -> {});
+            shot("27_forge_tyrant");
+            step(10, () -> server(sp -> command(sp, "kill @e[type=robotica:forge_tyrant]")));
+        }
         robotScenes();
     }
 
@@ -948,7 +1043,7 @@ public final class Showcase {
 
     /** Ranchers at work in a fenced pen with a chest, and Hauler Drones carrying a cow and a villager. */
     private static void robotScenes() {
-        step(20, () -> server(sp -> {
+        if (wants("rancher_pen", "rancher_close")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) {
                 BlockPos p = PEN.offset(x, 0, z);
@@ -1001,15 +1096,17 @@ public final class Showcase {
             }
         }));
         hud(false);
-        camera(PEN.getX() + 0.5, Y + 5.5, PEN.getZ() + 12.5, 180, 24);
-        rancherPoses();
-        shot("rancher_pen");
-        camera(PEN.getX() + 1.6, Y + 1.6, PEN.getZ() + 7.6, 180, 12);
-        rancherPoses();
-        shot("rancher_close");
+        if (wants("rancher_pen", "rancher_close")) {
+            camera(PEN.getX() + 0.5, Y + 5.5, PEN.getZ() + 12.5, 180, 24);
+            rancherPoses();
+            shot("rancher_pen");
+            camera(PEN.getX() + 1.6, Y + 1.6, PEN.getZ() + 7.6, 180, 12);
+            rancherPoses();
+            shot("rancher_close");
+        }
 
         // Hauler Drones: Mk1 with a cow, Mk2 with a villager; an empty Mk1 with its claw open.
-        step(20, () -> server(sp -> {
+        if (wants("hauler_drone")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             for (int x = -5; x <= 5; x++) for (int z = -3; z <= 3; z++) {
                 level.setBlock(HAUL.offset(x, -1, z), (Math.floorMod(x * 7 + z * 3, 5) == 0 ? Blocks.COARSE_DIRT : Blocks.GRASS_BLOCK).defaultBlockState(), 3);
@@ -1025,9 +1122,11 @@ public final class Showcase {
                 face(empty, HAUL.getX(), HAUL.getZ() + 9);
             }
         }));
-        camera(HAUL.getX() - 0.5, Y + 0.4, HAUL.getZ() + 6.8, 180, -9);
-        step(20, () -> {});
-        shot("hauler_drone");
+        if (wants("hauler_drone")) {
+            camera(HAUL.getX() - 0.5, Y + 0.4, HAUL.getZ() + 6.8, 180, -9);
+            step(20, () -> {});
+            shot("hauler_drone");
+        }
     }
 
     /** Restarts the job poses so the next shot catches them mid-move. */
@@ -1059,13 +1158,14 @@ public final class Showcase {
     }
 
     private static void openGui(BlockPos pos, String file) {
+        if (!wants(file)) return;
         step(10, () -> server(sp -> {
             sp.teleportTo(sp.serverLevel(), pos.getX() + 0.5, Math.max(Y, pos.getY() - 1), pos.getZ() + 2.5, 180, 20);
             sp.setShiftKeyDown(false);
             sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
                     new BlockHitResult(Vec3.atCenterOf(pos), Direction.SOUTH, pos, false));
         }));
-        step(30, () -> Screenshot.grab(mc().gameDirectory, file + ".png", mc().getMainRenderTarget(), m -> {}));
+        grab(30, file);
         step(5, () -> {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
@@ -1074,7 +1174,7 @@ public final class Showcase {
     private static void newGuis() {
         // An Item Pipe arm into the chest of the pipe scene: Extract, a whitelist and Closest first.
         final BlockPos pipePos = new BlockPos(21, Y, 124);
-        step(10, () -> server(sp -> {
+        if (wants("gui_101_item_pipe")) step(10, () -> server(sp -> {
             if (!(sp.serverLevel().getBlockEntity(pipePos) instanceof ItemPipeBlockEntity pipe)) return;
             pipe.filter(Direction.WEST).setStackInSlot(0, new ItemStack(Items.RAW_IRON));
             pipe.filter(Direction.WEST).setStackInSlot(1, new ItemStack(Items.RAW_COPPER));
@@ -1086,7 +1186,7 @@ public final class Showcase {
             sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
                     new BlockHitResult(Vec3.atCenterOf(pipePos).add(-0.4, 0, 0), Direction.SOUTH, pipePos, false));
         }));
-        step(30, () -> Screenshot.grab(mc().gameDirectory, "gui_101_item_pipe.png", mc().getMainRenderTarget(), m -> {}));
+        grab(30, "gui_101_item_pipe");
         step(5, () -> {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
@@ -1098,18 +1198,18 @@ public final class Showcase {
         openGui(COLLIDER, "gui_102_collider_formed");
 
         // The Architect Table with built plots: the Demolish button shows.
-        step(10, () -> server(sp -> {
+        if (wants("gui_96_architect_demolish")) step(10, () -> server(sp -> {
             sp.teleportTo(sp.serverLevel(), TABLE.getX() + 0.5, Y, TABLE.getZ() + 2.5, 180, 30);
             sp.gameMode.useItemOn(sp, sp.serverLevel(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
                     new BlockHitResult(Vec3.atCenterOf(TABLE), Direction.SOUTH, TABLE, false));
         }));
-        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_96_architect_demolish.png", mc().getMainRenderTarget(), m -> {}));
+        grab(25, "gui_96_architect_demolish");
         step(5, () -> {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
 
         // Tinker's Bench with a Null Drill full of modules, a few more modules in the inventory.
-        step(10, () -> server(sp -> {
+        if (wants("gui_97_tinkers_bench")) step(10, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             setFacing(level, BENCH, block("tinkers_bench"), Direction.SOUTH);
             sp.teleportTo(level, BENCH.getX() + 0.5, Y, BENCH.getZ() + 2.5, 180, 30);
@@ -1118,7 +1218,7 @@ public final class Showcase {
             sp.gameMode.useItemOn(sp, level, ItemStack.EMPTY, InteractionHand.MAIN_HAND,
                     new BlockHitResult(Vec3.atCenterOf(BENCH), Direction.SOUTH, BENCH, false));
         }));
-        step(10, () -> server(sp -> {
+        if (wants("gui_97_tinkers_bench")) step(10, () -> server(sp -> {
             if (!(sp.containerMenu instanceof TinkersBenchMenu menu)) return;
             ItemStack drill = new ItemStack(item("null_drill"));
             ItemEnergy.fill(drill);
@@ -1137,7 +1237,7 @@ public final class Showcase {
             menu.getSlot(TinkersBenchMenu.TOOL_SLOT).set(drill);
             menu.broadcastChanges();
         }));
-        step(25, () -> Screenshot.grab(mc().gameDirectory, "gui_97_tinkers_bench.png", mc().getMainRenderTarget(), m -> {}));
+        grab(25, "gui_97_tinkers_bench");
         step(5, () -> {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
