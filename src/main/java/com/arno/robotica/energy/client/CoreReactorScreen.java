@@ -97,7 +97,7 @@ public class CoreReactorScreen extends ControllerScreen<CoreReactorMenu> {
     }
 
     private static String fmt(float v) {
-        return String.format(Locale.ROOT, "%.0f", v);
+        return String.format(Locale.ROOT, "%.2f", v).replaceAll("\\.?0+$", "");
     }
 
     /** Core integrity: magenta when fresh, fading to red near burnout. */

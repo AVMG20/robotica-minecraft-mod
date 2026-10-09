@@ -300,16 +300,21 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
 
     /** Moves the next core in when there is none. */
     private void loadCore(ServerLevel level) {
-        if (!activeCore.isEmpty()) return;
+        if (!activeCore.isEmpty()) {
+            // a datapack took the loaded core out of robotica:reactor_core: hand it back through the waste slots
+            if (core() != null || !pendingWaste.isEmpty()) return;
+            pendingWaste = ItemHandlerHelper.insertItem(waste, activeCore, false);
+            activeCore = ItemStack.EMPTY;
+            coreWear = 0;
+            setChangedAndSync();
+        }
         ItemStack next = cores.getStackInSlot(0);
         if (next.isEmpty() || EnergyDataMaps.reactorCore(next) == null) return;
         activeCore = cores.extractItem(0, 1, false);
         Integer wear = activeCore.get(EnergyRegistry.CORE_WEAR.get());   // worn cores from older versions
         coreWear = wear == null ? 0 : wear;
         activeCore.remove(EnergyRegistry.CORE_WEAR.get());
-        if (center != null) {
-            CoreSounds.play(level, center, CoreSounds.CORE_INSERT, SoundSource.BLOCKS, 1.0F, 1.0F);
-        }
+        CoreSounds.play(level, center != null ? center : worldPosition, CoreSounds.CORE_INSERT, SoundSource.BLOCKS, 1.0F, 1.0F);
         setChangedAndSync();
     }
 
@@ -326,9 +331,9 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         setChangedAndSync();
     }
 
-    /** Hum while it runs, a crackle of sparks in the chamber now and then (both cheap, server side). */
+    /** Hum while it runs, once per loop of the vanilla conduit / beacon ambience it is made of (server side). */
     private void ambience(ServerLevel level, long now) {
-        if (CoreSounds.due(level, worldPosition, 70)) {
+        if (CoreSounds.due(level, worldPosition, 80)) {
             CoreSounds.play(level, center, CoreSounds.CORE_REACTOR_HUM, SoundSource.BLOCKS, 0.8F, 0.9F + 0.1F * (float) Math.min(2.0, powerMultiplier() - 1.0));
         }
     }

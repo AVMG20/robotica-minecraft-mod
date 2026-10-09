@@ -49,7 +49,7 @@ public class EnergyJeiPlugin implements IModPlugin {
             Item item = BuiltInRegistries.ITEM.get(key);
             if (item == Items.AIR) return;
             registration.addItemStackInfo(new ItemStack(item), Component.translatable("jei.robotica.info.reactor_core",
-                    String.format(Locale.ROOT, "%.0f", core.power()), Fmt.duration(core.life())));
+                    String.format(Locale.ROOT, "%.2f", core.power()).replaceAll("\\.?0+$", ""), Fmt.duration(core.life())));
         });
         BuiltInRegistries.ITEM.getDataMap(EnergyDataMaps.REACTOR_FUEL).forEach((key, fuel) -> {
             Item item = BuiltInRegistries.ITEM.get(key);

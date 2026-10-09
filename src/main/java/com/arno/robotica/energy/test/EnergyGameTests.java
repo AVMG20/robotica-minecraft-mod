@@ -352,6 +352,26 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /** A loaded core a datapack took out of robotica:reactor_core goes to the waste slots and the next core loads. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void coreReactorDropsUnknownCore(GameTestHelper helper) {
+        CoreReactorBlockEntity be = reactor(helper);
+        EnergyDataMaps.registerTestCore(Items.COMMAND_BLOCK, CORE);
+        be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 4));
+        be.cores.setStackInSlot(0, new ItemStack(Items.COMMAND_BLOCK));
+        be.simulate(10);
+        helper.assertTrue(be.activeCore().is(Items.COMMAND_BLOCK) && be.coreWear() > 0, "the core burns");
+        EnergyDataMaps.unregisterTestCore(Items.COMMAND_BLOCK);
+        be.cores.setStackInSlot(0, new ItemStack(Items.STRUCTURE_BLOCK));
+        be.simulate(2);
+        helper.assertTrue(be.activeCore().is(Items.STRUCTURE_BLOCK), "the next core loads, has " + be.activeCore());
+        boolean returned = false;
+        for (int i = 0; i < be.waste.getSlots(); i++) returned |= be.waste.getStackInSlot(i).is(Items.COMMAND_BLOCK);
+        helper.assertTrue(returned, "the unknown core comes out of the waste slots");
+        helper.assertTrue(be.state() == CoreReactorBlockEntity.State.RUNNING, "runs on, is " + be.state());
+        helper.succeed();
+    }
+
     private static int countDropped(GameTestHelper helper, net.minecraft.world.item.Item item) {
         int n = 0;
         for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(12))) {
