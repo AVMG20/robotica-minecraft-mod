@@ -857,7 +857,7 @@ public final class Showcase {
         }
 
         // Item pipes: chest, Grinder, Electric Furnace, chest.
-        if (wants("17_item_pipes", "gui_101_item_pipe")) step(20, () -> server(sp -> {
+        if (wants("17_item_pipes", "gui_101_item_pipe", "pipe_glint_frame", "sentry_bolt_frame")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             int z = 124;
             setFacing(level, new BlockPos(20, Y, z), Blocks.CHEST, Direction.SOUTH);
@@ -886,6 +886,23 @@ public final class Showcase {
             camera(26.5, Y + 3.2, 130, 180, 16);
             step(20, () -> {});
             shot("17_item_pipes");
+        }
+        // Dev only (not in shots.py): items flowing out of the first chest, frames a few ticks apart to catch the pipe
+        // glints, then a Sentry bolt sent straight to the client (no hostile mobs in the peaceful showcase world).
+        if (wants("pipe_glint_frame", "sentry_bolt_frame")) {
+            step(1, () -> server(sp -> {
+                if (sp.serverLevel().getBlockEntity(new BlockPos(20, Y, 124)) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+                    for (int i = 0; i < 6; i++) chest.setItem(i, new ItemStack(Items.RAW_IRON, 64));
+                }
+            }));
+            camera(23.2, Y + 0.2, 127.2, 150, 22);
+            step(20, () -> {});
+            for (int i = 0; i < 10; i++) grab(2, "pipe_glint_frame_" + i);
+            for (int k = 0; k < 2; k++) {
+                step(0, () -> server(sp -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp,
+                        new com.arno.robotica.drones.net.SentryBoltPayload(25.5F, Y + 2.6F, 126.8F, 20.5F, Y + 1.1F, 125.6F))));
+                for (int i = 0; i < 4; i++) grab(1, "sentry_bolt_frame_" + k + "_" + i);
+            }
         }
 
         // Core Reactor, Capacitor Bank, Tesla Spire and Ring Collider, built from the wiki's multiblock examples.

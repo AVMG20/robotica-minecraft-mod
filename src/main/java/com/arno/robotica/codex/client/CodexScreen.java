@@ -92,6 +92,7 @@ public class CodexScreen extends Screen {
         loadLayouts();
         loadChapters();
         loadGuide();
+        CodexSounds.open();
     }
 
     private void loadGuide() {
@@ -225,6 +226,7 @@ public class CodexScreen extends Screen {
         left = (vw - W) / 2;
         top = (vh - H) / 2;
         wrapCache.clear();
+        guidePagesCache = null;
         labItemList = buildLabItems();
         chapter = Math.min(chapter, Math.max(0, chapters.size() - 1));
         rebuild();
@@ -284,6 +286,7 @@ public class CodexScreen extends Screen {
 
     private void turnList(int dir) {
         listPage += dir;
+        CodexSounds.page();
         rebuild();
     }
 
@@ -293,6 +296,8 @@ public class CodexScreen extends Screen {
 
     private void turn(int dir) {
         if (chapters.isEmpty()) return;
+        int was = (chapter * 4096 + page) * 4096 + subPage;
+        boolean fromRecipe = !recipeItem.isEmpty();
         recipeItem = ItemStack.EMPTY;
         recipeHistory.clear();
         int subs = subPageCount();
@@ -311,6 +316,7 @@ public class CodexScreen extends Screen {
                 subPage = subPageCount() - 1;
             }
         }
+        if (fromRecipe || was != (chapter * 4096 + page) * 4096 + subPage) CodexSounds.page();
         followChapter();
         rebuild();
     }
@@ -321,6 +327,7 @@ public class CodexScreen extends Screen {
     }
 
     private void openChapter(int index) {
+        if (index != chapter || page != 0 || subPage != 0 || !recipeItem.isEmpty() || lab) CodexSounds.page();
         lab = false;
         chapter = index;
         page = 0;
@@ -547,8 +554,24 @@ public class CodexScreen extends Screen {
 
     // ---------------------------------------------------------------- guide
 
-    /** The steps you can do now, split into pages that fit under the heading. Always at least one (maybe empty) page. */
+    /** {@link #guidePages()} for the progress set it was built from (a new set arrives with every finished step). */
+    private List<List<Step>> guidePagesCache;
+    private java.util.Set<String> guidePagesFor;
+
+    /**
+     * The steps you can do now, split into pages that fit under the heading. Always at least one (maybe empty) page.
+     * Cached until the progress changes: it is asked for several times every frame.
+     */
     private List<List<Step>> guidePages() {
+        java.util.Set<String> done = com.arno.robotica.codex.GuideProgressPayload.clientDone();
+        if (guidePagesCache == null || done != guidePagesFor) {
+            guidePagesFor = done;
+            guidePagesCache = buildGuidePages();
+        }
+        return guidePagesCache;
+    }
+
+    private List<List<Step>> buildGuidePages() {
         List<Step> next = nextSteps();
         if (next.isEmpty()) return List.of(List.of());
         int[] heights = new int[next.size()];
@@ -903,6 +926,7 @@ public class CodexScreen extends Screen {
             int to = Math.max(0, Math.min(list.pages() - 1, listPage + (scrollY < 0 ? 1 : -1)));
             if (to != listPage) {
                 listPage = to;
+                CodexSounds.page();
                 rebuild();
             }
             return true;

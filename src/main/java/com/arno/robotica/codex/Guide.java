@@ -44,6 +44,11 @@ public final class Guide {
 
     /** Sends the player's finished guide steps to their client. */
     public static void sync(ServerPlayer player) {
+        sync(player, false);
+    }
+
+    /** Same; {@code earned}: a step was just finished, so the client chimes. */
+    private static void sync(ServerPlayer player, boolean earned) {
         MinecraftServer server = player.getServer();
         if (server == null) return;
         List<String> done = new ArrayList<>();
@@ -53,7 +58,7 @@ public final class Guide {
         // Fake and mock players (game tests, other mods) have no real connection or no Robotica channel.
         if (player instanceof net.neoforged.neoforge.common.util.FakePlayer || player.connection == null
                 || !player.connection.hasChannel(GuideProgressPayload.TYPE)) return;
-        PacketDistributor.sendToPlayer(player, new GuideProgressPayload(done));
+        PacketDistributor.sendToPlayer(player, new GuideProgressPayload(done, earned));
     }
 
     static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -64,7 +69,7 @@ public final class Guide {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         AdvancementHolder earned = event.getAdvancement();
         if (!isGuide(earned.id())) return;
-        sync(player);
+        sync(player, true);
         if (!CodexModule.guideTips()) return;
         MinecraftServer server = player.getServer();
         if (server == null) return;

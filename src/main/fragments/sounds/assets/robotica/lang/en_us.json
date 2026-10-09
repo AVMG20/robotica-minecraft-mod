@@ -84,5 +84,8 @@
   "subtitles.robotica.collider_matter": "Strange Matter forms",
   "subtitles.robotica.structure_form": "Multiblock powers up",
   "subtitles.robotica.structure_settle": "Multiblock frame chimes",
-  "subtitles.robotica.structure_unform": "Multiblock powers down"
+  "subtitles.robotica.structure_unform": "Multiblock powers down",
+  "subtitles.robotica.codex_open": "Codex opens",
+  "subtitles.robotica.codex_page": "Page turns",
+  "subtitles.robotica.codex_unlock": "Guide step done"
 }

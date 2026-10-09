@@ -25,6 +25,12 @@ final class BookButton extends FitButton {
         this.kind = Kind.LABEL;
     }
 
+    /** The arrows turn a page, which plays its own sound (CodexSounds) instead of the button click. */
+    @Override
+    public void playDownSound(net.minecraft.client.sounds.SoundManager sounds) {
+        if (kind == Kind.LABEL) super.playDownSound(sounds);
+    }
+
     @Override
     protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         boolean hover = active && isHoveredOrFocused();
