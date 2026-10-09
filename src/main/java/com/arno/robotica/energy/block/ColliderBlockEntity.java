@@ -215,6 +215,21 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
                 worldPosition.getX() + r, worldPosition.getY(), worldPosition.getZ() + r);
     }
 
+    /**
+     * The walk only reads loop blocks and their four side neighbours at the controller's height, so a change elsewhere
+     * (a farm inside the ring, blocks above or below it) never needs a re-scan.
+     */
+    @Override
+    protected boolean affectsStructure(BlockPos pos) {
+        if (level == null || pos.getY() != worldPosition.getY()) return false;
+        if (AcceleratorSegmentBlock.isRing(level.getBlockState(pos))) return true;
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            BlockPos n = pos.relative(dir);
+            if (level.isLoaded(n) && AcceleratorSegmentBlock.isRing(level.getBlockState(n))) return true;
+        }
+        return false;
+    }
+
     @Override
     protected void onFormed(Visitor visitor) {
         RingVisitor v = (RingVisitor) visitor;

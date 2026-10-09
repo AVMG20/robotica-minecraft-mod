@@ -183,6 +183,11 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         dirty = true;
     }
 
+    /** Whether a change is waiting for the next scan (tests). */
+    public boolean scanPending() {
+        return dirty;
+    }
+
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         long now = level.getGameTime();
         if (!watching) watchArea();
@@ -201,6 +206,11 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         CuboidScanner.Result result = scanStructure(serverLevel);
         if (result.status() == CuboidScanner.Status.UNLOADED) {
             nextPeriodic = now + 20;
+            // after a reload the block state still glows from before; nothing runs until a scan passes, so go dark
+            // (quietly: FORMED stays, so the scan that passes is no new forming either)
+            if (!formed && state.hasProperty(ControllerBlock.LIT) && state.getValue(ControllerBlock.LIT)) {
+                level.setBlock(worldPosition, state.setValue(ControllerBlock.LIT, false), Block.UPDATE_CLIENTS);
+            }
             return;
         }
         // the block state keeps FORMED over a reload, so a reactor that was already standing stays quiet on chunk load,
@@ -267,6 +277,11 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         return new BoundingBox(worldPosition).inflatedBy(r);
     }
 
+    /** Whether a block change at {@code pos} (inside the watched area) can change the scan result. */
+    protected boolean affectsStructure(BlockPos pos) {
+        return true;
+    }
+
     /** Turns the controller's screen to the box face it sits in (outward). */
     private void turnTowards(@Nullable BoundingBox found) {
         if (found == null || level == null) return;
@@ -282,7 +297,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         if (level == null || level.isClientSide) return;
         BoundingBox area = box;
         if (area == null) area = searchArea();
-        MultiblockWatcher.watch(level, worldPosition, area, this::markDirty);
+        MultiblockWatcher.watch(level, worldPosition, area, this::affectsStructure, this::markDirty);
         watching = true;
     }
 

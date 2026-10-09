@@ -13,6 +13,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.function.Predicate;
 
 /**
  * Cheap change detection for multiblocks: a controller registers the box it cares about (its structure, or the
@@ -28,14 +29,19 @@ import java.util.WeakHashMap;
 public final class MultiblockWatcher {
     private MultiblockWatcher() {}
 
-    private record Watch(BoundingBox box, Runnable onChange) {}
+    private record Watch(BoundingBox box, Predicate<BlockPos> filter, Runnable onChange) {}
 
     private static final Map<Level, Map<BlockPos, Watch>> WATCHES = new WeakHashMap<>();
 
     /** Watches {@code box} grown by one block on every side, replacing an earlier watch of the same owner. */
     public static void watch(Level level, BlockPos owner, BoundingBox box, Runnable onChange) {
+        watch(level, owner, box, pos -> true, onChange);
+    }
+
+    /** As {@link #watch(Level, BlockPos, BoundingBox, Runnable)}, but only changes {@code filter} accepts (checked after the box). */
+    public static void watch(Level level, BlockPos owner, BoundingBox box, Predicate<BlockPos> filter, Runnable onChange) {
         if (level.isClientSide) return;
-        WATCHES.computeIfAbsent(level, l -> new HashMap<>()).put(owner.immutable(), new Watch(box.inflatedBy(1), onChange));
+        WATCHES.computeIfAbsent(level, l -> new HashMap<>()).put(owner.immutable(), new Watch(box.inflatedBy(1), filter, onChange));
     }
 
     public static void unwatch(Level level, BlockPos owner) {
@@ -65,7 +71,8 @@ public final class MultiblockWatcher {
         if (map == null || map.isEmpty()) return;
         BlockPos pos = event.getPos();
         for (Map.Entry<BlockPos, Watch> e : map.entrySet()) {
-            if (e.getValue().box.isInside(pos) && !e.getKey().equals(pos)) e.getValue().onChange.run();
+            Watch w = e.getValue();
+            if (w.box.isInside(pos) && !e.getKey().equals(pos) && w.filter.test(pos)) w.onChange.run();
         }
     }
 }
