@@ -29,9 +29,9 @@ public record SentryBoltPayload(float fx, float fy, float fz, float tx, float ty
             ByteBufCodecs.FLOAT, SentryBoltPayload::tx, ByteBufCodecs.FLOAT, SentryBoltPayload::ty, ByteBufCodecs.FLOAT, SentryBoltPayload::tz,
             SentryBoltPayload::new);
 
-    /** Bright core dust and a fainter, larger glow dust, the drone's cyan. */
-    private static final DustParticleOptions CORE = new DustParticleOptions(new Vector3f(0.75F, 0.97F, 1.0F), 0.6F);
-    private static final DustParticleOptions GLOW = new DustParticleOptions(new Vector3f(0.37F, 0.89F, 0.94F), 1.0F);
+    /** A muzzle flash dust and a small haze dust, the drone's cyan. */
+    private static final DustParticleOptions CORE = new DustParticleOptions(new Vector3f(0.75F, 0.97F, 1.0F), 0.5F);
+    private static final DustParticleOptions GLOW = new DustParticleOptions(new Vector3f(0.37F, 0.89F, 0.94F), 0.45F);
     /** Trail points per block, and at most this many in all. */
     private static final double DENSITY = 2.2;
     private static final int MAX_POINTS = 28;
@@ -42,9 +42,14 @@ public record SentryBoltPayload(float fx, float fy, float fz, float tx, float ty
     }
 
     public static void send(Entity drone, Vec3 from, Vec3 to) {
-        if (!(drone.level() instanceof ServerLevel)) return;
-        PacketDistributor.sendToPlayersTrackingEntity(drone, new SentryBoltPayload((float) from.x, (float) from.y, (float) from.z,
-                (float) to.x, (float) to.y, (float) to.z));
+        if (!(drone.level() instanceof ServerLevel level)) return;
+        SentryBoltPayload payload = null;
+        for (net.minecraft.server.level.ServerPlayer player : level.getChunkSource().chunkMap.getPlayers(drone.chunkPosition(), false)) {
+            // mock and fake players (game tests, other mods) have no Robotica channel
+            if (player instanceof net.neoforged.neoforge.common.util.FakePlayer || player.connection == null || !player.connection.hasChannel(TYPE)) continue;
+            if (payload == null) payload = new SentryBoltPayload((float) from.x, (float) from.y, (float) from.z, (float) to.x, (float) to.y, (float) to.z);
+            PacketDistributor.sendToPlayer(player, payload);
+        }
     }
 
     static void handle(SentryBoltPayload p, IPayloadContext context) {
@@ -55,13 +60,15 @@ public record SentryBoltPayload(float fx, float fy, float fz, float tx, float ty
         if (len > 64 || len < 1.0E-3) return;
         RandomSource random = level.random;
         if (DronesClientConfig.boltTrails()) {
+            // a quick bright zap of tiny sparks along the path, with a thin cyan haze that lingers a moment
             int n = Math.min(MAX_POINTS, Math.max(2, (int) (len * DENSITY)));
             for (int i = 1; i <= n; i++) {
                 double t = (double) i / n;
                 double x = p.fx + dx * t, y = p.fy + dy * t, z = p.fz + dz * t;
-                level.addParticle(CORE, x, y, z, 0, 0, 0);
-                if ((i & 1) == 0) level.addParticle(GLOW, x, y, z, 0, 0, 0);
+                level.addParticle(ParticleTypes.ELECTRIC_SPARK, x, y, z, 0, 0, 0);
+                if (i % 3 == 0) level.addParticle(GLOW, x, y, z, 0, 0, 0);
             }
+            level.addParticle(CORE, p.fx, p.fy, p.fz, 0, 0, 0);
         }
         for (int i = 0; i < 5; i++) {
             level.addParticle(ParticleTypes.ELECTRIC_SPARK, p.tx + random.nextGaussian() * 0.15, p.ty + random.nextGaussian() * 0.15,

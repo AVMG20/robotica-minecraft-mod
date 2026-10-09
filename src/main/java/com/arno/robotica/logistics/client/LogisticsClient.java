@@ -10,6 +10,8 @@ public final class LogisticsClient {
     private LogisticsClient() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, com.arno.robotica.logistics.LogisticsClientConfig.SPEC,
+                "robotica-logistics-client.toml");
         modBus.addListener(LogisticsClient::registerScreens);
     }
 

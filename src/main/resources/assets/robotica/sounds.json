@@ -2359,5 +2359,68 @@
         "pitch": 2.0
       }
     ]
+  },
+  "codex_open": {
+    "subtitle": "subtitles.robotica.codex_open",
+    "sounds": [
+      {
+        "name": "minecraft:item/book/open_flip1",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:item/book/open_flip2",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:item/book/open_flip3",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 0.85
+      }
+    ]
+  },
+  "codex_page": {
+    "subtitle": "subtitles.robotica.codex_page",
+    "sounds": [
+      {
+        "name": "minecraft:item/book/open_flip1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.05
+      },
+      {
+        "name": "minecraft:item/book/open_flip2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.05
+      },
+      {
+        "name": "minecraft:item/book/open_flip3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.05
+      }
+    ]
+  },
+  "codex_unlock": {
+    "subtitle": "subtitles.robotica.codex_unlock",
+    "sounds": [
+      {
+        "name": "minecraft:note/icechime",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.26
+      },
+      {
+        "name": "minecraft:note/icechime",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.5
+      }
+    ]
   }
 }

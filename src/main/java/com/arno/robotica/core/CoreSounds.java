@@ -130,6 +130,10 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> STRUCTURE_UNFORM = reg("structure_unform");
     /** Played client side where the light of a forming frame closes (also the Replicator's). */
     public static final DeferredHolder<SoundEvent, SoundEvent> STRUCTURE_SETTLE = reg("structure_settle");
+    /** Codex: opening, a page turn, a guide step finished (all played only for the reader, client side). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CODEX_OPEN = reg("codex_open");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CODEX_PAGE = reg("codex_page");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CODEX_UNLOCK = reg("codex_unlock");
 
     /** Exo-Frame Flight: thruster loop, played client side for every flying suit nearby. */
     public static final DeferredHolder<SoundEvent, SoundEvent> EXO_THRUSTER = reg("exo_thruster");

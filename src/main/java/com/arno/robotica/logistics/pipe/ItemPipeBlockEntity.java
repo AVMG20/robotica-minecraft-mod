@@ -243,6 +243,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
         int maxTries = LogisticsConfig.maxInsertTries(), maxVisits = LogisticsConfig.maxTargetVisits();
         int moved = 0, tries = 0, visits = 0, slots = source.getSlots();
         boolean stuck = false;
+        PipeNetwork.Endpoint into = null;
         int scan = Math.min(slots, SCAN_SLOTS), s = 0;
         for (; s < scan && moved < budget && tries < maxTries && visits < maxVisits; s++) {
             int slot = (nextSlot + s) % slots;
@@ -279,6 +280,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
                     if (taken.isEmpty()) break groups;
                     ItemStack left = ItemHandlerHelper.insertItemStacked(dest, taken, false);
                     moved += taken.getCount() - left.getCount();
+                    if (left.getCount() < taken.getCount()) into = target;
                     if (!left.isEmpty()) giveBack(level, source, slot, left);
                     offer = null;
                     if (!closest) nextDestination[rank] = (start + k + 1) % size;
@@ -286,7 +288,16 @@ public class ItemPipeBlockEntity extends BlockEntity {
             }
         }
         nextSlot = nextStart(nextSlot, slots, s, moved >= budget, moved > 0, stuck);
+        // one glint per pull at most every 5 ticks per pipe (a Mk4 pulls every 4), never per item
+        long now = level.getGameTime();
+        if (moved > 0 && (now - lastGlint >= GLINT_GAP || now < lastGlint)) {
+            lastGlint = now;
+            PipeGlintPayload.send(level, worldPosition, side, into == null ? null : into.pipe().getBlockPos(), into == null ? null : into.side());
+        }
     }
+
+    private static final int GLINT_GAP = 5;
+    private long lastGlint = Long.MIN_VALUE / 2;
 
     /**
      * Start slot of the next pull. {@code checked}: slots looked at, {@code seen}: some of them passed the filter.

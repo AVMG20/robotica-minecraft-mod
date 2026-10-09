@@ -94,5 +94,8 @@
   "subtitles.robotica.exo_ready": "Exo-Frame ability ready",
   "subtitles.robotica.exo_denied": "Exo-Frame clicks",
   "subtitles.robotica.exo_shield_block": "Kinetic Shield blocks",
-  "subtitles.robotica.exo_shield_spark": "Kinetic Shield sparks"
+  "subtitles.robotica.exo_shield_spark": "Kinetic Shield sparks",
+  "subtitles.robotica.codex_open": "Codex opens",
+  "subtitles.robotica.codex_page": "Page turns",
+  "subtitles.robotica.codex_unlock": "Guide step done"
 }

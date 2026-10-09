@@ -19,6 +19,7 @@ public final class LogisticsModule {
         LogisticsContent.BLOCK_ENTITIES.register(modBus);
         LogisticsContent.MENUS.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, LogisticsConfig.SPEC, "robotica-logistics-server.toml");
+        modBus.addListener(com.arno.robotica.logistics.pipe.PipeGlintPayload::register);
 
         RoboticaTab.add(LogisticsContent.ITEM_PIPE_ITEM);
         RoboticaTab.add(LogisticsContent.ITEM_PIPE_MK2_ITEM);
