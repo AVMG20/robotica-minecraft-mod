@@ -170,7 +170,7 @@
         },
         {
           "title": "Core Reactor",
-          "text": "The middle block stays empty: the core floats there.\nAmplifiers in the other 26 spots raise power but burn fuel and the core faster. Stabilizers do the opposite.\nA core in the core slot waits until the one inside burns out.",
+          "text": "The middle block stays empty: the core floats there.\nAmplifiers in the other 26 spots raise power but burn fuel and the core faster, for fewer FE per pellet. Stabilizers do the opposite.\nA core in the core slot waits until the one inside burns out.",
           "items": [
             "robotica:reactor_controller",
             "robotica:flux_amplifier",

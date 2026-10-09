@@ -188,7 +188,7 @@
    "items": [
     "cryo_coolant"
    ],
-   "what": "The strongest Core Reactor stabilizer: -4% power, -12% burn.",
+   "what": "The strongest Core Reactor stabilizer: -6% power, -9% burn.",
    "see": [
     "guide:core-reactor"
    ]
@@ -860,9 +860,9 @@
      ],
      [
       "Burn",
-      "+12%",
-      "+18%",
-      "+22%"
+      "+14%",
+      "+25%",
+      "+40%"
      ]
     ]
    },
@@ -874,7 +874,7 @@
    "items": [
     "graphite_damper"
    ],
-   "what": "Core Reactor stabilizer: -3% power, -8% burn. Cheap way to stretch a core.",
+   "what": "Core Reactor stabilizer: -4% power, -5.5% burn. Cheap way to stretch a core.",
    "see": [
     "guide:core-reactor"
    ]

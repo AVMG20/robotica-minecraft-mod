@@ -33,24 +33,26 @@ A core is used up like fuel: it loads from the core slot and lasts 168 hours of 
 | Block | Power | Burn |
 |---|---|---|
 | [[minecraft:redstone_block]] | +3% | +6% |
-| [[flux_amplifier]] | +8% | +12% |
-| [[pyro_amplifier]] | +15% | +18% |
-| [[resonant_amplifier]] | +25% | +22% |
-| [[minecraft:packed_ice]] | -2% | -4% |
-| [[graphite_damper]] | -3% | -8% |
-| [[minecraft:blue_ice]] | -3% | -7% |
-| [[cryo_coolant]] | -4% | -12% |
+| [[flux_amplifier]] | +8% | +14% |
+| [[pyro_amplifier]] | +15% | +25% |
+| [[resonant_amplifier]] | +25% | +40% |
+| [[minecraft:packed_ice]] | -2% | -2.5% |
+| [[minecraft:blue_ice]] | -3% | -4% |
+| [[graphite_damper]] | -4% | -5.5% |
+| [[cryo_coolant]] | -6% | -9% |
 
 Burn speeds up both the pellet and the core. Power and burn never drop below x0.25.
+
+Amplifiers give fewer FE per pellet, stabilizers more. The most FE per pellet: 8 Cryo Coolant (power x0.52, burn x0.28, 1.86x FE per pellet).
 
 ## Example outputs
 
 | Build | Output | Core lasts |
 |---|---|---|
 | Servo Core, thorium, empty | 1,200 FE/t | 168 h |
-| Servo Core, thorium, 26 Flux Amplifiers | 3,700 FE/t | 41 h |
+| Servo Core, thorium, 26 Flux Amplifiers | 3,700 FE/t | 36 h |
 | Magma Core, enriched, empty | 9,000 FE/t | 168 h |
-| Magma Core, enriched, 26 Pyro Amplifiers | 44,000 FE/t | 30 h |
-| Antigrav Core, enriched, 26 Resonant Amplifiers | 180,000 FE/t | 25 h |
+| Magma Core, enriched, 26 Pyro Amplifiers | 44,000 FE/t | 22 h |
+| Antigrav Core, enriched, 26 Resonant Amplifiers | 180,000 FE/t | 15 h |
 
 It pauses while its buffer is full, so a core never burns unused.

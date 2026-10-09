@@ -6,31 +6,31 @@
     },
     "robotica:flux_amplifier": {
       "power": 0.08,
-      "burn": 0.12
+      "burn": 0.14
     },
     "robotica:pyro_amplifier": {
       "power": 0.15,
-      "burn": 0.18
+      "burn": 0.25
     },
     "robotica:resonant_amplifier": {
       "power": 0.25,
-      "burn": 0.22
+      "burn": 0.4
     },
     "minecraft:packed_ice": {
       "power": -0.02,
-      "burn": -0.04
+      "burn": -0.025
     },
     "robotica:graphite_damper": {
-      "power": -0.03,
-      "burn": -0.08
+      "power": -0.04,
+      "burn": -0.055
     },
     "minecraft:blue_ice": {
       "power": -0.03,
-      "burn": -0.07
+      "burn": -0.04
     },
     "robotica:cryo_coolant": {
-      "power": -0.04,
-      "burn": -0.12
+      "power": -0.06,
+      "burn": -0.09
     }
   }
 }

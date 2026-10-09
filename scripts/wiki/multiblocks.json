@@ -235,10 +235,10 @@
     "controller": "reactor_controller",
     "guide": "core-reactor",
     "check": "core_reactor",
-    "about": "Four Flux Amplifiers and eight Graphite Dampers: power x1.08, burn x0.84. With a Servo Core and thorium pellets about 1,300 FE/t, and the core lasts over 8 days.",
+    "about": "Twelve Flux Amplifiers: power x1.96, burn x2.68. With a Servo Core and thorium pellets about 2,350 FE/t, and the core lasts about 63 hours.",
     "notes": [
       "The middle block stays empty: the core floats there.",
-      "Swap the dampers for amplifiers for more power and a faster burn."
+      "Swap the amplifiers for Graphite Dampers for less power and more FE per pellet."
     ],
     "legend": {
       "C": "reactor_casing",
@@ -247,7 +247,6 @@
       "P": "reactor_power_port",
       "A": "reactor_access_port",
       "F": "flux_amplifier",
-      "D": "graphite_damper",
       ".": "air"
     },
     "layers": [
@@ -260,9 +259,9 @@
       ],
       [
         "CGGGC",
-        "GD.DG",
+        "GF.FG",
         "G...G",
-        "GD.DG",
+        "GF.FG",
         "CGGGC"
       ],
       [
@@ -274,9 +273,9 @@
       ],
       [
         "CGGGC",
-        "GD.DG",
+        "GF.FG",
         "G...G",
-        "GD.DG",
+        "GF.FG",
         "CGGGC"
       ],
       [

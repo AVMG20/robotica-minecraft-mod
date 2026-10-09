@@ -100,7 +100,7 @@ public class EnergyGameTests {
     }
 
     /**
-     * 5x5x5 Core Reactor at {@code min}: two Blocks of Redstone and one Blue Ice inside (power x1.03, burn x1.05), a
+     * 5x5x5 Core Reactor at {@code min}: two Blocks of Redstone and one Blue Ice inside (power x1.03, burn x1.08), a
      * Power Port in the south wall, an Access Port next to it, a window in the east wall.
      */
     private static CoreReactorBlockEntity reactorAt(GameTestHelper helper, BlockPos min) {
@@ -247,15 +247,15 @@ public class EnergyGameTests {
     // ---------------------------------------------------------------- core reactor
 
     /**
-     * Pellet 400 FE/t x core 2 x modulators 1.03 = 824 FE/t; pellet and core burn 1.05 ticks per tick. Waste comes out,
+     * Pellet 400 FE/t x core 2 x modulators 1.03 = 824 FE/t; pellet and core burn 1.08 ticks per tick. Waste comes out,
      * the Access Port takes fuel and cores, the core burns out and the reactor waits for the next one.
      */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void coreReactorBurnsFuelAndCores(GameTestHelper helper) {
         CoreReactorBlockEntity be = reactor(helper);
         helper.assertTrue(be.isFormed(), "reactor forms: " + why(be));
-        helper.assertTrue(Math.abs(be.powerMultiplier() - 1.03) < 1e-6 && Math.abs(be.burnMultiplier() - 1.05) < 1e-6,
-                "2 redstone blocks and a blue ice: x1.03 power, x1.05 burn, got " + be.powerMultiplier() + " / " + be.burnMultiplier());
+        helper.assertTrue(Math.abs(be.powerMultiplier() - 1.03) < 1e-6 && Math.abs(be.burnMultiplier() - 1.08) < 1e-6,
+                "2 redstone blocks and a blue ice: x1.03 power, x1.08 burn, got " + be.powerMultiplier() + " / " + be.burnMultiplier());
         be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 32));
         be.simulate(1);
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.NO_CORE && be.fePerTick() == 0, "no core, no power: " + be.state());
@@ -263,11 +263,11 @@ public class EnergyGameTests {
         be.simulate(100);
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.RUNNING, "should run, is " + be.state());
         helper.assertTrue(be.fePerTick() == 824, "824 FE/t, got " + be.fePerTick());
-        helper.assertTrue(Math.abs(be.coreWear() - 105) < 1e-6, "core wears 1.05 per tick, got " + be.coreWear());
-        helper.assertTrue(gunpowder(be.waste) == 1, "105 ticks of burn = 1 pellet done, waste " + gunpowder(be.waste));
+        helper.assertTrue(Math.abs(be.coreWear() - 108) < 1e-6, "core wears 1.08 per tick, got " + be.coreWear());
+        helper.assertTrue(gunpowder(be.waste) == 1, "108 ticks of burn = 1 pellet done, waste " + gunpowder(be.waste));
         var tag = new net.minecraft.nbt.CompoundTag();
         be.writeSync(tag, helper.getLevel().registryAccess());
-        helper.assertTrue(tag.getInt("fe") == 824 && tag.getInt("powerPct") == 103 && Math.abs(tag.getFloat("integrity") - 0.895F) < 0.001F,
+        helper.assertTrue(tag.getInt("fe") == 824 && tag.getInt("powerPct") == 103 && Math.abs(tag.getFloat("integrity") - 0.892F) < 0.001F,
                 "GUI sync of the reactor");
 
         // Access Port: fuel and cores go in, waste comes out, fuel can not be pulled.
@@ -285,7 +285,7 @@ public class EnergyGameTests {
         helper.assertTrue(port != null && port.canExtract() && !port.canReceive(), "power port: out only");
         helper.assertTrue(stored > 0 && port.extractEnergy(1_000, false) == Math.min(1_000, stored), "power port gives FE");
 
-        // 1,000 ticks of life at 1.05 per tick: gone after 953 ticks, then it waits for a core.
+        // 1,000 ticks of life at 1.08 per tick: gone after 926 ticks, then it waits for a core.
         be.simulate(860);
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.NO_CORE && be.activeCore().isEmpty(), "the core burned out: " + be.state());
         helper.assertTrue(helper.getBlockState(new BlockPos(3, 3, 1)).getValue(ControllerBlock.FORMED), "nothing breaks");
@@ -397,7 +397,7 @@ public class EnergyGameTests {
         be.simulate(1);
         double used = before - be.burnLeft();
         helper.assertTrue(be.energy.getEnergyStored() >= max - 2, "fills the buffer to the brim, has " + (max - be.energy.getEnergyStored()) + " room");
-        helper.assertTrue(used > 0 && used < 1.05 * 0.15, "burns only the share that fits: " + used);
+        helper.assertTrue(used > 0 && used < 1.08 * 0.15, "burns only the share that fits: " + used);
         helper.assertTrue(Math.abs((be.coreWear() - wear) - used) < 1e-9, "the core wears as much as the pellet");
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.RUNNING, "still running");
         be.energy.setEnergy(max);
@@ -405,6 +405,42 @@ public class EnergyGameTests {
         be.simulate(1);
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.BUFFER_FULL && be.burnLeft() == before, "a full buffer burns nothing");
         helper.assertTrue(helper.getBlockState(new BlockPos(3, 3, 1)).getValue(ControllerBlock.LIT), "the glow does not flicker off at the brim");
+        helper.succeed();
+    }
+
+    /**
+     * No modulator mix beats an empty chamber on power, burn and FE per pellet at once: every shipped amplifier burns
+     * more per power added than any stabilizer saves per power lost. 6 Resonant Amplifiers + 18 Cryo Coolant (once
+     * x1.78 power at x0.25 burn) now give x1.42 power at x1.78 burn.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void coreModulatorsTradeOff(GameTestHelper helper) {
+        double minAmp = Double.MAX_VALUE, maxStab = 0;
+        for (var e : net.minecraft.core.registries.BuiltInRegistries.BLOCK.getDataMap(EnergyDataMaps.CORE_MODULATOR).entrySet()) {
+            EnergyDataMaps.CoreModulator m = e.getValue();
+            helper.assertTrue(m.power() != 0 && Math.signum(m.power()) == Math.signum(m.burn()), e.getKey() + " moves power and burn the same way");
+            double ratio = m.burn() / (double) m.power();
+            if (m.power() > 0) minAmp = Math.min(minAmp, ratio);
+            else maxStab = Math.max(maxStab, ratio);
+        }
+        helper.assertTrue(minAmp > maxStab, "amplifiers burn at least " + minAmp + "x their power, stabilizers save at most " + maxStab + "x");
+
+        BlockPos min = new BlockPos(1, 1, 1);
+        BlockPos c = cuboid(helper, min, 5, 5, 5, EnergyRegistry.REACTOR_CASING.get(), EnergyRegistry.REACTOR_CONTROLLER.get());
+        helper.setBlock(min.offset(2, 2, 4), EnergyRegistry.REACTOR_POWER_PORT.get());
+        int placed = 0;
+        for (int x = 1; x <= 3; x++) for (int y = 1; y <= 3; y++) for (int z = 1; z <= 3; z++) {
+            if (x == 2 && y == 2 && z == 2) continue;
+            Block block = placed < 6 ? EnergyRegistry.RESONANT_AMPLIFIER.get() : placed < 24 ? EnergyRegistry.CRYO_COOLANT.get() : Blocks.AIR;
+            helper.setBlock(min.offset(x, y, z), block);
+            placed++;
+        }
+        CoreReactorBlockEntity be = be(helper, c);
+        be.scanNow();
+        helper.assertTrue(be.isFormed(), "reactor forms: " + why(be));
+        double p = be.powerMultiplier(), b = be.burnMultiplier();
+        helper.assertTrue(Math.abs(p - 1.42) < 1e-4 && Math.abs(b - 1.78) < 1e-4, "x1.42 power, x1.78 burn, got " + p + " / " + b);
+        helper.assertTrue(p / b < 1.0, "more power costs FE per pellet");
         helper.succeed();
     }
 
@@ -619,6 +655,27 @@ public class EnergyGameTests {
         helper.assertTrue(!be.isFormed() && !be.beamOn() && be.ring().isEmpty(), "a broken ring collapses the beam");
         be.serverTick(helper.getLevel(), be.getBlockPos(), be.getBlockState());
         helper.assertTrue(be.shownBeam() == 0 && be.shownCharge() == 0, "clients stop drawing the beam");
+        helper.succeed();
+    }
+
+    /** A formed ring re-scans for changes on and next to its loop, not for a farm inside it or blocks above it. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void colliderWatchesOnlyItsLoop(GameTestHelper helper) {
+        BlockPos min = new BlockPos(1, 1, 1);
+        BlockPos c = ring(helper, min);
+        ColliderBlockEntity be = be(helper, c);
+        be.scanNow();
+        helper.assertTrue(be.isFormed() && !be.scanPending(), "formed, nothing pending");
+        helper.setBlock(min.offset(3, 0, 3), Blocks.STONE);
+        helper.setBlock(min.offset(2, 0, 3), Blocks.FARMLAND);
+        helper.setBlock(min.offset(0, 1, 3), Blocks.STONE);
+        helper.setBlock(min.offset(3, -1, 3), Blocks.STONE);
+        helper.assertFalse(be.scanPending(), "the inside, above and below do not wake the ring");
+        helper.setBlock(min.offset(1, 0, 3), Blocks.STONE);
+        helper.assertTrue(be.scanPending(), "a block next to the loop does");
+        be.scanNow();
+        helper.setBlock(min.offset(6, 0, 3), Blocks.AIR);
+        helper.assertTrue(be.scanPending(), "a loop block taken out does");
         helper.succeed();
     }
 

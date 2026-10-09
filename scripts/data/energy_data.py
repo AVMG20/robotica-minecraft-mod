@@ -42,16 +42,18 @@ MODDED = {
     'electrum': (100, 1.0), 'signalum': (160, 1.5), 'lumium': (180, 1.6), 'enderium': (300, 2.5),
 }
 
-# power and burn as fractions; amplifiers trade fuel and core life for power, stabilizers the other way
+# power and burn as fractions; amplifiers trade fuel and core life for power, stabilizers the other way.
+# Every amplifier burns at least 1.6x the power it adds, every stabilizer saves at most 1.5x the power it costs, so no
+# mix of both beats an empty chamber on power, burn and FE per pellet at once (checked by a game test).
 MODULATORS = {
     'minecraft:redstone_block': (0.03, 0.06),
-    'robotica:flux_amplifier': (0.08, 0.12),
-    'robotica:pyro_amplifier': (0.15, 0.18),
-    'robotica:resonant_amplifier': (0.25, 0.22),
-    'minecraft:packed_ice': (-0.02, -0.04),
-    'robotica:graphite_damper': (-0.03, -0.08),
-    'minecraft:blue_ice': (-0.03, -0.07),
-    'robotica:cryo_coolant': (-0.04, -0.12),
+    'robotica:flux_amplifier': (0.08, 0.14),
+    'robotica:pyro_amplifier': (0.15, 0.25),
+    'robotica:resonant_amplifier': (0.25, 0.40),
+    'minecraft:packed_ice': (-0.02, -0.025),
+    'robotica:graphite_damper': (-0.04, -0.055),
+    'minecraft:blue_ice': (-0.03, -0.04),
+    'robotica:cryo_coolant': (-0.06, -0.09),
 }
 
 CORE_LIFE = 12_096_000  # 7 days of running at burn x1

@@ -206,9 +206,9 @@
         ],
         [
           "CGGGC",
-          "GD.DG",
+          "GF.FG",
           "G...G",
-          "GD.DG",
+          "GF.FG",
           "CGGGC"
         ],
         [
@@ -220,9 +220,9 @@
         ],
         [
           "CGGGC",
-          "GD.DG",
+          "GF.FG",
           "G...G",
-          "GD.DG",
+          "GF.FG",
           "CGGGC"
         ],
         [
@@ -240,7 +240,6 @@
         "P": "robotica:reactor_power_port",
         "A": "robotica:reactor_access_port",
         "F": "robotica:flux_amplifier",
-        "D": "robotica:graphite_damper",
         ".": ""
       }
     },
