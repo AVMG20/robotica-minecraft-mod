@@ -255,14 +255,20 @@ def depth(p):
     return p[0] * VIEW[0] + p[1] * VIEW[1] + p[2] * VIEW[2]
 
 
-def render_model(img, zbuf, ref, ox, oy, scale, night=False, xform=None, tint=None):
+def render_model(img, zbuf, ref, ox, oy, scale, night=False, xform=None, tint=None, cull=None, trans=None):
     """`xform` (scene_preview.py) places the model in a scene: .p(point) and .n(normal) after element rotation;
-    `tint` (r, g, b) multiplies faces with a tintindex."""
+    `tint` (r, g, b) multiplies faces with a tintindex. `cull(normal)` says whether a face with a cullface towards that
+    (scene) direction is hidden by its neighbour. Half transparent pixels go to `trans` (when given) for composite()
+    instead of being dropped."""
     textures, elements = resolve(ref)
     for el in elements or []:
         a, b = el['from'], el['to']
         rot = el.get('rotation')
         for d, f in el['faces'].items():
+            if cull and 'cullface' in f:
+                cn = NORMALS[f['cullface']]
+                if cull(tuple(round(v) for v in (xform.n(cn) if xform else cn))):
+                    continue
             n = rotate(NORMALS[d], dict(rot, origin=[0, 0, 0]) if rot else None)
             if xform:
                 n = xform.n(n)
@@ -315,13 +321,30 @@ def render_model(img, zbuf, ref, ox, oy, scale, night=False, xform=None, tint=No
                     tx = min(tw - 1, max(0, int(u * tw / 16)))
                     ty = min(th - 1, max(0, int(v * th / 16)))
                     r, g, bb, al = tpx[ty][tx]
-                    if al < 128:
-                        continue
                     z = d0 + du * s + dv * t + (0.001 if glow else 0)
+                    if al < 128:
+                        if trans is not None and al > 0:
+                            trans.append((z, px, py, (r * shade * tc[0], g * shade * tc[1], bb * shade * tc[2]), al / 255))
+                        continue
                     if z < zbuf[py][px] - 1e-4:
                         continue
                     zbuf[py][px] = z
                     img[py][px] = (int(r * shade * tc[0]), int(g * shade * tc[1]), int(bb * shade * tc[2]), 255)
+
+
+def composite(img, zbuf, trans):
+    """Blends the half transparent pixels collected by render_model over the image, far to near, where nothing opaque
+    stands in front of them (glass tints, beam pipes)."""
+    for z, px, py, (r, g, b), a in sorted(trans):
+        if z < zbuf[py][px] - 1e-4:
+            continue
+        o = img[py][px]
+        if o[3] == 0:
+            img[py][px] = (int(r), int(g), int(b), int(255 * a))
+            continue
+        img[py][px] = (int(o[0] + (r - o[0]) * a), int(o[1] + (g - o[1]) * a), int(o[2] + (b - o[2]) * a),
+                       max(o[3], int(255 * a)))
+    trans.clear()
 
 
 def render_flat(img, ref, ox, oy, scale):
@@ -411,7 +434,10 @@ def main():
             oy = cy + (cell if night else 0)
             if elements:
                 zbuf = [[-1e9] * W for _ in range(H)]
-                render_model(img, zbuf, 'robotica:' + ref, cx + cell / 2 - 13.86 * scale, oy + cell / 2 + 8 * scale, scale, night)
+                trans = []
+                render_model(img, zbuf, 'robotica:' + ref, cx + cell / 2 - 13.86 * scale, oy + cell / 2 + 8 * scale, scale,
+                             night, trans=trans)
+                composite(img, zbuf, trans)
             else:
                 render_flat(img, 'robotica:' + ref, cx + (cell - 16 * 8) // 2, oy + (cell - 16 * 8) // 2, 8)
     write_png(out, img)

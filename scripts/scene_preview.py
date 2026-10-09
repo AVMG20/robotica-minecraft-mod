@@ -31,6 +31,13 @@ MAP_COLORS = {
 }
 ARC_TINT = (0.55, 0.95, 1.0)                         # SpireRenderer's arc colour on the coil slits
 FORMED_CHECKS = {'bank', 'core_reactor', 'spire', 'collider'}      # multiblocks with a formed look
+# Full opaque cubes: a neighbour's face towards one is culled, like in a chunk. Glass also culls against its own kind.
+FULL = FRAMED | CONTROLLERS | {'bank_port', 'reactor_power_port', 'reactor_access_port', 'cryo_coolant'}
+FULL_PREFIXES = ('minecraft:', 'capacitor_', 'transfer_coil_')
+
+
+def occludes(block):
+    return block in FULL or block.startswith(FULL_PREFIXES)
 
 
 def coil_tint(rgb):
@@ -146,6 +153,14 @@ mp.VANILLA['minecraft:scene/vanilla'] = {'elements': [{'from': [0, 0, 0], 'to': 
 def render(mb_id, formed=True, scale=3.0, night=False):
     """The scene as rows of RGBA pixels, transparent around the build."""
     blocks, (W, H, D) = scene(mb_id, formed)
+    at = {pos: block for block, pos, _, _ in blocks}
+
+    def culler(block, pos):
+        def cull(n):
+            nb = at.get((pos[0] + n[0], pos[1] + n[1], pos[2] + n[2]))
+            return nb is not None and (occludes(nb) or nb == 'spire_coil' or (nb == block and block in FORMED_GLASS))
+        return cull
+    trans = []      # half transparent pixels (glass), blended in at the end
     # screen bounds of the box corners
     m = 1.5 if MBS[mb_id].get('check') == 'spire' else 0       # the formed crown's toroid reaches past the column
     pts = [mp.project((x * 16, y * 16, z * 16), scale, 0, 0) for x in (-m, W + m) for y in (0, H + 1) for z in (-m, D + m)]
@@ -159,7 +174,7 @@ def render(mb_id, formed=True, scale=3.0, night=False):
         if block.startswith('minecraft:'):          # a vanilla block: noise in its map colour
             col = MAP_COLORS.get(block.split(':')[1], 0x888888)
             mp.render_model(img, zbuf, 'minecraft:scene/vanilla', pad - minx, pad - miny, scale, night,
-                            Xf(x, y, z), tuple(((col >> s) & 255) / 255 for s in (16, 8, 0)))
+                            Xf(x, y, z), tuple(((col >> s) & 255) / 255 for s in (16, 8, 0)), cull=culler(block, (x, y, z)))
             continue
         if block == 'spire_coil':
             mp.render_model(img, zbuf, 'robotica:block/spire_coil', pad - minx, pad - miny, scale, night, Xf(x, y, z), tint)
@@ -169,7 +184,9 @@ def render(mb_id, formed=True, scale=3.0, night=False):
         else:
             refs = models_for(block, props)
         for ref, xr, yr in refs:
-            mp.render_model(img, zbuf, ref, pad - minx, pad - miny, scale, night, Xf(x, y, z, xr, yr), tint)
+            mp.render_model(img, zbuf, ref, pad - minx, pad - miny, scale, night, Xf(x, y, z, xr, yr), tint,
+                            cull=culler(block, (x, y, z)), trans=trans)
+    mp.composite(img, zbuf, trans)
     return img
 
 
