@@ -1,7 +1,25 @@
 {
   "variants": {
-    "": {
+    "frame=none": {
       "model": "robotica:block/bank_casing"
+    },
+    "frame=wall": {
+      "model": "robotica:block/bank_casing_wall"
+    },
+    "frame=corner": {
+      "model": "robotica:block/bank_casing_corner"
+    },
+    "frame=y": {
+      "model": "robotica:block/bank_casing_beam"
+    },
+    "frame=z": {
+      "model": "robotica:block/bank_casing_beam",
+      "x": 90
+    },
+    "frame=x": {
+      "model": "robotica:block/bank_casing_beam",
+      "x": 90,
+      "y": 90
     }
   }
 }

@@ -26,7 +26,7 @@ summary: The fixed 5x5x5 reactor that burns fuel pellets and a boss core. Amplif
 | [[magma_core]] | x6 |
 | [[antigrav_core]] | x16 |
 
-A core lasts 168 hours of running at burn x1, then breaks. Cores drop from bosses and can also be crafted. A core taken out keeps its wear. Put a spare in the core slot: it moves in when the active one breaks.
+A core is used up like fuel: it loads from the core slot and lasts 168 hours of running at burn x1, shown by the core bar. Cores drop from bosses and can also be crafted. Keep the next one in the core slot.
 
 ## Modulators
 
@@ -53,4 +53,4 @@ Burn speeds up both the pellet and the core. Power and burn never drop below x0.
 | Magma Core, enriched, 26 Pyro Amplifiers | 44,000 FE/t | 30 h |
 | Antigrav Core, enriched, 26 Resonant Amplifiers | 180,000 FE/t | 25 h |
 
-It pauses while its buffer is full, so a core never wears out unused.
+It pauses while its buffer is full, so a core never burns unused.

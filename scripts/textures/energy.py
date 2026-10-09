@@ -45,6 +45,8 @@ P.update({
     ':': '#B48CFF70', ';': '#F0E2FFC8',      # resonant pipe tint and glint
     '|': '#3A8FA0C8', '?': '#7A50C0C8',      # pipe walls (accelerator, resonant)
 })
+GY = 'ÀÁÂÃÄ'                                  # neutral grey windings, tinted in game with the metal's map colour
+P.update({ch: col for ch, col in zip(GY, ('#3C3C3C', '#7A7A7A', '#B4B4B4', '#DCDCDC', '#FFFFFF'))})
 GRAIN = {DK: 'vw', SL: 'xy', NU: '!#', ST: '$%'}
 
 ACCENT = {DK: AM, SL: CY, NU: PU, ST: CU}
@@ -92,6 +94,86 @@ def glass(r, tint, glint, seed=0):
     c.line(10, 13, 13, 10, glint)
     for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
         c.set(x, y, r[2])
+    return c
+
+
+# ---------------------------------------------------------------- formed look (casings and glass once the controller has formed)
+
+def frame_side(r, accent, seed=0):
+    """Formed frame beam, running top to bottom and seamless along it: bevelled rails with rivet rows either side of a
+    sunken channel. The reactor's channel carries hazard stripes, the bank's a dark conduit (its light is the overlay)."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, r, seed, bevel=False, vertical=True, density=0.3)
+    for x, ch in ((0, r[0]), (1, r[4]), (2, r[3]), (13, r[1]), (14, r[0]), (15, r[0])):
+        c.rect(x, 0, 1, 16, ch)
+    for y in (3, 11):
+        c.rivet(3, y, r).rivet(11, y, r)
+    c.rect(5, 0, 6, 16, r[1])
+    c.rect(5, 0, 1, 16, r[0]).rect(10, 0, 1, 16, r[3])
+    if accent == AM:
+        c.hazard(6, 0, 4, 16, AM[2], 'k')
+        for y in range(16):
+            if (6 + y) % 4 == 0:
+                c.set(6, y, AM[3])
+    else:
+        c.rect(6, 0, 4, 16, 'z').rect(7, 0, 2, 16, accent[1])
+        for y in (2, 10):
+            c.rect(6, y, 4, 2, r[1])
+    return c
+
+
+def frame_side_glow(accent):
+    """Full-bright conduit line of the bank's frame (the reactor's beams carry no light)."""
+    c = Canvas()
+    c.rect(7, 0, 2, 16, accent[3])
+    for y in (0, 8):
+        c.set(7, y + 4, accent[4]).set(8, y + 4, accent[4])
+    for y in (2, 10):
+        c.rect(7, y, 2, 2, '.')
+    return c
+
+
+def frame_corner(r, accent, seed=0):
+    """Corner cap where three beams meet: a heavy bevelled plate with a bolted boss and four corner bolts."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, r, seed, density=0.25)
+    c.frame(0, 0, 16, 16, r[0])
+    c.bevel(1, 1, 14, 14, r[4], r[1])
+    c.recess(4, 4, 8, 8, r, fill=r[1])
+    c.disc(7.5, 7.5, 2.6, accent[2] if accent == AM else r[3])
+    c.disc(7.5, 7.5, 1.5, 'k' if accent == AM else r[4])
+    c.set(7, 7, accent[3]).set(8, 8, accent[1])
+    for x, y in ((2, 2), (12, 2), (2, 12), (12, 12)):
+        c.rivet(x, y, r)
+    return c
+
+
+def frame_corner_glow(accent):
+    c = Canvas()
+    c.set(7, 7, accent[4]).set(8, 7, accent[3]).set(7, 8, accent[3]).set(8, 8, accent[3])
+    return c
+
+
+def panel(r, seed=0):
+    """Formed wall plating: one brushed surface with vertical ribs every 8 pixels, no border, so a whole wall reads as
+    a single panel."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, r, seed, bevel=False, density=0.22)
+    for x in (3, 11):
+        c.rect(x, 0, 1, 16, r[1]).rect(x + 1, 0, 1, 16, r[3])
+    for x in (7, 15):
+        for y in (1, 9):
+            c.rivet(x, y, r)
+    return c
+
+
+def glass_formed(tint, glint, seed=0):
+    """Formed window: the tinted pane without its frame and a few scattered glints, so panes merge into one window."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, tint)
+    c.line(2, 6, 6, 2, glint).line(3, 6, 6, 3, glint)
+    c.line(9, 14, 13, 10, glint)
+    c.set(12, 3, glint)
     return c
 
 
@@ -448,6 +530,41 @@ def crown_core(lit):
     return c
 
 
+def spire_coil():
+    """Formed conductor shell: the metal wound into tight turns (grey, tinted with the block's map colour in game),
+    seamless top to bottom, with a dark slit down the middle where the arc light runs."""
+    c = Canvas()
+    for y in range(16):
+        c.rect(0, y, 16, 1, (GY[3], GY[2], GY[1], GY[0])[y % 4])
+    for x in range(16):
+        for y in range(0, 16, 4):
+            if (x * 5 + y * 3) % 11 == 0:
+                c.set(x, y, GY[4])
+    c.rect(7, 0, 2, 16, 'k')
+    for y in range(0, 16, 4):
+        c.set(6, y + 1, GY[1]).set(9, y + 1, GY[1])
+    return c
+
+
+def spire_rail():
+    """Steel stay along the corners of the formed column: a bevelled bar with rivets, seamless top to bottom."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, ST, 190, bevel=False, vertical=True, density=0.3)
+    for x0 in (0, 4, 8, 12):
+        c.rect(x0, 0, 1, 16, ST[4]).rect(x0 + 1, 0, 1, 16, ST[3]).rect(x0 + 3, 0, 1, 16, ST[0])
+        for y in (2, 10):
+            c.set(x0 + 1, y, ST[4]).set(x0 + 2, y + 1, ST[1])
+    return c
+
+
+def spire_coil_glow():
+    """Arc light down the slit (white, tinted and pulsed by the renderer)."""
+    c = Canvas()
+    for y in range(16):
+        c.set(7, y, '&' if y % 5 else '^').set(8, y, '^' if y % 3 else '&')
+    return c
+
+
 # ---------------------------------------------------------------- ring collider
 
 SEG = {1: (SL, CU, CY, '-', '_', '|'), 2: (NU, PU, PU, ':', ';', '?')}
@@ -548,6 +665,14 @@ def main():
     write_block('graphite_damper', damper_side().rows(), P)
     write_block('graphite_damper_top', damper_top().rows(), P)
 
+    for prefix, r, a, tint, glint in (('reactor', DK, AM, '(', ')'), ('bank', SL, CY, '[', ']')):
+        write_block(f'{prefix}_frame', frame_side(r, a, 6).rows(), P)
+        write_block(f'{prefix}_frame_corner', frame_corner(r, a, 7).rows(), P)
+        write_block(f'{prefix}_frame_corner_glow', frame_corner_glow(GLOW[r]).rows(), P)
+        write_block(f'{prefix}_panel', panel(r, 8).rows(), P)
+        write_block(f'{prefix}_glass_formed', glass_formed(tint, glint).rows(), P)
+    write_block('bank_frame_glow', frame_side_glow(CY).rows(), P)
+
     write_block('bank_casing', casing(SL, 3).rows(), P)
     write_block('bank_glass', glass(SL, '[', ']', 4).rows(), P)
     write_block('bank_port_input', bank_port(False).rows(), P)
@@ -571,6 +696,10 @@ def main():
     write_block('spire_crown_ring', crown_ring().rows(), P)
     write_block('spire_crown_core', crown_core(False).rows(), P)
     write_block('spire_crown_core_lit', crown_core(True).rows(), P)
+
+    write_block('spire_coil', spire_coil().rows(), P)
+    write_block('spire_coil_glow', spire_coil_glow().rows(), P)
+    write_block('spire_rail', spire_rail().rows(), P)
 
     write_block('collider_casing', collider_casing().rows(), P)
     for tier, name in ((1, 'accelerator'), (2, 'resonant')):

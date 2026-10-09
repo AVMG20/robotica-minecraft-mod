@@ -306,10 +306,11 @@ function viewerHtml(id, big) {
     <div class="mb-top"><h3>${big ? esc(mb.title) : `<a href="#/multiblock/${id}">${esc(mb.title)}</a>`}</h3><span class="chip">${W} × ${H} × ${Dd}</span></div>
     <p>${inline(mb.about || '')}</p>
     <div class="mb-body">
-      <div><canvas width="10" height="10" role="img" aria-label="3D view of the ${esc(mb.title)}"></canvas>
+      <div><canvas width="10" height="10" role="img" aria-label="3D view of the ${esc(mb.title)}"${mb.formed ? ' hidden' : ''}></canvas>
+        ${mb.formed ? `<img class="formed" src="wiki/formed/${id}.png" alt="The finished ${esc(mb.title)}, formed">` : ''}
         <p class="compass">Seen from the north-east, above. The controller faces you.</p></div>
       <div>
-        <div class="mb-ctl"><button type="button" data-d="-1" aria-label="Layer down">▼</button>
+        <div class="mb-ctl">${mb.formed ? '<button type="button" data-formed aria-pressed="true">Formed</button>' : ''}<button type="button" data-d="-1" aria-label="Layer down">▼</button>
           <input type="range" min="1" max="${H}" value="${H}" aria-label="Layer">
           <button type="button" data-d="1" aria-label="Layer up">▲</button></div>
         <p class="mb-lbl" aria-live="polite"></p>
@@ -324,15 +325,21 @@ function viewerHtml(id, big) {
 function mountViewers(root) {
   root.querySelectorAll('.mb[data-mb]').forEach(el => {
     const mb = D.multiblocks[el.dataset.mb], H = mb.size[1];
-    const range = $('input[type=range]', el), canvas = $('canvas', el);
+    const range = $('input[type=range]', el), canvas = $('canvas', el), img = $('img.formed', el), fbtn = $('button[data-formed]', el);
+    // the finished build as the game draws it once formed; the layer controls switch to the block-by-block view
+    const formed = on => {
+      if (!img) return;
+      img.hidden = !on; canvas.hidden = on; fbtn.setAttribute('aria-pressed', on);
+    };
     const set = v => {
       v = Math.max(1, Math.min(H, v)); range.value = v;
       $('.mb-lbl', el).textContent = `Layer ${v} of ${H} (bottom to top)`;
       $('.mb-grid', el).innerHTML = layerGrid(mb, v - 1);
       drawStructure(canvas, mb, v - 1);
     };
-    range.addEventListener('input', () => set(+range.value));
-    el.querySelectorAll('button[data-d]').forEach(b => b.addEventListener('click', () => set(+range.value + +b.dataset.d)));
+    range.addEventListener('input', () => { formed(false); set(+range.value); });
+    el.querySelectorAll('button[data-d]').forEach(b => b.addEventListener('click', () => { formed(false); set(+range.value + +b.dataset.d); }));
+    if (fbtn) fbtn.addEventListener('click', () => { formed(img.hidden); if (!img.hidden) set(H); });
     set(H);
   });
 }

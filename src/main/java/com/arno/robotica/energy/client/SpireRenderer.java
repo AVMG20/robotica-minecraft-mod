@@ -4,25 +4,39 @@ import com.arno.robotica.energy.block.SpireBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 /**
  * Tesla Spire: while it runs, a pulsing ball of light on the crown, arcs crawling down the column and leaping from the
  * crown into the air. A lightning strike draws a forked bolt from the sky onto the crown for half a second, flashes the
- * sky and lights the whole column. Plus the structure highlight of every controller.
+ * sky and lights the whole column. While formed, every metal block of the column wears a coil shell tinted with its map
+ * colour (scripts/scene_preview.py draws the same), its arc slits glowing in a wave up the column while the spire runs.
+ * Plus the structure highlight of every controller.
  */
 public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity> {
     private static final int STRIKE_TICKS = 12;
     private static final int BOLT_HEIGHT = 72;
 
     private long flashedFor = Long.MIN_VALUE;
+    private final Vector3f normal = new Vector3f();
+    private final int[] lights = new int[4];
+    private static final float[] FULL = {1.0F, 1.0F, 1.0F, 1.0F};
 
     public SpireRenderer(BlockEntityRendererProvider.Context ctx) {
         super(ctx);
@@ -39,6 +53,7 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
         float time = (gameTime % 24000L) + partialTick;
         float sinceStrike = (gameTime - be.clientStrike()) + partialTick;
         boolean striking = sinceStrike >= 0 && sinceStrike < STRIKE_TICKS;
+        drawColumn(be, level, n, time, striking ? 1.0F - sinceStrike / STRIKE_TICKS : 0, pose, buffers);
         if (!be.running() && !striking) return;
 
         if (striking && flashedFor != be.clientStrike() && level instanceof ClientLevel cl) {
@@ -85,6 +100,62 @@ public class SpireRenderer extends ControllerHighlightRenderer<SpireBlockEntity>
             GlowDraw.bolt(vc, m, sky, crown, boltSeed + flicker, 18, 1.6, 0.09F, 160, 190, 255, alpha, 4);
             GlowDraw.box(vc, m, -0.06F, 0.94F, -0.06F, 1.06F, n + 1.06F, 1.06F, 150, 200, 255, (int) (70 * fade));
             GlowDraw.cube(vc, m, crown, 1.4F * fade + 0.3F, 220, 240, 255, (int) (90 * fade));
+        }
+    }
+
+    /** Coil shells over the conductors; the slits light in a wave climbing the column while it runs, white on a strike. */
+    private void drawColumn(SpireBlockEntity be, Level level, int n, float time, float strike, PoseStack pose, MultiBufferSource buffers) {
+        VertexConsumer vc = buffers.getBuffer(RenderType.cutout());
+        BlockPos base = be.getBlockPos();
+        for (int i = 1; i <= n; i++) {
+            BlockPos p = base.above(i);
+            BlockState state = level.getBlockState(p);
+            if (state.isAir()) continue;
+            int col = state.getMapColor(level, p).col;
+            float r = coilTint(col >> 16), g = coilTint(col >> 8), b = coilTint(col);
+            int light = sideLight(level, p);
+            lights[0] = lights[1] = lights[2] = lights[3] = light;
+            pose.pushPose();
+            pose.translate(0, i, 0);
+            draw(level, pose, vc, PartModel.SPIRE_COIL, r, g, b, false);
+            float wave = be.running() ? 0.35F + 0.65F * Math.max(0, Mth.sin(time * 0.3F - i * 0.9F)) : 0;
+            float k = Math.max(wave, strike);
+            if (k > 0.02F) {
+                lights[0] = lights[1] = lights[2] = lights[3] = LightTexture.FULL_BRIGHT;
+                draw(level, pose, vc, PartModel.SPIRE_COIL_GLOW, Mth.lerp(strike, 0.45F, 1.0F) * k, Mth.lerp(strike, 0.85F, 1.0F) * k, k, true);
+            }
+            pose.popPose();
+        }
+    }
+
+    /** Same lift as scene_preview.coil_tint: the map colour raised so dark metals still show their windings. */
+    private static float coilTint(int channel) {
+        return Math.min(1.0F, 0.3F + 0.85F * (channel & 255) / 255.0F);
+    }
+
+    /** The conductor itself is opaque (no light inside): the brightest of its four sides. */
+    private static int sideLight(Level level, BlockPos p) {
+        int block = 0, sky = 0;
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            int packed = LevelRenderer.getLightColor(level, p.relative(d));
+            block = Math.max(block, LightTexture.block(packed));
+            sky = Math.max(sky, LightTexture.sky(packed));
+        }
+        return LightTexture.pack(block, sky);
+    }
+
+    /** Emits a part's quads, tinted quads times (r, g, b), shaded like chunk faces unless {@code bright}. */
+    private void draw(Level level, PoseStack pose, VertexConsumer vc, PartModel part, float r, float g, float b, boolean bright) {
+        PoseStack.Pose last = pose.last();
+        for (BakedQuad quad : part.quads()) {
+            float shade = 1.0F;
+            if (!bright) {
+                Vec3i dir = quad.getDirection().getNormal();
+                last.transformNormal(dir.getX(), dir.getY(), dir.getZ(), normal);
+                shade = level.getShade(normal.x(), normal.y(), normal.z(), quad.isShade());
+            }
+            float tr = quad.isTinted() ? r : 1.0F, tg = quad.isTinted() ? g : 1.0F, tb = quad.isTinted() ? b : 1.0F;
+            vc.putBulkData(last, quad, FULL, shade * tr, shade * tg, shade * tb, 1.0F, lights, OverlayTexture.NO_OVERLAY, false);
         }
     }
 

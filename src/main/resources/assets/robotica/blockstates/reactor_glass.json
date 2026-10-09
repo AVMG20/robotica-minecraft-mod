@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "formed=false": {
       "model": "robotica:block/reactor_glass"
+    },
+    "formed=true": {
+      "model": "robotica:block/reactor_glass_formed"
     }
   }
 }

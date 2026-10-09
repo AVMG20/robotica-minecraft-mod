@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "formed=false": {
       "model": "robotica:block/bank_glass"
+    },
+    "formed=true": {
+      "model": "robotica:block/bank_glass_formed"
     }
   }
 }

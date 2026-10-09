@@ -1,0 +1,130 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "glow": "robotica:block/spire_coil_glow",
+    "particle": "robotica:block/spire_coil_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        -0.15
+      ],
+      "to": [
+        9,
+        16,
+        -0.15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ],
+          "tintindex": 0,
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        7,
+        0,
+        16.15
+      ],
+      "to": [
+        9,
+        16,
+        16.15
+      ],
+      "faces": {
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ],
+          "tintindex": 0,
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        -0.15,
+        0,
+        7
+      ],
+      "to": [
+        -0.15,
+        16,
+        9
+      ],
+      "faces": {
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ],
+          "tintindex": 0,
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        16.15,
+        0,
+        7
+      ],
+      "to": [
+        16.15,
+        16,
+        9
+      ],
+      "faces": {
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ],
+          "tintindex": 0,
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    }
+  ]
+}

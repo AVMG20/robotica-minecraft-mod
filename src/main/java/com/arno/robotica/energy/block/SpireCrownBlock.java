@@ -22,11 +22,14 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.List;
 
 /**
- * Top of a Tesla Spire: a copper-wound neck, a steel toroid and a discharge sphere. LIT while its spire runs (set by the Spire Base); it
- * then glows and throws sparks. The arcs and the strike bolt are drawn by the base's renderer.
+ * Top of a Tesla Spire: a copper-wound neck, a steel toroid and a discharge sphere. FORMED while its spire stands: the
+ * model then grows a wide toroid on spokes (drawn past the block; the hit box stays small). LIT while the spire runs
+ * (both set by the Spire Base); it then glows and throws sparks. The arcs and the strike bolt are drawn by the base's
+ * renderer.
  */
 public class SpireCrownBlock extends Block {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    public static final BooleanProperty FORMED = BooleanProperty.create("formed");
     private static final VoxelShape SHAPE = Shapes.or(
             Block.box(6, 0, 6, 10, 6, 10),
             Block.box(1, 6, 1, 15, 10, 15),
@@ -34,12 +37,12 @@ public class SpireCrownBlock extends Block {
 
     public SpireCrownBlock(Properties props) {
         super(props);
-        registerDefaultState(stateDefinition.any().setValue(LIT, false));
+        registerDefaultState(stateDefinition.any().setValue(LIT, false).setValue(FORMED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(LIT);
+        builder.add(LIT, FORMED);
     }
 
     @Override

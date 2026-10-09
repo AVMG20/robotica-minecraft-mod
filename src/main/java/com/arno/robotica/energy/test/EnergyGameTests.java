@@ -9,10 +9,12 @@ import com.arno.robotica.energy.block.BankControllerBlockEntity;
 import com.arno.robotica.energy.block.ColliderBlockEntity;
 import com.arno.robotica.energy.block.ControllerBlock;
 import com.arno.robotica.energy.block.CoreReactorBlockEntity;
+import com.arno.robotica.energy.block.FramedPartBlock;
 import com.arno.robotica.energy.block.PortBlock;
 import com.arno.robotica.energy.block.PortBlockEntity;
 import com.arno.robotica.energy.block.SpireBlockEntity;
 import com.arno.robotica.energy.block.StructureControllerBlockEntity;
+import com.arno.robotica.energy.block.StructureGlassBlock;
 import com.arno.robotica.energy.net.ControllerActionPayload;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.block.ChargerBlockEntity;
@@ -28,6 +30,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -289,28 +292,76 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
-    /** A core that was burning keeps its wear when the controller is broken, and goes on from there. */
+    /**
+     * A formed reactor wears the formed look: corner caps, edge beams along their axis, wall panels, frameless glass. It
+     * comes off when the structure breaks and when the controller is broken.
+     */
     @GameTest(template = ARENA, timeoutTicks = 40)
-    public static void coreReactorKeepsCoreWear(GameTestHelper helper) {
+    public static void formedLookComesAndGoes(GameTestHelper helper) {
+        BlockPos min = new BlockPos(1, 1, 1);
+        CoreReactorBlockEntity be = reactorAt(helper, min);
+        helper.assertTrue(be.isFormed(), "forms: " + why(be));
+        assertFrame(helper, min, FramedPartBlock.Shape.CORNER);
+        assertFrame(helper, min.offset(2, 0, 0), FramedPartBlock.Shape.X);
+        assertFrame(helper, min.offset(0, 2, 0), FramedPartBlock.Shape.Y);
+        assertFrame(helper, min.offset(0, 0, 2), FramedPartBlock.Shape.Z);
+        assertFrame(helper, min.offset(2, 4, 2), FramedPartBlock.Shape.WALL);
+        helper.assertTrue(helper.getBlockState(min.offset(4, 2, 2)).getValue(StructureGlassBlock.FORMED), "the window drops its frame");
+
+        helper.setBlock(min.offset(2, 4, 2), Blocks.DIRT);
+        be.scanNow();
+        helper.assertFalse(be.isFormed(), "dirt in the roof breaks it");
+        assertFrame(helper, min, FramedPartBlock.Shape.NONE);
+        assertFrame(helper, min.offset(0, 2, 0), FramedPartBlock.Shape.NONE);
+        helper.assertFalse(helper.getBlockState(min.offset(4, 2, 2)).getValue(StructureGlassBlock.FORMED), "the window gets its frame back");
+
+        helper.setBlock(min.offset(2, 4, 2), EnergyRegistry.REACTOR_CASING.get());
+        be.scanNow();
+        assertFrame(helper, min, FramedPartBlock.Shape.CORNER);
+        helper.destroyBlock(min.offset(2, 2, 0));
+        assertFrame(helper, min, FramedPartBlock.Shape.NONE);
+        assertFrame(helper, min.offset(2, 4, 2), FramedPartBlock.Shape.NONE);
+        helper.succeed();
+    }
+
+    private static void assertFrame(GameTestHelper helper, BlockPos pos, FramedPartBlock.Shape shape) {
+        BlockState state = helper.getBlockState(pos);
+        helper.assertTrue(state.hasProperty(FramedPartBlock.FRAME) && state.getValue(FramedPartBlock.FRAME) == shape,
+                "casing at " + pos + " should be " + shape + ", got " + state);
+    }
+
+    /** A loaded core is used up: breaking the controller gives it back only if it never burned. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void coreReactorUsesUpCores(GameTestHelper helper) {
         CoreReactorBlockEntity be = reactor(helper);
-        be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 4));
         be.cores.setStackInSlot(0, new ItemStack(Items.STRUCTURE_BLOCK));
-        be.simulate(40);
-        double wear = be.coreWear();
+        be.simulate(5);
+        helper.assertTrue(be.cores.getStackInSlot(0).isEmpty() && be.activeCore().is(Items.STRUCTURE_BLOCK) && be.coreWear() == 0,
+                "the core loads out of the slot and waits without fuel");
         helper.destroyBlock(new BlockPos(3, 3, 1));
-        ItemStack dropped = ItemStack.EMPTY;
-        for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(12))) {
-            if (e.getItem().is(Items.STRUCTURE_BLOCK)) dropped = e.getItem();
-        }
-        Integer kept = dropped.get(EnergyRegistry.CORE_WEAR.get());
-        helper.assertTrue(kept != null && kept == Math.round(wear), "the dropped core keeps its wear " + wear + ", got " + kept);
+        helper.assertTrue(countDropped(helper, Items.STRUCTURE_BLOCK) == 1, "an unburned core comes back");
+        clearDrops(helper);
 
         CoreReactorBlockEntity again = reactor(helper);
         again.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 4));
-        again.cores.setStackInSlot(0, dropped.copy());
-        again.simulate(1);
-        helper.assertTrue(Math.abs(again.coreWear() - (kept + 1.05)) < 1e-6, "goes on from the old wear, got " + again.coreWear());
+        again.cores.setStackInSlot(0, new ItemStack(Items.STRUCTURE_BLOCK));
+        again.simulate(40);
+        helper.assertTrue(again.coreWear() > 0, "the core burns with the fuel");
+        helper.destroyBlock(new BlockPos(3, 3, 1));
+        helper.assertTrue(countDropped(helper, Items.STRUCTURE_BLOCK) == 0, "a burning core is used up");
         helper.succeed();
+    }
+
+    private static int countDropped(GameTestHelper helper, net.minecraft.world.item.Item item) {
+        int n = 0;
+        for (ItemEntity e : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(12))) {
+            if (e.getItem().is(item)) n += e.getItem().getCount();
+        }
+        return n;
+    }
+
+    private static void clearDrops(GameTestHelper helper) {
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(12)).forEach(e -> e.discard());
     }
 
     /** With room for only part of a tick's output the reactor burns only that share; full, it burns nothing. */
@@ -430,8 +481,10 @@ public class EnergyGameTests {
         helper.assertTrue(!be.isFormed() && "multiblock.robotica.spire_too_short".equals(key(be)), "3 conductors are too few, got " + key(be));
         be = spire(helper, base, 8, 0);
         helper.assertTrue(be.isFormed(), "8 copper forms: " + why(be));
+        helper.assertTrue(helper.getBlockState(base.above(9)).getValue(com.arno.robotica.energy.block.SpireCrownBlock.FORMED), "the formed crown grows its toroid");
         helper.setBlock(base.above(3), Blocks.DIRT);
         be.scanNow();
+        helper.assertFalse(helper.getBlockState(base.above(9)).getValue(com.arno.robotica.energy.block.SpireCrownBlock.FORMED), "a broken spire's crown shrinks back");
         helper.assertTrue(!be.isFormed() && "multiblock.robotica.spire_column".equals(key(be)) && helper.absolutePos(base.above(3)).equals(be.problem().pos()),
                 "dirt in the column is named, got " + key(be));
         helper.setBlock(base.above(3), Blocks.COPPER_BLOCK);

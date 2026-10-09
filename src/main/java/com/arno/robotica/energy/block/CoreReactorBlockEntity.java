@@ -46,8 +46,8 @@ import java.util.List;
  * modulators (block data map robotica:core_modulator).
  * <ul>
  *   <li>A boss core (item data map robotica:reactor_core) is loaded from the core slot and burns for its {@code life}
- *       ticks; it breaks when worn out and the next one loads. Its wear travels with the item
- *       ({@link EnergyRegistry#CORE_WEAR}) when the controller is broken.</li>
+ *       ticks, shown as a life bar; when it runs out the next one loads. The loaded core is used up like fuel: breaking the
+ *       controller gives it back only if it never burned.</li>
  *   <li>Fuel pellets (robotica:reactor_fuel) burn one at a time. Output {@code = pellet power x core power x P} FE/t,
  *       where {@code P = 1 + sum of the modulators' power}; the pellet and the core both burn {@code B = 1 + sum of the
  *       modulators' burn} ticks per tick. P and B never drop below 0.25.</li>
@@ -304,7 +304,7 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         ItemStack next = cores.getStackInSlot(0);
         if (next.isEmpty() || EnergyDataMaps.reactorCore(next) == null) return;
         activeCore = cores.extractItem(0, 1, false);
-        Integer wear = activeCore.get(EnergyRegistry.CORE_WEAR.get());
+        Integer wear = activeCore.get(EnergyRegistry.CORE_WEAR.get());   // worn cores from older versions
         coreWear = wear == null ? 0 : wear;
         activeCore.remove(EnergyRegistry.CORE_WEAR.get());
         if (center != null) {
@@ -561,12 +561,8 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
             for (int i = 0; i < handler.getSlots(); i++) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), handler.getStackInSlot(i));
         }
         if (!pendingWaste.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), pendingWaste);
-        if (!activeCore.isEmpty()) {
-            ItemStack core = activeCore.copy();
-            long wear = Math.round(coreWear);
-            if (wear > 0) core.set(EnergyRegistry.CORE_WEAR.get(), (int) Math.min(Integer.MAX_VALUE, wear));
-            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), core);
-            activeCore = ItemStack.EMPTY;
-        }
+        // a loaded core that never burned comes back, a burning one is used up
+        if (!activeCore.isEmpty() && coreWear <= 0) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), activeCore.copy());
+        activeCore = ItemStack.EMPTY;
     }
 }
