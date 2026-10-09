@@ -1995,7 +1995,7 @@
         "name": "minecraft:block/beacon/ambient",
         "type": "file",
         "volume": 0.3,
-        "pitch": 0.5
+        "pitch": 0.7
       },
       {
         "name": "minecraft:block/respawn_anchor/ambient1",

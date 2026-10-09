@@ -331,10 +331,14 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         setChangedAndSync();
     }
 
-    /** Hum while it runs, once per loop of the vanilla conduit / beacon ambience it is made of (server side). */
+    /**
+     * Hum while it runs (server side). Its longest variant lasts about 9.2 s at the lowest pitch (beacon ambience 5.8 s at
+     * pitch 0.7 x 0.9), so it replays every 9.5 s and copies never stack.
+     */
     private void ambience(ServerLevel level, long now) {
-        if (CoreSounds.due(level, worldPosition, 80)) {
-            CoreSounds.play(level, center, CoreSounds.CORE_REACTOR_HUM, SoundSource.BLOCKS, 0.8F, 0.9F + 0.1F * (float) Math.min(2.0, powerMultiplier() - 1.0));
+        if (CoreSounds.due(level, worldPosition, 190)) {
+            float pitch = 0.9F + 0.1F * (float) Math.max(0.0, Math.min(2.0, powerMultiplier() - 1.0));
+            CoreSounds.play(level, center, CoreSounds.CORE_REACTOR_HUM, SoundSource.BLOCKS, 0.8F, pitch);
         }
     }
 
