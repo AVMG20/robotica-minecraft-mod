@@ -373,7 +373,11 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         long burst = Math.max(STRIKE_MIN, Math.round(full * 20.0 * EnergyConfig.spireStrikeSeconds()));
         energy.generate((int) Math.min(Integer.MAX_VALUE, burst));
         lastStrike = now;
-        level.blockEvent(worldPosition, getBlockState().getBlock(), STRIKE_EVENT, conductors);
+        // to every player who has the chunk loaded (a block event only reaches 64 blocks; the bolt draws out to 192)
+        var event = new net.minecraft.network.protocol.game.ClientboundBlockEventPacket(worldPosition, getBlockState().getBlock(), STRIKE_EVENT, conductors);
+        for (var player : level.getChunkSource().chunkMap.getPlayers(new net.minecraft.world.level.ChunkPos(worldPosition), false)) {
+            player.connection.send(event);
+        }
         CoreSounds.play(level, crown, CoreSounds.SPIRE_STRIKE, SoundSource.WEATHER, 6.0F, 0.9F + level.random.nextFloat() * 0.2F);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, crown.getX() + 0.5, crown.getY() + 0.7, crown.getZ() + 0.5, 60, 0.6, 0.6, 0.6, 0.6);
         level.sendParticles(ParticleTypes.FLASH, crown.getX() + 0.5, crown.getY() + 1.0, crown.getZ() + 0.5, 1, 0, 0, 0, 0);
