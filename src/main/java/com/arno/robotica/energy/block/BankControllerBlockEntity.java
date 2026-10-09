@@ -54,6 +54,12 @@ public class BankControllerBlockEntity extends StructureControllerBlockEntity {
         super(EnergyRegistry.BANK_BE.get(), pos, state);
     }
 
+    /** Frame light when it forms: cyan, like the charge bar. */
+    @Override
+    protected int formColor() {
+        return 0x4FC8FF;
+    }
+
     @Override
     protected CuboidSpec spec() {
         return SPEC;

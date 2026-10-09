@@ -3,6 +3,9 @@ package com.arno.robotica.energy.client;
 import com.arno.robotica.energy.EnergyRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
@@ -14,6 +17,9 @@ public final class EnergyClient {
     private EnergyClient() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        container.registerConfig(ModConfig.Type.CLIENT, com.arno.robotica.energy.EnergyClientConfig.SPEC, "robotica-energy-client.toml");
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, StructureFx::onClientTick);
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, StructureFx::onRenderLevel);
         modBus.addListener(RegisterMenuScreensEvent.class, event -> {
             event.register(EnergyRegistry.REACTOR_MENU.get(), CoreReactorScreen::new);
             event.register(EnergyRegistry.BANK_MENU.get(), BankScreen::new);

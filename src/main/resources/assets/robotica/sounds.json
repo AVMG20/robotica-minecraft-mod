@@ -2101,5 +2101,74 @@
         "pitch": 1.4
       }
     ]
+  },
+  "structure_form": {
+    "subtitle": "subtitles.robotica.structure_form",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.85
+      }
+    ]
+  },
+  "structure_settle": {
+    "subtitle": "subtitles.robotica.structure_settle",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 1.25
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 1.35
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate4",
+        "type": "file",
+        "volume": 0.9,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "structure_unform": {
+    "subtitle": "subtitles.robotica.structure_unform",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/deplete1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/deplete2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.95
+      }
+    ]
   }
 }

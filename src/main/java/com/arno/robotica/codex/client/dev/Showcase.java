@@ -1051,6 +1051,8 @@ public final class Showcase {
             step(1, () -> com.arno.robotica.gear.client.SparkWisps.demo = false);
         }
 
+        structureFxFrames();
+
         // Architect Table: four separate buildings, one per style, around the table plot (queued), one joined pair.
         if (wants("25_architect_build", "gui_96_architect_demolish")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
@@ -1120,6 +1122,54 @@ public final class Showcase {
     private static final BlockPos HAUL = new BlockPos(-70, Y, 80);
 
     /** Turns a mob (no AI) to look at a point. */
+    /**
+     * Dev only (not in shots.py): frames a few ticks apart of a Capacitor Bank and a Replicator forming (a corner put
+     * back) and breaking (a corner taken out), by day and by night, and the Replicator's spawn shimmer.
+     */
+    private static void structureFxFrames() {
+        if (!wants("structure_fx_frame")) return;
+        BlockPos bank = new BlockPos(140, Y, 20), corner = new BlockPos(144, Y + 4, 24);
+        BlockPos rep = new BlockPos(150, Y, 20), repCorner = new BlockPos(152, Y + 2, 22), repCtrl = new BlockPos(151, Y + 1, 22);
+        camera(147.5, Y + 5.5, 30, 146, 18);
+        step(20, () -> server(sp -> {
+            ServerLevel level = sp.serverLevel();
+            placeMultiblock(level, multiblock("capacitor_bank_5"), bank);
+            level.setBlock(corner, Blocks.AIR.defaultBlockState(), 3);
+            for (int x = 0; x < 3; x++) for (int y = 0; y < 3; y++) for (int z = 0; z < 3; z++) {
+                BlockPos p = rep.offset(x, y, z);
+                boolean glass = (x == 1 && z == 1 && y == 2) || (x == 0 && y == 1 && z == 1) || (x == 2 && y == 1 && z == 1);
+                if (x == 1 && y == 1 && z == 1) level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+                else level.setBlock(p, block(glass ? "replicator_glass" : "replicator_frame").defaultBlockState(), 3);
+            }
+            setFacing(level, repCtrl, block("replicator_controller"), Direction.SOUTH);
+            level.setBlock(repCorner, Blocks.AIR.defaultBlockState(), 3);
+        }));
+        step(80, () -> {});
+        for (String time : new String[]{"day", "night"}) {
+            if (time.equals("night")) step(20, () -> server(sp -> command(sp, "time set 18000")));
+            camera(147.5, Y + 5.5, 30, 146, 18);
+            step(1, () -> server(sp -> sp.serverLevel().setBlock(corner, block("bank_casing").defaultBlockState(), 3)));
+            for (int i = 0; i < 16; i++) grab(3, "structure_fx_frame_bank_form_" + time + "_" + i);
+            step(50, () -> {});
+            step(1, () -> server(sp -> sp.serverLevel().setBlock(corner, Blocks.AIR.defaultBlockState(), 3)));
+            for (int i = 0; i < 12; i++) grab(2, "structure_fx_frame_bank_break_" + time + "_" + i);
+        }
+        camera(154.5, Y + 3.5, 26, 146, 20);
+        step(1, () -> server(sp -> sp.serverLevel().setBlock(repCorner, block("replicator_frame").defaultBlockState(), 3)));
+        for (int i = 0; i < 14; i++) grab(3, "structure_fx_frame_replicator_form_" + i);
+        step(10, () -> {});
+        for (int k = 0; k < 2; k++) {
+            step(1, () -> server(sp -> com.arno.robotica.energy.net.StructureFxPayload.send(sp.serverLevel(),
+                    com.arno.robotica.energy.net.StructureFxPayload.SPAWN, repCtrl,
+                    new net.minecraft.world.level.levelgen.structure.BoundingBox(151, Y, 23, 151, Y + 1, 23), 0x5CFFC8)));
+            for (int i = 0; i < 8; i++) grab(2, "structure_fx_frame_spawn_" + k + "_" + i);
+            step(20, () -> {});
+        }
+        step(1, () -> server(sp -> sp.serverLevel().setBlock(repCorner, Blocks.AIR.defaultBlockState(), 3)));
+        for (int i = 0; i < 10; i++) grab(2, "structure_fx_frame_replicator_break_" + i);
+        step(10, () -> server(sp -> command(sp, "time set 6000")));
+    }
+
     private static void face(net.minecraft.world.entity.Mob mob, double x, double z) {
         float yaw = (float) (Math.toDegrees(Math.atan2(z - mob.getZ(), x - mob.getX())) - 90.0);
         mob.setYRot(yaw);

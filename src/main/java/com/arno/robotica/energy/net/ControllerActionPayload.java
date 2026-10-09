@@ -37,6 +37,7 @@ public record ControllerActionPayload(BlockPos pos, int action, int value) imple
         var registrar = event.registrar("1");
         registrar.playToServer(TYPE, CODEC, ControllerActionPayload::handle);
         registrar.playToClient(ControllerSyncPayload.TYPE, ControllerSyncPayload.CODEC, ControllerSyncPayload::handle);
+        registrar.playToClient(StructureFxPayload.TYPE, StructureFxPayload.CODEC, StructureFxPayload::handle);
     }
 
     private static void handle(ControllerActionPayload payload, IPayloadContext context) {

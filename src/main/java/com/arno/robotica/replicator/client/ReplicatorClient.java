@@ -6,6 +6,7 @@ import com.arno.robotica.replicator.logic.Essence;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
@@ -17,6 +18,7 @@ public final class ReplicatorClient {
     private ReplicatorClient() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        container.registerConfig(ModConfig.Type.CLIENT, com.arno.robotica.replicator.ReplicatorClientConfig.SPEC, "robotica-replicator-client.toml");
         modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ReplicatorRegistry.REPLICATOR_MENU.get(), ReplicatorScreen::new));
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 event -> event.registerBlockEntityRenderer(ReplicatorRegistry.CONTROLLER_BE.get(), ReplicatorControllerRenderer::new));

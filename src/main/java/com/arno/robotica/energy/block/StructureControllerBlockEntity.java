@@ -1,5 +1,6 @@
 package com.arno.robotica.energy.block;
 
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.multiblock.CuboidScanner;
 import com.arno.robotica.core.multiblock.CuboidSpec;
@@ -8,13 +9,13 @@ import com.arno.robotica.core.multiblock.MultiblockWatcher;
 import com.arno.robotica.core.multiblock.StructureProblem;
 import com.arno.robotica.core.progress.Milestones;
 import com.arno.robotica.energy.EnergyConfig;
+import com.arno.robotica.energy.net.StructureFxPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.level.Level;
@@ -228,7 +229,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
                 lookBox = box;
             }
             if (!was) {
-                level.playSound(null, worldPosition, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.5F, 1.4F);
+                formFx(serverLevel, true, box);
                 String milestone = formedMilestone();
                 if (milestone != null) Milestones.awardOwner(serverLevel, worldPosition, owner, milestone);
             }
@@ -237,7 +238,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
                 clearPorts();
                 formed = false;
                 onUnformed();
-                level.playSound(null, worldPosition, SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 0.5F, 1.2F);
+                formFx(serverLevel, false, box != null ? box : lookBox);
             }
             // a part in an unloaded chunk keeps its look: the box stays saved and the next scans take it off
             if (lookBox != null && dress(lookBox, false)) lookBox = null;
@@ -247,6 +248,27 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
         watchArea();
         setFormedState(formed);
         setChanged();
+    }
+
+    private long lastFormFx = Long.MIN_VALUE / 2;
+
+    /**
+     * Forming or breaking: the sound, and for cuboids the light along the frame edges (client drawn, see
+     * {@code StructureFx}). At most one every half second, so a block toggled in and out of the wall stays calm.
+     */
+    private void formFx(ServerLevel level, boolean form, @Nullable BoundingBox frame) {
+        long now = level.getGameTime();
+        if (now - lastFormFx < 10) return;
+        lastFormFx = now;
+        CoreSounds.play(level, worldPosition, form ? CoreSounds.STRUCTURE_FORM : CoreSounds.STRUCTURE_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
+        if (frame != null && spec() != null) {
+            StructureFxPayload.send(level, form ? StructureFxPayload.FORM : StructureFxPayload.UNFORM, worldPosition, frame, formColor());
+        }
+    }
+
+    /** Colour of the light along the frame when it forms (0xRRGGBB). */
+    protected int formColor() {
+        return 0x6EAAFF;
     }
 
     /**
@@ -384,11 +406,13 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
 
     /** The controller block was broken: take the formed look off, unlink the ports and reset the structure. */
     public void onControllerRemoved() {
+        BoundingBox frame = lookBox != null ? lookBox : box;
         if (lookBox != null) {
             dress(lookBox, false);
             lookBox = null;
         }
         if (formed) {
+            if (level instanceof ServerLevel serverLevel) formFx(serverLevel, false, frame);
             formed = false;
             clearPorts();
             onUnformed();

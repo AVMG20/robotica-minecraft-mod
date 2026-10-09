@@ -169,6 +169,26 @@ public class ReplicatorGameTests {
         });
     }
 
+    /** The glow outlasts a short stall (no flicker on a weak supply) and goes out a second after the work stops. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void glowOutlastsShortStall(GameTestHelper helper) {
+        buildShell(helper, true);
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        be.vial.setStackInSlot(0, Essence.completeVial(EntityType.ZOMBIE));
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        helper.runAfterDelay(20, () -> {
+            helper.assertTrue(helper.getBlockState(CONTROLLER).getValue(ReplicatorControllerBlock.LIT), "a working replicator glows");
+            be.energy.setEnergy(0);
+            helper.runAfterDelay(5, () -> {
+                helper.assertTrue(helper.getBlockState(CONTROLLER).getValue(ReplicatorControllerBlock.LIT), "a short stall keeps the glow");
+                helper.runAfterDelay(40, () -> {
+                    helper.assertFalse(helper.getBlockState(CONTROLLER).getValue(ReplicatorControllerBlock.LIT), "a long stall turns it off");
+                    helper.succeed();
+                });
+            });
+        });
+    }
+
     // ---- harvest ----
 
     /** Rolls a zombie's loot as a player kill. Rotten flesh must show up; boss items never do. */
