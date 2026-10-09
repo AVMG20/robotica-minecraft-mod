@@ -1,4 +1,4 @@
-"""Writes the crafting and pressing recipes of the power module (balance ladder, see docs/DESIGN.md).
+"""Writes the crafting and pressing recipes of the power module (balance ladder).
 Run: python3 scripts/data/power_recipes.py   (overwrites data/robotica/recipe/<name>.json for power items only)"""
 import json
 import pathlib

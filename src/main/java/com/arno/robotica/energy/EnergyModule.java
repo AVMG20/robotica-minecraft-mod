@@ -10,7 +10,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
 
 /**
- * Common (both sides) entry point of the energy module (big power). See docs/DESIGN.md, "Big energy".
+ * Common (both sides) entry point of the energy module (big power).
  * Capacitor Bank and Core Reactor (cuboids built on core.multiblock, with ports that expose the standard FE and item
  * capabilities), Tesla Spire (a column) and Ring Collider (a loop), whose controllers expose them directly. Data maps:
  * robotica:spire_conductor, spire_fuel, reactor_core, reactor_fuel, core_modulator and collider_fuel.

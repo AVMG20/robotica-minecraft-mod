@@ -6,7 +6,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
-/** Common (both sides) entry point of the gear module. See docs/DESIGN.md. */
+/** Common (both sides) entry point of the gear module. */
 public final class GearModule {
     private GearModule() {}
 

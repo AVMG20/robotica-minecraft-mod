@@ -1,4 +1,4 @@
-"""Writes the crafting recipes of the energy module (balance ladder, see docs/DESIGN.md "Big energy").
+"""Writes the crafting recipes of the energy module (balance ladder).
 Run: python3 scripts/data/energy_recipes.py   (overwrites data/robotica/recipe/<name>.json for energy items only)
 
 Ages: Capacitor Bank from first circuits (Age 1, copper cells); Tesla Spire and Core Reactor at Age 2 (ferrothorium,

@@ -19,7 +19,7 @@ import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
 
 /**
  * Common (both sides) entry point of the ore processing module: tiered Grinder (ore doubling by c: tags, grinding
- * media) and Electric Furnace (parallel lanes). See the "Ore processing" section of docs/DESIGN.md.
+ * media) and Electric Furnace (parallel lanes).
  */
 public final class ProcessingModule {
     private ProcessingModule() {}

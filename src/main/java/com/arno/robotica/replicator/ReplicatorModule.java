@@ -8,7 +8,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /**
- * Common (both sides) entry point of the replicator module. See docs/DESIGN.md.
+ * Common (both sides) entry point of the replicator module.
  * Essence Vial, Replicator Controller / Frame / Glass (3x3x3 multiblock), harvest and spawn modes.
  */
 public final class ReplicatorModule {

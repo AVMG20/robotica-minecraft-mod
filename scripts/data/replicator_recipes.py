@@ -1,4 +1,4 @@
-"""Writes the crafting recipes of the replicator module (balance ladder, see docs/DESIGN.md).
+"""Writes the crafting recipes of the replicator module (balance ladder).
 Run: python3 scripts/data/replicator_recipes.py   (overwrites data/robotica/recipe/<name>.json for replicator items only)
 
 A full replicator is 24 frame/glass blocks plus the controller. The frame costs one Reinforced Casing (32 raw iron)

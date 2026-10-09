@@ -6,7 +6,6 @@ Run: python3 scripts/data/energy_data.py
 - data_maps/block/core_modulator.json   {"power": fraction, "burn": fraction}  Core Reactor inside blocks
 - data_maps/item/reactor_core.json      {"power": x, "life": ticks}            Core Reactor cores
 - tags/block/spire_conductors/<metal>   optional #c:storage_blocks/<metal>     (fragment, merged at build time)
-Numbers: docs/DESIGN.md "Big energy".
 """
 import json
 import pathlib

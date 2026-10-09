@@ -17,7 +17,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
 /**
- * Common (both sides) entry point of the power module. See docs/DESIGN.md.
+ * Common (both sides) entry point of the power module.
  * Winding Crank, Combustion Generator, Solar Panels, Accumulators, Tesla Coils, Charger, Metal Press.
  */
 public final class PowerModule {

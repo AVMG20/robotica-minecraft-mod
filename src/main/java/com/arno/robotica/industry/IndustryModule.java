@@ -11,7 +11,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 /**
- * Common (both sides) entry point of the industry module. See docs/DESIGN.md, "Industry".
+ * Common (both sides) entry point of the industry module.
  * Thorium, Pyrolite and Resonite ores (worldgen is data: data/robotica/worldgen and neoforge/biome_modifier), the
  * Robotica alloys, the Alloy Smelter, Centrifuge and Assembler (Mk1-Mk4), the RTG and the reactor fuel pellets.
  */

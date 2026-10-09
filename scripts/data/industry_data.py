@@ -415,7 +415,7 @@ def tags():
 
 
 def data_maps():
-    """Fuel stats for the big energy module (docs/DESIGN.md "Big energy"): Tesla Spire, Core Reactor, Ring Collider."""
+    """Fuel stats for the big energy module: Tesla Spire, Core Reactor, Ring Collider."""
     waste = 'robotica:depleted_fuel_pellet'
     write(DATA / 'data_maps/item/spire_fuel.json', {'values': {
         '#c:ingots/thorium': {'energy': 400000},

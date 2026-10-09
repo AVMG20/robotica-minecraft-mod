@@ -13,7 +13,7 @@ import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
-/** Common (both sides) entry point of the automation module. See docs/DESIGN.md. */
+/** Common (both sides) entry point of the automation module. */
 public final class AutomationModule {
     private AutomationModule() {}
 
