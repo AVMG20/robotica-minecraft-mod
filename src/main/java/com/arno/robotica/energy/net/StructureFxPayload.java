@@ -57,8 +57,13 @@ public record StructureFxPayload(int kind, BlockPos origin, int minX, int minY, 
 
     /** Sends the effect to everyone tracking the controller's chunk. */
     public static void send(ServerLevel level, int kind, BlockPos origin, BoundingBox box, int color) {
-        PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(origin), new StructureFxPayload(kind, origin,
-                box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ(), color));
+        StructureFxPayload payload = null;
+        for (net.minecraft.server.level.ServerPlayer player : level.getChunkSource().chunkMap.getPlayers(new ChunkPos(origin), false)) {
+            // mock and fake players (game tests, other mods) have no Robotica channel
+            if (player instanceof net.neoforged.neoforge.common.util.FakePlayer || player.connection == null || !player.connection.hasChannel(TYPE)) continue;
+            if (payload == null) payload = new StructureFxPayload(kind, origin, box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ(), color);
+            PacketDistributor.sendToPlayer(player, payload);
+        }
     }
 
     /** Client side: hands the queued effects to {@code sink} and clears the queue. */
