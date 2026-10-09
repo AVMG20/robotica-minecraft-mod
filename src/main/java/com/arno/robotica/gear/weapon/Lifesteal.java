@@ -2,11 +2,10 @@ package com.arno.robotica.gear.weapon;
 
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.gear.GearFxPayload;
 import com.arno.robotica.core.module.ModuleItems;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.core.module.Modules;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -15,7 +14,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +37,8 @@ public final class Lifesteal {
         private long last;
         private final float[] healed = new float[SECOND];
         private final long[] tick = new long[SECOND];
+        /** Game time of the last heartbeat sound. */
+        private long lastBeat = Long.MIN_VALUE;
 
         private void refill(long now, float cap, int refillTicks) {
             if (tokens < 0.0F || now < last) {
@@ -110,7 +110,7 @@ public final class Lifesteal {
         if (amount < 0.01F) return 0.0F;
         if (!creative && costPer > 0) ItemEnergy.drain(weapon, (int) Math.ceil(amount * costPer));
         player.heal(amount);
-        effects(player, target);
+        effects(player, target, budget, now);
         if (budget.spend(now, amount) && cooldown > 0) {
             player.getCooldowns().addCooldown(cd, cooldown);
             player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 0.4F, 1.6F);
@@ -118,21 +118,21 @@ public final class Lifesteal {
         return amount;
     }
 
-    /** A thin crimson stream from the target to the player and a soft heartbeat. */
-    private static void effects(ServerPlayer player, LivingEntity target) {
+    /** A thin crimson stream from the target to the player (one packet, drawn by each client) and a soft heartbeat. */
+    private static void effects(ServerPlayer player, LivingEntity target, Budget budget, long now) {
         if (!(player.level() instanceof ServerLevel level)) return;
         Vec3 from = target.getBoundingBox().getCenter();
         Vec3 to = player.getBoundingBox().getCenter();
-        Vec3 d = to.subtract(from);
-        int steps = Math.min(24, Math.max(3, (int) (d.length() / 0.6)));
-        DustParticleOptions dust = new DustParticleOptions(new Vector3f(0.85F, 0.08F, 0.18F), 0.9F);
-        for (int i = 0; i <= steps; i++) {
-            Vec3 p = from.add(d.scale(i / (double) steps));
-            level.sendParticles(dust, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.0);
+        GearFxPayload.send(level, to.x, to.y, to.z, new GearFxPayload(GearFxPayload.DRAIN,
+                new float[]{(float) from.x, (float) from.y, (float) from.z, (float) to.x, (float) to.y, (float) to.z}, new int[0]));
+        // a heartbeat at most once a second, however fast the hits come
+        if (now - budget.lastBeat >= BEAT_GAP || now < budget.lastBeat) {
+            budget.lastBeat = now;
+            level.playSound(null, player.blockPosition(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 0.5F, 1.4F);
         }
-        level.sendParticles(ParticleTypes.HEART, to.x, to.y + 0.6, to.z, 1, 0.2, 0.1, 0.2, 0.0);
-        level.playSound(null, player.blockPosition(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 0.5F, 1.4F);
     }
+
+    private static final int BEAT_GAP = 20;
 
     public static void forget(UUID player) {
         BUDGETS.remove(player);

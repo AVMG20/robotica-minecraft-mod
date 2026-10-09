@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.gear.GearFxPayload;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -95,6 +96,7 @@ public class NullLanceItem extends EnergyWeaponItem {
         boolean hitBlock = block.getType() != HitResult.Type.MISS;
         if (hitBlock) end = block.getLocation();
         int hits = 0;
+        float[] hitPoints = new float[3 * 16];
         List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(1.5),
                 e -> e != shooter && e.isAlive() && !e.isSpectator());
         firing = true;
@@ -103,42 +105,36 @@ public class NullLanceItem extends EnergyWeaponItem {
                 AABB box = e.getBoundingBox().inflate(0.3);
                 if (box.contains(start) || box.clip(start, end).isPresent()) {
                     if (e.hurt(level.damageSources().playerAttack(shooter), DAMAGE)) {
+                        if (hits < 16) {
+                            Vec3 c = e.getBoundingBox().getCenter();
+                            hitPoints[hits * 3] = (float) c.x;
+                            hitPoints[hits * 3 + 1] = (float) c.y;
+                            hitPoints[hits * 3 + 2] = (float) c.z;
+                        }
                         hits++;
-                        Vec3 c = e.getBoundingBox().getCenter();
-                        level.sendParticles(ParticleTypes.REVERSE_PORTAL, c.x, c.y, c.z, 12, 0.25, 0.35, 0.25, 0.05);
-                        level.sendParticles(ParticleTypes.END_ROD, c.x, c.y, c.z, 4, 0.2, 0.3, 0.2, 0.08);
                     }
                 }
             }
         } finally {
             firing = false;
         }
-        beam(level, start, look, start.distanceTo(end));
-        if (hitBlock) {
-            Vec3 p = end;
-            level.sendParticles(ParticleTypes.FLASH, p.x, p.y, p.z, 1, 0.0, 0.0, 0.0, 0.0);
-            level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 14, 0.1, 0.1, 0.1, 0.12);
-            level.playSound(null, p.x, p.y, p.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.8F, 0.6F);
-        }
+        // One packet: each client draws the beam, the hits and the impact (GearFx).
+        int shown = Math.min(hits, 16);
+        float[] points = new float[9 + 3 * shown];
+        points[0] = (float) start.x;
+        points[1] = (float) start.y;
+        points[2] = (float) start.z;
+        points[3] = (float) look.x;
+        points[4] = (float) look.y;
+        points[5] = (float) look.z;
+        points[6] = (float) end.x;
+        points[7] = (float) end.y;
+        points[8] = (float) end.z;
+        System.arraycopy(hitPoints, 0, points, 9, 3 * shown);
+        Vec3 mid = start.add(end).scale(0.5);
+        GearFxPayload.send(level, mid.x, mid.y, mid.z, new GearFxPayload(GearFxPayload.LANCE, points, new int[]{hitBlock ? 1 : 0}));
+        if (hitBlock) level.playSound(null, end.x, end.y, end.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.8F, 0.6F);
         CoreSounds.play(level, shooter.blockPosition(), CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 0.9F, 1.0F);
         return hits;
-    }
-
-    /** Bright core with a slow purple spiral around it and a burst at the muzzle. */
-    private static void beam(ServerLevel level, Vec3 start, Vec3 look, double length) {
-        Vec3 muzzle = start.add(0, -0.2, 0).add(look.scale(0.8));
-        Vec3 side = look.cross(new Vec3(0, 1, 0));
-        if (side.lengthSqr() < 1.0E-4) side = new Vec3(1, 0, 0);
-        side = side.normalize().scale(0.3);
-        Vec3 up = side.cross(look).normalize().scale(0.3);
-        level.sendParticles(ParticleTypes.REVERSE_PORTAL, muzzle.x, muzzle.y, muzzle.z, 10, 0.1, 0.1, 0.1, 0.08);
-        for (double d = 0.5; d <= length; d += 0.5) {
-            Vec3 p = muzzle.add(look.scale(d));
-            level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 1, 0.01, 0.01, 0.01, 0.0);
-            double a = d * 1.4;
-            Vec3 s = p.add(side.scale(Math.cos(a))).add(up.scale(Math.sin(a)));
-            level.sendParticles(ParticleTypes.WITCH, s.x, s.y, s.z, 1, 0.0, 0.0, 0.0, 0.0);
-            if (((int) (d * 2)) % 4 == 0) level.sendParticles(ParticleTypes.PORTAL, p.x, p.y, p.z, 2, 0.15, 0.15, 0.15, 0.2);
-        }
     }
 }

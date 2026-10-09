@@ -222,5 +222,8 @@
   "robotica.configuration.sparkLampSounds": "Spark Lamp crackle and hum",
   "robotica.configuration.sparkLampFxRange": "Spark Lamp effect range",
   "robotica.configuration.tools": "Tools",
-  "robotica.configuration.areaOutlineAnimated": "Animated tool area outline"
+  "robotica.configuration.areaOutlineAnimated": "Animated tool area outline",
+  "robotica.configuration.areaBreakParticles": "Area break crumbs",
+  "robotica.configuration.weapons": "Weapons",
+  "robotica.configuration.weaponParticles": "Weapon bolts, beams and streams"
 }

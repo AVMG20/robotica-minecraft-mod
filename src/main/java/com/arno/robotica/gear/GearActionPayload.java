@@ -23,7 +23,9 @@ public record GearActionPayload(int action, int arg) implements CustomPacketPayl
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(TYPE, CODEC, GearActionPayload::handle);
+        var registrar = event.registrar("1");
+        registrar.playToServer(TYPE, CODEC, GearActionPayload::handle);
+        registrar.playToClient(GearFxPayload.TYPE, GearFxPayload.CODEC, GearFxPayload::handle);
     }
 
     private static void handle(GearActionPayload payload, IPayloadContext context) {

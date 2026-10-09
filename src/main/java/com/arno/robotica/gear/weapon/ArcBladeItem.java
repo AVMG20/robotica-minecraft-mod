@@ -4,13 +4,11 @@ import com.arno.robotica.core.module.ModuleTarget;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.gear.GearFxPayload;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.core.module.Modules;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
@@ -58,6 +56,8 @@ public class ArcBladeItem extends EnergyWeaponItem {
         boolean creative = attacker instanceof Player p && p.getAbilities().instabuild;
         List<LivingEntity> done = new ArrayList<>();
         done.add(target);
+        float[] struck = new float[3 * (arcs + 1)];
+        put(struck, 0, target);
         LivingEntity from = target;
         int hit = 0;
         arcing = stack;
@@ -69,19 +69,26 @@ public class ArcBladeItem extends EnergyWeaponItem {
                 if (hit >= CHAIN_TARGETS && !creative && !ItemEnergy.tryUse(stack, Modules.regulated(stack, GearConfig.chainCostPerArc()))) break;
                 done.add(next);
                 next.hurt(source, BASE_DAMAGE * 0.5F);
-                arc(level, from.getBoundingBox().getCenter(), next.getBoundingBox().getCenter());
-                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, next.getX(), next.getY(0.6), next.getZ(), 10, 0.3, 0.4, 0.3, 0.15);
-                CoreSounds.play(level, next.blockPosition(), CoreSounds.ARC_STRIKE, SoundSource.PLAYERS, 0.4F, 1.1F + hit * 0.08F);
+                put(struck, hit + 1, next);
                 from = next;
                 hit++;
             }
         } finally {
             arcing = ItemStack.EMPTY;
         }
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY(0.6), target.getZ(), 14, 0.3, 0.4, 0.3, 0.2);
-        CoreSounds.play(level, target.blockPosition(), CoreSounds.ARC_STRIKE, SoundSource.PLAYERS, 0.8F, 0.95F + level.random.nextFloat() * 0.1F);
-        if (hit >= CHAIN_TARGETS) level.playSound(null, target.blockPosition(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.35F, 1.6F);
+        // One packet for the whole chain (each client draws the bolts) and one strike sound that rises with each arc.
+        float[] points = hit == arcs ? struck : java.util.Arrays.copyOf(struck, 3 * (hit + 1));
+        GearFxPayload.send(level, target.getX(), target.getY(), target.getZ(), new GearFxPayload(GearFxPayload.ARC_CHAIN, points, new int[0]));
+        CoreSounds.play(level, target.blockPosition(), CoreSounds.ARC_STRIKE, SoundSource.PLAYERS, 0.8F + 0.05F * hit,
+                0.95F + 0.08F * hit + level.random.nextFloat() * 0.06F);
         return true;
+    }
+
+    private static void put(float[] chain, int i, LivingEntity e) {
+        Vec3 c = e.getBoundingBox().getCenter();
+        chain[i * 3] = (float) c.x;
+        chain[i * 3 + 1] = (float) c.y;
+        chain[i * 3 + 2] = (float) c.z;
     }
 
     /** The nearest living hostile within {@code range} of {@code from} that has not been hit yet, or null. */
@@ -90,25 +97,5 @@ public class ArcBladeItem extends EnergyWeaponItem {
         return level.getEntitiesOfClass(LivingEntity.class, from.getBoundingBox().inflate(range),
                         e -> e != attacker && !done.contains(e) && e.isAlive() && e instanceof Enemy && e.distanceToSqr(from) <= r2)
                 .stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(from))).orElse(null);
-    }
-
-    /** A jagged bolt: a few kinked segments of sparks with a bright core. */
-    static void arc(ServerLevel level, Vec3 a, Vec3 b) {
-        RandomSource random = level.random;
-        Vec3 d = b.subtract(a);
-        int kinks = Math.max(2, (int) (d.length() / 1.5));
-        Vec3 prev = a;
-        for (int k = 1; k <= kinks; k++) {
-            Vec3 point = a.add(d.scale(k / (double) kinks));
-            if (k < kinks) point = point.add((random.nextDouble() - 0.5) * 0.6, (random.nextDouble() - 0.5) * 0.6, (random.nextDouble() - 0.5) * 0.6);
-            Vec3 seg = point.subtract(prev);
-            int steps = Math.max(2, (int) (seg.length() / 0.25));
-            for (int i = 0; i <= steps; i++) {
-                Vec3 p = prev.add(seg.scale(i / (double) steps));
-                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 1, 0.03, 0.03, 0.03, 0.0);
-                if (i % 3 == 0) level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 1, 0.0, 0.0, 0.0, 0.0);
-            }
-            prev = point;
-        }
     }
 }
