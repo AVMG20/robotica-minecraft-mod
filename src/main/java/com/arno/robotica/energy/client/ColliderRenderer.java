@@ -15,10 +15,14 @@ import org.joml.Matrix4f;
 /**
  * Ring Collider: while charging, the pipe glows faintly, brighter as the charge fills. With the beam on, a glowing
  * beam runs through the whole loop and two particle bunches race around it in opposite directions, with comet tails,
- * faster as the beam grows; where they meet at the controller a white flash bursts. Plus the structure highlight.
+ * faster as the beam grows; where they meet at the controller sparks fly from its pipe mouths, arcs leap off it and a
+ * thin shockwave ring runs out. Plus the structure highlight.
  */
 public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockEntity> {
     private static final int TAIL = 6;
+    private static final float FLASH_TICKS = 6.0F;
+    /** Render thread only: re-seeded for the arcs of every collision. */
+    private static final java.util.Random FLASH = new java.util.Random();
     private static final Pipe CHARGE_GLOW = new Pipe(0.05), BEAM_CORE = new Pipe(0.035), BEAM_HALO = new Pipe(0.11);
 
     /**
@@ -74,12 +78,33 @@ public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockE
         float t = (time % lapTicks) / lapTicks;
         drawBunch(vc, m, pts, t, true, beam, 255, 120, 220);
         drawBunch(vc, m, pts, t, false, beam, 120, 255, 220);
-        float meet = Math.min(t, 1.0F - t) * lapTicks;
-        if (meet < 4.0F) {
-            float f = 1.0F - meet / 4.0F;
-            GlowDraw.cube(vc, m, pts[0], 0.2F + 0.9F * f * beam, 255, 255, 255, (int) (160 * f));
-            GlowDraw.cube(vc, m, pts[0], 0.6F + 1.6F * f * beam, 160, 200, 255, (int) (60 * f));
+        float age = t * lapTicks;                       // ticks since the bunches last met
+        if (age < FLASH_TICKS) drawCollision(vc, m, pts, age / FLASH_TICKS, beam, be.getBlockPos().asLong() * 31 + (long) (time / lapTicks));
+    }
+
+    /**
+     * Where the bunches meet: a white spark at both pipe mouths of the controller, short arcs leaping off it (re-rolled
+     * every other tick) and a thin shockwave ring running out level with the pipe, all fading over {@link #FLASH_TICKS}.
+     */
+    private static void drawCollision(VertexConsumer vc, Matrix4f m, Vec3[] pts, float age, float beam, long lapSeed) {
+        float f = 1.0F - age;
+        Vec3 c = pts[0];
+        for (int side = 0; side < 2; side++) {
+            Vec3 next = pts[side == 0 ? 1 : pts.length - 1];
+            double mx = c.x + (next.x - c.x) * 0.6, mz = c.z + (next.z - c.z) * 0.6;
+            GlowDraw.box(vc, m, (float) mx - 0.12F * f, (float) c.y - 0.12F * f, (float) mz - 0.12F * f,
+                    (float) mx + 0.12F * f, (float) c.y + 0.12F * f, (float) mz + 0.12F * f, 255, 255, 255, (int) (180 * f));
         }
+        FLASH.setSeed(lapSeed * 7 + (long) (age * FLASH_TICKS / 2));
+        int arcs = 3 + (int) (3 * beam);
+        for (int i = 0; i < arcs; i++) {
+            double yaw = FLASH.nextDouble() * Math.PI * 2, pitch = FLASH.nextDouble() * 1.1;
+            double reach = (0.9 + FLASH.nextDouble() * 0.8) * (0.6 + 0.4 * age);
+            double ex = c.x + Math.cos(yaw) * Math.cos(pitch) * reach, ey = c.y + Math.sin(pitch) * reach,
+                    ez = c.z + Math.sin(yaw) * Math.cos(pitch) * reach;
+            GlowDraw.bolt(vc, m, c.x, c.y, c.z, ex, ey, ez, FLASH.nextLong(), 4, 0.14, 0.022F, 170, 210, 255, (int) (220 * f), 0);
+        }
+        GlowDraw.ring(vc, m, c.x, c.y, c.z, 0.6 + 1.8 * age * beam, 0.02F, 20, 170, 215, 255, (int) (150 * f));
     }
 
     /** A bunch at lap fraction t (the reverse one runs the other way) with a fading tail. */

@@ -87,6 +87,25 @@ final class GlowDraw {
         bolt(vc, m, a.x, a.y, a.z, b.x, b.y, b.z, branches > 0 ? BOLT : FORK, seed, steps, jitter, width, r, g, bl, alpha, branches);
     }
 
+    /** {@link #bolt(VertexConsumer, Matrix4f, Vec3, Vec3, long, int, double, float, int, int, int, int, int)} on plain numbers. */
+    static void bolt(VertexConsumer vc, Matrix4f m, double ax, double ay, double az, double bx, double by, double bz,
+                     long seed, int steps, double jitter, float width, int r, int g, int bl, int alpha, int branches) {
+        bolt(vc, m, ax, ay, az, bx, by, bz, branches > 0 ? BOLT : FORK, seed, steps, jitter, width, r, g, bl, alpha, branches);
+    }
+
+    /** A thin level ring of {@code segments} beams around (cx, cy, cz): a shockwave. */
+    static void ring(VertexConsumer vc, Matrix4f m, double cx, double cy, double cz, double radius, float width, int segments,
+                     int r, int g, int bl, int alpha) {
+        double step = Math.PI * 2 / segments;
+        double px = cx + radius, pz = cz;
+        for (int i = 1; i <= segments; i++) {
+            double nx = cx + Math.cos(i * step) * radius, nz = cz + Math.sin(i * step) * radius;
+            beam(vc, m, px, cy, pz, nx, cy, nz, width, r, g, bl, alpha);
+            px = nx;
+            pz = nz;
+        }
+    }
+
     private static void bolt(VertexConsumer vc, Matrix4f m, double ax, double ay, double az, double bx, double by, double bz,
                              java.util.Random rnd, long seed, int steps, double jitter, float width,
                              int r, int g, int bl, int alpha, int branches) {
