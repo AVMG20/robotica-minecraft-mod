@@ -8,6 +8,7 @@ import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.side.RelativeSide;
+import com.arno.robotica.energy.net.StructureFxPayload;
 import com.arno.robotica.core.side.SideConfig;
 import com.arno.robotica.core.side.SideMode;
 import com.arno.robotica.core.item.CoreItems;
@@ -48,6 +49,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
@@ -187,6 +189,17 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     private boolean revalidate = true;
     private int age;
     private int lastCycleSound = -20;
+    /** Whether a validation ran since load (the first one takes the formed state from the block, quietly). */
+    private boolean validated;
+    /** Ticks of the last forming effect and spawn shimmer, to keep both calm. */
+    private int lastFormFx = -100, lastSpawnFx = -100;
+    /** The glow stays on this long after the last working tick, so a short stall does not flicker it. */
+    private static final int LIT_GRACE = 20;
+    private int litUntil;
+    /** Finished cycles are synced to clients (hologram flash) at most this often. */
+    private static final int SYNC_INTERVAL = 10;
+    private boolean syncPending;
+    private int lastSync = -100;
     // spawn mode: mobs around the replicator, counted at most once a second (speed cards may spawn every tick)
     @Nullable
     private EntityType<?> countedType;
@@ -353,17 +366,37 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         revalidate = false;
         ReplicatorStructure.Status now = ReplicatorStructure.validate(level, pos, state.getValue(ReplicatorControllerBlock.FACING));
         if (now == ReplicatorStructure.Status.UNLOADED) return;
-        boolean wasFormed = status.formed();
+        // after a load the block state still knows whether it stood, so a standing Replicator stays quiet
+        boolean wasFormed = validated ? status.formed() : state.getValue(ReplicatorControllerBlock.FORMED);
+        validated = true;
         status = now;
         if (wasFormed != now.formed()) {
-            CoreSounds.play(level, pos, now.formed() ? CoreSounds.REPLICATOR_FORM : CoreSounds.REPLICATOR_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
             if (now.formed()) com.arno.robotica.core.progress.Milestones.awardOwner(level, pos, owner, com.arno.robotica.core.progress.Milestones.REPLICATOR_FORMED);
+            if (age - lastFormFx >= 10) {
+                lastFormFx = age;
+                CoreSounds.play(level, pos, now.formed() ? CoreSounds.REPLICATOR_FORM : CoreSounds.REPLICATOR_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
+                frameFx(level, pos, state, now.formed() ? StructureFxPayload.FORM : StructureFxPayload.UNFORM);
+            }
         }
         if (state.getValue(ReplicatorControllerBlock.FORMED) != now.formed()) {
             BlockState next = state.setValue(ReplicatorControllerBlock.FORMED, now.formed());
             if (!now.formed()) next = next.setValue(ReplicatorControllerBlock.LIT, false);
             level.setBlock(pos, next, Block.UPDATE_CLIENTS);
         }
+    }
+
+    /** Frame light colour of the forming effect and the spawn shimmer: the hologram's mint. */
+    private static final int FX_COLOR = 0x5CFFC8;
+
+    /** Light along the 3x3x3 frame edges as it forms or breaks (client drawn). */
+    private static void frameFx(ServerLevel level, BlockPos pos, BlockState state, int kind) {
+        BlockPos center = ReplicatorStructure.center(pos, state.getValue(ReplicatorControllerBlock.FACING));
+        StructureFxPayload.send(level, kind, pos, BoundingBox.fromCorners(center.offset(-1, -1, -1), center.offset(1, 1, 1)), FX_COLOR);
+    }
+
+    /** The controller broke while formed: the frame lets go of its light. */
+    public void onControllerRemoved(ServerLevel level, BlockPos pos, BlockState state) {
+        if (status.formed()) frameFx(level, pos, state, StructureFxPayload.UNFORM);
     }
 
     // ---- server tick ----
@@ -417,7 +450,13 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             }
         }
         pause = nextPause;
-        setWorking(level, pos, state, working);
+        if (working) litUntil = age + LIT_GRACE;
+        setWorking(level, pos, state, working || (status.formed() && age < litUntil));
+        if (syncPending && age - lastSync >= SYNC_INTERVAL) {
+            syncPending = false;
+            lastSync = age;
+            setChangedAndSync();
+        }
         sides.tick(level);
         if (working && age % 80 == 0) {
             CoreSounds.play(level, pos, CoreSounds.REPLICATOR_HUM, SoundSource.BLOCKS, 0.8F, 1.0F);
@@ -450,7 +489,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             cycleSound(level, pos, CoreSounds.REPLICATOR_CYCLE);
         }
         cycles++;
-        setChangedAndSync();
+        setChanged();
+        syncPending = true;
         return Pause.NONE;
     }
 
@@ -506,6 +546,12 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             if (entity == null) return Pause.NO_SPACE;
             level.addFreshEntityWithPassengers(entity);
             level.gameEvent(null, net.minecraft.world.level.gameevent.GameEvent.ENTITY_PLACE, candidate);
+            if (age - lastSpawnFx >= 5) {
+                lastSpawnFx = age;
+                int height = Math.max(1, Math.min(4, (int) Math.ceil(entity.getBbHeight())));
+                StructureFxPayload.send(level, StructureFxPayload.SPAWN, pos, new BoundingBox(candidate.getX(), candidate.getY(), candidate.getZ(),
+                        candidate.getX(), candidate.getY() + height - 1, candidate.getZ()), FX_COLOR);
+            }
             nearbySame++;
             nearbyTotal++;
             return Pause.NONE;

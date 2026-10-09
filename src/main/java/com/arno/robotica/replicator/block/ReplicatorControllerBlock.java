@@ -150,6 +150,7 @@ public class ReplicatorControllerBlock extends Block implements EntityBlock {
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ReplicatorControllerBlockEntity be) {
             be.dropContents(level, pos);
+            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) be.onControllerRemoved(serverLevel, pos, state);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

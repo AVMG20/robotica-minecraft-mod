@@ -156,6 +156,12 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
 
     // ---------------------------------------------------------------- structure
 
+    /** Frame light when it forms: warm amber. */
+    @Override
+    protected int formColor() {
+        return 0xFFA046;
+    }
+
     @Override
     protected CuboidSpec spec() {
         return SPEC;

@@ -125,6 +125,11 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_HUM = reg("collider_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_COLLIDE = reg("collider_collide");
     public static final DeferredHolder<SoundEvent, SoundEvent> COLLIDER_MATTER = reg("collider_matter");
+    /** Multiblocks (Capacitor Bank, Core Reactor, Tesla Spire, Ring Collider) forming and breaking. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> STRUCTURE_FORM = reg("structure_form");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STRUCTURE_UNFORM = reg("structure_unform");
+    /** Played client side where the light of a forming frame closes (also the Replicator's). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> STRUCTURE_SETTLE = reg("structure_settle");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {
