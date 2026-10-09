@@ -6,14 +6,11 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-
-import java.util.List;
 
 /**
  * Ring Collider: while charging, the pipe glows faintly, brighter as the charge fills. With the beam on, a glowing
@@ -21,8 +18,23 @@ import java.util.List;
  * faster as the beam grows; where they meet at the controller a white flash bursts. Plus the structure highlight.
  */
 public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockEntity> {
-    private static final double PIPE_Y = 0.5;
     private static final int TAIL = 6;
+    private static final Pipe CHARGE_GLOW = new Pipe(0.05), BEAM_CORE = new Pipe(0.035), BEAM_HALO = new Pipe(0.11);
+
+    /**
+     * A glowing beam along one ring step, as two crossed ribbons. The ring only runs north, south, east and west, so
+     * the ribbon widths are fixed vectors: nothing is allocated per segment and frame.
+     */
+    private record Pipe(Vec3 acrossX, Vec3 acrossZ, Vec3 up) {
+        Pipe(double width) {
+            this(new Vec3(width, 0, 0), new Vec3(0, 0, width), new Vec3(0, width, 0));
+        }
+
+        void draw(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, int r, int g, int bl, int alpha) {
+            GlowDraw.ribbon(vc, m, a, b, a.x == b.x ? acrossX : acrossZ, r, g, bl, alpha);
+            GlowDraw.ribbon(vc, m, a, b, up, r, g, bl, alpha);
+        }
+    }
 
     public ColliderRenderer(BlockEntityRendererProvider.Context ctx) {
         super(ctx);
@@ -32,16 +44,10 @@ public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockE
     public void render(ColliderBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         super.render(be, partialTick, pose, buffers, light, overlay);
         Level level = be.getLevel();
-        List<BlockPos> ring = be.ring();
         int beamStep = be.shownBeam(), chargeStep = be.shownCharge();
-        if (level == null || ring.size() < 4 || (beamStep == 0 && chargeStep == 0)) return;
-        BlockPos origin = be.getBlockPos();
-        int n = ring.size();
-        Vec3[] pts = new Vec3[n];
-        for (int i = 0; i < n; i++) {
-            BlockPos p = ring.get(i);
-            pts[i] = new Vec3(p.getX() - origin.getX() + 0.5, p.getY() - origin.getY() + PIPE_Y, p.getZ() - origin.getZ() + 0.5);
-        }
+        if (level == null || be.ring().size() < 4 || (beamStep == 0 && chargeStep == 0)) return;
+        Vec3[] pts = be.ringCentres();
+        int n = pts.length;
         VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
         Matrix4f m = pose.last().pose();
         float time = level.getGameTime() % 24000L + partialTick;
@@ -50,16 +56,17 @@ public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockE
             // spinning up: the pipe glows in step with the charge
             float glow = chargeStep / 10.0F * (0.7F + 0.3F * Mth.sin(time * 0.2F));
             int alpha = (int) (25 + 60 * glow);
-            for (int i = 0; i < n; i++) GlowDraw.beam(vc, m, pts[i], pts[(i + 1) % n], 0.05F, 80, 140, 255, alpha);
+            for (int i = 0; i < n; i++) CHARGE_GLOW.draw(vc, m, pts[i], pts[(i + 1) % n], 80, 140, 255, alpha);
             return;
         }
 
         float beam = beamStep / 10.0F;
         float shimmer = 0.85F + 0.15F * Mth.sin(time * 0.9F);
+        int coreAlpha = (int) (200 * beam * shimmer), haloAlpha = (int) (70 * beam);
         for (int i = 0; i < n; i++) {
             Vec3 a = pts[i], b = pts[(i + 1) % n];
-            GlowDraw.beam(vc, m, a, b, 0.035F, 210, 245, 255, (int) (200 * beam * shimmer));
-            GlowDraw.beam(vc, m, a, b, 0.11F, 70, 150, 255, (int) (70 * beam));
+            BEAM_CORE.draw(vc, m, a, b, 210, 245, 255, coreAlpha);
+            BEAM_HALO.draw(vc, m, a, b, 70, 150, 255, haloAlpha);
         }
 
         // two bunches, one each way, meeting at the controller (index 0) once per lap
@@ -97,9 +104,7 @@ public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockE
 
     @Override
     public AABB getRenderBoundingBox(ColliderBlockEntity be) {
-        AABB own = super.getRenderBoundingBox(be);
-        for (BlockPos p : be.ring()) own = own.minmax(new AABB(p));
-        return own.inflate(2.5);
+        return super.getRenderBoundingBox(be).minmax(be.ringBounds()).inflate(2.5);
     }
 
     @Override

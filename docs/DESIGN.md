@@ -290,10 +290,11 @@ Big power for packs next to Mekanism, Thermal and Immersive Engineering: a Capac
 - Segments: Accelerator Segment (Superconductor Coil) 1,000 FE/t and 1 luminosity, Resonant Segment (Resonant Lattice) 2,500 FE/t and 2 luminosity (`colliderSegmentPower`, `colliderResonantPower`).
 - Spin-up: FE in through the controller (at most 2M FE/t) until the charge reaches 500k FE per segment (`colliderSpinupPerSegment`; 32M for a 64-block ring). With fuel and switched on, the charge is spent and the beam starts: output ramps from 0 to full over 10 s.
 - Fuel: item data map `robotica:collider_fuel` `{"ticks": int}`: Fusion Fuel Pellet 6,000 ticks for a 64-block ring; a ring of L blocks burns a pellet every `6,000 x 64 / L` ticks. Out of fuel for 5 s, the beam collapses and needs a new spin-up.
-- Output `= sum of segment power` FE/t (times the generation multiplier) into a 50M buffer; the controller sends it out of its top and bottom (and any side without a segment).
+- Output `= sum of segment power` FE/t (times the generation multiplier) into a 50M buffer; the controller sends it out of its top and bottom (and any side without a segment). While the buffer is full the beam pauses: no fuel burns, no Strange Matter.
 - Strange Matter: luminosity adds up every tick; every 768,000 makes one Strange Matter in the 3 output slots (a 64-block Accelerator ring: one per 10 minutes, a 256-block Resonant ring one per 75 s). Full output slots do not stop the power. Strange Matter is the Age 4 resource: Null Circuits without a nether star and Antigrav Cores in the Assembler.
-- Scale: 64 Accelerator Segments 64,000 FE/t, 128 Resonant 320,000 FE/t, 256 Resonant 640,000 FE/t.
+- Scale (the controller is one loop block, a loop is always an even length): 64 blocks of Accelerator Segments 63,000 FE/t, 128 of Resonant 317,500 FE/t, 256 of Resonant 637,500 FE/t.
 - GUI: spin-up charge, beam bar, FE/t and buffer, ring length / segments, Strange Matter progress, fuel and output slots, Running / Stopped button, status and structure line. The client draws the beam: bright bunches racing round the ring, a flash and sparks at the controller.
+- Sounds (all at the controller): a chime when the spin-up is full but there is no fuel, the beam lighting and dying, a hum every 6 s while it runs, a collision crack now and then at full beam, a chime per Strange Matter.
 
 **Data maps** (registered by this module, synced, optional on clients; JEI shows an info page for each entry):
 - `robotica:spire_conductor` (blocks): `{"power": int, "efficiency": float}`; `robotica:spire_fuel` (items): `{"energy": int, "waste": "<item id>"}` (waste optional).
