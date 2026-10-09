@@ -61,7 +61,7 @@ final class AreaOutline {
 
     // Sheet regions in 32 px texture units (u0, v0, u1, v1); the edge strip is sampled away from its ends.
     private static final float T = 1 / 32.0F;
-    private static final float[] EDGE = {8 * T, 0, 24 * T, 16 * T}, DOT = {0, 16 * T, 16 * T, 1}, FLAT = {20 * T, 20 * T, 28 * T, 28 * T};
+    private static final float[] EDGE = {8 * T, 0.5F * T, 24 * T, 15.5F * T}, DOT = {0, 16 * T, 16 * T, 1}, FLAT = {20 * T, 20 * T, 28 * T, 28 * T};
 
     // Colours (r, g, b).
     private static final int[] HALO = {60, 150, 255}, CORE = {200, 240, 255}, CORNER = {150, 215, 255}, TINT = {70, 160, 255};

@@ -218,6 +218,8 @@
   "robotica.configuration.exoEffects": "Exo-Frame effects",
   "robotica.configuration.xrayOutlines": "Sonar and thermal outlines",
   "robotica.configuration.flightSound": "Flight thruster sound",
+  "robotica.configuration.exoParticles": "Exo-Frame particles and flashes",
+  "robotica.configuration.cooldownSounds": "Ability ready beep",
   "module.robotica.night_vision": "Night Vision",
   "module.robotica.rebreather": "Rebreather",
   "module.robotica.robot_hud": "Robot HUD",

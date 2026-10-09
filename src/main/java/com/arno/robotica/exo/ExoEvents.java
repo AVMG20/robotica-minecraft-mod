@@ -88,6 +88,14 @@ public final class ExoEvents {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onLogout(player);
     }
 
+    /** A player comes into view of another: send the flying state for the thruster sound and trail. */
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getEntity() instanceof ServerPlayer watcher && event.getTarget() instanceof ServerPlayer target) {
+            ExoTicker.onStartTracking(watcher, target);
+        }
+    }
+
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         ExoTicker.clearAll();

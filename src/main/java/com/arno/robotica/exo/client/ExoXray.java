@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
@@ -73,6 +74,12 @@ final class ExoXray {
     private static int radius;
     private static long until;
     private static int duration = 1;
+    // Sonar front ring: where the ping started, how far the scan has got (sections, then blocks shown), when it ended.
+    private static double ringX, ringY, ringZ;
+    private static SectionPos ringSection = SectionPos.of(BlockPos.ZERO);
+    private static float front, frontPrev, scanned;
+    private static long frontDone = Long.MIN_VALUE;
+    private static final int RING_FADE = 12;
     // Thermal sight
     private static final List<Entity> thermal = new ArrayList<>();
     /** The level the outlines belong to; a dimension change (new level object) clears them. */
@@ -115,6 +122,7 @@ final class ExoXray {
         } else {
             scan(level);
         }
+        advanceFront(level.getGameTime());
         if (level.getGameTime() % 10 == 0) updateThermal(player, level);
     }
 
@@ -124,6 +132,8 @@ final class ExoXray {
         queue.clear();
         thermal.clear();
         until = 0;
+        frontDone = Long.MIN_VALUE;
+        front = frontPrev = radius = 0;
     }
 
     private static void start(LocalPlayer player, ClientLevel level, ExoSonarPayload ping) {
@@ -132,6 +142,13 @@ final class ExoXray {
         queue.clear();
         center = player.blockPosition();
         radius = ping.radius();
+        ringX = player.getX();
+        ringY = player.getY() + 1.0;
+        ringZ = player.getZ();
+        ringSection = SectionPos.of(center);
+        front = frontPrev = 0.5F;
+        scanned = 0;
+        frontDone = Long.MIN_VALUE;
         duration = ping.duration();
         until = level.getGameTime() + duration;
         // Nearest sections first, so the ping spreads outward like a wave.
@@ -161,6 +178,7 @@ final class ExoXray {
         long r2 = (long) radius * radius;
         for (int n = 0; n < SECTIONS_PER_TICK && !queue.isEmpty() && ores.size() < MAX_ORES; n++) {
             SectionPos sp = queue.poll();
+            scanned = (float) Math.sqrt(dist2(sp, ringSection)) * 16;
             int index = level.getSectionIndexFromSectionY(sp.y());
             if (index < 0 || index >= level.getSectionsCount() || !level.hasChunk(sp.x(), sp.z())) continue;
             LevelChunk chunk = level.getChunk(sp.x(), sp.z());
@@ -179,6 +197,52 @@ final class ExoXray {
                 }
             }
         }
+    }
+
+    /**
+     * Moves the sonar ring toward the scan front: the distance of the sections scanned so far (all of the radius once the
+     * scan is done), eased and kept between 0.6 and 2 blocks a tick so a fast scan still reads as a wave.
+     */
+    private static void advanceFront(long now) {
+        frontPrev = front;
+        if (radius <= 0 || frontDone != Long.MIN_VALUE) return;
+        float target = queue.isEmpty() || ores.size() >= MAX_ORES || now > until ? radius : Math.min(radius, scanned);
+        float step = Mth.clamp((target - front) * 0.3F, 0.6F, 2.0F);
+        front = Math.min(radius, front + step);
+        if (front >= radius) frontDone = now;
+    }
+
+    /** True while the sonar front ring shows. */
+    static boolean sonarRingVisible() {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || radius <= 0 || front <= 0) return false;
+        return frontDone == Long.MIN_VALUE || level.getGameTime() - frontDone < RING_FADE;
+    }
+
+    static float sonarRingRadius(float partial) {
+        return Mth.lerp(partial, frontPrev, front);
+    }
+
+    /** Fades in over the first blocks, thins as it spreads, fades out once it reached the radius. */
+    static float sonarRingAlpha(float partial) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return 0;
+        float r = sonarRingRadius(partial);
+        float a = Math.min(1, r / 3) * (1 - 0.4F * r / Math.max(1, radius));
+        if (frontDone != Long.MIN_VALUE) a *= Math.max(0, 1 - ((level.getGameTime() - frontDone) + partial) / RING_FADE);
+        return a;
+    }
+
+    static double sonarX() {
+        return ringX;
+    }
+
+    static double sonarY() {
+        return ringY;
+    }
+
+    static double sonarZ() {
+        return ringZ;
     }
 
     /** A rough colour per ore from its registry name. */

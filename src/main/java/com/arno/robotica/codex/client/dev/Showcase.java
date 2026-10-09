@@ -737,6 +737,15 @@ public final class Showcase {
         return BuiltInRegistries.ITEM.get(Robotica.id(name));
     }
 
+    /** Dev: sends an Exo-Frame effect for the armor stand tagged exo_fx to the showcase player. */
+    private static void exoFx(byte kind) {
+        step(1, () -> server(sp -> {
+            for (var e : sp.serverLevel().getEntities(EntityType.ARMOR_STAND, e -> e.getTags().contains("exo_fx"))) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp, new com.arno.robotica.exo.net.ExoFxPayload(e.getId(), kind));
+            }
+        }));
+    }
+
     private static void command(ServerPlayer sp, String cmd) {
         MinecraftServer s = sp.server;
         s.getCommands().performPrefixedCommand(s.createCommandSourceStack().withSuppressedOutput(), cmd);
@@ -828,6 +837,36 @@ public final class Showcase {
             camera(3, Y + 1.2, 104.6, 180, 6);
             step(20, () -> {});
             shot("14_exo_frames");
+        }
+
+        // Dev only (not in shots.py): Exo-Frame effects on an armor stand in Mk4 armor, then the Sonar front ring.
+        if (wants("exo_fx")) {
+            step(20, () -> server(sp -> {
+                StringBuilder armor = new StringBuilder();
+                for (int i = 0; i < 4; i++) {
+                    if (i > 0) armor.append(',');
+                    armor.append("{id:\"robotica:exo_").append(ARMOR_NAMES[i]).append("_mk4\",count:1}");
+                }
+                sp.serverLevel().setBlock(new BlockPos(20, Y - 1, 100), Blocks.POLISHED_DEEPSLATE.defaultBlockState(), 3);
+                command(sp, "summon minecraft:armor_stand 20.5 " + Y + " 100.5 {Tags:[\"exo_fx\"],Rotation:[0f,0f],NoBasePlate:1b,ShowArms:1b,ArmorItems:[" + armor + "]}");
+            }));
+            camera(20.5, Y + 0.6, 103.4, 180, 26);
+            // a step runs its action, then waits its delay
+            step(20, () -> {});
+            exoFx(com.arno.robotica.exo.net.ExoFxPayload.MED);
+            step(5, () -> {});
+            grab(40, "dev_exo_fx_med");
+            exoFx(com.arno.robotica.exo.net.ExoFxPayload.SHIELD_FULL);
+            step(2, () -> {});
+            grab(30, "dev_exo_fx_shield");
+            exoFx(com.arno.robotica.exo.net.ExoFxPayload.SPRING);
+            exoFx(com.arno.robotica.exo.net.ExoFxPayload.LANDED);
+            step(3, () -> {});
+            grab(30, "dev_exo_fx_land");
+            step(8, () -> server(sp -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp,
+                    new com.arno.robotica.exo.net.ExoSonarPayload(24, 200))));
+            grab(5, "dev_exo_fx_sonar_a");
+            grab(30, "dev_exo_fx_sonar_b");
         }
 
         // Industry machines Mk1 to Mk4, one row per machine, each working on something.

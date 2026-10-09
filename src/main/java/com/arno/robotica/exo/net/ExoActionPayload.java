@@ -25,6 +25,7 @@ public record ExoActionPayload(int action) implements CustomPacketPayload {
         var registrar = event.registrar("1");
         registrar.playToServer(TYPE, CODEC, ExoActionPayload::handle);
         registrar.playToClient(ExoSonarPayload.TYPE, ExoSonarPayload.CODEC, ExoSonarPayload::handle);
+        registrar.playToClient(ExoFxPayload.TYPE, ExoFxPayload.CODEC, ExoFxPayload::handle);
     }
 
     private static void handle(ExoActionPayload payload, IPayloadContext context) {

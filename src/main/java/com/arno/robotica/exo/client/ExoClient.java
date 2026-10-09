@@ -25,5 +25,7 @@ public final class ExoClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoXray::onClientTick);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, ExoXray::onRenderLevel);
         NeoForge.EVENT_BUS.addListener(PlayerTickEvent.Pre.class, ExoClientEffects::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoFx::onClientTick);
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, ExoFx::onRenderLevel);
     }
 }

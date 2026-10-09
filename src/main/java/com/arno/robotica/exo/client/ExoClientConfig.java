@@ -14,7 +14,7 @@ public final class ExoClientConfig {
     private static final ModConfigSpec.BooleanValue HUD;
     private static final ModConfigSpec.EnumValue<Corner> CORNER;
     private static final ModConfigSpec.IntValue OFFSET_X, OFFSET_Y;
-    private static final ModConfigSpec.BooleanValue OUTLINES, FLIGHT_SOUND;
+    private static final ModConfigSpec.BooleanValue OUTLINES, FLIGHT_SOUND, PARTICLES, COOLDOWN_SOUNDS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -26,7 +26,10 @@ public final class ExoClientConfig {
         b.pop();
         b.push("exoEffects");
         OUTLINES = b.comment("Draw the Sonar Pulse and thermal sight outlines through walls.").define("xrayOutlines", true);
-        FLIGHT_SOUND = b.comment("Play the thruster loop while flying with the Flight module.").define("flightSound", true);
+        FLIGHT_SOUND = b.comment("Thruster sound of suits flying with the Flight module (yours and other players').").define("flightSound", true);
+        PARTICLES = b.comment("Thruster trails, dash, landing and spring puffs, shield and injector flashes, the sonar ring.")
+                .define("exoParticles", true);
+        COOLDOWN_SOUNDS = b.comment("Quiet beep when Dash, Sonar, Med Injector or Overclock is ready again.").define("cooldownSounds", true);
         b.pop();
         SPEC = b.build();
     }
@@ -53,5 +56,13 @@ public final class ExoClientConfig {
 
     public static boolean flightSound() {
         return !SPEC.isLoaded() || FLIGHT_SOUND.get();
+    }
+
+    public static boolean particles() {
+        return !SPEC.isLoaded() || PARTICLES.get();
+    }
+
+    public static boolean cooldownSounds() {
+        return !SPEC.isLoaded() || COOLDOWN_SOUNDS.get();
     }
 }

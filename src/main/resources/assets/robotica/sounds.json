@@ -2170,5 +2170,194 @@
         "pitch": 0.95
       }
     ]
+  },
+  "exo_thruster": {
+    "subtitle": "subtitles.robotica.exo_thruster",
+    "sounds": [
+      {
+        "name": "minecraft:item/elytra/elytra_loop",
+        "type": "file",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "exo_land": {
+    "subtitle": "subtitles.robotica.exo_land",
+    "sounds": [
+      {
+        "name": "minecraft:block/heavy_core/step1",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.15
+      },
+      {
+        "name": "minecraft:block/heavy_core/step2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.15
+      },
+      {
+        "name": "minecraft:block/heavy_core/step3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.15
+      },
+      {
+        "name": "minecraft:block/heavy_core/step4",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.15
+      }
+    ]
+  },
+  "exo_med_hiss": {
+    "subtitle": "subtitles.robotica.exo_med_hiss",
+    "sounds": [
+      {
+        "name": "minecraft:item/bottle/fill_dragonbreath1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:item/bottle/fill_dragonbreath2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "exo_med_chime": {
+    "subtitle": "subtitles.robotica.exo_med_chime",
+    "sounds": [
+      {
+        "name": "minecraft:note/icechime",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "exo_dash": {
+    "subtitle": "subtitles.robotica.exo_dash",
+    "sounds": [
+      {
+        "name": "minecraft:item/trident/riptide1",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:item/trident/riptide2",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:item/trident/riptide3",
+        "type": "file",
+        "volume": 0.45,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "exo_spring": {
+    "subtitle": "subtitles.robotica.exo_spring",
+    "sounds": [
+      {
+        "name": "minecraft:mob/slime/small1",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:mob/slime/small2",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:mob/slime/small3",
+        "type": "file",
+        "volume": 0.35,
+        "pitch": 1.7
+      }
+    ]
+  },
+  "exo_ready": {
+    "subtitle": "subtitles.robotica.exo_ready",
+    "sounds": [
+      {
+        "name": "minecraft:note/bit",
+        "type": "file",
+        "volume": 0.18,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "exo_denied": {
+    "subtitle": "subtitles.robotica.exo_denied",
+    "sounds": [
+      {
+        "name": "minecraft:block/cherrywood_button/cherrywood_click",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "exo_shield_block": {
+    "subtitle": "subtitles.robotica.exo_shield_block",
+    "sounds": [
+      {
+        "name": "minecraft:item/shield/block1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.15
+      },
+      {
+        "name": "minecraft:item/shield/block2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.15
+      },
+      {
+        "name": "minecraft:item/shield/block3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.15
+      },
+      {
+        "name": "minecraft:item/shield/block4",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.15
+      },
+      {
+        "name": "minecraft:item/shield/block5",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.15
+      }
+    ]
+  },
+  "exo_shield_spark": {
+    "subtitle": "subtitles.robotica.exo_shield_spark",
+    "sounds": [
+      {
+        "name": "minecraft:mob/bee/sting",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.9
+      },
+      {
+        "name": "minecraft:random/fizz",
+        "type": "file",
+        "volume": 0.15,
+        "pitch": 2.0
+      }
+    ]
   }
 }
