@@ -30,12 +30,14 @@ public class CoreReactorRenderer extends ControllerHighlightRenderer<CoreReactor
         super(ctx);
     }
 
-    /** Shell colour per core: Servo cyan, Magma orange, Antigrav violet, anything else white. */
     /** Per reactor: spin angle, its speed and the time it was last drawn, so the core speeds up and slows down smoothly. */
     private final java.util.Map<CoreReactorBlockEntity, float[]> spins = new java.util.WeakHashMap<>();
+    /** Re-seeded every frame for the shell lightning (render thread only). */
+    private final java.util.Random rnd = new java.util.Random();
 
     private float spin(CoreReactorBlockEntity be, float time, boolean running) {
-        float[] s = spins.computeIfAbsent(be, k -> new float[]{0F, 0.8F, time});
+        float[] s = spins.get(be);
+        if (s == null) spins.put(be, s = new float[]{0F, 0.8F, time});
         float dt = time - s[2];
         if (dt < 0 || dt > 40) dt = 0; // wrapped, or not drawn for a while
         s[1] += ((running ? 4.0F : 0.8F) - s[1]) * Math.min(1F, dt * 0.05F);
@@ -44,6 +46,7 @@ public class CoreReactorRenderer extends ControllerHighlightRenderer<CoreReactor
         return s[0];
     }
 
+    /** Shell colour per core: Servo cyan, Magma orange, Antigrav violet, anything else white. */
     private static int coreColor(ItemStack core) {
         String id = BuiltInRegistries.ITEM.getKey(core.getItem()).getPath();
         if (id.contains("magma")) return 0xFF7A2A;
@@ -103,7 +106,7 @@ public class CoreReactorRenderer extends ControllerHighlightRenderer<CoreReactor
         }
 
         // lightning crawling over the shell, re-rolled five times a second
-        java.util.Random rnd = new java.util.Random(origin.asLong() * 17 + (long) (time / 4));
+        rnd.setSeed(origin.asLong() * 17 + (long) (time / 4));
         for (int k = 0; k < 3; k++) {
             Vec3 a = c.add(rnd.nextGaussian() * 0.5, rnd.nextGaussian() * 0.5, rnd.nextGaussian() * 0.5);
             Vec3 e = c.add(rnd.nextGaussian() * 0.9, rnd.nextGaussian() * 0.9, rnd.nextGaussian() * 0.9);

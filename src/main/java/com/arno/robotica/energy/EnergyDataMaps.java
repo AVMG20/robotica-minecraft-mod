@@ -118,6 +118,11 @@ public final class EnergyDataMaps {
         TEST_CORE.put(item, core);
     }
 
+    /** A datapack dropping a core from robotica:reactor_core, for game tests. */
+    public static void unregisterTestCore(Item item) {
+        TEST_CORE.remove(item);
+    }
+
     public static void registerTestFuel(Item item, ReactorFuel fuel) {
         TEST_REACTOR_FUEL.put(item, fuel);
     }
