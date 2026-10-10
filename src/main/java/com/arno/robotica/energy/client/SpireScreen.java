@@ -18,7 +18,7 @@ import java.util.Locale;
 
 /**
  * Tesla Spire GUI: FE buffer, output, the column (conductors, base power, efficiency), the crown's altitude, weather
- * and neighbours, the last lightning strike, fuel and waste slots with the burn bar, a mute switch, status and
+ * and neighbours, the last lightning strike, fuel and waste slots with the burn bar, a strike sound switch, status and
  * structure lines.
  */
 public class SpireScreen extends ControllerScreen<SpireMenu> {
@@ -43,21 +43,21 @@ public class SpireScreen extends ControllerScreen<SpireMenu> {
     protected void init() {
         super.init();
         addShowButton(150, 92);
-        muteButton = addRenderableWidget(new IconButton(leftPos + 150, topPos + 72, 18, new ItemStack(Items.NOTE_BLOCK), true,
-                b -> PacketDistributor.sendToServer(new ControllerActionPayload(menu.pos(), ControllerActionPayload.SET_MUTED, menu.muted() ? 0 : 1))));
+        muteButton = addRenderableWidget(new IconButton(leftPos + 150, topPos + 72, 18, new ItemStack(Items.LIGHTNING_ROD), true,
+                b -> PacketDistributor.sendToServer(new ControllerActionPayload(menu.pos(), ControllerActionPayload.SET_STRIKE_MUTED, menu.strikeMuted() ? 0 : 1))));
         shownMuted = null;
         updateMuteButton();
     }
 
     private void updateMuteButton() {
-        boolean muted = menu.muted(), allowed = menu.canControl();
+        boolean muted = menu.strikeMuted(), allowed = menu.canControl();
         if (shownMuted != null && shownMuted == muted && shownAllowed == allowed) return;
         shownMuted = muted;
         shownAllowed = allowed;
         muteButton.active = allowed;
         muteButton.setOn(!muted);
         muteButton.hint(Component.translatable(!allowed ? "gui.robotica.energy.not_allowed"
-                : muted ? "gui.robotica.energy.spire.muted_tip" : "gui.robotica.energy.spire.sound_tip"));
+                : muted ? "gui.robotica.energy.spire.strike_muted_tip" : "gui.robotica.energy.spire.strike_sound_tip"));
     }
 
     @Override

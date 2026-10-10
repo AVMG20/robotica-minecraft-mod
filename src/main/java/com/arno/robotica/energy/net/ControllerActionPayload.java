@@ -14,13 +14,13 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
- * Client to server: a button in a controller GUI (the Ring Collider's on/off switch, the Tesla Spire's mute). Only accepted when the player's open menu belongs to that
+ * Client to server: a button in a controller GUI (the Ring Collider's on/off switch, the Tesla Spire's strike sound). Only accepted when the player's open menu belongs to that
  * position and is still valid (in reach), so it can not be used remotely, and only from the owner, the owner's team or
  * an operator ({@link StructureControllerBlockEntity#canControl}). Other players may watch.
  */
 public record ControllerActionPayload(BlockPos pos, int action, int value) implements CustomPacketPayload {
     public static final int SET_ENABLED = 2;
-    public static final int SET_MUTED = 3;
+    public static final int SET_STRIKE_MUTED = 3;
 
     public static final Type<ControllerActionPayload> TYPE = new Type<>(Robotica.id("energy_controller_action"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ControllerActionPayload> CODEC = StreamCodec.composite(
@@ -55,8 +55,8 @@ public record ControllerActionPayload(BlockPos pos, int action, int value) imple
                 if (be instanceof ColliderBlockEntity collider) collider.setEnabled(payload.value() != 0);
                 else return false;
             }
-            case SET_MUTED -> {
-                if (be instanceof com.arno.robotica.energy.block.SpireBlockEntity spire) spire.setMuted(payload.value() != 0);
+            case SET_STRIKE_MUTED -> {
+                if (be instanceof com.arno.robotica.energy.block.SpireBlockEntity spire) spire.setStrikeMuted(payload.value() != 0);
                 else return false;
             }
             default -> {

@@ -54,7 +54,7 @@ public class SpireMenu extends ControllerMenu {
     public int interference() { return data().getInt("interference"); }
     public int neighbours() { return data().getInt("neighbours"); }
     public boolean sky() { return data().getBoolean("sky"); }
-    public boolean muted() { return data().getBoolean("muted"); }
+    public boolean strikeMuted() { return data().getBoolean("strikeMuted"); }
     /** Seconds since the last strike, -1 for never. */
     public long strikeAgo() { return data().getLong("strikeAgo"); }
 

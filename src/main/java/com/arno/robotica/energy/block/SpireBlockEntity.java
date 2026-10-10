@@ -101,7 +101,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     private Item burnWaste;
     private ItemStack pendingWaste = ItemStack.EMPTY;
     private long lastStrike = Long.MIN_VALUE / 2;
-    private boolean muted;
+    private boolean strikeMuted;
 
     // from the last scan
     private int conductors;
@@ -287,7 +287,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
             if (sky) rollStrike(level, now);
         }
         step();
-        if (running && !muted && CoreSounds.due(level, worldPosition, 50)) {
+        if (running && CoreSounds.due(level, worldPosition, 50)) {
             BlockPos crown = crown();
             // carries down a tall column to the base
             if (crown != null) CoreSounds.play(level, crown, CoreSounds.SPIRE_HUM, SoundSource.BLOCKS, 1.6F, 0.9F + 0.2F * (float) Math.min(1.0, potential / 10_000.0));
@@ -348,7 +348,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
                 continue;
             }
             fuel.extractItem(slot, 1, false);
-            if (level != null && !muted) CoreSounds.play(level, worldPosition, CoreSounds.SPIRE_FUEL, SoundSource.BLOCKS, 0.6F, 1.0F);
+            if (level != null) CoreSounds.play(level, worldPosition, CoreSounds.SPIRE_FUEL, SoundSource.BLOCKS, 0.6F, 1.0F);
             fuelTotal = f.energy();
             fuelLeft = f.energy();
             burnWaste = wasteItem;
@@ -383,7 +383,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         for (var player : level.getChunkSource().chunkMap.getPlayers(new net.minecraft.world.level.ChunkPos(worldPosition), false)) {
             player.connection.send(event);
         }
-        if (!muted) CoreSounds.play(level, crown, CoreSounds.SPIRE_STRIKE, SoundSource.WEATHER, 6.0F, 0.9F + level.random.nextFloat() * 0.2F);
+        if (!strikeMuted) CoreSounds.play(level, crown, CoreSounds.SPIRE_STRIKE, SoundSource.WEATHER, 6.0F, 0.9F + level.random.nextFloat() * 0.2F);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, crown.getX() + 0.5, crown.getY() + 0.7, crown.getZ() + 0.5, 60, 0.6, 0.6, 0.6, 0.6);
         level.sendParticles(ParticleTypes.FLASH, crown.getX() + 0.5, crown.getY() + 1.0, crown.getZ() + 0.5, 1, 0, 0, 0, 0);
         for (int i = 1; i <= conductors; i += 2) {
@@ -430,17 +430,17 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
 
     @Override
     protected boolean litSounds() {
-        return !muted;
+        return true;
     }
 
-    /** Silences the hum, fuel, start / stop and strike sounds. */
-    public void setMuted(boolean value) {
-        if (muted == value) return;
-        muted = value;
+    /** Silences the thunder of lightning strikes; the other sounds stay. */
+    public void setStrikeMuted(boolean value) {
+        if (strikeMuted == value) return;
+        strikeMuted = value;
         setChanged();
     }
 
-    public boolean muted() { return muted; }
+    public boolean strikeMuted() { return strikeMuted; }
 
     public int fePerTick() { return fePerTick; }
     public int conductors() { return conductors; }
@@ -535,7 +535,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         tag.putLong("strikeAgo", since > 1_000_000 ? -1 : since);
         tag.putInt("minH", EnergyConfig.spireMinConductors() + 2);
         tag.putInt("state", state.ordinal());
-        tag.putBoolean("muted", muted);
+        tag.putBoolean("strikeMuted", strikeMuted);
     }
 
     @Override
@@ -555,7 +555,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         tag.putDouble("fuelLeft", fuelLeft);
         tag.putLong("lastStrike", lastStrike);
         tag.putInt("fuelTotal", fuelTotal);
-        tag.putBoolean("muted", muted);
+        tag.putBoolean("strikeMuted", strikeMuted);
         tag.put("sides", sides.save());
         if (burnWaste != null) tag.putString("burnWaste", BuiltInRegistries.ITEM.getKey(burnWaste).toString());
         if (!pendingWaste.isEmpty()) tag.put("pendingWaste", pendingWaste.save(registries));
@@ -571,7 +571,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         fuelLeft = tag.getDouble("fuelLeft");
         if (tag.contains("lastStrike")) lastStrike = tag.getLong("lastStrike");
         fuelTotal = tag.getInt("fuelTotal");
-        muted = tag.getBoolean("muted");
+        strikeMuted = tag.getBoolean("strikeMuted");
         sides.load(tag.getCompound("sides"));
         burnWaste = tag.contains("burnWaste") ? BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(tag.getString("burnWaste"))).orElse(null) : null;
         pendingWaste = tag.contains("pendingWaste") ? ItemStack.parseOptional(registries, tag.getCompound("pendingWaste")) : ItemStack.EMPTY;

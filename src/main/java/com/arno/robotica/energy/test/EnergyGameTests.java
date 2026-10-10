@@ -529,7 +529,7 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
-    /** The owner mutes the spire, a stranger can not; faces follow the side config, and both are saved. */
+    /** The owner mutes the spire's thunder, a stranger can not; faces follow the side config, and both are saved. */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void spireMutesAndConfiguresSides(GameTestHelper helper) {
         BlockPos basePos = new BlockPos(4, 1, 4);
@@ -546,9 +546,9 @@ public class EnergyGameTests {
                 p.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 2.5);
                 p.containerMenu = new com.arno.robotica.energy.menu.SpireMenu(1, p.getInventory(), be);
             }
-            helper.assertTrue(!ControllerActionPayload.process(stranger, new ControllerActionPayload(pos, ControllerActionPayload.SET_MUTED, 1)) && !be.muted(),
+            helper.assertTrue(!ControllerActionPayload.process(stranger, new ControllerActionPayload(pos, ControllerActionPayload.SET_STRIKE_MUTED, 1)) && !be.strikeMuted(),
                     "a stranger can not mute it");
-            helper.assertTrue(ControllerActionPayload.process(owner, new ControllerActionPayload(pos, ControllerActionPayload.SET_MUTED, 1)) && be.muted(),
+            helper.assertTrue(ControllerActionPayload.process(owner, new ControllerActionPayload(pos, ControllerActionPayload.SET_STRIKE_MUTED, 1)) && be.strikeMuted(),
                     "the owner mutes it");
             var menu = (com.arno.robotica.core.menu.MachineMenu) owner.containerMenu;
             helper.assertTrue(menu.sides() == be.sides && menu.mayConfigure(owner) && !menu.mayConfigure(stranger),
@@ -569,10 +569,10 @@ public class EnergyGameTests {
 
         var registries = helper.getLevel().registryAccess();
         var tag = be.saveWithoutMetadata(registries);
-        be.setMuted(false);
+        be.setStrikeMuted(false);
         be.sides.set(com.arno.robotica.core.side.RelativeSide.BOTTOM, com.arno.robotica.core.side.SideMode.BOTH);
         be.loadWithComponents(tag, registries);
-        helper.assertTrue(be.muted() && be.sides.mode(com.arno.robotica.core.side.RelativeSide.BOTTOM) == com.arno.robotica.core.side.SideMode.NONE,
+        helper.assertTrue(be.strikeMuted() && be.sides.mode(com.arno.robotica.core.side.RelativeSide.BOTTOM) == com.arno.robotica.core.side.SideMode.NONE,
                 "mute and sides survive a reload");
         helper.succeed();
     }
