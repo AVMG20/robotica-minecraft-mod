@@ -147,7 +147,6 @@ public class UpgradeRuleGameTests {
         helper.assertTrue(rep.slots == 3 && rep.cap(SPEED) == 3 && rep.cap(FORTUNE) == 3 && rep.cap(EFFICIENCY) == 4, "Replicator: speed 3, fortune 3, efficiency 4");
         UpgradeRules.Fixed table = UpgradeRules.Fixed.ARCHITECT_TABLE;
         helper.assertTrue(table.slots == 2 && table.cap(SPEED) == 8 && table.cap(HEIGHT) == 6, "Architect Table: speed 8, height 6");
-        helper.assertTrue(UpgradeRules.Fixed.STORAGE_TERMINAL.kinds().equals(EnumSet.of(CARRY)), "Storage Terminal: only the Carry card");
 
         checkFixed(helper, press, cards(helper, PowerRegistry.METAL_PRESS.get().defaultBlockState()));
         checkFixed(helper, gen, cards(helper, PowerRegistry.COMBUSTION_GENERATOR.get().defaultBlockState()));

@@ -51,9 +51,7 @@ public final class UpgradeRules {
         REPLICATOR(3, limit(UpgradeKind.SPEED, 3), limit(UpgradeKind.FORTUNE, 3), limit(UpgradeKind.EFFICIENCY, 4)),
         ARCHITECT_TABLE(2, limit(UpgradeKind.SPEED, 8), limit(UpgradeKind.EFFICIENCY, 4), limit(UpgradeKind.HEIGHT, 6)),
         SENTRY_DRONE(2, limit(UpgradeKind.SPEED, 2), limit(UpgradeKind.RANGE, 4), limit(UpgradeKind.EFFICIENCY, 4)),
-        COURIER_DRONE(2, limit(UpgradeKind.SPEED, 2), limit(UpgradeKind.RANGE, 4), limit(UpgradeKind.EFFICIENCY, 4)),
-        /** Installed by right-click, no slot of its own. */
-        STORAGE_TERMINAL(1, limit(UpgradeKind.CARRY, 1));
+        COURIER_DRONE(2, limit(UpgradeKind.SPEED, 2), limit(UpgradeKind.RANGE, 4), limit(UpgradeKind.EFFICIENCY, 4));
 
         public final int slots;
         private final Map<UpgradeKind, Integer> caps = new EnumMap<>(UpgradeKind.class);

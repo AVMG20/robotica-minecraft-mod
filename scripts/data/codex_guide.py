@@ -138,7 +138,7 @@ STEPS = [
       'recall_remote', 'storage_terminal', 'storage_expansion_mk1', 'sentry_drone', 'courier_drone', 'courier_remote', 'exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1', 'night_vision_module', 'step_assist_module', 'spring_heels_module', 'servo_stride_module_1',
       'grinder_mk1', 'electric_furnace_mk1', 'bank_casing', 'bank_glass', 'bank_controller', 'bank_port', 'capacitor_copper', 'transfer_coil_basic', 'auto_feeder_module', 'kinetic_generator_module', 'magnet_module', 'fall_dampener_module', 'capacitor_plating_module', 'item_pipe_mk2',
       'armor_pierce_module', 'overclock_module', 'fortune_module', 'silk_touch_module', 'auto_pickup_module',
-      'void_filter_module', 'sharpened_edge_module', 'looting_module', 'thermal_edge_module'] + cards('speed', 'efficiency', 'growth', 'void', 'height', 'carry') + ['rancher'], 20),
+      'void_filter_module', 'sharpened_edge_module', 'looting_module', 'thermal_edge_module'] + cards('speed', 'efficiency', 'growth', 'void', 'height') + ['rancher'], 20),
     ('exo', 'basic_circuit', 'exo_chestplate_mk1', 'task', 1, 'Suit Up',
      'Craft an Exo-Frame piece.',
      has('exo_helmet_mk1', 'exo_chestplate_mk1', 'exo_leggings_mk1', 'exo_boots_mk1'), [], 10),

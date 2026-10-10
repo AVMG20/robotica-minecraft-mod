@@ -844,14 +844,6 @@
   },
   {
    "items": [
-    "upgrade_carry"
-   ],
-   "see": [
-    "guide:upgrade-cards"
-   ]
-  },
-  {
-   "items": [
     "strange_matter"
    ],
    "what": "Made by the Ring Collider. Replaces the nether star in [[null_circuit]]s and makes [[antigrav_core]]s in the Assembler.",
