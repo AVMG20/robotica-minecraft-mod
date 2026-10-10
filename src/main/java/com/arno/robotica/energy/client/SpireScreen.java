@@ -1,24 +1,32 @@
 package com.arno.robotica.energy.client;
 
+import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.energy.block.SpireBlockEntity.State;
 import com.arno.robotica.energy.menu.SpireMenu;
+import com.arno.robotica.energy.net.ControllerActionPayload;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Locale;
 
 /**
  * Tesla Spire GUI: FE buffer, output, the column (conductors, base power, efficiency), the crown's altitude, weather
- * and neighbours, the last lightning strike, fuel and waste slots with the burn bar, status and structure lines.
+ * and neighbours, the last lightning strike, fuel and waste slots with the burn bar, a strike sound switch, status and
+ * structure lines.
  */
 public class SpireScreen extends ControllerScreen<SpireMenu> {
     private static final int BUFFER_X = 8, BUFFER_Y = 18, BUFFER_H = 58;
     private static final int TEXT_X = 24, TEXT_W = 104;
+    private IconButton muteButton;
+    private Boolean shownMuted;
+    private boolean shownAllowed;
 
     public SpireScreen(SpireMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -35,6 +43,27 @@ public class SpireScreen extends ControllerScreen<SpireMenu> {
     protected void init() {
         super.init();
         addShowButton(150, 92);
+        muteButton = addRenderableWidget(new IconButton(leftPos + 150, topPos + 72, 18, new ItemStack(Items.LIGHTNING_ROD), true,
+                b -> PacketDistributor.sendToServer(new ControllerActionPayload(menu.pos(), ControllerActionPayload.SET_STRIKE_MUTED, menu.strikeMuted() ? 0 : 1))));
+        shownMuted = null;
+        updateMuteButton();
+    }
+
+    private void updateMuteButton() {
+        boolean muted = menu.strikeMuted(), allowed = menu.canControl();
+        if (shownMuted != null && shownMuted == muted && shownAllowed == allowed) return;
+        shownMuted = muted;
+        shownAllowed = allowed;
+        muteButton.active = allowed;
+        muteButton.setOn(!muted);
+        muteButton.hint(Component.translatable(!allowed ? "gui.robotica.energy.not_allowed"
+                : muted ? "gui.robotica.energy.spire.strike_muted_tip" : "gui.robotica.energy.spire.strike_sound_tip"));
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (muteButton != null) updateMuteButton();
     }
 
     @Override

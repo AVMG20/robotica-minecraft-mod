@@ -155,6 +155,8 @@
   "gui.robotica.energy.spire.no_strike": "No lightning yet",
   "gui.robotica.energy.spire.last_strike": "Last strike %s ago",
   "gui.robotica.energy.spire.strike_tip": "A strike adds 30 s of full output to the buffer, fuel or not",
+  "gui.robotica.energy.spire.strike_sound_tip": "Lightning strikes play thunder. Click to mute the thunder",
+  "gui.robotica.energy.spire.strike_muted_tip": "Thunder muted. Click to turn it back on",
   "gui.robotica.energy.spire.not_formed": "Not formed",
   "gui.robotica.energy.spire.not_formed.tip": "Finish the column: see the line below",
   "gui.robotica.energy.spire.running": "Running",

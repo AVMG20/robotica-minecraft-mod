@@ -7,6 +7,7 @@ import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.multiblock.CuboidScanner;
 import com.arno.robotica.core.multiblock.CuboidSpec;
 import com.arno.robotica.core.multiblock.StructureProblem;
+import com.arno.robotica.core.side.SideConfig;
 import com.arno.robotica.energy.EnergyConfig;
 import com.arno.robotica.energy.EnergyDataMaps;
 import com.arno.robotica.energy.EnergyDataMaps.SpireConductor;
@@ -89,6 +90,8 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     public final ItemStackHandler waste = newWasteHandler(this::setChanged);
     public final MachineEnergyStorage energy = new MachineEnergyStorage(EnergyConfig.spireBuffer(), 0, Integer.MAX_VALUE, this::setChanged);
     private final IItemHandler items = new ItemsHandler();
+    /** Which faces take fuel and give waste, and auto-input / auto-eject. */
+    public final SideConfig sides = new SideConfig(this, () -> items);
     private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
 
     // saved
@@ -98,6 +101,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     private Item burnWaste;
     private ItemStack pendingWaste = ItemStack.EMPTY;
     private long lastStrike = Long.MIN_VALUE / 2;
+    private boolean strikeMuted;
 
     // from the last scan
     private int conductors;
@@ -267,6 +271,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     @Override
     protected void tickController(ServerLevel level, long now) {
         if (!pendingWaste.isEmpty()) pendingWaste = ItemHandlerHelper.insertItem(waste, pendingWaste, false);
+        sides.tick(level);
         // a broken spire still empties its buffer into cables
         if (energy.getEnergyStored() > 0) {
             EnergyUtil.pushToNeighbors(level, worldPosition, energy, (int) Math.max(4096, Math.min(Integer.MAX_VALUE, potential * 8L)), neighbors);
@@ -378,7 +383,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         for (var player : level.getChunkSource().chunkMap.getPlayers(new net.minecraft.world.level.ChunkPos(worldPosition), false)) {
             player.connection.send(event);
         }
-        CoreSounds.play(level, crown, CoreSounds.SPIRE_STRIKE, SoundSource.WEATHER, 6.0F, 0.9F + level.random.nextFloat() * 0.2F);
+        if (!strikeMuted) CoreSounds.play(level, crown, CoreSounds.SPIRE_STRIKE, SoundSource.WEATHER, 6.0F, 0.9F + level.random.nextFloat() * 0.2F);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, crown.getX() + 0.5, crown.getY() + 0.7, crown.getZ() + 0.5, 60, 0.6, 0.6, 0.6, 0.6);
         level.sendParticles(ParticleTypes.FLASH, crown.getX() + 0.5, crown.getY() + 1.0, crown.getZ() + 0.5, 1, 0, 0, 0, 0);
         for (int i = 1; i <= conductors; i += 2) {
@@ -428,6 +433,15 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         return true;
     }
 
+    /** Silences the thunder of lightning strikes; the other sounds stay. */
+    public void setStrikeMuted(boolean value) {
+        if (strikeMuted == value) return;
+        strikeMuted = value;
+        setChanged();
+    }
+
+    public boolean strikeMuted() { return strikeMuted; }
+
     public int fePerTick() { return fePerTick; }
     public int conductors() { return conductors; }
     public int basePower() { return basePower; }
@@ -451,9 +465,10 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         return side == Direction.UP ? null : energy;
     }
 
-    /** Fuel in, waste out (hoppers and pipes). */
-    public IItemHandler itemView() {
-        return items;
+    /** Fuel in, waste out (hoppers and pipes), as the side config allows. */
+    @Nullable
+    public IItemHandler itemView(@Nullable Direction side) {
+        return sides.access(side);
     }
 
     private final class ItemsHandler implements IItemHandler {
@@ -520,6 +535,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         tag.putLong("strikeAgo", since > 1_000_000 ? -1 : since);
         tag.putInt("minH", EnergyConfig.spireMinConductors() + 2);
         tag.putInt("state", state.ordinal());
+        tag.putBoolean("strikeMuted", strikeMuted);
     }
 
     @Override
@@ -539,6 +555,8 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         tag.putDouble("fuelLeft", fuelLeft);
         tag.putLong("lastStrike", lastStrike);
         tag.putInt("fuelTotal", fuelTotal);
+        tag.putBoolean("strikeMuted", strikeMuted);
+        tag.put("sides", sides.save());
         if (burnWaste != null) tag.putString("burnWaste", BuiltInRegistries.ITEM.getKey(burnWaste).toString());
         if (!pendingWaste.isEmpty()) tag.put("pendingWaste", pendingWaste.save(registries));
         saveClientData(tag, registries);
@@ -553,6 +571,8 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         fuelLeft = tag.getDouble("fuelLeft");
         if (tag.contains("lastStrike")) lastStrike = tag.getLong("lastStrike");
         fuelTotal = tag.getInt("fuelTotal");
+        strikeMuted = tag.getBoolean("strikeMuted");
+        sides.load(tag.getCompound("sides"));
         burnWaste = tag.contains("burnWaste") ? BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(tag.getString("burnWaste"))).orElse(null) : null;
         pendingWaste = tag.contains("pendingWaste") ? ItemStack.parseOptional(registries, tag.getCompound("pendingWaste")) : ItemStack.EMPTY;
         conductors = tag.getInt("conductors");

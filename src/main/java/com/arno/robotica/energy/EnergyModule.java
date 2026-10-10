@@ -34,7 +34,7 @@ public final class EnergyModule {
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, EnergyRegistry.PORT_BE.get(), (be, side) -> be.itemView());
         // the Spire Base and the Collider Controller are their own ports
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, EnergyRegistry.SPIRE_BE.get(), (be, side) -> be.energyView(side));
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, EnergyRegistry.SPIRE_BE.get(), (be, side) -> be.itemView());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, EnergyRegistry.SPIRE_BE.get(), (be, side) -> be.itemView(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, EnergyRegistry.COLLIDER_BE.get(), (be, side) -> be.energyView());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, EnergyRegistry.COLLIDER_BE.get(), (be, side) -> be.itemView());
     }

@@ -34,6 +34,7 @@ public class SpireMenu extends ControllerMenu {
             }
         });
         addPlayerInventory(inv, 8, PLAYER_Y);
+        trackSides(be == null ? null : be.sides);
     }
 
     public int fePerTick() { return data().getInt("fe"); }
@@ -53,6 +54,7 @@ public class SpireMenu extends ControllerMenu {
     public int interference() { return data().getInt("interference"); }
     public int neighbours() { return data().getInt("neighbours"); }
     public boolean sky() { return data().getBoolean("sky"); }
+    public boolean strikeMuted() { return data().getBoolean("strikeMuted"); }
     /** Seconds since the last strike, -1 for never. */
     public long strikeAgo() { return data().getLong("strikeAgo"); }
 

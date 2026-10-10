@@ -268,6 +268,8 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
         }
         if (my >= TOGGLE_Y - 2 && my < TOGGLE_Y + 10) action = SideConfig.ACTION_AUTO_INPUT;
         else if (my >= TOGGLE_Y + 10 && my < TOGGLE_Y + 22) action = SideConfig.ACTION_AUTO_EJECT;
+        if (action >= 0 && menu instanceof MachineMenu machine && minecraft != null && minecraft.player != null
+                && !machine.mayConfigure(minecraft.player)) action = -1;
         if (action >= 0) {
             sides.handleAction(action);   // the client copy shows it at once, the server sync confirms
             PacketDistributor.sendToServer(new SideConfigPayload(menu.containerId, action));

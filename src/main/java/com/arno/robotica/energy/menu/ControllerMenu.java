@@ -99,6 +99,11 @@ public abstract class ControllerMenu extends MachineMenu {
         return be != null ? be.canControl(player) : canControl();
     }
 
+    @Override
+    public boolean mayConfigure(Player player) {
+        return be != null ? be.canControl(player) : canControl();
+    }
+
     /** A controller slot only the owner, their team or an operator can take from or put into. */
     public class ControlledSlot extends MachineSlot {
         public ControlledSlot(IItemHandler handler, int index, int x, int y) {
