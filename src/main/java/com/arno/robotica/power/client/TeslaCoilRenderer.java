@@ -67,7 +67,7 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     private static final float HALO_W = 0.065F, CORE_W = 0.011F;
     private static final int HALO_A = 30, CORE_A = 46;
     /** Brightness of the strand while the coil sends, and while the player holds a Linker. */
-    private static final float FLOW_GAIN = 1.0F, LINKER_GAIN = 2.0F;
+    private static final float FLOW_GAIN = 1.3F, LINKER_GAIN = 2.0F;
 
     /** Mote speed (blocks per tick) per flow level 0-4, blended between levels by the eased flow. */
     private static final double[] MOTE_SPEED = {0, 0.05, 0.058, 0.068, 0.08};
@@ -286,13 +286,13 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
                 QA[j] = t * t;
             }
             int halo = lerp(halo0, halo1, s / len), inner = pale(halo);
-            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.035F, halo, halo, (int) (50 * a));
-            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.008F, inner, inner, (int) (80 * a));
+            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.035F, halo, halo, (int) (70 * a));
+            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.008F, inner, inner, (int) (115 * a));
             pointAt(n, s);
             // two-layer halo round a white point, like the Spark Lamp wisp
-            disc(vc, m, px, py, pz, 0.18F, halo, (int) (45 * a));
-            disc(vc, m, px, py, pz, 0.065F, inner, (int) (65 * a));
-            disc(vc, m, px, py, pz, 0.025F, WHITE, (int) (140 * a));
+            disc(vc, m, px, py, pz, 0.18F, halo, (int) (66 * a));
+            disc(vc, m, px, py, pz, 0.065F, inner, (int) (97 * a));
+            disc(vc, m, px, py, pz, 0.025F, WHITE, (int) (195 * a));
         }
     }
 
