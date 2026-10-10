@@ -30,13 +30,13 @@ import java.util.Random;
 /**
  * Tesla links as soft energy tethers. Every link is a thin, slightly sagging strand of additive glow: a faint halo with a
  * brighter core, both fading out at the edges and into the coil tips, with a slow shimmer running along it. While energy
- * goes over a link, soft motes with short tails travel its strand towards the target (more and faster the bigger the
- * share of the coil's rate that link takes, from its synced flow level), and while the coil sends a tiny spark now and
+ * goes over a link, soft motes with short tails travel its strand towards the target (a little faster the bigger
+ * the share of the coil's rate that link takes, from its synced flow level), and while the coil sends a tiny spark now and
  * then crackles off the tip. A link whose target takes nothing has no motes.
  * <p>
  * Smooth: everything runs on a client tick clock plus the partial tick (the level's game time jumps on every server time
  * sync), the motes advance per frame by an eased speed so a flow change speeds them up or slows them down instead of
- * moving them, and they keep their identity along the strand so their twinkle and density never pop. Lines never get
+ * moving them, and they keep their identity along the strand so their twinkle never pops. Lines never get
  * thinner than a pixel or so: further out they widen and dim instead, so they do not shimmer.
  * <p>
  * Cheap: camera-facing strips in one batched render type, all geometry from static scratch arrays and one re-seeded
@@ -65,17 +65,17 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
 
     // Strand: halo and core half widths (blocks) and alphas (0-255) of an idle link without a Linker in hand.
     private static final float HALO_W = 0.065F, CORE_W = 0.011F;
-    private static final int HALO_A = 30, CORE_A = 46;
+    private static final int HALO_A = 24, CORE_A = 36;
     /** Brightness of the strand while the coil sends, and while the player holds a Linker. */
-    private static final float FLOW_GAIN = 1.3F, LINKER_GAIN = 2.0F;
+    private static final float FLOW_GAIN = 1.15F, LINKER_GAIN = 2.0F;
 
     /** Mote speed (blocks per tick) per flow level 0-4, blended between levels by the eased flow. */
-    private static final double[] MOTE_SPEED = {0, 0.045, 0.065, 0.09, 0.12};
+    private static final double[] MOTE_SPEED = {0, 0.05, 0.058, 0.068, 0.08};
     /**
-     * Motes sit on a lattice this far apart (wider on long links, at most {@link #MAX_MOTES} slots). Flow level 1 lights
-     * every fourth slot, 2 every second, 3 adds the rest at half strength, 4 lights all.
+     * Motes sit on a lattice this far apart (wider on long links, at most {@link #MAX_MOTES} slots). They fade in as a
+     * link starts carrying energy and out when it stops.
      */
-    private static final double MOTE_GAP = 0.8;
+    private static final double MOTE_GAP = 1.6;
     private static final int MAX_MOTES = 24;
     /** How fast the drawn flow follows the synced level, per tick. */
     private static final double FLOW_EASE = 0.12;
@@ -217,13 +217,6 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         return MOTE_SPEED[i] + (MOTE_SPEED[i + 1] - MOTE_SPEED[i]) * f;
     }
 
-    /** How lit lattice slot {@code id} is at an eased flow level: every fourth from level 1, every second from 2, all at 4. */
-    private static float moteWeight(long id, float flow) {
-        long slot = Math.floorMod(id, 4L);
-        float w = slot == 0 ? flow : slot == 2 ? flow - 1 : (flow - 2) / 2;
-        return Math.max(0F, Math.min(1F, w));
-    }
-
     /**
      * Fills the strand scratch arrays with the sagging curve from a to b and returns its point count. The sag is a
      * parabola, deeper for long and level links, breathing very slowly. SA holds the end fade times a slow shimmer.
@@ -272,14 +265,14 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
      */
     private static void motes(VertexConsumer vc, Matrix4f m, int n, double len, float flow, double travel, double time,
                               double phase, int halo0, int halo1, float fade) {
-        double gap = Math.max(MOTE_GAP, len / MAX_MOTES), tail = 0.45 + 0.12 * flow;
+        double gap = Math.max(MOTE_GAP, len / MAX_MOTES), tail = 0.45 + 0.04 * flow;
         double pos = travel + phase / (Math.PI * 2) * gap;
         long first = (long) Math.floor(pos / gap);
         double head0 = pos - first * gap;
         for (int k = 0; head0 + k * gap < len; k++) {
             double s = head0 + k * gap;
             long id = k - first;
-            float a = fade * moteWeight(id, flow) * (float) (smooth(s / 0.5) * smooth((len - s) / 0.5))
+            float a = fade * Math.min(1F, flow) * (float) (smooth(s / 0.5) * smooth((len - s) / 0.5))
                     * (float) (0.85 + 0.15 * Math.sin(time * 0.3 + (id % 1000) * 1.7 + phase));
             if (a <= 0.01F) continue;
             // tail: a tapering strip behind the head
@@ -293,13 +286,13 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
                 QA[j] = t * t;
             }
             int halo = lerp(halo0, halo1, s / len), inner = pale(halo);
-            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.035F, halo, halo, (int) (80 * a));
-            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.008F, inner, inner, (int) (130 * a));
+            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.035F, halo, halo, (int) (50 * a));
+            strip(vc, m, QX, QY, QZ, QA, TAIL_POINTS, 0.008F, inner, inner, (int) (80 * a));
             pointAt(n, s);
             // two-layer halo round a white point, like the Spark Lamp wisp
-            disc(vc, m, px, py, pz, 0.18F, halo, (int) (75 * a));
-            disc(vc, m, px, py, pz, 0.065F, inner, (int) (110 * a));
-            disc(vc, m, px, py, pz, 0.025F, WHITE, (int) (220 * a));
+            disc(vc, m, px, py, pz, 0.18F, halo, (int) (45 * a));
+            disc(vc, m, px, py, pz, 0.065F, inner, (int) (65 * a));
+            disc(vc, m, px, py, pz, 0.025F, WHITE, (int) (140 * a));
         }
     }
 
