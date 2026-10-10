@@ -29,9 +29,10 @@ import java.util.Random;
 
 /**
  * Tesla links as soft energy tethers. Every link is a thin, slightly sagging strand of additive glow: a faint halo with a
- * brighter core, both fading out at the edges and into the coil tips, with a slow shimmer running along it. While the
- * coil sends, soft motes with short tails travel the strand towards the target (more and faster the harder the coil
- * works, from the synced flow level) and now and then a tiny spark crackles off the tip.
+ * brighter core, both fading out at the edges and into the coil tips, with a slow shimmer running along it. While energy
+ * goes over a link, soft motes with short tails travel its strand towards the target (more and faster the bigger the
+ * share of the coil's rate that link takes, from its synced flow level), and while the coil sends a tiny spark now and
+ * then crackles off the tip. A link whose target takes nothing has no motes.
  * <p>
  * Smooth: everything runs on a client tick clock plus the partial tick (the level's game time jumps on every server time
  * sync), the motes advance per frame by an eased speed so a flow change speeds them up or slows them down instead of
@@ -154,12 +155,15 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         double time = clientTicks + partialTick;
         double dt = be.fxTime < 0 ? 0 : Math.max(0, Math.min(20, time - be.fxTime));
         be.fxTime = time;
-        be.fxFlow += (float) ((synced - be.fxFlow) * (1 - Math.exp(-dt * FLOW_EASE)));
-        if (Math.abs(synced - be.fxFlow) < 0.002F) be.fxFlow = synced;
-        float flow = be.fxFlow;
-        be.fxTravel += dt * moteSpeed(flow);
+        double ease = 1 - Math.exp(-dt * FLOW_EASE);
+        linkCount = Math.min(linkCount, be.fxFlow.length);
+        for (int i = 0; i < linkCount; i++) {
+            int target = Math.min(4, be.linkFlowLevel(i));
+            be.fxFlow[i] += (float) ((target - be.fxFlow[i]) * ease);
+            if (Math.abs(target - be.fxFlow[i]) < 0.002F) be.fxFlow[i] = target;
+            be.fxTravel[i] += dt * moteSpeed(be.fxFlow[i]);
+        }
         int halo = halo(be.tier().ordinal());
-        float gain = (1 + (FLOW_GAIN - 1) * Math.min(1F, flow)) * (linker ? LINKER_GAIN : 1F);
 
         Direction facing = state.getValue(TeslaCoilBlock.FACING);
         double tip = TeslaCoilBlock.TIP - 0.5;
@@ -194,12 +198,13 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
             int n = strand(ax, ay, az, bx, by, bz, time, phase);
             if (n < 2) continue;
             double len = SS[n - 1];
-            float a = fade * gain;
+            float flow = be.fxFlow[i];
+            float a = fade * (1 + (FLOW_GAIN - 1) * Math.min(1F, flow)) * (linker ? LINKER_GAIN : 1F);
             strip(vc, m, SX, SY, SZ, SA, n, HALO_W, halo, haloEnd, Math.min(255, (int) (HALO_A * a)));
             strip(vc, m, SX, SY, SZ, SA, n, CORE_W, pale(halo), pale(haloEnd), Math.min(255, (int) (CORE_A * a)));
             if (flow > 0.01F && dist < MOTE_RANGE && len > 0.6) {
                 float moteFade = fade * (float) smooth((MOTE_RANGE - dist) / 6.0) * (linker ? 1.3F : 1F);
-                motes(vc, m, n, len, flow, be.fxTravel, time, phase, halo, haloEnd, moteFade);
+                motes(vc, m, n, len, flow, be.fxTravel[i], time, phase, halo, haloEnd, moteFade);
             }
         }
         if (synced > 0 && closest < SPARK_RANGE) spark(vc, m, origin, ax, ay, az, facing, time, synced, pale(halo));

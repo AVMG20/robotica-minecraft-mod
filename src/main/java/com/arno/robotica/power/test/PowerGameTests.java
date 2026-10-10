@@ -277,6 +277,22 @@ public class PowerGameTests {
         });
     }
 
+    /** Each link syncs its own flow level: a link to a full Accumulator idles while one to an empty one works. */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void teslaFlowLevelPerLink(GameTestHelper helper) {
+        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        AccumulatorBlockEntity empty = accumulator(helper, new BlockPos(2, 1, 0), Direction.NORTH, 0);
+        AccumulatorBlockEntity full = accumulator(helper, new BlockPos(2, 1, 2), Direction.NORTH, 0);
+        full.energy.setEnergy(full.energy.getMaxEnergyStored());
+        helper.assertTrue(TeslaNetwork.toggle(coil, empty.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "link to the empty one");
+        helper.assertTrue(TeslaNetwork.toggle(coil, full.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "link to the full one");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(coil.linkFlowLevel(0) > 0, "the empty Accumulator's link works");
+            helper.assertTrue(coil.linkFlowLevel(1) == 0, "the full Accumulator's link idles, has " + coil.linkFlowLevel(1));
+        });
+    }
+
     /** Tier I takes 4 links; a fifth is refused until one is unlinked. Tiers hold 4/8/12/16/32. */
     @GameTest(template = "empty")
     public static void teslaLinkLimitPerTier(GameTestHelper helper) {
