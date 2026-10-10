@@ -65,9 +65,9 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
 
     // Strand: halo and core half widths (blocks) and alphas (0-255) of an idle link without a Linker in hand.
     private static final float HALO_W = 0.065F, CORE_W = 0.011F;
-    private static final int HALO_A = 24, CORE_A = 36;
+    private static final int HALO_A = 30, CORE_A = 46;
     /** Brightness of the strand while the coil sends, and while the player holds a Linker. */
-    private static final float FLOW_GAIN = 1.15F, LINKER_GAIN = 2.0F;
+    private static final float FLOW_GAIN = 1.0F, LINKER_GAIN = 2.0F;
 
     /** Mote speed (blocks per tick) per flow level 0-4, blended between levels by the eased flow. */
     private static final double[] MOTE_SPEED = {0, 0.05, 0.058, 0.068, 0.08};
