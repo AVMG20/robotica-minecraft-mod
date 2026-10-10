@@ -53,11 +53,16 @@ public final class TeslaNetwork {
         int remaining = budget;
         for (int i = 0; i < n && remaining > 0; i++) {
             int share = (remaining + (n - i) - 1) / (n - i);
-            remaining -= send(level, coil, (start + i) % n, share, visited, now, depth, rangeSq, keep);
+            int k = (start + i) % n, sent = send(level, coil, k, share, visited, now, depth, rangeSq, keep);
+            coil.recordLinkSent(k, sent);
+            remaining -= sent;
         }
         for (int i = 0; i < n && remaining > 0; i++) {
             int k = (start + i) % n;
-            if (!links.get(k).coil()) remaining -= send(level, coil, k, remaining, visited, now, depth, rangeSq, keep);
+            if (links.get(k).coil()) continue;
+            int sent = send(level, coil, k, remaining, visited, now, depth, rangeSq, keep);
+            coil.recordLinkSent(k, sent);
+            remaining -= sent;
         }
         int used = budget - remaining;
         coil.recordSent(now, used);

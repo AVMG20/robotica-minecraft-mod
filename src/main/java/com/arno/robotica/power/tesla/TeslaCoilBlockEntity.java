@@ -31,14 +31,15 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Links of one Tesla Coil plus its per-tick bookkeeping. A coil whose support block gives out FE is a root: every tick it
- * runs {@link TeslaNetwork#pushFromSource}. Every other coil only forwards what roots send it. The links and a coarse
- * flow level (0-4, how hard the coil works) are synced to the client for the link glow; nothing else is.
+ * runs {@link TeslaNetwork#pushFromSource}. Every other coil only forwards what roots send it. The links and coarse
+ * flow levels (0-4, how hard the coil and each link work) are synced to the client for the link glow; nothing else is.
  */
 public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvider, EnergyInfoMenu.Source {
     private final List<TeslaLink> links = new ArrayList<>();
@@ -60,14 +61,21 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     private int flow;
     /** Server: a new non-zero flow level must show up twice in a row before it is synced, so a rate on an edge does not resend. */
     private int pendingFlow;
+    /** Most links any tier has. */
+    private static final int MAX_LINKS = TeslaTier.V.maxLinks;
+    /** Server: FE sent over each link this second. */
+    private final long[] linkWindow = new long[MAX_LINKS];
+    /** Synced: 0 idle, 1-4 how much of the tier rate went over each link in the last second. Server: pending levels as above. */
+    private final byte[] linkFlow = new byte[MAX_LINKS], linkPending = new byte[MAX_LINKS];
     private long nextHum;
 
     /** Client: area the arcs cover, for frustum culling. */
     @Nullable
     private AABB renderBox;
-    /** Client: link animation state of the renderer: last frame time, how far the motes have travelled, eased flow level. */
-    public double fxTime = -1, fxTravel;
-    public float fxFlow;
+    /** Client: link animation state of the renderer: last frame time, and per link how far the motes have travelled and the eased flow level. */
+    public double fxTime = -1;
+    public final double[] fxTravel = new double[MAX_LINKS];
+    public final float[] fxFlow = new float[MAX_LINKS];
 
     public TeslaCoilBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.TESLA_COIL_BE.get(), pos, state);
@@ -124,6 +132,11 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return flow;
     }
 
+    /** Synced: 0 idle, 1-4 how much of the tier rate went over link {@code index} in the last second. */
+    public int linkFlowLevel(int index) {
+        return index < MAX_LINKS ? linkFlow[index] : 0;
+    }
+
     /** 0 when nothing went out, else 1-4 by the share of {@code max} that {@code rate} uses. */
     static int flowLevel(int rate, int max) {
         if (rate <= 0) return 0;
@@ -164,19 +177,29 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     void addLink(TeslaLink link) {
         links.add(link);
         caches.add(null);
+        resetLinkFlow();
         setChangedAndSync();
     }
 
     void removeLink(int index) {
         links.remove(index);
         caches.remove(index);
+        resetLinkFlow();
         setChangedAndSync();
     }
 
     void setLink(int index, TeslaLink link) {
         links.set(index, link);
         caches.set(index, null);
+        resetLinkFlow();
         setChangedAndSync();
+    }
+
+    /** Link indices moved: start counting each link's flow afresh. */
+    private void resetLinkFlow() {
+        Arrays.fill(linkWindow, 0);
+        Arrays.fill(linkFlow, (byte) 0);
+        Arrays.fill(linkPending, (byte) 0);
     }
 
     /** The FE capability of machine link {@code index} on its face, or null (not loaded, gone, or a coil link). */
@@ -230,6 +253,11 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         windowSent += amount;
     }
 
+    /** Counts {@code amount} FE that left over link {@code index}, for its flow level. */
+    void recordLinkSent(int index, int amount) {
+        if (amount > 0 && index < MAX_LINKS) linkWindow[index] += amount;
+    }
+
     /** Start index for this tick's fair split, so the rounding remainder moves round the links. */
     int nextRotation(int n) {
         rotation = (rotation + 1) % Math.max(1, n);
@@ -253,7 +281,10 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
                 changed = true;
             }
         }
-        if (changed) setChangedAndSync();
+        if (changed) {
+            resetLinkFlow();
+            setChangedAndSync();
+        }
     }
 
     @Override
@@ -267,16 +298,32 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             lastRate = (int) Math.min(Integer.MAX_VALUE, windowSent / 20);
             windowSent = 0;
             // At most one sync per second, only on change; steps between two busy levels need two windows in a row.
-            int target = flowLevel(lastRate, tier().rate());
+            int max = tier().rate();
+            int target = flowLevel(lastRate, max);
+            boolean sync = false;
             if (target == flow) {
                 pendingFlow = flow;
             } else if (target == 0 || flow == 0 || target == pendingFlow) {
                 flow = target;
                 pendingFlow = target;
-                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                sync = true;
             } else {
                 pendingFlow = target;
             }
+            for (int i = 0; i < Math.min(MAX_LINKS, links.size()); i++) {
+                int t = flowLevel((int) Math.min(Integer.MAX_VALUE, linkWindow[i] / 20), max);
+                linkWindow[i] = 0;
+                if (t == linkFlow[i]) {
+                    linkPending[i] = linkFlow[i];
+                } else if (t == 0 || linkFlow[i] == 0 || t == linkPending[i]) {
+                    linkFlow[i] = (byte) t;
+                    linkPending[i] = (byte) t;
+                    sync = true;
+                } else {
+                    linkPending[i] = (byte) t;
+                }
+            }
+            if (sync) level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         // A soft hum only for players standing right next to the coil, and rarely. No zaps from idle networks.
         if (flow > 0 && now >= nextHum) {
@@ -370,6 +417,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     protected void saveClientData(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("links", saveLinks());
         tag.putByte("flow", (byte) flow);
+        tag.putByteArray("linkFlow", Arrays.copyOf(linkFlow, Math.min(MAX_LINKS, links.size())));
     }
 
     @Override
@@ -393,5 +441,10 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             ownerName = tag.getString("ownerName");
         }
         if (tag.contains("flow")) flow = tag.getByte("flow");
+        if (tag.contains("linkFlow", Tag.TAG_BYTE_ARRAY)) {
+            byte[] levels = tag.getByteArray("linkFlow");
+            Arrays.fill(linkFlow, (byte) 0);
+            System.arraycopy(levels, 0, linkFlow, 0, Math.min(MAX_LINKS, levels.length));
+        }
     }
 }
