@@ -292,8 +292,7 @@
             "robotica:upgrade_fortune",
             "robotica:upgrade_silk",
             "robotica:upgrade_void",
-            "robotica:upgrade_height",
-            "robotica:upgrade_carry"
+            "robotica:upgrade_height"
           ]
         }
       ]
@@ -570,8 +569,7 @@
             "robotica:storage_terminal",
             "robotica:storage_expansion_mk1",
             "robotica:storage_expansion_mk2",
-            "robotica:storage_expansion_mk3",
-            "robotica:upgrade_carry"
+            "robotica:storage_expansion_mk3"
           ]
         }
       ]

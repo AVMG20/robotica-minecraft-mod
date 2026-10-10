@@ -50,12 +50,6 @@
       "item": "upgrade_height",
       "name": "Height Upgrade",
       "summary": "Architect Table: buildings one block taller per card."
-    },
-    "carry": {
-      "item": "upgrade_carry",
-      "name": "Carry Upgrade",
-      "summary": "Storage Terminal keeps its items when picked up.",
-      "rules": "Right-click the terminal with it. It stays in for good."
     }
   },
   "machines": [
@@ -385,18 +379,6 @@
       },
       "source": "drones/entity/CourierDrone",
       "rule": "fixed:COURIER_DRONE"
-    },
-    {
-      "id": "storage_terminal",
-      "name": "Storage Terminal",
-      "items": [
-        "storage_terminal"
-      ],
-      "effects": {
-        "carry": "Keeps every item inside when picked up."
-      },
-      "source": "storage/block/StorageTerminalBlock",
-      "rule": "fixed:STORAGE_TERMINAL"
     }
   ]
 }

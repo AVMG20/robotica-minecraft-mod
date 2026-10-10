@@ -163,7 +163,7 @@ public class StorageTerminalBlock extends BaseEntityBlock {
         /** Every stored item with its total count, biggest first, then how many more kinds there are. */
         private static List<Component> summary(CompoundTag contents, HolderLookup.Provider registries) {
             Summary last = lastSummary;
-            if (last != null && last.tag == contents) return last.lines;
+            if (last != null && last.tag() == contents) return last.lines();
             Map<Item, Integer> counts = new HashMap<>();
             count(contents.getCompound("items"), registries, counts);
             count(contents.getCompound("craft"), registries, counts);
