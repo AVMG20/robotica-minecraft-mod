@@ -18,7 +18,6 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -64,8 +63,6 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
     private int lastSignal = -1;
     private int gridVersion;
     private boolean powered;
-    /** A Carry card is installed: picking the terminal up keeps everything inside. */
-    private boolean carry;
 
     public final ItemStackHandler items = new ItemStackHandler(MAX_SLOTS) {
         @Override
@@ -424,26 +421,14 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
 
     // ------------------------------------------------------------------ misc
 
-    public boolean hasCarry() {
-        return carry;
-    }
-
-    /** Installs a Carry card for good. False when one is already in. */
-    public boolean installCarry() {
-        if (carry) return false;
-        carry = true;
-        setChanged();
-        return true;
-    }
-
-    /** Drops everything, unless a Carry card keeps it all in the dropped terminal (see the loot table). */
-    public void dropContents() {
-        if (level == null || carry) return;
-        double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 0.5, z = worldPosition.getZ() + 0.5;
-        for (int i = 0; i < MAX_SLOTS; i++) Containers.dropItemStack(level, x, y, z, items.getStackInSlot(i));
-        for (int i = 0; i < upgrades.getSlots(); i++) Containers.dropItemStack(level, x, y, z, upgrades.getStackInSlot(i));
-        for (int i = 0; i < battery.getSlots(); i++) Containers.dropItemStack(level, x, y, z, battery.getStackInSlot(i));
-        for (ItemStack s : craft) Containers.dropItemStack(level, x, y, z, s);
+    /** Anything inside (items, expansions, battery, crafting grid or FE): the dropped terminal keeps it all. */
+    public boolean hasContents() {
+        refreshCache();
+        if (usedCache > 0 || energy.getEnergyStored() > 0) return true;
+        for (int i = 0; i < upgrades.getSlots(); i++) if (!upgrades.getStackInSlot(i).isEmpty()) return true;
+        if (!battery.getStackInSlot(0).isEmpty()) return true;
+        for (ItemStack s : craft) if (!s.isEmpty()) return true;
+        return false;
     }
 
     @Override
@@ -460,7 +445,7 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
     @Override
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
-        if (carry && level != null) {
+        if (level != null && hasContents()) {
             CompoundTag contents = new CompoundTag();
             writeContents(contents, level.registryAccess());
             components.set(CoreComponents.CONTENTS.get(), contents);
@@ -484,7 +469,7 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
         tag.putBoolean("powered", powered);
     }
 
-    /** Everything inside: saved with the block, and carried by the item when a Carry card is installed. */
+    /** Everything inside: saved with the block, and kept by the dropped terminal item. */
     private void writeContents(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("items", items.serializeNBT(registries));
         tag.put("expansions", upgrades.serializeNBT(registries));
@@ -493,7 +478,6 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
         ContainerHelper.saveAllItems(grid, craft, registries);
         tag.put("craft", grid);
         tag.put("energy", energy.serializeNBT(registries));
-        tag.putBoolean("carry", carry);
     }
 
     @Override
@@ -510,7 +494,6 @@ public class StorageTerminalBlockEntity extends BlockEntity implements MenuProvi
         craft.clear();
         if (tag.contains("craft")) ContainerHelper.loadAllItems(tag.getCompound("craft"), craft, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
-        carry = tag.getBoolean("carry");
         cacheDirty = true;
         signalDirty = true;
         version++;
