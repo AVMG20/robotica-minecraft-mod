@@ -12,7 +12,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
  * Client to server: a click in a machine's side config tab. Only applied to the menu the player has open (same
- * container id), when that menu is still valid (block there, player in reach) and has a side config.
+ * container id), when that menu is still valid (block there, player in reach), has a side config and the player may
+ * change it ({@link MachineMenu#mayConfigure}).
  */
 public record SideConfigPayload(int containerId, int action) implements CustomPacketPayload {
     public static final Type<SideConfigPayload> TYPE = new Type<>(Robotica.id("core_side_config"));
@@ -34,7 +35,7 @@ public record SideConfigPayload(int containerId, int action) implements CustomPa
         if (!(context.player() instanceof ServerPlayer player) || player.isSpectator()) return;
         if (!(player.containerMenu instanceof MachineMenu menu) || menu.containerId != payload.containerId()) return;
         SideConfig sides = menu.sides();
-        if (sides == null || !sides.isServer() || !menu.stillValid(player)) return;
+        if (sides == null || !sides.isServer() || !menu.stillValid(player) || !menu.mayConfigure(player)) return;
         sides.handleAction(payload.action());
     }
 }

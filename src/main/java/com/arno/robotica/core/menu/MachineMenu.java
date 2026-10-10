@@ -101,6 +101,11 @@ public abstract class MachineMenu extends AbstractContainerMenu {
         return sides;
     }
 
+    /** Whether this player may change the side config. Controllers limit it to the owner, their team and operators. */
+    public boolean mayConfigure(Player player) {
+        return true;
+    }
+
     /** Client side only: the last synced value. On the server, read the block entity directly. */
     public int synced(int index) {
         return synced.get(index)[0];

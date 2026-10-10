@@ -529,6 +529,54 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /** The owner mutes the spire, a stranger can not; faces follow the side config, and both are saved. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void spireMutesAndConfiguresSides(GameTestHelper helper) {
+        BlockPos basePos = new BlockPos(4, 1, 4);
+        SpireBlockEntity be = spire(helper, basePos, 4, 4);
+        helper.assertTrue(be.isFormed(), "spire forms: " + why(be));
+        BlockPos pos = be.getBlockPos();
+        var owner = net.neoforged.neoforge.common.util.FakePlayerFactory.get(helper.getLevel(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.fromString("5e1d2c3b-0000-4000-8000-00000000e003"), "spire_owner"));
+        var stranger = net.neoforged.neoforge.common.util.FakePlayerFactory.get(helper.getLevel(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.fromString("5e1d2c3b-0000-4000-8000-00000000e004"), "spire_stranger"));
+        be.setOwner(owner.getUUID(), owner.getGameProfile().getName());
+        try {
+            for (var p : java.util.List.of(owner, stranger)) {
+                p.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 2.5);
+                p.containerMenu = new com.arno.robotica.energy.menu.SpireMenu(1, p.getInventory(), be);
+            }
+            helper.assertTrue(!ControllerActionPayload.process(stranger, new ControllerActionPayload(pos, ControllerActionPayload.SET_MUTED, 1)) && !be.muted(),
+                    "a stranger can not mute it");
+            helper.assertTrue(ControllerActionPayload.process(owner, new ControllerActionPayload(pos, ControllerActionPayload.SET_MUTED, 1)) && be.muted(),
+                    "the owner mutes it");
+            var menu = (com.arno.robotica.core.menu.MachineMenu) owner.containerMenu;
+            helper.assertTrue(menu.sides() == be.sides && menu.mayConfigure(owner) && !menu.mayConfigure(stranger),
+                    "the menu carries the side config, only the owner may change it");
+        } finally {
+            owner.containerMenu = owner.inventoryMenu;
+            stranger.containerMenu = stranger.inventoryMenu;
+        }
+
+        be.waste.setStackInSlot(0, new ItemStack(Items.GUNPOWDER, 3));
+        be.sides.set(com.arno.robotica.core.side.RelativeSide.BOTTOM, com.arno.robotica.core.side.SideMode.NONE);
+        be.sides.set(com.arno.robotica.core.side.RelativeSide.TOP, com.arno.robotica.core.side.SideMode.INPUT);
+        BlockPos abs = helper.absolutePos(basePos);
+        helper.assertTrue(helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, abs, Direction.DOWN) == null, "a None face has no items");
+        IItemHandler top = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, abs, Direction.UP);
+        helper.assertTrue(top != null && top.extractItem(2, 64, true).isEmpty() && top.insertItem(0, new ItemStack(Items.JIGSAW), true).isEmpty(),
+                "an Input face takes fuel and gives no waste");
+
+        var registries = helper.getLevel().registryAccess();
+        var tag = be.saveWithoutMetadata(registries);
+        be.setMuted(false);
+        be.sides.set(com.arno.robotica.core.side.RelativeSide.BOTTOM, com.arno.robotica.core.side.SideMode.BOTH);
+        be.loadWithComponents(tag, registries);
+        helper.assertTrue(be.muted() && be.sides.mode(com.arno.robotica.core.side.RelativeSide.BOTTOM) == com.arno.robotica.core.side.SideMode.NONE,
+                "mute and sides survive a reload");
+        helper.succeed();
+    }
+
     /** Too short, a stranger in the column, no crown, and the crown lights while it runs. */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void spireNamesTheWrongBlock(GameTestHelper helper) {

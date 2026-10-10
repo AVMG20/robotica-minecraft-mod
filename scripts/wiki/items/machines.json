@@ -886,7 +886,9 @@
    "what": "Bottom of a Tesla Spire: burns thorium and sends FE out of its sides and bottom.",
    "use": [
     "Stack 8 to 24 conductor blocks on it and a [[spire_crown]] on top.",
-    "Feed it thorium ingots, thorium blocks or fuel pellets."
+    "Feed it thorium ingots, thorium blocks or fuel pellets.",
+    "Set which faces take fuel and give waste in its Sides tab.",
+    "The note block button in its screen mutes it."
    ],
    "stats": {
     "rows": [
