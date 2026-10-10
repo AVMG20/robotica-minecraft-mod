@@ -118,6 +118,7 @@ public class RoboticaJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipeTransferHandlers(mezz.jei.api.registration.IRecipeTransferRegistration registration) {
         registration.addRecipeTransferHandler(new StorageCraftTransfer(), mezz.jei.api.constants.RecipeTypes.CRAFTING);
+        ToolRecipeTransfer.register(registration);
     }
 
     @Override

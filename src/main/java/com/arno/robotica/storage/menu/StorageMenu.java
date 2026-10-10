@@ -262,7 +262,8 @@ public class StorageMenu extends MachineMenu {
     /**
      * Fills the grid for a recipe (JEI transfer): what is in the grid goes back first, then each slot takes the first
      * accepted item it can find, from the terminal and then the player's inventory. {@code max} fills as many crafts as
-     * the items allow (one stack at most), otherwise one craft. Missing items just leave their slot empty. Server only.
+     * the items allow (one stack at most, and no more than a tool in the grid lasts), otherwise one craft. Missing items
+     * just leave their slot empty. Server only.
      */
     public void fillGrid(List<List<ItemStack>> wanted, boolean max) {
         if (be == null || wanted.size() > 9) return;
@@ -289,13 +290,20 @@ public class StorageMenu extends MachineMenu {
             }
             if (!got.isEmpty()) items.set(i, got);
         }
-        // Shift: add one more craft at a time while every filled slot can grow, so the slots stay even.
-        while (max) {
+        // Shift: add one more craft at a time while every filled slot can grow, so the slots stay even. A tool stays in
+        // the grid, so its slot keeps one and only caps the crafts at the uses it has left.
+        int crafts = 1;
+        int maxCrafts = Integer.MAX_VALUE;
+        for (ItemStack in : items) {
+            if (!isCraftingTool(in) || !in.isDamageableItem()) continue;
+            maxCrafts = Math.min(maxCrafts, in.getMaxDamage() - in.getDamageValue());
+        }
+        while (max && crafts < maxCrafts) {
             ItemStack[] round = new ItemStack[9];
             boolean any = false, complete = true;
             for (int i = 0; i < 9 && complete; i++) {
                 ItemStack in = items.get(i);
-                if (in.isEmpty()) continue;
+                if (in.isEmpty() || isCraftingTool(in)) continue;
                 any = true;
                 round[i] = in.getCount() < in.getMaxStackSize() ? take(in, 1) : ItemStack.EMPTY;
                 complete = !round[i].isEmpty();
@@ -311,9 +319,16 @@ public class StorageMenu extends MachineMenu {
                 }
             }
             if (!complete) break;
+            crafts++;
         }
         grid.setChanged();
         viewDirty = true;
+    }
+
+    /** An unstackable item that stays in the grid when crafting (the Tinker's Hammer): one per slot is enough. */
+    public static boolean isCraftingTool(ItemStack stack) {
+        return !stack.isEmpty() && stack.getMaxStackSize() == 1 && stack.hasCraftingRemainingItem()
+                && stack.getCraftingRemainingItem().is(stack.getItem());
     }
 
     /**

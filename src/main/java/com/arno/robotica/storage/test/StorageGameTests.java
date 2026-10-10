@@ -353,6 +353,32 @@ public class StorageGameTests {
         helper.succeed();
     }
 
+    /** Shift with a tool recipe: the hammer slot keeps one, the ingots fill up to the hammer's uses left. */
+    @GameTest(template = "empty")
+    public static void fillGridMaxWithTool(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.getInventory().clearContent();
+        StorageMenu menu = new StorageMenu(1, player.getInventory(), be);
+        be.insert(new ItemStack(com.arno.robotica.gear.GearItems.TINKERS_HAMMER.get()), false);
+        be.insert(new ItemStack(Items.IRON_INGOT, 20), false);
+        List<ItemStack> hammer = List.of(new ItemStack(com.arno.robotica.gear.GearItems.TINKERS_HAMMER.get()));
+        List<ItemStack> iron = List.of(new ItemStack(Items.IRON_INGOT));
+        menu.fillGrid(List.of(hammer, iron, iron), true);
+        helper.assertTrue(be.craft.get(0).getCount() == 1, "one hammer, got " + be.craft.get(0));
+        helper.assertTrue(be.craft.get(1).getCount() == 10 && be.craft.get(2).getCount() == 10, "shift: 20 ingots make 10 crafts, got "
+                + be.craft.get(1).getCount() + " / " + be.craft.get(2).getCount());
+
+        ItemStack worn = be.craft.get(0);
+        worn.setDamageValue(worn.getMaxDamage() - 4);
+        menu.fillGrid(List.of(hammer, iron, iron), true);
+        helper.assertTrue(be.craft.get(0).getDamageValue() == be.craft.get(0).getMaxDamage() - 4, "the same worn hammer, got " + be.craft.get(0));
+        helper.assertTrue(be.craft.get(1).getCount() == 4 && be.craft.get(2).getCount() == 4, "4 uses left: 4 crafts, got "
+                + be.craft.get(1).getCount() + " / " + be.craft.get(2).getCount());
+        helper.assertTrue(total(be, Items.IRON_INGOT) == 12, "the rest stays stored");
+        helper.succeed();
+    }
+
     /** With a Carry card the terminal drops as one item that holds everything; without it the items spill out. */
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void carryCardKeepsItemsWhenBroken(GameTestHelper helper) {
