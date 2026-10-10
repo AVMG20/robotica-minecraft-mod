@@ -7,7 +7,9 @@ import com.arno.robotica.power.client.screen.MetalPressScreen;
 import com.arno.robotica.power.PowerClientConfig;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.ModContainer;
 import net.minecraft.client.RecipeBookCategories;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -33,6 +35,7 @@ public final class PowerClient {
         modBus.addListener(PowerClient::registerRecipeCategories);
         modBus.addListener(PowerClient::registerRenderers);
         modBus.addListener(PowerClient::itemProperties);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, TeslaCoilRenderer::onClientTick);
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC, "robotica-power-client.toml");
     }
 

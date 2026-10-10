@@ -65,6 +65,9 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     /** Client: area the arcs cover, for frustum culling. */
     @Nullable
     private AABB renderBox;
+    /** Client: link animation state of the renderer: last frame time, how far the motes have travelled, eased flow level. */
+    public double fxTime = -1, fxTravel;
+    public float fxFlow;
 
     public TeslaCoilBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.TESLA_COIL_BE.get(), pos, state);
