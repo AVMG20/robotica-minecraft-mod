@@ -21,6 +21,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -32,10 +33,15 @@ import java.util.Random;
  * coil sends, soft motes with short tails travel the strand towards the target (more and faster the harder the coil
  * works, from the synced flow level) and now and then a tiny spark crackles off the tip.
  * <p>
+ * Smooth: everything runs on a client tick clock plus the partial tick (the level's game time jumps on every server time
+ * sync), the motes advance per frame by an eased speed so a flow change speeds them up or slows them down instead of
+ * moving them, and they keep their identity along the strand so their twinkle and density never pop. Lines never get
+ * thinner than a pixel or so: further out they widen and dim instead, so they do not shimmer.
+ * <p>
  * Cheap: camera-facing strips in one batched render type, all geometry from static scratch arrays and one re-seeded
  * Random (render thread only), nothing allocated per frame. Each link fades with its distance to the camera: motes and
- * sparks only up close, a coarser strand further out, nothing beyond the fade range (wider while holding a Linker). The
- * render box spans every link end, so long links stay when the coil itself is off-screen.
+ * sparks only up close, nothing beyond the fade range (wider while holding a Linker). The render box spans every link
+ * end, so long links stay when the coil itself is off-screen.
  */
 public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEntity> {
     /** Additive like lightning, but no depth writes (soft edges never hide glow behind them) and no culling (one winding). */
@@ -62,12 +68,21 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     /** Brightness of the strand while the coil sends, and while the player holds a Linker. */
     private static final float FLOW_GAIN = 1.3F, LINKER_GAIN = 2.0F;
 
-    // Motes per flow level 1-4: speed (blocks per tick) and spacing (blocks).
+    /** Mote speed (blocks per tick) per flow level 0-4, blended between levels by the eased flow. */
     private static final double[] MOTE_SPEED = {0, 0.045, 0.065, 0.09, 0.12};
-    private static final double[] MOTE_SPACING = {0, 3.2, 2.2, 1.5, 1.05};
-    private static final int MAX_MOTES = 16;
-    /** One crackle every this many 3-tick windows on average, per flow level. */
+    /**
+     * Motes sit on a lattice this far apart (wider on long links, at most {@link #MAX_MOTES} slots). Flow level 1 lights
+     * every fourth slot, 2 every second, 3 adds the rest at half strength, 4 lights all.
+     */
+    private static final double MOTE_GAP = 0.8;
+    private static final int MAX_MOTES = 24;
+    /** How fast the drawn flow follows the synced level, per tick. */
+    private static final double FLOW_EASE = 0.12;
+    /** One crackle every this many spark windows on average, per flow level. Each spark fades out over its window. */
     private static final int[] SPARK_ODDS = {0, 40, 28, 18, 12};
+    private static final double SPARK_TICKS = 3;
+    /** Least half width of a line or radius of a dot per block of camera distance (about a pixel and a half). */
+    private static final double MIN_WIDTH = 0.002;
 
     /**
      * Halo colours per tier (0xRRGGBB), after the coil's winding: I copper and II steel a pale ice blue like the Spark Lamp
@@ -86,10 +101,13 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     /** A second polyline for tails and sparks. */
     private static final double[] QX = new double[MAX_POINTS], QY = new double[MAX_POINTS], QZ = new double[MAX_POINTS],
             QA = new double[MAX_POINTS];
-    /** Per-point sideways unit vectors of the strip being emitted. */
-    private static final double[] WX = new double[MAX_POINTS], WY = new double[MAX_POINTS], WZ = new double[MAX_POINTS];
+    /** Per-point sideways vectors of the strip being emitted, and the alpha factor for any widening. */
+    private static final double[] WX = new double[MAX_POINTS], WY = new double[MAX_POINTS], WZ = new double[MAX_POINTS],
+            WK = new double[MAX_POINTS];
     private static final double[] COS = new double[DISC + 1], SIN = new double[DISC + 1];
     private static final Random RNG = new Random();
+    /** Client ticks while the game is not paused. */
+    private static long clientTicks;
     /** Result of {@link #pointAt}. */
     private static double px, py, pz;
     /** Camera position in the coil's block space, and the camera's left and up axes. */
@@ -104,6 +122,10 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     }
 
     public TeslaCoilRenderer(BlockEntityRendererProvider.Context context) {}
+
+    public static void onClientTick(ClientTickEvent.Post event) {
+        if (!Minecraft.getInstance().isPaused()) clientTicks++;
+    }
 
     @Override
     public void render(TeslaCoilBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
@@ -128,11 +150,16 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
 
         boolean linker = TeslaCoilBlock.isConfiguring();
         double near = linker ? NEAR_LINKER : NEAR, far = linker ? FAR_LINKER : FAR;
-        int flow = Math.min(4, be.flowLevel());
+        int synced = Math.min(4, be.flowLevel());
+        double time = clientTicks + partialTick;
+        double dt = be.fxTime < 0 ? 0 : Math.max(0, Math.min(20, time - be.fxTime));
+        be.fxTime = time;
+        be.fxFlow += (float) ((synced - be.fxFlow) * (1 - Math.exp(-dt * FLOW_EASE)));
+        if (Math.abs(synced - be.fxFlow) < 0.002F) be.fxFlow = synced;
+        float flow = be.fxFlow;
+        be.fxTravel += dt * moteSpeed(flow);
         int halo = halo(be.tier().ordinal());
-        float gain = (flow > 0 ? FLOW_GAIN : 1F) * (linker ? LINKER_GAIN : 1F);
-        long gameTime = level.getGameTime();
-        double time = gameTime + partialTick;
+        float gain = (1 + (FLOW_GAIN - 1) * Math.min(1F, flow)) * (linker ? LINKER_GAIN : 1F);
 
         Direction facing = state.getValue(TeslaCoilBlock.FACING);
         double tip = TeslaCoilBlock.TIP - 0.5;
@@ -164,32 +191,45 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
             if (dist >= far) continue;
             float fade = dist <= near ? 1F : (float) smooth((far - dist) / (far - near));
             double phase = ((p.asLong() * 0x9E3779B97F4A7C15L) >>> 40) / (double) (1 << 24) * Math.PI * 2;
-            int n = strand(ax, ay, az, bx, by, bz, dist, time, phase);
+            int n = strand(ax, ay, az, bx, by, bz, time, phase);
             if (n < 2) continue;
             double len = SS[n - 1];
             float a = fade * gain;
             strip(vc, m, SX, SY, SZ, SA, n, HALO_W, halo, haloEnd, Math.min(255, (int) (HALO_A * a)));
             strip(vc, m, SX, SY, SZ, SA, n, CORE_W, pale(halo), pale(haloEnd), Math.min(255, (int) (CORE_A * a)));
-            if (flow > 0 && dist < MOTE_RANGE && len > 0.6) {
+            if (flow > 0.01F && dist < MOTE_RANGE && len > 0.6) {
                 float moteFade = fade * (float) smooth((MOTE_RANGE - dist) / 6.0) * (linker ? 1.3F : 1F);
-                motes(vc, m, n, len, flow, time, phase, halo, haloEnd, moteFade);
+                motes(vc, m, n, len, flow, be.fxTravel, time, phase, halo, haloEnd, moteFade);
             }
         }
-        if (flow > 0 && closest < SPARK_RANGE) spark(vc, m, origin, ax, ay, az, facing, gameTime, flow, pale(halo));
+        if (synced > 0 && closest < SPARK_RANGE) spark(vc, m, origin, ax, ay, az, facing, time, synced, pale(halo));
+    }
+
+    /** Mote speed at an eased flow level, blended between the two nearest levels. */
+    private static double moteSpeed(float flow) {
+        int i = Math.max(0, Math.min(3, (int) flow));
+        double f = Math.max(0, Math.min(1, flow - i));
+        return MOTE_SPEED[i] + (MOTE_SPEED[i + 1] - MOTE_SPEED[i]) * f;
+    }
+
+    /** How lit lattice slot {@code id} is at an eased flow level: every fourth from level 1, every second from 2, all at 4. */
+    private static float moteWeight(long id, float flow) {
+        long slot = Math.floorMod(id, 4L);
+        float w = slot == 0 ? flow : slot == 2 ? flow - 1 : (flow - 2) / 2;
+        return Math.max(0F, Math.min(1F, w));
     }
 
     /**
      * Fills the strand scratch arrays with the sagging curve from a to b and returns its point count. The sag is a
      * parabola, deeper for long and level links, breathing very slowly. SA holds the end fade times a slow shimmer.
      */
-    private static int strand(double ax, double ay, double az, double bx, double by, double bz, double dist, double time, double phase) {
+    private static int strand(double ax, double ay, double az, double bx, double by, double bz, double time, double phase) {
         double dx = bx - ax, dy = by - ay, dz = bz - az;
         double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (len < 0.05) return 0;
         double level = Math.sqrt(dx * dx + dz * dz) / len;
         double sag = Math.min(0.06 * len, 0.8) * level * (1 + 0.06 * Math.sin(time * 0.025 + phase));
-        int n = dist < 20 ? (int) Math.ceil(len * 2.0) + 1 : (int) Math.ceil(len * 0.6) + 1;
-        n = Math.max(dist < 20 ? 8 : 4, Math.min(MAX_POINTS, n));
+        int n = Math.max(8, Math.min(MAX_POINTS, (int) Math.ceil(len * 1.5) + 1));
         double s = 0;
         for (int i = 0; i < n; i++) {
             double t = (double) i / (n - 1);
@@ -221,16 +261,21 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         pz = SZ[i - 1] + (SZ[i] - SZ[i - 1]) * t;
     }
 
-    /** Soft motes with a short tail, evenly spread so the loop is seamless, moving from the coil to the target. */
-    private static void motes(VertexConsumer vc, Matrix4f m, int n, double len, int flow, double time, double phase,
-                              int halo0, int halo1, float fade) {
-        int count = Math.max(1, Math.min(MAX_MOTES, (int) (len / MOTE_SPACING[flow])));
-        double gap = len / count, tail = 0.45 + 0.12 * flow;
-        double head0 = (time * MOTE_SPEED[flow] + phase / (Math.PI * 2) * gap) % gap;
-        for (int k = 0; k < count; k++) {
+    /**
+     * Soft motes with a short tail on a lattice that slides {@code travel} blocks from the coil to the target. Each mote
+     * keeps its lattice id while it travels, so its brightness and whether it is lit stay steady.
+     */
+    private static void motes(VertexConsumer vc, Matrix4f m, int n, double len, float flow, double travel, double time,
+                              double phase, int halo0, int halo1, float fade) {
+        double gap = Math.max(MOTE_GAP, len / MAX_MOTES), tail = 0.45 + 0.12 * flow;
+        double pos = travel + phase / (Math.PI * 2) * gap;
+        long first = (long) Math.floor(pos / gap);
+        double head0 = pos - first * gap;
+        for (int k = 0; head0 + k * gap < len; k++) {
             double s = head0 + k * gap;
-            float a = fade * (float) (smooth(s / 0.5) * smooth((len - s) / 0.5))
-                    * (float) (0.85 + 0.15 * Math.sin(time * 0.3 + k * 1.7 + phase));
+            long id = k - first;
+            float a = fade * moteWeight(id, flow) * (float) (smooth(s / 0.5) * smooth((len - s) / 0.5))
+                    * (float) (0.85 + 0.15 * Math.sin(time * 0.3 + (id % 1000) * 1.7 + phase));
             if (a <= 0.01F) continue;
             // tail: a tapering strip behind the head
             double start = Math.max(0, s - tail);
@@ -253,10 +298,12 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         }
     }
 
-    /** Now and then a tiny jagged spark off the coil tip while it sends; each lasts one 3-tick window. */
+    /** Now and then a tiny jagged spark off the coil tip while it sends; each fades out over one spark window. */
     private static void spark(VertexConsumer vc, Matrix4f m, BlockPos origin, double ax, double ay, double az, Direction facing,
-                              long gameTime, int flow, int color) {
-        long window = gameTime / 3;
+                              double time, int flow, int color) {
+        double w = time / SPARK_TICKS;
+        long window = (long) Math.floor(w);
+        float life = 1 - (float) (w - window);
         RNG.setSeed(origin.asLong() * 31 + window * 0x9E3779B97F4A7C15L);
         if (RNG.nextInt(SPARK_ODDS[flow]) != 0) return;
         // a random direction, leaning away from the block the coil sits on
@@ -278,13 +325,14 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
             QZ[i] = az + dz * d + (RNG.nextDouble() - 0.5) * 2 * j;
             QA[i] = 1 - t * t;
         }
-        strip(vc, m, QX, QY, QZ, QA, points, 0.03F, color, color, 28);
-        strip(vc, m, QX, QY, QZ, QA, points, 0.006F, color, color, 150);
+        strip(vc, m, QX, QY, QZ, QA, points, 0.03F, color, color, (int) (28 * life));
+        strip(vc, m, QX, QY, QZ, QA, points, 0.006F, color, color, (int) (150 * life));
     }
 
     /**
      * A camera-facing strip along the polyline with soft edges: full {@code alpha} (times the per-point factor) on the
      * line, zero at {@code halfWidth} to either side. The colour runs from {@code c0} at the first point to {@code c1}.
+     * Where that is under {@link #MIN_WIDTH} the strip widens and dims to match, so it keeps the same brightness.
      */
     private static void strip(VertexConsumer vc, Matrix4f m, double[] xs, double[] ys, double[] zs, double[] as, int n,
                               float halfWidth, int c0, int c1, int alpha) {
@@ -295,6 +343,7 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
             double vx = camX - xs[i], vy = camY - ys[i], vz = camZ - zs[i];
             double wx = ty * vz - tz * vy, wy = tz * vx - tx * vz, wz = tx * vy - ty * vx;
             double wl = Math.sqrt(wx * wx + wy * wy + wz * wz);
+            double w = Math.max(halfWidth, Math.sqrt(vx * vx + vy * vy + vz * vz) * MIN_WIDTH);
             if (wl < 1.0E-9) {
                 // looking straight down the line: any sideways vector will do
                 wx = leftX;
@@ -302,12 +351,13 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
                 wz = leftZ;
                 wl = 1;
             }
-            WX[i] = wx / wl * halfWidth;
-            WY[i] = wy / wl * halfWidth;
-            WZ[i] = wz / wl * halfWidth;
+            WX[i] = wx / wl * w;
+            WY[i] = wy / wl * w;
+            WZ[i] = wz / wl * w;
+            WK[i] = halfWidth / w;
         }
         for (int i = 0; i + 1 < n; i++) {
-            int a0 = (int) (alpha * as[i]), a1 = (int) (alpha * as[i + 1]);
+            int a0 = (int) (alpha * as[i] * WK[i]), a1 = (int) (alpha * as[i + 1] * WK[i + 1]);
             if (a0 <= 0 && a1 <= 0) continue;
             int k0 = c0 == c1 ? c0 : lerp(c0, c1, (double) i / (n - 1)), k1 = c0 == c1 ? c0 : lerp(c0, c1, (double) (i + 1) / (n - 1));
             int r = k0 >> 16 & 255, g = k0 >> 8 & 255, b = k0 & 255, r1 = k1 >> 16 & 255, g1 = k1 >> 8 & 255, b1 = k1 & 255;
@@ -326,8 +376,11 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         }
     }
 
-    /** A camera-facing soft dot: full alpha in the middle, zero at the rim. */
-    private static void disc(VertexConsumer vc, Matrix4f m, double cx, double cy, double cz, float radius, int color, int alpha) {
+    /** A camera-facing soft dot: full alpha in the middle, zero at the rim. Widens and dims like a strip when tiny. */
+    private static void disc(VertexConsumer vc, Matrix4f m, double cx, double cy, double cz, float size, int color, int alpha) {
+        double ex = camX - cx, ey = camY - cy, ez = camZ - cz;
+        float radius = (float) Math.max(size, Math.sqrt(ex * ex + ey * ey + ez * ez) * MIN_WIDTH);
+        alpha = (int) (alpha * (size / radius) * (size / radius));
         if (alpha <= 0) return;
         int r = color >> 16 & 255, g = color >> 8 & 255, b = color & 255;
         float x = (float) cx, y = (float) cy, z = (float) cz;
