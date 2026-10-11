@@ -71,7 +71,7 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
         drawEnergyBar(g, x + 9, y + 18, 12, 46, menu.energy(), menu.capacity());
         drawLabel(g, Component.translatable("gui.robotica.rancher.herd"), x + 48, y + 22, 30);
         drawInset(g, x + 97, y + 17, 30, 18);
-        drawLabelCentered(g, Component.literal(Integer.toString(menu.target())), x + 112, y + 22, 28);
+        drawFitted(g, font, Component.literal(Integer.toString(menu.target())), x + 112, y + 22, 28, 0xFFFFFFFF, 0, true, 1.0F);
         addTooltip(x + 97, y + 17, 30, 18, Component.translatable("gui.robotica.rancher.target", menu.target()),
                 Component.translatable("gui.robotica.rancher.shift_step"));
         drawLabelRight(g, Component.translatable("gui.robotica.rancher.adults", menu.adults()), x + imageWidth - 8, y + 46, 44);
@@ -81,6 +81,6 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
             case IDLE -> Tone.WARN;
             default -> Tone.BAD;
         };
-        drawStatus(g, Component.translatable(status.key()), x + 26, y + 68, 140, 1, tone);
+        drawStatus(g, Component.translatable(status.key()), x + 26, y + 62, 140, 1, tone);
     }
 }
