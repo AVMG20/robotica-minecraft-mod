@@ -67,6 +67,9 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     private final long[] linkWindow = new long[MAX_LINKS];
     /** Synced: 0 idle, 1-4 how much of the tier rate went over each link in the last second. Server: pending levels as above. */
     private final byte[] linkFlow = new byte[MAX_LINKS], linkPending = new byte[MAX_LINKS];
+    /** Server, {@link TeslaNetwork}: stamps of the last push that measured and fed this coil, and per link what it wants and gets. */
+    int demandMark, pushMark;
+    final int[] linkDemand = new int[MAX_LINKS], linkGive = new int[MAX_LINKS];
     private long nextHum;
 
     /** Client: area the arcs cover, for frustum culling. */

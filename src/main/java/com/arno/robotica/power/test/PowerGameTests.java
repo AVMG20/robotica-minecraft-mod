@@ -339,6 +339,50 @@ public class PowerGameTests {
         });
     }
 
+    /**
+     * Two Tesla Emitters on full Accumulators -> relay coil (also linked to two full machines) -> relay coil -> a hungry
+     * machine. What the full machines do not take goes on to the next coil, so each emitter sends its Accumulator's whole
+     * output and the machine gets both minus two hops.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void teslaRelaySendsWhatFullLinksSkip(GameTestHelper helper) {
+        int full = PowerConfig.accumulatorCapacity(1), io = PowerConfig.accumulatorIo(1);
+        AccumulatorBlockEntity a = accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, full);
+        AccumulatorBlockEntity b = accumulator(helper, new BlockPos(0, 1, 2), Direction.NORTH, full);
+        TeslaCoilBlockEntity e1 = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_EMITTER_1.get());
+        TeslaCoilBlockEntity e2 = coil(helper, new BlockPos(0, 2, 2), PowerRegistry.TESLA_EMITTER_1.get());
+        helper.setBlock(new BlockPos(2, 1, 0), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity first = coil(helper, new BlockPos(2, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        helper.setBlock(new BlockPos(2, 1, 2), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity second = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
+        AccumulatorBlockEntity full1 = accumulator(helper, new BlockPos(1, 1, 1), Direction.NORTH, full);
+        AccumulatorBlockEntity full2 = accumulator(helper, new BlockPos(3, 1, 1), Direction.NORTH, full);
+        BlockPos sinkPos = new BlockPos(3, 1, 3);
+        helper.setBlock(sinkPos, PowerRegistry.ACCUMULATOR_2.get().defaultBlockState().setValue(PowerBlock.FACING, Direction.NORTH));
+        AccumulatorBlockEntity sink = (AccumulatorBlockEntity) helper.getBlockEntity(sinkPos);
+        helper.assertTrue(TeslaNetwork.toggle(e1, first.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "emitter 1 -> first");
+        helper.assertTrue(TeslaNetwork.toggle(e2, first.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "emitter 2 -> first");
+        helper.assertTrue(TeslaNetwork.toggle(first, full1.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "first -> full 1");
+        helper.assertTrue(TeslaNetwork.toggle(first, second.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "first -> second");
+        helper.assertTrue(TeslaNetwork.toggle(first, full2.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "first -> full 2");
+        helper.assertTrue(TeslaNetwork.toggle(second, sink.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "second -> sink");
+        int[] mark = new int[2];
+        helper.runAfterDelay(20, () -> {
+            mark[0] = sink.energy.getEnergyStored();
+            mark[1] = a.energy.getEnergyStored() + b.energy.getEnergyStored();
+        });
+        helper.runAfterDelay(60, () -> {
+            long got = sink.energy.getEnergyStored() - mark[0];
+            long drained = mark[1] - (long) a.energy.getEnergyStored() - b.energy.getEnergyStored();
+            int keep = 100 - PowerConfig.teslaHopLoss();
+            long expected = 40L * 2 * io * keep / 100 * keep / 100;
+            helper.assertTrue(drained >= 39L * 2 * io, "both Accumulators give their full " + io + " FE/t, drained " + drained + " in 40 ticks");
+            helper.assertTrue(got >= expected * 39 / 40, "the machine gets both minus two hops: " + got + " of " + expected);
+            helper.assertTrue(full1.energy.getEnergyStored() == full && full2.energy.getEnergyStored() == full, "the full machines stay full");
+            helper.succeed();
+        });
+    }
+
     /** The clicked face is where the power goes in: an Accumulator's front only gives energy out. */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void teslaFaceSpecificInsertion(GameTestHelper helper) {
