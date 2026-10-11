@@ -78,6 +78,8 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     public final float[] fxFlow = new float[MAX_LINKS];
     /** Client: angle and eased speed (radians per tick) of the shards that circle a coil's crystal. */
     public double fxOrbit, fxOrbitSpeed;
+    /** Client: 0 idle .. 1 sending, eased; brightens the crystal's glow. */
+    public double fxBusy;
 
     public TeslaCoilBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.TESLA_COIL_BE.get(), pos, state);

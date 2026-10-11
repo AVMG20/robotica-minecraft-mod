@@ -177,121 +177,93 @@ for mk in (1, 2, 3, 4):
     loot(name)
 
 # ---------- tesla coils ----------
-# Every Tesla block is a glowing energy crystal on a platform of the tier metal (I copper, II iron, III gold, IV magma,
-# V null); the crystal colour shows the tier too. Tesla Emitter: a faceted crystal with a pointed top on a small plate.
-# Tesla Coil: a wide stepped platform with a glowing seam, four prongs with lit tips and a bigger crystal floating over
-# a socket; TeslaCoilRenderer adds the shards that circle it. FACING is the direction it points (away from the block it
-# sits on); the blockstate turns the up model like a piston.
+# Every Tesla block is a low machine platform of the tier metal (I copper, II iron, III gold, IV magma, V null) with a
+# glowing lens; TeslaCoilRenderer draws the energy crystal floating over it (and the Tesla Coil's orbiting shards),
+# also in the item (TeslaItemRenderer). Each layer is a square with stepped-in corners; their tops share one texture
+# drawn pixel for pixel from above (scripts/textures/power.py, same layers). FACING is the direction it points (away
+# from the block it sits on); the blockstate turns the up model like a piston.
 TESLA_ROT = {'up': {}, 'down': {'x': 180}, 'north': {'x': 90}, 'south': {'x': 90, 'y': 180},
              'west': {'x': 90, 'y': 270}, 'east': {'x': 90, 'y': 90}}
 SIDES = ('north', 'south', 'west', 'east')
 
 
-def cuboid(frm, to, texture, glow=False, turn=False, full_uv=False, uv=None, faces=SIDES + ('up', 'down')):
-    """A box with pixel-exact UVs taken from its own coordinates. full_uv: the whole texture on every face; uv: this
-    uv on every face. turn: 45 degrees round the block's vertical centre line."""
-    out = {}
+def face(texture, uv, glow=False):
+    return dict({'texture': texture, 'uv': [round(v, 4) for v in uv]}, **({'neoforge_data': GLOW} if glow else {}))
+
+
+def box(frm, to, top, side=None, row=0, glow=False, faces=SIDES, bottom=False):
+    """A box whose top takes `top` at its own coordinates and whose sides take row `row` of `side` (one texture row
+    per pixel of height). Glowing boxes are full bright and take `top` everywhere."""
+    side = side or top
+    out = {'up': face(top, [frm[0], frm[2], to[0], to[2]], glow)}
+    if bottom:
+        out['down'] = dict(face(side, [frm[0], 16 - to[2], to[0], 16 - frm[2]]), cullface='down')
     for d in faces:
-        if uv:
-            u = list(uv)
-        elif full_uv:
-            u = [0, 0, 16, 16]
-        elif d in ('up', 'down'):
-            u = [frm[0], frm[2], to[0], to[2]]
-        elif d in ('north', 'south'):
-            u = [frm[0], 16 - to[1], to[0], 16 - frm[1]]
-        else:
-            u = [frm[2], 16 - to[1], to[2], 16 - frm[1]]
-        out[d] = dict({'texture': texture, 'uv': u}, **({'neoforge_data': GLOW} if glow else {}))
+        a, b = (frm[0], to[0]) if d in ('north', 'south') else (frm[2], to[2])
+        out[d] = face(side, [a, 0, b, 16] if glow else [a, row, b, row + to[1] - frm[1]], glow)
     el = {'from': frm, 'to': to, 'faces': out}
     if glow:
         el['shade'] = False
-    if turn:
-        el['rotation'] = {'angle': 45, 'axis': 'y', 'origin': [8, frm[1], 8]}
     return el
 
 
-def platform(lo, hi, y0, y1):
-    """Tier platform: the whole plate texture on top and bottom, its lit frame band round the sides."""
-    el = cuboid([lo, y0, lo], [hi, y1, hi], '#plate', faces=('up', 'down'), full_uv=True)
-    for d in SIDES:
-        el['faces'][d] = {'texture': '#plate', 'uv': [lo, 0, hi, y1 - y0]}
-    return el
+def square(half, y0, y1, top, side=None, row=0, glow=False, bottom=False):
+    return box([8 - half, y0, 8 - half], [8 + half, y1, 8 + half], top, side, row, glow, bottom=bottom)
 
 
-def gem(w, y0, y1, turn=False, faces=SIDES + ('up',), rim=True):
-    """One full-bright crystal layer w wide on the centre line. rim: the whole texture (with its coloured rim) per face."""
-    return cuboid([8 - w / 2, y0, 8 - w / 2], [8 + w / 2, y1, 8 + w / 2], '#crystal', glow=True, turn=turn, full_uv=rim,
-                  faces=faces)
+def ring(outer, inner, y0, y1, top, side=None, row=0, glow=False):
+    """A square ring: north and south bars the full width, west and east bars between them."""
+    lo, hi, il, ih = 8 - outer, 8 + outer, 8 - inner, 8 + inner
+    return [box([lo, y0, lo], [hi, y1, il], top, side, row, glow),
+            box([lo, y0, ih], [hi, y1, hi], top, side, row, glow),
+            box([lo, y0, il], [il, y1, ih], top, side, row, glow, faces=('west', 'east')),
+            box([ih, y0, il], [hi, y1, ih], top, side, row, glow, faces=('west', 'east'))]
 
 
-def spike(y, w, h):
-    """Pointed roof from y: turned layers that shrink from w to a sliver over h pixels."""
-    steps = max(2, round(h / 1.0))
-    return [gem(w * (1 - i / steps) + 0.4 * (i == steps - 1), y + h * i / steps, y + h * (i + 1) / steps, turn=True, rim=False)
-            for i in range(steps)]
-
-
-def tesla_model(name, tier, elements):
-    elements[0]['faces']['down']['cullface'] = 'down'
+def tesla_model(name, tier, kind, elements, item_display):
     block_model(name, {
         'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
-        'textures': {'plate': tex(f'tesla_plate_{tier}'), 'frame': tex('tesla_frame'), 'crystal': tex(f'tesla_crystal_{tier}'),
-                     'particle': tex(f'tesla_plate_{tier}')},
+        'textures': {'top': tex(f'tesla_{kind}_{tier}_top'), 'side': tex(f'tesla_side_{tier}'),
+                     'glow': tex(f'tesla_glow_{tier}'), 'particle': tex(f'tesla_side_{tier}')},
         'elements': elements,
     })
     blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
+    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': item_display})
     loot(name)
 
 
-# Coil: 10 high. The crystal floats from 2.9 to 10 over a socket (TeslaCoilBlock.TIP 7.5); prongs at 4..5 and 11..12.
-for tier in range(1, 6):
-    name = f'tesla_coil_{tier}'
-    prongs = []
-    for x in (4, 11):
-        for z in (4, 11):
-            prongs.append(cuboid([x, 2, z], [x + 1, 4.5, z + 1], '#plate', uv=[0, 0, 1, 2.5], faces=SIDES))
-            prongs.append(cuboid([x, 4.5, z], [x + 1, 5.25, z + 1], '#crystal', glow=True, full_uv=True, faces=SIDES + ('up',)))
-    tesla_model(name, tier, [
-        platform(2, 14, 0, 1),
-        cuboid([3, 1, 3], [13, 1.25, 13], '#crystal', glow=True, full_uv=True, faces=SIDES + ('up',)),   # glowing seam
-        cuboid([3.5, 1, 3.5], [12.5, 2, 12.5], '#frame', faces=SIDES + ('up',)),
-        platform(6.5, 9.5, 2, 2.5),                                                                     # socket
-        *prongs,
-        gem(1.5, 2.9, 3.4, turn=True, faces=SIDES + ('down',), rim=False),                               # lower point
-        gem(3, 3.4, 3.9, turn=True, faces=SIDES + ('down',), rim=False),
-        gem(4, 3.9, 7.5, turn=True),
-        gem(3, 3.9, 7.25),
-        *spike(7.5, 3, 2.5),
-    ])
-    # 10 high and 12 wide: shown a little bigger than a block in the slot, lifted so it sits in the middle.
-    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, 2.5, 0], 'scale': [0.8, 0.8, 0.8]},
-        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.4, 0.4, 0.4]},
-        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 1, 0], 'scale': [0.7, 0.7, 0.7]},
-        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.45, 0.45, 0.45]},
-        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 2, 0], 'scale': [0.5, 0.5, 0.5]},
-        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 2, 0], 'scale': [0.5, 0.5, 0.5]},
-    }})
+def tesla_platform(base, seam, housing, well, y_housing, top_housing):
+    """Base plate, the glowing seam under the housing, the housing ring and the lens at the bottom of its well. Sizes
+    match TESLA_PARTS in scripts/textures/power.py."""
+    return [square(base, 0, 1, '#top', '#side', row=0, bottom=True),
+            *ring(seam, housing, 1, y_housing, '#glow', glow=True),
+            *ring(housing, well, 1, top_housing, '#top', '#side', row=1),
+            square(well, 1, 1.4, '#glow', glow=True)]
 
-# Emitter: a faceted crystal (a turned square round a lower square, so their tops do not fight) with a pointed roof,
-# 10.5 high on a small tier plate. Arcs start at 8 (TeslaEmitterBlock.EMITTER_TIP).
+
+# Coil: 2.6 high; the crystal floats over the well up to about 14. Light slits sit on the base at each edge.
 for tier in range(1, 6):
-    name = f'tesla_emitter_{tier}'
-    tesla_model(name, tier, [
-        platform(4.5, 11.5, 0, 1),
-        gem(4.5, 1, 6, turn=True),
-        gem(3.5, 1, 5.75),
-        *spike(6, 3.5, 4.5),
-    ])
-    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, 2, 0], 'scale': [0.95, 0.95, 0.95]},
+    slits = [box([7, 1, 2.5], [9, 1.15, 3], '#glow', glow=True, faces=SIDES), box([7, 1, 13], [9, 1.15, 13.5], '#glow', glow=True, faces=SIDES),
+             box([2.5, 1, 7], [3, 1.15, 9], '#glow', glow=True, faces=SIDES), box([13, 1, 7], [13.5, 1.15, 9], '#glow', glow=True, faces=SIDES)]
+    tesla_model(f'tesla_coil_{tier}', tier, 'coil', [*tesla_platform(6, 4.4, 4, 2, 1.25, 2.6), *slits], {
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, -1, 0], 'scale': [0.75, 0.75, 0.75]},
+        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.4, 0.4, 0.4]},
+        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [0.7, 0.7, 0.7]},
+        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.45, 0.45, 0.45]},
+        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
+        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
+    })
+
+# Emitter: 2.2 high under a slim crystal up to about 10.
+for tier in range(1, 6):
+    tesla_model(f'tesla_emitter_{tier}', tier, 'emitter', tesla_platform(4, 3.3, 3, 1.5, 1.2, 2.2), {
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, -1, 0], 'scale': [1, 1, 1]},
         'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
-        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 2, 0], 'scale': [0.8, 0.8, 0.8]},
+        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [0.8, 0.8, 0.8]},
         'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 3, 1], 'scale': [0.5, 0.5, 0.5]},
-        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 3, 0], 'scale': [0.6, 0.6, 0.6]},
-        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 3, 0], 'scale': [0.6, 0.6, 0.6]},
-    }})
+        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
+        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 2, 0], 'scale': [0.6, 0.6, 0.6]},
+    })
 
 # ---------- winding crank ----------
 crank_tex = {'base': tex('winding_crank_base'), 'metal': tex('winding_crank_metal'), 'spring': tex('winding_crank_spring'),

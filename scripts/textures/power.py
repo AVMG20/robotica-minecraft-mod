@@ -470,64 +470,98 @@ def accumulator_top(tier):
 
 
 # ---------------------------------------------------------------- tesla coil
-# Crystal colours per tier (dark, mid, light, glint, edge): I cyan, II blue, III amber, IV ember, V violet.
-# The edge is a hue step away so every facet gets a coloured rim.
+# Tesla blocks are a low machine platform in the tier metal (I copper, II iron, III gold, IV magma, V null) with a
+# glowing lens, under an energy crystal that TeslaCoilRenderer draws floating over it. Crystal and glow colours follow
+# the tier too: I cyan, II blue, III amber, IV ember, V violet (dark .. white hot).
 TESLA_CRYSTAL = {
-    1: ('#0E5566', '#1FA5BD', '#5FE3F0', '#E8FFFF', '#2F6FD8'),
-    2: ('#142E7A', '#2F5FD8', '#6F9CFF', '#E8F0FF', '#7A34D0'),
-    3: ('#7A4A08', '#D89418', '#FFD060', '#FFF6D8', '#E0481A'),
-    4: ('#7A1A08', '#E0481A', '#FF8A4A', '#FFE8D0', '#B01A3A'),
-    5: ('#3A1470', '#7A34D0', '#B07CFF', '#F4E8FF', '#E040C0'),
+    1: ('#0B3F52', '#127E98', '#2FC4DE', '#8AF0FF', '#F0FFFF'),
+    2: ('#10246A', '#2448C0', '#4F7EF4', '#A8C4FF', '#F0F4FF'),
+    3: ('#6A3A06', '#C07810', '#F2AE2A', '#FFE08A', '#FFFBEA'),
+    4: ('#62140A', '#C2321A', '#F26A34', '#FFB088', '#FFF0E4'),
+    5: ('#2C0E5C', '#6428BC', '#9C5CF4', '#D6B4FF', '#FAF2FF'),
 }
 GUNMETAL = {'0': '#16191C', '1': '#22272B', '2': '#2E343A', '3': '#3C444B', '4': '#58626B'}
+TESLA_METAL = {1: 'copper', 2: 'iron', 3: 'gold', 4: 'magma', 5: 'null'}
+# Platform parts seen from above, as half widths round the block centre; keep in step with scripts/data/power_models.py.
+# base: the tier metal plate; seam: the glowing line under the housing; housing: the raised gunmetal ring with a tier
+# metal top round the projector well; well: the glowing lens at its bottom; slit: the light slits on the base.
+TESLA_PARTS = {
+    'coil': {'base': 6, 'seam': 4.4, 'housing': 4, 'well': 2, 'slit': (5, 5.5)},
+    'emitter': {'base': 4, 'seam': 3.3, 'housing': 3, 'well': 1.5, 'slit': None},
+}
 
 
-# Platform metal per tier, after the machine Mk colours: I copper, II iron, III gold, IV magma, V null.
-TESLA_PLATE = {1: 'copper', 2: 'iron', 3: 'gold', 4: 'magma', 5: 'null'}
+def tesla_palette(tier):
+    return dict(GUNMETAL) | dict(zip('TUVWX', MATERIALS[TESLA_METAL[tier]])) | dict(zip('abcde', TESLA_CRYSTAL[tier]))
 
 
-def tesla_plate(tier):
-    """Tier platform: a bevelled 2 px frame of the tier metal with riveted corners round a dark recess with seams.
-    The top shows the whole texture; the sides show the top rows (the lit frame band)."""
+def tesla_top(tier, kind):
+    """Top of a Tesla platform, pixel for pixel (every part's top shows its own area): a bevelled tier metal base, and
+    the housing's tier metal rim with a lit outer edge and a dark lip into the well."""
+    parts = TESLA_PARTS[kind]
     c = Canvas()
-    c.plate(0, 0, 16, 16, 'TUVWX', tier, brushed=False)
-    c.rect(1, 1, 14, 14, 'V').rect(1, 14, 14, 1, 'U').rect(14, 1, 1, 14, 'U')
-    c.rect(0, 0, 16, 1, 'W')
-    c.rect(3, 3, 10, 10, '1').rect(3, 3, 10, 1, '0').rect(3, 3, 1, 10, '0')           # recess, shadowed top-left
-    c.rect(4, 12, 9, 1, '3').rect(12, 4, 1, 9, '3')                                   # lit lip
-    c.rect(4, 7, 8, 1, '2').rect(7, 4, 1, 8, '2')                                     # cross seams
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
-        c.set(x, y, 'X')
-    pal = dict(GUNMETAL) | dict(zip('TUVWX', MATERIALS[TESLA_PLATE[tier]]))
-    return c.rows(), pal
+    for y in range(16):
+        for x in range(16):
+            dx, dy = x + 0.5 - 8, y + 0.5 - 8
+            d = max(abs(dx), abs(dy))
+            lit = dx < 0 and abs(dx) >= abs(dy) or dy < 0 and abs(dy) > abs(dx)
+            if d < parts['well']:
+                c.set(x, y, '0')
+            elif d < parts['housing']:
+                if d < parts['well'] + 1:
+                    ch = 'T' if lit else 'U'                       # lip into the well
+                elif d > parts['housing'] - 1:
+                    ch = 'X' if lit else 'V'
+                else:
+                    ch = 'W' if hash01(x, y, 5 + tier) < 0.25 else 'V'
+                c.set(x, y, ch)
+            elif d < parts['base']:
+                if d > parts['base'] - 1:
+                    ch = 'W' if lit else 'T'
+                else:
+                    ch = 'V' if hash01(x, y, 2 + tier) < 0.18 else 'U'
+                c.set(x, y, ch)
+    return c
+
+
+def tesla_side(tier):
+    """Sides, one row per pixel of height: row 0 the base (tier metal with seams), rows 1-2 the gunmetal housing."""
+    c = Canvas()
+    for x in range(16):
+        c.set(x, 0, 'T' if x % 4 == 3 else 'U')
+        c.set(x, 1, '2' if x % 4 else '1')
+        c.set(x, 2, '1')
+        for y in range(3, 16):
+            c.set(x, y, 'U')
+    return c
 
 
 def tesla_crystal(tier):
-    """Full-bright energy crystal: speckled like a geode, a coloured rim. Each face shows the whole texture."""
+    """Facet of the energy crystal. TeslaCoilRenderer maps the texture down the whole crystal (tip at the top centre),
+    so every facet shows a bright core band that fades towards its edges and the base, a lit left edge and a few
+    sparkles."""
     rows = []
     for y in range(16):
         row = ''
         for x in range(16):
-            n = hash01(x, y, 40 + tier) * 0.5 + hash01(x // 3, y // 3, 70 + tier) * 0.3 + (15 - y) / 15 * 0.2
-            ch = 'e' if x in (0, 15) or y in (0, 15) else 'a' if n < 0.18 else 'b' if n < 0.62 else 'c' if n < 0.95 else 'd'
-            row += ch
+            d = abs(x - 7.5)
+            v = min(3.9 if y else 3.2, 3.2 - y / 15 * 1.3 + (0.9 if d < 2 else 0.45 if d < 4 else 0) - (0.5 if x > 13 else 0)
+                    + (0.8 if x < 1 else 0))
+            if (x * 7 + y * 13) % 29 == 0 and 2 < x < 13:
+                v += 1
+            row += 'abcde'[max(0, min(4, int(v)))]
         rows.append(row)
-    return rows, dict(zip('abcde', TESLA_CRYSTAL[tier]))
+    return rows, tesla_palette(tier)
 
 
-def tesla_frame():
-    """Dark gunmetal of the Tesla bases and pylon: bevelled panels with a seam, mapped pixel for pixel."""
+def tesla_glow(tier):
+    """Full-bright lens, seam and slit light: white hot in the middle, the tier colour outside."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, '2')
     for y in range(16):
         for x in range(16):
-            if hash01(x, y, 5) < 0.12:
-                c.set(x, y, '1')
-    for o in (0, 8):
-        c.rect(o, 0, 1, 16, '3').rect(0, o, 16, 1, '3')                     # lit panel edges
-        c.rect(o + 7, 0, 1, 16, '1').rect(0, o + 7, 16, 1, '0')             # dark seams
-    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
-        c.set(x, y, '4')
+            d = max(abs(x - 7.5), abs(y - 7.5))
+            v = 4.3 - d / 2.2 + (hash01(x, y, 30 + tier) - 0.5) * 0.5
+            c.set(x, y, 'abcde'[max(2, min(4, int(round(v))))])
     return c
 
 
@@ -650,12 +684,14 @@ def main():
         write_still('block', f'accumulator_side_glow_{level}', accumulator_side_glow(level), P)
 
     write_block('tesla_coil_tip', tesla_tip().rows(), P)
-    write_block('tesla_frame', tesla_frame().rows(), GUNMETAL)
     for tier in TESLA_CRYSTAL:
-        rows, pal = tesla_crystal(tier)
+        pal = tesla_palette(tier)
+        rows, _ = tesla_crystal(tier)
         write_block(f'tesla_crystal_{tier}', rows, pal)
-        rows, pal = tesla_plate(tier)
-        write_block(f'tesla_plate_{tier}', rows, pal)
+        write_block(f'tesla_glow_{tier}', tesla_glow(tier).rows(), pal)
+        write_block(f'tesla_side_{tier}', tesla_side(tier).rows(), pal)
+        for kind in TESLA_PARTS:
+            write_block(f'tesla_{kind}_{tier}_top', tesla_top(tier, kind).rows(), pal)
     write_item('tesla_linker', tesla_linker().rows(), P | {'b': '#8D9599', 'c': '#C4CBCE', 'd': '#5A6266'})
     write_block('winding_crank_base', crank_base().rows(), P)
     write_block('winding_crank_metal', crank_metal().rows(), P)

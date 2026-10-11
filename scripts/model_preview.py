@@ -6,6 +6,7 @@ Usage: python3 scripts/model_preview.py out.png block/combustion_generator_on bl
 Vanilla textures (an ore's host rock) come from the Minecraft client jar when one is found (or MC_CLIENT_JAR);
 --standins draws the wiki's stand-ins instead.
 A model path is relative to assets/robotica/models; an 'item/<name>' without elements in its model chain is drawn flat.
+Parts a renderer draws over a model (the Tesla crystals, live_parts) are added at rest.
 """
 import json
 import math
@@ -330,6 +331,87 @@ def render_model(img, zbuf, ref, ox, oy, scale, night=False, xform=None, tint=No
                         continue
                     zbuf[py][px] = z
                     img[py][px] = (int(r * shade * tc[0]), int(g * shade * tc[1]), int(bb * shade * tc[2]), 255)
+    render_tris(img, zbuf, live_parts(ref), ox, oy, scale, xform)
+
+
+# Floating Tesla crystals that TeslaCoilRenderer draws over the platform models, at rest: (middle height, ring radius,
+# lower point, straight middle, upper point) in model pixels. Keep in step with COIL_CRYSTAL / EMITTER_CRYSTAL there.
+TESLA_CRYSTALS = {'coil': (9, 2.4, 2.6, 1.6, 4.4), 'emitter': (6, 1.4, 1.6, 0.6, 3.6)}
+TESLA_SHARD = (0.48, 1.12)        # shard radius and point height (SHARD_W, SHARD_H), orbit radius 5.44 at the coil middle
+
+
+def crystal_tris(tex, cx, cy, cz, r, bottom, body, top, spin):
+    """Textured triangles of a 4 sided crystal like TeslaCoilRenderer.crystal: (points, uvs 0..16, texture, shade)."""
+    y0, y1, total = cy - body / 2, cy + body / 2, bottom + body + top
+    ring = [(math.cos(spin + k * math.pi / 2) * r, math.sin(spin + k * math.pi / 2) * r) for k in range(4)]
+    up = [(cx + dx, y1, cz + dz) for dx, dz in ring]
+    lo = [(cx + dx, y0, cz + dz) for dx, dz in ring]
+    apex, base = (cx, y1 + top, cz), (cx, y0 - bottom, cz)
+    vt, vb = top / total * 16, (top + body) / total * 16
+    out = []
+    for k in range(4):
+        j = (k + 1) % 4
+        out.append(((apex, up[k], up[j]), ((8, 0), (0, vt), (16, vt)), tex, 1.0))
+        if body > 0:
+            out.append(((up[k], lo[k], lo[j]), ((0, vt), (0, vb), (16, vb)), tex, 0.9))
+            out.append(((up[k], lo[j], up[j]), ((0, vt), (16, vb), (16, vt)), tex, 0.9))
+        out.append(((base, lo[j], lo[k]), ((8, 16), (16, vb), (0, vb)), tex, 0.75))
+    return out
+
+
+def live_parts(ref):
+    """Triangles a renderer adds to this model (block or item), or []."""
+    name = ref.split('/')[-1]
+    for kind, (y, r, bottom, body, top) in TESLA_CRYSTALS.items():
+        prefix = f'tesla_{kind}_'
+        if name.startswith(prefix) and name[len(prefix):].isdigit():
+            tex = f'robotica:block/tesla_crystal_{name[len(prefix):]}'
+            tris = crystal_tris(tex, 8, y, 8, r, bottom, body, top, math.pi / 4)
+            if kind == 'coil':
+                for i in range(3):
+                    a = 0.6 + i * math.pi * 2 / 3
+                    tris += crystal_tris(tex, 8 + math.cos(a) * 5.44, y, 8 + math.sin(a) * 5.44, TESLA_SHARD[0], TESLA_SHARD[1], 0,
+                                         TESLA_SHARD[1], 0.3 + i)
+            return tris
+    return []
+
+
+def render_tris(img, zbuf, tris, ox, oy, scale, xform=None):
+    """Full-bright textured triangles (model pixel coordinates), lit per facet like the renderer."""
+    for pts, uvs, tex, shade in tris:
+        if xform:
+            pts = [xform.p(p) for p in pts]
+        n = [(pts[1][(i + 1) % 3] - pts[0][(i + 1) % 3]) * (pts[2][(i + 2) % 3] - pts[0][(i + 2) % 3])
+             - (pts[1][(i + 2) % 3] - pts[0][(i + 2) % 3]) * (pts[2][(i + 1) % 3] - pts[0][(i + 1) % 3]) for i in range(3)]
+        nl = math.sqrt(sum(v * v for v in n)) or 1
+        light = 0.7 + 0.3 * max(0.0, abs(n[1]) / nl)
+        tw, th, tpx = texture(tex)
+        s = [project(p, scale, ox, oy) for p in pts]
+        d = [depth(p) for p in pts]
+        det = (s[1][0] - s[0][0]) * (s[2][1] - s[0][1]) - (s[1][1] - s[0][1]) * (s[2][0] - s[0][0])
+        if abs(det) < 1e-6:
+            continue
+        for py in range(int(min(q[1] for q in s)), int(max(q[1] for q in s)) + 2):
+            for px in range(int(min(q[0] for q in s)), int(max(q[0] for q in s)) + 2):
+                if not (0 <= px < len(img[0]) and 0 <= py < len(img)):
+                    continue
+                qx, qy = px + 0.5, py + 0.5
+                w1 = ((qx - s[0][0]) * (s[2][1] - s[0][1]) - (qy - s[0][1]) * (s[2][0] - s[0][0])) / det
+                w2 = ((s[1][0] - s[0][0]) * (qy - s[0][1]) - (s[1][1] - s[0][1]) * (qx - s[0][0])) / det
+                w0 = 1 - w1 - w2
+                if w0 < 0 or w1 < 0 or w2 < 0:
+                    continue
+                z = w0 * d[0] + w1 * d[1] + w2 * d[2]
+                if z < zbuf[py][px] - 1e-4:
+                    continue
+                u = w0 * uvs[0][0] + w1 * uvs[1][0] + w2 * uvs[2][0]
+                v = w0 * uvs[0][1] + w1 * uvs[1][1] + w2 * uvs[2][1]
+                r, g, b, a = tpx[min(th - 1, max(0, int(v * th / 16)))][min(tw - 1, max(0, int(u * tw / 16)))]
+                if a < 128:
+                    continue
+                k = shade * light
+                zbuf[py][px] = z
+                img[py][px] = (int(r * k), int(g * k), int(b * k), 255)
 
 
 def composite(img, zbuf, trans):
