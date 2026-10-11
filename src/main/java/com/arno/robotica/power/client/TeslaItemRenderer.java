@@ -68,6 +68,13 @@ final class TeslaItemRenderer extends BlockEntityWithoutLevelRenderer {
                 public boolean isCustomRenderer() {
                     return true;
                 }
+
+                /** The wrapped model would hand back itself, which is not custom rendered; stay the wrapper. */
+                @Override
+                public BakedModel applyTransform(ItemDisplayContext context, PoseStack pose, boolean leftHand) {
+                    super.applyTransform(context, pose, leftHand);
+                    return this;
+                }
             });
         }
     }
