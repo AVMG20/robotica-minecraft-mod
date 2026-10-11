@@ -4,6 +4,7 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyUtil;
+import com.arno.robotica.core.item.CellItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.DronesRegistry;
@@ -322,7 +323,7 @@ public abstract class DroneBase extends PathfinderMob {
             sp.displayClientMessage(Component.translatable("message.robotica.drone.repaired", Math.round(getHealth()), Math.round(getMaxHealth())), true);
             return InteractionResult.CONSUME;
         }
-        if (!held.isEmpty() && EnergyUtil.isEnergyItem(held) && !(held.getItem() instanceof DroneItem)) {
+        if (isBattery(held)) {
             if (chargeFrom(sp, held)) return InteractionResult.CONSUME;
         }
         openGui(sp);
@@ -331,7 +332,12 @@ public abstract class DroneBase extends PathfinderMob {
 
     protected abstract void openGui(ServerPlayer player);
 
-    /** Right-click with an FE item: an empty battery slot takes it, else the drone drains it directly. */
+    /** Batteries made to power things (cells, Mainspring). Right-click and shift-click load only these, never a charged tool. */
+    public static boolean isBattery(ItemStack stack) {
+        return stack.getItem() instanceof CellItem;
+    }
+
+    /** Right-click with a battery: an empty battery slot takes it, else the drone drains it directly. */
     private boolean chargeFrom(ServerPlayer player, ItemStack held) {
         if (battery.getStackInSlot(0).isEmpty() && battery.isItemValid(0, held)) {
             battery.setStackInSlot(0, held.copyWithCount(1));

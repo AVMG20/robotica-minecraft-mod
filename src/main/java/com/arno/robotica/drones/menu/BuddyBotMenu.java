@@ -1,10 +1,9 @@
 package com.arno.robotica.drones.menu;
 
-import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.entity.BuddyBot;
-import com.arno.robotica.drones.item.DroneItem;
+import com.arno.robotica.drones.entity.DroneBase;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
@@ -172,7 +171,7 @@ public class BuddyBotMenu extends MachineMenu {
         if (slot.hasItem() && index > batterySlotIndex()) {
             ItemStack stack = slot.getItem();
             int target = batterySlotIndex();
-            if (EnergyUtil.isEnergyItem(stack) && !(stack.getItem() instanceof DroneItem) && !slots.get(target).hasItem() && slots.get(target).mayPlace(stack)) {
+            if (DroneBase.isBattery(stack) && !slots.get(target).hasItem() && slots.get(target).mayPlace(stack)) {
                 ItemStack before = stack.copy();
                 if (moveItemStackTo(stack, target, target + 1, false)) {
                     slot.setChanged();
