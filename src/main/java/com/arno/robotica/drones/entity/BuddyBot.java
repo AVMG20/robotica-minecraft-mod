@@ -157,6 +157,9 @@ public class BuddyBot extends DroneBase {
         }
     }
 
+    /** Bolt beam color by stance, the same as its eye. */
+    private static final int[] BEAM_COLORS = {0xE83A2A, 0x2FB8CC, 0x3EB03A};
+
     /** Emotes it does on its own when nothing is going on. */
     private static final Emote[] IDLE = {Emote.SPIN, Emote.WAVE, Emote.HICCUP, Emote.SNEEZE, Emote.NOD, Emote.LOOK_AROUND, Emote.BOOP};
 
@@ -699,7 +702,7 @@ public class BuddyBot extends DroneBase {
         double len = dir.length();
         if (len > 1.0E-3) from = from.add(dir.scale(0.45 / len));
         // one small packet; the clients draw the trail and the sparks
-        SentryBoltPayload.send(this, from, aim);
+        SentryBoltPayload.send(this, from, aim, BEAM_COLORS[stance().ordinal()], tier());
         level().broadcastEntityEvent(this, EVENT_RECOIL);
         if (tickCount - lastShotSound >= SHOT_SOUND_GAP || tickCount < lastShotSound) {
             lastShotSound = tickCount;

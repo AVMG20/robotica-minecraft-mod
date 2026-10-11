@@ -13,6 +13,9 @@ import com.arno.robotica.gear.GearBlocks;
 import com.arno.robotica.gear.GearConfig;
 import com.arno.robotica.drones.entity.HaulerDrone;
 import com.arno.robotica.drones.entity.BuddyBot;
+import com.arno.robotica.drones.entity.DroneBase;
+import com.arno.robotica.drones.menu.BuddyBotMenu;
+import com.arno.robotica.gear.GearItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -222,6 +225,32 @@ public class DronesGameTests {
         helper.assertTrue(again.battery.getStackInSlot(0).is(CoreItems.COPPER_CELL.get()), "battery restored");
         helper.assertTrue(again.stance() == BuddyBot.Stance.DEFENSE && !again.pickupOn() && again.lightsOn() && again.voidOn(), "settings restored");
         helper.assertTrue(again.hasCustomName() && again.getCustomName().getString().equals("Sparky"), "name restored");
+        helper.succeed();
+    }
+
+    /** A charged tool is never loaded as a battery: right-click opens the GUI and shift-click puts it in the cargo. */
+    @GameTest(template = "empty")
+    public static void toolsAreNotBatteries(GameTestHelper helper) {
+        ItemStack drill = new ItemStack(GearItems.BORE_DRILL.get());
+        ItemStack cell = new ItemStack(CoreItems.COPPER_CELL.get());
+        helper.assertTrue(!DroneBase.isBattery(drill), "a Bore Drill is not a battery");
+        helper.assertTrue(DroneBase.isBattery(cell), "a Copper Cell is a battery");
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        BuddyBot bot = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        bot.setTier(1);
+        BuddyBotMenu menu = new BuddyBotMenu(1, player.getInventory(), bot);
+        int hotbar = -1;
+        for (int i = 0; i < menu.slots.size(); i++) {
+            if (menu.slots.get(i).container == player.getInventory() && menu.slots.get(i).getContainerSlot() == 0) hotbar = i;
+        }
+        helper.assertTrue(hotbar >= 0, "hotbar slot found");
+        player.getInventory().setItem(0, drill);
+        menu.quickMoveStack(player, hotbar);
+        helper.assertTrue(bot.battery.getStackInSlot(0).isEmpty(), "shift-click keeps the drill out of the battery slot");
+        helper.assertTrue(bot.storage.getStackInSlot(0).is(GearItems.BORE_DRILL.get()), "the drill goes to the cargo");
+        player.getInventory().setItem(0, cell);
+        menu.quickMoveStack(player, hotbar);
+        helper.assertTrue(bot.battery.getStackInSlot(0).is(CoreItems.COPPER_CELL.get()), "shift-click puts a cell in the battery slot");
         helper.succeed();
     }
 

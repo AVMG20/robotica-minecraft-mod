@@ -1,78 +1,74 @@
 package com.arno.robotica.drones.net;
 
 import com.arno.robotica.Robotica;
-import com.arno.robotica.drones.DronesClientConfig;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.joml.Vector3f;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Server to client: a Buddy Bot fired from {@code from} to {@code to}. One small packet per shot to the players
- * tracking the drone; each client draws the trail and the impact sparks itself (vanilla particles, so the particle
- * setting applies). Only common classes: the particles go through the client's {@link Level}.
+ * Server to client: a Buddy Bot fired from {@code from} to {@code to}, in {@code color} (its stance) and {@code tier}
+ * (thicker beam per Mk). One small packet per shot to the players tracking the bot; the drones client
+ * ({@code BoltBeams}) draws the beam and the impact. The handler only queues the data (no client classes).
  */
-public record SentryBoltPayload(float fx, float fy, float fz, float tx, float ty, float tz) implements CustomPacketPayload {
+public record SentryBoltPayload(float fx, float fy, float fz, float tx, float ty, float tz, int color, int tier) implements CustomPacketPayload {
     public static final Type<SentryBoltPayload> TYPE = new Type<>(Robotica.id("drones_sentry_bolt"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, SentryBoltPayload> CODEC = StreamCodec.composite(
-            ByteBufCodecs.FLOAT, SentryBoltPayload::fx, ByteBufCodecs.FLOAT, SentryBoltPayload::fy, ByteBufCodecs.FLOAT, SentryBoltPayload::fz,
-            ByteBufCodecs.FLOAT, SentryBoltPayload::tx, ByteBufCodecs.FLOAT, SentryBoltPayload::ty, ByteBufCodecs.FLOAT, SentryBoltPayload::tz,
-            SentryBoltPayload::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, SentryBoltPayload> CODEC = StreamCodec.of(
+            (buf, p) -> {
+                buf.writeFloat(p.fx);
+                buf.writeFloat(p.fy);
+                buf.writeFloat(p.fz);
+                buf.writeFloat(p.tx);
+                buf.writeFloat(p.ty);
+                buf.writeFloat(p.tz);
+                buf.writeMedium(p.color);
+                buf.writeByte(p.tier);
+            },
+            buf -> new SentryBoltPayload(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
+                    buf.readUnsignedMedium(), buf.readByte()));
 
-    /** A muzzle flash dust and a small haze dust, the drone's cyan. */
-    private static final DustParticleOptions CORE = new DustParticleOptions(new Vector3f(0.75F, 0.97F, 1.0F), 0.5F);
-    private static final DustParticleOptions GLOW = new DustParticleOptions(new Vector3f(0.37F, 0.89F, 0.94F), 0.45F);
-    /** Trail points per block, and at most this many in all. */
-    private static final double DENSITY = 2.2;
-    private static final int MAX_POINTS = 28;
+    /** Longest shot drawn; anything longer is ignored by the client. */
+    public static final double MAX_LENGTH = 64.0;
+
+    private static final List<SentryBoltPayload> PENDING = new ArrayList<>();
 
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 
-    public static void send(Entity drone, Vec3 from, Vec3 to) {
+    public static void send(Entity drone, Vec3 from, Vec3 to, int color, int tier) {
         if (!(drone.level() instanceof ServerLevel level)) return;
         SentryBoltPayload payload = null;
         for (net.minecraft.server.level.ServerPlayer player : level.getChunkSource().chunkMap.getPlayers(drone.chunkPosition(), false)) {
             // mock and fake players (game tests, other mods) have no Robotica channel
             if (player instanceof net.neoforged.neoforge.common.util.FakePlayer || player.connection == null || !player.connection.hasChannel(TYPE)) continue;
-            if (payload == null) payload = new SentryBoltPayload((float) from.x, (float) from.y, (float) from.z, (float) to.x, (float) to.y, (float) to.z);
+            if (payload == null) payload = new SentryBoltPayload((float) from.x, (float) from.y, (float) from.z, (float) to.x, (float) to.y, (float) to.z, color, tier);
             PacketDistributor.sendToPlayer(player, payload);
         }
     }
 
+    /** Client side: hands the queued shots to {@code sink} and clears the queue. */
+    public static void drain(java.util.function.Consumer<SentryBoltPayload> sink) {
+        for (int i = 0; i < PENDING.size(); i++) sink.accept(PENDING.get(i));
+        PENDING.clear();
+    }
+
+    public double length() {
+        double dx = tx - fx, dy = ty - fy, dz = tz - fz;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
     static void handle(SentryBoltPayload p, IPayloadContext context) {
-        Level level = context.player().level();
-        if (!level.isClientSide) return;
-        double dx = p.tx - p.fx, dy = p.ty - p.fy, dz = p.tz - p.fz;
-        double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (len > 64 || len < 1.0E-3) return;
-        RandomSource random = level.random;
-        if (DronesClientConfig.boltTrails()) {
-            // a quick bright zap of tiny sparks along the path, with a thin cyan haze that lingers a moment
-            int n = Math.min(MAX_POINTS, Math.max(2, (int) (len * DENSITY)));
-            for (int i = 1; i <= n; i++) {
-                double t = (double) i / n;
-                double x = p.fx + dx * t, y = p.fy + dy * t, z = p.fz + dz * t;
-                level.addParticle(ParticleTypes.ELECTRIC_SPARK, x, y, z, 0, 0, 0);
-                if (i % 3 == 0) level.addParticle(GLOW, x, y, z, 0, 0, 0);
-            }
-            level.addParticle(CORE, p.fx, p.fy, p.fz, 0, 0, 0);
-        }
-        for (int i = 0; i < 5; i++) {
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, p.tx + random.nextGaussian() * 0.15, p.ty + random.nextGaussian() * 0.15,
-                    p.tz + random.nextGaussian() * 0.15, random.nextGaussian() * 0.1, random.nextGaussian() * 0.1, random.nextGaussian() * 0.1);
-        }
+        double len = p.length();
+        if (!(len <= MAX_LENGTH) || len < 1.0E-3) return;
+        if (PENDING.size() < 64) PENDING.add(p);
     }
 }

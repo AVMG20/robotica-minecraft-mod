@@ -3,7 +3,6 @@ package com.arno.robotica.drones.entity;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.boss.entity.RoboticaBoss;
 import com.arno.robotica.core.CoreSounds;
-import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.DronesRegistry;
@@ -416,7 +415,7 @@ public class HaulerDrone extends DroneBase {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
         if (held.is(Items.NAME_TAG) || held.is(Items.LEAD)) return InteractionResult.PASS;
-        boolean energyItem = !held.isEmpty() && EnergyUtil.isEnergyItem(held) && !(held.getItem() instanceof DroneItem);
+        boolean energyItem = isBattery(held);
         boolean repair = !held.isEmpty() && (held.is(Tags.Items.INGOTS_IRON) || held.is(IRON_PLATES)) && getHealth() < getMaxHealth();
         if (!player.isShiftKeyDown() && !held.isEmpty() && !energyItem && !repair) return InteractionResult.PASS;
         return interact(player, hand, held, energyItem, repair);
@@ -425,7 +424,7 @@ public class HaulerDrone extends DroneBase {
     /** Right-click on the drone or on the carried mob. */
     public InteractionResult interactFrom(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
-        boolean energyItem = !held.isEmpty() && EnergyUtil.isEnergyItem(held) && !(held.getItem() instanceof DroneItem);
+        boolean energyItem = isBattery(held);
         return interact(player, hand, held, energyItem, false);
     }
 

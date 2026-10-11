@@ -13,6 +13,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -34,6 +35,8 @@ public final class DronesClient {
         modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class, DronesClient::registerLayers);
         modBus.addListener(RegisterKeyMappingsEvent.class, e -> e.register(COMMAND));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, DronesClient::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, BoltBeams::onClientTick);
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, BoltBeams::onRenderLevel);
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {

@@ -15,7 +15,7 @@ public final class DronesClientConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("sentry");
-        BOLT_TRAILS = b.comment("Trail of light along a Buddy Bot's bolt (the sparks where it hits always show).").define("boltTrails", true);
+        BOLT_TRAILS = b.comment("Beam of light along a Buddy Bot's shot (the flash where it hits always shows).").define("boltTrails", true);
         b.pop();
         SPEC = b.build();
     }
