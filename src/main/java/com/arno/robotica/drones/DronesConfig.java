@@ -41,7 +41,7 @@ public final class DronesConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("buddy_bot");
-        BUDDY_DAMAGE = b.comment("Damage of one energy bolt (Mk1; Mk2 x1.875, Mk3 x2.5, Mk4 x3).").defineInRange("buddyDamage", 4.0, 0.5, 100.0);
+        BUDDY_DAMAGE = b.comment("Damage of one energy bolt (Mk1; Mk2 x1.5, Mk3 x2, Mk4 x2.4).").defineInRange("buddyDamage", 5.0, 0.5, 100.0);
         BUDDY_FE_PER_SHOT = b.comment("FE per shot.").defineInRange("buddyFePerShot", 200, 0, 1_000_000);
         BUDDY_COOLDOWN = b.comment("Ticks between two shots (Mk1; Mk2 /1.5, Mk3 /2, Mk4 /2.5).").defineInRange("buddyCooldown", 20, 2, 400);
         BUDDY_RANGE = b.comment("Firing range in blocks (Mk1; +4 per Mk).").defineInRange("buddyRange", 16, 4, 64);
@@ -83,7 +83,7 @@ public final class DronesConfig {
         return SPEC.isLoaded() ? v.get() : v.getDefault();
     }
 
-    private static final double[] DAMAGE = {1.0, 1.0, 1.875, 2.5, 3.0};
+    private static final double[] DAMAGE = {1.0, 1.0, 1.5, 2.0, 2.4};
     private static final double[] FIRE_RATE = {1.0, 1.0, 1.5, 2.0, 2.5};
     private static final double[] DIG_SPEED = {1.0, 1.0, 1.5, 2.5, 3.5};
     private static final double[] HEALTH = {1.0, 1.0, 1.5, 2.0, 8.0 / 3.0};
