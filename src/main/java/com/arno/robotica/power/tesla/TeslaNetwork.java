@@ -74,7 +74,8 @@ public final class TeslaNetwork {
         TeslaLink link = coil.links().get(index);
         if (amount <= 0 || coil.getBlockPos().distSqr(link.pos()) > rangeSq || !level.isLoaded(link.pos())) return 0;
         if (link.coil()) {
-            if (depth >= MAX_DEPTH || !(level.getBlockEntity(link.pos()) instanceof TeslaCoilBlockEntity child) || !visited.add(child)) return 0;
+            if (depth >= MAX_DEPTH || !(level.getBlockEntity(link.pos()) instanceof TeslaCoilBlockEntity child) || child.isEmitter()
+                    || !visited.add(child)) return 0;
             int offer = (int) ((long) amount * keep / 100);
             if (offer <= 0) return 0;
             int delivered = push(child, offer, visited, now, depth + 1);
@@ -89,7 +90,7 @@ public final class TeslaNetwork {
     // ---- linking ----
 
     public enum LinkResult {
-        LINKED, UNLINKED, FACE_CHANGED, FULL, OUT_OF_RANGE, NO_ENERGY, WRONG_FACE, SELF, OWN_SUPPORT, REVERSE;
+        LINKED, UNLINKED, FACE_CHANGED, FULL, OUT_OF_RANGE, NO_ENERGY, WRONG_FACE, SELF, OWN_SUPPORT, REVERSE, EMITTER;
 
         public boolean changed() {
             return this == LINKED || this == UNLINKED || this == FACE_CHANGED;
@@ -104,6 +105,7 @@ public final class TeslaNetwork {
     /**
      * Links {@code coil} to the block at {@code target}, or unlinks it when it is already a target. For a machine,
      * {@code face} is the side the energy goes in. Clicking a linked machine on another face moves the link to that face.
+     * A coil with a single link (Tesla Emitter) moves that link to the new target instead of being full.
      */
     public static LinkResult toggle(TeslaCoilBlockEntity coil, BlockPos target, Direction face) {
         Level level = coil.getLevel();
@@ -121,16 +123,20 @@ public final class TeslaNetwork {
         }
         if (target.equals(coil.supportPos())) return LinkResult.OWN_SUPPORT;
         if (!inRange(coil, target)) return LinkResult.OUT_OF_RANGE;
-        if (coil.linkCount() >= coil.maxLinks()) return LinkResult.FULL;
+        boolean replace = coil.maxLinks() == 1 && coil.linkCount() == 1;
+        if (!replace && coil.linkCount() >= coil.maxLinks()) return LinkResult.FULL;
+        TeslaLink link;
         if (level.getBlockEntity(target) instanceof TeslaCoilBlockEntity other) {
+            if (other.isEmitter()) return LinkResult.EMITTER;
             if (other.indexOf(coil.getBlockPos()) >= 0) return LinkResult.REVERSE;
-            coil.addLink(TeslaLink.toCoil(target));
-            return LinkResult.LINKED;
-        }
-        if (level.getCapability(Capabilities.EnergyStorage.BLOCK, target, face) == null) {
+            link = TeslaLink.toCoil(target);
+        } else if (level.getCapability(Capabilities.EnergyStorage.BLOCK, target, face) == null) {
             return level.getCapability(Capabilities.EnergyStorage.BLOCK, target, null) != null ? LinkResult.WRONG_FACE : LinkResult.NO_ENERGY;
+        } else {
+            link = TeslaLink.toMachine(target, face);
         }
-        coil.addLink(TeslaLink.toMachine(target, face));
+        if (replace) coil.setLink(0, link);
+        else coil.addLink(link);
         return LinkResult.LINKED;
     }
 }

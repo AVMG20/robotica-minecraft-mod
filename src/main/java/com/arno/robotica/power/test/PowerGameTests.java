@@ -312,6 +312,33 @@ public class PowerGameTests {
         helper.succeed();
     }
 
+    /**
+     * Tesla Emitter: one link at its tier's rate, sends only from the block it sits on, and cannot be linked to. A new
+     * target moves its one link instead of being refused.
+     */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void teslaEmitterSendsOnly(GameTestHelper helper) {
+        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+        TeslaCoilBlockEntity emitter = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_EMITTER_1.get());
+        helper.setBlock(new BlockPos(2, 1, 2), Blocks.IRON_BLOCK);
+        TeslaCoilBlockEntity relay = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
+        BlockPos chargerPos = new BlockPos(2, 1, 0);
+        helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
+        ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
+        BlockPos chargerAbs = helper.absolutePos(chargerPos);
+        helper.assertTrue(emitter.isEmitter() && emitter.maxLinks() == 1, "an emitter has one link");
+        helper.assertTrue(emitter.maxIo() == TeslaTier.I.rate(), "an emitter sends at its tier's rate");
+        helper.assertTrue(TeslaNetwork.toggle(relay, emitter.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.EMITTER, "nothing links to an emitter");
+        helper.assertTrue(TeslaNetwork.toggle(emitter, chargerAbs, Direction.UP) == TeslaNetwork.LinkResult.LINKED, "emitter -> charger");
+        helper.assertTrue(TeslaNetwork.toggle(emitter, relay.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "a new target moves the link");
+        helper.assertTrue(emitter.linkCount() == 1 && emitter.links().get(0).coil(), "one link, to the coil");
+        helper.assertTrue(TeslaNetwork.toggle(relay, chargerAbs, Direction.UP) == TeslaNetwork.LinkResult.LINKED, "coil -> charger");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(emitter.isRoot(), "an emitter on an Accumulator sends");
+            helper.assertTrue(charger.energy.getEnergyStored() > 2_000, "Charger should fill through the coil, has " + charger.energy.getEnergyStored());
+        });
+    }
+
     /** The clicked face is where the power goes in: an Accumulator's front only gives energy out. */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void teslaFaceSpecificInsertion(GameTestHelper helper) {

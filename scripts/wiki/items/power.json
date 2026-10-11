@@ -215,6 +215,22 @@
   },
   {
    "items": [
+    "tesla_emitter_1",
+    "tesla_emitter_2",
+    "tesla_emitter_3",
+    "tesla_emitter_4",
+    "tesla_emitter_5"
+   ],
+   "what": "Small Tesla Coil with one link and the range and FE/t of its tier. It only sends from the generator or battery it sits on.",
+   "use": [
+    "Put one on each generator and link it to a coil or a machine with the [[tesla_linker]]."
+   ],
+   "see": [
+    "guide:power-ladder"
+   ]
+  },
+  {
+   "items": [
     "tesla_linker"
    ],
    "what": "Links Tesla Coils to machines and to other coils.",

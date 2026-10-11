@@ -20,6 +20,13 @@ def shaped(name, pattern, key, count=1, category='misc'):
     (OUT / f'{name}.json').write_text(json.dumps(data, indent=2) + '\n')
 
 
+def shapeless(name, ingredients, result, count=1, category='misc'):
+    OUT.mkdir(parents=True, exist_ok=True)
+    data = {'type': 'minecraft:crafting_shapeless', 'category': category, 'ingredients': [ing(x) for x in ingredients],
+            'result': {'id': f'robotica:{result}', 'count': count}}
+    (OUT / f'{name}.json').write_text(json.dumps(data, indent=2) + '\n')
+
+
 def pressing(name, ingredient, result, time=None):
     OUT.mkdir(parents=True, exist_ok=True)
     data = {'type': 'robotica:pressing', 'ingredient': ing(ingredient), 'result': {'id': f'robotica:{result}', 'count': 1}}
@@ -71,6 +78,10 @@ shaped('tesla_coil_4', [' C ', 'BTB', ' X '], {'C': 'quantum_circuit', 'B': '#c:
 shaped('solar_panel_mk4', ['PEP', 'ESE', 'PCP'], {'P': '#c:plates/resonant_alloy', 'E': '#c:ender_pearls', 'S': 'solar_panel_mk3',
                                                  'C': 'null_circuit'})
 shaped('tesla_coil_5', [' C ', 'ETE', ' X '], {'C': 'null_circuit', 'E': '#c:ender_pearls', 'T': 'tesla_coil_4', 'X': 'null_casing'})
+# Tesla Emitters: a coil splits into 4 one-link emitters of its tier, and 4 craft back into the coil.
+for t in range(1, 6):
+    shapeless(f'tesla_emitter_{t}', [f'tesla_coil_{t}'], f'tesla_emitter_{t}', count=4)
+    shapeless(f'tesla_coil_{t}_from_emitters', [f'tesla_emitter_{t}'] * 4, f'tesla_coil_{t}')
 
 # Metal Press: 1 ingot -> 1 plate (100 ticks at base speed)
 pressing('metal_press_iron_plate', '#c:ingots/iron', 'iron_plate')
