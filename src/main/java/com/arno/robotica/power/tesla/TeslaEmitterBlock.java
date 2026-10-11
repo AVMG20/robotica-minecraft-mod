@@ -23,14 +23,14 @@ import java.util.Map;
  * be linked to, so it never relays. A quarter of a coil (1 coil crafts into 4, 4 craft back).
  */
 public class TeslaEmitterBlock extends TeslaCoilBlock {
-    /** Arcs start in the crystal of the model, which spans 6..11. */
-    public static final double EMITTER_TIP = 9.5 / 16.0;
+    /** Arcs start in the crystal of the model, which spans 1..10.5. */
+    public static final double EMITTER_TIP = 8.0 / 16.0;
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
     static {
         for (Direction dir : Direction.values()) {
-            SHAPES.put(dir, Shapes.or(box(dir, 6.5, 9.5, 0, 1), box(dir, 7, 9, 1, 5), box(dir, 6, 10, 5, 11)));
+            SHAPES.put(dir, Shapes.or(box(dir, 4.5, 11.5, 0, 1), box(dir, 5, 11, 1, 6), box(dir, 6, 10, 6, 10.5)));
         }
     }
 

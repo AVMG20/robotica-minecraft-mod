@@ -11,7 +11,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import Canvas, grain, material, write_anim, write_block, write_item, write_still  # noqa: E402
+from pixelart import Canvas, grain, hash01, material, write_anim, write_block, write_item, write_still  # noqa: E402
 
 CU, ST, BR, AU, WD, SO = '01234', 'abcde', '56789', 'ABCDE', 'uvwWX', 'mnopP'
 MG, NV, SL = '!#$%&', '()[]{', '<>?;:'                                                 # magma, null, slate (solar Mk3 / Mk4)
@@ -470,67 +470,44 @@ def accumulator_top(tier):
 
 
 # ---------------------------------------------------------------- tesla coil
-# Tier ramps: I copper, II steel, III gold, IV magma, V null. Magma and null get their own chars here.
-P.update(material('!#$%&', 'magma'))
-P.update(material('()*+,', 'null'))
-TESLA_TIER = {1: CU, 2: ST, 3: AU, 4: '!#$%&', 5: '()*+,'}
+# Crystal colours per tier (dark, mid, light, glint, edge): I cyan, II blue, III amber, IV ember, V violet.
+# The edge is a hue step away so every facet gets a coloured rim.
+TESLA_CRYSTAL = {
+    1: ('#0E5566', '#1FA5BD', '#5FE3F0', '#E8FFFF', '#2F6FD8'),
+    2: ('#142E7A', '#2F5FD8', '#6F9CFF', '#E8F0FF', '#7A34D0'),
+    3: ('#7A4A08', '#D89418', '#FFD060', '#FFF6D8', '#E0481A'),
+    4: ('#7A1A08', '#E0481A', '#FF8A4A', '#FFE8D0', '#B01A3A'),
+    5: ('#3A1470', '#7A34D0', '#B07CFF', '#F4E8FF', '#E040C0'),
+}
+GUNMETAL = {'0': '#16191C', '1': '#22272B', '2': '#2E343A', '3': '#3C444B', '4': '#58626B'}
 
 
-def tesla_base():
-    """Steel foot plate: the model maps its middle 8x8 on top and the bottom rows on the sides."""
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, ST, 60, density=0.25)
-    c.bevel(4, 4, 8, 8, 'd', 'a')
-    for x, y in ((5, 5), (10, 5), (5, 10), (10, 10)):
-        c.rivet(x, y, ST)
-    c.rect(0, 14, 16, 1, 'c').rect(0, 15, 16, 1, 'a')                    # side band: lit lip, dark foot
-    return c
-
-
-def tesla_winding(r):
-    """Tightly wound wire: a lit and a shadowed row per turn, a glint on the left third, dark insulation every 4 turns."""
-    c = Canvas()
+def tesla_crystal(tier):
+    """Full-bright energy crystal: speckled like a geode, a coloured rim. Each face shows the whole texture."""
+    rows = []
     for y in range(16):
-        turn = y // 2
-        c.rect(0, y, 16, 1, r[3] if y % 2 == 0 else r[1])
-        if y % 2 == 0:
-            c.set((turn * 5) % 3 + 1, y, r[4]).set((turn * 5) % 3 + 2, y, r[4])
-        if y % 8 == 7:
-            c.rect(0, y, 16, 1, 'K')
-    for y in range(16):
-        c.set(15, y, r[0] if y % 2 else r[2])
-    return c
+        row = ''
+        for x in range(16):
+            n = hash01(x, y, 40 + tier) * 0.5 + hash01(x // 3, y // 3, 70 + tier) * 0.3 + (15 - y) / 15 * 0.2
+            ch = 'e' if x in (0, 15) or y in (0, 15) else 'a' if n < 0.18 else 'b' if n < 0.62 else 'c' if n < 0.95 else 'd'
+            row += ch
+        rows.append(row)
+    return rows, dict(zip('abcde', TESLA_CRYSTAL[tier]))
 
 
-def tesla_claw(r):
-    """Collar and claws that hold the crystal: a brushed plate of the tier metal, mapped pixel for pixel on the model."""
+def tesla_frame():
+    """Dark gunmetal of the Tesla bases and pylon: bevelled panels with a seam, mapped pixel for pixel."""
     c = Canvas()
-    plate(c, 0, 0, 16, 16, r, 7, vertical=True, density=0.3)
-    for y in range(0, 16, 4):
-        c.rect(0, y, 16, 1, r[3])                                         # lit rim on every collar row
-    return c
-
-
-def tesla_rod():
-    """Thin steel rod of the Tesla Emitter: vertical brushing, a lit and a shadowed column pair."""
-    c = Canvas()
-    for x in range(16):
-        c.rect(x, 0, 1, 16, ST[3] if x % 2 == 0 else ST[2])
-    for y in range(3, 16, 5):
-        c.rect(0, y, 16, 1, ST[1])                                        # joints
-    return c
-
-
-def tesla_crystal():
-    """Full-bright energy crystal: every two columns a lit and a mid facet, white glints, a dark seam now and then."""
-    c = Canvas()
+    c.rect(0, 0, 16, 16, '2')
     for y in range(16):
         for x in range(16):
-            c.set(x, y, 'Y' if x % 2 == 0 else 'y')
-            if x % 2 == 0 and (x + y * 3) % 7 == 0:
-                c.set(x, y, 'z')
-        if y % 8 == 7:
-            c.rect(0, y, 16, 1, 'Z')
+            if hash01(x, y, 5) < 0.12:
+                c.set(x, y, '1')
+    for o in (0, 8):
+        c.rect(o, 0, 1, 16, '3').rect(0, o, 16, 1, '3')                     # lit panel edges
+        c.rect(o + 7, 0, 1, 16, '1').rect(0, o + 7, 16, 1, '0')             # dark seams
+    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+        c.set(x, y, '4')
     return c
 
 
@@ -652,13 +629,11 @@ def main():
         write_anim('block', f'accumulator_front_glow_{level}', [accumulator_front_glow(level, i) for i in range(6)], P, frametime=4)
         write_still('block', f'accumulator_side_glow_{level}', accumulator_side_glow(level), P)
 
-    write_block('tesla_coil_base', tesla_base().rows(), P)
     write_block('tesla_coil_tip', tesla_tip().rows(), P)
-    for tier, ramp in TESLA_TIER.items():
-        write_block(f'tesla_coil_{tier}_winding', tesla_winding(ramp).rows(), P)
-        write_block(f'tesla_coil_{tier}_claw', tesla_claw(ramp).rows(), P)
-    write_block('tesla_rod', tesla_rod().rows(), P)
-    write_block('tesla_crystal', tesla_crystal().rows(), P)
+    write_block('tesla_frame', tesla_frame().rows(), GUNMETAL)
+    for tier in TESLA_CRYSTAL:
+        rows, pal = tesla_crystal(tier)
+        write_block(f'tesla_crystal_{tier}', rows, pal)
     write_item('tesla_linker', tesla_linker().rows(), P | {'b': '#8D9599', 'c': '#C4CBCE', 'd': '#5A6266'})
     write_block('winding_crank_base', crank_base().rows(), P)
     write_block('winding_crank_metal', crank_metal().rows(), P)

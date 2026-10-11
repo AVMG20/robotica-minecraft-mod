@@ -97,16 +97,16 @@ public final class PowerRegistry {
     }
 
     private static DeferredBlock<TeslaCoilBlock> teslaCoil(TeslaTier tier) {
-        return BLOCKS.registerBlock(tier.id(), p -> new TeslaCoilBlock(p, tier), teslaProps(7));
+        return BLOCKS.registerBlock(tier.id(), p -> new TeslaCoilBlock(p, tier), teslaProps());
     }
 
     private static DeferredBlock<TeslaEmitterBlock> teslaEmitter(TeslaTier tier) {
-        return BLOCKS.registerBlock(tier.emitterId(), p -> new TeslaEmitterBlock(p, tier), teslaProps(4));
+        return BLOCKS.registerBlock(tier.emitterId(), p -> new TeslaEmitterBlock(p, tier), teslaProps());
     }
 
-    private static BlockBehaviour.Properties teslaProps(int light) {
+    private static BlockBehaviour.Properties teslaProps() {
         return BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.0F, 3.0F).sound(SoundType.COPPER)
-                .noOcclusion().lightLevel(s -> light).pushReaction(PushReaction.DESTROY);
+                .noOcclusion().lightLevel(s -> 7).pushReaction(PushReaction.DESTROY);
     }
 
     // ---- Items ----

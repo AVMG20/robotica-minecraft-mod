@@ -177,28 +177,23 @@ for mk in (1, 2, 3, 4):
     loot(name)
 
 # ---------- tesla coils ----------
-# Every Tesla block is a metal holder with a pointy energy crystal. The coil: steel foot, wound column, a collar with four
-# claws of the tier metal, and a full-bright crystal turned 45 degrees. FACING is the direction it points (away from the
-# block it sits on); the blockstate turns the up model like a piston.
+# Tesla Coil: a sci-fi pylon. Gunmetal base on a glowing plate, four pillars round a full-bright energy core, a head
+# plate and a small crystal tip. Tesla Emitter: mostly a faceted crystal on a low gunmetal plate. The crystal colour
+# shows the tier. FACING is the direction it points (away from the block it sits on); the blockstate turns the up model
+# like a piston.
 TESLA_ROT = {'up': {}, 'down': {'x': 180}, 'north': {'x': 90}, 'south': {'x': 90, 'y': 180},
              'west': {'x': 90, 'y': 270}, 'east': {'x': 90, 'y': 90}}
 SIDES = ('north', 'south', 'west', 'east')
 
 
-def box(frm, to, top_uv, side_uv, texture, down=True, up=True, **face_extra):
-    faces = {d: dict({'texture': texture, 'uv': side_uv}, **face_extra) for d in SIDES}
-    if up:
-        faces['up'] = dict({'texture': texture, 'uv': top_uv}, **face_extra)
-    if down:
-        faces['down'] = dict({'texture': texture, 'uv': top_uv}, **face_extra)
-    return {'from': frm, 'to': to, 'faces': faces}
-
-
-def cuboid(frm, to, texture, glow=False, turn=False, faces=SIDES + ('up', 'down')):
-    """A box with pixel-exact UVs taken from its own coordinates. turn: 45 degrees round its own vertical axis."""
+def cuboid(frm, to, texture, glow=False, turn=False, full_uv=False, faces=SIDES + ('up', 'down')):
+    """A box with pixel-exact UVs taken from its own coordinates (full_uv: the whole texture on every face).
+    turn: 45 degrees round the block's vertical centre line."""
     out = {}
     for d in faces:
-        if d in ('up', 'down'):
+        if full_uv:
+            uv = [0, 0, 16, 16]
+        elif d in ('up', 'down'):
             uv = [frm[0], frm[2], to[0], to[2]]
         elif d in ('north', 'south'):
             uv = [frm[0], 16 - to[1], to[0], 16 - frm[1]]
@@ -213,44 +208,43 @@ def cuboid(frm, to, texture, glow=False, turn=False, faces=SIDES + ('up', 'down'
     return el
 
 
-def crystal(y, width, body):
-    """Pointy crystal on the centre line from y up: a body, a narrower shoulder and a one-pixel tip, all turned 45."""
-    shoulder = (width + 1) / 2
-    def c(w, y0, y1):
-        return cuboid([8 - w / 2, y0, 8 - w / 2], [8 + w / 2, y1, 8 + w / 2], '#crystal', glow=True, turn=True)
-    return [c(width, y, y + body), c(shoulder, y + body, y + body + 1), c(1, y + body + 1, y + body + 2)]
+def gem(w, y0, y1, turn=False, faces=SIDES + ('up',), rim=True):
+    """One full-bright crystal layer w wide on the centre line. rim: the whole texture (with its coloured rim) per face."""
+    return cuboid([8 - w / 2, y0, 8 - w / 2], [8 + w / 2, y1, 8 + w / 2], '#crystal', glow=True, turn=turn, full_uv=rim,
+                  faces=faces)
 
 
-def claws(y0, y1, inner):
-    """Four one-pixel claws round an inner x inner square."""
-    lo, hi = 8 - inner / 2, 8 + inner / 2
-    return [cuboid([x, y0, z], [x + 1, y1, z + 1], '#claw', faces=SIDES + ('up',))
-            for x, z in ((lo - 1, lo - 1), (hi, lo - 1), (lo - 1, hi), (hi, hi))]
+def spike(y, w, h):
+    """Pointed roof from y: turned layers that shrink from w to a sliver over h pixels."""
+    steps = max(2, round(h / 1.0))
+    return [gem(w * (1 - i / steps) + 0.4 * (i == steps - 1), y + h * i / steps, y + h * (i + 1) / steps, turn=True, rim=False)
+            for i in range(steps)]
 
 
 def tesla_model(name, tier, elements):
     elements[0]['faces']['down']['cullface'] = 'down'
     block_model(name, {
         'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
-        'textures': {'base': tex('tesla_coil_base'), 'rod': tex('tesla_rod'), 'winding': tex(f'tesla_coil_{tier}_winding'),
-                     'claw': tex(f'tesla_coil_{tier}_claw'), 'crystal': tex('tesla_crystal'),
-                     'particle': tex(f'tesla_coil_{tier}_winding')},
+        'textures': {'frame': tex('tesla_frame'), 'crystal': tex(f'tesla_crystal_{tier}'), 'particle': tex(f'tesla_crystal_{tier}')},
         'elements': elements,
     })
     blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
     loot(name)
 
 
-# Coil: 15 high; the crystal spans 10..15 (TeslaCoilBlock.TIP 13.5 sits in its upper half).
+# Coil: 15 high; the tip spike spans 12.5..15 (TeslaCoilBlock.TIP 13.5).
 for tier in range(1, 6):
     name = f'tesla_coil_{tier}'
+    pillars = [cuboid([x, 3.5, z], [x + 1, 11.5, z + 1], '#frame', faces=SIDES) for x in (4.5, 10.5) for z in (4.5, 10.5)]
     tesla_model(name, tier, [
-        box([5, 0, 5], [11, 1, 11], [5, 5, 11, 11], [5, 15, 11, 16], '#base'),
-        cuboid([6.5, 1, 6.5], [9.5, 2, 9.5], '#base', faces=SIDES + ('up',)),
-        cuboid([6.5, 2, 6.5], [9.5, 9, 9.5], '#winding', faces=SIDES),
-        cuboid([5.5, 9, 5.5], [10.5, 10, 10.5], '#claw'),
-        *claws(10, 13, 3),
-        *crystal(10, 3, 3),
+        cuboid([3, 0, 3], [13, 2, 13], '#frame'),
+        gem(9, 2, 2.5, faces=SIDES + ('up',)),
+        cuboid([4.5, 2.5, 4.5], [11.5, 3.5, 11.5], '#frame', faces=SIDES + ('up',)),
+        *pillars,
+        gem(3, 3.5, 11.5, faces=SIDES),
+        gem(3, 3.5, 11.5, turn=True, faces=SIDES),
+        cuboid([4.5, 11.5, 4.5], [11.5, 12.5, 11.5], '#frame'),
+        *spike(12.5, 3, 2.5),
     ])
     # The coil is 15 high: a little bigger than a block (0.625) in the slot, but no more, or it sticks out of the slot.
     # In the GUI view it spans about 12 px at 0.75, lifted 1 px so the tip and the foot sit evenly in the slot.
@@ -263,19 +257,18 @@ for tier in range(1, 6):
         'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
     }})
 
-# Tesla Emitters: torch-sized Spark Rod. A small steel socket, a thin rod, a collar with claws of the tier metal and a
-# crystal from 6 to 11 (TeslaEmitterBlock.EMITTER_TIP 9.5). The item is shown bigger than the coil so it fills the slot.
+# Emitter: a faceted crystal (a turned square round a lower square, so their tops do not fight) with a pointed roof,
+# 10.5 high on a low plate. Arcs start at 8 (TeslaEmitterBlock.EMITTER_TIP).
 for tier in range(1, 6):
     name = f'tesla_emitter_{tier}'
     tesla_model(name, tier, [
-        cuboid([6.5, 0, 6.5], [9.5, 1, 9.5], '#base'),
-        cuboid([7.5, 1, 7.5], [8.5, 5, 8.5], '#rod', faces=SIDES),
-        cuboid([6.5, 5, 6.5], [9.5, 6, 9.5], '#claw'),
-        *claws(6, 8, 2),
-        *crystal(6, 2, 3),
+        cuboid([4.5, 0, 4.5], [11.5, 1, 11.5], '#frame'),
+        gem(4.5, 1, 6, turn=True),
+        gem(3.5, 1, 5.75),
+        *spike(6, 3.5, 4.5),
     ])
     write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, 2.5, 0], 'scale': [1.0, 1.0, 1.0]},
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, 2, 0], 'scale': [0.95, 0.95, 0.95]},
         'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
         'fixed': {'rotation': [0, 0, 0], 'translation': [0, 2, 0], 'scale': [0.8, 0.8, 0.8]},
         'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 3, 1], 'scale': [0.5, 0.5, 0.5]},

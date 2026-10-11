@@ -2,78 +2,75 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "base": "robotica:block/tesla_coil_base",
-    "rod": "robotica:block/tesla_rod",
-    "winding": "robotica:block/tesla_coil_5_winding",
-    "claw": "robotica:block/tesla_coil_5_claw",
-    "crystal": "robotica:block/tesla_crystal",
-    "particle": "robotica:block/tesla_coil_5_winding"
+    "frame": "robotica:block/tesla_frame",
+    "crystal": "robotica:block/tesla_crystal_5",
+    "particle": "robotica:block/tesla_crystal_5"
   },
   "elements": [
     {
       "from": [
-        5,
+        3,
         0,
-        5
+        3
       ],
       "to": [
-        11,
-        1,
-        11
+        13,
+        2,
+        13
       ],
       "faces": {
         "north": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            5,
-            15,
-            11,
+            3,
+            14,
+            13,
             16
           ]
         },
         "south": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            5,
-            15,
-            11,
+            3,
+            14,
+            13,
             16
           ]
         },
         "west": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            5,
-            15,
-            11,
+            3,
+            14,
+            13,
             16
           ]
         },
         "east": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            5,
-            15,
-            11,
+            3,
+            14,
+            13,
             16
           ]
         },
         "up": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            5,
-            5,
-            11,
-            11
+            3,
+            3,
+            13,
+            13
           ]
         },
         "down": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            5,
-            5,
-            11,
-            11
+            3,
+            3,
+            13,
+            13
           ],
           "cullface": "down"
         }
@@ -81,413 +78,344 @@
     },
     {
       "from": [
-        6.5,
-        1,
-        6.5
-      ],
-      "to": [
-        9.5,
+        3.5,
         2,
-        9.5
+        3.5
+      ],
+      "to": [
+        12.5,
+        2.5,
+        12.5
       ],
       "faces": {
         "north": {
-          "texture": "#base",
+          "texture": "#crystal",
           "uv": [
-            6.5,
-            14,
-            9.5,
-            15
+            0,
+            0,
+            16,
+            16
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "south": {
+          "texture": "#crystal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#crystal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#crystal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#crystal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        4.5,
+        2.5,
+        4.5
+      ],
+      "to": [
+        11.5,
+        3.5,
+        11.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            12.5,
+            11.5,
+            13.5
           ]
         },
         "south": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            6.5,
-            14,
-            9.5,
-            15
+            4.5,
+            12.5,
+            11.5,
+            13.5
           ]
         },
         "west": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            6.5,
-            14,
-            9.5,
-            15
+            4.5,
+            12.5,
+            11.5,
+            13.5
           ]
         },
         "east": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            6.5,
-            14,
-            9.5,
-            15
+            4.5,
+            12.5,
+            11.5,
+            13.5
           ]
         },
         "up": {
-          "texture": "#base",
+          "texture": "#frame",
           "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
+            4.5,
+            4.5,
+            11.5,
+            11.5
           ]
         }
       }
     },
     {
       "from": [
-        6.5,
-        2,
-        6.5
+        4.5,
+        3.5,
+        4.5
       ],
       "to": [
-        9.5,
-        9,
-        9.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#winding",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            14
-          ]
-        },
-        "south": {
-          "texture": "#winding",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            14
-          ]
-        },
-        "west": {
-          "texture": "#winding",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            14
-          ]
-        },
-        "east": {
-          "texture": "#winding",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            14
-          ]
-        }
-      }
-    },
-    {
-      "from": [
         5.5,
-        9,
+        11.5,
         5.5
       ],
-      "to": [
-        10.5,
-        10,
-        10.5
-      ],
       "faces": {
         "north": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
+            4.5,
+            4.5,
             5.5,
-            6,
-            10.5,
-            7
+            12.5
           ]
         },
         "south": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
+            4.5,
+            4.5,
             5.5,
-            6,
-            10.5,
-            7
+            12.5
           ]
         },
         "west": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
+            4.5,
+            4.5,
             5.5,
-            6,
-            10.5,
-            7
+            12.5
           ]
         },
         "east": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
+            4.5,
+            4.5,
             5.5,
-            6,
-            10.5,
-            7
-          ]
-        },
-        "up": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            5.5,
-            10.5,
-            10.5
-          ]
-        },
-        "down": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            5.5,
-            10.5,
-            10.5
+            12.5
           ]
         }
       }
     },
     {
       "from": [
+        4.5,
+        3.5,
+        10.5
+      ],
+      "to": [
         5.5,
-        10,
+        11.5,
+        11.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            4.5,
+            5.5,
+            12.5
+          ]
+        },
+        "south": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            4.5,
+            5.5,
+            12.5
+          ]
+        },
+        "west": {
+          "texture": "#frame",
+          "uv": [
+            10.5,
+            4.5,
+            11.5,
+            12.5
+          ]
+        },
+        "east": {
+          "texture": "#frame",
+          "uv": [
+            10.5,
+            4.5,
+            11.5,
+            12.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        10.5,
+        3.5,
+        4.5
+      ],
+      "to": [
+        11.5,
+        11.5,
         5.5
       ],
-      "to": [
-        6.5,
-        13,
-        6.5
-      ],
       "faces": {
         "north": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
-            5.5,
-            3,
-            6.5,
-            6
+            10.5,
+            4.5,
+            11.5,
+            12.5
           ]
         },
         "south": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
-            5.5,
-            3,
-            6.5,
-            6
+            10.5,
+            4.5,
+            11.5,
+            12.5
           ]
         },
         "west": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
+            4.5,
+            4.5,
             5.5,
-            3,
-            6.5,
-            6
+            12.5
           ]
         },
         "east": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
+            4.5,
+            4.5,
             5.5,
-            3,
-            6.5,
-            6
-          ]
-        },
-        "up": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            5.5,
-            6.5,
-            6.5
+            12.5
           ]
         }
       }
     },
     {
       "from": [
-        9.5,
-        10,
-        5.5
-      ],
-      "to": [
         10.5,
-        13,
-        6.5
-      ],
-      "faces": {
-        "north": {
-          "texture": "#claw",
-          "uv": [
-            9.5,
-            3,
-            10.5,
-            6
-          ]
-        },
-        "south": {
-          "texture": "#claw",
-          "uv": [
-            9.5,
-            3,
-            10.5,
-            6
-          ]
-        },
-        "west": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            3,
-            6.5,
-            6
-          ]
-        },
-        "east": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            3,
-            6.5,
-            6
-          ]
-        },
-        "up": {
-          "texture": "#claw",
-          "uv": [
-            9.5,
-            5.5,
-            10.5,
-            6.5
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        5.5,
-        10,
-        9.5
-      ],
-      "to": [
-        6.5,
-        13,
+        3.5,
         10.5
       ],
-      "faces": {
-        "north": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            3,
-            6.5,
-            6
-          ]
-        },
-        "south": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            3,
-            6.5,
-            6
-          ]
-        },
-        "west": {
-          "texture": "#claw",
-          "uv": [
-            9.5,
-            3,
-            10.5,
-            6
-          ]
-        },
-        "east": {
-          "texture": "#claw",
-          "uv": [
-            9.5,
-            3,
-            10.5,
-            6
-          ]
-        },
-        "up": {
-          "texture": "#claw",
-          "uv": [
-            5.5,
-            9.5,
-            6.5,
-            10.5
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        9.5,
-        10,
-        9.5
-      ],
       "to": [
-        10.5,
-        13,
-        10.5
+        11.5,
+        11.5,
+        11.5
       ],
       "faces": {
         "north": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
-            9.5,
-            3,
             10.5,
-            6
+            4.5,
+            11.5,
+            12.5
           ]
         },
         "south": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
-            9.5,
-            3,
             10.5,
-            6
+            4.5,
+            11.5,
+            12.5
           ]
         },
         "west": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
-            9.5,
-            3,
             10.5,
-            6
+            4.5,
+            11.5,
+            12.5
           ]
         },
         "east": {
-          "texture": "#claw",
+          "texture": "#frame",
           "uv": [
-            9.5,
-            3,
             10.5,
-            6
-          ]
-        },
-        "up": {
-          "texture": "#claw",
-          "uv": [
-            9.5,
-            9.5,
-            10.5,
-            10.5
+            4.5,
+            11.5,
+            12.5
           ]
         }
       }
@@ -495,22 +423,22 @@
     {
       "from": [
         6.5,
-        10,
+        3.5,
         6.5
       ],
       "to": [
         9.5,
-        13,
+        11.5,
         9.5
       ],
       "faces": {
         "north": {
           "texture": "#crystal",
           "uv": [
-            6.5,
-            3,
-            9.5,
-            6
+            0,
+            0,
+            16,
+            16
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -521,10 +449,10 @@
         "south": {
           "texture": "#crystal",
           "uv": [
-            6.5,
-            3,
-            9.5,
-            6
+            0,
+            0,
+            16,
+            16
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -535,10 +463,10 @@
         "west": {
           "texture": "#crystal",
           "uv": [
-            6.5,
-            3,
-            9.5,
-            6
+            0,
+            0,
+            16,
+            16
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -549,10 +477,39 @@
         "east": {
           "texture": "#crystal",
           "uv": [
-            6.5,
-            3,
-            9.5,
-            6
+            0,
+            0,
+            16,
+            16
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
+        6.5,
+        3.5,
+        6.5
+      ],
+      "to": [
+        9.5,
+        11.5,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#crystal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -560,13 +517,13 @@
             "ambient_occlusion": false
           }
         },
-        "up": {
+        "south": {
           "texture": "#crystal",
           "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
+            0,
+            0,
+            16,
+            16
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -574,13 +531,27 @@
             "ambient_occlusion": false
           }
         },
-        "down": {
+        "west": {
           "texture": "#crystal",
           "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
+            0,
+            0,
+            16,
+            16
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#crystal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -595,30 +566,98 @@
         "axis": "y",
         "origin": [
           8,
-          10,
+          3.5,
           8
         ]
       }
     },
     {
       "from": [
-        7.0,
-        13,
-        7.0
+        4.5,
+        11.5,
+        4.5
       ],
       "to": [
-        9.0,
-        14,
-        9.0
+        11.5,
+        12.5,
+        11.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            3.5,
+            11.5,
+            4.5
+          ]
+        },
+        "south": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            3.5,
+            11.5,
+            4.5
+          ]
+        },
+        "west": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            3.5,
+            11.5,
+            4.5
+          ]
+        },
+        "east": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            3.5,
+            11.5,
+            4.5
+          ]
+        },
+        "up": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            4.5,
+            11.5,
+            11.5
+          ]
+        },
+        "down": {
+          "texture": "#frame",
+          "uv": [
+            4.5,
+            4.5,
+            11.5,
+            11.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6.5,
+        12.5,
+        6.5
+      ],
+      "to": [
+        9.5,
+        13.75,
+        9.5
       ],
       "faces": {
         "north": {
           "texture": "#crystal",
           "uv": [
-            7.0,
-            2,
-            9.0,
-            3
+            6.5,
+            2.25,
+            9.5,
+            3.5
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -629,10 +668,10 @@
         "south": {
           "texture": "#crystal",
           "uv": [
-            7.0,
-            2,
-            9.0,
-            3
+            6.5,
+            2.25,
+            9.5,
+            3.5
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -643,10 +682,10 @@
         "west": {
           "texture": "#crystal",
           "uv": [
-            7.0,
-            2,
-            9.0,
-            3
+            6.5,
+            2.25,
+            9.5,
+            3.5
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -657,10 +696,10 @@
         "east": {
           "texture": "#crystal",
           "uv": [
-            7.0,
-            2,
-            9.0,
-            3
+            6.5,
+            2.25,
+            9.5,
+            3.5
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -671,24 +710,10 @@
         "up": {
           "texture": "#crystal",
           "uv": [
-            7.0,
-            7.0,
-            9.0,
-            9.0
-          ],
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "down": {
-          "texture": "#crystal",
-          "uv": [
-            7.0,
-            7.0,
-            9.0,
-            9.0
+            6.5,
+            6.5,
+            9.5,
+            9.5
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -703,30 +728,30 @@
         "axis": "y",
         "origin": [
           8,
-          13,
+          12.5,
           8
         ]
       }
     },
     {
       "from": [
-        7.5,
-        14,
-        7.5
+        7.05,
+        13.75,
+        7.05
       ],
       "to": [
-        8.5,
-        15,
-        8.5
+        8.95,
+        15.0,
+        8.95
       ],
       "faces": {
         "north": {
           "texture": "#crystal",
           "uv": [
-            7.5,
-            1,
-            8.5,
-            2
+            7.05,
+            1.0,
+            8.95,
+            2.25
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -737,10 +762,10 @@
         "south": {
           "texture": "#crystal",
           "uv": [
-            7.5,
-            1,
-            8.5,
-            2
+            7.05,
+            1.0,
+            8.95,
+            2.25
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -751,10 +776,10 @@
         "west": {
           "texture": "#crystal",
           "uv": [
-            7.5,
-            1,
-            8.5,
-            2
+            7.05,
+            1.0,
+            8.95,
+            2.25
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -765,10 +790,10 @@
         "east": {
           "texture": "#crystal",
           "uv": [
-            7.5,
-            1,
-            8.5,
-            2
+            7.05,
+            1.0,
+            8.95,
+            2.25
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -779,24 +804,10 @@
         "up": {
           "texture": "#crystal",
           "uv": [
-            7.5,
-            7.5,
-            8.5,
-            8.5
-          ],
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "down": {
-          "texture": "#crystal",
-          "uv": [
-            7.5,
-            7.5,
-            8.5,
-            8.5
+            7.05,
+            7.05,
+            8.95,
+            8.95
           ],
           "neoforge_data": {
             "block_light": 15,
@@ -811,7 +822,7 @@
         "axis": "y",
         "origin": [
           8,
-          14,
+          13.75,
           8
         ]
       }
