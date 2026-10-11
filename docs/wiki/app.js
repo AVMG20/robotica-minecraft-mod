@@ -12,8 +12,8 @@ const HOME_TAGS = {
   copper_gear: 'Where it all starts', mainspring: 'Wind it by hand. Power for your first robot.',
   clockwork_mechanism: 'The heart of every early bot', tinkers_hammer: 'Slow 3x3 mining on day one',
   felling_axe: 'Whole trees in one chop', gearblade: 'Fast copper sword', copper_cell: 'Your first battery',
-  bore_drill: 'Iron-pick speed, 3x3 mode, runs on FE', chainsaw: 'Trees, leaves and all', mining_drone: 'Digs tunnels for you',
-  sentry_drone: 'Shoots monsters, not friends', courier_drone: 'Chest to chest, with filters', basic_circuit: 'Wired age',
+  bore_drill: 'Iron-pick speed, 3x3 mode, runs on FE', chainsaw: 'Trees, leaves and all', buddy_bot: 'Fights, carries, digs. Your best buddy.',
+  courier_drone: 'Chest to chest, with filters', basic_circuit: 'Wired age',
   servo_drill: '5x5 and vein mining', rivet_gun: 'Four shots a second, no ammo', redstone_cell: 'A bigger battery',
   essence_vial: 'Bottle a monster, print its loot', advanced_circuit: 'Servo age', magma_drill: '3x3x3, auto-smelt',
   arc_blade: 'Lightning jumps to three monsters', magma_core: 'Deep age', null_drill: 'Up to 12x12x12',
@@ -22,14 +22,14 @@ const HOME_TAGS = {
   exo_leggings_mk1: 'Run faster', exo_boots_mk1: 'No fall damage, item magnet', upgrade_speed: 'Stack them. Go faster.',
   upgrade_range: 'Bigger work area', upgrade_fortune: 'More ore per ore', upgrade_void: 'Bye, cobblestone', upgrade_growth: 'Crops grow faster',
   codex: 'Your guide. Every player gets one.', recall_remote: 'Hold to go home', tesla_linker: 'Click a coil, then a machine',
-  signal_flare: 'Wakes the Scrap Colossus', storage_expansion_mk1: 'More room in your terminal', mining_drone_mk2: 'Digs 1.5x faster',
-  sentry_drone_mk2: 'Hits harder, shoots faster', courier_drone_mk2: 'Three stacks per trip', magnet_module: 'Items fly to you',
+  signal_flare: 'Wakes the Scrap Colossus', storage_expansion_mk1: 'More room in your terminal', buddy_bot_mk2: 'More cargo, harder hits',
+  courier_drone_mk2: 'Three stacks per trip', magnet_module: 'Items fly to you',
   night_vision_module: 'See in the dark', jet_assist_module: 'Double jump, soft landings', grinder_mk1: 'Two dusts per ore',
   reactor_controller: 'Split the atom', item_pipe: 'Move items, no lag', thorium_ingot: 'Glows a little'
 };
 const HOME_AGES = [
   ['copper_gear', 'mainspring', 'clockwork_mechanism', 'tinkers_hammer', 'felling_axe', 'gearblade'],
-  ['copper_cell', 'tesla_linker', 'bore_drill', 'chainsaw', 'mining_drone', 'grinder_mk1', 'item_pipe', 'signal_flare'],
+  ['copper_cell', 'tesla_linker', 'bore_drill', 'chainsaw', 'buddy_bot', 'grinder_mk1', 'item_pipe', 'signal_flare'],
   ['advanced_circuit', 'servo_drill', 'rivet_gun', 'redstone_cell', 'essence_vial', 'reactor_controller', 'upgrade_fortune'],
   ['magma_core', 'magma_drill', 'arc_blade', 'upgrade_void'],
   ['antigrav_core', 'null_drill', 'null_lance', 'ender_cell', 'flight_module']

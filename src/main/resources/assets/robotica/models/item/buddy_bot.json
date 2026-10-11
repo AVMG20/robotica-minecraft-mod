@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "robotica:item/sentry_drone"
+    "layer0": "robotica:item/buddy_bot"
   }
 }

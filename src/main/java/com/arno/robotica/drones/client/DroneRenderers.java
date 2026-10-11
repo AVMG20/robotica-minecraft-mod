@@ -1,11 +1,10 @@
 package com.arno.robotica.drones.client;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.drones.entity.BuddyBot;
 import com.arno.robotica.drones.entity.CourierDrone;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.drones.entity.HaulerDrone;
-import com.arno.robotica.drones.entity.MiningDrone;
-import com.arno.robotica.drones.entity.SentryDrone;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.LightTexture;
@@ -19,7 +18,7 @@ import net.minecraft.client.renderer.entity.layers.EyesLayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-/** Renderers of both drones: the model faces the entity's yaw (not the movement direction) and a glow layer lights the lamp and eye. */
+/** Drone renderers: the model faces the entity's yaw (not the movement direction) and a glow layer lights the lamps and eyes. */
 public final class DroneRenderers {
     private DroneRenderers() {}
 
@@ -59,12 +58,63 @@ public final class DroneRenderers {
         }
     }
 
-    public static Renderer<MiningDrone, MiningDroneModel> mining(EntityRendererProvider.Context ctx) {
-        return new Renderer<>(ctx, new MiningDroneModel(ctx.bakeLayer(MiningDroneModel.LAYER)), "mining_drone", 0.25F, true);
+    public static BuddyRenderer buddy(EntityRendererProvider.Context ctx) {
+        return new BuddyRenderer(ctx);
     }
 
-    public static Renderer<SentryDrone, SentryDroneModel> sentry(EntityRendererProvider.Context ctx) {
-        return new Renderer<>(ctx, new SentryDroneModel(ctx.bakeLayer(SentryDroneModel.LAYER)), "sentry_drone", 0.25F);
+    /**
+     * Buddy Bot: one texture per tier (Mk1 to Mk4), a full bright trim layer per tier (nozzle, muzzle, Mk3/Mk4 seams) and
+     * a full bright eye tinted by stance (aggressive red, defense cyan, passive green) that dims and flickers on low energy.
+     */
+    public static class BuddyRenderer extends MobRenderer<BuddyBot, BuddyBotModel> {
+        private static final ResourceLocation[] TEXTURES = {
+                Robotica.id("textures/entity/buddy_bot.png"), Robotica.id("textures/entity/buddy_bot_mk2.png"),
+                Robotica.id("textures/entity/buddy_bot_mk3.png"), Robotica.id("textures/entity/buddy_bot_mk4.png")};
+        /** Mk1 and Mk2 share the plain glow sheet. */
+        private static final ResourceLocation[] GLOW = {
+                Robotica.id("textures/entity/buddy_bot_glow.png"), Robotica.id("textures/entity/buddy_bot_glow.png"),
+                Robotica.id("textures/entity/buddy_bot_mk3_glow.png"), Robotica.id("textures/entity/buddy_bot_mk4_glow.png")};
+        /** Indexed by {@link BuddyBot.Stance} ordinal. */
+        private static final ResourceLocation[] EYES = {
+                Robotica.id("textures/entity/buddy_bot_eye_aggressive.png"), Robotica.id("textures/entity/buddy_bot_eye_defense.png"),
+                Robotica.id("textures/entity/buddy_bot_eye_passive.png")};
+        private static final int EYE_DIM = 0xFF707070;
+        private static final int EYE_FLICKER = 0xFF303030;
+
+        public BuddyRenderer(EntityRendererProvider.Context ctx) {
+            super(ctx, new BuddyBotModel(ctx.bakeLayer(BuddyBotModel.LAYER)), 0.3F);
+            RenderType[] glow = new RenderType[GLOW.length];
+            for (int i = 0; i < GLOW.length; i++) glow[i] = RenderType.eyes(GLOW[i]);
+            RenderType[] eyes = new RenderType[EYES.length];
+            for (int i = 0; i < EYES.length; i++) eyes[i] = RenderType.eyes(EYES[i]);
+            addLayer(new RenderLayer<>(this) {
+                @Override
+                public void render(PoseStack pose, MultiBufferSource buffers, int light, BuddyBot bot, float limbSwing, float limbSwingAmount,
+                                   float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
+                    if (bot.isInvisible()) return;
+                    BuddyBotModel model = getParentModel();
+                    model.renderToBuffer(pose, buffers.getBuffer(glow[tierIndex(bot)]), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                    int color = -1;
+                    if (bot.isLowEnergy()) color = ((int) ageInTicks + bot.getId()) % 23 < 2 ? EYE_FLICKER : EYE_DIM;
+                    int stance = Mth.clamp(bot.stance().ordinal(), 0, eyes.length - 1);
+                    model.renderToBuffer(pose, buffers.getBuffer(eyes[stance]), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, color);
+                }
+            });
+        }
+
+        private static int tierIndex(BuddyBot bot) {
+            return Mth.clamp(bot.tier(), 1, TEXTURES.length) - 1;
+        }
+
+        @Override
+        public ResourceLocation getTextureLocation(BuddyBot bot) {
+            return TEXTURES[tierIndex(bot)];
+        }
+
+        @Override
+        protected void setupRotations(BuddyBot bot, PoseStack pose, float bob, float yBodyRot, float partialTick, float scale) {
+            super.setupRotations(bot, pose, bob, Mth.rotLerp(partialTick, bot.yRotO, bot.getYRot()), partialTick, scale);
+        }
     }
 
     public static Renderer<HaulerDrone, HaulerDroneModel> hauler(EntityRendererProvider.Context ctx) {
