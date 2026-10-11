@@ -1,7 +1,7 @@
-"""Drones module textures: Mining Drone (copper body, steel drill) and Sentry Drone (steel orb, cyan eye), tier 1 and tier 2.
+"""Drones module textures: Buddy Bot (Mk1 copper, Mk2 dark steel, Mk3 blackened netherite, Mk4 null), Courier and Hauler Drone.
 Run: python3 scripts/textures/drones.py
-Writes textures/entity/{mining,sentry}_drone[_mk2].png, mining_drone_mk3.png (64x64 model sheets), the matching *_glow.png (only the lamp and eye
-pixels, drawn full bright by a render layer) and the four item icons (models are written by scripts/data/drones_data.py).
+Writes the 64x64 entity sheets in textures/entity, their *_glow.png (only the full bright pixels, drawn by a render layer),
+buddy_bot_eye_<stance>.png (the Buddy Bot eye, tinted by stance) and the item icons (write_item adds missing item models).
 The model sheets follow the box layout of the models in drones/client: texOffs(u, v), box w x h x d unfolds as
     top (u+d, v)  bottom (u+d+w, v)  west (u, v+d)  north/front (u+d, v+d)  east (u+d+w, v+d)  south (u+2d+w, v+d)
 """
@@ -12,40 +12,6 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from pixelart import ASSETS, MATERIALS, Canvas, write_item, write_png  # noqa: E402
 
 ENTITY = ASSETS / 'textures/entity'
-
-# Tier palettes. 1-4: main ramp light to dark, a-c: trim ramp, k: near black, y/Y/z: cyan glow, l/L: lamp
-MK1 = {
-    '1': '#E8A060', '2': '#C87533', '3': '#A35E26', '4': '#7A431B',      # copper body
-    'a': '#C4CBCE', 'b': '#8D9599', 'c': '#4D5558', 'k': '#1E1A1A',      # steel trim
-    'r': '#D4A73A', 'R': '#F2D27A',                                      # brass rivets
-    'y': '#2FB8CC', 'Y': '#5FE3F0', 'z': '#D8FBFF',                      # cyan
-    'l': '#E8C15A', 'L': '#FFF3B0',
-}
-MK2 = dict(MK1)
-MK2.update({
-    '1': '#7E8A90', '2': '#566067', '3': '#3F484E', '4': '#2A3034',      # dark steel body
-    'r': '#F0B030', 'R': '#FFE08A',                                      # gold trim
-})
-MK3 = dict(MK1)
-MK3.update({
-    '1': '#6A5A62', '2': '#4A3C44', '3': '#33282F', '4': '#211A1F',      # blackened pyrosteel body
-    'a': '#D8C0B0', 'b': '#A8826E', 'c': '#5E4034',                      # heat-tinted trim
-    'r': '#FF7A1A', 'R': '#FFC266',                                      # blaze orange rivets
-})
-
-SENTRY1 = {
-    '1': '#D8DEE0', '2': '#A9B3B7', '3': '#7C878C', '4': '#4D5558',      # steel shell
-    'a': '#E8A060', 'b': '#C87533', 'c': '#8A4A22', 'k': '#1E1A1A',      # copper trim
-    'r': '#D4A73A', 'R': '#F2D27A',
-    'y': '#2FB8CC', 'Y': '#5FE3F0', 'z': '#D8FBFF',
-    'l': '#E8C15A', 'L': '#FFF3B0',
-}
-SENTRY2 = dict(SENTRY1)
-SENTRY2.update({
-    '1': '#5A6870', '2': '#3F4A51', '3': '#2C353A', '4': '#1B2124',      # dark steel shell
-    'a': '#F6C45A', 'b': '#E0A02E', 'c': '#8A5E14',                      # gold trim
-})
-
 
 def rects(u, v, w, h, d):
     return {
@@ -88,148 +54,295 @@ def block(c, face, dx, dy, w, h, ch):
             put(c, face, dx + xx, dy + yy, ch)
 
 
-# ---------------------------------------------------------------- Mining Drone
+# ---------------------------------------------------------------- Buddy Bot
 
-def mining_sheet(tier):
-    """Returns (main, glow) canvases of the Mining Drone sheet."""
+# Chars: '01234' body (deep -> highlight), 'abcde' trim, 'mnoO' drill (dark -> highlight), 'ghi' tier glow (deep, mid,
+# bright), 'k' near black, 'K' lens glass, 'x' cargo hold, 'W' teeth, 'w' white, 'G D E' loot (gold, diamond, emerald).
+BUDDY = {
+    1: {'body': MATERIALS['copper'], 'trim': MATERIALS['brass'],
+        'drill': ('#33393C', '#5A6266', '#A9B1B4', '#E4EAEC'), 'glow': ('#145A66', '#2FB8CC', '#B5F6FB')},
+    2: {'body': ('#1B2124', '#2A3034', '#3F484E', '#566067', '#7E8A90'), 'trim': MATERIALS['gold'],
+        'drill': ('#3E4447', '#6B7376', '#B5BCBF', '#F0F4F5'), 'glow': ('#145A66', '#2FB8CC', '#B5F6FB')},
+    3: {'body': ('#0E0B0E', '#1A1519', '#2A2328', '#40363C', '#5E5258'), 'trim': ('#1C1618', '#352C30', '#54484D', '#7A6C71', '#A8989C'),
+        'drill': ('#1E1A1C', '#3A3236', '#5E5458', '#8E8286'), 'glow': ('#A82E0A', '#FF7A1A', '#FFD27A')},
+    4: {'body': ('#0C0618', '#1A0E36', '#2C1A58', '#47307E', '#6E52A8'), 'trim': ('#2A1660', '#4A2C96', '#7650C8', '#A884F0', '#E6DAFF'),
+        'drill': ('#145247', '#2E8F7F', '#5AD6BE', '#D8FBFF'), 'glow': ('#7A1E9E', '#E060FF', '#FFE0FF')},
+}
+# Eye glow by stance (aggressive, defense, passive): 'p' lens rim, 'q' pupil sides, 's' pupil, 'w' glint.
+BUDDY_EYES = {
+    'aggressive': ('#5A1008', '#E83A2A', '#FF8A70'),
+    'defense': ('#0E4650', '#2FB8CC', '#9AF2FA'),
+    'passive': ('#123E16', '#3EB03A', '#AEF08A'),
+}
+
+
+def buddy_pal(tier):
+    t = BUDDY[tier]
+    p = {'k': '#1E1A1A', 'K': '#0A0C10', 'x': '#120E10', 'W': '#F2EEDC', 'w': '#FFFFFF',
+         'G': '#FFD84A', 'D': '#6FE8F0', 'E': '#3EC75A'}
+    p.update(zip('01234', t['body']))
+    p.update(zip('abcde', t['trim']))
+    p.update(zip('mnoO', t['drill']))
+    p.update(zip('ghi', t['glow']))
+    return p
+
+
+def eye_pal(stance):
+    deep, mid, bright = BUDDY_EYES[stance]
+    return {'p': deep, 'q': mid, 's': bright, 'w': '#FFFFFF'}
+
+
+def stamp(c, face, rows):
+    """Draws a hand made face: rows of chars sized like the face, '.' = transparent, ' ' = leave alone."""
+    x, y, rw, rh = face
+    for dy, row in enumerate(rows[:rh]):
+        for dx, ch in enumerate(row[:rw]):
+            if ch != ' ':
+                c.set(x + dx, y + dy, ch)
+
+
+def panel(c, face, ramp='01234', seed=0, top=None, bottom=None):
+    """Side plate: mid fill with brushed grain, light top row, shadowed bottom row."""
+    x, y, rw, rh = face
+    c.rect(x, y, rw, rh, ramp[2])
+    if rw >= 3 and rh >= 3:
+        c.brushed(x, y + 1, rw, rh - 2, ramp, seed=seed, density=0.16)
+    c.rect(x, y, rw, 1, top or ramp[3])
+    c.rect(x, y + rh - 1, rw, 1, bottom or ramp[1])
+
+
+def buddy_sheet(tier):
+    """Returns (main, tier glow, eye glow) canvases of the Buddy Bot sheet (64x64, layout of BuddyBotModel)."""
     c = Canvas(64)
-    g = Canvas(64)
-    # body 8x6x8 at (0,0): copper (tier 1) or dark steel (tier 2)
-    f = box(c, 0, 0, 8, 6, 8)
-    # front: grille with cyan status strip
-    block(c, f['north'], 1, 1, 6, 4, '4')
-    for i in range(3):
-        block(c, f['north'], 1, 1 + i + (i // 2), 6, 1, 'c')
-    block(c, f['north'], 1, 4, 6, 1, 'y')
-    # sides: bolted panel and battery window
-    for side in ('west', 'east'):
-        block(c, f[side], 2, 1, 4, 4, '3')
-        block(c, f[side], 3, 2, 2, 2, 'y')
-        put(c, f[side], 3, 2, 'z')
-        put(c, f[side], 1, 1, 'r')
-        put(c, f[side], 6, 4, 'r')
-    # back: vent
-    for i in range(4):
-        block(c, f['south'], 1, 1 + i, 6, 1, 'c' if i % 2 == 0 else '4')
-    # top and bottom studs
+    e = Canvas(64)
+    hot = tier >= 3                                # Mk3/Mk4: glowing seams, stripe, hub, drill tip and blade tips
+    seam = 'h' if hot else '0'
+
+    # body 8x6x8 at (0,0): a chest with a trim skirt and rivets
+    f = rects(0, 0, 8, 6, 8)
+    for i, name in enumerate(('north', 'south', 'west', 'east')):
+        x, y, rw, rh = f[name]
+        panel(c, f[name], seed=11 + i)
+        c.set(x, y + 1, '3').set(x + rw - 1, y + 1, '1')            # rounded vertical edges
+        c.rect(x, y + rh - 1, rw, 1, 'c')                           # skirt
+        c.set(x, y + rh - 1, 'd').set(x + rw - 1, y + rh - 1, 'b')
+        put(c, f[name], 1, 1, 'e')
+        put(c, f[name], rw - 2, 1, 'e')
+    for name in ('west', 'east'):                                   # vent slit above the shoulder
+        block(c, f[name], 2, 1, 4, 1, seam)
+        if hot:
+            put(c, f[name], 3, 1, 'i')
+    # back: hinge knuckles, a hatch with two charge lights
+    stamp(c, f['south'], [
+        ' dc  dc ',
+        '        ',
+        '  0001  ',
+        '  0gh3  ',
+        '  1333  ',
+    ])
+    # top: the open cargo hold, seen when the lid snaps open (bottom rows face the front)
+    stamp(c, f['top'], [
+        'cdddddcb',
+        'dkkkkkkb',
+        'dkxxxxxb',
+        'dkxGxDxb',
+        'dkxxGGxb',
+        'dkxExxxb',
+        'dkxxxxxa',
+        'bbbbbbba',
+    ])
+    # bottom: plate with screws, the nozzle sits in the middle
+    x, y, rw, rh = f['bottom']
+    c.rect(x, y, rw, rh, '1')
+    c.bevel(x, y, rw, rh, '2', '0')
     for dx, dy in ((1, 1), (6, 1), (1, 6), (6, 6)):
-        put(c, f['top'], dx, dy, 'r')
-    # top cap 6x2x6 at (0,16): steel with a cyan dot
-    f = box(c, 0, 16, 6, 2, 6, ('a', 'b', 'c', 'k'))
-    block(c, f['top'], 2, 2, 2, 2, 'y')
-    put(c, f['top'], 2, 2, 'z')
-    # belly battery pack 6x2x6 at (0,26)
-    f = box(c, 0, 26, 6, 2, 6, ('b', 'c', 'c', 'k'))
-    block(c, f['bottom'], 1, 1, 4, 4, 'y')
-    # headlamp 3x2x2 at (32,0): brass housing, glowing lens on the front
-    f = box(c, 32, 0, 3, 2, 2, ('R', 'r', 'r', 'c'))
-    block(c, f['north'], 0, 0, 3, 2, 'L')
-    block(g, f['north'], 0, 0, 3, 2, 'L')
-    # drill collar 5x5x2 at (32,8), bit 4x4x3 at (32,16), tip 2x2x3 at (32,24): steel with spiral stripes
-    f = box(c, 32, 8, 5, 5, 2, ('a', 'b', 'c', 'k'))
-    block(c, f['north'], 1, 1, 3, 3, 'c')
-    f = box(c, 32, 16, 4, 4, 3, ('a', 'b', 'c', 'k'))
-    for name in ('west', 'east', 'top', 'bottom'):
+        put(c, f['bottom'], dx, dy, 'c')
+
+    # lid 9x3x9 at (0,14): rimmed top with a racing stripe, buck teeth inside
+    f = rects(0, 14, 9, 3, 9)
+    stripe = 'h' if hot else 'd'
+    x, y, rw, rh = f['top']
+    c.rect(x, y, rw, rh, '3')
+    c.brushed(x + 1, y + 1, rw - 2, rh - 2, '23344', seed=5, density=0.12)
+    stamp(c, f['top'], [
+        'cddd dddc',
+        'd4     2b',
+        'd       b',
+        'd       b',
+        'd       b',
+        'd       b',
+        'd       b',
+        'd2     1b',
+        'cbbb bbba',
+    ])
+    c.rect(x + 4, y, 1, rh, stripe)
+    if hot:
+        c.set(x + 4, y + 2, 'i').set(x + 4, y + 6, 'i')
+    else:
+        c.set(x + 4, y, 'e')
+    for dx, dy in ((1, 1), (7, 1), (1, 7), (7, 7)):
+        put(c, f['top'], dx, dy, 'e')
+    stamp(c, f['bottom'], [
+        'bbbbbbbbb',
+        'bkkkkkkkb',
+        'bxxxxxxxb',
+        'bxxxxxxxb',
+        'bxxxxxxxb',
+        'bxxxxxxxb',
+        'bxxxxxxxb',
+        'bxxWxWxxb',
+        'bbbWbWbbb',
+    ])
+    for name in ('north', 'west', 'east', 'south'):
         x, y, rw, rh = f[name]
-        for yy in range(rh):
-            for xx in range(rw):
-                if (xx + yy) % 3 == 0:
-                    c.set(x + xx, y + yy, 'a')
-                elif (xx + yy) % 3 == 1:
-                    c.set(x + xx, y + yy, 'c')
-    f = box(c, 32, 24, 2, 2, 3, ('a', 'b', 'c', 'k'))
-    block(c, f['north'], 0, 0, 2, 2, 'k')
-    # side pods 4x4x4 at (0,36): steel with a copper ring
-    f = box(c, 0, 36, 4, 4, 4, ('a', 'b', 'c', 'k'))
-    for side in ('west', 'east', 'north', 'south'):
-        block(c, f[side], 0, 1, 4, 2, '2')
-        block(c, f[side], 0, 1, 4, 1, '1')
-    # rotor discs 6x1x6 at (16,36): a plus shaped blade, the rest of the faces stays transparent
-    f = box(c, 16, 36, 6, 1, 6, ('a', 'b', 'c', 'k'))
+        c.rect(x, y, rw, 1, '3').rect(x, y + 1, rw, 1, '2').rect(x, y + 2, rw, 1, 'c')
+        c.set(x, y + 2, 'd').set(x + rw - 1, y + 2, 'b')
+    put(c, f['north'], 4, 2, 'e')                                   # latch between the brows
+    put(c, f['north'], 4, 1, 'c')
+    stamp(c, f['south'], ['', '', ' dc   dc '])
+
+    # eye bezel 6x6x1 at (32,0): rounded trim ring round a dark lens
+    f = rects(32, 0, 6, 6, 1)
+    stamp(c, f['north'], [
+        '.dccb.',
+        'dkKKkb',
+        'cKKKKb',
+        'cKKKKa',
+        'bkKKka',
+        '.bbaa.',
+    ])
+    put(c, f['north'], 1, 0, 'e')
+    stamp(c, f['top'], ['.dddd.'])
+    stamp(c, f['bottom'], ['.bbbb.'])
+    stamp(c, f['west'], ['.', 'd', 'c', 'c', 'c', '.'])
+    stamp(c, f['east'], ['.', 'c', 'b', 'b', 'b', '.'])
+    c.rect(*f['south'], 'k')
+    stamp(e, f['north'], [
+        '      ',
+        '  pp  ',
+        ' p  p ',
+        ' p  p ',
+        '  pp  ',
+        '      ',
+    ])
+    # pupil 2x2x1 at (46,0): dark here, lit by the eye sheet
+    f = rects(46, 0, 2, 2, 1)
+    for face in f.values():
+        c.rect(*face, 'K')
+    stamp(e, f['north'], ['ws', 'ss'])
+    for name in ('top', 'bottom', 'west', 'east'):
+        e.rect(*f[name], 'q')
+    # eyelid 4x4x1 at (46,3): a body coloured shutter with a dark lash line
+    f = rects(46, 3, 4, 4, 1)
+    stamp(c, f['north'], ['3443', '2332', '2222', 'kkkk'])
+    for name in ('top', 'west', 'east', 'south'):
+        c.rect(*f[name], '2')
+    c.rect(*f['bottom'], 'k')
+    # brows 3x1x1 at (52,0)
+    f = rects(52, 0, 3, 1, 1)
+    for name, face in f.items():
+        c.rect(*face, '0' if name == 'top' else 'k')
+    # mast 1x2x1 at (56,3), propeller hub 2x1x2 at (56,6)
+    f = rects(56, 3, 1, 2, 1)
+    for face in f.values():
+        c.rect(*face, 'b')
+    c.rect(*f['top'], 'c')
+    f = rects(56, 6, 2, 1, 2)
+    for face in f.values():
+        c.rect(*face, 'c')
+    stamp(c, f['top'], ['ih', 'hg'] if hot else ['ed', 'dc'])
+    # propeller blade 10x1x2 at (36,20): two tone blades, glowing tips on Mk3/Mk4
+    f = rects(36, 20, 10, 1, 2)
+    tip = 'h' if hot else 'e'
     for name in ('top', 'bottom'):
-        x, y, rw, rh = f[name]
-        c.rect(x, y, rw, rh, '.')
-        c.rect(x, y + 2, rw, 2, 'b')
-        c.rect(x + 2, y, 2, rh, 'b')
-        c.rect(x + 2, y + 2, 2, 2, 'c')
-        c.rect(x, y + 2, rw, 1, 'a')
-        c.rect(x + 2, y, 1, rh, 'a')
-    # tail fin 1x4x3 at (46,0)
-    box(c, 46, 0, 1, 4, 3, ('a', 'b', 'c', 'k'))
-    return c, g
+        stamp(c, f[name], [
+            '.' + 'dddc' + 'bb' + '3333',
+            'cccc' + 'bb' + '222' + '.',
+        ])
+        put(c, f[name], 1, 0, tip)
+        put(c, f[name], 8, 1, tip)
+    for name in ('north', 'south', 'west', 'east'):
+        c.rect(*f[name], 'b')
+    # thruster nozzle 4x1x4 at (36,14): glowing jet underneath
+    f = rects(36, 14, 4, 1, 4)
+    for face in f.values():
+        c.rect(*face, 'b')
+    stamp(c, f['bottom'], ['abba', 'bihb', 'bhgb', 'abba'])
+    stamp(c, f['top'], ['cccc', 'cbbc', 'cbbc', 'cccc'])
 
-
-# ---------------------------------------------------------------- Sentry Drone
-
-def sentry_sheet(tier):
-    c = Canvas(64)
-    g = Canvas(64)
-    # shell: three crossing boxes make a chamfered cube, all steel
-    f = box(c, 0, 0, 8, 6, 6)          # wide
-    block(c, f['top'], 1, 1, 6, 4, '2')
+    # shoulder pods 3x3x3 at (0,26): rounded trim pods with a bolt on the outer face
+    f = rects(0, 26, 3, 3, 3)
+    for name, face in f.items():
+        if name == 'top':
+            stamp(c, face, ['cdc', 'ded', 'cdc'])
+        elif name == 'bottom':
+            stamp(c, face, ['aba', 'bab', 'aba'])
+        else:
+            stamp(c, face, ['bdb', 'cdc', 'aba'])
     for name in ('west', 'east'):
-        put(c, f[name], 2, 2, 'a')
-        put(c, f[name], 3, 3, 'b')
-    f = box(c, 0, 12, 6, 8, 6)         # tall
-    for name in ('west', 'east', 'north', 'south'):
-        block(c, f[name], 2, 3, 2, 2, '3')
-        put(c, f[name], 2, 3, 'a')
-    f = box(c, 28, 0, 6, 6, 8)         # long, carries the eye
-    block(c, f['west'], 3, 1, 3, 4, '3')
-    block(c, f['east'], 2, 1, 3, 4, '3')
-    block(c, f['west'], 4, 2, 1, 1, 'y')
-    block(c, f['east'], 3, 2, 1, 1, 'y')
-    # trim rivets on the long box front
-    put(c, f['north'], 0, 0, 'R')
-    put(c, f['north'], 5, 0, 'R')
-    put(c, f['north'], 0, 5, 'R')
-    put(c, f['north'], 5, 5, 'R')
-    # eye visor 5x3x1 at (0,28): dark frame, cyan lens
-    f = box(c, 0, 28, 5, 3, 1, ('4', 'c', 'c', 'k'))
-    block(c, f['north'], 0, 0, 5, 3, 'k')
-    block(c, f['north'], 1, 1, 3, 1, 'Y')
-    put(c, f['north'], 2, 1, 'z')
-    block(c, f['north'], 1, 1, 3, 1, 'Y')
-    put(c, f['north'], 2, 1, 'z')
-    block(g, f['north'], 1, 1, 3, 1, 'Y')
-    put(g, f['north'], 2, 1, 'z')
-    block(g, f['north'], 0, 1, 1, 1, 'y')
-    block(g, f['north'], 4, 1, 1, 1, 'y')
-    block(c, f['north'], 0, 1, 1, 1, 'y')
-    block(c, f['north'], 4, 1, 1, 1, 'y')
-    # barrel 2x2x6 at (16,28), muzzle ring 3x3x2 at (34,28)
-    f = box(c, 16, 28, 2, 2, 6, ('a', 'b', 'c', 'k'))
-    for name in ('top', 'bottom'):
+        stamp(c, f[name], ['bdb', 'dek', 'bkb'])
+    # drill collar 3x3x2 at (12,26), bit 2x2x2 at (22,26), tip 1x1x2 at (30,26): spiral flutes
+    f = rects(12, 26, 3, 3, 2)
+    for name, face in f.items():
+        c.rect(*face, 'n')
+    stamp(c, f['north'], ['ooO', 'o n', 'nnm'])
+    for name in ('top', 'west', 'east', 'bottom'):
         x, y, rw, rh = f[name]
-        for yy in range(0, rh, 2):
-            c.rect(x, y + yy, rw, 1, 'c')
-    f = box(c, 34, 28, 3, 3, 2, ('R', 'r', 'r', 'k'))
-    block(c, f['north'], 0, 0, 3, 3, 'k')
-    block(c, f['north'], 1, 1, 1, 1, 'z')
-    block(g, f['north'], 1, 1, 1, 1, 'z')
-    block(g, f['north'], 0, 1, 1, 1, 'y')
-    block(g, f['north'], 2, 1, 1, 1, 'y')
-    block(g, f['north'], 1, 0, 1, 1, 'y')
-    block(g, f['north'], 1, 2, 1, 1, 'y')
-    block(c, f['north'], 0, 1, 1, 1, 'y')
-    block(c, f['north'], 2, 1, 1, 1, 'y')
-    block(c, f['north'], 1, 0, 1, 1, 'y')
-    block(c, f['north'], 1, 2, 1, 1, 'y')
-    # rotor mast 1x2x1 at (44,14)
-    box(c, 44, 14, 1, 2, 1, ('a', 'b', 'c', 'k'))
-    # rotor blade 12x1x2 at (0,36): shared by both blades
-    f = box(c, 0, 36, 12, 1, 2, ('a', 'b', 'c', 'k'))
-    for name in ('top', 'bottom'):
-        x, y, rw, rh = f[name]
+        c.rect(x, y, rw, rh, 'n')
+        c.set(x, y, 'o')
+    f = rects(22, 26, 2, 2, 2)
+    for i, (name, face) in enumerate(f.items()):
+        stamp(c, face, ['Om', 'mO'] if i % 2 else ['mO', 'Om'])
+    f = rects(30, 26, 1, 1, 2)
+    for face in f.values():
+        c.rect(*face, 'h' if hot else 'o')
+    c.rect(*f['north'], 'i' if hot else 'O')
+    # blaster barrel 2x2x3 at (36,26) with a dark cooling ring, muzzle 3x3x1 at (46,26) with a glowing bore
+    f = rects(36, 26, 2, 2, 3)
+    for name, face in f.items():
+        x, y, rw, rh = face
         c.rect(x, y, rw, rh, 'b')
-        c.rect(x, y, rw, 1, 'a')
-        block(c, f[name], 0, 0, 1, rh, 'k')
-        block(c, f[name], rw - 1, 0, 1, rh, 'k')
-    # thruster pods 2x2x3 at (0,40)
-    f = box(c, 0, 40, 2, 2, 3, ('a', 'b', 'c', 'k'))
-    block(c, f['south'], 0, 0, 2, 2, 'y')
-    block(g, f['south'], 0, 0, 2, 2, 'y')
-    return c, g
+        c.rect(x, y, rw, 1, 'c')
+    for name in ('top', 'bottom'):
+        x, y, rw, rh = f[name]
+        c.rect(x, y + 1, rw, 1, 'k')
+    for name in ('west', 'east'):
+        x, y, rw, rh = f[name]
+        c.rect(x + 1, y, 1, rh, 'k')
+    f = rects(46, 26, 3, 3, 1)
+    for face in f.values():
+        c.rect(*face, 'c')
+    stamp(c, f['north'], ['dcc', 'cib', 'cba'])
+    c.set(f['north'][0] + 1, f['north'][1] + 1, 'i')
+    glow = c.mask('ghi')
+    c.replace('hi', 'g')                    # dark under the glow, so the additive layer keeps its hue in daylight
+    return c, glow, e
+
+
+def buddy_icon(tier):
+    """Front view: propeller on the lid, a unibrow, one big eye with a lit pupil, shoulder pods with a muzzle and a drill tip."""
+    hot = 'h' if tier >= 3 else None
+
+    def draw(c):
+        c.draw(0, 0, [
+            '.......ed.......',
+            '...edddcb3332...',
+            '.......cb.......',
+            '..dddddddddddc..',
+            '..d4333dd3332b..',
+            '..cbbbkkkkbbba..',
+            '...32kdccbk21...',
+            '.dc32dKKKKb21cd.',
+            '.ih32cKKwhb21On.',
+            '.ba32cKKhha21ab.',
+            '...32bKKKKa21...',
+            '...322baab121...',
+            '...dccccccccb...',
+            '......bhhb......',
+        ])
+        if hot:                                                     # glowing stripe and blade tips on Mk3/Mk4
+            c.rect(7, 3, 2, 2, hot).set(3, 1, hot).set(12, 1, hot)
+    return draw
 
 
 # ---------------------------------------------------------------- item icons
@@ -241,24 +354,7 @@ def icon(draw):
     return c
 
 
-def mining_icon(pal, body, light, dark):
-    """Front three-quarter view: twin rotor pods, a stubby body with a lamp and window, the drill pointing down."""
-    def draw(c):
-        for x0 in (0, 10):                                   # rotor blur and pods
-            c.rect(x0, 2, 6, 1, 'b').rect(x0 + 1, 2, 2, 1, 'a')
-            c.set(x0 + 2, 3, 'c').set(x0 + 3, 3, 'c')
-            c.rect(x0 + 1, 4, 4, 3, 'b')
-        c.rect(4, 3, 8, 7, body)                             # body
-        c.auto_shade({body: (dark, light), 'b': ('c', 'a')})
-        c.rect(6, 4, 4, 1, 'r').set(7, 4, 'L').set(8, 4, 'l')    # headlamp
-        c.rect(6, 6, 4, 2, 'k').rect(7, 6, 2, 1, 'y').set(7, 6, 'z')   # window
-        c.set(5, 4, 'R')
-        c.rect(5, 10, 6, 1, 'c').rect(6, 10, 4, 1, 'b')      # drill collar
-        c.draw(6, 11, ['abca', '.ab.', '.ca.', '.a..'])       # spiral bit
-    return draw
-
-
-# Item icons of the sentry and courier drones and the courier remote share the mod wide item look (see core.py): outline 'k',
+# Item icons of the courier and hauler drones and the courier remote share the mod wide item look (see core.py): outline 'k',
 # light from the top-left, ramps from pixelart.MATERIALS. Chars: '12345' shell (deep -> highlight), 'abcde' trim,
 # 'y Y z Z' cyan glow (mid, bright, white, deep), 'K' near black glass, 'o O' brass, 'A' amber lens.
 DSTEEL = ('#2A3034', '#3F484E', '#566067', '#7E8A90', '#B5C0C5')    # Mk2 steel, same family as the Mk2 entity shells
@@ -274,38 +370,8 @@ def ipal(shell, trim):
     return p
 
 
-SENTRY_ICON1 = ipal('white', 'copper')
-SENTRY_ICON2 = ipal(DSTEEL, 'steel')
 COURIER_ICON1 = ipal('white', 'brass')
 COURIER_ICON2 = ipal(DSTEEL, 'brass')
-
-
-def shaded_ellipse(c, cx, cy, rx, ry, chars):
-    """Lit ball, light from the top-left; `chars` run dark -> light."""
-    for y in range(c.size):
-        for x in range(c.size):
-            nx, ny = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
-            d = nx * nx + ny * ny
-            if d <= 1.0:
-                lum = -0.5 * nx - 0.6 * ny + 0.62 * (1 - d) ** 0.5
-                i = 0 if lum < -0.05 else 1 if lum < 0.3 else 2 if lum < 0.62 else 3 if lum < 0.9 else 4
-                c.set(x, y, chars[i])
-
-
-def sentry_icon(mk2):
-    """Floating orb: rotor on top, visor with a cyan eye, a trim band round the belly and a cannon on the right."""
-    def draw(c):
-        c.rect(3, 2, 10, 1, 'c').rect(3, 2, 4, 1, 'd').set(3, 2, 'e')         # rotor blade
-        c.rect(7, 3, 2, 1, 'b').set(7, 3, 'c')                                # mast
-        shaded_ellipse(c, 7.0, 9.0, 5.0, 5.0, '12345')
-        for x in range(2, 12):                                                # belly band
-            if c.get(x, 11) != '.':
-                c.set(x, 11, 'y' if mk2 else 'c')
-        c.rect(3, 6, 7, 4, 'K').rect(3, 6, 7, 1, '1').set(3, 6, '2')          # visor with a lit brow
-        c.rect(4, 7, 5, 2, 'k').rect(4, 8, 5, 1, 'y').rect(5, 8, 3, 1, 'Y').set(5, 8, 'z')   # eye
-        c.rect(11, 8, 4, 3, 'c').rect(11, 8, 4, 1, 'd').rect(11, 10, 4, 1, 'b')   # cannon barrel
-        c.rect(14, 8, 1, 3, 'y' if mk2 else 'o').set(14, 8, 'z' if mk2 else 'O')  # muzzle
-    return draw
 
 
 COURIER1 = {
@@ -526,18 +592,17 @@ def main():
             write_png(ENTITY / 'hauler_drone_glow_active.png', ga.rows(), pal, 64)
     write_item('hauler_drone', icon(hauler_icon(False)).rows(), HAULER_ICON1)
     write_item('hauler_drone_mk2', icon(hauler_icon(True)).rows(), HAULER_ICON2)
-    for tier, pal_m, pal_s, suffix in ((1, MK1, SENTRY1, ''), (2, MK2, SENTRY2, '_mk2')):
-        c, g = mining_sheet(tier)
-        write_png(ENTITY / f'mining_drone{suffix}.png', c.rows(), pal_m, 64)
+    for tier in (1, 2, 3, 4):
+        suffix = '' if tier == 1 else f'_mk{tier}'
+        pal = buddy_pal(tier)
+        c, g, e = buddy_sheet(tier)
+        write_png(ENTITY / f'buddy_bot{suffix}.png', c.rows(), pal, 64)
+        if tier != 2:                                               # Mk2 shares the Mk1 glow sheet
+            write_png(ENTITY / f'buddy_bot{suffix}_glow.png', g.rows(), pal, 64)
         if tier == 1:
-            write_png(ENTITY / 'mining_drone_glow.png', g.rows(), pal_m, 64)
-        c, g = sentry_sheet(tier)
-        write_png(ENTITY / f'sentry_drone{suffix}.png', c.rows(), pal_s, 64)
-        if tier == 1:
-            write_png(ENTITY / 'sentry_drone_glow.png', g.rows(), pal_s, 64)
-
-    c, _ = mining_sheet(3)
-    write_png(ENTITY / 'mining_drone_mk3.png', c.rows(), MK3, 64)
+            for stance in BUDDY_EYES:
+                write_png(ENTITY / f'buddy_bot_eye_{stance}.png', e.rows(), eye_pal(stance), 64)
+        write_item(f'buddy_bot{suffix}', icon(buddy_icon(tier)).rows(), pal)
 
     for pal, suffix in ((COURIER1, ''), (COURIER2, '_mk2')):
         c, g = courier_sheet(1 if not suffix else 2)
@@ -547,11 +612,6 @@ def main():
     write_item('courier_drone', icon(courier_icon(False)).rows(), COURIER_ICON1)
     write_item('courier_drone_mk2', icon(courier_icon(True)).rows(), COURIER_ICON2)
     write_item('courier_remote', courier_remote_icon().rows(), COURIER_ICON1)
-    write_item('mining_drone', icon(mining_icon(MK1, '2', '1', '3')).rows(), MK1)
-    write_item('mining_drone_mk2', icon(mining_icon(MK2, '2', '1', '3')).rows(), MK2)
-    write_item('mining_drone_mk3', icon(mining_icon(MK3, '2', '1', '3')).rows(), MK3)
-    write_item('sentry_drone', icon(sentry_icon(False)).rows(), SENTRY_ICON1)
-    write_item('sentry_drone_mk2', icon(sentry_icon(True)).rows(), SENTRY_ICON2)
     print('drone textures written')
 
 

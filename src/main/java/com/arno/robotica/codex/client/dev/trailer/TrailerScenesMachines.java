@@ -1,15 +1,12 @@
 package com.arno.robotica.codex.client.dev.trailer;
 
 import com.arno.robotica.Robotica;
-import com.arno.robotica.core.item.CoreItems;
-import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.entity.CourierDrone;
 import com.arno.robotica.drones.entity.CourierRoute;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.drones.entity.HaulerDrone;
-import com.arno.robotica.drones.entity.MiningDrone;
-import com.arno.robotica.drones.entity.SentryDrone;
+import com.arno.robotica.drones.entity.BuddyBot;
 import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
 import com.arno.robotica.logistics.pipe.PipeMode;
 import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
@@ -231,7 +228,7 @@ final class TrailerScenesMachines {
 
     // ------------------------------------------------------------------ drones_mining
 
-    /** A Mk3 Mining Drone eating a 5x5 tunnel through a beam of ore-flecked rock. */
+    /** A Mk3 Buddy Bot eating a 5x5 tunnel through a beam of ore-flecked rock. */
     private static TrailerScene dronesMining() {
         return TrailerScene.builder("drones_mining")
                 .site(48, 36)
@@ -253,13 +250,13 @@ final class TrailerScenesMachines {
                             }
                         }
                     }
-                    MiningDrone d = drone(level, player, DronesRegistry.MINING_DRONE_ENTITY.get(), 3,
+                    BuddyBot d = drone(level, player, DronesRegistry.BUDDY_BOT_ENTITY.get(), 3,
                             site.getX() + 0.5, site.getY() + 2.0, site.getZ() + 0.5, Direction.EAST.toYRot());
                     d.digTicksOverride = 1;
-                    d.setHeading(Direction.EAST);
+                    d.setMode(BuddyBot.Mode.STAY);
                 })
                 .at(0, (level, player, site) -> {
-                    for (MiningDrone d : level.getEntitiesOfClass(MiningDrone.class, new AABB(site).inflate(6))) {
+                    for (BuddyBot d : level.getEntitiesOfClass(BuddyBot.class, new AABB(site).inflate(6))) {
                         d.startTunnel(Direction.EAST, 18, site);
                     }
                 })
@@ -314,7 +311,7 @@ final class TrailerScenesMachines {
 
     // ------------------------------------------------------------------ sentry_defense
 
-    /** Three Sentry Drones holding the line against a wave of zombies and husks at dusk. */
+    /** Three Buddy Bots holding the line against a wave of zombies and husks at dusk. */
     private static TrailerScene sentryDefense() {
         return TrailerScene.builder("sentry_defense")
                 .site(64, 64)
@@ -333,10 +330,9 @@ final class TrailerScenesMachines {
                     }
                     double[][] spots = {{-3.5, 2.4, -1.0}, {3.5, 2.0, -2.0}, {0.0, 2.9, -3.5}};
                     for (double[] s : spots) {
-                        SentryDrone d = drone(level, player, DronesRegistry.SENTRY_DRONE_ENTITY.get(), 2,
+                        BuddyBot d = drone(level, player, DronesRegistry.BUDDY_BOT_ENTITY.get(), 3,
                                 site.getX() + 0.5 + s[0], site.getY() + s[1], site.getZ() + 0.5 + s[2], 180);
-                        d.setMode(SentryDrone.Mode.STAY);
-                        d.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 1));
+                        d.setMode(BuddyBot.Mode.STAY);
                     }
                 })
                 .at(0, (level, player, site) -> { wave(level, site, 0); march(level, site); })

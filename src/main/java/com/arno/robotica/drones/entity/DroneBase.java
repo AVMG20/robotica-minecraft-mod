@@ -59,8 +59,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Shared part of the Mining Drone and the Sentry Drone: a small flying robot with an owner (UUID), an internal FE
- * buffer that a battery slot refills, a tier (1 to 3; only the Mining Drone has a Mk3), hit points and the pick-up/deploy round trip through the item.
+ * Shared part of every drone (Buddy Bot, Courier, Hauler): a small flying robot with an owner (UUID), an internal FE
+ * buffer that a battery slot refills, a tier (1 to 4; only the Buddy Bot goes past Mk2), hit points and the pick-up/deploy round trip through the item.
  * All logic runs on the server; the client only renders what the synced data says.
  */
 public abstract class DroneBase extends PathfinderMob {
@@ -124,8 +124,8 @@ public abstract class DroneBase extends PathfinderMob {
         builder.define(DATA_ACTIVE, false);
     }
 
-    /** Highest tier of any drone (the Mining Drone Mk3). */
-    public static final int MAX_TIER = 3;
+    /** Highest tier of any drone (the Buddy Bot Mk4). */
+    public static final int MAX_TIER = 4;
 
     public int tier() {
         return entityData.get(DATA_TIER);

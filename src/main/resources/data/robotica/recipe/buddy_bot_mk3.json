@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:quantum_circuit"
+  },
+  "base": {
+    "item": "robotica:buddy_bot_mk2"
+  },
+  "addition": {
+    "item": "robotica:plasma_actuator"
+  },
+  "result": {
+    "id": "robotica:buddy_bot_mk3",
+    "count": 1
+  }
+}

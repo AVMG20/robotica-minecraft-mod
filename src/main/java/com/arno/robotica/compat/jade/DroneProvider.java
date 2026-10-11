@@ -3,8 +3,7 @@ package com.arno.robotica.compat.jade;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.drones.entity.CourierDrone;
 import com.arno.robotica.drones.entity.DroneBase;
-import com.arno.robotica.drones.entity.MiningDrone;
-import com.arno.robotica.drones.entity.SentryDrone;
+import com.arno.robotica.drones.entity.BuddyBot;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -66,8 +65,11 @@ enum DroneProvider implements IEntityComponentProvider, IServerDataProvider<Enti
 
     /** Translation key of what the drone is doing, null when unknown. */
     private static String modeKey(DroneBase drone) {
-        if (drone instanceof MiningDrone mining) return "gui.robotica.drone.mode." + mining.mode().name().toLowerCase(Locale.ROOT);
-        if (drone instanceof SentryDrone sentry) return "gui.robotica.drone.mode." + sentry.mode().name().toLowerCase(Locale.ROOT);
+        if (drone instanceof BuddyBot bot) {
+            if (bot.hasTunnel()) return "gui.robotica.buddy.mode.tunnel";
+            if (bot.isReturning()) return "gui.robotica.buddy.returning";
+            return "gui.robotica.buddy.mode." + bot.mode().name().toLowerCase(Locale.ROOT);
+        }
         if (drone instanceof CourierDrone courier) return "gui.robotica.courier.state." + courier.state().name().toLowerCase(Locale.ROOT);
         if (drone instanceof com.arno.robotica.drones.entity.HaulerDrone hauler) return hauler.isCarrying() ? "gui.robotica.hauler.carrying" : "gui.robotica.drone.mode.follow";
         return null;

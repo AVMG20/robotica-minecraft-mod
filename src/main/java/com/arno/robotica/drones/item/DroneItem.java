@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * A drone in item form. Right-click a block face to deploy it; sneak-right-click the drone to get this item back with its
- * energy, inventory and settings (data components). Mk2 (and the Mining Drone Mk3) are the same entity with better numbers, reached by smithing.
+ * energy, inventory and settings (data components). Higher Mks are the same entity with better numbers, reached by smithing.
  */
 public class DroneItem extends Item implements EnergyItem {
     private final DronesRegistry.Kind kind;
@@ -51,8 +51,7 @@ public class DroneItem extends Item implements EnergyItem {
     @Override
     public int getEnergyCapacity(ItemStack stack) {
         return switch (kind) {
-            case MINING -> DronesConfig.miningBuffer(tier);
-            case SENTRY -> DronesConfig.sentryBuffer(tier);
+            case BUDDY -> DronesConfig.buddyBuffer(tier);
             case COURIER -> DronesConfig.courierBuffer(tier);
             case HAULER -> DronesConfig.haulerBuffer(tier);
         };
@@ -80,8 +79,7 @@ public class DroneItem extends Item implements EnergyItem {
 
     private EntityType<? extends DroneBase> entityType() {
         return switch (kind) {
-            case MINING -> DronesRegistry.MINING_DRONE_ENTITY.get();
-            case SENTRY -> DronesRegistry.SENTRY_DRONE_ENTITY.get();
+            case BUDDY -> DronesRegistry.BUDDY_BOT_ENTITY.get();
             case COURIER -> DronesRegistry.COURIER_DRONE_ENTITY.get();
             case HAULER -> DronesRegistry.HAULER_DRONE_ENTITY.get();
         };
@@ -131,7 +129,7 @@ public class DroneItem extends Item implements EnergyItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         ItemEnergy.appendTooltip(stack, tooltip);
-        String key = kind.name().toLowerCase(java.util.Locale.ROOT) + (kind == DronesRegistry.Kind.MINING && tier >= 3 ? "_mk3" : "");
+        String key = kind.name().toLowerCase(java.util.Locale.ROOT);
         tooltip.add(Component.translatable("tooltip.robotica.drone." + key).withStyle(ChatFormatting.GRAY));
         CompoundTag state = stack.get(DronesRegistry.DRONE_STATE.get());
         if (kind == DronesRegistry.Kind.HAULER) {
