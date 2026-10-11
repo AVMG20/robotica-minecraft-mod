@@ -50,7 +50,7 @@
       "robotica:tesla_emitter_1",
       "robotica:tesla_coil_1_from_emitters",
       "robotica:tesla_linker",
-      "robotica:mining_drone",
+      "robotica:buddy_bot",
       "robotica:hauler_drone",
       "robotica:signal_flare",
       "robotica:tinkers_bench",

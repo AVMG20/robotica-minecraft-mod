@@ -650,103 +650,84 @@
   },
   {
    "items": [
-    "mining_drone",
-    "mining_drone_mk2",
-    "mining_drone_mk3"
+    "buddy_bot",
+    "buddy_bot_mk2",
+    "buddy_bot_mk3",
+    "buddy_bot_mk4"
    ],
-   "what": "Flying miner: digs a tunnel, lights it, bridges gaps and brings the loot back.",
+   "what": "Your flying companion: fights, picks up drops into its cargo and digs tunnels lit with Spark Lamps.",
    "use": [
-    "Right-click a block to deploy it.",
-    "Give it a cell or [[mainspring]] and torches.",
-    "Pick a direction and length, press the pickaxe.",
-    "Drone key (default H): nearest drone digs where you look. With sneak: all come back."
+    "Right-click a block to deploy it. It follows you.",
+    "Right-click it for its cargo and buttons: Follow, Patrol, Stay, stance, pick-up, light-up, void.",
+    "Buddy key (default H): it digs a tunnel where you look. With sneak: all come back.",
+    "Sneak-right-click to pick it up with its cargo. Repair it with iron."
    ],
    "stats": {
     "columns": [
      "Mk1",
      "Mk2",
-     "Mk3"
+     "Mk3",
+     "Mk4"
     ],
     "rows": [
+     [
+      "Cargo",
+      "18 slots",
+      "27 slots",
+      "36 slots",
+      "54 slots"
+     ],
+     [
+      "Damage",
+      "5",
+      "7.5",
+      "10",
+      "12"
+     ],
+     [
+      "Fire rate",
+      "1 shot/s",
+      "1.5 shots/s",
+      "2 shots/s",
+      "2.5 shots/s"
+     ],
+     [
+      "Range",
+      "16 blocks",
+      "20 blocks",
+      "24 blocks",
+      "28 blocks"
+     ],
      [
       "Tunnel",
       "3x3",
       "3x3",
-      "5x5"
+      "5x5, Fortune I",
+      "5x5, Fortune II"
      ],
      [
       "Dig speed",
       "1 block / 12 ticks",
       "x1.5",
-      "x2.5"
+      "x2.5",
+      "x3.5"
      ],
      [
       "Buffer",
       "500k FE",
       "2M FE",
-      "8M FE"
-     ],
-     [
-      "Extra",
-      "",
-      "",
-      "Fortune I"
+      "8M FE",
+      "32M FE"
      ],
      [
       "Power",
-      "80 FE per block",
+      "200 FE per shot, 80 FE per block",
+      "",
       "",
       ""
      ]
     ]
    }
-  },
-  {
-   "items": [
-    "sentry_drone",
-    "sentry_drone_mk2"
-   ],
-   "what": "Shoots energy bolts at hostile mobs.",
-   "use": [
-    "Deploy it and set Guard, Follow or Stay in its menu.",
-    "Repair it with iron."
-   ],
-   "stats": {
-    "columns": [
-     "Mk1",
-     "Mk2"
-    ],
-    "rows": [
-     [
-      "Damage",
-      "5",
-      "7.5"
-     ],
-     [
-      "Fire rate",
-      "1 shot/s",
-      "1.5 shots/s"
-     ],
-     [
-      "Range",
-      "16 blocks",
-      "20 blocks"
-     ],
-     [
-      "Per shot",
-      "200 FE",
-      ""
-     ],
-     [
-      "Buffer",
-      "400k FE",
-      "1.6M FE"
-     ]
-    ]
-   },
-   "see": [
-    "guide:upgrade-cards"
-   ]
   },
   {
    "items": [

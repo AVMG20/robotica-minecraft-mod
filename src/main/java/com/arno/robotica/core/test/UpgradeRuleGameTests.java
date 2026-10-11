@@ -10,9 +10,7 @@ import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.core.upgrade.UpgradeRules;
 import com.arno.robotica.core.upgrade.Upgrades;
-import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.DronesRegistry;
-import com.arno.robotica.drones.entity.SentryDrone;
 import com.arno.robotica.industry.IndustryRegistry;
 import com.arno.robotica.industry.block.ProcessingBlockEntity;
 import com.arno.robotica.industry.recipe.Machine;
@@ -154,7 +152,6 @@ public class UpgradeRuleGameTests {
         checkFixed(helper, charger, cards(helper, PowerRegistry.WIRELESS_CHARGER.get().defaultBlockState()));
         checkFixed(helper, rep, cards(helper, ReplicatorRegistry.REPLICATOR_CONTROLLER.get().defaultBlockState()));
         checkFixed(helper, table, cards(helper, ArchitectRegistry.ARCHITECT_TABLE.get().defaultBlockState()));
-        checkFixed(helper, UpgradeRules.Fixed.SENTRY_DRONE, DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel()).upgrades);
         checkFixed(helper, UpgradeRules.Fixed.COURIER_DRONE, DronesRegistry.COURIER_DRONE_ENTITY.get().create(helper.getLevel()).upgrades);
 
         Upgrades up = cards(helper, PowerRegistry.COMBUSTION_GENERATOR.get().defaultBlockState());
@@ -190,12 +187,6 @@ public class UpgradeRuleGameTests {
         helper.assertTrue(grinder.powerFor(100) == want, "Grinder FE/t " + grinder.powerFor(100) + ", want " + want);
         grinder.upgrades.setStackInSlot(0, ItemStack.EMPTY);
         grinder.upgrades.setStackInSlot(1, ItemStack.EMPTY);
-
-        SentryDrone sentry = DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel());
-        sentry.setTier(1);
-        sentry.upgrades.setStackInSlot(0, CoreItems.cards(SPEED, 2));
-        int cooldown = Math.max(3, (int) Math.round(DronesConfig.sentryCooldown(1) / (double) Upgrades.speedMultiplier(2)));
-        helper.assertTrue(sentry.cooldownTicks() == cooldown, "Sentry fires x3 as often with 2 speed cards: " + sentry.cooldownTicks());
         helper.succeed();
     }
 

@@ -60,6 +60,7 @@
       "robotica:power_regulator_module_3",
       "robotica:excavator_mk4",
       "robotica:survey_rig_mk4",
+      "robotica:buddy_bot_mk4",
       "robotica:chain_lightning_module_3",
       "robotica:lifesteal_module"
     ],

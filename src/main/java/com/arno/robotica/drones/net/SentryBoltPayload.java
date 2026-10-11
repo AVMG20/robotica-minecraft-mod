@@ -18,7 +18,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.joml.Vector3f;
 
 /**
- * Server to client: a Sentry Drone fired from {@code from} to {@code to}. One small packet per shot to the players
+ * Server to client: a Buddy Bot fired from {@code from} to {@code to}. One small packet per shot to the players
  * tracking the drone; each client draws the trail and the impact sparks itself (vanilla particles, so the particle
  * setting applies). Only common classes: the particles go through the client's {@link Level}.
  */
