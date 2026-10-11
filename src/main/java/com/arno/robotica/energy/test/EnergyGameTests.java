@@ -444,21 +444,24 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
-    /** A Tesla Coil sitting on a Power Port pulls the reactor's FE and sends it to a Charger. */
+    /** A Tesla Emitter sitting on a Power Port puts the reactor's FE into its network, and a relay hands it to a Charger. */
     @GameTest(template = ARENA, timeoutTicks = 100)
-    public static void teslaCoilPullsFromPowerPort(GameTestHelper helper) {
+    public static void teslaEmitterPullsFromPowerPort(GameTestHelper helper) {
         CoreReactorBlockEntity be = reactor(helper);
         helper.setBlock(new BlockPos(3, 5, 3), EnergyRegistry.REACTOR_POWER_PORT.get());
         be.scanNow();
         be.energy.setEnergy(1_000_000);
-        helper.setBlock(new BlockPos(3, 6, 3), PowerRegistry.TESLA_COIL_1.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
-        TeslaCoilBlockEntity coil = be(helper, new BlockPos(3, 6, 3));
+        helper.setBlock(new BlockPos(3, 6, 3), PowerRegistry.TESLA_EMITTER_1.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
+        TeslaCoilBlockEntity emitter = be(helper, new BlockPos(3, 6, 3));
+        helper.setBlock(new BlockPos(5, 1, 7), PowerRegistry.TESLA_COIL_1.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
+        TeslaCoilBlockEntity relay = be(helper, new BlockPos(5, 1, 7));
         BlockPos chargerPos = new BlockPos(7, 1, 7);
         helper.setBlock(chargerPos, PowerRegistry.CHARGER.get());
         ChargerBlockEntity charger = be(helper, chargerPos);
-        helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(chargerPos), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link coil to charger");
+        helper.assertTrue(TeslaNetwork.toggle(emitter, relay.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link emitter to relay");
+        helper.assertTrue(TeslaNetwork.toggle(relay, helper.absolutePos(chargerPos), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link relay to charger");
         helper.succeedWhen(() -> {
-            helper.assertTrue(coil.isRoot(), "a coil on a Power Port is a source");
+            helper.assertTrue(emitter.isRoot(), "an emitter on a Power Port is a source");
             helper.assertTrue(charger.energy.getEnergyStored() > 2_000, "charger fills from the reactor, has " + charger.energy.getEnergyStored());
         });
     }

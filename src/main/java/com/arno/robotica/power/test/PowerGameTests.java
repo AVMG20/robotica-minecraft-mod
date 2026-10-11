@@ -228,11 +228,23 @@ public class PowerGameTests {
         });
     }
 
-    // ---- Tesla Coils ----
+    // ---- Tesla Relays and Emitters ----
 
     private static TeslaCoilBlockEntity coil(GameTestHelper helper, BlockPos pos, net.minecraft.world.level.block.Block block) {
         helper.setBlock(pos, block.defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
         return (TeslaCoilBlockEntity) helper.getBlockEntity(pos);
+    }
+
+    /** A Tesla Relay I on an iron block under it. */
+    private static TeslaCoilBlockEntity relay(GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos.below(), Blocks.IRON_BLOCK);
+        return coil(helper, pos, PowerRegistry.TESLA_COIL_1.get());
+    }
+
+    /** A Tesla Emitter I on top of an Accumulator I holding {@code energy}. */
+    private static TeslaCoilBlockEntity emitterOn(GameTestHelper helper, BlockPos accumulator, int energy) {
+        accumulator(helper, accumulator, Direction.NORTH, energy);
+        return coil(helper, accumulator.above(), PowerRegistry.TESLA_EMITTER_1.get());
     }
 
     private static AccumulatorBlockEntity accumulator(GameTestHelper helper, BlockPos pos, Direction front, int energy) {
@@ -242,127 +254,161 @@ public class PowerGameTests {
         return be;
     }
 
-    /** Accumulator -> coil on top of it -> Charger: the coil pulls from the block it sits on and feeds its link. */
+    private static void link(GameTestHelper helper, TeslaCoilBlockEntity from, BlockPos to, Direction face, String what) {
+        TeslaNetwork.LinkResult result = TeslaNetwork.toggle(from, to, face);
+        helper.assertTrue(result == TeslaNetwork.LinkResult.LINKED, what + ": " + result);
+    }
+
+    /** Accumulator -> Emitter on it -> Relay -> Charger: the emitter puts the Accumulator's FE into the network. */
     @GameTest(template = "empty", timeoutTicks = 60)
-    public static void teslaStorageFeedsMachine(GameTestHelper helper) {
-        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
-        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
-        BlockPos chargerPos = new BlockPos(2, 1, 2);
+    public static void teslaEmitterFeedsMachine(GameTestHelper helper) {
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        TeslaCoilBlockEntity relay = relay(helper, new BlockPos(2, 2, 2));
+        BlockPos chargerPos = new BlockPos(2, 1, 0);
         helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
         ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
-        helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(chargerPos), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link to the charger");
+        link(helper, emitter, relay.getBlockPos(), Direction.UP, "emitter -> relay");
+        link(helper, relay, helper.absolutePos(chargerPos), Direction.UP, "relay -> charger");
         helper.succeedWhen(() -> {
-            helper.assertTrue(coil.isRoot(), "a coil on an Accumulator is a source");
+            helper.assertTrue(emitter.isRoot(), "an emitter on an Accumulator sends");
             helper.assertTrue(charger.energy.getEnergyStored() > 2_000, "Charger should fill, has " + charger.energy.getEnergyStored());
         });
     }
 
-    /** Accumulator -> coil A -> coil B -> Accumulator: the hop costs 5%, and A and B cannot link both ways. */
+    /** A relay on an Accumulator does not pull from it: only emitters put energy in. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaRelayOnlyHandsOut(GameTestHelper helper) {
+        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+        TeslaCoilBlockEntity relay = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(2, 1, 0), Direction.NORTH, 0);
+        link(helper, relay, sink.getBlockPos(), Direction.EAST, "relay -> sink");
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(!relay.isRoot(), "a relay is never a source");
+            helper.assertTrue(sink.energy.getEnergyStored() == 0, "nothing flows without an emitter, has " + sink.energy.getEnergyStored());
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Emitter -> relay A -> relay B -> Accumulator: nothing is lost on the way. A relay link works both ways: clicking A
+     * from B unlinks them, and linking B to A works just as well.
+     */
     @GameTest(template = "empty", timeoutTicks = 80)
-    public static void teslaHopLosesFivePercent(GameTestHelper helper) {
-        AccumulatorBlockEntity source = accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
-        TeslaCoilBlockEntity a = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
-        helper.setBlock(new BlockPos(2, 1, 2), Blocks.IRON_BLOCK);
-        TeslaCoilBlockEntity b = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
-        AccumulatorBlockEntity target = accumulator(helper, new BlockPos(2, 1, 0), Direction.NORTH, 0);
-        helper.assertTrue(TeslaNetwork.toggle(a, b.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "A -> B");
-        helper.assertTrue(TeslaNetwork.toggle(b, a.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.REVERSE, "B -> A must be refused");
-        helper.assertTrue(TeslaNetwork.toggle(b, target.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "B -> accumulator");
+    public static void teslaNetworkIsLossless(GameTestHelper helper) {
+        int start = 500_000;
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), start);
+        AccumulatorBlockEntity source = (AccumulatorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        TeslaCoilBlockEntity a = relay(helper, new BlockPos(2, 2, 2));
+        TeslaCoilBlockEntity b = relay(helper, new BlockPos(2, 2, 0));
+        AccumulatorBlockEntity target = accumulator(helper, new BlockPos(0, 1, 2), Direction.NORTH, 0);
+        link(helper, emitter, a.getBlockPos(), Direction.UP, "emitter -> A");
+        link(helper, a, b.getBlockPos(), Direction.UP, "A -> B");
+        helper.assertTrue(TeslaNetwork.toggle(b, a.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.UNLINKED, "B -> A unlinks A -> B");
+        helper.assertTrue(a.linkCount() == 0, "A has no links left");
+        link(helper, b, a.getBlockPos(), Direction.UP, "B -> A");
+        link(helper, b, target.getBlockPos(), Direction.EAST, "B -> accumulator");
         helper.succeedWhen(() -> {
             long received = target.energy.getEnergyStored();
-            long drained = 500_000 - source.energy.getEnergyStored();
+            long drained = start - source.energy.getEnergyStored();
             helper.assertTrue(received >= 20_000, "target should fill, has " + received);
-            helper.assertTrue(!b.isRoot(), "B sits on iron: a relay");
-            helper.assertTrue(Math.abs(received * 100 - drained * 95) <= drained, "expected 95% of " + drained + ", got " + received);
+            helper.assertTrue(received == drained, "nothing lost: drained " + drained + ", got " + received);
         });
     }
 
     /** Each link syncs its own flow level: a link to a full Accumulator idles while one to an empty one works. */
     @GameTest(template = "empty", timeoutTicks = 80)
     public static void teslaFlowLevelPerLink(GameTestHelper helper) {
-        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
-        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
-        AccumulatorBlockEntity empty = accumulator(helper, new BlockPos(2, 1, 0), Direction.NORTH, 0);
-        AccumulatorBlockEntity full = accumulator(helper, new BlockPos(2, 1, 2), Direction.NORTH, 0);
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        TeslaCoilBlockEntity relay = relay(helper, new BlockPos(2, 2, 2));
+        AccumulatorBlockEntity empty = accumulator(helper, new BlockPos(0, 1, 2), Direction.NORTH, 0);
+        AccumulatorBlockEntity full = accumulator(helper, new BlockPos(2, 1, 0), Direction.NORTH, 0);
         full.energy.setEnergy(full.energy.getMaxEnergyStored());
-        helper.assertTrue(TeslaNetwork.toggle(coil, empty.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "link to the empty one");
-        helper.assertTrue(TeslaNetwork.toggle(coil, full.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "link to the full one");
+        link(helper, emitter, relay.getBlockPos(), Direction.UP, "emitter -> relay");
+        link(helper, relay, empty.getBlockPos(), Direction.EAST, "link to the empty one");
+        link(helper, relay, full.getBlockPos(), Direction.EAST, "link to the full one");
         helper.succeedWhen(() -> {
-            helper.assertTrue(coil.linkFlowLevel(0) > 0, "the empty Accumulator's link works");
-            helper.assertTrue(coil.linkFlowLevel(1) == 0, "the full Accumulator's link idles, has " + coil.linkFlowLevel(1));
+            helper.assertTrue(relay.linkFlowLevel(0) > 0, "the empty Accumulator's link works");
+            helper.assertTrue(relay.linkFlowLevel(1) == 0, "the full Accumulator's link idles, has " + relay.linkFlowLevel(1));
         });
     }
 
     /** Tier I takes 4 links; a fifth is refused until one is unlinked. Tiers hold 4/8/12/16/32. */
     @GameTest(template = "empty")
     public static void teslaLinkLimitPerTier(GameTestHelper helper) {
-        helper.setBlock(new BlockPos(1, 0, 1), Blocks.IRON_BLOCK);
-        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_1.get());
+        TeslaCoilBlockEntity coil = relay(helper, new BlockPos(1, 1, 1));
         BlockPos[] targets = {new BlockPos(0, 1, 0), new BlockPos(2, 1, 0), new BlockPos(0, 1, 2), new BlockPos(2, 1, 2), new BlockPos(0, 1, 1)};
         for (BlockPos t : targets) helper.setBlock(t, PowerRegistry.CHARGER.get().defaultBlockState());
-        for (int i = 0; i < 4; i++) {
-            helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[i]), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link " + i);
-        }
+        for (int i = 0; i < 4; i++) link(helper, coil, helper.absolutePos(targets[i]), Direction.UP, "link " + i);
         helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[4]), Direction.UP) == TeslaNetwork.LinkResult.FULL, "fifth link is refused");
         helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[0]), Direction.UP) == TeslaNetwork.LinkResult.UNLINKED, "unlink frees a slot");
-        helper.assertTrue(TeslaNetwork.toggle(coil, helper.absolutePos(targets[4]), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "now it fits");
+        link(helper, coil, helper.absolutePos(targets[4]), Direction.UP, "now it fits");
         helper.assertTrue(coil.linkCount() == 4, "four links");
         int[] expected = {4, 8, 12, 16, 32};
         for (TeslaTier tier : TeslaTier.values()) helper.assertTrue(tier.maxLinks == expected[tier.ordinal()], tier + " links");
         helper.succeed();
     }
 
+    /** A Tesla Emitter can power a machine straight away, but not the block it sits on. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaEmitterPowersMachine(GameTestHelper helper) {
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        BlockPos chargerPos = new BlockPos(2, 1, 0);
+        helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
+        ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
+        helper.assertTrue(TeslaNetwork.toggle(emitter, emitter.supportPos(), Direction.EAST) == TeslaNetwork.LinkResult.OWN_SUPPORT, "not the block it sits on");
+        link(helper, emitter, helper.absolutePos(chargerPos), Direction.UP, "emitter -> charger");
+        helper.succeedWhen(() -> helper.assertTrue(charger.energy.getEnergyStored() > 2_000,
+                "Charger should fill from the emitter, has " + charger.energy.getEnergyStored()));
+    }
+
     /**
-     * Tesla Emitter: one link at its tier's rate, sends only from the block it sits on, and cannot be linked to. A new
-     * target moves its one link instead of being refused.
+     * Tesla Emitter: one link at its tier's rate, and nothing links to it. A new target moves its one link instead of
+     * being refused.
      */
     @GameTest(template = "empty", timeoutTicks = 80)
-    public static void teslaEmitterSendsOnly(GameTestHelper helper) {
-        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
-        TeslaCoilBlockEntity emitter = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_EMITTER_1.get());
-        helper.setBlock(new BlockPos(2, 1, 2), Blocks.IRON_BLOCK);
-        TeslaCoilBlockEntity relay = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
+    public static void teslaEmitterMovesItsLink(GameTestHelper helper) {
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        TeslaCoilBlockEntity first = relay(helper, new BlockPos(2, 2, 2));
+        TeslaCoilBlockEntity second = relay(helper, new BlockPos(0, 2, 2));
         BlockPos chargerPos = new BlockPos(2, 1, 0);
         helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
         ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
         BlockPos chargerAbs = helper.absolutePos(chargerPos);
         helper.assertTrue(emitter.isEmitter() && emitter.maxLinks() == 1, "an emitter has one link");
         helper.assertTrue(emitter.maxIo() == TeslaTier.I.rate(), "an emitter sends at its tier's rate");
-        helper.assertTrue(TeslaNetwork.toggle(relay, emitter.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.EMITTER, "nothing links to an emitter");
-        helper.assertTrue(TeslaNetwork.toggle(emitter, chargerAbs, Direction.UP) == TeslaNetwork.LinkResult.LINKED, "emitter -> charger");
-        helper.assertTrue(TeslaNetwork.toggle(emitter, relay.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "a new target moves the link");
-        helper.assertTrue(emitter.linkCount() == 1 && emitter.links().get(0).coil(), "one link, to the coil");
-        helper.assertTrue(TeslaNetwork.toggle(relay, chargerAbs, Direction.UP) == TeslaNetwork.LinkResult.LINKED, "coil -> charger");
-        helper.succeedWhen(() -> {
-            helper.assertTrue(emitter.isRoot(), "an emitter on an Accumulator sends");
-            helper.assertTrue(charger.energy.getEnergyStored() > 2_000, "Charger should fill through the coil, has " + charger.energy.getEnergyStored());
-        });
+        helper.assertTrue(TeslaNetwork.toggle(first, emitter.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.EMITTER, "nothing links to an emitter");
+        link(helper, emitter, chargerAbs, Direction.UP, "emitter -> charger");
+        link(helper, emitter, first.getBlockPos(), Direction.UP, "a relay moves the link");
+        link(helper, emitter, second.getBlockPos(), Direction.UP, "another relay moves it again");
+        helper.assertTrue(emitter.linkCount() == 1 && emitter.link(0).pos().equals(second.getBlockPos()), "one link, to the second relay");
+        link(helper, second, chargerAbs, Direction.UP, "relay -> charger");
+        helper.succeedWhen(() -> helper.assertTrue(charger.energy.getEnergyStored() > 2_000,
+                "Charger should fill through the relay, has " + charger.energy.getEnergyStored()));
     }
 
     /** The clicked face is where the power goes in: an Accumulator's front only gives energy out. */
-    @GameTest(template = "empty", timeoutTicks = 60)
+    @GameTest(template = "empty", timeoutTicks = 80)
     public static void teslaFaceSpecificInsertion(GameTestHelper helper) {
-        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
-        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        TeslaCoilBlockEntity relay = relay(helper, new BlockPos(0, 2, 2));
         AccumulatorBlockEntity front = accumulator(helper, new BlockPos(2, 1, 0), Direction.WEST, 0);
         AccumulatorBlockEntity side = accumulator(helper, new BlockPos(2, 1, 2), Direction.WEST, 0);
-        helper.assertTrue(TeslaNetwork.toggle(coil, front.getBlockPos(), Direction.WEST) == TeslaNetwork.LinkResult.LINKED, "link front face");
-        helper.assertTrue(TeslaNetwork.toggle(coil, side.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "link side face");
+        link(helper, emitter, relay.getBlockPos(), Direction.UP, "emitter -> relay");
+        link(helper, relay, front.getBlockPos(), Direction.WEST, "link front face");
+        link(helper, relay, side.getBlockPos(), Direction.EAST, "link side face");
         helper.succeedWhen(() -> {
             helper.assertTrue(side.energy.getEnergyStored() > 5_000, "side face takes energy, has " + side.energy.getEnergyStored());
             helper.assertTrue(front.energy.getEnergyStored() == 0, "front face is output only, has " + front.energy.getEnergyStored());
         });
     }
 
-    /** Range is checked per tier: Tier I reaches 12 blocks, Tier V 36. */
+    /** Range is centre to centre per tier: 12 blocks for Tier I, 36 for Tier V. */
     @GameTest(template = "empty")
     public static void teslaRangeLimit(GameTestHelper helper) {
-        helper.setBlock(new BlockPos(1, 0, 1), Blocks.IRON_BLOCK);
-        TeslaCoilBlockEntity small = coil(helper, new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_1.get());
+        TeslaCoilBlockEntity small = relay(helper, new BlockPos(1, 1, 1));
         BlockPos at = small.getBlockPos();
         helper.assertTrue(TeslaNetwork.toggle(small, at.above(13), Direction.UP) == TeslaNetwork.LinkResult.OUT_OF_RANGE, "13 blocks is out of range");
         helper.assertTrue(TeslaNetwork.toggle(small, at.above(12), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "12 blocks is in range (air there; straight up, away from other tests)");
-        helper.assertTrue(TeslaNetwork.toggle(small, at.below(), Direction.UP) == TeslaNetwork.LinkResult.OWN_SUPPORT, "not the block it sits on");
         helper.setBlock(new BlockPos(1, 1, 1), PowerRegistry.TESLA_COIL_5.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
         TeslaCoilBlockEntity big = (TeslaCoilBlockEntity) helper.getBlockEntity(new BlockPos(1, 1, 1));
         helper.assertTrue(TeslaNetwork.toggle(big, at.above(20), Direction.UP) == TeslaNetwork.LinkResult.NO_ENERGY, "Tier V reaches 20 blocks");
@@ -370,18 +416,19 @@ public class PowerGameTests {
         helper.succeed();
     }
 
-    /** Clicking a linked target on the same face unlinks it (and energy stops); another face moves the link. */
+    /** Clicking a linked machine on another face moves the link; on the same face it unlinks, and the machine gets nothing. */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void teslaUnlinking(GameTestHelper helper) {
-        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
-        TeslaCoilBlockEntity coil = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        TeslaCoilBlockEntity coil = relay(helper, new BlockPos(0, 2, 2));
+        link(helper, emitter, coil.getBlockPos(), Direction.UP, "emitter -> relay");
         BlockPos chargerPos = new BlockPos(2, 1, 2);
         helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
         ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
         BlockPos abs = helper.absolutePos(chargerPos);
-        helper.assertTrue(TeslaNetwork.toggle(coil, abs, Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link");
+        link(helper, coil, abs, Direction.UP, "link");
         helper.assertTrue(TeslaNetwork.toggle(coil, abs, Direction.NORTH) == TeslaNetwork.LinkResult.FACE_CHANGED, "another face moves the link");
-        helper.assertTrue(coil.linkCount() == 1 && coil.links().get(0).face() == Direction.NORTH, "one link, on the north face");
+        helper.assertTrue(coil.linkCount() == 1 && coil.link(0).face() == Direction.NORTH, "one link, on the north face");
         helper.assertTrue(TeslaNetwork.toggle(coil, abs, Direction.NORTH) == TeslaNetwork.LinkResult.UNLINKED, "same face unlinks");
         helper.assertTrue(coil.linkCount() == 0, "no links left");
         helper.runAfterDelay(20, () -> {
@@ -391,31 +438,88 @@ public class PowerGameTests {
     }
 
     /**
-     * Loops create no energy: coil A on an Accumulator feeds relay B, B feeds relay C, C feeds A again (a cycle) and the
-     * very Accumulator A sits on (through a relay, since a direct link is refused). Energy only ever shrinks by the hop
-     * losses, a machine on the loop still gets its share, and nothing recurses forever.
+     * Relays A -> B -> C -> A form a loop, and C also feeds the very Accumulator the emitter sits on. Energy is neither
+     * made nor lost, a machine on the loop still gets its share, and nothing recurses forever.
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void teslaLoopsCreateNoEnergy(GameTestHelper helper) {
         int start = 500_000;
-        AccumulatorBlockEntity source = accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, start);
-        TeslaCoilBlockEntity a = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
-        helper.setBlock(new BlockPos(2, 1, 0), Blocks.IRON_BLOCK);
-        TeslaCoilBlockEntity b = coil(helper, new BlockPos(2, 2, 0), PowerRegistry.TESLA_COIL_1.get());
-        helper.setBlock(new BlockPos(2, 1, 2), Blocks.IRON_BLOCK);
-        TeslaCoilBlockEntity c = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), start);
+        AccumulatorBlockEntity source = (AccumulatorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        TeslaCoilBlockEntity a = relay(helper, new BlockPos(4, 2, 0));
+        TeslaCoilBlockEntity b = relay(helper, new BlockPos(2, 2, 0));
+        TeslaCoilBlockEntity c = relay(helper, new BlockPos(2, 2, 2));
         AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(0, 1, 2), Direction.NORTH, 0);
-        helper.assertTrue(TeslaNetwork.toggle(a, source.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.OWN_SUPPORT, "no direct self link");
-        helper.assertTrue(TeslaNetwork.toggle(a, b.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "A -> B");
-        helper.assertTrue(TeslaNetwork.toggle(b, c.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "B -> C");
-        helper.assertTrue(TeslaNetwork.toggle(c, a.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "C -> A closes a cycle");
-        helper.assertTrue(TeslaNetwork.toggle(c, source.getBlockPos(), Direction.SOUTH) == TeslaNetwork.LinkResult.LINKED, "C -> A's own Accumulator");
-        helper.assertTrue(TeslaNetwork.toggle(b, sink.getBlockPos(), Direction.EAST) == TeslaNetwork.LinkResult.LINKED, "B -> a machine");
+        link(helper, emitter, a.getBlockPos(), Direction.UP, "emitter -> A");
+        link(helper, a, b.getBlockPos(), Direction.UP, "A -> B");
+        link(helper, b, c.getBlockPos(), Direction.UP, "B -> C");
+        link(helper, c, a.getBlockPos(), Direction.UP, "C -> A closes a loop");
+        link(helper, c, source.getBlockPos(), Direction.SOUTH, "C -> the emitter's own Accumulator");
+        link(helper, b, sink.getBlockPos(), Direction.EAST, "B -> a machine");
         helper.runAfterDelay(60, () -> {
             long total = (long) source.energy.getEnergyStored() + sink.energy.getEnergyStored();
             helper.assertTrue(sink.energy.getEnergyStored() > 0, "the machine on the loop gets energy");
-            helper.assertTrue(total < start, "the loop only loses energy: " + total + " of " + start);
-            helper.assertTrue(a.isRoot() && !b.isRoot() && !c.isRoot(), "only A sends");
+            helper.assertTrue(total == start, "the loop neither makes nor loses energy: " + total + " of " + start);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Two Tesla Emitters on full Accumulators -> relay (also linked to two full machines) -> relay -> a hungry machine.
+     * What the full machines do not take goes on to the next relay, so each emitter sends its Accumulator's whole output.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void teslaFullLinksPassTheRestOn(GameTestHelper helper) {
+        int full = PowerConfig.accumulatorCapacity(1), io = PowerConfig.accumulatorIo(1);
+        TeslaCoilBlockEntity e1 = emitterOn(helper, new BlockPos(0, 1, 0), full);
+        TeslaCoilBlockEntity e2 = emitterOn(helper, new BlockPos(0, 1, 2), full);
+        AccumulatorBlockEntity a = (AccumulatorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        AccumulatorBlockEntity b = (AccumulatorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 2));
+        TeslaCoilBlockEntity first = relay(helper, new BlockPos(2, 2, 0));
+        TeslaCoilBlockEntity second = relay(helper, new BlockPos(2, 2, 2));
+        AccumulatorBlockEntity full1 = accumulator(helper, new BlockPos(1, 1, 1), Direction.NORTH, full);
+        AccumulatorBlockEntity full2 = accumulator(helper, new BlockPos(3, 1, 1), Direction.NORTH, full);
+        BlockPos sinkPos = new BlockPos(3, 1, 3);
+        helper.setBlock(sinkPos, PowerRegistry.ACCUMULATOR_2.get().defaultBlockState().setValue(PowerBlock.FACING, Direction.NORTH));
+        AccumulatorBlockEntity sink = (AccumulatorBlockEntity) helper.getBlockEntity(sinkPos);
+        link(helper, e1, first.getBlockPos(), Direction.UP, "emitter 1 -> first");
+        link(helper, e2, first.getBlockPos(), Direction.UP, "emitter 2 -> first");
+        link(helper, first, full1.getBlockPos(), Direction.EAST, "first -> full 1");
+        link(helper, first, second.getBlockPos(), Direction.UP, "first -> second");
+        link(helper, first, full2.getBlockPos(), Direction.EAST, "first -> full 2");
+        link(helper, second, sink.getBlockPos(), Direction.EAST, "second -> sink");
+        long[] mark = new long[2];
+        helper.runAfterDelay(20, () -> {
+            mark[0] = sink.energy.getEnergyStored();
+            mark[1] = (long) a.energy.getEnergyStored() + b.energy.getEnergyStored();
+        });
+        helper.runAfterDelay(60, () -> {
+            long got = sink.energy.getEnergyStored() - mark[0];
+            long drained = mark[1] - a.energy.getEnergyStored() - b.energy.getEnergyStored();
+            helper.assertTrue(got >= 39L * 2 * io, "both Accumulators give their full " + io + " FE/t, the sink got " + got + " in 40 ticks");
+            helper.assertTrue(got == drained, "nothing lost: drained " + drained + ", got " + got);
+            helper.assertTrue(full1.energy.getEnergyStored() == full && full2.energy.getEnergyStored() == full, "the full machines stay full");
+            helper.succeed();
+        });
+    }
+
+    /** Two emitters feeding a machine that takes less than both give: each gives half, so neither source drains first. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void teslaEmittersShareTheLoad(GameTestHelper helper) {
+        int full = PowerConfig.accumulatorCapacity(1), io = PowerConfig.accumulatorIo(1);
+        TeslaCoilBlockEntity e1 = emitterOn(helper, new BlockPos(0, 1, 0), full);
+        TeslaCoilBlockEntity e2 = emitterOn(helper, new BlockPos(0, 1, 2), full);
+        AccumulatorBlockEntity a = (AccumulatorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        AccumulatorBlockEntity b = (AccumulatorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 2));
+        TeslaCoilBlockEntity relay = relay(helper, new BlockPos(2, 2, 1));
+        AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(4, 1, 1), Direction.NORTH, 0);
+        link(helper, e1, relay.getBlockPos(), Direction.UP, "emitter 1 -> relay");
+        link(helper, e2, relay.getBlockPos(), Direction.UP, "emitter 2 -> relay");
+        link(helper, relay, sink.getBlockPos(), Direction.EAST, "relay -> sink");
+        helper.runAfterDelay(40, () -> {
+            long da = full - a.energy.getEnergyStored(), db = full - b.energy.getEnergyStored();
+            helper.assertTrue(da + db == sink.energy.getEnergyStored(), "the sink got what both gave");
+            helper.assertTrue(da > 0 && db > 0 && Math.abs(da - db) <= io, "both give about half: " + da + " and " + db);
             helper.succeed();
         });
     }

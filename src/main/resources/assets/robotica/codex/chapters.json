@@ -67,7 +67,7 @@
         },
         {
           "title": "Moving FE",
-          "text": "Tesla Coils can link to other coils to reach further. Each hop loses 5%.\nPut a Tesla Emitter on each generator and link them to one coil.",
+          "text": "Put a Tesla Emitter on a generator or battery and link it to a machine, or to a Tesla Relay to power many.\nLinked relays form one network, whichever side you link from.",
           "items": [
             "robotica:tesla_coil_1",
             "robotica:tesla_emitter_1",
@@ -236,7 +236,7 @@
         },
         {
           "title": "Rancher",
-          "text": "Name or leash an animal to keep it from being culled.\nIts lamp is green while working, amber with no feed and red when stuck.\nTurn on Overbreed (Mk2) for a steady meat supply.",
+          "text": "Name or leash an animal to keep it from being culled.\nIts lamp is green while working, amber with no feed and red when stuck.",
           "items": [
             "robotica:rancher",
             "robotica:rancher_mk2"
@@ -250,7 +250,7 @@
       "pages": [
         {
           "title": "Buddy Bot",
-          "text": "Right-click a block to deploy it, sneak-right-click to pick it up. Repair it with iron.\nBuddy key (default H): dig where you look. With sneak: call it back.\nOn Patrol with pick-up on, it collects farm drops.",
+          "text": "Right-click a block to deploy it, sneak-right-click to pick it up with its cargo. Repair it with iron.\nBuddy key (default H): dig where you look. With sneak: call it back.\nOn Patrol with pick-up on, it collects a farm's drops.",
           "items": [
             "robotica:buddy_bot",
             "robotica:buddy_bot_mk2",

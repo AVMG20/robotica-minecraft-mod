@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-/** Trailer scenes about the machines: drones, Tesla Coils, reactors, the factory line and the warp gate. Dev-only. */
+/** Trailer scenes about the machines: drones, Tesla Relays, reactors, the factory line and the warp gate. Dev-only. */
 final class TrailerScenesMachines {
     private TrailerScenesMachines() {}
 
@@ -79,7 +79,7 @@ final class TrailerScenesMachines {
         return d;
     }
 
-    /** Dev only: links a Tesla Coil without the Linker (TeslaCoilBlockEntity.addLink is package-private). */
+    /** Dev only: links a Tesla Relay or Emitter without the Linker (TeslaCoilBlockEntity.addLink is package-private). */
     private static void teslaLink(ServerLevel level, BlockPos coil, TeslaLink link) {
         try {
             var be = level.getBlockEntity(coil);
@@ -87,12 +87,18 @@ final class TrailerScenesMachines {
             m.setAccessible(true);
             m.invoke(be, link);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            Robotica.LOGGER.warn("Trailer could not link Tesla Coil at {}", coil, e);
+            Robotica.LOGGER.warn("Trailer could not link Tesla block at {}", coil, e);
         }
     }
 
     private static void coil(ServerLevel level, BlockPos pos, int tier, Direction facing) {
         level.setBlock(pos, Trailer.block("tesla_coil_" + tier).defaultBlockState().setValue(BlockStateProperties.FACING, facing), 3);
+    }
+
+    /** A Tesla Emitter on the source behind it ({@code facing} points away from it), linked to {@code relay}. */
+    private static void emitter(ServerLevel level, BlockPos pos, int tier, Direction facing, BlockPos relay) {
+        level.setBlock(pos, Trailer.block("tesla_emitter_" + tier).defaultBlockState().setValue(BlockStateProperties.FACING, facing), 3);
+        teslaLink(level, pos, TeslaLink.toCoil(relay));
     }
 
     /** The Tesla Linker in the camera player's hand makes the client draw the arcs at full strength. */
@@ -389,6 +395,7 @@ final class TrailerScenesMachines {
                     fullAccumulator(level, acc);
                     BlockPos root = acc.above();
                     coil(level, root, 5, Direction.UP);
+                    emitter(level, acc.west(), 5, Direction.WEST, root);
                     int n = 6;
                     for (int i = 0; i < n; i++) {
                         double a = Math.PI * 2 * i / n + 0.3;
@@ -445,7 +452,7 @@ final class TrailerScenesMachines {
             {"BGGGB", "BRRRB", "BRRRB", "BRRRB", "BBBBB"},
             {"BBBBB", "BBBBB", "BBBBB", "BBBBB", "BBBBB"}};
 
-    /** A running Core Reactor feeding a Capacitor Bank through Tesla Coils, which in turn power furnaces. */
+    /** A running Core Reactor feeding a Capacitor Bank through Tesla Relays, which in turn power furnaces. */
     private static TrailerScene reactorPower() {
         return TrailerScene.builder("reactor_power")
                 .site(64, 44)
@@ -467,22 +474,23 @@ final class TrailerScenesMachines {
                     if (level.getBlockEntity(reactor.offset(2, 2, 4)) instanceof com.arno.robotica.energy.block.CoreReactorBlockEntity r) {
                         r.energy.setEnergy(r.energy.getMaxEnergyStored());
                     }
-                    // reactor power port (east wall) -> coil -> bank input (west wall)
-                    BlockPos coilA = reactor.offset(5, 1, 2);
-                    coil(level, coilA, 3, Direction.EAST);
-                    teslaLink(level, coilA, TeslaLink.toMachine(bank.offset(0, 2, 2), Direction.WEST));
-                    // bank output (east wall) -> coil -> three furnaces and an accumulator
-                    BlockPos coilB = bank.offset(5, 2, 2);
-                    coil(level, coilB, 3, Direction.EAST);
+                    // reactor power port (east wall) -> emitter -> relay on the bank's roof -> bank input (west wall)
+                    BlockPos relayA = bank.offset(2, 5, 2);
+                    coil(level, relayA, 3, Direction.UP);
+                    teslaLink(level, relayA, TeslaLink.toMachine(bank.offset(0, 2, 2), Direction.WEST));
+                    emitter(level, reactor.offset(5, 1, 2), 3, Direction.EAST, relayA);
+                    // bank output (east wall) -> emitter -> relay on an accumulator -> three furnaces and that accumulator
+                    BlockPos acc = site.offset(10, 0, -1), relayB = acc.above();
+                    set(level, acc, Trailer.block("accumulator_3"));
+                    coil(level, relayB, 3, Direction.UP);
                     for (int i = 0; i < 3; i++) {
                         BlockPos f = site.offset(6, 0, -8 + i * 4);
                         Trailer.place(level, f, Trailer.block("electric_furnace_mk3"), Direction.SOUTH);
                         insert(level, f, new ItemStack(Items.RAW_IRON, 64));
-                        teslaLink(level, coilB, TeslaLink.toMachine(f, Direction.UP));
+                        teslaLink(level, relayB, TeslaLink.toMachine(f, Direction.UP));
                     }
-                    BlockPos acc = site.offset(10, 0, -1);
-                    set(level, acc, Trailer.block("accumulator_3"));
-                    teslaLink(level, coilB, TeslaLink.toMachine(acc, Direction.UP));
+                    teslaLink(level, relayB, TeslaLink.toMachine(acc, Direction.UP));
+                    emitter(level, bank.offset(5, 2, 2), 3, Direction.EAST, relayB);
                     // keep the bank's output port primed so the second hop runs from the first second
                     if (level.getBlockEntity(bank.offset(2, 2, 4)) instanceof com.arno.robotica.energy.block.BankControllerBlockEntity b) {
                         Robotica.LOGGER.info("Trailer: bank controller ready {}", b.isFormed());

@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Small send-only Tesla Coil: one link, the tier's rate and range. It only works on a block that gives out FE and cannot
- * be linked to, so it never relays. A quarter of a coil (1 coil crafts into 4, 4 craft back).
+ * Tesla Emitter: puts the FE of the block it sits on into a Tesla network, through one link to a relay, at the tier's
+ * rate and range. A quarter of a relay (1 relay crafts into 4, 4 craft back).
  */
 public class TeslaEmitterBlock extends TeslaCoilBlock {
     /** Arcs start in the middle of the floating crystal, which spans about 3.8..10. */

@@ -50,7 +50,7 @@ shaped('solar_panel_mk1', ['GGG', 'CBC', 'PPP'],
        {'G': '#c:glass_blocks', 'C': COPPER_PLATE, 'B': 'basic_circuit', 'P': IRON_PLATE})
 shaped('accumulator_1', ['PRP', 'CIC', 'PRP'],
        {'P': IRON_PLATE, 'R': REDSTONE_BLOCK, 'C': 'copper_coil', 'I': 'iron_casing'})
-# Tesla Coils: wireless power. Tier I is a first-iron item (no gold); every tier consumes the one before.
+# Tesla Relays: wireless power. Tier I is a first-iron item (no gold); every tier consumes the one before.
 shaped('tesla_linker', ['R', 'C', 'I'], {'R': '#c:dusts/redstone', 'C': COPPER, 'I': '#c:ingots/iron'})
 shaped('tesla_coil_1', [' R ', 'CKC', ' P '], {'R': '#c:dusts/redstone', 'C': COPPER, 'K': 'copper_coil', 'P': IRON_PLATE})
 shaped('tesla_coil_2', [' B ', 'GTG', 'PKP'], {'B': 'basic_circuit', 'G': GOLD, 'T': 'tesla_coil_1', 'P': IRON_PLATE, 'K': 'copper_coil'})
@@ -60,7 +60,7 @@ shaped('metal_press', ['PPP', 'GSG', 'PMP'],
        {'P': IRON_PLATE, 'G': '#c:gears/copper', 'S': 'minecraft:piston', 'M': 'electric_motor'})
 
 # Age 2: each tier consumes the previous one
-# Wireless Charger: a Charger with a Tesla Coil II as emitter, an advanced circuit to pick the players.
+# Wireless Charger: a Charger with a Tesla Relay II as emitter, an advanced circuit to pick the players.
 shaped('wireless_charger', [' T ', 'ACA', 'QXQ'], {'T': 'tesla_coil_2', 'A': 'advanced_circuit', 'C': 'charger', 'Q': QUARTZ,
                                                  'X': 'reinforced_casing'})
 shaped('solar_panel_mk2', ['SQS', 'QAQ', 'SQS'], {'S': 'solar_panel_mk1', 'Q': QUARTZ, 'A': 'advanced_circuit'})

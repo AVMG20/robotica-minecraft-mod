@@ -37,7 +37,7 @@
    "what": "Burns any furnace fuel for FE.",
    "use": [
     "Right-click it with coal, charcoal or logs.",
-    "Machines touching it get power, or put a [[tesla_coil_1]] on top."
+    "Machines touching it get power, or put a [[tesla_emitter_1]] on top."
    ],
    "stats": {
     "rows": [
@@ -113,7 +113,7 @@
     "guide:power-ladder"
    ],
    "use": [
-    "Machines touching it get power, or put a [[tesla_coil_1]] on it."
+    "Machines touching it get power, or put a [[tesla_emitter_1]] on it."
    ],
    "image": "shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4"
   },
@@ -125,7 +125,7 @@
    ],
    "what": "Battery block. Takes FE on every side, gives it out on its front. Keeps its charge when mined.",
    "use": [
-    "Put a [[tesla_coil_1]] on it to send its FE wirelessly."
+    "Put a [[tesla_emitter_1]] on it to send its FE wirelessly."
    ],
    "stats": {
     "columns": [
@@ -160,11 +160,11 @@
     "tesla_coil_4",
     "tesla_coil_5"
    ],
-   "what": "Wireless power. On a generator or battery it sends that block's FE; anywhere else it relays.",
+   "what": "Wireless power. Hands out what [[tesla_emitter_1]]s put into its network.",
    "use": [
-    "Place it on a generator, [[accumulator_1]] or panel.",
     "Sneak-right-click it with a [[tesla_linker]].",
-    "Right-click machines (the face you click is where power goes in) or other coils."
+    "Right-click machines (the face you click is where power goes in) or other relays.",
+    "Linked relays share one network, whichever side you link from."
    ],
    "stats": {
     "columns": [
@@ -192,20 +192,12 @@
       "36"
      ],
      [
-      "FE/t",
+      "FE/t to its machines",
       "4,000",
       "16,000",
       "64,000",
       "256,000",
       "1,000,000"
-     ],
-     [
-      "Loss per hop",
-      "5%",
-      "",
-      "",
-      "",
-      ""
      ]
     ]
    },
@@ -221,9 +213,9 @@
     "tesla_emitter_4",
     "tesla_emitter_5"
    ],
-   "what": "Small Tesla Coil with one link. Sends the FE of the generator or battery it sits on.",
+   "what": "Sends the FE of the generator or battery it sits on. One link: a machine or a [[tesla_coil_1]].",
    "use": [
-    "Put one on each generator and link it to a coil or machine with the [[tesla_linker]]."
+    "Put one on each generator and link it to a relay or a machine with the [[tesla_linker]]."
    ],
    "see": [
     "guide:power-ladder"
@@ -233,10 +225,10 @@
    "items": [
     "tesla_linker"
    ],
-   "what": "Links Tesla Coils to machines and to other coils.",
+   "what": "Links Tesla Relays and Emitters to machines, and relays to each other.",
    "use": [
-    "Sneak-right-click a coil to select it.",
-    "Right-click a machine face or another coil to link.",
+    "Sneak-right-click a relay or emitter to select it.",
+    "Right-click a machine face or a relay to link.",
     "Click a linked face again to unlink. Sneak-right-click air clears the selection."
    ],
    "see": [
@@ -475,7 +467,7 @@
    ],
    "what": "Radioisotope Generator: burns Thorium Fuel Pellets one at a time for steady FE.",
    "use": [
-    "It powers touching blocks; a [[tesla_coil_1]] on it sends the FE on.",
+    "It powers touching blocks; a [[tesla_emitter_1]] on it sends the FE on.",
     "Take out the [[depleted_fuel_pellet]] waste."
    ],
    "stats": {

@@ -37,9 +37,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Links of one Tesla Coil plus its per-tick bookkeeping. A coil whose support block gives out FE is a root: every tick it
- * runs {@link TeslaNetwork#pushFromSource}. Every other coil only forwards what roots send it. The links and coarse
- * flow levels (0-4, how hard the coil and each link work) are synced to the client for the link glow; nothing else is.
+ * Links of one Tesla Relay or Tesla Emitter plus its per-tick bookkeeping. An emitter on a block that gives out FE runs
+ * its network ({@link TeslaGrid}) every tick; relays only hand out what the network gives them. The links and coarse
+ * flow levels (0-4, how hard the block and each link work) are synced to the client for the link glow; nothing else is.
  */
 public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvider, EnergyInfoMenu.Source {
     private final List<TeslaLink> links = new ArrayList<>();
@@ -51,12 +51,15 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
 
     @Nullable
     private BlockCapabilityCache<IEnergyStorage, Direction> sourceSided, sourceAny;
-    private long sentTick = Long.MIN_VALUE;
-    private int sentThisTick;
     private long windowSent;
     private int lastRate;
+    /** Emitter: sits on a block that gives out FE. */
     private boolean root;
+    /** Relay: game time its network last moved energy. */
+    private long activeTick = Long.MIN_VALUE / 2;
     private int rotation;
+    /** Server: relays and emitters whose links point at this relay (links work both ways). Not saved; the linking side restores it. */
+    private final List<BlockPos> backlinks = new ArrayList<>();
     /** Synced: 0 idle, 1-4 how much of the tier rate went out over the last second. */
     private int flow;
     /** Server: a new non-zero flow level must show up twice in a row before it is synced, so a rate on an edge does not resend. */
@@ -67,6 +70,11 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     private final long[] linkWindow = new long[MAX_LINKS];
     /** Synced: 0 idle, 1-4 how much of the tier rate went over each link in the last second. Server: pending levels as above. */
     private final byte[] linkFlow = new byte[MAX_LINKS], linkPending = new byte[MAX_LINKS];
+    /** Server, {@link TeslaGrid}: the network this block was last found in, the stamp of that search, and per link what it wants and gets. */
+    @Nullable
+    TeslaGrid grid;
+    int buildMark;
+    final int[] linkDemand = new int[MAX_LINKS], linkGive = new int[MAX_LINKS];
     private long nextHum;
 
     /** Client: area the arcs cover, for frustum culling. */
@@ -116,19 +124,24 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return getBlockState().getBlock() instanceof TeslaCoilBlock coil ? coil.maxLinks() : TeslaTier.I.maxLinks;
     }
 
-    /** A Tesla Emitter: one link, only sends from the block it sits on, never a link target. */
+    /** A Tesla Emitter: one link to a relay or machine, only sends from the block it sits on, never a link target. */
     public boolean isEmitter() {
         return getBlockState().getBlock() instanceof TeslaEmitterBlock;
     }
 
-    /** FE/t sent over the last second (including what hops lose). */
+    /** FE/t sent over the last second: an emitter into its network, a relay into its machines. */
     public int sentRate() {
         return lastRate;
     }
 
-    /** True while the support block gives out FE. */
+    /** Emitter: true while the support block gives out FE. */
     public boolean isRoot() {
         return root;
+    }
+
+    /** Relay: its network moved energy during the last second. */
+    public boolean networkActive() {
+        return level != null && level.getGameTime() - activeTick < 20;
     }
 
     /** Synced: energy went out during the last second. */
@@ -186,22 +199,45 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     void addLink(TeslaLink link) {
         links.add(link);
         caches.add(null);
-        resetLinkFlow();
-        setChangedAndSync();
+        linksChanged();
     }
 
     void removeLink(int index) {
         links.remove(index);
         caches.remove(index);
-        resetLinkFlow();
-        setChangedAndSync();
+        linksChanged();
     }
 
     void setLink(int index, TeslaLink link) {
         links.set(index, link);
         caches.set(index, null);
+        linksChanged();
+    }
+
+    private void linksChanged() {
         resetLinkFlow();
+        TeslaGrid.changed();
         setChangedAndSync();
+    }
+
+    List<BlockPos> backlinks() {
+        return backlinks;
+    }
+
+    /** Remembers that the block at {@code from} links here. True when it was new. */
+    boolean addBacklink(BlockPos from) {
+        if (backlinks.contains(from)) return false;
+        backlinks.add(from.immutable());
+        return true;
+    }
+
+    void removeBacklink(BlockPos from) {
+        if (backlinks.remove(from)) TeslaGrid.changed();
+    }
+
+    /** Relay: notes that its network moved energy this tick. */
+    void markActive(long now) {
+        activeTick = now;
     }
 
     /** Link indices moved: start counting each link's flow afresh. */
@@ -246,20 +282,9 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         sourceAny = null;
     }
 
-    /** FE this coil may still send in tick {@code now}. */
-    int remainingRate(long now) {
-        if (sentTick != now) {
-            sentTick = now;
-            sentThisTick = 0;
-        }
-        return Math.max(0, tier().rate() - sentThisTick);
-    }
-
-    void recordSent(long now, int amount) {
-        if (amount <= 0) return;
-        remainingRate(now);
-        sentThisTick += amount;
-        windowSent += amount;
+    /** Counts {@code amount} FE sent this tick, for the rate and flow level. */
+    void recordSent(int amount) {
+        if (amount > 0) windowSent += amount;
     }
 
     /** Counts {@code amount} FE that left over link {@code index}, for its flow level. */
@@ -267,41 +292,58 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         if (amount > 0 && index < MAX_LINKS) linkWindow[index] += amount;
     }
 
-    /** Start index for this tick's fair split, so the rounding remainder moves round the links. */
+    /** Start index for a fair split, so the rounding remainder moves round the links. */
     int nextRotation(int n) {
         rotation = (rotation + 1) % Math.max(1, n);
         return rotation;
     }
 
-    /** Drops links whose target is loaded but gone: no coil there any more, or no FE capability at all. */
+    /**
+     * Drops links whose target is loaded but gone: no relay there any more, or no FE capability at all. Tells each linked
+     * relay that this block links to it, so the network finds it from either side.
+     */
     void validateLinks() {
         if (level == null) return;
         boolean changed = false;
         for (int i = links.size() - 1; i >= 0; i--) {
             TeslaLink link = links.get(i);
             if (!level.isLoaded(link.pos())) continue;
-            boolean gone = link.coil()
-                    ? !(level.getBlockEntity(link.pos()) instanceof TeslaCoilBlockEntity other) || other.isEmitter()
+            TeslaCoilBlockEntity relay = link.coil() && level.getBlockEntity(link.pos()) instanceof TeslaCoilBlockEntity other
+                    && !other.isEmitter() ? other : null;
+            boolean gone = link.coil() ? relay == null
                     : level.getCapability(Capabilities.EnergyStorage.BLOCK, link.pos(), link.face()) == null
                     && level.getCapability(Capabilities.EnergyStorage.BLOCK, link.pos(), null) == null;
             if (gone) {
                 links.remove(i);
                 caches.remove(i);
                 changed = true;
+            } else if (relay != null && relay.addBacklink(worldPosition)) {
+                TeslaGrid.changed();
             }
         }
-        if (changed) {
-            resetLinkFlow();
-            setChangedAndSync();
-        }
+        if (changed) linksChanged();
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && !level.isClientSide) TeslaGrid.changed();
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && !level.isClientSide) TeslaGrid.changed();
     }
 
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         long now = level.getGameTime();
-        IEnergyStorage source = links.isEmpty() ? null : source();
-        root = source != null;
-        if (source != null) TeslaNetwork.pushFromSource(this, source, now);
+        if (isEmitter()) {
+            root = !links.isEmpty() && source() != null;
+            if (root && links.get(0).coil()) TeslaGrid.tick(this, now);
+            else if (root) TeslaGrid.sendDirect(this);
+        }
         if ((now + (pos.asLong() & 31)) % 40 == 0) validateLinks();
         if (now % 20 == 0) {
             lastRate = (int) Math.min(Integer.MAX_VALUE, windowSent / 20);
@@ -387,7 +429,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
 
     @Override
     public int flag() {
-        return root ? 1 : 0;
+        return (isEmitter() ? root : networkActive()) ? 1 : 0;
     }
 
     @Override

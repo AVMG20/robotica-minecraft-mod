@@ -13,7 +13,8 @@ import java.util.function.IntSupplier;
 /**
  * Read-only status screen for blocks that only store, make or send energy (Accumulators, Solar Panels, Tesla Coils):
  * stored, capacity, net FE/t over the last second, max I/O and a state flag. No slots. Tesla Coils reuse the fields:
- * stored/capacity = links used/max, rate = FE/t sent, maxIo = tier rate, flag = sits on a source.
+ * stored/capacity = links used/max, rate = FE/t sent, maxIo = tier rate,
+ * flag = emitter on a source, or relay in a network that moves energy.
  */
 public class EnergyInfoMenu extends MachineMenu {
     /** What the block is, so the screen can pick its status words. */
@@ -29,7 +30,7 @@ public class EnergyInfoMenu extends MachineMenu {
 
         int maxIo();
 
-        /** Storage: unused. Solar: 1 when the sun reaches it. Tesla: 1 when it sits on an FE source. */
+        /** Storage: unused. Solar: 1 when the sun reaches it. Tesla: emitter on an FE source, or relay whose network moves energy. */
         int flag();
     }
 
