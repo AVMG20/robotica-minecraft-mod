@@ -524,6 +524,27 @@ public class PowerGameTests {
         });
     }
 
+    /** Two relays of one network linked to the same machine: it is fed once, and nothing is lost. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void teslaSharedMachineLosesNothing(GameTestHelper helper) {
+        int start = 500_000;
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), start);
+        AccumulatorBlockEntity source = (AccumulatorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        TeslaCoilBlockEntity a = relay(helper, new BlockPos(2, 2, 0));
+        TeslaCoilBlockEntity b = relay(helper, new BlockPos(2, 2, 2));
+        AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(0, 1, 2), Direction.NORTH, 0);
+        link(helper, emitter, a.getBlockPos(), Direction.UP, "emitter -> A");
+        link(helper, a, b.getBlockPos(), Direction.UP, "A -> B");
+        link(helper, a, sink.getBlockPos(), Direction.EAST, "A -> sink");
+        link(helper, b, sink.getBlockPos(), Direction.WEST, "B -> the same sink");
+        helper.runAfterDelay(40, () -> {
+            long drained = start - source.energy.getEnergyStored();
+            helper.assertTrue(sink.energy.getEnergyStored() > 20_000, "the sink fills, has " + sink.energy.getEnergyStored());
+            helper.assertTrue(drained == sink.energy.getEnergyStored(), "nothing lost: drained " + drained + ", got " + sink.energy.getEnergyStored());
+            helper.succeed();
+        });
+    }
+
     /**
      * A generator's push rate is one budget for all six faces, split evenly over the receivers, with or without the
      * neighbour cache; what one receiver does not take goes to the others.

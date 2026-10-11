@@ -20,8 +20,8 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * Links Tesla Coils. Sneak-right-click a coil to select it, then right-click machines (the clicked face is where the
- * power goes in) or other coils. Right-click a target again to unlink it. Sneak-right-click the air to clear the
+ * Links Tesla Relays and Emitters. Sneak-right-click one to select it, then right-click machines (the clicked face is
+ * where the power goes in) or relays. Right-click a target again to unlink it. Sneak-right-click the air to clear the
  * selection. The logic runs in {@link #onItemUseFirst}, before the clicked block's own right-click (machine GUIs).
  */
 public class TeslaLinkerItem extends Item {
@@ -75,7 +75,7 @@ public class TeslaLinkerItem extends Item {
             say(player, Component.translatable("message.robotica.tesla.protected").withStyle(ChatFormatting.RED));
             return InteractionResult.CONSUME;
         }
-        TeslaNetwork.LinkResult result = TeslaNetwork.toggle(coil, pos, ctx.getClickedFace());
+        TeslaNetwork.LinkResult result = TeslaNetwork.toggle(coil, pos, ctx.getClickedFace(), player);
         Component face = Component.translatable("message.robotica.tesla.face." + ctx.getClickedFace().getName());
         Component msg = Component.translatable("message.robotica.tesla." + result.name().toLowerCase(java.util.Locale.ROOT),
                 coil.linkCount(), coil.maxLinks(), coil.tier().range(), face);

@@ -99,7 +99,7 @@ public final class PowerConfig {
                 .defineInRange("wirelessLoss", 10, 0, 500);
         WIRELESS_BUFFER = b.comment("Wireless Charger: internal FE buffer.")
                 .defineInRange("wirelessBuffer", 200_000, 1_000, 1_000_000_000);
-        WIRELESS_INPUT = b.comment("Wireless Charger: FE/t it accepts from cables and Tesla Coils.")
+        WIRELESS_INPUT = b.comment("Wireless Charger: FE/t it accepts from cables and Tesla Relays.")
                 .defineInRange("wirelessInput", 20_000, 1, 1_000_000_000);
         WIRELESS_ANYONE = b.comment("Wireless Charger: charge every player in range, not only the owner and the owner's team.")
                 .define("wirelessChargeAnyone", false);

@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
  * Capacitor Bank controller. The energy is a long in this block entity (a 9x9x9 bank of Ender Capacitors holds about
  * 175 billion FE); ports clamp every transfer to an int. Input and output are each limited to the sum of the Transfer
  * Coils per tick, shared by all ports. Output ports push into the block outside them and can be pulled from (Tesla
- * Coils, cables). The energy stays in the controller when the structure breaks and travels with the controller item.
+ * Emitters, cables). The energy stays in the controller when the structure breaks and travels with the controller item.
  * A bank that holds more than its capacity (it was rebuilt smaller) takes nothing in until it drained below it.
  */
 public class BankControllerBlockEntity extends StructureControllerBlockEntity {

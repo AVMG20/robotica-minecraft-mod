@@ -2,8 +2,10 @@ package com.arno.robotica.power.tesla;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Link rules of Tesla Relays and Tesla Emitters. An emitter links to one relay or machine; a relay links to machines and
@@ -13,7 +15,7 @@ public final class TeslaNetwork {
     private TeslaNetwork() {}
 
     public enum LinkResult {
-        LINKED, UNLINKED, FACE_CHANGED, FULL, OUT_OF_RANGE, NO_ENERGY, WRONG_FACE, SELF, OWN_SUPPORT, EMITTER;
+        LINKED, UNLINKED, FACE_CHANGED, FULL, OUT_OF_RANGE, NO_ENERGY, WRONG_FACE, SELF, OWN_SUPPORT, EMITTER, NOT_YOURS;
 
         public boolean changed() {
             return this == LINKED || this == UNLINKED || this == FACE_CHANGED;
@@ -31,10 +33,17 @@ public final class TeslaNetwork {
      * that face. An emitter's one link moves to a new target instead of being full.
      */
     public static LinkResult toggle(TeslaCoilBlockEntity coil, BlockPos target, Direction face) {
+        return toggle(coil, target, face, null);
+    }
+
+    /** As {@link #toggle(TeslaCoilBlockEntity, BlockPos, Direction)}; a relay link also needs {@code player} to own the other relay. */
+    public static LinkResult toggle(TeslaCoilBlockEntity coil, BlockPos target, Direction face, @Nullable Player player) {
         Level level = coil.getLevel();
         if (level == null || target.equals(coil.getBlockPos())) return LinkResult.SELF;
         BlockPos self = coil.getBlockPos();
         TeslaCoilBlockEntity other = level.getBlockEntity(target) instanceof TeslaCoilBlockEntity be ? be : null;
+        // A relay link joins two networks, so it takes both ends.
+        if (other != null && player != null && !other.canEdit(player)) return LinkResult.NOT_YOURS;
         if (other != null) {
             int back = other.indexOf(self);
             if (back >= 0) {

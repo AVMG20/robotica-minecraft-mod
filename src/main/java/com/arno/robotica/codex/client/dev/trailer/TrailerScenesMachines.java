@@ -381,7 +381,7 @@ final class TrailerScenesMachines {
 
     // ------------------------------------------------------------------ tesla_arcs
 
-    /** A Tesla Coil network at night: a root coil on an Accumulator, relay pylons around it, accumulators as sinks. */
+    /** A Tesla network at night: a relay fed by an Emitter on an Accumulator, relay pylons around it, accumulators as sinks. */
     private static TrailerScene teslaArcs() {
         return TrailerScene.builder("tesla_arcs")
                 .site(60, 60)
