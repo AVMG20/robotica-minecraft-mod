@@ -31,6 +31,8 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -94,7 +96,7 @@ public class BuddyBot extends DroneBase {
 
     private static final EntityDataAccessor<Integer> DATA_STANCE = SynchedEntityData.defineId(BuddyBot.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(BuddyBot.class, EntityDataSerializers.BYTE);
-    private static final int FLAG_PICKUP = 1, FLAG_LIGHTS = 2, FLAG_VOID = 4, FLAG_DIGGING = 8, FLAG_LOW = 16;
+    private static final int FLAG_PICKUP = 1, FLAG_LIGHTS = 2, FLAG_VOID = 4, FLAG_DIGGING = 8, FLAG_LOW = 16, FLAG_OPEN = 32;
 
     /** Entity events (above the vanilla ids): a bite when it grabs loot, a recoil when it fires, then one per emote. */
     public static final byte EVENT_CHOMP = 100;
@@ -258,6 +260,9 @@ public class BuddyBot extends DroneBase {
     private Vec3 patrolPoint;
     private int patrolTicks;
     private int lampCooldown;
+    private int lastChomp = -20;
+    /** Ticks the lid stays open after the GUI was last seen open. */
+    private int openTicks;
     /** Bolts fired since the bot was created or loaded (tests, stats). */
     public int shots;
 
@@ -274,6 +279,8 @@ public class BuddyBot extends DroneBase {
     private int clientEmoteAge;
     private int chompTicks;
     private int recoilTicks;
+    private float lidOpen;
+    private float lidOpenO;
 
     public BuddyBot(EntityType<? extends BuddyBot> type, Level level) {
         super(type, level);
@@ -615,7 +622,8 @@ public class BuddyBot extends DroneBase {
             else item.setItem(rest);
             took = true;
         }
-        if (took && every(4)) {
+        if (took && tickCount - lastChomp >= 10) {
+            lastChomp = tickCount;
             playSound(SoundEvents.ITEM_PICKUP, 0.25F, 1.3F + random.nextFloat() * 0.2F);
             level().broadcastEntityEvent(this, EVENT_CHOMP);
         }
@@ -710,9 +718,67 @@ public class BuddyBot extends DroneBase {
     public void tick() {
         super.tick();
         if (level().isClientSide) {
+            if (clientEmote == Emote.SNEEZE && clientEmoteAge == 20) sneeze();
             if (clientEmote != Emote.NONE && ++clientEmoteAge >= clientEmote.ticks) clientEmote = Emote.NONE;
             if (chompTicks > 0) chompTicks--;
             if (recoilTicks > 0) recoilTicks--;
+            lidOpenO = lidOpen;
+            lidOpen = Mth.clamp(lidOpen + (flag(FLAG_OPEN) ? 0.2F : -0.2F), 0.0F, 1.0F);
+            if (!isInvisible()) clientParticles();
+        }
+    }
+
+    /** Client: thruster puffs while it flies, sputtering smoke and sparks on low energy. */
+    private void clientParticles() {
+        Level level = level();
+        double dx = getX() - xo, dy = getY() - yo, dz = getZ() - zo;
+        if (dx * dx + dy * dy + dz * dz > 0.0016 && tickCount % 3 == 0) {
+            level.addParticle(ParticleTypes.WHITE_SMOKE, getX() + (random.nextDouble() - 0.5) * 0.1, getY() + 0.02, getZ() + (random.nextDouble() - 0.5) * 0.1,
+                    0.0, -0.04, 0.0);
+        }
+        if (isLowEnergy() && random.nextInt(14) == 0) {
+            level.addParticle(ParticleTypes.SMOKE, getX() + (random.nextDouble() - 0.5) * 0.4, getY() + 0.55, getZ() + (random.nextDouble() - 0.5) * 0.4,
+                    0.0, 0.03, 0.0);
+            if (random.nextBoolean()) level.addParticle(ParticleTypes.ELECTRIC_SPARK, getX(), getY() + 0.3, getZ(),
+                    (random.nextDouble() - 0.5) * 0.2, 0.1, (random.nextDouble() - 0.5) * 0.2);
+        }
+    }
+
+    /** Client: the CHOO of a sneeze, in time with the animation. */
+    private void sneeze() {
+        level().playLocalSound(getX(), getY(), getZ(), SoundEvents.PANDA_SNEEZE, getSoundSource(), 0.6F, 1.6F, false);
+        Vec3 nose = position().add(Vec3.directionFromRotation(0, getYRot()).scale(0.45)).add(0, 0.3, 0);
+        for (int i = 0; i < 5; i++) {
+            level().addParticle(ParticleTypes.POOF, nose.x, nose.y, nose.z,
+                    (random.nextDouble() - 0.5) * 0.06, random.nextDouble() * 0.04, (random.nextDouble() - 0.5) * 0.06);
+        }
+    }
+
+    /** Client: a few particles when an emote starts. */
+    private void emoteParticles(Emote e) {
+        double y = getY() + 0.9;
+        switch (e) {
+            case CHEER -> {
+                for (int i = 0; i < 6; i++) {
+                    level().addParticle(ParticleTypes.HAPPY_VILLAGER, getX() + (random.nextDouble() - 0.5) * 0.8, getY() + 0.3 + random.nextDouble() * 0.5,
+                            getZ() + (random.nextDouble() - 0.5) * 0.8, 0.0, 0.0, 0.0);
+                }
+            }
+            case WAVE, SPIN -> level().addParticle(ParticleTypes.NOTE, getX(), y, getZ(), random.nextInt(25) / 24.0, 0.0, 0.0);
+            case BOOP -> level().addParticle(ParticleTypes.HEART, getX(), y, getZ(), 0.0, 0.0, 0.0);
+            case HICCUP -> {
+                for (int i = 0; i < 3; i++) {
+                    level().addParticle(ParticleTypes.BUBBLE_POP, getX() + (random.nextDouble() - 0.5) * 0.3, getY() + 0.7, getZ() + (random.nextDouble() - 0.5) * 0.3,
+                            0.0, 0.05, 0.0);
+                }
+            }
+            case SHAKE -> {
+                for (int i = 0; i < 2; i++) {
+                    level().addParticle(ParticleTypes.FALLING_WATER, getX() + (random.nextBoolean() ? 0.3 : -0.3), getY() + 0.55, getZ(), 0.0, 0.0, 0.0);
+                }
+            }
+            default -> {
+            }
         }
     }
 
@@ -720,6 +786,10 @@ public class BuddyBot extends DroneBase {
     protected void droneTick(ServerLevel sl) {
         if (cooldown > 0) cooldown--;
         if (lampCooldown > 0) lampCooldown--;
+        if (openTicks > 0 && --openTicks == 0) {
+            setFlag(FLAG_OPEN, false);
+            playSound(SoundEvents.CHEST_CLOSE, 0.4F, 1.5F);
+        }
         if (drillTicks > 0 && --drillTicks == 0 && target == null) setActive(false);
         boolean low = isEnergyLow();
         setFlag(FLAG_LOW, low);
@@ -879,14 +949,7 @@ public class BuddyBot extends DroneBase {
             case WAVE, BOOP -> CoreSounds.play(this, CoreSounds.ROBOT_BEEP, SoundSource.NEUTRAL, 0.5F, 1.8F);
             case HICCUP -> CoreSounds.play(this, CoreSounds.ROBOT_BEEP_LOW, SoundSource.NEUTRAL, 0.5F, 2.0F);
             case NOD -> CoreSounds.play(this, CoreSounds.ROBOT_BEEP_LOW, SoundSource.NEUTRAL, 0.5F, 1.3F);
-            case SHAKE -> CoreSounds.play(this, CoreSounds.ROBOT_ERROR, SoundSource.NEUTRAL, 0.5F, 1.2F);
-            case SNEEZE -> {
-                playSound(SoundEvents.PANDA_SNEEZE, 0.6F, 1.6F);
-                if (level() instanceof ServerLevel sl) {
-                    Vec3 nose = position().add(Vec3.directionFromRotation(0, getYRot()).scale(0.4)).add(0, 0.3, 0);
-                    sl.sendParticles(ParticleTypes.POOF, nose.x, nose.y, nose.z, 4, 0.05, 0.05, 0.05, 0.02);
-                }
-            }
+            case SHAKE -> CoreSounds.play(this, CoreSounds.ROBOT_ERROR, SoundSource.NEUTRAL, 0.35F, 1.2F);
             default -> {
             }
         }
@@ -933,6 +996,7 @@ public class BuddyBot extends DroneBase {
         } else if (id >= EVENT_EMOTE && id < EVENT_EMOTE + Emote.values().length) {
             clientEmote = Emote.byId(id - EVENT_EMOTE);
             clientEmoteAge = 0;
+            emoteParticles(clientEmote);
         } else {
             super.handleEntityEvent(id);
         }
@@ -951,6 +1015,11 @@ public class BuddyBot extends DroneBase {
     /** Client: 1 right after it grabbed loot, falling to 0. */
     public float chomp(float partialTick) {
         return Math.max(0.0F, (chompTicks - partialTick) / 8.0F);
+    }
+
+    /** Client: how far the lid is open for the GUI, 0 to 1. */
+    public float lidOpen(float partialTick) {
+        return Mth.lerp(partialTick, lidOpenO, lidOpen);
     }
 
     /** Client: 1 right after a shot, falling to 0. */
@@ -1260,6 +1329,32 @@ public class BuddyBot extends DroneBase {
     }
 
     // ---------------------------------------------------------------- gui
+
+    /** The lid opens while its GUI is open. */
+    @Override
+    public void holdForGui() {
+        super.holdForGui();
+        if (level().isClientSide) return;
+        if (openTicks == 0) {
+            setFlag(FLAG_OPEN, true);
+            playSound(SoundEvents.CHEST_OPEN, 0.4F, 1.5F);
+        }
+        openTicks = 3;
+    }
+
+    /** Repairing or charging it gets a happy spin. */
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        float health = getHealth();
+        int fe = getEnergy();
+        boolean noBattery = battery.getStackInSlot(0).isEmpty();
+        InteractionResult result = super.mobInteract(player, hand);
+        if (!level().isClientSide && !isRemoved() && serverEmote == Emote.NONE
+                && (getHealth() > health || getEnergy() > fe || noBattery && !battery.getStackInSlot(0).isEmpty())) {
+            emote(Emote.SPIN);
+        }
+        return result;
+    }
 
     @Override
     protected void openGui(ServerPlayer player) {

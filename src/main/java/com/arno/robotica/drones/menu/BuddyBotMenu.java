@@ -162,6 +162,7 @@ public class BuddyBotMenu extends MachineMenu {
                 return false;
             }
         }
+        if (id <= BTN_STANCE) bot.emote(BuddyBot.Emote.NOD);
         return true;
     }
 

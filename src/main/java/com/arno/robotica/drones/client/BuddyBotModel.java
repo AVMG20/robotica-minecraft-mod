@@ -187,6 +187,13 @@ public class BuddyBotModel extends EntityModel<BuddyBot> {
             eyelidDown = Math.max(eyelidDown, gulp * 0.5F);
             rootY -= open * 0.4F;
         }
+        // GUI open: the lid swings up and the eye looks up at whoever opened it
+        float open = smooth(bot.lidOpen(p));
+        if (open > 0.0F) {
+            lidOpen = Math.max(lidOpen, open * 0.95F);
+            pupilY = pupilY * (1.0F - open) - open;
+            browY -= open * 0.5F;
+        }
         float recoil = bot.recoil(p);
         blasterArmX -= recoil * 0.35F;
         rootZ += recoil * 0.3F;
