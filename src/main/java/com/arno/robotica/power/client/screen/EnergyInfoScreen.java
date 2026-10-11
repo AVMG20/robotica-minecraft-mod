@@ -4,6 +4,7 @@ import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.power.menu.EnergyInfoMenu;
 import com.arno.robotica.power.tesla.TeslaCoilBlock;
+import com.arno.robotica.power.tesla.TeslaEmitterBlock;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -58,7 +59,7 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
                 Component.translatable("gui.robotica.energy_io_tip", Fmt.compact(menu.maxIo())));
     }
 
-    /** Tesla Coil: links used / max as a bar, FE/t sent, and whether it pulls from the block it sits on. */
+    /** Tesla Relay or Emitter: links used / max as a bar, FE/t sent, and what it is doing. */
     private void renderTesla(GuiGraphics g, int x, int y) {
         int used = menu.stored(), max = menu.capacity();
         int range = menu.block() instanceof TeslaCoilBlock coil ? coil.tier().range() : 0;
@@ -76,12 +77,12 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
         if (used == 0) {
             tone = Tone.WARN;
             status = Component.translatable("gui.robotica.tesla_no_links");
-        } else if (rate > 0) {
-            tone = Tone.GOOD;
-            status = Component.translatable(menu.flag() ? "gui.robotica.tesla_source" : "gui.robotica.tesla_relay");
+        } else if (menu.block() instanceof TeslaEmitterBlock) {
+            tone = rate > 0 ? Tone.GOOD : Tone.WARN;
+            status = Component.translatable(rate > 0 ? "gui.robotica.tesla_source" : menu.flag() ? "gui.robotica.tesla_idle" : "gui.robotica.tesla_no_source");
         } else {
-            tone = Tone.WARN;
-            status = Component.translatable(menu.flag() ? "gui.robotica.tesla_idle" : "gui.robotica.tesla_waiting");
+            tone = rate > 0 || menu.flag() ? Tone.GOOD : Tone.WARN;
+            status = Component.translatable(rate > 0 ? "gui.robotica.tesla_relay" : menu.flag() ? "gui.robotica.tesla_passing" : "gui.robotica.tesla_waiting");
         }
         drawStatus(g, status, x + 8, y + 58, 160, 1, tone);
         addTooltip(x + 8, y + 56, 160, 12, Component.translatable("gui.robotica.tesla_status_tip"));

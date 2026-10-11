@@ -232,7 +232,7 @@ public final class Showcase {
         return out;
     }
 
-    /** Dev only: links a Tesla Coil without the Linker (TeslaCoilBlockEntity.addLink is package-private). */
+    /** Dev only: links a Tesla Relay or Emitter without the Linker (TeslaCoilBlockEntity.addLink is package-private). */
     private static void devLink(ServerLevel level, BlockPos coil, com.arno.robotica.power.tesla.TeslaLink link) {
         try {
             var be = level.getBlockEntity(coil);
@@ -240,7 +240,7 @@ public final class Showcase {
             m.setAccessible(true);
             m.invoke(be, link);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            Robotica.LOGGER.warn("Showcase could not link Tesla Coil at {}", coil, e);
+            Robotica.LOGGER.warn("Showcase could not link Tesla block at {}", coil, e);
         }
     }
 
@@ -473,7 +473,7 @@ public final class Showcase {
             for (int i = 0; i < 12; i++) grab(1, "area_static_frame_" + i);
         }
 
-        // Scene 7: a Tesla network on an Accumulator, Linker in hand so the arcs show at full strength.
+        // Scene 7: a Tesla network fed by an Emitter on an Accumulator, Linker in hand so the arcs show at full strength.
         if (wants("11_tesla_network")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             BlockPos acc = new BlockPos(40, Y, -20);
@@ -482,6 +482,8 @@ public final class Showcase {
             for (int i = 0; i < 64 && cap != null && cap.receiveEnergy(Integer.MAX_VALUE, false) > 0; i++) {}
             BlockPos root = acc.above();
             level.setBlock(root, block("tesla_coil_5").defaultBlockState().setValue(BlockStateProperties.FACING, Direction.UP), 3);
+            level.setBlock(acc.west(), block("tesla_emitter_5").defaultBlockState().setValue(BlockStateProperties.FACING, Direction.WEST), 3);
+            devLink(level, acc.west(), new com.arno.robotica.power.tesla.TeslaLink(root, null, true));
             BlockPos pillar = new BlockPos(46, Y, -26);
             level.setBlock(pillar, Blocks.POLISHED_ANDESITE.defaultBlockState(), 3);
             level.setBlock(pillar.above(), Blocks.POLISHED_ANDESITE.defaultBlockState(), 3);
@@ -530,6 +532,10 @@ public final class Showcase {
                 String[] tiers = {"tesla_coil_1", "tesla_coil_2", "tesla_coil_3", "tesla_coil_4", "tesla_coil_5"};
                 for (int i = 0; i < coils.length; i++) {
                     level.setBlock(coils[i], block(tiers[i]).defaultBlockState().setValue(BlockStateProperties.FACING, Direction.UP), 3);
+                }
+                for (BlockPos acc : new BlockPos[]{src, src2}) {
+                    level.setBlock(acc.west(), block("tesla_emitter_1").defaultBlockState().setValue(BlockStateProperties.FACING, Direction.WEST), 3);
+                    devLink(level, acc.west(), new com.arno.robotica.power.tesla.TeslaLink(acc.above(), null, true));
                 }
                 devLink(level, src.above(), new com.arno.robotica.power.tesla.TeslaLink(relay, null, true));
                 devLink(level, relay, new com.arno.robotica.power.tesla.TeslaLink(sink, Direction.UP, false));

@@ -43,9 +43,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Wireless power coil, placed on floors, walls and ceilings. FACING points away from the block it sits on.
- * A coil on a block that gives out FE (Accumulator, generator, any mod's battery) pulls from it and sends to its links;
- * any other coil is a relay that only forwards what other coils send it. Linking: {@link TeslaLinkerItem}.
+ * Tesla Relay (the block ids still say coil), placed on floors, walls and ceilings. FACING points away from the block it
+ * sits on. Relays link to machines and to each other and hand out what Tesla Emitters put into their network.
+ * Linking: {@link TeslaLinkerItem}.
  */
 public class TeslaCoilBlock extends PowerBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;

@@ -2,7 +2,7 @@ package com.arno.robotica.power.tesla;
 
 import com.arno.robotica.power.PowerConfig;
 
-/** Tesla Coil tiers. The link count is fixed per tier; rate and range come from the server config. */
+/** Tesla Relay and Emitter tiers. The relay link count is fixed per tier; rate and range come from the server config. */
 public enum TeslaTier {
     I(4), II(8), III(12), IV(16), V(32);
 
@@ -25,7 +25,7 @@ public enum TeslaTier {
         return "tesla_emitter_" + number();
     }
 
-    /** FE/t the coil sends in total over all its links. */
+    /** FE/t an emitter puts into its network, and a relay gives its machines. */
     public int rate() {
         return PowerConfig.teslaRate(number());
     }

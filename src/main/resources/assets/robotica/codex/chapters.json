@@ -67,7 +67,7 @@
         },
         {
           "title": "Moving FE",
-          "text": "Tesla Coils can link to other coils to reach further. Each hop loses 5%.\nPut Tesla Emitters on your generators and link each to one coil to gather their FE.",
+          "text": "Put a Tesla Emitter on each generator or battery and link it to a Tesla Relay.\nLinked relays share one network, whichever side you link from. Every emitter gives an even part of what the machines need.",
           "items": [
             "robotica:tesla_coil_1",
             "robotica:tesla_emitter_1",

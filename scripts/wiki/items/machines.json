@@ -45,7 +45,7 @@
    "items": [
     "bank_port"
    ],
-   "what": "Moves FE in or out of a Capacitor Bank. Sneak-right-click to switch input/output. Output ports push into the block outside them, or into a [[tesla_coil_1]] on top.",
+   "what": "Moves FE in or out of a Capacitor Bank. Sneak-right-click to switch input/output. Output ports push into the block outside them, or into a [[tesla_emitter_1]] on top.",
    "see": [
     "guide:capacitor-bank"
    ]

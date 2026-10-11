@@ -49,7 +49,7 @@ public final class MachineInfoCollector {
             int capacity = ItemEnergy.capacity(spring);
             info.spring = spring.isEmpty() ? MachineInfo.SPRING_NONE : capacity <= 0 ? 0 : percent(ItemEnergy.get(spring), capacity);
         } else if (be instanceof com.arno.robotica.power.tesla.TeslaCoilBlockEntity coil) {
-            // No "Mk" line: the block name already says the tier (Tesla Coil I-V).
+            // No "Mk" line: the block name already says the tier (Tesla Relay or Emitter I-V).
             info.status = coil.isActive() ? "working" : "idle";
         } else if (be instanceof ArchitectTableBlockEntity table) {
             int st = table.status();
