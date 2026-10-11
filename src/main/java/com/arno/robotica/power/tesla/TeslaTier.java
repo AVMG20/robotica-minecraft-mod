@@ -21,6 +21,10 @@ public enum TeslaTier {
         return "tesla_coil_" + number();
     }
 
+    public String emitterId() {
+        return "tesla_emitter_" + number();
+    }
+
     /** FE/t the coil sends in total over all its links. */
     public int rate() {
         return PowerConfig.teslaRate(number());

@@ -17,6 +17,7 @@ import com.arno.robotica.power.block.WindingCrankBlock;
 import com.arno.robotica.power.block.WindingCrankBlockEntity;
 import com.arno.robotica.power.tesla.TeslaCoilBlock;
 import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
+import com.arno.robotica.power.tesla.TeslaEmitterBlock;
 import com.arno.robotica.power.tesla.TeslaLinkerItem;
 import com.arno.robotica.power.tesla.TeslaTier;
 import net.minecraft.core.GlobalPos;
@@ -81,6 +82,11 @@ public final class PowerRegistry {
     public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_3 = teslaCoil(TeslaTier.III);
     public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_4 = teslaCoil(TeslaTier.IV);
     public static final DeferredBlock<TeslaCoilBlock> TESLA_COIL_5 = teslaCoil(TeslaTier.V);
+    public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_1 = teslaEmitter(TeslaTier.I);
+    public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_2 = teslaEmitter(TeslaTier.II);
+    public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_3 = teslaEmitter(TeslaTier.III);
+    public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_4 = teslaEmitter(TeslaTier.IV);
+    public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_5 = teslaEmitter(TeslaTier.V);
     public static final DeferredBlock<ChargerBlock> CHARGER = BLOCKS.registerBlock("charger", ChargerBlock::new, machine());
     public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock("metal_press", MetalPressBlock::new, machine());
     public static final DeferredBlock<com.arno.robotica.power.block.WirelessChargerBlock> WIRELESS_CHARGER = BLOCKS.registerBlock("wireless_charger",
@@ -91,9 +97,16 @@ public final class PowerRegistry {
     }
 
     private static DeferredBlock<TeslaCoilBlock> teslaCoil(TeslaTier tier) {
-        return BLOCKS.registerBlock(tier.id(), p -> new TeslaCoilBlock(p, tier),
-                BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.0F, 3.0F).sound(SoundType.COPPER)
-                        .noOcclusion().lightLevel(s -> 7).pushReaction(PushReaction.DESTROY));
+        return BLOCKS.registerBlock(tier.id(), p -> new TeslaCoilBlock(p, tier), teslaProps(7));
+    }
+
+    private static DeferredBlock<TeslaEmitterBlock> teslaEmitter(TeslaTier tier) {
+        return BLOCKS.registerBlock(tier.emitterId(), p -> new TeslaEmitterBlock(p, tier), teslaProps(4));
+    }
+
+    private static BlockBehaviour.Properties teslaProps(int light) {
+        return BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(1.0F, 3.0F).sound(SoundType.COPPER)
+                .noOcclusion().lightLevel(s -> light).pushReaction(PushReaction.DESTROY);
     }
 
     // ---- Items ----
@@ -111,6 +124,11 @@ public final class PowerRegistry {
     public static final DeferredItem<BlockItem> TESLA_COIL_3_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_3);
     public static final DeferredItem<BlockItem> TESLA_COIL_4_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_4);
     public static final DeferredItem<BlockItem> TESLA_COIL_5_ITEM = ITEMS.registerSimpleBlockItem(TESLA_COIL_5);
+    public static final DeferredItem<BlockItem> TESLA_EMITTER_1_ITEM = ITEMS.registerSimpleBlockItem(TESLA_EMITTER_1);
+    public static final DeferredItem<BlockItem> TESLA_EMITTER_2_ITEM = ITEMS.registerSimpleBlockItem(TESLA_EMITTER_2);
+    public static final DeferredItem<BlockItem> TESLA_EMITTER_3_ITEM = ITEMS.registerSimpleBlockItem(TESLA_EMITTER_3);
+    public static final DeferredItem<BlockItem> TESLA_EMITTER_4_ITEM = ITEMS.registerSimpleBlockItem(TESLA_EMITTER_4);
+    public static final DeferredItem<BlockItem> TESLA_EMITTER_5_ITEM = ITEMS.registerSimpleBlockItem(TESLA_EMITTER_5);
     public static final DeferredItem<TeslaLinkerItem> TESLA_LINKER = ITEMS.registerItem("tesla_linker", TeslaLinkerItem::new);
     public static final DeferredItem<BlockItem> CHARGER_ITEM = ITEMS.registerSimpleBlockItem(CHARGER);
     public static final DeferredItem<BlockItem> METAL_PRESS_ITEM = ITEMS.registerSimpleBlockItem(METAL_PRESS);
@@ -138,7 +156,8 @@ public final class PowerRegistry {
                     ACCUMULATOR_1.get(), ACCUMULATOR_2.get(), ACCUMULATOR_3.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TeslaCoilBlockEntity>> TESLA_COIL_BE =
             BLOCK_ENTITIES.register("tesla_coil", () -> BlockEntityType.Builder.of(TeslaCoilBlockEntity::new, TESLA_COIL_1.get(),
-                    TESLA_COIL_2.get(), TESLA_COIL_3.get(), TESLA_COIL_4.get(), TESLA_COIL_5.get()).build(null));
+                    TESLA_COIL_2.get(), TESLA_COIL_3.get(), TESLA_COIL_4.get(), TESLA_COIL_5.get(), TESLA_EMITTER_1.get(), TESLA_EMITTER_2.get(),
+                    TESLA_EMITTER_3.get(), TESLA_EMITTER_4.get(), TESLA_EMITTER_5.get()).build(null));
 
     // ---- Data components ----
     /** The coil a Tesla Linker has selected. */
@@ -197,6 +216,11 @@ public final class PowerRegistry {
         RoboticaTab.add(TESLA_COIL_3_ITEM);
         RoboticaTab.add(TESLA_COIL_4_ITEM);
         RoboticaTab.add(TESLA_COIL_5_ITEM);
+        RoboticaTab.add(TESLA_EMITTER_1_ITEM);
+        RoboticaTab.add(TESLA_EMITTER_2_ITEM);
+        RoboticaTab.add(TESLA_EMITTER_3_ITEM);
+        RoboticaTab.add(TESLA_EMITTER_4_ITEM);
+        RoboticaTab.add(TESLA_EMITTER_5_ITEM);
         RoboticaTab.add(CHARGER_ITEM);
         RoboticaTab.add(WIRELESS_CHARGER_ITEM);
         RoboticaTab.add(METAL_PRESS_ITEM);

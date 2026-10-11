@@ -222,6 +222,34 @@ for tier in range(1, 6):
     }})
     loot(name)
 
+# Tesla Emitters: a stubby coil about torch height (9 high), same textures as the coil of its tier. The tip ball spans
+# 7..9 (TeslaEmitterBlock.EMITTER_TIP); the item is shown bigger than the coil so it still fills the slot.
+for tier in range(1, 6):
+    name, coil = f'tesla_emitter_{tier}', f'tesla_coil_{tier}'
+    elements = [
+        box([5, 0, 5], [11, 1, 11], [5, 5, 11, 11], [5, 15, 11, 16], '#base'),
+        box([7, 1, 7], [9, 6, 9], [7, 5, 9, 10], [7, 5, 9, 10], '#winding', down=False, up=False),
+        box([6, 6, 6], [10, 7, 10], [6, 6, 10, 10], [6, 7, 10, 8], '#cap'),
+        dict(box([7, 7, 7], [9, 9, 9], [6, 6, 10, 10], [6, 6, 10, 10], '#tip', down=False, neoforge_data=GLOW), shade=False),
+    ]
+    elements[0]['faces']['down']['cullface'] = 'down'
+    block_model(name, {
+        'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+        'textures': {'base': tex('tesla_coil_base'), 'winding': tex(f'{coil}_winding'), 'cap': tex(f'{coil}_cap'),
+                     'tip': tex('tesla_coil_tip'), 'particle': tex(f'{coil}_winding')},
+        'elements': elements,
+    })
+    blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
+    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, 3, 0], 'scale': [1.0, 1.0, 1.0]},
+        'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
+        'fixed': {'rotation': [0, 0, 0], 'translation': [0, 2, 0], 'scale': [0.8, 0.8, 0.8]},
+        'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 3, 1], 'scale': [0.5, 0.5, 0.5]},
+        'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 3, 0], 'scale': [0.6, 0.6, 0.6]},
+        'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 3, 0], 'scale': [0.6, 0.6, 0.6]},
+    }})
+    loot(name)
+
 # ---------- winding crank ----------
 crank_tex = {'base': tex('winding_crank_base'), 'metal': tex('winding_crank_metal'), 'spring': tex('winding_crank_spring'),
              'particle': tex('winding_crank_base')}

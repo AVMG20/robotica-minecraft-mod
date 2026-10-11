@@ -166,7 +166,7 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         int halo = halo(be.tier().ordinal());
 
         Direction facing = state.getValue(TeslaCoilBlock.FACING);
-        double tip = TeslaCoilBlock.TIP - 0.5;
+        double tip = TeslaCoilBlock.tipHeight(state) - 0.5;
         double ax = 0.5 + facing.getStepX() * tip, ay = 0.5 + facing.getStepY() * tip, az = 0.5 + facing.getStepZ() * tip;
 
         VertexConsumer vc = buffers.getBuffer(GLOW);
@@ -181,9 +181,10 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
                 BlockState other = level.getBlockState(p);
                 if (other.getBlock() instanceof TeslaCoilBlock coil) haloEnd = halo(coil.tier().ordinal());
                 Direction f = other.hasProperty(TeslaCoilBlock.FACING) ? other.getValue(TeslaCoilBlock.FACING) : Direction.UP;
-                bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * tip;
-                by = p.getY() - origin.getY() + 0.5 + f.getStepY() * tip;
-                bz = p.getZ() - origin.getZ() + 0.5 + f.getStepZ() * tip;
+                double t = TeslaCoilBlock.tipHeight(other) - 0.5;
+                bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * t;
+                by = p.getY() - origin.getY() + 0.5 + f.getStepY() * t;
+                bz = p.getZ() - origin.getZ() + 0.5 + f.getStepZ() * t;
             } else {
                 Direction f = link.face() == null ? Direction.UP : link.face();
                 bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * 0.52;

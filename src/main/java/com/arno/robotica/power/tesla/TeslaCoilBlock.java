@@ -61,7 +61,7 @@ public class TeslaCoilBlock extends PowerBlock {
     }
 
     /** A box that is {@code lo..hi} wide on both lateral axes and {@code h0..h1} high along {@code dir}. */
-    private static VoxelShape box(Direction dir, double lo, double hi, double h0, double h1) {
+    protected static VoxelShape box(Direction dir, double lo, double hi, double h0, double h1) {
         return switch (dir) {
             case UP -> Block.box(lo, h0, lo, hi, h1, hi);
             case DOWN -> Block.box(lo, 16 - h1, lo, hi, 16 - h0, hi);
@@ -84,9 +84,24 @@ public class TeslaCoilBlock extends PowerBlock {
         return tier;
     }
 
-    /** Where the arcs start: the glowing tip, relative to the block's corner. */
-    public static Vec3 tipOffset(Direction facing) {
-        double d = TIP - 0.5;
+    public int maxLinks() {
+        return tier.maxLinks;
+    }
+
+    /** Height of the tip above the face it sits on, in blocks. */
+    public double tip() {
+        return TIP;
+    }
+
+    /** Tip height of the coil at {@code state}. */
+    public static double tipHeight(BlockState state) {
+        return state.getBlock() instanceof TeslaCoilBlock coil ? coil.tip() : TIP;
+    }
+
+    /** Where the arcs of a coil at {@code state} start: the glowing tip, relative to the block's corner. */
+    public static Vec3 tipOffset(BlockState state) {
+        Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.UP;
+        double d = tipHeight(state) - 0.5;
         return new Vec3(0.5 + facing.getStepX() * d, 0.5 + facing.getStepY() * d, 0.5 + facing.getStepZ() * d);
     }
 
@@ -173,14 +188,14 @@ public class TeslaCoilBlock extends PowerBlock {
         if (links.isEmpty()) return;
         // Very light: an occasional soft spark at the tip while configuring and the coil is sending.
         if (be.isActive() && random.nextInt(10) == 0) {
-            Vec3 tip = tipOffset(state.getValue(FACING)).add(pos.getX(), pos.getY(), pos.getZ());
+            Vec3 tip = tipOffset(state).add(pos.getX(), pos.getY(), pos.getZ());
             level.addParticle(ParticleTypes.ELECTRIC_SPARK, tip.x, tip.y, tip.z, 0, 0.01, 0);
         }
     }
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.tesla_coil", tier.maxLinks, tier.range(), Fmt.compact(tier.rate()))
+        tooltip.add(Component.translatable("tooltip.robotica.tesla_coil", maxLinks(), tier.range(), Fmt.compact(tier.rate()))
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.tesla_coil_source").withStyle(ChatFormatting.DARK_GRAY));
     }

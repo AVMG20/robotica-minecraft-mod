@@ -1,0 +1,285 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "base": "robotica:block/tesla_coil_base",
+    "winding": "robotica:block/tesla_coil_2_winding",
+    "cap": "robotica:block/tesla_coil_2_cap",
+    "tip": "robotica:block/tesla_coil_tip",
+    "particle": "robotica:block/tesla_coil_2_winding"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        1,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#base",
+          "uv": [
+            5,
+            15,
+            11,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#base",
+          "uv": [
+            5,
+            15,
+            11,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#base",
+          "uv": [
+            5,
+            15,
+            11,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#base",
+          "uv": [
+            5,
+            15,
+            11,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#base",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#base",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ],
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        1,
+        7
+      ],
+      "to": [
+        9,
+        6,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#winding",
+          "uv": [
+            7,
+            5,
+            9,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#winding",
+          "uv": [
+            7,
+            5,
+            9,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#winding",
+          "uv": [
+            7,
+            5,
+            9,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#winding",
+          "uv": [
+            7,
+            5,
+            9,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        6,
+        6
+      ],
+      "to": [
+        10,
+        7,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cap",
+          "uv": [
+            6,
+            7,
+            10,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#cap",
+          "uv": [
+            6,
+            7,
+            10,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#cap",
+          "uv": [
+            6,
+            7,
+            10,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#cap",
+          "uv": [
+            6,
+            7,
+            10,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#cap",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#cap",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        7,
+        7
+      ],
+      "to": [
+        9,
+        9,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "south": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#tip",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    }
+  ]
+}
