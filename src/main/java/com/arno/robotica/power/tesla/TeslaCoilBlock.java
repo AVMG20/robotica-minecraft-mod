@@ -43,20 +43,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Torch-sized wireless power emitter, placed on floors, walls and ceilings. FACING points away from the block it sits on.
+ * Wireless power coil, placed on floors, walls and ceilings. FACING points away from the block it sits on.
  * A coil on a block that gives out FE (Accumulator, generator, any mod's battery) pulls from it and sends to its links;
  * any other coil is a relay that only forwards what other coils send it. Linking: {@link TeslaLinkerItem}.
  */
 public class TeslaCoilBlock extends PowerBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
-    /** Tip of the coil, in blocks from the face it sits on (the glowing ball of the model ends at 15/16). */
+    /** Tip of the coil, in blocks from the face it sits on (the crystal of the model spans 10..15). */
     public static final double TIP = 13.5 / 16.0;
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
     static {
         for (Direction dir : Direction.values()) {
-            SHAPES.put(dir, Shapes.or(box(dir, 4, 12, 0, 2), box(dir, 5, 11, 2, 15)));
+            SHAPES.put(dir, Shapes.or(box(dir, 5, 11, 0, 1), box(dir, 6.5, 9.5, 1, 9), box(dir, 5.5, 10.5, 9, 15)));
         }
     }
 

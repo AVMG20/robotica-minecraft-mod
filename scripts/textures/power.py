@@ -502,15 +502,35 @@ def tesla_winding(r):
     return c
 
 
-def tesla_cap(r):
-    """The toroid on top: concentric rings round a dark socket, bright rim; its middle rows also wrap the sides."""
+def tesla_claw(r):
+    """Collar and claws that hold the crystal: a brushed plate of the tier metal, mapped pixel for pixel on the model."""
+    c = Canvas()
+    plate(c, 0, 0, 16, 16, r, 7, vertical=True, density=0.3)
+    for y in range(0, 16, 4):
+        c.rect(0, y, 16, 1, r[3])                                         # lit rim on every collar row
+    return c
+
+
+def tesla_rod():
+    """Thin steel rod of the Tesla Emitter: vertical brushing, a lit and a shadowed column pair."""
+    c = Canvas()
+    for x in range(16):
+        c.rect(x, 0, 1, 16, ST[3] if x % 2 == 0 else ST[2])
+    for y in range(3, 16, 5):
+        c.rect(0, y, 16, 1, ST[1])                                        # joints
+    return c
+
+
+def tesla_crystal():
+    """Full-bright energy crystal: every two columns a lit and a mid facet, white glints, a dark seam now and then."""
     c = Canvas()
     for y in range(16):
         for x in range(16):
-            d = math.hypot(x - 7.5, y - 7.5)
-            c.set(x, y, r[3] if d > 5.6 else r[2] if d > 3.8 else r[1] if d > 1.6 else 'K')
-    c.ring(7.5, 7.5, 4.6, 5.3, r[4])
-    c.rect(0, 7, 16, 1, r[4]).rect(0, 8, 16, 1, r[2])                     # side band: highlight over mid
+            c.set(x, y, 'Y' if x % 2 == 0 else 'y')
+            if x % 2 == 0 and (x + y * 3) % 7 == 0:
+                c.set(x, y, 'z')
+        if y % 8 == 7:
+            c.rect(0, y, 16, 1, 'Z')
     return c
 
 
@@ -636,7 +656,9 @@ def main():
     write_block('tesla_coil_tip', tesla_tip().rows(), P)
     for tier, ramp in TESLA_TIER.items():
         write_block(f'tesla_coil_{tier}_winding', tesla_winding(ramp).rows(), P)
-        write_block(f'tesla_coil_{tier}_cap', tesla_cap(ramp).rows(), P)
+        write_block(f'tesla_coil_{tier}_claw', tesla_claw(ramp).rows(), P)
+    write_block('tesla_rod', tesla_rod().rows(), P)
+    write_block('tesla_crystal', tesla_crystal().rows(), P)
     write_item('tesla_linker', tesla_linker().rows(), P | {'b': '#8D9599', 'c': '#C4CBCE', 'd': '#5A6266'})
     write_block('winding_crank_base', crank_base().rows(), P)
     write_block('winding_crank_metal', crank_metal().rows(), P)

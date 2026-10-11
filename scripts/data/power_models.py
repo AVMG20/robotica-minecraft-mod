@@ -177,8 +177,9 @@ for mk in (1, 2, 3, 4):
     loot(name)
 
 # ---------- tesla coils ----------
-# A torch-sized coil pointing up: steel foot, wound column, toroid cap and a full-bright tip. FACING is the direction it
-# points (away from the block it sits on); the blockstate turns the up model like a piston.
+# Every Tesla block is a metal holder with a pointy energy crystal. The coil: steel foot, wound column, a collar with four
+# claws of the tier metal, and a full-bright crystal turned 45 degrees. FACING is the direction it points (away from the
+# block it sits on); the blockstate turns the up model like a piston.
 TESLA_ROT = {'up': {}, 'down': {'x': 180}, 'north': {'x': 90}, 'south': {'x': 90, 'y': 180},
              'west': {'x': 90, 'y': 270}, 'east': {'x': 90, 'y': 90}}
 SIDES = ('north', 'south', 'west', 'east')
@@ -193,23 +194,64 @@ def box(frm, to, top_uv, side_uv, texture, down=True, up=True, **face_extra):
     return {'from': frm, 'to': to, 'faces': faces}
 
 
-for tier in range(1, 6):
-    name = f'tesla_coil_{tier}'
-    elements = [
-        box([4, 0, 4], [12, 2, 12], [4, 4, 12, 12], [4, 14, 12, 16], '#base'),
-        box([6, 2, 6], [10, 10, 10], [6, 6, 10, 10], [6, 4, 10, 12], '#winding', down=False, up=False),
-        box([7, 10, 7], [9, 11, 9], [7, 7, 9, 9], [7, 14, 9, 15], '#base', down=False, up=False),
-        box([5, 11, 5], [11, 13, 11], [5, 5, 11, 11], [5, 7, 11, 9], '#cap'),
-        dict(box([7, 13, 7], [9, 15, 9], [6, 6, 10, 10], [6, 6, 10, 10], '#tip', down=False, neoforge_data=GLOW), shade=False),
-    ]
+def cuboid(frm, to, texture, glow=False, turn=False, faces=SIDES + ('up', 'down')):
+    """A box with pixel-exact UVs taken from its own coordinates. turn: 45 degrees round its own vertical axis."""
+    out = {}
+    for d in faces:
+        if d in ('up', 'down'):
+            uv = [frm[0], frm[2], to[0], to[2]]
+        elif d in ('north', 'south'):
+            uv = [frm[0], 16 - to[1], to[0], 16 - frm[1]]
+        else:
+            uv = [frm[2], 16 - to[1], to[2], 16 - frm[1]]
+        out[d] = dict({'texture': texture, 'uv': uv}, **({'neoforge_data': GLOW} if glow else {}))
+    el = {'from': frm, 'to': to, 'faces': out}
+    if glow:
+        el['shade'] = False
+    if turn:
+        el['rotation'] = {'angle': 45, 'axis': 'y', 'origin': [8, frm[1], 8]}
+    return el
+
+
+def crystal(y, width, body):
+    """Pointy crystal on the centre line from y up: a body, a narrower shoulder and a one-pixel tip, all turned 45."""
+    shoulder = (width + 1) / 2
+    def c(w, y0, y1):
+        return cuboid([8 - w / 2, y0, 8 - w / 2], [8 + w / 2, y1, 8 + w / 2], '#crystal', glow=True, turn=True)
+    return [c(width, y, y + body), c(shoulder, y + body, y + body + 1), c(1, y + body + 1, y + body + 2)]
+
+
+def claws(y0, y1, inner):
+    """Four one-pixel claws round an inner x inner square."""
+    lo, hi = 8 - inner / 2, 8 + inner / 2
+    return [cuboid([x, y0, z], [x + 1, y1, z + 1], '#claw', faces=SIDES + ('up',))
+            for x, z in ((lo - 1, lo - 1), (hi, lo - 1), (lo - 1, hi), (hi, hi))]
+
+
+def tesla_model(name, tier, elements):
     elements[0]['faces']['down']['cullface'] = 'down'
     block_model(name, {
         'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
-        'textures': {'base': tex('tesla_coil_base'), 'winding': tex(f'{name}_winding'), 'cap': tex(f'{name}_cap'),
-                     'tip': tex('tesla_coil_tip'), 'particle': tex(f'{name}_winding')},
+        'textures': {'base': tex('tesla_coil_base'), 'rod': tex('tesla_rod'), 'winding': tex(f'tesla_coil_{tier}_winding'),
+                     'claw': tex(f'tesla_coil_{tier}_claw'), 'crystal': tex('tesla_crystal'),
+                     'particle': tex(f'tesla_coil_{tier}_winding')},
         'elements': elements,
     })
     blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
+    loot(name)
+
+
+# Coil: 15 high; the crystal spans 10..15 (TeslaCoilBlock.TIP 13.5 sits in its upper half).
+for tier in range(1, 6):
+    name = f'tesla_coil_{tier}'
+    tesla_model(name, tier, [
+        box([5, 0, 5], [11, 1, 11], [5, 5, 11, 11], [5, 15, 11, 16], '#base'),
+        cuboid([6.5, 1, 6.5], [9.5, 2, 9.5], '#base', faces=SIDES + ('up',)),
+        cuboid([6.5, 2, 6.5], [9.5, 9, 9.5], '#winding', faces=SIDES),
+        cuboid([5.5, 9, 5.5], [10.5, 10, 10.5], '#claw'),
+        *claws(10, 13, 3),
+        *crystal(10, 3, 3),
+    ])
     # The coil is 15 high: a little bigger than a block (0.625) in the slot, but no more, or it sticks out of the slot.
     # In the GUI view it spans about 12 px at 0.75, lifted 1 px so the tip and the foot sit evenly in the slot.
     write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
@@ -220,35 +262,26 @@ for tier in range(1, 6):
         'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
         'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 1, 0], 'scale': [0.5, 0.5, 0.5]},
     }})
-    loot(name)
 
-# Tesla Emitters: a stubby coil about torch height (9 high), same textures as the coil of its tier. The tip ball spans
-# 7..9 (TeslaEmitterBlock.EMITTER_TIP); the item is shown bigger than the coil so it still fills the slot.
+# Tesla Emitters: torch-sized Spark Rod. A small steel socket, a thin rod, a collar with claws of the tier metal and a
+# crystal from 6 to 11 (TeslaEmitterBlock.EMITTER_TIP 9.5). The item is shown bigger than the coil so it fills the slot.
 for tier in range(1, 6):
-    name, coil = f'tesla_emitter_{tier}', f'tesla_coil_{tier}'
-    elements = [
-        box([5, 0, 5], [11, 1, 11], [5, 5, 11, 11], [5, 15, 11, 16], '#base'),
-        box([7, 1, 7], [9, 6, 9], [7, 5, 9, 10], [7, 5, 9, 10], '#winding', down=False, up=False),
-        box([6, 6, 6], [10, 7, 10], [6, 6, 10, 10], [6, 7, 10, 8], '#cap'),
-        dict(box([7, 7, 7], [9, 9, 9], [6, 6, 10, 10], [6, 6, 10, 10], '#tip', down=False, neoforge_data=GLOW), shade=False),
-    ]
-    elements[0]['faces']['down']['cullface'] = 'down'
-    block_model(name, {
-        'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
-        'textures': {'base': tex('tesla_coil_base'), 'winding': tex(f'{coil}_winding'), 'cap': tex(f'{coil}_cap'),
-                     'tip': tex('tesla_coil_tip'), 'particle': tex(f'{coil}_winding')},
-        'elements': elements,
-    })
-    blockstate(name, {'variants': {f'facing={f}': dict({'model': f'robotica:block/{name}'}, **r) for f, r in TESLA_ROT.items()}})
+    name = f'tesla_emitter_{tier}'
+    tesla_model(name, tier, [
+        cuboid([6.5, 0, 6.5], [9.5, 1, 9.5], '#base'),
+        cuboid([7.5, 1, 7.5], [8.5, 5, 8.5], '#rod', faces=SIDES),
+        cuboid([6.5, 5, 6.5], [9.5, 6, 9.5], '#claw'),
+        *claws(6, 8, 2),
+        *crystal(6, 2, 3),
+    ])
     write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}', 'display': {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, 3, 0], 'scale': [1.0, 1.0, 1.0]},
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, 2.5, 0], 'scale': [1.0, 1.0, 1.0]},
         'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
         'fixed': {'rotation': [0, 0, 0], 'translation': [0, 2, 0], 'scale': [0.8, 0.8, 0.8]},
         'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 3, 1], 'scale': [0.5, 0.5, 0.5]},
         'firstperson_righthand': {'rotation': [0, 45, 0], 'translation': [0, 3, 0], 'scale': [0.6, 0.6, 0.6]},
         'firstperson_lefthand': {'rotation': [0, 225, 0], 'translation': [0, 3, 0], 'scale': [0.6, 0.6, 0.6]},
     }})
-    loot(name)
 
 # ---------- winding crank ----------
 crank_tex = {'base': tex('winding_crank_base'), 'metal': tex('winding_crank_metal'), 'spring': tex('winding_crank_spring'),
