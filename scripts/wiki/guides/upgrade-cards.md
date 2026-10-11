@@ -6,7 +6,7 @@ summary: How cards stack, the Mk rule, and what speed really costs.
 ---
 Right-click a machine with a card, or put it in an upgrade slot. One kind per slot; stackable kinds stack in that slot, every card one step.
 
-{{items upgrade_speed upgrade_efficiency upgrade_range upgrade_fortune upgrade_silk upgrade_growth upgrade_void upgrade_height upgrade_carry}}
+{{items upgrade_speed upgrade_efficiency upgrade_range upgrade_fortune upgrade_silk upgrade_growth upgrade_void upgrade_height}}
 
 ## The Mk rule
 

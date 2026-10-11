@@ -15,7 +15,6 @@
   "jei.robotica.info.upgrade.growth": "+50% crop and sapling growth per card.",
   "jei.robotica.info.upgrade.void": "Deletes junk (cobblestone, dirt, gravel) and outputs that don't fit.",
   "jei.robotica.info.upgrade.height": "Architect Table: every card makes the buildings one block taller, up to %2$s high. Built buildings follow.",
-  "jei.robotica.info.upgrade.carry": "Right-click a Storage Terminal with it: the terminal keeps its items when picked up.",
   "jei.robotica.info.upgrade.stackable": "Stacks in one upgrade slot: each card adds one step, up to %s.",
   "jei.robotica.info.upgrade.single": "One card per machine.",
   "jei.robotica.info.upgrade.rules": "Right-click a machine with the card, or put it in an upgrade slot. Machines with a Mk have Mk + 1 slots.",

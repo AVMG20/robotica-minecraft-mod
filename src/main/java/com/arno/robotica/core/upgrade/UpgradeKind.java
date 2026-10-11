@@ -23,9 +23,7 @@ public enum UpgradeKind {
     /** Deletes junk (tag robotica:voidable) or outputs that do not fit. Single card. */
     VOID(1, 1),
     /** Architect Table: one block taller buildings per card (6 cards: 12 high). */
-    HEIGHT(6, 1),
-    /** Storage Terminal: keeps everything inside when picked up. Single card, installed by right-click. */
-    CARRY(1, 1);
+    HEIGHT(6, 1);
 
     /** Most cards of this kind any machine accepts in its slot. 1 = not stackable. */
     public final int maxStack;

@@ -16,7 +16,11 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -379,28 +383,85 @@ public class StorageGameTests {
         helper.succeed();
     }
 
-    /** With a Carry card the terminal drops as one item that holds everything; without it the items spill out. */
+    /** A broken terminal drops as one item that holds everything; placing it again brings it all back. */
     @GameTest(template = "empty", timeoutTicks = 40)
-    public static void carryCardKeepsItemsWhenBroken(GameTestHelper helper) {
-        StorageTerminalBlockEntity be = place(helper);
+    public static void terminalKeepsItemsWhenBroken(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = placeUnpowered(helper);
+        helper.assertTrue(!be.collectComponents().has(CoreComponents.CONTENTS.get()), "an empty terminal drops plain (it stacks)");
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
+        be.updatePowerNow();
         be.insert(new ItemStack(Items.DIAMOND, 40), false);
-        helper.assertTrue(!be.collectComponents().has(CoreComponents.CONTENTS.get()), "no Carry card: nothing rides along");
-        helper.assertTrue(be.installCarry() && !be.installCarry(), "one Carry card goes in, a second is refused");
+        be.upgrades.setStackInSlot(0, new ItemStack(StorageContent.EXPANSION_MK1.get()));
+        be.craft.set(0, new ItemStack(Items.OAK_PLANKS, 3));
 
         BlockPos abs = helper.absolutePos(POS);
         helper.getLevel().destroyBlock(abs, true);
-        AABB box = new AABB(abs).inflate(3);
-        List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, box);
-        helper.assertTrue(drops.stream().noneMatch(e -> e.getItem().is(Items.DIAMOND)), "the diamonds must not spill out");
-        ItemStack terminal = drops.stream().map(ItemEntity::getItem).filter(s -> s.is(StorageContent.TERMINAL_ITEM.get())).findFirst().orElse(ItemStack.EMPTY);
+        ItemStack terminal = onlyDrop(helper, abs);
         helper.assertTrue(terminal.has(CoreComponents.CONTENTS.get()), "the dropped terminal carries its contents");
-        drops.forEach(ItemEntity::discard);
 
         StorageTerminalBlockEntity again = placeUnpowered(helper);
         again.applyComponentsFromItemStack(terminal);
-        helper.assertTrue(total(again, Items.DIAMOND) == 40 && again.hasCarry(), "placed again: diamonds and the card are back");
-        helper.assertTrue(!again.insert(terminal.copy(), true).isEmpty(), "a carried terminal never goes into a terminal");
+        helper.assertTrue(total(again, Items.DIAMOND) == 40, "placed again: the diamonds are back");
+        helper.assertTrue(again.upgrades.getStackInSlot(0).is(StorageContent.EXPANSION_MK1.get()), "and the expansion");
+        helper.assertTrue(again.craft.get(0).is(Items.OAK_PLANKS) && again.craft.get(0).getCount() == 3, "and the crafting grid");
+        helper.assertTrue(again.energy.getEnergyStored() > 0, "and the FE");
+        again.updatePowerNow();
+        helper.assertTrue(again.isPowered() && !again.insert(terminal.copy(), true).isEmpty(), "a filled terminal never goes into a terminal");
         helper.succeed();
+    }
+
+    /** Creative breaking hands out the filled terminal once (no loot there), and nothing for an empty one. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void creativeBreakKeepsItems(GameTestHelper helper) {
+        BlockPos abs = helper.absolutePos(POS);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.setGameMode(GameType.CREATIVE);
+        placeUnpowered(helper);
+        player.gameMode.destroyBlock(abs);
+        helper.assertTrue(helper.getLevel().getBlockState(abs).isAir(), "broken");
+        helper.assertTrue(drops(helper, abs).isEmpty(), "an empty terminal drops nothing in creative");
+
+        place(helper).insert(new ItemStack(Items.DIAMOND, 40), false);
+        player.gameMode.destroyBlock(abs);
+        ItemStack terminal = onlyDrop(helper, abs);
+        StorageTerminalBlockEntity again = placeUnpowered(helper);
+        again.applyComponentsFromItemStack(terminal);
+        helper.assertTrue(total(again, Items.DIAMOND) == 40, "placed again: the diamonds are back");
+        helper.succeed();
+    }
+
+    /** An explosion drops the terminal with everything in it, every time. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void explosionKeepsItems(GameTestHelper helper) {
+        StorageTerminalBlockEntity be = place(helper);
+        be.insert(new ItemStack(Items.DIAMOND, 40), false);
+        BlockPos abs = helper.absolutePos(POS);
+        LootParams.Builder loot = new LootParams.Builder(helper.getLevel())
+                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(abs))
+                .withParameter(LootContextParams.TOOL, ItemStack.EMPTY)
+                .withParameter(LootContextParams.EXPLOSION_RADIUS, 4.0F)
+                .withOptionalParameter(LootContextParams.BLOCK_ENTITY, be);
+        for (int i = 0; i < 20; i++) {
+            List<ItemStack> drops = helper.getLevel().getBlockState(abs).getDrops(loot);
+            helper.assertTrue(drops.size() == 1 && drops.get(0).has(CoreComponents.CONTENTS.get()),
+                    "one terminal with its contents, got " + drops);
+        }
+        helper.succeed();
+    }
+
+    private static List<ItemStack> drops(GameTestHelper helper, BlockPos abs) {
+        List<ItemEntity> entities = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(abs).inflate(3));
+        List<ItemStack> out = entities.stream().map(e -> e.getItem().copy()).toList();
+        entities.forEach(ItemEntity::discard);
+        return out;
+    }
+
+    /** The one item a broken terminal dropped: the terminal itself, no spilled items. */
+    private static ItemStack onlyDrop(GameTestHelper helper, BlockPos abs) {
+        List<ItemStack> drops = drops(helper, abs);
+        helper.assertTrue(drops.size() == 1 && drops.get(0).is(StorageContent.TERMINAL_ITEM.get()),
+                "only the terminal drops, got " + drops);
+        return drops.get(0);
     }
 
     /** Filled shulker boxes and bundles stay out of the terminal and its grid; empty ones go in. */

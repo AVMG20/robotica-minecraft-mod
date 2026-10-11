@@ -54,7 +54,7 @@ write(ASSETS / 'models/item/storage_terminal.json', {'parent': 'robotica:block/s
 write(DATA / 'loot_table/blocks/storage_terminal.json', {
     'type': 'minecraft:block',
     'pools': [{'rolls': 1.0, 'bonus_rolls': 0.0,
-               # with a Carry card the items travel inside the terminal, so it always drops (no explosion roll)
+               # the items travel inside the terminal, so it always drops (no explosion roll)
                'entries': [{'type': 'minecraft:item', 'name': 'robotica:storage_terminal',
                             'functions': [{'function': 'minecraft:copy_components', 'source': 'block_entity',
                                            'include': ['robotica:contents']}]}]}],

@@ -20,7 +20,7 @@ public final class CoreComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> ENERGY =
             REGISTER.registerComponentType("energy", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
-    /** Inventories a utility block keeps when picked up (Architect Table, Storage Terminal with a Carry card). */
+    /** Inventories a utility block keeps when picked up (Architect Table, Storage Terminal). */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> CONTENTS =
             REGISTER.registerComponentType("contents", b -> b.persistent(CompoundTag.CODEC).networkSynchronized(ByteBufCodecs.COMPOUND_TAG));
 }

@@ -66,7 +66,6 @@ CARDS = {
     'efficiency': (1, GOLD, GOLD),
     'growth': (1, '#c:storage_blocks/bone_meal', '#c:storage_blocks/bone_meal'),
     'void': (1, '#c:crops/cactus', '#c:obsidians'),
-    'carry': (1, '#c:chests/wooden', '#c:leathers'),
     'range': (2, '#c:ender_pearls', '#c:gems/lapis'),
     'fortune': (2, '#c:storage_blocks/lapis', DIAMOND),
     'silk': (2, '#c:slime_balls', '#c:gems/emerald'),
