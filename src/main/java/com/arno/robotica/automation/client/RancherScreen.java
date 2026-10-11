@@ -13,10 +13,11 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/** Rancher GUI: energy bar and battery, herd size with -/+ (Shift: 8), shear and milk toggles, adult count and status. */
+/** Rancher GUI: energy bar and battery, herd size with -/+ (Shift: 8), adult count, shear, milk and overbreed toggles, status. */
 public class RancherScreen extends MachineScreen<RancherMenu> {
     private IconButton shear;
     private IconButton milk;
+    private IconButton overbreed;
 
     public RancherScreen(RancherMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -31,6 +32,7 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
                 b -> press(Screen.hasShiftDown() ? RancherMenu.BTN_PLUS_8 : RancherMenu.BTN_PLUS)));
         shear = addRenderableWidget(new IconButton(leftPos + 80, topPos + 40, 20, new ItemStack(Items.SHEARS), true, b -> press(RancherMenu.BTN_SHEAR)));
         milk = addRenderableWidget(new IconButton(leftPos + 102, topPos + 40, 20, new ItemStack(Items.MILK_BUCKET), true, b -> press(RancherMenu.BTN_MILK)));
+        overbreed = addRenderableWidget(new IconButton(leftPos + 124, topPos + 40, 20, new ItemStack(Items.WHEAT), true, b -> press(RancherMenu.BTN_OVERBREED)));
         update();
     }
 
@@ -43,6 +45,10 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
         milk.setOn(menu.milk());
         shear.hint(Component.translatable(menu.shear() ? "gui.robotica.rancher.shear_on" : "gui.robotica.rancher.shear_off"));
         milk.hint(Component.translatable(menu.milk() ? "gui.robotica.rancher.milk_on" : "gui.robotica.rancher.milk_off"));
+        overbreed.active = menu.canOverbreed();
+        overbreed.setOn(menu.overbreed());
+        overbreed.hint(Component.translatable(!menu.canOverbreed() ? "gui.robotica.rancher.overbreed_locked"
+                : menu.overbreed() ? "gui.robotica.rancher.overbreed_on" : "gui.robotica.rancher.overbreed_off"));
     }
 
     @Override
@@ -74,7 +80,7 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
         drawFitted(g, font, Component.literal(Integer.toString(menu.target())), x + 112, y + 22, 28, 0xFFFFFFFF, 0, true, 1.0F);
         addTooltip(x + 97, y + 17, 30, 18, Component.translatable("gui.robotica.rancher.target", menu.target()),
                 Component.translatable("gui.robotica.rancher.shift_step"));
-        drawLabelRight(g, Component.translatable("gui.robotica.rancher.adults", menu.adults()), x + imageWidth - 8, y + 46, 44);
+        drawLabel(g, Component.translatable("gui.robotica.rancher.adults", menu.adults()), x + 26, y + 46, 52);
         Rancher.Status status = menu.status();
         Tone tone = switch (status) {
             case WORKING -> Tone.GOOD;

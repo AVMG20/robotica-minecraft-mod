@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
-/** Rancher GUI: battery slot, population target (-/+), shear and milk toggles, status. Buttons use the vanilla menu button channel. */
+/** Rancher GUI: battery slot, population target (-/+), shear, milk and overbreed (Mk2) toggles, status. Buttons use the vanilla menu button channel. */
 public class RancherMenu extends MachineMenu {
     public static final int BTN_MINUS = 0;
     public static final int BTN_PLUS = 1;
@@ -15,6 +15,7 @@ public class RancherMenu extends MachineMenu {
     public static final int BTN_MILK = 3;
     public static final int BTN_MINUS_8 = 4;
     public static final int BTN_PLUS_8 = 5;
+    public static final int BTN_OVERBREED = 6;
 
     public final Rancher rancher;
     private final int idxEnergy;
@@ -42,7 +43,8 @@ public class RancherMenu extends MachineMenu {
         idxEnergy = track(rancher::getEnergy);
         idxCapacity = track(rancher::getEnergyCapacity);
         idxTarget = track(rancher::target);
-        idxFlags = track(() -> (rancher.shearOn() ? 1 : 0) | (rancher.milkOn() ? 2 : 0));
+        idxFlags = track(() -> (rancher.shearOn() ? 1 : 0) | (rancher.milkOn() ? 2 : 0) | (rancher.overbreedOn() ? 4 : 0)
+                | (rancher.tier() >= 2 ? 8 : 0));
         idxStatus = track(() -> rancher.status().ordinal());
         idxAdults = track(rancher::lastAdults);
     }
@@ -67,6 +69,15 @@ public class RancherMenu extends MachineMenu {
         return (synced(idxFlags) & 2) != 0;
     }
 
+    public boolean overbreed() {
+        return (synced(idxFlags) & 4) != 0;
+    }
+
+    /** Overbreed can be turned on (Mk2). */
+    public boolean canOverbreed() {
+        return (synced(idxFlags) & 8) != 0;
+    }
+
     public Rancher.Status status() {
         return Rancher.Status.byId(synced(idxStatus));
     }
@@ -85,6 +96,10 @@ public class RancherMenu extends MachineMenu {
             case BTN_PLUS_8 -> rancher.setTarget(rancher.target() + 8);
             case BTN_SHEAR -> rancher.setShear(!rancher.shearOn());
             case BTN_MILK -> rancher.setMilk(!rancher.milkOn());
+            case BTN_OVERBREED -> {
+                if (rancher.tier() < 2) return false;
+                rancher.setOverbreed(!rancher.overbreedOn());
+            }
             default -> {
                 return false;
             }

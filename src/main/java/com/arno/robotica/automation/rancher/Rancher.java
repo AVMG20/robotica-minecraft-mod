@@ -70,8 +70,9 @@ import java.util.UUID;
 /**
  * Rancher: a walking robot that runs a passive-mob farm around its home. It keeps every species of {@link Animal} in its
  * area at an even share of one population target (breeding with feed from storage, culling extra adults), shears sheep
- * and milks cows, and puts the loot into an inventory near home. Server side, throttled: one entity scan every
- * {@link #scanInterval()} ticks, one action at a time.
+ * and milks cows, and puts the loot into an inventory near home. A Mk2 can overbreed: breed past the share so there is
+ * always a grown adult to cull. Server side, throttled: one entity scan every {@link #scanInterval()} ticks, one action
+ * at a time.
  */
 public class Rancher extends PathfinderMob {
     public enum Status {
@@ -137,6 +138,7 @@ public class Rancher extends PathfinderMob {
     private int target = DEFAULT_TARGET;
     private boolean shear = true;
     private boolean milk = true;
+    private boolean overbreed;
     private boolean homeSet;
 
     @Nullable
@@ -327,6 +329,16 @@ public class Rancher extends PathfinderMob {
         scanIn = Math.min(scanIn, 5);
     }
 
+    /** Overbreed is Mk2 only; a Mk1 keeps the setting but ignores it. */
+    public boolean overbreedOn() {
+        return overbreed && tier() >= 2;
+    }
+
+    public void setOverbreed(boolean on) {
+        overbreed = on;
+        scanIn = Math.min(scanIn, 5);
+    }
+
     /** Adults of every species in the area at the last scan. */
     public int lastAdults() {
         return lastAdults;
@@ -508,6 +520,7 @@ public class Rancher extends PathfinderMob {
         tag.putInt("Target", target);
         tag.putBoolean("Shear", shear);
         tag.putBoolean("Milk", milk);
+        tag.putBoolean("Overbreed", overbreed);
         tag.put("Battery", battery.serializeNBT(registries));
     }
 
@@ -515,6 +528,7 @@ public class Rancher extends PathfinderMob {
         target = tag.contains("Target") ? Mth.clamp(tag.getInt("Target"), MIN_TARGET, MAX_TARGET) : DEFAULT_TARGET;
         shear = !tag.contains("Shear") || tag.getBoolean("Shear");
         milk = !tag.contains("Milk") || tag.getBoolean("Milk");
+        overbreed = tag.getBoolean("Overbreed");
         if (tag.contains("Battery")) battery.deserializeNBT(registries, tag.getCompound("Battery"));
     }
 
@@ -1031,6 +1045,7 @@ public class Rancher extends PathfinderMob {
             if (isHerd(list)) herds++;
         }
         int[] herdShares = shares(target, Math.max(1, herds));
+        boolean overbreeding = overbreedOn();
         boolean room = hasEmptySlot(store);
         boolean wantOutput = !dropsFit;
         boolean missingFeed = false;
@@ -1077,7 +1092,9 @@ public class Rancher extends PathfinderMob {
                     else wantOutput = true;
                 }
             }
-            if (feedJob == null && adults.size() + babies < share) {
+            // overbreeding a culled species: up to one baby per adult on top of the share, culled once grown
+            boolean extra = overbreeding && !shearKind && !milkKind;
+            if (feedJob == null && (extra ? adults.size() <= share && babies < share : adults.size() + babies < share)) {
                 List<Animal> ready = new ArrayList<>();
                 for (Animal a : adults) {
                     if (!skipped(a, now) && canBreedNow(a)) ready.add(a);
