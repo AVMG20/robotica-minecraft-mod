@@ -67,7 +67,6 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
         drawLabelRight(g, Component.translatable("gui.robotica.tesla_range", range), x + 168, y + 20, 56);
         int rate = menu.rate();
         drawProgress(g, x + 8, y + 31, 160, 8, menu.maxIo() <= 0 ? 0 : Math.min(1F, (float) rate / menu.maxIo()));
-        addTooltip(x + 8, y + 31, 160, 8, Component.translatable("gui.robotica.tesla_rate_tip"));
 
         drawLabel(g, Component.translatable("gui.robotica.tesla_sending", Fmt.compact(rate)), x + 8, y + 44, 110);
         drawLabelRight(g, Component.translatable("gui.robotica.tesla_max", Fmt.compact(menu.maxIo())), x + 168, y + 44, 56);
@@ -85,6 +84,5 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
             status = Component.translatable(rate > 0 ? "gui.robotica.tesla_relay" : menu.flag() ? "gui.robotica.tesla_passing" : "gui.robotica.tesla_waiting");
         }
         drawStatus(g, status, x + 8, y + 58, 160, 1, tone);
-        addTooltip(x + 8, y + 56, 160, 12, Component.translatable("gui.robotica.tesla_status_tip"));
     }
 }
