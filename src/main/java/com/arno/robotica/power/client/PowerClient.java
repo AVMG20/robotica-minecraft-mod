@@ -34,6 +34,8 @@ public final class PowerClient {
         };
         modBus.addListener(PowerClient::registerRecipeCategories);
         modBus.addListener(PowerClient::registerRenderers);
+        modBus.addListener(TeslaItemRenderer::registerExtensions);
+        modBus.addListener(TeslaItemRenderer::wrapModels);
         modBus.addListener(PowerClient::itemProperties);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, TeslaCoilRenderer::onClientTick);
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC, "robotica-power-client.toml");
