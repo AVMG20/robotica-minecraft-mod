@@ -25,7 +25,7 @@ import org.joml.Quaternionf;
 import java.util.List;
 
 /**
- * Tesla Coil and Tesla Emitter items: the platform from the block model plus the floating crystal (and a coil's shards)
+ * Tesla Relay and Tesla Emitter items: the platform from the block model plus the floating crystal (and a coil's shards)
  * that {@link TeslaCoilRenderer} draws in the world, hovering and turning the same way. The item models keep their
  * JSON transforms; they are only marked as custom rendered so this renderer runs.
  */

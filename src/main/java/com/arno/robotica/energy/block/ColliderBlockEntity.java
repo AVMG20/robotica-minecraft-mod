@@ -299,7 +299,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         effects(level, now);
     }
 
-    /** Sends FE into every neighbour that takes it (cables, Tesla Coils, machines); segments take none. */
+    /** Sends FE into every neighbour that takes it (cables, Tesla Emitters, machines); segments take none. */
     private void pushOut(ServerLevel level, long now) {
         for (Direction dir : Direction.values()) {
             int left = energy.getEnergyStored();

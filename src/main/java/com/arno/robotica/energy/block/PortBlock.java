@@ -25,7 +25,7 @@ import java.util.List;
 
 /**
  * A port in a multiblock wall. It has no logic of its own: its block entity forwards the standard FE / item
- * capabilities to the controller that formed it, so cables, pipes and Tesla Coils of any mod work on it.
+ * capabilities to the controller that formed it, so cables, pipes and Tesla blocks of any mod work on it.
  * Right-click opens the controller's GUI. A Bank Port switches between input and output with sneak + right-click.
  */
 public class PortBlock extends Block implements EntityBlock {

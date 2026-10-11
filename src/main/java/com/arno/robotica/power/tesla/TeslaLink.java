@@ -7,7 +7,7 @@ import net.minecraft.nbt.NbtUtils;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * One link of a Tesla Coil. Either another coil ({@code coil}, no face) or an FE block, fed through {@code face}: the
+ * One link of a Tesla Relay or Emitter. Either a relay ({@code coil}, no face) or an FE block, fed through {@code face}: the
  * face the player clicked, which is the side the energy enters (machines that only take power on some sides).
  */
 public record TeslaLink(BlockPos pos, @Nullable Direction face, boolean coil) {

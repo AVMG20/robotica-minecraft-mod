@@ -6,32 +6,41 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * One Tesla network: the relays joined by relay links (either direction counts) and the emitters linked into them.
  * <p>
- * The first emitter that ticks after the layout changed (a link, or a relay or emitter loading or going away, see
- * {@link #changed()}) walks the loaded blocks once and caches the network. Every tick the network then runs once, as one
- * pool: the machines say what they take, the emitters what their sources give, and the smaller of the two moves. Each
- * emitter gives a fair share of it and each relay hands out a fair share, both up to their tier rate; inside a relay its
- * machines get fair shares again. Energy is taken from the sources before it is handed out, so a source that gives less
- * than it promised never creates energy. Nothing is lost on the way. A run allocates nothing; chunks are never loaded.
+ * The first emitter that ticks without a valid network walks the loaded blocks once and caches the network on every
+ * member. A link change or a member going away marks only that network dead ({@link #invalidate}); a network that met
+ * an unloaded link while walking is also rebuilt after any Tesla block loads.
+ * <p>
+ * Every tick the network runs once, as one pool: the machines say what they take, the emitters what their sources give,
+ * and the smaller of the two moves. Each emitter gives a fair share of it and each relay hands out a fair share, both up
+ * to their tier rate; inside a relay its machines get fair shares again. A machine linked from two relays is fed by the
+ * first only. Energy is taken from the sources before it is handed out, so a source that gives less than it promised
+ * never creates energy. Nothing is lost on the way. A run allocates nothing; chunks are never loaded.
  */
 final class TeslaGrid {
-    /** Bumped on every layout change; a network built at another version is rebuilt before it runs. Server thread only. */
-    private static int version;
+    /** Bumped whenever a Tesla block loads; networks with gaps are rebuilt after it. Server thread only. */
+    private static int loadVersion;
     private static int buildStamp;
 
-    private final int builtAt;
+    /** Built when this load version was current; whether the walk met an unloaded link; marked by {@link #invalidate}. */
+    private final int builtAtLoad;
+    private final boolean gaps;
+    private boolean dead;
     private final TeslaCoilBlockEntity[] relays, emitters;
     /** Per relay what its machines take and what it handed out; per emitter what it can give and what it gave. */
     private final int[] relayWant, relayGive, supply, take;
     private long lastRun = Long.MIN_VALUE;
     private int rotation;
 
-    private TeslaGrid(List<TeslaCoilBlockEntity> relays, List<TeslaCoilBlockEntity> emitters) {
-        this.builtAt = version;
+    private TeslaGrid(List<TeslaCoilBlockEntity> relays, List<TeslaCoilBlockEntity> emitters, boolean gaps) {
+        this.builtAtLoad = loadVersion;
+        this.gaps = gaps;
         this.relays = relays.toArray(new TeslaCoilBlockEntity[0]);
         this.emitters = emitters.toArray(new TeslaCoilBlockEntity[0]);
         this.relayWant = new int[this.relays.length];
@@ -40,15 +49,24 @@ final class TeslaGrid {
         this.take = new int[this.emitters.length];
     }
 
-    /** The layout of some network changed: every cached network is rebuilt before its next run. */
-    static void changed() {
-        version++;
+    /** The links around {@code coil} changed or it went away: its network is rebuilt before the next run. */
+    static void invalidate(TeslaCoilBlockEntity coil) {
+        if (coil.grid != null) coil.grid.dead = true;
+    }
+
+    /** A Tesla block loaded: networks that met an unloaded link are rebuilt, it may be one of theirs. */
+    static void loaded() {
+        loadVersion++;
+    }
+
+    private boolean stale() {
+        return dead || gaps && builtAtLoad != loadVersion;
     }
 
     /** Runs the network of {@code emitter} for tick {@code now}, unless another of its emitters already did. */
     static void tick(TeslaCoilBlockEntity emitter, long now) {
         TeslaGrid grid = emitter.grid;
-        if (grid == null || grid.builtAt != version) grid = build(emitter);
+        if (grid == null || grid.stale()) grid = build(emitter);
         if (grid == null || grid.lastRun == now) return;
         grid.lastRun = now;
         grid.run(now);
@@ -66,7 +84,7 @@ final class TeslaGrid {
         if (wanted <= 0) return;
         int got = Math.max(0, source.extractEnergy(wanted, false));
         int sent = got <= 0 ? 0 : Math.max(0, target.receiveEnergy(got, false));
-        if (sent < got) source.receiveEnergy(got - sent, false);
+        if (sent < got) giveBack(emitter, got - sent);
         emitter.recordSent(sent);
         emitter.recordLinkSent(0, sent);
     }
@@ -93,6 +111,7 @@ final class TeslaGrid {
         if (++buildStamp == 0) buildStamp = 1;
         int stamp = buildStamp;
         first.addBacklink(emitter.getBlockPos());
+        boolean gaps = false;
         List<TeslaCoilBlockEntity> relays = new ArrayList<>(), emitters = new ArrayList<>();
         emitter.buildMark = stamp;
         emitters.add(emitter);
@@ -102,6 +121,8 @@ final class TeslaGrid {
             TeslaCoilBlockEntity relay = relays.get(at);
             BlockPos pos = relay.getBlockPos();
             for (int i = 0; i < relay.linkCount(); i++) {
+                TeslaLink link = relay.link(i);
+                if (link.coil() && !level.isLoaded(link.pos())) gaps = true;
                 TeslaCoilBlockEntity next = relayAt(level, relay, i);
                 if (next == null) continue;
                 next.addBacklink(pos);
@@ -113,7 +134,10 @@ final class TeslaGrid {
             List<BlockPos> back = relay.backlinks();
             for (int i = back.size() - 1; i >= 0; i--) {
                 BlockPos from = back.get(i);
-                if (!level.isLoaded(from)) continue;
+                if (!level.isLoaded(from)) {
+                    gaps = true;
+                    continue;
+                }
                 int k;
                 if (!(level.getBlockEntity(from) instanceof TeslaCoilBlockEntity other) || other.isRemoved()
                         || (k = other.indexOf(pos)) < 0 || !other.link(k).coil() || !TeslaNetwork.inRange(other, pos)) {
@@ -125,7 +149,18 @@ final class TeslaGrid {
                 (other.isEmitter() ? emitters : relays).add(other);
             }
         }
-        TeslaGrid grid = new TeslaGrid(relays, emitters);
+        TeslaGrid grid = new TeslaGrid(relays, emitters, gaps);
+        // Each machine is fed by the first relay that links it, so two relays never count the same free space twice.
+        Set<BlockPos> machines = new HashSet<>();
+        for (TeslaCoilBlockEntity relay : grid.relays) {
+            for (int i = 0; i < Math.min(relay.linkCount(), relay.linkShared.length); i++) {
+                TeslaLink link = relay.link(i);
+                relay.linkShared[i] = !link.coil() && (!TeslaNetwork.inRange(relay, link.pos()) || !machines.add(link.pos()));
+            }
+        }
+        // A rebuild in the middle of a tick must not run that tick again.
+        for (TeslaCoilBlockEntity member : relays) if (member.grid != null) grid.lastRun = Math.max(grid.lastRun, member.grid.lastRun);
+        for (TeslaCoilBlockEntity member : emitters) if (member.grid != null) grid.lastRun = Math.max(grid.lastRun, member.grid.lastRun);
         for (TeslaCoilBlockEntity relay : grid.relays) relay.grid = grid;
         for (TeslaCoilBlockEntity e : grid.emitters) e.grid = grid;
         return grid;
@@ -174,8 +209,7 @@ final class TeslaGrid {
             left -= sent;
         }
         for (int k = 0; k < emitters.length && left > 0; k++) {
-            IEnergyStorage source = emitters[k].source();
-            if (source != null) left -= Math.max(0, source.receiveEnergy((int) Math.min(left, take[k]), false));
+            if (take[k] > 0) left -= giveBack(emitters[k], (int) Math.min(left, take[k]));
         }
         for (int j = 0; j < relays.length; j++) {
             TeslaCoilBlockEntity relay = relays[j];
@@ -196,7 +230,7 @@ final class TeslaGrid {
         for (int i = 0; i < n; i++) {
             TeslaLink link = relay.link(i);
             int want = 0;
-            if (level != null && !link.coil() && TeslaNetwork.inRange(relay, link.pos()) && level.isLoaded(link.pos())) {
+            if (level != null && !link.coil() && !relay.linkShared[i] && TeslaNetwork.inRange(relay, link.pos()) && level.isLoaded(link.pos())) {
                 IEnergyStorage target = relay.targetCapability(i);
                 if (target != null && target.canReceive()) want = Math.max(0, Math.min(cap, target.receiveEnergy(cap, true)));
             }
@@ -219,11 +253,18 @@ final class TeslaGrid {
 
     /** Offers up to {@code amount} more to the machines of {@code relay} that wanted energy this tick. Returns what went in. */
     private static int topUp(TeslaCoilBlockEntity relay, int amount) {
-        int n = Math.min(relay.linkCount(), relay.linkDemand.length), sent = 0;
+        int n = Math.min(relay.linkCount(), relay.linkDemand.length), sent = 0, start = relay.nextRotation(n);
         for (int i = 0; i < n && sent < amount; i++) {
-            if (relay.linkDemand[i] > 0) sent += deliver(relay, i, amount - sent);
+            int k = (start + i) % n;
+            if (relay.linkDemand[k] > 0) sent += deliver(relay, k, amount - sent);
         }
         return sent;
+    }
+
+    /** Puts {@code amount} back into the block under {@code emitter} (its own buffer, not a side). Returns what went back. */
+    private static int giveBack(TeslaCoilBlockEntity emitter, int amount) {
+        IEnergyStorage back = emitter.sourceBuffer();
+        return back == null ? 0 : Math.max(0, back.receiveEnergy(amount, false));
     }
 
     private static int deliver(TeslaCoilBlockEntity relay, int index, int amount) {

@@ -75,6 +75,10 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     TeslaGrid grid;
     int buildMark;
     final int[] linkDemand = new int[MAX_LINKS], linkGive = new int[MAX_LINKS];
+    /** Server, {@link TeslaGrid}: machine link {@code i} is fed by an earlier relay of the same network. */
+    final boolean[] linkShared = new boolean[MAX_LINKS];
+    /** Server: the first tick after loading has not run yet. */
+    private boolean fresh = true;
     private long nextHum;
 
     /** Client: area the arcs cover, for frustum culling. */
@@ -216,7 +220,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
 
     private void linksChanged() {
         resetLinkFlow();
-        TeslaGrid.changed();
+        TeslaGrid.invalidate(this);
         setChangedAndSync();
     }
 
@@ -228,11 +232,12 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     boolean addBacklink(BlockPos from) {
         if (backlinks.contains(from)) return false;
         backlinks.add(from.immutable());
+        TeslaGrid.invalidate(this);
         return true;
     }
 
     void removeBacklink(BlockPos from) {
-        if (backlinks.remove(from)) TeslaGrid.changed();
+        if (backlinks.remove(from)) TeslaGrid.invalidate(this);
     }
 
     /** Relay: notes that its network moved energy this tick. */
@@ -273,6 +278,12 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         if (sided != null && sided.canExtract()) return sided;
         IEnergyStorage any = sourceAny.getCapability();
         return any != null && any.canExtract() ? any : null;
+    }
+
+    /** The support block's own FE view (no side), to hand back what could not be delivered. */
+    @Nullable
+    IEnergyStorage sourceBuffer() {
+        return source() == null || sourceAny == null ? null : sourceAny.getCapability();
     }
 
     @Override
@@ -317,8 +328,8 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
                 links.remove(i);
                 caches.remove(i);
                 changed = true;
-            } else if (relay != null && relay.addBacklink(worldPosition)) {
-                TeslaGrid.changed();
+            } else if (relay != null && TeslaNetwork.inRange(this, link.pos())) {
+                relay.addBacklink(worldPosition);
             }
         }
         if (changed) linksChanged();
@@ -327,18 +338,23 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level != null && !level.isClientSide) TeslaGrid.changed();
+        if (level != null && !level.isClientSide) TeslaGrid.loaded();
     }
 
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (level != null && !level.isClientSide) TeslaGrid.changed();
+        if (level != null && !level.isClientSide) TeslaGrid.invalidate(this);
     }
 
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         long now = level.getGameTime();
+        if (fresh) {
+            // Tell the relays this block links to that it is back, so their networks find it from either side.
+            fresh = false;
+            validateLinks();
+        }
         if (isEmitter()) {
             root = !links.isEmpty() && source() != null;
             if (root && links.get(0).coil()) TeslaGrid.tick(this, now);

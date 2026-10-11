@@ -29,13 +29,13 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Fuel slot, FE buffer, lit state. Pushes up to {@link #MAX_OUTPUT} FE/t in total into the neighbouring FE receivers; Tesla Coils on it pull from the buffer.
+ * Fuel slot, FE buffer, lit state. Pushes up to {@link #MAX_OUTPUT} FE/t in total into the neighbouring FE receivers; Tesla Emitters on it pull from the buffer.
  * Two card slots ({@link com.arno.robotica.core.upgrade.UpgradeRules.Fixed#COMBUSTION_GENERATOR}): speed cards multiply
  * the FE/t like a machine's work rate; fuel burns at that rate times {@link Upgrades#energyMultiplier}, the same energy
  * math as every machine (efficiency cards save less here), so speed costs fuel per FE and efficiency saves it.
  */
 public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
-    /** FE/t the buffer may be drained at (by neighbours and Tesla Coils). */
+    /** FE/t the buffer may be drained at (by neighbours and Tesla Emitters). */
     public static final int MAX_OUTPUT = 400;
 
     public final ItemStackHandler fuel = new ItemStackHandler(1) {
@@ -61,7 +61,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         return upgrades;
     }
 
-    /** Receive 0: only the burning fills it. Extract is limited so Tesla Coils cannot empty it faster than MAX_OUTPUT. */
+    /** Receive 0: only the burning fills it. Extract is limited so Tesla Emitters cannot empty it faster than MAX_OUTPUT. */
     public final MachineEnergyStorage energy = new MachineEnergyStorage(PowerConfig.generatorBuffer(), 0, MAX_OUTPUT, this::setChanged);
 
     private final IItemHandler automation = new ItemAccess(fuel, (slot, stack) -> isFuel(stack), (slot, stack) -> !isFuel(stack));

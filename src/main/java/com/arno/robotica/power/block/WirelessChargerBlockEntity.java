@@ -42,7 +42,7 @@ import java.util.UUID;
  * Wireless Charger: charges the FE items of players in range, worn armor first (the Exo-Frame), then the held items,
  * then the rest of the inventory, at a fixed rate per player. Only the owner and the owner's team unless the server
  * config allows everyone. Every FE that reaches an item costs {@code wirelessLoss} percent more from the buffer.
- * Range and rate come from range and speed cards. Fed by cables or a Tesla Coil link like any machine.
+ * Range and rate come from range and speed cards. Fed by cables or a Tesla link like any machine.
  *
  * <p>Players in range are collected every {@link #SCAN_INTERVAL} ticks; the list (entity ids and a state per player)
  * is synced to clients for the GUI and the arcs, only when it changed.

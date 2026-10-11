@@ -11,8 +11,8 @@ import net.minecraft.world.level.block.Block;
 import java.util.function.IntSupplier;
 
 /**
- * Read-only status screen for blocks that only store, make or send energy (Accumulators, Solar Panels, Tesla Coils):
- * stored, capacity, net FE/t over the last second, max I/O and a state flag. No slots. Tesla Coils reuse the fields:
+ * Read-only status screen for blocks that only store, make or send energy (Accumulators, Solar Panels, Tesla Relays and Emitters):
+ * stored, capacity, net FE/t over the last second, max I/O and a state flag. No slots. Tesla blocks reuse the fields:
  * stored/capacity = links used/max, rate = FE/t sent, maxIo = tier rate,
  * flag = emitter on a source, or relay in a network that moves energy.
  */

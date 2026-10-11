@@ -34,7 +34,7 @@ public final class IndustryConfig {
                 .defineInRange("assemblerPower", 80, 1, 1_000_000);
         MACHINE_BUFFER = b.comment("FE buffer of a Mk1 industry machine (a MkN holds N times as much).")
                 .defineInRange("machineBuffer", 200_000, 1_000, 100_000_000);
-        MACHINE_INPUT = b.comment("FE/t a Mk1 industry machine accepts from cables and Tesla Coils (a MkN N times as much). A recipe that wants more FE/t runs at this rate and takes longer.")
+        MACHINE_INPUT = b.comment("FE/t a Mk1 industry machine accepts from cables and Tesla Relays (a MkN N times as much). A recipe that wants more FE/t runs at this rate and takes longer.")
                 .defineInRange("machineInput", 20_000, 1, 100_000_000);
         double[] speeds = {1.0, 2.0, 3.0, 5.0};
         for (int i = 0; i < 4; i++) {
@@ -51,7 +51,7 @@ public final class IndustryConfig {
                 .defineInRange("rtgPelletTicks", 24_000, 20, 10_000_000);
         RTG_BUFFER = b.comment("Internal FE buffer of the RTG.")
                 .defineInRange("rtgBuffer", 100_000, 1_000, 100_000_000);
-        RTG_OUTPUT = b.comment("FE/t the RTG pushes into neighbours and lets Tesla Coils take.")
+        RTG_OUTPUT = b.comment("FE/t the RTG pushes into neighbours and lets Tesla Emitters take.")
                 .defineInRange("rtgOutput", 1_000, 1, 100_000_000);
         b.pop();
         SPEC = b.build();

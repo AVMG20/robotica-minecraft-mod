@@ -99,7 +99,7 @@ public final class AutomationConfig {
                 .defineInRange("excavatorRangeStep", 10, 1, 32);
         EXCAVATOR_MAX_SIZE = b.comment("Largest square side an Excavator digs, whatever its Mk and range cards.")
                 .defineInRange("excavatorMaxSize", 128, 8, 256);
-        EXCAVATOR_INPUT = b.comment("FE/t an Excavator Mk1 accepts from cables and Tesla Coils (a MkN N times as much; its buffer is energyBuffer x N).")
+        EXCAVATOR_INPUT = b.comment("FE/t an Excavator Mk1 accepts from cables and Tesla Relays (a MkN N times as much; its buffer is energyBuffer x N).")
                 .defineInRange("excavatorInputPerTick", 1_000, 1, 100_000_000);
         EXCAVATOR_FE_PER_BLOCK = b.comment("Excavator FE per mined block (before upgrade multipliers).")
                 .defineInRange("excavatorFePerBlock", 40, 0, 1_000_000);

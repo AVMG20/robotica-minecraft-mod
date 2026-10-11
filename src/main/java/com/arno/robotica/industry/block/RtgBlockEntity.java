@@ -34,7 +34,7 @@ import net.minecraft.core.Direction;
  * Radioisotope Generator: slot 0 fuel pellets ({@code #robotica:rtg_fuel}), slot 1 waste. One pellet at a time decays
  * for {@link IndustryConfig#rtgPelletTicks()} ticks at {@link IndustryConfig#rtgPower()} FE/t, then leaves a Depleted
  * Fuel Pellet in the waste slot. It pauses while its buffer is full or the waste slot has no room. Pushes FE into every
- * neighbour; Tesla Coils on it pull from the buffer.
+ * neighbour; Tesla Emitters on it pull from the buffer.
  */
 public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider, InfoSource {
     public static final int FUEL = 0, WASTE = 1;
