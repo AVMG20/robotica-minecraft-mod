@@ -83,7 +83,7 @@
   "tooltip.robotica.tesla_coil": "%s links, %s blocks range, %s FE/t",
   "tooltip.robotica.tesla_coil_source": "Place it on an Accumulator or generator, link machines with a Tesla Linker",
   "tooltip.robotica.tesla_emitter": "1 link, %s blocks range, %s FE/t",
-  "tooltip.robotica.tesla_emitter_source": "Place it on a generator or battery, link one machine or coil with a Tesla Linker",
+  "tooltip.robotica.tesla_emitter_source": "Place it on a generator or battery, link it with a Tesla Linker",
   "tooltip.robotica.tesla_linker.none": "Sneak-right-click a Tesla Coil to select it",
   "tooltip.robotica.tesla_linker.selected": "Selected coil at %s, %s, %s",
   "tooltip.robotica.tesla_linker.details": "Select a coil (sneak-click), then click machines or coils to link\nSneak-click the air to clear",

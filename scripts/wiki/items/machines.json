@@ -655,12 +655,12 @@
     "buddy_bot_mk3",
     "buddy_bot_mk4"
    ],
-   "what": "Your flying companion: fights, picks up drops into its cargo and digs tunnels lit with Spark Lamps.",
+   "what": "Flying companion: fights, picks up drops and digs lit tunnels.",
    "use": [
-    "Right-click a block to deploy it. It follows you.",
-    "Right-click it for its cargo and buttons: Follow, Patrol, Stay, stance, pick-up, light-up, void.",
-    "Buddy key (default H): it digs a tunnel where you look. With sneak: all come back.",
-    "Sneak-right-click to pick it up with its cargo. Repair it with iron."
+    "Right-click a block to deploy it.",
+    "Right-click it to open its cargo and settings.",
+    "Buddy key (default H): dig where you look. With sneak: all come back.",
+    "Sneak-right-click to pick it up. Repair it with iron."
    ],
    "stats": {
     "columns": [
@@ -867,9 +867,7 @@
    "what": "Bottom of a Tesla Spire: burns thorium and sends FE out of its sides and bottom.",
    "use": [
     "Stack 8 to 24 conductor blocks on it and a [[spire_crown]] on top.",
-    "Feed it thorium ingots, thorium blocks or fuel pellets.",
-    "Set which faces take fuel and give waste in its Sides tab.",
-    "The lightning rod button in its screen mutes the thunder of strikes."
+    "Feed it thorium ingots, thorium blocks or fuel pellets."
    ],
    "stats": {
     "rows": [
