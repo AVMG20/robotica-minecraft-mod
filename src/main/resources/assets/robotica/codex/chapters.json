@@ -236,7 +236,7 @@
         },
         {
           "title": "Rancher",
-          "text": "Name or leash an animal to keep it from being culled.\nIts lamp is green while working, amber with no feed and red when stuck.",
+          "text": "Name or leash an animal to keep it from being culled.\nIts lamp is green while working, amber with no feed and red when stuck.\nTurn on Overbreed (Mk2) for a steady meat supply.",
           "items": [
             "robotica:rancher",
             "robotica:rancher_mk2"

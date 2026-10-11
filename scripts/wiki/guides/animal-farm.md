@@ -15,5 +15,6 @@ Setup steps are on the [[rancher]] page.
 - Name or leash an animal to keep it from being culled.
 - Drops, wool and milk go into the chest. Chest full: it stops culling, shearing and milking.
 - **Shear** and **Milk** (on by default): sheep are sheared, cows and goats fill an empty bucket once a minute each. Turned off, those animals are bred and culled like the rest.
+- **Overbreed** (Mk2, off by default): it keeps breeding past the herd size, up to one baby per adult, and culls each adult over it. Sheared and milked animals are left out.
 
 > Status in its menu and in Jade: Working, Idle, No energy, Storage full, No feed or No storage. The lamp on its chest shows it too: green working, dim green idle, amber no feed, blinking red for the rest.

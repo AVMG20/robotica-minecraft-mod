@@ -89,6 +89,32 @@ public class RancherGameTests {
         });
     }
 
+    @GameTest(template = "rancher_pen", timeoutTicks = 900)
+    public static void rancherOverbreedsPastTarget(GameTestHelper helper) {
+        Rancher r = rancher(helper, 2);
+        r.setTier(2);
+        r.setOverbreed(true);
+        chest(helper).setItem(0, new ItemStack(Items.CARROT, 4));
+        animal(helper, EntityType.PIG, 3, 3);
+        animal(helper, EntityType.PIG, 7, 3);
+        helper.succeedWhen(() -> helper.assertTrue(babies(helper, EntityType.PIG) >= 1, "Mk2 should breed past a full herd"));
+    }
+
+    @GameTest(template = "rancher_pen", timeoutTicks = 400)
+    public static void rancherMk1IgnoresOverbreed(GameTestHelper helper) {
+        Rancher r = rancher(helper, 2);
+        r.setOverbreed(true);
+        chest(helper).setItem(0, new ItemStack(Items.CARROT, 4));
+        animal(helper, EntityType.PIG, 3, 3);
+        animal(helper, EntityType.PIG, 7, 3);
+        helper.runAfterDelay(250, () -> {
+            helper.assertTrue(!r.overbreedOn(), "Overbreed is Mk2 only");
+            helper.assertTrue(babies(helper, EntityType.PIG) == 0, "Mk1 stops breeding at a full herd");
+            helper.assertTrue(count(chest(helper), Items.CARROT) == 4, "No carrots should be fed");
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = "rancher_pen", timeoutTicks = 1200)
     public static void rancherCullsToTarget(GameTestHelper helper) {
         rancher(helper, 2);
@@ -218,19 +244,21 @@ public class RancherGameTests {
         r.setTarget(13);
         r.setShear(false);
         r.setMilk(false);
+        r.setOverbreed(true);
         r.setEnergy(12_345);
         CompoundTag tag = new CompoundTag();
         r.saveWithoutId(tag);
         Rancher copy = RancherContent.RANCHER_ENTITY.get().create(helper.getLevel());
         copy.load(tag);
         helper.assertTrue(copy.tier() == 2 && copy.home().equals(home) && copy.target() == 13 && !copy.shearOn() && !copy.milkOn()
-                && copy.getEnergy() == 12_345, "Saved entity keeps tier, home and settings");
+                && copy.overbreedOn() && copy.getEnergy() == 12_345, "Saved entity keeps tier, home and settings");
 
         ItemStack item = r.toItemStack(false);
         helper.assertTrue(item.is(RancherContent.RANCHER_MK2.get()), "Mk2 picks up as the Mk2 item");
         Rancher placed = RancherContent.RANCHER_ENTITY.get().create(helper.getLevel());
         placed.initFromStack(item, null);
-        helper.assertTrue(placed.tier() == 2 && placed.target() == 13 && !placed.shearOn() && !placed.milkOn() && placed.getEnergy() == 12_345,
+        helper.assertTrue(placed.tier() == 2 && placed.target() == 13 && !placed.shearOn() && !placed.milkOn() && placed.overbreedOn()
+                && placed.getEnergy() == 12_345,
                 "The item keeps tier, energy and settings");
         r.discard();
         helper.succeed();
