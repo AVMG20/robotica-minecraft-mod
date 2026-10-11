@@ -958,7 +958,7 @@ public final class Showcase {
             for (int i = 0; i < 10; i++) grab(2, "pipe_glint_frame_" + i);
             for (int k = 0; k < 2; k++) {
                 step(0, () -> server(sp -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp,
-                        new com.arno.robotica.drones.net.SentryBoltPayload(25.5F, Y + 2.6F, 126.8F, 20.5F, Y + 1.1F, 125.6F))));
+                        new com.arno.robotica.drones.net.SentryBoltPayload(25.5F, Y + 2.6F, 126.8F, 20.5F, Y + 1.1F, 125.6F, 0xE83A2A, 2))));
                 for (int i = 0; i < 4; i++) grab(1, "sentry_bolt_frame_" + k + "_" + i);
             }
         }
