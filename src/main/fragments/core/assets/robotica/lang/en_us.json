@@ -141,9 +141,6 @@
   "robotica.configuration.architectTableSpeedCap": "Architect Table: most speed cards",
   "robotica.configuration.architectTableEfficiencyCap": "Architect Table: most efficiency cards",
   "robotica.configuration.architectTableHeightCap": "Architect Table: most height cards",
-  "robotica.configuration.sentryDroneSpeedCap": "Sentry Drone: most speed cards",
-  "robotica.configuration.sentryDroneRangeCap": "Sentry Drone: most range cards",
-  "robotica.configuration.sentryDroneEfficiencyCap": "Sentry Drone: most efficiency cards",
   "robotica.configuration.courierDroneSpeedCap": "Courier Drone: most speed cards",
   "robotica.configuration.courierDroneRangeCap": "Courier Drone: most range cards",
   "robotica.configuration.courierDroneEfficiencyCap": "Courier Drone: most efficiency cards"

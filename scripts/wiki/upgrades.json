@@ -343,25 +343,6 @@
       "rule": "fixed:ARCHITECT_TABLE"
     },
     {
-      "id": "sentry_drone",
-      "name": "Sentry Drone",
-      "items": [
-        "sentry_drone",
-        "sentry_drone_mk2"
-      ],
-      "tiers": [
-        "Mk1",
-        "Mk2"
-      ],
-      "effects": {
-        "speed": "Shoots more often: x2, x3.",
-        "range": "+4 blocks guard and attack range per card.",
-        "efficiency": "-15% FE per shot per card."
-      },
-      "source": "drones/entity/SentryDrone",
-      "rule": "fixed:SENTRY_DRONE"
-    },
-    {
       "id": "courier_drone",
       "name": "Courier Drone",
       "items": [

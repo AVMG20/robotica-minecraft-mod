@@ -1,7 +1,6 @@
 package com.arno.robotica.drones;
 
-import com.arno.robotica.drones.entity.MiningDrone;
-import com.arno.robotica.drones.entity.SentryDrone;
+import com.arno.robotica.drones.entity.BuddyBot;
 import com.arno.robotica.drones.net.DroneCommandPayload;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -12,7 +11,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
-/** Common (both sides) entry point of the drones module: Mining, Sentry, Courier and Hauler Drones. */
+/** Common (both sides) entry point of the drones module: Buddy Bot, Courier and Hauler Drones. */
 public final class DronesModule {
     private DronesModule() {}
 
@@ -27,16 +26,14 @@ public final class DronesModule {
     }
 
     private static void registerAttributes(EntityAttributeCreationEvent event) {
-        event.put(DronesRegistry.MINING_DRONE_ENTITY.get(), MiningDrone.createAttributes().build());
-        event.put(DronesRegistry.SENTRY_DRONE_ENTITY.get(), SentryDrone.createAttributes().build());
+        event.put(DronesRegistry.BUDDY_BOT_ENTITY.get(), BuddyBot.createAttributes().build());
         event.put(DronesRegistry.COURIER_DRONE_ENTITY.get(), com.arno.robotica.drones.entity.CourierDrone.createAttributes().build());
         event.put(DronesRegistry.HAULER_DRONE_ENTITY.get(), com.arno.robotica.drones.entity.HaulerDrone.createAttributes().build());
     }
 
-    /** FE can be pushed into a deployed drone (receive only). The loot stays inside until the drone returns. */
+    /** FE can be pushed into a deployed drone (receive only). */
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.MINING_DRONE_ENTITY.get(), (drone, side) -> drone.energyStorage());
-        event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.SENTRY_DRONE_ENTITY.get(), (drone, side) -> drone.energyStorage());
+        event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.BUDDY_BOT_ENTITY.get(), (drone, side) -> drone.energyStorage());
         event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.COURIER_DRONE_ENTITY.get(), (drone, side) -> drone.energyStorage());
         event.registerEntity(Capabilities.EnergyStorage.ENTITY, DronesRegistry.HAULER_DRONE_ENTITY.get(), (drone, side) -> drone.energyStorage());
     }

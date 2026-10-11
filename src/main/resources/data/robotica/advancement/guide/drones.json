@@ -2,7 +2,7 @@
   "parent": "robotica:guide/basic_circuit",
   "display": {
     "icon": {
-      "id": "robotica:sentry_drone"
+      "id": "robotica:courier_drone"
     },
     "title": {
       "translate": "advancements.robotica.guide.drones.title"
@@ -22,7 +22,6 @@
         "items": [
           {
             "items": [
-              "robotica:sentry_drone",
               "robotica:courier_drone"
             ]
           }

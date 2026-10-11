@@ -50,7 +50,6 @@ public final class UpgradeRules {
         WIRELESS_CHARGER(2, limit(UpgradeKind.SPEED, 4), limit(UpgradeKind.RANGE, 4)),
         REPLICATOR(3, limit(UpgradeKind.SPEED, 3), limit(UpgradeKind.FORTUNE, 3), limit(UpgradeKind.EFFICIENCY, 4)),
         ARCHITECT_TABLE(2, limit(UpgradeKind.SPEED, 8), limit(UpgradeKind.EFFICIENCY, 4), limit(UpgradeKind.HEIGHT, 6)),
-        SENTRY_DRONE(2, limit(UpgradeKind.SPEED, 2), limit(UpgradeKind.RANGE, 4), limit(UpgradeKind.EFFICIENCY, 4)),
         COURIER_DRONE(2, limit(UpgradeKind.SPEED, 2), limit(UpgradeKind.RANGE, 4), limit(UpgradeKind.EFFICIENCY, 4));
 
         public final int slots;

@@ -3,8 +3,7 @@ package com.arno.robotica.drones.net;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.entity.DroneBase;
-import com.arno.robotica.drones.entity.MiningDrone;
-import com.arno.robotica.drones.entity.SentryDrone;
+import com.arno.robotica.drones.entity.BuddyBot;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -21,9 +20,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Client to server: the drone command key. {@link #TUNNEL}: the nearest own Mining Drone digs along the direction the
- * player looks (or returns when it is already digging). {@link #RECALL}: all own drones in range come back (Mining Drones
- * return, Sentry Drones follow). The server checks ownership and distance itself and rate limits per player.
+ * Client to server: the drone command key. {@link #TUNNEL}: the nearest own Buddy Bot digs along the direction the
+ * player looks (or comes back when it is already digging). {@link #RECALL}: all own Buddy Bots in range stop and follow.
+ * The server checks ownership and distance itself and rate limits per player.
  */
 public record DroneCommandPayload(int action) implements CustomPacketPayload {
     public static final int TUNNEL = 0;
@@ -72,23 +71,26 @@ public record DroneCommandPayload(int action) implements CustomPacketPayload {
             return;
         }
         if (action == TUNNEL) {
-            MiningDrone nearest = null;
+            BuddyBot nearest = null;
             for (DroneBase d : drones) {
-                if (d instanceof MiningDrone m && (nearest == null || m.distanceToSqr(player) < nearest.distanceToSqr(player))) nearest = m;
+                if (d instanceof BuddyBot b && (nearest == null || b.distanceToSqr(player) < nearest.distanceToSqr(player))) nearest = b;
             }
             if (nearest == null) {
-                player.displayClientMessage(Component.translatable("message.robotica.drone.no_miner"), true);
-            } else if (nearest.mode() == MiningDrone.Mode.TUNNEL) {
+                player.displayClientMessage(Component.translatable("message.robotica.drone.no_buddy"), true);
+            } else if (nearest.hasTunnel()) {
                 nearest.commandReturn();
             } else {
                 nearest.commandTunnel(player, player.getDirection());
             }
         } else if (action == RECALL) {
+            int n = 0;
             for (DroneBase d : drones) {
-                if (d instanceof MiningDrone m) m.commandReturn();
-                else if (d instanceof SentryDrone s) s.setMode(SentryDrone.Mode.FOLLOW);
+                if (d instanceof BuddyBot b) {
+                    b.commandFollow();
+                    n++;
+                }
             }
-            player.displayClientMessage(Component.translatable("message.robotica.drone.recalled", drones.size()), true);
+            player.displayClientMessage(Component.translatable("message.robotica.drone.recalled", n), true);
         }
     }
 }

@@ -43,7 +43,7 @@ public final class LabActions {
                     Map.entry("tesla_linker", 1), Map.entry("tesla_coil_1", 4), Map.entry("tesla_coil_2", 4), Map.entry("charger", 1), Map.entry("metal_press", 1),
                     Map.entry("excavator", 1), Map.entry("farm_kit_mk2", 2), Map.entry("bore_drill", 1), Map.entry("chainsaw", 1),
                     Map.entry("shock_baton", 1), Map.entry("recall_remote", 1), Map.entry("warp_pad", 2),
-                    Map.entry("mining_drone", 1), Map.entry("sentry_drone", 1), Map.entry("courier_drone", 1), Map.entry("courier_remote", 1), Map.entry("exo_helmet_mk1", 1), Map.entry("exo_chestplate_mk1", 1), Map.entry("exo_leggings_mk1", 1), Map.entry("exo_boots_mk1", 1), Map.entry("servo_stride_module_1", 1), Map.entry("magnet_module", 1),
+                    Map.entry("buddy_bot", 1), Map.entry("courier_drone", 1), Map.entry("courier_remote", 1), Map.entry("exo_helmet_mk1", 1), Map.entry("exo_chestplate_mk1", 1), Map.entry("exo_leggings_mk1", 1), Map.entry("exo_boots_mk1", 1), Map.entry("servo_stride_module_1", 1), Map.entry("magnet_module", 1),
                     Map.entry("storage_terminal", 1), Map.entry("storage_expansion_mk1", 1), Map.entry("upgrade_speed", 4), Map.entry("upgrade_efficiency", 4), Map.entry("upgrade_growth", 4), Map.entry("upgrade_void", 1), Map.entry("upgrade_height", 6), Map.entry("tinkers_bench", 1),
                     Map.entry("signal_flare", 2)),
             Map.ofEntries(Map.entry("reinforced_casing", 8), Map.entry("advanced_circuit", 8), Map.entry("servo_actuator", 4),

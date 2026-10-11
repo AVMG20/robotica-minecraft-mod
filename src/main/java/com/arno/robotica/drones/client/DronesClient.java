@@ -2,8 +2,7 @@ package com.arno.robotica.drones.client;
 
 import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.client.screen.CourierDroneScreen;
-import com.arno.robotica.drones.client.screen.MiningDroneScreen;
-import com.arno.robotica.drones.client.screen.SentryDroneScreen;
+import com.arno.robotica.drones.client.screen.BuddyBotScreen;
 import com.arno.robotica.drones.net.DroneCommandPayload;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -24,7 +23,7 @@ public final class DronesClient {
     private DronesClient() {}
 
     private static final String CATEGORY = "key.categories.robotica.drones";
-    /** H: nearest Mining Drone digs where you look (again: it returns). Sneak + H: call all drones back. */
+    /** H: nearest Buddy Bot digs where you look (again: it comes back). Sneak + H: call all Buddy Bots back. */
     static final KeyMapping COMMAND = new KeyMapping("key.robotica.drones.command", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
 
@@ -38,21 +37,18 @@ public final class DronesClient {
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
-        event.register(DronesRegistry.MINING_MENU.get(), MiningDroneScreen::new);
-        event.register(DronesRegistry.SENTRY_MENU.get(), SentryDroneScreen::new);
+        event.register(DronesRegistry.BUDDY_MENU.get(), BuddyBotScreen::new);
         event.register(DronesRegistry.COURIER_MENU.get(), CourierDroneScreen::new);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(DronesRegistry.MINING_DRONE_ENTITY.get(), DroneRenderers::mining);
-        event.registerEntityRenderer(DronesRegistry.SENTRY_DRONE_ENTITY.get(), DroneRenderers::sentry);
+        event.registerEntityRenderer(DronesRegistry.BUDDY_BOT_ENTITY.get(), DroneRenderers::buddy);
         event.registerEntityRenderer(DronesRegistry.COURIER_DRONE_ENTITY.get(), DroneRenderers::courier);
         event.registerEntityRenderer(DronesRegistry.HAULER_DRONE_ENTITY.get(), DroneRenderers::hauler);
     }
 
     private static void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
-        event.registerLayerDefinition(MiningDroneModel.LAYER, MiningDroneModel::createLayer);
-        event.registerLayerDefinition(SentryDroneModel.LAYER, SentryDroneModel::createLayer);
+        event.registerLayerDefinition(BuddyBotModel.LAYER, BuddyBotModel::createLayer);
         event.registerLayerDefinition(CourierDroneModel.LAYER, CourierDroneModel::createLayer);
         event.registerLayerDefinition(HaulerDroneModel.LAYER, HaulerDroneModel::createLayer);
     }
