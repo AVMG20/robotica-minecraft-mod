@@ -112,7 +112,7 @@
   "message.robotica.tesla.face.east": "east",
   "gui.robotica.tesla_links": "Links %s / %s",
   "gui.robotica.tesla_range": "Range %s",
-  "gui.robotica.tesla_links_tip": "Links in use. Machines and other relays each take one",
+  "gui.robotica.tesla_rate_tip": "FE/t sent, out of the most this tier sends",
   "gui.robotica.tesla_sending": "Sending %s FE/t",
   "gui.robotica.tesla_max": "max %s FE/t",
   "gui.robotica.tesla_no_links": "No links: use a Tesla Linker",

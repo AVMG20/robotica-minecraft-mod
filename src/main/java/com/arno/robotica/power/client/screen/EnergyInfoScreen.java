@@ -59,16 +59,16 @@ public class EnergyInfoScreen extends MachineScreen<EnergyInfoMenu> {
                 Component.translatable("gui.robotica.energy_io_tip", Fmt.compact(menu.maxIo())));
     }
 
-    /** Tesla Relay or Emitter: links used / max as a bar, FE/t sent, and what it is doing. */
+    /** Tesla Relay or Emitter: links used / max, FE/t sent as a bar of the tier rate, and what it is doing. */
     private void renderTesla(GuiGraphics g, int x, int y) {
         int used = menu.stored(), max = menu.capacity();
         int range = menu.block() instanceof TeslaCoilBlock coil ? coil.tier().range() : 0;
         drawLabel(g, Component.translatable("gui.robotica.tesla_links", used, max), x + 8, y + 20, 110);
         drawLabelRight(g, Component.translatable("gui.robotica.tesla_range", range), x + 168, y + 20, 56);
-        drawProgress(g, x + 8, y + 31, 160, 8, max <= 0 ? 0 : (float) used / max);
-        addTooltip(x + 8, y + 31, 160, 8, Component.translatable("gui.robotica.tesla_links_tip"));
-
         int rate = menu.rate();
+        drawProgress(g, x + 8, y + 31, 160, 8, menu.maxIo() <= 0 ? 0 : Math.min(1F, (float) rate / menu.maxIo()));
+        addTooltip(x + 8, y + 31, 160, 8, Component.translatable("gui.robotica.tesla_rate_tip"));
+
         drawLabel(g, Component.translatable("gui.robotica.tesla_sending", Fmt.compact(rate)), x + 8, y + 44, 110);
         drawLabelRight(g, Component.translatable("gui.robotica.tesla_max", Fmt.compact(menu.maxIo())), x + 168, y + 44, 56);
 
