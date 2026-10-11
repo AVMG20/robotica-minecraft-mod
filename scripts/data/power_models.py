@@ -241,12 +241,13 @@ def tesla_platform(base, seam, housing, well, y_housing, top_housing):
             square(well, 1, 1.4, '#glow', glow=True)]
 
 
-# Coil: 2.6 high; the crystal floats over the well up to about 14. Light slits sit on the base at each edge.
+# Coil: 2.6 high; the crystal floats over the well up to about 14.6. Light slits sit on the base at each edge. In the
+# slot it is lifted and scaled so platform and crystal fill it.
 for tier in range(1, 6):
     slits = [box([7, 1, 2.5], [9, 1.15, 3], '#glow', glow=True, faces=SIDES), box([7, 1, 13], [9, 1.15, 13.5], '#glow', glow=True, faces=SIDES),
              box([2.5, 1, 7], [3, 1.15, 9], '#glow', glow=True, faces=SIDES), box([13, 1, 7], [13.5, 1.15, 9], '#glow', glow=True, faces=SIDES)]
     tesla_model(f'tesla_coil_{tier}', tier, 'coil', [*tesla_platform(6, 4.4, 4, 2, 1.25, 2.6), *slits], {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, -1, 0], 'scale': [0.75, 0.75, 0.75]},
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, 2.2, 0], 'scale': [0.85, 0.85, 0.85]},
         'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.4, 0.4, 0.4]},
         'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [0.7, 0.7, 0.7]},
         'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.45, 0.45, 0.45]},
@@ -257,7 +258,7 @@ for tier in range(1, 6):
 # Emitter: 2.2 high under a slim crystal up to about 10.
 for tier in range(1, 6):
     tesla_model(f'tesla_emitter_{tier}', tier, 'emitter', tesla_platform(4, 3.3, 3, 1.5, 1.2, 2.2), {
-        'gui': {'rotation': [30, 225, 0], 'translation': [0, -1, 0], 'scale': [1, 1, 1]},
+        'gui': {'rotation': [30, 225, 0], 'translation': [0, 4.5, 0], 'scale': [1.15, 1.15, 1.15]},
         'ground': {'rotation': [0, 0, 0], 'translation': [0, 3, 0], 'scale': [0.5, 0.5, 0.5]},
         'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [0.8, 0.8, 0.8]},
         'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 3, 1], 'scale': [0.5, 0.5, 0.5]},
