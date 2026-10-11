@@ -124,7 +124,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return getBlockState().getBlock() instanceof TeslaCoilBlock coil ? coil.maxLinks() : TeslaTier.I.maxLinks;
     }
 
-    /** A Tesla Emitter: one link to a relay, only sends from the block it sits on, never a link target. */
+    /** A Tesla Emitter: one link to a relay or machine, only sends from the block it sits on, never a link target. */
     public boolean isEmitter() {
         return getBlockState().getBlock() instanceof TeslaEmitterBlock;
     }
@@ -299,8 +299,8 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     }
 
     /**
-     * Drops links whose target is loaded but gone: no relay there any more, or no FE capability at all (an emitter only
-     * keeps a relay link). Tells each linked relay that this block links to it, so the network finds it from either side.
+     * Drops links whose target is loaded but gone: no relay there any more, or no FE capability at all. Tells each linked
+     * relay that this block links to it, so the network finds it from either side.
      */
     void validateLinks() {
         if (level == null) return;
@@ -311,7 +311,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             TeslaCoilBlockEntity relay = link.coil() && level.getBlockEntity(link.pos()) instanceof TeslaCoilBlockEntity other
                     && !other.isEmitter() ? other : null;
             boolean gone = link.coil() ? relay == null
-                    : isEmitter() || level.getCapability(Capabilities.EnergyStorage.BLOCK, link.pos(), link.face()) == null
+                    : level.getCapability(Capabilities.EnergyStorage.BLOCK, link.pos(), link.face()) == null
                     && level.getCapability(Capabilities.EnergyStorage.BLOCK, link.pos(), null) == null;
             if (gone) {
                 links.remove(i);
@@ -341,7 +341,8 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         long now = level.getGameTime();
         if (isEmitter()) {
             root = !links.isEmpty() && source() != null;
-            if (root) TeslaGrid.tick(this, now);
+            if (root && links.get(0).coil()) TeslaGrid.tick(this, now);
+            else if (root) TeslaGrid.sendDirect(this);
         }
         if ((now + (pos.asLong() & 31)) % 40 == 0) validateLinks();
         if (now % 20 == 0) {

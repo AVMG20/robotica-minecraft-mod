@@ -213,9 +213,9 @@
     "tesla_emitter_4",
     "tesla_emitter_5"
    ],
-   "what": "Puts the FE of the generator or battery it sits on into a Tesla network, up to the FE/t of its tier. One link, to a [[tesla_coil_1]].",
+   "what": "Sends the FE of the generator or battery it sits on, up to the FE/t of its tier. One link: a machine or a [[tesla_coil_1]].",
    "use": [
-    "Put one on each generator and link it to a relay with the [[tesla_linker]]."
+    "Put one on each generator and link it to a relay or a machine with the [[tesla_linker]]."
    ],
    "see": [
     "guide:power-ladder"
@@ -225,7 +225,7 @@
    "items": [
     "tesla_linker"
    ],
-   "what": "Links Tesla Relays to machines and to each other, and Tesla Emitters to relays.",
+   "what": "Links Tesla Relays and Emitters to machines, and relays to each other.",
    "use": [
     "Sneak-right-click a relay or emitter to select it.",
     "Right-click a machine face or a relay to link.",

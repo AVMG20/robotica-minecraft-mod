@@ -348,12 +348,25 @@ public class PowerGameTests {
         helper.succeed();
     }
 
+    /** A Tesla Emitter can power a machine straight away, but not the block it sits on. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaEmitterPowersMachine(GameTestHelper helper) {
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        BlockPos chargerPos = new BlockPos(2, 1, 0);
+        helper.setBlock(chargerPos, PowerRegistry.CHARGER.get().defaultBlockState());
+        ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(chargerPos);
+        helper.assertTrue(TeslaNetwork.toggle(emitter, emitter.supportPos(), Direction.EAST) == TeslaNetwork.LinkResult.OWN_SUPPORT, "not the block it sits on");
+        link(helper, emitter, helper.absolutePos(chargerPos), Direction.UP, "emitter -> charger");
+        helper.succeedWhen(() -> helper.assertTrue(charger.energy.getEnergyStored() > 2_000,
+                "Charger should fill from the emitter, has " + charger.energy.getEnergyStored()));
+    }
+
     /**
-     * Tesla Emitter: one link, only to a relay, at its tier's rate; nothing links to it. A new relay moves its one link
-     * instead of being refused.
+     * Tesla Emitter: one link at its tier's rate, and nothing links to it. A new target moves its one link instead of
+     * being refused.
      */
     @GameTest(template = "empty", timeoutTicks = 80)
-    public static void teslaEmitterLinksOnlyRelays(GameTestHelper helper) {
+    public static void teslaEmitterMovesItsLink(GameTestHelper helper) {
         TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
         TeslaCoilBlockEntity first = relay(helper, new BlockPos(2, 2, 2));
         TeslaCoilBlockEntity second = relay(helper, new BlockPos(0, 2, 2));
@@ -363,10 +376,10 @@ public class PowerGameTests {
         BlockPos chargerAbs = helper.absolutePos(chargerPos);
         helper.assertTrue(emitter.isEmitter() && emitter.maxLinks() == 1, "an emitter has one link");
         helper.assertTrue(emitter.maxIo() == TeslaTier.I.rate(), "an emitter sends at its tier's rate");
-        helper.assertTrue(TeslaNetwork.toggle(emitter, chargerAbs, Direction.UP) == TeslaNetwork.LinkResult.NOT_RELAY, "an emitter links only to a relay");
         helper.assertTrue(TeslaNetwork.toggle(first, emitter.getBlockPos(), Direction.UP) == TeslaNetwork.LinkResult.EMITTER, "nothing links to an emitter");
-        link(helper, emitter, first.getBlockPos(), Direction.UP, "emitter -> first relay");
-        link(helper, emitter, second.getBlockPos(), Direction.UP, "a new relay moves the link");
+        link(helper, emitter, chargerAbs, Direction.UP, "emitter -> charger");
+        link(helper, emitter, first.getBlockPos(), Direction.UP, "a relay moves the link");
+        link(helper, emitter, second.getBlockPos(), Direction.UP, "another relay moves it again");
         helper.assertTrue(emitter.linkCount() == 1 && emitter.link(0).pos().equals(second.getBlockPos()), "one link, to the second relay");
         link(helper, second, chargerAbs, Direction.UP, "relay -> charger");
         helper.succeedWhen(() -> helper.assertTrue(charger.energy.getEnergyStored() > 2_000,

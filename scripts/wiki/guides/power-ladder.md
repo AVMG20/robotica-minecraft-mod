@@ -26,7 +26,7 @@ Cells ([[copper_cell]]) power robots and gear. For a base, use [[accumulator_1]]
 
 ## Tesla Relays
 
-Put a [[tesla_emitter_1]] on each generator or battery and link it to a [[tesla_coil_1]] with the [[tesla_linker]]. Link the relay to machines and to other relays: no cables needed. Linked relays share one network, whichever side you link from, and every emitter gives an even part of what the machines need.
+Put a [[tesla_emitter_1]] on a generator or battery and link it to a machine with the [[tesla_linker]], or to a [[tesla_coil_1]] to power many. Link the relay to machines and to other relays: no cables needed. Linked relays share one network, whichever side you link from, and every emitter gives an even part of what the machines need.
 
 {{items tesla_coil_1 tesla_coil_2 tesla_coil_3 tesla_coil_4 tesla_coil_5 tesla_linker}}
 

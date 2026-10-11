@@ -6,14 +6,14 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.Capabilities;
 
 /**
- * Link rules of Tesla Relays and Tesla Emitters. An emitter links to one relay; a relay links to machines and to other
- * relays, and a relay link works both ways. Energy flow: {@link TeslaGrid}.
+ * Link rules of Tesla Relays and Tesla Emitters. An emitter links to one relay or machine; a relay links to machines and
+ * to other relays, and a relay link works both ways. Energy flow: {@link TeslaGrid}.
  */
 public final class TeslaNetwork {
     private TeslaNetwork() {}
 
     public enum LinkResult {
-        LINKED, UNLINKED, FACE_CHANGED, FULL, OUT_OF_RANGE, NO_ENERGY, WRONG_FACE, SELF, EMITTER, NOT_RELAY;
+        LINKED, UNLINKED, FACE_CHANGED, FULL, OUT_OF_RANGE, NO_ENERGY, WRONG_FACE, SELF, OWN_SUPPORT, EMITTER;
 
         public boolean changed() {
             return this == LINKED || this == UNLINKED || this == FACE_CHANGED;
@@ -28,7 +28,7 @@ public final class TeslaNetwork {
     /**
      * Links {@code coil} to the block at {@code target}, or unlinks them when either already links the other. For a
      * machine, {@code face} is the side the energy goes in. Clicking a linked machine on another face moves the link to
-     * that face. An emitter links only to a relay, and a new relay moves its one link instead of being full.
+     * that face. An emitter's one link moves to a new target instead of being full.
      */
     public static LinkResult toggle(TeslaCoilBlockEntity coil, BlockPos target, Direction face) {
         Level level = coil.getLevel();
@@ -56,7 +56,7 @@ public final class TeslaNetwork {
             return LinkResult.FACE_CHANGED;
         }
         if (other != null && other.isEmitter()) return LinkResult.EMITTER;
-        if (coil.isEmitter() && other == null) return LinkResult.NOT_RELAY;
+        if (coil.isEmitter() && target.equals(coil.supportPos())) return LinkResult.OWN_SUPPORT;
         if (!inRange(coil, target)) return LinkResult.OUT_OF_RANGE;
         boolean replace = coil.maxLinks() == 1 && coil.linkCount() == 1;
         if (!replace && coil.linkCount() >= coil.maxLinks()) return LinkResult.FULL;

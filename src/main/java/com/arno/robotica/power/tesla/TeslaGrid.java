@@ -54,6 +54,23 @@ final class TeslaGrid {
         grid.run(now);
     }
 
+    /** An emitter linked straight to a machine: moves what both sides allow, up to the tier rate. */
+    static void sendDirect(TeslaCoilBlockEntity emitter) {
+        Level level = emitter.getLevel();
+        TeslaLink link = emitter.link(0);
+        if (level == null || !TeslaNetwork.inRange(emitter, link.pos()) || !level.isLoaded(link.pos())) return;
+        IEnergyStorage source = emitter.source(), target = emitter.targetCapability(0);
+        if (source == null || target == null || !target.canReceive()) return;
+        int offer = Math.max(0, source.extractEnergy(emitter.tier().rate(), true));
+        int wanted = offer <= 0 ? 0 : Math.max(0, target.receiveEnergy(offer, true));
+        if (wanted <= 0) return;
+        int got = Math.max(0, source.extractEnergy(wanted, false));
+        int sent = got <= 0 ? 0 : Math.max(0, target.receiveEnergy(got, false));
+        if (sent < got) source.receiveEnergy(got - sent, false);
+        emitter.recordSent(sent);
+        emitter.recordLinkSent(0, sent);
+    }
+
     // ---- building ----
 
     /** The relay that link {@code index} of {@code coil} points at, if it is loaded, in range and still a relay. */

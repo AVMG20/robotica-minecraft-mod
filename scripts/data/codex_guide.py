@@ -125,7 +125,7 @@ STEPS = [
      'Craft a Copper Cell.',
      has('copper_cell'), [], 5),
     ('tesla', 'generator', 'tesla_coil_1', 'task', 1, 'Plugged In',
-     'Put a Tesla Emitter on your generator and link it to a Tesla Relay that powers a machine.',
+     'Put a Tesla Emitter on your generator and link a machine to it.',
      placed('tesla_coil_1', 'tesla_coil_2', 'tesla_coil_3', 'tesla_coil_4', 'tesla_coil_5',
             'tesla_emitter_1', 'tesla_emitter_2', 'tesla_emitter_3', 'tesla_emitter_4', 'tesla_emitter_5'), [], 5),
     ('power_tool', 'first_iron', 'bore_drill', 'task', 1, 'Power Tools',
