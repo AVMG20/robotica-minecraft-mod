@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "robotica:tesla_emitter_5"
+    },
+    {
+      "item": "robotica:tesla_emitter_5"
+    },
+    {
+      "item": "robotica:tesla_emitter_5"
+    },
+    {
+      "item": "robotica:tesla_emitter_5"
+    }
+  ],
+  "result": {
+    "id": "robotica:tesla_coil_5",
+    "count": 1
+  }
+}

@@ -67,9 +67,10 @@
         },
         {
           "title": "Moving FE",
-          "text": "Tesla Coils can link to other coils to reach further. Each hop loses 5%.",
+          "text": "Tesla Coils can link to other coils to reach further. Each hop loses 5%.\nPut Tesla Emitters on your generators and link each to one coil to gather their FE.",
           "items": [
             "robotica:tesla_coil_1",
+            "robotica:tesla_emitter_1",
             "robotica:tesla_linker",
             "robotica:accumulator_1",
             "robotica:wireless_charger"

@@ -1,5 +1,6 @@
 package com.arno.robotica.power.client;
 
+import com.arno.robotica.Robotica;
 import com.arno.robotica.power.PowerClientConfig;
 import com.arno.robotica.power.tesla.TeslaCoilBlock;
 import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
@@ -10,19 +11,26 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.Random;
@@ -32,7 +40,8 @@ import java.util.Random;
  * brighter core, both fading out at the edges and into the coil tips, with a slow shimmer running along it. While energy
  * goes over a link, soft motes with short tails travel its strand towards the target (a little faster the bigger
  * the share of the coil's rate that link takes, from its synced flow level), and while the coil sends a tiny spark now and
- * then crackles off the tip. A link whose target takes nothing has no motes.
+ * then crackles off the tip. A link whose target takes nothing has no motes. Around a Tesla Coil's floating crystal
+ * three glowing shards circle on a faint ring, faster while it sends.
  * <p>
  * Smooth: everything runs on a client tick clock plus the partial tick (the level's game time jumps on every server time
  * sync), the motes advance per frame by an eased speed so a flow change speeds them up or slows them down instead of
@@ -86,13 +95,24 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     private static final double MIN_WIDTH = 0.002;
 
     /**
-     * Halo colours per tier (0xRRGGBB), after the coil's winding: I copper and II steel a pale ice blue like the Spark Lamp
-     * wisp, III a soft gold, IV a muted ember, V violet. The strand core and inner halo are these pulled towards the
-     * wisp's white. A link between two tiers fades from one colour to the other.
+     * Halo colours per tier (0xRRGGBB), after the tier's crystal: I cyan, II blue, III amber, IV ember, V violet. The
+     * strand core and inner halo are these pulled towards the wisp's white. A link between two tiers fades from one
+     * colour to the other.
      */
-    private static final int[] TIER_HALO = {0x6EAAFF, 0x82B9FF, 0xFFBE50, 0xFF7846, 0x965AFF};
+    private static final int[] TIER_HALO = {0x5FD8F0, 0x6F8CFF, 0xFFBE50, 0xFF7846, 0x9A5AFF};
     /** The wisp's core white. */
     private static final int WHITE = 0xEBFAFF;
+
+    // Coil shards: count, orbit radius and height (blocks, before the facing turn), size, bob, and orbit speed in
+    // radians per tick while idle and while sending. Drawn within SHARD_RANGE of the camera.
+    private static final int SHARDS = 3, RING_POINTS = 33;
+    private static final double ORBIT_R = 0.34, ORBIT_Y = 0.42, SHARD_H = 0.07, SHARD_W = 0.03, SHARD_BOB = 0.025;
+    private static final double ORBIT_IDLE = 0.03, ORBIT_BUSY = 0.08, SHARD_RANGE = 32;
+    /** Solid block-atlas sheet (a fixed buffer, so switching to it never ends the glow batch); faces go both ways round. */
+    private static final RenderType SHARD_TYPE = Sheets.cutoutBlockSheet();
+    private static final ResourceLocation[] CRYSTAL = new ResourceLocation[5];
+    /** Turns the up-pointing model to each facing (index = Direction ordinal), like the blockstate does. */
+    private static final Quaternionf[] FACING_ROT = new Quaternionf[6];
 
     // ---- render-thread scratch, nothing below is allocated per frame ----
     private static final int MAX_POINTS = 48, TAIL_POINTS = 6, DISC = 10;
@@ -106,6 +126,10 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     private static final double[] WX = new double[MAX_POINTS], WY = new double[MAX_POINTS], WZ = new double[MAX_POINTS],
             WK = new double[MAX_POINTS];
     private static final double[] COS = new double[DISC + 1], SIN = new double[DISC + 1];
+    /** Shard corner points in block space, the shards' centres, and a scratch vector for turning them. */
+    private static final double[] PX = new double[6], PY = new double[6], PZ = new double[6];
+    private static final double[] GX = new double[SHARDS], GY = new double[SHARDS], GZ = new double[SHARDS];
+    private static final Vector3f SCRATCH = new Vector3f();
     private static final Random RNG = new Random();
     /** Client ticks while the game is not paused. */
     private static long clientTicks;
@@ -116,6 +140,10 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     private static float leftX, leftY, leftZ, upX, upY, upZ;
 
     static {
+        for (int t = 0; t < CRYSTAL.length; t++) {
+            CRYSTAL[t] = ResourceLocation.fromNamespaceAndPath(Robotica.MODID, "block/tesla_crystal_" + (t + 1));
+        }
+        for (Direction d : Direction.values()) FACING_ROT[d.ordinal()] = d.getRotation();
         for (int i = 0; i <= DISC; i++) {
             COS[i] = Math.cos(Math.PI * 2 * i / DISC);
             SIN[i] = Math.sin(Math.PI * 2 * i / DISC);
@@ -131,10 +159,8 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     @Override
     public void render(TeslaCoilBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         Level level = be.getLevel();
-        int linkCount = be.linkCount();
-        if (level == null || linkCount == 0 || !PowerClientConfig.teslaArcs()) return;
         BlockState state = be.getBlockState();
-        if (!state.hasProperty(TeslaCoilBlock.FACING)) return;
+        if (level == null || !state.hasProperty(TeslaCoilBlock.FACING)) return;
         BlockPos origin = be.getBlockPos();
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         Vec3 cam = camera.getPosition();
@@ -149,13 +175,18 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         upY = up.y();
         upZ = up.z();
 
-        boolean linker = TeslaCoilBlock.isConfiguring();
-        double near = linker ? NEAR_LINKER : NEAR, far = linker ? FAR_LINKER : FAR;
-        int synced = Math.min(4, be.flowLevel());
         double time = clientTicks + partialTick;
         double dt = be.fxTime < 0 ? 0 : Math.max(0, Math.min(20, time - be.fxTime));
         be.fxTime = time;
         double ease = 1 - Math.exp(-dt * FLOW_EASE);
+        int synced = Math.min(4, be.flowLevel());
+        Direction facing = state.getValue(TeslaCoilBlock.FACING);
+        if (!be.isEmitter()) shards(be, facing, pose, buffers, time, dt, ease, synced);
+
+        int linkCount = be.linkCount();
+        if (linkCount == 0 || !PowerClientConfig.teslaArcs()) return;
+        boolean linker = TeslaCoilBlock.isConfiguring();
+        double near = linker ? NEAR_LINKER : NEAR, far = linker ? FAR_LINKER : FAR;
         linkCount = Math.min(linkCount, be.fxFlow.length);
         for (int i = 0; i < linkCount; i++) {
             int target = Math.min(4, be.linkFlowLevel(i));
@@ -165,8 +196,7 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         }
         int halo = halo(be.tier().ordinal());
 
-        Direction facing = state.getValue(TeslaCoilBlock.FACING);
-        double tip = TeslaCoilBlock.TIP - 0.5;
+        double tip = TeslaCoilBlock.tipHeight(state) - 0.5;
         double ax = 0.5 + facing.getStepX() * tip, ay = 0.5 + facing.getStepY() * tip, az = 0.5 + facing.getStepZ() * tip;
 
         VertexConsumer vc = buffers.getBuffer(GLOW);
@@ -181,9 +211,10 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
                 BlockState other = level.getBlockState(p);
                 if (other.getBlock() instanceof TeslaCoilBlock coil) haloEnd = halo(coil.tier().ordinal());
                 Direction f = other.hasProperty(TeslaCoilBlock.FACING) ? other.getValue(TeslaCoilBlock.FACING) : Direction.UP;
-                bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * tip;
-                by = p.getY() - origin.getY() + 0.5 + f.getStepY() * tip;
-                bz = p.getZ() - origin.getZ() + 0.5 + f.getStepZ() * tip;
+                double t = TeslaCoilBlock.tipHeight(other) - 0.5;
+                bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * t;
+                by = p.getY() - origin.getY() + 0.5 + f.getStepY() * t;
+                bz = p.getZ() - origin.getZ() + 0.5 + f.getStepZ() * t;
             } else {
                 Direction f = link.face() == null ? Direction.UP : link.face();
                 bx = p.getX() - origin.getX() + 0.5 + f.getStepX() * 0.52;
@@ -208,6 +239,96 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
             }
         }
         if (synced > 0 && closest < SPARK_RANGE) spark(vc, m, origin, ax, ay, az, facing, time, synced, pale(halo));
+    }
+
+    /**
+     * Tesla Coil only: three small crystal shards circle the floating crystal, bobbing and spinning, each with a soft
+     * glow, over a faint orbit ring. They circle faster while the coil sends (eased, so they never jump). Shards are
+     * octahedra with the tier's crystal texture at full brightness; positions are turned with the coil's facing.
+     */
+    private static void shards(TeslaCoilBlockEntity be, Direction facing, PoseStack pose, MultiBufferSource buffers, double time,
+                               double dt, double ease, int synced) {
+        if (camX * camX + camY * camY + camZ * camZ > SHARD_RANGE * SHARD_RANGE) return;
+        double target = synced > 0 ? ORBIT_BUSY + 0.012 * synced : ORBIT_IDLE;
+        be.fxOrbitSpeed += (target - be.fxOrbitSpeed) * ease;
+        be.fxOrbit = (be.fxOrbit + dt * be.fxOrbitSpeed) % (Math.PI * 2);
+        Quaternionf rot = FACING_ROT[facing.ordinal()];
+        int tier = Math.max(0, Math.min(CRYSTAL.length - 1, be.tier().ordinal()));
+        TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getAtlas(InventoryMenu.BLOCK_ATLAS).getSprite(CRYSTAL[tier]);
+        PoseStack.Pose last = pose.last();
+        Matrix4f m = last.pose();
+        VertexConsumer solid = buffers.getBuffer(SHARD_TYPE);
+        for (int i = 0; i < SHARDS; i++) {
+            double a = be.fxOrbit + i * Math.PI * 2 / SHARDS;
+            double bob = SHARD_BOB * Math.sin(time * 0.07 + i * 2.1);
+            double cx = Math.cos(a) * ORBIT_R, cy = ORBIT_Y - 0.5 + bob, cz = Math.sin(a) * ORBIT_R;
+            double spin = time * 0.06 + i * 1.3;
+            // octahedron points: 0 top, 1 bottom, 2-5 the equator
+            local(rot, 0, cx, cy + SHARD_H, cz);
+            local(rot, 1, cx, cy - SHARD_H, cz);
+            for (int k = 0; k < 4; k++) {
+                double e = spin + k * Math.PI / 2;
+                local(rot, 2 + k, cx + Math.cos(e) * SHARD_W, cy, cz + Math.sin(e) * SHARD_W);
+            }
+            for (int k = 0; k < 4; k++) {
+                int e0 = 2 + k, e1 = 2 + (k + 1) % 4;
+                face(solid, last, m, sprite, 0, e0, e1);
+                face(solid, last, m, sprite, 0, e1, e0);
+                face(solid, last, m, sprite, 1, e1, e0);
+                face(solid, last, m, sprite, 1, e0, e1);
+            }
+            GX[i] = (PX[0] + PX[1]) / 2;
+            GY[i] = (PY[0] + PY[1]) / 2;
+            GZ[i] = (PZ[0] + PZ[1]) / 2;
+        }
+        VertexConsumer glow = buffers.getBuffer(GLOW);
+        int color = TIER_HALO[tier], inner = pale(color);
+        float busy = (float) Math.min(1, (be.fxOrbitSpeed - ORBIT_IDLE) / (ORBIT_BUSY - ORBIT_IDLE));
+        for (int i = 0; i < SHARDS; i++) {
+            disc(glow, m, GX[i], GY[i], GZ[i], 0.13F, color, (int) (40 + 30 * busy));
+            disc(glow, m, GX[i], GY[i], GZ[i], 0.05F, inner, (int) (70 + 50 * busy));
+        }
+        int n = RING_POINTS;
+        for (int k = 0; k < n; k++) {
+            double e = Math.PI * 2 * k / (n - 1);
+            local(rot, 0, Math.cos(e) * ORBIT_R, ORBIT_Y - 0.5, Math.sin(e) * ORBIT_R);
+            QX[k] = PX[0];
+            QY[k] = PY[0];
+            QZ[k] = PZ[0];
+            QA[k] = 1;
+        }
+        strip(glow, m, QX, QY, QZ, QA, n, 0.02F, color, color, (int) (16 + 22 * busy));
+    }
+
+    /** Point {@code k} of the shard scratch: (x, y, z) around the block centre, turned by {@code rot}, in block space. */
+    private static void local(Quaternionf rot, int k, double x, double y, double z) {
+        SCRATCH.set((float) x, (float) y, (float) z);
+        rot.transform(SCRATCH);
+        PX[k] = SCRATCH.x + 0.5;
+        PY[k] = SCRATCH.y + 0.5;
+        PZ[k] = SCRATCH.z + 0.5;
+    }
+
+    /** One triangle of a shard (as a quad with its last corner twice), the sprite's corners as UVs, lit full bright. */
+    private static void face(VertexConsumer vc, PoseStack.Pose last, Matrix4f m, TextureAtlasSprite sprite, int a, int b, int c) {
+        double ux = PX[b] - PX[a], uy = PY[b] - PY[a], uz = PZ[b] - PZ[a];
+        double vx = PX[c] - PX[a], vy = PY[c] - PY[a], vz = PZ[c] - PZ[a];
+        float nx = (float) (uy * vz - uz * vy), ny = (float) (uz * vx - ux * vz), nz = (float) (ux * vy - uy * vx);
+        float nl = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (nl < 1.0E-9F) return;
+        nx /= nl;
+        ny /= nl;
+        nz /= nl;
+        float u0 = sprite.getU0(), u1 = sprite.getU1(), v0 = sprite.getV0(), v1 = sprite.getV1(), um = (u0 + u1) / 2;
+        vertex(vc, last, m, a, um, v0, nx, ny, nz);
+        vertex(vc, last, m, b, u0, v1, nx, ny, nz);
+        vertex(vc, last, m, c, u1, v1, nx, ny, nz);
+        vertex(vc, last, m, c, u1, v1, nx, ny, nz);
+    }
+
+    private static void vertex(VertexConsumer vc, PoseStack.Pose last, Matrix4f m, int k, float u, float v, float nx, float ny, float nz) {
+        vc.addVertex(m, (float) PX[k], (float) PY[k], (float) PZ[k]).setColor(255, 255, 255, 255).setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(last, nx, ny, nz);
     }
 
     /** Mote speed at an eased flow level, blended between the two nearest levels. */

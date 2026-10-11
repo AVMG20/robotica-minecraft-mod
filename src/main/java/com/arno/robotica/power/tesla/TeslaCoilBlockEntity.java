@@ -76,6 +76,8 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     public double fxTime = -1;
     public final double[] fxTravel = new double[MAX_LINKS];
     public final float[] fxFlow = new float[MAX_LINKS];
+    /** Client: angle and eased speed (radians per tick) of the shards that circle a coil's crystal. */
+    public double fxOrbit, fxOrbitSpeed;
 
     public TeslaCoilBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.TESLA_COIL_BE.get(), pos, state);
@@ -109,7 +111,12 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     }
 
     public int maxLinks() {
-        return tier().maxLinks;
+        return getBlockState().getBlock() instanceof TeslaCoilBlock coil ? coil.maxLinks() : TeslaTier.I.maxLinks;
+    }
+
+    /** A Tesla Emitter: one link, only sends from the block it sits on, never a link target. */
+    public boolean isEmitter() {
+        return getBlockState().getBlock() instanceof TeslaEmitterBlock;
     }
 
     /** FE/t sent over the last second (including what hops lose). */
@@ -272,7 +279,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             TeslaLink link = links.get(i);
             if (!level.isLoaded(link.pos())) continue;
             boolean gone = link.coil()
-                    ? !(level.getBlockEntity(link.pos()) instanceof TeslaCoilBlockEntity)
+                    ? !(level.getBlockEntity(link.pos()) instanceof TeslaCoilBlockEntity other) || other.isEmitter()
                     : level.getCapability(Capabilities.EnergyStorage.BLOCK, link.pos(), link.face()) == null
                     && level.getCapability(Capabilities.EnergyStorage.BLOCK, link.pos(), null) == null;
             if (gone) {
@@ -339,11 +346,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     /** World position an arc of this link ends at: the other coil's tip, or the middle of the linked face. */
     public static Vec3 endPoint(Level level, TeslaLink link) {
         BlockPos p = link.pos();
-        if (link.coil()) {
-            BlockState state = level.getBlockState(p);
-            Direction f = state.hasProperty(TeslaCoilBlock.FACING) ? state.getValue(TeslaCoilBlock.FACING) : Direction.UP;
-            return TeslaCoilBlock.tipOffset(f).add(p.getX(), p.getY(), p.getZ());
-        }
+        if (link.coil()) return TeslaCoilBlock.tipOffset(level.getBlockState(p)).add(p.getX(), p.getY(), p.getZ());
         Direction face = link.face() == null ? Direction.UP : link.face();
         return new Vec3(p.getX() + 0.5 + face.getStepX() * 0.52, p.getY() + 0.5 + face.getStepY() * 0.52, p.getZ() + 0.5 + face.getStepZ() * 0.52);
     }
