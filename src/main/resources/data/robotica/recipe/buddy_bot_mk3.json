@@ -4,13 +4,13 @@
     "item": "robotica:quantum_circuit"
   },
   "base": {
-    "item": "robotica:mining_drone_mk2"
+    "item": "robotica:buddy_bot_mk2"
   },
   "addition": {
     "item": "robotica:plasma_actuator"
   },
   "result": {
-    "id": "robotica:mining_drone_mk3",
+    "id": "robotica:buddy_bot_mk3",
     "count": 1
   }
 }

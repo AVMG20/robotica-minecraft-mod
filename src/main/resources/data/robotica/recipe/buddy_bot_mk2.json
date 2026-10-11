@@ -4,13 +4,13 @@
     "item": "robotica:advanced_circuit"
   },
   "base": {
-    "item": "robotica:mining_drone"
+    "item": "robotica:buddy_bot"
   },
   "addition": {
     "item": "robotica:servo_actuator"
   },
   "result": {
-    "id": "robotica:mining_drone_mk2",
+    "id": "robotica:buddy_bot_mk2",
     "count": 1
   }
 }

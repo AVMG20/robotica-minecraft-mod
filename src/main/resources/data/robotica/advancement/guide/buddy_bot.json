@@ -2,13 +2,13 @@
   "parent": "robotica:guide/first_iron",
   "display": {
     "icon": {
-      "id": "robotica:mining_drone"
+      "id": "robotica:buddy_bot"
     },
     "title": {
-      "translate": "advancements.robotica.guide.mining_drone.title"
+      "translate": "advancements.robotica.guide.buddy_bot.title"
     },
     "description": {
-      "translate": "advancements.robotica.guide.mining_drone.description"
+      "translate": "advancements.robotica.guide.buddy_bot.description"
     },
     "frame": "task",
     "show_toast": true,
@@ -22,7 +22,7 @@
         "items": [
           {
             "items": [
-              "robotica:mining_drone"
+              "robotica:buddy_bot"
             ]
           }
         ]

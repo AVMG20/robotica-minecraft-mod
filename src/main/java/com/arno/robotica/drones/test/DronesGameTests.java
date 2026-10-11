@@ -5,14 +5,14 @@ import com.arno.robotica.core.CoreComponents;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
-import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.entity.CourierDrone;
 import com.arno.robotica.drones.entity.CourierRoute;
+import com.arno.robotica.gear.GearBlocks;
+import com.arno.robotica.gear.GearConfig;
 import com.arno.robotica.drones.entity.HaulerDrone;
-import com.arno.robotica.drones.entity.MiningDrone;
-import com.arno.robotica.drones.entity.SentryDrone;
+import com.arno.robotica.drones.entity.BuddyBot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -24,6 +24,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
@@ -68,24 +69,38 @@ public class DronesGameTests {
         }
     }
 
-    private static MiningDrone miner(GameTestHelper helper) {
-        MiningDrone drone = helper.spawn(DronesRegistry.MINING_DRONE_ENTITY.get(), p(0, 2, 1));
-        drone.setTier(1);
-        drone.setHealth(drone.getMaxHealth());
-        drone.setOwnerUUID(UUID.randomUUID());
-        drone.setEnergy(drone.getEnergyCapacity());
-        drone.digTicksOverride = 1;
-        return drone;
+    private static BuddyBot buddy(GameTestHelper helper) {
+        BuddyBot bot = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(0, 2, 1));
+        bot.setTier(1);
+        bot.setHealth(bot.getMaxHealth());
+        bot.setOwnerUUID(UUID.randomUUID());
+        bot.setEnergy(bot.getEnergyCapacity());
+        bot.setMode(BuddyBot.Mode.STAY);
+        bot.digTicksOverride = 1;
+        return bot;
+    }
+
+    /** Spark Lamps the tunnel put up in the test area (they cost FE too). */
+    private static int lamps(GameTestHelper helper) {
+        int n = 0;
+        for (int x = -2; x <= 8; x++) {
+            for (int y = 0; y <= 6; y++) {
+                for (int z = -2; z <= 8; z++) {
+                    if (helper.getBlockState(p(x, y, z)).is(GearBlocks.SPARK_LAMP.get())) n++;
+                }
+            }
+        }
+        return n;
     }
 
     @GameTest(template = "drones_arena", batch = "dronesTunnel", timeoutTicks = 600)
-    public static void miningDroneCarvesTunnel(GameTestHelper helper) {
+    public static void buddyCarvesTunnel(GameTestHelper helper) {
         rock(helper);
-        MiningDrone drone = miner(helper);
-        int before = drone.getEnergy();
-        helper.runAfterDelay(2, () -> drone.startTunnel(Direction.EAST, 5, helper.absolutePos(p(0, 1, 1))));
+        BuddyBot bot = buddy(helper);
+        int before = bot.getEnergy();
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 5, helper.absolutePos(p(0, 1, 1))));
         helper.succeedWhen(() -> {
-            helper.assertTrue(drone.lastStop() == MiningDrone.Stop.DONE, "tunnel should finish with DONE, is " + drone.lastStop());
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.DONE, "tunnel should finish with DONE, is " + bot.lastStop());
             for (int x = 1; x <= 5; x++) {
                 for (int y = 1; y <= 3; y++) {
                     for (int z = 0; z <= 2; z++) helper.assertBlockNotPresent(Blocks.STONE, p(x, y, z));
@@ -95,32 +110,33 @@ public class DronesGameTests {
             helper.assertBlockPresent(Blocks.STONE, p(3, 4, 1));
             helper.assertBlockPresent(Blocks.STONE, p(3, 2, 3));
             helper.assertBlockPresent(Blocks.STONE, p(3, 0, 1));
-            helper.assertTrue(drone.count(Items.COBBLESTONE) == 45, "5 slices of 9 stone give 45 cobblestone, has " + drone.count(Items.COBBLESTONE));
-            int perBlock = CoreConfig.scaleEnergy(DronesConfig.miningFePerBlock());
-            helper.assertTrue(drone.getEnergy() == before - 45 * perBlock, "each block costs " + perBlock + " FE, spent " + (before - drone.getEnergy()));
+            helper.assertTrue(bot.count(Items.COBBLESTONE) == 45, "5 slices of 9 stone give 45 cobblestone, has " + bot.count(Items.COBBLESTONE));
+            int perBlock = CoreConfig.scaleEnergy(DronesConfig.buddyFePerBlock());
+            int spent = before - bot.getEnergy() - lamps(helper) * GearConfig.lampCost();
+            helper.assertTrue(spent == 45 * perBlock, "each block costs " + perBlock + " FE, spent " + spent);
+            helper.assertTrue(!bot.hasTunnel() && !bot.isDigging(), "the bot leaves the tunnel job");
             clear(helper);
         });
     }
 
-    /** Mk3 digs a 5x5 slice (floor at foot level, so 2 to each side and 3 above the drone's line) and rolls drops with Fortune I. */
+    /** Mk3 digs a 5x5 slice (floor at foot level, so 2 to each side and 3 above its line) and rolls drops with Fortune I. */
     @GameTest(template = "drones_arena", batch = "dronesTunnel5", timeoutTicks = 800)
-    public static void miningDroneMk3CarvesFiveByFive(GameTestHelper helper) {
+    public static void buddyMk3CarvesFiveByFive(GameTestHelper helper) {
         fill(helper, 0, 8, -2, 8, Blocks.AIR);
         fill(helper, 1, 5, -2, 4, Blocks.STONE);
-        MiningDrone drone = miner(helper);
-        drone.setTier(3);
-        helper.assertTrue(drone.radius() == 2, "Mk3 digs 5x5");
+        BuddyBot bot = buddy(helper);
         var fortune = helper.getLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
                 .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FORTUNE);
-        helper.assertTrue(drone.tool().getEnchantmentLevel(fortune) == 1, "Mk3 mines with Fortune I");
-        drone.setTier(2);
-        helper.assertTrue(drone.radius() == 1 && drone.tool().getEnchantmentLevel(fortune) == 0, "Mk2 stays 3x3 without Fortune");
-        drone.setTier(3);
-        helper.assertTrue(drone.getEnergyCapacity() >= DronesConfig.miningBuffer(2), "Mk3 holds at least the Mk2 buffer");
-        drone.setEnergy(drone.getEnergyCapacity());
-        helper.runAfterDelay(2, () -> drone.startTunnel(Direction.EAST, 3, helper.absolutePos(p(0, 1, 1))));
+        bot.setTier(2);
+        helper.assertTrue(bot.radius() == 1 && bot.tool().getEnchantmentLevel(fortune) == 0, "Mk2 stays 3x3 without Fortune");
+        bot.setTier(4);
+        helper.assertTrue(bot.radius() == 2 && bot.tool().getEnchantmentLevel(fortune) == 2, "Mk4 digs 5x5 with Fortune II");
+        bot.setTier(3);
+        helper.assertTrue(bot.radius() == 2 && bot.tool().getEnchantmentLevel(fortune) == 1, "Mk3 digs 5x5 with Fortune I");
+        bot.setEnergy(bot.getEnergyCapacity());
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 3, helper.absolutePos(p(0, 1, 1))));
         helper.succeedWhen(() -> {
-            helper.assertTrue(drone.lastStop() == MiningDrone.Stop.DONE, "tunnel should finish with DONE, is " + drone.lastStop());
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.DONE, "tunnel should finish with DONE, is " + bot.lastStop());
             for (int x = 1; x <= 3; x++) {
                 for (int y = 1; y <= 5; y++) {
                     for (int z = -1; z <= 3; z++) helper.assertBlockNotPresent(Blocks.STONE, p(x, y, z));
@@ -131,7 +147,7 @@ public class DronesGameTests {
             helper.assertBlockPresent(Blocks.STONE, p(2, 3, 4));
             helper.assertBlockPresent(Blocks.STONE, p(2, 3, -2));
             helper.assertBlockPresent(Blocks.STONE, p(2, 0, 1));
-            helper.assertTrue(drone.count(Items.COBBLESTONE) == 75, "3 slices of 25 stone give 75 cobblestone, has " + drone.count(Items.COBBLESTONE));
+            helper.assertTrue(bot.count(Items.COBBLESTONE) == 75, "3 slices of 25 stone give 75 cobblestone, has " + bot.count(Items.COBBLESTONE));
             fill(helper, 0, 8, -2, 8, Blocks.AIR);
         });
     }
@@ -149,14 +165,14 @@ public class DronesGameTests {
     public static void lavaAheadStopsTunnel(GameTestHelper helper) {
         rock(helper);
         helper.setBlock(p(4, 2, 1), Blocks.LAVA);
-        MiningDrone drone = miner(helper);
-        helper.runAfterDelay(2, () -> drone.startTunnel(Direction.EAST, 5, helper.absolutePos(p(0, 1, 1))));
+        BuddyBot bot = buddy(helper);
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 5, helper.absolutePos(p(0, 1, 1))));
         helper.succeedWhen(() -> {
-            helper.assertTrue(drone.lastStop() == MiningDrone.Stop.LAVA, "lava should stop the tunnel, stop is " + drone.lastStop());
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.LAVA, "lava should stop the tunnel, stop is " + bot.lastStop());
             helper.assertBlockPresent(Blocks.COBBLESTONE, p(4, 2, 1));
             helper.assertBlockNotPresent(Blocks.STONE, p(2, 2, 1));
             helper.assertBlockPresent(Blocks.STONE, p(3, 2, 1));
-            helper.assertTrue(drone.mode() != MiningDrone.Mode.TUNNEL, "the drone must leave tunnel mode");
+            helper.assertTrue(!bot.hasTunnel(), "the bot must leave the tunnel job");
             clear(helper);
         });
     }
@@ -172,10 +188,10 @@ public class DronesGameTests {
         };
         VETO[0] = veto;
         NeoForge.EVENT_BUS.addListener(veto);
-        MiningDrone drone = miner(helper);
-        helper.runAfterDelay(2, () -> drone.startTunnel(Direction.EAST, 5, helper.absolutePos(p(0, 1, 1))));
+        BuddyBot bot = buddy(helper);
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 5, helper.absolutePos(p(0, 1, 1))));
         helper.succeedWhen(() -> {
-            helper.assertTrue(drone.lastStop() == MiningDrone.Stop.BLOCKED, "a vetoed break should block the tunnel, stop is " + drone.lastStop());
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.BLOCKED, "a vetoed break should block the tunnel, stop is " + bot.lastStop());
             helper.assertBlockPresent(Blocks.STONE, p(2, 2, 1));
             NeoForge.EVENT_BUS.unregister(veto);
             clear(helper);
@@ -184,118 +200,167 @@ public class DronesGameTests {
 
     @GameTest(template = "empty")
     public static void pickUpKeepsEnergyAndSettings(GameTestHelper helper) {
-        MiningDrone drone = DronesRegistry.MINING_DRONE_ENTITY.get().create(helper.getLevel());
-        drone.setTier(1);
-        drone.setEnergy(123_456);
-        drone.setHeading(Direction.EAST);
-        drone.cycleLength();
-        drone.toggleVoid();
-        drone.storage.setStackInSlot(0, new ItemStack(Items.IRON_ORE, 17));
-        drone.torch.setStackInSlot(0, new ItemStack(Items.TORCH, 5));
-        drone.battery.setStackInSlot(0, new ItemStack(CoreItems.COPPER_CELL.get()));
-        drone.setCustomName(Component.literal("Digger"));
-        ItemStack stack = drone.toItemStack(false);
-        helper.assertTrue(stack.is(DronesRegistry.MINING_DRONE.get()), "item form of a Mk1 drone");
+        BuddyBot bot = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        bot.setTier(1);
+        bot.setEnergy(123_456);
+        bot.setStance(BuddyBot.Stance.DEFENSE);
+        bot.setPickup(false);
+        bot.setLights(true);
+        bot.setVoid(true);
+        bot.storage.setStackInSlot(0, new ItemStack(Items.IRON_ORE, 17));
+        bot.battery.setStackInSlot(0, new ItemStack(CoreItems.COPPER_CELL.get()));
+        bot.setCustomName(Component.literal("Sparky"));
+        ItemStack stack = bot.toItemStack(false);
+        helper.assertTrue(stack.is(DronesRegistry.BUDDY_BOT.get()), "item form of a Mk1 bot");
         helper.assertTrue(ItemEnergy.get(stack) == 123_456, "energy is kept in the energy component");
         helper.assertTrue(stack.has(CoreComponents.ENERGY.get()) && stack.has(DronesRegistry.DRONE_STATE.get()), "components present");
 
-        MiningDrone again = DronesRegistry.MINING_DRONE_ENTITY.get().create(helper.getLevel());
+        BuddyBot again = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
         again.initFromStack(stack, null);
         helper.assertTrue(again.getEnergy() == 123_456, "energy restored, is " + again.getEnergy());
-        helper.assertTrue(again.storage.getStackInSlot(0).is(Items.IRON_ORE) && again.storage.getStackInSlot(0).getCount() == 17, "inventory restored");
-        helper.assertTrue(again.torch.getStackInSlot(0).getCount() == 5, "torches restored");
+        helper.assertTrue(again.storage.getStackInSlot(0).is(Items.IRON_ORE) && again.storage.getStackInSlot(0).getCount() == 17, "cargo restored");
         helper.assertTrue(again.battery.getStackInSlot(0).is(CoreItems.COPPER_CELL.get()), "battery restored");
-        helper.assertTrue(again.voidOn() && again.tunnelLength() == 128 && again.heading() == Direction.EAST, "settings restored");
-        helper.assertTrue(again.hasCustomName() && again.getCustomName().getString().equals("Digger"), "name restored");
+        helper.assertTrue(again.stance() == BuddyBot.Stance.DEFENSE && !again.pickupOn() && again.lightsOn() && again.voidOn(), "settings restored");
+        helper.assertTrue(again.hasCustomName() && again.getCustomName().getString().equals("Sparky"), "name restored");
+        helper.succeed();
+    }
 
-        ItemStack mk2 = new ItemStack(DronesRegistry.MINING_DRONE_MK2.get());
-        MiningDrone big = DronesRegistry.MINING_DRONE_ENTITY.get().create(helper.getLevel());
-        big.initFromStack(mk2, null);
-        helper.assertTrue(big.tier() == 2 && big.storageSlots() == 27, "Mk2 has tier 2 and 27 slots");
+    /** Every Mk adds cargo space; the slots past the tier take nothing. */
+    @GameTest(template = "empty")
+    public static void cargoGrowsWithTier(GameTestHelper helper) {
+        int[] want = {18, 27, 36, 54};
+        net.minecraft.world.item.Item[] items = {DronesRegistry.BUDDY_BOT.get(), DronesRegistry.BUDDY_BOT_MK2.get(),
+                DronesRegistry.BUDDY_BOT_MK3.get(), DronesRegistry.BUDDY_BOT_MK4.get()};
+        int lastBuffer = 0;
+        for (int t = 1; t <= 4; t++) {
+            BuddyBot bot = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+            bot.initFromStack(new ItemStack(items[t - 1]), null);
+            helper.assertTrue(bot.tier() == t && bot.cargoSlots() == want[t - 1], "Mk" + t + " has " + want[t - 1] + " slots, has " + bot.cargoSlots());
+            helper.assertTrue(bot.baseItem() == items[t - 1], "Mk" + t + " turns back into its own item");
+            helper.assertTrue(bot.getEnergyCapacity() > lastBuffer, "Mk" + t + " holds more FE than the Mk before");
+            lastBuffer = bot.getEnergyCapacity();
+            if (t < 4) {
+                ItemStack rest = bot.storage.insertItem(want[t - 1], new ItemStack(Items.DIRT), false);
+                helper.assertTrue(rest.getCount() == 1, "Mk" + t + " refuses items past its cargo");
+            }
+        }
         helper.succeed();
     }
 
     @GameTest(template = "empty")
-    public static void mk3DroneKeepsTierOnLoad(GameTestHelper helper) {
-        MiningDrone drone = DronesRegistry.MINING_DRONE_ENTITY.get().create(helper.getLevel());
-        drone.setTier(3);
-        drone.setHealth(drone.getMaxHealth());
-        drone.setEnergy(drone.getEnergyCapacity());
-        CompoundTag saved = drone.saveWithoutId(new CompoundTag());
+    public static void mk4KeepsTierOnLoad(GameTestHelper helper) {
+        BuddyBot bot = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        bot.setTier(4);
+        bot.setHealth(bot.getMaxHealth());
+        bot.setEnergy(bot.getEnergyCapacity());
+        CompoundTag saved = bot.saveWithoutId(new CompoundTag());
 
-        MiningDrone again = DronesRegistry.MINING_DRONE_ENTITY.get().create(helper.getLevel());
+        BuddyBot again = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
         again.load(saved);
-        helper.assertTrue(again.tier() == 3, "Mk3 stays Mk3 after a reload, is Mk" + again.tier());
-        helper.assertTrue(again.getEnergy() == DronesConfig.miningBuffer(3), "Mk3 buffer kept, is " + again.getEnergy());
-        helper.assertTrue(again.getMaxHealth() == DronesConfig.miningHealth(3) && again.getHealth() == again.getMaxHealth(),
-                "Mk3 health kept, is " + again.getHealth() + "/" + again.getMaxHealth());
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty")
-    public static void sentryPickUpKeepsSettings(GameTestHelper helper) {
-        SentryDrone drone = DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel());
-        drone.setTier(1);
-        drone.setEnergy(77_777);
-        drone.toggleStance();
-        drone.cycleRadius();
-        drone.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 1));
-        ItemStack stack = drone.toItemStack(false);
-        helper.assertTrue(ItemEnergy.get(stack) == 77_777, "energy kept");
-        SentryDrone again = DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel());
-        again.initFromStack(stack, null);
-        helper.assertTrue(again.getEnergy() == 77_777 && !again.aggressive() && again.radiusIndex() == 1, "settings restored");
-        helper.assertTrue(again.upgrades.level(UpgradeKind.SPEED) == 1, "upgrade card restored");
+        helper.assertTrue(again.tier() == 4, "Mk4 stays Mk4 after a reload, is Mk" + again.tier());
+        helper.assertTrue(again.getEnergy() == DronesConfig.buddyBuffer(4), "Mk4 buffer kept, is " + again.getEnergy());
+        helper.assertTrue(again.getMaxHealth() == DronesConfig.buddyHealth(4) && again.getHealth() == again.getMaxHealth(),
+                "Mk4 health kept, is " + again.getHealth() + "/" + again.getMaxHealth());
         helper.succeed();
     }
 
     @GameTest(template = "drones_arena", batch = "dronesSentry", timeoutTicks = 400)
-    public static void sentryShootsHostilesOnly(GameTestHelper helper) {
+    public static void buddyShootsHostilesOnly(GameTestHelper helper) {
         clear(helper);
         for (int x = 0; x <= 8; x++) {
             for (int z = 0; z <= 8; z++) helper.setBlock(p(x, 0, z), Blocks.STONE);
         }
-        SentryDrone sentry = helper.spawn(DronesRegistry.SENTRY_DRONE_ENTITY.get(), p(1, 2, 1));
-        sentry.setTier(1);
-        sentry.setHealth(sentry.getMaxHealth());
-        sentry.setOwnerUUID(UUID.randomUUID());
-        sentry.setEnergy(sentry.getEnergyCapacity());
-        sentry.setMode(SentryDrone.Mode.STAY);
+        BuddyBot bot = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(1, 2, 1));
+        bot.setTier(1);
+        bot.setHealth(bot.getMaxHealth());
+        bot.setOwnerUUID(UUID.randomUUID());
+        bot.setEnergy(bot.getEnergyCapacity());
+        bot.setMode(BuddyBot.Mode.STAY);
         Husk husk = helper.spawn(EntityType.HUSK, p(6, 1, 1));
         husk.setNoAi(true);
         Villager villager = helper.spawn(EntityType.VILLAGER, p(3, 1, 1));
         villager.setNoAi(true);
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        helper.assertTrue(sentry.canTarget(husk), "a husk is a target");
-        helper.assertTrue(!sentry.canTarget(villager), "never a villager");
-        helper.assertTrue(!sentry.canTarget(player), "never a player");
-        helper.assertTrue(!sentry.canTarget(sentry), "never a drone");
-        SentryDrone other = DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel());
-        helper.assertTrue(!sentry.canTarget(other), "never another drone");
-        sentry.toggleStance();
-        helper.assertTrue(!sentry.canTarget(husk), "defensive: a calm husk is left alone");
-        sentry.toggleStance();
+        helper.assertTrue(bot.canTarget(husk), "aggressive: a husk is a target");
+        helper.assertTrue(!bot.canTarget(villager), "never a villager");
+        helper.assertTrue(!bot.canTarget(player), "never a player");
+        helper.assertTrue(!bot.canTarget(bot), "never itself");
+        BuddyBot other = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        helper.assertTrue(!bot.canTarget(other), "never another drone");
+        bot.setStance(BuddyBot.Stance.DEFENSE);
+        helper.assertTrue(!bot.canTarget(husk), "defense: a husk the owner is not fighting is left alone");
+        bot.setStance(BuddyBot.Stance.PASSIVE);
+        helper.assertTrue(!bot.canTarget(husk), "passive: never fires");
+        bot.setStance(BuddyBot.Stance.AGGRESSIVE);
         float villagerHealth = villager.getHealth();
         helper.succeedWhen(() -> {
-            helper.assertTrue(sentry.shots > 0, "the sentry must fire");
+            helper.assertTrue(bot.shots > 0, "the bot must fire");
             helper.assertTrue(!husk.isAlive() || husk.getHealth() < husk.getMaxHealth(), "the husk must be hurt");
             helper.assertTrue(villager.getHealth() == villagerHealth, "the villager must stay unhurt");
-            helper.assertTrue(sentry.getEnergy() < sentry.getEnergyCapacity(), "shots cost energy");
+            helper.assertTrue(bot.getEnergy() < bot.getEnergyCapacity(), "shots cost energy");
             clear(helper);
         });
     }
 
     @GameTest(template = "empty")
-    public static void sentryOnlyFiresWithEnergy(GameTestHelper helper) {
-        SentryDrone sentry = DronesRegistry.SENTRY_DRONE_ENTITY.get().create(helper.getLevel());
-        sentry.setTier(1);
-        sentry.setEnergy(0);
-        helper.assertTrue(sentry.isEnergyLow(), "an empty drone is low");
-        sentry.setEnergy(sentry.getEnergyCapacity());
-        helper.assertTrue(!sentry.isEnergyLow(), "a full drone is not low");
-        helper.assertTrue(sentry.consume(sentry.fePerShot()), "a shot is paid from the buffer");
-        helper.assertTrue(sentry.getEnergy() == sentry.getEnergyCapacity() - sentry.fePerShot(), "exactly the shot cost is spent");
+    public static void buddyOnlyFiresWithEnergy(GameTestHelper helper) {
+        BuddyBot bot = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        bot.setTier(1);
+        bot.setEnergy(0);
+        helper.assertTrue(bot.isEnergyLow(), "an empty bot is low");
+        bot.setEnergy(bot.getEnergyCapacity());
+        helper.assertTrue(!bot.isEnergyLow(), "a full bot is not low");
+        helper.assertTrue(bot.consume(bot.fePerShot()), "a shot is paid from the buffer");
+        helper.assertTrue(bot.getEnergy() == bot.getEnergyCapacity() - bot.fePerShot(), "exactly the shot cost is spent");
         helper.succeed();
+    }
+
+    /** Drops lying around go into the cargo, only while pick-up is on. */
+    @GameTest(template = "drones_arena", batch = "dronesPickup", timeoutTicks = 200)
+    public static void pickupToggleControlsSweeping(GameTestHelper helper) {
+        clear(helper);
+        BuddyBot bot = buddy(helper);
+        bot.setPickup(false);
+        BlockPos at = helper.absolutePos(p(1, 2, 1));
+        ItemEntity drop = new ItemEntity(helper.getLevel(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(Items.APPLE, 3));
+        drop.setNoGravity(true);
+        drop.setDeltaMovement(0, 0, 0);
+        helper.getLevel().addFreshEntity(drop);
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(drop.isAlive() && bot.count(Items.APPLE) == 0, "pick-up off: the drop stays");
+            bot.setPickup(true);
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bot.pickupOn() && bot.count(Items.APPLE) == 3, "pick-up on: the drop is in the cargo");
+            helper.assertTrue(!drop.isAlive(), "the item entity is gone");
+            clear(helper);
+        });
+    }
+
+    /** Light-up mode puts a Spark Lamp where the bot hovers in the dark, for FE. */
+    @GameTest(template = "drones_arena", batch = "dronesLights", timeoutTicks = 200)
+    public static void lightsModeLightsTheDark(GameTestHelper helper) {
+        clear(helper);
+        // a closed stone box, 3x3x3 of air inside around p(2, 2, 2)
+        for (int x = 0; x <= 4; x++) {
+            for (int y = 0; y <= 4; y++) {
+                for (int z = 0; z <= 4; z++) {
+                    boolean wall = x == 0 || x == 4 || y == 0 || y == 4 || z == 0 || z == 4;
+                    helper.setBlock(p(x, y, z), wall ? Blocks.STONE : Blocks.AIR);
+                }
+            }
+        }
+        BuddyBot bot = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(2, 2, 2));
+        bot.setTier(1);
+        bot.setOwnerUUID(UUID.randomUUID());
+        bot.setEnergy(bot.getEnergyCapacity());
+        bot.setMode(BuddyBot.Mode.STAY);
+        bot.setLights(true);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(lamps(helper) >= 1, "a lamp in the dark box");
+            helper.assertTrue(bot.getEnergy() < bot.getEnergyCapacity(), "the lamp costs FE");
+            clear(helper);
+        });
     }
 
     // ---------------------------------------------------------------- courier
@@ -545,7 +610,7 @@ public class DronesGameTests {
         helper.assertTrue(HaulerDrone.refusal(com.arno.robotica.boss.BossRegistry.SCRAP_COLOSSUS.get().create(level), player, 2) != null, "never a Robotica boss");
         helper.assertTrue(EntityType.ELDER_GUARDIAN.is(HaulerDrone.BLACKLIST), "bosses are in robotica:hauler_blacklist");
         helper.assertTrue(HaulerDrone.refusal(helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL), player, 2) != null, "never a player");
-        helper.assertTrue(HaulerDrone.refusal(DronesRegistry.SENTRY_DRONE_ENTITY.get().create(level), player, 2) != null, "never a drone");
+        helper.assertTrue(HaulerDrone.refusal(DronesRegistry.BUDDY_BOT_ENTITY.get().create(level), player, 2) != null, "never a drone");
         var rancher = com.arno.robotica.automation.rancher.RancherContent.RANCHER_ENTITY.get().create(level);
         rancher.setOwnerUUID(UUID.randomUUID());
         helper.assertTrue(HaulerDrone.refusal(rancher, player, 2) != null, "never another player's Rancher");

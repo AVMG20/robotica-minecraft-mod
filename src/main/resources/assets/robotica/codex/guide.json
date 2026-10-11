@@ -49,9 +49,9 @@
       "age": 1
     },
     {
-      "id": "robotica:guide/mining_drone",
+      "id": "robotica:guide/buddy_bot",
       "parent": "robotica:guide/first_iron",
-      "icon": "robotica:mining_drone",
+      "icon": "robotica:buddy_bot",
       "age": 1
     },
     {
@@ -105,7 +105,7 @@
     {
       "id": "robotica:guide/drones",
       "parent": "robotica:guide/basic_circuit",
-      "icon": "robotica:sentry_drone",
+      "icon": "robotica:courier_drone",
       "age": 1
     },
     {

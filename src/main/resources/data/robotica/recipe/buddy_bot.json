@@ -2,11 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    " P ",
+    "XHP",
     "ICI",
     "RWR"
   ],
   "key": {
+    "X": {
+      "tag": "c:tools/crossbow"
+    },
+    "H": {
+      "tag": "c:chests/wooden"
+    },
     "P": {
       "item": "minecraft:iron_pickaxe"
     },
@@ -24,7 +30,7 @@
     }
   },
   "result": {
-    "id": "robotica:mining_drone",
+    "id": "robotica:buddy_bot",
     "count": 1
   }
 }
