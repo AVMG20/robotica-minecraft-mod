@@ -11,7 +11,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import Canvas, grain, hash01, material, write_anim, write_block, write_item, write_still  # noqa: E402
+from pixelart import MATERIALS, Canvas, grain, hash01, material, write_anim, write_block, write_item, write_still  # noqa: E402
 
 CU, ST, BR, AU, WD, SO = '01234', 'abcde', '56789', 'ABCDE', 'uvwWX', 'mnopP'
 MG, NV, SL = '!#$%&', '()[]{', '<>?;:'                                                 # magma, null, slate (solar Mk3 / Mk4)
@@ -482,6 +482,26 @@ TESLA_CRYSTAL = {
 GUNMETAL = {'0': '#16191C', '1': '#22272B', '2': '#2E343A', '3': '#3C444B', '4': '#58626B'}
 
 
+# Platform metal per tier, after the machine Mk colours: I copper, II iron, III gold, IV magma, V null.
+TESLA_PLATE = {1: 'copper', 2: 'iron', 3: 'gold', 4: 'magma', 5: 'null'}
+
+
+def tesla_plate(tier):
+    """Tier platform: a bevelled 2 px frame of the tier metal with riveted corners round a dark recess with seams.
+    The top shows the whole texture; the sides show the top rows (the lit frame band)."""
+    c = Canvas()
+    c.plate(0, 0, 16, 16, 'TUVWX', tier, brushed=False)
+    c.rect(1, 1, 14, 14, 'V').rect(1, 14, 14, 1, 'U').rect(14, 1, 1, 14, 'U')
+    c.rect(0, 0, 16, 1, 'W')
+    c.rect(3, 3, 10, 10, '1').rect(3, 3, 10, 1, '0').rect(3, 3, 1, 10, '0')           # recess, shadowed top-left
+    c.rect(4, 12, 9, 1, '3').rect(12, 4, 1, 9, '3')                                   # lit lip
+    c.rect(4, 7, 8, 1, '2').rect(7, 4, 1, 8, '2')                                     # cross seams
+    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
+        c.set(x, y, 'X')
+    pal = dict(GUNMETAL) | dict(zip('TUVWX', MATERIALS[TESLA_PLATE[tier]]))
+    return c.rows(), pal
+
+
 def tesla_crystal(tier):
     """Full-bright energy crystal: speckled like a geode, a coloured rim. Each face shows the whole texture."""
     rows = []
@@ -634,6 +654,8 @@ def main():
     for tier in TESLA_CRYSTAL:
         rows, pal = tesla_crystal(tier)
         write_block(f'tesla_crystal_{tier}', rows, pal)
+        rows, pal = tesla_plate(tier)
+        write_block(f'tesla_plate_{tier}', rows, pal)
     write_item('tesla_linker', tesla_linker().rows(), P | {'b': '#8D9599', 'c': '#C4CBCE', 'd': '#5A6266'})
     write_block('winding_crank_base', crank_base().rows(), P)
     write_block('winding_crank_metal', crank_metal().rows(), P)
