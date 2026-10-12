@@ -8,7 +8,8 @@ import net.neoforged.fml.config.ModConfig;
 /**
  * Common (both sides) entry point of the logistics module: item pipes (Mk1 to Mk4) that pull from
  * Extract links and push into Insert links through standard item capabilities.
- * Client side: the per-face pipe GUI ({@code client/LogisticsClient}); the pipes are plain multipart block models.
+ * Client side ({@code client/LogisticsClient}): the per-face pipe GUI and the light along a route when items move; the
+ * pipes are plain multipart block models.
  */
 public final class LogisticsModule {
     private LogisticsModule() {}
@@ -19,7 +20,7 @@ public final class LogisticsModule {
         LogisticsContent.BLOCK_ENTITIES.register(modBus);
         LogisticsContent.MENUS.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, LogisticsConfig.SPEC, "robotica-logistics-server.toml");
-        modBus.addListener(com.arno.robotica.logistics.pipe.PipeGlintPayload::register);
+        modBus.addListener(com.arno.robotica.logistics.net.PipeGlowPayload::register);
 
         RoboticaTab.add(LogisticsContent.ITEM_PIPE_ITEM);
         RoboticaTab.add(LogisticsContent.ITEM_PIPE_MK2_ITEM);

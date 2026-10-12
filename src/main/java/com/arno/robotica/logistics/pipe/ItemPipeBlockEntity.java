@@ -6,6 +6,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
@@ -28,7 +32,9 @@ import java.util.List;
  * network. Every {@code pipeInterval} ticks each Extract link pulls up to {@code pipeItems} items that pass its filter and
  * hands them to the Insert links of the network whose filter takes them, highest priority first and within a priority in
  * turn (round robin) or nearest first, through their item capabilities, so machine side configs and other mods'
- * inventories decide what fits. Items move instantly and never go back into the inventory they came from.
+ * inventories decide what fits. Items move instantly and never go back into the inventory they came from; the route
+ * lights up for players close by ({@link PipeNetwork#glow}). A link to the next pipe can be cut: both pipes keep the cut
+ * (synced to the client, which predicts links too), so the face stays apart from either side and after a reload.
  */
 public class ItemPipeBlockEntity extends BlockEntity {
     public static final int FILTER_SLOTS = 9;
@@ -50,6 +56,8 @@ public class ItemPipeBlockEntity extends BlockEntity {
     /** Round robin position per priority. */
     private final int[] nextDestination = new int[PipePriority.values().length];
     private int nextSlot;
+    /** Faces whose link to the next pipe is cut (bit per 3D data value). */
+    private byte cut;
 
     public ItemPipeBlockEntity(BlockPos pos, BlockState state) {
         super(LogisticsContent.ITEM_PIPE_BE.get(), pos, state);
@@ -141,6 +149,43 @@ public class ItemPipeBlockEntity extends BlockEntity {
         return !any || !whitelist[side.ordinal()];
     }
 
+    /** True when the link to the pipe on {@code side} is cut on this pipe's end. */
+    public boolean isCut(Direction side) {
+        return (cut >> side.get3DDataValue() & 1) != 0;
+    }
+
+    /** Sets this pipe's end of a cut and sends it to the players watching. */
+    public void setCut(Direction side, boolean on) {
+        byte next = (byte) (on ? cut | 1 << side.get3DDataValue() : cut & ~(1 << side.get3DDataValue()));
+        if (next == cut) return;
+        cut = next;
+        setChanged();
+        if (level != null && !level.isClientSide) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = new CompoundTag();
+        tag.putByte("cut", cut);
+        return tag;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    /** The client only needs the cuts (to predict links); modes and filters reach it through the menu. */
+    @Override
+    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
+        cut = tag.getByte("cut");
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider registries) {
+        cut = packet.getTag().getByte("cut");
+    }
+
     // ---------------------------------------------------------------- network
 
     void joinNetwork(PipeNetwork net) {
@@ -176,10 +221,13 @@ public class ItemPipeBlockEntity extends BlockEntity {
         super.onLoad();
         if (!(level instanceof ServerLevel server)) return;
         recheckLinks = true;
-        // A pipe that loads next to loaded pipes joins their network.
+        // A pipe that loads next to loaded pipes joins their network, and takes over a cut a neighbour keeps toward it
+        // (a pipe placed where a cut one was broken).
         for (Direction dir : Direction.values()) {
             BlockPos at = worldPosition.relative(dir);
-            if (server.isLoaded(at) && server.getBlockEntity(at) instanceof ItemPipeBlockEntity pipe) pipe.invalidateNetwork();
+            if (!server.isLoaded(at) || !(server.getBlockEntity(at) instanceof ItemPipeBlockEntity pipe)) continue;
+            pipe.invalidateNetwork();
+            if (pipe.isCut(dir.getOpposite())) cut |= (byte) (1 << dir.get3DDataValue());
         }
     }
 
@@ -217,7 +265,8 @@ public class ItemPipeBlockEntity extends BlockEntity {
         for (Direction dir : Direction.values()) {
             BlockPos at = pos.relative(dir);
             if (!level.isLoaded(at)) continue;
-            PipeConnection link = level.getBlockState(at).getBlock() instanceof ItemPipeBlock ? PipeConnection.PIPE
+            PipeConnection link = level.getBlockState(at).getBlock() instanceof ItemPipeBlock
+                    ? ItemPipeBlock.cut(level, pos, dir) ? PipeConnection.NONE : PipeConnection.PIPE
                     : handler(dir) != null ? mode(dir).connection : PipeConnection.NONE;
             next = next.setValue(ItemPipeBlock.prop(dir), link);
         }
@@ -243,7 +292,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
         int maxTries = LogisticsConfig.maxInsertTries(), maxVisits = LogisticsConfig.maxTargetVisits();
         int moved = 0, tries = 0, visits = 0, slots = source.getSlots();
         boolean stuck = false;
-        PipeNetwork.Endpoint into = null;
+        litCount = 0;
         int scan = Math.min(slots, SCAN_SLOTS), s = 0;
         for (; s < scan && moved < budget && tries < maxTries && visits < maxVisits; s++) {
             int slot = (nextSlot + s) % slots;
@@ -280,7 +329,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
                     if (taken.isEmpty()) break groups;
                     ItemStack left = ItemHandlerHelper.insertItemStacked(dest, taken, false);
                     moved += taken.getCount() - left.getCount();
-                    if (left.getCount() < taken.getCount()) into = target;
+                    if (left.getCount() < taken.getCount()) light(target);
                     if (!left.isEmpty()) giveBack(level, source, slot, left);
                     offer = null;
                     if (!closest) nextDestination[rank] = (start + k + 1) % size;
@@ -288,16 +337,20 @@ public class ItemPipeBlockEntity extends BlockEntity {
             }
         }
         nextSlot = nextStart(nextSlot, slots, s, moved >= budget, moved > 0, stuck);
-        // one glint per pull at most every 5 ticks per pipe (a Mk4 pulls every 4), never per item
-        long now = level.getGameTime();
-        if (moved > 0 && (now - lastGlint >= GLINT_GAP || now < lastGlint)) {
-            lastGlint = now;
-            PipeGlintPayload.send(level, worldPosition, side, into == null ? null : into.pipe().getBlockPos(), into == null ? null : into.side());
+        for (int i = 0; i < litCount; i++) {
+            net.glow(level, this, side, lit[i]);
+            lit[i] = null;
         }
     }
 
-    private static final int GLINT_GAP = 5;
-    private long lastGlint = Long.MIN_VALUE / 2;
+    /** Insert faces that took items in the current pull (the first few), lit for the players near the route. */
+    private final PipeNetwork.Endpoint[] lit = new PipeNetwork.Endpoint[4];
+    private int litCount;
+
+    private void light(PipeNetwork.Endpoint target) {
+        for (int i = 0; i < litCount; i++) if (lit[i] == target) return;
+        if (litCount < lit.length) lit[litCount++] = target;
+    }
 
     /**
      * Start slot of the next pull. {@code checked}: slots looked at, {@code seen}: some of them passed the filter.
@@ -347,6 +400,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
         tag.putByteArray("priorities", prio);
         tag.putByteArray("whitelist", white);
         if (!filterTag.isEmpty()) tag.put("filters", filterTag);
+        if (cut != 0) tag.putByte("cut", cut);
     }
 
     private static boolean isEmpty(ItemStackHandler handler) {
@@ -363,6 +417,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
         byte[] white = tag.getByteArray("whitelist");
         byte[] prio = tag.getByteArray("priorities");
         CompoundTag filterTag = tag.getCompound("filters");
+        cut = tag.getByte("cut");
         for (int i = 0; i < 6; i++) {
             orders[i] = i < order.length ? PipeOrder.byId(order[i]) : PipeOrder.ROUND_ROBIN;
             whitelist[i] = i < white.length && white[i] != 0;

@@ -2,75 +2,134 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "flange": "robotica:block/item_pipe_insert",
+    "connector": "robotica:block/item_pipe_insert",
     "particle": "robotica:block/item_pipe_insert"
   },
   "elements": [
     {
       "from": [
-        4,
-        4,
+        3,
+        3,
         0
       ],
       "to": [
-        12,
-        12,
-        2
+        13,
+        13,
+        1
       ],
       "faces": {
         "north": {
-          "texture": "#flange",
+          "texture": "#connector",
           "uv": [
             0,
             0,
-            8,
-            8
+            10,
+            10
           ],
           "cullface": "north"
         },
         "south": {
-          "texture": "#flange",
+          "texture": "#connector",
           "uv": [
             0,
             0,
-            8,
-            8
+            10,
+            10
           ]
         },
         "west": {
-          "texture": "#flange",
+          "texture": "#connector",
           "uv": [
-            8,
-            0,
             10,
-            8
+            0,
+            11,
+            10
           ]
         },
         "east": {
-          "texture": "#flange",
+          "texture": "#connector",
           "uv": [
-            8,
-            0,
             10,
-            8
+            0,
+            11,
+            10
           ]
         },
         "up": {
-          "texture": "#flange",
+          "texture": "#connector",
           "uv": [
             0,
-            8,
-            8,
-            10
+            15,
+            10,
+            16
           ]
         },
         "down": {
-          "texture": "#flange",
+          "texture": "#connector",
           "uv": [
             0,
-            8,
-            8,
-            10
+            15,
+            10,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        5,
+        1
+      ],
+      "to": [
+        11,
+        11,
+        4
+      ],
+      "faces": {
+        "west": {
+          "texture": "#connector",
+          "uv": [
+            12,
+            0,
+            15,
+            6
+          ]
+        },
+        "east": {
+          "texture": "#connector",
+          "uv": [
+            15,
+            0,
+            12,
+            6
+          ]
+        },
+        "up": {
+          "texture": "#connector",
+          "uv": [
+            0,
+            11,
+            6,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#connector",
+          "uv": [
+            0,
+            14,
+            6,
+            11
+          ]
+        },
+        "south": {
+          "texture": "#connector",
+          "uv": [
+            10,
+            10,
+            16,
+            16
           ]
         }
       }

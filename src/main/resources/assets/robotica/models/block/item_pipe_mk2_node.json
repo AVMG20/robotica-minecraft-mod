@@ -2,8 +2,8 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "pipe": "robotica:block/item_pipe_mk3",
-    "particle": "robotica:block/item_pipe_mk3"
+    "pipe": "robotica:block/item_pipe_mk2",
+    "particle": "robotica:block/item_pipe_mk2"
   },
   "elements": [
     {
@@ -22,54 +22,54 @@
           "texture": "#pipe",
           "uv": [
             0,
-            0,
+            8,
             6,
-            6
+            14
           ]
         },
         "south": {
           "texture": "#pipe",
           "uv": [
             0,
-            0,
+            8,
             6,
-            6
+            14
           ]
         },
         "west": {
           "texture": "#pipe",
           "uv": [
             0,
-            0,
+            8,
             6,
-            6
+            14
           ]
         },
         "east": {
           "texture": "#pipe",
           "uv": [
             0,
-            0,
+            8,
             6,
-            6
+            14
           ]
         },
         "up": {
           "texture": "#pipe",
           "uv": [
             0,
-            0,
+            8,
             6,
-            6
+            14
           ]
         },
         "down": {
           "texture": "#pipe",
           "uv": [
             0,
-            0,
+            8,
             6,
-            6
+            14
           ]
         }
       }

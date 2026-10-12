@@ -574,7 +574,7 @@
       "pages": [
         {
           "title": "Item pipes",
-          "text": "Items go to the highest priority arm that has room. Round robin only spreads them between arms of the same priority.",
+          "text": "Items go to the highest priority arm that has room. Round robin only spreads them between arms of the same priority. Moving items light up their route, from the amber Extract arm to the cyan Insert arm. Sneak-right-click between two pipes to keep side-by-side lines apart.",
           "items": [
             "robotica:item_pipe",
             "robotica:item_pipe_mk2",

@@ -48,7 +48,8 @@ import java.util.Map;
  * Item pipe (Mk1 to Mk4). Each face links to the next pipe or to a block with an item capability on that face
  * (chests, machines as their side config allows, other mods' inventories). A link to an inventory is Insert (default),
  * Extract or Disabled with a filter and an order, set in the GUI of the right-clicked arm (sneak-right-click with an
- * empty hand switches the mode without it); see {@link ItemPipeBlockEntity}.
+ * empty hand switches the mode without it); see {@link ItemPipeBlockEntity}. Sneak-right-click with an empty hand toward
+ * the next pipe cuts the link to it, or joins it again.
  */
 public class ItemPipeBlock extends Block implements EntityBlock {
     private static final Map<Direction, EnumProperty<PipeConnection>> PROPS = new EnumMap<>(Direction.class);
@@ -57,16 +58,18 @@ public class ItemPipeBlock extends Block implements EntityBlock {
         for (Direction dir : Direction.values()) PROPS.put(dir, EnumProperty.create(dir.getSerializedName(), PipeConnection.class));
     }
 
-    private static final VoxelShape CORE = Block.box(5, 5, 5, 11, 11, 11);
+    /** Sizes in step with scripts/data/logistics_data.py: a 4 px tube, a 6 px node where it bends, splits or ends. */
+    private static final VoxelShape NODE = Block.box(5, 5, 5, 11, 11, 11);
+    private static final VoxelShape TUBE = Block.box(6, 6, 6, 10, 10, 10);
     private static final Map<Direction, VoxelShape> ARMS = new EnumMap<>(Direction.class);
-    private static final Map<Direction, VoxelShape> FLANGES = new EnumMap<>(Direction.class);
+    private static final Map<Direction, VoxelShape> CONNECTORS = new EnumMap<>(Direction.class);
     /** Shape per combination of the six faces (2 bits each), built on first use. */
     private static final VoxelShape[] SHAPES = new VoxelShape[1 << 12];
 
     static {
         for (Direction dir : Direction.values()) {
-            ARMS.put(dir, faceBox(dir, 2, 5));
-            FLANGES.put(dir, faceBox(dir, 4, 2));
+            ARMS.put(dir, faceBox(dir, 2, 8));
+            CONNECTORS.put(dir, Shapes.or(faceBox(dir, 5, 1), faceBox(dir, 3, 4)));
         }
     }
 
@@ -109,17 +112,31 @@ public class ItemPipeBlock extends Block implements EntityBlock {
         };
     }
 
+    /** True for a straight run: arms on exactly two opposite faces. Such a pipe has no node. */
+    public static boolean isStraight(BlockState state) {
+        int arms = 0;
+        Direction first = null;
+        for (Direction dir : Direction.values()) {
+            if (!state.getValue(prop(dir)).hasArm()) continue;
+            if (++arms > 2) return false;
+            if (first == null) first = dir;
+            else if (dir != first.getOpposite()) return false;
+        }
+        return arms == 2;
+    }
+
     private static VoxelShape shapeFor(BlockState state) {
         int key = 0;
         for (Direction dir : Direction.values()) key |= state.getValue(prop(dir)).ordinal() << (2 * dir.ordinal());
         VoxelShape shape = SHAPES[key];
         if (shape == null) {
-            shape = CORE;
+            shape = isStraight(state) ? TUBE : NODE;
             for (Direction dir : Direction.values()) {
                 PipeConnection c = state.getValue(prop(dir));
                 if (c.hasArm()) shape = Shapes.or(shape, ARMS.get(dir));
-                if (c == PipeConnection.INSERT || c == PipeConnection.EXTRACT) shape = Shapes.or(shape, FLANGES.get(dir));
+                if (c == PipeConnection.INSERT || c == PipeConnection.EXTRACT) shape = Shapes.or(shape, CONNECTORS.get(dir));
             }
+            shape = shape.optimize();
             SHAPES[key] = shape;
         }
         return shape;
@@ -144,6 +161,12 @@ public class ItemPipeBlock extends Block implements EntityBlock {
                 && level.getCapability(Capabilities.ItemHandler.BLOCK, at, dir.getOpposite()) != null;
     }
 
+    /** True when the link from {@code pos} to the pipe on {@code dir} is cut on either end. */
+    public static boolean cut(BlockGetter level, BlockPos pos, Direction dir) {
+        return level.getBlockEntity(pos) instanceof ItemPipeBlockEntity a && a.isCut(dir)
+                || level.getBlockEntity(pos.relative(dir)) instanceof ItemPipeBlockEntity b && b.isCut(dir.getOpposite());
+    }
+
     private static PipeMode modeAt(LevelAccessor level, BlockPos pos, Direction dir) {
         return level.getBlockEntity(pos) instanceof ItemPipeBlockEntity be ? be.mode(dir) : PipeMode.INSERT;
     }
@@ -155,7 +178,7 @@ public class ItemPipeBlock extends Block implements EntityBlock {
         BlockState state = defaultBlockState();
         for (Direction dir : Direction.values()) {
             PipeConnection c = PipeConnection.NONE;
-            if (level.getBlockState(pos.relative(dir)).getBlock() instanceof ItemPipeBlock) c = PipeConnection.PIPE;
+            if (level.getBlockState(pos.relative(dir)).getBlock() instanceof ItemPipeBlock) c = cut(level, pos, dir) ? PipeConnection.NONE : PipeConnection.PIPE;
             else if (hasInventory(level, pos, dir)) c = PipeMode.INSERT.connection;
             state = state.setValue(prop(dir), c);
         }
@@ -170,7 +193,7 @@ public class ItemPipeBlock extends Block implements EntityBlock {
     protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         PipeConnection current = state.getValue(prop(dir));
         PipeConnection next;
-        if (neighbor.getBlock() instanceof ItemPipeBlock) next = PipeConnection.PIPE;
+        if (neighbor.getBlock() instanceof ItemPipeBlock) next = cut(level, pos, dir) ? PipeConnection.NONE : PipeConnection.PIPE;
         else if (level instanceof ServerLevel server) next = hasInventory(server, pos, dir) ? modeAt(level, pos, dir).connection : PipeConnection.NONE;
         else next = neighbor.isAir() || current == PipeConnection.PIPE ? PipeConnection.NONE : current;
         return next == current ? state : state.setValue(prop(dir), next);
@@ -211,12 +234,22 @@ public class ItemPipeBlock extends Block implements EntityBlock {
 
     /**
      * Right-click an inventory link: opens its GUI (mode, filter, order). Sneak-right-click with an empty hand switches
-     * it Insert, Extract, Off without the GUI.
+     * it Insert, Extract, Off without the GUI; toward the next pipe (its arm, or the core's face where a cut arm was)
+     * it cuts or joins that link. Sneaking with an item in hand never gets here.
      */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         Direction side = sideFromHit(hit.getLocation(), pos, hit.getDirection());
-        if (state.getValue(prop(side)) == PipeConnection.PIPE) return InteractionResult.PASS;
+        if (level.getBlockState(pos.relative(side)).getBlock() instanceof ItemPipeBlock) {
+            if (!player.isShiftKeyDown()) return InteractionResult.PASS;
+            if (level.isClientSide) return InteractionResult.SUCCESS;
+            if (!level.mayInteract(player, pos) || !(level instanceof ServerLevel server)) return InteractionResult.FAIL;
+            boolean cut = toggleLink(server, pos, side);
+            level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3F, cut ? 0.6F : 1.2F);
+            player.displayClientMessage(Component.translatable(cut ? "message.robotica.pipe_link.cut" : "message.robotica.pipe_link.joined")
+                    .withStyle(cut ? ChatFormatting.GRAY : ChatFormatting.AQUA), true);
+            return InteractionResult.CONSUME;
+        }
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (!(level.getBlockEntity(pos) instanceof ItemPipeBlockEntity pipe) || !hasInventory(level, pos, side)) return InteractionResult.PASS;
         if (!player.isShiftKeyDown()) {
@@ -229,6 +262,25 @@ public class ItemPipeBlock extends Block implements EntityBlock {
         level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3F, mode == PipeMode.DISABLED ? 0.6F : 1.2F);
         player.displayClientMessage(Component.translatable(mode.translationKey()).withStyle(mode.color), true);
         return InteractionResult.CONSUME;
+    }
+
+    /**
+     * Cuts the link between the pipe at {@code pos} and the one on {@code side}, or joins it when it is cut. Both pipes
+     * keep the cut; their arms and networks follow, and the two pipes flash. Returns true when the link is now cut.
+     */
+    public static boolean toggleLink(ServerLevel level, BlockPos pos, Direction side) {
+        BlockPos other = pos.relative(side);
+        if (!(level.getBlockEntity(pos) instanceof ItemPipeBlockEntity a) || !(level.getBlockEntity(other) instanceof ItemPipeBlockEntity b)) return false;
+        boolean cut = !cut(level, pos, side);
+        a.setCut(side, cut);
+        b.setCut(side.getOpposite(), cut);
+        PipeConnection link = cut ? PipeConnection.NONE : PipeConnection.PIPE;
+        a.invalidateNetwork();
+        b.invalidateNetwork();
+        level.setBlock(pos, level.getBlockState(pos).setValue(prop(side), link), Block.UPDATE_ALL);
+        level.setBlock(other, level.getBlockState(other).setValue(prop(side.getOpposite()), link), Block.UPDATE_ALL);
+        PipeNetwork.flash(level, pos, side);
+        return cut;
     }
 
     private static void openMenu(ServerPlayer player, Level level, BlockPos pos, Direction side, ItemPipeBlockEntity pipe) {

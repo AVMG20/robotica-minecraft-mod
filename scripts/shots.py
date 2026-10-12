@@ -31,6 +31,7 @@ SHOTS = {
     '15_industry_machines': ('15_industry_machines.png', 'scene'),
     '16_grinder_furnace': ('16_grinder_furnace.png', 'scene'),
     '17_item_pipes': ('17_item_pipes.png', 'scene'),
+    '30_item_pipe_glow': ('30_item_pipe_glow.png', 'scene'),
     '18_energy_multiblocks': ('18_energy_multiblocks.png', 'scene'),
     '19_core_reactor': ('19_core_reactor.png', 'scene'),
     '20_capacitor_bank': ('20_capacitor_bank.png', 'scene'),
