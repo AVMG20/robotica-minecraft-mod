@@ -17,11 +17,11 @@ summary: Powered armor, Mk1 to Mk4, with modules and a core socket.
 
 ### Helmet
 
-{{items night_vision_module rebreather_module robot_hud_module auto_feeder_module solar_weave_module sonar_pulse_module zoom_optics_module}}
+{{items night_vision_module rebreather_module robot_hud_module auto_feeder_module solar_weave_module sonar_pulse_module}}
 
 ### Chestplate
 
-{{items jet_assist_module flight_module kinetic_shield_module med_injector_module hazard_seal_module glider_module extender_arms_module}}
+{{items jet_assist_module flight_module kinetic_shield_module med_injector_module hazard_seal_module glider_module}}
 
 Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one off on the J screen to use the other.
 
@@ -35,7 +35,7 @@ Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one 
 
 ### Any piece
 
-{{items capacitor_plating_module power_regulator_module}}
+{{items capacitor_plating_module power_regulator_module reach_module heat_shield_module}}
 
 ## Core socket
 

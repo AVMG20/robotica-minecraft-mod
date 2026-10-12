@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "robotica:item/zoom_optics_module"
+    "layer0": "robotica:item/heat_shield_module"
   }
 }

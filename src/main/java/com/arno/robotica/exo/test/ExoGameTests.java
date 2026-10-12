@@ -393,17 +393,17 @@ public class ExoGameTests {
     // ---------------------------------------------------------------- newer modules
 
     @GameTest(template = "empty")
-    public static void gliderAndExtenderArms(GameTestHelper helper) {
+    public static void gliderAndReach(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         double reach = player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE);
-        ItemStack chest = pieceM(ExoItems.CHESTPLATE_MK2, 100_000, mod(ModuleKind.GLIDER), mod(ModuleKind.EXTENDER_ARMS, 2));
-        player.setItemSlot(EquipmentSlot.CHEST, chest);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, 100_000, ModuleKind.GLIDER));
+        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK2, 100_000, mod(ModuleKind.REACH, 2)));
         helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).canElytraFly(player), "a charged Glider glides");
         ticks(player, 1);
         double got = player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE);
-        helper.assertTrue(Math.abs(got - reach - ExoConfig.extenderReach(2)) < 1.0E-6, "Extender Arms II add " + ExoConfig.extenderReach(2) + " reach, got " + (got - reach));
+        helper.assertTrue(Math.abs(got - reach - ExoConfig.reachBlocks(2)) < 1.0E-6, "Reach II adds " + ExoConfig.reachBlocks(2) + " blocks, got " + (got - reach));
 
-        Modules.setEnabled(player.getItemBySlot(EquipmentSlot.CHEST), ModuleKind.EXTENDER_ARMS, false);
+        Modules.setEnabled(player.getItemBySlot(EquipmentSlot.LEGS), ModuleKind.REACH, false);
         ticks(player, 1);
         helper.assertTrue(player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE) == reach, "switched off: normal reach");
 
@@ -411,6 +411,32 @@ public class ExoGameTests {
         helper.assertTrue(!player.getItemBySlot(EquipmentSlot.CHEST).canElytraFly(player), "an empty Glider does not glide");
         player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, 100_000));
         helper.assertTrue(!player.getItemBySlot(EquipmentSlot.CHEST).canElytraFly(player), "no Glider, no gliding");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void heatShieldPutsOutAndBlocksFire(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ModuleKind.HEAT_SHIELD));
+        ticks(player, 1);
+        player.igniteForSeconds(10);
+        ticks(player, 6);
+        helper.assertTrue(!player.isOnFire(), "Heat Shield I puts you out");
+        helper.assertTrue(energy(player, EquipmentSlot.HEAD) < 100_000, "putting you out costs energy");
+        LivingIncomingDamageEvent lava = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().lava(), 4.0F));
+        NeoForge.EVENT_BUS.post(lava);
+        helper.assertTrue(!lava.isCanceled(), "Heat Shield I does not block lava");
+
+        player.setItemSlot(EquipmentSlot.HEAD, pieceM(ExoItems.HELMET_MK3, 100_000, mod(ModuleKind.HEAT_SHIELD, 2)));
+        ticks(player, 1);
+        helper.assertTrue(player.hasEffect(MobEffects.FIRE_RESISTANCE), "Heat Shield II gives Fire Resistance");
+        LivingIncomingDamageEvent lava2 = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().lava(), 4.0F));
+        NeoForge.EVENT_BUS.post(lava2);
+        helper.assertTrue(lava2.isCanceled(), "Heat Shield II blocks lava");
+
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.HEAD), 0);
+        ticks(player, 1);
+        helper.assertTrue(!player.hasEffect(MobEffects.FIRE_RESISTANCE), "an empty Heat Shield stops");
         helper.succeed();
     }
 

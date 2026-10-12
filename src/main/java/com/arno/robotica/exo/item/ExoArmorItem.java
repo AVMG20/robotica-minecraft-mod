@@ -184,8 +184,7 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder 
         }
         tooltip.add(Component.translatable("exo.robotica.tooltip.keys", HasDetails.key("key.robotica.exo.open_modules"),
                 HasDetails.key("key.robotica.exo.toggle_flight"), HasDetails.key("key.robotica.exo.dash"),
-                HasDetails.key("key.robotica.exo.sonar"), HasDetails.key("key.robotica.exo.overclock"),
-                HasDetails.key("key.robotica.exo.zoom")).withStyle(ChatFormatting.DARK_GRAY));
+                HasDetails.key("key.robotica.exo.sonar"), HasDetails.key("key.robotica.exo.overclock")).withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("exo.robotica.tooltip.set").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

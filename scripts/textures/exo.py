@@ -116,12 +116,12 @@ GLYPHS = {
     'hydro_fins': ['......', 'X.....', 'XX....', 'XXX...', 'XXXX..', 'XXXXXX', '......', 'x.x.x.'],
     'capacitor_plating': ['..XX..', 'XXXXXX', 'X....X', 'XXXXXX', 'XXXXXX', 'XXXXXX', 'XXXXXX', '......'],
     'power_regulator': ['.XXXX.', 'X....X', 'X..X.X', 'X.X..X', 'X....X', '.XXXX.', '......', '......'],
-    'zoom_optics': ['.XXX..', 'X...X.', 'X.x.X.', 'X...X.', '.XXX..', '....X.', '.....X', '......'],
     'glider': ['......', 'X....X', 'XX..XX', 'XXXXXX', 'xXXXXx', '..XX..', '......', '......'],
-    'extender_arms': ['XX....', 'X.....', '.X....', '..X...', '...X..', '....XX', '....XX', '......'],
     'gyro_stabilizer': ['..XX..', '.X..X.', 'XxXXxX', 'XxXXxX', '.X..X.', '..XX..', '......', 'xxxxxx'],
     'anchor_servos': ['..XX..', '..XX..', 'XXXXXX', '..XX..', '..XX..', 'X.XX.X', '.XXXX.', '......'],
     'cryo_treads': ['..X...', 'X.X.X.', '.XXX..', 'XXXXX.', '.XXX..', 'X.X.X.', '..X...', 'xxxxxx'],
+    'reach': ['......', '...X..', '....X.', 'xXXXXX', '....X.', '...X..', '......', 'x.x.x.'],
+    'heat_shield': ['XXXXXX', 'X..x.X', 'X.xx.X', 'XxxxxX', 'XxxxxX', '.X..X.', '..XX..', '......'],
 }
 
 
@@ -147,17 +147,17 @@ def module(name, colors, level=0):
 
 MODULE_COLORS = {
     'night_vision': HEAD, 'rebreather': HEAD, 'robot_hud': HEAD, 'auto_feeder': HEAD, 'solar_weave': HEAD, 'sonar_pulse': HEAD,
-    'zoom_optics': HEAD,
     'jet_assist': CHEST, 'flight': CHEST, 'kinetic_shield': CHEST, 'med_injector': CHEST, 'hazard_seal': CHEST,
-    'glider': CHEST, 'extender_arms': CHEST,
+    'glider': CHEST,
     'servo_stride_1': LEGS, 'servo_stride_2': LEGS, 'servo_stride_3': LEGS, 'kinetic_generator': LEGS, 'dash_thrusters': LEGS,
     'gyro_stabilizer': LEGS, 'anchor_servos': LEGS,
     'step_assist': FEET, 'spring_heels': FEET, 'fall_dampener': FEET, 'magnet': FEET, 'hydro_fins': FEET, 'cryo_treads': FEET,
-    'capacitor_plating': ANY, 'power_regulator': ANY,
+    'capacitor_plating': ANY, 'power_regulator': ANY, 'reach': ANY, 'heat_shield': ANY,
 }
-# Modules with levels I-III: one file per level (level I keeps the plain name). Servo Stride has its own glyph per level.
-LEVELED = ('night_vision', 'sonar_pulse', 'jet_assist', 'kinetic_shield', 'med_injector', 'spring_heels', 'fall_dampener',
-           'magnet', 'capacitor_plating', 'power_regulator', 'extender_arms', 'anchor_servos')
+# Modules with levels: one file per level (level I keeps the plain name). Servo Stride has its own glyph per level.
+LEVELS = {name: 3 for name in ('night_vision', 'sonar_pulse', 'jet_assist', 'kinetic_shield', 'med_injector', 'spring_heels',
+                               'fall_dampener', 'magnet', 'capacitor_plating', 'power_regulator', 'reach', 'anchor_servos')}
+LEVELS['heat_shield'] = 2
 
 
 def module_files():
@@ -167,8 +167,8 @@ def module_files():
         if name.startswith('servo_stride_'):
             level = int(name[-1])
             out.append((f'servo_stride_module_{level}', name, level))
-        elif name in LEVELED:
-            for level in (1, 2, 3):
+        elif name in LEVELS:
+            for level in range(1, LEVELS[name] + 1):
                 out.append((f'{name}_module' if level == 1 else f'{name}_module_{level}', name, level))
         else:
             out.append((f'{name}_module', name, 0))

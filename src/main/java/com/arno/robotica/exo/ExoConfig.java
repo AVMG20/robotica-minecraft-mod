@@ -16,7 +16,7 @@ public final class ExoConfig {
 
     // ---- energy costs (FE per unit of the module)
     private static final ModConfigSpec.IntValue[] NIGHT_VISION, JET_ASSIST, JET_ASSIST_JUMP, KINETIC_SHIELD, SERVO, SPRING_HEELS,
-            FALL_DAMPENER, MAGNET, SONAR, MED_INJECTOR, EXTENDER_ARMS, ANCHOR_SERVOS;
+            FALL_DAMPENER, MAGNET, SONAR, MED_INJECTOR, REACH, ANCHOR_SERVOS, HEAT_SHIELD;
     private static final ModConfigSpec.IntValue REBREATHER, ROBOT_HUD, FLIGHT, STEP_ASSIST, AUTO_FEEDER, SOLAR_WEAVE, HAZARD_SEAL,
             KINETIC_GEN_WALK, KINETIC_GEN_SPRINT, DASH, HYDRO_FINS, OVERCLOCK, GLIDER, CRYO_TREADS;
     private static final ModConfigSpec.IntValue CELL_RECHARGE_RATE, CELL_SLOT_RATE;
@@ -24,7 +24,7 @@ public final class ExoConfig {
 
     // ---- module numbers
     private static final ModConfigSpec.IntValue[] MAGNET_RADIUS, AIR_JUMPS, THERMAL_RADIUS, SONAR_RADIUS, MED_COOLDOWN;
-    private static final ModConfigSpec.DoubleValue[] SHIELD_ABSORB, SERVO_SPEED, SPRING_BOOST, MED_HEAL, CAPACITOR_BONUS, EXTENDER_REACH,
+    private static final ModConfigSpec.DoubleValue[] SHIELD_ABSORB, SERVO_SPEED, SPRING_BOOST, MED_HEAL, CAPACITOR_BONUS, REACH_BLOCKS,
             ANCHOR_RESIST;
     private static final ModConfigSpec.DoubleValue STEP_BONUS, MED_THRESHOLD, HYDRO_SWIM, HYDRO_MINING, DASH_SPEED;
     private static final ModConfigSpec.IntValue AUTO_FEEDER_HUNGER, SONAR_COOLDOWN, SONAR_DURATION, DASH_COOLDOWN;
@@ -67,7 +67,8 @@ public final class ExoConfig {
         MAGNET = costs(b, "magnetPerSecond", "FE per second while the Magnet pulls items (I, II, III).", 40, 60, 80);
         HYDRO_FINS = cost(b, "hydroFinsPerSecond", "FE per second while swimming with Hydro Fins.", 20);
         GLIDER = cost(b, "gliderPerSecond", "FE per second while gliding with the Glider.", 40);
-        EXTENDER_ARMS = costs(b, "extenderArmsPerSecond", "FE per second while Extender Arms are on (I, II, III).", 5, 10, 20);
+        REACH = costs(b, "reachPerSecond", "FE per second while Reach is on (I, II, III).", 5, 10, 20);
+        HEAT_SHIELD = costs(b, "heatShieldPerSecond", "FE per second while Heat Shield works: putting you out (I) or keeping fire and lava off (II).", 40, 80);
         ANCHOR_SERVOS = costs(b, "anchorServosPerHit", "FE per knockback Anchor Servos reduce (I, II, III).", 100, 150, 200);
         OVERCLOCK = cost(b, "overclockPerUse", "FE per Overclock (Servo Core set bonus).", 50_000);
         CELL_RECHARGE = b.comment("Energy cells (and Mainsprings) in the inventory top up the worn suit once per second.")
@@ -102,7 +103,7 @@ public final class ExoConfig {
         HYDRO_SWIM = b.comment("Swim speed bonus of Hydro Fins (0.5 = +50%).").defineInRange("hydroFinsSwimSpeed", 0.5, 0.0, 4.0);
         HYDRO_MINING = b.comment("Underwater mining speed Hydro Fins add (players mine at 0.2 under water, +0.8 is full speed).")
                 .defineInRange("hydroFinsMiningSpeed", 0.8, 0.0, 1.0);
-        EXTENDER_REACH = doubles(b, "extenderArmsReach", "Extra block reach of Extender Arms in blocks (I, II, III).", 0.0, 8.0, 1.0, 2.0, 3.0);
+        REACH_BLOCKS = doubles(b, "reachBlocks", "Extra block reach of the Reach module in blocks (I, II, III).", 0.0, 8.0, 1.0, 2.0, 3.0);
         ANCHOR_RESIST = doubles(b, "anchorServosResist", "Share of knockback Anchor Servos stop (I, II, III; 1 = all).", 0.0, 1.0, 0.4, 0.7, 1.0);
         CAPACITOR_BONUS = doubles(b, "capacitorPlatingBonus", "Extra battery of the piece with Capacitor Plating (I, II, III; 0.5 = +50%).",
                 0.0, 10.0, 0.5, 1.0, 2.0);
@@ -200,7 +201,8 @@ public final class ExoConfig {
             case MAGNET -> get(lv(MAGNET, level));
             case HYDRO_FINS -> get(HYDRO_FINS);
             case GLIDER -> get(GLIDER);
-            case EXTENDER_ARMS -> get(lv(EXTENDER_ARMS, level));
+            case REACH -> get(lv(REACH, level));
+            case HEAT_SHIELD -> get(lv(HEAT_SHIELD, level));
             case ANCHOR_SERVOS -> get(lv(ANCHOR_SERVOS, level));
             case CRYO_TREADS -> get(CRYO_TREADS);
             default -> 0;
@@ -321,8 +323,8 @@ public final class ExoConfig {
         return get(HYDRO_MINING);
     }
 
-    public static double extenderReach(int level) {
-        return level <= 0 ? 0 : get(lv(EXTENDER_REACH, level));
+    public static double reachBlocks(int level) {
+        return level <= 0 ? 0 : get(lv(REACH_BLOCKS, level));
     }
 
     public static double anchorResist(int level) {
@@ -413,7 +415,7 @@ public final class ExoConfig {
             case SPRING_HEELS -> new Object[]{level};
             case MAGNET -> new Object[]{magnetRadius(level)};
             case CAPACITOR_PLATING -> new Object[]{pct(capacitorBonus(level))};
-            case EXTENDER_ARMS -> new Object[]{trim(extenderReach(level))};
+            case REACH -> new Object[]{trim(reachBlocks(level))};
             case ANCHOR_SERVOS -> new Object[]{pct(anchorResist(level))};
             case KINETIC_GENERATOR -> new Object[]{kineticSprintPerBlock()};
             default -> new Object[0];

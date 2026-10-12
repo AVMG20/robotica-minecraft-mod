@@ -87,7 +87,9 @@ public final class ExoTicker {
     private static final ResourceLocation JUMP_ID = Robotica.id("exo_spring_heels");
     private static final ResourceLocation SWIM_ID = Robotica.id("exo_hydro_fins");
     private static final ResourceLocation DIG_ID = Robotica.id("exo_hydro_fins_mining");
-    private static final ResourceLocation REACH_ID = Robotica.id("exo_extender_arms");
+    private static final ResourceLocation REACH_ID = Robotica.id("exo_reach");
+    /** Ticks between two Heat Shield I fire checks: a burning wearer is put out within a quarter second. */
+    private static final int EXTINGUISH_GAP = 5;
     /** Radius in blocks of the water Cryo Treads freeze around the wearer. */
     private static final int CRYO_RADIUS = 3;
     private static final int FLUSH_INTERVAL = 10;
@@ -570,14 +572,14 @@ public final class ExoTicker {
         setModifier(p, NeoForgeMod.SWIM_SPEED, SWIM_ID, fins ? ExoConfig.hydroSwim() : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         setModifier(p, Attributes.SUBMERGED_MINING_SPEED, DIG_ID, fins ? ExoConfig.hydroMining() : 0, AttributeModifier.Operation.ADD_VALUE);
 
-        int arms = lvl(st, ModuleKind.EXTENDER_ARMS);
-        boolean armsOn = false;
-        if (arms > 0) {
-            double cost = ExoConfig.perTick(ModuleKind.EXTENDER_ARMS, arms);
-            armsOn = afford(st, ModuleKind.EXTENDER_ARMS, cost);
-            if (armsOn) spend(st, ModuleKind.EXTENDER_ARMS, cost);
+        int reach = lvl(st, ModuleKind.REACH);
+        boolean reachOn = false;
+        if (reach > 0) {
+            double cost = ExoConfig.perTick(ModuleKind.REACH, reach);
+            reachOn = afford(st, ModuleKind.REACH, cost);
+            if (reachOn) spend(st, ModuleKind.REACH, cost);
         }
-        setModifier(p, Attributes.BLOCK_INTERACTION_RANGE, REACH_ID, armsOn ? ExoConfig.extenderReach(arms) : 0, AttributeModifier.Operation.ADD_VALUE);
+        setModifier(p, Attributes.BLOCK_INTERACTION_RANGE, REACH_ID, reachOn ? ExoConfig.reachBlocks(reach) : 0, AttributeModifier.Operation.ADD_VALUE);
     }
 
     private static void setModifier(ServerPlayer p, Holder<Attribute> attribute, ResourceLocation id, double amount, AttributeModifier.Operation op) {
@@ -664,7 +666,8 @@ public final class ExoTicker {
     // ---------------------------------------------------------------- set bonus
 
     private static void setBonus(ServerPlayer p, State st) {
-        if (st.core == ExoData.Core.MAGMA) {
+        boolean shield = heatShield(p, st);
+        if (st.core == ExoData.Core.MAGMA || shield) {
             refreshEffect(p, MobEffects.FIRE_RESISTANCE, 0, 300, 240);
             st.fireRes = true;
             if (p.isOnFire() && st.tick % 10 == 0) p.clearFire();
@@ -672,6 +675,26 @@ public final class ExoTicker {
             st.fireRes = false;
             removeOurs(p, MobEffects.FIRE_RESISTANCE);
         }
+    }
+
+    /**
+     * Heat Shield, paid per second while it works. Level I puts a burning wearer out every {@link #EXTINGUISH_GAP} ticks
+     * (lava and fire still hurt while you stand in them). Level II keeps fire and lava off entirely: returns true while
+     * it does, and the caller gives fire resistance.
+     */
+    private static boolean heatShield(ServerPlayer p, State st) {
+        int level = lvl(st, ModuleKind.HEAT_SHIELD);
+        if (level <= 0) return false;
+        double cost = ExoConfig.perTick(ModuleKind.HEAT_SHIELD, level);
+        if (!afford(st, ModuleKind.HEAT_SHIELD, cost)) return false;
+        boolean hot = p.isOnFire() || p.isInLava();
+        if (level >= 2) {
+            if (hot) spend(st, ModuleKind.HEAT_SHIELD, cost);
+            return true;
+        }
+        if (hot) spend(st, ModuleKind.HEAT_SHIELD, cost);
+        if (p.isOnFire() && st.tick % EXTINGUISH_GAP == 0) p.clearFire();
+        return false;
     }
 
     /** The worn pieces in charging order (chestplate first), EMPTY for a missing one. */
@@ -933,7 +956,8 @@ public final class ExoTicker {
     }
 
     /**
-     * Incoming hit, before vanilla's checks. Magma Core set: fire damage is ignored (free, so i-frames do not matter).
+     * Incoming hit, before vanilla's checks. Magma Core set and Heat Shield II: fire damage is ignored (i-frames do not
+     * matter: Heat Shield II pays per second in the ticker).
      * Fall damage that skips the fall event (an Ender Pearl landing) and flying into a wall: the Antigrav Core ignores
      * the fall, the Fall Dampener cancels both like a fall of that many blocks. Cryo Treads: magma blocks do not burn.
      */
@@ -941,7 +965,7 @@ public final class ExoTicker {
         State st = STATES.get(p.getUUID());
         if (st == null) return;
         var source = event.getSource();
-        if (st.core == ExoData.Core.MAGMA && source.is(DamageTypeTags.IS_FIRE)) {
+        if ((st.core == ExoData.Core.MAGMA || st.fireRes) && source.is(DamageTypeTags.IS_FIRE)) {
             event.setCanceled(true);
             return;
         }

@@ -491,12 +491,12 @@
           "title": "More modules",
           "text": "Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one off on the J screen to use the other.",
           "items": [
-            "robotica:zoom_optics_module",
             "robotica:glider_module",
-            "robotica:extender_arms_module",
             "robotica:gyro_stabilizer_module",
             "robotica:anchor_servos_module",
-            "robotica:cryo_treads_module"
+            "robotica:cryo_treads_module",
+            "robotica:reach_module",
+            "robotica:heat_shield_module"
           ]
         },
         {

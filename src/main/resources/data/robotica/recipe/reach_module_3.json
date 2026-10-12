@@ -13,11 +13,11 @@
       "item": "robotica:plasma_actuator"
     },
     "U": {
-      "item": "robotica:extender_arms_module_2"
+      "item": "robotica:reach_module_2"
     }
   },
   "result": {
-    "id": "robotica:extender_arms_module_3",
+    "id": "robotica:reach_module_3",
     "count": 1
   }
 }

@@ -129,8 +129,7 @@ public final class ExoSuit {
 
     /**
      * Level of a switched-on, working module of this kind in the piece worn in {@code slot}, when its energy source holds
-     * any energy; 0 otherwise. Allocation free, for hooks that run every tick on both sides (Glider, Gyro Stabilizer,
-     * Zoom Optics).
+     * any energy; 0 otherwise. Allocation free, for hooks that run every tick on both sides (Glider, Gyro Stabilizer).
      */
     public static int pieceLevel(LivingEntity entity, EquipmentSlot slot, ModuleKind kind) {
         ItemStack piece = piece(entity, slot);

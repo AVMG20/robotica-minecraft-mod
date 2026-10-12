@@ -105,7 +105,7 @@
      ],
      [
       "Core socket",
-      "\u2013",
+      "–",
       "yes",
       "yes",
       "yes"
@@ -390,27 +390,6 @@
   },
   {
    "items": [
-    "zoom_optics_module"
-   ],
-   "what": "Hold the Zoom key (default Z) to look 4x closer.",
-   "stats": {
-    "rows": [
-     [
-      "Fits",
-      "Exo helmet"
-     ],
-     [
-      "Min. Mk",
-      "Mk1"
-     ]
-    ]
-   },
-   "see": [
-    "guide:exo-frame"
-   ]
-  },
-  {
-   "items": [
     "jet_assist_module",
     "jet_assist_module_2",
     "jet_assist_module_3"
@@ -558,33 +537,6 @@
      [
       "Energy",
       "40 FE/s gliding"
-     ]
-    ]
-   },
-   "see": [
-    "guide:exo-frame"
-   ]
-  },
-  {
-   "items": [
-    "extender_arms_module",
-    "extender_arms_module_2",
-    "extender_arms_module_3"
-   ],
-   "what": "Reach blocks 1 / 2 / 3 blocks further.",
-   "stats": {
-    "rows": [
-     [
-      "Fits",
-      "Exo chestplate"
-     ],
-     [
-      "Min. Mk (I / II / III)",
-      "Mk1 / Mk2 / Mk3"
-     ],
-     [
-      "Energy",
-      "5 / 10 / 20 FE/s"
      ]
     ]
    },
@@ -889,6 +841,59 @@
      [
       "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "reach_module",
+    "reach_module_2",
+    "reach_module_3"
+   ],
+   "what": "Reach blocks 1 / 2 / 3 blocks further.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "any Exo piece"
+     ],
+     [
+      "Min. Mk (I / II / III)",
+      "Mk1 / Mk2 / Mk3"
+     ],
+     [
+      "Energy",
+      "5 / 10 / 20 FE/s"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "heat_shield_module",
+    "heat_shield_module_2"
+   ],
+   "what": "I puts you out quickly when you catch fire. II makes you immune to fire and lava.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "any Exo piece"
+     ],
+     [
+      "Min. Mk (I / II)",
+      "Mk1 / Mk3"
+     ],
+     [
+      "Energy",
+      "40 / 80 FE/s burning"
      ]
     ]
    },

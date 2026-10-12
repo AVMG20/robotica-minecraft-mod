@@ -11,20 +11,17 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 /**
  * Keybinds: J opens the module screen of the worn suit, K toggles Flight, R dashes (Dash Thrusters), N pings (Sonar
- * Pulse), O overclocks (Servo Core set bonus), holding Z zooms (Zoom Optics). None of them clash with vanilla defaults
- * or Robotica's V, B, G (tools) and H (drones). A second jump press in mid air is the Jet Assist double jump.
+ * Pulse), O overclocks (Servo Core set bonus). None of them clash with vanilla defaults or Robotica's V, B, G (tools)
+ * and H (drones). A second jump press in mid air is the Jet Assist double jump.
  */
 final class ExoKeys {
     private ExoKeys() {}
@@ -35,15 +32,10 @@ final class ExoKeys {
     static final KeyMapping DASH = key("dash", GLFW.GLFW_KEY_R);
     static final KeyMapping SONAR = key("sonar", GLFW.GLFW_KEY_N);
     static final KeyMapping OVERCLOCK = key("overclock", GLFW.GLFW_KEY_O);
-    static final KeyMapping ZOOM = key("zoom", GLFW.GLFW_KEY_Z);
-    /** Field of view factor at full Zoom Optics zoom (4x). */
-    private static final float ZOOM_FOV = 0.25F;
 
     private static boolean jumpWasDown;
     private static int airJumps;
     private static int lastAirJump = -100;
-    /** Zoom factor of the last and this client tick, eased toward the target; 1 = no zoom. */
-    private static float zoomPrev = 1.0F, zoomNow = 1.0F;
 
     private static KeyMapping key(String name, int key) {
         return new KeyMapping("key.robotica.exo." + name, KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, key, CATEGORY);
@@ -55,22 +47,6 @@ final class ExoKeys {
         event.register(DASH);
         event.register(SONAR);
         event.register(OVERCLOCK);
-        event.register(ZOOM);
-    }
-
-    /** Zoom Optics: while the key is held, narrows the view (eased over a few ticks, like a spyglass). */
-    static void onFov(ViewportEvent.ComputeFov event) {
-        if (!event.usedConfiguredFov()) return;
-        float zoom = Mth.lerp((float) event.getPartialTick(), zoomPrev, zoomNow);
-        if (zoom < 0.999F) event.setFOV(event.getFOV() * zoom);
-    }
-
-    private static void tickZoom(Minecraft mc, LocalPlayer player) {
-        boolean on = player != null && mc.screen == null && ZOOM.isDown() && mc.options.getCameraType().isFirstPerson()
-                && ExoSuit.pieceLevel(player, EquipmentSlot.HEAD, ModuleKind.ZOOM_OPTICS) > 0;
-        zoomPrev = zoomNow;
-        zoomNow += ((on ? ZOOM_FOV : 1.0F) - zoomNow) * 0.5F;
-        if (Math.abs(zoomNow - 1.0F) < 0.001F) zoomNow = 1.0F;
     }
 
     private static void send(int action) {
@@ -80,7 +56,6 @@ final class ExoKeys {
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        tickZoom(mc, player);
         if (player == null) {
             jumpWasDown = false;
             return;

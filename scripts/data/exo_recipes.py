@@ -89,7 +89,6 @@ shaped('sonar_pulse_module', ['ZAZ', 'CNC'], {'Z': '#c:gems/amethyst', 'A': 'adv
 # Sonar levels run one age later: II is Age 3, III Age 4.
 level3('sonar_pulse', '#c:gems/prismarine', 'sonar_pulse_module', 'sonar_pulse_module_2')
 level_null('sonar_pulse_module_3', 'sonar_pulse_module_2', 'minecraft:ender_eye')
-shapeless('zoom_optics_module', ['basic_circuit', 'minecraft:spyglass', 'copper_coil', PLATE])
 
 # ---- Chest modules
 shaped('jet_assist_module', ['FAF', 'PSP'], {'F': '#c:feathers', 'A': 'advanced_circuit', 'S': 'servo_actuator', 'P': PLATE})
@@ -105,9 +104,6 @@ level3('med_injector', 'minecraft:golden_apple', 'med_injector_module', 'med_inj
 level_null('med_injector_module_3', 'med_injector_module_2', 'minecraft:ghast_tear')
 shaped('hazard_seal_module', ['GQG', 'PMP'], {'G': '#c:glass_blocks', 'Q': 'quantum_circuit', 'P': PLATE, 'M': '#c:buckets/milk'})
 shaped('glider_module', ['PEP', 'ASA'], {'P': PLATE, 'E': 'minecraft:elytra', 'A': 'advanced_circuit', 'S': 'servo_actuator'})
-shaped('extender_arms_module', ['PIP', 'MBM'], {'P': PLATE, 'I': 'minecraft:piston', 'M': 'electric_motor', 'B': 'basic_circuit'})
-level2('extender_arms', 'servo_actuator')
-level3('extender_arms', 'plasma_actuator')
 
 # ---- Leg modules
 shaped('servo_stride_module_1', ['CMC', 'PBP'], {'C': 'copper_coil', 'M': 'electric_motor', 'B': 'basic_circuit', 'P': PLATE})
@@ -120,6 +116,13 @@ shaped('gyro_stabilizer_module', ['PCP', 'ASA'], {'P': PLATE, 'C': 'minecraft:co
 shaped('anchor_servos_module', ['PIP', 'MBM'], {'P': PLATE, 'I': '#c:storage_blocks/iron', 'M': 'electric_motor', 'B': 'basic_circuit'})
 level2('anchor_servos', '#c:obsidians')
 level3('anchor_servos', 'plasma_actuator')
+
+# ---- Modules for any piece
+shaped('reach_module', ['PIP', 'MBM'], {'P': PLATE, 'I': 'minecraft:piston', 'M': 'electric_motor', 'B': 'basic_circuit'})
+level2('reach', 'servo_actuator')
+level3('reach', 'plasma_actuator')
+shaped('heat_shield_module', ['PWP', 'CBC'], {'P': PLATE, 'W': '#c:buckets/water', 'C': 'copper_coil', 'B': 'basic_circuit'})
+level3('heat_shield', 'minecraft:magma_cream', 'heat_shield_module', 'heat_shield_module_2')
 
 # ---- Boot modules
 shaped('step_assist_module', ['PIP', 'C C'], {'P': PLATE, 'I': 'minecraft:piston', 'C': 'copper_coil'})

@@ -13,11 +13,11 @@
       "item": "robotica:servo_actuator"
     },
     "U": {
-      "item": "robotica:extender_arms_module"
+      "item": "robotica:reach_module"
     }
   },
   "result": {
-    "id": "robotica:extender_arms_module_2",
+    "id": "robotica:reach_module_2",
     "count": 1
   }
 }
