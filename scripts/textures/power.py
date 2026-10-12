@@ -290,62 +290,123 @@ def write_press():
 
 
 # ---------------------------------------------------------------- charger
+# Energy storage family (light steel body, copper accents) with a teal identity. The front is a charging dock sunk 2 px
+# into the casing (model: power_models.charger_model): a white power cell stands in a copper cradle between two teal
+# coil pillars whose contacts touch its sides. The dock texture holds the back wall in 3..12 x 3..11, the dock's
+# ceiling (row 1), floor (row 14) and side walls (cols 1 and 14), and the cell's top (row 12) and sides (col 2); the
+# cell's front reuses its back wall pixels (CH_CELL). Working, one 48 tick loop: pulses run along the pillars into the
+# contacts, the cell's window fills row by row and flashes when full, energy chases along the rail under the dock into
+# it, and the induction rings on top light from the rim inwards.
+
+ACC_CHARGER_BODY = dict(zip('abcde', ('#4A535B', '#6F7A83', '#9AA5AE', '#C4CDD4', '#EBF0F3')))   # light steel
+CH_FRAMES, CH_FRAMETIME = 24, 2
+CH_EXTRA = {
+    't': '#123F38', 'T': '#1F7563', 'q': '#1ECB9C', 'Q': '#86F7D2', 'r': '#E4FFF6',     # teal: glass, dim, lit, bright, white
+    'm': '#E4EAEE', 'n': '#B4BFC6', 'o': '#FFFFFF', 'p': '#7E8A94',                     # ceramic power cell
+}
+CH_CELL = (5, 4, 6, 7)                                                    # x, y, w, h of the cell on the back wall
+CH_WINDOW = (7, 5, 2, 5)                                                  # its charge window
+CH_START = 16                                                             # loop start: cell nearly full (stills show it)
+
+
+def ch_pal():
+    return casing.casing_palette(MATERIALS['copper'], **ACC_CHARGER_BODY, **CH_EXTRA)
+
+
+def charger_dock():
+    """Back wall, dock walls and cell faces."""
+    c = Canvas()
+    c.rect(3, 3, 10, 9, 'b').rect(3, 3, 10, 1, 'a')                      # back wall
+    for x in (3, 12):                                                     # coil pillars
+        c.rect(x, 4, 1, 7, 'T').set(x, 4, 'a').set(x, 10, 'a')
+    for x in (4, 11):                                                     # contacts: copper jaws round a teal conduit
+        c.set(x, 6, 'h').set(x, 7, 'T').set(x, 8, 'g')
+    x, y, w, h = CH_CELL
+    c.rect(7, 3, 2, 1, 'h').set(8, 3, 'g')                                # cell terminal
+    c.rect(x, y, w, h, 'm').rect(x, y, w, 1, 'o').rect(x, y, 1, h, 'o')
+    c.rect(x + w - 1, y + 1, 1, h - 1, 'n').rect(x + 1, y + h - 1, w - 1, 1, 'p')
+    wx, wy, ww, wh = CH_WINDOW
+    c.rect(wx, wy, ww, wh, 'T').rect(wx + ww - 1, wy, 1, wh, 't')         # charge window
+    c.rect(4, 11, 8, 1, 'h').set(4, 11, 'i').set(11, 11, 'g')             # copper cradle
+    c.rect(5, 11, 6, 1, 'g')                                              # cell shadow on it
+    c.rect(x, 12, w, 1, 'o').set(x + w - 1, 12, 'm')                      # cell top
+    c.rect(2, y, 1, h, 'n')                                               # cell sides
+    c.rect(3, 1, 10, 1, 'b')                                              # ceiling
+    c.rect(3, 14, 10, 1, 'd')                                             # floor
+    c.rect(1, 3, 1, 9, 'c').rect(14, 3, 1, 9, 'b')                        # side walls
+    return c
+
+
+def charger_dock_glow(f):
+    """Cell window filling a row every 4 frames and flashing when full, pulses running down and up the pillars into
+    the contacts."""
+    c = Canvas()
+    wx, wy, ww, wh = CH_WINDOW
+    n = min(wh, f // 4 + 1)
+    flash = f - 20
+    for i in range(n):
+        ch = 'Q' if i == n - 1 else 'q'
+        if flash >= 0:
+            ch = 'rQqq'[flash]
+        c.rect(wx, wy + wh - 1 - i, ww, 1, ch)
+    p = (f % 8) // 2                                                      # pulse step 0..3: pillar ends -> contact row
+    for pillar, contact in ((3, 4), (12, 11)):
+        for y in range(4, 11):
+            c.set(pillar, y, 'Q' if abs(y - 7) == 3 - p else 'q')
+        c.set(contact, 7, 'r' if p == 3 else 'Q' if p == 0 else 'q')
+    return c
+
 
 def charger_front(lit):
-    """Charging bay between two coil stacks, a lightning mark on the back wall, a charge meter below."""
-    c = frame(8)
-    c.recess(3, 3, 10, 8, CU, fill='K')
-    for x in (3, 11):                                                    # coil stacks
-        c.rect(x, 3, 2, 8, '1')
-        for y in range(3, 11, 2):
-            c.rect(x, y, 2, 1, '3').set(x, y, '4')
-    bolt = ((8, 4), (7, 5), (6, 6), (7, 6), (8, 6), (9, 6), (8, 7), (7, 8), (7, 9))
-    for x, y in bolt:
-        c.set(x, y, 'Z')
-    c.rect(4, 12, 8, 1, 'K')                                             # charge meter
-    for i in range(4):
-        c.rect(4 + i * 2, 12, 1, 1, 'Z')
-    led(c, 12, 12, lit, 'G')
+    """Casing face with the dock opening, a teal rail under it and the status lamp."""
+    c = casing.shell(1)
+    c.rect(3, 3, 10, 9, '.')
+    c.rect(3, 12, 10, 1, 'T').set(3, 12, 'a').set(12, 12, 'a')            # rail
+    c.rect(7, 1, 2, 1, 'L' if lit else 'l')
+    return casing.tier_notches(c, 1)
+
+
+def charger_glow(f):
+    """Lamp, and energy chasing along the rail from both ends into the dock."""
+    c = Canvas().rect(7, 1, 2, 1, 'L')
+    for x in range(4, 8):
+        k = (x - 4 - f // 2) % 4
+        ch = 'r' if k == 0 else 'Q' if k == 1 else 'q'
+        c.set(x, 12, ch).set(15 - x, 12, ch)
     return c
 
 
-def charger_glow(frame_no):
+def ch_rings():
+    """Pixels of the two induction rings on top, outer (an octagon round 4..11) first, and the centre contact."""
+    outer = [(x, y) for x in range(6, 10) for y in (4, 11)] + [(x, y) for x in (4, 11) for y in range(6, 10)]
+    outer += [(5, 5), (10, 5), (5, 10), (10, 10)]
+    inner = [(7, 6), (8, 6), (7, 9), (8, 9), (6, 7), (6, 8), (9, 7), (9, 8)]
+    centre = [(7, 7), (8, 7), (7, 8), (8, 8)]
+    return outer, inner, centre
+
+
+def charger_top():
+    """Induction pad: an octagonal steel plate with two teal rings round a copper contact."""
+    c = casing.shell(1)
+    c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
+    c.rect(4, 4, 8, 8, 'd').rect(5, 5, 6, 6, 'c')
+    outer, inner, centre = ch_rings()
+    for x, y in outer + inner:
+        c.set(x, y, 'T')
+    for x, y in centre:
+        c.set(x, y, 'h')
+    c.set(7, 7, 'i').set(8, 8, 'g')
+    return casing.tier_notches(c, 1)
+
+
+def charger_top_glow(f):
+    """The rings light from the rim inwards, the contact flares as the pulse arrives (interpolated)."""
     c = Canvas()
-    bolt = ((8, 4), (7, 5), (6, 6), (7, 6), (8, 6), (9, 6), (8, 7), (7, 8), (7, 9))
-    for i, (x, y) in enumerate(bolt):
-        c.set(x, y, 'z' if (i - frame_no) % 9 < 2 else 'Y')
-    for x in (4, 11):                                                    # coil edges glow
-        for y in range(3, 11, 2):
-            if (y // 2 + frame_no) % 4 == 0:
-                c.set(x, y, 'Y')
-            else:
-                c.set(x, y, 'y')
-    for i in range(4):
-        if i <= frame_no % 5:
-            c.set(4 + i * 2, 12, 'Y')
-    c.set(12, 12, 'G')
-    return c
-
-
-def charger_top(lit):
-    """Induction coil seen from above: concentric copper windings round a steel core."""
-    c = frame(10, panel=ST)
-    for y in range(3, 13):
-        for x in range(3, 13):
-            d = math.hypot(x - 7.5, y - 7.5)
-            if d <= 5.0:
-                c.set(x, y, '3' if int(d * 1.6) % 2 == 0 else '1')
-    c.ring(7.5, 7.5, 4.6, 5.3, '0')
-    for x, y in ((4, 5), (5, 4), (6, 3)):
-        c.set(x, y, '4')
-    c.disc(7.5, 7.5, 1.5, 'Z' if not lit else 'y')
-    return c
-
-
-def charger_top_glow():
-    c = Canvas()
-    c.disc(7.5, 7.5, 1.5, 'Y')
-    c.set(7, 7, 'z')
+    for i, ring in enumerate(ch_rings()):
+        k = (f - i * 3) % 12
+        ch = 'r' if k == 0 else 'Q' if k in (1, 11) else 'q'
+        for x, y in ring:
+            c.set(x, y, ch)
     return c
 
 
@@ -499,64 +560,115 @@ def solar_side(mk):
 
 
 # ---------------------------------------------------------------- accumulators
+# Energy storage family: the casing construction in light steel. Front: two dark glass cell columns (rows 3..12)
+# sunk into the panel either side of a level scale; sides: one wider cell column between cooling slats; top: four
+# cell heads on a glass bus cross. Tiers: copper, gold, magma (PROCESSING_TIERS 1-3).
+# The block state `charge` (0-ACC_CELLS) fills the cells 2 rows per level on full-bright overlays shared by every tier,
+# with a calm shimmer rising through the charge.
 
-def accumulator_side(tier):
-    r = TIER[tier]
-    c = frame(20 + tier, panel=CU, frame_ramp=r)
-    for y in range(4, 12, 2):                                            # heat sink fins
-        c.rect(4, y, 8, 1, '3').rect(4, y + 1, 8, 1, '0')
-        c.set(4, y, '4')
-    c.rect(7, 3, 2, 10, 'K').rect(7, 4, 2, 8, 'Z')                       # sight glass
-    c.set(7, 4, 'y')
-    return c
-
-
-# The front gauge has ACC_CELLS charge cells; the block state `charge` (0-ACC_CELLS) says how many are lit.
 ACC_CELLS = 5
-ACC_GLASS = [0, 2, 3, 5, 6, 8]                                           # sight glass rows lit per charge level
+ACC_FRAMES, ACC_FRAMETIME = 32, 2
+ACC_EXTRA = {
+    'm': '#1D5260', 'n': '#2E7A88', 'o': '#8AD4DE', 'p': '#123039',     # empty cell glass: mid, lit edge, glare, shade
+    'y': '#137489',                                                     # deep charge
+}
+ACC_FRONT_CELLS = ((3, 6), (10, 13))                                     # x ranges of the front cell columns
+ACC_SIDE_CELL = (6, 10)
 
 
-def accumulator_side_glow(level):
-    """Sight glass filled from the bottom (8 rows, y 4-11) to the charge level."""
-    c = Canvas()
-    h = ACC_GLASS[level]
-    if h:
-        c.rect(7, 12 - h, 2, h, 'y').rect(7, 12 - h, 1, h, 'Y')
-    return c
+def acc_pal(tier=1):
+    return casing.casing_palette(casing.PROCESSING_TIERS[tier], **ACC_CHARGER_BODY, **ACC_EXTRA)
+
+
+def acc_cell(c, x0, x1):
+    """Empty glass cell column x0..x1-1 over rows 3..12, shaded round, sunk into the panel."""
+    w = x1 - x0
+    for x in range(x0, x1):
+        i = x - x0
+        c.rect(x, 3, 1, 10, 'n' if i == 0 else 'p' if i == w - 1 else 'm')
+    c.rect(x0 + 1, 4, 1, 3, 'o').set(x0 + 1, 8, 'o')                    # glare
+    c.rect(x0 - 1, 2, 1, 12, 'a').rect(x0 - 1, 2, w + 1, 1, 'a')         # shadowed rim top left, lit bottom right
+    c.rect(x1, 2, 1, 12, 'd').rect(x0, 13, w + 1, 1, 'd')
+
+
+def acc_fill(c, x0, x1, level, t):
+    """Charge in a cell column: 2 rows per level from the bottom, round shading, a bright surface and a soft band of
+    light rising through it (one pass per loop)."""
+    w = x1 - x0
+    top = 13 - 2 * level
+    band = 13.5 - (t / ACC_FRAMES) * 14                                   # rows 13.5 .. -0.5
+    up = {'y': 'v', 'v': 'w', 'w': 'x', 'x': 'x'}
+    for y in range(top, 13):
+        for x in range(x0, x1):
+            i = x - x0
+            ch = 'w' if i == 0 else 'y' if i == w - 1 else 'v'
+            if y == top:
+                ch = 'x' if i <= 1 else 'w'
+            elif abs(y - band) < 0.75:
+                ch = up[ch]
+            c.set(x, y, ch)
 
 
 def accumulator_front(tier):
-    r = TIER[tier]
-    c = frame(30 + tier, panel=CU, frame_ramp=r)
-    c.recess(4, 2, 8, 12, r, fill='K')                                   # glass gauge
-    for i in range(ACC_CELLS):                                           # dark cells, bottom (y 12) to top (y 4)
-        c.rect(5, 12 - i * 2, 6, 1, 'Z')
-    for i in range(tier):                                                # tier pips
-        c.set(3, 4 + i * 2, r[4])
+    c = casing.shell(tier)
+    for x0, x1 in ACC_FRONT_CELLS:
+        acc_cell(c, x0, x1)
+    c.rect(7, 2, 2, 12, 'd').rect(8, 2, 1, 12, 'c').set(7, 2, 'e')       # level scale
+    for k in range(1, ACC_CELLS + 1):                                     # a glass mark at each level's top
+        c.set(7, 13 - 2 * k, 'n').set(8, 13 - 2 * k, 'm')
+    c.rect(7, 1, 2, 1, 'l')
+    return casing.tier_notches(c, tier)
+
+
+def accumulator_front_glow(level, t):
+    c = Canvas().rect(7, 1, 2, 1, 'L')
+    for x0, x1 in ACC_FRONT_CELLS:
+        acc_fill(c, x0, x1, level, t)
+    for k in range(1, level + 1):
+        c.set(7, 13 - 2 * k, 'x' if k == level else 'w').set(8, 13 - 2 * k, 'w' if k == level else 'v')
     return c
 
 
-def accumulator_front_glow(level, frame_no):
-    """The lowest `level` charge cells lit, a soft wave running up the lit ones."""
+def accumulator_side(tier):
+    c = casing.shell(tier)
+    for y in range(4, 12, 2):                                             # cooling slats
+        c.rect(3, y, 2, 1, 'a').rect(3, y + 1, 2, 1, 'd')
+        c.rect(11, y, 2, 1, 'a').rect(11, y + 1, 2, 1, 'd')
+    acc_cell(c, *ACC_SIDE_CELL)
+    return casing.tier_notches(c, tier)
+
+
+def accumulator_side_glow(level, t):
     c = Canvas()
-    for i in range(level):
-        y = 12 - i * 2
-        k = (i - frame_no) % 6
-        c.rect(5, y, 6, 1, 'z' if k == 0 else 'Y' if k == 1 else 'y')
-        c.set(5, y, 'Y' if k > 1 else 'z')
+    acc_fill(c, *ACC_SIDE_CELL, level, t)
     return c
+
+
+ACC_HEADS = ((3, 3), (9, 3), (3, 9), (9, 9))                             # top left corners of the 4x4 cell heads
 
 
 def accumulator_top(tier):
-    """Two terminal posts (+ brass in a red collar, - steel in a black one), polarity marks and tier pips."""
-    r = TIER[tier]
-    c = frame(40 + tier, panel=r, frame_ramp=ST if tier != 2 else CU)
-    c.draw(3, 4, ['.RRR.', 'R989R', 'R878R', 'R776R', '.r55.'])      # + post, red collar
-    c.draw(8, 4, ['.KKK.', 'Kedck', 'Kdcbk', 'Kcbbk', '.kaa.'])      # - post, black collar
-    c.draw(3, 10, ['.R.', 'RRR', '.R.'])                                 # +
-    c.draw(9, 11, ['KKK'])                                               # -
-    for i in range(tier):
-        c.set(12, 4 + i * 2, r[4]).set(12, 5 + i * 2, r[1])
+    """Four cell heads (steel collars round a dark glass core) on a glass bus cross."""
+    c = casing.shell(tier)
+    c.rect(3, 7, 10, 2, 'a').rect(7, 3, 2, 10, 'a')                      # glass bus cross
+    c.rect(4, 7, 8, 2, 'm').rect(7, 4, 2, 8, 'm').rect(4, 7, 8, 1, 'n').rect(7, 4, 1, 8, 'n')
+    c.rect(7, 7, 2, 2, 'p')                                               # hub
+    for x, y in ACC_HEADS:
+        c.rect(x, y, 4, 4, 'd')
+        c.rect(x, y, 4, 1, 'e').rect(x, y, 1, 4, 'e').rect(x + 3, y + 1, 1, 3, 'b').rect(x + 1, y + 3, 3, 1, 'b')
+        c.set(x, y, 'c').set(x + 3, y, 'c').set(x, y + 3, 'c').set(x + 3, y + 3, 'a')
+        c.rect(x + 1, y + 1, 2, 2, 'm').set(x + 1, y + 1, 'o').set(x + 2, y + 2, 'p')
+    return casing.tier_notches(c, tier)
+
+
+def accumulator_top_glow(level):
+    """Cell cores and hub lit, brighter the fuller the cells."""
+    c = Canvas()
+    c.rect(4, 7, 8, 2, 'y').rect(7, 4, 2, 8, 'y').rect(4, 7, 8, 1, 'v').rect(7, 4, 1, 8, 'v')
+    core = 'v' if level < 3 else 'w'
+    for x, y in ACC_HEADS:
+        c.rect(x + 1, y + 1, 2, 2, core).set(x + 1, y + 1, 'x' if level == ACC_CELLS else 'w')
+    c.rect(7, 7, 2, 2, core if level < ACC_CELLS else 'x')
     return c
 
 
@@ -741,12 +853,18 @@ def write_generator():
 
 
 def write_charger():
-    write_block('charger_front', charger_front(False).rows(), P)
-    write_block('charger_front_on', charger_front(True).rows(), P)
-    write_anim('block', 'charger_front_glow', [charger_glow(i) for i in range(10)], P, frametime=2)
-    write_block('charger_top', charger_top(False).rows(), P)
-    write_block('charger_top_on', charger_top(True).rows(), P)
-    write_block('charger_top_glow', charger_top_glow().rows(), P)
+    p = ch_pal()
+    frames = [(f + CH_START) % CH_FRAMES for f in range(CH_FRAMES)]
+    write_block('charger_front', charger_front(False).rows(), p)
+    write_block('charger_front_on', charger_front(True).rows(), p)
+    write_block('charger_top', charger_top().rows(), p)
+    write_block('charger_side', casing.side(1).rows(), p)
+    write_block('charger_bottom', casing.bottom().rows(), p)
+    write_block('charger_dock', charger_dock().rows(), p)
+    write_anim('block', 'charger_dock_glow', [charger_dock_glow(f) for f in frames], p, frametime=CH_FRAMETIME)
+    write_anim('block', 'charger_front_glow', [charger_glow(f) for f in frames], p, frametime=CH_FRAMETIME)
+    write_anim('block', 'charger_top_glow', [charger_top_glow(f) for f in frames], p, frametime=CH_FRAMETIME,
+               interpolate=True)
 
 
 def write_wireless():
@@ -766,12 +884,19 @@ def write_solar():
 
 def write_accumulators():
     for tier in (1, 2, 3):
-        write_block(f'accumulator_{tier}_side', accumulator_side(tier).rows(), P)
-        write_block(f'accumulator_{tier}_front', accumulator_front(tier).rows(), P)
-        write_block(f'accumulator_{tier}_top', accumulator_top(tier).rows(), P)
+        p = acc_pal(tier)
+        write_block(f'accumulator_{tier}_side', accumulator_side(tier).rows(), p)
+        write_block(f'accumulator_{tier}_front', accumulator_front(tier).rows(), p)
+        write_block(f'accumulator_{tier}_top', accumulator_top(tier).rows(), p)
+    p = acc_pal()
+    write_block('accumulator_bottom', casing.bottom().rows(), p)
+    frames = range(ACC_FRAMES)
     for level in range(1, ACC_CELLS + 1):
-        write_anim('block', f'accumulator_front_glow_{level}', [accumulator_front_glow(level, i) for i in range(6)], P, frametime=4)
-        write_still('block', f'accumulator_side_glow_{level}', accumulator_side_glow(level), P)
+        write_anim('block', f'accumulator_front_glow_{level}', [accumulator_front_glow(level, t) for t in frames], p,
+                   frametime=ACC_FRAMETIME, interpolate=True)
+        write_anim('block', f'accumulator_side_glow_{level}', [accumulator_side_glow(level, t) for t in frames], p,
+                   frametime=ACC_FRAMETIME, interpolate=True)
+        write_block(f'accumulator_top_glow_{level}', accumulator_top_glow(level).rows(), p)
 
 
 def main():

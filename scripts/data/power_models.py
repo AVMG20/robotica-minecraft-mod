@@ -95,13 +95,35 @@ def generator_model(lit):
     return machine_model(faces, {'north': 'combustion_generator_front_glow'} if lit else None)
 
 
-# ---------- charger
-
+# ---------- charger: the shared casing in light steel with a charging dock 2 px deep in the front (dock texture layout in
+# scripts/textures/power.py): back wall at z 2, four walls, and the power cell standing 1.5 px proud of the back wall.
+# Working, a full-bright glow on the back wall and the cell.
 def charger_model(lit):
-    faces = {'north': 'charger_front' + ('_on' if lit else ''), 'up': 'charger_top' + ('_on' if lit else ''),
-             'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
-             'east': 'power_machine_side'}
-    return machine_model(faces, {'north': 'charger_front_glow', 'up': 'charger_top_glow'} if lit else None)
+    faces = {'north': 'charger_front' + ('_on' if lit else ''), 'up': 'charger_top', 'down': 'charger_bottom',
+             'south': 'charger_side', 'west': 'charger_side', 'east': 'charger_side'}
+    d = '#dock'
+    elements = [
+        {'from': [3, 4, 2], 'to': [13, 13, 3], 'faces': {'north': {'texture': d, 'uv': [3, 3, 13, 12]}}},
+        {'from': [3, 13, 0], 'to': [13, 14, 2], 'faces': {'down': {'texture': d, 'uv': [13, 1, 3, 2]}}},
+        {'from': [3, 3, 0], 'to': [13, 4, 2], 'faces': {'up': {'texture': d, 'uv': [13, 14, 3, 15]}}},
+        {'from': [13, 4, 0], 'to': [14, 13, 2], 'faces': {'west': {'texture': d, 'uv': [1, 3, 2, 12]}}},
+        {'from': [2, 4, 0], 'to': [3, 13, 2], 'faces': {'east': {'texture': d, 'uv': [14, 3, 15, 12]}}},
+        {'from': [5, 5, 0.5], 'to': [11, 12, 2], 'faces': {'north': {'texture': d, 'uv': [5, 4, 11, 11]},
+                                                        'up': {'texture': d, 'uv': [5, 12, 11, 13]},
+                                                        'east': {'texture': d, 'uv': [2, 4, 3, 11]},
+                                                        'west': {'texture': d, 'uv': [2, 4, 3, 11]}}},
+    ]
+    textures = {'dock': 'charger_dock'}
+    if lit:
+        textures['dock_glow'] = 'charger_dock_glow'
+        elements += [
+            {'from': [3, 4, 1.99], 'to': [13, 13, 2], 'glow': True,
+             'faces': {'north': {'texture': '#dock_glow', 'uv': [3, 3, 13, 12]}}},
+            {'from': [5, 5, 0.49], 'to': [11, 12, 0.5], 'glow': True,
+             'faces': {'north': {'texture': '#dock_glow', 'uv': [5, 4, 11, 11]}}},
+        ]
+    glow = {'north': 'charger_front_glow', 'up': 'charger_top_glow'} if lit else None
+    return casing_model(faces, glow, elements, textures, lit=lit)
 
 
 for name, model_fn in (('combustion_generator', generator_model), ('charger', charger_model)):
@@ -175,14 +197,17 @@ ACC_CELLS = 5
 
 
 def accumulator_model(tier, level):
+    """The casing cube in light steel; charged, the cells on the front and sides fill on full-bright overlays and the
+    cell heads on top light up."""
     name = f'accumulator_{tier}'
-    faces = {'north': f'{name}_front', 'up': f'{name}_top', 'down': 'power_machine_bottom',
+    faces = {'north': f'{name}_front', 'up': f'{name}_top', 'down': 'accumulator_bottom',
              'south': f'{name}_side', 'west': f'{name}_side', 'east': f'{name}_side'}
     glow = None
     if level:
         side_glow = f'accumulator_side_glow_{level}'
-        glow = {'north': f'accumulator_front_glow_{level}', 'south': side_glow, 'west': side_glow, 'east': side_glow}
-    return machine_model(faces, glow)
+        glow = {'north': f'accumulator_front_glow_{level}', 'up': f'accumulator_top_glow_{level}',
+                'south': side_glow, 'west': side_glow, 'east': side_glow}
+    return casing_model(faces, glow)
 
 
 for tier in (1, 2, 3):
