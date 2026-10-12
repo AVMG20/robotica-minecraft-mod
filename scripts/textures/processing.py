@@ -63,12 +63,15 @@ def led(c, x, y, on):
 # The front is the casing with a crusher bay cut 2 px deep into it (model: processing_models.grinder_model). The bay
 # texture holds the back wall in 2..13 x 3..12 and the bay's ceiling (rows 0-1), floor (rows 14-15) and side walls
 # (cols 0-1, 14-15) around it. Two toothed crusher gears counter-rotate into the bite; working, their teeth glow cyan,
-# the crushed ore drops as hot grains onto a glowing heap on the energy tray.
+# the crushed ore drops as hot grains onto a glowing heap on the energy tray. Orange is the grinder's colour: raw ore
+# in the bay and the hopper, an ore lamp under the bay and the hopper's feed lights, dim at standby.
 
 GRINDER_FRAMES = 24                                                       # bay animation loop, 1 tick per frame
 G_EXTRA = {
     '1': '#3A1006', '2': '#9A2E0C', '3': '#FF7A1A', '4': '#FFC23A', '5': '#FFF3C0',     # crushed ore heat
-    '6': '#7E8A94', '7': '#C2CDD5', '8': '#4E4844', '9': '#7A706A',                     # gear teeth, ore
+    '6': '#7E8A94', '7': '#C2CDD5',                                                     # gear teeth
+    '8': '#6A3418', '9': '#B05A22', '0': '#E8893A',                                     # raw ore
+    'y': '#6E3812', 'n': '#3E464E',                                                     # lamps off, light rim
 }
 # Rim of a 6x6 gear, clockwise from the top left; the left gear sits at 2..7 x 4..9, the right one mirrors it
 RIM = ((1, 0), (2, 0), (3, 0), (4, 0), (5, 1), (5, 2), (5, 3), (5, 4),
@@ -102,15 +105,15 @@ def gear(step):
 def grinder_bay(frame, lit):
     """Back wall and bay walls; frame counts ticks (idle draws the gears at rest)."""
     c = Canvas()
-    c.rect(2, 3, 12, 10, 'k')
+    c.rect(2, 3, 12, 10, 'b')
     c.rect(2, 10, 12, 3, 'a').rect(2, 10, 12, 1, 'K')                    # discharge pit
     c.rect(3, 12, 10, 1, 'u')                                             # energy tray
-    c.rect(5, 11, 6, 1, '8').rect(4, 12, 8, 1, '8').rect(6, 11, 4, 1, '9')   # crushed heap
+    c.rect(5, 11, 6, 1, '8').rect(4, 12, 8, 1, '8').rect(6, 11, 4, 1, '9').set(7, 11, '0')   # crushed heap
     c.paste(mirrored(gear(frame if lit else 0)))
     c.rect(7, 3 + (frame % 6 // 3 if lit else 1), 2, 1, '9').set(8, 3 + (frame % 6 // 3 if lit else 1), '8')   # ore feeding in
     c.rect(2, 0, 12, 2, 'a').rect(2, 1, 12, 1, 'b')                      # ceiling (row 0 at the back)
     c.rect(2, 14, 12, 2, 'b').rect(2, 14, 12, 1, 'c')                    # floor (row 14 at the front)
-    c.rect(5, 15, 6, 1, '8').rect(6, 15, 4, 1, '9').rect(6, 14, 4, 1, '8')
+    c.rect(5, 15, 6, 1, '8').rect(6, 15, 4, 1, '9').rect(6, 14, 4, 1, '8').set(7, 15, '0')
     c.rect(0, 3, 2, 10, 'b').rect(0, 3, 1, 10, 'c')                      # side walls (col 0 and 15 at the front)
     c.rect(14, 3, 2, 10, 'a').rect(15, 3, 1, 10, 'b')
     return c
@@ -139,26 +142,28 @@ def grinder_glow(frame):
 
 
 def grinder_front(tier, lit):
-    """Casing face with the crusher bay cut out of it and the status lamp."""
+    """Casing face with the crusher bay cut out of it, the ore lamp under it and the status lamp."""
     c = casing.shell(tier)
     c.rect(2, 3, 12, 10, '.')
+    c.rect(4, 13, 8, 1, '3' if lit else 'y')
     c.rect(7, 1, 2, 1, 'L' if lit else 'l')
     return casing.tier_notches(c, tier)
 
 
 def grinder_front_glow():
-    return Canvas().rect(7, 1, 2, 1, 'L')
+    return Canvas().rect(7, 1, 2, 1, 'L').rect(4, 13, 8, 1, '3').rect(6, 13, 4, 1, '4')
 
 
 def grinder_top_glow():
     """The hopper's feed lights."""
-    return Canvas().rect(3, 6, 1, 4, 'v').rect(12, 6, 1, 4, 'v')
+    return Canvas().rect(3, 6, 1, 4, '3').rect(12, 6, 1, 4, '3').rect(3, 7, 1, 2, '4').rect(12, 7, 1, 2, '4')
 
 
 def grinder_top(tier):
-    """Feed hopper: a stepped funnel down to a slot over the bite, the gear tops ribbed below it."""
+    """Feed hopper: a stepped funnel in a steel rim down to a slot over the bite, the gear tops ribbed below it and
+    ore waiting on them."""
     c = casing.shell(tier)
-    c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
+    c.rect(3, 3, 10, 10, 'n').bevel(3, 3, 10, 10, '7', '6')
     c.rect(4, 4, 8, 8, 'a').bevel(4, 4, 8, 8, 'k', 'c')
     c.rect(5, 4, 6, 8, 'K')
     for y in range(5, 11):
@@ -167,7 +172,10 @@ def grinder_top(tier):
         c.set(5, y, 'b').set(10, y, 'b')
         c.set(7, y, 'd' if rib else 'b').set(8, y, 'd' if rib else 'b')
     c.rect(5, 4, 6, 1, 'K').rect(5, 11, 6, 1, 'a')
-    c.rect(3, 6, 1, 4, 'u').rect(12, 6, 1, 4, 'u')                       # feed lights
+    c.shape(lambda x, y: 6 <= x <= 9 and 6 <= y <= 9 and abs(x - 7.5) + abs(y - 7.5) < 3,
+            lambda x, y: '0' if x + y < 14 else '9' if x + y < 17 else '8')                 # raw ore heap
+    c.set(7, 8, '8').set(9, 7, '0')
+    c.rect(3, 6, 1, 4, 'y').rect(12, 6, 1, 4, 'y')                       # feed lights
     casing.tier_notches(c, tier)
     return c
 

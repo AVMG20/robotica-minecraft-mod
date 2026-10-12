@@ -156,14 +156,19 @@ def generator_top(lit):
 
 # ---------------------------------------------------------------- metal press
 # The processing machines' casing (scripts/textures/machine_casing.py) with a press bay cut 2 px deep into the front
-# between two cyan hydraulic columns (model: power_models.press_model). The bay texture holds the back wall in
-# 4..11 x 3..12 and the bay's ceiling (rows 0-1), floor (rows 14-15) and side walls (cols 0-1, 14-15) around it.
+# (model: power_models.press_model), framed like a hydraulic press: a light steel crown and uprights around two cyan
+# hydraulic columns, a safety-yellow ram over a steel die bed, and a yellow bed lamp under the bay (dim at standby).
+# The bay texture holds the back wall in 4..11 x 3..12 and the bay's ceiling (rows 0-1), floor (rows 14-15) and side
+# walls (cols 0-1, 14-15) around it.
 # Working, one 32 tick stroke: an ingot slides onto the die, the ram drops on it, flattens it to a plate in a cyan
-# flash, holds, rises slowly and the plate slides out. Bay, glow, columns and top share the loop.
+# flash, holds, rises slowly and the plate slides out. Bay, glow, columns, bed lamp and top share the loop.
 
 PRESS_TICKS = 32
 PRESS_PAL = casing.casing_palette(MATERIALS['copper'], **{
     '6': '#8E99A2', '7': '#D6DEE3',                                       # ram rod
+    'm': '#3C454D', 'n': '#56616A', 'o': '#7A868F', 'p': '#A6B1B9', 'q': '#D2DAE0',      # light steel frame
+    'r': '#4A3A10', 's': '#8E6A12', 't': '#D49E1C', 'y': '#F6C93A', 'z': '#FFF2A6',      # safety yellow
+    '8': '#7A6018', 'G': '#2A5762', 'H': '#4C8C99',                       # bed lamp off, column glass
 })
 RAM = [0] * 8 + [1, 1, 2, 3] + [3] * 6 + [2, 2, 2, 1, 1, 1, 1] + [0] * 7    # ram drop (px) per tick
 IMPACT = RAM.index(3)
@@ -177,15 +182,15 @@ def press_slide(t):
 def press_bay(t, lit):
     """Back wall and bay walls at tick t of the stroke (idle: ram up, an ingot on the die)."""
     c = Canvas()
-    c.rect(4, 3, 8, 10, 'k')
-    c.rect(4, 3, 8, 1, 'b').rect(5, 3, 6, 1, 'c').rect(6, 4, 4, 1, 'a')  # crown and rod gland
-    c.rect(4, 12, 8, 1, 'd').set(4, 12, 'e')                             # die bed
+    c.rect(4, 3, 8, 10, 'o').rect(4, 3, 1, 10, 'n').rect(11, 3, 1, 10, 'n')   # steel back wall, guide rails
+    c.rect(4, 3, 8, 1, 'p').rect(5, 3, 6, 1, 'q').rect(6, 4, 4, 1, 'n')  # crown and rod gland
+    c.rect(4, 12, 8, 1, 'q').set(11, 12, 'p')                            # die bed
     p = RAM[t] if lit else 0
     if p:
         c.rect(7, 5, 2, p, '6').rect(7, 5, 1, p, '7')                    # rod
-    y = 5 + p                                                             # ram: bevelled head, guide shoes, die face
-    c.rect(4, y, 8, 1, 'e').rect(4, y + 1, 8, 1, 'd').rect(5, y + 2, 6, 1, 'u')
-    c.rect(4, y, 1, 3, 'h').rect(11, y, 1, 3, 'g').set(4, y, 'i').set(11, y + 2, 'f').set(4, y + 2, 'g')
+    y = 5 + p                                                             # ram: yellow head, die face
+    c.rect(4, y, 8, 1, 'y').rect(4, y + 1, 8, 1, 't').rect(4, y + 2, 8, 1, 's').rect(5, y + 2, 6, 1, 'u')
+    c.set(4, y, 'z').set(11, y, 't').set(11, y + 1, 's')
     s = press_slide(t) if lit else 8
     if lit and IMPACT <= t:
         c.rect(4, 11, 8, 1, 'h').set(4, 11, 'i').set(11, 11, 'g')         # flattened plate
@@ -195,10 +200,10 @@ def press_bay(t, lit):
         for x in range(s - 2, s + 2):                                     # ingot coming in
             if 4 <= x < 12:
                 c.set(x, 10, 'i' if x < s + 1 else 'h').set(x, 11, 'h' if x < s + 1 else 'g')
-    c.rect(3, 0, 10, 2, 'a').rect(3, 1, 10, 1, 'b')                      # ceiling (row 0 at the back)
-    c.rect(3, 14, 10, 2, 'c').rect(3, 14, 10, 1, 'd')                    # floor: the die bed's front (row 14)
-    c.rect(0, 3, 2, 10, 'b').rect(0, 3, 1, 10, 'c')                      # side walls (col 0 and 15 at the front)
-    c.rect(14, 3, 2, 10, 'a').rect(15, 3, 1, 10, 'b')
+    c.rect(3, 0, 10, 2, 'n').rect(3, 1, 10, 1, 'o')                      # ceiling (row 0 at the back)
+    c.rect(3, 14, 10, 1, 'y').rect(3, 15, 10, 1, 't')                    # floor: the yellow bed plate (row 14)
+    c.rect(0, 3, 2, 10, 'o').rect(0, 3, 1, 10, 'p')                      # side walls (col 0 and 15 at the front)
+    c.rect(14, 3, 2, 10, 'n').rect(15, 3, 1, 10, 'o')
     return c
 
 
@@ -223,17 +228,24 @@ def press_glow(t):
 
 
 def press_front(lit):
-    """Casing face with the press bay between two hydraulic columns, and the status lamp."""
+    """Casing face with the press bay in a light steel press frame (crown, uprights, hydraulic columns), the yellow
+    bed lamp under the bay and the status lamp."""
     c = casing.shell(1)
+    c.rect(2, 2, 12, 1, 'q').rect(2, 2, 1, 12, 'p').rect(13, 2, 1, 12, 'o')   # crown and uprights
+    c.set(13, 2, 'p').set(2, 13, 'o')
+    for x in (3, 12):                                                     # hydraulic columns
+        c.rect(x, 3, 1, 10, 'v' if lit else 'G').set(x, 3, 'n').set(x, 12, 'm')
+        if not lit:
+            c.rect(x, 4, 1, 3, 'H')
+    c.rect(3, 13, 10, 1, 's').rect(4, 13, 8, 1, 't' if lit else '8')     # bed lamp
     c.rect(4, 3, 8, 10, '.')
-    for x in (3, 12):
-        c.rect(x, 3, 1, 10, 'v' if lit else 'u').set(x, 3, 'h').set(x, 12, 'g')
     c.rect(7, 1, 2, 1, 'L' if lit else 'l')
     return c
 
 
 def press_front_glow(t):
-    """Lamp, and the columns: pressure rushes down them on the drop, flashes on impact, drains up on the return."""
+    """Lamp, the bed lamp (flashing white on impact), and the columns: pressure rushes down them on the drop, flashes
+    on impact, drains up on the return."""
     c = Canvas().rect(7, 1, 2, 1, 'L')
     head = None
     if 8 <= t < IMPACT:
@@ -249,18 +261,19 @@ def press_front_glow(t):
             elif head is not None and abs(y - head) <= 1:
                 ch = 'x' if y == head else 'w'
             c.set(x, y, ch)
+    c.rect(4, 13, 8, 1, 'z' if 0 <= d < 3 else 'y')
     return c
 
 
 def press_top():
-    """Hydraulic cylinder head: a round graphite cap in a copper ring around a cyan pressure core."""
+    """Hydraulic cylinder head: a light steel cap in a safety-yellow ring around a cyan pressure core."""
     c = casing.shell(1)
     c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
     c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 4.3,
-            lambda x, y: 'i' if x + y < 12 else 'h' if x + y < 17 else 'g')     # copper ring
+            lambda x, y: 'y' if x + y < 12 else 't' if x + y < 17 else 's')     # yellow ring
     c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 3.2,
-            lambda x, y: 'd' if x + y < 13 else 'c')                             # cap
-    c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 2.0, lambda x, y: 'a')  # core socket
+            lambda x, y: 'q' if x + y < 11 else 'p' if x + y < 15 else 'o')     # cap
+    c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 2.0, lambda x, y: 'm')  # core socket
     c.rect(7, 7, 2, 2, 'u')
     casing.tier_notches(c, 1)
     return c
