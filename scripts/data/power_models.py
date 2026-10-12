@@ -86,22 +86,27 @@ def machine_model(textures, glow=None):
     return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': tex_vars, 'elements': elements}
 
 
-MACHINES = {
-    # name: (top off, top on, glow on top when lit)
-    'combustion_generator': ('combustion_generator_top', 'combustion_generator_top_on', None),
-    'charger': ('charger_top', 'charger_top_on', 'charger_top_glow'),
-}
-for name, (top, top_on, top_glow) in MACHINES.items():
+# ---------- combustion generator
+
+def generator_model(lit):
+    faces = {'north': 'combustion_generator_front' + ('_on' if lit else ''),
+             'up': 'combustion_generator_top' + ('_on' if lit else ''), 'down': 'power_machine_bottom',
+             'south': 'power_machine_side', 'west': 'power_machine_side', 'east': 'power_machine_side'}
+    return machine_model(faces, {'north': 'combustion_generator_front_glow'} if lit else None)
+
+
+# ---------- charger
+
+def charger_model(lit):
+    faces = {'north': 'charger_front' + ('_on' if lit else ''), 'up': 'charger_top' + ('_on' if lit else ''),
+             'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
+             'east': 'power_machine_side'}
+    return machine_model(faces, {'north': 'charger_front_glow', 'up': 'charger_top_glow'} if lit else None)
+
+
+for name, model_fn in (('combustion_generator', generator_model), ('charger', charger_model)):
     for lit in (False, True):
-        faces = {'north': f'{name}_front' + ('_on' if lit else ''), 'up': top_on if lit else top,
-                 'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
-                 'east': 'power_machine_side'}
-        glow = None
-        if lit:
-            glow = {'north': f'{name}_front_glow'}
-            if top_glow:
-                glow['up'] = top_glow
-        block_model(name + ('_on' if lit else ''), machine_model(faces, glow))
+        block_model(name + ('_on' if lit else ''), model_fn(lit))
     blockstate(name, {'variants': facing_variants(lambda c, n=name: n + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
     item_model(name, f'robotica:block/{name}')
     loot(name)
@@ -140,8 +145,7 @@ item_model('metal_press', 'robotica:block/metal_press')
 loot('metal_press')
 
 # ---------- wireless charger: the machine cube plus an emitter mast with a ball on top (full bright when lit) ----------
-for lit in (False, True):
-    name = 'wireless_charger' + ('_on' if lit else '')
+def wireless_model(lit):
     faces = {'north': 'wireless_charger_front' + ('_on' if lit else ''), 'up': 'wireless_charger_top',
              'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
              'east': 'power_machine_side'}
@@ -156,7 +160,11 @@ for lit in (False, True):
          'faces': {d: dict({'texture': '#ball', 'uv': [5, 5, 11, 11]}, **({'neoforge_data': GLOW} if lit else {}))
                    for d in DIRS}},
     ]
-    block_model(name, model)
+    return model
+
+
+for lit in (False, True):
+    block_model('wireless_charger' + ('_on' if lit else ''), wireless_model(lit))
 blockstate('wireless_charger', {'variants': facing_variants(lambda c: 'wireless_charger' + ('_on' if c['lit'] else ''),
                                                             [('lit', [False, True])])})
 item_model('wireless_charger', 'robotica:block/wireless_charger')
@@ -164,16 +172,23 @@ loot('wireless_charger')
 
 # ---------- accumulators: the gauge shows the charge (block state `charge` 0-5, one lit cell per level) ----------
 ACC_CELLS = 5
-for tier in (1, 2, 3):
+
+
+def accumulator_model(tier, level):
     name = f'accumulator_{tier}'
     faces = {'north': f'{name}_front', 'up': f'{name}_top', 'down': 'power_machine_bottom',
              'south': f'{name}_side', 'west': f'{name}_side', 'east': f'{name}_side'}
+    glow = None
+    if level:
+        side_glow = f'accumulator_side_glow_{level}'
+        glow = {'north': f'accumulator_front_glow_{level}', 'south': side_glow, 'west': side_glow, 'east': side_glow}
+    return machine_model(faces, glow)
+
+
+for tier in (1, 2, 3):
+    name = f'accumulator_{tier}'
     for level in range(ACC_CELLS + 1):
-        glow = None
-        if level:
-            side_glow = f'accumulator_side_glow_{level}'
-            glow = {'north': f'accumulator_front_glow_{level}', 'south': side_glow, 'west': side_glow, 'east': side_glow}
-        block_model(f'{name}_{level}', machine_model(faces, glow))
+        block_model(f'{name}_{level}', accumulator_model(tier, level))
     blockstate(name, {'variants': facing_variants(lambda c, n=name: f"{n}_{c['charge']}",
                                                   [('charge', list(range(ACC_CELLS + 1)))])})
     # The item shows the stored charge too (item property robotica:charge = level / 5, see PowerClient).
@@ -185,10 +200,10 @@ for tier in (1, 2, 3):
     loot(name, copy_energy=True)
 
 # ---------- solar panels: a 6 px slab, cells catch a faint glow ----------
-for mk in (1, 2, 3, 4):
+def solar_model(mk):
     name = f'solar_panel_mk{mk}'
     side_uv = [0, 0, 16, 6]
-    block_model(name, {
+    return {
         'parent': 'minecraft:block/block',
         'render_type': 'minecraft:cutout',
         'textures': {'top': tex(f'{name}_top'), 'side': tex(f'{name}_side'), 'bottom': tex('power_machine_bottom'),
@@ -207,7 +222,12 @@ for mk in (1, 2, 3, 4):
             'from': [0, 0, 0], 'to': [16, 6, 16], 'shade': False,
             'faces': {'up': {'texture': '#glow', 'neoforge_data': {'block_light': 9, 'sky_light': 9, 'ambient_occlusion': False}}},
         }],
-    })
+    }
+
+
+for mk in (1, 2, 3, 4):
+    name = f'solar_panel_mk{mk}'
+    block_model(name, solar_model(mk))
     blockstate(name, {'variants': {'': {'model': f'robotica:block/{name}'}}})
     item_model(name, f'robotica:block/{name}')
     loot(name)

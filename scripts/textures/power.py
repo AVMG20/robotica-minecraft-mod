@@ -732,22 +732,15 @@ def crank_spring():
 
 # ---------------------------------------------------------------- output
 
-def main():
-    write_block('power_machine_side', side(), P)
-    write_block('power_machine_top', hatch_top().rows(), P)
-    write_block('power_machine_bottom', bottom(), P)
-
+def write_generator():
     write_block('combustion_generator_front', generator_front(False).rows(), P)
     write_block('combustion_generator_front_on', generator_front(True).rows(), P)
     write_anim('block', 'combustion_generator_front_glow', [generator_flames(i) for i in range(8)], P, frametime=3)
     write_block('combustion_generator_top', generator_top(False).rows(), P)
     write_block('combustion_generator_top_on', generator_top(True).rows(), P)
 
-    write_press()
-    write_block('metal_press_side', casing.side(1).rows(), casing.casing_palette(MATERIALS['copper']))
-    write_block('metal_press_bottom', casing.bottom().rows(), casing.casing_palette(MATERIALS['copper']))
-    casing.write_side_glow()
 
+def write_charger():
     write_block('charger_front', charger_front(False).rows(), P)
     write_block('charger_front_on', charger_front(True).rows(), P)
     write_anim('block', 'charger_front_glow', [charger_glow(i) for i in range(10)], P, frametime=2)
@@ -755,17 +748,23 @@ def main():
     write_block('charger_top_on', charger_top(True).rows(), P)
     write_block('charger_top_glow', charger_top_glow().rows(), P)
 
+
+def write_wireless():
     write_block('wireless_charger_front', wireless_front(False).rows(), P)
     write_block('wireless_charger_front_on', wireless_front(True).rows(), P)
     write_anim('block', 'wireless_charger_front_glow', [wireless_glow(i) for i in range(8)], P, frametime=3)
     write_block('wireless_charger_top', wireless_top().rows(), P)
     write_block('wireless_charger_mast', wireless_mast().rows(), P)
 
+
+def write_solar():
     for mk in (1, 2, 3, 4):
         write_block(f'solar_panel_mk{mk}_top', solar_top(mk).rows(), P)
         write_block(f'solar_panel_mk{mk}_side', solar_side(mk).rows(), P)
         write_block(f'solar_panel_mk{mk}_glow', solar_glow(mk).rows(), P)
 
+
+def write_accumulators():
     for tier in (1, 2, 3):
         write_block(f'accumulator_{tier}_side', accumulator_side(tier).rows(), P)
         write_block(f'accumulator_{tier}_front', accumulator_front(tier).rows(), P)
@@ -773,6 +772,22 @@ def main():
     for level in range(1, ACC_CELLS + 1):
         write_anim('block', f'accumulator_front_glow_{level}', [accumulator_front_glow(level, i) for i in range(6)], P, frametime=4)
         write_still('block', f'accumulator_side_glow_{level}', accumulator_side_glow(level), P)
+
+
+def main():
+    # the generator, chargers and solar panels sit in the processing machines' shared casing (Mk1 copper)
+    write_block('power_machine_side', casing.side(1).rows(), casing.casing_palette(MATERIALS['copper']))
+    write_block('power_machine_bottom', casing.bottom().rows(), casing.casing_palette(MATERIALS['copper']))
+    casing.write_side_glow()
+
+    write_generator()
+    write_press()
+    write_block('metal_press_side', casing.side(1).rows(), casing.casing_palette(MATERIALS['copper']))
+    write_block('metal_press_bottom', casing.bottom().rows(), casing.casing_palette(MATERIALS['copper']))
+    write_charger()
+    write_wireless()
+    write_solar()
+    write_accumulators()
 
     write_block('tesla_coil_tip', tesla_tip().rows(), P)
     for tier in TESLA_CRYSTAL:
