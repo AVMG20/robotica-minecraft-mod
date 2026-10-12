@@ -1,9 +1,10 @@
-"""Machine sounds: soft synthesized clips for the processing machines, generators and chargers.
+"""Machine sounds: soft synthesized clips for the processing machines, the RTG and chargers.
 Run: python3 scripts/sounds/machines.py   (writes assets/robotica/sounds/machine/*.ogg; needs numpy and ffmpeg)
 
 Every clip is mono 44.1 kHz, built from sines and filtered noise with a seeded generator, faded in and out and
 normalized to the same peak, so machines sound alike in loudness. Low and muffled on purpose: they repeat a lot.
-Volumes and pitches per event live in sounds.json.
+No sustained low hums: start/stop and the charger hum use vanilla sounds. Volumes and pitches per event live in
+sounds.json.
 """
 import pathlib
 import subprocess
@@ -71,22 +72,6 @@ def thump(seconds, f0, f1, decay, seed):
 
 # ------------------------------------------------------------------------------------------------------------ clips
 
-def start():
-    """Motor spinning up: a low glide with a breath of air."""
-    t = time(0.6)
-    motor = sweep(t, 70, 140, (1.0, 0.5, 0.25, 0.1))
-    air = band(noise(0.6, 1), 300, 1500) * (t / t[-1]) * 0.25
-    return (motor + air) * env(t, 0.08, 0.25)
-
-
-def stop():
-    """Motor winding down."""
-    t = time(0.7)
-    motor = sweep(t, 140, 55, (1.0, 0.5, 0.25, 0.1)) * np.exp(-t / 0.35)
-    air = band(noise(0.7, 2), 250, 1200) * np.exp(-t / 0.2) * 0.25
-    return (motor + air) * env(t, 0.02, 0.3)
-
-
 def press():
     """Muffled hydraulic thump, then the valve lets out a short hiss."""
     total = 0.6
@@ -136,12 +121,17 @@ def assemble():
     return at(total, 0, servo) + at(total, 0.3, click * 0.6) + at(total, 0.42, click * 0.45)
 
 
-def hum():
-    """Electric hum with a slow beat (pitched up for chargers, down for the RTG in sounds.json)."""
-    t = time(1.6)
-    tone = np.sin(2 * np.pi * 100 * t) + 0.35 * np.sin(2 * np.pi * 200.6 * t) + 0.12 * np.sin(2 * np.pi * 300 * t)
-    beat = 0.85 + 0.15 * np.sin(2 * np.pi * 1.6 * t)
-    return tone * beat * env(t, 0.35, 0.5)
+def geiger():
+    """Irregular ticks of a radiation counter (RTG)."""
+    total = 1.4
+    rng = np.random.default_rng(11)
+    c = time(0.01)
+    out = np.zeros(int(SR * total))
+    for i, start_at in enumerate(np.cumsum(rng.exponential(0.08, 30))):
+        if start_at > total - 0.02:
+            break
+        out += at(total, start_at, band(noise(0.01, 20 + i), 1200, 5000) * np.exp(-c / 0.0015) * rng.uniform(0.5, 1.0))
+    return out
 
 
 def chime():
@@ -156,8 +146,8 @@ def chime():
 
 
 CLIPS = {
-    'start': start, 'stop': stop, 'press': press, 'grind': grind, 'smelt': smelt,
-    'centrifuge': centrifuge, 'assemble': assemble, 'hum': hum, 'chime': chime,
+    'press': press, 'grind': grind, 'smelt': smelt, 'centrifuge': centrifuge, 'assemble': assemble, 'geiger': geiger,
+    'chime': chime,
 }
 
 
