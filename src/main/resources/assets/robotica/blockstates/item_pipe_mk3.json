@@ -1,8 +1,116 @@
 {
   "multipart": [
     {
+      "when": {
+        "OR": [
+          {
+            "north": "pipe|insert|extract",
+            "west": "pipe|insert|extract"
+          },
+          {
+            "north": "pipe|insert|extract",
+            "east": "pipe|insert|extract"
+          },
+          {
+            "north": "pipe|insert|extract",
+            "up": "pipe|insert|extract"
+          },
+          {
+            "north": "pipe|insert|extract",
+            "down": "pipe|insert|extract"
+          },
+          {
+            "south": "pipe|insert|extract",
+            "west": "pipe|insert|extract"
+          },
+          {
+            "south": "pipe|insert|extract",
+            "east": "pipe|insert|extract"
+          },
+          {
+            "south": "pipe|insert|extract",
+            "up": "pipe|insert|extract"
+          },
+          {
+            "south": "pipe|insert|extract",
+            "down": "pipe|insert|extract"
+          },
+          {
+            "west": "pipe|insert|extract",
+            "up": "pipe|insert|extract"
+          },
+          {
+            "west": "pipe|insert|extract",
+            "down": "pipe|insert|extract"
+          },
+          {
+            "east": "pipe|insert|extract",
+            "up": "pipe|insert|extract"
+          },
+          {
+            "east": "pipe|insert|extract",
+            "down": "pipe|insert|extract"
+          },
+          {
+            "north": "pipe|insert|extract",
+            "south": "none",
+            "west": "none",
+            "east": "none",
+            "up": "none",
+            "down": "none"
+          },
+          {
+            "north": "none",
+            "south": "pipe|insert|extract",
+            "west": "none",
+            "east": "none",
+            "up": "none",
+            "down": "none"
+          },
+          {
+            "north": "none",
+            "south": "none",
+            "west": "pipe|insert|extract",
+            "east": "none",
+            "up": "none",
+            "down": "none"
+          },
+          {
+            "north": "none",
+            "south": "none",
+            "west": "none",
+            "east": "pipe|insert|extract",
+            "up": "none",
+            "down": "none"
+          },
+          {
+            "north": "none",
+            "south": "none",
+            "west": "none",
+            "east": "none",
+            "up": "pipe|insert|extract",
+            "down": "none"
+          },
+          {
+            "north": "none",
+            "south": "none",
+            "west": "none",
+            "east": "none",
+            "up": "none",
+            "down": "pipe|insert|extract"
+          },
+          {
+            "north": "none",
+            "south": "none",
+            "west": "none",
+            "east": "none",
+            "up": "none",
+            "down": "none"
+          }
+        ]
+      },
       "apply": {
-        "model": "robotica:block/item_pipe_mk3_core"
+        "model": "robotica:block/item_pipe_mk3_node"
       }
     },
     {

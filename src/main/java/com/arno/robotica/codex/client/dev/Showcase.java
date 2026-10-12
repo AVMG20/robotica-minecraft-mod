@@ -921,7 +921,7 @@ public final class Showcase {
         }
 
         // Item pipes: chest, Grinder, Electric Furnace, chest.
-        if (wants("17_item_pipes", "gui_101_item_pipe", "pipe_glint_frame", "sentry_bolt_frame")) step(20, () -> server(sp -> {
+        if (wants("17_item_pipes", "gui_101_item_pipe", "sentry_bolt_frame")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             int z = 124;
             setFacing(level, new BlockPos(20, Y, z), Blocks.CHEST, Direction.SOUTH);
@@ -951,17 +951,39 @@ public final class Showcase {
             step(20, () -> {});
             shot("17_item_pipes");
         }
-        // Dev only (not in shots.py): items flowing out of the first chest, frames a few ticks apart to catch the pipe
-        // glints, then a Sentry bolt sent straight to the client (no hostile mobs in the peaceful showcase world).
-        if (wants("pipe_glint_frame", "sentry_bolt_frame")) {
-            step(1, () -> server(sp -> {
-                if (sp.serverLevel().getBlockEntity(new BlockPos(20, Y, 124)) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
-                    for (int i = 0; i < 6; i++) chest.setItem(i, new ItemStack(Items.RAW_IRON, 64));
+        // Items moving: a chest emptied by a Mk4 Extract arm through Mk4, Mk3, Mk2 and Mk1 pipes into two chests (round
+        // robin), so every Mk's channel lights up. Filled once the camera is there; a Mk4 pulls every 4 ticks.
+        if (wants("30_item_pipe_glow")) {
+            step(20, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                int z = 136;
+                setFacing(level, new BlockPos(20, Y, z), Blocks.CHEST, Direction.SOUTH);
+                setFacing(level, new BlockPos(29, Y, z), Blocks.CHEST, Direction.SOUTH);
+                setFacing(level, new BlockPos(25, Y + 2, z), Blocks.CHEST, Direction.SOUTH);
+                String[] line = {"item_pipe_mk4", "item_pipe_mk4", "item_pipe_mk3", "item_pipe_mk3", "item_pipe_mk2", "item_pipe_mk2", "item_pipe", "item_pipe"};
+                List<BlockPos> pipes = new ArrayList<>();
+                for (int i = 0; i < line.length; i++) {
+                    pipes.add(new BlockPos(21 + i, Y, z));
+                    level.setBlock(pipes.get(i), block(line[i]).defaultBlockState(), 3);
+                }
+                pipes.add(new BlockPos(25, Y + 1, z));
+                level.setBlock(pipes.get(pipes.size() - 1), block("item_pipe_mk2").defaultBlockState(), 3);
+                for (BlockPos p : pipes) reshape(level, p);
+                if (level.getBlockEntity(pipes.get(0)) instanceof ItemPipeBlockEntity pipe) pipe.changeMode(Direction.WEST, PipeMode.EXTRACT);
+            }));
+            camera(25.5, Y + 2.4, 140.6, 180, 18);
+            step(20, () -> server(sp -> {
+                if (sp.serverLevel().getBlockEntity(new BlockPos(20, Y, 136)) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+                    for (int i = 0; i < 27; i++) chest.setItem(i, new ItemStack(i % 3 == 0 ? Items.RAW_IRON : i % 3 == 1 ? Items.COBBLESTONE : Items.COAL, 64));
                 }
             }));
+            grab(7, "30_item_pipe_glow");
+            for (int i = 0; i < 6; i++) grab(2, "pipe_glow_frame_" + i);
+        }
+        // Dev only (not in shots.py): a Sentry bolt sent straight to the client (no hostile mobs in the peaceful showcase world).
+        if (wants("sentry_bolt_frame")) {
             camera(23.2, Y + 0.2, 127.2, 150, 22);
             step(20, () -> {});
-            for (int i = 0; i < 10; i++) grab(2, "pipe_glint_frame_" + i);
             for (int k = 0; k < 2; k++) {
                 step(0, () -> server(sp -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp,
                         new com.arno.robotica.drones.net.SentryBoltPayload(25.5F, Y + 2.6F, 126.8F, 20.5F, Y + 1.1F, 125.6F, 0xE83A2A, 2))));

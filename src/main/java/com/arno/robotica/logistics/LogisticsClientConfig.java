@@ -10,17 +10,17 @@ public final class LogisticsClientConfig {
     private LogisticsClientConfig() {}
 
     public static final ModConfigSpec SPEC;
-    private static final ModConfigSpec.BooleanValue PIPE_PARTICLES;
+    private static final ModConfigSpec.BooleanValue PIPE_GLOW;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("pipes");
-        PIPE_PARTICLES = b.comment("Small glints where item pipes pull items out and put them in.").define("pipeParticles", true);
+        PIPE_GLOW = b.comment("Light up item pipes along the route when items move.").define("pipeGlow", true);
         b.pop();
         SPEC = b.build();
     }
 
-    public static boolean pipeParticles() {
-        return !SPEC.isLoaded() || PIPE_PARTICLES.get();
+    public static boolean pipeGlow() {
+        return !SPEC.isLoaded() || PIPE_GLOW.get();
     }
 }

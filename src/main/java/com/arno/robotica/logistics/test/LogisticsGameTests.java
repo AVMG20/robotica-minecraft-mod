@@ -8,6 +8,7 @@ import com.arno.robotica.logistics.pipe.ItemPipeBlock;
 import com.arno.robotica.logistics.pipe.ItemPipeBlockEntity;
 import com.arno.robotica.logistics.pipe.PipeConnection;
 import com.arno.robotica.logistics.pipe.PipeMode;
+import com.arno.robotica.logistics.pipe.PipeNetwork;
 import com.arno.robotica.logistics.pipe.PipeOrder;
 import com.arno.robotica.logistics.pipe.PipePriority;
 import com.arno.robotica.processing.ProcessingRegistry;
@@ -17,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -25,7 +27,7 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-/** Item pipes: chest to chest along a pipe line, Off links, filters, Closest First, and arms that follow a machine's side config. */
+/** Item pipes: chest to chest along a pipe line, Off links, filters, Closest First, arms that follow a machine's side config, and the glow route. */
 @GameTestHolder(Robotica.MODID)
 @PrefixGameTestTemplate(false)
 public class LogisticsGameTests {
@@ -212,5 +214,64 @@ public class LogisticsGameTests {
             helper.assertTrue(count(near, Items.COBBLESTONE) == 20, "cobblestone filled the High barrel");
             helper.assertTrue(count(target, Items.IRON_INGOT) == 3 && count(target, Items.COBBLESTONE) == 0, "only the overflow in the Low chest");
         });
+    }
+
+    /**
+     * The route the glow lights is the shortest one along the pipe links: two steps along the line, not over the detour
+     * above it. Straight pipes (arms on two opposite faces only) have no node.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void glowRouteIsShortestPipePath(GameTestHelper helper) {
+        line(helper);
+        BlockPos top = new BlockPos(1, 3, 1);
+        for (BlockPos p : new BlockPos[]{new BlockPos(0, 2, 1), new BlockPos(0, 3, 1), top, new BlockPos(2, 3, 1), new BlockPos(2, 2, 1)}) {
+            helper.setBlock(p, LogisticsContent.ITEM_PIPE_MK2.get());
+        }
+        helper.runAfterDelay(5, () -> {
+            ServerLevel level = helper.getLevel();
+            BlockPos from = helper.absolutePos(FIRST), to = helper.absolutePos(LAST);
+            PipeNetwork.Route route = pipe(helper, FIRST).network(level).route(level, from, to);
+            helper.assertTrue(route != null && route.steps().length == 2, "a two step route");
+            BlockPos at = from;
+            for (byte step : route.steps()) at = at.relative(Direction.from3DDataValue(step));
+            helper.assertTrue(at.equals(to), "the route ends at the last pipe");
+            helper.assertTrue(ItemPipeBlock.isStraight(helper.getBlockState(MIDDLE)) && ItemPipeBlock.isStraight(helper.getBlockState(top)),
+                    "straight pipes have no node");
+            helper.assertFalse(ItemPipeBlock.isStraight(helper.getBlockState(FIRST)), "a T has a node");
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A cut link splits the line: nothing reaches the target, the arm is gone on both pipes, a pipe placed again where
+     * the cut one was keeps the cut, and joining the link lets the items through.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void cutLinkSplitsNetwork(GameTestHelper helper) {
+        ChestBlockEntity source = line(helper);
+        ItemStack[] held = {source.removeItemNoUpdate(0), source.removeItemNoUpdate(5)};
+        helper.runAfterDelay(3, () -> {
+            ServerLevel level = helper.getLevel();
+            helper.assertTrue(ItemPipeBlock.toggleLink(level, helper.absolutePos(MIDDLE), Direction.EAST), "the link is cut");
+            helper.assertBlockProperty(MIDDLE, ItemPipeBlock.prop(Direction.EAST), PipeConnection.NONE);
+            helper.assertBlockProperty(LAST, ItemPipeBlock.prop(Direction.WEST), PipeConnection.NONE);
+            helper.assertTrue(pipe(helper, FIRST).network(level).size() == 2, "the line split, got " + pipe(helper, FIRST).network(level).size());
+            // break the last pipe and place it again: the middle one keeps the cut
+            helper.setBlock(LAST, Blocks.AIR);
+            helper.setBlock(LAST, LogisticsContent.ITEM_PIPE.get());
+            source.setItem(0, held[0]);
+            source.setItem(5, held[1]);
+        });
+        helper.runAfterDelay(60, () -> {
+            helper.assertBlockProperty(LAST, ItemPipeBlock.prop(Direction.WEST), PipeConnection.NONE);
+            helper.assertTrue(pipe(helper, LAST).isCut(Direction.WEST), "the new pipe took over the cut");
+            helper.assertTrue(((ChestBlockEntity) helper.getBlockEntity(TARGET)).isEmpty(), "nothing crossed the cut");
+            helper.assertFalse(ItemPipeBlock.toggleLink(helper.getLevel(), helper.absolutePos(LAST), Direction.WEST), "the link is joined");
+        });
+        helper.runAfterDelay(65, () -> helper.succeedWhen(() -> {
+            ChestBlockEntity target = (ChestBlockEntity) helper.getBlockEntity(TARGET);
+            helper.assertBlockProperty(MIDDLE, ItemPipeBlock.prop(Direction.EAST), PipeConnection.PIPE);
+            helper.assertTrue(count(target, Items.COBBLESTONE) == 20 && count(target, Items.IRON_INGOT) == 3, "everything arrived once joined");
+        }));
     }
 }
