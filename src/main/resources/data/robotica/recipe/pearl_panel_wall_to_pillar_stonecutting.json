@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "robotica:pearl_panel_wall"
+  },
+  "result": {
+    "id": "robotica:pearl_panel_pillar",
+    "count": 1
+  }
+}

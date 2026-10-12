@@ -1,5 +1,6 @@
 package com.arno.robotica.architect.plan;
 
+import com.arno.robotica.architect.block.ConnectedPillarBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -14,7 +15,8 @@ public final class ShellPlacer {
             if (!layout.planned(plot)) continue;
             BlockPos origin = Plots.origin(table, plot);
             for (BlockOp op : Shell.generate(layout.shape(plot), plot == Plots.CENTER)) {
-                level.setBlock(origin.offset(op.x(), op.y(), op.z()), op.piece().resolve(layout.style(plot)), Block.UPDATE_CLIENTS);
+                BlockPos pos = origin.offset(op.x(), op.y(), op.z());
+                level.setBlock(pos, ConnectedPillarBlock.placed(level, pos, op.piece().resolve(layout.style(plot))), Block.UPDATE_CLIENTS);
             }
         }
     }

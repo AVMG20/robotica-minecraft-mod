@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "robotica:block/dark_stone_floor",
+        "weight": 6
+      },
+      {
+        "model": "robotica:block/dark_stone_floor_2",
+        "weight": 3
+      },
+      {
+        "model": "robotica:block/dark_stone_floor_3",
+        "weight": 2
+      }
+    ]
+  }
+}

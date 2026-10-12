@@ -36,8 +36,16 @@ public record Piece(@Nullable Role role, Direction.Axis axis) {
     /** True when the state is this piece in some style (air never matches: it has no style). */
     public boolean matchesAnyStyle(BlockState state) {
         if (role == null) return false;
-        for (BuildStyle style : BuildStyle.values()) if (resolve(style) == state) return true;
+        for (BuildStyle style : BuildStyle.values()) if (matches(style, state)) return true;
         return false;
+    }
+
+    /** True when the state is this piece in this style. Connected trim may join its neighbours in any way. */
+    public boolean matches(BuildStyle style, BlockState state) {
+        BlockState want = resolve(style);
+        if (role == null) return state.isAir();
+        if (!state.is(want.getBlock())) return false;
+        return role != Role.PILLAR || state.getValue(RotatedPillarBlock.AXIS) == axis;
     }
 
     public BlockState resolve(BuildStyle style) {

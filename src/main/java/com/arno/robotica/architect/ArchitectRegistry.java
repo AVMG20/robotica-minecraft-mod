@@ -4,6 +4,7 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.architect.block.ArchitectTableBlock;
 import com.arno.robotica.architect.block.ArchitectTableBlockEntity;
 import com.arno.robotica.architect.block.BuildingBlock;
+import com.arno.robotica.architect.block.ConnectedPillarBlock;
 import com.arno.robotica.architect.block.StyleBlock;
 import com.arno.robotica.architect.block.StylePillarBlock;
 import com.arno.robotica.architect.block.StyleWindowBlock;
@@ -70,7 +71,7 @@ public final class ArchitectRegistry {
             Map<Role, DeferredBlock<Block>> blocks = new EnumMap<>(Role.class);
             Map<Role, DeferredItem<BlockItem>> items = new EnumMap<>(Role.class);
             for (Role role : Role.values()) {
-                DeferredBlock<Block> block = BLOCKS.registerBlock(style.blockName(role), p -> create(role, p), properties(style, role));
+                DeferredBlock<Block> block = BLOCKS.registerBlock(style.blockName(role), p -> create(style, role, p), properties(style, role));
                 blocks.put(role, block);
                 items.put(role, ITEMS.registerSimpleBlockItem(block));
             }
@@ -79,9 +80,10 @@ public final class ArchitectRegistry {
         }
     }
 
-    private static Block create(Role role, BlockBehaviour.Properties props) {
+    private static Block create(BuildStyle style, Role role, BlockBehaviour.Properties props) {
         return switch (role) {
-            case PILLAR -> new StylePillarBlock(props);
+            // Clean Stone keeps its original seamless pillar; the other styles' trim connects at corners
+            case PILLAR -> style == BuildStyle.TIMBERFRAME ? new StylePillarBlock(props) : new ConnectedPillarBlock(props);
             case WINDOW -> new StyleWindowBlock(props);
             default -> new StyleBlock(props);
         };
@@ -89,22 +91,20 @@ public final class ArchitectRegistry {
 
     private static BlockBehaviour.Properties properties(BuildStyle style, Role role) {
         MapColor color = switch (style) {
-            case TIMBERFRAME, STEEL_LAB -> role == Role.ROOF ? MapColor.STONE : MapColor.SAND;
-            case COPPER_WORKS -> role == Role.ROOF ? MapColor.STONE : MapColor.QUARTZ;
-            case NULL_SPIRE -> role == Role.ROOF ? MapColor.STONE : MapColor.SNOW;
+            case TIMBERFRAME -> role == Role.ROOF ? MapColor.STONE : MapColor.SAND;
+            case DARK_STONE -> role == Role.ROOF ? MapColor.DEEPSLATE : MapColor.COLOR_GRAY;
+            case PEARL_PANEL -> role == Role.ROOF ? MapColor.STONE : MapColor.SNOW;
+            case ONYX_PANEL -> role == Role.ROOF ? MapColor.DEEPSLATE : MapColor.COLOR_GRAY;
         };
         SoundType sound = switch (style) {
-            case TIMBERFRAME -> SoundType.STONE;
-            case COPPER_WORKS -> SoundType.CALCITE;
-            case STEEL_LAB -> SoundType.STONE;
-            case NULL_SPIRE -> role == Role.LIGHT ? SoundType.AMETHYST : SoundType.POLISHED_DEEPSLATE;
+            case TIMBERFRAME, DARK_STONE -> SoundType.STONE;
+            case PEARL_PANEL, ONYX_PANEL -> SoundType.POLISHED_DEEPSLATE;
         };
         BlockBehaviour.Properties p = BlockBehaviour.Properties.of().mapColor(color).strength(2.0F, 6.0F).sound(sound);
         if (role == Role.WINDOW) {
             p = BlockBehaviour.Properties.of().mapColor(color).strength(0.6F, 3.0F).sound(SoundType.GLASS).noOcclusion()
                     .isValidSpawn((s, l, pos, t) -> false).isRedstoneConductor((s, l, pos) -> false)
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos) -> false);
-            if (style == BuildStyle.NULL_SPIRE) p = p.lightLevel(s -> 6);
         } else if (role == Role.LIGHT) {
             int level = style.lightLevel;
             p = p.strength(1.0F, 3.0F).lightLevel(s -> level);
@@ -120,7 +120,7 @@ public final class ArchitectRegistry {
         return STYLE_ITEMS.get(style).get(role);
     }
 
-    /** All 24 style block names, for scripts and tests. */
+    /** Every style block, for scripts and tests. */
     public static List<DeferredBlock<Block>> allStyleBlocks() {
         List<DeferredBlock<Block>> list = new ArrayList<>();
         for (BuildStyle style : BuildStyle.values()) list.addAll(STYLE_BLOCKS.get(style).values());

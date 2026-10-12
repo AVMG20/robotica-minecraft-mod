@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "robotica:block/copper_works_window"
-  },
-  "render_type": "minecraft:cutout"
-}

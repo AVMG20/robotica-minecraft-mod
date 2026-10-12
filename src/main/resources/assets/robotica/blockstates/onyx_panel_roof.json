@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "robotica:block/onyx_panel_roof",
+        "weight": 6
+      },
+      {
+        "model": "robotica:block/onyx_panel_roof_2",
+        "weight": 3
+      },
+      {
+        "model": "robotica:block/onyx_panel_roof_3",
+        "weight": 2
+      }
+    ]
+  }
+}

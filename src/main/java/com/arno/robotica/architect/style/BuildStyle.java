@@ -5,18 +5,19 @@ import com.arno.robotica.architect.matter.Matter;
 import java.util.Locale;
 
 /**
- * Building style families. Each has six block roles ({@link Role}), a matter price per fabricated block and the casing
- * level the table needs in its style slot (0 = always available). Registry names are {@code <id>_<role>}.
+ * Building style families, two light/dark pairs with the same shapes. Each has six block roles ({@link Role}), a matter
+ * price per fabricated block and the casing level the table needs in its style slot (0 = always available). Registry
+ * names are {@code <id>_<role>}. At most four styles: plot records keep the style in two bits.
  */
 public enum BuildStyle {
     TIMBERFRAME("timberframe", 0, 0, new Matter(2, 0, 0), 50, 14),
-    COPPER_WORKS("copper_works", 1, 1, new Matter(2, 1, 0), 100, 14),
-    STEEL_LAB("steel_lab", 2, 2, new Matter(1, 2, 1), 200, 15),
-    NULL_SPIRE("null_spire", 4, 4, new Matter(0, 2, 2), 400, 15);
+    DARK_STONE("dark_stone", 0, 0, new Matter(2, 0, 0), 50, 14),
+    PEARL_PANEL("pearl_panel", 1, 1, new Matter(2, 1, 0), 100, 15),
+    ONYX_PANEL("onyx_panel", 1, 1, new Matter(2, 1, 0), 100, 15);
 
     public final String id;
     public final int age;
-    /** Casing level needed in the style slot: 1 iron, 2 reinforced, 3 blazing, 4 null casing. */
+    /** Casing level needed in the style slot: 0 none, 1 an Iron Casing or better. */
     public final int casingLevel;
     public final Matter cost;
     /** FE per block in percent of the configured base: Timberframe is cheap enough for a Mainspring on day one. */

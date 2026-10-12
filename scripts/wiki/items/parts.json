@@ -658,6 +658,7 @@
    "use": [
     "Feed it cobble, wood or ingots (matter).",
     "A casing in the style slot opens higher styles.",
+    "Click a built plot and pick another style to restyle it: Build swaps every block, the old ones come back as matter.",
     "Demolish (click twice) clears every built plot: the table's own building blocks come back as matter, the rest goes into a chest touching the table."
    ],
    "stats": {
@@ -695,40 +696,44 @@
     "timberframe_window",
     "timberframe_light"
    ],
-   "what": "A building style of the [[architect_table]]. Also craftable by hand."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand.",
+   "image": "shots/architect_hall_timberframe.jpg|A Clean Stone hall"
   },
   {
    "items": [
-    "copper_works_wall",
-    "copper_works_floor",
-    "copper_works_roof",
-    "copper_works_pillar",
-    "copper_works_window",
-    "copper_works_light"
+    "dark_stone_wall",
+    "dark_stone_floor",
+    "dark_stone_roof",
+    "dark_stone_pillar",
+    "dark_stone_window",
+    "dark_stone_light"
    ],
-   "what": "A building style of the [[architect_table]]. Also craftable by hand."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand.",
+   "image": "shots/architect_hall_dark_stone.jpg|A Dark Stone hall"
   },
   {
    "items": [
-    "steel_lab_wall",
-    "steel_lab_floor",
-    "steel_lab_roof",
-    "steel_lab_pillar",
-    "steel_lab_window",
-    "steel_lab_light"
+    "pearl_panel_wall",
+    "pearl_panel_floor",
+    "pearl_panel_roof",
+    "pearl_panel_pillar",
+    "pearl_panel_window",
+    "pearl_panel_light"
    ],
-   "what": "A building style of the [[architect_table]]. Also craftable by hand."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand.",
+   "image": "shots/architect_hall_pearl_panel.jpg|A Pearl Panel hall"
   },
   {
    "items": [
-    "null_spire_wall",
-    "null_spire_floor",
-    "null_spire_roof",
-    "null_spire_pillar",
-    "null_spire_window",
-    "null_spire_light"
+    "onyx_panel_wall",
+    "onyx_panel_floor",
+    "onyx_panel_roof",
+    "onyx_panel_pillar",
+    "onyx_panel_window",
+    "onyx_panel_light"
    ],
-   "what": "A building style of the [[architect_table]]. Also craftable by hand."
+   "what": "A building style of the [[architect_table]]. Also craftable by hand.",
+   "image": "shots/architect_hall_onyx_panel.jpg|A Onyx Panel hall"
   },
   {
    "items": [

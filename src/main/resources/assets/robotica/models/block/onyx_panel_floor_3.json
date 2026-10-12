@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "robotica:block/onyx_panel_floor_3"
+  }
+}

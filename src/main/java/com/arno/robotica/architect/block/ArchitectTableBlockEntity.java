@@ -172,6 +172,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private UUID owner;
     private String ownerName = "";
     private BuildStyle selectedStyle = BuildStyle.TIMBERFRAME;
+    /** The built plot clicked last: picking a style restyles it until Build, Cancel or another plot click. Not saved. */
+    private int restyleTarget = -1;
     private boolean clearTerrain;
 
     private final Layout layout = new Layout();
@@ -444,6 +446,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 if (layout.cycleWall(a, b) < 0) return Component.translatable("message.robotica.architect_no_wall");
             }
             case ACTION_BUILD -> {
+                restyleTarget = -1;
                 needs = 0;
                 if (layout.hasWork()) running = true;
             }
@@ -452,6 +455,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                     stopDemolish();
                 } else {
                     layout.unqueueAll();
+                    restyleTarget = -1;
                     needs = 0;
                 }
             }
@@ -461,7 +465,10 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             }
             case ACTION_CLEAR -> clearTerrain = a != 0 && ArchitectConfig.allowClearTerrain();
             case ACTION_STYLE -> {
-                if (a >= 0 && a < BuildStyle.values().length && unlocked(BuildStyle.values()[a])) selectedStyle = BuildStyle.values()[a];
+                if (a >= 0 && a < BuildStyle.values().length && unlocked(BuildStyle.values()[a])) {
+                    selectedStyle = BuildStyle.values()[a];
+                    if (restyleTarget >= 0) layout.restyle(restyleTarget, selectedStyle);
+                }
             }
             default -> {
                 return Component.translatable("message.robotica.architect_bad_request");
@@ -477,9 +484,17 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         switch (layout.state(plot)) {
             case Layout.QUEUED -> layout.unqueue(plot);
             case Layout.BUILT -> {
-                if (forget) layout.forget(plot);
+                if (forget) {
+                    layout.forget(plot);
+                    restyleTarget = -1;
+                } else {
+                    // restyle: the next pass swaps the plot's blocks for the same pieces in the selected style
+                    restyleTarget = plot;
+                    layout.restyle(plot, selectedStyle());
+                }
             }
             default -> {
+                restyleTarget = -1;
                 if (layout.queuedCount() >= ArchitectConfig.maxQueue()) return Component.translatable("message.robotica.architect_queue_full");
                 BuildStyle style = selectedStyle();
                 if (!unlocked(style)) return Component.translatable("message.robotica.architect_style_locked");
@@ -585,7 +600,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             }
             if (actions <= 0 || skips > MAX_SKIPS_PER_TICK) break;
             BlockOp op = list.get(cursor);
-            int result = step(level, origin, op, style, energyCost, layout.height(), opsShape.overlaps(op.x(), op.z()), clear);
+            int shared = opsShape.overlaps(op.x(), op.z()) ? layout.sharedStyles(current, op.x(), op.z()) | 1 << style.ordinal() : 0;
+            int result = step(level, origin, op, style, energyCost, layout.height(), shared, clear);
             if (result == STEP_SKIPPED) {
                 cursor++;
                 skips++;
@@ -642,18 +658,22 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     /**
      * One op: returns STEP_SKIPPED (nothing to do, free), STEP_DONE (changed the world), STEP_WAIT or a status code to pause on.
-     * {@code overlap}: a neighbour shares this cell, so the right piece in the neighbour's style counts as done (no swapping).
+     * {@code shared}: styles (bit per ordinal) of the plots sharing this cell, 0 when no neighbour does; the right piece
+     * in a neighbour's style counts as done (no swapping). A piece in another style is swapped and refunded (restyling).
      * {@code clear}: solid blocks in the way are removed (clear terrain on a first build).
      */
-    private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost, int height, boolean overlap, boolean clear) {
+    private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost, int height, int shared, boolean clear) {
         BlockPos target = origin.offset(op.x(), op.y(), op.z());
         if (target.equals(worldPosition) || !level.isInWorldBounds(target)) return STEP_SKIPPED;
         if (!level.isLoaded(target)) return ST_UNLOADED;
 
-        BlockState desired = op.piece().resolve(style);
         BlockState current = level.getBlockState(target);
-        if (current == desired || (desired.isAir() && current.isAir())) return STEP_SKIPPED;
-        if (overlap && op.piece().matchesAnyStyle(current)) return STEP_SKIPPED;
+        if (op.piece().matches(style, current)) return STEP_SKIPPED;
+        for (BuildStyle other : BuildStyle.values()) {
+            if ((shared & 1 << other.ordinal()) != 0 && op.piece().matches(other, current)) return STEP_SKIPPED;
+        }
+        BlockState desired = ConnectedPillarBlock.placed(level, target, op.piece().resolve(style));
+        boolean restyled = op.piece().matchesAnyStyle(current);
         if (current.is(ArchitectRegistry.ARCHITECT_TABLE.get())) return STEP_SKIPPED;
         // above the building (it got lower): only its own old blocks go
         if (op.y() >= height && !ArchitectRegistry.isBuildingBlock(current)) return STEP_SKIPPED;
@@ -701,6 +721,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         refined -= cost.refined();
         exotic -= cost.exotic();
         energy.consume(energyCost);
+        // the old style's block comes back like a takedown's: as matter, or as an item when the matter does not fit
+        if (restyled && !refund(current)) stash(level, new ItemStack(current.getBlock()));
         return STEP_DONE;
     }
 

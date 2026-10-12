@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:pearl_panel_wall"
+    },
+    "B": {
+      "item": "minecraft:lantern"
+    }
+  },
+  "result": {
+    "id": "robotica:pearl_panel_light",
+    "count": 8
+  }
+}

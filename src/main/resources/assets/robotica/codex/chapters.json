@@ -495,12 +495,12 @@
         },
         {
           "title": "Styles",
-          "text": "An Iron, Reinforced or Null Casing in the casing slot opens the next style.\nThe stonecutter turns style blocks into other shapes.",
+          "text": "An Iron Casing opens Pearl Panel and Onyx Panel. A hall can mix styles.\nClick a built plot and pick a style to restyle it; old blocks come back as matter.\nThe stonecutter turns style blocks into other shapes.",
           "items": [
             "robotica:timberframe_wall",
-            "robotica:copper_works_wall",
-            "robotica:steel_lab_wall",
-            "robotica:null_spire_wall"
+            "robotica:dark_stone_wall",
+            "robotica:pearl_panel_wall",
+            "robotica:onyx_panel_wall"
           ]
         },
         {

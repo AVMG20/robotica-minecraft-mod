@@ -200,6 +200,31 @@ public final class Layout {
         return true;
     }
 
+    /**
+     * Gives a built plot another style: the next pass swaps its blocks for the same pieces in that style. False when it
+     * is not built or has that style already.
+     */
+    public boolean restyle(int plot, BuildStyle buildStyle) {
+        if (!Plots.valid(plot) || state[plot] != BUILT || style[plot] == buildStyle) return false;
+        style[plot] = buildStyle;
+        return true;
+    }
+
+    /** Styles (bit per ordinal) of the other planned plots covering this edge or corner cell of a plot. */
+    public int sharedStyles(int plot, int x, int z) {
+        int sx = x == 0 ? Plots.W : x == Plots.SIZE - 1 ? Plots.E : -1;
+        int sz = z == 0 ? Plots.N : z == Plots.SIZE - 1 ? Plots.S : -1;
+        int m = 0;
+        if (sx >= 0) m |= styleBit(Plots.neighbour(plot, sx));
+        if (sz >= 0) m |= styleBit(Plots.neighbour(plot, sz));
+        if (sx >= 0 && sz >= 0) m |= styleBit(Plots.diagonal(plot, (z == 0 ? 0 : 2) + (x == 0 ? 0 : 1)));
+        return m;
+    }
+
+    private int styleBit(int plot) {
+        return planned(plot) ? 1 << style[plot].ordinal() : 0;
+    }
+
     /** Takes a queued plot off the plan (blocks it already placed stay). False if it was not queued. */
     public boolean unqueue(int plot) {
         if (!Plots.valid(plot) || state[plot] != QUEUED) return false;
@@ -216,8 +241,12 @@ public final class Layout {
         return true;
     }
 
+    /** Takes every queued plot off the plan and undoes restyles that have not started. */
     public void unqueueAll() {
-        for (int plot = 0; plot < Plots.COUNT; plot++) if (state[plot] == QUEUED) clear(plot);
+        for (int plot = 0; plot < Plots.COUNT; plot++) {
+            if (state[plot] == QUEUED) clear(plot);
+            else if (state[plot] == BUILT && builtSig[plot] > 0) style[plot] = BuildStyle.byOrdinal(builtSig[plot] >> 28 & 3);
+        }
         normalize();
     }
 

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "robotica:block/onyx_panel_roof_2",
+    "side": "robotica:block/onyx_panel_roof_2",
+    "bottom": "robotica:block/onyx_panel_wall",
+    "particle": "robotica:block/onyx_panel_roof_2"
+  }
+}

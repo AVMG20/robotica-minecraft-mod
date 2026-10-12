@@ -46,7 +46,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     /** Clicks this close to the edge of a planned plot toggle a door (outside) or step the inner wall (shared side). */
     private static final int EDGE = 4;
 
-    public static final int[] STYLE_COLORS = {0xFFB98550, 0xFFD8813F, 0xFFDCE6EA, 0xFF2FB8A0};
+    public static final int[] STYLE_COLORS = {0xFFB98550, 0xFF7C6A5A, 0xFFDCE6EA, 0xFF3FC9DC};
     private static final int[] MATTER_COLORS = {0xFF9A7B4F, 0xFFD08850, 0xFFB070E0};
     private static final int GRID_BG = 0xFF2B2B2B;
     private static final int CELL_EMPTY = 0xFF4A4A4A;
@@ -338,7 +338,10 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             lines.add(Component.translatable(style.langKey()).withStyle(s -> s.withColor(STYLE_COLORS[style.ordinal()] & 0xFFFFFF)));
             String key = plot == menu.currentPlot() ? "building" : state == Layout.QUEUED ? "queued" : menu.plotNeedsWork(plot) ? "changed" : "built";
             lines.add(Component.translatable("gui.robotica.architect_plot_" + key).withStyle(ChatFormatting.GRAY));
-            if (state == Layout.BUILT) lines.add(Component.translatable("gui.robotica.architect_plot_forget").withStyle(ChatFormatting.DARK_GRAY));
+            if (state == Layout.BUILT) {
+                lines.add(Component.translatable("gui.robotica.architect_plot_restyle").withStyle(ChatFormatting.DARK_GRAY));
+                lines.add(Component.translatable("gui.robotica.architect_plot_forget").withStyle(ChatFormatting.DARK_GRAY));
+            }
         }
         addTooltip(x, y, CELL, CELL, lines.toArray(Component[]::new));
     }

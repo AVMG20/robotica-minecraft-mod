@@ -4,14 +4,15 @@ models, blockstates, recipes and lang are written by scripts/data/architect_*.py
 
 Walls, floors and roofs tile seamlessly: seams sit on one block edge or are staggered, and low-frequency noise wraps
 at 16 px. Each has 3 variants (<name>, <name>_2, <name>_3) that the blockstate mixes with weights, so large surfaces
-never show a repeating stamp. Pillars have no joint at their ends, so stacked posts read as one column. Light blocks
+never show a repeating stamp. Clean Stone pillars have no joint at their ends; the other styles' trim
+connects (one texture per face shape, see trim()), so posts and beams join at corners. Light blocks
 are a plain frame plus a bright diffuser; <style>_light_glow is the diffuser alone, drawn as a full-bright overlay.
 
-One family of light-to-mid stone, from plain to detailed (registry ids are historic and stay):
-  timberframe_*   Clean Stone     light warm concrete panels with subtle seams, running-bond floor slabs, slate roof
-  copper_works_*  Smooth Panel    pearl white near-seamless panels, glossy floor tiles, standing seam roof
-  steel_lab_*     Detailed Stone  bevelled limestone bricks, chiseled floor tiles, clay shingle roof, fluted pillar
-  null_spire_*    Tech Stone      cool light stone with steel inlays, rivets and a thin cyan accent line
+Two pairs, light and dark, with the same shapes so they mix in one base:
+  timberframe_*  Clean Stone   light warm concrete panels with subtle seams, running-bond floor slabs, slate roof
+  dark_stone_*   Dark Stone    the same in warm charcoal, with connected grooved trim
+  pearl_panel_*  Pearl Panel   cool white plates with cut corners, polished tiles, tinted glass, connected trim with a glowing strip
+  onyx_panel_*   Onyx Panel    the same in graphite
 """
 import math
 import pathlib
@@ -27,23 +28,25 @@ CLEAN = {
     'f': '#F7E2B2', 'g': '#FFEFCB', 'h': '#FFF9EA',
     'v': '#E4F6FB', 'V': '#A8D8E8',
 }
-SMOOTH = {
-    '0': '#F7F8F9', '1': '#EFF1F3', '2': '#E7EAED', '3': '#DCE0E4', '4': '#C7CDD2', '5': '#AEB5BC', '6': '#949CA4',
-    'f': '#DCEFF7', 'g': '#EDF8FC', 'h': '#FFFFFF',
+# Dark Stone: Clean Stone's shapes in warm charcoal, with a darker slate roof.
+DARK = {
+    '0': '#8C8A86', '1': '#7E7C78', '2': '#716F6B', '3': '#676561', '4': '#53514E', '5': '#43423F', '6': '#33322F',
+    'r': '#666C72', 'R': '#5B6167', 's': '#464B51', 't': '#7A8086',
+    'f': '#F7E2B2', 'g': '#FFEFCB', 'h': '#FFF9EA',
     'v': '#E4F6FB', 'V': '#A8D8E8',
 }
-DETAILED = {
-    '0': '#F2EADB', '1': '#E8DEC9', '2': '#DCD0B8', '3': '#CEC0A5', '4': '#B8A88C', '5': '#9E8E73', '6': '#857760',
-    'r': '#B88D72', 'R': '#A67A5E', 's': '#87604A', 't': '#CDA488',  # clay shingles
-    'f': '#FFD99A', 'g': '#FFE9BF', 'h': '#FFF7E3',
-    'v': '#E4F6FB', 'V': '#A8D8E8',
+# Pearl Panel and Onyx Panel share every shape; a cyan accent strip glows on the pillars (a, A only).
+PEARL = {
+    '0': '#F6F8FA', '1': '#ECF0F3', '2': '#E1E6EA', '3': '#D3D9DE', '4': '#B9C1C8', '5': '#9AA4AC', '6': '#7E8891',
+    'a': '#3FC9DC', 'A': '#A6F3FA',
+    'f': '#D6F2FA', 'g': '#ECFAFE', 'h': '#FFFFFF',
+    'v': '#F2FBFE', 'V': '#BFE6F2', 'w': '#BFE9F530',
 }
-TECH = {
-    '0': '#EEF1F3', '1': '#E3E7EA', '2': '#D7DCE0', '3': '#C9CFD4', '4': '#B2B9BF', '5': '#99A1A8',
-    'N': '#E2E7EA', 'M': '#B8C0C6', 'm': '#8F989F', 'n': '#6F787F',  # steel inlay, light to dark
-    'a': '#3CC6D6', 'A': '#A6F2F9',  # accent line
-    'f': '#B2EEF5', 'g': '#D8F9FC', 'h': '#F5FEFF',
-    'v': '#BFF4FA', 'V': '#7FDCE899', 'w': '#BFEFF52A',
+ONYX = {
+    '0': '#737B83', '1': '#636B72', '2': '#555C63', '3': '#4B5258', '4': '#3C4247', '5': '#2F3438', '6': '#25292C',
+    'a': '#3FC9DC', 'A': '#A6F3FA',
+    'f': '#D6F2FA', 'g': '#ECFAFE', 'h': '#FFFFFF',
+    'v': '#F2FBFE', 'V': '#BFE6F2', 'w': '#BFE9F530',
 }
 
 
@@ -129,7 +132,7 @@ def window_frame(c, light, mid, dark):
     c.rect(0, 15, 16, 1, dark).rect(15, 1, 1, 15, dark)
 
 
-# ---------------------------------------------------------------- Clean Stone (tier 1, ids timberframe_*)
+# ---------------------------------------------------------------- Clean Stone and Dark Stone (ids timberframe_*, dark_stone_*)
 
 def clean_wall(v):
     """One concrete panel per block: a soft seam on the right and bottom, a faint lit edge top and left."""
@@ -210,263 +213,117 @@ def clean_light():
     return c.rows()
 
 
-# ---------------------------------------------------------------- Smooth Panel (tier 2, ids copper_works_*)
+# ---------------------------------------------------------------- Pearl Panel / Onyx Panel (one shape, two palettes)
 
-def smooth_wall(v):
-    """Near-seamless: almost flat, a hairline joint on the bottom edge (and on the right for one variant)."""
+def panel_wall(v):
+    """Crisp plate: a lit top/left edge, a soft seam bottom/right and cut corners, so a wall reads as a grid of plates."""
     c = Canvas()
-    tone(c, '22222211', field(60 + v, ((16, 0.6), (8, 0.4))), jitter=0.025, seed=61 + v)
-    c.rect(0, 15, 16, 1, '3')
-    if v == 2:
-        c.rect(15, 0, 1, 15, '3')
-    if v == 3:  # a slightly brighter panel
-        c.rect(0, 0, 16, 15, '1')
-        tone(c, '2111110', field(65, ((16, 1.0),)), 0, 0, 16, 15, jitter=0.02, seed=66)
+    c.rect(0, 0, 16, 16, '2')
+    speckle(c, '1', 53, 62 + v)
+    c.rect(0, 0, 16, 1, '0').rect(0, 0, 1, 15, '1')
+    c.rect(0, 15, 16, 1, '4').rect(15, 0, 1, 15, '3')
+    for x, y, ch in ((0, 0, '3'), (15, 0, '3'), (0, 15, '4'), (15, 15, '5'), (1, 1, '1'), (14, 14, '3')):
+        c.set(x, y, ch)
+    if v == 2:  # four flush bolts
+        for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+            c.set(x, y, '4').set(x + 1, y + 1 if y < 13 else y, '2')
+    if v == 3:  # a small vent: three slots
+        for y in (6, 8, 10):
+            c.rect(5, y, 6, 1, '5').rect(5, y + 1, 6, 1, '1')
     return c.rows()
 
 
-def smooth_floor(v):
-    """Large glossy tiles, hairline joints, a faint soft sheen."""
+def panel_floor(v):
+    """Large polished tiles with hairline joints and a faint diagonal sheen."""
     c = Canvas()
-    tone(c, '3322221', field(70 + v, ((16, 0.6), (8, 0.4))), jitter=0.025, seed=71 + v)
-    for y in range(16):  # soft sheen band, wraps
+    c.rect(0, 0, 16, 16, '2')
+    speckle(c, '1', 47, 72 + v)
+    for y in range(16):
         for x in range(16):
-            if (x + y) % 16 in (5, 6, 7) and c.get(x, y) in '23':
-                c.set(x, y, '1' if (x + y) % 16 == 6 else c.get(x, y) if c.get(x, y) == '2' else '2')
+            if (x + y) % 16 in (4, 5) and c.get(x, y) in '23':
+                c.set(x, y, '1')
+    c.rect(0, 0, 16, 1, '1').rect(0, 0, 1, 16, '1')
     c.rect(0, 15, 16, 1, '4').rect(15, 0, 1, 16, '4')
-    if v == 3:
-        c.rect(7, 0, 1, 15, '3')
+    if v == 2:  # quartered tile
+        c.rect(1, 7, 14, 1, '4').rect(7, 1, 1, 14, '4').rect(1, 8, 14, 1, '1').rect(8, 1, 1, 14, '1')
+    if v == 3:  # four flush bolts
+        for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+            c.set(x, y, '4')
     return c.rows()
 
 
-def smooth_roof(v):
-    """Standing seam panels, mid grey."""
+def panel_roof(v):
+    """Standing seam metal roof: 8 px panels with a raised seam."""
     c = Canvas()
-    tone(c, '5444', lambda x, y: vnoise(x, y * 0.25, 80 + v, 4), jitter=0.04, seed=81 + v)
+    c.rect(0, 0, 16, 16, '4')
+    speckle(c, '35', 23, 82 + v)
     for x in range(0, 16, 8):
         c.rect(x, 0, 1, 16, '3').rect(x + 1, 0, 1, 16, '6')
     if v >= 2:
         y = 5 if v == 2 else 12
-        c.rect(2, y, 6, 1, '6').rect(10, y, 6, 1, '6')
+        c.rect(2, y, 6, 1, '5').rect(10, (y + 7) % 16, 6, 1, '5')
     return c.rows()
 
 
-def smooth_pillar_side():
-    c = Canvas()
-    for x, ch in enumerate('2100011122223345'):
-        c.rect(x, 0, 1, 16, ch)
-    return c.rows()
+# ---------------------------------------------------------------- connected trim (every style but Clean Stone)
+
+# Arms a trim face connects through, in texture space: top, right, bottom, left. Each shape is drawn once; the models
+# rotate it for the other directions, so nothing here may be lit from one side.
+TRIM_SHAPES = {'none': '', 'end': 'T', 'straight': 'TB', 'corner': 'TR', 'tee': 'TRL', 'cross': 'TRBL'}
+# Dark Stone: a plain groove. Pearl and Onyx: a recessed channel with a glowing strip (a).
+GROOVE = ('4', '3')
+STRIP = ('a', '5', '4')
 
 
-def smooth_pillar_end():
+def trim(arms, channel):
+    """A trim face: body, a 2 px rim (dark edge, light line) on every side it does not connect through, rims that turn
+    at inner corners, and a channel from the centre out through each connected side (a dot when nothing connects)."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, '2').bevel(0, 0, 16, 16, '1', '4')
+    c.rect(0, 0, 16, 16, '2')
+    ends = {'T': (8, 0), 'R': (16, 8), 'B': (8, 16), 'L': (0, 8)}
     for y in range(16):
         for x in range(16):
-            d = math.hypot(x - 7.5, y - 7.5)
-            if 5.2 < d < 6.3:
-                c.set(x, y, '3' if y + x > 15 else '4')
+            px, py = x + 0.5, y + 0.5
+            d = max(abs(px - 8), abs(py - 8))  # Chebyshev distance to the centre: square joins
+            for arm in arms:
+                ex, ey = ends[arm]
+                if ex == 8 and min(8, ey) <= py <= max(8, ey):
+                    d = min(d, abs(px - 8))
+                elif ey == 8 and min(8, ex) <= px <= max(8, ex):
+                    d = min(d, abs(py - 8))
+            k = int(d)
+            if k < len(channel):
+                c.set(x, y, channel[k])
+    rim = {'T': lambda i: (i, 0), 'B': lambda i: (i, 15), 'L': lambda i: (0, i), 'R': lambda i: (15, i)}
+    inner = {'T': lambda i: (i, 1), 'B': lambda i: (i, 14), 'L': lambda i: (1, i), 'R': lambda i: (14, i)}
+    for side in 'TRBL':
+        if side in arms:
+            continue
+        for i in range(16):
+            c.set(*inner[side](i), '1')
+        for i in range(16):
+            c.set(*rim[side](i), '5')
+    # an inner corner (both sides connected): the neighbours' rims meet here
+    for a1, a2, (cx, cy, dx, dy) in (('T', 'R', (15, 0, -1, 1)), ('R', 'B', (15, 15, -1, -1)),
+                                      ('B', 'L', (0, 15, 1, -1)), ('L', 'T', (0, 0, 1, 1))):
+        if a1 in arms and a2 in arms:
+            c.set(cx, cy, '5').set(cx + dx, cy, '5').set(cx, cy + dy, '5').set(cx + dx, cy + dy, '1')
     return c.rows()
 
 
-def smooth_window():
+def panel_window():
+    """Thin frame, lightly tinted glass."""
     c = Canvas()
-    window_frame(c, '0', '2', '4')
+    c.rect(0, 0, 16, 16, 'w')
+    window_frame(c, '1', '3', '5')
     glass(c)
     return c.rows()
 
 
-def smooth_light():
+def panel_light():
     c = Canvas()
-    light_frame(c, '1', '4', '2', width=1)
+    light_frame(c, '1', '5', '3', width=1)
     diffuser(c, 1, 14)
-    return c.rows()
-
-
-# ---------------------------------------------------------------- Detailed Stone (tier 3, ids steel_lab_*)
-
-def detailed_wall(v):
-    """Bevelled limestone bricks, 8x4, staggered by half a brick per course."""
-    c = Canvas()
-    for ri, y0 in enumerate(range(0, 16, 4)):
-        shift = 4 if ri % 2 else 0
-        for tx in range(-8, 16, 8):
-            x0 = tx + shift
-            k = n((x0 % 16) // 4, ri, 100 + v) % 9
-            ramp = '3321' if k < 2 else '43221' if k == 4 else '32211'
-            tone(c, ramp, field(100 + ri + 4 * v), x0, y0, 8, 4, jitter=0.1, seed=101 + v)
-            c.rect(x0, y0, 7, 1, '0' if k else '1').rect(x0, y0, 1, 3, '1')
-            c.rect(x0 + 1, y0 + 2, 6, 1, '4').rect(x0 + 6, y0 + 1, 1, 2, '4')
-            c.rect(x0, y0 + 3, 8, 1, '5').rect(x0 + 7, y0, 1, 4, '5')
-    if v == 2:  # one brick with a chiseled cross
-        c.set(10, 5, '4').set(11, 6, '4').set(12, 5, '4').set(11, 5, '0')
-    if v == 3:  # weathered corner
-        c.set(1, 9, '4').set(2, 10, '3').set(13, 1, '3')
-    return c.rows()
-
-
-def detailed_floor(v):
-    """8x8 bevelled tiles in a checker of plain and chiseled (inner square) tiles."""
-    c = Canvas()
-    for ty in range(2):
-        for tx in range(2):
-            x0, y0 = tx * 8, ty * 8
-            chiseled = (tx + ty) % 2 == 1
-            tone(c, '3222' if chiseled else '32211', field(110 + tx + 2 * ty + 4 * v), x0, y0, 8, 8, jitter=0.08, seed=111 + v)
-            c.rect(x0, y0, 7, 1, '0').rect(x0, y0, 1, 7, '0')
-            c.rect(x0 + 1, y0 + 6, 6, 1, '4').rect(x0 + 6, y0 + 1, 1, 6, '4')
-            c.rect(x0, y0 + 7, 8, 1, '5').rect(x0 + 7, y0, 1, 8, '5')
-            if chiseled:  # raised 3x3 boss with a cast shadow
-                c.rect(x0 + 2, y0 + 2, 3, 3, '1' if v != 2 else '0')
-                c.rect(x0 + 3, y0 + 5, 3, 1, '4').rect(x0 + 5, y0 + 3, 1, 3, '4')
-    return c.rows()
-
-
-def detailed_roof(v):
-    """Clay shingles, 4 px rows of staggered 4 px tiles with a lit top and a shadowed lap."""
-    c = Canvas()
-    for ri, y0 in enumerate(range(0, 16, 4)):
-        shift = 2 if ri % 2 else 0
-        for tx in range(-4, 16, 4):
-            x0 = tx + shift
-            k = n((x0 % 16) // 2, ri, 150 + v) % 5
-            c.rect(x0, y0, 4, 4, 'R' if k == 0 and v >= 2 else 'r')
-            c.rect(x0, y0, 3, 1, 't')
-            c.rect(x0, y0 + 3, 4, 1, 's')
-            c.rect(x0 + 3, y0, 1, 3, 'R' if k else 's')
-    return c.rows()
-
-
-def detailed_pillar_side():
-    """Fluted column: three flutes between bevelled edges."""
-    c = Canvas()
-    for x, ch in enumerate('1054213421342145'):
-        c.rect(x, 0, 1, 16, ch)
-    return c.rows()
-
-
-def detailed_pillar_end():
-    c = Canvas()
-    tone(c, '32211', field(165), jitter=0.06, seed=166)
-    c.bevel(0, 0, 16, 16, '0', '5')
-    c.bevel(2, 2, 12, 12, '4', '1')
-    c.bevel(4, 4, 8, 8, '1', '4')
-    c.bevel(6, 6, 4, 4, '4', '0')
-    return c.rows()
-
-
-def detailed_window():
-    c = Canvas()
-    window_frame(c, '1', '3', '5')
-    c.rect(7, 1, 1, 14, '3').rect(8, 1, 1, 14, '4')  # mullion
-    c.rect(1, 7, 14, 1, '3').rect(1, 8, 14, 1, '4')  # transom
-    c.set(3, 11, 'v').set(4, 10, 'v').set(11, 4, 'v').set(12, 3, 'V').set(10, 12, 'V')
-    return c.rows()
-
-
-def detailed_light():
-    c = Canvas()
-    light_frame(c, '0', '5', '3')
-    for x, y in ((0, 0), (14, 0), (0, 14), (14, 14)):  # chiseled corner blocks
-        c.rect(x, y, 2, 2, '4').set(x, y, '1')
-    diffuser(c, 2, 12)
-    return c.rows()
-
-
-# ---------------------------------------------------------------- Tech Stone (tier 4, ids null_spire_*)
-
-def tech_wall(v):
-    """Light stone panel above a continuous steel inlay band with a thin accent line and rivets."""
-    c = Canvas()
-    tone(c, '322211', field(130 + v), 0, 0, 16, 11, jitter=0.05, seed=131 + v)
-    c.rect(0, 0, 16, 1, '1').rect(0, 0, 1, 11, '1').rect(15, 0, 1, 11, '4')
-    c.rect(0, 11, 16, 1, 'M').rect(0, 12, 16, 1, 'a').rect(0, 13, 16, 1, 'm').rect(0, 14, 16, 1, 'n')
-    tone(c, '322211', field(135 + v), 0, 15, 16, 1, jitter=0.05, seed=136 + v)
-    for x in (3, 11):  # rivets sit on the band edge, the accent line runs between them
-        c.set(x, 11, 'N').set(x, 12, 'm').set(x, 13, 'n')
-    if v == 2:  # flush stone access plate in a thin steel frame, rivets in the corners
-        c.frame(4, 2, 8, 7, 'm').rect(5, 3, 6, 5, '1').rect(5, 7, 6, 1, '3')
-        for x, y in ((4, 2), (11, 2), (4, 8), (11, 8)):
-            c.set(x, y, 'N')
-    if v == 3:  # vertical inlay from the band into the panel, ending in an accent dot
-        c.rect(7, 4, 1, 7, 'm').rect(8, 4, 1, 7, 'n').set(7, 3, 'a').set(8, 3, 'A')
-    return c.rows()
-
-
-def tech_floor(v):
-    """8x8 stone tiles framed by steel inlay lines, rivets where they cross."""
-    c = Canvas()
-    tone(c, '32221', field(140 + v), jitter=0.06, seed=141 + v)
-    for t in (7, 15):
-        c.rect(0, t, 16, 1, 'm').rect(t, 0, 1, 16, 'm')
-    for t in (0, 8):
-        c.rect(0, t, 16, 1, '1').rect(t, 0, 1, 16, '1')
-        c.rect(0, t + 6, 16, 1, '3').rect(t + 6, 0, 1, 16, '3')
-    for t in (7, 15):
-        c.rect(0, t, 16, 1, 'm').rect(t, 0, 1, 16, 'm')
-    for x in (7, 15):
-        for y in (7, 15):
-            c.set(x, y, 'N')
-    if v == 2:  # one tile is a steel plate
-        c.rect(8, 0, 7, 7, 'M').bevel(8, 0, 7, 7, 'N', 'm')
-        c.set(9, 1, 'n').set(13, 1, 'n').set(9, 5, 'n').set(13, 5, 'n')
-    if v == 3:  # accent along one inlay segment
-        c.rect(0, 7, 7, 1, 'a')
-    return c.rows()
-
-
-def tech_roof(v):
-    """Mid grey stone plates with steel seams and rivets."""
-    c = Canvas()
-    tone(c, '5444', field(150 + v), jitter=0.06, seed=151 + v)
-    for y0 in (0, 8):
-        c.rect(0, y0, 16, 1, '3')
-        c.rect(0, y0 + 7, 16, 1, 'n')
-    for x, y0 in ((7, 0), (15, 8)):
-        c.rect(x, y0, 1, 7, 'm')
-    for x, y in ((2, 2), (12, 2), (5, 10), (10, 10)):
-        c.set(x, y, 'M')
-    if v == 3:
-        c.rect(1, 15, 6, 1, 'a')
-    return c.rows()
-
-
-def tech_pillar_side():
-    c = Canvas()
-    for x, ch in enumerate('NM1122nan2223mnn'):
-        c.rect(x, 0, 1, 16, ch)
-    for y in (2, 10):  # rivets on the steel edges
-        c.set(1, y, 'N').set(14, y, 'M')
-    return c.rows()
-
-
-def tech_pillar_end():
-    c = Canvas()
-    tone(c, '32211', field(165), jitter=0.05, seed=166)
-    c.bevel(0, 0, 16, 16, 'M', 'n')
-    c.bevel(1, 1, 14, 14, 'm', 'N')
-    c.rect(6, 6, 4, 4, 'n').rect(7, 7, 2, 2, 'a').set(7, 7, 'A')
-    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
-        c.set(x, y, 'M')
-    return c.rows()
-
-
-def tech_window():
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'w')
-    window_frame(c, 'M', 'm', 'n')
-    c.rect(1, 0, 14, 1, 'a')
-    for ox, oy in ((3, 9), (9, 3)):
-        c.set(ox, oy + 2, 'V').set(ox + 1, oy + 1, 'V').set(ox + 2, oy, 'V')
-    return c.rows()
-
-
-def tech_light():
-    c = Canvas()
-    light_frame(c, 'M', 'n', 'm')
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
-        c.set(x, y, 'N')
-    diffuser(c, 2, 12)
     return c.rows()
 
 
@@ -539,11 +396,15 @@ def drone_texture():
     return c.rows()
 
 
+CLEAN_SHAPES = (clean_wall, clean_floor, clean_roof, clean_pillar_side, clean_pillar_end, clean_window, clean_light)
+DARK_SHAPES = (clean_wall, clean_floor, clean_roof, None, None, clean_window, clean_light)
+PANEL_SHAPES = (panel_wall, panel_floor, panel_roof, None, None, panel_window, panel_light)
+# style -> (palette, shapes, connected trim channel or None for Clean Stone's own pillar)
 STYLES = {
-    'timberframe': (CLEAN, clean_wall, clean_floor, clean_roof, clean_pillar_side, clean_pillar_end, clean_window, clean_light, 'fgh'),
-    'copper_works': (SMOOTH, smooth_wall, smooth_floor, smooth_roof, smooth_pillar_side, smooth_pillar_end, smooth_window, smooth_light, 'fgh'),
-    'steel_lab': (DETAILED, detailed_wall, detailed_floor, detailed_roof, detailed_pillar_side, detailed_pillar_end, detailed_window, detailed_light, 'fgh'),
-    'null_spire': (TECH, tech_wall, tech_floor, tech_roof, tech_pillar_side, tech_pillar_end, tech_window, tech_light, 'fgh'),
+    'timberframe': (CLEAN, CLEAN_SHAPES, None),
+    'dark_stone': (DARK, DARK_SHAPES, GROOVE),
+    'pearl_panel': (PEARL, PANEL_SHAPES, STRIP),
+    'onyx_panel': (ONYX, PANEL_SHAPES, STRIP),
 }
 VARIANTS = 3
 
@@ -553,17 +414,25 @@ def variant_name(base, v):
 
 
 def main():
-    for style, (pal, wall, floor, roof, pside, pend, window, light, glow) in STYLES.items():
+    for style, (pal, shapes, channel) in STYLES.items():
+        wall, floor, roof, pside, pend, window, light = shapes
         for v in range(1, VARIANTS + 1):
             write_block(variant_name(f'{style}_wall', v), wall(v), pal)
             write_block(variant_name(f'{style}_floor', v), floor(v), pal)
             write_block(variant_name(f'{style}_roof', v), roof(v), pal)
-        write_block(f'{style}_pillar', pside(), pal)
-        write_block(f'{style}_pillar_top', pend(), pal)
+        if channel is None:
+            write_block(f'{style}_pillar', pside(), pal)
+            write_block(f'{style}_pillar_top', pend(), pal)
+        else:
+            for shape, arms in TRIM_SHAPES.items():
+                rows = trim(arms, channel)
+                write_block(f'{style}_pillar_{shape}', rows, pal)
+                if 'a' in channel:
+                    write_block(f'{style}_pillar_{shape}_glow', glow_only(rows, 'a'), pal)
         write_block(f'{style}_window', window(), pal)
         rows = light()
         write_block(f'{style}_light', rows, pal)
-        write_block(f'{style}_light_glow', glow_only(rows, glow), pal)
+        write_block(f'{style}_light_glow', glow_only(rows, 'fgh'), pal)
     write_block('architect_table_top', table_top(), TABLE)
     write_block('architect_table_side', table_side(), TABLE)
     write_block('architect_table_bottom', table_bottom(), TABLE)

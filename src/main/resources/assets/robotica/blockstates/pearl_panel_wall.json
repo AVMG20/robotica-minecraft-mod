@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "robotica:block/pearl_panel_wall",
+        "weight": 8
+      },
+      {
+        "model": "robotica:block/pearl_panel_wall_2",
+        "weight": 3
+      },
+      {
+        "model": "robotica:block/pearl_panel_wall_3",
+        "weight": 1
+      }
+    ]
+  }
+}
