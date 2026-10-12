@@ -11,7 +11,8 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, Canvas, grain, material, write_anim, write_block, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, MATERIALS, Canvas, grain, material, write_anim, write_block, write_item, write_png  # noqa: E402
+import machine_casing as casing  # noqa: E402
 
 CU, BR, ST, DK, WD, GR, AC = '01234', '56789', 'abcde', 'fghij', 'uvwxy', 'lmnop', 'ABCDE'
 BASE = {'k': '#16191B', 'V': '#0C1418', 'W': '#3A5560',
@@ -232,61 +233,238 @@ def accent():
     return c
 
 
-def drill():
-    """Spiral flutes for the drill cones."""
+# ---------------------------------------------------------------- excavator
+# A drill cage: four corner pillars on a base slab under a lintel slab, the motor on top; through the open bay on every
+# side (2 px deep) the drill column shows: chuck, auger and bit (scripts/data/automation_data.py excavator_elements).
+# Industrial grey body, tier metal brackets (casing.PROCESSING_TIERS: copper, gold, magma, null), amber work lights:
+# a lamp bar under every lintel and a beacon in every top corner (dim standby amber while idle). Working: the auger
+# turns (its flutes scroll round), the bit glows hot, the beacons sweep round the corners, cyan light runs up the
+# pillars and round the motor cap. Every face samples its default uv (element position).
+
+EX_GREY = ('#2A2C2F', '#43464A', '#62666B', '#8A8F95', '#B9BEC3')        # industrial grey body
+EX_EXTRA = dict(zip('abcde', EX_GREY))
+EX_EXTRA.update(zip('12345', MATERIALS['steel']))                          # drill steel
+EX_EXTRA.update({'6': '#4A2E08', '7': '#8A5410', '8': '#B8761A',          # amber lens: dark, standby
+                 'A': '#D88A12', 'B': '#FFB21E', 'C': '#FFE08A', 'D': '#FFFBE6',   # amber lit
+                 'H': '#C2410C', 'I': '#FF8A1E'})                                  # hot bit
+EX_FRAMES, EX_FRAMETIME = 16, 2                                            # every working loop: 32 ticks
+EX_BEACONS = ((1, 1), (13, 1), (13, 13), (1, 13))                          # top corner lenses NW, NE, SE, SW
+EX_AMBER = '678ABCD'                                                       # amber from dark to white-hot
+EX_DRILL = (5, 6)                                                          # auger: first col, width (core face)
+EX_SHADE = '234432'                                                        # auger cylinder shading per col
+
+
+def ex_pal(tier=1):
+    return casing.casing_palette(casing.PROCESSING_TIERS[tier], **EX_EXTRA)
+
+
+def ex_frame(tier):
+    """Outer face of every side (rows 2-15): the pillars (cols 0-2, 13-15) with an energy channel, the lintel (rows
+    2-3) with the amber lamp bar under it, the base slab (rows 14-15); tier metal brackets on the corners. The bay
+    (cols 3-12, rows 4-13) is empty space in the model."""
     c = Canvas()
+    c.rect(0, 2, 16, 14, 'c')
+    c.rect(0, 2, 16, 1, 'e').rect(0, 3, 16, 1, 'b')                        # lintel
+    c.rect(4, 3, 8, 1, '7').set(4, 3, '6').set(11, 3, '6')                 # lamp bar
+    c.rect(0, 14, 16, 1, 'd').rect(0, 15, 16, 1, 'a')                      # base
+    for outer, mid, inner in ((0, 1, 2), (15, 14, 13)):                    # pillars
+        c.rect(outer, 2, 1, 14, 'd' if outer == 0 else 'b')
+        c.rect(inner, 4, 1, 10, 'b' if outer == 0 else 'd')
+        c.rect(mid, 5, 1, 8, 'u').set(mid, 4, 'a').set(mid, 13, 'e')
+    for x, sx in ((0, 1), (15, -1)):                                       # tier brackets, top and bottom
+        for y, sy in ((2, 1), (15, -1)):
+            for i in range(4):
+                c.set(x + sx * i, y, 'h')
+            c.set(x, y + sy, 'h').set(x, y + 2 * sy, 'g')
+            c.set(x + sx * 3, y, 'g')
+    c.set(0, 2, 'j').set(1, 2, 'i').set(15, 15, 'f')
+    for i in range(tier):                                                  # Mk marks on the base
+        c.set(6 + i * 2, 14, 'i')
+    return c
+
+
+def ex_frame_glow(frame=None):
+    """Lamp bars: standby amber when idle (frame None); working they blaze and a pulse runs up the pillar
+    channels."""
+    c = Canvas()
+    if frame is None:
+        return c.rect(4, 3, 8, 1, '8').set(4, 3, '7').set(11, 3, '7')
+    head = 12 - frame * 8 // EX_FRAMES
+    for y in range(5, 13):
+        d = (y - head) % 8
+        ch = 'x' if d == 0 else 'w' if d in (1, 7) else 'v'
+        c.set(1, y, ch).set(14, y, ch)
+    return c.rect(4, 3, 8, 1, 'B').rect(5, 3, 6, 1, 'C').set(4, 3, 'A').set(11, 3, 'A')
+
+
+def ex_wall():
+    """Bay side walls (inner pillar faces, cols 0-1 and 14-15 show) and their rows."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'b')
+    c.rect(0, 4, 16, 1, 'c')
+    return c
+
+
+def ex_floor():
+    """Base slab top: a grating rim in each bay (rows/cols 0-1 and 14-15)."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'b')
+    for i in range(0, 16, 2):
+        c.set(i, 1, 'a').set(i, 14, 'a').set(1, i, 'a').set(14, i, 'a')
+    c.rect(0, 0, 16, 1, 'd').rect(0, 15, 16, 1, 'd').rect(0, 0, 1, 16, 'd').rect(15, 0, 1, 16, 'd')
+    return c
+
+
+def ex_ceiling():
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'a')
+    return c
+
+
+def ex_core(phase=None):
+    """Drill column on the bay's back wall (cols 4-11, rows 4-13): mid grey wall, the chuck with a cyan collar, the
+    turning auger (flutes scroll with phase) and the bit. phase None: at rest."""
+    x0, w = EX_DRILL
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'c')
+    for x, edge in ((3, 'd'), (12, 'b')):                                 # guide rails
+        c.rect(x, 4, 1, 10, edge)
+    c.rect(3, 13, 10, 1, 'b')
+    c.rect(x0, 4, w, 1, 'a').rect(x0, 5, w, 1, 'u')                       # chuck, collar
+    p = phase or 0
+    for y in range(6, 12):
+        for i in range(w):
+            k = (i + y + p) % 4
+            ch = '1' if k == 0 else EX_SHADE[i] if k != 1 else str(min(5, int(EX_SHADE[i]) + 1))
+            c.set(x0 + i, y, ch)
+    c.rect(x0 + 1, 12, 4, 1, '2').set(x0 + 2, 12, '4').set(x0 + 3, 12, '3')   # bit
+    c.rect(x0 + 2, 13, 2, 1, '2').set(x0 + 2, 13, '3')
+    return c
+
+
+def ex_core_glow(frame):
+    """Collar lit with a bright step running round it, the bit hot (pulsing gently)."""
+    x0, w = EX_DRILL
+    c = Canvas()
+    for i in range(w):
+        c.set(x0 + i, 5, 'w' if (i - frame // 2) % 3 == 0 else 'v')
+    hot = 0.5 + 0.5 * math.sin(frame / EX_FRAMES * 2 * math.pi)
+    c.rect(x0 + 1, 12, 4, 1, 'H').set(x0 + 2, 12, 'I').set(x0 + 3, 12, 'I')
+    c.rect(x0 + 2, 13, 2, 1, 'B' if hot > 0.5 else 'I').set(x0 + 2, 13, 'C' if hot > 0.5 else 'B')
+    return c
+
+
+def ex_beacons(c, levels):
+    """2x2 amber lenses in the top corners, each lit to its level (0 dark .. 4 white-hot)."""
+    for (x, y), lv in zip(EX_BEACONS, levels):
+        ramp = EX_AMBER[lv:lv + 3]
+        c.rect(x, y, 2, 2, ramp[1]).set(x, y, ramp[2]).set(x + 1, y + 1, ramp[0])
+    return c
+
+
+def ex_beacon_levels(frame):
+    """A rotating beam: each corner peaks in turn (NW, NE, SE, SW) and fades out behind it."""
+    out = []
+    for i in range(4):
+        ph = (frame / EX_FRAMES - i / 4) % 1
+        v = max(0.0, math.cos(ph * 2 * math.pi)) ** 2
+        out.append(2 + round(v * 2))
+    return out
+
+
+def ex_top(tier):
+    """Lintel top: a rim round the motor (3..12), the beacon lenses in tier metal corner plates."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'c')
+    c.bevel(0, 0, 16, 16, 'e', 'a')
+    c.rect(3, 3, 10, 10, 'a')
+    for x, y in EX_BEACONS:
+        c.rect(x - 1, y - 1, 4, 4, 'h').set(x - 1, y - 1, 'j' if (x, y) == (1, 1) else 'i')
+    return ex_beacons(c, [0, 0, 0, 0])
+
+
+def ex_top_glow(frame=None):
+    """Beacons: standby amber when idle (frame None), a beam sweeping round the corners while working."""
+    return ex_beacons(Canvas(), [1, 1, 1, 1] if frame is None else ex_beacon_levels(frame))
+
+
+def ex_bottom():
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'b').bevel(0, 0, 16, 16, 'c', 'a')
+    c.rect(5, 5, 6, 6, 'a').rect(6, 6, 4, 4, 'K')
+    return c
+
+
+def ex_dist(x, y):
+    return math.hypot(x - 7.5, y - 7.5)
+
+
+EX_RING = sorted(((x, y) for y in range(16) for x in range(16) if 3.0 <= ex_dist(x, y) < 3.9),
+                 key=lambda p: math.atan2(p[1] - 7.5, p[0] - 7.5))
+
+
+def ex_motor_top(tier):
+    """Motor cap (cols/rows 3-12): a glass ring round a domed steel hub with a cross slot, tier metal corners."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'c')
+    c.bevel(3, 3, 10, 10, 'e', 'b')
     for y in range(16):
         for x in range(16):
-            band = (x + y * 2) % 6
-            c.set(x, y, 'e' if band == 0 else 'd' if band < 2 else 'c' if band < 4 else 'b' if band < 5 else 'a')
+            d = ex_dist(x, y)
+            lean = (x - 7.5) + (y - 7.5)
+            if d < 2.2:
+                c.set(x, y, '5' if lean < -1.5 else '2' if lean > 1.5 else '4')
+            elif d < 3.0:
+                c.set(x, y, '3' if lean < 0 else '2')
+            elif d < 3.9:
+                c.set(x, y, 'u')
+    c.rect(7, 6, 2, 4, '1').rect(6, 7, 4, 2, '1').set(7, 7, '3')            # cross slot
+    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
+        c.set(x, y, 'h')
     return c
 
 
-def drill_spin(frame_no):
-    """Working drill: the flutes shift one step a frame, so the cones seem to turn."""
+def ex_motor_glow(frame):
+    """Four arcs of cyan chasing round the motor ring (one turn per loop)."""
     c = Canvas()
-    for y in range(16):
-        for x in range(16):
-            band = (x + y * 2 + frame_no) % 6
-            c.set(x, y, 'e' if band == 0 else 'd' if band < 2 else 'c' if band < 4 else 'b' if band < 5 else 'a')
+    arm = len(EX_RING) // 4
+    step = frame * arm // EX_FRAMES
+    for i, (x, y) in enumerate(EX_RING):
+        behind = (step - i) % arm
+        c.set(x, y, 'xwv'[behind] if behind < 3 else 'u')
     return c
 
 
-def light():
-    """Excavator work lamp (the model samples texels 5-8 x 5-7 and draws them full bright)."""
+def ex_motor_side():
+    """Motor sides (rows 0-1): cooling ribs."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'T')
-    c.draw(5, 5, ['zY9', '9TT'])
-    c.frame(4, 4, 5, 4, '6')
+    c.rect(0, 0, 16, 16, 'c')
+    c.rect(0, 0, 16, 1, 'e')
+    for x in range(4, 12):
+        c.set(x, 1, 'a' if x % 2 else 'd')
     return c
 
 
-def light_off():
-    """Idle lamp: dark amber, no glare."""
-    c = Canvas()
-    c.rect(0, 0, 16, 16, '6')
-    c.draw(5, 5, ['876', '766'])
-    c.frame(4, 4, 5, 4, '5')
-    return c
-
-
-def light_on(frame_no):
-    """Working lamp: a slow amber blink with a moving glare."""
-    c = light()
-    if frame_no % 4 in (2, 3):
-        c.draw(5, 5, ['YzT', 'TzT'] if frame_no % 4 == 2 else ['TYz', 'TTz'])
-    return c
-
-
-def excavator_side():
-    """Steel housing: the box face samples rows 3-10, cols 1-14 (vents and lamps are separate elements)."""
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, ST, 21, density=0.25)
-    c.rect(1, 3, 14, 1, 'e').rect(1, 10, 14, 1, 'a')
-    c.hazard(1, 8, 14, 2, 'T', 'H')
-    for x in (2, 13):
-        c.rivet(x, 4, ST).rivet(x, 6, ST)
-    return c
+def write_excavator():
+    p = ex_pal()
+    for tier in (1, 2, 3, 4):
+        tp = ex_pal(tier)
+        write_block(f'excavator_mk{tier}_frame', ex_frame(tier).rows(), tp)
+        write_block(f'excavator_mk{tier}_top', ex_top(tier).rows(), tp)
+        write_block(f'excavator_mk{tier}_motor', ex_motor_top(tier).rows(), tp)
+    for name, fn in (('bottom', ex_bottom), ('wall', ex_wall), ('floor', ex_floor), ('ceiling', ex_ceiling),
+                     ('motor_side', ex_motor_side)):
+        write_block(f'excavator_{name}', fn().rows(), p)
+    write_block('excavator_core', ex_core().rows(), p)
+    write_block('excavator_top_glow', ex_top_glow().rows(), p)
+    write_block('excavator_frame_glow', ex_frame_glow().rows(), p)
+    frames = range(EX_FRAMES)
+    anim = {'excavator_core_on': (ex_core, False), 'excavator_core_glow': (ex_core_glow, True),
+            'excavator_frame_glow_on': (ex_frame_glow, False), 'excavator_top_glow_on': (ex_top_glow, True),
+            'excavator_motor_glow': (ex_motor_glow, True)}
+    for name, (fn, smooth) in anim.items():
+        arg = (lambda i: -i) if fn is ex_core else (lambda i: i)
+        write_anim('block', name, [fn(arg(i)) for i in frames], p, frametime=EX_FRAMETIME, interpolate=smooth)
 
 
 def crate_side():
@@ -357,11 +535,7 @@ def main():
     write_block('automation_eye', eye().rows(), pal())
     write_block('automation_saw', saw().rows(), pal())
     write_block('automation_leaf', leaf().rows(), pal())
-    write_block('excavator_drill', drill().rows(), pal())
-    write_block('excavator_light', light_off().rows(), pal())
-    write_anim('block', 'excavator_drill_on', [drill_spin(i) for i in range(6)], pal(), frametime=1)
-    write_anim('block', 'excavator_light_on', [light_on(i) for i in range(4)], pal(), frametime=5)
-    write_block('excavator_side', excavator_side().rows(), pal())
+    write_excavator()
     write_block('supply_crate_side', crate_side().rows(), pal())
     write_block('supply_crate_top', crate_top().rows(), pal())
     for tier in (2, 3, 4):
