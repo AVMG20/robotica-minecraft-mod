@@ -416,14 +416,19 @@ def shell(seed=0):
     return c
 
 
-# Alloy Smelter: a bay 3 px deep holding a crucible (a real model part) wrapped in a cyan heating hoop; molten alloy
-# shows on its top and pours from a spout into a mould on the bay floor. Two textures shared by every tier: the
-# chamber (back wall, bay walls in its border) and the parts atlas (SMELTER_PARTS); while working both are animated
-# and full-bright. Top: a feed hopper with a cyan ring round its throat.
+# Alloy Smelter: a bay 2 px deep with a steel back wall, holding a white ceramic crucible (a real model part) wrapped
+# in a cyan heating hoop; a crust of magenta alloy sits in it and a cast ingot in the mould on the bay floor. Working,
+# the alloy melts magenta-white and pours from a spout into the mould. Two textures shared by every tier: the chamber
+# (back wall, bay walls in its border) and the parts atlas (SMELTER_PARTS); while working both are animated and
+# full-bright. A magenta label lamp on the front frame. Top: a steel feed hopper with a magenta glass ring round its
+# throat. Magenta is the smelter's identity colour.
 
 SMELTER_HEAT = {
-    'm': '#2A0C08', 'n': '#7A2208', 'o': '#D4500E', 'p': '#FF9426', 'q': '#FFD070', 'y': '#FFF6D8',  # molten
-    'r': '#2E2C30', 's': '#4A474D', 't': '#6E6A70',                                                  # cooled alloy
+    'm': '#2A0A24', 'n': '#6E1458', 'o': '#C42A90', 'p': '#F45CC2', 'q': '#FFA6E0', 'y': '#FFF0FA',  # molten alloy
+    'r': '#5A2454', 's': '#8E4482', 't': '#C474B4',                                                  # cooled alloy
+    '1': '#7A746C', '2': '#A69F95', '3': '#CDC7BD', '4': '#ECE7DE',                                  # ceramic crucible
+    'A': '#323A42', 'B': '#4A545D', 'C': '#65717B', 'D': '#8995A0', 'E': '#B4BFC8',                  # steel
+    'z': '#7A2870', 'Z': '#B4549E', 'G': '#723E76', 'H': '#A064A2',                                # magenta glass
 }
 SMELTER_BAY = (3, 3, 10, 10)                    # x, y, w, h of the bay on the front (corners stay casing)
 SMELTER_FRAMES, SMELTER_FRAMETIME = 16, 2
@@ -434,6 +439,7 @@ SMELTER_PARTS = {
     'mould_front': (0, 9, 4, 1), 'mould_top': (0, 10, 4, 2), 'mould_side': (4, 9, 2, 1),
 }
 HOOP_ROW = 2                                    # crucible row with the heating hoop
+SMELTER_LABEL = (5, 1, 6)                       # x, y, w of the label lamp on the front frame
 
 
 def smelter_pal(tier=1):
@@ -441,30 +447,33 @@ def smelter_pal(tier=1):
 
 
 def smelter_chamber(lit, t=0):
-    """Back wall in the bay area; bay walls in the border: cols 0-2 left, 13-15 right, rows 0-2 floor, 13-15 roof."""
+    """Back wall in the bay area; bay walls in the border: cols 1-2 left, 13-14 right, rows 1-2 floor, 13-14 roof
+    (the row or column next to the back wall is the inner one)."""
     x0, y0, w, h = SMELTER_BAY
     c = Canvas()
-    c.rect(x0, y0, w, h, 'm' if lit else 'a')
+    c.rect(x0, y0, w, h, 'm' if lit else 'C')
     if lit:                                                               # heat glow behind the crucible mouth
         for y in range(y0, y0 + h):
             for x in range(x0, x0 + w):
                 d = math.hypot((x - 6.5) / 1.7, y - 6.0)
                 if d < 3.0:
                     c.set(x, y, 'o' if d < 1.8 else 'n')
-    else:
-        for x in range(x0 + 1, x0 + w, 3):
-            c.rect(x, y0, 1, h, 'b')
+    else:                                                                 # tinted glass heat shield, steel trim
+        c.rect(x0, y0, w, h, 'G')
+        for x, y in ((4, 5), (5, 4), (6, 3), (11, 6), (12, 5), (11, 10), (12, 9)):   # glints
+            c.set(x, y, 'H')
+        c.rect(x0, y0, w, 1, 'B').rect(x0, y0 + h - 1, w, 1, 'B').rect(x0, y0 + h - 2, w, 1, 'C')
     for x, d in ((3, 0), (10, 0), (11, 1), (12, 2)):                       # emitters feeding the hoop, pulses flow in
         c.set(x, 8, ('w' if (t // 2 + d) % 4 == 0 else 'v') if lit else 'u')
-    c.set(3, 7, 'b').set(3, 9, 'b').set(12, 7, 'b').set(12, 9, 'b')
+    c.set(3, 7, 'A').set(3, 9, 'A').set(12, 7, 'A').set(12, 9, 'A')
     if lit:
         c.rect(0, y0, 3, h, 'm').rect(13, y0, 3, h, 'm').set(2, 7, 'n').set(13, 7, 'n')
         c.rect(x0, 0, w, 3, 'm').rect(x0 + 1, 2, w - 2, 1, 'n')
         c.rect(x0, 13, w, 3, 'm')
     else:
-        c.rect(0, y0, 3, h, 'b').rect(13, y0, 3, h, 'b').rect(0, y0, 1, h, 'c').rect(15, y0, 1, h, 'c')
-        c.rect(x0, 0, w, 3, 'b').rect(x0, 0, w, 1, 'c')
-        c.rect(x0, 13, w, 3, 'a')
+        c.rect(0, y0, 3, h, 'D').rect(13, y0, 3, h, 'D').rect(2, y0, 1, h, 'C').rect(13, y0, 1, h, 'C')
+        c.rect(x0, 0, w, 3, 'D').rect(x0, 2, w, 1, 'C')
+        c.rect(x0, 13, w, 3, 'B').rect(x0, 13, w, 1, 'A')
     return c
 
 
@@ -483,11 +492,11 @@ def smelter_parts(lit, t=0):
     def body(name):
         x, y, w, h = R[name]
         face = name.split('_')[1]
-        c.rect(x, y, w, h, 'c').rect(x, y, w, 1, 'e' if face == 'front' else 'd')
-        c.rect(x, y + 1, w, 1, 'd').rect(x, y + h - 1, w, 1, 'b')
+        c.rect(x, y, w, h, '3').rect(x, y, w, 1, '4' if face == 'front' else '3')
+        c.rect(x, y + 1, w, 1, '4' if face == 'front' else '3').rect(x, y + h - 1, w, 1, '2')
         if face == 'front':
             c.set(x, y + h - 1, '.').set(x + w - 1, y + h - 1, '.')
-            c.rect(x + w - 1, y + 1, 1, h - 2, 'b').set(x, y + 1, 'e')
+            c.rect(x + w - 1, y + 1, 1, h - 2, '2').set(x, y + 1, '4')
         spark = hoop_spark(t) if lit else None
         for u in range(w):
             if not lit:
@@ -505,63 +514,70 @@ def smelter_parts(lit, t=0):
     if lit:
         glint = 1 + round(1.5 + 1.5 * math.sin(t / SMELTER_FRAMES * 2 * math.pi))
         c.rect(x, y, w, h, 'q').rect(x, y + 1, w, 1, 'p').set(x + glint, y, 'y').set(x + 5 - glint, y + 1, 'q')
-    else:
-        c.rect(x, y, w, h, 's').rect(x, y + 1, w, 1, 'r')
-    c.rect(x, y, 1, h, 'e').rect(x + w - 1, y, 1, h, 'd')                # rim ends
+    else:                                                                 # alloy crust
+        c.rect(x, y, w, h, 't').rect(x, y + 1, w, 1, 's').set(x + 2, y, 'Z').set(x + 3, y + 1, 'r')
+    c.rect(x, y, 1, h, '4').rect(x + w - 1, y, 1, h, '2')                # rim ends
     x, y, _, _ = R['spout']
-    c.set(x, y, 'd')
+    c.set(x, y, '2')
     x, y, _, _ = R['spout_top']
     c.set(x, y, 'p' if lit else 's')
     x, y, w, h = R['stream']
     for v in range(h):                                                    # blobs sliding down
         c.set(x, y + v, 'y' if (v - t) % 4 == 0 else 'q')
     x, y, w, h = R['mould_front']
-    c.rect(x, y, w, h, 'd')
+    c.rect(x, y, w, h, 'D').set(x, y, 'E')
     x, y, w, h = R['mould_top']
-    c.rect(x, y, w, h, 'c')
-    c.rect(x + 1, y, w - 2, h, 'p' if lit else 'r')
+    c.rect(x, y, w, h, 'D')
+    c.rect(x + 1, y, w - 2, h, 'p' if lit else 's')
     if lit:                                                               # splash where each blob lands
         c.rect(x + 1, y, w - 2, 1, 'q').set(x + 1, y, 'y' if t % 4 < 2 else 'q')
+    else:                                                                 # the cast ingot
+        c.set(x + 1, y + 1, 't').set(x + 2, y, 'r')
     x, y, w, h = R['mould_side']
-    c.rect(x, y, w, h, 'b')
+    c.rect(x, y, w, h, 'C')
     return c
 
 
 def smelter_front(tier, lit):
-    """The bay with tier metal corners; the bottom right one is the status lamp."""
+    """The bay with tier metal corners; the bottom right one is the status lamp. The label lamp on the top frame."""
     x0, y0, w, h = SMELTER_BAY
     c = casing.shell(tier)
     c.rect(x0, y0, w, h, '.')
     c.set(3, 3, 'i').set(12, 3, 'h').set(3, 12, 'h').set(12, 12, 'L' if lit else 'l')    # tier metal corners
+    lx, ly, lw = SMELTER_LABEL
+    c.rect(lx - 1, ly, lw + 2, 1, 'k').rect(lx, ly, lw, 1, 'z').set(lx + 1, ly, 'Z').set(lx + 2, ly, 'Z')
     return c
 
 
 def smelter_glow():
-    """Front overlay: the status lamp."""
+    """Front overlay: the label lamp and the status lamp."""
     c = Canvas()
+    lx, ly, lw = SMELTER_LABEL
+    c.rect(lx, ly, lw, 1, 'p').rect(lx + 1, ly, lw - 2, 1, 'q').set(lx + 2, ly, 'y')
     c.set(12, 12, 'L')
     return c
 
 
 def smelter_top(tier):
-    """Feed hopper: a stepped funnel down to a dark throat with a ring round it."""
+    """Feed hopper: a stepped steel funnel down to a dark throat with a magenta glass ring round it."""
     c = casing.shell(tier)
-    c.recess(4, 4, 8, 8, 'abcde', fill='b')
-    c.recess(5, 5, 6, 6, 'abcde', fill='a')
-    c.ring(7.5, 7.5, 1.6, 2.6, 'u')
+    c.recess(4, 4, 8, 8, 'ABCDE', fill='D')
+    c.recess(5, 5, 6, 6, 'ABCDE', fill='C')
+    c.ring(7.5, 7.5, 1.6, 2.6, 'z')
+    c.set(6, 5, 'Z').set(5, 6, 'Z')
     c.disc(7.5, 7.5, 1.5, 'K')
     return c
 
 
 def smelter_top_glow(t):
-    """The throat ring lit, a spark running round it."""
+    """The throat ring lit magenta, a white-hot spark running round it."""
     c = Canvas()
     for y in range(16):
         for x in range(16):
             d = math.hypot(x - 7.5, y - 7.5)
             if 1.6 <= d <= 2.6:
                 a = (math.atan2(y - 7.5, x - 7.5) / (2 * math.pi) - t / SMELTER_FRAMES) % 1
-                c.set(x, y, 'x' if a < 0.1 else 'w' if a < 0.3 else 'v')
+                c.set(x, y, 'y' if a < 0.1 else 'q' if a < 0.3 else 'p')
     return c
 
 
