@@ -230,10 +230,10 @@ final class TrailerScenesRobots {
                     if (!(level.getBlockEntity(site) instanceof ArchitectTableBlockEntity table)) return;
                     table.setMatter(new Matter(20_000, 20_000, 20_000));
                     table.energy.setEnergy(table.energy.getMaxEnergyStored());
-                    table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.REINFORCED_CASING.get()));
+                    table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.IRON_CASING.get()));
                     table.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 5));
                     Layout layout = table.layout();
-                    BuildStyle style = BuildStyle.STEEL_LAB;
+                    BuildStyle style = BuildStyle.PEARL_PANEL;
                     layout.queue(Plots.CENTER, style);
                     layout.queue(Plots.index(1, 0), style);
                     table.setChanged();

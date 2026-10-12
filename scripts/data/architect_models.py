@@ -9,11 +9,15 @@ ASSETS = ROOT / 'src/main/resources/assets/robotica'
 DATA = ROOT / 'src/main/resources/data/robotica'
 FRAG = ROOT / 'src/main/fragments/architect'
 
-STYLES = ['timberframe', 'copper_works', 'steel_lab', 'null_spire']
+STYLES = ['timberframe', 'dark_stone', 'pearl_panel', 'onyx_panel']
 ROLES = ['wall', 'floor', 'roof', 'pillar', 'window', 'light']
 
-# Registry ids are historic (timberframe_* ... null_spire_*) and stay; the names follow the looks.
-STYLE_NAMES = {'timberframe': 'Clean Stone', 'copper_works': 'Smooth Panel', 'steel_lab': 'Detailed Stone', 'null_spire': 'Tech Stone'}
+# The timberframe_* id is historic and stays; the names follow the looks.
+STYLE_NAMES = {'timberframe': 'Clean Stone', 'dark_stone': 'Dark Stone', 'pearl_panel': 'Pearl Panel', 'onyx_panel': 'Onyx Panel'}
+# Styles whose trim carries a full-bright accent strip (<name>_glow textures) and whose windows are tinted glass.
+PANEL_STYLES = {'pearl_panel', 'onyx_panel'}
+# Styles whose pillars connect (ConnectedPillarBlock): every style but Clean Stone, which keeps its own pillar.
+CONNECTED_TRIM = {'dark_stone', 'pearl_panel', 'onyx_panel'}
 ROLE_NAME = {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Light'}
 ROLE_NAMES = {style: ROLE_NAME for style in STYLES}
 
@@ -48,7 +52,7 @@ def simple_block(name, model):
     write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}'})
 
 
-# ---------- the 24 style blocks ----------
+# ---------- the style blocks ----------
 # Walls, floors and roofs pick one of three textures per position (weights below), so big surfaces never repeat.
 WEIGHTS = {'wall': [8, 3, 1], 'floor': [6, 3, 2], 'roof': [6, 3, 2]}
 DIRS = ['down', 'up', 'north', 'south', 'west', 'east']
@@ -58,9 +62,84 @@ def variant(name, v):
     return name if v == 1 else f'{name}_{v}'
 
 
+GLOW = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+
+
+# ---------- connected trim (every style but Clean Stone) ----------
+# ConnectedPillarBlock has a boolean per side. Each face picks one of the trim textures (scripts/textures/architect.py)
+# from the four sides around it, turned to fit. Texture edges (top, right, bottom, left) per face, as world sides:
+FACE_EDGES = {
+    'north': ('up', 'west', 'down', 'east'), 'south': ('up', 'east', 'down', 'west'),
+    'east': ('up', 'north', 'down', 'south'), 'west': ('up', 'south', 'down', 'north'),
+    'up': ('north', 'east', 'south', 'west'), 'down': ('south', 'east', 'north', 'west'),
+}
+TRIM_SHAPES = {'none': '', 'end': 'T', 'straight': 'TB', 'corner': 'TR', 'tee': 'TRL', 'cross': 'TRBL'}
+CW = {'T': 'R', 'R': 'B', 'B': 'L', 'L': 'T'}
+
+
+def trim_texture(arms):
+    """(shape, clockwise rotation) that draws exactly these texture-space arms."""
+    for shape, base in TRIM_SHAPES.items():
+        turned = set(base)
+        for rot in (0, 90, 180, 270):
+            if turned == set(arms):
+                return shape, rot
+            turned = {CW[a] for a in turned}
+    raise ValueError(arms)
+
+
+def trim_face(name, d, shape, rot, glow, cull=True):
+    faces = [{'texture': f'#{shape}', 'rotation': rot}]
+    if glow:
+        faces.append({'texture': f'#{shape}_glow', 'rotation': rot, 'neoforge_data': GLOW})
+    elements = []
+    for i, face in enumerate(faces):
+        if not face['rotation']:
+            del face['rotation']
+        if cull:
+            face['cullface'] = d
+        element = {'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {d: face}}
+        if i:
+            element['shade'] = False
+        elements.append(element)
+    return elements
+
+
+def trim_textures(name, glow, shapes=TRIM_SHAPES):
+    t = {'particle': tex(f'{name}_straight')}
+    for shape in shapes:
+        t[shape] = tex(f'{name}_{shape}')
+        if glow:
+            t[f'{shape}_glow'] = tex(f'{name}_{shape}_glow')
+    return t
+
+
+def connected_pillar(name, glow):
+    """16 one-face models per face and a multipart blockstate; the item looks like a standing post."""
+    parts = []
+    for d, edges in FACE_EDGES.items():
+        for mask in range(16):
+            arms = ''.join(e for i, e in enumerate('TRBL') if mask >> i & 1)
+            shape, rot = trim_texture(arms)
+            model = f'{name}/{d}_{mask}'
+            write(ASSETS / 'models/block' / f'{model}.json', {
+                'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+                'textures': trim_textures(name, glow, (shape,)),
+                'elements': trim_face(name, d, shape, rot, glow)})
+            parts.append({'when': {edges[i]: 'true' if mask >> i & 1 else 'false' for i in range(4)},
+                          'apply': {'model': f'robotica:block/{model}'}})
+    write(ASSETS / 'blockstates' / f'{name}.json', {'multipart': parts})
+    elements = []
+    for d in DIRS:
+        elements += trim_face(name, d, 'straight' if d not in ('up', 'down') else 'none', 0, glow, cull=False)
+    write(ASSETS / 'models/item' / f'{name}.json', {
+        'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+        'textures': trim_textures(name, glow, ('straight', 'none')), 'elements': elements})
+
+
 def light_model(name):
     """Panel plus a full-bright overlay of its diffuser (NeoForge per-face light data), so it glows in the dark."""
-    glow = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+    glow = GLOW
     return {
         'parent': 'minecraft:block/block',
         'render_type': 'minecraft:cutout',
@@ -78,6 +157,10 @@ for style in STYLES:
     for role in ROLES:
         name = f'{style}_{role}'
         if role == 'pillar':
+            if style in CONNECTED_TRIM:
+                connected_pillar(name, style in PANEL_STYLES)
+                loot(name)
+                continue
             textures = {'end': tex(f'{name}_top'), 'side': tex(name), 'particle': tex(name)}
             write(ASSETS / 'models/block' / f'{name}.json', {'parent': 'minecraft:block/cube_column', 'textures': textures})
             write(ASSETS / 'models/block' / f'{name}_horizontal.json', {'parent': 'minecraft:block/cube_column_horizontal', 'textures': textures})
@@ -103,7 +186,7 @@ for style in STYLES:
             write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {'': {'model': f'robotica:block/{name}'}}})
         else:
             write(ASSETS / 'models/block' / f'{name}.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(name)},
-                  'render_type': 'minecraft:translucent' if style == 'null_spire' else 'minecraft:cutout'})
+                  'render_type': 'minecraft:translucent' if style in PANEL_STYLES else 'minecraft:cutout'})
             write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {'': {'model': f'robotica:block/{name}'}}})
         write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}'})
         loot(name)
@@ -165,7 +248,7 @@ lang.update({
     'gui.robotica.architect_build': 'Build',
     'gui.robotica.architect_build_tip': 'Build every planned plot and update the buildings next to them',
     'gui.robotica.architect_cancel': 'Cancel',
-    'gui.robotica.architect_cancel_tip': 'Take all queued plots off the plan. Blocks already placed stay.',
+    'gui.robotica.architect_cancel_tip': 'Take all queued plots and restyles off the plan. Blocks already placed stay.',
     'gui.robotica.architect_clear_on': 'Clear terrain: ON',
     'gui.robotica.architect_clear_off': 'Clear terrain: OFF',
     'gui.robotica.architect_clear_tip': 'Breaks blocks in the way, slowly. Junk is voided; the rest, chest contents too, goes into a chest touching the table',
@@ -186,9 +269,6 @@ lang.update({
     'gui.robotica.architect_progress': 'Building: %s%%',
     'gui.robotica.architect_cost_tip': 'Per block: %s rustic, %s refined, %s exotic, %s FE',
     'gui.robotica.architect_needs_casing_1': 'Needs an Iron Casing',
-    'gui.robotica.architect_needs_casing_2': 'Needs a Reinforced Casing',
-    'gui.robotica.architect_needs_casing_3': 'Needs a Blazing Casing',
-    'gui.robotica.architect_needs_casing_4': 'Needs a Null Casing',
     'gui.robotica.architect_door_add': 'Add a door here',
     'gui.robotica.architect_door_remove': 'Remove this door',
     'gui.robotica.architect_wall_add': 'Add an inner wall with a doorway',
@@ -200,6 +280,7 @@ lang.update({
     'gui.robotica.architect_plot_building': 'Building',
     'gui.robotica.architect_plot_changed': 'Built, changes pending',
     'gui.robotica.architect_plot_built': 'Built',
+    'gui.robotica.architect_plot_restyle': 'Click to restyle it in the selected style',
     'gui.robotica.architect_plot_forget': 'Shift-click to forget (blocks stay)',
     'gui.robotica.architect_casing': 'Casing: unlocks styles',
     'gui.robotica.architect_battery': 'Battery: a wound Mainspring or any FE cell',
@@ -228,5 +309,8 @@ lang.update({
 # keep keys added by hand (demolish, config) and overwrite only the generated ones
 _lang_file = FRAG / 'assets/robotica/lang/en_us.json'
 _existing = json.loads(_lang_file.read_text()) if _lang_file.exists() else {}
-write(_lang_file, {**_existing, **lang})
+# block and style names are all generated: drop old ones so removed styles leave no keys behind
+_existing = {k: v for k, v in _existing.items()
+             if not k.startswith(('block.robotica.', 'style.robotica.', 'gui.robotica.architect_needs_casing_'))}
+write(_lang_file, {**lang, **{k: v for k, v in _existing.items() if k not in lang}})
 print('architect models, loot, tags and lang written')

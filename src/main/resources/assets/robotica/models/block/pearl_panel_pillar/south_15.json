@@ -1,0 +1,53 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "robotica:block/pearl_panel_pillar_straight",
+    "cross": "robotica:block/pearl_panel_pillar_cross",
+    "cross_glow": "robotica:block/pearl_panel_pillar_cross_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "texture": "#cross",
+          "cullface": "south"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "texture": "#cross_glow",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          },
+          "cullface": "south"
+        }
+      },
+      "shade": false
+    }
+  ]
+}

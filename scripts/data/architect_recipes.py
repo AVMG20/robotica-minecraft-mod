@@ -1,5 +1,5 @@
 """Writes the recipes of the architect module: the Architect Table (Age 0), 8 bulk blocks + 1 tier material -> 8 style blocks
-for all 24 blocks, and stonecutter recipes between the roles of one style.
+for every style block, and stonecutter recipes between the roles of one style.
 Run: python3 scripts/data/architect_recipes.py   (overwrites data/robotica/recipe/<name>.json for architect items only)"""
 import json
 import pathlib
@@ -46,29 +46,30 @@ HAND = {
         'window': ('#c:glass_blocks', '#c:dyes/white'),
         'light': ('#minecraft:planks', 'minecraft:torch'),
     },
-    'copper_works': {
-        'wall': ('#c:cobblestones/normal', '#c:ingots/copper'),
-        'floor': ('#c:stones', '#c:ingots/copper'),
-        'roof': ('minecraft:stone_bricks', '#c:ingots/copper'),
-        'pillar': ('minecraft:polished_andesite', '#c:ingots/copper'),
-        'window': ('#c:glass_blocks', '#c:ingots/copper'),
-        'light': ('#c:cobblestones/normal', 'minecraft:redstone_lamp'),
+    'dark_stone': {
+        'wall': ('#minecraft:planks', '#minecraft:coals'),
+        'floor': ('#minecraft:wooden_slabs', '#minecraft:coals'),
+        'roof': ('#minecraft:wooden_stairs', '#minecraft:coals'),
+        'pillar': ('#minecraft:logs', '#minecraft:coals'),
+        'window': ('#c:glass_blocks', '#minecraft:coals'),
+        'light': ('dark_stone_wall', 'minecraft:torch'),
     },
-    'steel_lab': {
-        'wall': ('minecraft:white_concrete', IRON_PLATE),
-        'floor': ('minecraft:iron_bars', IRON_PLATE),
-        'roof': ('minecraft:light_gray_concrete', IRON_PLATE),
-        'pillar': ('minecraft:quartz_block', IRON_PLATE),
-        'window': ('#c:glass_blocks', IRON_PLATE),
-        'light': ('minecraft:white_concrete', 'minecraft:glowstone'),
+    # Age 1: light and dark stone around an Iron Plate
+    'pearl_panel': {
+        'wall': ('minecraft:smooth_stone', IRON_PLATE),
+        'floor': ('minecraft:polished_diorite', IRON_PLATE),
+        'roof': ('#c:stones', IRON_PLATE),
+        'pillar': ('minecraft:polished_andesite', IRON_PLATE),
+        'window': ('#c:glass_blocks', 'pearl_panel_wall'),
+        'light': ('pearl_panel_wall', 'minecraft:lantern'),
     },
-    'null_spire': {
-        'wall': ('minecraft:blackstone', '#c:ender_pearls'),
-        'floor': ('minecraft:polished_blackstone', '#c:ender_pearls'),
-        'roof': ('#c:cobblestones/deepslate', '#c:ender_pearls'),
-        'pillar': ('#c:obsidians', '#c:ender_pearls'),
-        'window': ('#c:glass_blocks', '#c:ender_pearls'),
-        'light': ('minecraft:blackstone', 'minecraft:sea_lantern'),
+    'onyx_panel': {
+        'wall': ('#c:cobblestones/deepslate', IRON_PLATE),
+        'floor': ('minecraft:polished_deepslate', IRON_PLATE),
+        'roof': ('minecraft:deepslate_tiles', IRON_PLATE),
+        'pillar': ('minecraft:deepslate_bricks', IRON_PLATE),
+        'window': ('#c:glass_blocks', 'onyx_panel_wall'),
+        'light': ('onyx_panel_wall', 'minecraft:lantern'),
     },
 }
 

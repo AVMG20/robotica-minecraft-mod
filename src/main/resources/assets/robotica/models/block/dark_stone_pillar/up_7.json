@@ -1,0 +1,29 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "robotica:block/dark_stone_pillar_straight",
+    "tee": "robotica:block/dark_stone_pillar_tee"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#tee",
+          "rotation": 90,
+          "cullface": "up"
+        }
+      }
+    }
+  ]
+}

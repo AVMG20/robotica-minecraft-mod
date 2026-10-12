@@ -1,0 +1,55 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "robotica:block/pearl_panel_pillar_straight",
+    "tee": "robotica:block/pearl_panel_pillar_tee",
+    "tee_glow": "robotica:block/pearl_panel_pillar_tee_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#tee",
+          "rotation": 270,
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#tee_glow",
+          "rotation": 270,
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          },
+          "cullface": "down"
+        }
+      },
+      "shade": false
+    }
+  ]
+}

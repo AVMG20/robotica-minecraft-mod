@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:dark_stone_wall"
+    },
+    "B": {
+      "item": "minecraft:torch"
+    }
+  },
+  "result": {
+    "id": "robotica:dark_stone_light",
+    "count": 8
+  }
+}

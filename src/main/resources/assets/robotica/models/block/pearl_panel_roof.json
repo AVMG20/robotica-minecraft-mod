@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "robotica:block/pearl_panel_roof",
+    "side": "robotica:block/pearl_panel_roof",
+    "bottom": "robotica:block/pearl_panel_wall",
+    "particle": "robotica:block/pearl_panel_roof"
+  }
+}

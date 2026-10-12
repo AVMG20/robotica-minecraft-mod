@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "robotica:block/dark_stone_roof_2",
+    "side": "robotica:block/dark_stone_roof_2",
+    "bottom": "robotica:block/dark_stone_wall",
+    "particle": "robotica:block/dark_stone_roof_2"
+  }
+}

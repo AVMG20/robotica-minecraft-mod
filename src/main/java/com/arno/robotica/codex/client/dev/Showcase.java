@@ -350,7 +350,7 @@ public final class Showcase {
         if (wants("06_workshop_inside")) {
             step(20, () -> server(sp -> {
                 Layout layout = new Layout();
-                for (int plot : new int[]{Plots.CENTER, Plots.index(1, 0), Plots.index(0, 1), Plots.index(1, 1)}) layout.queue(plot, BuildStyle.STEEL_LAB);
+                for (int plot : new int[]{Plots.CENTER, Plots.index(1, 0), Plots.index(0, 1), Plots.index(1, 1)}) layout.queue(plot, BuildStyle.ONYX_PANEL);
                 ShellPlacer.placeAll(sp.serverLevel(), new BlockPos(64, Y, 44), layout);
             }));
             camera(62, Y + 3, 42, -45, 12);
@@ -1189,15 +1189,15 @@ public final class Showcase {
 
         structureFxFrames();
 
-        // Architect Table: four separate buildings, one per style, around the table plot (queued), one joined pair.
+        // Architect Table: a building per style around the table plot (queued), Pearl and Onyx joined into one hall.
         if (wants("25_architect_build", "gui_96_architect_demolish")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             setFacing(level, TABLE, block("architect_table"), Direction.SOUTH);
             if (!(level.getBlockEntity(TABLE) instanceof ArchitectTableBlockEntity table)) return;
             Layout layout = table.layout();
             int[][] plots = {{-1, -1}, {1, -1}, {-1, 1}, {1, 1}, {2, 1}};
-            BuildStyle[] styles = {BuildStyle.TIMBERFRAME, BuildStyle.COPPER_WORKS, BuildStyle.STEEL_LAB, BuildStyle.NULL_SPIRE,
-                    BuildStyle.NULL_SPIRE};
+            BuildStyle[] styles = {BuildStyle.TIMBERFRAME, BuildStyle.DARK_STONE, BuildStyle.TIMBERFRAME, BuildStyle.PEARL_PANEL,
+                    BuildStyle.ONYX_PANEL};
             for (int i = 0; i < plots.length; i++) layout.queue(Plots.index(plots[i][0], plots[i][1]), styles[i]);
             // an inner wall with a doorway between the joined pair
             layout.cycleWall(Plots.index(1, 1), Plots.E);
@@ -1206,7 +1206,7 @@ public final class Showcase {
                 int plot = Plots.index(p[0], p[1]);
                 layout.markBuilt(plot, layout.signature(plot));
             }
-            layout.queue(Plots.CENTER, BuildStyle.COPPER_WORKS);
+            layout.queue(Plots.CENTER, BuildStyle.PEARL_PANEL);
             table.setMatter(new Matter(820, 360, 140));
             table.setChanged();
         }));
@@ -1214,6 +1214,24 @@ public final class Showcase {
             camera(TABLE.getX() - 24, Y + 17, TABLE.getZ() - 26, -40, 30);
             step(40, () -> {});
             shot("25_architect_build");
+        }
+
+        // One joined two-plot hall per style, seen from the front corner with its door.
+        BuildStyle[] hallStyles = BuildStyle.values();
+        for (int i = 0; i < hallStyles.length; i++) {
+            BuildStyle style = hallStyles[i];
+            String name = "architect_hall_" + style.id;
+            if (!wants(name)) continue;
+            BlockPos origin = new BlockPos(100 + i * 40, Y, 240);
+            step(20, () -> server(sp -> {
+                Layout layout = new Layout();
+                layout.queue(Plots.CENTER, style);
+                layout.queue(Plots.index(1, 0), style);
+                ShellPlacer.placeAll(sp.serverLevel(), origin, layout);
+            }));
+            camera(origin.getX() - 10, Y + 6.5, origin.getZ() + 13, 227, 16);
+            step(30, () -> {});
+            shot(name);
         }
 
         // Solar Panels Mk1 to Mk4.

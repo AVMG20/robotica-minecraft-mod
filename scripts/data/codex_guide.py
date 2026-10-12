@@ -21,7 +21,7 @@ RECIPES = RES / 'data/robotica/recipe'
 GUIDE = RES / 'assets/robotica/codex/guide.json'
 LANG = ROOT / 'src/main/fragments/codex/assets/robotica/lang/en_us.json'
 
-ARCHITECT_PREFIXES = ('timberframe_', 'copper_works_', 'steel_lab_', 'null_spire_', 'architect_')
+ARCHITECT_PREFIXES = ('timberframe_', 'dark_stone_', 'pearl_panel_', 'onyx_panel_', 'architect_')
 
 
 def has(*items):

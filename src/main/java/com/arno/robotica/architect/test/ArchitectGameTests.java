@@ -93,16 +93,19 @@ public class ArchitectGameTests {
         BlockPos pos = new BlockPos(1, 1, 1);
         helper.setBlock(pos, ArchitectRegistry.ARCHITECT_TABLE.get().defaultBlockState());
         ArchitectTableBlockEntity table = (ArchitectTableBlockEntity) helper.getBlockEntity(pos);
-        helper.assertTrue(table.unlocked(BuildStyle.TIMBERFRAME), "Timberframe is always unlocked");
-        helper.assertTrue(!table.unlocked(BuildStyle.COPPER_WORKS), "Copper Works needs a casing");
-        helper.assertTrue(table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.STEEL_LAB.ordinal(), 0) == null, "style action works");
+        helper.assertTrue(table.unlocked(BuildStyle.TIMBERFRAME) && table.unlocked(BuildStyle.DARK_STONE), "Clean Stone and Dark Stone are always unlocked");
+        helper.assertTrue(!table.unlocked(BuildStyle.PEARL_PANEL) && !table.unlocked(BuildStyle.ONYX_PANEL), "the panel styles need a casing");
+        helper.assertTrue(table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.ONYX_PANEL.ordinal(), 0) == null, "style action works");
         helper.assertTrue(table.selectedStyle() == BuildStyle.TIMBERFRAME, "a locked style cannot be selected");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.DARK_STONE.ordinal(), 0);
+        helper.assertTrue(table.selectedStyle() == BuildStyle.DARK_STONE, "Dark Stone can be selected without a casing");
         table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.IRON_CASING.get()));
-        helper.assertTrue(table.unlocked(BuildStyle.COPPER_WORKS) && !table.unlocked(BuildStyle.STEEL_LAB), "Iron Casing unlocks Copper Works only");
-        table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.REINFORCED_CASING.get()));
-        helper.assertTrue(table.unlocked(BuildStyle.STEEL_LAB) && !table.unlocked(BuildStyle.NULL_SPIRE), "Reinforced Casing unlocks Steel Lab");
+        helper.assertTrue(table.unlocked(BuildStyle.PEARL_PANEL) && table.unlocked(BuildStyle.ONYX_PANEL), "an Iron Casing unlocks both panel styles");
         table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.NULL_CASING.get()));
-        helper.assertTrue(table.unlocked(BuildStyle.NULL_SPIRE), "Null Casing unlocks Null Spire");
+        helper.assertTrue(table.unlockedMask() == (1 << BuildStyle.values().length) - 1, "a better casing unlocks every style");
+        helper.assertTrue(BuildStyle.DARK_STONE.cost.equals(BuildStyle.TIMBERFRAME.cost), "Dark Stone costs the same as Clean Stone");
+        for (BuildStyle style : BuildStyle.values()) helper.assertTrue(style.cost.exotic() == 0, style.id + " needs no exotic matter");
+        helper.assertTrue(BuildStyle.values().length <= 4, "plot records keep the style in two bits");
         helper.succeed();
     }
 
@@ -117,7 +120,7 @@ public class ArchitectGameTests {
         helper.assertTrue(table.battery.isItemValid(0, spring) && !table.battery.isItemValid(0, new ItemStack(Items.COBBLESTONE)), "battery slot takes energy items only");
         table.battery.setStackInSlot(0, spring);
         int base = ArchitectTableBlockEntity.baseEnergy();
-        helper.assertTrue(BuildStyle.TIMBERFRAME.energyPerBlock(base) * 2 == BuildStyle.COPPER_WORKS.energyPerBlock(base), "Timberframe costs half the base FE");
+        helper.assertTrue(BuildStyle.TIMBERFRAME.energyPerBlock(base) * 2 == BuildStyle.PEARL_PANEL.energyPerBlock(base), "Timberframe costs half the base FE");
         helper.assertTrue(BuildStyle.TIMBERFRAME.energyPerBlock(base) <= 10, "a Timberframe block costs at most 10 FE by default");
         helper.succeedWhen(() -> {
             helper.assertTrue(table.energy.getEnergyStored() > 0, "the Mainspring should charge the buffer");
@@ -265,7 +268,7 @@ public class ArchitectGameTests {
         layout.markBuilt(Plots.CENTER, layout.signature(Plots.CENTER));
         helper.assertTrue(!layout.hasWork(), "everything built");
         int north = Plots.index(0, -1);
-        layout.queue(north, BuildStyle.STEEL_LAB);
+        layout.queue(north, BuildStyle.ONYX_PANEL);
         helper.assertTrue(layout.nextWork() == north, "the new plot is built first");
         helper.assertTrue(layout.needsWork(Plots.CENTER) && layout.needsWork(west), "the centre opens toward the new plot; the west plot's shared corner becomes the inner corner of an L");
         layout.unqueue(north);
@@ -865,6 +868,106 @@ public class ArchitectGameTests {
         int[] w = new int[(Plots.COUNT + 1) / 2];
         for (int i = 0; i < w.length; i++) w[i] = table.planWord(i);
         return w;
+    }
+
+    private static void runUntilDone(GameTestHelper helper, ArchitectTableBlockEntity table) {
+        BlockState state = helper.getLevel().getBlockState(table.getBlockPos());
+        for (int i = 0; i < 40_000 && (table.running() || table.layout().hasWork()); i++) table.serverTick(helper.getLevel(), table.getBlockPos(), state);
+        helper.assertTrue(!table.layout().hasWork(), "the build should finish, status " + table.status());
+    }
+
+    private static boolean joined(BlockState state, Direction side) {
+        return state.getValue(net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION.get(side));
+    }
+
+    /**
+     * Trim of the connected styles joins where a post meets a beam (both ways round), runs on along a beam, and keeps
+     * a lintel apart from the roof beam stacked on it.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void connectedTrimJoinsAtCorners(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, 10, false);
+        BlockPos t = table.getBlockPos();
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.DARK_STONE.ordinal(), 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        runUntilDone(helper, table);
+        var level = helper.getLevel();
+        BlockState corner = level.getBlockState(t.offset(4, 0, 4));
+        helper.assertTrue(joined(corner, Direction.UP) && joined(corner, Direction.WEST) && joined(corner, Direction.NORTH)
+                && !joined(corner, Direction.EAST) && !joined(corner, Direction.DOWN), "the corner post joins both floor beams and the post above: " + corner);
+        BlockState beam = level.getBlockState(t.offset(3, 0, 4));
+        helper.assertTrue(joined(beam, Direction.EAST) && joined(beam, Direction.WEST) && !joined(beam, Direction.UP), "a beam runs on: " + beam);
+        BlockState lintel = level.getBlockState(t.offset(0, 4, 4));
+        helper.assertTrue(joined(lintel, Direction.EAST) && joined(lintel, Direction.WEST) && !joined(lintel, Direction.UP), "the lintel stays apart from the roof beam: " + lintel);
+        BlockState post = level.getBlockState(t.offset(-2, 3, 4));
+        helper.assertTrue(joined(post, Direction.UP) && joined(post, Direction.DOWN), "a door post joins the lintel: " + post);
+        BlockState foot = level.getBlockState(t.offset(-2, 0, 4));
+        helper.assertTrue(joined(foot, Direction.UP) && joined(foot, Direction.EAST) && joined(foot, Direction.WEST), "the floor beam joins the door post: " + foot);
+        BlockState clean = ArchitectRegistry.styleBlock(BuildStyle.TIMBERFRAME, Role.PILLAR).get().defaultBlockState();
+        helper.assertTrue(!clean.hasProperty(BlockStateProperties.UP), "Clean Stone keeps its plain pillar");
+        helper.succeed();
+    }
+
+    /**
+     * Restyle: clicking a built plot and picking a style swaps its blocks for the same pieces in the new style on Build.
+     * The old blocks are refunded like a takedown, the neighbour and its shared column keep their style, and what the
+     * player put inside stays. Cancel undoes a restyle that has not started.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void restyleSwapsABuiltPlot(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, 11, false);
+        BlockPos t = table.getBlockPos();
+        var level = helper.getLevel();
+        table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.IRON_CASING.get()));
+        Layout layout = table.layout();
+        int east = Plots.index(1, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.DARK_STONE.ordinal(), 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        runUntilDone(helper, table);
+        BlockPos eastOrigin = Plots.origin(t, east);
+        BlockPos chest = eastOrigin.offset(4, 1, 4), stone = eastOrigin.offset(5, 1, 4);
+        level.setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
+        level.setBlockAndUpdate(stone, Blocks.STONE.defaultBlockState());
+
+        // click the built plot, then pick the style; Cancel takes it back
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        helper.assertTrue(layout.state(east) == Layout.BUILT && !layout.needsWork(east), "clicking with its own style changes nothing");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.ONYX_PANEL.ordinal(), 0);
+        helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.needsWork(east) && !layout.needsWork(Plots.CENTER), "picking a style restyles the clicked plot");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_CANCEL, 0, 0);
+        helper.assertTrue(layout.style(east) == BuildStyle.DARK_STONE && !layout.hasWork(), "Cancel undoes the restyle");
+        // style first, then the click
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.needsWork(east), "a click restyles in the selected style");
+
+        Shell.Shape shape = layout.shape(east);
+        int swapped = 0;
+        for (BlockOp op : Shell.generate(shape, false)) if (!op.piece().isAir() && !shape.overlaps(op.x(), op.z())) swapped++;
+        Matter before = table.matter();
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        runUntilDone(helper, table);
+
+        for (BlockOp op : Shell.generate(shape, false)) {
+            BlockPos p = eastOrigin.offset(op.x(), op.y(), op.z());
+            if (p.equals(chest) || p.equals(stone)) continue;
+            BuildStyle want = shape.overlaps(op.x(), op.z()) ? BuildStyle.DARK_STONE : BuildStyle.ONYX_PANEL;
+            helper.assertTrue(op.piece().matches(want, level.getBlockState(p)), "at " + op + " expected " + want + " but found " + level.getBlockState(p));
+        }
+        for (BlockOp op : Shell.generate(layout.shape(Plots.CENTER), true)) {
+            BlockState s = level.getBlockState(Plots.origin(t, Plots.CENTER).offset(op.x(), op.y(), op.z()));
+            helper.assertTrue(op.piece().matches(BuildStyle.DARK_STONE, s), "the neighbour keeps its style at " + op);
+        }
+        helper.assertTrue(level.getBlockState(chest).is(Blocks.CHEST) && level.getBlockState(stone).is(Blocks.STONE), "the player's blocks stay");
+        Matter after = table.matter();
+        double share = com.arno.robotica.architect.ArchitectConfig.demolishRefund();
+        int rustic = before.rustic() - swapped * BuildStyle.ONYX_PANEL.cost.rustic() + (int) (swapped * BuildStyle.DARK_STONE.cost.rustic() * share);
+        helper.assertTrue(Math.abs(after.rustic() - rustic) <= 1, "old blocks are refunded: rustic " + after.rustic() + ", expected about " + rustic + " for " + swapped + " blocks");
+        helper.assertTrue(after.refined() == before.refined() - swapped * BuildStyle.ONYX_PANEL.cost.refined(), "the new style is charged: refined " + after.refined());
+        helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.state(east) == Layout.BUILT, "the plot is built in its new style");
+        helper.succeed();
     }
 
     private static ArchitectTableBlockEntity preparedTable(GameTestHelper helper, int band, boolean clear) {

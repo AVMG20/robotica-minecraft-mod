@@ -1,0 +1,28 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "robotica:block/dark_stone_pillar_straight",
+    "none": "robotica:block/dark_stone_pillar_none"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#none",
+          "cullface": "north"
+        }
+      }
+    }
+  ]
+}

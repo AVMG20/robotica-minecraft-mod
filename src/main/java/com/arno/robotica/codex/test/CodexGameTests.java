@@ -54,8 +54,8 @@ public class CodexGameTests {
             ResourceLocation id = holder.id();
             if (!id.getNamespace().equals(Robotica.MODID) || unlocked.contains(id)) continue;
             String path = id.getPath();
-            if (path.startsWith("timberframe_") || path.startsWith("copper_works_") || path.startsWith("steel_lab_")
-                    || path.startsWith("null_spire_") || path.startsWith("architect_")) continue;
+            if (path.startsWith("timberframe_") || path.startsWith("dark_stone_") || path.startsWith("pearl_panel_")
+                    || path.startsWith("onyx_panel_") || path.startsWith("architect_")) continue;
             missing.add(path);
         }
         if (!missing.isEmpty()) helper.fail("recipes no guide step unlocks: " + missing);
