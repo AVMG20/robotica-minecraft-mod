@@ -37,7 +37,8 @@ public final class Harvest {
     /** Used when a controller has no owner (placed by a dispenser or a command). */
     private static final UUID NO_OWNER = UUID.fromString("5b0c3a64-3b1a-4f5e-9c4e-0f6f0d0c7e11");
 
-    public record Result(List<ItemStack> drops, int xp) {}
+    /** @param deathSound the mob's death sound, null when it has none */
+    public record Result(List<ItemStack> drops, int xp, @Nullable net.minecraft.sounds.SoundEvent deathSound) {}
 
     /**
      * @param looting Looting level 0-3 (the fortune card of the controller). It goes onto the fake player's held
@@ -82,9 +83,9 @@ public final class Harvest {
                     if (!stack.isEmpty() && !Essence.isOutputBlacklisted(stack)) drops.add(stack);
                 }
                 int xp = Math.max(0, living.getExperienceReward(level, fake));
-                return new Result(drops, xp);
+                return new Result(drops, xp, DeathSounds.of(living));
             }
-            return new Result(drops, 0);
+            return new Result(drops, 0, null);
         } catch (RuntimeException e) {
             // A modded mob with a broken constructor or loot condition must not crash the server.
             Robotica.LOGGER.warn("Replicator could not roll the loot of {}", type, e);

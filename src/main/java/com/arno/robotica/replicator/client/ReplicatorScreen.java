@@ -5,6 +5,7 @@ import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.replicator.ReplicatorModePayload;
+import com.arno.robotica.replicator.ReplicatorMutePayload;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity.Mode;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity.Pause;
@@ -22,7 +23,7 @@ import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * GUI of the Replicator Controller: energy bar, cycle progress, one short status word and a mode icon. Slots carry ghost icons;
+ * GUI of the Replicator Controller: energy bar, cycle progress, one short status word, a mode icon and a mute toggle. Slots carry ghost icons;
  * cycle time, speed, FE/t and looting are in tooltips. A row above the output claims the stored experience: up to a
  * target level (-/+, shift for 10) or all of it, through menu button clicks the server validates.
  */
@@ -31,6 +32,8 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
     private static int targetLevel = 30;
 
     private IconButton modeButton;
+    private IconButton muteButton;
+    private Boolean shownMuted;
     private Button claimButton;
     private Button allButton;
     private int shownTarget = -1;
@@ -54,6 +57,10 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
             PacketDistributor.sendToServer(new ReplicatorModePayload(menu.pos(), next.ordinal()));
         }));
         updateMode();
+        muteButton = addRenderableWidget(new IconButton(leftPos + 86, topPos + 56, 20, new ItemStack(Items.NOTE_BLOCK), true,
+                b -> PacketDistributor.sendToServer(new ReplicatorMutePayload(menu.pos(), !menu.muted()))));
+        shownMuted = null;
+        updateMute();
 
         int y = topPos + ReplicatorMenu.XP_ROW_Y;
         addRenderableWidget(new FitButton(leftPos + 62, y, 12, 12, Component.literal("-"), b -> changeTarget(-1),
@@ -98,10 +105,19 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
                 .append(Component.literal("\n")).append(Component.translatable("gui.robotica.replicator.mode_tip").withStyle(ChatFormatting.GRAY)));
     }
 
+    private void updateMute() {
+        boolean muted = menu.muted();
+        if (shownMuted != null && shownMuted == muted) return;
+        shownMuted = muted;
+        muteButton.setOn(!muted);
+        muteButton.hint(Component.translatable(muted ? "gui.robotica.replicator.unmute_tip" : "gui.robotica.replicator.mute_tip"));
+    }
+
     @Override
     protected void containerTick() {
         super.containerTick();
         if (modeButton != null) updateMode();
+        if (muteButton != null) updateMute();
         if (claimButton != null) updateXp();
     }
 

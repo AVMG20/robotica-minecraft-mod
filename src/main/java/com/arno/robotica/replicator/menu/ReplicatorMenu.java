@@ -78,9 +78,9 @@ public class ReplicatorMenu extends MachineMenu {
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());
         progressIndex = track(be == null ? () -> 0 : be::progress);
         neededIndex = track(be == null ? () -> 0 : be::needed);
-        // bit 0 formed, bit 1 mode, bits 2-4 structure status, bits 5-8 pause reason, bits 9-10 looting level
+        // bit 0 formed, bit 1 mode, bits 2-4 structure status, bits 5-8 pause reason, bits 9-10 looting level, bit 11 muted
         statusIndex = track(be == null ? () -> 0 : () -> (be.isFormed() ? 1 : 0) | (be.mode().ordinal() << 1)
-                | (be.status().ordinal() << 2) | (be.pause().ordinal() << 5) | (be.lootingLevel() << 9));
+                | (be.status().ordinal() << 2) | (be.pause().ordinal() << 5) | (be.lootingLevel() << 9) | (be.muted() ? 1 << 11 : 0));
         speedIndex = track(be == null ? () -> 0 : be::speedMultiplier);
         costIndex = track(be == null ? () -> 0 : be::energyPerTick);
         xpIndex = track(be == null ? () -> 0 : be::xpStored);
@@ -128,6 +128,10 @@ public class ReplicatorMenu extends MachineMenu {
 
     public int looting() {
         return (synced(statusIndex) >> 9) & 3;
+    }
+
+    public boolean muted() {
+        return (synced(statusIndex) >> 11 & 1) != 0;
     }
 
     public int speedMultiplier() {

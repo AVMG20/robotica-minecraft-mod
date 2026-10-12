@@ -3,6 +3,8 @@ Run: python3 scripts/data/replicator_models.py   (overwrites files named after r
 import json
 import pathlib
 
+import connected_glass
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ASSETS = ROOT / 'src/main/resources/assets/robotica'
 DATA = ROOT / 'src/main/resources/data/robotica'
@@ -31,6 +33,7 @@ def loot(name):
 # ---------- frame and glass ----------
 GLOW = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
 DIRS = ('down', 'up', 'north', 'south', 'west', 'east')
+SIDES = ('north', 'south', 'west', 'east')
 
 
 def glow_cube(faces, glow):
@@ -44,17 +47,27 @@ def glow_cube(faces, glow):
          'faces': {d: {'texture': f'#g_{d}', 'cullface': d, 'neoforge_data': GLOW} for d in glow}}]}
 
 
+# Formed look: the controller sets frame=wall|x|y|z|corner on its frames (FramedPartBlock) and formed=true on its
+# glass: beams with a teal conduit along the edges, corner caps, plain panels in the faces, windows joined into the
+# frame. Loose, a frame shows its circuit plate.
+m = 'robotica:block/replicator_frame'
 write(ASSETS / 'models/block/replicator_frame.json', glow_cube({d: 'replicator_frame' for d in DIRS},
                                                                {d: 'replicator_frame_glow' for d in DIRS}))
-write(ASSETS / 'blockstates/replicator_frame.json', {'variants': {'': {'model': 'robotica:block/replicator_frame'}}})
-write(ASSETS / 'models/item/replicator_frame.json', {'parent': 'robotica:block/replicator_frame'})
+write(ASSETS / 'models/block/replicator_frame_wall.json', {'parent': 'minecraft:block/cube_all',
+                                                            'textures': {'all': tex('replicator_panel')}})
+write(ASSETS / 'models/block/replicator_frame_beam.json', glow_cube(
+    {d: 'replicator_frame_beam' for d in SIDES} | {'up': 'replicator_frame_corner', 'down': 'replicator_frame_corner'},
+    {d: 'replicator_frame_beam_glow' for d in SIDES}))
+write(ASSETS / 'models/block/replicator_frame_corner.json', glow_cube({d: 'replicator_frame_corner' for d in DIRS},
+                                                                      {d: 'replicator_frame_corner_glow' for d in DIRS}))
+write(ASSETS / 'blockstates/replicator_frame.json', {'variants': {
+    'frame=none': {'model': m}, 'frame=wall': {'model': m + '_wall'}, 'frame=corner': {'model': m + '_corner'},
+    'frame=y': {'model': m + '_beam'}, 'frame=z': {'model': m + '_beam', 'x': 90},
+    'frame=x': {'model': m + '_beam', 'x': 90, 'y': 90}}})
+write(ASSETS / 'models/item/replicator_frame.json', {'parent': m})
 loot('replicator_frame')
 
-write(ASSETS / 'models/block/replicator_glass.json', {
-    'parent': 'minecraft:block/cube_all', 'render_type': 'minecraft:translucent',
-    'textures': {'all': tex('replicator_glass')}})
-write(ASSETS / 'blockstates/replicator_glass.json', {'variants': {'': {'model': 'robotica:block/replicator_glass'}}})
-write(ASSETS / 'models/item/replicator_glass.json', {'parent': 'robotica:block/replicator_glass'})
+connected_glass.write_glass(write, ASSETS, 'replicator_glass')
 loot('replicator_glass')
 
 # ---------- controller: three faces (not formed / formed / working), six facings ----------

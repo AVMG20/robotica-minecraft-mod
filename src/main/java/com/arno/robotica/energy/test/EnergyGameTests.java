@@ -307,6 +307,7 @@ public class EnergyGameTests {
         assertFrame(helper, min.offset(0, 0, 2), FramedPartBlock.Shape.Z);
         assertFrame(helper, min.offset(2, 4, 2), FramedPartBlock.Shape.WALL);
         helper.assertTrue(helper.getBlockState(min.offset(4, 2, 2)).getValue(StructureGlassBlock.FORMED), "the window drops its frame");
+        helper.assertTrue(helper.getBlockState(min.offset(4, 2, 2)).getValue(StructureGlassBlock.side(Direction.UP)), "the window joins the casing");
 
         helper.setBlock(min.offset(2, 4, 2), Blocks.DIRT);
         be.scanNow();
@@ -314,6 +315,7 @@ public class EnergyGameTests {
         assertFrame(helper, min, FramedPartBlock.Shape.NONE);
         assertFrame(helper, min.offset(0, 2, 0), FramedPartBlock.Shape.NONE);
         helper.assertFalse(helper.getBlockState(min.offset(4, 2, 2)).getValue(StructureGlassBlock.FORMED), "the window gets its frame back");
+        helper.assertFalse(helper.getBlockState(min.offset(4, 2, 2)).getValue(StructureGlassBlock.side(Direction.UP)), "loose glass keeps its frame at the casing");
 
         helper.setBlock(min.offset(2, 4, 2), EnergyRegistry.REACTOR_CASING.get());
         be.scanNow();
@@ -321,6 +323,40 @@ public class EnergyGameTests {
         helper.destroyBlock(min.offset(2, 2, 0));
         assertFrame(helper, min, FramedPartBlock.Shape.NONE);
         assertFrame(helper, min.offset(2, 4, 2), FramedPartBlock.Shape.NONE);
+        helper.succeed();
+    }
+
+    /** Connected glass: sides join the same glass only, formed also the opaque blocks; the sides turn with the block. */
+    @GameTest(template = "empty")
+    public static void glassJoinsItsNeighbours(GameTestHelper helper) {
+        BlockPos a = new BlockPos(1, 2, 1), b = a.east();
+        helper.setBlock(a, EnergyRegistry.BANK_GLASS.get());
+        helper.setBlock(b, EnergyRegistry.BANK_GLASS.get());
+        helper.setBlock(a.above(), EnergyRegistry.BANK_CASING.get());
+        helper.setBlock(a.south(), EnergyRegistry.REACTOR_GLASS.get());
+        BlockState sa = helper.getBlockState(a), sb = helper.getBlockState(b);
+        helper.assertTrue(sa.getValue(StructureGlassBlock.side(Direction.EAST)), "the first pane joins the one placed next to it");
+        helper.assertTrue(sb.getValue(StructureGlassBlock.side(Direction.WEST)), "a pane placed by code joins on its own");
+        helper.assertFalse(sa.getValue(StructureGlassBlock.side(Direction.UP)), "loose glass keeps its frame at a casing");
+        helper.assertFalse(sa.getValue(StructureGlassBlock.side(Direction.SOUTH)), "other glass does not join");
+        helper.assertFalse(sa.getValue(StructureGlassBlock.side(Direction.NORTH)), "air does not join");
+
+        BlockState formed = EnergyRegistry.BANK_GLASS.get().withFormed(helper.getLevel(), helper.absolutePos(a), sa, true);
+        helper.assertTrue(formed.getValue(StructureGlassBlock.side(Direction.UP)), "formed glass joins the casing");
+        helper.assertTrue(formed.getValue(StructureGlassBlock.side(Direction.EAST)), "and still its own kind");
+        helper.assertFalse(formed.getValue(StructureGlassBlock.side(Direction.SOUTH)) || formed.getValue(StructureGlassBlock.side(Direction.NORTH)),
+                "but not other glass or air");
+
+        helper.setBlock(b, Blocks.AIR);
+        helper.assertFalse(helper.getBlockState(a).getValue(StructureGlassBlock.side(Direction.EAST)), "the frame comes back when the neighbour goes");
+
+        BlockState east = EnergyRegistry.BANK_GLASS.get().defaultBlockState().setValue(StructureGlassBlock.side(Direction.EAST), true);
+        BlockState turned = east.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+        helper.assertTrue(turned.getValue(StructureGlassBlock.side(Direction.SOUTH)) && !turned.getValue(StructureGlassBlock.side(Direction.EAST)),
+                "rotating turns the joined side");
+        BlockState mirrored = east.mirror(net.minecraft.world.level.block.Mirror.FRONT_BACK);
+        helper.assertTrue(mirrored.getValue(StructureGlassBlock.side(Direction.WEST)) && !mirrored.getValue(StructureGlassBlock.side(Direction.EAST)),
+                "mirroring flips the joined side");
         helper.succeed();
     }
 

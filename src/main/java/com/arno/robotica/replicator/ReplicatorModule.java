@@ -19,6 +19,7 @@ public final class ReplicatorModule {
         container.registerConfig(ModConfig.Type.SERVER, ReplicatorConfig.SPEC, "robotica-replicator-server.toml");
         modBus.addListener(RegisterCapabilitiesEvent.class, ReplicatorModule::registerCapabilities);
         modBus.addListener(RegisterPayloadHandlersEvent.class, ReplicatorModePayload::register);
+        modBus.addListener(RegisterPayloadHandlersEvent.class, ReplicatorMutePayload::register);
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {

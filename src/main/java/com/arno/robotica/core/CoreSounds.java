@@ -69,8 +69,6 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_CHARGE = reg("lance_charge");
     public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_READY = reg("lance_ready");
     public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_FIRE = reg("lance_fire");
-    public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_FORM = reg("replicator_form");
-    public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_UNFORM = reg("replicator_unform");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_HUM = reg("replicator_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_CYCLE = reg("replicator_cycle");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_SPAWN = reg("replicator_spawn");

@@ -3,6 +3,8 @@ Run: python3 scripts/data/energy_models.py   (overwrites files named after energ
 import json
 import pathlib
 
+import connected_glass
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ASSETS = ROOT / 'src/main/resources/assets/robotica'
 DATA = ROOT / 'src/main/resources/data/robotica'
@@ -128,7 +130,7 @@ def all_faces(t):
 # ---------- casings, glass, coolant ----------
 # Formed look: the controller sets frame=wall|x|y|z|corner on its casings (FramedPartBlock) and formed=true on its
 # glass, so a finished structure reads as one machine: beams along the edges, corner caps, plain wall panels and
-# frameless windows. Previewed by scripts/scene_preview.py.
+# windows joined into the frame. Glass is connected (connected_glass.py). Previewed by scripts/scene_preview.py.
 for prefix in ('reactor', 'bank'):
     name = f'{prefix}_casing'
     write(ASSETS / 'models/block' / f'{name}.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex(name)}})
@@ -148,12 +150,7 @@ for prefix in ('reactor', 'bank'):
     BLOCKS.append(name)
 
     name = f'{prefix}_glass'
-    for suffix, texture in (('', name), ('_formed', f'{prefix}_glass_formed')):
-        write(ASSETS / 'models/block' / f'{name}{suffix}.json',
-              {'parent': 'minecraft:block/cube_all', 'render_type': 'minecraft:translucent', 'textures': {'all': tex(texture)}})
-    write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {
-        'formed=false': {'model': f'robotica:block/{name}'}, 'formed=true': {'model': f'robotica:block/{name}_formed'}}})
-    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}'})
+    connected_glass.write_glass(write, ASSETS, name)
     loot(name)
     BLOCKS.append(name)
 cube_all('cryo_coolant')

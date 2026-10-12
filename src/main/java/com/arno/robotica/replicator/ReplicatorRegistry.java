@@ -4,7 +4,8 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.core.RoboticaTab;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlock;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
-import com.arno.robotica.replicator.block.ReplicatorGlassBlock;
+import com.arno.robotica.energy.block.FramedPartBlock;
+import com.arno.robotica.energy.block.StructureGlassBlock;
 import com.arno.robotica.replicator.item.EssenceVialItem;
 import com.arno.robotica.replicator.menu.ReplicatorMenu;
 import com.mojang.serialization.Codec;
@@ -20,6 +21,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -54,9 +56,11 @@ public final class ReplicatorRegistry {
     public static final DeferredBlock<ReplicatorControllerBlock> REPLICATOR_CONTROLLER = BLOCKS.registerBlock("replicator_controller",
             ReplicatorControllerBlock::new,
             metal().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 12 : s.getValue(ReplicatorControllerBlock.FORMED) ? 5 : 0));
-    public static final DeferredBlock<Block> REPLICATOR_FRAME = BLOCKS.registerBlock("replicator_frame", Block::new, metal());
-    public static final DeferredBlock<ReplicatorGlassBlock> REPLICATOR_GLASS = BLOCKS.registerBlock("replicator_glass", ReplicatorGlassBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).strength(2.5F, 8.0F).sound(SoundType.GLASS).requiresCorrectToolForDrops()
+    // frame and glass carry the formed look in their state: pistons may not move them out of the cube
+    public static final DeferredBlock<FramedPartBlock> REPLICATOR_FRAME = BLOCKS.registerBlock("replicator_frame", FramedPartBlock::new,
+            metal().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<StructureGlassBlock> REPLICATOR_GLASS = BLOCKS.registerBlock("replicator_glass", StructureGlassBlock::new,
+            BlockBehaviour.Properties.of().pushReaction(PushReaction.BLOCK).mapColor(MapColor.COLOR_CYAN).strength(2.5F, 8.0F).sound(SoundType.GLASS).requiresCorrectToolForDrops()
                     .noOcclusion().lightLevel(s -> 3)
                     .isValidSpawn((s, l, p, t) -> false).isRedstoneConductor((s, l, p) -> false)
                     .isSuffocating((s, l, p) -> false).isViewBlocking((s, l, p) -> false));

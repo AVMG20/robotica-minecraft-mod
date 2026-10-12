@@ -775,28 +775,6 @@
       }
     ]
   },
-  "replicator_form": {
-    "subtitle": "subtitles.robotica.replicator_form",
-    "sounds": [
-      {
-        "name": "minecraft:block/beacon/activate",
-        "type": "file",
-        "volume": 0.7,
-        "pitch": 1.2
-      }
-    ]
-  },
-  "replicator_unform": {
-    "subtitle": "subtitles.robotica.replicator_unform",
-    "sounds": [
-      {
-        "name": "minecraft:block/beacon/deactivate",
-        "type": "file",
-        "volume": 0.7,
-        "pitch": 1.2
-      }
-    ]
-  },
   "replicator_hum": {
     "subtitle": "subtitles.robotica.replicator_hum",
     "sounds": [
