@@ -392,7 +392,7 @@ public class DronesGameTests {
         helper.succeed();
     }
 
-    /** Drops lying around go into the cargo, only while pick-up is on. */
+    /** Drops lying around go into the cargo, only while pick-up is on; with void on, junk drops are deleted. */
     @GameTest(template = "drones_arena", batch = "dronesPickup", timeoutTicks = 200)
     public static void pickupToggleControlsSweeping(GameTestHelper helper) {
         clear(helper);
@@ -403,13 +403,19 @@ public class DronesGameTests {
         drop.setNoGravity(true);
         drop.setDeltaMovement(0, 0, 0);
         helper.getLevel().addFreshEntity(drop);
+        ItemEntity junk = new ItemEntity(helper.getLevel(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(Items.DIRT, 5));
+        junk.setNoGravity(true);
+        junk.setDeltaMovement(0, 0, 0);
+        helper.getLevel().addFreshEntity(junk);
         helper.runAfterDelay(40, () -> {
             helper.assertTrue(drop.isAlive() && bot.count(Items.APPLE) == 0, "pick-up off: the drop stays");
+            bot.setVoid(true);
             bot.setPickup(true);
         });
         helper.succeedWhen(() -> {
             helper.assertTrue(bot.pickupOn() && bot.count(Items.APPLE) == 3, "pick-up on: the drop is in the cargo");
             helper.assertTrue(!drop.isAlive(), "the item entity is gone");
+            helper.assertTrue(!junk.isAlive() && bot.count(Items.DIRT) == 0, "void on: the junk drop is deleted");
             clear(helper);
         });
     }
