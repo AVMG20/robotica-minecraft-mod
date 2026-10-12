@@ -3,24 +3,22 @@ package com.arno.robotica.warp;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.util.Fmt;
-import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.gate.GateLinks;
+import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.item.RemoteItem;
-import com.arno.robotica.warp.item.RiftTargets;
+import com.arno.robotica.warp.item.RemoteTargets;
 import com.arno.robotica.warp.menu.DestinationEntry;
 import com.arno.robotica.warp.menu.DestinationMenu;
 import com.arno.robotica.warp.menu.PadMenu;
-import com.arno.robotica.warp.menu.RiftEntry;
-import com.arno.robotica.warp.menu.RiftRemoteMenu;
-import com.arno.robotica.warp.teleport.RiftCharges;
-import net.minecraft.world.InteractionHand;
+import com.arno.robotica.warp.menu.RemoteEntry;
+import com.arno.robotica.warp.menu.RemoteMenu;
 import com.arno.robotica.warp.pad.PadRecord;
 import com.arno.robotica.warp.pad.WarpCosts;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import com.arno.robotica.warp.pad.WarpPads;
 import com.arno.robotica.warp.teleport.Teleporter;
+import com.arno.robotica.warp.teleport.WarpCharges;
 import com.arno.robotica.warp.teleport.WarpCooldowns;
-import net.minecraft.util.StringUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
@@ -28,6 +26,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.StringUtil;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -40,8 +40,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Server side logic of pad trips, remote trips, binding and gate linking. Every entry point validates everything again
- * (permissions, standing on the pad, energy, destination block, safe spot); the GUIs and payloads are only requests.
+ * Server side logic of pad trips, remote trips, storing pads and projector linking. Every entry point validates
+ * everything again (permissions, standing on the pad, energy, destination block, safe spot); the GUIs and payloads are
+ * only requests.
  */
 public final class WarpTravel {
     private WarpTravel() {}
@@ -74,7 +75,7 @@ public final class WarpTravel {
     // ---- Opening the GUIs ----
 
     public static void openPadSettings(ServerPlayer player, WarpPadBlockEntity pad) {
-        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new PadMenu(id, inv, pad), Component.translatable("block.robotica.warp_pad")),
+        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new PadMenu(id, inv, pad), pad.getBlockState().getBlock().getName()),
                 buf -> PadMenu.writeOpenData(buf, pad));
     }
 
@@ -114,7 +115,7 @@ public final class WarpTravel {
             int distance = cross ? -1 : (int) Math.round(Math.sqrt(rec.pos().distSqr(departure.pos())));
             int cost = WarpCosts.padTrip(Math.max(0, distance), cross);
             list.add(new DestinationEntry(rec.id(), rec.name(), rec.ownerName().isEmpty() ? "-" : rec.ownerName(), rec.dimension(),
-                    distance, cost, !cross || pad.hasRift()));
+                    distance, cost, !cross || pad.isMk2()));
         }
         list.sort(Comparator.<DestinationEntry>comparingInt(e -> e.distance() < 0 ? Integer.MAX_VALUE : e.distance())
                 .thenComparing(DestinationEntry::name, String.CASE_INSENSITIVE_ORDER));
@@ -123,8 +124,21 @@ public final class WarpTravel {
 
     // ---- Pad trip ----
 
-    /** The player clicked a destination in the list. Returns true when the trip happened. */
+    /** The player clicked a destination in the list: check the trip now, then wind up for a second ({@link WarpCharges}). */
+    public static boolean requestPadTrip(ServerPlayer player, WarpPadBlockEntity pad, UUID destinationId) {
+        if (!padTrip(player, pad, destinationId, true)) return false;
+        WarpCharges.startPad(player, pad.getBlockPos(), destinationId);
+        CoreSounds.play(player, CoreSounds.WARP_START, SoundSource.PLAYERS, 0.8F, 1.2F);
+        return true;
+    }
+
+    /** Pad trip right now (the end of the wind-up). Returns true when the trip happened. */
     public static boolean travelFromPad(ServerPlayer player, WarpPadBlockEntity pad, UUID destinationId) {
+        return padTrip(player, pad, destinationId, false);
+    }
+
+    /** Every check, the cost and the cooldown of a pad trip. {@code dryRun} stops after the checks. */
+    private static boolean padTrip(ServerPlayer player, WarpPadBlockEntity pad, UUID destinationId, boolean dryRun) {
         MinecraftServer server = player.server;
         ServerLevel level = player.serverLevel();
         PadRecord departure = pad.ensureRegistered();
@@ -150,8 +164,8 @@ public final class WarpTravel {
             return false;
         }
         boolean cross = !dest.dimension().equals(level.dimension());
-        if (cross && !pad.hasRift()) {
-            message(player, Component.translatable("message.robotica.warp.needs_rift"));
+        if (cross && !pad.isMk2()) {
+            message(player, Component.translatable("message.robotica.warp.needs_mk2"));
             return false;
         }
         ServerLevel destLevel = server.getLevel(dest.dimension());
@@ -164,9 +178,10 @@ public final class WarpTravel {
             message(player, Component.translatable("message.robotica.warp.pad_no_energy", Fmt.energy(cost), Fmt.energy(pad.energy.getEnergyStored())));
             return false;
         }
+        if (dryRun) return true;
 
         destLevel.getChunk(dest.pos());
-        if (!destLevel.getBlockState(dest.pos()).is(WarpRegistry.WARP_PAD.get())) {
+        if (!WarpPads.isPad(destLevel.getBlockState(dest.pos()))) {
             pads.remove(dest.id());
             message(player, Component.translatable("message.robotica.warp.destination_gone"));
             return false;
@@ -191,8 +206,6 @@ public final class WarpTravel {
         return true;
     }
 
-    // ---- Remotes ----
-
     /** Safe spot above a destination pad. Empty when that would generate terrain (never on the main thread for a trip). */
     private static Optional<Vec3> arrivalSpot(ServerLevel destLevel, BlockPos padPos) {
         BlockPos center = padPos.above();
@@ -200,6 +213,9 @@ public final class WarpTravel {
         return Teleporter.prepareArrival(destLevel, center);
     }
 
+    // ---- Remote ----
+
+    /** Sneak-right-click of a Warp Remote on a pad: stores it (the first pad becomes home). */
     public static void bindRemote(ServerPlayer player, ItemStack remote, WarpPadBlockEntity pad) {
         PadRecord rec = pad.ensureRegistered();
         if (rec == null) return;
@@ -207,106 +223,89 @@ public final class WarpTravel {
             message(player, Component.translatable("message.robotica.warp.private_pad", rec.ownerName()));
             return;
         }
-        if (remote.getItem() instanceof RemoteItem item && item.isRift()) {
-            switch (RiftTargets.add(remote, rec)) {
-                case FULL -> {
-                    message(player, Component.translatable("message.robotica.warp.remote_full", WarpComponents.MAX_RIFT_PADS));
-                    return;
-                }
-                case ALREADY_STORED -> {
-                    message(player, Component.translatable("message.robotica.warp.remote_known", rec.name()));
-                    return;
-                }
-                case ADDED -> message(player, Component.translatable("message.robotica.warp.remote_added", rec.name(),
-                        RiftTargets.list(remote).size(), WarpComponents.MAX_RIFT_PADS));
+        switch (RemoteTargets.add(remote, rec)) {
+            case FULL -> {
+                message(player, Component.translatable("message.robotica.warp.remote_full", WarpComponents.MAX_PADS));
+                return;
             }
-        } else {
-            remote.set(WarpComponents.BOUND_PAD.get(), new WarpComponents.BoundPad(rec.id(), rec.name(),
-                    Optional.of(GlobalPos.of(rec.dimension(), rec.pos()))));
-            message(player, Component.translatable("message.robotica.warp.remote_bound", rec.name()));
+            case ALREADY_STORED -> {
+                message(player, Component.translatable("message.robotica.warp.remote_known", rec.name()));
+                return;
+            }
+            case ADDED -> {
+                int size = RemoteTargets.list(remote).size();
+                message(player, size == 1 ? Component.translatable("message.robotica.warp.remote_home", rec.name())
+                        : Component.translatable("message.robotica.warp.remote_added", rec.name(), size, WarpComponents.MAX_PADS));
+            }
         }
         CoreSounds.play(player, CoreSounds.WARP_BIND, SoundSource.PLAYERS, 0.8F, 1.0F);
     }
 
-    /** Tells the player why a remote does not start charging. */
-    public static void explainRemote(ServerPlayer player, ItemStack stack, RemoteItem remote) {
-        if (!stack.has(WarpComponents.BOUND_PAD.get())) {
-            message(player, Component.translatable("message.robotica.warp.remote_unbound"));
-        } else if (RemoteItem.cooldownLeft(player, remote) > 0) {
-            message(player, Component.translatable("message.robotica.warp.remote_cooldown"));
-        } else {
-            message(player, Component.translatable("message.robotica.warp.remote_no_energy", Fmt.energy(remote.sameDimensionCost()),
-                    Fmt.energy(ItemEnergy.get(stack))));
-        }
-    }
-
-    /** The 3 second charge of the Recall Remote finished: travel to the bound pad. */
-    public static boolean recall(ServerPlayer player, ItemStack stack, RemoteItem remote) {
-        WarpComponents.BoundPad bound = stack.get(WarpComponents.BOUND_PAD.get());
-        if (bound == null) {
+    /** The 3 second hold finished: travel to the home pad. */
+    public static boolean goHome(ServerPlayer player, ItemStack stack) {
+        WarpComponents.BoundPad home = RemoteTargets.home(stack);
+        if (home == null) {
             message(player, Component.translatable("message.robotica.warp.remote_unbound"));
             return false;
         }
-        return remoteTrip(player, stack, remote, bound.id(), bound.name(), false);
+        return remoteTrip(player, stack, home.id(), home.name(), false);
     }
 
-    // ---- Rift Remote list ----
-
-    /** Opens the pad list of the Rift Remote in {@code hand}, with current names from the registry. */
-    public static void openRiftRemote(ServerPlayer player, InteractionHand hand) {
+    /** Opens the pad list of the Warp Remote in {@code hand}, with current names from the registry. */
+    public static void openRemote(ServerPlayer player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!(stack.getItem() instanceof RemoteItem remote) || !remote.isRift()) return;
+        if (!(stack.getItem() instanceof RemoteItem)) return;
         MinecraftServer server = player.server;
         WarpPads pads = WarpPads.get(server);
-        RiftTargets.migrate(stack);
-        RiftTargets.refresh(stack, pads);
-        List<WarpComponents.BoundPad> stored = RiftTargets.list(stack);
+        RemoteTargets.refresh(stack, pads);
+        List<WarpComponents.BoundPad> stored = RemoteTargets.list(stack);
         if (stored.isEmpty()) {
             message(player, Component.translatable("message.robotica.warp.remote_unbound"));
             return;
         }
-        List<RiftEntry> entries = new ArrayList<>();
+        List<RemoteEntry> entries = new ArrayList<>();
         for (WarpComponents.BoundPad b : stored) {
             PadRecord rec = pads.validated(server, b.id());
             if (rec == null) {
-                entries.add(new RiftEntry(b.id(), b.name(), b.pos().map(GlobalPos::dimension).orElse(null),
-                        b.pos().map(GlobalPos::pos).orElse(null), 0, RiftEntry.GONE));
+                entries.add(new RemoteEntry(b.id(), b.name(), b.pos().map(GlobalPos::dimension).orElse(null),
+                        b.pos().map(GlobalPos::pos).orElse(null), 0, RemoteEntry.GONE));
                 continue;
             }
             boolean cross = !rec.dimension().equals(player.level().dimension());
-            int cost = cross ? remote.crossDimensionCost() : remote.sameDimensionCost();
-            int status = WarpPads.canUse(server, rec, player) ? RiftEntry.OK : RiftEntry.PRIVATE;
-            entries.add(new RiftEntry(rec.id(), rec.name(), rec.dimension(), rec.pos(), cost, status));
+            int cost = cross ? RemoteItem.crossDimensionCost() : RemoteItem.sameDimensionCost();
+            int status = !WarpPads.canUse(server, rec, player) ? RemoteEntry.PRIVATE
+                    : cross && !rec.mk2() ? RemoteEntry.NEEDS_MK2 : RemoteEntry.OK;
+            entries.add(new RemoteEntry(rec.id(), rec.name(), rec.dimension(), rec.pos(), cost, status));
         }
-        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new RiftRemoteMenu(id, inv, hand, entries), stack.getHoverName()),
-                buf -> RiftRemoteMenu.writeOpenData(buf, hand, entries));
+        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new RemoteMenu(id, inv, hand, entries), stack.getHoverName()),
+                buf -> RemoteMenu.writeOpenData(buf, hand, entries));
     }
 
-    /** A row of the Rift Remote list was clicked: check the trip now, then charge for 3 seconds ({@link RiftCharges}). */
-    public static boolean requestRiftTrip(ServerPlayer player, InteractionHand hand, UUID padId) {
+    /** A row of the remote list was clicked: check the trip now, then charge for 3 seconds ({@link WarpCharges}). */
+    public static boolean requestRemoteTrip(ServerPlayer player, InteractionHand hand, UUID padId) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!(stack.getItem() instanceof RemoteItem remote) || !remote.isRift()) return false;
-        if (!riftTravel(player, stack, remote, padId, true)) return false;
-        RiftCharges.start(player, hand, padId);
+        if (!remoteListTrip(player, stack, padId, true)) return false;
+        WarpCharges.startRemote(player, hand, padId);
         CoreSounds.play(player, CoreSounds.WARP_START, SoundSource.PLAYERS, 0.8F, 1.0F);
         return true;
     }
 
-    /** Trip of a Rift Remote to one of its stored pads. With {@code dryRun} it only checks (and explains) without travelling. */
-    public static boolean riftTravel(ServerPlayer player, ItemStack stack, RemoteItem remote, UUID padId, boolean dryRun) {
-        WarpComponents.BoundPad bound = RiftTargets.find(RiftTargets.list(stack), padId);
+    /** Trip to one of the remote's stored pads. With {@code dryRun} it only checks (and explains) without travelling. */
+    public static boolean remoteListTrip(ServerPlayer player, ItemStack stack, UUID padId, boolean dryRun) {
+        if (!(stack.getItem() instanceof RemoteItem)) return false;
+        WarpComponents.BoundPad bound = RemoteTargets.find(RemoteTargets.list(stack), padId);
         if (bound == null) {
             message(player, Component.translatable("message.robotica.warp.remote_unbound"));
             return false;
         }
-        return remoteTrip(player, stack, remote, bound.id(), bound.name(), dryRun);
+        return remoteTrip(player, stack, bound.id(), bound.name(), dryRun);
     }
 
     /** Remote trip to a pad: every check, the cost and the cooldown. {@code dryRun} stops after the checks. */
-    private static boolean remoteTrip(ServerPlayer player, ItemStack stack, RemoteItem remote, UUID padId, String storedName, boolean dryRun) {
+    private static boolean remoteTrip(ServerPlayer player, ItemStack stack, UUID padId, String storedName, boolean dryRun) {
         MinecraftServer server = player.server;
         ServerLevel level = player.serverLevel();
-        if (RemoteItem.cooldownLeft(player, remote) > 0) {
+        if (RemoteItem.cooldownLeft(player) > 0) {
             message(player, Component.translatable("message.robotica.warp.remote_cooldown"));
             return false;
         }
@@ -321,8 +320,8 @@ public final class WarpTravel {
             return false;
         }
         boolean cross = !dest.dimension().equals(level.dimension());
-        if (cross && !remote.isRift()) {
-            message(player, Component.translatable("message.robotica.warp.remote_needs_rift"));
+        if (cross && !dest.mk2()) {
+            message(player, Component.translatable("message.robotica.warp.remote_needs_mk2"));
             return false;
         }
         ServerLevel destLevel = server.getLevel(dest.dimension());
@@ -331,7 +330,7 @@ public final class WarpTravel {
             return false;
         }
         boolean free = player.getAbilities().instabuild;
-        int cost = cross ? remote.crossDimensionCost() : remote.sameDimensionCost();
+        int cost = cross ? RemoteItem.crossDimensionCost() : RemoteItem.sameDimensionCost();
         if (!free && !ItemEnergy.has(stack, cost)) {
             message(player, Component.translatable("message.robotica.warp.remote_no_energy", Fmt.energy(cost), Fmt.energy(ItemEnergy.get(stack))));
             return false;
@@ -339,7 +338,7 @@ public final class WarpTravel {
         if (dryRun) return true;
 
         destLevel.getChunk(dest.pos());
-        if (!destLevel.getBlockState(dest.pos()).is(WarpRegistry.WARP_PAD.get())) {
+        if (!WarpPads.isPad(destLevel.getBlockState(dest.pos()))) {
             pads.remove(dest.id());
             message(player, Component.translatable("message.robotica.warp.remote_pad_gone", dest.name()));
             return false;
@@ -363,60 +362,61 @@ public final class WarpTravel {
         return true;
     }
 
-    // ---- Gate linking ----
+    // ---- Projector linking ----
 
-    /** Furthest the player may stand from the clicked controller when linking. */
+    /** Furthest the player may stand from the clicked projector when linking. */
     public static final double LINK_REACH = 8.0;
 
     /**
-     * Sneak-right-click of a Linking Card on a Portal Projector: first click stores it, second click links both. Both
-     * projectors must be usable by the player (owner, op level 2 or owner's team); an unowned gate is claimed by the
-     * player who links it.
+     * Sneak-right-click of a Warp Remote on a Portal Projector: the first click stores it, a click on a second one links
+     * both, a second click on the same one cancels. Both projectors must be usable by the player (owner, op level 2 or
+     * owner's team); an unowned projector is claimed by the player who links it.
      */
-    public static void linkingCardUsed(ServerPlayer player, ItemStack card, GlobalPos clicked) {
+    public static void linkProjector(ServerPlayer player, ItemStack remote, GlobalPos clicked) {
         MinecraftServer server = player.server;
         ServerLevel clickedLevel = server.getLevel(clicked.dimension());
         if (clickedLevel == null || player.level() != clickedLevel
                 || player.distanceToSqr(Vec3.atCenterOf(clicked.pos())) > LINK_REACH * LINK_REACH) {
-            message(player, Component.translatable("message.robotica.warp.card_too_far"));
+            message(player, Component.translatable("message.robotica.warp.link_too_far"));
             return;
         }
         if (!(clickedLevel.getBlockEntity(clicked.pos()) instanceof PortalProjectorBlockEntity second)) {
-            card.remove(WarpComponents.LINK_SOURCE.get());
-            message(player, Component.translatable("message.robotica.warp.card_lost"));
+            remote.remove(WarpComponents.LINK_SOURCE.get());
+            message(player, Component.translatable("message.robotica.warp.link_lost"));
             return;
         }
         if (!second.canUse(player)) {
-            message(player, Component.translatable("message.robotica.warp.card_not_owner", second.ownerName()));
+            message(player, Component.translatable("message.robotica.warp.link_not_owner", second.ownerName()));
             return;
         }
-        GlobalPos source = card.get(WarpComponents.LINK_SOURCE.get());
+        GlobalPos source = remote.get(WarpComponents.LINK_SOURCE.get());
         if (source == null) {
-            card.set(WarpComponents.LINK_SOURCE.get(), clicked);
+            remote.set(WarpComponents.LINK_SOURCE.get(), clicked);
             CoreSounds.play(player, CoreSounds.WARP_BIND, SoundSource.PLAYERS, 0.8F, 0.85F);
-            message(player, Component.translatable("message.robotica.warp.card_stored", clicked.pos().getX(), clicked.pos().getY(), clicked.pos().getZ()));
+            message(player, Component.translatable("message.robotica.warp.link_stored", clicked.pos().getX(), clicked.pos().getY(), clicked.pos().getZ()));
             return;
         }
         if (source.equals(clicked)) {
-            message(player, Component.translatable("message.robotica.warp.card_same"));
+            remote.remove(WarpComponents.LINK_SOURCE.get());
+            message(player, Component.translatable("message.robotica.warp.link_cleared"));
             return;
         }
         ServerLevel sourceLevel = server.getLevel(source.dimension());
         if (sourceLevel == null) {
-            card.remove(WarpComponents.LINK_SOURCE.get());
-            message(player, Component.translatable("message.robotica.warp.card_lost"));
+            remote.remove(WarpComponents.LINK_SOURCE.get());
+            message(player, Component.translatable("message.robotica.warp.link_lost"));
             return;
         }
         sourceLevel.getChunk(source.pos());
         if (!(sourceLevel.getBlockEntity(source.pos()) instanceof PortalProjectorBlockEntity first)) {
-            card.remove(WarpComponents.LINK_SOURCE.get());
-            message(player, Component.translatable("message.robotica.warp.card_lost"));
+            remote.remove(WarpComponents.LINK_SOURCE.get());
+            message(player, Component.translatable("message.robotica.warp.link_lost"));
             return;
         }
         if (!first.canUse(player)) {
-            // the card may have been filled by somebody else or the gate changed hands since
-            card.remove(WarpComponents.LINK_SOURCE.get());
-            message(player, Component.translatable("message.robotica.warp.card_not_owner", first.ownerName()));
+            // the remote may have been filled by somebody else or the projector changed hands since
+            remote.remove(WarpComponents.LINK_SOURCE.get());
+            message(player, Component.translatable("message.robotica.warp.link_not_owner", first.ownerName()));
             return;
         }
         first.claimIfUnowned(player);
@@ -424,8 +424,8 @@ public final class WarpTravel {
         GateLinks.get(server).link(source, clicked);
         first.setLinked(clicked);
         second.setLinked(source);
-        card.remove(WarpComponents.LINK_SOURCE.get());
+        remote.remove(WarpComponents.LINK_SOURCE.get());
         CoreSounds.play(player, CoreSounds.WARP_LINK, SoundSource.PLAYERS, 0.8F, 1.0F);
-        message(player, Component.translatable("message.robotica.warp.card_linked"));
+        message(player, Component.translatable("message.robotica.warp.link_done"));
     }
 }

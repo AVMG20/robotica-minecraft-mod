@@ -1,6 +1,6 @@
 package com.arno.robotica.warp.pad;
 
-import com.arno.robotica.warp.WarpRegistry;
+import net.minecraft.world.level.block.state.BlockState;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -31,7 +31,7 @@ import java.util.function.Function;
 
 /**
  * Registry of every Warp Pad of the world, stored on the overworld data storage so pads keep working while their
- * chunk is unloaded. Entries are added on placement, updated on rename / visibility / rift changes and removed when the
+ * chunk is unloaded. Entries are added on placement, updated on rename / visibility / Mk changes and removed when the
  * pad is broken. {@link #validated} drops entries whose block is missing when it can see the block.
  */
 public class WarpPads extends SavedData {
@@ -111,6 +111,11 @@ public class WarpPads extends SavedData {
         if (changed) setDirty();
     }
 
+    /** True for a Warp Pad of any Mk. */
+    public static boolean isPad(BlockState state) {
+        return state.getBlock() instanceof WarpPadBlock;
+    }
+
     /**
      * Returns the pad if it is still believed to exist. When the pad's chunk is loaded and the block is gone, the entry is
      * removed and null is returned. Pads in unloaded chunks are trusted (they are checked again on arrival).
@@ -121,7 +126,7 @@ public class WarpPads extends SavedData {
         if (rec == null) return null;
         ServerLevel level = server.getLevel(rec.dimension());
         if (level == null) return null;
-        if (level.isLoaded(rec.pos()) && !level.getBlockState(rec.pos()).is(WarpRegistry.WARP_PAD.get())) {
+        if (level.isLoaded(rec.pos()) && !isPad(level.getBlockState(rec.pos()))) {
             remove(id);
             return null;
         }

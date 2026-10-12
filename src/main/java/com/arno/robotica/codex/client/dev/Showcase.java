@@ -430,6 +430,21 @@ public final class Showcase {
             shot("09_gate_and_pad");
         }
 
+        // Scene 5b: the shared warp effect over the Mk2 pad, drawn client side: the vortex winds up, then the arrival flash.
+        if (wants("30_warp_fx")) {
+            step(20, () -> server(sp -> setFacing(sp.serverLevel(), new BlockPos(31, Y, 40), block("warp_pad_mk2"), Direction.SOUTH)));
+            camera(31.5, Y + 1.7, 44.2, 180, 14);
+            step(40, () -> {});
+            for (int i = 0; i < 30; i++) {
+                final float progress = i / 30.0F;
+                step(2, () -> com.arno.robotica.warp.WarpFxPayload.clientHandler.accept(new com.arno.robotica.warp.WarpFxPayload(
+                        com.arno.robotica.warp.WarpFxPayload.CHARGE, 31.5F, Y + 0.5F, 40.5F, progress)));
+            }
+            step(1, () -> com.arno.robotica.warp.WarpFxPayload.clientHandler.accept(new com.arno.robotica.warp.WarpFxPayload(
+                    com.arno.robotica.warp.WarpFxPayload.ARRIVE, 31.5F, Y + 0.5F, 40.5F, 1.0F)));
+            grab(2, "30_warp_fx");
+        }
+
         // Scene 6: drill HUD and area outline.
         if (wants("10_drill_hud_outline", "area_static_frame")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
@@ -661,7 +676,7 @@ public final class Showcase {
         // Warp pads: owner GUI (sneak, empty hand) and the destination list (standing on a pad, another pad exists).
         final BlockPos padA = new BlockPos(0, Y, 60);
         final BlockPos padB = new BlockPos(10, Y, 60);
-        if (wants("gui_90_warp_pad_owner", "gui_91_warp_destinations")) step(10, () -> server(sp -> {
+        if (wants("gui_90_warp_pad_owner", "gui_91_warp_destinations", "gui_92_warp_remote")) step(10, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             for (BlockPos p : new BlockPos[]{padA, padB}) {
                 setFacing(level, p, block("warp_pad"), Direction.SOUTH);
@@ -684,6 +699,24 @@ public final class Showcase {
             step(5, () -> {
                 if (mc().player != null && mc().screen != null) mc().player.closeContainer();
             });
+        }
+        if (wants("gui_92_warp_remote")) {
+            step(10, () -> server(sp -> {
+                ItemStack remote = new ItemStack(com.arno.robotica.warp.WarpRegistry.WARP_REMOTE.get());
+                for (BlockPos p : new BlockPos[]{padA, padB}) {
+                    if (sp.serverLevel().getBlockEntity(p) instanceof WarpPadBlockEntity pad) {
+                        com.arno.robotica.warp.item.RemoteTargets.add(remote, pad.ensureRegistered());
+                    }
+                }
+                com.arno.robotica.core.energy.ItemEnergy.set(remote, 450_000);
+                sp.setItemInHand(InteractionHand.MAIN_HAND, remote);
+                com.arno.robotica.warp.WarpTravel.openRemote(sp, InteractionHand.MAIN_HAND);
+            }));
+            grab(25, "gui_92_warp_remote");
+            step(5, () -> {
+                if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+            });
+            step(2, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
         }
         if (wants("gui_91_warp_destinations")) {
             step(10, () -> server(sp -> {

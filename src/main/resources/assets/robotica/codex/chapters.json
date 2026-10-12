@@ -540,14 +540,12 @@
       "pages": [
         {
           "title": "Warp",
-          "text": "Taking damage cancels a remote teleport.\nPortal Projectors work across dimensions.",
+          "text": "Taking damage cancels a teleport while it winds up.\nThe first pad a remote stores is home. Pick another with H in its list.\nUpgrading a placed pad to Mk2 keeps it in every remote.\nPortal Projectors work across dimensions.",
           "items": [
             "robotica:warp_pad",
-            "robotica:rift_upgrade",
-            "robotica:recall_remote",
-            "robotica:rift_remote",
-            "robotica:gate_controller",
-            "robotica:linking_card"
+            "robotica:warp_pad_mk2",
+            "robotica:warp_remote",
+            "robotica:gate_controller"
           ]
         }
       ]

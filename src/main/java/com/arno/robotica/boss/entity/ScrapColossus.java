@@ -438,7 +438,9 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
         super.die(source);
         if (!(level() instanceof ServerLevel server)) return;
         server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.5, getZ(), 1, 0.0, 0.0, 0.0, 0.0);
-        server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1.5, getZ(), 40, 0.8, 1.2, 0.8, 0.05);
+        server.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 1.8F), getX(), getY() + 1.5, getZ(), 20, 0.7, 0.9, 0.7, 0.4);
+        server.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.3F), getX(), getY() + 1.5, getZ(), 18, 0.6, 0.8, 0.6, 0.4);
+        server.sendParticles(com.arno.robotica.core.particle.CoreParticles.puff(com.arno.robotica.core.particle.CoreParticles.SMOKE, 3.0F), getX(), getY() + 1.5, getZ(), 16, 0.8, 1.2, 0.8, 0.05);
         playSound(SoundEvents.GENERIC_EXPLODE.value(), 2.5F, 0.7F);
         AdvancementHolder step = server.getServer().getAdvancements().get(Robotica.id("guide/colossus"));
         if (step == null) return;

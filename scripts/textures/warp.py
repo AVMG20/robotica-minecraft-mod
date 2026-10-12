@@ -1,6 +1,6 @@
 """Warp module textures: ender teal / purple tech look on dark plating.
 Run: python3 scripts/textures/warp.py
-Writes block textures (pad, Portal Projector parts, animated portal vortex and rim) and item sprites (rift upgrade, remotes, linking card).
+Writes block textures (pad, Portal Projector parts, animated portal vortex and rim) and the Warp Remote item sprite.
 Block models, blockstates, loot and recipes come from scripts/data/warp_data.py.
 """
 import json
@@ -244,37 +244,15 @@ def item_pal():
 IP = item_pal()
 
 
-def rift_upgrade():
-    """Upgrade card (same shape as the core upgrade cards): steel card, a portal ring in the window, null contacts."""
-    c = Canvas()
-    c.rect(2, 1, 12, 14, 'd')
-    c.set(13, 1, '.').set(12, 1, '.').set(13, 2, '.')                    # clipped corner
-    c.auto_shade({'d': ('c', 'e')})
-    c.recess(4, 3, 8, 6, 'Kbcde', fill='1')
-    c.rect(5, 4, 6, 4, '1').rect(5, 4, 6, 1, '2').set(5, 4, '3')
-    for dx, row in enumerate(['..vv..', '.v44u.', '.v45u.', '..uu..']):    # portal oval
-        for x, ch in enumerate(row):
-            if ch != '.':
-                c.set(5 + x, 4 + dx, ch)
-    for dy, row in enumerate(['.3...3.', '3.3.3.3', '...3...']):
-        for dx, ch in enumerate(row):
-            if ch == '3':
-                c.set(4 + dx, 10 + dy, '3')
-    for x in range(3, 13, 2):
-        c.set(x, 14, '7')
-    c.outline('k')
-    return c.rows()
-
-
-def remote(rift):
-    """Hand-held transmitter: steel body, recessed screen with a pad ring (recall, teal) or a ring split by a rift
-    slit (rift, purple), d-pad, buttons and an antenna with a glowing tip and signal arcs."""
-    glow, bright, dim, deep = ('w', 'v', 'u', 's') if not rift else ('5', '4', '3', '1')
+def remote():
+    """Hand-held transmitter: steel body, recessed screen with a teal pad ring, d-pad, buttons and an antenna with a
+    glowing purple tip (the Mk2 colour: it reaches other dimensions)."""
+    glow, bright, dim, deep = 'w', 'v', 'u', 's'
     c = Canvas()
     c.rect(2, 6, 11, 9, 'c')
     c.auto_shade({'c': ('b', 'd')})
     c.recess(3, 7, 9, 5, 'Kbcde', fill=deep)
-    glyph = ['.44544.', '4..5..4', '.44544.'] if rift else ['.44444.', '4.555.4', '.44444.']
+    glyph = ['.44444.', '4.555.4', '.44444.']
     for dy, row in enumerate(glyph):
         for dx, ch in enumerate(row):
             if ch != '.':
@@ -285,40 +263,21 @@ def remote(rift):
     c.set(8, 13, bright).set(9, 13, glow).set(10, 13, dim)               # buttons
     for x, y in ((11, 5), (12, 4)):                                      # antenna
         c.set(x, y, 'd')
-    c.set(13, 2, glow).set(13, 3, bright).set(14, 2, bright).set(14, 3, dim)    # tip
-    c.outline('k')
-    return c.rows()
-
-
-def linking_card():
-    """Key card: null purple body with a dark stripe, a chain link (teal and white loops) and a brass contact chip."""
-    c = Canvas()
-    c.rect(1, 3, 14, 10, '3')
-    c.auto_shade({'3': ('2', '4')})
-    c.rect(2, 4, 12, 2, '1').rect(2, 4, 12, 1, 'K').rect(2, 5, 12, 1, '2')    # magnetic stripe
-    c.set(2, 6, '4')
-    for x in range(5, 9):                                               # left loop, teal
-        c.set(x, 7, 'v').set(x, 10, 'u')
-    c.set(4, 8, 'v').set(4, 9, 'v').set(8, 8, 'u').set(8, 9, 'u')
-    for x in range(8, 12):                                              # right loop, steel
-        c.set(x, 7, 'e').set(x, 10, 'c')
-    c.set(7, 8, 'd').set(7, 9, 'c').set(12, 8, 'd').set(12, 9, 'c')
-    c.set(8, 7, 'v').set(7, 10, 'c')                                    # weave
-    c.rect(2, 11, 3, 1, '7').set(2, 11, '8').rect(11, 11, 3, 1, '2')    # chip, serial bar
+    c.set(13, 2, '5').set(13, 3, '4').set(14, 2, '4').set(14, 3, '3')    # tip
     c.outline('k')
     return c.rows()
 
 
 def main():
     write_block('warp_pad_top', pad_top(False), P)
-    write_block('warp_pad_rift_top', pad_top(True), P)
+    write_block('warp_pad_mk2_top', pad_top(True), P)
     write_block('warp_pad_side', pad_side(False), P)
-    write_block('warp_pad_rift_side', pad_side(True), P)
-    for rift, name in ((False, 'warp_pad'), (True, 'warp_pad_rift')):
+    write_block('warp_pad_mk2_side', pad_side(True), P)
+    for rift, name in ((False, 'warp_pad'), (True, 'warp_pad_mk2')):
         write_anim('block', f'{name}_top_glow', [pad_top_glow(rift, i) for i in range(16)], P, frametime=2)
         write_block(f'{name}_side_glow', pad_side_glow(rift).rows(), P)
     write_block('warp_pad_base', pad_base(), P)
-    write_block('warp_pad_rift_stud', rift_stud(), P)
+    write_block('warp_pad_mk2_stud', rift_stud(), P)
     write_block('projector_side', projector_side(), P)
     write_block('projector_top', projector_top(), P)
     write_block('projector_side_glow', projector_side_glow().rows(), P)
@@ -327,10 +286,7 @@ def main():
     write_block('projector_fin', projector_fin(False), P)
     write_block('projector_fin_on', projector_fin(True), P)
     write_portal()
-    write_item('rift_upgrade', rift_upgrade(), IP)
-    write_item('recall_remote', remote(False), IP)
-    write_item('rift_remote', remote(True), IP)
-    write_item('linking_card', linking_card(), IP)
+    write_item('warp_remote', remote(), IP)
     print('warp textures written')
 
 

@@ -3,8 +3,8 @@
   "category": "misc",
   "pattern": [
     "BQB",
-    "EME",
-    " P "
+    "MWP",
+    "E E"
   ],
   "key": {
     "B": {
@@ -13,18 +13,21 @@
     "Q": {
       "item": "robotica:quantum_circuit"
     },
-    "E": {
-      "tag": "c:ender_pearls"
-    },
     "M": {
       "item": "robotica:magma_core"
     },
+    "W": {
+      "item": "robotica:warp_pad"
+    },
     "P": {
       "item": "robotica:plasma_actuator"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
     }
   },
   "result": {
-    "id": "robotica:rift_upgrade",
+    "id": "robotica:warp_pad_mk2",
     "count": 1
   }
 }

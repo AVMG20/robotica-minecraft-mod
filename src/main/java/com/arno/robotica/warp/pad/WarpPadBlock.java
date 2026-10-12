@@ -1,17 +1,16 @@
 package com.arno.robotica.warp.pad;
 
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.particle.CoreParticles;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.WarpTravel;
-import com.arno.robotica.warp.item.RiftUpgradeItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -26,8 +25,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -36,21 +33,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Warp Pad (Age 2): a slab-height block. Right-click while standing on it opens the destination list, sneak-right-click
- * with an empty hand opens the owner GUI (rename, public / private), a Rift Upgrade in hand installs the upgrade.
+ * Warp Pad Mk1 (Age 1) and Mk2 (Age 3, also other dimensions): a slab-height block. Right-click while standing on it
+ * opens the destination list, sneak-right-click with an empty hand opens the owner GUI (rename, public / private). A
+ * Mk2 pad in hand upgrades a placed Mk1 in place and keeps its name, owner, energy and every remote that stores it.
  */
 public class WarpPadBlock extends Block implements EntityBlock {
-    public static final BooleanProperty RIFT = BooleanProperty.create("rift");
     private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 8, 16);
 
-    public WarpPadBlock(Properties props) {
+    private final boolean mk2;
+
+    public WarpPadBlock(Properties props, boolean mk2) {
         super(props);
-        registerDefaultState(stateDefinition.any().setValue(RIFT, false));
+        this.mk2 = mk2;
     }
 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(RIFT);
+    public boolean isMk2() {
+        return mk2;
     }
 
     @Override
@@ -96,57 +94,70 @@ public class WarpPadBlock extends Block implements EntityBlock {
         return InteractionResult.CONSUME;
     }
 
+    /** A Warp Pad Mk2 in hand on a placed Mk1: upgrade in place. */
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (!(stack.getItem() instanceof RiftUpgradeItem)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (mk2 || !stack.is(WarpRegistry.WARP_PAD_MK2_ITEM.get())) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (!player.mayBuild() || !level.mayInteract(player, pos)) return ItemInteractionResult.FAIL;
         if (level.isClientSide) return ItemInteractionResult.SUCCESS;
         if (!(player instanceof ServerPlayer serverPlayer) || !(level.getBlockEntity(pos) instanceof WarpPadBlockEntity pad)) {
             return ItemInteractionResult.FAIL;
-        }
-        if (state.getValue(RIFT)) {
-            WarpTravel.message(serverPlayer, Component.translatable("message.robotica.warp.rift_installed"));
-            return ItemInteractionResult.CONSUME;
         }
         if (!pad.canEdit(player)) {
             WarpTravel.message(serverPlayer, Component.translatable("message.robotica.warp.not_owner", pad.ownerName()));
             return ItemInteractionResult.CONSUME;
         }
-        level.setBlock(pos, state.setValue(RIFT, true), Block.UPDATE_ALL);
-        pad.ensureRegistered();
-        if (!player.getAbilities().instabuild) stack.shrink(1);
-        CoreSounds.play(level, pos, CoreSounds.WARP_RIFT, SoundSource.BLOCKS, 1.0F, 1.0F);
-        WarpTravel.message(serverPlayer, Component.translatable("message.robotica.warp.rift_done", pad.padName()));
+        if (upgradeInPlace(level, pos)) {
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+                ItemStack back = new ItemStack(WarpRegistry.WARP_PAD_ITEM.get());
+                if (!player.getInventory().add(back)) player.drop(back, false);
+            }
+            WarpTravel.message(serverPlayer, Component.translatable("message.robotica.warp.upgraded", pad.padName()));
+        }
         return ItemInteractionResult.CONSUME;
+    }
+
+    /** Swaps the Mk1 pad at {@code pos} for a Mk2 and keeps its identity, owner, name, visibility and energy. */
+    public static boolean upgradeInPlace(Level level, BlockPos pos) {
+        if (!(level.getBlockEntity(pos) instanceof WarpPadBlockEntity old)) return false;
+        CompoundTag saved = old.saveWithoutMetadata(level.registryAccess());
+        if (!level.setBlock(pos, WarpRegistry.WARP_PAD_MK2.get().defaultBlockState(), Block.UPDATE_ALL)) return false;
+        if (level.getBlockEntity(pos) instanceof WarpPadBlockEntity fresh) {
+            fresh.loadCustomOnly(saved, level.registryAccess());
+            fresh.setChanged();
+            fresh.ensureRegistered();
+        }
+        CoreSounds.play(level, pos, CoreSounds.WARP_RIFT, SoundSource.BLOCKS, 1.0F, 1.0F);
+        return true;
     }
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())) {
-            if (level.getBlockEntity(pos) instanceof WarpPadBlockEntity pad && !level.isClientSide) {
-                java.util.UUID id = pad.padId();
-                if (id != null && level.getServer() != null) WarpPads.get(level.getServer()).remove(id);
-                if (state.getValue(RIFT)) {
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, new ItemStack(WarpRegistry.RIFT_UPGRADE.get()));
-                }
-            }
+        if (!state.is(newState.getBlock()) && !level.isClientSide && level.getServer() != null
+                && level.getBlockEntity(pos) instanceof WarpPadBlockEntity pad) {
+            java.util.UUID id = pad.padId();
+            if (id != null) WarpPads.get(level.getServer()).remove(id);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
+    /** Client only: now and then a faint mote rises from the pad surface. */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (random.nextInt(4) != 0) return;
-        double x = pos.getX() + 0.15 + random.nextDouble() * 0.7;
-        double z = pos.getZ() + 0.15 + random.nextDouble() * 0.7;
-        level.addParticle(state.getValue(RIFT) ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.ELECTRIC_SPARK,
-                x, pos.getY() + 0.55, z, 0.0, 0.04, 0.0);
+        if (random.nextInt(6) != 0) return;
+        double x = pos.getX() + 0.2 + random.nextDouble() * 0.6;
+        double z = pos.getZ() + 0.2 + random.nextDouble() * 0.6;
+        level.addParticle(CoreParticles.mote(mk2 ? CoreParticles.WARP_VIOLET : CoreParticles.WARP_CYAN, 0.6F),
+                x, pos.getY() + 0.55, z, 0.0, 0.015, 0.0);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.age", 1, Component.translatable("age.robotica.1")).withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.warp_pad").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.warp_pad_use").withStyle(ChatFormatting.DARK_GRAY));
+        int age = mk2 ? 3 : 1;
+        tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age)).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable(mk2 ? "tooltip.robotica.warp_pad_mk2" : "tooltip.robotica.warp_pad").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable(mk2 ? "tooltip.robotica.warp_pad_mk2_use" : "tooltip.robotica.warp_pad_use").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

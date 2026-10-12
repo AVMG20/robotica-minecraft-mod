@@ -6,7 +6,6 @@ import com.arno.robotica.gear.GearConfig;
 import com.arno.robotica.gear.entity.RivetEntity;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.core.module.Modules;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -79,11 +78,11 @@ public class RivetGunItem extends EnergyWeaponItem {
         Vec3 own = player.getEyePosition().add(look.scale(1.8)).add(side.scale(0.3)).add(0, -0.3, 0);
         for (ServerPlayer viewer : level.players()) {
             if (viewer == player) {
-                level.sendParticles(viewer, ParticleTypes.ELECTRIC_SPARK, false, own.x, own.y, own.z, 3, 0.03, 0.03, 0.03, 0.08);
+                level.sendParticles(viewer, com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 0.8F), false, own.x, own.y, own.z, 3, 0.03, 0.03, 0.03, 0.08);
             } else if (viewer.distanceToSqr(player) < 64 * 64) {
-                level.sendParticles(viewer, ParticleTypes.SMALL_FLAME, false, held.x, held.y, held.z, 2, 0.03, 0.03, 0.03, 0.02);
-                level.sendParticles(viewer, ParticleTypes.ELECTRIC_SPARK, false, held.x, held.y, held.z, 4, 0.05, 0.05, 0.05, 0.12);
-                level.sendParticles(viewer, ParticleTypes.SMOKE, false, held.x, held.y, held.z, 2, 0.03, 0.03, 0.03, 0.01);
+                level.sendParticles(viewer, com.arno.robotica.core.particle.CoreParticles.flash(com.arno.robotica.core.particle.CoreParticles.EMBER, 0.5F), false, held.x, held.y, held.z, 1, 0, 0, 0, 0);
+                level.sendParticles(viewer, com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 0.8F), false, held.x, held.y, held.z, 4, 0.05, 0.05, 0.05, 0.12);
+                level.sendParticles(viewer, com.arno.robotica.core.particle.CoreParticles.puff(com.arno.robotica.core.particle.CoreParticles.SMOKE, 0.6F), false, held.x, held.y, held.z, 2, 0.03, 0.03, 0.03, 0.01);
             }
         }
     }

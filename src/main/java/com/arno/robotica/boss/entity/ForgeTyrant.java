@@ -648,8 +648,10 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
         syncSpots();
         if (!(level() instanceof ServerLevel server)) return;
         server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.5, getZ(), 1, 0.0, 0.0, 0.0, 0.0);
-        server.sendParticles(ParticleTypes.LAVA, getX(), getY() + 1.5, getZ(), 30, 0.8, 1.0, 0.8, 0.0);
-        server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1.5, getZ(), 40, 0.8, 1.2, 0.8, 0.05);
+        server.sendParticles(ParticleTypes.LAVA, getX(), getY() + 1.5, getZ(), 20, 0.8, 1.0, 0.8, 0.0);
+        server.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.4F), getX(), getY() + 1.5, getZ(), 24, 0.6, 0.8, 0.6, 0.45);
+        server.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(0x6E5E54, 1.6F), getX(), getY() + 1.5, getZ(), 14, 0.6, 0.8, 0.6, 0.35);
+        server.sendParticles(com.arno.robotica.core.particle.CoreParticles.puff(com.arno.robotica.core.particle.CoreParticles.SMOKE, 3.0F), getX(), getY() + 1.5, getZ(), 16, 0.8, 1.2, 0.8, 0.05);
         playSound(SoundEvents.GENERIC_EXPLODE.value(), 2.5F, 0.6F);
         AdvancementHolder step = server.getServer().getAdvancements().get(Robotica.id("guide/tyrant"));
         if (step == null) return;

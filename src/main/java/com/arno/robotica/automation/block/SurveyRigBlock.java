@@ -25,7 +25,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -58,9 +57,9 @@ public class SurveyRigBlock extends AreaWorkerBlock {
     /** Sparks around the receiver while the rig works (client side, random display ticks). */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (!state.getValue(LIT) || random.nextInt(4) != 0) return;
-        level.addParticle(ParticleTypes.ELECTRIC_SPARK, pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.3, pos.getY() + 1.2,
-                pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.02, 0.0);
+        if (!state.getValue(LIT) || random.nextInt(8) != 0) return;
+        level.addParticle(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.6F), pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.3, pos.getY() + 1.2,
+                pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.0, 0.0);
     }
 
     @Override

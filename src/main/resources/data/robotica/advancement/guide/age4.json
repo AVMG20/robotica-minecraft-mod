@@ -52,7 +52,6 @@
       "robotica:accelerator_segment",
       "robotica:farm_kit_mk4",
       "robotica:gate_controller",
-      "robotica:linking_card",
       "robotica:capacitor_ender",
       "robotica:sonar_pulse_module_3",
       "robotica:jet_assist_module_3",

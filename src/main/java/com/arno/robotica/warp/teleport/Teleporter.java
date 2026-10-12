@@ -1,15 +1,13 @@
 package com.arno.robotica.warp.teleport;
 
-import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.warp.WarpFxPayload;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.status.ChunkType;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
@@ -153,16 +151,13 @@ public final class Teleporter {
 
     // ---- Effects ----
 
-    /** Ender sound and particles around an entity position. */
+    /** Flash and collapsing vortex where the traveller left (see {@link WarpFxPayload}). */
     public static void departEffects(ServerLevel level, Vec3 pos, boolean quiet) {
-        level.sendParticles(ParticleTypes.PORTAL, pos.x, pos.y + 1.0, pos.z, 40, 0.3, 0.8, 0.3, 0.2);
-        CoreSounds.play(level, pos.x, pos.y, pos.z, quiet ? CoreSounds.TELEPORT_QUIET_DEPART : CoreSounds.TELEPORT_DEPART, SoundSource.PLAYERS,
-                1.0F, 1.0F);
+        WarpFxPayload.depart(level, pos.x, pos.y, pos.z, quiet);
     }
 
+    /** Flash and unwinding vortex where the traveller arrived. */
     public static void arriveEffects(ServerLevel level, Vec3 pos, boolean quiet) {
-        level.sendParticles(ParticleTypes.REVERSE_PORTAL, pos.x, pos.y + 1.0, pos.z, 40, 0.3, 0.8, 0.3, 0.1);
-        CoreSounds.play(level, pos.x, pos.y, pos.z, quiet ? CoreSounds.TELEPORT_QUIET_ARRIVE : CoreSounds.TELEPORT_ARRIVE, SoundSource.PLAYERS,
-                1.0F, 1.0F);
+        WarpFxPayload.arrive(level, pos.x, pos.y, pos.z, quiet);
     }
 }

@@ -9,7 +9,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /**
  * Common (both sides) entry point of the warp module.
- * Warp Pad, Rift Upgrade, Recall / Rift Remote, Portal Projector (registry id gate_controller), Linking Card.
+ * Warp Pad Mk1 / Mk2, Warp Remote, Portal Projector (registry id gate_controller).
  */
 public final class WarpModule {
     private WarpModule() {}

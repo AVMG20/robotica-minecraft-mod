@@ -104,7 +104,7 @@
   "advancements.robotica.guide.tyrant.title": "Quenched",
   "advancements.robotica.guide.tyrant.description": "Summon and beat the Forge Tyrant.",
   "advancements.robotica.guide.magma_core.title": "Hot Core",
-  "advancements.robotica.guide.magma_core.description": "Get a Magma Core: Magma Drill, Arc Blade, Rift Upgrade, Age 3 mobs in the replicator.",
+  "advancements.robotica.guide.magma_core.description": "Get a Magma Core: Magma Drill, Arc Blade, Warp Pad Mk2, Age 3 mobs in the replicator.",
   "advancements.robotica.guide.magma_drill.title": "Smelt as You Go",
   "advancements.robotica.guide.magma_drill.description": "Smith a Magma Drill. Turn on auto-smelt in its settings.",
   "advancements.robotica.guide.exo_mk3.title": "Blazing Frame",
@@ -124,5 +124,5 @@
   "advancements.robotica.guide.exo_mk4.title": "Null Frame",
   "advancements.robotica.guide.exo_mk4.description": "Smith an Exo piece to Mk4.",
   "advancements.robotica.guide.portal.title": "Through the Lens",
-  "advancements.robotica.guide.portal.description": "Link two Portal Projectors with a Linking Card and step through the portal."
+  "advancements.robotica.guide.portal.description": "Link two Portal Projectors with a Warp Remote and step through the portal."
 }

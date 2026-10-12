@@ -14,27 +14,27 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Pad list of a Rift Remote held in {@code hand}. No slots. The list is built on the server when the GUI opens; travel
- * and forget requests are payloads that the server checks against the remote again.
+ * Pad list of a Warp Remote held in {@code hand}. No slots. The list is built on the server when the GUI opens; travel,
+ * home and forget requests are payloads that the server checks against the remote again.
  */
-public class RiftRemoteMenu extends MachineMenu {
+public class RemoteMenu extends MachineMenu {
     private final InteractionHand hand;
-    private final List<RiftEntry> entries;
+    private final List<RemoteEntry> entries;
     private final int energyIndex;
     private final int capacityIndex;
 
     /** Client side, from the opening buffer (see {@link #writeOpenData}). */
-    public RiftRemoteMenu(int id, Inventory inv, FriendlyByteBuf buf) {
+    public RemoteMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv, buf.readEnum(InteractionHand.class), readEntries(buf), false);
     }
 
     /** Server side. */
-    public RiftRemoteMenu(int id, Inventory inv, InteractionHand hand, List<RiftEntry> entries) {
+    public RemoteMenu(int id, Inventory inv, InteractionHand hand, List<RemoteEntry> entries) {
         this(id, inv, hand, entries, true);
     }
 
-    private RiftRemoteMenu(int id, Inventory inv, InteractionHand hand, List<RiftEntry> entries, boolean server) {
-        super(WarpRegistry.RIFT_REMOTE_MENU.get(), id);
+    private RemoteMenu(int id, Inventory inv, InteractionHand hand, List<RemoteEntry> entries, boolean server) {
+        super(WarpRegistry.REMOTE_MENU.get(), id);
         this.hand = hand;
         this.entries = new ArrayList<>(entries);
         Player player = inv.player;
@@ -42,16 +42,16 @@ public class RiftRemoteMenu extends MachineMenu {
         capacityIndex = track(server ? () -> ItemEnergy.capacity(player.getItemInHand(hand)) : () -> 0);
     }
 
-    public static void writeOpenData(FriendlyByteBuf buf, InteractionHand hand, List<RiftEntry> entries) {
+    public static void writeOpenData(FriendlyByteBuf buf, InteractionHand hand, List<RemoteEntry> entries) {
         buf.writeEnum(hand);
         buf.writeVarInt(entries.size());
-        for (RiftEntry entry : entries) entry.write(buf);
+        for (RemoteEntry entry : entries) entry.write(buf);
     }
 
-    private static List<RiftEntry> readEntries(FriendlyByteBuf buf) {
+    private static List<RemoteEntry> readEntries(FriendlyByteBuf buf) {
         int n = Math.min(buf.readVarInt(), 64);
-        List<RiftEntry> list = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) list.add(RiftEntry.read(buf));
+        List<RemoteEntry> list = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) list.add(RemoteEntry.read(buf));
         return list;
     }
 
@@ -59,13 +59,23 @@ public class RiftRemoteMenu extends MachineMenu {
         return hand;
     }
 
-    public List<RiftEntry> entries() {
+    public List<RemoteEntry> entries() {
         return entries;
     }
 
     /** Client side: drops a row right away, the server removes it from the remote. */
     public void forgetLocally(UUID id) {
         entries.removeIf(e -> e.id().equals(id));
+    }
+
+    /** Client side: moves a row to the top right away, the server makes it home on the remote. */
+    public void homeLocally(UUID id) {
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i).id().equals(id)) {
+                entries.add(0, entries.remove(i));
+                return;
+            }
+        }
     }
 
     public int energy() {
@@ -83,6 +93,6 @@ public class RiftRemoteMenu extends MachineMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return player.isAlive() && player.getItemInHand(hand).is(WarpRegistry.RIFT_REMOTE.get());
+        return player.isAlive() && player.getItemInHand(hand).is(WarpRegistry.WARP_REMOTE.get());
     }
 }

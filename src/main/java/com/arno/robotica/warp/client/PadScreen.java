@@ -87,10 +87,10 @@ public class PadScreen extends MachineScreen<PadMenu> {
         addTooltip(x + imageWidth - 80, y + 4, 72, 11, Component.translatable("gui.robotica.warp.owner", owner));
         drawLabel(g, Component.translatable(menu.isPublic() ? "gui.robotica.warp.public_short" : "gui.robotica.warp.private_short"), x + 62, y + 48, 60);
         drawSlot(g, x + 31, y + 43);
-        ItemStack rift = icon("rift_upgrade");
-        if (menu.hasRift()) g.renderItem(rift, x + 32, y + 44);
-        else drawGhost(g, rift, x + 32, y + 44);
-        addTooltip(x + 31, y + 43, 18, 18, Component.translatable(menu.hasRift() ? "gui.robotica.warp.rift_on" : "gui.robotica.warp.rift_off"));
+        ItemStack mk2 = icon("warp_pad_mk2");
+        if (menu.isMk2()) g.renderItem(mk2, x + 32, y + 44);
+        else drawGhost(g, mk2, x + 32, y + 44);
+        addTooltip(x + 31, y + 43, 18, 18, Component.translatable(menu.isMk2() ? "gui.robotica.warp.mk2_on" : "gui.robotica.warp.mk2_off"));
         drawEnergyBarWide(g, x + 8, y + 70, 160, 11, menu.energy(), com.arno.robotica.warp.WarpConfig.padBuffer());
     }
 }

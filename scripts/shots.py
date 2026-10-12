@@ -23,6 +23,7 @@ SHOTS = {
     '07_robots': ('07_robots.png', 'scene'),
     '08_replicator': ('08_replicator.png', 'scene'),
     '09_gate_and_pad': ('09_gate_and_pad.png', 'scene'),
+    '30_warp_fx': ('30_warp_fx.png', 'scene'),
     '10_drill_hud_outline': ('10_drill_hud_outline.png', 'scene'),
     '11_tesla_network': ('11_tesla_network.png', 'scene'),
     '12_scrap_colossus': ('12_scrap_colossus.png', 'scene'),

@@ -2,13 +2,13 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "top": "robotica:block/warp_pad_rift_top",
-    "side": "robotica:block/warp_pad_rift_side",
-    "top_glow": "robotica:block/warp_pad_rift_top_glow",
-    "side_glow": "robotica:block/warp_pad_rift_side_glow",
+    "top": "robotica:block/warp_pad_mk2_top",
+    "side": "robotica:block/warp_pad_mk2_side",
+    "top_glow": "robotica:block/warp_pad_mk2_top_glow",
+    "side_glow": "robotica:block/warp_pad_mk2_side_glow",
     "base": "robotica:block/warp_pad_base",
-    "particle": "robotica:block/warp_pad_rift_side",
-    "stud": "robotica:block/warp_pad_rift_stud"
+    "particle": "robotica:block/warp_pad_mk2_side",
+    "stud": "robotica:block/warp_pad_mk2_stud"
   },
   "elements": [
     {

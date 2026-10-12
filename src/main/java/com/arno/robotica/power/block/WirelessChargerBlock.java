@@ -6,7 +6,6 @@ import com.arno.robotica.power.PowerRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -74,19 +73,19 @@ public class WirelessChargerBlock extends PowerBlock {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (!state.getValue(LIT) || !PowerClientConfig.teslaParticles()) return;
-        if (random.nextInt(3) == 0) {
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.3, pos.getY() + 1.25,
-                    pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.03, 0.0);
+        if (random.nextInt(8) == 0) {
+            level.addParticle(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.6F), pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.3, pos.getY() + 1.25,
+                    pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.02, 0.0);
         }
         if (!(level.getBlockEntity(pos) instanceof WirelessChargerBlockEntity be)) return;
         int[] ids = be.targetIds();
         byte[] states = be.targetStates();
         for (int i = 0; i < ids.length && i < states.length; i++) {
-            if (states[i] != WirelessChargerBlockEntity.CHARGING || random.nextInt(2) != 0) continue;
+            if (states[i] != WirelessChargerBlockEntity.CHARGING || random.nextInt(4) != 0) continue;
             Entity target = level.getEntity(ids[i]);
             if (target == null) continue;
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, target.getX() + (random.nextDouble() - 0.5) * 0.6,
-                    target.getY() + 0.4 + random.nextDouble() * 1.2, target.getZ() + (random.nextDouble() - 0.5) * 0.6, 0.0, 0.0, 0.0);
+            level.addParticle(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.6F), target.getX() + (random.nextDouble() - 0.5) * 0.6,
+                    target.getY() + 0.4 + random.nextDouble() * 1.2, target.getZ() + (random.nextDouble() - 0.5) * 0.6, 0.0, 0.02, 0.0);
         }
     }
 

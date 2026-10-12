@@ -186,16 +186,18 @@ final class ExoFx {
             }
             case ExoFxPayload.SHIELD_FULL -> {
                 ring(id, level.getGameTime(), 7, 0.45F, 1.35F, 1.0F, 0xA8F0FF, 0.9F);
+                var spark = com.arno.robotica.core.particle.CoreParticles.spark(0xA8F0FF, 0.9F);
                 for (int i = 0; i < 10; i++) {
                     float a = i * Mth.TWO_PI / 10;
-                    level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + Mth.cos(a) * 0.6, y + 1.0, z + Mth.sin(a) * 0.6,
-                            Mth.cos(a) * 0.12, 0.02, Mth.sin(a) * 0.12);
+                    level.addParticle(spark, x + Mth.cos(a) * 0.6, y + 1.0, z + Mth.sin(a) * 0.6,
+                            Mth.cos(a) * 0.14, 0.08, Mth.sin(a) * 0.14);
                 }
             }
             case ExoFxPayload.SHIELD_PARTIAL -> {
-                for (int i = 0; i < 4; i++) {
-                    level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + (r.nextDouble() - 0.5) * 0.8, y + 0.7 + r.nextDouble() * 0.7,
-                            z + (r.nextDouble() - 0.5) * 0.8, (r.nextDouble() - 0.5) * 0.1, 0.03, (r.nextDouble() - 0.5) * 0.1);
+                var zap = com.arno.robotica.core.particle.CoreParticles.zap(0xA8F0FF, 1.0F);
+                for (int i = 0; i < 3; i++) {
+                    level.addParticle(zap, x + (r.nextDouble() - 0.5) * 0.8, y + 0.7 + r.nextDouble() * 0.7,
+                            z + (r.nextDouble() - 0.5) * 0.8, 0, 0, 0);
                 }
             }
             default -> {}

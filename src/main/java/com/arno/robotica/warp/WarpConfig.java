@@ -14,12 +14,12 @@ public final class WarpConfig {
 
     private static final ModConfigSpec.IntValue PAD_BASE_COST;
     private static final ModConfigSpec.IntValue PAD_COST_PER_BLOCK;
-    private static final ModConfigSpec.IntValue PAD_RIFT_COST;
+    private static final ModConfigSpec.IntValue PAD_CROSS_COST;
     private static final ModConfigSpec.IntValue PAD_BUFFER;
     private static final ModConfigSpec.IntValue PAD_MAX_RECEIVE;
     private static final ModConfigSpec.IntValue PAD_TRAVEL_COOLDOWN;
     private static final ModConfigSpec.IntValue REMOTE_COST;
-    private static final ModConfigSpec.IntValue RIFT_REMOTE_COST;
+    private static final ModConfigSpec.IntValue REMOTE_CROSS_COST;
     private static final ModConfigSpec.IntValue REMOTE_COOLDOWN_SECONDS;
     private static final ModConfigSpec.IntValue GATE_BUFFER;
     private static final ModConfigSpec.IntValue GATE_MAX_RECEIVE;
@@ -34,8 +34,8 @@ public final class WarpConfig {
                 .defineInRange("padBaseCost", 5_000, 0, 100_000_000);
         PAD_COST_PER_BLOCK = b.comment("Extra FE per block of distance.")
                 .defineInRange("padCostPerBlock", 20, 0, 1_000_000);
-        PAD_RIFT_COST = b.comment("Flat FE for a trip to another dimension (needs the Rift Upgrade on the departure pad).")
-                .defineInRange("padRiftCost", 100_000, 0, 1_000_000_000);
+        PAD_CROSS_COST = b.comment("Flat FE for a trip to another dimension (needs a Warp Pad Mk2 to leave from).")
+                .defineInRange("padCrossCost", 100_000, 0, 1_000_000_000);
         PAD_BUFFER = b.comment("FE buffer of a Warp Pad.")
                 .defineInRange("padBuffer", 1_000_000, 1_000, 1_000_000_000);
         PAD_MAX_RECEIVE = b.comment("FE per tick a Warp Pad accepts from cables and other mods.")
@@ -44,10 +44,10 @@ public final class WarpConfig {
                 .defineInRange("padTravelCooldown", 40, 0, 72_000);
         b.pop();
         b.push("warp_remote");
-        REMOTE_COST = b.comment("FE per Recall Remote trip (also Rift Remote trips inside one dimension).")
+        REMOTE_COST = b.comment("FE per Warp Remote trip inside one dimension.")
                 .defineInRange("remoteCost", 20_000, 0, 100_000_000);
-        RIFT_REMOTE_COST = b.comment("FE per Rift Remote trip to another dimension.")
-                .defineInRange("riftRemoteCost", 150_000, 0, 1_000_000_000);
+        REMOTE_CROSS_COST = b.comment("FE per Warp Remote trip to a Warp Pad Mk2 in another dimension.")
+                .defineInRange("remoteCrossCost", 150_000, 0, 1_000_000_000);
         REMOTE_COOLDOWN_SECONDS = b.comment("Seconds a player has to wait between two remote trips.")
                 .defineInRange("remoteCooldownSeconds", 30, 0, 3_600);
         b.pop();
@@ -76,12 +76,12 @@ public final class WarpConfig {
 
     public static int padBaseCost() { return fe(PAD_BASE_COST); }
     public static int padCostPerBlock() { return fe(PAD_COST_PER_BLOCK); }
-    public static int padRiftCost() { return fe(PAD_RIFT_COST); }
+    public static int padCrossCost() { return fe(PAD_CROSS_COST); }
     public static int padBuffer() { return get(PAD_BUFFER); }
     public static int padMaxReceive() { return get(PAD_MAX_RECEIVE); }
     public static int padTravelCooldown() { return get(PAD_TRAVEL_COOLDOWN); }
     public static int remoteCost() { return fe(REMOTE_COST); }
-    public static int riftRemoteCost() { return fe(RIFT_REMOTE_COST); }
+    public static int remoteCrossCost() { return fe(REMOTE_CROSS_COST); }
     public static int remoteCooldownTicks() { return get(REMOTE_COOLDOWN_SECONDS) * 20; }
     public static int gateBuffer() { return get(GATE_BUFFER); }
     public static int gateMaxReceive() { return get(GATE_MAX_RECEIVE); }

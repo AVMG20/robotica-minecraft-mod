@@ -541,43 +541,49 @@
   },
   {
    "items": [
-    "warp_pad"
+    "warp_pad",
+    "warp_pad_mk2"
    ],
-   "what": "Teleport pad: travel to any of your pads, or public ones.",
+   "what": "Teleport pad: travel to any of your pads, or public ones. Mk2 also travels to other dimensions.",
    "use": [
     "Place and name it.",
-    "Stand on it, right-click, pick a destination."
+    "Stand on it, right-click, pick a destination.",
+    "Right-click a placed pad with a Mk2 to upgrade it."
    ],
    "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
     "rows": [
      [
       "Cost",
-      "5,000 FE + 20 FE per block"
-     ],
-     [
-      "Buffer",
-      "1,000,000 FE"
+      "5,000 FE + 20 FE per block",
+      "same"
      ],
      [
       "Other dimensions",
-      "with a [[rift_upgrade]]: 100,000 FE"
+      "-",
+      "100,000 FE"
+     ],
+     [
+      "Buffer",
+      "1,000,000 FE",
+      "1,000,000 FE"
      ]
     ]
-   }
+   },
+   "image": "shots/30_warp_fx.jpg|Arriving on a Warp Pad Mk2"
   },
   {
    "items": [
-    "rift_upgrade"
+    "warp_remote"
    ],
-   "what": "Lets a Warp Pad jump between dimensions."
-  },
-  {
-   "items": [
-    "recall_remote"
-   ],
-   "what": "Hold right-click 3 s to go home to its bound pad. Getting hit cancels.",
+   "what": "Stores up to 10 Warp Pads. Hold right-click 3 s to go home, or pick a pad from its list. Also links Portal Projectors.",
    "use": [
-    "Sneak-right-click a Warp Pad to bind it."
+    "Sneak-right-click pads to store them. The first is home.",
+    "Sneak-right-click the air: pad list.",
+    "Sneak-right-click two Portal Projectors to link them."
    ],
    "stats": {
     "rows": [
@@ -586,34 +592,12 @@
       "20,000 FE"
      ],
      [
+      "Other dimensions",
+      "150,000 FE, Mk2 pads only"
+     ],
+     [
       "Cooldown",
       "30 s"
-     ],
-     [
-      "Range",
-      "same dimension"
-     ]
-    ]
-   }
-  },
-  {
-   "items": [
-    "rift_remote"
-   ],
-   "what": "Stores up to 10 Warp Pads in a list and works across dimensions.",
-   "use": [
-    "Sneak-right-click pads to add them.",
-    "Right-click: pick a pad from the list."
-   ],
-   "stats": {
-    "rows": [
-     [
-      "Cost",
-      "150,000 FE"
-     ],
-     [
-      "Pads",
-      "10"
      ]
     ]
    }
@@ -624,7 +608,7 @@
    ],
    "what": "Portal Projector: throws a floating portal to its linked projector, in any dimension.",
    "use": [
-    "Link two with a [[linking_card]].",
+    "Link two with a [[warp_remote]].",
     "Power both and walk through."
    ],
    "stats": {
@@ -643,12 +627,6 @@
      ]
     ]
    }
-  },
-  {
-   "items": [
-    "linking_card"
-   ],
-   "what": "Links two Portal Projectors: sneak-right-click A, then B."
   },
   {
    "items": [

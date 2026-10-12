@@ -328,7 +328,8 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         if (level instanceof ServerLevel sl && center != null) {
             CoreSounds.play(sl, center, CoreSounds.CORE_BURNOUT, SoundSource.BLOCKS, 1.4F, 0.8F);
             sl.sendParticles(ParticleTypes.EXPLOSION, center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, 1, 0, 0, 0, 0);
-            sl.sendParticles(ParticleTypes.LARGE_SMOKE, center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, 30, 0.6, 0.6, 0.6, 0.02);
+            sl.sendParticles(com.arno.robotica.core.particle.CoreParticles.puff(com.arno.robotica.core.particle.CoreParticles.SMOKE, 2.5F), center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, 16, 0.6, 0.6, 0.6, 0.03);
+            sl.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.2F), center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, 14, 0.4, 0.4, 0.4, 0.3);
             var player = com.arno.robotica.core.progress.Milestones.nearbyOwner(sl, worldPosition, owner(), 64);
             if (player != null) player.displayClientMessage(Component.translatable("message.robotica.core_burned_out", activeCore.getHoverName()), true);
         }

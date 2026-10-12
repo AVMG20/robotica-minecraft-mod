@@ -2,7 +2,6 @@ package com.arno.robotica.energy.block;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
@@ -53,14 +52,14 @@ public class SpireCrownBlock extends Block {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (!state.getValue(LIT)) return;
-        for (int i = 0; i < 2; i++) {
+        if (random.nextBoolean()) {
             double a = random.nextDouble() * Math.PI * 2;
             double r = 0.45 + random.nextDouble() * 0.25;
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, pos.getX() + 0.5 + Math.cos(a) * r, pos.getY() + 0.55 + random.nextDouble() * 0.5,
-                    pos.getZ() + 0.5 + Math.sin(a) * r, Math.cos(a) * 0.06, 0.04, Math.sin(a) * 0.06);
+            level.addParticle(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), pos.getX() + 0.5 + Math.cos(a) * r, pos.getY() + 0.55 + random.nextDouble() * 0.5,
+                    pos.getZ() + 0.5 + Math.sin(a) * r, 0, 0, 0);
         }
         if (random.nextInt(4) == 0) {
-            level.addParticle(ParticleTypes.END_ROD, pos.getX() + 0.5, pos.getY() + 0.8, pos.getZ() + 0.5,
+            level.addParticle(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), pos.getX() + 0.5, pos.getY() + 0.8, pos.getZ() + 0.5,
                     (random.nextDouble() - 0.5) * 0.02, 0.03, (random.nextDouble() - 0.5) * 0.02);
         }
     }

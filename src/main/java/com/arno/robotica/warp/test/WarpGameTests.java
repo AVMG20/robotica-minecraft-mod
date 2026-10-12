@@ -9,7 +9,7 @@ import com.arno.robotica.warp.gate.PortalProjectorBlock;
 import com.arno.robotica.warp.gate.PortalProjectorBlockEntity;
 import com.arno.robotica.warp.gate.GateLinks;
 import com.arno.robotica.warp.gate.PortalGeometry;
-import com.arno.robotica.warp.item.RiftTargets;
+import com.arno.robotica.warp.item.RemoteTargets;
 import com.arno.robotica.warp.pad.PadRecord;
 import com.arno.robotica.warp.pad.WarpCosts;
 import com.arno.robotica.warp.pad.WarpPadBlock;
@@ -68,9 +68,9 @@ public class WarpGameTests {
         helper.assertTrue(pads.findAt(Level.OVERWORLD, mine.pos()) == mine, "lookup by position");
         helper.assertTrue(pads.findAt(Level.NETHER, mine.pos()) == null, "other dimension does not match");
 
-        pads.put(home.withName("Base").withPublic(true).withRift(true));
+        pads.put(home.withName("Base").withPublic(true).withMk2(true));
         PadRecord changed = pads.get(home.id());
-        helper.assertTrue(pads.size() == 2 && changed.name().equals("Base") && changed.isPublic() && changed.rift(), "update replaces the record");
+        helper.assertTrue(pads.size() == 2 && changed.name().equals("Base") && changed.isPublic() && changed.mk2(), "update replaces the record");
 
         // round trip through NBT
         CompoundTag tag = pads.save(new CompoundTag(), helper.getLevel().registryAccess());
@@ -96,7 +96,7 @@ public class WarpGameTests {
         BlockPos abs = helper.absolutePos(pos);
         PadRecord rec = pads.findAt(helper.getLevel().dimension(), abs);
         helper.assertTrue(rec != null, "placed pad is in the registry");
-        helper.assertTrue(player.getUUID().equals(rec.owner()) && !rec.isPublic() && !rec.rift(), "owner is the placing player, pad starts private");
+        helper.assertTrue(player.getUUID().equals(rec.owner()) && !rec.isPublic() && !rec.mk2(), "owner is the placing player, pad starts private");
         helper.assertTrue(rec.name().length() <= WarpPadBlockEntity.MAX_NAME, "default name fits");
 
         be.rename("Spawn");
@@ -162,7 +162,7 @@ public class WarpGameTests {
         helper.assertTrue(WarpCosts.padTrip(1_000_000, true, 5_000, 20, 100_000) == 100_000, "cross dimension ignores distance");
         helper.assertTrue(WarpCosts.padTrip(Double.MAX_VALUE / 2, false, 5_000, 20, 100_000) > 0, "huge distances do not overflow");
         helper.assertTrue(WarpCosts.padTrip(100, false) == 5_000 + 100 * 20, "defaults are 5000 + 20 per block");
-        helper.assertTrue(WarpConfig.padRiftCost() == 100_000 && WarpConfig.remoteCost() == 20_000 && WarpConfig.riftRemoteCost() == 150_000, "default costs");
+        helper.assertTrue(WarpConfig.padCrossCost() == 100_000 && WarpConfig.remoteCost() == 20_000 && WarpConfig.remoteCrossCost() == 150_000, "default costs");
         helper.succeed();
     }
 
@@ -401,18 +401,22 @@ public class WarpGameTests {
         GlobalPos posA = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(relA));
         GlobalPos posB = GlobalPos.of(helper.getLevel().dimension(), helper.absolutePos(relB));
         GateLinks links = GateLinks.get(helper.getLevel().getServer());
-        var card = new net.minecraft.world.item.ItemStack(WarpRegistry.LINKING_CARD.get());
+        var remote = new ItemStack(WarpRegistry.WARP_REMOTE.get());
         stranger.setPos(Vec3.atCenterOf(helper.absolutePos(relA)));
-        WarpTravel.linkingCardUsed(stranger, card, posA);
-        helper.assertTrue(card.get(WarpComponents.LINK_SOURCE.get()) == null, "a stranger can not even store an owned gate");
+        WarpTravel.linkProjector(stranger, remote, posA);
+        helper.assertTrue(remote.get(WarpComponents.LINK_SOURCE.get()) == null, "a stranger can not even store an owned gate");
         owner.setPos(Vec3.atCenterOf(helper.absolutePos(relA)).add(40, 0, 0));
-        WarpTravel.linkingCardUsed(owner, card, posA);
-        helper.assertTrue(card.get(WarpComponents.LINK_SOURCE.get()) == null, "linking from far away is refused");
+        WarpTravel.linkProjector(owner, remote, posA);
+        helper.assertTrue(remote.get(WarpComponents.LINK_SOURCE.get()) == null, "linking from far away is refused");
         owner.setPos(Vec3.atCenterOf(helper.absolutePos(relA)));
-        WarpTravel.linkingCardUsed(owner, card, posA);
-        helper.assertTrue(posA.equals(card.get(WarpComponents.LINK_SOURCE.get())), "the owner stores the first gate");
-        WarpTravel.linkingCardUsed(owner, card, posB);
+        WarpTravel.linkProjector(owner, remote, posA);
+        helper.assertTrue(posA.equals(remote.get(WarpComponents.LINK_SOURCE.get())), "the owner stores the first gate");
+        WarpTravel.linkProjector(owner, remote, posA);
+        helper.assertTrue(remote.get(WarpComponents.LINK_SOURCE.get()) == null, "a second click on the same gate cancels");
+        WarpTravel.linkProjector(owner, remote, posA);
+        WarpTravel.linkProjector(owner, remote, posB);
         helper.assertTrue(posB.equals(links.partner(posA)) && posA.equals(links.partner(posB)), "the owner links both gates");
+        helper.assertTrue(remote.get(WarpComponents.LINK_SOURCE.get()) == null, "linking clears the remote");
         helper.assertTrue(owner.getUUID().equals(b.owner()), "the unowned second gate was claimed by the linker");
         links.unlink(posA);
         helper.succeed();
@@ -480,47 +484,95 @@ public class WarpGameTests {
     }
 
     @GameTest(template = "empty")
-    public static void padBlockHasHalfHeightAndRiftState(GameTestHelper helper) {
-        BlockState state = WarpRegistry.WARP_PAD.get().defaultBlockState();
-        helper.assertTrue(!state.getValue(WarpPadBlock.RIFT), "pads start without rift");
-        helper.assertTrue(state.getShape(helper.getLevel(), BlockPos.ZERO).max(Direction.Axis.Y) == 0.5, "pad is slab height");
+    public static void padBlocksHaveHalfHeightAndTheirMk(GameTestHelper helper) {
+        WarpPadBlock mk1 = WarpRegistry.WARP_PAD.get();
+        WarpPadBlock mk2 = WarpRegistry.WARP_PAD_MK2.get();
+        helper.assertTrue(!mk1.isMk2() && mk2.isMk2(), "only the Mk2 pad leaves the dimension");
+        for (WarpPadBlock block : List.of(mk1, mk2)) {
+            helper.assertTrue(block.defaultBlockState().getShape(helper.getLevel(), BlockPos.ZERO).max(Direction.Axis.Y) == 0.5, block + " is slab height");
+            helper.assertTrue(WarpPads.isPad(block.defaultBlockState()), block + " counts as a pad");
+        }
         helper.succeed();
     }
 
-    // ---- Rift Remote list ----
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void padUpgradesInPlaceAndKeepsItsIdentity(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(1, 1, 1);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        helper.setBlock(pos, WarpRegistry.WARP_PAD.get().defaultBlockState());
+        WarpPadBlockEntity be = (WarpPadBlockEntity) helper.getBlockEntity(pos);
+        be.initPlacement(player);
+        be.rename("Base");
+        be.setPublic(true);
+        be.energy.setEnergy(12_345);
+        UUID id = be.padId();
+        WarpPads pads = WarpPads.get(helper.getLevel().getServer());
+        helper.assertTrue(!pads.get(id).mk2(), "a Mk1 pad is registered as Mk1");
+
+        helper.assertTrue(WarpPadBlock.upgradeInPlace(helper.getLevel(), helper.absolutePos(pos)), "the upgrade works");
+        helper.assertTrue(helper.getBlockState(pos).is(WarpRegistry.WARP_PAD_MK2.get()), "the block is a Mk2 pad now");
+        WarpPadBlockEntity fresh = (WarpPadBlockEntity) helper.getBlockEntity(pos);
+        helper.assertTrue(id.equals(fresh.padId()) && fresh.isMk2(), "same pad id, now Mk2");
+        helper.assertTrue(fresh.padName().equals("Base") && fresh.isPublic() && player.getUUID().equals(fresh.owner()), "name, visibility and owner are kept");
+        helper.assertTrue(fresh.energy.getEnergyStored() == 12_345, "energy is kept");
+        PadRecord rec = pads.get(id);
+        helper.assertTrue(rec != null && rec.mk2() && rec.name().equals("Base"), "the registry knows the same pad as Mk2");
+        helper.setBlock(pos, Blocks.AIR);
+        helper.succeed();
+    }
+
+    // ---- Warp Remote ----
 
     @GameTest(template = "empty")
-    public static void riftRemoteStoresTenPadsWithoutDuplicates(GameTestHelper helper) {
-        ItemStack remote = new ItemStack(WarpRegistry.RIFT_REMOTE.get());
+    public static void remoteStoresTenPadsAndAHome(GameTestHelper helper) {
+        ItemStack remote = new ItemStack(WarpRegistry.WARP_REMOTE.get());
         UUID owner = UUID.randomUUID();
         List<PadRecord> recs = new java.util.ArrayList<>();
-        for (int i = 0; i < WarpComponents.MAX_RIFT_PADS + 1; i++) recs.add(pad("Pad " + i, owner, "Owner", false));
-        for (int i = 0; i < WarpComponents.MAX_RIFT_PADS; i++) {
-            helper.assertTrue(RiftTargets.add(remote, recs.get(i)) == RiftTargets.AddResult.ADDED, "pad " + i + " is added");
+        for (int i = 0; i < WarpComponents.MAX_PADS + 1; i++) recs.add(pad("Pad " + i, owner, "Owner", false));
+        helper.assertTrue(RemoteTargets.home(remote) == null, "a new remote has no home");
+        for (int i = 0; i < WarpComponents.MAX_PADS; i++) {
+            helper.assertTrue(RemoteTargets.add(remote, recs.get(i)) == RemoteTargets.AddResult.ADDED, "pad " + i + " is added");
         }
-        helper.assertTrue(RiftTargets.add(remote, recs.get(3)) == RiftTargets.AddResult.ALREADY_STORED, "a stored pad is not added twice");
-        helper.assertTrue(RiftTargets.list(remote).size() == WarpComponents.MAX_RIFT_PADS, "ten pads stored");
-        PadRecord extra = recs.get(WarpComponents.MAX_RIFT_PADS);
-        helper.assertTrue(RiftTargets.add(remote, extra) == RiftTargets.AddResult.FULL, "the eleventh pad does not fit");
-        helper.assertTrue(RiftTargets.find(RiftTargets.list(remote), extra.id()) == null, "a full remote stays unchanged");
-        helper.assertTrue(RiftTargets.remove(remote, recs.get(0).id()), "a pad can be forgotten");
-        helper.assertTrue(!RiftTargets.remove(remote, recs.get(0).id()), "forgetting twice is harmless");
-        helper.assertTrue(RiftTargets.add(remote, extra) == RiftTargets.AddResult.ADDED, "after forgetting one there is room again");
-        WarpComponents.BoundPad stored = RiftTargets.find(RiftTargets.list(remote), extra.id());
+        helper.assertTrue(RemoteTargets.home(remote).id().equals(recs.get(0).id()), "the first stored pad is home");
+        helper.assertTrue(RemoteTargets.add(remote, recs.get(3)) == RemoteTargets.AddResult.ALREADY_STORED, "a stored pad is not added twice");
+        helper.assertTrue(RemoteTargets.list(remote).size() == WarpComponents.MAX_PADS, "ten pads stored");
+        PadRecord extra = recs.get(WarpComponents.MAX_PADS);
+        helper.assertTrue(RemoteTargets.add(remote, extra) == RemoteTargets.AddResult.FULL, "the eleventh pad does not fit");
+        helper.assertTrue(RemoteTargets.find(RemoteTargets.list(remote), extra.id()) == null, "a full remote stays unchanged");
+
+        helper.assertTrue(RemoteTargets.setHome(remote, recs.get(5).id()), "any stored pad can become home");
+        helper.assertTrue(RemoteTargets.home(remote).id().equals(recs.get(5).id()) && RemoteTargets.list(remote).size() == WarpComponents.MAX_PADS,
+                "the new home is first, nothing was lost");
+        helper.assertTrue(!RemoteTargets.setHome(remote, extra.id()), "an unknown pad can not become home");
+        helper.assertTrue(RemoteTargets.remove(remote, recs.get(5).id()), "the home can be forgotten");
+        helper.assertTrue(RemoteTargets.home(remote).id().equals(recs.get(0).id()), "then the next pad is home");
+        helper.assertTrue(!RemoteTargets.remove(remote, recs.get(5).id()), "forgetting twice is harmless");
+        helper.assertTrue(RemoteTargets.add(remote, extra) == RemoteTargets.AddResult.ADDED, "after forgetting one there is room again");
+        WarpComponents.BoundPad stored = RemoteTargets.find(RemoteTargets.list(remote), extra.id());
         helper.assertTrue(stored != null && stored.pos().isPresent() && stored.pos().get().pos().equals(extra.pos()), "position is stored");
         helper.succeed();
     }
 
+    @SuppressWarnings("removal")
     @GameTest(template = "empty")
-    public static void riftRemoteMigratesTheOldSingleBinding(GameTestHelper helper) {
-        ItemStack remote = new ItemStack(WarpRegistry.RIFT_REMOTE.get());
-        PadRecord old = pad("Old", UUID.randomUUID(), "Owner", false);
-        remote.set(WarpComponents.BOUND_PAD.get(), new WarpComponents.BoundPad(old.id(), old.name()));
-        helper.assertTrue(RiftTargets.list(remote).size() == 1, "the old binding shows in the list before migration");
-        RiftTargets.migrate(remote);
-        helper.assertTrue(!remote.has(WarpComponents.BOUND_PAD.get()), "the old component is removed");
-        helper.assertTrue(RiftTargets.list(remote).size() == 1 && RiftTargets.list(remote).get(0).id().equals(old.id()), "the old pad moved into the list");
-        helper.assertTrue(RiftTargets.add(remote, old) == RiftTargets.AddResult.ALREADY_STORED, "the migrated pad is known");
+    public static void remoteReachesOtherDimensionsOnlyAtMk2Pads(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayerInLevel();
+        player.getAbilities().instabuild = true; // trips are free: only the pad rule is checked
+        var server = helper.getLevel().getServer();
+        helper.assertTrue(server.getLevel(Level.NETHER) != null, "the test server has a Nether");
+        WarpPads pads = WarpPads.get(server);
+        // far away in the Nether: the chunk is not loaded, so the registry trusts the record
+        PadRecord mk1 = new PadRecord(UUID.randomUUID(), new BlockPos(90_000, 70, 90_000), Level.NETHER, "Mk1", player.getUUID(), "P", false, false);
+        PadRecord mk2 = new PadRecord(UUID.randomUUID(), new BlockPos(90_016, 70, 90_000), Level.NETHER, "Mk2", player.getUUID(), "P", false, true);
+        pads.put(mk1);
+        pads.put(mk2);
+        ItemStack remote = new ItemStack(WarpRegistry.WARP_REMOTE.get());
+        RemoteTargets.add(remote, mk1);
+        RemoteTargets.add(remote, mk2);
+        helper.assertTrue(!WarpTravel.remoteListTrip(player, remote, mk1.id(), true), "a Mk1 pad in another dimension is out of reach");
+        helper.assertTrue(WarpTravel.remoteListTrip(player, remote, mk2.id(), true), "a Mk2 pad in another dimension is reachable");
+        pads.remove(mk1.id());
+        pads.remove(mk2.id());
         helper.succeed();
     }
 
@@ -533,8 +585,8 @@ public class WarpGameTests {
         be.initPlacement(player);
         WarpPads pads = WarpPads.get(helper.getLevel().getServer());
         PadRecord rec = be.ensureRegistered();
-        ItemStack remote = new ItemStack(WarpRegistry.RIFT_REMOTE.get());
-        RiftTargets.add(remote, rec);
+        ItemStack remote = new ItemStack(WarpRegistry.WARP_REMOTE.get());
+        RemoteTargets.add(remote, rec);
 
         helper.assertTrue(be.canEdit(player), "the owner may rename the pad");
         helper.assertTrue(!be.canEdit(helper.makeMockPlayer(GameType.SURVIVAL)), "somebody else may not");
@@ -543,14 +595,14 @@ public class WarpGameTests {
         helper.assertTrue(WarpTravel.sanitizeName("x".repeat(WarpPadBlockEntity.MAX_NAME + 1)).isEmpty(), "too long names are refused");
         be.rename(name.get());
 
-        WarpComponents.BoundPad stored = RiftTargets.list(remote).get(0);
+        WarpComponents.BoundPad stored = RemoteTargets.list(remote).get(0);
         helper.assertTrue(stored.name().equals(rec.name()), "the snapshot still holds the old name");
-        helper.assertTrue(RiftTargets.currentName(pads, stored).equals("Base"), "the list shows the current name");
-        RiftTargets.refresh(remote, pads);
-        helper.assertTrue(RiftTargets.list(remote).get(0).name().equals("Base"), "refresh updates the snapshot");
+        helper.assertTrue(RemoteTargets.currentName(pads, stored).equals("Base"), "the list shows the current name");
+        RemoteTargets.refresh(remote, pads);
+        helper.assertTrue(RemoteTargets.list(remote).get(0).name().equals("Base"), "refresh updates the snapshot");
 
         helper.setBlock(pos, Blocks.AIR);
-        helper.assertTrue(RiftTargets.currentName(pads, stored).equals(rec.name()), "a broken pad falls back to the stored name");
+        helper.assertTrue(RemoteTargets.currentName(pads, stored).equals(rec.name()), "a broken pad falls back to the stored name");
         helper.succeed();
     }
 }

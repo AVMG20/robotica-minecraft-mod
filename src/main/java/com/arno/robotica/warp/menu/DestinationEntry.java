@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * One row of the destination list, as sent to the client when the GUI opens.
  * {@code distance} is the block distance in the same dimension, or -1 for another dimension.
- * {@code available} is false when the trip needs a Rift Upgrade the departure pad does not have.
+ * {@code available} is false when the trip leaves the dimension and the departure pad is no Mk2.
  */
 public record DestinationEntry(UUID id, String name, String ownerName, ResourceKey<Level> dimension, int distance, int cost, boolean available) {
 
