@@ -229,6 +229,9 @@
             "robotica:stumpy",
             "robotica:sprout",
             "robotica:supply_crate",
+            "robotica:supply_crate_mk2",
+            "robotica:supply_crate_mk3",
+            "robotica:supply_crate_mk4",
             "robotica:farm_kit_mk2",
             "robotica:farm_kit_mk3",
             "robotica:farm_kit_mk4"

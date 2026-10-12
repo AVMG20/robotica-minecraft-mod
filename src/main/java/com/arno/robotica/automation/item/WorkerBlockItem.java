@@ -3,6 +3,7 @@ package com.arno.robotica.automation.item;
 import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.block.AreaWorkerBlock;
 import com.arno.robotica.automation.block.ExcavatorBlock;
+import com.arno.robotica.automation.block.SupplyCrateBlock;
 import com.arno.robotica.automation.block.SurveyRigBlock;
 import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.item.HasDetails;
@@ -31,8 +32,13 @@ public class WorkerBlockItem extends BlockItem implements HasDetails {
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age))
                 .withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable(descriptionKey).withStyle(ChatFormatting.GRAY));
-        int tier = getBlock() instanceof AreaWorkerBlock worker ? worker.mkTier() : 0;
+        if (getBlock() instanceof SupplyCrateBlock crate) {
+            tooltip.add(Component.translatable(descriptionKey, crate.slots()).withStyle(ChatFormatting.GRAY));
+        } else {
+            tooltip.add(Component.translatable(descriptionKey).withStyle(ChatFormatting.GRAY));
+        }
+        int tier = getBlock() instanceof AreaWorkerBlock worker ? worker.mkTier()
+                : getBlock() instanceof SupplyCrateBlock crate ? crate.tier() : 0;
         if (getBlock() instanceof ExcavatorBlock) {
             int size = AutomationConfig.excavatorSize(tier);
             tooltip.add(Component.translatable("tooltip.robotica.excavator_mk", tier, size, size,

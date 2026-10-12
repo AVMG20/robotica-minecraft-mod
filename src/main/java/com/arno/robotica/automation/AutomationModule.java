@@ -47,6 +47,9 @@ public final class AutomationModule {
         RoboticaTab.add(AutomationContent.SURVEY_RIG_MK3_ITEM);
         RoboticaTab.add(AutomationContent.SURVEY_RIG_MK4_ITEM);
         RoboticaTab.add(AutomationContent.SUPPLY_CRATE_ITEM);
+        RoboticaTab.add(AutomationContent.SUPPLY_CRATE_MK2_ITEM);
+        RoboticaTab.add(AutomationContent.SUPPLY_CRATE_MK3_ITEM);
+        RoboticaTab.add(AutomationContent.SUPPLY_CRATE_MK4_ITEM);
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {

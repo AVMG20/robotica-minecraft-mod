@@ -5,9 +5,13 @@ import com.arno.robotica.core.client.MachineScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-/** Plain chest style GUI. */
+/** Plain chest style GUI, sized to the crate's slot grid. */
 public class SupplyCrateScreen extends MachineScreen<SupplyCrateMenu> {
     public SupplyCrateScreen(SupplyCrateMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
+        this.imageWidth = menu.width();
+        this.imageHeight = menu.height();
+        this.inventoryLabelX = menu.inventoryX();
+        this.inventoryLabelY = imageHeight - 94;
     }
 }

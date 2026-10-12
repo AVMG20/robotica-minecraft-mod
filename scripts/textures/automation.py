@@ -289,42 +289,96 @@ def excavator_side():
     return c
 
 
-def crate_side():
-    """Oak boards behind copper straps, brass rivets, a stencilled arrow."""
-    c = Canvas()
+# Supply Crate Mk1-Mk4: the processing machines' graphite casing (bevelled frame around a sunk panel, chamfered corners
+# with tier metal L brackets) as a crate with a lid seam, a latch and cyan accents. Body DK, tier metal AC (pal(TIERS)).
+# The cyan pixels (q, Q, Y) are copied onto a full-bright *_glow overlay, so the accents stay lit at night.
+CRATE_CYAN = {'q': '#2FB8CC', 'Q': '#8CF4FF'}
+
+
+def crate_pal(tier=1):
+    return pal(TIERS[tier], **CRATE_CYAN)
+
+
+def glow_only(c, keep='qQY'):
+    out = Canvas()
     for y in range(16):
-        board = y // 5
         for x in range(16):
-            n = (x * 7 + board * 11 + (y % 5) * 3) % 13
-            c.set(x, y, 'x' if n == 0 else 'v' if n == 6 else 'w')
-        if y % 5 == 0:
-            c.rect(0, y, 16, 1, 'u')
-        elif y % 5 == 1:
-            c.rect(0, y, 16, 1, 'x')
-    c.line(3, 12, 12, 3, 'v').line(4, 12, 12, 4, 'u')                   # diagonal brace
-    for x in (0, 13):                                                    # copper straps
-        plate(c, x, 0, 3, 16, CU, 3 + x, brushed=False)
-        for y in (2, 8, 13):
-            c.rivet(x + 1, y, BR)
-    c.rect(3, 0, 10, 1, 'u').rect(3, 15, 10, 1, 'u')
+            if c.get(x, y) in keep:
+                out.set(x, y, c.get(x, y))
+    return out
+
+
+def crate_shell():
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'h')
+    c.rect(1, 1, 14, 14, 'g')
+    c.bevel(0, 0, 16, 16, 'i', 'f')                                      # outer edge
+    c.bevel(2, 2, 12, 12, 'f', 'i')                                      # panel sunk into the frame
+    c.rect(3, 3, 10, 10, 'h')
+    for x, y, sx, sy in ((0, 0, 1, 1), (15, 0, -1, 1), (0, 15, 1, -1), (15, 15, -1, -1)):
+        for i in range(5):                                               # 2 px L bracket in the tier metal
+            for j in range(2):
+                c.set(x + sx * i, y + sy * j, 'C').set(x + sx * j, y + sy * i, 'C')
+        c.set(x + sx * 4, y, 'B').set(x, y + sy * 4, 'B')
+        c.set(x + sx * 4, y + sy, 'A').set(x + sx, y + sy * 4, 'A')
+        c.set(x + sx, y + sy, 'B')
+        c.set(x, y, 'V')                                                 # chamfer
+    for i in range(1, 4):                                                # light from the top-left
+        c.set(i, 0, 'E').set(0, i, 'E')
     return c
 
 
-def crate_top():
+def crate_seam(c, y=5, glow=True):
+    """Lid seam across the panel: a dark gap with a cyan strip in it and the lid's lit edge above."""
+    c.rect(3, y - 1, 10, 1, 'i')
+    c.rect(2, y, 12, 1, 'k')
+    if glow:
+        c.rect(4, y, 8, 1, 'q').set(3, y, 'Z').set(12, y, 'Z')
+    c.rect(3, y + 1, 10, 1, 'f')
+    return c
+
+
+def crate_front(tier):
+    """Front: lid seam, a tier metal latch with a cyan lock light, and a plate with one lit pip per Mk."""
+    c = crate_seam(crate_shell())
+    c.rect(6, 3, 4, 6, 'C').bevel(6, 3, 4, 6, 'D', 'A')                 # latch hasp over the seam
+    c.rect(7, 4, 2, 1, 'B')
+    c.set(7, 6, 'Y').set(8, 6, 'q')                                      # lock light
+    c.rect(7, 7, 2, 1, 'B')
+    c.rect(4, 10, 8, 3, 'f').bevel(4, 10, 8, 3, 'k', 'i')               # Mk plate
+    for i in range(4):
+        c.set(5 + i * 2, 11, 'Y' if i < tier else 'Z')
+    return c
+
+
+def crate_side(tier):
+    """Side: lid seam and a recessed carry handle with a tier metal grip bar."""
+    c = crate_seam(crate_shell())
+    c.rect(4, 8, 8, 4, 'g').bevel(4, 8, 8, 4, 'f', 'i')                 # handle well
+    c.rect(5, 9, 6, 2, 'k')
+    c.rect(5, 9, 6, 1, 'C').set(5, 9, 'D').set(10, 9, 'B')              # grip bar
+    return c
+
+
+def crate_top(tier):
+    """Lid: the casing frame around a sunk hatch, four stiffening ribs and a cyan core."""
+    c = crate_shell()
+    for x0, y0, w, h in ((7, 3, 2, 2), (7, 11, 2, 2), (3, 7, 2, 2), (11, 7, 2, 2)):
+        c.rect(x0, y0, w, h, 'i')                                        # ribs out to the frame
+    c.rect(5, 5, 6, 6, 'C').frame(5, 5, 6, 6, 'B')                       # tier metal hatch ring
+    c.rect(5, 5, 6, 1, 'D').rect(5, 5, 1, 6, 'D')
+    c.rect(6, 6, 4, 4, 'k')
+    c.rect(7, 7, 2, 2, 'q').set(7, 7, 'Q')                               # cyan core
+    return c
+
+
+def crate_bottom():
     c = Canvas()
-    for x in range(16):
-        for y in range(16):
-            n = (y * 7 + (x // 5) * 11 + (x % 5) * 3) % 13
-            c.set(x, y, 'x' if n == 0 else 'v' if n == 6 else 'w')
-        if x % 5 == 0:
-            c.rect(x, 0, 1, 16, 'u')
-        elif x % 5 == 1:
-            c.rect(x, 0, 1, 16, 'x')
-    c.frame(0, 0, 16, 16, '2').frame(1, 1, 14, 14, '1')
-    c.rect(0, 0, 16, 1, '3').rect(0, 0, 1, 16, '3')
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
-        c.set(x, y, '9')
-    c.rect(6, 6, 4, 4, '7').bevel(6, 6, 4, 4, '9', '5').set(7, 7, 'k').set(8, 8, 'k')   # brass latch plate
+    c.rect(0, 0, 16, 16, 'g')
+    c.bevel(0, 0, 16, 16, 'h', 'f')
+    c.rect(3, 3, 10, 10, 'f').bevel(3, 3, 10, 10, 'k', 'h')
+    for x, y in ((1, 1), (13, 1), (1, 13), (13, 13)):
+        c.rect(x, y, 2, 2, 'f').set(x, y, 'h')
     return c
 
 
@@ -362,8 +416,15 @@ def main():
     write_anim('block', 'excavator_drill_on', [drill_spin(i) for i in range(6)], pal(), frametime=1)
     write_anim('block', 'excavator_light_on', [light_on(i) for i in range(4)], pal(), frametime=5)
     write_block('excavator_side', excavator_side().rows(), pal())
-    write_block('supply_crate_side', crate_side().rows(), pal())
-    write_block('supply_crate_top', crate_top().rows(), pal())
+    for tier, mat in TIERS.items():
+        name = 'supply_crate' if tier == 1 else f'supply_crate_mk{tier}'
+        for face, draw in (('front', crate_front), ('side', crate_side), ('top', crate_top)):
+            c = draw(tier)
+            write_block(f'{name}_{face}', c.rows(), crate_pal(tier))
+            if face == 'front' or tier == 1:                             # side and top glow are the same for every Mk
+                write_block(f'{name}_{face}_glow' if face == 'front' else f'supply_crate_{face}_glow', glow_only(c).rows(),
+                            crate_pal(tier))
+    write_block('supply_crate_bottom', crate_bottom().rows(), pal())
     for tier in (2, 3, 4):
         write_item(f'farm_kit_mk{tier}', kit(tier).rows(), pal(TIERS[tier]))
 

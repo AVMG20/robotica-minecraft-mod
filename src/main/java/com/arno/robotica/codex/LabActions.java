@@ -34,7 +34,7 @@ public final class LabActions {
     /** Item ids per age. Missing ids (module not built yet) are skipped. Value = count. */
     public static final List<Map<String, Integer>> KITS = List.of(
             Map.ofEntries(Map.entry("copper_gear", 16), Map.entry("clockwork_mechanism", 4), Map.entry("wooden_chassis", 2),
-                    Map.entry("mainspring", 2), Map.entry("stumpy", 1), Map.entry("sprout", 1), Map.entry("supply_crate", 2),
+                    Map.entry("mainspring", 2), Map.entry("stumpy", 1), Map.entry("sprout", 1), Map.entry("supply_crate", 2), Map.entry("supply_crate_mk2", 1),
                     Map.entry("winding_crank", 1), Map.entry("tinkers_hammer", 1), Map.entry("felling_axe", 1),
                     Map.entry("gearblade", 1), Map.entry("architect_table", 1), Map.entry("minecraft:bone_meal", 32), Map.entry("minecraft:copper_ingot", 64), Map.entry("minecraft:oak_sapling", 16)),
             Map.ofEntries(Map.entry("iron_plate", 32), Map.entry("copper_coil", 8), Map.entry("iron_casing", 8),

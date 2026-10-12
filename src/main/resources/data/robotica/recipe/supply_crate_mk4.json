@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " D ",
+    "OXO",
+    " D "
+  ],
+  "key": {
+    "D": {
+      "tag": "c:gems/diamond"
+    },
+    "O": {
+      "tag": "c:obsidians"
+    },
+    "X": {
+      "item": "robotica:supply_crate_mk3"
+    }
+  },
+  "result": {
+    "id": "robotica:supply_crate_mk4",
+    "count": 1
+  }
+}
