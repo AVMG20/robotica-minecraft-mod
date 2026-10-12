@@ -375,11 +375,11 @@ def smelter_model(tier, lit):
 
 
 def centrifuge_model(tier, lit):
-    """The drum sits 2 px behind the round porthole of the front, its spinning light on a full-bright layer."""
+    """The drum sits 1 px behind the round porthole of the front, its spinning light on a full-bright layer."""
     faces = dict(machine_casing(tier), north=f'centrifuge_mk{tier}_front' + ('_on' if lit else ''), up=f'centrifuge_mk{tier}_top')
-    drum = [{'from': [0, 0, 2], 'to': [16, 16, 2], 'faces': {'north': {'texture': '#drum'}}}]
+    drum = [{'from': [0, 0, 1], 'to': [16, 16, 1], 'faces': {'north': {'texture': '#drum'}}}]
     if lit:
-        drum.append({'from': [0, 0, 2], 'to': [16, 16, 2], 'glow': True, 'faces': {'north': {'texture': '#drum_glow'}}})
+        drum.append({'from': [0, 0, 1], 'to': [16, 16, 1], 'glow': True, 'faces': {'north': {'texture': '#drum_glow'}}})
     textures = {'drum': 'centrifuge_drum', 'drum_glow': 'centrifuge_front_glow'}
     return machine_model(faces, {'up': 'centrifuge_top_glow'} if lit else None, drum, textures, lit=lit)
 

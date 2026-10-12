@@ -581,22 +581,36 @@ def smelter_top_glow(t):
     return c
 
 
-# Centrifuge: a drum spinning behind a round porthole. The drum sits 2 px deep on its own element
-# (scripts/data/industry_data.py): separated layers of material in rings round the hub and a glass track where green
-# light chases round while it spins. Chars on top of the casing: 'n o p q r' green glow (deep -> white core),
-# 's t y' material layers unlit (heavy outer -> light inner), 'S T Y' the same layers lit.
+# Centrifuge: a drum spinning behind a round porthole in a polished steel bezel. The drum sits 1 px deep on its own
+# element (scripts/data/industry_data.py): a steel hub, four sample buckets of green material between steel spokes and
+# a green glass track where green light chases round while it spins. Chars on top of the casing: 'n o p q r' green glow
+# (deep -> white core), 't y' bucket material unlit (heavy, light), 'S T Y' the material layers lit, '1'-'5' light
+# steel (deep -> highlight), '6 7 8 9' green glass (shadow, body, lit edge, glint).
 
 CF_HOLE, CF_RIM = 5.0, 6.1                                               # porthole and bezel radius
 CF_TRACK, CF_HEAVY, CF_LIGHT = 3.8, 2.0, 1.4                             # drum rings: track, heavy, light layer
 CF_LAYERS = 2.9                                                          # outer edge of the material, a dark gap to the track
 CF_ARMS, CF_FRAMES, CF_FRAMETIME = 4, 8, 2                               # 4 light arms, one track pixel per frame
 CF_TAIL = 'rqpo'                                                      # an arm from its head back
+CF_STEEL = ('#3C464F', '#5C6873', '#84909A', '#AEB9C2', '#DDE4E9')       # light steel, also the Assembler's
+CF_GLASS = ('#287A44', '#3FA35E', '#74D38C', '#C8F7CE')
 
 
 def cf_pal(tier=1):
     return casing.casing_palette(casing.INDUSTRY_TIERS[tier], n='#123A22', o='#1F7A3A', p='#45D35C', q='#B2FF8A',
-                                 r='#F2FFE8', s='#1A2620', t='#22342A', y='#2E4636', S='#1E5C30', T='#3C9C48',
-                                 Y='#9AEC7A')
+                                 r='#F2FFE8', t='#3E9452', y='#74D282', S='#1E5C30', T='#3C9C48', Y='#9AEC7A',
+                                 **dict(zip('12345', CF_STEEL)), **dict(zip('6789', CF_GLASS)))
+
+
+def cf_lean(x, y):
+    """< 0 towards the light (top-left), > 0 away from it."""
+    return (x - 7.5) + (y - 7.5)
+
+
+def cf_spoke(x, y):
+    """True on the four rotor spokes (diagonals)."""
+    a = math.degrees(math.atan2(y - 7.5, x - 7.5)) % 90
+    return abs(a - 45) < 13
 
 
 def cf_dist(x, y):
@@ -616,42 +630,43 @@ def cf_clamps(c):
 
 
 def centrifuge_front(tier, lit):
-    """Casing with a round porthole (transparent: the drum shows through) in a bevelled bezel held by tier clamps."""
+    """Casing with a round porthole (transparent: the drum shows through) in a polished steel bezel held by tier
+    clamps."""
     c = casing.shell(tier)
     for y in range(16):
         for x in range(16):
-            d = cf_dist(x, y)
-            lean = (x - 7.5) + (y - 7.5)                                 # < 0 towards the light (top-left)
+            d, lean = cf_dist(x, y), cf_lean(x, y)
             if d < CF_HOLE:
                 c.set(x, y, '.')
             elif d < CF_RIM:
                 if d < CF_HOLE + 0.55:                                   # inner lip: shadowed at the top-left
-                    c.set(x, y, 'a' if lean < -1 else 'd' if lean > 1 else 'b')
+                    c.set(x, y, '2' if lean < -1 else '4' if lean > 1 else '3')
                 else:
-                    c.set(x, y, 'e' if lean < -2 else 'b' if lean > 2 else 'd')
+                    c.set(x, y, '5' if lean < -2 else '2' if lean > 2 else '4')
     cf_clamps(c)
     c.set(12, 3, 'L' if lit else 'l')
     return c
 
 
 def centrifuge_drum():
-    """The drum face behind the porthole: hub, light and heavy layer, glass track, dark bore round it."""
+    """The drum face behind the porthole: a steel hub cap, four buckets of material (heavy outside, light inside)
+    between steel spokes, a steel rotor ring and the green glass track; while working the glow covers the buckets
+    and the track."""
     c = Canvas()
     for y in range(16):
         for x in range(16):
-            d = cf_dist(x, y)
-            if d < CF_LIGHT:
-                c.set(x, y, 'e' if (x, y) == (7, 7) else 'd')
-            elif d < CF_HEAVY:
-                c.set(x, y, 'y')
-            elif d < CF_LAYERS:
-                c.set(x, y, 't')
-            elif d < CF_TRACK:
-                c.set(x, y, 'K')
-            elif d < CF_HOLE - 0.1:
-                c.set(x, y, 'u')
+            d, lean = cf_dist(x, y), cf_lean(x, y)
+            if d < CF_HEAVY:                                             # hub cap
+                c.set(x, y, '5' if lean < -1 else '3' if lean > 1 else '4')
+            elif d < CF_LAYERS:                                          # buckets between the spokes
+                c.set(x, y, '3' if cf_spoke(x, y) else 'y' if d < 2.4 else 't')
+            elif d < CF_TRACK:                                           # rotor ring
+                c.set(x, y, '3' if cf_spoke(x, y) else '1')
+            elif d < CF_HOLE - 0.1:                                      # glass track: lit edge at the top-left
+                c.set(x, y, '8' if lean < -3 else '6' if lean > 3 else '7')
             else:
-                c.set(x, y, 'K' if d < CF_RIM else 'a')
+                c.set(x, y, '2')                                         # bore
+    c.set(5, 4, '9').set(4, 5, '9')                                      # glint on the glass
     return c
 
 
@@ -673,20 +688,20 @@ def centrifuge_glow(frame, layers=True):
 
 
 def centrifuge_top(tier):
-    """Round lid over the drum: a bevelled rim, the glass track (lit by centrifuge_top_glow) and a vented hub cap."""
+    """Round lid over the drum: a polished steel rim, the green glass track (lit by centrifuge_top_glow), a rotor ring
+    with spokes and a steel hub cap."""
     c = casing.shell(tier)
     for y in range(16):
         for x in range(16):
-            d = cf_dist(x, y)
-            lean = (x - 7.5) + (y - 7.5)
+            d, lean = cf_dist(x, y), cf_lean(x, y)
             if d < CF_LIGHT + 0.9:
-                c.set(x, y, 'e' if lean < -1 else 'b' if lean > 1 else 'd')
+                c.set(x, y, '5' if lean < -1 else '3' if lean > 1 else '4')
             elif d < CF_TRACK:
-                c.set(x, y, 'a')
+                c.set(x, y, '3' if cf_spoke(x, y) else '1')
             elif d < CF_HOLE - 0.1:
-                c.set(x, y, 'u')
+                c.set(x, y, '8' if lean < -3 else '6' if lean > 3 else '7')
             elif d < CF_RIM:
-                c.set(x, y, 'e' if lean < -2 else 'b' if lean > 2 else 'd')
+                c.set(x, y, '5' if lean < -2 else '2' if lean > 2 else '4')
     cf_clamps(c)
     return c
 
@@ -697,18 +712,23 @@ def centrifuge_top_glow(frame):
 
 
 # Assembler: a robot work cell. The front has an open bay 2 px deep (walls and back on their own elements, see
-# scripts/data/industry_data.py). A gantry carriage runs along the back, lowers its torch onto the part, welds a seam
-# from left to right with a cyan-white spark, lifts and travels back while the seam cools. Chars on top of the
-# casing: 'p q' part steel (body, lit edge), 'y s' a cooling seam (warm cyan, cool cyan); the spark uses 'v w x'.
+# scripts/data/industry_data.py) with a deep blue back wall behind a light steel gantry. Its carriage runs along the
+# rail, lowers its torch onto the part, welds a seam from left to right with a cyan-white spark, lifts and travels
+# back while the seam cools. A blue standby strip under the bay and a blue glass seam on the top hatch light up while
+# it works. Chars on top of the casing: '1'-'5' light steel (deep -> highlight), '6 7 8' deep blue paint (shadow,
+# body, lit edge), '9' blue glass unlit, '0 B' blue light (lit, core), 'y s' a cooling seam (warm cyan, cool cyan);
+# the spark uses 'v w x'.
 
 AS_FRAMES, AS_FRAMETIME = 32, 2                                          # one weld cycle: 64 ticks
 AS_LEFT, AS_RIGHT, AS_PARK = 5, 10, 7                                    # torch x: seam ends, parked while idle
 AS_PHASE = 8                                                             # the loop starts mid-weld
 AS_SEAM = 'xxwwvvvvyyyyssssss'                                           # a seam pixel cooling, one char per frame
+AS_BLUE = ('#1A2A62', '#26418E', '#3C63BE', '#304E9E', '#5A8CFF', '#C2D6FF')
 
 
 def as_pal(tier=1):
-    return casing.casing_palette(casing.INDUSTRY_TIERS[tier], p='#56626C', q='#9AA8B2', y='#2C8FA2', s='#1C4C58')
+    return casing.casing_palette(casing.INDUSTRY_TIERS[tier], y='#2C8FA2', s='#1C4C58',
+                                 **dict(zip('12345', CF_STEEL)), **dict(zip('67890B', AS_BLUE)))
 
 
 def as_torch(frame):
@@ -727,29 +747,31 @@ def as_torch(frame):
 
 
 def assembler_front(tier, lit):
-    """Casing with the open work cell bay (transparent) above a lip with the status lamp."""
+    """Casing with the open work cell bay (transparent) above a steel lip with the blue strip and the status lamp."""
     c = casing.shell(tier)
     c.rect(3, 3, 10, 9, '.')
-    c.rect(3, 12, 10, 1, 'd')
+    c.rect(3, 12, 10, 1, '3')
+    c.rect(4, 12, 7, 1, '0' if lit else '9')
     c.set(12, 12, 'L' if lit else 'l')
     return c
 
 
 def assembler_bay(frame=None):
-    """Back wall of the bay: the gantry rail, the carriage, arm and torch, the part on its bed. No frame: parked."""
+    """Back wall of the bay: blue panels, the gantry rail, the carriage, arm and torch, the part on its bed.
+    No frame: parked."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'c')
-    c.rect(3, 3, 10, 1, 'a')
+    c.rect(0, 0, 16, 16, '7')
+    c.rect(3, 3, 10, 1, '6')                                             # shadow under the ceiling
     for x in range(4, 12, 3):                                            # back wall panel seams
-        c.rect(x, 6, 1, 4, 'b')
-    c.rect(3, 4, 10, 1, 'd').rect(3, 5, 10, 1, 'a')                      # gantry rail
-    c.rect(3, 11, 10, 1, 'a')                                            # bed
-    c.rect(AS_LEFT, 10, AS_RIGHT - AS_LEFT + 1, 1, 'q')                  # the part
-    c.set(AS_LEFT - 1, 10, 'p').set(AS_RIGHT + 1, 10, 'p')
-    x, head, _ = as_torch(frame) if frame is not None else (AS_PARK, 6, False)
-    c.rect(x - 1, 4, 3, 2, 'q').set(x + 1, 5, 'p').set(x - 1, 4, 'e')   # carriage on the rail
-    c.rect(x, 6, 1, head - 6, 'e')                                       # telescoping arm
-    c.rect(x - 1, head, 3, 1, 'q').set(x + 1, head, 'p')                 # torch head
+        c.rect(x, 6, 1, 4, '6').rect(x + 1, 6, 1, 4, '8')
+    c.rect(3, 4, 10, 1, '4').rect(3, 5, 10, 1, '2')                      # gantry rail
+    c.rect(3, 11, 10, 1, '2')                                            # bed
+    c.rect(AS_LEFT, 10, AS_RIGHT - AS_LEFT + 1, 1, '5')                  # the part
+    c.set(AS_LEFT - 1, 10, '3').set(AS_RIGHT + 1, 10, '3')
+    x, head, _ = as_torch(frame) if frame is not None else (AS_PARK, 7, False)
+    c.rect(x - 1, 4, 3, 2, '8').set(x + 1, 5, '6').set(x - 1, 4, '5')   # blue carriage on the rail
+    c.rect(x, 6, 1, head - 6, '4')                                       # telescoping arm
+    c.rect(x - 1, head, 3, 1, '5').set(x + 1, head, '3')                 # torch head
     c.set(x, head + 1, 'K')                                              # nozzle
     return c
 
@@ -771,8 +793,9 @@ def assembler_bay_glow(frame):
 
 
 def assembler_front_glow():
-    """The status lamp, lit full-bright."""
+    """The blue strip and the status lamp, lit full-bright."""
     c = Canvas()
+    c.rect(4, 12, 7, 1, '0').rect(6, 12, 3, 1, 'B')
     c.set(12, 12, 'L')
     return c
 
@@ -780,19 +803,22 @@ def assembler_front_glow():
 def assembler_bay_wall():
     """Bay walls and floor: rows 0-8 the side wall panel, rows 9-15 the floor (lit front edge first)."""
     c = Canvas()
-    c.rect(0, 0, 16, 9, 'b')
-    c.rect(0, 0, 16, 1, 'a').rect(0, 4, 16, 1, 'a')
-    c.rect(0, 9, 16, 7, 'a')
-    c.rect(0, 9, 16, 1, 'c')
+    c.rect(0, 0, 16, 9, '2')
+    c.rect(0, 0, 16, 1, '1').rect(0, 4, 16, 1, '1')
+    c.rect(0, 9, 16, 7, '2')
+    c.rect(0, 9, 16, 1, '4')
     return c
 
 
 def assembler_top(tier):
-    """Parts hatch: two doors over the cell, a cyan seam between them, feed lights at the corners."""
+    """Parts hatch: two light steel doors over the cell, a blue glass seam between them, feed lights at the
+    corners."""
     c = casing.shell(tier)
-    c.recess(4, 4, 8, 8, 'abcde', fill='c')
-    c.rect(7, 5, 2, 6, 'u')
-    c.rect(5, 6, 1, 4, 'b').rect(10, 6, 1, 4, 'b')
+    c.recess(4, 4, 8, 8, '13325', fill='3')
+    for x in (5, 9):                                                     # doors: lit top edge, shaded bottom edge
+        c.rect(x, 5, 2, 6, '4').rect(x, 5, 2, 1, '5').rect(x, 10, 2, 1, '3')
+    c.rect(5, 7, 1, 2, '2').rect(10, 7, 1, 2, '2')                       # handles
+    c.rect(7, 5, 2, 6, '9')
     for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
         c.set(x, y, 'u')
     return c
@@ -800,7 +826,7 @@ def assembler_top(tier):
 
 def assembler_top_glow():
     c = Canvas()
-    c.rect(7, 5, 2, 6, 'v').rect(7, 7, 2, 2, 'w')
+    c.rect(7, 5, 2, 6, '0').rect(7, 7, 2, 2, 'B')
     for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
         c.set(x, y, 'w')
     return c
