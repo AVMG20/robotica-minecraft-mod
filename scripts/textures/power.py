@@ -972,16 +972,6 @@ def tesla_glow(tier):
     return c
 
 
-def tesla_tip():
-    """Full-bright energy ball: white hot core fading to cyan."""
-    c = Canvas()
-    for y in range(16):
-        for x in range(16):
-            d = math.hypot(x - 7.5, y - 7.5)
-            c.set(x, y, 'z' if d < 1.6 else 'Y' if d < 3.2 else 'y' if d < 5.5 else 'Z')
-    return c
-
-
 def tesla_linker():
     """Hand tool: steel grip bottom left, copper coil wrap, a forked brass probe with a cyan spark top right."""
     c = Canvas()
@@ -1142,7 +1132,6 @@ def main():
     write_solar()
     write_accumulators()
 
-    write_block('tesla_coil_tip', tesla_tip().rows(), P)
     for tier in TESLA_CRYSTAL:
         pal = tesla_palette(tier)
         rows, _ = tesla_crystal(tier)

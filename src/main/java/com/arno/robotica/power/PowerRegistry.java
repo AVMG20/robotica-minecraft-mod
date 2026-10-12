@@ -65,7 +65,7 @@ public final class PowerRegistry {
     public static final DeferredBlock<WindingCrankBlock> WINDING_CRANK = BLOCKS.registerBlock("winding_crank", WindingCrankBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD).noOcclusion());
     public static final DeferredBlock<CombustionGeneratorBlock> COMBUSTION_GENERATOR = BLOCKS.registerBlock("combustion_generator",
-            CombustionGeneratorBlock::new, machine().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 13 : 0));
+            CombustionGeneratorBlock::new, machine().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 13 : 0));
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK1 = BLOCKS.registerBlock("solar_panel_mk1",
             p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK1), machine().noOcclusion());
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK2 = BLOCKS.registerBlock("solar_panel_mk2",
