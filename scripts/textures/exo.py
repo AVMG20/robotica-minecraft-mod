@@ -4,6 +4,7 @@ Run: python3 scripts/textures/exo.py
 Mk1 = copper plating with brass trim and cyan lights, Mk2 = steel plating with cyan trim and lights, Mk3 = dark netherite
 plating with magma trim and amber lights, Mk4 = null-violet plating with lilac trim and teal lights.
 Armor layers go to textures/models/armor/exo_mk{1-4}_layer_{1,2}.png (layer 1: helmet, chestplate, boots; layer 2: leggings).
+The Glider wings (Elytra model UVs) go to textures/entity/exo_glider.png.
 Module cards are coloured by the piece they fit (any-piece modules violet); leveled modules show one gold pip per level.
 """
 import pathlib
@@ -115,6 +116,12 @@ GLYPHS = {
     'hydro_fins': ['......', 'X.....', 'XX....', 'XXX...', 'XXXX..', 'XXXXXX', '......', 'x.x.x.'],
     'capacitor_plating': ['..XX..', 'XXXXXX', 'X....X', 'XXXXXX', 'XXXXXX', 'XXXXXX', 'XXXXXX', '......'],
     'power_regulator': ['.XXXX.', 'X....X', 'X..X.X', 'X.X..X', 'X....X', '.XXXX.', '......', '......'],
+    'zoom_optics': ['.XXX..', 'X...X.', 'X.x.X.', 'X...X.', '.XXX..', '....X.', '.....X', '......'],
+    'glider': ['......', 'X....X', 'XX..XX', 'XXXXXX', 'xXXXXx', '..XX..', '......', '......'],
+    'extender_arms': ['XX....', 'X.....', '.X....', '..X...', '...X..', '....XX', '....XX', '......'],
+    'gyro_stabilizer': ['..XX..', '.X..X.', 'XxXXxX', 'XxXXxX', '.X..X.', '..XX..', '......', 'xxxxxx'],
+    'anchor_servos': ['..XX..', '..XX..', 'XXXXXX', '..XX..', '..XX..', 'X.XX.X', '.XXXX.', '......'],
+    'cryo_treads': ['..X...', 'X.X.X.', '.XXX..', 'XXXXX.', '.XXX..', 'X.X.X.', '..X...', 'xxxxxx'],
 }
 
 
@@ -140,14 +147,17 @@ def module(name, colors, level=0):
 
 MODULE_COLORS = {
     'night_vision': HEAD, 'rebreather': HEAD, 'robot_hud': HEAD, 'auto_feeder': HEAD, 'solar_weave': HEAD, 'sonar_pulse': HEAD,
+    'zoom_optics': HEAD,
     'jet_assist': CHEST, 'flight': CHEST, 'kinetic_shield': CHEST, 'med_injector': CHEST, 'hazard_seal': CHEST,
+    'glider': CHEST, 'extender_arms': CHEST,
     'servo_stride_1': LEGS, 'servo_stride_2': LEGS, 'servo_stride_3': LEGS, 'kinetic_generator': LEGS, 'dash_thrusters': LEGS,
-    'step_assist': FEET, 'spring_heels': FEET, 'fall_dampener': FEET, 'magnet': FEET, 'hydro_fins': FEET,
+    'gyro_stabilizer': LEGS, 'anchor_servos': LEGS,
+    'step_assist': FEET, 'spring_heels': FEET, 'fall_dampener': FEET, 'magnet': FEET, 'hydro_fins': FEET, 'cryo_treads': FEET,
     'capacitor_plating': ANY, 'power_regulator': ANY,
 }
 # Modules with levels I-III: one file per level (level I keeps the plain name). Servo Stride has its own glyph per level.
 LEVELED = ('night_vision', 'sonar_pulse', 'jet_assist', 'kinetic_shield', 'med_injector', 'spring_heels', 'fall_dampener',
-           'magnet', 'capacitor_plating', 'power_regulator')
+           'magnet', 'capacitor_plating', 'power_regulator', 'extender_arms', 'anchor_servos')
 
 
 def module_files():
@@ -325,6 +335,34 @@ def layer2():
     return t.rows()
 
 
+# ------------------------------------------------------------------ glider wings (64x32, Elytra model UVs)
+
+def glider_wings():
+    """One wing box at u=22, v=0 (10 wide, 20 tall, 2 deep), used mirrored for both wings: a steel panel wing with
+    dark ribs and cyan light seams, tapering to a tip at the bottom."""
+    t = Layer()
+
+    def paint(name, lx, ly, fw, fh):
+        if name not in ('front', 'back'):
+            return 'n'
+        # taper: full width for the first 12 rows, then narrower toward the tip
+        inset = max(0, ly - 11)
+        if lx < inset // 2 or lx >= fw - (inset + 1) // 2:
+            return '.'
+        if lx == inset // 2 or lx == fw - 1 - (inset + 1) // 2 or ly == 0:
+            return 'n'
+        if ly == 1:
+            return 'T'
+        if ly in (6, 12):
+            return 'a'
+        if lx in (3, 6):
+            return 't'
+        return 'M' if lx < 3 else 'm'
+
+    t.box(22, 0, 10, 20, 2, paint)
+    return t.rows()
+
+
 # ------------------------------------------------------------------ main
 
 def main():
@@ -336,6 +374,7 @@ def main():
         write_png(ASSETS / f'textures/models/armor/exo_mk{mk}_layer_2.png', layer2(), p, size=None)
     for fname, name, level in module_files():
         write_item(fname, module(name, MODULE_COLORS[name], level), pal(MODULE_COLORS[name]))
+    write_png(ASSETS / 'textures/entity/exo_glider.png', glider_wings(), pal(MK2), size=None)
 
 
 if __name__ == '__main__':

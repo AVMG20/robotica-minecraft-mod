@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PCP",
+    "ASA"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "C": {
+      "item": "minecraft:compass"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    }
+  },
+  "result": {
+    "id": "robotica:gyro_stabilizer_module",
+    "count": 1
+  }
+}

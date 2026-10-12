@@ -105,7 +105,14 @@
      ],
      [
       "Core socket",
-      "–",
+      "\u2013",
+      "yes",
+      "yes",
+      "yes"
+     ],
+     [
+      "Cell slot",
+      "yes",
       "yes",
       "yes",
       "yes"
@@ -383,6 +390,27 @@
   },
   {
    "items": [
+    "zoom_optics_module"
+   ],
+   "what": "Hold the Zoom key (default Z) to look 4x closer.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo helmet"
+     ],
+     [
+      "Min. Mk",
+      "Mk1"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
     "jet_assist_module",
     "jet_assist_module_2",
     "jet_assist_module_3"
@@ -514,6 +542,58 @@
   },
   {
    "items": [
+    "glider_module"
+   ],
+   "what": "Elytra gliding: press jump in mid air. Firework rockets boost it.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo chestplate"
+     ],
+     [
+      "Min. Mk",
+      "Mk2"
+     ],
+     [
+      "Energy",
+      "40 FE/s gliding"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "extender_arms_module",
+    "extender_arms_module_2",
+    "extender_arms_module_3"
+   ],
+   "what": "Reach blocks 1 / 2 / 3 blocks further.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo chestplate"
+     ],
+     [
+      "Min. Mk (I / II / III)",
+      "Mk1 / Mk2 / Mk3"
+     ],
+     [
+      "Energy",
+      "5 / 10 / 20 FE/s"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
     "servo_stride_module_1",
     "servo_stride_module_2",
     "servo_stride_module_3"
@@ -591,6 +671,54 @@
   },
   {
    "items": [
+    "gyro_stabilizer_module"
+   ],
+   "what": "Full mining speed while your feet are off the ground.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo leggings"
+     ],
+     [
+      "Min. Mk",
+      "Mk2"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "anchor_servos_module",
+    "anchor_servos_module_2",
+    "anchor_servos_module_3"
+   ],
+   "what": "Cuts knockback by 40 / 70 / 100%.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo leggings"
+     ],
+     [
+      "Min. Mk (I / II / III)",
+      "Mk1 / Mk2 / Mk3"
+     ],
+     [
+      "Energy",
+      "100 / 150 / 200 FE per knockback"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
     "step_assist_module"
    ],
    "what": "Walk up full blocks.",
@@ -647,7 +775,7 @@
     "fall_dampener_module_2",
     "fall_dampener_module_3"
    ],
-   "what": "Absorbs fall damage beyond 3 blocks.",
+   "what": "Cancels all fall damage while charged, also from Ender Pearls and flying into walls.",
    "stats": {
     "rows": [
      [
@@ -713,6 +841,31 @@
      [
       "Energy",
       "20 FE/s in water"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "cryo_treads_module"
+   ],
+   "what": "Freezes water under your feet so you can walk on it. Magma blocks do not burn.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo boots"
+     ],
+     [
+      "Min. Mk",
+      "Mk1"
+     ],
+     [
+      "Energy",
+      "20 FE/s freezing"
      ]
     ]
    },

@@ -43,6 +43,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
@@ -84,6 +87,9 @@ public final class ExoTicker {
     private static final ResourceLocation JUMP_ID = Robotica.id("exo_spring_heels");
     private static final ResourceLocation SWIM_ID = Robotica.id("exo_hydro_fins");
     private static final ResourceLocation DIG_ID = Robotica.id("exo_hydro_fins_mining");
+    private static final ResourceLocation REACH_ID = Robotica.id("exo_extender_arms");
+    /** Radius in blocks of the water Cryo Treads freeze around the wearer. */
+    private static final int CRYO_RADIUS = 3;
     private static final int FLUSH_INTERVAL = 10;
     private static final int CHEST = 1, FEET = 3;
     /** Persistent data: true while the suit (not a game mode or another mod) granted the player {@code mayfly}. */
@@ -177,15 +183,20 @@ public final class ExoTicker {
         helmet(p, st);
         jetAssist(p, st);
         flight(p, st);
+        glider(p, st);
         attributes(p, st);
         kineticGenerator(p, st);
         setBonus(p, st);
         medInjector(p, st);
-        if ((st.tick & 1) == 0) magnet(p, st);
+        if ((st.tick & 1) == 0) {
+            magnet(p, st);
+            cryoTreads(p, st);
+        }
         if (st.tick % 10 == 0) hazardSeal(p, st);
         if (st.tick % 20 == 0) {
             autoFeeder(p, st);
             solarWeave(p, st);
+            chestCell(p);
             if (ExoConfig.cellRecharge()) rechargeFromCells(p);
         }
         if (st.tick % FLUSH_INTERVAL == 0) flush(p, st);
@@ -489,6 +500,16 @@ public final class ExoTicker {
         p.resetFallDistance();
     }
 
+    /**
+     * Glider: the chestplate glides like an Elytra ({@link com.arno.robotica.exo.item.ExoArmorItem#canElytraFly}); this
+     * charges the time in the air.
+     */
+    private static void glider(ServerPlayer p, State st) {
+        if (!p.isFallFlying() || !has(st, ModuleKind.GLIDER)) return;
+        double cost = ExoConfig.perTick(ModuleKind.GLIDER, 1);
+        if (afford(st, ModuleKind.GLIDER, cost)) spend(st, ModuleKind.GLIDER, cost);
+    }
+
     /** Med Injector: heals once when health drops low, then waits out its cooldown. */
     private static void medInjector(ServerPlayer p, State st) {
         int level = lvl(st, ModuleKind.MED_INJECTOR);
@@ -548,6 +569,15 @@ public final class ExoTicker {
         if (fins && p.isInWater()) spend(st, ModuleKind.HYDRO_FINS, finsCost);
         setModifier(p, NeoForgeMod.SWIM_SPEED, SWIM_ID, fins ? ExoConfig.hydroSwim() : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         setModifier(p, Attributes.SUBMERGED_MINING_SPEED, DIG_ID, fins ? ExoConfig.hydroMining() : 0, AttributeModifier.Operation.ADD_VALUE);
+
+        int arms = lvl(st, ModuleKind.EXTENDER_ARMS);
+        boolean armsOn = false;
+        if (arms > 0) {
+            double cost = ExoConfig.perTick(ModuleKind.EXTENDER_ARMS, arms);
+            armsOn = afford(st, ModuleKind.EXTENDER_ARMS, cost);
+            if (armsOn) spend(st, ModuleKind.EXTENDER_ARMS, cost);
+        }
+        setModifier(p, Attributes.BLOCK_INTERACTION_RANGE, REACH_ID, armsOn ? ExoConfig.extenderReach(arms) : 0, AttributeModifier.Operation.ADD_VALUE);
     }
 
     private static void setModifier(ServerPlayer p, Holder<Attribute> attribute, ResourceLocation id, double amount, AttributeModifier.Operation op) {
@@ -601,6 +631,36 @@ public final class ExoTicker {
         if (pulled > 0) spend(st, ModuleKind.MAGNET, cost);
     }
 
+    /**
+     * Cryo Treads: every other tick on the ground, still water sources around the feet turn into frosted ice that melts
+     * again by itself (like Frost Walker). Charged only when something froze.
+     */
+    private static void cryoTreads(ServerPlayer p, State st) {
+        if (!has(st, ModuleKind.CRYO_TREADS) || !p.onGround() || p.isPassenger() || p.isSpectator()) return;
+        double cost = ExoConfig.perTick(ModuleKind.CRYO_TREADS, 1) * 2;
+        if (!afford(st, ModuleKind.CRYO_TREADS, cost)) return;
+        ServerLevel level = p.serverLevel();
+        BlockState ice = Blocks.FROSTED_ICE.defaultBlockState();
+        BlockPos below = p.blockPosition().below();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos above = new BlockPos.MutableBlockPos();
+        boolean froze = false;
+        for (int dx = -CRYO_RADIUS; dx <= CRYO_RADIUS; dx++) {
+            for (int dz = -CRYO_RADIUS; dz <= CRYO_RADIUS; dz++) {
+                if (dx * dx + dz * dz > CRYO_RADIUS * CRYO_RADIUS) continue;
+                pos.set(below.getX() + dx, below.getY(), below.getZ() + dz);
+                BlockState state = level.getBlockState(pos);
+                if (!state.is(Blocks.WATER) || !state.getFluidState().isSource()) continue;
+                above.setWithOffset(pos, 0, 1, 0);
+                if (!level.getBlockState(above).isAir() || !level.isUnobstructed(ice, pos, CollisionContext.empty())) continue;
+                level.setBlockAndUpdate(pos, ice);
+                level.scheduleTick(pos.immutable(), Blocks.FROSTED_ICE, Mth.nextInt(p.getRandom(), 60, 120));
+                froze = true;
+            }
+        }
+        if (froze) spend(st, ModuleKind.CRYO_TREADS, cost);
+    }
+
     // ---------------------------------------------------------------- set bonus
 
     private static void setBonus(ServerPlayer p, State st) {
@@ -614,32 +674,56 @@ public final class ExoTicker {
         }
     }
 
+    /** The worn pieces in charging order (chestplate first), EMPTY for a missing one. */
+    private static ItemStack[] chargeOrder(ServerPlayer p) {
+        return new ItemStack[]{ExoSuit.piece(p, EquipmentSlot.CHEST), ExoSuit.piece(p, EquipmentSlot.LEGS),
+                ExoSuit.piece(p, EquipmentSlot.HEAD), ExoSuit.piece(p, EquipmentSlot.FEET)};
+    }
+
+    private static boolean needsCharge(ItemStack[] pieces) {
+        for (ItemStack piece : pieces) {
+            if (!piece.isEmpty() && ItemEnergy.get(piece) < ItemEnergy.capacity(piece)) return true;
+        }
+        return false;
+    }
+
+    /** Moves up to {@code rate} FE from {@code cell} into the pieces, in order. Returns the FE moved. */
+    private static int feed(ItemStack cell, ItemStack[] pieces, int rate) {
+        int left = rate;
+        for (ItemStack piece : pieces) {
+            if (left <= 0 || piece.isEmpty()) continue;
+            int space = ItemEnergy.capacity(piece) - ItemEnergy.get(piece);
+            int move = Math.min(Math.min(left, space), ItemEnergy.get(cell));
+            if (move <= 0) continue;
+            ItemEnergy.drain(cell, move);
+            ItemEnergy.addInternal(piece, move);
+            left -= move;
+        }
+        return rate - left;
+    }
+
+    /** The cell in the worn chestplate's cell slot tops up the suit once per second (config cellSlotPerSecond). */
+    private static void chestCell(ServerPlayer p) {
+        ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
+        if (chest.isEmpty()) return;
+        ItemStack cell = ExoData.cell(chest);
+        if (!(cell.getItem() instanceof CellItem item) || ItemEnergy.get(cell) <= 0) return;
+        ItemStack[] pieces = chargeOrder(p);
+        if (!needsCharge(pieces)) return;
+        int rate = (int) Math.min((long) item.getMaxExtract(cell) * 20, ExoConfig.cellSlotPerSecond());
+        if (feed(cell, pieces, rate) > 0) ExoData.setCell(chest, cell);
+    }
+
     /** Cells and Mainsprings in the inventory top up the worn suit once per second (config cellsRechargeSuit). */
     private static void rechargeFromCells(ServerPlayer p) {
-        ItemStack[] pieces = {ExoSuit.piece(p, EquipmentSlot.CHEST), ExoSuit.piece(p, EquipmentSlot.LEGS),
-                ExoSuit.piece(p, EquipmentSlot.HEAD), ExoSuit.piece(p, EquipmentSlot.FEET)};
-        boolean needs = false;
-        for (ItemStack piece : pieces) {
-            if (!piece.isEmpty() && ItemEnergy.get(piece) < ItemEnergy.capacity(piece)) needs = true;
-        }
-        if (!needs) return;
+        ItemStack[] pieces = chargeOrder(p);
+        if (!needsCharge(pieces)) return;
         var inv = p.getInventory();
         int budget = ExoConfig.cellRechargePerSecond();
         for (int i = 0; i < inv.items.size() + 1 && budget > 0; i++) {
             ItemStack cell = i < inv.items.size() ? inv.items.get(i) : inv.offhand.get(0);
             if (!(cell.getItem() instanceof CellItem item) || ItemEnergy.get(cell) <= 0) continue;
-            int rate = (int) Math.min((long) item.getMaxExtract(cell) * 20, budget);
-            int start = rate;
-            for (ItemStack piece : pieces) {
-                if (rate <= 0 || piece.isEmpty()) continue;
-                int space = ItemEnergy.capacity(piece) - ItemEnergy.get(piece);
-                int move = Math.min(Math.min(rate, space), ItemEnergy.get(cell));
-                if (move <= 0) continue;
-                ItemEnergy.drain(cell, move);
-                ItemEnergy.addInternal(piece, move);
-                rate -= move;
-            }
-            budget -= start - rate;
+            budget -= feed(cell, pieces, (int) Math.min((long) item.getMaxExtract(cell) * 20, budget));
         }
     }
 
@@ -848,11 +932,30 @@ public final class ExoTicker {
         event.setCanBreathe(true);
     }
 
-    /** Incoming hit, before vanilla's checks. Magma Core set: fire damage is ignored (free, so i-frames do not matter). */
+    /**
+     * Incoming hit, before vanilla's checks. Magma Core set: fire damage is ignored (free, so i-frames do not matter).
+     * Fall damage that skips the fall event (an Ender Pearl landing) and flying into a wall: the Antigrav Core ignores
+     * the fall, the Fall Dampener cancels both like a fall of that many blocks. Cryo Treads: magma blocks do not burn.
+     */
     public static void onIncomingDamage(ServerPlayer p, LivingIncomingDamageEvent event) {
         State st = STATES.get(p.getUUID());
         if (st == null) return;
-        if (st.core == ExoData.Core.MAGMA && event.getSource().is(DamageTypeTags.IS_FIRE)) event.setCanceled(true);
+        var source = event.getSource();
+        if (st.core == ExoData.Core.MAGMA && source.is(DamageTypeTags.IS_FIRE)) {
+            event.setCanceled(true);
+            return;
+        }
+        boolean fall = source.is(DamageTypeTags.IS_FALL);
+        if (fall || source.is(DamageTypes.FLY_INTO_WALL)) {
+            refresh(p, st);
+            if (fall && st.core == ExoData.Core.ANTIGRAV) event.setCanceled(true);
+            else if (dampen(p, st, event.getAmount())) event.setCanceled(true);
+            return;
+        }
+        if (source.is(DamageTypes.HOT_FLOOR)) {
+            refresh(p, st);
+            if (afford(st, ModuleKind.CRYO_TREADS, 0)) event.setCanceled(true);
+        }
     }
 
     /**
@@ -891,10 +994,23 @@ public final class ExoTicker {
         }
     }
 
-    /** A hit the Kinetic Shield absorbed completely pushes nobody around. */
+    /** A hit the Kinetic Shield absorbed completely pushes nobody around. Anchor Servos take a share off the rest. */
     public static void onKnockback(ServerPlayer p, LivingKnockBackEvent event) {
         State st = STATES.get(p.getUUID());
-        if (st != null && st.shieldTick == p.tickCount) event.setCanceled(true);
+        if (st == null) return;
+        if (st.shieldTick == p.tickCount) {
+            event.setCanceled(true);
+            return;
+        }
+        refresh(p, st);
+        int level = lvl(st, ModuleKind.ANCHOR_SERVOS);
+        if (level <= 0 || event.getStrength() <= 0) return;
+        double cost = ExoConfig.cost(ModuleKind.ANCHOR_SERVOS, level);
+        if (!afford(st, ModuleKind.ANCHOR_SERVOS, cost)) return;
+        spendNow(p, st, ModuleKind.ANCHOR_SERVOS, cost);
+        double resist = ExoConfig.anchorResist(level);
+        if (resist >= 1.0) event.setCanceled(true);
+        else event.setStrength((float) (event.getStrength() * (1.0 - resist)));
     }
 
     /** Magma Core set: the wearer's melee hits set the target on fire. */
@@ -906,8 +1022,8 @@ public final class ExoTicker {
     }
 
     /**
-     * Antigrav Core set: no fall damage at all. Fall Dampener: absorbs fall damage for FE per block fallen (beyond the 3
-     * safe blocks). Partial with little energy.
+     * Antigrav Core set: no fall damage at all. Fall Dampener: cancels all fall damage while its battery holds any
+     * energy, for FE per block fallen beyond the safe fall distance (an emptying battery pays what it has left).
      */
     public static void onFall(ServerPlayer p, LivingFallEvent event) {
         State st = STATES.get(p.getUUID());
@@ -917,19 +1033,33 @@ public final class ExoTicker {
             event.setDamageMultiplier(0.0F);
             return;
         }
-        int level = lvl(st, ModuleKind.FALL_DAMPENER);
-        if (level <= 0) return;
-        float blocks = event.getDistance() - 3.0F;
+        double blocks = event.getDistance() - p.getAttributeValue(Attributes.SAFE_FALL_DISTANCE);
         if (blocks <= 0 || event.getDamageMultiplier() <= 0) return;
+        if (dampen(p, st, blocks)) event.setDamageMultiplier(0.0F);
+    }
+
+    /** Client side of a fall: the same answer as the server, so a dampened landing plays no fall damage sound. */
+    public static void onClientFall(Player player, LivingFallEvent event) {
+        if (ExoSuit.setBonus(player) == ExoData.Core.ANTIGRAV || ExoSuit.pieceLevel(player, EquipmentSlot.FEET, ModuleKind.FALL_DAMPENER) > 0) {
+            event.setDamageMultiplier(0.0F);
+        }
+    }
+
+    /**
+     * Fall Dampener: pays for {@code blocks} blocks of fall (or what is left in its battery) and returns true when the
+     * damage is cancelled, false without a working, charged module.
+     */
+    private static boolean dampen(ServerPlayer p, State st, double blocks) {
+        int level = lvl(st, ModuleKind.FALL_DAMPENER);
+        if (level <= 0) return false;
         int piece = st.act.piece(ModuleKind.FALL_DAMPENER);
-        double cost = (double) blocks * ExoConfig.cost(ModuleKind.FALL_DAMPENER, level) * st.factor;
         double have = available(st, piece);
-        double fraction = cost <= 0 ? 1.0 : Mth.clamp(have / cost, 0.0, 1.0);
-        if (fraction <= 0) return;
-        payNow(p, st, piece, cost * fraction);
-        event.setDamageMultiplier((float) (event.getDamageMultiplier() * (1.0 - fraction)));
+        if (have < 1) return false;
+        double cost = blocks * ExoConfig.cost(ModuleKind.FALL_DAMPENER, level) * st.factor;
+        payNow(p, st, piece, Math.min(cost, have));
         CoreSounds.play(p, CoreSounds.MACHINE_STOP, SoundSource.PLAYERS, 0.5F, 1.5F);
         p.serverLevel().sendParticles(ParticleTypes.POOF, p.getX(), p.getY() + 0.1, p.getZ(), 8, 0.3, 0.05, 0.3, 0.02);
+        return true;
     }
 
     /** Spring Heels: the jump height itself is an attribute; this charges the jump. */
@@ -1009,6 +1139,7 @@ public final class ExoTicker {
         setModifier(p, Attributes.JUMP_STRENGTH, JUMP_ID, 0, AttributeModifier.Operation.ADD_VALUE);
         setModifier(p, NeoForgeMod.SWIM_SPEED, SWIM_ID, 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         setModifier(p, Attributes.SUBMERGED_MINING_SPEED, DIG_ID, 0, AttributeModifier.Operation.ADD_VALUE);
+        setModifier(p, Attributes.BLOCK_INTERACTION_RANGE, REACH_ID, 0, AttributeModifier.Operation.ADD_VALUE);
         if (st.nv) removeOurs(p, MobEffects.NIGHT_VISION);
         if (st.fireRes) removeOurs(p, MobEffects.FIRE_RESISTANCE);
         if (st.gliding) removeOurs(p, MobEffects.SLOW_FALLING);

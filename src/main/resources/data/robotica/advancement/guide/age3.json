@@ -67,6 +67,8 @@
       "robotica:fall_dampener_module_3",
       "robotica:magnet_module_3",
       "robotica:capacitor_plating_module_3",
+      "robotica:extender_arms_module_3",
+      "robotica:anchor_servos_module_3",
       "robotica:power_regulator_module_2",
       "robotica:buddy_bot_mk3",
       "robotica:excavator_mk3",

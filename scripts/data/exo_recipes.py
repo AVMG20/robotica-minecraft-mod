@@ -89,6 +89,7 @@ shaped('sonar_pulse_module', ['ZAZ', 'CNC'], {'Z': '#c:gems/amethyst', 'A': 'adv
 # Sonar levels run one age later: II is Age 3, III Age 4.
 level3('sonar_pulse', '#c:gems/prismarine', 'sonar_pulse_module', 'sonar_pulse_module_2')
 level_null('sonar_pulse_module_3', 'sonar_pulse_module_2', 'minecraft:ender_eye')
+shapeless('zoom_optics_module', ['basic_circuit', 'minecraft:spyglass', 'copper_coil', PLATE])
 
 # ---- Chest modules
 shaped('jet_assist_module', ['FAF', 'PSP'], {'F': '#c:feathers', 'A': 'advanced_circuit', 'S': 'servo_actuator', 'P': PLATE})
@@ -103,6 +104,10 @@ shaped('med_injector_module', ['GAG', 'CBC'], {'G': 'minecraft:glistering_melon_
 level3('med_injector', 'minecraft:golden_apple', 'med_injector_module', 'med_injector_module_2')
 level_null('med_injector_module_3', 'med_injector_module_2', 'minecraft:ghast_tear')
 shaped('hazard_seal_module', ['GQG', 'PMP'], {'G': '#c:glass_blocks', 'Q': 'quantum_circuit', 'P': PLATE, 'M': '#c:buckets/milk'})
+shaped('glider_module', ['PEP', 'ASA'], {'P': PLATE, 'E': 'minecraft:elytra', 'A': 'advanced_circuit', 'S': 'servo_actuator'})
+shaped('extender_arms_module', ['PIP', 'MBM'], {'P': PLATE, 'I': 'minecraft:piston', 'M': 'electric_motor', 'B': 'basic_circuit'})
+level2('extender_arms', 'servo_actuator')
+level3('extender_arms', 'plasma_actuator')
 
 # ---- Leg modules
 shaped('servo_stride_module_1', ['CMC', 'PBP'], {'C': 'copper_coil', 'M': 'electric_motor', 'B': 'basic_circuit', 'P': PLATE})
@@ -111,6 +116,10 @@ shaped('servo_stride_module_3', ['QPQ', ' U '], {'Q': 'quantum_circuit', 'P': 'p
 shaped('kinetic_generator_module', ['PMP', 'CGC'], {'P': PLATE, 'M': 'electric_motor', 'C': 'copper_coil', 'G': '#c:gears/copper'})
 shaped('dash_thrusters_module', ['BPB', 'FCF'], {'B': 'minecraft:blaze_powder', 'P': 'plasma_actuator', 'F': 'minecraft:fire_charge',
                                                   'C': 'copper_coil'})
+shaped('gyro_stabilizer_module', ['PCP', 'ASA'], {'P': PLATE, 'C': 'minecraft:compass', 'A': 'advanced_circuit', 'S': 'servo_actuator'})
+shaped('anchor_servos_module', ['PIP', 'MBM'], {'P': PLATE, 'I': '#c:storage_blocks/iron', 'M': 'electric_motor', 'B': 'basic_circuit'})
+level2('anchor_servos', '#c:obsidians')
+level3('anchor_servos', 'plasma_actuator')
 
 # ---- Boot modules
 shaped('step_assist_module', ['PIP', 'C C'], {'P': PLATE, 'I': 'minecraft:piston', 'C': 'copper_coil'})
@@ -125,6 +134,7 @@ level2('magnet', '#c:storage_blocks/iron')
 level3('magnet', 'minecraft:lodestone')
 # Age 2 like its mark: kelp fins on a Servo Actuator (prismarine is Age 3).
 shaped('hydro_fins_module', ['KAK', 'PSP'], {'K': '#c:storage_blocks/dried_kelp', 'A': 'advanced_circuit', 'P': PLATE, 'S': 'servo_actuator'})
+shaped('cryo_treads_module', ['IPI', 'CBC'], {'I': 'minecraft:packed_ice', 'P': PLATE, 'C': 'copper_coil', 'B': 'basic_circuit'})
 
 # ---- Any piece
 shaped('capacitor_plating_module', ['PCP', 'RBR'], {'P': PLATE, 'C': 'copper_cell', 'R': '#c:dusts/redstone', 'B': 'basic_circuit'})

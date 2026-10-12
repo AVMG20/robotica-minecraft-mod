@@ -35,7 +35,9 @@ final class ExoModuleText {
     @Nullable
     private static String unit(ModuleKind kind) {
         return switch (kind) {
-            case NIGHT_VISION, REBREATHER, ROBOT_HUD, JET_ASSIST, FLIGHT, SERVO_STRIDE, STEP_ASSIST, MAGNET, HYDRO_FINS -> "second";
+            case NIGHT_VISION, REBREATHER, ROBOT_HUD, JET_ASSIST, FLIGHT, SERVO_STRIDE, STEP_ASSIST, MAGNET, HYDRO_FINS, GLIDER,
+                 EXTENDER_ARMS, CRYO_TREADS -> "second";
+            case ANCHOR_SERVOS -> "knockback";
             case SPRING_HEELS -> "jump";
             case FALL_DAMPENER -> "block";
             case KINETIC_SHIELD -> "damage";
