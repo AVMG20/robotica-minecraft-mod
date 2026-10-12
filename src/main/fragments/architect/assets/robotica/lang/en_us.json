@@ -64,7 +64,7 @@
   "gui.robotica.architect_plot_building": "Building",
   "gui.robotica.architect_plot_changed": "Built, changes pending",
   "gui.robotica.architect_plot_built": "Built",
-  "gui.robotica.architect_plot_restyle": "Click to restyle it in the selected style",
+  "gui.robotica.architect_plot_restyle": "Click, then pick a style to restyle it",
   "gui.robotica.architect_plot_forget": "Shift-click to forget (blocks stay)",
   "gui.robotica.architect_casing": "Casing: unlocks styles",
   "gui.robotica.architect_battery": "Battery: a wound Mainspring or any FE cell",

@@ -171,7 +171,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private UUID owner;
     private String ownerName = "";
     private BuildStyle selectedStyle = BuildStyle.TIMBERFRAME;
-    /** The built plot clicked last: picking a style restyles it until Build, Cancel or another plot click. Not saved. */
+    /** The built plot clicked last: picking a style restyles it until Build, Cancel, Demolish or another plot click. Not saved. */
     private int restyleTarget = -1;
     private boolean clearTerrain;
 
@@ -462,7 +462,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             case ACTION_STYLE -> {
                 if (a >= 0 && a < BuildStyle.values().length && unlocked(BuildStyle.values()[a])) {
                     selectedStyle = BuildStyle.values()[a];
-                    if (restyleTarget >= 0) layout.restyle(restyleTarget, selectedStyle);
+                    if (restyleTarget >= 0 && !demolishing()) layout.restyle(restyleTarget, selectedStyle);
                 }
             }
             default -> {
@@ -477,15 +477,17 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private Component toggle(int plot, boolean forget) {
         if (!Plots.valid(plot)) return Component.translatable("message.robotica.architect_bad_request");
         switch (layout.state(plot)) {
-            case Layout.QUEUED -> layout.unqueue(plot);
+            case Layout.QUEUED -> {
+                layout.unqueue(plot);
+                restyleTarget = -1;
+            }
             case Layout.BUILT -> {
                 if (forget) {
                     layout.forget(plot);
                     restyleTarget = -1;
                 } else {
-                    // restyle: the next pass swaps the plot's blocks for the same pieces in the selected style
+                    // the style picked next restyles it: the next pass swaps its blocks for the same pieces in that style
                     restyleTarget = plot;
-                    layout.restyle(plot, selectedStyle());
                 }
             }
             default -> {
@@ -807,6 +809,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private Component startDemolish() {
         if (!ArchitectConfig.allowDemolish()) return Component.translatable("message.robotica.architect_demolish_off");
         if (demolishing()) return null;
+        restyleTarget = -1;
         int count = 0;
         for (int plot = 0; plot < Plots.COUNT; plot++) {
             int height = layout.builtHeight(plot);
@@ -889,7 +892,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         ItemStack tool = demolishTool(level);
         int sig = demolishSig[demoPlot];
         Shell.Shape shape = sig == 0 ? null : Shell.Shape.fromSignature(sig);
-        BuildStyle builtStyle = BuildStyle.byOrdinal(sig >> 28 & 3);
         BlockPos last = null;
         int skips = 0, shown = 0;
         while (true) {
@@ -902,7 +904,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             int x = rest % Plots.SIZE, y = height - 1 - demoCursor / layer, z = rest / Plots.SIZE;
             BlockPos target = origin.offset(x, y, z);
             BlockState was = level.getBlockState(target);
-            boolean own = shape != null && builtHere(shape, builtStyle, x, y, z, was);
+            boolean own = shape != null && builtHere(shape, x, y, z, was);
             int result = takeDown(level, target, was, energyCost, fake, tool, own);
             if (result == STEP_SKIPPED) {
                 demoCursor++;
@@ -966,17 +968,13 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return false;
     }
 
-    /**
-     * True when the block is the piece the plan built at this cell: in the plot's style, or any style on a cell a
-     * neighbouring plot shares.
-     */
-    private static boolean builtHere(Shell.Shape shape, BuildStyle style, int x, int y, int z, BlockState state) {
+    /** True when the block is the piece the plan built at this cell, in any style (it goes back as matter). */
+    public static boolean builtHere(Shell.Shape shape, int x, int y, int z, BlockState state) {
         if (!ArchitectRegistry.isBuildingBlock(state)) return false;
         Piece piece = Shell.piece(shape, x, y, z);
-        if (piece.resolve(style).isAir()) return false;
-        if (state.is(piece.resolve(style).getBlock())) return true;
-        if (!shape.overlaps(x, z)) return false;
-        for (BuildStyle other : BuildStyle.values()) if (state.is(piece.resolve(other).getBlock())) return true;
+        if (piece.isAir()) return false;
+        // any style: a shared column may be the neighbour's, and a half restyled plot holds both its old and new blocks
+        for (BuildStyle style : BuildStyle.values()) if (state.is(piece.resolve(style).getBlock())) return true;
         return false;
     }
 
