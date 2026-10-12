@@ -258,7 +258,7 @@ public class DronesGameTests {
     }
 
     /** The backpack key picks the nearest own bot the player's client tracks, never another player's, and reaches past arm's reach. */
-    @GameTest(template = "empty", batch = "dronesBackpack")
+    @GameTest(template = "empty")
     public static void backpackKeyOpensOwnBot(GameTestHelper helper) {
         // A fake player stays out of the level's player list: a listed mock player far away makes other tests' mobs despawn.
         ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
