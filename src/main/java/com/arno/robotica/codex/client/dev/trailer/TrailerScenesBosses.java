@@ -267,7 +267,7 @@ final class TrailerScenesBosses {
                 BlockPos origin = site.offset(hitX[hit], 2, 4 + hit * 5);
                 BreakQueue.rememberFace(player, origin, Direction.NORTH);
                 // the breaking player's own client does not get the break particles, so send them for the exposed blocks
-                for (BlockPos p : AreaShape.positions(origin, Direction.NORTH, AreaMode.CUBE_5, 0, false)) {
+                for (BlockPos p : AreaShape.positions(origin, Direction.NORTH, AreaMode.CUBE_5)) {
                     BlockState st = level.getBlockState(p);
                     boolean exposed = false;
                     for (Direction d : Direction.values()) exposed |= level.getBlockState(p.relative(d)).isAir();

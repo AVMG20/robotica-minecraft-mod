@@ -235,9 +235,9 @@ public class GearModuleGameTests {
             ItemStack held = player.getMainHandItem();
             helper.assertTrue(LampPlacer.isDark(level, spot), "a closed pocket is dark");
             BlockPos o = new BlockPos(0, 10, 0);
-            helper.assertTrue(LampPlacer.spotFor(o, AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3, 9, false), 9)
+            helper.assertTrue(LampPlacer.spotFor(o, AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3), 9)
                     .equals(o.below()), "3x3 on a wall: lamp on the bottom row");
-            helper.assertTrue(LampPlacer.spotFor(o, AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_5, 9, false), 9)
+            helper.assertTrue(LampPlacer.spotFor(o, AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_5), 9)
                     .equals(o.below()), "5x5 on a wall: lamp at the player's feet level, not below the floor");
             helper.assertTrue(LampPlacer.spotFor(o, java.util.List.of(), 9).equals(o), "1x1: lamp at the mined block");
             helper.assertTrue(!LampPlacer.tryPlace(player, level, held, spot), "no FE, no lamp");

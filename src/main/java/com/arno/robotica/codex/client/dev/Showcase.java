@@ -483,7 +483,7 @@ public final class Showcase {
                 BlockPos origin = new BlockPos(0, Y + 2, -20);
                 com.arno.robotica.gear.tool.BreakQueue.rememberFace(sp, origin, Direction.SOUTH);
                 // the breaking player's own client gets no break particles from destroyBlock, so send them
-                for (BlockPos p : com.arno.robotica.gear.tool.AreaShape.positions(origin, Direction.SOUTH, AreaMode.AREA_5, 0, false)) {
+                for (BlockPos p : com.arno.robotica.gear.tool.AreaShape.positions(origin, Direction.SOUTH, AreaMode.AREA_5)) {
                     level.levelEvent(2001, p, net.minecraft.world.level.block.Block.getId(level.getBlockState(p)));
                 }
                 sp.gameMode.destroyBlock(origin);
