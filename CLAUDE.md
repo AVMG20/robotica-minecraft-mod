@@ -9,8 +9,8 @@ The user is the only developer.
 - Code: `src/main/java/com/arno/robotica/<module>/` (`core` is shared; `client/` subpackages are client-only).
   Every module has `<Module>Module.init` and `client/<Module>Client.init`.
 - Lang and tags: `src/main/fragments/<module>/` (merged at build time), never in `src/main/resources`.
-- Generated data: `scripts/data/*.py` (recipes, models, guide steps) and `scripts/textures/*.py`. Edit the script, run
-  it, commit both. Don't hand-edit generated JSON.
+- Generated data: `scripts/data/*.py` (recipes, models, guide steps), `scripts/textures/*.py` and `scripts/sounds/*.py`
+  (needs ffmpeg). Edit the script, run it, commit both. Don't hand-edit generated JSON.
 - Codex (in-game book): `src/main/resources/assets/robotica/codex/chapters.json`; guide steps in
   `scripts/data/codex_guide.py`. Layout pages (`"layout": "<id>"`) draw a build from `scripts/wiki/multiblocks.json`,
   copied by `scripts/data/codex_multiblocks.py`.
@@ -35,7 +35,8 @@ The user is the only developer.
   `MachineEnergyStorage`, GUIs extend `MachineMenu`/`MachineScreen`.
 - Server config (`robotica-<module>-server.toml`) only for main knobs; other numbers stay constants.
 - Every item/block: recipe on the component ladder, generated texture and model, lang name, loot table, mineable tag.
-  Sounds go through `sounds.json`: vanilla sound files or our own `.ogg` files in `assets/robotica/sounds/`. Game tests in `<module>/test` for core logic.
+  Sounds go through `sounds.json`: vanilla sound files or our own `.ogg` files in `assets/robotica/sounds/`; one
+  consistent sound per machine. Game tests in `<module>/test` for core logic.
 - Balance numbers live in the data scripts and code; `python3 scripts/cost_report.py` prints raw-material costs.
 
 ## Every change
