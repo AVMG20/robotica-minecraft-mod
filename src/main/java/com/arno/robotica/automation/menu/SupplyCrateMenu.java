@@ -40,9 +40,9 @@ public class SupplyCrateMenu extends MachineMenu {
         addPlayerInventory(inv, inventoryX(), inventoryY());
     }
 
-    /** GUI width: the slot grid plus 8 px margins, at least the standard 176. */
+    /** GUI width: the slot grid plus 7 px margins, at least the standard 176. */
     public int width() {
-        return Math.max(176, columns * 18 + 16);
+        return Math.max(176, columns * 18 + 14);
     }
 
     /** GUI height: the 3 row crate is the standard 166 high, each extra row adds 18. */
