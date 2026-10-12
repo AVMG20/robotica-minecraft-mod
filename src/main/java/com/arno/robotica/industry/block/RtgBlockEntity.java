@@ -3,6 +3,7 @@ package com.arno.robotica.industry.block;
 import com.arno.robotica.compat.InfoSource;
 import com.arno.robotica.compat.MachineInfo;
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyNeighbors;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
@@ -15,7 +16,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -145,9 +145,7 @@ public class RtgBlockEntity extends IndustryBlockEntity implements MenuProvider,
             energy.generate(gen);
             working = true;
             if (--decay == 0) finishPellet();
-            if ((level.getGameTime() + pos.asLong()) % 120 == 0) {
-                level.playSound(null, pos, SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 0.15F, 0.6F);
-            }
+            if (CoreSounds.due(level, pos, 120)) CoreSounds.play(level, pos, CoreSounds.RTG_HUM, SoundSource.BLOCKS, 0.5F, 1.0F);
         }
         setLit(working);
         if (energy.getEnergyStored() > 0) EnergyUtil.pushToNeighbors(level, pos, energy, IndustryConfig.rtgOutput(), neighbors);

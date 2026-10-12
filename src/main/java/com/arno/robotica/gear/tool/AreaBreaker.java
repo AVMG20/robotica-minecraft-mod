@@ -42,17 +42,16 @@ public final class AreaBreaker {
             case SINGLE -> List.of();
             case TREE -> tree(level, stack, tool, origin, originState);
             case VEIN -> vein(level, stack, tool, origin, originState);
-            default -> box(level, player, stack, tool, origin, originState, face, mode);
+            default -> box(level, stack, tool, origin, originState, face, mode);
         };
     }
 
-    private static List<BlockPos> box(Level level, Player player, ItemStack stack, GearToolItem tool, BlockPos origin,
+    private static List<BlockPos> box(Level level, ItemStack stack, GearToolItem tool, BlockPos origin,
                                       BlockState originState, Direction face, AreaMode mode) {
         float originHardness = originState.getDestroySpeed(level, origin);
         double limit = Math.max(originHardness, 0.5F) * GearConfig.hardnessRatio();
-        boolean keepFloor = ToolSettings.has(stack, ToggleKind.KEEP_FLOOR);
         List<BlockPos> out = new ArrayList<>();
-        for (BlockPos p : AreaShape.positions(origin, face, mode, player.blockPosition().getY(), keepFloor)) {
+        for (BlockPos p : AreaShape.positions(origin, face, mode)) {
             if (p.equals(origin) || !level.isLoaded(p) || !level.isInWorldBounds(p)) continue;
             if (breakable(level, p, level.getBlockState(p), stack, tool, limit)) out.add(p);
         }

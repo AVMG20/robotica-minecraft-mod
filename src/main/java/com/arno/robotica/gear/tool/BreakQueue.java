@@ -46,14 +46,17 @@ public final class BreakQueue {
         final ArrayDeque<BlockPos> blocks;
         final List<ReplantSpot> replant;
         final int total;
+        /** Debris clatter while draining (vein and tree breaks; box modes only play the vanilla break sounds). */
+        final boolean debris;
         int done, staticSent;
 
-        Job(ResourceKey<Level> dimension, GearToolItem tool, ArrayDeque<BlockPos> blocks, List<ReplantSpot> replant) {
+        Job(ResourceKey<Level> dimension, GearToolItem tool, ArrayDeque<BlockPos> blocks, List<ReplantSpot> replant, boolean debris) {
             this.dimension = dimension;
             this.tool = tool;
             this.blocks = blocks;
             this.replant = replant;
             this.total = blocks.size();
+            this.debris = debris;
         }
     }
 
@@ -73,9 +76,9 @@ public final class BreakQueue {
         if (targets.size() <= AreaBreaker.QUEUE_THRESHOLD) {
             breakBlocks(player, level, tool, queue, Integer.MAX_VALUE);
             sendStatic(player, level, staticPops(targets.size()));
-            if (!replant.isEmpty()) enqueue(player, new Job(level.dimension(), tool, new ArrayDeque<>(), replant));
+            if (!replant.isEmpty()) enqueue(player, new Job(level.dimension(), tool, new ArrayDeque<>(), replant, false));
         } else {
-            enqueue(player, new Job(level.dimension(), tool, queue, replant));
+            enqueue(player, new Job(level.dimension(), tool, queue, replant, !tool.activeMode(stack, player).isBox()));
         }
     }
 
@@ -176,7 +179,7 @@ public final class BreakQueue {
                     job.done += consumed;
                     int due = staticPops(job.total) * job.done / Math.max(1, job.total) - job.staticSent;
                     if (due > 0) job.staticSent += sendStatic(player, level, due);
-                    if (level.getGameTime() % 4 == 0 && level.isLoaded(first)) GearSounds.debris(level, first, job.blocks.size());
+                    if (job.debris && level.getGameTime() % 4 == 0 && level.isLoaded(first)) GearSounds.debris(level, first, job.blocks.size());
                 }
                 if (job.blocks.isEmpty()) {
                     replant(player, level, job.replant);

@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Sounds of the mining tools, played on the server so everyone nearby hears them. They scale with the size of the
- * break: 1x1 sounds like vanilla, 3x3 adds a chunky crunch, 5x5 and 3x3x3 layer a heavier crunch, anything over 27
- * blocks spins the drill up, rumbles and keeps clattering debris while the queue drains. Mode switches tick higher
- * for bigger modes. Start sounds are limited to one every half second per player.
+ * Sounds of the mining tools, played on the server so everyone nearby hears them. 3x3 adds a chunky crunch to the
+ * vanilla break sounds; 5x5 and bigger only play the vanilla ones. Vein and tree breaks keep clattering debris while
+ * the queue drains. Mode switches tick higher for bigger modes. Start sounds are limited to one every half second per
+ * player.
  */
 public final class GearSounds {
     private GearSounds() {}
@@ -43,18 +43,7 @@ public final class GearSounds {
             CoreSounds.play(level, origin, CoreSounds.AREA_BREAK, SoundSource.PLAYERS, 0.7F, 1.15F * jitter);
             return;
         }
-        if (blocks <= 9) {
-            CoreSounds.play(level, origin, CoreSounds.AREA_BREAK, SoundSource.PLAYERS, 0.7F, jitter);
-        } else if (blocks <= 27) {
-            CoreSounds.play(level, origin, CoreSounds.AREA_BREAK, SoundSource.PLAYERS, 0.8F, 0.85F * jitter);
-            CoreSounds.play(level, origin, CoreSounds.AREA_CRUNCH, SoundSource.PLAYERS, 0.9F, jitter);
-        } else {
-            CoreSounds.play(player.serverLevel(), player.blockPosition(), CoreSounds.DRILL_SPINUP, SoundSource.PLAYERS, 0.8F, jitter);
-            float volume = Math.min(1.8F, 0.9F + blocks / 400F);
-            float pitch = Math.max(0.6F, 1.0F - blocks / 3000F) * jitter;
-            CoreSounds.play(level, origin, CoreSounds.AREA_RUMBLE, SoundSource.PLAYERS, volume, pitch);
-            CoreSounds.play(level, origin, CoreSounds.AREA_CRUNCH, SoundSource.PLAYERS, 0.9F, 0.8F * jitter);
-        }
+        if (mode.width * mode.height * mode.depth <= 9) CoreSounds.play(level, origin, CoreSounds.AREA_BREAK, SoundSource.PLAYERS, 0.7F, jitter);
     }
 
     /** Debris clatter while a queued break drains; call with the block just broken, every few ticks. */

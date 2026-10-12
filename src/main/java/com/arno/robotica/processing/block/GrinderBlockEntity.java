@@ -18,7 +18,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Inventory;
@@ -244,7 +243,7 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         if (progress >= needed) {
             if (grindOne(level.random, plan)) {
                 progress = 0;
-                CoreSounds.play(level, worldPosition, () -> SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 0.35F, 0.8F + level.random.nextFloat() * 0.3F);
+                CoreSounds.play(level, worldPosition, CoreSounds.GRINDER_GRIND, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
             } else {
                 status = Status.OUTPUT_FULL;
             }

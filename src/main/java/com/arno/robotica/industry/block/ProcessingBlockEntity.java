@@ -3,6 +3,7 @@ package com.arno.robotica.industry.block;
 import com.arno.robotica.compat.InfoSource;
 import com.arno.robotica.compat.MachineInfo;
 import com.arno.robotica.core.CoreConfig;
+import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.side.SideConfig;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
@@ -23,7 +24,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import net.minecraft.core.Direction;
 
 /**
@@ -60,6 +61,8 @@ import net.minecraft.core.Direction;
  */
 public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuProvider, InfoSource {
     public static final int IDLE = 0, WORKING = 1, NO_ENERGY = 2, OUTPUT_FULL = 3;
+    /** Ticks between two quiet work sounds during a craft. */
+    private static final int WORK_SOUND_PERIOD = 60;
 
     public final Machine machine;
     public final int tier;
@@ -258,7 +261,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
                         work = 0;
                         progress = 0;
                         craft(level, recipe);
-                    } else if ((level.getGameTime() + pos.asLong()) % 40 == 0) {
+                    } else if (CoreSounds.due(level, pos, WORK_SOUND_PERIOD)) {
                         playSound(level, pos, false);
                     }
                 } else {
@@ -342,15 +345,14 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         return stack;
     }
 
+    /** The machine's one work sound: quiet while it works, louder when an item is done. */
     private void playSound(Level level, BlockPos pos, boolean done) {
-        SoundEvent sound = switch (machine) {
-            case ALLOY_SMELTER -> done ? SoundEvents.LAVA_POP : SoundEvents.BLASTFURNACE_FIRE_CRACKLE;
-            case CENTRIFUGE -> done ? SoundEvents.BREWING_STAND_BREW : SoundEvents.BEACON_AMBIENT;
-            case ASSEMBLER -> done ? SoundEvents.SMITHING_TABLE_USE : SoundEvents.PISTON_EXTEND;
+        Supplier<SoundEvent> sound = switch (machine) {
+            case ALLOY_SMELTER -> CoreSounds.ALLOY_SMELTER_WORK;
+            case CENTRIFUGE -> CoreSounds.CENTRIFUGE_SPIN;
+            case ASSEMBLER -> CoreSounds.ASSEMBLER_WORK;
         };
-        float volume = done ? 0.5F : 0.25F;
-        float pitch = machine == Machine.CENTRIFUGE && !done ? 1.6F : 0.9F + level.random.nextFloat() * 0.2F;
-        level.playSound(null, pos, sound, SoundSource.BLOCKS, volume, pitch);
+        CoreSounds.play(level, pos, sound, SoundSource.BLOCKS, done ? 0.6F : 0.3F, 0.95F + level.random.nextFloat() * 0.1F);
     }
 
     // ---------------------------------------------------------------- access

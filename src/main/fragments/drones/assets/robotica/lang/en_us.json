@@ -37,7 +37,7 @@
   "gui.robotica.buddy.stance.passive": "Passive: never attacks",
   "gui.robotica.buddy.pickup": "Pick up drops",
   "gui.robotica.buddy.lights": "Place Spark Lamps in the dark",
-  "gui.robotica.buddy.void": "Void junk blocks it digs",
+  "gui.robotica.buddy.void": "Void junk blocks",
   "gui.robotica.buddy.dig": "Dig a tunnel where you look (H)",
   "gui.robotica.buddy.dig_stop": "Stop digging",
   "gui.robotica.buddy.digging": "Digging %s / %s",

@@ -592,10 +592,14 @@ public class BuddyBot extends DroneBase {
         return false;
     }
 
-    /** Stores a mined drop; with void on, junk goes (a stack of cobblestone is kept for plugging fluids). What does not fit drops. */
+    /** With void on, junk goes (a stack of cobblestone is kept for plugging fluids). */
+    private boolean voids(ItemStack stack) {
+        return voidOn() && stack.is(VOIDABLE) && !(stack.is(Items.COBBLESTONE) && count(Items.COBBLESTONE) < 64);
+    }
+
+    /** Stores a mined drop, unless it is voided. What does not fit drops. */
     public void collect(ItemStack drop) {
-        if (drop.isEmpty()) return;
-        if (voidOn() && drop.is(VOIDABLE) && !(drop.is(Items.COBBLESTONE) && count(Items.COBBLESTONE) < 64)) return;
+        if (drop.isEmpty() || voids(drop)) return;
         ItemStack rest = ItemHandlerHelper.insertItem(storage, drop.copy(), false);
         if (!rest.isEmpty()) Containers.dropItemStack(level(), getX(), getY(), getZ(), rest);
     }
@@ -620,6 +624,11 @@ public class BuddyBot extends DroneBase {
         boolean took = false;
         for (ItemEntity item : items) {
             ItemStack stack = item.getItem();
+            if (voids(stack)) {
+                item.discard();
+                took = true;
+                continue;
+            }
             ItemStack rest = ItemHandlerHelper.insertItem(storage, stack.copy(), false);
             int taken = stack.getCount() - rest.getCount();
             if (taken <= 0) continue;
