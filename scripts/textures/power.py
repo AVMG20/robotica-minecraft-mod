@@ -1118,9 +1118,6 @@ def write_accumulators():
 
 
 def main():
-    # the generator, chargers and solar panels sit in the processing machines' shared casing (Mk1 copper)
-    write_block('power_machine_side', casing.side(1).rows(), casing.casing_palette(MATERIALS['copper']))
-    write_block('power_machine_bottom', casing.bottom().rows(), casing.casing_palette(MATERIALS['copper']))
     casing.write_side_glow()
 
     write_generator()
