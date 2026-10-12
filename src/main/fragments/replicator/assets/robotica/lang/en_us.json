@@ -54,6 +54,8 @@
   "gui.robotica.replicator.mode.harvest": "Mode: Harvest",
   "gui.robotica.replicator.mode.spawn": "Mode: Spawn",
   "gui.robotica.replicator.mode_tip": "Click to switch between harvesting loot and spawning mobs",
+  "gui.robotica.replicator.mute_tip": "Mute working sounds",
+  "gui.robotica.replicator.unmute_tip": "Unmute working sounds",
   "gui.robotica.replicator.cycle": "Cycle: %s (x%s)",
   "gui.robotica.replicator.cost": "%s/t",
   "gui.robotica.replicator.looting": "Looting %s",

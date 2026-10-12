@@ -181,6 +181,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     @Nullable
     private UUID owner;
     private Mode mode = Mode.HARVEST;
+    /** Silences the hum, the cycle sounds and the mob's death sound (forming and breaking still sound). */
+    private boolean muted;
     private int progress;
     private int needed = 1;
     private int cycles;
@@ -264,6 +266,16 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (this.mode == mode) return;
         this.mode = mode;
         setChangedAndSync();
+    }
+
+    public boolean muted() {
+        return muted;
+    }
+
+    public void setMuted(boolean muted) {
+        if (this.muted == muted) return;
+        this.muted = muted;
+        setChanged();
     }
 
     public int progress() {
@@ -504,7 +516,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             setChangedAndSync();
         }
         sides.tick(level);
-        if (working && CoreSounds.due(level, pos, 80)) {
+        if (working && !muted && CoreSounds.due(level, pos, 80)) {
             CoreSounds.play(level, pos, CoreSounds.REPLICATOR_HUM, SoundSource.BLOCKS, 0.8F, 1.0F);
         }
     }
@@ -520,7 +532,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (mode == Mode.SPAWN) {
             Pause blocked = spawn(level, pos, state, type);
             if (blocked != Pause.NONE) return blocked;
-            cycleSound(level, pos, CoreSounds.REPLICATOR_SPAWN);
+            cycleSound(level, pos, CoreSounds.REPLICATOR_SPAWN, null);
         } else {
             Harvest.Result result = Harvest.roll(level, type, pos.relative(state.getValue(ReplicatorControllerBlock.FACING).getOpposite()),
                     owner, lootingLevel());
@@ -532,7 +544,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
                 // A lowered cap stops new XP but keeps what is already stored.
                 if (ReplicatorConfig.harvestXp()) xpStored = (int) Math.max(xpStored, Math.min(ReplicatorConfig.maxXp(), (long) xpStored + result.xp()));
             }
-            cycleSound(level, pos, CoreSounds.REPLICATOR_CYCLE);
+            cycleSound(level, pos, CoreSounds.REPLICATOR_CYCLE, result == null ? null : result.deathSound());
         }
         cycles++;
         setChanged();
@@ -540,11 +552,19 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         return Pause.NONE;
     }
 
-    /** Cycle sound, at most once a second even when speed upgrades finish cycles faster. */
-    private void cycleSound(ServerLevel level, BlockPos pos, java.util.function.Supplier<net.minecraft.sounds.SoundEvent> sound) {
-        if (age - lastCycleSound < 20) return;
+    /**
+     * Cycle sound, with the harvested mob's death sound from the middle of the cube, at most once a second even when
+     * speed upgrades finish cycles faster.
+     */
+    private void cycleSound(ServerLevel level, BlockPos pos, java.util.function.Supplier<net.minecraft.sounds.SoundEvent> sound,
+                            @Nullable net.minecraft.sounds.SoundEvent death) {
+        if (muted || age - lastCycleSound < 20) return;
         lastCycleSound = age;
         CoreSounds.play(level, pos, sound, SoundSource.BLOCKS, 0.9F, 1.0F);
+        if (death != null) {
+            BlockPos center = ReplicatorStructure.center(pos, getBlockState().getValue(ReplicatorControllerBlock.FACING));
+            level.playSound(null, center, death, SoundSource.BLOCKS, 0.6F, 0.9F + level.random.nextFloat() * 0.2F);
+        }
     }
 
     /** Moves leftovers into the output. True when nothing is left. */
@@ -710,6 +730,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         tag.putInt("cycles", cycles);
         tag.putInt("xp", xpStored);
         tag.putInt("mode", mode.ordinal());
+        if (muted) tag.putBoolean("muted", true);
         tag.put("sides", sides.save());
         if (owner != null) tag.putUUID("owner", owner);
         if (lookBox != null) {
@@ -735,6 +756,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (tag.contains("vial")) activeType = boundType();
         if (tag.contains("xp")) xpStored = tag.getInt("xp");
         if (tag.contains("mode")) mode = Mode.byId(tag.getInt("mode"));
+        muted = tag.getBoolean("muted");
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
         int[] look = tag.getIntArray("look");
         lookBox = look.length == 6 ? new BoundingBox(look[0], look[1], look[2], look[3], look[4], look[5]) : null;
@@ -793,6 +815,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         tag.putString("clientVial", type == null ? "" : BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
         tag.putInt("cycles", cycles);
         tag.putInt("mode", mode.ordinal());
+        if (muted) tag.putBoolean("muted", true);
     }
 
     /** Extract-only view for hoppers, pipes and storage networks: they can empty the output but never insert. */

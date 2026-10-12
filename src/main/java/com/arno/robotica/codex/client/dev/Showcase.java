@@ -405,7 +405,7 @@ public final class Showcase {
             }
         }));
         if (wants("08_replicator")) {
-            camera(3.9, Y + 3.5, 45.0, 145, 24);
+            camera(3.9, Y + 3.6, 45.0, 145, 33);
             step(100, () -> {});
             shot("08_replicator");
         }

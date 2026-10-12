@@ -30,6 +30,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.sounds.SoundEvents;
+import com.arno.robotica.replicator.logic.DeathSounds;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -220,6 +222,26 @@ public class ReplicatorGameTests {
         BlockState state = helper.getBlockState(pos);
         helper.assertTrue(state.hasProperty(FramedPartBlock.FRAME) && state.getValue(FramedPartBlock.FRAME) == shape,
                 "frame at " + pos + " should be " + shape + ", got " + state);
+    }
+
+    /** A harvest knows the mob's death sound (cached per type); the mute toggle is saved with the controller. */
+    @GameTest(template = "empty")
+    public static void deathSoundAndMute(GameTestHelper helper) {
+        Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        helper.assertTrue(DeathSounds.of(zombie) == SoundEvents.ZOMBIE_DEATH, "a zombie dies like a zombie");
+        helper.assertTrue(DeathSounds.of(zombie) == DeathSounds.of(zombie), "cached");
+        Harvest.Result roll = Harvest.roll(helper.getLevel(), EntityType.SKELETON, helper.absolutePos(CENTER), null, 0);
+        helper.assertTrue(roll != null && roll.deathSound() == SoundEvents.SKELETON_DEATH, "a harvest carries the death sound");
+
+        buildShell(helper, true);
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        helper.assertFalse(be.muted(), "sounds on by default");
+        be.setMuted(true);
+        net.minecraft.nbt.CompoundTag tag = be.saveWithoutMetadata(helper.getLevel().registryAccess());
+        be.setMuted(false);
+        be.loadWithComponents(tag, helper.getLevel().registryAccess());
+        helper.assertTrue(be.muted(), "mute is saved");
+        helper.succeed();
     }
 
     /** The glow outlasts a short stall (no flicker on a weak supply) and goes out a second after the work stops. */
