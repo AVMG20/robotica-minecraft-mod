@@ -47,7 +47,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     private static final int EDGE = 4;
 
     public static final int[] STYLE_COLORS = {0xFFB98550, 0xFF7C6A5A, 0xFFDCE6EA, 0xFF3FC9DC};
-    private static final int[] MATTER_COLORS = {0xFF9A7B4F, 0xFFD08850, 0xFFB070E0};
+    private static final int[] MATTER_COLORS = {0xFF9A7B4F, 0xFFD08850};
     private static final int GRID_BG = 0xFF2B2B2B;
     private static final int CELL_EMPTY = 0xFF4A4A4A;
     private static final int CELL_HOVER = 0xFF6A6A6A;
@@ -425,7 +425,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             Matter c = style.cost;
             Component tip = Component.translatable(style.langKey()).withStyle(s -> s.withColor(STYLE_COLORS[style.ordinal()] & 0xFFFFFF))
                     .append(Component.literal("\n"))
-                    .append(Component.translatable("gui.robotica.architect_cost_tip", c.rustic(), c.refined(), c.exotic(),
+                    .append(Component.translatable("gui.robotica.architect_cost_tip", c.rustic(), c.refined(),
                             style.energyPerBlock(menu.baseEnergy())).withStyle(ChatFormatting.GRAY));
             if (!active) tip = tip.copy().append(Component.literal("\n"))
                     .append(Component.translatable("gui.robotica.architect_needs_casing_" + style.casingLevel).withStyle(ChatFormatting.RED));

@@ -275,7 +275,7 @@ public final class Showcase {
             }
             case "architect_table" -> {
                 if (level.getBlockEntity(pos) instanceof ArchitectTableBlockEntity table) {
-                    table.setMatter(new Matter(320, 140, 36));
+                    table.setMatter(new Matter(320, 140));
                     for (int plot : new int[]{Plots.index(0, -1), Plots.index(1, -1), Plots.index(1, 0), Plots.index(-1, 1)}) {
                         table.handleAction(sp, ArchitectTableBlockEntity.ACTION_TOGGLE, plot, 0);
                     }
@@ -1207,7 +1207,7 @@ public final class Showcase {
                 layout.markBuilt(plot, layout.signature(plot));
             }
             layout.queue(Plots.CENTER, BuildStyle.PEARL_PANEL);
-            table.setMatter(new Matter(820, 360, 140));
+            table.setMatter(new Matter(820, 360));
             table.setChanged();
         }));
         if (wants("25_architect_build")) {

@@ -10,10 +10,10 @@ import java.util.Locale;
  * names are {@code <id>_<role>}. At most four styles: plot records keep the style in two bits.
  */
 public enum BuildStyle {
-    TIMBERFRAME("timberframe", 0, 0, new Matter(2, 0, 0), 50, 14),
-    DARK_STONE("dark_stone", 0, 0, new Matter(2, 0, 0), 50, 14),
-    PEARL_PANEL("pearl_panel", 1, 1, new Matter(2, 1, 0), 100, 15),
-    ONYX_PANEL("onyx_panel", 1, 1, new Matter(2, 1, 0), 100, 15);
+    TIMBERFRAME("timberframe", 0, 0, new Matter(2, 0), 50, 14),
+    DARK_STONE("dark_stone", 0, 0, new Matter(2, 0), 50, 14),
+    PEARL_PANEL("pearl_panel", 1, 1, new Matter(2, 1), 100, 15),
+    ONYX_PANEL("onyx_panel", 1, 1, new Matter(2, 1), 100, 15);
 
     public final String id;
     public final int age;

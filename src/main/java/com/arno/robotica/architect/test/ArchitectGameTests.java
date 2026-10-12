@@ -63,27 +63,27 @@ public class ArchitectGameTests {
         helper.setBlock(pos, ArchitectRegistry.ARCHITECT_TABLE.get().defaultBlockState());
         ArchitectTableBlockEntity table = (ArchitectTableBlockEntity) helper.getBlockEntity(pos);
 
-        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.COBBLESTONE)).equals(new Matter(1, 0, 0)), "cobblestone is 1 rustic");
-        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.OAK_LOG)).equals(new Matter(4, 0, 0)), "logs are 4 rustic");
-        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.COPPER_INGOT)).equals(new Matter(0, 4, 0)), "copper ingot is 4 refined");
-        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.IRON_INGOT)).equals(new Matter(0, 8, 0)), "iron ingot is 8 refined");
-        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.OBSIDIAN)).equals(new Matter(0, 0, 4)), "obsidian is 4 exotic");
-        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.ENDER_PEARL)).equals(new Matter(0, 0, 16)), "ender pearl is 16 exotic");
-        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.DIAMOND)).equals(new Matter(0, 0, 32)), "diamond is 32 exotic");
+        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.COBBLESTONE)).equals(new Matter(1, 0)), "cobblestone is 1 rustic");
+        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.OAK_LOG)).equals(new Matter(4, 0)), "logs are 4 rustic");
+        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.COPPER_INGOT)).equals(new Matter(0, 4)), "copper ingot is 4 refined");
+        helper.assertTrue(MatterTable.valueOf(new ItemStack(Items.IRON_INGOT)).equals(new Matter(0, 8)), "iron ingot is 8 refined");
         helper.assertTrue(!MatterTable.hasValue(new ItemStack(Items.STICK)), "sticks are worthless");
+        for (var rare : new net.minecraft.world.item.Item[]{Items.DIAMOND, Items.OBSIDIAN, Items.ENDER_PEARL, Items.AMETHYST_SHARD, Items.GLOWSTONE_DUST}) {
+            helper.assertTrue(!MatterTable.hasValue(new ItemStack(rare)), rare + " is no matter, so the table never eats it");
+        }
 
         IItemHandler handler = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(pos), Direction.UP);
         helper.assertTrue(handler != null, "table should expose an item handler");
         helper.assertTrue(handler.insertItem(0, new ItemStack(Items.STICK, 4), false).getCount() == 4, "worthless items are refused");
+        helper.assertTrue(handler.insertItem(0, new ItemStack(Items.DIAMOND, 2), false).getCount() == 2, "diamonds are refused");
         helper.assertTrue(handler.insertItem(0, new ItemStack(Items.COBBLESTONE, 10), false).isEmpty(), "cobblestone is accepted");
         helper.assertTrue(handler.extractItem(0, 10, true).isEmpty(), "nothing can be extracted");
         table.input.insertItem(1, new ItemStack(Items.COPPER_INGOT, 2), false);
-        table.input.insertItem(2, new ItemStack(Items.OBSIDIAN, 1), false);
         table.input.insertItem(3, new ItemStack(Items.OAK_LOG, 3), false);
 
         helper.succeedWhen(() -> {
             Matter m = table.matter();
-            helper.assertTrue(m.equals(new Matter(10 + 12, 8, 4)), "matter should be 22/8/4 but is " + m);
+            helper.assertTrue(m.equals(new Matter(10 + 12, 8)), "matter should be 22/8 but is " + m);
             helper.assertTrue(table.input.getStackInSlot(0).isEmpty(), "input should be consumed");
         });
     }
@@ -104,7 +104,6 @@ public class ArchitectGameTests {
         table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.NULL_CASING.get()));
         helper.assertTrue(table.unlockedMask() == (1 << BuildStyle.values().length) - 1, "a better casing unlocks every style");
         helper.assertTrue(BuildStyle.DARK_STONE.cost.equals(BuildStyle.TIMBERFRAME.cost), "Dark Stone costs the same as Clean Stone");
-        for (BuildStyle style : BuildStyle.values()) helper.assertTrue(style.cost.exotic() == 0, style.id + " needs no exotic matter");
         helper.assertTrue(BuildStyle.values().length <= 4, "plot records keep the style in two bits");
         helper.succeed();
     }
@@ -574,7 +573,7 @@ public class ArchitectGameTests {
         ArchitectTableBlockEntity table = preparedTable(helper, 7, false);
         // no speed card: one block every few ticks, the ticks in between used to report "building" again
         table.upgrades.setStackInSlot(0, ItemStack.EMPTY);
-        table.setMatter(new Matter(12, 0, 0));
+        table.setMatter(new Matter(12, 0));
         table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
         table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
         int[] stoppedAt = {-1};
@@ -601,7 +600,7 @@ public class ArchitectGameTests {
                 helper.assertTrue(helper.getLevel().getEntitiesOfClass(com.arno.robotica.architect.entity.BuilderDrone.class, around).isEmpty(),
                         "the drone is gone while the table waits");
             }
-            if (since == 40) table.setMatter(new Matter(5000, 5000, 5000));
+            if (since == 40) table.setMatter(new Matter(5000, 5000));
             if (since == 81) table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
             if (since > 85 && table.isBuilding() && table.needs() == 0) {
                 helper.assertTrue(droneSeen[0], "a drone flew while the table built");
@@ -752,7 +751,7 @@ public class ArchitectGameTests {
         level.setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
         level.getCapability(Capabilities.ItemHandler.BLOCK, chest, null).insertItem(0, new ItemStack(Items.DIAMOND, 5), false);
         level.setBlockAndUpdate(stash, Blocks.CHEST.defaultBlockState());
-        table.setMatter(new Matter(100, 0, 0));
+        table.setMatter(new Matter(100, 0));
         int energyBefore = table.energy.getEnergyStored();
 
         helper.assertTrue(table.handleAction(null, ArchitectTableBlockEntity.ACTION_DEMOLISH, 1, 0) != null && !table.demolishing(),
@@ -973,7 +972,7 @@ public class ArchitectGameTests {
     private static ArchitectTableBlockEntity preparedTable(GameTestHelper helper, int band, boolean clear) {
         helper.setBlock(high(band), ArchitectRegistry.ARCHITECT_TABLE.get().defaultBlockState());
         ArchitectTableBlockEntity table = (ArchitectTableBlockEntity) helper.getBlockEntity(high(band));
-        table.setMatter(new Matter(5000, 5000, 5000));
+        table.setMatter(new Matter(5000, 5000));
         table.energy.setEnergy(table.energy.getMaxEnergyStored());
         table.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 1));
         if (clear) table.handleAction(null, ArchitectTableBlockEntity.ACTION_CLEAR, 1, 0);
