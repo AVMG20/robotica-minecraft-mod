@@ -2,13 +2,14 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "down": "robotica:block/industry_bottom",
+    "down": "robotica:block/rtg_bottom",
     "up": "robotica:block/rtg_top",
     "south": "robotica:block/rtg_side",
     "west": "robotica:block/rtg_side",
     "east": "robotica:block/rtg_side",
     "north": "robotica:block/rtg_front",
-    "particle": "robotica:block/rtg_side"
+    "particle": "robotica:block/rtg_side",
+    "core": "robotica:block/rtg_core"
   },
   "elements": [
     {
@@ -46,6 +47,162 @@
         "east": {
           "texture": "#east",
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        3,
+        2
+      ],
+      "to": [
+        12,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#core",
+          "uv": [
+            0,
+            0,
+            8,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        3,
+        0
+      ],
+      "to": [
+        12,
+        13,
+        2
+      ],
+      "faces": {
+        "west": {
+          "texture": "#core",
+          "uv": [
+            8,
+            0,
+            10,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        3,
+        0
+      ],
+      "to": [
+        4,
+        13,
+        2
+      ],
+      "faces": {
+        "east": {
+          "texture": "#core",
+          "uv": [
+            10,
+            0,
+            12,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        13,
+        0
+      ],
+      "to": [
+        12,
+        13,
+        2
+      ],
+      "faces": {
+        "down": {
+          "texture": "#core",
+          "uv": [
+            0,
+            10,
+            8,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        3,
+        0
+      ],
+      "to": [
+        12,
+        3,
+        2
+      ],
+      "faces": {
+        "up": {
+          "texture": "#core",
+          "uv": [
+            0,
+            12,
+            8,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        3,
+        0.5
+      ],
+      "to": [
+        10,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#core",
+          "uv": [
+            12,
+            0,
+            16,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#core",
+          "uv": [
+            12,
+            0,
+            13,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#core",
+          "uv": [
+            15,
+            0,
+            16,
+            10
+          ]
         }
       }
     }

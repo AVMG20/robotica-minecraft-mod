@@ -7,7 +7,7 @@ Items follow the core item style: one dark outline 'k', light from the top-left 
 on the lit side. Chars: '12345' main material (deep -> highlight), 'abcde' steel, 'y Y z' glow (mid, bright, white).
 The Alloy Smelter, Centrifuge and Assembler use the shared casing (machine_casing.py) with the tier metal (Mk1 copper,
 Mk2 ferrothorium, Mk3 pyrosteel, Mk4 resonant alloy) and inset bays on their own model elements (crucible, drum, work
-cell); what glows sits on full-bright overlays. The RTG is a dark slate box with the same kind of overlay.
+cell); what glows sits on full-bright overlays. The RTG uses the same casing in generator gunmetal.
 """
 import math
 import pathlib
@@ -389,32 +389,6 @@ def blocks_ores():
 
 
 # =================================================================================================== machines
-# Chars: 'abcde' slate body, 'fghij' tier trim, 'k K' dark, 'r R' hazard, 'y Y z Z' glow, 'l L' leds off/on.
-
-TIER_TRIM = {1: MATERIALS['copper'], 2: RAMPS['ferrothorium'], 3: RAMPS['pyrosteel'], 4: RAMPS['resonant']}
-
-
-def mpal(tier=1, glow='amber'):
-    p = {'k': '#121416', 'K': '#07080A', 'r': '#E8B530', 'R': '#2A2418', 'l': '#1C4A22', 'L': '#5CFF6A'}
-    p.update(material('abcde', 'slate'))
-    p.update(dict(zip('fghij', TIER_TRIM[tier])))
-    g = GLOWS[glow]
-    p.update({'Z': g[0], 'y': g[1], 'Y': g[2], 'z': g[3]})
-    p.update(dict(zip('mnopq', MATERIALS['steel'])))
-    return p
-
-
-def shell(seed=0):
-    """Slate panel in a 2 px tier-coloured frame with corner bolts."""
-    c = Canvas()
-    c.plate(0, 0, 16, 16, 'fghij', seed, brushed=False)
-    c.rect(1, 1, 14, 14, 'h').rect(1, 14, 14, 1, 'g').rect(14, 1, 1, 14, 'g')
-    c.plate(2, 2, 12, 12, 'abcde', seed + 2, density=0.25)
-    c.rect(2, 2, 12, 1, 'a').rect(2, 2, 1, 12, 'a')
-    for x, y in ((0, 0), (14, 0), (0, 14), (14, 14)):
-        c.rect(x, y, 2, 2, 'i').set(x, y, 'j').set(x + 1, y + 1, 'g')
-    return c
-
 
 # Alloy Smelter: a bay 2 px deep with a steel back wall, holding a white ceramic crucible (a real model part) wrapped
 # in a cyan heating hoop; a crust of magenta alloy sits in it and a cast ingot in the mould on the bay floor. Working,
@@ -832,54 +806,153 @@ def assembler_top_glow():
     return c
 
 
-def rtg_front():
-    """Shielded cask: a round viewport over the glowing pellet stack with a trefoil, cooling ribs on both sides."""
-    c = shell(60)
-    for x in (2, 3, 12, 13):
-        for y in range(3, 13, 2):
-            c.set(x, y, 'K')
-    c.disc(7.5, 7.5, 3.8, 'm').disc(7.5, 7.5, 3.0, 'K')
-    c.ring(7.5, 7.5, 3.0, 3.8, 'o')
-    for a in range(3):                                                   # dim trefoil
-        ang = a * 2 * math.pi / 3 - math.pi / 2
-        c.set(round(7.5 + 1.8 * math.cos(ang)), round(7.5 + 1.8 * math.sin(ang)), 'Z')
-    c.set(7, 7, 'Z')
-    c.hazard(4, 13, 8, 1, 'r', 'R')
+# RTG: a shielded radioisotope core. A window 2 px deep in the gunmetal casing (model: industry_data.rtg_model) shows
+# a column of three yellow-green thorium pellets held between steel clamps from floor to roof; deep radiator fins on
+# the sides and a finned heat sink round a core port on top. Idle the pellets are cold yellow-green ceramic; working
+# they glow toxic yellow-green and breathe slowly, the halo in the window and the top port breathing with them, and
+# each breath sends a ripple out across the heat sink. Chars on top of the casing: '0'-'9' toxic glow (deep -> white
+# core, enough steps for a smooth breath), 's t y' cold pellet (shadow, body, highlight), 'S T' clamp steel.
+
+RTG_BODY = ('#1E2328', '#323A42', '#4C565F', '#6C7882', '#97A3AD')      # generator gunmetal
+RTG_GLOW = ('#121A04', '#1E2E06', '#34500A', '#4E760C', '#6A9A0E', '#88BC14', '#A8DC1C', '#C6F238', '#E2FF6A',
+            '#FAFFD0')
+RTG_FRAMES, RTG_FRAMETIME = 32, 2                                        # one breath: 64 ticks
+RTG_WINDOW = (4, 3, 8, 10)                                               # x, y, w, h of the window on the front
+# Core atlas regions (x, y, w, h); industry_data.rtg_model maps the model faces onto them. The column's sides use its
+# front's outer columns.
+RTG_PARTS = {'back': (0, 0, 8, 10), 'wall_left': (8, 0, 2, 10), 'wall_right': (10, 0, 2, 10),
+             'column': (12, 0, 4, 10), 'roof': (0, 10, 8, 2), 'floor': (0, 12, 8, 2)}
+RTG_CLAMPS = (0, 3, 6, 9)                                                # column rows with a clamp, pellets between
+
+
+def rtg_pal():
+    a, b, c, d, e = RTG_BODY
+    return casing.casing_palette(casing.INDUSTRY_TIERS[1], a=a, b=b, c=c, d=d, e=e,
+                                 s='#7E9E20', t='#B4D838', y='#E2F870', S='#8A96A0', T='#C2CCD4',
+                                 **{str(i): col for i, col in enumerate(RTG_GLOW)})
+
+
+def rtg_breath(t):
+    """1 (peak, at frame 0) .. 0 (dim) and back over the loop, a smooth cosine."""
+    return 0.5 + 0.5 * math.cos(t / RTG_FRAMES * 2 * math.pi)
+
+
+def rtg_level(level):
+    """The toxic glow char of a brightness level 0..9."""
+    return str(max(0, min(9, round(level))))
+
+
+def rtg_core(lit, t=0):
+    """The window's faces: back wall, side walls, roof, floor and the pellet column (RTG_PARTS)."""
+    R = RTG_PARTS
+    c = Canvas()
+    b = rtg_breath(t)
+    x, y, w, h = R['back']
+    if lit:                                                              # the column's halo, brightest next to it
+        for xx in range(w):
+            c.rect(x + xx, y, 1, h, rtg_level(3 + 3 * b if xx in (1, w - 2) else 2 + 2 * b))
+    else:                                                                # steel back plate with clamp rails
+        c.rect(x, y, w, h, 'd').rect(x, y, 1, h, 'c').rect(x + w - 1, y, 1, h, 'e')
+        for yy in RTG_CLAMPS:
+            c.rect(x + 1, y + yy, w - 2, 1, 'c')
+    for name, front in (('wall_left', 0), ('wall_right', 1)):            # side walls: the front edge catches light
+        x, y, w, h = R[name]
+        if lit:
+            c.rect(x, y, w, h, rtg_level(1 + 2 * b)).rect(x + front, y, 1, h, rtg_level(2 + 2 * b))
+        else:
+            c.rect(x, y, w, h, 'b').rect(x + front, y, 1, h, 'c')
+    x, y, w, h = R['roof']
+    c.rect(x, y, w, h, rtg_level(1 + b) if lit else 'a').rect(x, y + 1, w, 1, rtg_level(1 + 2 * b) if lit else 'b')
+    x, y, w, h = R['floor']
+    c.rect(x, y, w, h, rtg_level(2 + 2 * b) if lit else 'c').rect(x, y, w, 1, rtg_level(3 + 2 * b) if lit else 'd')
+    x, y, w, h = R['column']                                             # pellets: a cylinder lit from the left
+    if lit:
+        c.rect(x, y, w, h, rtg_level(5 + 3 * b)).rect(x + 1, y, 1, h, rtg_level(6 + 3 * b)).rect(x + w - 1, y, 1, h, rtg_level(4 + 2 * b))
+    else:
+        c.rect(x, y, w, h, 't').rect(x + 1, y, 1, h, 'y').rect(x + w - 1, y, 1, h, 's')
+    for yy in RTG_CLAMPS:                                                # clamps: steel, dark graphite while it glows
+        c.rect(x, y + yy, w, 1, 'b' if lit else 'S').set(x, y + yy, 'c' if lit else 'T')
+        c.set(x + w - 1, y + yy, 'a' if lit else 'd')
     return c
 
 
-def rtg_front_glow():
+def rtg_front(lit):
+    """Gunmetal casing with the window (transparent: the core shows through) between two shield lips."""
+    x0, y0, w, h = RTG_WINDOW
+    c = casing.shell(1)
+    c.rect(x0, y0, w, h, '.')
+    c.rect(3, 3, 1, 10, 'd').rect(12, 3, 1, 10, 'b').set(3, 3, 'e')      # shield lips, lit from the top-left
+    c.set(12, 12, 'L' if lit else 'l')
+    return c
+
+
+def rtg_front_glow(t):
+    """Front overlay: the lips catch the breathing glow; the status lamp."""
     c = Canvas()
-    for a in range(3):
-        ang = a * 2 * math.pi / 3 - math.pi / 2
-        for r in (1.2, 1.8, 2.4):
-            c.set(round(7.5 + r * math.cos(ang)), round(7.5 + r * math.sin(ang)), 'y' if r > 2 else 'Y')
-    c.set(7, 7, 'z').set(8, 8, 'Y')
+    b = rtg_breath(t)
+    c.rect(3, 3, 1, 10, rtg_level(3 + 3 * b)).rect(12, 3, 1, 9, rtg_level(2 + 2 * b))
+    c.set(12, 12, 'L')
     return c
 
 
 def rtg_side():
-    """Radiator fins: deep vertical ribs."""
-    c = shell(61)
-    for x in range(3, 13, 2):
-        c.rect(x, 3, 1, 10, 'e').rect(x + 1, 3, 1, 10, 'K')
+    """Radiator: the shared energy channel between two banks of deep vertical fins."""
+    c = casing.shell(1)
+    for x in (3, 5, 10, 12):                                             # fins: lit face, dark gap behind
+        c.rect(x, 3, 1, 10, 'd').set(x, 3, 'e')
+    for x in (4, 11):
+        c.rect(x, 3, 1, 10, 'K')
+    c.rect(3, 12, 3, 1, 'b').rect(10, 12, 3, 1, 'b')
+    c.rect(6, 2, 4, 12, 'b')                                             # channel housing, as casing.side
+    c.rect(6, 2, 1, 12, 'a').rect(9, 2, 1, 12, 'd')
+    c.rect(7, 2, 2, 12, 'u')
+    c.rect(7, 2, 2, 1, 'k').rect(7, 13, 2, 1, 'k')
     return c
 
 
 def rtg_top():
-    c = shell(62)
-    c.disc(7.5, 7.5, 4.6, 'b').disc(7.5, 7.5, 3.4, 'K')
-    for x, y in ((5, 5), (10, 5), (5, 10), (10, 10)):
-        c.set(x, y, 'Z')
+    """Heat sink: rows of fins round a core port of yellow-green glass."""
+    c = casing.shell(1)
+    c.recess(3, 3, 10, 10, 'abcde', fill='b')
+    for y in range(4, 12, 2):
+        c.rect(4, y, 8, 1, 'd').rect(4, y + 1, 8, 1, 'a').set(4, y, 'e')
+    c.rect(5, 5, 6, 6, 'c').bevel(5, 5, 6, 6, 'e', 'a')                  # port collar
+    c.rect(6, 6, 4, 4, 't').rect(6, 6, 4, 1, 'y').rect(6, 6, 1, 4, 'y').rect(9, 7, 1, 3, 's').rect(7, 9, 3, 1, 's')
     return c
 
 
-def rtg_top_glow():
+def rtg_top_glow(t):
+    """The core port breathing with the pellets; from each peak a ripple runs out along the fin gaps and fades."""
     c = Canvas()
-    for x, y in ((5, 5), (10, 5), (5, 10), (10, 10)):
-        c.set(x, y, 'y')
-    c.disc(7.5, 7.5, 1.0, 'Y')
+    b = rtg_breath(t)
+    c.rect(6, 6, 4, 4, rtg_level(4 + 3 * b)).rect(7, 7, 2, 2, rtg_level(5 + 4 * b))
+    r = t / 3.0                                                          # px travelled since the peak
+    for y in range(5, 12, 2):
+        for x in range(4, 12):
+            if 5 <= x <= 10 and 5 <= y <= 10:
+                continue
+            d = max(abs(x - 7.5), abs(y - 7.5)) - 2.5
+            v = max(0.0, 1 - abs(r - d) / 1.2) * max(0.0, 1 - d / 3.5)
+            if v > 0.12:
+                c.set(x, y, rtg_level(1 + 6 * v))
     return c
+
+
+def write_rtg():
+    p = rtg_pal()
+    frames = range(RTG_FRAMES)
+    write_block('rtg_front', rtg_front(False).rows(), p)
+    write_block('rtg_front_on', rtg_front(True).rows(), p)
+    write_block('rtg_side', rtg_side().rows(), p)
+    write_block('rtg_bottom', casing.bottom().rows(), p)
+    write_block('rtg_top', rtg_top().rows(), p)
+    write_block('rtg_core', rtg_core(False).rows(), p)
+    write_anim('block', 'rtg_core_on', [rtg_core(True, t) for t in frames], p, frametime=RTG_FRAMETIME,
+               interpolate=True)
+    write_anim('block', 'rtg_front_glow', [rtg_front_glow(t) for t in frames], p, frametime=RTG_FRAMETIME,
+               interpolate=True)
+    write_anim('block', 'rtg_top_glow', [rtg_top_glow(t) for t in frames], p, frametime=RTG_FRAMETIME,
+               interpolate=True)
 
 
 def write_smelter():
@@ -940,12 +1013,7 @@ def blocks_machines():
     write_smelter()
     write_centrifuge()
     write_assembler()
-    p = mpal(2, 'green')
-    write_block('rtg_front', rtg_front().rows(), p)
-    write_block('rtg_front_glow', rtg_front_glow().rows(), p)
-    write_block('rtg_side', rtg_side().rows(), p)
-    write_block('rtg_top', rtg_top().rows(), p)
-    write_block('rtg_top_glow', rtg_top_glow().rows(), p)
+    write_rtg()
 
 
 def main():
