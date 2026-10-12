@@ -1,4 +1,4 @@
-"""Writes the recipes of the architect module: the Architect Table (Age 0), 8 bulk blocks + 1 tier material -> 8 style blocks
+"""Writes the recipes of the architect module: the Architect Table (Age 0), the Pocket Architect Mk1/Mk2, 8 bulk blocks + 1 tier material -> 8 style blocks
 for every style block, and stonecutter recipes between the roles of one style.
 Run: python3 scripts/data/architect_recipes.py   (overwrites data/robotica/recipe/<name>.json for architect items only)"""
 import json
@@ -35,6 +35,14 @@ shaped('architect_table', ['CTC', 'GMG', 'SSS'],
        {'C': '#c:ingots/copper', 'T': '#c:player_workstations/crafting_tables', 'G': '#c:gears/copper', 'M': 'clockwork_mechanism',
         'S': '#c:cobblestones/normal'},
        category='misc')
+
+# Pocket Architect: an Eye of Ender keeps it out of day one. Mk2 is a smithing upgrade that keeps the stored matter.
+shaped('pocket_architect', ['PEP', 'CTC', 'PIP'],
+       {'P': IRON_PLATE, 'E': 'minecraft:ender_eye', 'C': 'basic_circuit', 'T': 'architect_table', 'I': 'iron_casing'},
+       category='equipment')
+write('pocket_architect_mk2', {'type': 'minecraft:smithing_transform', 'template': ing('advanced_circuit'),
+                               'base': ing('pocket_architect'), 'addition': ing('reinforced_casing'),
+                               'result': {'id': 'robotica:pocket_architect_mk2', 'count': 1}})
 
 # (bulk, centre) per style and role. Every pair is unique, 8 bulk around 1 centre gives 8 blocks.
 HAND = {

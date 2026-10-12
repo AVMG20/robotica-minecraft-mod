@@ -1,5 +1,6 @@
 """Architect module textures: 4 styles x 6 roles (with random variants), the Architect Table and the builder drone.
-Run: python3 scripts/textures/architect.py   (writes textures/block/*.png and textures/entity/builder_drone.png;
+Run: python3 scripts/textures/architect.py   (writes textures/block/*.png, textures/entity/builder_drone.png and the
+Pocket Architect item sprites;
 models, blockstates, recipes and lang are written by scripts/data/architect_*.py)
 
 Walls, floors and roofs tile seamlessly: seams sit on one block edge or are staggered, and low-frequency noise wraps
@@ -19,7 +20,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, Canvas, write_block, write_png  # noqa: E402
+from pixelart import ASSETS, MATERIALS, Canvas, write_block, write_item, write_png  # noqa: E402
 
 # Glass glints shared by every window; light diffusers use f (edge) g (body) h (centre), nothing else does.
 CLEAN = {
@@ -413,6 +414,39 @@ def variant_name(base, v):
     return base if v == 1 else f'{base}_{v}'
 
 
+
+# ---------- Pocket Architect ----------
+# A hand-held blueprint tablet with an ender eye lens. Mk1: copper body, white plan lines. Mk2: steel body, cyan lines.
+
+def pocket_palette(mk2):
+    p = {'k': '#1E1A1A', 'B': '#16335F', 'b': '#24508F',
+         'g': '#1E6B2E', 'G': '#3E9E3A', 'h': '#9BE07F', 'p': '#0E1A12'}
+    p.update(zip('01234', MATERIALS['steel' if mk2 else 'copper']))
+    p['L'] = '#7FF0FA' if mk2 else '#DDEEFF'
+    p['r'] = MATERIALS['gold'][3] if mk2 else MATERIALS['copper'][3]
+    return p
+
+
+def pocket(mk2):
+    c = Canvas()
+    c.rect(2, 1, 12, 14, '2')
+    c.auto_shade({'2': ('1', '3')})
+    c.recess(3, 5, 10, 8, '01234', fill='B')
+    plan = ['...LL...', '..LLLL..', '.LLLLLL.', '..L..L..', '..L.LL..', '..LLLL..']
+    for dy, row in enumerate(plan):
+        for dx, ch in enumerate(row):
+            c.set(4 + dx, 6 + dy, ch if ch != '.' else ('b' if dx % 3 == 0 and dy % 3 == 0 else 'B'))
+    # ender eye lens in a rim
+    c.rect(5, 2, 6, 2, 'r')
+    c.set(6, 2, 'g').set(7, 2, 'h').set(8, 2, 'G').set(9, 2, 'g')
+    c.set(6, 3, 'p').set(7, 3, 'G').set(8, 3, 'g').set(9, 3, 'p')
+    c.set(4, 13, 'L' if mk2 else '4').set(7, 13, '1').set(8, 13, '1').set(11, 13, 'r')
+    if mk2:
+        for y in range(5, 13):
+            c.set(2, y, 'L')
+    c.outline('k')
+    return c.rows()
+
 def main():
     for style, (pal, shapes, channel) in STYLES.items():
         wall, floor, roof, pside, pend, window, light = shapes
@@ -437,6 +471,8 @@ def main():
     write_block('architect_table_side', table_side(), TABLE)
     write_block('architect_table_bottom', table_bottom(), TABLE)
     write_png(ASSETS / 'textures/entity/builder_drone.png', drone_texture(), DRONE, size=32)
+    write_item('pocket_architect', pocket(False), pocket_palette(False))
+    write_item('pocket_architect_mk2', pocket(True), pocket_palette(True))
 
 
 if __name__ == '__main__':

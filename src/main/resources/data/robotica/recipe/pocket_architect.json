@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PEP",
+    "CTC",
+    "PIP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "E": {
+      "item": "minecraft:ender_eye"
+    },
+    "C": {
+      "item": "robotica:basic_circuit"
+    },
+    "T": {
+      "item": "robotica:architect_table"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:pocket_architect",
+    "count": 1
+  }
+}

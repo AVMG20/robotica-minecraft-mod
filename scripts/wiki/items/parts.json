@@ -669,6 +669,35 @@
   },
   {
    "items": [
+    "pocket_architect",
+    "pocket_architect_mk2"
+   ],
+   "what": "A hand-held [[architect_table]] for mining trips: eats junk from your inventory and hands out building blocks.",
+   "use": [
+    "In its GUI, click a block to take it, right-click it to pick it for placing.",
+    "Edit the junk list in its GUI, or turn junk eating off."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Styles",
+      "Clean Stone, Dark Stone",
+      "All four"
+     ],
+     [
+      "Matter",
+      "1 billion rustic",
+      "1 billion rustic and refined"
+     ]
+    ]
+   }
+  },
+  {
+   "items": [
     "timberframe_wall",
     "timberframe_floor",
     "timberframe_roof",

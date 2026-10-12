@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "robotica:advanced_circuit"
+  },
+  "base": {
+    "item": "robotica:pocket_architect"
+  },
+  "addition": {
+    "item": "robotica:reinforced_casing"
+  },
+  "result": {
+    "id": "robotica:pocket_architect_mk2",
+    "count": 1
+  }
+}
