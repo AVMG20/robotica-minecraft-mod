@@ -33,8 +33,8 @@ PAL = {
     '6': '#121014', '7': '#1F1B22', '8': '#2F2933', '9': '#443C48', '0': '#5E5462',
     'g': '#5C3A0A', 'h': '#9A6A12', 'i': '#D9A423', 'j': '#F7D25A', 'l': '#FFF0A8',
     # null steel (dark -> light) and purpur (dark -> light) for the Null Sentinel, end stone for its altar
-    'x': '#0E0B16', 'y': '#1C1728', 'z': '#2B2440', 'f': '#3E3558', 'W': '#5A4E7A',
-    'N': '#4E2F5E', 'O': '#7A4E8C', 'P': '#A77BB8', 'Q': '#C9A6D6', 'U': '#E6D2EE',
+    'x': '#0E0B16', 'y': '#1E192C', 'z': '#312948', 'f': '#4A4068', 'W': '#6E6094',
+    'N': '#56326A', 'O': '#865598', 'P': '#B588C6', 'Q': '#D4B2E2', 'U': '#F0DFF6',
     'I': '#DBDE9E', 'J': '#C9CC8A', 'K': '#A9AC6E',
     # null glow: deep violet, violet, bright violet, cyan, dark cyan, pale white
     'X': '#6A2EE0', 'B': '#8A50F0', 'V': '#B07CFF', 'Y': '#6FF2E0', 'C': '#2FA89A', 'Z': '#F2E8FF',
@@ -477,6 +477,9 @@ def sentinel():
     front = f['north']
     band(c, front, 0, 2, PURPUR)
     band(c, front, 14, 2, PURPUR)
+    for name in ('north', 'south', 'west', 'east'):               # emissive trim under the collar and over the belt
+        glowfill(c, g, f[name], 0, 2, f[name][2], 1, 'X')
+        glowfill(c, g, f[name], 0, 13, f[name][2], 1, 'X')
     fill(c, front, 4, 3, 10, 10, 'x')                             # socket around the core
     for dx, dy in ((4, 3), (13, 3), (4, 12), (13, 12)):
         glowput(c, g, front, dx, dy, 'X')
@@ -513,6 +516,9 @@ def sentinel():
     hf = f['north']
     band(c, hf, 0, 2, PURPUR)
     fill(c, hf, 1, 2, 7, 6, 'x')
+    glowfill(c, g, hf, 1, 4, 7, 1, 'B')
+    glowput(c, g, hf, 1, 4, 'V')
+    glowput(c, g, hf, 7, 4, 'V')
     glowput(c, g, hf, 1, 7, 'X')
     glowput(c, g, hf, 7, 7, 'X')
     for side in ('west', 'east', 'south'):
