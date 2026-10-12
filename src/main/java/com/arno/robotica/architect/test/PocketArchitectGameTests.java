@@ -82,8 +82,8 @@ public class PocketArchitectGameTests {
         helper.assertTrue(item(mk2).absorb(mk2, ingots) == 3 && PocketArchitectItem.matter(mk2).equals(new Matter(0, 24)), "iron is 8 refined each");
 
         PocketArchitectItem.setMatter(mk2, new Matter(PocketArchitectItem.CAP - 1, 0));
-        ItemStack cobble = new ItemStack(Items.COBBLESTONE, 5);
-        helper.assertTrue(item(mk2).absorb(mk2, cobble) == 1 && cobble.getCount() == 4, "a full pocket leaves the rest");
+        ItemStack spill = new ItemStack(Items.COBBLESTONE, 5);
+        helper.assertTrue(item(mk2).absorb(mk2, spill) == 1 && spill.getCount() == 4, "a full pocket leaves the rest");
         helper.succeed();
     }
 
