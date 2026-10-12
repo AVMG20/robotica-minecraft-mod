@@ -344,12 +344,12 @@ def machine_casing(tier):
 
 
 def smelter_model(tier, lit):
-    """The front opens into a bay 3 px deep (SMELTER_BAY in scripts/textures/industry.py: x 3..12, y 3..12 of the front
+    """The front opens into a bay 2 px deep (SMELTER_BAY in scripts/textures/industry.py: x 3..12, y 3..12 of the front
     texture) with the chamber texture on its walls. In it a crucible floats over the bay floor, a spout pours (while
     working) into a mould; their faces come from the parts atlas (SMELTER_PARTS there). Full-bright while working."""
     name = f'alloy_smelter_mk{tier}'
     faces = dict(machine_casing(tier), north=f'{name}_front' + ('_on' if lit else ''), up=f'{name}_top')
-    x0, x1, y0, y1, z = 3, 13, 3, 13, 3                                   # bay in model space
+    x0, x1, y0, y1, z = 3, 13, 3, 13, 2                                   # bay in model space
 
     def wall(d, uv):
         return {'from': [x0 if d != 'west' else x1, y0 if d != 'down' else y1, 0 if d != 'north' else z],
@@ -358,14 +358,14 @@ def smelter_model(tier, lit):
 
     def part(a, b, uvs):
         return {'from': a, 'to': b, 'faces': {d: {'texture': '#parts', 'uv': uv} for d, uv in uvs.items()}, 'glow': lit}
-    els = [wall('north', [3, 3, 13, 13]), wall('east', [13, 3, 16, 13]), wall('west', [0, 3, 3, 13]),
-           wall('up', [13, 0, 3, 3]), wall('down', [13, 13, 3, 16]),
-           part([6, 5, 0.5], [12, 10, 2.5], {'north': [0, 0, 6, 5], 'up': [6, 6, 0, 8], 'east': [6, 0, 8, 5],
-                                              'west': [8, 0, 10, 5], 'down': [0, 3, 6, 4]}),
+    els = [wall('north', [3, 3, 13, 13]), wall('east', [13, 3, 15, 13]), wall('west', [1, 3, 3, 13]),
+           wall('up', [13, 1, 3, 3]), wall('down', [13, 13, 3, 15]),
+           part([6, 5, 0.5], [12, 10, 2], {'north': [0, 0, 6, 5], 'up': [6, 6, 0, 8], 'east': [6, 0, 8, 5],
+                                            'west': [8, 0, 10, 5], 'down': [0, 3, 6, 4]}),
            part([5, 9, 1], [6, 10, 2], {'north': [10, 0, 11, 1], 'up': [10, 1, 11, 2], 'west': [10, 0, 11, 1],
                                         'down': [10, 0, 11, 1]}),
-           part([3, 3, 0.5], [7, 4, 2.5], {'north': [0, 9, 4, 10], 'up': [4, 10, 0, 12], 'east': [4, 9, 6, 10],
-                                            'west': [4, 9, 6, 10]})]
+           part([3, 3, 0.5], [7, 4, 2], {'north': [0, 9, 4, 10], 'up': [4, 10, 0, 12], 'east': [4, 9, 6, 10],
+                                          'west': [4, 9, 6, 10]})]
     if lit:                                                               # the pour
         els.append(part([5, 4, 1], [6, 9, 2], {d: [12, 0, 13, 5] for d in ('north', 'east', 'west')}))
     glow = {'north': 'alloy_smelter_front_glow', 'up': 'alloy_smelter_top_glow'} if lit else None
