@@ -1,10 +1,10 @@
-"""Machine sounds: soft synthesized clips for the Grinder, Centrifuge, Assembler, RTG and chargers.
+"""Machine sounds: soft synthesized clips for the processing machines, the RTG and chargers.
 Run: python3 scripts/sounds/machines.py   (writes assets/robotica/sounds/machine/*.ogg; needs numpy and ffmpeg)
 
 Every clip is mono 44.1 kHz, built from sines and filtered noise with a seeded generator, faded in and out and
-normalized to the same peak, so machines sound alike in loudness. No sustained low tones (motor glides, hums): those
-sounded cheap, so start/stop, the press, the smelter and the charger hum use vanilla sounds. Volumes and pitches per
-event live in sounds.json.
+normalized to the same peak, so machines sound alike in loudness. Low and muffled on purpose: they repeat a lot.
+No sustained low hums: start/stop and the charger hum use vanilla sounds. Volumes and pitches per event live in
+sounds.json.
 """
 import pathlib
 import subprocess
@@ -38,6 +38,13 @@ def band(signal, low, high):
     return np.fft.irfft(spectrum * gain, len(signal))
 
 
+def sweep(t, f0, f1, harmonics=(1.0,)):
+    """Sine (plus harmonics) gliding exponentially from f0 to f1 Hz over t."""
+    freq = f0 * (f1 / f0) ** (t / t[-1])
+    phase = 2 * np.pi * np.cumsum(freq) / SR
+    return sum(a * np.sin(phase * (i + 1)) for i, a in enumerate(harmonics))
+
+
 def env(t, attack, release, decay=None):
     """Linear attack, optional exponential decay (time constant), smooth release at the end."""
     e = np.minimum(1, t / max(attack, 1e-4))
@@ -56,7 +63,23 @@ def at(total, start, clip):
     return out
 
 
+def thump(seconds, f0, f1, decay, seed):
+    t = time(seconds)
+    body = sweep(t, f0, f1, (1.0, 0.25)) * np.exp(-t / decay)
+    knock = band(noise(seconds, seed), 60, 500) * np.exp(-t / (decay * 0.4)) * 0.3
+    return body + knock
+
+
 # ------------------------------------------------------------------------------------------------------------ clips
+
+def press():
+    """Muffled hydraulic thump, then the valve lets out a short hiss."""
+    total = 0.6
+    hit = thump(0.3, 150, 55, 0.09, 3)
+    t = time(0.45)
+    hiss = band(noise(0.45, 4), 1800, 5000) * env(t, 0.03, 0.2, 0.12) * 0.12
+    return at(total, 0, hit) + at(total, 0.1, hiss)
+
 
 def grind():
     """Rough low rumble of stone on steel."""
@@ -66,22 +89,36 @@ def grind():
     return rough * env(t, 0.06, 0.3)
 
 
+def smelt():
+    """Soft roar of a hot chamber, a few faint crackles."""
+    total = 0.9
+    t = time(total)
+    roar = band(noise(total, 6), 40, 500) * env(t, 0.25, 0.4)
+    rng = np.random.default_rng(7)
+    sparks = np.zeros_like(t)
+    for start_at in rng.uniform(0.1, 0.6, 4):
+        c = time(0.03)
+        sparks += at(total, start_at, band(noise(0.03, int(start_at * 1000)), 1500, 6000) * np.exp(-c / 0.006))
+    return roar + sparks * 0.15
+
+
 def centrifuge():
-    """Air swishing past a spinning drum."""
+    """Rotor whir with a steady wobble."""
     t = time(1.0)
-    swish = (0.5 + 0.5 * np.sin(2 * np.pi * 9 * t)) ** 2
-    return band(noise(1.0, 8), 500, 3000) * (0.25 + 0.75 * swish) * env(t, 0.2, 0.3)
+    wobble = 0.75 + 0.25 * np.sin(2 * np.pi * 11 * t)
+    rotor = sweep(t, 175, 185, (1.0, 0.35, 0.1)) * wobble
+    air = band(noise(1.0, 8), 700, 2500) * wobble * 0.2
+    return (rotor + air) * env(t, 0.2, 0.3)
 
 
 def assemble():
-    """A short ratchet of soft clicks as a part seats."""
+    """Servo glide, then two soft clicks as a part seats."""
     total = 0.6
+    t = time(0.28)
+    servo = band(sweep(t, 300, 480, (1.0, 0.5, 0.3, 0.2)), 0, 1500) * env(t, 0.04, 0.08) * 0.6
     c = time(0.08)
-    out = np.zeros(int(SR * total))
-    for i, (start_at, f, gain) in enumerate([(0.0, 1100, 0.5), (0.09, 1000, 0.45), (0.18, 950, 0.5), (0.36, 850, 0.8)]):
-        click = (np.sin(2 * np.pi * f * c) * 0.5 + band(noise(0.08, 9 + i), 300, 3000)) * np.exp(-c / 0.012)
-        out += at(total, start_at, click * gain)
-    return out
+    click = (np.sin(2 * np.pi * 850 * c) * 0.5 + band(noise(0.08, 9), 200, 2000)) * np.exp(-c / 0.012)
+    return at(total, 0, servo) + at(total, 0.3, click * 0.6) + at(total, 0.42, click * 0.45)
 
 
 def geiger():
@@ -108,7 +145,10 @@ def chime():
     return at(total, 0, bell(1046.5, 0.6)) + at(total, 0.11, bell(1568.0, 0.75) * 0.8)
 
 
-CLIPS = {'grind': grind, 'centrifuge': centrifuge, 'assemble': assemble, 'geiger': geiger, 'chime': chime}
+CLIPS = {
+    'press': press, 'grind': grind, 'smelt': smelt, 'centrifuge': centrifuge, 'assemble': assemble, 'geiger': geiger,
+    'chime': chime,
+}
 
 
 def write(name, signal):
