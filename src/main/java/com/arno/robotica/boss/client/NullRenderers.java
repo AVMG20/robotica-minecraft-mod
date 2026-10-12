@@ -190,22 +190,25 @@ public final class NullRenderers {
 
     // ------------------------------------------------------------------ geometry
 
+    /** Scratch rotation and the unit corners of a beam's cross-section (render thread only, nothing allocated per frame). */
+    private static final Quaternionf TURN = new Quaternionf();
+    private static final float[][] CORNERS = {{-1.0F, -1.0F}, {1.0F, -1.0F}, {1.0F, 1.0F}, {-1.0F, 1.0F}};
+
     /** A square prism of half width {@code w} from {@code from} along {@code dir} (unit), both faces of every side. */
     static void beam(VertexConsumer buf, PoseStack pose, Vec3 from, Vec3 dir, double len, float w, int rgb, float alpha) {
         if (alpha <= 0.0F || w <= 0.0F) return;
         pose.pushPose();
         pose.translate(from.x, from.y, from.z);
-        pose.mulPose(new Quaternionf().rotationTo(0.0F, 1.0F, 0.0F, (float) dir.x, (float) dir.y, (float) dir.z));
+        pose.mulPose(TURN.rotationTo(0.0F, 1.0F, 0.0F, (float) dir.x, (float) dir.y, (float) dir.z));
         Matrix4f m = pose.last().pose();
         float r = (rgb >> 16 & 255) / 255.0F;
         float g = (rgb >> 8 & 255) / 255.0F;
         float b = (rgb & 255) / 255.0F;
         float l = (float) len;
-        float[][] corners = {{-w, -w}, {w, -w}, {w, w}, {-w, w}};
         for (int i = 0; i < 4; i++) {
-            float[] c0 = corners[i];
-            float[] c1 = corners[(i + 1) % 4];
-            quad(buf, m, c0[0], 0.0F, c0[1], c1[0], 0.0F, c1[1], c1[0], l, c1[1], c0[0], l, c0[1], r, g, b, alpha);
+            float x0 = CORNERS[i][0] * w, z0 = CORNERS[i][1] * w;
+            float x1 = CORNERS[(i + 1) % 4][0] * w, z1 = CORNERS[(i + 1) % 4][1] * w;
+            quad(buf, m, x0, 0.0F, z0, x1, 0.0F, z1, x1, l, z1, x0, l, z0, r, g, b, alpha);
         }
         pose.popPose();
     }

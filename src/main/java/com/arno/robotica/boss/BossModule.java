@@ -42,12 +42,22 @@ public final class BossModule {
 
     /**
      * Boss loot belongs to whoever landed the kill: every drop moves to the killer, only they can pick it up for two minutes
-     * (config; or until they log out, see {@link BossLoot}) and it lasts longer than normal items. Kills without a player
+     * (config; or until they log out, see {@link BossLoot}) and it lasts longer than normal items. A killer above the void
+     * gets it locked where the boss fell instead. Kills without a player
      * (/kill, a pet) leave the loot where the boss fell, free for anyone.
      */
     private static void onDrops(LivingDropsEvent event) {
         if (!(event.getEntity() instanceof RoboticaBoss) || !(event.getEntity() instanceof LivingEntity boss)) return;
         ServerPlayer killer = killer(event.getSource().getEntity(), boss);
+        // a killer flying over the void (the outer End islands) would lose the loot to it: it stays where the boss fell
+        if (killer != null && killer.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+                killer.getBlockX(), killer.getBlockZ()) <= killer.level().getMinBuildHeight()) {
+            for (ItemEntity drop : event.getDrops()) {
+                drop.setExtendedLifetime();
+                BossLoot.lock(drop, killer.getUUID(), boss.level().getGameTime());
+            }
+            return;
+        }
         for (ItemEntity drop : event.getDrops()) {
             drop.setExtendedLifetime();
             if (killer != null) {

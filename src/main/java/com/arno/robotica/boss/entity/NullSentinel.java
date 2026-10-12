@@ -610,7 +610,8 @@ public class NullSentinel extends Monster implements RoboticaBoss {
         int raised = 0;
         for (int i = 0; i < count; i++) {
             double a = offset + i * Math.PI * 2.0 / count;
-            Vec3 at = ground(new Vec3(centre.x + Math.cos(a) * PYLON_RADIUS, centre.y + 2.0, centre.z + Math.sin(a) * PYLON_RADIUS));
+            Vec3 at = pylonSpot(server, centre, a);
+            if (at == null) continue;
             NullPylon pylon = BossRegistry.NULL_PYLON.get().create(server);
             if (pylon == null) continue;
             pylon.moveTo(at.x, at.y + 1.2, at.z, random.nextFloat() * 360.0F, 0.0F);
@@ -624,6 +625,19 @@ public class NullSentinel extends Monster implements RoboticaBoss {
         }
         entityData.set(PYLONS, (byte) pylons.size());
         return raised;
+    }
+
+    /**
+     * Where a pylon at angle {@code a} around {@code centre} can float free: on the ring, else closer in (a crafted altar
+     * in a tight room). Null when every spot is inside blocks, so a pylon nobody can reach never shields it.
+     */
+    @Nullable
+    private Vec3 pylonSpot(ServerLevel server, Vec3 centre, double a) {
+        for (double r : new double[]{PYLON_RADIUS, PYLON_RADIUS * 0.66, PYLON_RADIUS * 0.4}) {
+            Vec3 at = ground(new Vec3(centre.x + Math.cos(a) * r, centre.y + 2.0, centre.z + Math.sin(a) * r));
+            if (server.noCollision(BossRegistry.NULL_PYLON.get().getSpawnAABB(at.x, at.y + 1.2, at.z))) return at;
+        }
+        return null;
     }
 
     /** Living pylons of this Sentinel nearby. */
@@ -868,20 +882,23 @@ public class NullSentinel extends Monster implements RoboticaBoss {
     private void tickSpots(ServerLevel server) {
         if (spots.isEmpty()) return;
         long now = server.getGameTime();
-        List<Spot> done = new ArrayList<>();
-        for (Spot s : spots) {
+        boolean changed = false;
+        for (java.util.Iterator<Spot> it = spots.iterator(); it.hasNext(); ) {
+            Spot s = it.next();
             if (s.kind() == SPOT_LAUNCH && now >= s.at()) {
                 launchAt(server, s.pos());
-                done.add(s);
+                it.remove();
+                changed = true;
             } else if (s.kind() == SPOT_RIFT) {
-                if (now >= s.until()) done.add(s);
-                else if (now >= s.at() && now % 10 == 0) riftTick(server, s.pos());
+                if (now >= s.until()) {
+                    it.remove();
+                    changed = true;
+                } else if (now >= s.at() && now % 10 == 0) {
+                    riftTick(server, s.pos());
+                }
             }
         }
-        if (!done.isEmpty()) {
-            spots.removeAll(done);
-            syncSpots();
-        }
+        if (changed) syncSpots();
     }
 
     private void riftTick(ServerLevel server, Vec3 pos) {
