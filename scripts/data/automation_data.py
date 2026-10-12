@@ -285,11 +285,9 @@ def main():
         name = 'supply_crate' if tier == 1 else f'supply_crate_mk{tier}'
         textures = {'front': f'robotica:block/{name}_front', 'side': f'robotica:block/{name}_side',
                     'top': f'robotica:block/{name}_top', 'bottom': 'robotica:block/supply_crate_bottom',
-                    'particle': f'robotica:block/{name}_side', 'front_glow': f'robotica:block/{name}_front_glow',
-                    'side_glow': 'robotica:block/supply_crate_side_glow', 'top_glow': 'robotica:block/supply_crate_top_glow'}
+                    'particle': f'robotica:block/{name}_side', 'front_glow': f'robotica:block/{name}_front_glow'}
         faces = {'north': '#front', 'south': '#side', 'east': '#side', 'west': '#side', 'up': '#top', 'down': '#bottom'}
-        glow = {'north': '#front_glow', 'south': '#side_glow', 'east': '#side_glow', 'west': '#side_glow', 'up': '#top_glow'}
-        write(ASSETS / f'models/block/{name}.json', glow_cube(textures, faces, glow))
+        write(ASSETS / f'models/block/{name}.json', glow_cube(textures, faces, {'north': '#front_glow'}))
         write(ASSETS / f'blockstates/{name}.json', {'variants': {
             f'facing={d}': dict({'model': f'robotica:block/{name}'}, **({'y': y} if y else {}))
             for d, y in (('north', 0), ('east', 90), ('south', 180), ('west', 270))}})

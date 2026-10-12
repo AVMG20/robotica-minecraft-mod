@@ -10,10 +10,6 @@
     "robotica:survey_rig",
     "robotica:survey_rig_mk2",
     "robotica:survey_rig_mk3",
-    "robotica:survey_rig_mk4",
-    "robotica:supply_crate",
-    "robotica:supply_crate_mk2",
-    "robotica:supply_crate_mk3",
-    "robotica:supply_crate_mk4"
+    "robotica:survey_rig_mk4"
   ]
 }

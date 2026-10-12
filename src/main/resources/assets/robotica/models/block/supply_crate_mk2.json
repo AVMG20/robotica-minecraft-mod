@@ -7,9 +7,7 @@
     "top": "robotica:block/supply_crate_mk2_top",
     "bottom": "robotica:block/supply_crate_bottom",
     "particle": "robotica:block/supply_crate_mk2_side",
-    "front_glow": "robotica:block/supply_crate_mk2_front_glow",
-    "side_glow": "robotica:block/supply_crate_side_glow",
-    "top_glow": "robotica:block/supply_crate_top_glow"
+    "front_glow": "robotica:block/supply_crate_mk2_front_glow"
   },
   "elements": [
     {
@@ -66,42 +64,6 @@
         "north": {
           "texture": "#front_glow",
           "cullface": "north",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "south": {
-          "texture": "#side_glow",
-          "cullface": "south",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "east": {
-          "texture": "#side_glow",
-          "cullface": "east",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "west": {
-          "texture": "#side_glow",
-          "cullface": "west",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "up": {
-          "texture": "#top_glow",
-          "cullface": "up",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15,

@@ -56,8 +56,8 @@ public final class AutomationContent {
     }
 
     private static DeferredBlock<SupplyCrateBlock> crate(String id, int tier) {
-        return BLOCKS.registerBlock(id, p -> new SupplyCrateBlock(p, tier), BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY)
-                .strength(2.0F + tier * 0.5F, 3.0F + tier * 3.0F).sound(SoundType.METAL));
+        return BLOCKS.registerBlock(id, p -> new SupplyCrateBlock(p, tier), BlockBehaviour.Properties.of().mapColor(MapColor.WOOD)
+                .strength(2.0F + tier * 0.5F, 3.0F + tier * 3.0F).sound(SoundType.WOOD));
     }
 
     // ---- blocks ----

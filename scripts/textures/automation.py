@@ -11,7 +11,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, Canvas, grain, material, write_anim, write_block, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, Canvas, grain, hash01, material, write_anim, write_block, write_item, write_png  # noqa: E402
 
 CU, BR, ST, DK, WD, GR, AC = '01234', '56789', 'abcde', 'fghij', 'uvwxy', 'lmnop', 'ABCDE'
 BASE = {'k': '#16191B', 'V': '#0C1418', 'W': '#3A5560',
@@ -289,16 +289,16 @@ def excavator_side():
     return c
 
 
-# Supply Crate Mk1-Mk4: the processing machines' graphite casing (bevelled frame around a sunk panel, chamfered corners
-# with tier metal L brackets) as a crate with a lid seam, a latch and cyan accents. Body DK, tier metal AC (pal(TIERS)).
-# The cyan pixels (q, Q, Y) are copied onto a full-bright *_glow overlay, so the accents stay lit at night.
+# Supply Crate Mk1-Mk4: a wooden crate (plank boards inside a frame of edge boards, a diagonal brace) shod in the tier
+# metal, with a latch whose cyan lock light and Mk pips stay lit at night (copied onto a full-bright *_glow overlay).
+# More Mk, more metal: corner caps on every Mk, straps along the vertical edges from Mk3, a full metal edge on Mk4.
 CRATE_CYAN = {'q': '#2FB8CC', 'Q': '#8CF4FF'}
-# Storage gets a lighter gunmetal body than the dark machine casing, so crates stand apart from machines.
-CRATE_BODY = dict(zip(DK, ('#23282E', '#3C434B', '#5D666F', '#86909A', '#B4BDC5')))
+# Darker, cooler wood than oak, so every tier metal (copper included) stands out on it.
+CRATE_WOOD = dict(zip(WD, ('#24180F', '#3E2B1C', '#5C412B', '#7C5B3C', '#A07C55')))
 
 
 def crate_pal(tier=1):
-    return pal(TIERS[tier], **CRATE_CYAN, **CRATE_BODY)
+    return pal(TIERS[tier], **CRATE_CYAN, **CRATE_WOOD)
 
 
 def glow_only(c, keep='qQY'):
@@ -310,100 +310,84 @@ def glow_only(c, keep='qQY'):
     return out
 
 
-def crate_shell(tier):
-    """Casing face. Higher Mks carry more metal: Mk3 runs the tier metal down the vertical edges, Mk4 all around."""
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'h')
-    c.rect(1, 1, 14, 14, 'g')
-    c.bevel(0, 0, 16, 16, 'i', 'f')                                      # outer edge
-    c.bevel(2, 2, 12, 12, 'f', 'i')                                      # panel sunk into the frame
-    c.rect(3, 3, 10, 10, 'h')
-    if tier >= 3:
-        c.rect(0, 4, 2, 8, 'C').rect(14, 4, 2, 8, 'C').rect(0, 4, 1, 8, 'D').rect(15, 4, 1, 8, 'B')
-    if tier >= 4:
-        c.rect(4, 0, 8, 2, 'C').rect(4, 14, 8, 2, 'C').rect(4, 0, 8, 1, 'D').rect(4, 15, 8, 1, 'B')
+def crate_planks(c, vertical=False, seed=0):
+    """Boards 4 px wide: lit edge, plank, a little grain, dark joint."""
+    for a in range(16):
+        for b in range(16):
+            x, y = (b, a) if not vertical else (a, b)
+            k = a % 4
+            ch = 'x' if k == 0 else 'u' if k == 3 else 'w'
+            if ch == 'w' and hash01(b + (a // 4) * 5, a // 4, seed) < 0.12:
+                ch = 'v'
+            c.set(x, y, ch)
+    return c
+
+
+def crate_frame(c, tier):
+    """Edge boards around the face (raised: lit outer edge, shadow inside), then the tier metal on top."""
+    c.frame(0, 0, 16, 16, 'w').frame(1, 1, 14, 14, 'w')
+    c.rect(0, 0, 16, 1, 'x').rect(0, 0, 1, 16, 'x')                      # lit outer edge
+    c.rect(1, 15, 15, 1, 'v').rect(15, 1, 1, 15, 'v')
+    c.frame(2, 2, 12, 12, 'u')                                           # shadow inside the frame
+    for i in (5, 10):                                                    # nails along the edge boards
+        c.set(i, 1, 'v').set(1, i, 'v').set(i, 14, 'v').set(14, i, 'v')
+    if tier >= 3:                                                        # straps down the vertical edges
+        c.rect(0, 3, 2, 10, 'C').rect(14, 3, 2, 10, 'C').rect(0, 3, 1, 10, 'D').rect(15, 3, 1, 10, 'B')
+    if tier >= 4:                                                        # and along the top and bottom
+        c.rect(3, 0, 10, 2, 'C').rect(3, 14, 10, 2, 'C').rect(3, 0, 10, 1, 'D').rect(3, 15, 10, 1, 'B')
     for x, y, sx, sy in ((0, 0, 1, 1), (15, 0, -1, 1), (0, 15, 1, -1), (15, 15, -1, -1)):
-        for i in range(5):                                               # 2 px L bracket in the tier metal
+        for i in range(4):                                               # 2 px L corner cap
             for j in range(2):
                 c.set(x + sx * i, y + sy * j, 'C').set(x + sx * j, y + sy * i, 'C')
+        c.set(x, y, 'D').set(x + sx, y + sy, 'E')                       # rivet
         if tier < 4:
-            c.set(x + sx * 4, y, 'B').set(x + sx * 4, y + sy, 'A')
+            c.set(x + sx * 3, y + sy, 'A')
         if tier < 3:
-            c.set(x, y + sy * 4, 'B').set(x + sx, y + sy * 4, 'A')
-        c.set(x + sx, y + sy, 'B')
-        c.set(x, y, 'V')                                                 # chamfer
-    for i in range(1, 4):                                                # light from the top-left
-        c.set(i, 0, 'E').set(0, i, 'E')
+            c.set(x + sx, y + sy * 3, 'A')
     return c
 
 
-def crate_seam(c, y=4):
-    """Lid seam across the panel: a dark gap with a cyan strip in it, the lid's lit edge above."""
-    c.rect(3, y - 1, 10, 1, 'i')
-    c.rect(2, y, 12, 1, 'k')
-    c.rect(4, y, 8, 1, 'q').set(3, y, 'Z').set(12, y, 'Z')
-    return c
-
-
-def crate_boards(c, y0=5):
-    """Graphite boards below the lid: a dark joint with a lit edge every 3 rows, like a cargo crate."""
-    for y in range(y0, 13):
-        if (y - y0) % 3 == 0:
-            c.rect(3, y, 10, 1, 'g')
-        elif (y - y0) % 3 == 1:
-            c.rect(3, y, 10, 1, 'i')
+def crate_brace(c):
+    """Diagonal board from the bottom-left corner to the top-right one, over the planks."""
+    for i in range(10):
+        x, y = 3 + i, 12 - i
+        c.set(x, y, 'y').set(x, y + 1 if y < 12 else y, 'x')
+        if x + 1 <= 12:
+            c.set(x + 1, y, 'x')
+        if y + 2 <= 12:
+            c.set(x, y + 2, 'u')
     return c
 
 
 def crate_front(tier):
-    """Front: lid seam, boards, a tier metal latch with a cyan lock light and a plate with one lit pip per Mk."""
-    c = crate_boards(crate_seam(crate_shell(tier)))
-    c.rect(6, 2, 4, 6, 'C').bevel(6, 2, 4, 6, 'D', 'A')                 # latch hasp over the seam
+    """Front: boards, a tier metal latch with a cyan lock light and a plate with one lit pip per Mk."""
+    c = crate_frame(crate_planks(Canvas(), seed=1), tier)
+    c.rect(6, 2, 4, 6, 'C').bevel(6, 2, 4, 6, 'D', 'A')                 # latch hasp
     c.rect(7, 3, 2, 1, 'B')
     c.set(7, 5, 'Y').set(8, 5, 'q')                                      # lock light
     c.rect(7, 6, 2, 1, 'B')
-    c.rect(4, 10, 8, 3, 'f').bevel(4, 10, 8, 3, 'k', 'i')               # Mk plate
+    c.rect(3, 10, 10, 3, 'C').bevel(3, 10, 10, 3, 'D', 'A')             # Mk plate: a 4 segment bar, one lit per Mk
     for i in range(4):
-        c.set(5 + i * 2, 11, 'Y' if i < tier else 'Z')
+        lit = i < tier
+        c.set(4 + i * 2, 11, 'Y' if lit else 'Z').set(5 + i * 2, 11, 'q' if lit else 'k')
     return c
 
 
 def crate_side(tier):
-    """Side: lid seam, boards and the crate's diagonal brace in the tier metal."""
-    c = crate_boards(crate_seam(crate_shell(tier)))
-    lit, mid, dark = 'D', 'C', 'A'
-    for i in range(9):                                                   # 2 px brace, bottom-left to top-right
-        x, y = 3 + i, 12 - (i * 7) // 8
-        c.set(x, y, mid).set(x, y - 1, lit)
-        if y + 1 <= 12:
-            c.set(x, y + 1, dark)
-    c.set(12, 6, mid).set(12, 5, lit)
-    return c
+    """Side: boards with the diagonal brace."""
+    return crate_frame(crate_brace(crate_planks(Canvas(), seed=2)), tier)
 
 
 def crate_top(tier):
-    """Lid: boards across it under a tier metal cross strap with a cyan core where the straps meet."""
-    c = crate_shell(tier)
-    for x in range(3, 13):
-        if x % 3 == 0:
-            c.rect(x, 3, 1, 10, 'g')
-        elif x % 3 == 1:
-            c.rect(x, 3, 1, 10, 'i')
-    c.rect(3, 7, 10, 2, 'C').rect(3, 7, 10, 1, 'D')                      # straps
-    c.rect(7, 3, 2, 10, 'C').rect(7, 3, 1, 10, 'D')
-    c.rect(6, 6, 4, 4, 'B').bevel(6, 6, 4, 4, 'D', 'A')                  # hub
-    c.rect(7, 7, 2, 2, 'q').set(7, 7, 'Q')                               # cyan core
+    """Lid: boards running the other way and a tier metal carry handle across the middle."""
+    c = crate_frame(crate_planks(Canvas(), vertical=True, seed=3), tier)
+    c.rect(4, 7, 8, 2, 'C').rect(4, 7, 8, 1, 'D').set(4, 8, 'A').set(11, 8, 'A')
+    c.rect(3, 7, 1, 2, 'B').rect(12, 7, 1, 2, 'B')                       # handle brackets
     return c
 
 
 def crate_bottom():
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'g')
-    c.bevel(0, 0, 16, 16, 'h', 'f')
-    c.rect(3, 3, 10, 10, 'f').bevel(3, 3, 10, 10, 'k', 'h')
-    for x, y in ((1, 1), (13, 1), (1, 13), (13, 13)):
-        c.rect(x, y, 2, 2, 'f').set(x, y, 'h')
-    return c
+    return crate_frame(crate_planks(Canvas(), seed=4), 1)
 
 
 def kit(tier):
@@ -445,9 +429,8 @@ def main():
         for face, draw in (('front', crate_front), ('side', crate_side), ('top', crate_top)):
             c = draw(tier)
             write_block(f'{name}_{face}', c.rows(), crate_pal(tier))
-            if face == 'front' or tier == 1:                             # side and top glow are the same for every Mk
-                write_block(f'{name}_{face}_glow' if face == 'front' else f'supply_crate_{face}_glow', glow_only(c).rows(),
-                            crate_pal(tier))
+            if face == 'front':
+                write_block(f'{name}_front_glow', glow_only(c).rows(), crate_pal(tier))
     write_block('supply_crate_bottom', crate_bottom().rows(), crate_pal())
     for tier in (2, 3, 4):
         write_item(f'farm_kit_mk{tier}', kit(tier).rows(), pal(TIERS[tier]))
