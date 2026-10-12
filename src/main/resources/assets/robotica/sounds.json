@@ -115,7 +115,7 @@
       {
         "name": "robotica:machine/start",
         "type": "file",
-        "volume": 0.5,
+        "volume": 0.25,
         "pitch": 1.0
       }
     ]
@@ -126,7 +126,7 @@
       {
         "name": "robotica:machine/stop",
         "type": "file",
-        "volume": 0.5,
+        "volume": 0.35,
         "pitch": 1.0
       }
     ]
@@ -172,7 +172,7 @@
       {
         "name": "robotica:machine/press",
         "type": "file",
-        "volume": 0.7,
+        "volume": 0.4,
         "pitch": 1.0
       }
     ]
@@ -183,7 +183,7 @@
       {
         "name": "robotica:machine/grind",
         "type": "file",
-        "volume": 0.6,
+        "volume": 0.4,
         "pitch": 1.0
       }
     ]
@@ -194,7 +194,7 @@
       {
         "name": "robotica:machine/smelt",
         "type": "file",
-        "volume": 0.7,
+        "volume": 0.5,
         "pitch": 1.0
       }
     ]
@@ -205,7 +205,7 @@
       {
         "name": "robotica:machine/centrifuge",
         "type": "file",
-        "volume": 0.5,
+        "volume": 0.3,
         "pitch": 1.0
       }
     ]
@@ -216,7 +216,7 @@
       {
         "name": "robotica:machine/assemble",
         "type": "file",
-        "volume": 0.6,
+        "volume": 0.3,
         "pitch": 1.0
       }
     ]
@@ -227,7 +227,7 @@
       {
         "name": "robotica:machine/hum",
         "type": "file",
-        "volume": 0.35,
+        "volume": 0.3,
         "pitch": 0.8
       }
     ]
@@ -238,7 +238,7 @@
       {
         "name": "robotica:machine/hum",
         "type": "file",
-        "volume": 0.35,
+        "volume": 0.3,
         "pitch": 1.5
       }
     ]
@@ -249,7 +249,7 @@
       {
         "name": "robotica:machine/chime",
         "type": "file",
-        "volume": 0.5,
+        "volume": 0.45,
         "pitch": 1.0
       }
     ]
