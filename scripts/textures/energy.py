@@ -4,7 +4,7 @@ come from scripts/data/energy_models.py)
 
 Four families, one construction (top-left light, bevelled plates, riveted corners, glow on separate overlays):
 - Core Reactor: dark graphite plating with hazard amber trim and a green glow; amplifiers glow in their tier colour.
-- Capacitor Bank: slate blue plating with cyan energy glow; capacitors show their cell metal, coils their windings.
+- Capacitor Bank: slate blue plating with cyan energy glow; its capacitors and coils are light steel modules.
 - Tesla Spire: brushed steel with copper windings and a cyan arc glow.
 - Ring Collider: null violet plating with a white-hot plasma glow; segments are a glass beam pipe between magnets.
 Casing faces tile seamlessly: the frame of a casing is drawn as half-width seams so walls read as one surface.
@@ -390,74 +390,169 @@ def cryo_coolant(frame_no):
 
 
 # ---------------------------------------------------------------- bank inside
+# Capacitors and Transfer Coils: energy storage family, the casing construction in light steel (brackets in the tier
+# colour) so a bank's inside reads as a rack of modules through its glass. Capacitors are storage cells: a round can
+# in a coloured sleeve with a cyan charge stripe that a calm shimmer climbs, an aluminium vent top. Transfer coils are
+# I/O conductors: banks of windings round a cyan current band that runs right round the block (the four sides join
+# up), with pulses chasing round it, and round the ring on top. More pulses per tier.
+# Capacitor tiers (sleeve): copper, redstone red, ender green, resonant indigo. Coil tiers (windings): copper, gold,
+# superconductor frost.
+import machine_casing as mc  # noqa: E402
+from pixelart import MATERIALS  # noqa: E402
 
-CAP = {0: CU, 1: RD, 2: TE, 3: PU}
+BANK_BODY = ('#4A535B', '#6F7A83', '#9AA5AE', '#C4CDD4', '#EBF0F3')   # light steel
+BANK_EXTRA = {'m': '#163A44', 'n': '#2A6A78', 'p': '#0D2229', 'y': '#137489'}   # dark glass, lit edge, shade, deep charge
+CAP_SLEEVE = {
+    0: MATERIALS['copper'],
+    1: ('#3E0608', '#7A0E10', '#BE1E1A', '#F0473A', '#FFB0A2'),          # redstone
+    2: ('#062C26', '#0C5A48', '#169070', '#46CC9C', '#C0FFE4'),          # ender
+    3: ('#160A2E', '#36206A', '#5E46B0', '#8EA0F0', '#D8F4FF'),          # resonant
+}
+COIL_METAL = {
+    0: MATERIALS['copper'],
+    1: MATERIALS['gold'],
+    2: ('#0E1E36', '#1C3E6C', '#2F6CB0', '#78B8F0', '#E0F4FF'),          # superconductor frost
+}
+BANK_FRAMES = 16
+
+
+def bank_pal(ramp):
+    return mc.casing_palette(ramp, **dict(zip(mc.BODY, BANK_BODY)), **BANK_EXTRA)
+
+
+CAN_X = range(3, 13)
+CAN_SLEEVE = 'ghijiihhgf'        # sleeve ramp across the can (round, lit from the left)
+CAN_CRIMP = 'cdeeddcccb'         # aluminium crimp ring
+CAP_STRIPE = (9, 5, 2, 7)        # x, y, w, h of the charge stripe
 
 
 def capacitor_side(tier):
-    """Cell bank: three vertical cells in the tier metal with charge windows, slate end caps."""
-    m = CAP[tier]
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, SL, 61 + tier, bevel=False, density=0.25)
-    c.rect(0, 0, 16, 2, SL[3]).rect(0, 14, 16, 2, SL[1]).rect(0, 15, 16, 1, SL[0])
-    for i in range(3):
-        x = 1 + i * 5
-        c.rect(x, 2, 4, 12, m[2]).rect(x, 2, 1, 12, m[3]).rect(x + 3, 2, 1, 12, m[1])
-        c.rect(x + 1, 4, 2, 8, 'z').rect(x + 1, 7, 2, 5, CY[1])            # charge window
-        c.set(x + 1, 2, m[4])
-    return c
+    """A round can filling the bay: aluminium crimp, groove, coloured sleeve with a dark glass charge stripe."""
+    c = mc.shell(tier + 1)
+    for i, x in enumerate(CAN_X):
+        c.set(x, 3, CAN_CRIMP[i]).set(x, 4, 'a')
+        c.rect(x, 5, 1, 7, CAN_SLEEVE[i])
+        c.set(x, 12, 'fghij'[max(0, 'fghij'.index(CAN_SLEEVE[i]) - 2)])
+    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):                     # rounded can corners
+        c.set(x, y, 'b')
+    x, y, w, h = CAP_STRIPE
+    c.rect(x, y, w, h, 'm').rect(x, y, 1, h, 'n').set(x + 1, y + h - 1, 'p')
+    return mc.tier_notches(c, tier + 1)
 
 
-def capacitor_side_glow():
+def capacitor_side_glow(t):
+    """Charge stripe lit, a soft band of light climbing it once per loop (interpolated)."""
     c = Canvas()
-    for i in range(3):
-        x = 1 + i * 5
-        c.rect(x + 1, 7, 2, 5, CY[2])
-        c.rect(x + 1, 7, 1, 1, CY[4])
+    x, y, w, h = CAP_STRIPE
+    band = y + h + 1 - (t / BANK_FRAMES) * (h + 4)
+    for yy in range(y, y + h):
+        d = abs(yy - band)
+        lo, hi = ('w', 'x') if d < 0.8 else ('v', 'w') if d < 1.8 else ('y', 'v')
+        c.set(x, yy, hi).set(x + 1, yy, lo)
+    c.set(x, y, 'x').set(x + 1, y, 'w')
     return c
 
 
 def capacitor_top(tier):
-    m = CAP[tier]
-    c = casing(SL, 70 + tier)
-    c.recess(3, 3, 10, 10, SL, fill='k')
-    for x, y in ((5, 5), (9, 5), (5, 9), (9, 9)):                         # terminals
-        c.rect(x, y, 2, 2, m[2]).set(x, y, m[4])
-    c.set(7, 7, CY[1]).set(8, 8, CY[1])
-    return c
+    """The can seen from above: a ring of sleeve round an aluminium lid scored with a vent cross."""
+    c = mc.shell(tier + 1)
+    c.rect(3, 3, 10, 10, 'b')
+    for y in range(3, 13):
+        for x in range(3, 13):
+            dx, dy = x - 7.5, y - 7.5
+            d = (dx * dx + dy * dy) ** 0.5
+            lit = -(dx + dy) / max(d, 0.1)                                  # light from the top left
+            if d <= 5.2:
+                c.set(x, y, 'i' if lit > 0.5 else 'g' if lit < -0.5 else 'h')
+            if d <= 3.9:
+                c.set(x, y, 'e' if lit > 0.3 and d > 2.6 else 'c' if lit < -0.3 and d > 2.6 else 'd')
+    for i in range(5, 11):                                                  # vent score
+        c.set(i, 7, 'b').set(7, i, 'b').set(i, 8, 'c').set(8, i, 'c')
+    c.rect(7, 7, 2, 2, 'a')
+    return mc.tier_notches(c, tier + 1)
 
 
-COIL = {0: CU, 1: AM, 2: PU}
+WIND_ROWS = (3, 4, 5, 10, 11, 12)
+WIND_SHADE = 'ghiijhhggf'
 
 
 def coil_side(tier):
-    """Transfer coil: tight windings in the tier metal around a slate core, energy gap in the middle."""
-    m = COIL[tier]
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, SL, 81 + tier, bevel=False, density=0.25)
-    c.rect(0, 0, 16, 1, SL[3]).rect(0, 15, 16, 1, SL[0])
-    c.rect(2, 1, 12, 14, 'k')
-    for y in range(1, 15):
-        c.rect(3, y, 10, 1, m[2] if y % 2 else m[1])
-        c.set(3, y, m[3] if y % 2 else m[2]).set(12, y, m[0])
-    c.rect(2, 7, 12, 2, 'z').rect(4, 7, 8, 2, CY[1])
-    return c
+    """Two banks of windings over and under a glass current band that crosses the whole face."""
+    c = mc.shell(tier + 1)
+    for y in WIND_ROWS:
+        for i, x in enumerate(CAN_X):
+            ch = WIND_SHADE[i]
+            if y in (4, 11):                                                # groove between two turns
+                ch = 'g' if ch in 'ij' else 'f'
+            c.set(x, y, ch)
+    for x in range(16):
+        c.set(x, 6, 'a').set(x, 9, 'd')
+        c.rect(x, 7, 1, 2, 'u')
+    for x in (2, 13):                                                       # band collars
+        c.rect(x, 6, 1, 4, 'k')
+    return mc.tier_notches(c, tier + 1)
 
 
-def coil_glow(tier):
+def coil_glow(tier, t):
+    """The current band lit, pulses chasing left to right (round the block: the four sides join up)."""
     c = Canvas()
-    c.rect(4, 7, 8, 2, CY[3])
-    c.rect(5 + tier * 2, 7, 2, 1, CY[4])
+    n = (1, 2, 4)[tier]
+    for x in range(16):
+        d = (t - x) % (16 // n)
+        ch = 'x' if d == 0 else 'w' if d == 1 else 'w' if d == 2 and n < 4 else 'v'
+        c.rect(x, 7, 1, 2, ch)
     return c
 
 
 def coil_top(tier):
-    m = COIL[tier]
-    c = casing(SL, 90 + tier)
-    c.disc(7.5, 7.5, 5.8, 'k')
-    c.ring(7.5, 7.5, 2.4, 5.3, m[1]).ring(7.5, 7.5, 3.2, 4.2, m[2])
-    c.disc(7.5, 7.5, 2.0, CY[1])
+    """Looking down the coil: a winding ring round a glass current ring and a steel core pin."""
+    c = mc.shell(tier + 1)
+    c.rect(3, 3, 10, 10, 'b')
+    for y in range(3, 13):
+        for x in range(3, 13):
+            dx, dy = x - 7.5, y - 7.5
+            d = (dx * dx + dy * dy) ** 0.5
+            lit = -(dx + dy) / max(d, 0.1)
+            if d <= 5.2:
+                ch = 'i' if lit > 0.5 else 'g' if lit < -0.5 else 'h'
+                c.set(x, y, ch if d > 4.2 or d < 3.3 else 'fghij'['fghij'.index(ch) - 1])
+            if d < 2.9:
+                c.set(x, y, 'u')
+            if d < 1.0:
+                c.set(x, y, 'd')
+    return mc.tier_notches(c, tier + 1)
+
+
+def coil_top_glow(tier, t):
+    """The current ring lit with marks circling it (the same way round as the band on the sides)."""
+    c = Canvas()
+    n = (1, 2, 4)[tier]
+    for y in range(3, 13):
+        for x in range(3, 13):
+            dx, dy = x - 7.5, y - 7.5
+            d = (dx * dx + dy * dy) ** 0.5
+            if 1.0 <= d < 2.9:
+                a = (math.atan2(dy, dx) / (2 * math.pi)) % 1
+                k = (a * n + t / BANK_FRAMES) % 1
+                c.set(x, y, 'x' if k < 0.12 else 'w' if k < 0.3 else 'v')
     return c
+
+
+def write_bank_inside():
+    for tier, name in enumerate(('copper', 'redstone', 'ender', 'resonant')):
+        pal = bank_pal(CAP_SLEEVE[tier])
+        write_block(f'capacitor_{name}', capacitor_side(tier).rows(), pal)
+        write_block(f'capacitor_{name}_top', capacitor_top(tier).rows(), pal)
+    write_anim('block', 'capacitor_glow', [capacitor_side_glow(t) for t in range(BANK_FRAMES)], bank_pal(CAP_SLEEVE[0]),
+               frametime=4, interpolate=True)
+    for tier, name in enumerate(('basic', 'advanced', 'elite')):
+        pal = bank_pal(COIL_METAL[tier])
+        write_block(f'transfer_coil_{name}', coil_side(tier).rows(), pal)
+        write_anim('block', f'transfer_coil_{name}_glow', [coil_glow(tier, t) for t in range(BANK_FRAMES)], pal,
+                   frametime=2)
+        write_block(f'transfer_coil_{name}_top', coil_top(tier).rows(), pal)
+        write_anim('block', f'transfer_coil_{name}_top_glow', [coil_top_glow(tier, t) for t in range(BANK_FRAMES)],
+                   pal, frametime=2, interpolate=True)
 
 
 # ---------------------------------------------------------------- tesla spire
@@ -674,14 +769,7 @@ def main():
     write_block('bank_port_input_glow', bank_port_glow(False).rows(), P)
     write_block('bank_port_output', bank_port(True).rows(), P)
     write_block('bank_port_output_glow', bank_port_glow(True).rows(), P)
-    for tier, name in enumerate(('copper', 'redstone', 'ender', 'resonant')):
-        write_block(f'capacitor_{name}', capacitor_side(tier).rows(), P)
-        write_block(f'capacitor_{name}_top', capacitor_top(tier).rows(), P)
-    write_block('capacitor_glow', capacitor_side_glow().rows(), P)
-    for tier, name in enumerate(('basic', 'advanced', 'elite')):
-        write_block(f'transfer_coil_{name}', coil_side(tier).rows(), P)
-        write_block(f'transfer_coil_{name}_glow', coil_glow(tier).rows(), P)
-        write_block(f'transfer_coil_{name}_top', coil_top(tier).rows(), P)
+    write_bank_inside()
 
     write_block('spire_casing', casing(ST, 5).rows(), P)
     write_block('spire_base', spire_base_side().rows(), P)
