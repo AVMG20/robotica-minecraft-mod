@@ -12,6 +12,8 @@
     "g_south": "robotica:block/transfer_coil_elite_glow",
     "g_west": "robotica:block/transfer_coil_elite_glow",
     "g_east": "robotica:block/transfer_coil_elite_glow",
+    "g_up": "robotica:block/transfer_coil_elite_top_glow",
+    "g_down": "robotica:block/transfer_coil_elite_top_glow",
     "particle": "robotica:block/transfer_coil_elite"
   },
   "elements": [
@@ -96,6 +98,24 @@
         "east": {
           "texture": "#g_east",
           "cullface": "east",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#g_up",
+          "cullface": "up",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "down": {
+          "texture": "#g_down",
+          "cullface": "down",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15,

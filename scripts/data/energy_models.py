@@ -160,7 +160,8 @@ cube_all('reactor_access_port')
 for n in ('copper', 'redstone', 'ender', 'resonant'):
     column(f'capacitor_{n}', f'capacitor_{n}', f'capacitor_{n}_top', 'capacitor_glow')
 for n in ('basic', 'advanced', 'elite'):
-    column(f'transfer_coil_{n}', f'transfer_coil_{n}', f'transfer_coil_{n}_top', f'transfer_coil_{n}_glow')
+    column(f'transfer_coil_{n}', f'transfer_coil_{n}', f'transfer_coil_{n}_top', f'transfer_coil_{n}_glow',
+           f'transfer_coil_{n}_top_glow')
 
 # ---------- ports ----------
 simple('reactor_power_port', glow_cube({d: 'reactor_power_port' for d in DIRS}, {d: 'reactor_power_port_glow' for d in DIRS}))
