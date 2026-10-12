@@ -400,6 +400,27 @@ def assembler_model(tier, lit):
     return machine_model(faces, glow, bay, textures, lit=lit)
 
 
+def rtg_model(lit):
+    """Gunmetal casing with a window 2 px deep in the front (RTG_WINDOW in scripts/textures/industry.py: x 4..11,
+    y 3..12) and the pellet column standing in it from floor to roof; their faces come from the core atlas (RTG_PARTS
+    there), full-bright while working."""
+    suffix = '_on' if lit else ''
+    faces = {'down': 'rtg_bottom', 'up': 'rtg_top', 'south': 'rtg_side', 'west': 'rtg_side', 'east': 'rtg_side',
+             'north': 'rtg_front' + suffix}
+    x0, x1, y0, y1, z = 4, 12, 3, 13, 2
+
+    def el(a, b, uvs):
+        return {'from': a, 'to': b, 'faces': {d: {'texture': '#core', 'uv': uv} for d, uv in uvs.items()}, 'glow': lit}
+    els = [el([x0, y0, z], [x1, y1, z], {'north': [0, 0, 8, 10]}),
+           el([x1, y0, 0], [x1, y1, z], {'west': [8, 0, 10, 10]}),
+           el([x0, y0, 0], [x0, y1, z], {'east': [10, 0, 12, 10]}),
+           el([x0, y1, 0], [x1, y1, z], {'down': [0, 10, 8, 12]}),
+           el([x0, y0, 0], [x1, y0, z], {'up': [0, 12, 8, 14]}),
+           el([6, y0, 0.5], [10, y1, z], {'north': [12, 0, 16, 10], 'east': [12, 0, 13, 10], 'west': [15, 0, 16, 10]})]
+    glow = {'north': 'rtg_front_glow', 'up': 'rtg_top_glow'} if lit else None
+    return machine_model(faces, glow, els, {'core': 'rtg_core' + suffix}, lit=lit)
+
+
 MACHINE_MODELS = {'alloy_smelter': smelter_model, 'centrifuge': centrifuge_model, 'assembler': assembler_model}
 
 
@@ -427,9 +448,8 @@ def models():
             machine_blockstate(name)
             item_block(name)
             loot_self(name)
-    faces = {'down': 'industry_bottom', 'up': 'rtg_top', 'south': 'rtg_side', 'west': 'rtg_side', 'east': 'rtg_side'}
-    block_model('rtg', cube(dict(faces, north='rtg_front')))
-    block_model('rtg_on', cube(dict(faces, north='rtg_front'), {'north': 'rtg_front_glow', 'up': 'rtg_top_glow'}))
+    block_model('rtg', rtg_model(False))
+    block_model('rtg_on', rtg_model(True))
     machine_blockstate('rtg')
     item_block('rtg')
     loot_self('rtg')
