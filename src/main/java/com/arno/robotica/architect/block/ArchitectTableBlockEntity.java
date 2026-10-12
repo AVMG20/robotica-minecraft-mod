@@ -86,7 +86,7 @@ import java.util.UUID;
 public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
     public static final int INPUT_SLOTS = 9;
 
-    public static final int ST_IDLE = 0, ST_BUILDING = 1, ST_NO_RUSTIC = 2, ST_NO_REFINED = 3, ST_NO_EXOTIC = 4,
+    public static final int ST_IDLE = 0, ST_BUILDING = 1, ST_NO_RUSTIC = 2, ST_NO_REFINED = 3,
             ST_NO_ENERGY = 5, ST_LOCKED = 6, ST_UNLOADED = 7, ST_READY = 8, ST_DEMOLISHING = 9;
 
     // GUI actions (ArchitectActionPayload): a and b are the arguments.
@@ -167,7 +167,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     private int rustic;
     private int refined;
-    private int exotic;
     @Nullable
     private UUID owner;
     private String ownerName = "";
@@ -180,7 +179,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     /** Set by Build; cleared when nothing is left to do or matter runs out. */
     private boolean running;
     /**
-     * The matter status (ST_NO_RUSTIC / REFINED / EXOTIC) the build stopped on, 0 when it did not stop for matter. A
+     * The matter status (ST_NO_RUSTIC / REFINED) the build stopped on, 0 when it did not stop for matter. A
      * stopped build stays stopped, drone gone, until the player presses Build again: no retry every tick.
      */
     private int needs;
@@ -216,7 +215,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private int demolishTotal;
     private int demoPlot = -1;
     private int demoCursor;
-    private final double[] refundCarry = new double[3];
+    private final double[] refundCarry = new double[2];
 
     public ArchitectTableBlockEntity(BlockPos pos, BlockState state) {
         super(ArchitectRegistry.ARCHITECT_TABLE_BE.get(), pos, state);
@@ -276,18 +275,16 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return switch (grade) {
             case RUSTIC -> rustic;
             case REFINED -> refined;
-            case EXOTIC -> exotic;
         };
     }
 
     public Matter matter() {
-        return new Matter(rustic, refined, exotic);
+        return new Matter(rustic, refined);
     }
 
     public void setMatter(Matter m) {
         rustic = m.rustic();
         refined = m.refined();
-        exotic = m.exotic();
         setChanged();
     }
 
@@ -308,12 +305,10 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             int fit = stack.getCount();
             if (v.rustic() > 0) fit = Math.min(fit, (cap - rustic) / v.rustic());
             if (v.refined() > 0) fit = Math.min(fit, (cap - refined) / v.refined());
-            if (v.exotic() > 0) fit = Math.min(fit, (cap - exotic) / v.exotic());
             if (fit <= 0) continue;
             input.extractItem(slot, fit, false);
             rustic += v.rustic() * fit;
             refined += v.refined() * fit;
-            exotic += v.exotic() * fit;
             budgetSlots--;
             absorbed = true;
             setChanged();
@@ -614,7 +609,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                 actions--;
                 status = ST_BUILDING;
                 last = origin.offset(op.x(), op.y(), op.z());
-            } else if (result == ST_NO_RUSTIC || result == ST_NO_REFINED || result == ST_NO_EXOTIC) {
+            } else if (result == ST_NO_RUSTIC || result == ST_NO_REFINED) {
                 stopForMatter(level, result);
                 break;
             } else {
@@ -695,7 +690,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (!desired.isAir()) {
             if (rustic < cost.rustic()) return ST_NO_RUSTIC;
             if (refined < cost.refined()) return ST_NO_REFINED;
-            if (exotic < cost.exotic()) return ST_NO_EXOTIC;
             if (energy.getEnergyStored() < energyCost) return ST_NO_ENERGY;
         }
 
@@ -719,7 +713,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         if (!level.setBlock(target, desired, Block.UPDATE_ALL)) return STEP_SKIPPED;
         rustic -= cost.rustic();
         refined -= cost.refined();
-        exotic -= cost.exotic();
         energy.consume(energyCost);
         // the old style's block comes back like a takedown's: as matter, or as an item when the matter does not fit
         if (restyled && !refund(current)) stash(level, new ItemStack(current.getBlock()));
@@ -996,15 +989,13 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         double share = ArchitectConfig.demolishRefund();
         if (style == null || share <= 0) return false;
         int cap = ArchitectConfig.matterCap();
-        double[] add = {refundCarry[0] + style.cost.rustic() * share, refundCarry[1] + style.cost.refined() * share, refundCarry[2] + style.cost.exotic() * share};
-        int r = (int) add[0], f = (int) add[1], x = (int) add[2];
-        if (rustic + r > cap || refined + f > cap || exotic + x > cap) return false;
+        double[] add = {refundCarry[0] + style.cost.rustic() * share, refundCarry[1] + style.cost.refined() * share};
+        int r = (int) add[0], f = (int) add[1];
+        if (rustic + r > cap || refined + f > cap) return false;
         rustic += r;
         refined += f;
-        exotic += x;
         refundCarry[0] = add[0] - r;
         refundCarry[1] = add[1] - f;
-        refundCarry[2] = add[2] - x;
         return true;
     }
 
@@ -1100,7 +1091,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         writeContents(tag, registries);
         tag.putInt("rustic", rustic);
         tag.putInt("refined", refined);
-        tag.putInt("exotic", exotic);
         if (owner != null) tag.putUUID("owner", owner);
         tag.putString("owner_name", ownerName);
         writeBuild(tag);
@@ -1142,14 +1132,13 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         }
         tag.putDouble("refund_rustic", refundCarry[0]);
         tag.putDouble("refund_refined", refundCarry[1]);
-        tag.putDouble("refund_exotic", refundCarry[2]);
     }
 
     private void readBuild(CompoundTag tag) {
         layout.load(tag.getCompound("layout"));
         running = tag.getBoolean("running");
         needs = tag.getInt("needs");
-        if (needs < ST_NO_RUSTIC || needs > ST_NO_EXOTIC) needs = 0;
+        if (needs < ST_NO_RUSTIC || needs > ST_NO_REFINED) needs = 0;
         current = tag.contains("current") ? tag.getInt("current") : -1;
         if (!Plots.valid(current)) current = -1;
         currentSig = tag.getInt("current_sig");
@@ -1172,7 +1161,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         demoCursor = Math.max(0, tag.getInt("demolish_cursor"));
         refundCarry[0] = Math.max(0, tag.getDouble("refund_rustic"));
         refundCarry[1] = Math.max(0, tag.getDouble("refund_refined"));
-        refundCarry[2] = Math.max(0, tag.getDouble("refund_exotic"));
     }
 
     /** Build state for the item (picking the table up): the plan, the cursor, settings and where it was standing. */
@@ -1212,7 +1200,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         readContents(tag, registries);
         rustic = tag.getInt("rustic");
         refined = tag.getInt("refined");
-        exotic = tag.getInt("exotic");
         owner = tag.hasUUID("owner") ? tag.getUUID("owner") : null;
         ownerName = tag.getString("owner_name");
         readBuild(tag);

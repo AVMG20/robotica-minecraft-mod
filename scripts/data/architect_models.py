@@ -226,12 +226,10 @@ MATTER = {
     'refined_8': ['#c:ingots/iron', '#c:ingots/gold', '#c:plates/iron', '#c:plates/gold', 'minecraft:bricks'],
     'refined_36': ['#c:storage_blocks/copper'],
     'refined_72': ['#c:storage_blocks/iron', '#c:storage_blocks/gold'],
-    'exotic_2': ['#c:dusts/glowstone'],
-    'exotic_4': ['#c:obsidians', '#c:gems/amethyst', '#c:gems/prismarine'],
-    'exotic_16': ['#c:ender_pearls'],
-    'exotic_32': ['#c:gems/diamond'],
-    'exotic_288': ['#c:storage_blocks/diamond'],
 }
+for _old in (FRAG / 'data/robotica/tags/item/matter').glob('*.json'):
+    if _old.stem not in MATTER:
+        _old.unlink()  # a grade or value that is gone
 for name, values in MATTER.items():
     write(FRAG / 'data/robotica/tags/item/matter' / f'{name}.json', {'replace': False, 'values': values})
 
@@ -244,7 +242,6 @@ for style in STYLES:
 lang.update({
     'gui.robotica.matter.rustic': 'Rustic',
     'gui.robotica.matter.refined': 'Refined',
-    'gui.robotica.matter.exotic': 'Exotic',
     'gui.robotica.architect_build': 'Build',
     'gui.robotica.architect_build_tip': 'Build every planned plot and update the buildings next to them',
     'gui.robotica.architect_cancel': 'Cancel',
@@ -256,18 +253,16 @@ lang.update({
     'gui.robotica.architect_status_1': 'Building',
     'gui.robotica.architect_status_2': 'Needs rustic',
     'gui.robotica.architect_status_3': 'Needs refined',
-    'gui.robotica.architect_status_4': 'Needs exotic',
     'gui.robotica.architect_status_5': 'Needs energy',
     'gui.robotica.architect_status_6': 'Style locked',
     'gui.robotica.architect_status_7': 'Area not loaded',
     'gui.robotica.architect_status_8': 'Ready',
     'gui.robotica.architect_status_tip_2': 'Feed stone, dirt, sand or wood, then press Build',
     'gui.robotica.architect_status_tip_3': 'Feed ingots, glass, bricks or quartz, then press Build',
-    'gui.robotica.architect_status_tip_4': 'Feed obsidian, amethyst, glowstone, pearls or diamonds, then press Build',
     'gui.robotica.architect_status_tip_5': 'Put a wound Mainspring or a cell in the battery slot, or connect a generator',
     'gui.robotica.architect_status_tip_6': 'Put the casing this style needs back in the casing slot',
     'gui.robotica.architect_progress': 'Building: %s%%',
-    'gui.robotica.architect_cost_tip': 'Per block: %s rustic, %s refined, %s exotic, %s FE',
+    'gui.robotica.architect_cost_tip': 'Per block: %s rustic, %s refined, %s FE',
     'gui.robotica.architect_needs_casing_1': 'Needs an Iron Casing',
     'gui.robotica.architect_door_add': 'Add a door here',
     'gui.robotica.architect_door_remove': 'Remove this door',
@@ -284,7 +279,7 @@ lang.update({
     'gui.robotica.architect_plot_forget': 'Shift-click to forget (blocks stay)',
     'gui.robotica.architect_casing': 'Casing: unlocks styles',
     'gui.robotica.architect_battery': 'Battery: a wound Mainspring or any FE cell',
-    'gui.robotica.architect_storage_hint': 'Stone, wood, ingots, glass, quartz, obsidian and more turn into matter',
+    'gui.robotica.architect_storage_hint': 'Stone, wood, ingots, glass, quartz and more turn into matter',
     'message.robotica.architect_not_owner': 'This Architect Table belongs to %s',
     'message.robotica.architect_bad_request': 'That is not a plot',
     'message.robotica.architect_no_wall': 'Inner walls go between two planned plots',

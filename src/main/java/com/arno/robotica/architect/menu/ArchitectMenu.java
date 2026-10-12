@@ -81,7 +81,6 @@ public class ArchitectMenu extends MachineMenu {
         matterCapIndex = track(be == null ? zero : ArchitectConfig::matterCap);
         track(be == null ? zero : () -> be.matter(Matter.Grade.RUSTIC));
         track(be == null ? zero : () -> be.matter(Matter.Grade.REFINED));
-        track(be == null ? zero : () -> be.matter(Matter.Grade.EXOTIC));
         statusIndex = track(be == null ? zero : be::status);
         progressIndex = track(be == null ? zero : be::progressPermille);
         flagsIndex = track(be == null ? zero : be::flags);

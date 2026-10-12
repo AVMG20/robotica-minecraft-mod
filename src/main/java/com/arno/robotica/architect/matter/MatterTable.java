@@ -65,12 +65,12 @@ public final class MatterTable {
             }
             if (value <= 0) return;
             for (Holder<Item> holder : named) {
-                int[] v = values.computeIfAbsent(holder.value(), i -> new int[3]);
+                int[] v = values.computeIfAbsent(holder.value(), i -> new int[2]);
                 v[grade.ordinal()] = Math.max(v[grade.ordinal()], value);
             }
         });
         Map<Item, Matter> result = new HashMap<>();
-        values.forEach((item, v) -> result.put(item, new Matter(v[0], v[1], v[2])));
+        values.forEach((item, v) -> result.put(item, new Matter(v[0], v[1])));
         return result;
     }
 }

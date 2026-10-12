@@ -228,7 +228,7 @@ final class TrailerScenesRobots {
                 .setup((level, player, site) -> {
                     Trailer.place(level, site, Trailer.block("architect_table"), Direction.SOUTH);
                     if (!(level.getBlockEntity(site) instanceof ArchitectTableBlockEntity table)) return;
-                    table.setMatter(new Matter(20_000, 20_000, 20_000));
+                    table.setMatter(new Matter(20_000, 20_000));
                     table.energy.setEnergy(table.energy.getMaxEnergyStored());
                     table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.IRON_CASING.get()));
                     table.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 5));
