@@ -17,6 +17,7 @@ import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.drones.menu.BuddyBotMenu;
 import com.arno.robotica.drones.net.DroneCommandPayload;
 import com.arno.robotica.gear.GearItems;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -35,6 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -258,7 +260,9 @@ public class DronesGameTests {
     /** The backpack key picks the nearest own bot the player's client tracks, never another player's, and reaches past arm's reach. */
     @GameTest(template = "empty", batch = "dronesBackpack")
     public static void backpackKeyOpensOwnBot(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        // A fake player stays out of the level's player list: a listed mock player far away makes other tests' mobs despawn.
+        ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.fromString("5e1d2c3b-0000-4000-8000-00000000d001"), "backpack_owner"));
         BlockPos at = helper.absolutePos(p(0, 1, 0));
         player.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         BuddyBot theirs = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(1, 2, 0));
