@@ -308,19 +308,26 @@ def glow_only(c, keep='qQY'):
     return out
 
 
-def crate_shell():
+def crate_shell(tier):
+    """Casing face. Higher Mks carry more metal: Mk3 runs the tier metal down the vertical edges, Mk4 all around."""
     c = Canvas()
     c.rect(0, 0, 16, 16, 'h')
     c.rect(1, 1, 14, 14, 'g')
     c.bevel(0, 0, 16, 16, 'i', 'f')                                      # outer edge
     c.bevel(2, 2, 12, 12, 'f', 'i')                                      # panel sunk into the frame
     c.rect(3, 3, 10, 10, 'h')
+    if tier >= 3:
+        c.rect(0, 4, 2, 8, 'C').rect(14, 4, 2, 8, 'C').rect(0, 4, 1, 8, 'D').rect(15, 4, 1, 8, 'B')
+    if tier >= 4:
+        c.rect(4, 0, 8, 2, 'C').rect(4, 14, 8, 2, 'C').rect(4, 0, 8, 1, 'D').rect(4, 15, 8, 1, 'B')
     for x, y, sx, sy in ((0, 0, 1, 1), (15, 0, -1, 1), (0, 15, 1, -1), (15, 15, -1, -1)):
         for i in range(5):                                               # 2 px L bracket in the tier metal
             for j in range(2):
                 c.set(x + sx * i, y + sy * j, 'C').set(x + sx * j, y + sy * i, 'C')
-        c.set(x + sx * 4, y, 'B').set(x, y + sy * 4, 'B')
-        c.set(x + sx * 4, y + sy, 'A').set(x + sx, y + sy * 4, 'A')
+        if tier < 4:
+            c.set(x + sx * 4, y, 'B').set(x + sx * 4, y + sy, 'A')
+        if tier < 3:
+            c.set(x, y + sy * 4, 'B').set(x + sx, y + sy * 4, 'A')
         c.set(x + sx, y + sy, 'B')
         c.set(x, y, 'V')                                                 # chamfer
     for i in range(1, 4):                                                # light from the top-left
@@ -328,23 +335,31 @@ def crate_shell():
     return c
 
 
-def crate_seam(c, y=5, glow=True):
-    """Lid seam across the panel: a dark gap with a cyan strip in it and the lid's lit edge above."""
+def crate_seam(c, y=4):
+    """Lid seam across the panel: a dark gap with a cyan strip in it, the lid's lit edge above."""
     c.rect(3, y - 1, 10, 1, 'i')
     c.rect(2, y, 12, 1, 'k')
-    if glow:
-        c.rect(4, y, 8, 1, 'q').set(3, y, 'Z').set(12, y, 'Z')
-    c.rect(3, y + 1, 10, 1, 'f')
+    c.rect(4, y, 8, 1, 'q').set(3, y, 'Z').set(12, y, 'Z')
+    return c
+
+
+def crate_boards(c, y0=5):
+    """Graphite boards below the lid: a dark joint with a lit edge every 3 rows, like a cargo crate."""
+    for y in range(y0, 13):
+        if (y - y0) % 3 == 0:
+            c.rect(3, y, 10, 1, 'f')
+        elif (y - y0) % 3 == 1:
+            c.rect(3, y, 10, 1, 'i')
     return c
 
 
 def crate_front(tier):
-    """Front: lid seam, a tier metal latch with a cyan lock light, and a plate with one lit pip per Mk."""
-    c = crate_seam(crate_shell())
-    c.rect(6, 3, 4, 6, 'C').bevel(6, 3, 4, 6, 'D', 'A')                 # latch hasp over the seam
-    c.rect(7, 4, 2, 1, 'B')
-    c.set(7, 6, 'Y').set(8, 6, 'q')                                      # lock light
-    c.rect(7, 7, 2, 1, 'B')
+    """Front: lid seam, boards, a tier metal latch with a cyan lock light and a plate with one lit pip per Mk."""
+    c = crate_boards(crate_seam(crate_shell(tier)))
+    c.rect(6, 2, 4, 6, 'C').bevel(6, 2, 4, 6, 'D', 'A')                 # latch hasp over the seam
+    c.rect(7, 3, 2, 1, 'B')
+    c.set(7, 5, 'Y').set(8, 5, 'q')                                      # lock light
+    c.rect(7, 6, 2, 1, 'B')
     c.rect(4, 10, 8, 3, 'f').bevel(4, 10, 8, 3, 'k', 'i')               # Mk plate
     for i in range(4):
         c.set(5 + i * 2, 11, 'Y' if i < tier else 'Z')
@@ -352,22 +367,29 @@ def crate_front(tier):
 
 
 def crate_side(tier):
-    """Side: lid seam and a recessed carry handle with a tier metal grip bar."""
-    c = crate_seam(crate_shell())
-    c.rect(4, 8, 8, 4, 'g').bevel(4, 8, 8, 4, 'f', 'i')                 # handle well
-    c.rect(5, 9, 6, 2, 'k')
-    c.rect(5, 9, 6, 1, 'C').set(5, 9, 'D').set(10, 9, 'B')              # grip bar
+    """Side: lid seam, boards and the crate's diagonal brace in the tier metal."""
+    c = crate_boards(crate_seam(crate_shell(tier)))
+    lit, mid, dark = 'D', 'C', 'A'
+    for i in range(9):                                                   # 2 px brace, bottom-left to top-right
+        x, y = 3 + i, 12 - (i * 7) // 8
+        c.set(x, y, mid).set(x, y - 1, lit)
+        if y + 1 <= 12:
+            c.set(x, y + 1, dark)
+    c.set(12, 6, mid).set(12, 5, lit)
     return c
 
 
 def crate_top(tier):
-    """Lid: the casing frame around a sunk hatch, four stiffening ribs and a cyan core."""
-    c = crate_shell()
-    for x0, y0, w, h in ((7, 3, 2, 2), (7, 11, 2, 2), (3, 7, 2, 2), (11, 7, 2, 2)):
-        c.rect(x0, y0, w, h, 'i')                                        # ribs out to the frame
-    c.rect(5, 5, 6, 6, 'C').frame(5, 5, 6, 6, 'B')                       # tier metal hatch ring
-    c.rect(5, 5, 6, 1, 'D').rect(5, 5, 1, 6, 'D')
-    c.rect(6, 6, 4, 4, 'k')
+    """Lid: boards across it under a tier metal cross strap with a cyan core where the straps meet."""
+    c = crate_shell(tier)
+    for x in range(3, 13):
+        if x % 3 == 0:
+            c.rect(x, 3, 1, 10, 'f')
+        elif x % 3 == 1:
+            c.rect(x, 3, 1, 10, 'i')
+    c.rect(3, 7, 10, 2, 'C').rect(3, 7, 10, 1, 'D')                      # straps
+    c.rect(7, 3, 2, 10, 'C').rect(7, 3, 1, 10, 'D')
+    c.rect(6, 6, 4, 4, 'B').bevel(6, 6, 4, 4, 'D', 'A')                  # hub
     c.rect(7, 7, 2, 2, 'q').set(7, 7, 'Q')                               # cyan core
     return c
 
