@@ -192,11 +192,44 @@ for style in STYLES:
         loot(name)
 
 # ---------- architect table ----------
-write(ASSETS / 'models/block/architect_table.json', {
-    'parent': 'minecraft:block/cube_bottom_top',
-    'textures': {'top': tex('architect_table_top'), 'side': tex('architect_table_side'),
-                 'bottom': tex('architect_table_bottom'), 'particle': tex('architect_table_side')},
-})
+def table_model():
+    """Design station (textures: scripts/textures/architect.py): tabletop slab y 13..16 and plinth y 0..2 over the
+    full block, graphite corner posts, a glass body 1 px back between them, and the holo blueprint 1 px deep in the
+    tabletop (full-bright) with its bezel. Side faces use the default UVs, so every part maps onto its piece of the
+    one architect_table_side picture."""
+    sides = ('north', 'south', 'west', 'east')
+
+    def box(a, b, faces, cull=()):
+        return {'from': a, 'to': b, 'faces': {d: dict(f, cullface=d) if d in cull else f for d, f in faces.items()}}
+    side = {d: {'texture': '#side'} for d in sides}
+    bezel = {'texture': '#bottom', 'uv': [3, 1, 13, 2]}
+    els = [
+        box([0, 0, 0], [16, 2, 16], dict(side, down={'texture': '#bottom'}, up={'texture': '#bottom'}),
+            sides + ('down',)),
+        box([0, 13, 0], [16, 16, 16], dict(side, up={'texture': '#top'}, down={'texture': '#bottom'}),
+            sides + ('up',)),
+        box([1, 2, 1], [15, 13, 15], side),
+    ]
+    for x in (0, 14):
+        for z in (0, 14):
+            els.append(box([x, 2, z], [x + 2, 13, z + 2], side))
+    els.append({'from': [2, 15, 2], 'to': [14, 15, 14], 'shade': False,
+                'faces': {'up': {'texture': '#holo', 'neoforge_data': dict(GLOW)}}})
+    els += [{'from': [2, 15, 2], 'to': [2, 16, 14], 'faces': {'east': bezel}},
+            {'from': [14, 15, 2], 'to': [14, 16, 14], 'faces': {'west': bezel}},
+            {'from': [2, 15, 2], 'to': [14, 16, 2], 'faces': {'south': bezel}},
+            {'from': [2, 15, 14], 'to': [14, 16, 14], 'faces': {'north': bezel}},
+            {'from': [0, 13, 0], 'to': [16, 16, 16], 'shade': False,      # light strip on the tabletop edge
+             'faces': {d: {'texture': '#glow', 'cullface': d, 'neoforge_data': dict(GLOW)} for d in sides}}]
+    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+            'textures': {'top': tex('architect_table_top'), 'side': tex('architect_table_side'),
+                         'bottom': tex('architect_table_bottom'), 'holo': tex('architect_table_holo'),
+                         'glow': tex('architect_table_side_glow'),
+                         'particle': tex('architect_table_side')},
+            'elements': els}
+
+
+write(ASSETS / 'models/block/architect_table.json', table_model())
 simple_block('architect_table', 'architect_table')
 loot('architect_table', copy_matter=True)
 
