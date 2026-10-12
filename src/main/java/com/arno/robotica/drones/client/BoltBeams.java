@@ -11,7 +11,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.AABB;
@@ -124,8 +123,9 @@ public final class BoltBeams {
             dy /= len;
             dz /= len;
         }
+        var spark = com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.9F);
         for (int i = 0; i < 4; i++) {
-            lvl.addParticle(ParticleTypes.ELECTRIC_SPARK, s.tx, s.ty, s.tz,
+            lvl.addParticle(spark, s.tx, s.ty, s.tz,
                     dx * 0.12 + random.nextGaussian() * 0.06, dy * 0.12 + random.nextGaussian() * 0.06 + 0.03, dz * 0.12 + random.nextGaussian() * 0.06);
         }
     }

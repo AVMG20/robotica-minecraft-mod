@@ -192,6 +192,7 @@ public class BossAltarBlock extends Block implements EntityBlock {
         double y = pos.getY() + 1.0;
         double z = pos.getZ() + 0.5;
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, y + 1.0, z, 1, 0.0, 0.0, 0.0, 0.0);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.flash(0xFFD9A0, 4.0F), x, y + 1.0, z, 1, 0.0, 0.0, 0.0, 0.0);
         level.sendParticles(ParticleTypes.FLAME, x, y + 0.5, z, 60, 0.8, 1.5, 0.8, 0.05);
         level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 1.5, z, 40, 1.0, 1.5, 1.0, 0.03);
         level.playSound(null, pos, SoundEvents.RESPAWN_ANCHOR_SET_SPAWN, SoundSource.HOSTILE, 2.0F, 0.5F);

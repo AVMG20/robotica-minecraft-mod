@@ -1,7 +1,6 @@
 package com.arno.robotica.gear.weapon;
 
 import com.arno.robotica.core.module.ModuleTarget;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -74,7 +73,11 @@ public class NullLanceItem extends EnergyWeaponItem {
             CoreSounds.play(level, user.blockPosition(), CoreSounds.LANCE_READY, SoundSource.PLAYERS, 0.8F, 1.0F);
         } else if (charged > 0 && charged < CHARGE_TICKS && charged % 4 == 0 && level instanceof ServerLevel server) {
             Vec3 tip = user.getEyePosition().add(user.getLookAngle().scale(1.2));
-            server.sendParticles(ParticleTypes.PORTAL, tip.x, tip.y - 0.2, tip.z, 4, 0.2, 0.2, 0.2, 0.1);
+            for (int i = 0; i < 2; i++) {
+                // count 0: the offsets are the vortex arguments (radius, rise, turn)
+                server.sendParticles(com.arno.robotica.core.particle.CoreParticles.warp(com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET, 0.8F), tip.x, tip.y - 0.25 + user.getRandom().nextDouble() * 0.1, tip.z,
+                        0, 0.35 + user.getRandom().nextDouble() * 0.15, 0.0, 0.5, 1.0);
+            }
         }
     }
 

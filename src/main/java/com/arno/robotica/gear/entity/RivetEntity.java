@@ -5,7 +5,6 @@ import com.arno.robotica.gear.GearEntities;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -22,8 +21,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -119,7 +116,7 @@ public class RivetEntity extends ThrowableProjectile {
             setDeltaMovement(Vec3.ZERO);
             stuckTicks++;
             if (level().isClientSide) {
-                if (random.nextInt(6) == 0) level().addParticle(ParticleTypes.ELECTRIC_SPARK, getX(), getY(), getZ(), 0, 0.02, 0);
+                if (random.nextInt(8) == 0) level().addParticle(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.6F), getX(), getY(), getZ(), 0, 0, 0);
             } else if (stuckTicks >= GearConfig.rivetStickTicks()) {
                 shatter();
             }
@@ -153,7 +150,7 @@ public class RivetEntity extends ThrowableProjectile {
             if (p.distanceToSqr(trailStart) < TRAIL_GAP * TRAIL_GAP) continue;
             level().addParticle(TRACER, p.x, p.y, p.z, 0, 0, 0);
         }
-        if (random.nextInt(3) == 0) level().addParticle(ParticleTypes.ELECTRIC_SPARK, b.x, b.y, b.z, 0, 0, 0);
+        if (random.nextInt(3) == 0) level().addParticle(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 0.7F), b.x, b.y, b.z, 0, 0, 0);
     }
 
     @Override
@@ -170,8 +167,9 @@ public class RivetEntity extends ThrowableProjectile {
         boolean hurt = target.hurt(damageSource(), damage);
         if (hurt && fireSeconds > 0) target.igniteForSeconds(fireSeconds);
         Vec3 at = result.getLocation();
-        level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 8, 0.15, 0.15, 0.15, 0.3);
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 6, 0.1, 0.1, 0.1, 0.2);
+        level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 4, 0.15, 0.15, 0.15, 0.3);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.0F), at.x, at.y, at.z, 6, 0.1, 0.1, 0.1, 0.2);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 1.0F), at.x, at.y, at.z, 3, 0.1, 0.1, 0.1, 0.15);
         level.playSound(null, at.x, at.y, at.z, SoundEvents.ARROW_HIT, SoundSource.PLAYERS, 0.6F, 1.5F + random.nextFloat() * 0.2F);
         if (hurt && bouncesDone < bounces) {
             LivingEntity next = ricochetTarget(level, target);
@@ -193,8 +191,8 @@ public class RivetEntity extends ThrowableProjectile {
         setPos(start.x, start.y, start.z);
         shoot(dir.x, dir.y, dir.z, GearConfig.rivetSpeed(), 0.0F);
         hasImpulse = true;
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, start.x, start.y, start.z, 14, 0.2, 0.2, 0.2, 0.35);
-        level.sendParticles(ParticleTypes.FLASH, start.x, start.y, start.z, 1, 0, 0, 0, 0);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), start.x, start.y, start.z, 8, 0.2, 0.2, 0.2, 0.3);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.flash(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), start.x, start.y, start.z, 1, 0, 0, 0, 0);
         level.playSound(null, start.x, start.y, start.z, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.25F, 1.9F + random.nextFloat() * 0.1F);
         level.playSound(null, start.x, start.y, start.z, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.9F, 1.6F);
     }
@@ -227,17 +225,16 @@ public class RivetEntity extends ThrowableProjectile {
             return;
         }
         entityData.set(STUCK, true);
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 8, 0.05, 0.05, 0.05, 0.25);
-        level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 4, 0.05, 0.05, 0.05, 0.2);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.0F), at.x, at.y, at.z, 8, 0.05, 0.05, 0.05, 0.25);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 0.8F), at.x, at.y, at.z, 3, 0.05, 0.05, 0.05, 0.15);
         level.playSound(null, at.x, at.y, at.z, SoundEvents.CHAIN_HIT, SoundSource.PLAYERS, 0.7F, 1.4F + random.nextFloat() * 0.3F);
     }
 
     /** Stuck too long: bursts into sparks and steel shards and is gone (never an item). */
     private void shatter() {
         if (level() instanceof ServerLevel level) {
-            level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, new ItemStack(Items.IRON_NUGGET)), getX(), getY(), getZ(),
-                    6, 0.05, 0.05, 0.05, 0.08);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, getX(), getY(), getZ(), 5, 0.05, 0.05, 0.05, 0.15);
+            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 1.0F), getX(), getY(), getZ(), 6, 0.05, 0.05, 0.05, 0.1);
+            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 0.8F), getX(), getY(), getZ(), 4, 0.05, 0.05, 0.05, 0.15);
             level.playSound(null, getX(), getY(), getZ(), SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 0.4F, 1.7F);
         }
         discard();

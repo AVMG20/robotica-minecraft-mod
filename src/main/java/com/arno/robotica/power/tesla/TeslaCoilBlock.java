@@ -7,7 +7,6 @@ import com.arno.robotica.power.block.PowerBlock;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -189,7 +188,7 @@ public class TeslaCoilBlock extends PowerBlock {
         // Very light: an occasional soft spark at the tip while configuring and the coil is sending.
         if (be.isActive() && random.nextInt(10) == 0) {
             Vec3 tip = tipOffset(state).add(pos.getX(), pos.getY(), pos.getZ());
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, tip.x, tip.y, tip.z, 0, 0.01, 0);
+            level.addParticle(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.7F), tip.x, tip.y, tip.z, 0, 0, 0);
         }
     }
 

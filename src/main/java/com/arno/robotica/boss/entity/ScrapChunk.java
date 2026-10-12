@@ -91,7 +91,9 @@ public class ScrapChunk extends ThrowableProjectile {
         super.onHit(result);
         if (level() instanceof ServerLevel server) {
             server.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, LOOK), getX(), getY() + 0.2, getZ(), 24, 0.3, 0.3, 0.3, 0.15);
-            server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.2, getZ(), 4, 0.2, 0.2, 0.2, 0.02);
+            server.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 1.2F), getX(), getY() + 0.2, getZ(), 6, 0.2, 0.2, 0.2, 0.25);
+            server.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.0F), getX(), getY() + 0.2, getZ(), 5, 0.2, 0.2, 0.2, 0.3);
+            server.sendParticles(com.arno.robotica.core.particle.CoreParticles.puff(com.arno.robotica.core.particle.CoreParticles.SMOKE, 1.5F), getX(), getY() + 0.2, getZ(), 3, 0.2, 0.2, 0.2, 0.02);
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 0.8F, 1.4F);
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.COPPER_BREAK, SoundSource.HOSTILE, 1.5F, 0.6F);
             discard();

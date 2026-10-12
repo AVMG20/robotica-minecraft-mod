@@ -1,5 +1,7 @@
 package com.arno.robotica.gear.client;
 
+import com.arno.robotica.core.particle.CoreParticles;
+import com.arno.robotica.core.particle.TintParticleOptions;
 import com.arno.robotica.gear.GearClientConfig;
 import com.arno.robotica.gear.GearFxPayload;
 import net.minecraft.client.Minecraft;
@@ -60,18 +62,32 @@ final class GearFx {
         }
     }
 
-    /** Sparks on the main target, then a jagged bolt and a spark burst for every arc. */
+    /** Sparks and a crackle on the main target, then a jagged bolt and a smaller burst for every arc. */
     private static void arcChain(ClientLevel level, float[] p) {
-        burst(level, ParticleTypes.ELECTRIC_SPARK, p[0], p[1], p[2], 14, 0.3, 0.4, 0.3, 0.2);
+        TintParticleOptions spark = CoreParticles.spark(CoreParticles.ELECTRIC, 1.0F);
+        TintParticleOptions zap = CoreParticles.zap(CoreParticles.ELECTRIC, 1.3F);
+        sparks(level, spark, p[0], p[1], p[2], 8, 0.25);
+        burst(level, zap, p[0], p[1], p[2], 3, 0.25, 0.35, 0.25, 0);
         for (int i = 3; i + 2 < p.length; i += 3) {
             bolt(level, p[i - 3], p[i - 2], p[i - 1], p[i], p[i + 1], p[i + 2]);
-            burst(level, ParticleTypes.ELECTRIC_SPARK, p[i], p[i + 1], p[i + 2], 10, 0.3, 0.4, 0.3, 0.15);
+            sparks(level, spark, p[i], p[i + 1], p[i + 2], 5, 0.2);
+            burst(level, zap, p[i], p[i + 1], p[i + 2], 2, 0.25, 0.35, 0.25, 0);
         }
     }
 
-    /** A jagged bolt: a few kinked segments of sparks with a bright core. */
+    /** Sparks flying out and up from a point; they fall and bounce. */
+    private static void sparks(ClientLevel level, ParticleOptions spark, double x, double y, double z, int count, double speed) {
+        RandomSource r = level.random;
+        for (int i = 0; i < count; i++) {
+            level.addParticle(spark, x, y, z, r.nextGaussian() * speed, 0.08 + r.nextDouble() * speed, r.nextGaussian() * speed);
+        }
+    }
+
+    /** A jagged bolt: a few kinked segments of crackle with a bright core. */
     private static void bolt(ClientLevel level, double ax, double ay, double az, double bx, double by, double bz) {
         RandomSource r = level.random;
+        TintParticleOptions zap = CoreParticles.zap(CoreParticles.ELECTRIC, 0.8F);
+        TintParticleOptions core = CoreParticles.mote(CoreParticles.ELECTRIC, 0.7F);
         double dx = bx - ax, dy = by - ay, dz = bz - az;
         double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
         int kinks = Math.max(2, (int) (len / 1.5));
@@ -89,8 +105,8 @@ final class GearFx {
             for (int i = 0; i <= steps; i++) {
                 double f = i / (double) steps;
                 double x = px + sx * f, y = py + sy * f, z = pz + sz * f;
-                level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + r.nextGaussian() * 0.03, y + r.nextGaussian() * 0.03, z + r.nextGaussian() * 0.03, 0, 0, 0);
-                if (i % 3 == 0) level.addParticle(ParticleTypes.END_ROD, x, y, z, 0, 0, 0);
+                if (i % 2 == 0) level.addParticle(zap, x + r.nextGaussian() * 0.03, y + r.nextGaussian() * 0.03, z + r.nextGaussian() * 0.03, 0, 0, 0);
+                if (i % 3 == 0) level.addParticle(core, x, y, z, 0, 0, 0);
             }
             px = nx;
             py = ny;
@@ -118,21 +134,23 @@ final class GearFx {
         ux = ux / un * 0.3;
         uy = uy / un * 0.3;
         uz = uz / un * 0.3;
-        burst(level, ParticleTypes.REVERSE_PORTAL, mx, my, mz, 10, 0.1, 0.1, 0.1, 0.08);
+        TintParticleOptions core = CoreParticles.mote(0xE6D6FF, 0.9F);
+        TintParticleOptions spiral = CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.6F);
+        level.addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 0.8F), mx, my, mz, 0, 0, 0);
         for (double d = 0.5; d <= length; d += 0.5) {
             double x = mx + lx * d, y = my + ly * d, z = mz + lz * d;
-            level.addParticle(ParticleTypes.END_ROD, x, y, z, 0, 0, 0);
+            level.addParticle(core, x, y, z, 0, 0, 0);
             double a = d * 1.4, c = Math.cos(a), s = Math.sin(a);
-            level.addParticle(ParticleTypes.WITCH, x + sideX * c + ux * s, y + sideY * c + uy * s, z + sideZ * c + uz * s, 0, 0, 0);
-            if (((int) (d * 2)) % 4 == 0) burst(level, ParticleTypes.PORTAL, x, y, z, 2, 0.15, 0.15, 0.15, 0.2);
+            level.addParticle(spiral, x + sideX * c + ux * s, y + sideY * c + uy * s, z + sideZ * c + uz * s, 0, 0, 0);
         }
+        TintParticleOptions hit = CoreParticles.spark(CoreParticles.WARP_VIOLET, 1.0F);
         for (int i = 9; i + 2 < p.length; i += 3) {
-            burst(level, ParticleTypes.REVERSE_PORTAL, p[i], p[i + 1], p[i + 2], 12, 0.25, 0.35, 0.25, 0.05);
-            burst(level, ParticleTypes.END_ROD, p[i], p[i + 1], p[i + 2], 4, 0.2, 0.3, 0.2, 0.08);
+            level.addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 1.2F), p[i], p[i + 1], p[i + 2], 0, 0, 0);
+            sparks(level, hit, p[i], p[i + 1], p[i + 2], 6, 0.15);
         }
         if (hitBlock) {
-            level.addParticle(ParticleTypes.FLASH, ex, ey, ez, 0, 0, 0);
-            burst(level, ParticleTypes.END_ROD, ex, ey, ez, 14, 0.1, 0.1, 0.1, 0.12);
+            level.addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 1.6F), ex, ey, ez, 0, 0, 0);
+            sparks(level, hit, ex, ey, ez, 10, 0.18);
         }
     }
 

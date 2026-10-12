@@ -15,7 +15,6 @@ import com.arno.robotica.energy.menu.ColliderMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.LongArrayTag;
 import net.minecraft.nbt.Tag;
@@ -372,7 +371,8 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
                 luminosity -= cost;
                 if (level instanceof ServerLevel sl) {
                     CoreSounds.play(sl, worldPosition, CoreSounds.COLLIDER_MATTER, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    sl.sendParticles(ParticleTypes.REVERSE_PORTAL, worldPosition.getX() + 0.5, worldPosition.getY() + 1.2, worldPosition.getZ() + 0.5, 40, 0.3, 0.3, 0.3, 0.05);
+                    sl.sendParticles(com.arno.robotica.core.particle.CoreParticles.flash(com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET, 1.4F), worldPosition.getX() + 0.5, worldPosition.getY() + 1.2, worldPosition.getZ() + 0.5, 1, 0, 0, 0, 0);
+                    sl.sendParticles(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET, 1.0F), worldPosition.getX() + 0.5, worldPosition.getY() + 1.2, worldPosition.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.03);
                 }
             }
         }
@@ -427,8 +427,9 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         }
         if (now % 10 == 0) {
             double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 1.05, z = worldPosition.getZ() + 0.5;
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, (int) (4 + 8 * beam), 0.3, 0.2, 0.3, 0.25);
-            level.sendParticles(ParticleTypes.END_ROD, x, y + 0.2, z, (int) (1 + 2 * beam), 0.1, 0.1, 0.1, 0.05);
+            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.9F), x, y, z, (int) (2 + 4 * beam), 0.3, 0.2, 0.3, 0.2);
+            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), x, y + 0.1, z, 1, 0.25, 0.15, 0.25, 0);
+            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.8F), x, y + 0.2, z, (int) (1 + 2 * beam), 0.1, 0.1, 0.1, 0.03);
         }
         if (beam >= 1.0 && CoreSounds.due(level, worldPosition, 80) && level.random.nextBoolean()) {
             CoreSounds.play(level, worldPosition, CoreSounds.COLLIDER_COLLIDE, SoundSource.BLOCKS, 0.7F, 0.8F + level.random.nextFloat() * 0.4F);

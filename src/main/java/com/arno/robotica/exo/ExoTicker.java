@@ -776,7 +776,8 @@ public final class ExoTicker {
         startCooldown(p, CD_OVERCLOCK, ExoConfig.overclockCooldown());
         CoreSounds.play(p, CoreSounds.MACHINE_START, SoundSource.PLAYERS, 0.8F, 1.5F);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.5F, 1.8F);
-        p.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0, p.getZ(), 20, 0.4, 0.6, 0.4, 0.2);
+        p.serverLevel().sendParticles(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), p.getX(), p.getY() + 1.0, p.getZ(), 8, 0.4, 0.6, 0.4, 0.04);
+        p.serverLevel().sendParticles(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), p.getX(), p.getY() + 1.0, p.getZ(), 4, 0.4, 0.6, 0.4, 0);
         return true;
     }
 

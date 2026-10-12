@@ -226,8 +226,8 @@ public class HaulerDrone extends DroneBase {
     /** Sparks around the mob and the claw, a puff at the claw. */
     private static void grabParticles(ServerLevel level, HaulerDrone drone, Mob mob) {
         double w = mob.getBbWidth() * 0.5, h = mob.getBbHeight();
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, mob.getX(), mob.getY() + h * 0.5, mob.getZ(), 14, w, h * 0.4, w, 0.08);
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, drone.getX(), drone.getY(), drone.getZ(), 8, 0.2, 0.05, 0.2, 0.05);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), mob.getX(), mob.getY() + h * 0.5, mob.getZ(), 4, w, h * 0.4, w, 0);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.8F), drone.getX(), drone.getY(), drone.getZ(), 5, 0.2, 0.05, 0.2, 0.08);
         level.sendParticles(ParticleTypes.CLOUD, drone.getX(), drone.getY() - 0.05, drone.getZ(), 4, 0.15, 0.02, 0.15, 0.01);
     }
 

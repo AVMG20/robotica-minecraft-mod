@@ -5,7 +5,6 @@ import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
 import com.arno.robotica.automation.entity.ExcavatorBlockEntity;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -59,8 +58,8 @@ public class ExcavatorBlock extends AreaWorkerBlock {
     /** Rock dust under a working drill head (client side, random display ticks). */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (!state.getValue(LIT) || random.nextInt(3) != 0) return;
-        level.addParticle(ParticleTypes.SMOKE, pos.getX() + 0.3 + random.nextDouble() * 0.4, pos.getY() + 0.05,
+        if (!state.getValue(LIT) || random.nextInt(4) != 0) return;
+        level.addParticle(com.arno.robotica.core.particle.CoreParticles.puff(0x8A8580, 0.6F), pos.getX() + 0.3 + random.nextDouble() * 0.4, pos.getY() + 0.05,
                 pos.getZ() + 0.3 + random.nextDouble() * 0.4, 0.0, -0.02, 0.0);
     }
 }

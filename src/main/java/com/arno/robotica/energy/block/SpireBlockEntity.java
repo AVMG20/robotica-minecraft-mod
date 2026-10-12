@@ -17,7 +17,6 @@ import com.arno.robotica.energy.menu.SpireMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -384,10 +383,11 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
             player.connection.send(event);
         }
         if (!strikeMuted) CoreSounds.play(level, crown, CoreSounds.SPIRE_STRIKE, SoundSource.WEATHER, 6.0F, 0.9F + level.random.nextFloat() * 0.2F);
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, crown.getX() + 0.5, crown.getY() + 0.7, crown.getZ() + 0.5, 60, 0.6, 0.6, 0.6, 0.6);
-        level.sendParticles(ParticleTypes.FLASH, crown.getX() + 0.5, crown.getY() + 1.0, crown.getZ() + 0.5, 1, 0, 0, 0, 0);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.flash(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 3.5F), crown.getX() + 0.5, crown.getY() + 1.0, crown.getZ() + 0.5, 1, 0, 0, 0, 0);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.2F), crown.getX() + 0.5, crown.getY() + 0.7, crown.getZ() + 0.5, 24, 0.5, 0.5, 0.5, 0.4);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.6F), crown.getX() + 0.5, crown.getY() + 0.7, crown.getZ() + 0.5, 8, 0.7, 0.6, 0.7, 0);
         for (int i = 1; i <= conductors; i += 2) {
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, worldPosition.getX() + 0.5, worldPosition.getY() + i + 0.5, worldPosition.getZ() + 0.5, 4, 0.4, 0.3, 0.4, 0.15);
+            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.2F), worldPosition.getX() + 0.5, worldPosition.getY() + i + 0.5, worldPosition.getZ() + 0.5, 2, 0.4, 0.3, 0.4, 0);
         }
         setChanged();
     }

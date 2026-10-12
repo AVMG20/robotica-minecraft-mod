@@ -13,7 +13,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -288,18 +287,18 @@ public final class StructureFx {
             // smoke from the corners and the controller
             for (int i = 0; i < 8; i++) {
                 double x = (i & 1) != 0 ? fx.x1 : fx.x0, y = (i & 2) != 0 ? fx.y1 : fx.y0, z = (i & 4) != 0 ? fx.z1 : fx.z0;
-                lvl.addParticle(ParticleTypes.SMOKE, x, y, z, (random.nextDouble() - 0.5) * 0.02, 0.02 + random.nextDouble() * 0.02,
+                lvl.addParticle(com.arno.robotica.core.particle.CoreParticles.puff(com.arno.robotica.core.particle.CoreParticles.SMOKE, 1.0F), x, y, z, (random.nextDouble() - 0.5) * 0.02, 0.02 + random.nextDouble() * 0.02,
                         (random.nextDouble() - 0.5) * 0.02);
             }
             for (int i = 0; i < 3; i++) {
-                lvl.addParticle(ParticleTypes.LARGE_SMOKE, fx.ox + (random.nextDouble() - 0.5) * 0.4, fx.oy + (random.nextDouble() - 0.5) * 0.4,
+                lvl.addParticle(com.arno.robotica.core.particle.CoreParticles.puff(com.arno.robotica.core.particle.CoreParticles.SMOKE, 2.0F), fx.ox + (random.nextDouble() - 0.5) * 0.4, fx.oy + (random.nextDouble() - 0.5) * 0.4,
                         fx.oz + (random.nextDouble() - 0.5) * 0.4, 0, 0.02, 0);
             }
         } else if (p.kind() == StructureFxPayload.SPAWN && d2 < 48 * 48) {
             for (int i = 0; i < 12; i++) {
                 double x = fx.x0 + random.nextDouble() * (fx.x1 - fx.x0), y = fx.y0 + random.nextDouble() * (fx.y1 - fx.y0),
                         z = fx.z0 + random.nextDouble() * (fx.z1 - fx.z0);
-                lvl.addParticle(ParticleTypes.REVERSE_PORTAL, x, y, z, 0, 0.03 + random.nextDouble() * 0.04, 0);
+                lvl.addParticle(com.arno.robotica.core.particle.CoreParticles.warp(com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET, 1.0F), x, y, z, -(0.2 + random.nextDouble() * 0.3), 0.03 + random.nextDouble() * 0.03, 0.3);
             }
         }
     }
