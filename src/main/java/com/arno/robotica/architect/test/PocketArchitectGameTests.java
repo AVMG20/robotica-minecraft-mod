@@ -247,6 +247,12 @@ public class PocketArchitectGameTests {
         var mk1 = recipes.byKey(Robotica.id("pocket_architect")).orElseThrow();
         boolean eye = mk1.value().getIngredients().stream().anyMatch(i -> i.test(new ItemStack(Items.ENDER_EYE)));
         helper.assertTrue(eye, "the Mk1 recipe takes an Eye of Ender");
+        ItemStack fresh = new ItemStack(ArchitectRegistry.ARCHITECT_TABLE_ITEM.get());
+        ItemStack used = fresh.copy();
+        used.set(ArchitectRegistry.MATTER_COMPONENT.get(), new Matter(500, 0));
+        var table = mk1.value().getIngredients().stream().filter(i -> i.test(fresh)).findFirst();
+        helper.assertTrue(table.isPresent(), "the Mk1 recipe takes an Architect Table");
+        helper.assertTrue(!table.get().test(used), "a table holding matter does not fit, so its matter is never lost");
         var mk2 = recipes.byKey(Robotica.id("pocket_architect_mk2")).orElseThrow();
         helper.assertTrue(mk2.value() instanceof net.minecraft.world.item.crafting.SmithingTransformRecipe smith
                 && smith.isBaseIngredient(new ItemStack(ArchitectRegistry.POCKET_ARCHITECT.get())), "the Mk2 is smithed from the Mk1");

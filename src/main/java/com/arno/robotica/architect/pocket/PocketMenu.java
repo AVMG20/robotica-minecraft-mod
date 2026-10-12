@@ -201,7 +201,11 @@ public class PocketMenu extends MachineMenu {
         } else {
             PocketArchitectItem item = PocketArchitectItem.of(pocket());
             if (item == null || !item.accepts(stack)) {
-                if (server) player.displayClientMessage(Component.translatable("message.robotica.pocket_architect_not_junk"), true);
+                if (server && item != null) {
+                    boolean refinedOnMk1 = !item.mk2() && !com.arno.robotica.architect.matter.MatterTable.valueOf(stack).isZero();
+                    player.displayClientMessage(Component.translatable(refinedOnMk1
+                            ? "message.robotica.pocket_architect_not_junk_mk1" : "message.robotica.pocket_architect_not_junk"), true);
+                }
                 return;
             }
             for (int i = 0; i < junk.getContainerSize(); i++) if (junk.getItem(i).is(stack.getItem())) return;
@@ -231,7 +235,7 @@ public class PocketMenu extends MachineMenu {
         super.clicked(slotId, button, type, player);
     }
 
-    /** Shift-click: inventory to the feed slot and back; the junk list never takes real items. */
+    /** Shift-click: matter items to the feed slot and back, the rest between inventory and hotbar; the junk list never takes real items. */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         if (index < feedSlot || index >= slots.size() || index == lockedSlot) return ItemStack.EMPTY;
@@ -239,8 +243,13 @@ public class PocketMenu extends MachineMenu {
         if (!slot.hasItem()) return ItemStack.EMPTY;
         ItemStack stack = slot.getItem();
         ItemStack original = stack.copy();
-        boolean moved = index == feedSlot ? moveItemStackTo(stack, playerStart, slots.size(), true)
-                : moveItemStackTo(stack, feedSlot, feedSlot + 1, false);
+        int hotbar = playerStart + 27;
+        boolean moved;
+        if (index == feedSlot) moved = moveItemStackTo(stack, playerStart, slots.size(), true);
+        else if (slots.get(feedSlot).mayPlace(stack)) moved = moveItemStackTo(stack, feedSlot, feedSlot + 1, false);
+        // anything else moves between the main inventory and the hotbar, around the locked pocket slot
+        else if (index < hotbar) moved = moveItemStackTo(stack, hotbar, slots.size(), false);
+        else moved = moveItemStackTo(stack, playerStart, hotbar, false);
         if (!moved) return ItemStack.EMPTY;
         if (stack.isEmpty()) slot.set(ItemStack.EMPTY);
         else slot.setChanged();

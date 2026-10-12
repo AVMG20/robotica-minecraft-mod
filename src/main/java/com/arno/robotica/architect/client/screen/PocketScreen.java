@@ -128,7 +128,8 @@ public class PocketScreen extends MachineScreen<PocketMenu> {
         List<Component> lines = new ArrayList<>();
         lines.add(icons[index].getHoverName());
         Matter c = style.cost;
-        lines.add(Component.translatable("gui.robotica.pocket_architect_cost", c.rustic(), c.refined()).withStyle(ChatFormatting.GRAY));
+        lines.add((c.refined() > 0 ? Component.translatable("gui.robotica.pocket_architect_cost_refined", c.rustic(), c.refined())
+                : Component.translatable("gui.robotica.pocket_architect_cost", c.rustic())).withStyle(ChatFormatting.GRAY));
         if (!item.makes(style)) {
             lines.add(Component.translatable("gui.robotica.pocket_architect_needs_mk2").withStyle(ChatFormatting.RED));
         } else {
@@ -152,7 +153,7 @@ public class PocketScreen extends MachineScreen<PocketMenu> {
             Component name = Component.translatable(grades[i].langKey());
             drawFitted(g, font, name, x + 9, top, 36, shown ? TEXT : TEXT_MUTED, -1, false, 0.75F);
             drawFitted(g, font, Component.literal(shown ? Fmt.compact(value) : "-"), x, top + 9, 44, shown ? TEXT : TEXT_MUTED, -1, false, 1.0F);
-            Component detail = shown ? Component.literal(value + " / " + Fmt.compact(PocketArchitectItem.CAP)).withStyle(ChatFormatting.GRAY)
+            Component detail = shown ? Component.literal(String.format(java.util.Locale.ROOT, "%,d", value)).withStyle(ChatFormatting.GRAY)
                     : Component.translatable("gui.robotica.pocket_architect_needs_mk2").withStyle(ChatFormatting.RED);
             addTooltip(x - 1, top - 1, 46, 20, name.copy().withStyle(s -> s.withColor(color & 0xFFFFFF)), detail);
         }

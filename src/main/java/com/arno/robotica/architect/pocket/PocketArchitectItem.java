@@ -23,6 +23,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -152,19 +153,21 @@ public class PocketArchitectItem extends Item {
     }
 
     /**
-     * Feeds a stack the player is picking up to the pockets in their inventory (hotbar and main slots) that eat it as
-     * junk. Shrinks the stack; true when nothing is left of it.
+     * Feeds a stack the player is picking up to the pockets in their inventory (main slots, hotbar, off hand) that eat
+     * it as junk. Shrinks the stack; true when nothing is left of it.
      */
     public static boolean eatPickup(Player player, ItemStack picked) {
         if (picked.isEmpty() || picked.getItem() instanceof PocketArchitectItem) return false;
-        var items = player.getInventory().items;
-        for (int i = 0; i < items.size() && !picked.isEmpty(); i++) {
-            ItemStack stack = items.get(i);
-            if (!(stack.getItem() instanceof PocketArchitectItem pocket)) continue;
-            PocketSettings settings = settings(stack);
-            if (settings.eatJunk() && isJunk(settings, picked)) pocket.absorb(stack, picked);
-        }
+        Inventory inv = player.getInventory();
+        for (int i = 0; i < inv.items.size() && !picked.isEmpty(); i++) eatInto(inv.items.get(i), picked);
+        if (!picked.isEmpty()) eatInto(inv.offhand.get(0), picked);
         return picked.isEmpty();
+    }
+
+    private static void eatInto(ItemStack stack, ItemStack picked) {
+        if (!(stack.getItem() instanceof PocketArchitectItem pocket)) return;
+        PocketSettings settings = settings(stack);
+        if (settings.eatJunk() && isJunk(settings, picked)) pocket.absorb(stack, picked);
     }
 
     /** Junk on the ground goes straight into a carried pocket instead of the inventory; stacks already carried stay. */
@@ -174,7 +177,11 @@ public class PocketArchitectItem extends Item {
         if (player.level().isClientSide || entity.hasPickUpDelay() || event.canPickup() == TriState.FALSE) return;
         ItemStack stack = entity.getItem();
         int count = stack.getCount();
-        if (!eatPickup(player, stack)) return;   // the rest, if any, is picked up as usual
+        if (!eatPickup(player, stack)) {
+            // partly eaten (the pockets are full): show the new count; the rest is picked up as usual
+            if (stack.getCount() != count) entity.setItem(stack.copy());
+            return;
+        }
         player.take(entity, count);
         entity.discard();
         event.setCanPickup(TriState.FALSE);

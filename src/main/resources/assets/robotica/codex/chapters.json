@@ -530,7 +530,7 @@
         },
         {
           "title": "Pocket Architect",
-          "text": "Smithing it into a Mk2 keeps its matter.\nAny item worth matter can go on its junk list; on the Mk1 only rustic ones.\nWith a block picked, right-clicking the air does nothing.",
+          "text": "Junk goes into it as you pick it up, even with a full inventory.\nSmithing it into a Mk2 keeps its matter.",
           "items": [
             "robotica:pocket_architect",
             "robotica:pocket_architect_mk2"
