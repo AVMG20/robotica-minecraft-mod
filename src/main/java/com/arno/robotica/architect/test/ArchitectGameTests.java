@@ -938,9 +938,11 @@ public class ArchitectGameTests {
         helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.needsWork(east) && !layout.needsWork(Plots.CENTER), "picking a style restyles the clicked plot");
         table.handleAction(null, ArchitectTableBlockEntity.ACTION_CANCEL, 0, 0);
         helper.assertTrue(layout.style(east) == BuildStyle.DARK_STONE && !layout.hasWork(), "Cancel undoes the restyle");
-        // style first, then the click
+        // a click alone changes nothing, even with another style selected: the pick restyles
         table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
-        helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.needsWork(east), "a click restyles in the selected style");
+        helper.assertTrue(layout.style(east) == BuildStyle.DARK_STONE && !layout.needsWork(east), "a click alone keeps the style");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.ONYX_PANEL.ordinal(), 0);
+        helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.needsWork(east), "the pick restyles the clicked plot");
 
         Shell.Shape shape = layout.shape(east);
         int swapped = 0;
@@ -966,6 +968,49 @@ public class ArchitectGameTests {
         helper.assertTrue(Math.abs(after.rustic() - rustic) <= 1, "old blocks are refunded: rustic " + after.rustic() + ", expected about " + rustic + " for " + swapped + " blocks");
         helper.assertTrue(after.refined() == before.refined() - swapped * BuildStyle.ONYX_PANEL.cost.refined(), "the new style is charged: refined " + after.refined());
         helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.state(east) == Layout.BUILT, "the plot is built in its new style");
+        helper.succeed();
+    }
+
+    /**
+     * Demolish takes the plan's piece back as matter in any style on every cell (a half restyled plot holds old and new
+     * blocks), never a block that is not the piece there.
+     */
+    @GameTest(template = "empty")
+    public static void demolishOwnsThePieceInAnyStyle(GameTestHelper helper) {
+        Layout layout = new Layout();
+        int east = Plots.index(1, 0);
+        layout.queue(east, BuildStyle.ONYX_PANEL);
+        Shell.Shape shape = layout.shape(east);
+        BlockOp wall = null;
+        for (BlockOp op : Shell.generate(shape, false)) {
+            if (op.piece().role() == Role.WALL && !shape.overlaps(op.x(), op.z())) {
+                wall = op;
+                break;
+            }
+        }
+        helper.assertTrue(wall != null, "a wall cell no neighbour shares");
+        for (BuildStyle style : BuildStyle.values()) {
+            BlockState state = wall.piece().resolve(style);
+            helper.assertTrue(ArchitectTableBlockEntity.builtHere(shape, wall.x(), wall.y(), wall.z(), state), "own in " + style);
+        }
+        BlockState roof = ArchitectRegistry.styleBlock(BuildStyle.DARK_STONE, Role.ROOF).get().defaultBlockState();
+        helper.assertFalse(ArchitectTableBlockEntity.builtHere(shape, wall.x(), wall.y(), wall.z(), roof), "another piece is not own");
+        helper.assertFalse(ArchitectTableBlockEntity.builtHere(shape, wall.x(), wall.y(), wall.z(), Blocks.STONE.defaultBlockState()), "stone is not own");
+        helper.succeed();
+    }
+
+    /** Connected trim turned or mirrored in a structure keeps its joins on the turned sides. */
+    @GameTest(template = "empty")
+    public static void connectedTrimRotatesItsJoins(GameTestHelper helper) {
+        var north = net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION.get(Direction.NORTH);
+        var up = net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION.get(Direction.UP);
+        BlockState beam = ArchitectRegistry.styleBlock(BuildStyle.DARK_STONE, Role.PILLAR).get().defaultBlockState()
+                .setValue(BlockStateProperties.AXIS, Direction.Axis.Z).setValue(north, true).setValue(up, true);
+        BlockState turned = beam.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+        helper.assertTrue(turned.getValue(BlockStateProperties.AXIS) == Direction.Axis.X && joined(turned, Direction.EAST) && joined(turned, Direction.UP)
+                && !joined(turned, Direction.NORTH), "turned: " + turned);
+        BlockState mirrored = beam.mirror(net.minecraft.world.level.block.Mirror.LEFT_RIGHT);
+        helper.assertTrue(joined(mirrored, Direction.SOUTH) && !joined(mirrored, Direction.NORTH), "mirrored: " + mirrored);
         helper.succeed();
     }
 

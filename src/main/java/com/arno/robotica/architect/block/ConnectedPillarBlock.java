@@ -6,7 +6,9 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.PipeBlock;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -60,5 +62,24 @@ public class ConnectedPillarBlock extends StylePillarBlock {
     @Override
     protected BlockState updateShape(BlockState state, Direction side, BlockState neighbour, LevelAccessor level, BlockPos pos, BlockPos neighbourPos) {
         return state.setValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side), joins(state, side, neighbour));
+    }
+
+    /** Structures placed turned or mirrored: the axis turns (RotatedPillarBlock) and the joined sides turn with it. */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        BlockState out = super.rotate(state, rotation);
+        for (Direction side : Direction.values()) {
+            out = out.setValue(PipeBlock.PROPERTY_BY_DIRECTION.get(rotation.rotate(side)), state.getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side)));
+        }
+        return out;
+    }
+
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        BlockState out = state;
+        for (Direction side : Direction.values()) {
+            out = out.setValue(PipeBlock.PROPERTY_BY_DIRECTION.get(mirror.mirror(side)), state.getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side)));
+        }
+        return out;
     }
 }
