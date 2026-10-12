@@ -113,10 +113,10 @@
     "subtitle": "subtitles.robotica.machine_start",
     "sounds": [
       {
-        "name": "robotica:machine/start",
+        "name": "minecraft:block/copper_bulb/toggle",
         "type": "file",
-        "volume": 0.25,
-        "pitch": 1.0
+        "volume": 0.4,
+        "pitch": 1.2
       }
     ]
   },
@@ -124,10 +124,10 @@
     "subtitle": "subtitles.robotica.machine_stop",
     "sounds": [
       {
-        "name": "robotica:machine/stop",
+        "name": "minecraft:block/copper_bulb/toggle",
         "type": "file",
-        "volume": 0.35,
-        "pitch": 1.0
+        "volume": 0.4,
+        "pitch": 0.85
       }
     ]
   },
@@ -170,10 +170,28 @@
     "subtitle": "subtitles.robotica.press_stamp",
     "sounds": [
       {
-        "name": "robotica:machine/press",
+        "name": "minecraft:block/heavy_core/step1",
         "type": "file",
-        "volume": 0.4,
-        "pitch": 1.0
+        "volume": 0.6,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:block/heavy_core/step2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:block/heavy_core/step3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:block/heavy_core/step4",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.85
       }
     ]
   },
@@ -192,10 +210,34 @@
     "subtitle": "subtitles.robotica.alloy_smelter_work",
     "sounds": [
       {
-        "name": "robotica:machine/smelt",
+        "name": "minecraft:block/furnace/fire_crackle1",
         "type": "file",
         "volume": 0.5,
-        "pitch": 1.0
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle2",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle3",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle4",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/furnace/fire_crackle5",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.7
       }
     ]
   },
@@ -205,7 +247,7 @@
       {
         "name": "robotica:machine/centrifuge",
         "type": "file",
-        "volume": 0.3,
+        "volume": 0.6,
         "pitch": 1.0
       }
     ]
@@ -225,10 +267,10 @@
     "subtitle": "subtitles.robotica.rtg_hum",
     "sounds": [
       {
-        "name": "robotica:machine/hum",
+        "name": "robotica:machine/geiger",
         "type": "file",
-        "volume": 0.3,
-        "pitch": 0.8
+        "volume": 0.4,
+        "pitch": 1.0
       }
     ]
   },
@@ -236,10 +278,10 @@
     "subtitle": "subtitles.robotica.charger_hum",
     "sounds": [
       {
-        "name": "robotica:machine/hum",
+        "name": "minecraft:block/amethyst/shimmer",
         "type": "file",
         "volume": 0.3,
-        "pitch": 1.5
+        "pitch": 1.3
       }
     ]
   },
