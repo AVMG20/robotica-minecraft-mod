@@ -1,6 +1,9 @@
 {
   "replace": false,
   "values": [
-    "robotica:supply_crate"
+    "robotica:supply_crate",
+    "robotica:supply_crate_mk2",
+    "robotica:supply_crate_mk3",
+    "robotica:supply_crate_mk4"
   ]
 }

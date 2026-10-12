@@ -55,6 +55,11 @@ public final class AutomationContent {
                 .strength(4.0F, 10.0F).sound(SoundType.METAL).noOcclusion().lightLevel(s -> s.getValue(SurveyRigBlock.LIT) ? 9 : 4));
     }
 
+    private static DeferredBlock<SupplyCrateBlock> crate(String id, int tier) {
+        return BLOCKS.registerBlock(id, p -> new SupplyCrateBlock(p, tier), BlockBehaviour.Properties.of().mapColor(MapColor.WOOD)
+                .strength(2.0F + tier * 0.5F, 3.0F + tier * 3.0F).sound(SoundType.WOOD));
+    }
+
     // ---- blocks ----
     public static final DeferredBlock<StumpyBlock> STUMPY = BLOCKS.registerBlock("stumpy", StumpyBlock::new, robot(MapColor.COLOR_ORANGE));
     public static final DeferredBlock<SproutBlock> SPROUT = BLOCKS.registerBlock("sprout", SproutBlock::new, robot(MapColor.COLOR_YELLOW));
@@ -66,8 +71,10 @@ public final class AutomationContent {
     public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG_MK2 = surveyRig("survey_rig_mk2", 2);
     public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG_MK3 = surveyRig("survey_rig_mk3", 3);
     public static final DeferredBlock<SurveyRigBlock> SURVEY_RIG_MK4 = surveyRig("survey_rig_mk4", 4);
-    public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE = BLOCKS.registerBlock("supply_crate", SupplyCrateBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD));
+    public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE = crate("supply_crate", 1);
+    public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE_MK2 = crate("supply_crate_mk2", 2);
+    public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE_MK3 = crate("supply_crate_mk3", 3);
+    public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE_MK4 = crate("supply_crate_mk4", 4);
 
     // ---- items ----
     public static final DeferredItem<BlockItem> STUMPY_ITEM = ITEMS.registerItem("stumpy",
@@ -92,6 +99,12 @@ public final class AutomationContent {
             p -> new WorkerBlockItem(SURVEY_RIG_MK4.get(), p.rarity(Rarity.EPIC), 4, "tooltip.robotica.survey_rig"));
     public static final DeferredItem<BlockItem> SUPPLY_CRATE_ITEM = ITEMS.registerItem("supply_crate",
             p -> new WorkerBlockItem(SUPPLY_CRATE.get(), p, 0, "tooltip.robotica.supply_crate"));
+    public static final DeferredItem<BlockItem> SUPPLY_CRATE_MK2_ITEM = ITEMS.registerItem("supply_crate_mk2",
+            p -> new WorkerBlockItem(SUPPLY_CRATE_MK2.get(), p, 0, "tooltip.robotica.supply_crate"));
+    public static final DeferredItem<BlockItem> SUPPLY_CRATE_MK3_ITEM = ITEMS.registerItem("supply_crate_mk3",
+            p -> new WorkerBlockItem(SUPPLY_CRATE_MK3.get(), p, 0, "tooltip.robotica.supply_crate"));
+    public static final DeferredItem<BlockItem> SUPPLY_CRATE_MK4_ITEM = ITEMS.registerItem("supply_crate_mk4",
+            p -> new WorkerBlockItem(SUPPLY_CRATE_MK4.get(), p.rarity(Rarity.UNCOMMON), 0, "tooltip.robotica.supply_crate"));
 
     public static final DeferredItem<FarmKitItem> FARM_KIT_MK2 = ITEMS.registerItem("farm_kit_mk2",
             p -> new FarmKitItem(p.rarity(Rarity.COMMON), 2, 1));
@@ -114,7 +127,8 @@ public final class AutomationContent {
             () -> BlockEntityType.Builder.of(SurveyRigBlockEntity::new, SURVEY_RIG.get(), SURVEY_RIG_MK2.get(), SURVEY_RIG_MK3.get(),
                     SURVEY_RIG_MK4.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SupplyCrateBlockEntity>> SUPPLY_CRATE_BE = BLOCK_ENTITIES.register("supply_crate",
-            () -> BlockEntityType.Builder.of(SupplyCrateBlockEntity::new, SUPPLY_CRATE.get()).build(null));
+            () -> BlockEntityType.Builder.of(SupplyCrateBlockEntity::new, SUPPLY_CRATE.get(), SUPPLY_CRATE_MK2.get(),
+                    SUPPLY_CRATE_MK3.get(), SUPPLY_CRATE_MK4.get()).build(null));
 
     // ---- menus ----
     public static final DeferredHolder<MenuType<?>, MenuType<AreaWorkerMenu>> WORKER_MENU = MENUS.register("area_worker",

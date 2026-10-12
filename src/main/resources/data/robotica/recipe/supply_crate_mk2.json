@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " I ",
+    "IXI",
+    " I "
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "X": {
+      "item": "robotica:supply_crate"
+    }
+  },
+  "result": {
+    "id": "robotica:supply_crate_mk2",
+    "count": 1
+  }
+}

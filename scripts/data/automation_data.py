@@ -38,6 +38,7 @@ GLOW = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
 sys.path.insert(0, str(ROOT / 'scripts'))
 sys.path.insert(0, str(ROOT / 'scripts/textures'))
 from automation import ATLAS  # noqa: E402
+from pixelart import glow_cube  # noqa: E402
 
 
 def at(name, mirror=False, w=None, h=None):
@@ -291,13 +292,21 @@ def main():
         write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})
         loot(name)
 
-    # Supply crate
-    write(ASSETS / 'models/block/supply_crate.json', {
-        'parent': 'minecraft:block/cube_column',
-        'textures': {'end': 'robotica:block/supply_crate_top', 'side': 'robotica:block/supply_crate_side'}})
-    single('supply_crate', 'supply_crate')
+    # Supply crate Mk1-Mk4: one block per Mk, front with the latch faces the player
+    for tier in range(1, 5):
+        name = 'supply_crate' if tier == 1 else f'supply_crate_mk{tier}'
+        textures = {'front': f'robotica:block/{name}_front', 'side': f'robotica:block/{name}_side',
+                    'top': f'robotica:block/{name}_top', 'bottom': 'robotica:block/supply_crate_bottom',
+                    'particle': f'robotica:block/{name}_side', 'front_glow': f'robotica:block/{name}_front_glow'}
+        faces = {'north': '#front', 'south': '#side', 'east': '#side', 'west': '#side', 'up': '#top', 'down': '#bottom'}
+        write(ASSETS / f'models/block/{name}.json', glow_cube(textures, faces, {'north': '#front_glow'}))
+        write(ASSETS / f'blockstates/{name}.json', {'variants': {
+            f'facing={d}': dict({'model': f'robotica:block/{name}'}, **({'y': y} if y else {}))
+            for d, y in (('north', 0), ('east', 90), ('south', 180), ('west', 270))}})
+        write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})
+        loot(name)
 
-    for name in ('stumpy', 'sprout', 'supply_crate'):
+    for name in ('stumpy', 'sprout'):
         loot(name)
 
     # Recipes (component ladder: Age 0 bots, Age 1 excavator and Mk2 kit, Age 2 Mk3 kit, Age 4 Mk4 kit)
@@ -315,6 +324,10 @@ def main():
     shaped('excavator_mk4', [' N ', 'PXP', 'ECE'], {'N': 'null_circuit', 'P': 'plasma_actuator', 'X': 'excavator_mk3',
                                                   'E': '#c:ender_pearls', 'C': 'null_casing'})
     shaped('supply_crate', ['PPP', 'C C', 'PPP'], {'P': '#minecraft:planks', 'C': '#c:ingots/copper'})
+    # Crate Mk2-4: the Mk before it plus a few plain ingots or gems, like a chest upgrade.
+    shaped('supply_crate_mk2', [' I ', 'IXI', ' I '], {'I': '#c:ingots/iron', 'X': 'supply_crate'})
+    shaped('supply_crate_mk3', [' G ', 'GXG', ' G '], {'G': '#c:ingots/gold', 'X': 'supply_crate_mk2'})
+    shaped('supply_crate_mk4', [' D ', 'OXO', ' D '], {'D': '#c:gems/diamond', 'O': '#c:obsidians', 'X': 'supply_crate_mk3'})
     shaped('farm_kit_mk2', ['BMB', 'PIP'], {'B': 'basic_circuit', 'M': 'electric_motor', 'P': '#c:plates/iron', 'I': 'iron_casing'})
     shaped('farm_kit_mk3', ['ASA', 'GRG'], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'G': '#c:plates/gold', 'R': 'reinforced_casing'})
     shaped('farm_kit_mk4', ['CPC', 'NEN'], {'C': 'null_circuit', 'P': 'plasma_actuator', 'N': 'null_casing', 'E': '#c:ender_pearls'})

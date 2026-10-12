@@ -11,7 +11,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, MATERIALS, Canvas, grain, material, write_anim, write_block, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, MATERIALS, Canvas, grain, hash01, material, write_anim, write_block, write_item, write_png  # noqa: E402
 import machine_casing as casing  # noqa: E402
 
 CU, BR, ST, DK, WD, GR, AC = '01234', '56789', 'abcde', 'fghij', 'uvwxy', 'lmnop', 'ABCDE'
@@ -467,43 +467,105 @@ def write_excavator():
         write_anim('block', name, [fn(arg(i)) for i in frames], p, frametime=EX_FRAMETIME, interpolate=smooth)
 
 
-def crate_side():
-    """Oak boards behind copper straps, brass rivets, a stencilled arrow."""
-    c = Canvas()
+# Supply Crate Mk1-Mk4: a wooden crate (plank boards inside a frame of edge boards, a diagonal brace) shod in the tier
+# metal, with a latch whose cyan lock light and Mk pips stay lit at night (copied onto a full-bright *_glow overlay).
+# More Mk, more metal: corner caps on every Mk, straps along the vertical edges from Mk3, a full metal edge on Mk4.
+CRATE_CYAN = {'q': '#2FB8CC', 'Q': '#8CF4FF'}
+# Darker, cooler wood than oak, so every tier metal (copper included) stands out on it.
+CRATE_WOOD = dict(zip(WD, ('#24180F', '#3E2B1C', '#5C412B', '#7C5B3C', '#A07C55')))
+
+
+def crate_pal(tier=1):
+    return pal(TIERS[tier], **CRATE_CYAN, **CRATE_WOOD)
+
+
+def glow_only(c, keep='qQY'):
+    out = Canvas()
     for y in range(16):
-        board = y // 5
         for x in range(16):
-            n = (x * 7 + board * 11 + (y % 5) * 3) % 13
-            c.set(x, y, 'x' if n == 0 else 'v' if n == 6 else 'w')
-        if y % 5 == 0:
-            c.rect(0, y, 16, 1, 'u')
-        elif y % 5 == 1:
-            c.rect(0, y, 16, 1, 'x')
-    c.line(3, 12, 12, 3, 'v').line(4, 12, 12, 4, 'u')                   # diagonal brace
-    for x in (0, 13):                                                    # copper straps
-        plate(c, x, 0, 3, 16, CU, 3 + x, brushed=False)
-        for y in (2, 8, 13):
-            c.rivet(x + 1, y, BR)
-    c.rect(3, 0, 10, 1, 'u').rect(3, 15, 10, 1, 'u')
+            if c.get(x, y) in keep:
+                out.set(x, y, c.get(x, y))
+    return out
+
+
+def crate_planks(c, vertical=False, seed=0):
+    """Boards 4 px wide: lit edge, plank, a little grain, dark joint."""
+    for a in range(16):
+        for b in range(16):
+            x, y = (b, a) if not vertical else (a, b)
+            k = a % 4
+            ch = 'x' if k == 0 else 'u' if k == 3 else 'w'
+            if ch == 'w' and hash01(b + (a // 4) * 5, a // 4, seed) < 0.12:
+                ch = 'v'
+            c.set(x, y, ch)
     return c
 
 
-def crate_top():
-    c = Canvas()
-    for x in range(16):
-        for y in range(16):
-            n = (y * 7 + (x // 5) * 11 + (x % 5) * 3) % 13
-            c.set(x, y, 'x' if n == 0 else 'v' if n == 6 else 'w')
-        if x % 5 == 0:
-            c.rect(x, 0, 1, 16, 'u')
-        elif x % 5 == 1:
-            c.rect(x, 0, 1, 16, 'x')
-    c.frame(0, 0, 16, 16, '2').frame(1, 1, 14, 14, '1')
-    c.rect(0, 0, 16, 1, '3').rect(0, 0, 1, 16, '3')
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
-        c.set(x, y, '9')
-    c.rect(6, 6, 4, 4, '7').bevel(6, 6, 4, 4, '9', '5').set(7, 7, 'k').set(8, 8, 'k')   # brass latch plate
+def crate_frame(c, tier):
+    """Edge boards around the face (raised: lit outer edge, shadow inside), then the tier metal on top."""
+    c.frame(0, 0, 16, 16, 'w').frame(1, 1, 14, 14, 'w')
+    c.rect(0, 0, 16, 1, 'x').rect(0, 0, 1, 16, 'x')                      # lit outer edge
+    c.rect(1, 15, 15, 1, 'v').rect(15, 1, 1, 15, 'v')
+    c.frame(2, 2, 12, 12, 'u')                                           # shadow inside the frame
+    for i in (5, 10):                                                    # nails along the edge boards
+        c.set(i, 1, 'v').set(1, i, 'v').set(i, 14, 'v').set(14, i, 'v')
+    if tier >= 3:                                                        # straps down the vertical edges
+        c.rect(0, 3, 2, 10, 'C').rect(14, 3, 2, 10, 'C').rect(0, 3, 1, 10, 'D').rect(15, 3, 1, 10, 'B')
+    if tier >= 4:                                                        # and along the top and bottom
+        c.rect(3, 0, 10, 2, 'C').rect(3, 14, 10, 2, 'C').rect(3, 0, 10, 1, 'D').rect(3, 15, 10, 1, 'B')
+    for x, y, sx, sy in ((0, 0, 1, 1), (15, 0, -1, 1), (0, 15, 1, -1), (15, 15, -1, -1)):
+        for i in range(4):                                               # 2 px L corner cap
+            for j in range(2):
+                c.set(x + sx * i, y + sy * j, 'C').set(x + sx * j, y + sy * i, 'C')
+        c.set(x, y, 'D').set(x + sx, y + sy, 'E')                       # rivet
+        if tier < 4:
+            c.set(x + sx * 3, y + sy, 'A')
+        if tier < 3:
+            c.set(x + sx, y + sy * 3, 'A')
     return c
+
+
+def crate_brace(c):
+    """Diagonal board from the bottom-left corner to the top-right one, over the planks."""
+    for i in range(10):
+        x, y = 3 + i, 12 - i
+        c.set(x, y, 'y').set(x, y + 1 if y < 12 else y, 'x')
+        if x + 1 <= 12:
+            c.set(x + 1, y, 'x')
+        if y + 2 <= 12:
+            c.set(x, y + 2, 'u')
+    return c
+
+
+def crate_front(tier):
+    """Front: boards, a tier metal latch with a cyan lock light and a plate with one lit pip per Mk."""
+    c = crate_frame(crate_planks(Canvas(), seed=1), tier)
+    c.rect(6, 2, 4, 6, 'C').bevel(6, 2, 4, 6, 'D', 'A')                 # latch hasp
+    c.rect(7, 3, 2, 1, 'B')
+    c.set(7, 5, 'Y').set(8, 5, 'q')                                      # lock light
+    c.rect(7, 6, 2, 1, 'B')
+    c.rect(3, 10, 10, 3, 'C').bevel(3, 10, 10, 3, 'D', 'A')             # Mk plate: a 4 segment bar, one lit per Mk
+    for i in range(4):
+        lit = i < tier
+        c.set(4 + i * 2, 11, 'Y' if lit else 'Z').set(5 + i * 2, 11, 'q' if lit else 'k')
+    return c
+
+
+def crate_side(tier):
+    """Side: boards with the diagonal brace."""
+    return crate_frame(crate_brace(crate_planks(Canvas(), seed=2)), tier)
+
+
+def crate_top(tier):
+    """Lid: boards running the other way and a tier metal carry handle across the middle."""
+    c = crate_frame(crate_planks(Canvas(), vertical=True, seed=3), tier)
+    c.rect(4, 7, 8, 2, 'C').rect(4, 7, 8, 1, 'D').set(4, 8, 'A').set(11, 8, 'A')
+    c.rect(3, 7, 1, 2, 'B').rect(12, 7, 1, 2, 'B')                       # handle brackets
+    return c
+
+
+def crate_bottom():
+    return crate_frame(crate_planks(Canvas(), seed=4), 1)
 
 
 def kit(tier):
@@ -536,8 +598,14 @@ def main():
     write_block('automation_saw', saw().rows(), pal())
     write_block('automation_leaf', leaf().rows(), pal())
     write_excavator()
-    write_block('supply_crate_side', crate_side().rows(), pal())
-    write_block('supply_crate_top', crate_top().rows(), pal())
+    for tier, mat in TIERS.items():
+        name = 'supply_crate' if tier == 1 else f'supply_crate_mk{tier}'
+        for face, draw in (('front', crate_front), ('side', crate_side), ('top', crate_top)):
+            c = draw(tier)
+            write_block(f'{name}_{face}', c.rows(), crate_pal(tier))
+            if face == 'front':
+                write_block(f'{name}_front_glow', glow_only(c).rows(), crate_pal(tier))
+    write_block('supply_crate_bottom', crate_bottom().rows(), crate_pal())
     for tier in (2, 3, 4):
         write_item(f'farm_kit_mk{tier}', kit(tier).rows(), pal(TIERS[tier]))
 
