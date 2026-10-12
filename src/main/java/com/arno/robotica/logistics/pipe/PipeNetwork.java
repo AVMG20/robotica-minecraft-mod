@@ -24,9 +24,7 @@ import java.util.Set;
  * shared by all of them; any pipe that is placed, removed, relinked, loaded or unloaded marks it invalid, and the next
  * pipe that needs it builds a fresh one. Nothing walks the network per tick.
  * <p>
- * It also tells nearby players which way items went ({@link #glow}): the route between two pipes is found once and
- * kept, and each Extract face to Insert face pair is sent at most every {@link #GLOW_GAP} ticks, so a busy line only
- * refreshes its light.
+ * It also sends the route glow to nearby players ({@link #glow}). Routes are cached.
  */
 public final class PipeNetwork {
     /** An Insert connection: the pipe, its face, the inventory block behind it, and the face's priority. */
@@ -123,8 +121,8 @@ public final class PipeNetwork {
     // ---------------------------------------------------------------- glow
 
     /**
-     * Items went from the Extract face {@code side} of {@code from} into {@code to}: lights the route for the players
-     * near it, unless this pair was sent less than {@link #GLOW_GAP} ticks ago or the network sent its share this tick.
+     * Items went from the Extract face {@code side} of {@code from} into {@code to}: sends the route glow to nearby
+     * players, at most every {@link #GLOW_GAP} ticks per pair and {@link #GLOWS_PER_TICK} per tick.
      */
     void glow(ServerLevel level, ItemPipeBlockEntity from, Direction side, Endpoint to) {
         long now = level.getGameTime();
@@ -161,7 +159,7 @@ public final class PipeNetwork {
         }
     }
 
-    /** A player near either end (a long route is checked again by its whole box before it is sent). */
+    /** True when a player is near either end. */
     private static boolean anyViewer(ServerLevel level, BlockPos a, BlockPos b) {
         for (ServerPlayer player : level.players()) {
             if (!PipeGlowPayload.canReceive(player)) continue;
@@ -186,7 +184,7 @@ public final class PipeNetwork {
         if (known != null && known.from == from.asLong() && known.to == to.asLong()) return known.steps == null ? null : known;
         Route found = findRoute(level, from, to);
         if (routes.size() >= MAX_ROUTES) routes.clear();
-        // no route (past the network's size limit): remembered too, so it is not searched again on every pull
+        // cache misses too, so they are not searched again
         routes.put(key, found != null ? found : new Route(from.asLong(), to.asLong(), null, 0, 0, 0, 0, 0, 0));
         return found;
     }

@@ -10,17 +10,16 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * Robotica's own particles (common side: types and options; the client draws them in {@code core.client.particle}).
- * Every type takes {@link TintParticleOptions}. All of them go through vanilla's particle setting (fewer at
- * Decreased, none at Minimal). Velocity arguments mean what they do for vanilla particles, except for {@link #WARP}.
+ * Robotica's particle types (drawn in {@code core.client.particle}). Every type takes {@link TintParticleOptions}.
+ * Velocity works as for vanilla particles, except for {@link #WARP}.
  * <ul>
- *   <li>{@link #SPARK}: white-hot streak that falls, bounces up to twice and cools to its tint. Full bright.</li>
- *   <li>{@link #ZAP}: tiny jagged flash that flickers for a few ticks. Full bright.</li>
- *   <li>{@link #MOTE}: soft light dot that drifts and fades. Full bright.</li>
- *   <li>{@link #PUFF}: soft dust or smoke puff in the tint, lit by the world.</li>
- *   <li>{@link #WARP}: vortex mote circling its spawn point. x speed = radius (positive: spirals in, negative: spirals
- *   out), y speed = rise per tick, z speed = turn per tick in radians (0: default). Full bright.</li>
- *   <li>{@link #SHARD}: metal fragment that tumbles, falls and bounces once, lit by the world.</li>
+ *   <li>{@link #SPARK}: falling, bouncing streak. Full bright.</li>
+ *   <li>{@link #ZAP}: tiny jagged flash. Full bright.</li>
+ *   <li>{@link #MOTE}: soft drifting dot. Full bright.</li>
+ *   <li>{@link #PUFF}: dust or smoke puff, lit by the world.</li>
+ *   <li>{@link #WARP}: vortex mote. x speed = radius (positive spirals in), y speed = rise per tick, z speed = turn per
+ *   tick in radians (0: default). Full bright.</li>
+ *   <li>{@link #SHARD}: tumbling metal fragment, lit by the world.</li>
  *   <li>{@link #FLASH}: short bright burst. Full bright.</li>
  * </ul>
  */

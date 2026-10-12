@@ -9,9 +9,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 
 /**
- * The shared warp effect of pads, remotes and portals, from {@link WarpFxPayload}: a violet vortex gathers around the
- * traveller while the trip winds up, then a flash where they leave (the vortex collapses) and where they arrive (it
- * unwinds, with a ring of dust at the feet). Portal trips get a quieter version.
+ * Warp effect of pads, remotes and portals ({@link WarpFxPayload}): a vortex while the trip winds up, then a flash at
+ * both ends. Portal trips get a quieter version.
  */
 final class WarpFx {
     private WarpFx() {}

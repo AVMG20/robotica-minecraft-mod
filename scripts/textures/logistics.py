@@ -27,7 +27,7 @@ from industry import RAMPS  # noqa: E402
 
 F, T, C, M = 'abcde', 'fghij', 'lmnop', 'qrstu'     # frame (slate), Mk trim (clamps), channel tint, mode colour
 TRIM = {1: MATERIALS['copper'], 2: RAMPS['ferrothorium'], 3: RAMPS['pyrosteel'], 4: RAMPS['resonant']}
-# channel: deep tinted glass with a lit streak, brighter and more saturated than the trim so the Mk reads at a glance
+# channel: tinted glass with a lit streak, brighter than the trim
 CHANNEL = {
     1: ('#3A1C0A', '#7A3E14', '#C26A2A', '#F2A060', '#FFE0B0'),
     2: ('#10301A', '#1E5A2E', '#3E9A4A', '#86DA6A', '#DCFFC0'),

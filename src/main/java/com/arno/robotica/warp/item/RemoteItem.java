@@ -37,10 +37,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import java.util.List;
 
 /**
- * Warp Remote (Age 1). Sneak-right-click a Warp Pad to store it (up to 10, the first is home), sneak-right-click two
- * Portal Projectors to link them. Hold right-click for 3 seconds to go home; sneak-right-click the air for the pad list,
- * where a click on a pad starts the same 3 second charge on the server ({@link com.arno.robotica.warp.teleport.WarpCharges}).
- * Other dimensions only lead to Mk2 pads. Damage cancels the charge. The trips run in {@link WarpTravel}.
+ * Warp Remote (Age 1): stores up to 10 Warp Pads (the first is home) and links Portal Projectors. Hold right-click to go
+ * home; trips from the pad list charge in {@link com.arno.robotica.warp.teleport.WarpCharges}. Trips run in
+ * {@link WarpTravel}.
  */
 public class RemoteItem extends Item implements EnergyItem {
     public static final int CHARGE_TICKS = 60;
@@ -125,9 +124,9 @@ public class RemoteItem extends Item implements EnergyItem {
             return InteractionResultHolder.fail(stack);
         }
         if (player instanceof ServerPlayer serverPlayer) {
-            // every check of the trip up front (and its message), so a charge never runs into a known refusal
+            // check the trip before the charge starts
             if (!WarpTravel.remoteListTrip(serverPlayer, stack, home.id(), true)) {
-                // the client predicted success and started the hold: stop it there too
+                // the client already started the hold
                 WarpFxPayload.stopUse(serverPlayer);
                 return InteractionResultHolder.fail(stack);
             }

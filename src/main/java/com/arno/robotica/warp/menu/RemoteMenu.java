@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Pad list of a Warp Remote held in {@code hand}. No slots. The list is built on the server when the GUI opens; travel,
- * home and forget requests are payloads that the server checks against the remote again.
+ * Pad list of a Warp Remote held in {@code hand}. No slots. Built on the server when the GUI opens; requests are
+ * checked against the remote again.
  */
 public class RemoteMenu extends MachineMenu {
     private final InteractionHand hand;

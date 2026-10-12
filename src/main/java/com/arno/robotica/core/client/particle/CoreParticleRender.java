@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 public final class CoreParticleRender {
     private CoreParticleRender() {}
 
-    /** Particle sheet with additive blending and no depth writes: overlapping glows add up instead of covering each other. */
+    /** Particle sheet with additive blending and no depth writes. */
     public static final ParticleRenderType ADDITIVE = new ParticleRenderType() {
         @Override
         public BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
@@ -34,8 +34,8 @@ public final class CoreParticleRender {
     };
 
     /**
-     * How many of {@code count} cosmetic particles a client effect should spawn: all at the All setting, half at
-     * Decreased, none at Minimal. Vanilla thins out every single particle on top of this.
+     * How many of {@code count} cosmetic particles a client effect should spawn: all at All, half at Decreased, none at
+     * Minimal.
      */
     public static int budget(int count) {
         ParticleStatus status = Minecraft.getInstance().options.particles().get();

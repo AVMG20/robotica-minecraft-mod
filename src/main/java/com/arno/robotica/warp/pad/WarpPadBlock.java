@@ -33,9 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Warp Pad Mk1 (Age 1) and Mk2 (Age 3, also other dimensions): a slab-height block. Right-click while standing on it
- * opens the destination list, sneak-right-click with an empty hand opens the owner GUI (rename, public / private). A
- * Mk2 pad in hand upgrades a placed Mk1 in place and keeps its name, owner, energy and every remote that stores it.
+ * Warp Pad Mk1 (Age 1) and Mk2 (Age 3, also other dimensions). Right-click while standing on it: destination list.
+ * Sneak-right-click with an empty hand: owner GUI. A Mk2 pad in hand upgrades a placed Mk1 in place.
  */
 public class WarpPadBlock extends Block implements EntityBlock {
     private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 8, 16);

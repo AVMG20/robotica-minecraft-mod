@@ -495,7 +495,7 @@
         },
         {
           "title": "Styles",
-          "text": "An Iron Casing opens Pearl Panel and Onyx Panel. A hall can mix styles.\nClick a built plot and pick a style to restyle it; old blocks come back as matter.\nThe stonecutter turns style blocks into other shapes.",
+          "text": "An Iron Casing opens Pearl Panel and Onyx Panel. A hall can mix styles.\nRestyling a plot gives the old blocks back as matter.\nThe stonecutter turns style blocks into other shapes.",
           "items": [
             "robotica:timberframe_wall",
             "robotica:dark_stone_wall",
@@ -540,7 +540,7 @@
       "pages": [
         {
           "title": "Warp",
-          "text": "Taking damage cancels a teleport while it winds up.\nThe first pad a remote stores is home. Pick another with H in its list.\nUpgrading a placed pad to Mk2 keeps it in every remote.\nPortal Projectors work across dimensions.",
+          "text": "Taking damage cancels a teleport.\nThe first pad a remote stores is home. Pick another with H in its list.\nUpgrading a placed pad to Mk2 keeps it in every remote.\nPortal Projectors work across dimensions.",
           "items": [
             "robotica:warp_pad",
             "robotica:warp_pad_mk2",
@@ -572,7 +572,7 @@
       "pages": [
         {
           "title": "Item pipes",
-          "text": "Items go to the highest priority arm that has room. Round robin only spreads them between arms of the same priority. Moving items light up their route, from the amber Extract arm to the cyan Insert arm. Sneak-right-click between two pipes to keep side-by-side lines apart.",
+          "text": "Items go to the highest priority arm that has room. Round robin only spreads them between arms of the same priority. Unlink two pipes to run lines side by side.",
           "items": [
             "robotica:item_pipe",
             "robotica:item_pipe_mk2",

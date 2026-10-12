@@ -909,9 +909,8 @@ public class ArchitectGameTests {
     }
 
     /**
-     * Restyle: clicking a built plot and picking a style swaps its blocks for the same pieces in the new style on Build.
-     * The old blocks are refunded like a takedown, the neighbour and its shared column keep their style, and what the
-     * player put inside stays. Cancel undoes a restyle that has not started.
+     * Restyle swaps a built plot's blocks on Build and refunds the old ones. The neighbour and its shared column keep
+     * their style, player blocks inside stay, and Cancel undoes a restyle that has not started.
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void restyleSwapsABuiltPlot(GameTestHelper helper) {

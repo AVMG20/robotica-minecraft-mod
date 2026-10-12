@@ -14,9 +14,8 @@ import java.util.List;
 
 /**
  * Server to client: items went from the Extract face {@code fromSide} of pipe {@code from} to the Insert face
- * {@code toSide} of pipe {@code to}. {@code steps} is the route from {@code from}, one direction (3D data value) per
- * pipe, packed two to a byte on the wire; a route longer than {@link #MAX_STEPS} is cut short (both ends still light).
- * Drawn by the logistics client ({@code ItemPipeGlow}); the handler only queues the data (no client classes).
+ * {@code toSide} of pipe {@code to}. {@code steps}: one direction (3D data value) per pipe, two per byte on the wire,
+ * cut at {@link #MAX_STEPS}. The handler only queues it for {@code ItemPipeGlow}.
  */
 public record PipeGlowPayload(long from, int fromSide, long to, int toSide, byte[] steps) implements CustomPacketPayload {
     public static final Type<PipeGlowPayload> TYPE = new Type<>(Robotica.id("logistics_pipe_glow"));
@@ -59,7 +58,7 @@ public record PipeGlowPayload(long from, int fromSide, long to, int toSide, byte
         event.registrar("1").playToClient(TYPE, CODEC, PipeGlowPayload::handle);
     }
 
-    /** True when the player can receive it: mock and fake players (game tests, other mods) have no Robotica channel. */
+    /** False for fake and mock players, which have no Robotica channel. */
     public static boolean canReceive(ServerPlayer player) {
         return !(player instanceof net.neoforged.neoforge.common.util.FakePlayer) && player.connection != null && player.connection.hasChannel(TYPE);
     }

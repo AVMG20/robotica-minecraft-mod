@@ -23,13 +23,12 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import java.util.Arrays;
 
 /**
- * The light along an item pipe route ({@link PipeGlowPayload}): the Extract connector flashes, a quick wave runs down
- * the channel of every pipe on the way to the Insert connector, which flashes too, and all of it fades in about half a
- * second. A route sent again while it still glows only refreshes the light. Additive full-bright quads just outside
- * the pipe model (sizes in step with scripts/data/logistics_data.py), drawn after the particles.
+ * Glow along an item pipe route ({@link PipeGlowPayload}): a wave from the Extract connector to the Insert connector
+ * that fades in about half a second. Additive quads just outside the pipe model (sizes match
+ * scripts/data/logistics_data.py).
  * <p>
- * Per pipe one slot in flat arrays, at most {@link #MAX} of them: start times of its six arms, its node and its six
- * connectors. Nothing is allocated per frame or per tick. Render thread only.
+ * One slot per pipe in flat arrays, at most {@link #MAX}: start times of its six arms, node and six connectors. Render
+ * thread only.
  */
 public final class ItemPipeGlow {
     private ItemPipeGlow() {}

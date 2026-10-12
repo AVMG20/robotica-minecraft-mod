@@ -233,9 +233,8 @@ public class ItemPipeBlock extends Block implements EntityBlock {
     }
 
     /**
-     * Right-click an inventory link: opens its GUI (mode, filter, order). Sneak-right-click with an empty hand switches
-     * it Insert, Extract, Off without the GUI; toward the next pipe (its arm, or the core's face where a cut arm was)
-     * it cuts or joins that link. Sneaking with an item in hand never gets here.
+     * Right-click an inventory link: opens its GUI. Sneak-right-click with an empty hand: cycles its mode, or toward the
+     * next pipe cuts or joins that link.
      */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
@@ -268,8 +267,8 @@ public class ItemPipeBlock extends Block implements EntityBlock {
     }
 
     /**
-     * Cuts the link between the pipe at {@code pos} and the one on {@code side}, or joins it when it is cut. Both pipes
-     * keep the cut; their arms and networks follow, and the two pipes flash. Returns true when the link is now cut.
+     * Cuts the link between the pipe at {@code pos} and the one on {@code side}, or joins it when it is cut. Returns
+     * true when the link is now cut.
      */
     public static boolean toggleLink(ServerLevel level, BlockPos pos, Direction side) {
         BlockPos other = pos.relative(side);

@@ -267,8 +267,8 @@ def panel_roof(v):
 
 # ---------------------------------------------------------------- connected trim (every style but Clean Stone)
 
-# Arms a trim face connects through, in texture space: top, right, bottom, left. Each shape is drawn once; the models
-# rotate it for the other directions, so nothing here may be lit from one side.
+# Arms a trim face connects through, in texture space: top, right, bottom, left. The models rotate each shape, so
+# don't light it from one side.
 TRIM_SHAPES = {'none': '', 'end': 'T', 'straight': 'TB', 'corner': 'TR', 'tee': 'TRL', 'cross': 'TRBL'}
 # Dark Stone: a plain groove. Pearl and Onyx: a recessed channel with a glowing strip (a).
 GROOVE = ('4', '3')

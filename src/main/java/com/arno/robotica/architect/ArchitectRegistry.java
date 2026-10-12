@@ -82,7 +82,7 @@ public final class ArchitectRegistry {
 
     private static Block create(BuildStyle style, Role role, BlockBehaviour.Properties props) {
         return switch (role) {
-            // Clean Stone keeps its original seamless pillar; the other styles' trim connects at corners
+            // Clean Stone has a plain pillar, the other styles connected trim
             case PILLAR -> style == BuildStyle.TIMBERFRAME ? new StylePillarBlock(props) : new ConnectedPillarBlock(props);
             case WINDOW -> new StyleWindowBlock(props);
             default -> new StyleBlock(props);

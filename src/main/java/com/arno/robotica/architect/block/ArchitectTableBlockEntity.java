@@ -486,7 +486,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                     layout.forget(plot);
                     restyleTarget = -1;
                 } else {
-                    // the style picked next restyles it: the next pass swaps its blocks for the same pieces in that style
+                    // the next style pick restyles it
                     restyleTarget = plot;
                 }
             }
@@ -655,8 +655,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     /**
      * One op: returns STEP_SKIPPED (nothing to do, free), STEP_DONE (changed the world), STEP_WAIT or a status code to pause on.
-     * {@code shared}: styles (bit per ordinal) of the plots sharing this cell, 0 when no neighbour does; the right piece
-     * in a neighbour's style counts as done (no swapping). A piece in another style is swapped and refunded (restyling).
+     * {@code shared}: styles (bit per ordinal) of the plots sharing this cell. The right piece in a neighbour's style
+     * counts as done; a piece in another style is swapped and refunded.
      * {@code clear}: solid blocks in the way are removed (clear terrain on a first build).
      */
     private int step(ServerLevel level, BlockPos origin, BlockOp op, BuildStyle style, int energyCost, int height, int shared, boolean clear) {
@@ -716,7 +716,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         rustic -= cost.rustic();
         refined -= cost.refined();
         energy.consume(energyCost);
-        // the old style's block comes back like a takedown's: as matter, or as an item when the matter does not fit
+        // the old block is refunded as matter, or stashed as an item when the matter does not fit
         if (restyled && !refund(current)) stash(level, new ItemStack(current.getBlock()));
         return STEP_DONE;
     }

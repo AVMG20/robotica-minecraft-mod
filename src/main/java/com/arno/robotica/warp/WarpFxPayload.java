@@ -16,11 +16,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.function.Consumer;
 
 /**
- * Server to client: one step of the shared warp effect, drawn by each client itself (warp.client.WarpFx).
- * {@link #CHARGE}: the vortex gathers around the traveller, {@code value} is the charge progress 0..1;
- * {@link #DEPART} / {@link #ARRIVE}: the flash at either end, {@code value} 1 for a full trip, 0 for a quiet one (portals).
- * Positions are the traveller's feet. {@link #STOP} (to one player): the server stopped or refused the go-home hold the
- * client started, so the client ends its use animation too.
+ * Server to client: one step of the warp effect (warp.client.WarpFx), at the traveller's feet. {@code value}:
+ * charge progress 0..1 for {@link #CHARGE}, 1 for a full trip or 0 for a quiet one (portals) for {@link #DEPART} /
+ * {@link #ARRIVE}. {@link #STOP} ends the go-home hold on the client.
  */
 public record WarpFxPayload(byte kind, float x, float y, float z, float value) implements CustomPacketPayload {
     public static final byte CHARGE = 0, DEPART = 1, ARRIVE = 2, STOP = 3;
@@ -51,7 +49,7 @@ public record WarpFxPayload(byte kind, float x, float y, float z, float value) i
         }
     }
 
-    /** Ends the Warp Remote hold on this player's client too (a server-side stopUsingItem does not reach it). */
+    /** Ends the Warp Remote hold on the server and the client. */
     public static void stopUse(ServerPlayer player) {
         player.stopUsingItem();
         if (!(player instanceof FakePlayer) && player.connection != null && player.connection.hasChannel(TYPE)) {

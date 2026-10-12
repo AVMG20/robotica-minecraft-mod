@@ -32,9 +32,8 @@ import java.util.List;
  * network. Every {@code pipeInterval} ticks each Extract link pulls up to {@code pipeItems} items that pass its filter and
  * hands them to the Insert links of the network whose filter takes them, highest priority first and within a priority in
  * turn (round robin) or nearest first, through their item capabilities, so machine side configs and other mods'
- * inventories decide what fits. Items move instantly and never go back into the inventory they came from; the route
- * lights up for players close by ({@link PipeNetwork#glow}). A link to the next pipe can be cut: both pipes keep the cut
- * (synced to the client, which predicts links too), so the face stays apart from either side and after a reload.
+ * inventories decide what fits. Items move instantly and never go back into the inventory they came from. Both pipes
+ * of a cut link store the cut, synced to the client.
  */
 public class ItemPipeBlockEntity extends BlockEntity {
     public static final int FILTER_SLOTS = 9;
@@ -221,8 +220,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
         super.onLoad();
         if (!(level instanceof ServerLevel server)) return;
         recheckLinks = true;
-        // A pipe that loads next to loaded pipes joins their network, and takes over a cut a neighbour keeps toward it
-        // (a pipe placed where a cut one was broken).
+        // A pipe that loads next to loaded pipes joins their network and takes over any cut a neighbour keeps toward it.
         for (Direction dir : Direction.values()) {
             BlockPos at = worldPosition.relative(dir);
             if (!server.isLoaded(at) || !(server.getBlockEntity(at) instanceof ItemPipeBlockEntity pipe)) continue;
@@ -343,7 +341,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
         }
     }
 
-    /** Insert faces that took items in the current pull (the first few), lit for the players near the route. */
+    /** The first Insert faces that took items in the current pull, for the glow. */
     private final PipeNetwork.Endpoint[] lit = new PipeNetwork.Endpoint[4];
     private int litCount;
 

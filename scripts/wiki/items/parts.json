@@ -579,7 +579,7 @@
    "items": [
     "warp_remote"
    ],
-   "what": "Stores up to 10 Warp Pads. Hold right-click 3 s to go home, or pick a pad from its list. Also links Portal Projectors.",
+   "what": "Stores up to 10 Warp Pads. Hold right-click 3 s to go home, or pick a pad from its list.",
    "use": [
     "Sneak-right-click pads to store them. The first is home.",
     "Sneak-right-click the air: pad list.",
@@ -636,7 +636,7 @@
    "use": [
     "Feed it cobble, wood or ingots (matter).",
     "A casing in the style slot opens higher styles.",
-    "Click a built plot and pick another style to restyle it: Build swaps every block, the old ones come back as matter.",
+    "Click a built plot and pick another style to restyle it. The old blocks come back as matter.",
     "Demolish (click twice) clears every built plot: the table's own building blocks come back as matter, the rest goes into a chest touching the table."
    ],
    "stats": {
@@ -711,7 +711,7 @@
     "onyx_panel_light"
    ],
    "what": "A building style of the [[architect_table]]. Also craftable by hand.",
-   "image": "shots/architect_hall_onyx_panel.jpg|A Onyx Panel hall"
+   "image": "shots/architect_hall_onyx_panel.jpg|An Onyx Panel hall"
   },
   {
    "items": [

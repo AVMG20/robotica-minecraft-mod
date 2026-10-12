@@ -8,8 +8,7 @@ import net.neoforged.fml.config.ModConfig;
 /**
  * Common (both sides) entry point of the logistics module: item pipes (Mk1 to Mk4) that pull from
  * Extract links and push into Insert links through standard item capabilities.
- * Client side ({@code client/LogisticsClient}): the per-face pipe GUI and the light along a route when items move; the
- * pipes are plain multipart block models.
+ * Client side ({@code client/LogisticsClient}): the per-face pipe GUI and the route glow.
  */
 public final class LogisticsModule {
     private LogisticsModule() {}

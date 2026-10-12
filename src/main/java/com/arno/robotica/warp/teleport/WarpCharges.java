@@ -22,9 +22,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Server side wind-up of a trip picked in a GUI, keyed by player UUID: a pad trip (1 second, the player stays on the
- * pad) or a remote trip from the pad list (3 seconds, the remote stays in hand). Damage cancels it (WarpEvents).
- * Cleared on logout, death, a dimension change and server stop. The held charge of "go home" is the vanilla item use instead.
+ * Server side wind-up of a trip picked in a GUI, keyed by player UUID: a pad trip (1 second on the pad) or a remote
+ * list trip (3 seconds, remote in hand). Damage cancels it (WarpEvents). Cleared on logout, death, dimension change and
+ * server stop. Going home uses the vanilla item use instead.
  */
 public final class WarpCharges {
     private WarpCharges() {}

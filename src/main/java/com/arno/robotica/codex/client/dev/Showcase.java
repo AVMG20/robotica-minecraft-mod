@@ -430,7 +430,7 @@ public final class Showcase {
             shot("09_gate_and_pad");
         }
 
-        // Scene 5b: the shared warp effect over the Mk2 pad, drawn client side: the vortex winds up, then the arrival flash.
+        // Scene 5b: warp effect over the Mk2 pad, wind-up then arrival flash.
         if (wants("30_warp_fx")) {
             step(20, () -> server(sp -> setFacing(sp.serverLevel(), new BlockPos(31, Y, 40), block("warp_pad_mk2"), Direction.SOUTH)));
             camera(31.5, Y + 1.7, 44.2, 180, 14);
@@ -984,8 +984,7 @@ public final class Showcase {
             step(20, () -> {});
             shot("17_item_pipes");
         }
-        // Items moving: a chest emptied by a Mk4 Extract arm through Mk4, Mk3, Mk2 and Mk1 pipes into two chests (round
-        // robin), so every Mk's channel lights up. Filled once the camera is there; a Mk4 pulls every 4 ticks.
+        // Pipe glow: a Mk4 Extract arm empties a chest through Mk4 to Mk1 pipes into two chests, filled once the camera is there.
         if (wants("30_item_pipe_glow")) {
             step(20, () -> server(sp -> {
                 ServerLevel level = sp.serverLevel();
@@ -1013,7 +1012,7 @@ public final class Showcase {
             grab(7, "30_item_pipe_glow");
             for (int i = 0; i < 6; i++) grab(2, "pipe_glow_frame_" + i);
         }
-        // Dev only (not in shots.py): a Sentry bolt sent straight to the client (no hostile mobs in the peaceful showcase world).
+        // Dev only (not in shots.py): a Sentry bolt sent straight to the client.
         if (wants("sentry_bolt_frame")) {
             camera(23.2, Y + 0.2, 127.2, 150, 22);
             step(20, () -> {});
@@ -1189,7 +1188,7 @@ public final class Showcase {
 
         structureFxFrames();
 
-        // Architect Table: a building per style around the table plot (queued), Pearl and Onyx joined into one hall.
+        // Architect Table: a queued building per style around the table, Pearl and Onyx joined into one hall.
         if (wants("25_architect_build", "gui_96_architect_demolish")) step(20, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
             setFacing(level, TABLE, block("architect_table"), Direction.SOUTH);

@@ -151,8 +151,7 @@ def main():
     for name in ('warp_pad', 'warp_pad_mk2', 'gate_controller'):
         loot(name)
 
-    # Recipes. Age 1 pad and remote (the remote stores pads, so both arrive together), Age 3 Mk2 pad (the Mk1 pad plus
-    # Magma Core and Age 3 parts), Age 4 portal projector. Ender pearls keep the pad an evening's hunt away.
+    # Recipes: Age 1 pad and remote, Age 3 Mk2 pad, Age 4 portal projector.
     shaped('warp_pad', ['EAE', 'GRG', 'PPP'], {
         'E': '#c:ender_pearls', 'A': 'basic_circuit', 'G': '#c:plates/gold', 'R': 'iron_casing', 'P': '#c:plates/iron'})
     shaped('warp_pad_mk2', ['BQB', 'MWP', 'E E'], {

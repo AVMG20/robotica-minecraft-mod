@@ -40,9 +40,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Server side logic of pad trips, remote trips, storing pads and projector linking. Every entry point validates
- * everything again (permissions, standing on the pad, energy, destination block, safe spot); the GUIs and payloads are
- * only requests.
+ * Server side logic of pad trips, remote trips, storing pads and projector linking. Every entry point validates again;
+ * GUIs and payloads are only requests.
  */
 public final class WarpTravel {
     private WarpTravel() {}
@@ -414,7 +413,7 @@ public final class WarpTravel {
             return;
         }
         if (!first.canUse(player)) {
-            // the remote may have been filled by somebody else or the projector changed hands since
+            // the projector may have changed hands since the first click
             remote.remove(WarpComponents.LINK_SOURCE.get());
             message(player, Component.translatable("message.robotica.warp.link_not_owner", first.ownerName()));
             return;

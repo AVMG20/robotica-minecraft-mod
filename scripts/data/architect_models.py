@@ -12,11 +12,11 @@ FRAG = ROOT / 'src/main/fragments/architect'
 STYLES = ['timberframe', 'dark_stone', 'pearl_panel', 'onyx_panel']
 ROLES = ['wall', 'floor', 'roof', 'pillar', 'window', 'light']
 
-# The timberframe_* id is historic and stays; the names follow the looks.
+# Clean Stone keeps the timberframe_* ids.
 STYLE_NAMES = {'timberframe': 'Clean Stone', 'dark_stone': 'Dark Stone', 'pearl_panel': 'Pearl Panel', 'onyx_panel': 'Onyx Panel'}
-# Styles whose trim carries a full-bright accent strip (<name>_glow textures) and whose windows are tinted glass.
+# Styles with a glowing trim strip (<name>_glow textures) and tinted windows.
 PANEL_STYLES = {'pearl_panel', 'onyx_panel'}
-# Styles whose pillars connect (ConnectedPillarBlock): every style but Clean Stone, which keeps its own pillar.
+# Styles with connected pillars (ConnectedPillarBlock).
 CONNECTED_TRIM = {'dark_stone', 'pearl_panel', 'onyx_panel'}
 ROLE_NAME = {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Light'}
 ROLE_NAMES = {style: ROLE_NAME for style in STYLES}
@@ -275,7 +275,7 @@ lang.update({
     'gui.robotica.architect_plot_building': 'Building',
     'gui.robotica.architect_plot_changed': 'Built, changes pending',
     'gui.robotica.architect_plot_built': 'Built',
-    'gui.robotica.architect_plot_restyle': 'Click to restyle it in the selected style',
+    'gui.robotica.architect_plot_restyle': 'Click, then pick a style to restyle it',
     'gui.robotica.architect_plot_forget': 'Shift-click to forget (blocks stay)',
     'gui.robotica.architect_casing': 'Casing: unlocks styles',
     'gui.robotica.architect_battery': 'Battery: a wound Mainspring or any FE cell',
@@ -304,7 +304,7 @@ lang.update({
 # keep keys added by hand (demolish, config) and overwrite only the generated ones
 _lang_file = FRAG / 'assets/robotica/lang/en_us.json'
 _existing = json.loads(_lang_file.read_text()) if _lang_file.exists() else {}
-# block and style names are all generated: drop old ones so removed styles leave no keys behind
+# drop old generated names so removed styles leave no keys
 _existing = {k: v for k, v in _existing.items()
              if not k.startswith(('block.robotica.', 'style.robotica.', 'gui.robotica.architect_needs_casing_'))}
 write(_lang_file, {**lang, **{k: v for k, v in _existing.items() if k not in lang}})
