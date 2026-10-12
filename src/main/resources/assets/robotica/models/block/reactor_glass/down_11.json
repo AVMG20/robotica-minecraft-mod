@@ -1,0 +1,28 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "particle": "robotica:block/reactor_glass/0",
+    "pane": "robotica:block/reactor_glass/11"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#pane",
+          "cullface": "down"
+        }
+      }
+    }
+  ]
+}

@@ -2,6 +2,6 @@
   "parent": "minecraft:block/cube_all",
   "render_type": "minecraft:translucent",
   "textures": {
-    "all": "robotica:block/replicator_glass"
+    "all": "robotica:block/replicator_glass/0"
   }
 }

@@ -28,8 +28,6 @@
   "subtitles.robotica.lance_charge": "Null lance charges",
   "subtitles.robotica.lance_ready": "Null lance is ready",
   "subtitles.robotica.lance_fire": "Null lance fires",
-  "subtitles.robotica.replicator_form": "Replicator assembles",
-  "subtitles.robotica.replicator_unform": "Replicator powers down",
   "subtitles.robotica.replicator_hum": "Replicator hums",
   "subtitles.robotica.replicator_cycle": "Replicator cycles",
   "subtitles.robotica.replicator_spawn": "Replicator materialises",

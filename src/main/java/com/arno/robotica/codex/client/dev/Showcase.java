@@ -212,12 +212,15 @@ public final class Showcase {
         if (wants(name)) step(delay, () -> Screenshot.grab(mc().gameDirectory, name + ".png", mc().getMainRenderTarget(), msg -> {}));
     }
 
+    /** Flies the player there; a second teleport a moment later, as the first one of a run can land before the client is ready. */
     private static void camera(double x, double y, double z, float yaw, float pitch) {
-        step(40, () -> server(sp -> {
-            sp.getAbilities().flying = true;
-            sp.onUpdateAbilities();
-            sp.teleportTo(sp.serverLevel(), x, y, z, yaw, pitch);
-        }));
+        for (int delay : new int[]{40, 5}) {
+            step(delay, () -> server(sp -> {
+                sp.getAbilities().flying = true;
+                sp.onUpdateAbilities();
+                sp.teleportTo(sp.serverLevel(), x, y, z, yaw, pitch);
+            }));
+        }
     }
 
     private static void hud(boolean visible) {
@@ -402,7 +405,7 @@ public final class Showcase {
             }
         }));
         if (wants("08_replicator")) {
-            camera(1.5, Y + 2.5, 47, 180, 12);
+            camera(3.9, Y + 3.5, 45.0, 145, 24);
             step(100, () -> {});
             shot("08_replicator");
         }

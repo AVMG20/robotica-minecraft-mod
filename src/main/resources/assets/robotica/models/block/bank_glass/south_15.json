@@ -1,0 +1,28 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "particle": "robotica:block/bank_glass/0",
+    "pane": "robotica:block/bank_glass/15"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "texture": "#pane",
+          "cullface": "south"
+        }
+      }
+    }
+  ]
+}

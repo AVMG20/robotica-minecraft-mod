@@ -1,12 +1,12 @@
 """Renders a multiblock of scripts/wiki/multiblocks.json the way the game draws it once it has formed: casings turn
-into frame beams and wall panels, glass loses its frame, controllers face out and glow, the Tesla Spire's metal
+into frame beams and wall panels, glass joins up (with its neighbours, and once formed with the frame), controllers face out and glow, the Tesla Spire's metal
 column gets its coil shell (tinted like the metal), collider segments join up. Seen from the north-east, above, like
 the wiki's 3D view.
 
 Usage: python3 scripts/scene_preview.py out.png <multiblock id> [--plain] [--scale 3]
 --plain draws the blocks as placed (before the structure forms). The wiki's formed views (docs/wiki/formed/<id>.png)
 come from build_wiki.py through render_png().
-Keep FRAMED / frame_shape() in step with FramedPartBlock and StructureControllerBlockEntity.applyFormedLook.
+Keep FRAMED / frame_shape() / glass_sides() in step with FramedPartBlock, StructureGlassBlock and StructureLook.
 """
 import json
 import pathlib
@@ -19,9 +19,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 STATES = ROOT / 'src/main/resources/assets/robotica/blockstates'
 MBS = json.loads((ROOT / 'scripts/wiki/multiblocks.json').read_text())
 
-FRAMED = {'reactor_casing', 'bank_casing'}          # FramedPartBlock: frame=none|wall|x|y|z|corner
-FORMED_GLASS = {'reactor_glass', 'bank_glass'}       # formed=true drops the pane frame
-CONTROLLERS = {'reactor_controller', 'bank_controller', 'spire_base', 'collider_controller'}
+FRAMED = {'reactor_casing', 'bank_casing', 'replicator_frame'}     # FramedPartBlock: frame=none|wall|x|y|z|corner
+GLASS = {'reactor_glass', 'bank_glass', 'replicator_glass'}          # StructureGlassBlock: connected, formed
+CONTROLLERS = {'reactor_controller', 'bank_controller', 'spire_base', 'collider_controller', 'replicator_controller'}
 RING = {'accelerator_segment', 'resonant_segment', 'collider_controller'}
 # MapColor of the vanilla conductor blocks (the Spire renderer tints the coil shell with the block's map colour)
 MAP_COLORS = {
@@ -30,7 +30,7 @@ MAP_COLORS = {
     'emerald_block': 0x00D93A, 'netherite_block': 0x191919, 'redstone_block': 0xFF0000, 'lapis_block': 0x4A80FF,
 }
 ARC_TINT = (0.55, 0.95, 1.0)                         # SpireRenderer's arc colour on the coil slits
-FORMED_CHECKS = {'bank', 'core_reactor', 'spire', 'collider'}      # multiblocks with a formed look
+FORMED_CHECKS = {'bank', 'core_reactor', 'spire', 'collider', 'replicator'}      # multiblocks with a formed look
 # Full opaque cubes: a neighbour's face towards one is culled, like in a chunk. Glass also culls against its own kind.
 FULL = FRAMED | CONTROLLERS | {'bank_port', 'reactor_power_port', 'reactor_access_port', 'cryo_coolant'}
 FULL_PREFIXES = ('minecraft:', 'capacitor_', 'transfer_coil_')
@@ -105,6 +105,19 @@ def frame_shape(x, y, z, size):
     return 'wall'
 
 
+SIDE_STEPS = {'north': (0, 0, -1), 'south': (0, 0, 1), 'west': (-1, 0, 0), 'east': (1, 0, 0), 'up': (0, 1, 0),
+              'down': (0, -1, 0)}
+
+
+def glass_sides(grid, pos, block, formed):
+    """StructureGlassBlock.connect: a side joins the same glass, and once formed any opaque block."""
+    out = {}
+    for d, (dx, dy, dz) in SIDE_STEPS.items():
+        nb = grid.get((pos[0] + dx, pos[1] + dy, pos[2] + dz))
+        out[d] = str(nb == block or (formed and nb is not None and occludes(nb))).lower()
+    return out
+
+
 def scene(mb_id, formed=True):
     """[(block id, (x, y, z), props, tint)] in world-style coordinates: x east, y up, z south (layout rows go north
     to south)."""
@@ -130,8 +143,8 @@ def scene(mb_id, formed=True):
             props.update(formed=str(formed).lower(), lit=str(formed).lower())
         if formed and b in FRAMED:
             props['frame'] = frame_shape(x, y, z, (W, H, D))
-        if b in FORMED_GLASS:
-            props['formed'] = str(formed).lower()
+        if b in GLASS:
+            props.update(glass_sides(grid, (x, y, z), b, formed))
         if b == 'spire_crown':
             props.update(formed=str(formed).lower(), lit=str(formed).lower())
         if b in RING:
@@ -158,7 +171,7 @@ def render(mb_id, formed=True, scale=3.0, night=False):
     def culler(block, pos):
         def cull(n):
             nb = at.get((pos[0] + n[0], pos[1] + n[1], pos[2] + n[2]))
-            return nb is not None and (occludes(nb) or nb == 'spire_coil' or (nb == block and block in FORMED_GLASS))
+            return nb is not None and (occludes(nb) or nb == 'spire_coil' or (nb == block and block in GLASS))
         return cull
     trans = []      # half transparent pixels (glass), blended in at the end
     # screen bounds of the box corners

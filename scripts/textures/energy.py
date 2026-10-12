@@ -83,21 +83,38 @@ def hazard_trim(c, a):
     return c
 
 
-def glass(r, tint, glint, seed=0):
-    """Translucent pane in a thin frame of the family's metal, with streaked glints; edges tile into a grid."""
+def glass(r, tint, glint, joined=0):
+    """Translucent pane with streaked glints in a thin frame of the family's metal. Connected glass: `joined` has a bit
+    per side that joins a neighbour (1 top, 2 right, 4 bottom, 8 left) and loses its frame line, so a wall of panes
+    reads as one window with a frame round its outer edge."""
+    t, rt, b, lf = (not joined & 1, not joined & 2, not joined & 4, not joined & 8)
     c = Canvas()
     c.rect(0, 0, 16, 16, tint)
-    c.frame(0, 0, 16, 16, r[1])
-    c.rect(0, 0, 16, 1, r[3]).rect(0, 0, 1, 16, r[3])
-    c.set(0, 0, r[4]).set(15, 15, r[0])
-    c.line(3, 10, 10, 3, glint).line(4, 10, 10, 4, glint)
-    c.line(10, 13, 13, 10, glint)
-    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
-        c.set(x, y, r[2])
+    if b:
+        c.rect(0, 15, 16, 1, r[1])
+    if rt:
+        c.rect(15, 0, 1, 16, r[1])
+    if t:
+        c.rect(0, 0, 16, 1, r[3])
+    if lf:
+        c.rect(0, 0, 1, 16, r[3])
+    if t and lf:
+        c.set(0, 0, r[4])
+    if b and rt:
+        c.set(15, 15, r[0])
+    if joined:      # part of a pane: fewer glints, so a wall of them reads calm
+        c.line(2, 6, 6, 2, glint).line(3, 6, 6, 3, glint)
+        c.line(9, 14, 13, 10, glint)
+    else:
+        c.line(3, 10, 10, 3, glint).line(4, 10, 10, 4, glint)
+        c.line(10, 13, 13, 10, glint)
+    for x, y, s1, s2 in ((1, 1, t, lf), (14, 1, t, rt), (1, 14, b, lf), (14, 14, b, rt)):
+        if s1 and s2:
+            c.set(x, y, r[2])
     return c
 
 
-# ---------------------------------------------------------------- formed look (casings and glass once the controller has formed)
+# ---------------------------------------------------------------- formed look (casings once the controller has formed)
 
 def frame_side(r, accent, seed=0):
     """Formed frame beam, running top to bottom and seamless along it: bevelled rails with rivet rows either side of a
@@ -164,16 +181,6 @@ def panel(r, seed=0):
     for x in (7, 15):
         for y in (1, 9):
             c.rivet(x, y, r)
-    return c
-
-
-def glass_formed(tint, glint, seed=0):
-    """Formed window: the tinted pane without its frame and a few scattered glints, so panes merge into one window."""
-    c = Canvas()
-    c.rect(0, 0, 16, 16, tint)
-    c.line(2, 6, 6, 2, glint).line(3, 6, 6, 3, glint)
-    c.line(9, 14, 13, 10, glint)
-    c.set(12, 3, glint)
     return c
 
 
@@ -641,7 +648,6 @@ def strange_matter(frame_no):
 
 def main():
     write_block('reactor_casing', hazard_trim(casing(DK, 1), AM).rows(), P)
-    write_block('reactor_glass', glass(DK, '(', ')', 2).rows(), P)
     write_block('reactor_power_port', power_port(DK).rows(), P)
     write_block('reactor_power_port_glow', power_port_glow(DK).rows(), P)
     write_block('reactor_access_port', access_port(DK).rows(), P)
@@ -659,11 +665,11 @@ def main():
         write_block(f'{prefix}_frame_corner', frame_corner(r, a, 7).rows(), P)
         write_block(f'{prefix}_frame_corner_glow', frame_corner_glow(GLOW[r]).rows(), P)
         write_block(f'{prefix}_panel', panel(r, 8).rows(), P)
-        write_block(f'{prefix}_glass_formed', glass_formed(tint, glint).rows(), P)
+        for joined in range(16):
+            write_block(f'{prefix}_glass/{joined}', glass(r, tint, glint, joined).rows(), P)
     write_block('bank_frame_glow', frame_side_glow(CY).rows(), P)
 
     write_block('bank_casing', casing(SL, 3).rows(), P)
-    write_block('bank_glass', glass(SL, '[', ']', 4).rows(), P)
     write_block('bank_port_input', bank_port(False).rows(), P)
     write_block('bank_port_input_glow', bank_port_glow(False).rows(), P)
     write_block('bank_port_output', bank_port(True).rows(), P)

@@ -3,6 +3,8 @@ package com.arno.robotica.replicator.test;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.energy.block.FramedPartBlock;
+import com.arno.robotica.energy.block.StructureGlassBlock;
 import com.arno.robotica.replicator.ReplicatorRegistry;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlock;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
@@ -28,6 +30,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -167,6 +170,56 @@ public class ReplicatorGameTests {
             ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
             helper.assertTrue(be.isFormed(), "block entity should be formed");
         });
+    }
+
+    /**
+     * Formed, the frames turn into corner caps, edge beams along their axis and face panels, and the glass joins the
+     * frame; it all comes off when the cube breaks and when the controller is broken.
+     */
+    @GameTest(template = "empty")
+    public static void formedLookComesAndGoes(GameTestHelper helper) {
+        buildShell(helper, true);
+        BlockPos edgeGlass = new BlockPos(0, 1, 0);
+        helper.setBlock(edgeGlass, ReplicatorRegistry.REPLICATOR_GLASS.get());
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        BlockPos ctrl = helper.absolutePos(CONTROLLER);
+        be.validate(helper.getLevel(), ctrl, helper.getBlockState(CONTROLLER));
+        helper.assertTrue(be.isFormed(), "forms");
+        assertFrame(helper, new BlockPos(2, 2, 2), FramedPartBlock.Shape.CORNER);
+        assertFrame(helper, new BlockPos(1, 2, 2), FramedPartBlock.Shape.X);
+        assertFrame(helper, new BlockPos(2, 1, 2), FramedPartBlock.Shape.Y);
+        assertFrame(helper, new BlockPos(2, 0, 1), FramedPartBlock.Shape.Z);
+        assertFrame(helper, new BlockPos(1, 1, 2), FramedPartBlock.Shape.WALL);
+        BlockState glass = helper.getBlockState(GLASS);
+        helper.assertTrue(glass.getValue(StructureGlassBlock.FORMED), "the glass is formed");
+        helper.assertTrue(glass.getValue(StructureGlassBlock.side(Direction.EAST)), "formed glass joins the frame");
+        helper.assertTrue(glass.getValue(StructureGlassBlock.side(Direction.UP)), "and the glass above");
+        helper.assertFalse(glass.getValue(StructureGlassBlock.side(Direction.WEST)), "and keeps its frame towards the outside");
+
+        helper.setBlock(new BlockPos(2, 2, 2), Blocks.AIR);
+        be.validate(helper.getLevel(), ctrl, helper.getBlockState(CONTROLLER));
+        helper.assertFalse(be.isFormed(), "a missing corner breaks it");
+        assertFrame(helper, new BlockPos(1, 2, 2), FramedPartBlock.Shape.NONE);
+        assertFrame(helper, new BlockPos(1, 1, 2), FramedPartBlock.Shape.NONE);
+        glass = helper.getBlockState(GLASS);
+        helper.assertFalse(glass.getValue(StructureGlassBlock.FORMED), "the glass is loose again");
+        helper.assertFalse(glass.getValue(StructureGlassBlock.side(Direction.EAST)), "loose glass keeps its frame at a frame block");
+        helper.assertTrue(glass.getValue(StructureGlassBlock.side(Direction.UP)), "but stays joined to the glass above");
+
+        helper.setBlock(new BlockPos(2, 2, 2), ReplicatorRegistry.REPLICATOR_FRAME.get());
+        be.validate(helper.getLevel(), ctrl, helper.getBlockState(CONTROLLER));
+        assertFrame(helper, new BlockPos(2, 2, 2), FramedPartBlock.Shape.CORNER);
+        helper.setBlock(CONTROLLER, Blocks.AIR);
+        assertFrame(helper, new BlockPos(2, 2, 2), FramedPartBlock.Shape.NONE);
+        assertFrame(helper, new BlockPos(1, 1, 2), FramedPartBlock.Shape.NONE);
+        helper.assertFalse(helper.getBlockState(GLASS).getValue(StructureGlassBlock.FORMED), "breaking the controller takes the look off");
+        helper.succeed();
+    }
+
+    private static void assertFrame(GameTestHelper helper, BlockPos pos, FramedPartBlock.Shape shape) {
+        BlockState state = helper.getBlockState(pos);
+        helper.assertTrue(state.hasProperty(FramedPartBlock.FRAME) && state.getValue(FramedPartBlock.FRAME) == shape,
+                "frame at " + pos + " should be " + shape + ", got " + state);
     }
 
     /** The glow outlasts a short stall (no flicker on a weak supply) and goes out a second after the work stops. */

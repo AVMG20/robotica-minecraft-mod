@@ -7,6 +7,8 @@
   "tooltip.robotica.essence_vial": "Right-click a hostile mob to take a sample",
   "tooltip.robotica.essence_vial_samples": "Samples: %s/%s",
   "tooltip.robotica.essence_vial_complete": "Complete. Put it in a Replicator Controller",
+  "tooltip.robotica.replicator_frame": "Frame of a Mob Replicator",
+  "tooltip.robotica.replicator_glass": "Window of a Mob Replicator",
   "tooltip.robotica.replicator_controller": "Controller of a 3x3x3 Mob Replicator",
   "tooltip.robotica.replicator_controller_power": "%s FE/t, one cycle every %s s at base speed",
   "tooltip.robotica.replicator_controller_shape": "Frame all around, one Glass, hollow center",

@@ -67,19 +67,102 @@ def frame_glow():
     return c
 
 
-def glass():
-    """Translucent teal pane in a thin dark steel frame with streaked glints."""
+def glass(joined=0):
+    """Translucent teal pane in a two pixel dark steel frame with streaked glints. Connected glass: `joined` has a bit
+    per side that joins a neighbour (1 top, 2 right, 4 bottom, 8 left) and drops its frame there."""
+    t, r, b, lf = (not joined & 1, not joined & 2, not joined & 4, not joined & 8)
+    steel = Canvas()
+    steel.plate(0, 0, 16, 16, DS, 3, brushed=False)
     c = Canvas()
     c.rect(0, 0, 16, 16, 't')
-    c.rect(1, 1, 14, 14, 't')
-    c.plate(0, 0, 16, 16, DS, 3, brushed=False)
-    c.rect(1, 1, 14, 14, 't')
-    c.frame(1, 1, 14, 14, 'z')
-    c.line(3, 9, 9, 3, 'T').line(4, 9, 9, 4, 'T')
-    c.line(10, 13, 13, 10, 'T')
-    for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):
-        c.set(x, y, 'm')
+    x0, x1 = (1 if lf else 0), (14 if r else 15)
+    y0, y1 = (1 if t else 0), (14 if b else 15)
+    for side, on in (('t', t), ('b', b), ('l', lf), ('r', r)):
+        if not on:
+            continue
+        for i in range(16):
+            x, y = {'t': (i, 0), 'b': (i, 15), 'l': (0, i), 'r': (15, i)}[side]
+            c.set(x, y, steel.get(x, y))
+        if side in 'tb':
+            c.rect(x0, 1 if side == 't' else 14, x1 - x0 + 1, 1, 'z')
+        else:
+            c.rect(1 if side == 'l' else 14, y0, 1, y1 - y0 + 1, 'z')
+    if joined:      # part of a pane: fewer glints, so a wall of them reads calm
+        c.line(3, 6, 6, 3, 'T')
+        c.line(9, 13, 12, 10, 'T')
+    else:
+        c.line(3, 9, 9, 3, 'T').line(4, 9, 9, 4, 'T')
+        c.line(10, 13, 13, 10, 'T')
+    for x, y, s1, s2 in ((0, 0, t, lf), (15, 0, t, r), (0, 15, b, lf), (15, 15, b, r)):
+        if s1 and s2:
+            c.set(x, y, 'm')
     return c.rows()
+
+
+# ---- formed look: the controller sets frame=wall|x|y|z|corner on its frames (see scripts/data/replicator_models.py)
+
+def frame_beam():
+    """Edge beam, running top to bottom and seamless along it: bevelled rails either side of a sunken conduit (its
+    light is the overlay)."""
+    c = Canvas()
+    c.plate(0, 0, 16, 16, DS, 7, bevel=False, vertical=True, grain='Ss', density=0.3)
+    for x, ch in ((0, 'n'), (1, 'm'), (2, 'A'), (13, 'z'), (14, 'n'), (15, 'n')):
+        c.rect(x, 0, 1, 16, ch)
+    for y in (3, 11):
+        c.rivet(3, y, DS).rivet(11, y, DS)
+    c.rect(5, 0, 6, 16, 'z')
+    c.rect(5, 0, 1, 16, 'n').rect(10, 0, 1, 16, 'A')
+    c.rect(6, 0, 4, 16, 'n').rect(7, 0, 2, 16, 'q')
+    for y in (6, 14):
+        c.rect(6, y, 4, 1, 'z')
+    return c
+
+
+def frame_beam_glow():
+    """Thin teal conduit line along the beam, a little brighter halfway between the clamps."""
+    c = Canvas()
+    c.rect(7, 0, 2, 16, 'e')
+    for y in (2, 10):
+        c.set(7, y, 'E').set(8, y, 'E')
+    for y in (6, 14):
+        c.rect(7, y, 2, 1, '.')
+    return c
+
+
+def frame_corner():
+    """Corner cap where three beams meet: a heavy bevelled plate, four bolts and a sunken teal lens."""
+    c = Canvas()
+    c.plate(0, 0, 16, 16, DS, 8, grain='Ss', density=0.25)
+    c.frame(0, 0, 16, 16, 'n')
+    c.bevel(1, 1, 14, 14, 'm', 'z')
+    c.recess(4, 4, 8, 8, DS, fill='z')
+    c.disc(7.5, 7.5, 2.6, 'q')
+    c.disc(7.5, 7.5, 1.5, 'e')
+    for x, y in ((2, 2), (12, 2), (2, 12), (12, 12)):
+        c.rivet(x, y, DS)
+    return c
+
+
+def frame_corner_glow():
+    c = Canvas()
+    c.ring(7.5, 7.5, 1.6, 2.6, 'e')
+    c.rect(7, 7, 2, 2, 'E').set(7, 7, 'F')
+    return c
+
+
+def panel():
+    """Formed wall plating between the beams: one brushed surface with two ribs and a capped port in the middle."""
+    c = Canvas()
+    c.plate(0, 0, 16, 16, DS, 9, bevel=False, grain='Ss', density=0.22)
+    for y in (3, 11):
+        c.rect(0, y, 16, 1, 'z').rect(0, y + 1, 16, 1, 'A')
+    c.disc(7.5, 7.5, 3.4, 'z')
+    c.disc(7.5, 7.5, 2.6, 'a')
+    c.ring(7.5, 7.5, 1.0, 1.8, 'q')
+    c.set(6, 6, 'A')
+    for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
+        c.rivet(x, y, DS)
+    return c
 
 
 def controller_side():
@@ -202,7 +285,13 @@ def vial(fill_rows):
 def main():
     write_block('replicator_frame', frame(), P)
     write_block('replicator_frame_glow', frame_glow().rows(), P)
-    write_block('replicator_glass', glass(), P)
+    for joined in range(16):
+        write_block(f'replicator_glass/{joined}', glass(joined), P)
+    write_block('replicator_frame_beam', frame_beam().rows(), P)
+    write_block('replicator_frame_beam_glow', frame_beam_glow().rows(), P)
+    write_block('replicator_frame_corner', frame_corner().rows(), P)
+    write_block('replicator_frame_corner_glow', frame_corner_glow().rows(), P)
+    write_block('replicator_panel', panel().rows(), P)
     write_block('replicator_controller_side', controller_side(), P)
     write_block('replicator_controller_top', controller_top(), P)
     for state in ('off', 'formed', 'on'):
