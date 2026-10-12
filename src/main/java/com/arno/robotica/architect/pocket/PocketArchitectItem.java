@@ -22,8 +22,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -33,6 +32,8 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,15 +41,13 @@ import java.util.List;
 
 /**
  * Pocket Architect Mk1 / Mk2: a hand-held Architect Table without the plot grid. It stores matter (rustic, and refined on
- * the Mk2), eats junk from the player's inventory, hands out building blocks for matter and places the picked block on
+ * the Mk2), eats junk the player picks up, hands out building blocks for matter and places the picked block on
  * right-click. Mk1 makes the styles the table has without a casing; Mk2 makes every style. Sneak-right-click: GUI
  * ({@link PocketMenu}); sneak-right-click an Architect Table: move the stored matter into it.
  */
 public class PocketArchitectItem extends Item {
     /** Most matter of each grade a pocket holds. */
     public static final int CAP = 1_000_000_000;
-    /** Ticks between junk scans of the inventory. */
-    public static final int JUNK_INTERVAL = 10;
     public static final int BLOCKS = BuildStyle.values().length * Role.values().length;
     /** Junk the table's clear terrain voids; also the starting junk list of a pocket. */
     public static final TagKey<Item> VOIDABLE = TagKey.create(Registries.ITEM, Robotica.id("voidable"));
@@ -152,23 +151,33 @@ public class PocketArchitectItem extends Item {
         return fit;
     }
 
-    /** Eats the junk in the player's main inventory (not the pocket itself). Returns the number of items eaten. */
-    public int eatJunk(ItemStack pocket, Inventory inventory) {
-        PocketSettings settings = settings(pocket);
-        if (!settings.eatJunk()) return 0;
-        int eaten = 0;
-        for (int i = 0; i < inventory.items.size(); i++) {
-            ItemStack stack = inventory.items.get(i);
-            if (stack == pocket || !isJunk(settings, stack)) continue;
-            eaten += absorb(pocket, stack);
+    /**
+     * Feeds a stack the player is picking up to the pockets in their inventory (hotbar and main slots) that eat it as
+     * junk. Shrinks the stack; true when nothing is left of it.
+     */
+    public static boolean eatPickup(Player player, ItemStack picked) {
+        if (picked.isEmpty() || picked.getItem() instanceof PocketArchitectItem) return false;
+        var items = player.getInventory().items;
+        for (int i = 0; i < items.size() && !picked.isEmpty(); i++) {
+            ItemStack stack = items.get(i);
+            if (!(stack.getItem() instanceof PocketArchitectItem pocket)) continue;
+            PocketSettings settings = settings(stack);
+            if (settings.eatJunk() && isJunk(settings, picked)) pocket.absorb(stack, picked);
         }
-        return eaten;
+        return picked.isEmpty();
     }
 
-    @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (level.isClientSide || level.getGameTime() % JUNK_INTERVAL != 0 || !(entity instanceof Player player)) return;
-        if (eatJunk(stack, player.getInventory()) > 0) player.getInventory().setChanged();
+    /** Junk on the ground goes straight into a carried pocket instead of the inventory; stacks already carried stay. */
+    public static void onPickup(ItemEntityPickupEvent.Pre event) {
+        ItemEntity entity = event.getItemEntity();
+        Player player = event.getPlayer();
+        if (player.level().isClientSide || entity.hasPickUpDelay() || event.canPickup() == TriState.FALSE) return;
+        ItemStack stack = entity.getItem();
+        int count = stack.getCount();
+        if (!eatPickup(player, stack)) return;   // the rest, if any, is picked up as usual
+        player.take(entity, count);
+        entity.discard();
+        event.setCanPickup(TriState.FALSE);
     }
 
     // ---------------------------------------------------------------- matter out

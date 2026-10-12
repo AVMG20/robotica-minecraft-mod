@@ -3,6 +3,7 @@ package com.arno.robotica.architect;
 import com.arno.robotica.architect.matter.MatterTable;
 import com.arno.robotica.architect.net.ArchitectActionPayload;
 import com.arno.robotica.architect.pocket.PocketActionPayload;
+import com.arno.robotica.architect.pocket.PocketArchitectItem;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -24,6 +25,7 @@ public final class ArchitectModule {
         modBus.addListener(ArchitectModule::registerCapabilities);
         modBus.addListener(ArchitectModule::registerPayloads);
         NeoForge.EVENT_BUS.addListener(MatterTable::onTagsUpdated);
+        NeoForge.EVENT_BUS.addListener(PocketArchitectItem::onPickup);
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {

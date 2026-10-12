@@ -672,7 +672,7 @@
     "pocket_architect",
     "pocket_architect_mk2"
    ],
-   "what": "A hand-held [[architect_table]] for mining trips: eats junk from your inventory and hands out building blocks.",
+   "what": "A hand-held [[architect_table]] for mining trips: eats the junk you pick up and hands out building blocks.",
    "use": [
     "In its GUI, click a block to take it, right-click it to pick it for placing.",
     "Edit the junk list in its GUI, or turn junk eating off."

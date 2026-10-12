@@ -16,6 +16,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
@@ -25,6 +26,9 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -47,28 +51,29 @@ public class PocketArchitectGameTests {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         ItemStack pocket = pocket(false);
         var inv = player.getInventory();
-        inv.setItem(0, pocket);
+        inv.setItem(5, pocket);
         inv.setItem(1, new ItemStack(Items.COBBLESTONE, 10));
-        inv.setItem(2, new ItemStack(Items.DIAMOND, 2));
-        inv.setItem(3, new ItemStack(Items.OAK_LOG, 3));
-        inv.setItem(4, new ItemStack(Items.DIRT, 5));
 
         helper.assertTrue(PocketArchitectItem.junkList(PocketArchitectItem.settings(pocket)).contains(Items.COBBLESTONE),
                 "the starting junk list is the table's voidable junk");
-        helper.assertTrue(item(pocket).eatJunk(pocket, inv) == 15, "cobblestone and dirt are eaten");
-        helper.assertTrue(PocketArchitectItem.matter(pocket).equals(new Matter(15, 0)), "junk turns into rustic, got " + PocketArchitectItem.matter(pocket));
-        helper.assertTrue(inv.getItem(1).isEmpty() && inv.getItem(4).isEmpty(), "eaten junk is gone");
-        helper.assertTrue(inv.getItem(2).getCount() == 2 && inv.getItem(3).getCount() == 3, "diamonds and logs are no junk");
-        helper.assertTrue(inv.getItem(0) == pocket, "the pocket keeps itself");
+        ItemStack dirt = new ItemStack(Items.DIRT, 5);
+        helper.assertTrue(PocketArchitectItem.eatPickup(player, dirt) && dirt.isEmpty(), "picked up dirt is eaten");
+        helper.assertTrue(PocketArchitectItem.matter(pocket).equals(new Matter(5, 0)), "junk turns into rustic, got " + PocketArchitectItem.matter(pocket));
+        helper.assertTrue(inv.getItem(1).getCount() == 10, "junk already carried stays");
+        ItemStack diamonds = new ItemStack(Items.DIAMOND, 2);
+        ItemStack logs = new ItemStack(Items.OAK_LOG, 3);
+        helper.assertTrue(!PocketArchitectItem.eatPickup(player, diamonds) && diamonds.getCount() == 2, "diamonds are no junk");
+        helper.assertTrue(!PocketArchitectItem.eatPickup(player, logs) && logs.getCount() == 3, "logs are not on the starting list");
 
         PocketArchitectItem.setSettings(pocket, PocketArchitectItem.settings(pocket).withJunk(List.of(Items.OAK_LOG)));
-        inv.setItem(1, new ItemStack(Items.COBBLESTONE, 4));
-        helper.assertTrue(item(pocket).eatJunk(pocket, inv) == 3, "an edited list eats only what is on it");
-        helper.assertTrue(PocketArchitectItem.matter(pocket).rustic() == 15 + 12 && inv.getItem(1).getCount() == 4, "logs are 4 rustic, cobble stays");
+        helper.assertTrue(PocketArchitectItem.eatPickup(player, logs), "an edited list eats what is on it");
+        helper.assertTrue(PocketArchitectItem.matter(pocket).rustic() == 5 + 12, "logs are 4 rustic");
+        ItemStack cobble = new ItemStack(Items.COBBLESTONE, 4);
+        helper.assertTrue(!PocketArchitectItem.eatPickup(player, cobble) && cobble.getCount() == 4, "cobble is off the edited list");
 
         PocketArchitectItem.setSettings(pocket, PocketArchitectItem.settings(pocket).withEatJunk(false));
-        inv.setItem(3, new ItemStack(Items.OAK_LOG, 3));
-        helper.assertTrue(item(pocket).eatJunk(pocket, inv) == 0, "eating can be turned off");
+        ItemStack more = new ItemStack(Items.OAK_LOG, 3);
+        helper.assertTrue(!PocketArchitectItem.eatPickup(player, more) && more.getCount() == 3, "eating can be turned off");
 
         helper.assertTrue(!item(pocket).accepts(new ItemStack(Items.IRON_INGOT)), "the Mk1 holds no refined matter");
         ItemStack mk2 = pocket(true);
@@ -79,6 +84,30 @@ public class PocketArchitectGameTests {
         PocketArchitectItem.setMatter(mk2, new Matter(PocketArchitectItem.CAP - 1, 0));
         ItemStack cobble = new ItemStack(Items.COBBLESTONE, 5);
         helper.assertTrue(item(mk2).absorb(mk2, cobble) == 1 && cobble.getCount() == 4, "a full pocket leaves the rest");
+        helper.succeed();
+    }
+
+    /** The pickup event: a junk item on the ground goes into the pocket and the item entity is gone. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void pocketEatsJunkOnPickup(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack pocket = pocket(false);
+        player.getInventory().setItem(0, pocket);
+        BlockPos abs = helper.absolutePos(new BlockPos(1, 1, 1));
+        ItemEntity gravel = new ItemEntity(helper.getLevel(), abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, new ItemStack(Items.GRAVEL, 7));
+        gravel.setNoPickUpDelay();
+        helper.getLevel().addFreshEntity(gravel);
+        var event = NeoForge.EVENT_BUS.post(new ItemEntityPickupEvent.Pre(player, gravel));
+        helper.assertTrue(event.canPickup() == TriState.FALSE && gravel.isRemoved(), "the gravel is eaten, not picked up");
+        helper.assertTrue(PocketArchitectItem.matter(pocket).rustic() == 7, "7 gravel is 7 rustic");
+        helper.assertTrue(player.getInventory().countItem(Items.GRAVEL) == 0, "no gravel in the inventory");
+
+        ItemEntity diamond = new ItemEntity(helper.getLevel(), abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, new ItemStack(Items.DIAMOND));
+        diamond.setNoPickUpDelay();
+        helper.getLevel().addFreshEntity(diamond);
+        var other = NeoForge.EVENT_BUS.post(new ItemEntityPickupEvent.Pre(player, diamond));
+        helper.assertTrue(other.canPickup() != TriState.FALSE && !diamond.isRemoved(), "a diamond is picked up as usual");
+        diamond.discard();
         helper.succeed();
     }
 
