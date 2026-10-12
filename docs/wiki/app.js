@@ -21,7 +21,7 @@ const HOME_TAGS = {
   flight_module: 'Yes, you can fly', exo_helmet_mk1: 'Night vision, rebreather', exo_chestplate_mk1: 'Double jump, shield, flight',
   exo_leggings_mk1: 'Run faster', exo_boots_mk1: 'No fall damage, item magnet', upgrade_speed: 'Stack them. Go faster.',
   upgrade_range: 'Bigger work area', upgrade_fortune: 'More ore per ore', upgrade_void: 'Bye, cobblestone', upgrade_growth: 'Crops grow faster',
-  codex: 'Your guide. Every player gets one.', recall_remote: 'Hold to go home', tesla_linker: 'Click a coil, then a machine',
+  codex: 'Your guide. Every player gets one.', warp_remote: 'Hold to go home', tesla_linker: 'Click a coil, then a machine',
   signal_flare: 'Wakes the Scrap Colossus', storage_expansion_mk1: 'More room in your terminal', buddy_bot_mk2: 'More cargo, harder hits',
   courier_drone_mk2: 'Three stacks per trip', magnet_module: 'Items fly to you',
   night_vision_module: 'See in the dark', jet_assist_module: 'Double jump, soft landings', grinder_mk1: 'Two dusts per ore',
