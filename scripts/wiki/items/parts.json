@@ -770,7 +770,7 @@
    "what": "Wakes the Null Sentinel boss. Found in Null Relays on the outer End islands, or craft your own.",
    "use": [
     "Right-click it with a [[null_key]].",
-    "Needs 3x3x4 air above. 5 min cooldown."
+    "5 min cooldown."
    ],
    "see": [
     "guide:bosses"
