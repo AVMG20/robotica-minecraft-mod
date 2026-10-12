@@ -65,7 +65,7 @@ public final class PowerRegistry {
     public static final DeferredBlock<WindingCrankBlock> WINDING_CRANK = BLOCKS.registerBlock("winding_crank", WindingCrankBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD).noOcclusion());
     public static final DeferredBlock<CombustionGeneratorBlock> COMBUSTION_GENERATOR = BLOCKS.registerBlock("combustion_generator",
-            CombustionGeneratorBlock::new, machine().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 13 : 0));
+            CombustionGeneratorBlock::new, machine().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 13 : 0));
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK1 = BLOCKS.registerBlock("solar_panel_mk1",
             p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK1), machine().noOcclusion());
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK2 = BLOCKS.registerBlock("solar_panel_mk2",
@@ -87,7 +87,7 @@ public final class PowerRegistry {
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_3 = teslaEmitter(TeslaTier.III);
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_4 = teslaEmitter(TeslaTier.IV);
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_5 = teslaEmitter(TeslaTier.V);
-    public static final DeferredBlock<ChargerBlock> CHARGER = BLOCKS.registerBlock("charger", ChargerBlock::new, machine());
+    public static final DeferredBlock<ChargerBlock> CHARGER = BLOCKS.registerBlock("charger", ChargerBlock::new, machine().noOcclusion());
     public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock("metal_press", MetalPressBlock::new, machine().noOcclusion());
     public static final DeferredBlock<com.arno.robotica.power.block.WirelessChargerBlock> WIRELESS_CHARGER = BLOCKS.registerBlock("wireless_charger",
             com.arno.robotica.power.block.WirelessChargerBlock::new, machine().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 9 : 3));

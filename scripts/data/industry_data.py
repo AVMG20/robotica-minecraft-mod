@@ -344,12 +344,12 @@ def machine_casing(tier):
 
 
 def smelter_model(tier, lit):
-    """The front opens into a bay 3 px deep (SMELTER_BAY in scripts/textures/industry.py: x 3..12, y 3..12 of the front
+    """The front opens into a bay 2 px deep (SMELTER_BAY in scripts/textures/industry.py: x 3..12, y 3..12 of the front
     texture) with the chamber texture on its walls. In it a crucible floats over the bay floor, a spout pours (while
     working) into a mould; their faces come from the parts atlas (SMELTER_PARTS there). Full-bright while working."""
     name = f'alloy_smelter_mk{tier}'
     faces = dict(machine_casing(tier), north=f'{name}_front' + ('_on' if lit else ''), up=f'{name}_top')
-    x0, x1, y0, y1, z = 3, 13, 3, 13, 3                                   # bay in model space
+    x0, x1, y0, y1, z = 3, 13, 3, 13, 2                                   # bay in model space
 
     def wall(d, uv):
         return {'from': [x0 if d != 'west' else x1, y0 if d != 'down' else y1, 0 if d != 'north' else z],
@@ -358,14 +358,14 @@ def smelter_model(tier, lit):
 
     def part(a, b, uvs):
         return {'from': a, 'to': b, 'faces': {d: {'texture': '#parts', 'uv': uv} for d, uv in uvs.items()}, 'glow': lit}
-    els = [wall('north', [3, 3, 13, 13]), wall('east', [13, 3, 16, 13]), wall('west', [0, 3, 3, 13]),
-           wall('up', [13, 0, 3, 3]), wall('down', [13, 13, 3, 16]),
-           part([6, 5, 0.5], [12, 10, 2.5], {'north': [0, 0, 6, 5], 'up': [6, 6, 0, 8], 'east': [6, 0, 8, 5],
-                                              'west': [8, 0, 10, 5], 'down': [0, 3, 6, 4]}),
+    els = [wall('north', [3, 3, 13, 13]), wall('east', [13, 3, 15, 13]), wall('west', [1, 3, 3, 13]),
+           wall('up', [13, 1, 3, 3]), wall('down', [13, 13, 3, 15]),
+           part([6, 5, 0.5], [12, 10, 2], {'north': [0, 0, 6, 5], 'up': [6, 6, 0, 8], 'east': [6, 0, 8, 5],
+                                            'west': [8, 0, 10, 5], 'down': [0, 3, 6, 4]}),
            part([5, 9, 1], [6, 10, 2], {'north': [10, 0, 11, 1], 'up': [10, 1, 11, 2], 'west': [10, 0, 11, 1],
                                         'down': [10, 0, 11, 1]}),
-           part([3, 3, 0.5], [7, 4, 2.5], {'north': [0, 9, 4, 10], 'up': [4, 10, 0, 12], 'east': [4, 9, 6, 10],
-                                            'west': [4, 9, 6, 10]})]
+           part([3, 3, 0.5], [7, 4, 2], {'north': [0, 9, 4, 10], 'up': [4, 10, 0, 12], 'east': [4, 9, 6, 10],
+                                          'west': [4, 9, 6, 10]})]
     if lit:                                                               # the pour
         els.append(part([5, 4, 1], [6, 9, 2], {d: [12, 0, 13, 5] for d in ('north', 'east', 'west')}))
     glow = {'north': 'alloy_smelter_front_glow', 'up': 'alloy_smelter_top_glow'} if lit else None
@@ -375,11 +375,11 @@ def smelter_model(tier, lit):
 
 
 def centrifuge_model(tier, lit):
-    """The drum sits 2 px behind the round porthole of the front, its spinning light on a full-bright layer."""
+    """The drum sits 1 px behind the round porthole of the front, its spinning light on a full-bright layer."""
     faces = dict(machine_casing(tier), north=f'centrifuge_mk{tier}_front' + ('_on' if lit else ''), up=f'centrifuge_mk{tier}_top')
-    drum = [{'from': [0, 0, 2], 'to': [16, 16, 2], 'faces': {'north': {'texture': '#drum'}}}]
+    drum = [{'from': [0, 0, 1], 'to': [16, 16, 1], 'faces': {'north': {'texture': '#drum'}}}]
     if lit:
-        drum.append({'from': [0, 0, 2], 'to': [16, 16, 2], 'glow': True, 'faces': {'north': {'texture': '#drum_glow'}}})
+        drum.append({'from': [0, 0, 1], 'to': [16, 16, 1], 'glow': True, 'faces': {'north': {'texture': '#drum_glow'}}})
     textures = {'drum': 'centrifuge_drum', 'drum_glow': 'centrifuge_front_glow'}
     return machine_model(faces, {'up': 'centrifuge_top_glow'} if lit else None, drum, textures, lit=lit)
 
@@ -398,6 +398,27 @@ def assembler_model(tier, lit):
     textures = {'bay': 'assembler_bay' + ('_on' if lit else ''), 'wall': 'assembler_bay_wall', 'bay_glow': 'assembler_bay_glow'}
     glow = {'north': 'assembler_front_glow', 'up': 'assembler_top_glow'} if lit else None
     return machine_model(faces, glow, bay, textures, lit=lit)
+
+
+def rtg_model(lit):
+    """Gunmetal casing with a window 2 px deep in the front (RTG_WINDOW in scripts/textures/industry.py: x 4..11,
+    y 3..12) and the pellet column standing in it from floor to roof; their faces come from the core atlas (RTG_PARTS
+    there), full-bright while working."""
+    suffix = '_on' if lit else ''
+    faces = {'down': 'rtg_bottom', 'up': 'rtg_top', 'south': 'rtg_side', 'west': 'rtg_side', 'east': 'rtg_side',
+             'north': 'rtg_front' + suffix}
+    x0, x1, y0, y1, z = 4, 12, 3, 13, 2
+
+    def el(a, b, uvs):
+        return {'from': a, 'to': b, 'faces': {d: {'texture': '#core', 'uv': uv} for d, uv in uvs.items()}, 'glow': lit}
+    els = [el([x0, y0, z], [x1, y1, z], {'north': [0, 0, 8, 10]}),
+           el([x1, y0, 0], [x1, y1, z], {'west': [8, 0, 10, 10]}),
+           el([x0, y0, 0], [x0, y1, z], {'east': [10, 0, 12, 10]}),
+           el([x0, y1, 0], [x1, y1, z], {'down': [0, 10, 8, 12]}),
+           el([x0, y0, 0], [x1, y0, z], {'up': [0, 12, 8, 14]}),
+           el([6, y0, 0.5], [10, y1, z], {'north': [12, 0, 16, 10], 'east': [12, 0, 13, 10], 'west': [15, 0, 16, 10]})]
+    glow = {'north': 'rtg_front_glow', 'up': 'rtg_top_glow'} if lit else None
+    return machine_model(faces, glow, els, {'core': 'rtg_core' + suffix}, lit=lit)
 
 
 MACHINE_MODELS = {'alloy_smelter': smelter_model, 'centrifuge': centrifuge_model, 'assembler': assembler_model}
@@ -427,9 +448,8 @@ def models():
             machine_blockstate(name)
             item_block(name)
             loot_self(name)
-    faces = {'down': 'industry_bottom', 'up': 'rtg_top', 'south': 'rtg_side', 'west': 'rtg_side', 'east': 'rtg_side'}
-    block_model('rtg', cube(dict(faces, north='rtg_front')))
-    block_model('rtg_on', cube(dict(faces, north='rtg_front'), {'north': 'rtg_front_glow', 'up': 'rtg_top_glow'}))
+    block_model('rtg', rtg_model(False))
+    block_model('rtg_on', rtg_model(True))
     machine_blockstate('rtg')
     item_block('rtg')
     loot_self('rtg')

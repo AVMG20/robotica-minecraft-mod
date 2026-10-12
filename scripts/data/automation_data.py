@@ -152,33 +152,43 @@ def sprout_elements():
     return els
 
 
-def excavator_elements():
-    return [
-        {'from': [1, 5, 1], 'to': [15, 13, 15], 'faces': {
-            'north': {'texture': '#side'}, 'south': {'texture': '#side'}, 'east': {'texture': '#side'},
-            'west': {'texture': '#side'}, 'up': {'texture': '#steel'}, 'down': {'texture': '#dark'}}},
-        box((0, 5, 0), (2.5, 13, 2.5), 'dark'),
-        box((13.5, 5, 0), (16, 13, 2.5), 'dark'),
-        box((0, 5, 13.5), (2.5, 13, 16), 'dark'),
-        box((13.5, 5, 13.5), (16, 13, 16), 'dark'),
-        # motor on top
-        box((3, 13, 3), (13, 14, 13), 'dark'),
-        box((4, 14, 4), (12, 16, 12), 'accent'),    # motor housing: brass on Mk1, the Mk colour above
-        # vents and indicator light
-        box((3, 6, 0.7), (13, 8, 1), 'dark', faces=('north',)),
-        box((3, 6, 15), (13, 8, 15.3), 'dark', faces=('south',)),
-        box((15, 6, 3), (15.3, 8, 13), 'dark', faces=('east',)),
-        box((0.7, 6, 3), (1, 8, 13), 'dark', faces=('west',)),
-        {'from': [6.5, 9.5, 0.6], 'to': [9.5, 11.5, 1], 'shade': False, 'faces': {
-            'north': {'texture': '#light', 'uv': [5, 5, 8, 7], 'neoforge_data': dict(GLOW)}}},
-        box((3, 9.5, 0.6), (5, 11.5, 1), 'brass', faces=('north',)),
-        box((11, 9.5, 0.6), (13, 11.5, 1), 'brass', faces=('north',)),
-        # drill head underneath
-        box((4, 3, 4), (12, 5, 12), 'dark'),
-        box((5, 1.8, 5), (11, 3, 11), 'drill'),
-        box((6.2, 0.8, 6.2), (9.8, 1.8, 9.8), 'drill'),
-        box((7.3, 0, 7.3), (8.7, 0.8, 8.7), 'steel'),
+def excavator_elements(lit=False):
+    """Drill cage: base slab, four corner pillars and a lintel slab round an open bay on every side, 2 px deep, whose
+    back wall (the core) shows the drill column; the motor on top. Every face samples its default uv (see the
+    excavator section of scripts/textures/automation.py). Coplanar full-bright overlays light the beacons (standby
+    while idle) and, lit, the frame channels and lamp bars, the drill collar and bit, and the motor ring."""
+    sides = ('north', 'east', 'south', 'west')
+
+    def el(a, b, faces, glow=False):
+        e = {'from': list(a), 'to': list(b), 'faces': faces}
+        if glow:
+            e['shade'] = False
+            for f in faces.values():
+                f['neoforge_data'] = dict(GLOW)
+        return e
+
+    def f(tex, cull=None):
+        return {'texture': '#' + tex, **({'cullface': cull} if cull else {})}
+
+    els = [
+        el((0, 0, 0), (16, 2, 16), dict({d: f('frame', d) for d in sides}, up=f('floor'), down=f('bottom', 'down'))),
+        el((0, 12, 0), (16, 14, 16), dict({d: f('frame', d) for d in sides}, up=f('top'), down=f('ceiling'))),
+        el((2, 2, 2), (14, 12, 14), {d: f('core') for d in sides}),
+        el((3, 14, 3), (13, 16, 13), dict({d: f('motor_side') for d in sides}, up=f('motor', 'up'))),
     ]
+    for x, z in ((0, 0), (13, 0), (13, 13), (0, 13)):                      # pillars: outer faces frame, inner walls
+        faces = {}
+        for d, outer in (('north', z == 0), ('south', z == 13), ('west', x == 0), ('east', x == 13)):
+            faces[d] = f('frame', d) if outer else f('wall')
+        els.append(el((x, 2, z), (x + 3, 12, z + 3), faces))
+    els += [el((0, 12, 0), (16, 14, 16), {'up': f('top_glow')}, glow=True),
+            el((0, 0, 0), (16, 14, 16), {d: f('frame_glow', d) for d in sides}, glow=True)]
+    if lit:
+        els += [
+            el((2, 2, 2), (14, 12, 14), {d: f('core_glow') for d in sides}, glow=True),
+            el((3, 14, 3), (13, 16, 13), {'up': f('motor_glow', 'up')}, glow=True),
+        ]
+    return els
 
 
 def model(textures, elements, particle):
@@ -260,20 +270,22 @@ def main():
     robot('stumpy', stumpy_elements(), STUMPY_ARMS, 'automation_copper')
     robot('sprout', sprout_elements(), SPROUT_ARMS, 'automation_brass')
 
-    # Excavator Mk1-4: one base model; the Mk swaps the motor housing colour, LIT swaps in the spinning drill and the
-    # blinking lamp. Mk1 keeps the id "excavator".
-    tex = {'steel': 'robotica:block/automation_steel', 'dark': 'robotica:block/automation_dark',
-           'brass': 'robotica:block/automation_brass', 'drill': 'robotica:block/excavator_drill',
-           'light': 'robotica:block/excavator_light', 'side': 'robotica:block/excavator_side',
-           'accent': 'robotica:block/automation_brass'}
-    write(ASSETS / 'models/block/excavator.json', model(tex, excavator_elements(), 'robotica:block/automation_steel'))
-    working = {'drill': 'robotica:block/excavator_drill_on', 'light': 'robotica:block/excavator_light_on'}
+    # Excavator Mk1-4: full models per Mk (tier metal brackets) and state (LIT: turning drill, lamps and glow).
+    # Mk1 keeps the id "excavator".
     for tier in range(1, 5):
         name = 'excavator' if tier == 1 else f'excavator_mk{tier}'
-        accent = {} if tier == 1 else {'accent': f'robotica:block/automation_mk{tier}'}
-        if tier > 1:
-            write(ASSETS / f'models/block/{name}.json', {'parent': 'robotica:block/excavator', 'textures': accent})
-        write(ASSETS / f'models/block/{name}_on.json', {'parent': 'robotica:block/excavator', 'textures': dict(accent, **working)})
+        mk = f'robotica:block/excavator_mk{tier}'
+        for lit in (False, True):
+            on = '_on' if lit else ''
+            tex = {'frame': f'{mk}_frame', 'top': f'{mk}_top', 'motor': f'{mk}_motor'}
+            for part in ('bottom', 'wall', 'floor', 'ceiling', 'motor_side'):
+                tex[part] = f'robotica:block/excavator_{part}'
+            for part in ('core', 'top_glow', 'frame_glow'):
+                tex[part] = f'robotica:block/excavator_{part}{on}'
+            if lit:
+                for part in ('core_glow', 'motor_glow'):
+                    tex[part] = f'robotica:block/excavator_{part}'
+            write(ASSETS / f'models/block/{name}{on}.json', model(tex, excavator_elements(lit), f'{mk}_frame'))
         write(ASSETS / f'blockstates/{name}.json', {'variants': {
             'lit=false': {'model': f'robotica:block/{name}'}, 'lit=true': {'model': f'robotica:block/{name}_on'}}})
         write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})

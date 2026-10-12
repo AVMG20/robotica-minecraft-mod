@@ -1,79 +1,94 @@
 """Survey Rig data: block model, blockstate, item model, loot table and recipe.
 Run: python3 scripts/data/automation_survey_rig.py   (overwrites only Survey Rig files)
 
-The model faces north (-Z); the blockstate turns it toward the player. A tall plated tower on a plinth, a glowing
-scan band around it, a scan window on the front, a mast with a tilted scanner dish and a glowing receiver on top.
-The band, window and receiver are emissive (neoforge_data block_light / sky_light 15).
+The model faces north (-Z); the blockstate turns it toward the player. A plinth, a tower with a depth display on its
+front, a mast with a scanner dish tilted toward the front and its amber feed lamp (textures:
+scripts/textures/survey_rig.py). Coplanar full-bright overlays carry the lights: the plinth's work light strip (at
+standby while idle) and, working, the dish's scan rings, the display's scan bar and the tower's energy channels.
 """
 import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from automation_data import ASSETS, box, loot, shaped, write  # noqa: E402
+from automation_data import ASSETS, loot, shaped, write  # noqa: E402
 
-GLOW = {'block_light': 15, 'sky_light': 15}
-SIDES = ('north', 'south', 'east', 'west')
-
-
-def glowing(el):
-    for face in el['faces'].values():
-        face['neoforge_data'] = dict(GLOW)
-    return el
+GLOW = {'block_light': 15, 'sky_light': 15, 'ambient_occlusion': False}
+SIDES = ('north', 'east', 'south', 'west')
 
 
-def rotated(el, angle, origin=(8, 15, 8), axis='x'):
-    el['rotation'] = {'origin': list(origin), 'axis': axis, 'angle': angle}
-    return el
+def el(a, b, faces, glow=False):
+    e = {'from': list(a), 'to': list(b), 'faces': faces}
+    if glow:
+        e['shade'] = False
+        for f in faces.values():
+            f['neoforge_data'] = dict(GLOW)
+    return e
 
 
-def elements():
+def f(tex, cull=None, uv=None):
+    face = {'texture': '#' + tex}
+    if uv:
+        face['uv'] = uv
+    if cull:
+        face['cullface'] = cull
+    return face
+
+
+def rotated(e):
+    """Tilt a dish part back 22.5 degrees round the dish centre, so the dish faces up and forward."""
+    e['rotation'] = {'origin': [8, 13.6, 8], 'axis': 'x', 'angle': -22.5}
+    return e
+
+
+def elements(lit):
     els = [
-        # plinth with a brass trim
-        box((0, 0, 0), (16, 3, 16), 'dark'),
-        box((0.5, 3, 0.5), (15.5, 4, 15.5), 'accent'),     # trim: brass on Mk1, the Mk colour above
-        # the tower and its corner posts
-        box((2, 4, 2), (14, 13, 14), 'panel'),
-        box((1.5, 4, 1.5), (3.5, 13, 3.5), 'dark'),
-        box((12.5, 4, 1.5), (14.5, 13, 3.5), 'dark'),
-        box((1.5, 4, 12.5), (3.5, 13, 14.5), 'dark'),
-        box((12.5, 4, 12.5), (14.5, 13, 14.5), 'dark'),
-        # glowing scan band around the tower
-        glowing(box((1.9, 6.6, 3.5), (14.1, 7.4, 12.5), 'glow', faces=('east', 'west'))),
-        glowing(box((3.5, 6.6, 13.9), (12.5, 7.4, 14.1), 'glow', faces=('south',))),
-        # scan window on the front
-        glowing(box((4.5, 8, 1.8), (11.5, 12, 2), 'scan', faces=('north',))),
-        glowing(box((3.5, 6.6, 1.8), (12.5, 7.4, 2), 'glow', faces=('north',))),
-        # cap, mast, dish and receiver
-        box((3, 13, 3), (13, 14, 13), 'dark'),
-        box((7, 14, 7), (9, 16, 9), 'steel'),
-        rotated(box((2.5, 15, 2.5), (13.5, 16, 13.5), 'steel', faces=('north', 'south', 'east', 'west', 'down')), -22.5),
-        rotated(box((2.5, 15, 2.5), (13.5, 16, 13.5), 'dish', faces=('up',)), -22.5),
-        rotated(box((7.5, 16, 7.5), (8.5, 18.5, 8.5), 'steel'), -22.5),
-        rotated(glowing(box((7, 18.5, 7), (9, 19.5, 9), 'glow')), -22.5),
+        el((0, 0, 0), (16, 4, 16), dict({d: f('base_side', d) for d in SIDES}, up=f('base_top'),
+                                        down=f('bottom', 'down'))),
+        el((2, 4, 2), (14, 11, 14), dict({d: f('side') for d in ('east', 'south', 'west')}, north=f('front'),
+                                         up=f('top'))),
+        el((3, 5, 1), (13, 10, 2), {d: f('screen') for d in ('north', 'east', 'west', 'up', 'down')}),
+        el((6.5, 11, 6.5), (9.5, 13.5, 9.5), {d: f('mast') for d in SIDES}),
+        rotated(el((2.5, 13.35, 2.5), (13.5, 13.85, 13.5), {'up': f('dish'), 'down': f('dish_back')})),
+        rotated(el((7, 13.85, 7), (9, 15.35, 9), dict({d: f('feed', uv=[0, 0, 2, 1.5]) for d in SIDES},
+                                                     up=f('feed', uv=[0, 0, 2, 2])), glow=True)),
+        el((0, 0, 0), (16, 4, 16), {d: f('base_glow', d) for d in SIDES}, glow=True),
     ]
+    if lit:
+        els += [
+            el((2, 4, 2), (14, 11, 14), {d: f('channel') for d in ('east', 'south', 'west')}, glow=True),
+            el((3, 5, 0.99), (13, 10, 0.99), {'north': f('screen_glow')}, glow=True),
+            rotated(el((2.5, 13.86, 2.5), (13.5, 13.86, 13.5), {'up': f('dish_glow')}, glow=True)),
+        ]
     return els
 
 
+def textures(tier, lit):
+    mk = f'robotica:block/survey_rig_mk{tier}'
+    on = '_on' if lit else ''
+    t = {d: f'{mk}_{d}' for d in ('base_side', 'base_top', 'side', 'front', 'top', 'dish')}
+    t['particle'] = f'{mk}_side'
+    for part in ('bottom', 'dish_back', 'mast'):
+        t[part] = f'robotica:block/survey_rig_{part}'
+    for part in ('screen', 'feed', 'base_glow'):
+        t[part] = f'robotica:block/survey_rig_{part}{on}'
+    if lit:
+        t['channel'] = 'robotica:block/survey_rig_channel_glow'
+        for part in ('screen_glow', 'dish_glow'):
+            t[part] = f'robotica:block/survey_rig_{part}'
+    return t
+
+
 def main():
-    textures = {'panel': 'robotica:block/survey_rig_panel', 'dark': 'robotica:block/automation_dark',
-                'steel': 'robotica:block/automation_steel', 'brass': 'robotica:block/automation_brass',
-                'scan': 'robotica:block/survey_rig_scan', 'dish': 'robotica:block/survey_rig_dish',
-                'glow': 'robotica:block/survey_rig_glow', 'particle': 'robotica:block/survey_rig_panel',
-                'accent': 'robotica:block/automation_brass'}
-    write(ASSETS / 'models/block/survey_rig.json', {
-        'render_type': 'minecraft:cutout',
-        'parent': 'minecraft:block/block',
-        'textures': textures,
-        'elements': elements(),
-    })
-    # Mk1-4 share the model: the Mk colours the trim, LIT (working) swaps in the sweeping scan and the pulsing band.
-    working = {'scan': 'robotica:block/survey_rig_scan_on', 'glow': 'robotica:block/survey_rig_glow_on'}
+    # Mk1-4: full models per Mk (tier metal trims) and state (LIT: scan rings, scan bar, lamps, energy channels).
     for tier in range(1, 5):
         name = 'survey_rig' if tier == 1 else f'survey_rig_mk{tier}'
-        accent = {} if tier == 1 else {'accent': f'robotica:block/automation_mk{tier}'}
-        if tier > 1:
-            write(ASSETS / f'models/block/{name}.json', {'parent': 'robotica:block/survey_rig', 'textures': accent})
-        write(ASSETS / f'models/block/{name}_on.json', {'parent': 'robotica:block/survey_rig', 'textures': dict(accent, **working)})
+        for lit in (False, True):
+            write(ASSETS / f'models/block/{name}{"_on" if lit else ""}.json', {
+                'render_type': 'minecraft:cutout',
+                'parent': 'minecraft:block/block',
+                'textures': textures(tier, lit),
+                'elements': elements(lit),
+            })
         variants = {}
         for lit in (False, True):
             for i, facing in enumerate(('north', 'east', 'south', 'west')):

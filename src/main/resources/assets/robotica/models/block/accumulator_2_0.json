@@ -4,7 +4,7 @@
   "textures": {
     "north": "robotica:block/accumulator_2_front",
     "up": "robotica:block/accumulator_2_top",
-    "down": "robotica:block/power_machine_bottom",
+    "down": "robotica:block/accumulator_bottom",
     "south": "robotica:block/accumulator_2_side",
     "west": "robotica:block/accumulator_2_side",
     "east": "robotica:block/accumulator_2_side",

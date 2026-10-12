@@ -63,12 +63,15 @@ def led(c, x, y, on):
 # The front is the casing with a crusher bay cut 2 px deep into it (model: processing_models.grinder_model). The bay
 # texture holds the back wall in 2..13 x 3..12 and the bay's ceiling (rows 0-1), floor (rows 14-15) and side walls
 # (cols 0-1, 14-15) around it. Two toothed crusher gears counter-rotate into the bite; working, their teeth glow cyan,
-# the crushed ore drops as hot grains onto a glowing heap on the energy tray.
+# the crushed ore drops as hot grains onto a glowing heap on the energy tray. Orange is the grinder's colour: raw ore
+# in the bay and the hopper, an ore lamp under the bay and the hopper's feed lights, dim at standby.
 
 GRINDER_FRAMES = 24                                                       # bay animation loop, 1 tick per frame
 G_EXTRA = {
     '1': '#3A1006', '2': '#9A2E0C', '3': '#FF7A1A', '4': '#FFC23A', '5': '#FFF3C0',     # crushed ore heat
-    '6': '#7E8A94', '7': '#C2CDD5', '8': '#4E4844', '9': '#7A706A',                     # gear teeth, ore
+    '6': '#7E8A94', '7': '#C2CDD5',                                                     # gear teeth
+    '8': '#6A3418', '9': '#B05A22', '0': '#E8893A',                                     # raw ore
+    'y': '#6E3812', 'n': '#3E464E',                                                     # lamps off, light rim
 }
 # Rim of a 6x6 gear, clockwise from the top left; the left gear sits at 2..7 x 4..9, the right one mirrors it
 RIM = ((1, 0), (2, 0), (3, 0), (4, 0), (5, 1), (5, 2), (5, 3), (5, 4),
@@ -102,15 +105,15 @@ def gear(step):
 def grinder_bay(frame, lit):
     """Back wall and bay walls; frame counts ticks (idle draws the gears at rest)."""
     c = Canvas()
-    c.rect(2, 3, 12, 10, 'k')
+    c.rect(2, 3, 12, 10, 'b')
     c.rect(2, 10, 12, 3, 'a').rect(2, 10, 12, 1, 'K')                    # discharge pit
     c.rect(3, 12, 10, 1, 'u')                                             # energy tray
-    c.rect(5, 11, 6, 1, '8').rect(4, 12, 8, 1, '8').rect(6, 11, 4, 1, '9')   # crushed heap
+    c.rect(5, 11, 6, 1, '8').rect(4, 12, 8, 1, '8').rect(6, 11, 4, 1, '9').set(7, 11, '0')   # crushed heap
     c.paste(mirrored(gear(frame if lit else 0)))
     c.rect(7, 3 + (frame % 6 // 3 if lit else 1), 2, 1, '9').set(8, 3 + (frame % 6 // 3 if lit else 1), '8')   # ore feeding in
     c.rect(2, 0, 12, 2, 'a').rect(2, 1, 12, 1, 'b')                      # ceiling (row 0 at the back)
     c.rect(2, 14, 12, 2, 'b').rect(2, 14, 12, 1, 'c')                    # floor (row 14 at the front)
-    c.rect(5, 15, 6, 1, '8').rect(6, 15, 4, 1, '9').rect(6, 14, 4, 1, '8')
+    c.rect(5, 15, 6, 1, '8').rect(6, 15, 4, 1, '9').rect(6, 14, 4, 1, '8').set(7, 15, '0')
     c.rect(0, 3, 2, 10, 'b').rect(0, 3, 1, 10, 'c')                      # side walls (col 0 and 15 at the front)
     c.rect(14, 3, 2, 10, 'a').rect(15, 3, 1, 10, 'b')
     return c
@@ -139,26 +142,28 @@ def grinder_glow(frame):
 
 
 def grinder_front(tier, lit):
-    """Casing face with the crusher bay cut out of it and the status lamp."""
+    """Casing face with the crusher bay cut out of it, the ore lamp under it and the status lamp."""
     c = casing.shell(tier)
     c.rect(2, 3, 12, 10, '.')
+    c.rect(4, 13, 8, 1, '3' if lit else 'y')
     c.rect(7, 1, 2, 1, 'L' if lit else 'l')
     return casing.tier_notches(c, tier)
 
 
 def grinder_front_glow():
-    return Canvas().rect(7, 1, 2, 1, 'L')
+    return Canvas().rect(7, 1, 2, 1, 'L').rect(4, 13, 8, 1, '3').rect(6, 13, 4, 1, '4')
 
 
 def grinder_top_glow():
     """The hopper's feed lights."""
-    return Canvas().rect(3, 6, 1, 4, 'v').rect(12, 6, 1, 4, 'v')
+    return Canvas().rect(3, 6, 1, 4, '3').rect(12, 6, 1, 4, '3').rect(3, 7, 1, 2, '4').rect(12, 7, 1, 2, '4')
 
 
 def grinder_top(tier):
-    """Feed hopper: a stepped funnel down to a slot over the bite, the gear tops ribbed below it."""
+    """Feed hopper: a stepped funnel in a steel rim down to a slot over the bite, the gear tops ribbed below it and
+    ore waiting on them."""
     c = casing.shell(tier)
-    c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
+    c.rect(3, 3, 10, 10, 'n').bevel(3, 3, 10, 10, '7', '6')
     c.rect(4, 4, 8, 8, 'a').bevel(4, 4, 8, 8, 'k', 'c')
     c.rect(5, 4, 6, 8, 'K')
     for y in range(5, 11):
@@ -167,23 +172,34 @@ def grinder_top(tier):
         c.set(5, y, 'b').set(10, y, 'b')
         c.set(7, y, 'd' if rib else 'b').set(8, y, 'd' if rib else 'b')
     c.rect(5, 4, 6, 1, 'K').rect(5, 11, 6, 1, 'a')
-    c.rect(3, 6, 1, 4, 'u').rect(12, 6, 1, 4, 'u')                       # feed lights
+    c.shape(lambda x, y: 6 <= x <= 9 and 6 <= y <= 9 and abs(x - 7.5) + abs(y - 7.5) < 3,
+            lambda x, y: '0' if x + y < 14 else '9' if x + y < 17 else '8')                 # raw ore heap
+    c.set(7, 8, '8').set(9, 7, '0')
+    c.rect(3, 6, 1, 4, 'y').rect(12, 6, 1, 4, 'y')                       # feed lights
     casing.tier_notches(c, tier)
     return c
 
 
 # ---------------------------------------------------------------- electric furnace
-# An induction chamber sunk 2 px into the casing: a billet (a real model part) levitating white-hot over a cyan
-# induction plate, arcs of heat radiating off it. One chamber texture shared by every tier holds the back wall, the
-# bay walls and the billet faces (FURNACE_PARTS); the working one is animated and full-bright. Top: exhaust louvres
-# that glow while working.
+# An induction kiln sunk 2 px into the casing: a white ceramic lining with a red heating coil snaking across the back,
+# and a steel billet (a real model part) levitating over a cyan induction plate. Working, the lining burns, the coil
+# glows and the billet turns white-hot with arcs of heat radiating off it. One chamber texture shared by every tier
+# holds the back wall, the bay walls and the billet faces (FURNACE_PARTS); the working one is animated and
+# full-bright. Below the bay a steel strip with a red heat gauge. Top: a light steel exhaust hood whose louvres show
+# the red coil, glowing while working. Red is the furnace's identity colour.
 
 FURNACE_HEAT = {
     'm': '#24100C', 'n': '#5E1A0C', 'o': '#B83A0E', 'p': '#F2771A', 'q': '#FFC04A', 'y': '#FFF4C8',  # ember -> white
-    'r': '#3C3836', 's': '#5C5754', 't': '#26211F',                                                  # cold billet
+    '1': '#746C62', '2': '#A0988C', '3': '#C8C1B4', '4': '#E6E0D4',                                  # ceramic lining
+    '5': '#5A1610', '6': '#AE2E1E', '7': '#E04A32',                                                  # cold red coil
+    'A': '#3E474F', 'B': '#5C6770', 'C': '#808B94', 'D': '#A6B0B8', 'E': '#CDD5DB',                  # light steel
+    'z': '#6A1E16', 'Z': '#963222',                                                                  # red gauge glass
 }
+STEEL = 'ABCDE'
 FURNACE_BAY = (3, 3, 10, 8)                     # x, y, w, h of the chamber opening on the front
 FURNACE_FRAMES, FURNACE_FRAMETIME = 16, 2
+FURNACE_COIL_ROWS = (4, 6, 8)                   # back wall rows the coil runs along, turning at the ends
+HEAT_RANK = 'mnopqy'
 # chamber texture regions (x, y, w, h) besides the back wall; scripts/data/processing_models.py maps faces onto them
 FURNACE_PARTS = {'wall_left': (0, 3, 2, 8), 'wall_right': (14, 3, 2, 8), 'floor': (3, 0, 10, 2),
                  'roof': (3, 14, 10, 2), 'billet_front': (3, 11, 6, 2), 'billet_top': (3, 13, 6, 1),
@@ -194,13 +210,23 @@ def furnace_pal(tier=1):
     return casing.casing_palette(casing.PROCESSING_TIERS[tier], **FURNACE_HEAT)
 
 
+def furnace_coil():
+    """(x, y) of the coil on the back wall: three runs joined at alternating ends."""
+    pts = [(x, y) for y in FURNACE_COIL_ROWS for x in range(4, 12)]
+    return pts + [(11, 5), (4, 7)]
+
+
 def heat_haze(c, t):
-    """Chamber air: a steady glow round the billet, two arcs of heat radiating out of it and fading as they grow."""
+    """Chamber air: a steady glow round the billet, two arcs of heat radiating out of it and fading as they grow; the
+    coil glows through it."""
     x0, y0, w, _ = FURNACE_BAY
+    coil = set(furnace_coil())
     for y in range(y0, 10):
         for x in range(x0, x0 + w):
             d = math.hypot((x - 7.5) / 1.5, (y - 9.0))
             ch = 'p' if d < 1.7 else 'o' if d < 2.5 else 'n' if d < 3.1 else 'm'
+            if (x, y) in coil and HEAT_RANK.index(ch) < 2:
+                ch = 'o' if (x + y) % 2 else 'n'
             for k in range(2):
                 r = 3.1 + ((t / FURNACE_FRAMES + k / 2) % 1) * 3.8
                 if abs(d - r) < 0.45:
@@ -215,13 +241,15 @@ def furnace_chamber(lit, t=0):
     c = Canvas()
     if lit:
         heat_haze(c, t)
-    else:
-        c.rect(x0, y0, w, 7, 'a')
-        for x in range(x0 + 1, x0 + w, 2):
-            c.rect(x, y0, 1, 7, 'b')
+    else:                                                                 # ceramic lining, the coil across it
+        c.rect(x0, y0, w, 7, '3').rect(x0, y0, w, 1, '2').rect(x0, y0, 1, 7, '2').rect(x0 + w - 1, y0, 1, 7, '4')
+        for x, y in furnace_coil():
+            c.set(x, y, '7' if (x + y) % 2 else '6')
+            if c.get(x, y + 1) in '34':
+                c.set(x, y + 1, '2')                                      # its shadow on the lining
     # induction plate: its back edge on the wall, its top on the floor; two pulses run out from the middle
     x, y, fw, _ = R['floor']
-    c.rect(x0, 10, w, 1, 'b').rect(x, y, fw, 1, 'c')
+    c.rect(x0, 10, w, 1, 'C').rect(x, y, fw, 1, 'n' if lit else '3')
     head = t * 8 // FURNACE_FRAMES
     for i in range(w):
         d = (abs(i - 4.5) - 0.5 - head) % 4
@@ -239,28 +267,31 @@ def furnace_chamber(lit, t=0):
         glint = round(2.5 + 2.5 * math.sin(t / FURNACE_FRAMES * 2 * math.pi))
         c.rect(tx, ty, bw, 1, 'q').rect(tx + 1, ty, 4, 1, 'y').set(tx + glint, ty, 'x')
         c.set(ex, ey, 'p').set(ex, ey + 1, 'o')
-    else:
-        c.rect(x, y, bw, 1, 's').rect(x, y + 1, bw, 1, 'r').set(x + bw - 1, y + 1, 't')
-        c.rect(tx, ty, bw, 1, 'e').set(tx, ty, 'd')
-        c.set(ex, ey, 'r').set(ex, ey + 1, 't')
-    # bay walls
+    else:                                                                 # cold steel
+        c.rect(x, y, bw, 1, 'D').rect(x, y + 1, bw, 1, 'B').set(x, y, 'E').set(x + bw - 1, y + 1, 'A')
+        c.rect(tx, ty, bw, 1, 'E').set(tx + bw - 1, ty, 'D')
+        c.set(ex, ey, 'C').set(ex, ey + 1, 'A')
+    # bay walls: lining with the coil's feed running up the inside, the plate's edge at the bottom
     for name in ('wall_left', 'wall_right'):
         x, y, ww, wh = R[name]
-        c.rect(x, y, ww, wh, 'n' if lit else 'b')
-        c.rect(x if name == 'wall_left' else x + 1, y, 1, wh, 'm' if lit else 'c')
+        front = x if name == 'wall_left' else x + 1                       # column at the bay mouth
+        c.rect(x, y, ww, wh, 'n' if lit else '2')
+        c.rect(front, y, 1, wh, 'm' if lit else '3')
+        c.rect(x + 1 - (front - x), y + 1, 1, wh - 3, 'o' if lit else '6')
         c.rect(x, y + wh - 1, ww, 1, 'v' if lit else 'u')
     x, y, ww, _ = R['roof']
-    c.rect(x, y, ww, 2, 'n' if lit else 'a').rect(x, y + 1, ww, 1, 'm' if lit else 'a')
+    c.rect(x, y, ww, 2, 'n' if lit else '2').rect(x, y + 1, ww, 1, 'm' if lit else '1')
     return c
 
 
 def furnace_front(tier, lit):
-    """The chamber opening on a tier metal sill, a heat gauge and the status lamp below."""
+    """The chamber opening on a tier metal sill, a steel strip below it with the heat gauge and the status lamp."""
     x0, y0, w, h = FURNACE_BAY
     c = casing.shell(tier)
     c.rect(x0, y0, w, h, '.')
     c.rect(x0, y0 + h, w, 1, 'h').set(x0, y0 + h, 'i').set(x0 + w - 1, y0 + h, 'g')   # tier metal sill
-    c.rect(4, 12, 6, 1, 'u').set(3, 12, 'a').set(10, 12, 'a')             # heat gauge
+    c.rect(3, 12, 10, 1, 'C').set(3, 12, 'D').set(11, 12, 'B')                # steel strip
+    c.rect(4, 12, 6, 1, 'z').set(6, 12, 'Z').set(7, 12, 'Z')                  # heat gauge, red glass
     c.set(12, 12, 'L' if lit else 'l')
     return c
 
@@ -276,11 +307,15 @@ def furnace_glow(t):
 
 
 def furnace_top(tier):
-    """Exhaust: a recessed bank of louvres."""
+    """Exhaust hood: a light steel plate with a recessed bank of louvres, the red coil showing through them."""
     c = casing.shell(tier)
-    c.recess(4, 4, 8, 8, 'abcde', fill='b')
+    c.rect(3, 3, 10, 10, 'C').bevel(3, 3, 10, 10, 'E', 'A')
+    c.rect(4, 4, 8, 7, 'B').bevel(4, 4, 8, 7, 'A', 'D')
     for y in (5, 7, 9):
-        c.rect(5, y, 6, 1, 'K').rect(5, y + 1, 6, 1, 'd')
+        c.rect(5, y, 6, 1, '6').rect(5, y + 1, 6, 1, 'D')
+        c.set(5, y, '5').set(10, y, '5').set(7, y, '7').set(8, y, '7')
+    c.rect(5, 11, 6, 1, 'B').set(5, 11, 'A').set(10, 11, 'D')                 # hood lip
+    casing.tier_notches(c, tier)
     return c
 
 

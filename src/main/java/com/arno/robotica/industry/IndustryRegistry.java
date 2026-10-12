@@ -136,7 +136,7 @@ public final class IndustryRegistry {
         }
     }
 
-    public static final DeferredBlock<RtgBlock> RTG = BLOCKS.registerBlock("rtg", RtgBlock::new, machine());
+    public static final DeferredBlock<RtgBlock> RTG = BLOCKS.registerBlock("rtg", RtgBlock::new, machine().noOcclusion());
     public static final DeferredItem<BlockItem> RTG_ITEM = ITEMS.registerSimpleBlockItem(RTG);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RtgBlockEntity>> RTG_BE =
             BLOCK_ENTITIES.register("rtg", () -> BlockEntityType.Builder.of(RtgBlockEntity::new, RTG.get()).build(null));

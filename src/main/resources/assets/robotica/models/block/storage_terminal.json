@@ -3,12 +3,13 @@
   "render_type": "minecraft:cutout",
   "textures": {
     "north": "robotica:block/storage_terminal_front",
+    "up": "robotica:block/storage_terminal_top",
+    "down": "robotica:block/storage_terminal_bottom",
     "south": "robotica:block/storage_terminal_side",
     "west": "robotica:block/storage_terminal_side",
     "east": "robotica:block/storage_terminal_side",
-    "up": "robotica:block/storage_terminal_top",
-    "down": "robotica:block/storage_terminal_bottom",
-    "particle": "robotica:block/storage_terminal_side"
+    "particle": "robotica:block/storage_terminal_side",
+    "screen": "robotica:block/storage_terminal_screen"
   },
   "elements": [
     {
@@ -46,6 +47,121 @@
         "east": {
           "texture": "#east",
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        1
+      ],
+      "to": [
+        13,
+        13,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#screen",
+          "uv": [
+            3,
+            3,
+            13,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        0
+      ],
+      "to": [
+        3,
+        13,
+        1
+      ],
+      "faces": {
+        "east": {
+          "texture": "#screen",
+          "uv": [
+            13,
+            3,
+            14,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        5,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        1
+      ],
+      "faces": {
+        "west": {
+          "texture": "#screen",
+          "uv": [
+            2,
+            3,
+            3,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        13,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        1
+      ],
+      "faces": {
+        "down": {
+          "texture": "#screen",
+          "uv": [
+            3,
+            2,
+            13,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        0
+      ],
+      "to": [
+        13,
+        5,
+        1
+      ],
+      "faces": {
+        "up": {
+          "texture": "#screen",
+          "uv": [
+            3,
+            11,
+            13,
+            12
+          ]
         }
       }
     }
