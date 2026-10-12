@@ -113,22 +113,10 @@
     "subtitle": "subtitles.robotica.machine_start",
     "sounds": [
       {
-        "name": "minecraft:tile/piston/out",
+        "name": "robotica:machine/start",
         "type": "file",
-        "volume": 0.3,
-        "pitch": 0.6
-      },
-      {
-        "name": "minecraft:block/iron_trapdoor/open1",
-        "type": "file",
-        "volume": 0.4,
-        "pitch": 0.6
-      },
-      {
-        "name": "minecraft:block/iron_trapdoor/open2",
-        "type": "file",
-        "volume": 0.4,
-        "pitch": 0.6
+        "volume": 0.25,
+        "pitch": 1.0
       }
     ]
   },
@@ -136,22 +124,10 @@
     "subtitle": "subtitles.robotica.machine_stop",
     "sounds": [
       {
-        "name": "minecraft:tile/piston/in",
+        "name": "robotica:machine/stop",
         "type": "file",
-        "volume": 0.3,
-        "pitch": 0.5
-      },
-      {
-        "name": "minecraft:block/iron_trapdoor/close1",
-        "type": "file",
-        "volume": 0.4,
-        "pitch": 0.6
-      },
-      {
-        "name": "minecraft:block/iron_trapdoor/close2",
-        "type": "file",
-        "volume": 0.4,
-        "pitch": 0.6
+        "volume": 0.35,
+        "pitch": 1.0
       }
     ]
   },
@@ -194,21 +170,64 @@
     "subtitle": "subtitles.robotica.press_stamp",
     "sounds": [
       {
-        "name": "minecraft:random/anvil_land",
-        "type": "file",
-        "volume": 0.3,
-        "pitch": 1.7
-      },
-      {
-        "name": "minecraft:tile/piston/in",
+        "name": "robotica:machine/press",
         "type": "file",
         "volume": 0.4,
-        "pitch": 0.8
-      },
+        "pitch": 1.0
+      }
+    ]
+  },
+  "grinder_grind": {
+    "subtitle": "subtitles.robotica.grinder_grind",
+    "sounds": [
       {
-        "name": "minecraft:block/copper_bulb/toggle",
+        "name": "robotica:machine/grind",
+        "type": "file",
+        "volume": 0.4,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "alloy_smelter_work": {
+    "subtitle": "subtitles.robotica.alloy_smelter_work",
+    "sounds": [
+      {
+        "name": "robotica:machine/smelt",
         "type": "file",
         "volume": 0.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "centrifuge_spin": {
+    "subtitle": "subtitles.robotica.centrifuge_spin",
+    "sounds": [
+      {
+        "name": "robotica:machine/centrifuge",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "assembler_work": {
+    "subtitle": "subtitles.robotica.assembler_work",
+    "sounds": [
+      {
+        "name": "robotica:machine/assemble",
+        "type": "file",
+        "volume": 0.3,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "rtg_hum": {
+    "subtitle": "subtitles.robotica.rtg_hum",
+    "sounds": [
+      {
+        "name": "robotica:machine/hum",
+        "type": "file",
+        "volume": 0.3,
         "pitch": 0.8
       }
     ]
@@ -217,16 +236,10 @@
     "subtitle": "subtitles.robotica.charger_hum",
     "sounds": [
       {
-        "name": "minecraft:block/beacon/ambient",
-        "type": "file",
-        "volume": 0.15,
-        "pitch": 1.8
-      },
-      {
-        "name": "minecraft:block/amethyst/shimmer",
+        "name": "robotica:machine/hum",
         "type": "file",
         "volume": 0.3,
-        "pitch": 1.3
+        "pitch": 1.5
       }
     ]
   },
@@ -234,16 +247,10 @@
     "subtitle": "subtitles.robotica.charge_complete",
     "sounds": [
       {
-        "name": "minecraft:note/pling",
-        "type": "file",
-        "volume": 0.35,
-        "pitch": 1.6
-      },
-      {
-        "name": "minecraft:block/amethyst/resonate3",
+        "name": "robotica:machine/chime",
         "type": "file",
         "volume": 0.45,
-        "pitch": 1.8
+        "pitch": 1.0
       }
     ]
   },
@@ -778,12 +785,6 @@
   "replicator_hum": {
     "subtitle": "subtitles.robotica.replicator_hum",
     "sounds": [
-      {
-        "name": "minecraft:block/beacon/ambient",
-        "type": "file",
-        "volume": 0.25,
-        "pitch": 1.4
-      },
       {
         "name": "minecraft:block/respawn_anchor/ambient1",
         "type": "file",
@@ -1747,18 +1748,6 @@
         "type": "file",
         "volume": 0.3,
         "pitch": 1.7
-      },
-      {
-        "name": "minecraft:block/amethyst/shimmer",
-        "type": "file",
-        "volume": 0.25,
-        "pitch": 0.8
-      },
-      {
-        "name": "minecraft:random/fizz",
-        "type": "file",
-        "volume": 0.08,
-        "pitch": 1.8
       }
     ]
   },
@@ -1868,24 +1857,6 @@
         "type": "file",
         "volume": 0.5,
         "pitch": 0.6
-      },
-      {
-        "name": "minecraft:block/beacon/ambient",
-        "type": "file",
-        "volume": 0.3,
-        "pitch": 0.7
-      },
-      {
-        "name": "minecraft:block/respawn_anchor/ambient1",
-        "type": "file",
-        "volume": 0.25,
-        "pitch": 0.7
-      },
-      {
-        "name": "minecraft:block/respawn_anchor/ambient2",
-        "type": "file",
-        "volume": 0.25,
-        "pitch": 0.7
       }
     ]
   },
@@ -1919,12 +1890,6 @@
         "type": "file",
         "volume": 0.35,
         "pitch": 0.7
-      },
-      {
-        "name": "minecraft:portal/portal",
-        "type": "file",
-        "volume": 0.08,
-        "pitch": 1.8
       }
     ]
   },

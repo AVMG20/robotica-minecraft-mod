@@ -13,9 +13,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.function.Supplier;
 
 /**
- * Sound events of the whole mod. All of them are defined in {@code assets/robotica/sounds.json} from vanilla sound files
- * (pitched, quieted, in weighted variants), so no audio ships with the mod. Every event is variable range (volume above
- * 1.0 carries further) and has a subtitle {@code subtitles.robotica.<name>}.
+ * Sound events of the whole mod. All of them are defined in {@code assets/robotica/sounds.json}, from vanilla sound files
+ * (pitched, quieted, in weighted variants) or our own clips in {@code assets/robotica/sounds/} (made by
+ * {@code scripts/sounds/*.py}). Every event is variable range (volume above 1.0 carries further) and has a subtitle
+ * {@code subtitles.robotica.<name>}. Each machine has one sound for its work, so it sounds the same every time.
  *
  * <p>Conventions: machines play on {@link SoundSource#BLOCKS}, tools and weapons on {@link SoundSource#PLAYERS}, robots
  * and drones on {@link SoundSource#NEUTRAL}. Always play server side (these helpers do nothing on the client) and keep
@@ -38,6 +39,11 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> MACHINE_STOP = reg("machine_stop");
     public static final DeferredHolder<SoundEvent, SoundEvent> GENERATOR_BURN = reg("generator_burn");
     public static final DeferredHolder<SoundEvent, SoundEvent> PRESS_STAMP = reg("press_stamp");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRINDER_GRIND = reg("grinder_grind");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ALLOY_SMELTER_WORK = reg("alloy_smelter_work");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CENTRIFUGE_SPIN = reg("centrifuge_spin");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ASSEMBLER_WORK = reg("assembler_work");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RTG_HUM = reg("rtg_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> CHARGER_HUM = reg("charger_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> CHARGE_COMPLETE = reg("charge_complete");
     public static final DeferredHolder<SoundEvent, SoundEvent> ROBOT_BEEP = reg("robot_beep");
