@@ -7,11 +7,13 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -48,16 +50,19 @@ import java.util.function.Supplier;
  * Boss altar: right-click it with its summon item to wake its boss on top. One boss at a time per altar (and none while a
  * boss of its kind is alive within {@value #ONE_BOSS_RADIUS} blocks), then a cooldown
  * (config, 5 minutes). The Colossus Altar (Signal Flare, Scrap Colossus) stands in every Rusted Foundry, the Forge Altar
- * (Ignition Charge, Forge Tyrant) in every Cinder Forge ({@link #NATURAL}: drops building blocks instead of itself, so the
- * ruin's altar stays where it is). Both are craftable to build your own arena.
+ * (Ignition Charge, Forge Tyrant) in every Cinder Forge, the Null Altar (Null Key, Null Sentinel) in every Null Relay
+ * ({@link #NATURAL}: drops building blocks instead of itself, so the ruin's altar stays where it is). All are craftable to
+ * build your own arena.
  */
 public class BossAltarBlock extends Block implements EntityBlock {
     /**
      * What one altar summons. {@code key} names its messages: {@code message.robotica.boss.<key>.awakened / boss_alive /
-     * peaceful / ready}. {@code colors} are the firework colors of the summon.
+     * peaceful / ready}. {@code colors} are the firework colors of the summon. Particles: {@code ember} and {@code wisp} over
+     * a lit altar, {@code burst} and {@code haze} when it wakes its boss, together with {@code sound}.
      */
     public record Kind(String key, Supplier<? extends EntityType<? extends Mob>> boss, Supplier<? extends net.minecraft.world.item.Item> summon,
-                       int[] colors, int fade) {
+                       int[] colors, int fade, ParticleOptions ember, ParticleOptions wisp, ParticleOptions burst, ParticleOptions haze,
+                       SoundEvent sound) {
         MutableComponent message(String what) {
             return Component.translatable("message.robotica.boss." + key + "." + what);
         }
@@ -151,7 +156,7 @@ public class BossAltarBlock extends Block implements EntityBlock {
         AABB space = type.getSpawnAABB(x, y, z);
         Mob boss = type.create(level);
         if (boss == null || !level.noCollision(space)) {
-            tell(player, Component.translatable("message.robotica.boss.blocked"));
+            tell(player, Component.translatable("message.robotica.boss.blocked", (int) Math.ceil(type.getHeight())));
             return Result.BLOCKED;
         }
         float yaw = player != null ? player.getYRot() + 180.0F : level.random.nextFloat() * 360.0F;
@@ -192,11 +197,11 @@ public class BossAltarBlock extends Block implements EntityBlock {
         double y = pos.getY() + 1.0;
         double z = pos.getZ() + 0.5;
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, y + 1.0, z, 1, 0.0, 0.0, 0.0, 0.0);
-        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.flash(0xFFD9A0, 4.0F), x, y + 1.0, z, 1, 0.0, 0.0, 0.0, 0.0);
-        level.sendParticles(ParticleTypes.FLAME, x, y + 0.5, z, 60, 0.8, 1.5, 0.8, 0.05);
-        level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 1.5, z, 40, 1.0, 1.5, 1.0, 0.03);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.flash(kind.fade(), 4.0F), x, y + 1.0, z, 1, 0.0, 0.0, 0.0, 0.0);
+        level.sendParticles(kind.burst(), x, y + 0.5, z, 60, 0.8, 1.5, 0.8, 0.05);
+        level.sendParticles(kind.haze(), x, y + 1.5, z, 40, 1.0, 1.5, 1.0, 0.03);
         level.playSound(null, pos, SoundEvents.RESPAWN_ANCHOR_SET_SPAWN, SoundSource.HOSTILE, 2.0F, 0.5F);
-        level.playSound(null, pos, SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE, 2.0F, 0.4F);
+        level.playSound(null, pos, kind.sound(), SoundSource.HOSTILE, 2.0F, 0.4F);
         level.playSound(null, pos, SoundEvents.IRON_GOLEM_REPAIR, SoundSource.HOSTILE, 2.0F, 0.5F);
         // The flare itself goes up as a firework high above the altar, so everyone around sees the fight start.
         ItemStack rocket = new ItemStack(Items.FIREWORK_ROCKET);
@@ -242,10 +247,10 @@ public class BossAltarBlock extends Block implements EntityBlock {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (!state.getValue(READY) || random.nextInt(3) != 0) return;
-        level.addParticle(ParticleTypes.SMALL_FLAME, pos.getX() + 0.3 + random.nextDouble() * 0.4, pos.getY() + 1.02,
+        level.addParticle(kind.ember(), pos.getX() + 0.3 + random.nextDouble() * 0.4, pos.getY() + 1.02,
                 pos.getZ() + 0.3 + random.nextDouble() * 0.4, 0.0, 0.01, 0.0);
         if (random.nextInt(4) == 0) {
-            level.addParticle(ParticleTypes.SMOKE, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 0.0, 0.03, 0.0);
+            level.addParticle(kind.wisp(), pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 0.0, 0.03, 0.0);
         }
     }
 

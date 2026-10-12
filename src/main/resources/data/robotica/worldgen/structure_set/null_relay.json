@@ -1,0 +1,18 @@
+{
+  "structures": [
+    {
+      "structure": "robotica:null_relay",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 28,
+    "separation": 10,
+    "salt": 19071907,
+    "exclusion_zone": {
+      "other_set": "minecraft:end_cities",
+      "chunk_count": 5
+    }
+  }
+}

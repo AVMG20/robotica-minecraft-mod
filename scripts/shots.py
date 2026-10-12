@@ -49,6 +49,8 @@ SHOTS = {
     'architect_hall_onyx_panel': ('architect_hall_onyx_panel.png', 'scene'),
     '26_solar_panels': ('26_solar_panels.png', 'scene'),
     '27_forge_tyrant': ('27_forge_tyrant.png', 'scene'),
+    '31_null_sentinel': ('31_null_sentinel.png', 'scene'),
+    '32_null_relay': ('32_null_relay.png', 'scene'),
     'rancher_pen': ('rancher_pen.png', 'scene'),
     'rancher_close': ('rancher_close.png', 'scene'),
     'hauler_drone': ('hauler_drone.png', 'scene'),

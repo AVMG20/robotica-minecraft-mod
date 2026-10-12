@@ -1,0 +1,7 @@
+{
+  "type": "robotica:null_relay",
+  "biomes": "#robotica:has_structure/null_relay",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

@@ -307,8 +307,20 @@
       "age": 4
     },
     {
-      "id": "robotica:guide/antigrav_core",
+      "id": "robotica:guide/null_relay",
       "parent": "robotica:guide/age4",
+      "icon": "robotica:null_key",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/sentinel",
+      "parent": "robotica:guide/null_relay",
+      "icon": "robotica:null_altar",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/antigrav_core",
+      "parent": "robotica:guide/sentinel",
       "icon": "robotica:antigrav_core",
       "age": 4
     },

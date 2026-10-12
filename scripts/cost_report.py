@@ -9,7 +9,8 @@ Run: python3 scripts/cost_report.py
 
 Conventions
 - Tags map to one representative vanilla item (TAGS below). #c:plates/<metal> resolves to the Metal Press recipe (1 ingot).
-- Boss cores (servo/magma/antigrav core) use their temp_ recipes and are marked [temp].
+- Boss cores: the Servo and Magma Core use their temp_ recipes (marked [temp]), the Antigrav Core its Assembler recipe
+  from Strange Matter (marked [assembler], Strange Matter counted as a raw item).
 - Tools that are only consumed as a catalyst (Tinker's Hammer in hand-plate recipes) are never the cheapest route.
 - Iron-equivalent score = sum(raw * WEIGHT). Weights are a rough rarity scale, not a market price.
 - Industry: raw thorium, pyrolite shards, resonite crystals and radiant isotopes are raw materials. Assembler recipes
@@ -310,8 +311,10 @@ def main():
         other = {k: v for k, v in c.items() if k not in COLUMNS}
         kinds = sorted({k for k, _, _, _ in RECIPE_MAP['robotica:' + n]})
         note = ''
-        if n in ('servo_core', 'magma_core', 'antigrav_core'):
+        if n in ('servo_core', 'magma_core'):
             note = '[temp] boss core'
+        elif n == 'antigrav_core':
+            note = '[assembler] boss core'
         elif 'smithing_transform' in kinds:
             note = 'smithing'
         rows.append((age_of(n), score(c), n, c, other, note))
@@ -319,7 +322,7 @@ def main():
 
     lines = ['# Robotica raw-material costs', '',
              'Each item is costed by its cheapest recipe, recursively down to raw materials. Tags map to a representative',
-             'vanilla item; plates cost the Metal Press price (1 ingot); boss cores use their `temp_` recipes. Stack recipes',
+             'vanilla item; plates cost the Metal Press price (1 ingot); boss cores use their `temp_` or Assembler recipes. Stack recipes',
              'are divided by their output count. Iron-equivalent (IE) weights: iron 1, copper 0.4, redstone 0.4, gold 3,',
              'diamond 10, ender pearl 8, netherite ingot 60, nether star 80, other items from 0.02 (cobblestone) to 25.',
              '"other" lists non-column raw items (quartz, obsidian, blaze rods, shulker shells, ...).', '']

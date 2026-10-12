@@ -184,8 +184,10 @@
    "items": [
     "antigrav_core"
    ],
-   "what": "Opens Age 4. Burns in a Core Reactor (x16 power). The Assembler makes it from [[strange_matter]].",
+   "what": "Opens Age 4. Drops from the Null Sentinel. Burns in a Core Reactor (x16 power). The Assembler also makes it from [[strange_matter]].",
    "see": [
+    "item:null_altar",
+    "guide:bosses",
     "guide:exo-frame",
     "guide:core-reactor"
    ]
@@ -757,6 +759,29 @@
     "ignition_charge"
    ],
    "what": "Summons the Forge Tyrant at a Forge Altar. It drops the [[magma_core]].",
+   "see": [
+    "guide:bosses"
+   ]
+  },
+  {
+   "items": [
+    "null_altar"
+   ],
+   "what": "Wakes the Null Sentinel boss. Found in Null Relays on the outer End islands, or craft your own.",
+   "use": [
+    "Right-click it with a [[null_key]].",
+    "Needs 3x3x4 air above. 5 min cooldown."
+   ],
+   "see": [
+    "guide:bosses"
+   ],
+   "image": "shots/32_null_relay.jpg|A Null Relay with its Null Altar"
+  },
+  {
+   "items": [
+    "null_key"
+   ],
+   "what": "Summons the Null Sentinel at a Null Altar. It drops the [[antigrav_core]].",
    "see": [
     "guide:bosses"
    ]

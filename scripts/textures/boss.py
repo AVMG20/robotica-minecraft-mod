@@ -1,10 +1,13 @@
 """Boss module textures: the Scrap Colossus (128x128 model sheet + glow layer), the Scrap Drone (32x32 + glow), the Forge
-Tyrant (128x128 + glow), the Signal Flare and Ignition Charge icons, and the Colossus Altar and Forge Altar blocks (side,
-top, bottom and their glow overlays).
+Tyrant (128x128 + glow), the Null Sentinel (128x128 + glow) and its Null Pylon (64x32 + glow), the Signal Flare, Ignition
+Charge and Null Key icons, and the Colossus Altar, Forge Altar and Null Altar blocks (side, top, bottom and their glow
+overlays).
 Run: python3 scripts/textures/boss.py
-The model sheets follow the box layout of boss/client/ScrapColossusModel, ScrapDroneModel and ForgeTyrantModel: texOffs(u, v), box w x h x d
+The model sheets follow the box layout of boss/client/ScrapColossusModel, ScrapDroneModel, ForgeTyrantModel,
+NullSentinelModel and NullPylonModel: texOffs(u, v), box w x h x d
 unfolds as  top (u+d, v)  bottom (u+d+w, v)  west (u, v+d)  north/front (u+d, v+d)  east (u+d+w, v+d)  south (u+2d+w, v+d).
 """
+import math
 import pathlib
 import sys
 
@@ -29,11 +32,19 @@ PAL = {
     # blackstone (dark -> light) and gold (dark -> light) for the Forge Tyrant
     '6': '#121014', '7': '#1F1B22', '8': '#2F2933', '9': '#443C48', '0': '#5E5462',
     'g': '#5C3A0A', 'h': '#9A6A12', 'i': '#D9A423', 'j': '#F7D25A', 'l': '#FFF0A8',
+    # null steel (dark -> light) and purpur (dark -> light) for the Null Sentinel, end stone for its altar
+    'x': '#0E0B16', 'y': '#1C1728', 'z': '#2B2440', 'f': '#3E3558', 'W': '#5A4E7A',
+    'N': '#4E2F5E', 'O': '#7A4E8C', 'P': '#A77BB8', 'Q': '#C9A6D6', 'U': '#E6D2EE',
+    'I': '#DBDE9E', 'J': '#C9CC8A', 'K': '#A9AC6E',
+    # null glow: deep violet, violet, bright violet, cyan, dark cyan, pale white
+    'X': '#6A2EE0', 'B': '#8A50F0', 'V': '#B07CFF', 'Y': '#6FF2E0', 'C': '#2FA89A', 'Z': '#F2E8FF',
 }
 COPPER = ('1', '2', '3', '4', '5')
 BLACK = ('6', '7', '8', '9', '0')
 GOLD = ('g', 'h', 'i', 'j', 'l')
 STEEL = ('s', 't', 'u', 'v', 'w')
+NULL = ('x', 'y', 'z', 'f', 'W')
+PURPUR = ('N', 'O', 'P', 'Q', 'U')
 
 
 def rects(u, v, w, h, d):
@@ -429,6 +440,329 @@ def tyrant():
     return c, g
 
 
+# ---------------------------------------------------------------- Null Sentinel (Age 4, End)
+
+def null_plate(c, x, y, w, h, seed=0, bevel=True, dark=False):
+    """Null steel panel: near black indigo, brushed grain, bevelled."""
+    weathered(c, x, y, w, h, NULL, seed, verdigris=0.0, rust=0.0, bevel=bevel, dark=dark)
+
+
+def nbox(c, u, v, w, h, d, seed=0, ramp=None):
+    f = rects(u, v, w, h, d)
+    for i, (name, (x, y, rw, rh)) in enumerate(f.items()):
+        weathered(c, x, y, rw, rh, ramp or NULL, seed + i * 13 + u * 3 + v, verdigris=0.0, rust=0.0, dark=(name == 'bottom'))
+    return f
+
+
+def glowfill(c, g, face, dx, dy, w, h, ch):
+    fill(c, face, dx, dy, w, h, ch)
+    fill(g, face, dx, dy, w, h, ch)
+
+
+def glowput(c, g, face, dx, dy, ch):
+    put(c, face, dx, dy, ch)
+    put(g, face, dx, dy, ch)
+
+
+def purpur_rivet(c, face, dx, dy):
+    put(c, face, dx, dy, 'U')
+    put(c, face, dx + 1, dy + 1, 'N')
+
+
+def sentinel():
+    c = Canvas(128)
+    g = Canvas(128)
+    # hull 18x16x12 at (0,0): null steel, purpur collar and belt, a dark socket behind the core, glowing seams
+    f = nbox(c, 0, 0, 18, 16, 12, seed=201)
+    front = f['north']
+    band(c, front, 0, 2, PURPUR)
+    band(c, front, 14, 2, PURPUR)
+    fill(c, front, 4, 3, 10, 10, 'x')                             # socket around the core
+    for dx, dy in ((4, 3), (13, 3), (4, 12), (13, 12)):
+        glowput(c, g, front, dx, dy, 'X')
+    for dy in range(3, 13):                                       # seams down both sides of the socket
+        glowput(c, g, front, 2, dy, 'X' if dy % 3 else 'V')
+        glowput(c, g, front, 15, dy, 'X' if dy % 3 else 'V')
+    for dx in (0, 16):
+        for dy in (4, 9):
+            purpur_rivet(c, front, dx, dy)
+    for side in ('west', 'east'):                                  # side vents glowing violet
+        sf = f[side]
+        band(c, sf, 0, 2, PURPUR)
+        band(c, sf, 14, 2, PURPUR)
+        for dy in range(4, 12, 2):
+            fill(c, sf, 3, dy, 6, 1, 'x')
+            glowfill(c, g, sf, 3, dy + 1, 6, 1, 'X')
+            glowput(c, g, sf, 5, dy + 1, 'V')
+        purpur_rivet(c, sf, 1, 3)
+        purpur_rivet(c, sf, 9, 3)
+    back = f['south']
+    band(c, back, 0, 2, PURPUR)
+    fill(c, back, 4, 2, 10, 9, 'y')                               # socket of the gyro ring
+    fill(c, back, 5, 3, 8, 7, 'x')
+    for dx in range(5, 13):
+        glowput(c, g, back, dx, 3, 'X')
+        glowput(c, g, back, dx, 9, 'X')
+    band(c, back, 14, 2, PURPUR)
+    top = f['top']
+    fill(c, top, 3, 2, 12, 8, 'z')                                # deck under the head
+    for dx in range(4, 14, 3):
+        put(c, top, dx, 3, 'W')
+    # head 9x9x9 at (64,0): null steel helm, purpur brow, dark visor around the lens, antenna socket
+    f = nbox(c, 64, 0, 9, 9, 9, seed=202)
+    hf = f['north']
+    band(c, hf, 0, 2, PURPUR)
+    fill(c, hf, 1, 2, 7, 6, 'x')
+    glowput(c, g, hf, 1, 7, 'X')
+    glowput(c, g, hf, 7, 7, 'X')
+    for side in ('west', 'east', 'south'):
+        band(c, f[side], 0, 2, PURPUR)
+        for dy in (4, 6):
+            glowfill(c, g, f[side], 2, dy, 5, 1, 'X')
+    fill(c, f['top'], 2, 2, 5, 5, 'z')
+    put(c, f['top'], 4, 4, 'W')
+    # lens 5x5x1 at (100,0): white centre, violet rings
+    f = rects(100, 0, 5, 5, 1)
+    for name, (x, y, rw, rh) in f.items():
+        c.rect(x, y, rw, rh, 'B')
+        g.rect(x, y, rw, rh, 'B')
+    lf = f['north']
+    for dy in range(5):
+        for dx in range(5):
+            dist = max(abs(dx - 2), abs(dy - 2))
+            glowput(c, g, lf, dx, dy, 'Z' if dist == 0 else 'V' if dist == 1 else 'X')
+    # antenna 1x6x1 at (112,0): steel with a glowing tip
+    f = rects(112, 0, 1, 6, 1)
+    for name, (x, y, rw, rh) in f.items():
+        c.rect(x, y, rw, rh, 'f')
+    for name in ('north', 'south', 'west', 'east'):
+        glowput(c, g, f[name], 0, 0, 'Y')
+    glowfill(c, g, f['top'], 0, 0, 1, 1, 'Z')
+    # antigrav core 8x8x1 at (100,8): a white-hot centre in cyan and violet rings
+    f = rects(100, 8, 8, 8, 1)
+    for name, (x, y, rw, rh) in f.items():
+        c.rect(x, y, rw, rh, 'X')
+        g.rect(x, y, rw, rh, 'X')
+    cf = f['north']
+    for dy in range(8):
+        for dx in range(8):
+            dist = ((dx - 3.5) ** 2 + (dy - 3.5) ** 2) ** 0.5
+            ch = 'Z' if dist < 1.0 else 'Y' if dist < 2.0 else 'V' if dist < 3.0 else 'B' if dist < 3.8 else 'X'
+            glowput(c, g, cf, dx, dy, ch)
+    # chest plates 4x8x1 at (118,0): null steel framed in purpur, a glowing slit on the inner edge
+    f = rects(118, 0, 4, 8, 1)
+    for name, (x, y, rw, rh) in f.items():
+        null_plate(c, x, y, rw, rh, seed=203, bevel=rw >= 3 and rh >= 3)
+    pf = f['north']
+    for dy in range(8):
+        put(c, pf, 0, dy, 'P')
+    for dx in range(4):
+        put(c, pf, dx, 0, 'Q')
+        put(c, pf, dx, 7, 'O')
+    for dy in range(2, 6):
+        glowput(c, g, pf, 3, dy, 'V')
+    purpur_rivet(c, pf, 1, 2)
+    fill(c, f['south'], 0, 0, 4, 8, 'x')
+    # keel 10x6x10 at (0,30), 6x6x6 at (40,30), thruster tip 3x4x3 at (64,30)
+    f = nbox(c, 0, 30, 10, 6, 10, seed=204)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 0, 1, PURPUR)
+        glowfill(c, g, f[name], 2, 3, 6, 1, 'X')
+    f = nbox(c, 40, 30, 6, 6, 6, seed=205)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 4, 1, PURPUR)
+        glowput(c, g, f[name], 2, 2, 'V')
+        glowput(c, g, f[name], 3, 2, 'V')
+    f = rects(64, 30, 3, 4, 3)
+    for name, (x, y, rw, rh) in f.items():
+        for yy in range(rh):
+            for xx in range(rw):
+                ch = 'Z' if name == 'bottom' and xx == 1 and yy == 1 else 'Y' if name == 'bottom' else 'V' if yy >= rh - 2 else 'B'
+                c.set(x + xx, y + yy, ch)
+                g.set(x + xx, y + yy, ch)
+    # pauldrons 7x6x8 at (0,48): purpur armour with a null steel rim and rivets
+    f = nbox(c, 0, 48, 7, 6, 8, seed=206, ramp=PURPUR)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 5, 1, NULL)
+        purpur_rivet(c, f[name], 1, 1)
+    for name in ('west', 'east'):
+        glowfill(c, g, f[name], 2, 3, 4, 1, 'X')
+    for dx, dy in ((1, 1), (4, 1), (1, 5), (4, 5)):
+        put(c, f['top'], dx, dy, 'U')
+    # upper arms 5x9x5 at (32,48): null steel with a glowing joint ring
+    f = nbox(c, 32, 48, 5, 9, 5, seed=207)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 0, 1, PURPUR)
+        glowfill(c, g, f[name], 0, 7, 5, 1, 'X')
+        put(c, f[name], 2, 3, 'W')
+    # emitters 6x8x6 at (52,48): heavy forearm with purpur bands and a glowing port underneath and in front
+    f = nbox(c, 52, 48, 6, 8, 6, seed=208)
+    for name in ('north', 'south', 'west', 'east'):
+        band(c, f[name], 1, 1, PURPUR)
+        band(c, f[name], 6, 1, PURPUR)
+        glowfill(c, g, f[name], 2, 3, 2, 2, 'X')
+    glowfill(c, g, f['north'], 2, 3, 2, 2, 'V')
+    x0, y0, rw, rh = f['bottom']
+    for yy in range(rh):
+        for xx in range(rw):
+            d = max(abs(xx - 2.5), abs(yy - 2.5))
+            ch = 'Z' if d < 1 else 'Y' if d < 2 else 'X'
+            c.set(x0 + xx, y0 + yy, ch)
+            g.set(x0 + xx, y0 + yy, ch)
+    # claws 2x5x2 at (76,48): purpur with glowing tips
+    f = rects(76, 48, 2, 5, 2)
+    for name, (x, y, rw, rh) in f.items():
+        for yy in range(rh):
+            for xx in range(rw):
+                c.set(x + xx, y + yy, 'P' if (xx + yy) % 3 else 'O')
+    for name in ('north', 'south', 'west', 'east'):
+        glowfill(c, g, f[name], 0, 4, 2, 1, 'V')
+    glowfill(c, g, f['bottom'], 0, 0, 2, 2, 'Z')
+    # gyro ring plates 3x6x1 at (84,48): purpur with a glowing inner edge
+    f = rects(84, 48, 3, 6, 1)
+    for name, (x, y, rw, rh) in f.items():
+        for yy in range(rh):
+            for xx in range(rw):
+                c.set(x + xx, y + yy, 'Q' if yy == 0 else 'P' if hash01(x + xx, y + yy, 9) > 0.25 else 'O')
+    for name in ('north', 'south'):
+        for dy in range(6):
+            glowput(c, g, f[name], 1, dy, 'V' if 1 <= dy <= 4 else 'X')
+    # ring hub 6x6x2 at (92,48): steel with a glowing eye
+    f = nbox(c, 92, 48, 6, 6, 2, seed=209)
+    for name in ('north', 'south'):
+        x0, y0, rw, rh = f[name]
+        for yy in range(rh):
+            for xx in range(rw):
+                d = max(abs(xx - 2.5), abs(yy - 2.5))
+                if d < 2:
+                    ch = 'Z' if d < 1 else 'V'
+                    c.set(x0 + xx, y0 + yy, ch)
+                    g.set(x0 + xx, y0 + yy, ch)
+    return c, g
+
+
+def pylon():
+    c = Canvas(64)
+    g = Canvas(64)
+    # crystal 4x10x4 at (0,0): glowing cyan with pale facets
+    f = rects(0, 0, 4, 10, 4)
+    for name, (x, y, rw, rh) in f.items():
+        for yy in range(rh):
+            for xx in range(rw):
+                n = hash01(x + xx, y + yy, 31)
+                ch = 'Z' if n > 0.86 else 'Y' if n > 0.35 else 'C'
+                if name in ('north', 'south', 'west', 'east') and xx == 0:
+                    ch = 'Z' if yy % 4 == 1 else 'Y'
+                c.set(x + xx, y + yy, ch)
+                g.set(x + xx, y + yy, ch)
+    # caps 8x2x8 at (16,0): null steel, purpur rim, glowing ring on the inner face
+    f = nbox(c, 16, 0, 8, 2, 8, seed=231)
+    for name in ('north', 'south', 'west', 'east'):
+        x0, y0, rw, rh = f[name]
+        for xx in range(rw):
+            c.set(x0 + xx, y0, 'P')
+    for name in ('top', 'bottom'):
+        x0, y0, rw, rh = f[name]
+        for yy in range(rh):
+            for xx in range(rw):
+                d = max(abs(xx - 3.5), abs(yy - 3.5))
+                if 1.5 < d < 2.5:
+                    c.set(x0 + xx, y0 + yy, 'Y')
+                    g.set(x0 + xx, y0 + yy, 'Y')
+    # orbiting shards 2x3x2 at (48,0)
+    f = rects(48, 0, 2, 3, 2)
+    for name, (x, y, rw, rh) in f.items():
+        for yy in range(rh):
+            for xx in range(rw):
+                ch = 'Z' if (xx + yy) % 3 == 0 else 'Y'
+                c.set(x + xx, y + yy, ch)
+                g.set(x + xx, y + yy, ch)
+    return c, g
+
+
+def null_key():
+    c = Canvas(16)
+    for y in range(16):                                           # the bow: a null steel ring around a violet lens
+        for x in range(16):
+            d = ((x - 5.0) ** 2 + (y - 5.0) ** 2) ** 0.5
+            if 2.6 <= d <= 4.1:
+                c.set(x, y, 'f' if (x + y) % 4 else 'W')
+                if d > 3.6 and x + y > 10:
+                    c.set(x, y, 'z')
+            elif d < 2.6:
+                c.set(x, y, 'Z' if d < 0.9 else 'V' if d < 1.8 else 'B')
+    c.set(3, 4, 'Q').set(4, 3, 'Q')                               # purpur glint on the rim
+    for i in range(7):                                            # shaft from the bow to the bottom right
+        x, y = 8 + i, 8 + i
+        c.set(x, y, 'f').set(x + 1, y, 'z').set(x, y + 1, 'y')
+    for x, y in ((12, 10), (13, 9), (14, 12), (15, 11)):          # bit: two purpur teeth
+        c.set(x, y, 'P')
+    c.set(13, 10, 'O').set(15, 12, 'O')
+    c.outline('k')
+    write_item('null_key', c.rows(), PAL)
+
+
+def null_altar():
+    side = Canvas(16)
+    glow_side = Canvas(16)
+    null_plate(side, 0, 4, 16, 8, seed=241)
+    for y in range(12, 16):                                       # end stone brick footing
+        for x in range(16):
+            side.set(x, y, 'I' if hash01(x, y, 24) > 0.25 else 'J')
+    for x in range(16):
+        side.set(x, 12, 'I')
+        side.set(x, 15, 'K')
+    for x in (3, 11):
+        side.set(x, 13, 'K').set(x, 14, 'K')
+    for y in range(0, 4):                                         # top rim: purpur band with rivets
+        for x in range(16):
+            side.set(x, y, 'P' if y in (1, 2) else 'Q' if y == 0 else 'O')
+    for x in (1, 5, 10, 14):
+        side.set(x, 1, 'U').set(x + 1, 2, 'N')
+    side.rect(5, 6, 6, 5, 'x')                                    # emitter window with a lens
+    for y in range(7, 10):
+        for x in range(6, 10):
+            d = max(abs(x - 7.5), abs(y - 8.0))
+            ch = 'Z' if d < 1 else 'V' if d < 1.6 else 'X'
+            side.set(x, y, ch)
+            glow_side.set(x, y, ch)
+    for x in (2, 13):                                             # glowing seams
+        for y in range(5, 11):
+            side.set(x, y, 'X')
+            glow_side.set(x, y, 'X')
+    top = Canvas(16)
+    glow_top = Canvas(16)
+    null_plate(top, 0, 0, 16, 16, seed=243)
+    for y in range(16):                                           # purpur ring around a null vortex
+        for x in range(16):
+            dx, dy = x - 7.5, y - 7.5
+            d = (dx * dx + dy * dy) ** 0.5
+            if 5.2 <= d <= 6.4:
+                top.set(x, y, 'P' if (x + y) % 3 else 'Q')
+            elif 4.4 <= d < 5.2:
+                top.set(x, y, 'N')
+            elif d < 4.4:
+                a = math.atan2(dy, dx)
+                swirl = math.sin(a * 3.0 + d * 1.3)
+                ch = 'Z' if d < 1.0 else 'Y' if d < 1.8 else 'V' if swirl > 0.2 else 'B' if swirl > -0.4 else 'X'
+                top.set(x, y, ch)
+                glow_top.set(x, y, ch)
+    bottom = Canvas(16)
+    for y in range(16):
+        for x in range(16):
+            bottom.set(x, y, 'I' if hash01(x, y, 27) > 0.25 else 'J')
+        if y % 4 == 3:
+            for x in range(16):
+                bottom.set(x, y, 'K')
+    for y in range(16):
+        bottom.set((y // 4 % 2) * 8 + 3, y, 'K')
+    write_block('null_altar_side', side.rows(), PAL)
+    write_block('null_altar_side_glow', glow_side.rows(), PAL)
+    write_block('null_altar_top', top.rows(), PAL)
+    write_block('null_altar_top_glow', glow_top.rows(), PAL)
+    write_block('null_altar_bottom', bottom.rows(), PAL)
+
+
 # ---------------------------------------------------------------- items and blocks
 
 def signal_flare():
@@ -583,10 +917,18 @@ def main():
     c, g = tyrant()
     write_png(ENTITY / 'forge_tyrant.png', c.rows(), PAL, 128)
     write_png(ENTITY / 'forge_tyrant_glow.png', g.rows(), PAL, 128)
+    c, g = sentinel()
+    write_png(ENTITY / 'null_sentinel.png', c.rows(), PAL, 128)
+    write_png(ENTITY / 'null_sentinel_glow.png', g.rows(), PAL, 128)
+    c, g = pylon()
+    write_png(ENTITY / 'null_pylon.png', c.rows()[:32], PAL, None)
+    write_png(ENTITY / 'null_pylon_glow.png', g.rows()[:32], PAL, None)
     signal_flare()
     altar()
     ignition_charge()
     forge_altar()
+    null_key()
+    null_altar()
     print('boss textures written')
 
 

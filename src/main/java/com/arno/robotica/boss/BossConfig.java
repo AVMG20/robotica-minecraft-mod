@@ -25,6 +25,13 @@ public final class BossConfig {
     private static final ModConfigSpec.IntValue TYRANT_ATTACKS_PER_VENT;
     private static final ModConfigSpec.IntValue TYRANT_VENT_TICKS;
     private static final ModConfigSpec.DoubleValue TYRANT_VENT_MULTIPLIER;
+    private static final ModConfigSpec.DoubleValue SENTINEL_HEALTH;
+    private static final ModConfigSpec.DoubleValue SENTINEL_ARMOR;
+    private static final ModConfigSpec.DoubleValue SENTINEL_MELEE;
+    private static final ModConfigSpec.DoubleValue SENTINEL_BEAM;
+    private static final ModConfigSpec.DoubleValue SENTINEL_BURST;
+    private static final ModConfigSpec.DoubleValue SENTINEL_LAUNCH;
+    private static final ModConfigSpec.IntValue SENTINEL_COOLDOWN;
     private static final ModConfigSpec.DoubleValue MAX_ATTACKER_DISTANCE;
     private static final ModConfigSpec.IntValue REGEN_DELAY;
     private static final ModConfigSpec.DoubleValue REGEN_RADIUS;
@@ -33,6 +40,7 @@ public final class BossConfig {
     private static final ModConfigSpec.IntValue LOOT_LOCK;
     private static final ModConfigSpec.BooleanValue FOUNDRY_ENABLED;
     private static final ModConfigSpec.BooleanValue CINDER_FORGE_ENABLED;
+    private static final ModConfigSpec.BooleanValue NULL_RELAY_ENABLED;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -68,6 +76,22 @@ public final class BossConfig {
         TYRANT_VENT_MULTIPLIER = b.comment("Damage multiplier while the Forge Tyrant vents.")
                 .defineInRange("tyrantVentDamageMultiplier", 2.0, 1.0, 10.0);
         b.pop();
+        b.push("sentinel");
+        SENTINEL_HEALTH = b.comment("Hit points of the Null Sentinel. Applied when it is summoned. Max 1024 (the game's limit).")
+                .defineInRange("sentinelHealth", 800.0, 1.0, 1024.0);
+        SENTINEL_ARMOR = b.comment("Armor of the Null Sentinel.")
+                .defineInRange("sentinelArmor", 14.0, 0.0, 30.0);
+        SENTINEL_MELEE = b.comment("Damage of the Null Sentinel's claw swipe.")
+                .defineInRange("sentinelMeleeDamage", 16.0, 0.0, 1000.0);
+        SENTINEL_BEAM = b.comment("Damage of each null beam pulse (2 per second while the beam is on you).")
+                .defineInRange("sentinelBeamDamage", 8.0, 0.0, 1000.0);
+        SENTINEL_BURST = b.comment("Damage of the null burst at the end of a gravity well.")
+                .defineInRange("sentinelBurstDamage", 16.0, 0.0, 1000.0);
+        SENTINEL_LAUNCH = b.comment("Damage of each gravity inversion under a marked spot (the fall comes on top).")
+                .defineInRange("sentinelLaunchDamage", 8.0, 0.0, 1000.0);
+        SENTINEL_COOLDOWN = b.comment("Ticks between two big attacks of the Null Sentinel (shorter in phase 3).")
+                .defineInRange("sentinelAttackCooldown", 50, 10, 1200);
+        b.pop();
         b.push("fight");
         MAX_ATTACKER_DISTANCE = b.comment("Bosses ignore damage from attackers further away than this many blocks.")
                 .defineInRange("maxAttackerDistance", 32.0, 8.0, 256.0);
@@ -79,7 +103,7 @@ public final class BossConfig {
                 .defineInRange("regenPercentPerSecond", 5.0, 0.0, 100.0);
         b.pop();
         b.push("altar");
-        ALTAR_COOLDOWN = b.comment("Seconds before a Colossus Altar or Forge Altar can be used again after a summon.")
+        ALTAR_COOLDOWN = b.comment("Seconds before a boss altar can be used again after a summon.")
                 .defineInRange("altarCooldownSeconds", 300, 0, 86_400);
         LOOT_LOCK = b.comment("Seconds a boss's loot belongs to its killer alone.")
                 .defineInRange("lootLockSeconds", 120, 0, 3600);
@@ -89,6 +113,8 @@ public final class BossConfig {
                 .define("foundryEnabled", true);
         CINDER_FORGE_ENABLED = b.comment("Generate Cinder Forge ruins (with a Forge Altar) in the Nether. Only affects new chunks.")
                 .define("cinderForgeEnabled", true);
+        NULL_RELAY_ENABLED = b.comment("Generate Null Relay ruins (with a Null Altar) on the outer End islands. Only affects new chunks.")
+                .define("nullRelayEnabled", true);
         b.pop();
         SPEC = b.build();
     }
@@ -157,6 +183,36 @@ public final class BossConfig {
         return (float) get(TYRANT_VENT_MULTIPLIER);
     }
 
+    public static double sentinelHealth() {
+        return get(SENTINEL_HEALTH);
+    }
+
+    public static double sentinelArmor() {
+        return get(SENTINEL_ARMOR);
+    }
+
+    public static double sentinelMelee() {
+        return get(SENTINEL_MELEE);
+    }
+
+    public static float sentinelBeam() {
+        return (float) get(SENTINEL_BEAM);
+    }
+
+    public static float sentinelBurst() {
+        return (float) get(SENTINEL_BURST);
+    }
+
+    public static float sentinelLaunch() {
+        return (float) get(SENTINEL_LAUNCH);
+    }
+
+    /** Ticks between big attacks; phase 3 attacks a third faster. */
+    public static int sentinelCooldown(int phase) {
+        int base = get(SENTINEL_COOLDOWN);
+        return phase >= 3 ? Math.max(10, base * 2 / 3) : base;
+    }
+
     public static double maxAttackerDistance() {
         return get(MAX_ATTACKER_DISTANCE);
     }
@@ -187,5 +243,9 @@ public final class BossConfig {
 
     public static boolean cinderForgeEnabled() {
         return get(CINDER_FORGE_ENABLED);
+    }
+
+    public static boolean nullRelayEnabled() {
+        return get(NULL_RELAY_ENABLED);
     }
 }

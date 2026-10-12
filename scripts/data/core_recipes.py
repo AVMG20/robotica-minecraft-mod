@@ -55,7 +55,7 @@ shaped('temp_magma_core', ['SQS', 'NPN', 'SQS'], {'S': 'servo_actuator', 'Q': 'q
 shaped('null_casing', ['SBS', 'BAB', 'SBS'], {'S': 'minecraft:shulker_shell', 'B': 'blazing_casing', 'A': 'antigrav_core'}, count=2)
 shaped('null_circuit', ['QEQ', 'ENE', 'QEQ'], {'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'N': '#c:nether_stars'}, count=2)
 shaped('ender_cell', ['ERE', 'NCN', 'ERE'], {'E': '#c:ender_pearls', 'R': 'redstone_cell', 'N': 'null_casing', 'C': 'null_circuit'}, category='equipment')
-shaped('temp_antigrav_core', ['PCP', 'CNC', 'PCP'], {'P': 'plasma_actuator', 'C': 'minecraft:end_crystal', 'N': '#c:nether_stars'}, result='antigrav_core')
+# The Null Sentinel (boss module) drops Antigrav Cores; the Assembler makes them from Strange Matter (Ring Collider).
 
 # Upgrade cards (machines only): one card per kind, stackable kinds stack in a machine slot (see Upgrades.java).
 # Age 1 cards: two catalysts in the corners, iron plates and a Basic Circuit. Age 2 cards: gold plates and an Advanced Circuit.

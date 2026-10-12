@@ -1268,7 +1268,108 @@ public final class Showcase {
             shot("27_forge_tyrant");
             step(10, () -> server(sp -> command(sp, "kill @e[type=robotica:forge_tyrant]")));
         }
+        nullScenes();
         robotScenes();
+    }
+
+    /** Centre of the showcase Null Relay, far out in the End (no dragon fight in sight); the altar stands on it. */
+    private static final BlockPos RELAY = new BlockPos(3000, 64, 0);
+
+    @org.jetbrains.annotations.Nullable
+    private static com.arno.robotica.boss.entity.NullSentinel sentinel(ServerPlayer sp) {
+        var list = sp.serverLevel().getEntitiesOfClass(com.arno.robotica.boss.entity.NullSentinel.class, new net.minecraft.world.phys.AABB(RELAY).inflate(16));
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    /** One posed moment of the Null Sentinel for the dev frames (null_dev_*, not in shots.py). */
+    private static void sentinelFrame(String name, int delay, Consumer<com.arno.robotica.boss.entity.NullSentinel> pose) {
+        step(5, () -> server(sp -> {
+            var e = sentinel(sp);
+            if (e != null) pose.accept(e);
+        }));
+        grab(delay, name);
+    }
+
+    /**
+     * A Null Relay on its own End island and the Null Sentinel in it (no AI, posed), in the End for its sky. The dev frames
+     * show every telegraph. Back to the overworld afterwards.
+     */
+    private static void nullScenes() {
+        boolean relay = wants("32_null_relay"), boss = wants("31_null_sentinel", "null_dev");
+        if (!relay && !boss) return;
+        step(20, () -> server(sp -> {
+            ServerLevel end = sp.server.getLevel(net.minecraft.world.level.Level.END);
+            if (end == null) return;
+            command(sp, "difficulty normal");
+            sp.teleportTo(end, RELAY.getX() + 0.5, RELAY.getY() + 20, RELAY.getZ() + 30, 180, 30);
+            for (int dx = -19; dx <= 19; dx++) for (int dz = -19; dz <= 19; dz++) {
+                double r = Math.sqrt(dx * dx + dz * dz) / 19.0;
+                if (r > 1.0) continue;
+                int depth = 1 + (int) ((1.0 - r * r) * 12.0) + (int) (((dx * 31 + dz * 17) & 3) * (1.0 - r));
+                for (int dy = 0; dy < depth; dy++) end.setBlock(RELAY.offset(dx, -dy, dz), Blocks.END_STONE.defaultBlockState(), 2);
+            }
+            BlockPos origin = RELAY.offset(-13, 0, -13);
+            end.getStructureManager().get(com.arno.robotica.boss.world.NullRelayPiece.TEMPLATE).ifPresent(t -> t.placeInWorld(end, origin, origin,
+                    new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings(), end.random, 2));
+        }));
+        step(80, () -> {});
+        if (relay) {
+            camera(RELAY.getX() - 13.5, RELAY.getY() + 15, RELAY.getZ() + 18.5, 216, 32);
+            step(60, () -> {});
+            shot("32_null_relay");
+        }
+        if (boss) {
+            step(20, () -> server(sp -> {
+                ServerLevel end = sp.serverLevel();
+                var e = com.arno.robotica.boss.BossRegistry.NULL_SENTINEL.get().create(end);
+                if (e == null) return;
+                BlockPos altar = RELAY.above();
+                e.moveTo(altar.getX() + 0.5, altar.getY() + 1, altar.getZ() + 0.5, 0.0F, 0.0F);
+                e.setNoAi(true);
+                e.setAltarPos(altar);
+                end.addFreshEntity(e);
+                e.setYHeadRot(0.0F);
+                e.setYBodyRot(0.0F);
+                e.raisePylons(end);
+            }));
+            camera(RELAY.getX() + 2.5, RELAY.getY() + 4.0, RELAY.getZ() + 7.5, 160, 8);
+            step(5, () -> server(sp -> {
+                var e = sentinel(sp);
+                if (e != null) e.pose(com.arno.robotica.boss.entity.NullSentinel.Action.BEAM, new Vec3(-1.0, -0.3, 0.3).normalize());
+            }));
+            shot("31_null_sentinel");
+            if (wants("null_dev")) {
+                Vec3 aim = new Vec3(-1.0, -0.3, 0.3).normalize();
+                sentinelFrame("null_dev_windup", 24, e -> e.pose(com.arno.robotica.boss.entity.NullSentinel.Action.BEAM_WINDUP, aim));
+                sentinelFrame("null_dev_well", 26, e -> e.pose(com.arno.robotica.boss.entity.NullSentinel.Action.WELL_WINDUP, e.aim()));
+                step(5, () -> server(sp -> {
+                    var stand = EntityType.ARMOR_STAND.create(sp.serverLevel());
+                    if (stand == null) return;
+                    stand.moveTo(RELAY.getX() - 2.5, RELAY.getY() + 1, RELAY.getZ() + 6.5, 0, 0);
+                    sp.serverLevel().addFreshEntity(stand);
+                }));
+                sentinelFrame("null_dev_launch", 16, e -> {
+                    e.pose(com.arno.robotica.boss.entity.NullSentinel.Action.LAUNCH_WINDUP, e.aim());
+                    var stands = e.level().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, e.getBoundingBox().inflate(12));
+                    if (!stands.isEmpty()) e.markLaunches(stands.get(0));
+                });
+                sentinelFrame("null_dev_rift", 45, e -> {
+                    e.pose(com.arno.robotica.boss.entity.NullSentinel.Action.IDLE, e.aim());
+                    e.markRift(new Vec3(RELAY.getX() + 3.5, RELAY.getY() + 1, RELAY.getZ() + 5.5));
+                    e.markRift(new Vec3(RELAY.getX() - 4.5, RELAY.getY() + 1, RELAY.getZ() + 3.5));
+                });
+                sentinelFrame("null_dev_recharge", 16, e -> e.startRecharge());
+                sentinelFrame("null_dev_shift", 22, e -> e.startShift(3));
+                sentinelFrame("null_dev_intro", 40, e -> e.startIntro());
+                sentinelFrame("null_dev_death", 30, e -> e.kill());
+            }
+            step(40, () -> server(sp -> {
+                command(sp, "kill @e[type=robotica:null_pylon]");
+                command(sp, "kill @e[type=robotica:null_sentinel]");
+                command(sp, "kill @e[type=minecraft:armor_stand]");
+            }));
+        }
+        step(10, () -> server(sp -> sp.teleportTo(sp.server.overworld(), 0.5, Y, 0.5, 0, 0)));
     }
 
     private static final BlockPos PEN = new BlockPos(-70, Y, 40);

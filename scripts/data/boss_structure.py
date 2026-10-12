@@ -3,6 +3,9 @@
   with broken walls, roof beams with hanging chains, a round arena floor and the Colossus Altar in the centre (12, 1, 12).
 - data/robotica/structure/cinder_forge.nbt   : the Cinder Forge, a ruined 23x23 Nether forge of blackstone, basalt and
   gold with magma channels, broken walls, lava cauldrons and the Forge Altar in the centre (11, 1, 11).
+- data/robotica/structure/null_relay.nbt     : the Null Relay, a ruined round 27x27 relay platform of end stone, purpur and
+  obsidian on the outer End islands, with a broken railing, relay pylons on an obsidian ring and the Null Altar in the
+  centre (13, 1, 13).
 - data/robotica/structure/boss_arena.nbt     : an empty 9x8x9 game test area.
 Run: python3 scripts/data/boss_structure.py   (deterministic: the same file every run)
 """
@@ -362,6 +365,105 @@ def build_cinder_forge():
     return t
 
 
+# ---------------------------------------------------------------- Null Relay (outer End islands)
+
+RSIZE, RHEIGHT, RC = 27, 14, 13
+rrng = random.Random(1908)                                        # own stream: the other templates stay as they are
+
+
+def rpick(*weighted):
+    total = sum(w for _, w in weighted)
+    r = rrng.random() * total
+    for name, w in weighted:
+        r -= w
+        if r <= 0:
+            return name
+    return weighted[-1][0]
+
+
+def build_null_relay():
+    t = Template(RSIZE, RHEIGHT, RSIZE)
+    radius = 13.3
+    for x in range(RSIZE):
+        for z in range(RSIZE):
+            d = math.hypot(x - RC, z - RC)
+            if d > radius:
+                continue                                          # round platform: the island stays in the corners
+            for y in range(1, RHEIGHT):
+                t.set(x, y, z, 'air')
+            if d <= 2.5:
+                block, props = 'purpur_block', {}
+            elif abs(d - 9.0) < 0.55:
+                block, props = ('crying_obsidian' if rrng.random() < 0.25 else 'obsidian'), {}
+            elif d < 9.0 and (x == RC or z == RC):
+                block, props = 'purpur_pillar', {'axis': 'x' if z == RC else 'z'}
+            elif d < 9.0:
+                block, props = rpick(('end_stone_bricks', 6), ('end_stone', 2), ('purpur_block', 1)), {}
+            else:
+                block, props = rpick(('end_stone_bricks', 5), ('end_stone', 4), ('purpur_block', 1), ('obsidian', 0.5)), {}
+            t.set(x, 0, z, block, **props)
+
+    # dais: purpur plinth with the altar in the middle, slab steps around it
+    for dx in range(-2, 3):
+        for dz in range(-2, 3):
+            if max(abs(dx), abs(dz)) == 2:
+                t.set(RC + dx, 1, RC + dz, 'purpur_slab', type='bottom', waterlogged=False)
+            else:
+                t.set(RC + dx, 1, RC + dz, 'purpur_block')
+    t.set(RC, 1, RC, 'robotica:null_altar', natural=True, ready=True)
+    for dx, dz in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
+        t.set(RC + dx, 2, RC + dz, 'end_rod', facing='up')
+
+    # broken railing on the rim, open where the spokes meet it
+    for x in range(RSIZE):
+        for z in range(RSIZE):
+            d = math.hypot(x - RC, z - RC)
+            if not 12.4 < d <= radius or abs(x - RC) <= 1 or abs(z - RC) <= 1:
+                continue
+            if rrng.random() < 0.72:
+                t.set(x, 1, z, 'end_stone_brick_wall', up=True, north='none', south='none', east='none', west='none',
+                      waterlogged=False)
+
+    # relay pylons on the ring: obsidian shafts with purpur bands, the whole ones topped with an end rod
+    for k in range(8):
+        a = math.radians(22.5 + k * 45.0)
+        x = RC + int(round(math.cos(a) * 11.0))
+        z = RC + int(round(math.sin(a) * 11.0))
+        broken = k in (2, 5)
+        h = 3 + rrng.randrange(2) if broken else 7 + rrng.randrange(2)
+        for y in range(1, h + 1):
+            if y == 1:
+                block = 'purpur_pillar'
+            elif y % 3 == 0:
+                block = 'purpur_block'
+            else:
+                block = 'crying_obsidian' if rrng.random() < 0.2 else 'obsidian'
+            t.set(x, y, z, block, **({'axis': 'y'} if block == 'purpur_pillar' else {}))
+        if broken:
+            t.set(x, h + 1, z, 'purpur_slab', type='bottom', waterlogged=False)
+            fx = RC + int(round(math.cos(a) * 9.8))               # fallen top piece next to it
+            fz = RC + int(round(math.sin(a) * 9.8))
+            t.set(fx, 1, fz, 'obsidian')
+        else:
+            t.set(x, h + 1, z, 'end_rod', facing='up')
+
+    # floating debris high above the rim: the relay's antigrav field still holds a few blocks up
+    for x, y, z, block in ((4, 11, 8, 'purpur_block'), (5, 11, 8, 'purpur_slab'), (20, 12, 5, 'obsidian'), (21, 12, 5, 'crying_obsidian'),
+                           (21, 10, 20, 'end_stone_bricks'), (7, 12, 21, 'purpur_block'), (7, 13, 21, 'end_rod')):
+        if block == 'purpur_slab':
+            t.set(x, y, z, block, type='bottom', waterlogged=False)
+        elif block == 'end_rod':
+            t.set(x, y, z, block, facing='up')
+        else:
+            t.set(x, y, z, block)
+
+    # the loot chest by a pylon: End goods and a Null Key to start the fight
+    t.set(RC - 9, 1, RC + 4, 'chest', {'id': 'minecraft:chest', 'LootTable': 'robotica:chests/null_relay'},
+          facing='east', type='single', waterlogged=False)
+    t.set(RC - 9, 1, RC + 5, 'purpur_stairs', facing='east', half='bottom', shape='straight', waterlogged=False)
+    return t
+
+
 def build_arena():
     return Template(9, 8, 9)
 
@@ -371,6 +473,8 @@ def main():
     print(f'rusted_foundry.nbt: {n} blocks, {p} states')
     n, p = build_cinder_forge().write(OUT / 'cinder_forge.nbt')
     print(f'cinder_forge.nbt: {n} blocks, {p} states')
+    n, p = build_null_relay().write(OUT / 'null_relay.nbt')
+    print(f'null_relay.nbt: {n} blocks, {p} states')
     build_arena().write(OUT / 'boss_arena.nbt')
     print('boss_arena.nbt written')
 
