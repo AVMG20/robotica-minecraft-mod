@@ -37,6 +37,11 @@ public final class WarpEvents {
     }
 
     @SubscribeEvent
+    public static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        WarpCharges.cancel(event.getEntity().getUUID());
+    }
+
+    @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         WarpCharges.clear();
     }

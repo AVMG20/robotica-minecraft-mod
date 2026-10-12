@@ -14,6 +14,13 @@ import net.minecraft.network.codec.StreamCodec;
  * {@code /particle robotica:spark{color:9496063,scale:1.5}}.
  */
 public record TintParticleOptions(ParticleType<TintParticleOptions> type, int color, float scale) implements ParticleOptions {
+    public static final float MIN_SCALE = 0.05F, MAX_SCALE = 8.0F;
+
+    /** The packet codec takes any float: keep the size in range (NaN becomes 1) and the colour to RGB. */
+    public TintParticleOptions {
+        scale = Float.isNaN(scale) ? 1.0F : Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+        color &= 0xFFFFFF;
+    }
 
     @Override
     public ParticleType<TintParticleOptions> getType() {
@@ -35,7 +42,7 @@ public record TintParticleOptions(ParticleType<TintParticleOptions> type, int co
     static MapCodec<TintParticleOptions> codec(ParticleType<TintParticleOptions> type) {
         return RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("color", 0xFFFFFF).forGetter(TintParticleOptions::color),
-                Codec.floatRange(0.05F, 8.0F).optionalFieldOf("scale", 1.0F).forGetter(TintParticleOptions::scale)
+                Codec.floatRange(MIN_SCALE, MAX_SCALE).optionalFieldOf("scale", 1.0F).forGetter(TintParticleOptions::scale)
         ).apply(i, (color, scale) -> new TintParticleOptions(type, color, scale)));
     }
 
