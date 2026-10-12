@@ -1,7 +1,10 @@
 package com.arno.robotica.exo;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.module.ModuleKind;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -21,6 +24,9 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class ExoEvents {
     private ExoEvents() {}
 
+    /** Vanilla divides the mining speed by this while the feet are off the ground. */
+    private static final float GYRO_FACTOR = 5.0F;
+
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.tick(player);
@@ -29,7 +35,7 @@ public final class ExoEvents {
     /** Both sides: the client needs to agree that the player does not drown, or its bubble bar would drain. */
     @SubscribeEvent
     public static void onBreathe(LivingBreatheEvent event) {
-        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player player) ExoTicker.onBreathe(player, event);
+        if (event.getEntity() instanceof Player player) ExoTicker.onBreathe(player, event);
     }
 
     @SubscribeEvent
@@ -51,9 +57,20 @@ public final class ExoEvents {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onKnockback(player, event);
     }
 
+    /** Both sides: the client runs the fall too and would play the fall damage sound for a dampened landing. */
     @SubscribeEvent
     public static void onFall(LivingFallEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onFall(player, event);
+        else if (event.getEntity() instanceof Player player && player.level().isClientSide) ExoTicker.onClientFall(player, event);
+    }
+
+    /** Both sides (the client predicts the mining progress): Gyro Stabilizer undoes the slower mining off the ground. */
+    @SubscribeEvent
+    public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
+        Player player = event.getEntity();
+        if (!player.onGround() && ExoSuit.pieceLevel(player, EquipmentSlot.LEGS, ModuleKind.GYRO_STABILIZER) > 0) {
+            event.setNewSpeed(event.getNewSpeed() * GYRO_FACTOR);
+        }
     }
 
     @SubscribeEvent

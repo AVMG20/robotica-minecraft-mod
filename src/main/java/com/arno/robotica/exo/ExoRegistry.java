@@ -20,7 +20,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.EnumMap;
 import java.util.List;
 
-/** Registries of the exo module: the core socket component, armor materials and the module menu. */
+/** Registries of the exo module: the core socket and cell slot components, armor materials and the module menu. */
 public final class ExoRegistry {
     private ExoRegistry() {}
 
@@ -32,6 +32,11 @@ public final class ExoRegistry {
     /** The core in the chestplate's core socket (Mk2+): one Servo, Magma or Antigrav Core, never consumed. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> CORE =
             COMPONENTS.registerComponentType("exo_core",
+                    b -> b.persistent(ItemContainerContents.CODEC).networkSynchronized(ItemContainerContents.STREAM_CODEC));
+
+    /** The battery cell in the chestplate's cell slot (every mark): it charges the worn suit. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> CELL =
+            COMPONENTS.registerComponentType("exo_cell",
                     b -> b.persistent(ItemContainerContents.CODEC).networkSynchronized(ItemContainerContents.STREAM_CODEC));
 
     /** Iron-tier protection (Mk1). Defense 2/5/6/2, no toughness. Layers: textures/models/armor/exo_mk1_layer_1/2.png. */

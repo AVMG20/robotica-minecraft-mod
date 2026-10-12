@@ -18,6 +18,7 @@ final class ExoModuleText {
                 public MutableComponent describe(int level) {
                     String key = "module.robotica." + kind.id + ".desc";
                     if (kind == ModuleKind.NIGHT_VISION && ExoConfig.thermalRadius(level) > 0) key += "_thermal";
+                    if (kind == ModuleKind.HEAT_SHIELD && level >= 2) key += "_2";
                     return Component.translatable(key, ExoConfig.describeArgs(kind, level));
                 }
 
@@ -35,7 +36,10 @@ final class ExoModuleText {
     @Nullable
     private static String unit(ModuleKind kind) {
         return switch (kind) {
-            case NIGHT_VISION, REBREATHER, ROBOT_HUD, JET_ASSIST, FLIGHT, SERVO_STRIDE, STEP_ASSIST, MAGNET, HYDRO_FINS -> "second";
+            case NIGHT_VISION, REBREATHER, ROBOT_HUD, JET_ASSIST, FLIGHT, SERVO_STRIDE, STEP_ASSIST, MAGNET, HYDRO_FINS, GLIDER,
+                 REACH, CRYO_TREADS -> "second";
+            case HEAT_SHIELD -> "burning";
+            case ANCHOR_SERVOS -> "knockback";
             case SPRING_HEELS -> "jump";
             case FALL_DAMPENER -> "block";
             case KINETIC_SHIELD -> "damage";

@@ -46,18 +46,25 @@ public enum ModuleKind {
     KINETIC_SHIELD("kinetic_shield", Pieces.CHEST, 0, 3, 4, 4),
     MED_INJECTOR("med_injector", Pieces.CHEST, 0, 2, 3, 4),
     HAZARD_SEAL("hazard_seal", Pieces.CHEST, 0, 3),
+    GLIDER("glider", Pieces.CHEST, 0, 2),
     // Exo leggings
     SERVO_STRIDE("servo_stride", Pieces.LEGS, 0, 1, 2, 3),
     KINETIC_GENERATOR("kinetic_generator", Pieces.LEGS, 0, 1),
     DASH_THRUSTERS("dash_thrusters", Pieces.LEGS | Pieces.FEET, 0, 3),
+    GYRO_STABILIZER("gyro_stabilizer", Pieces.LEGS, 0, 2),
+    ANCHOR_SERVOS("anchor_servos", Pieces.LEGS, 0, 1, 2, 3),
     // Exo boots
     STEP_ASSIST("step_assist", Pieces.FEET, 0, 1),
     SPRING_HEELS("spring_heels", Pieces.FEET, 0, 1, 2, 3),
     FALL_DAMPENER("fall_dampener", Pieces.FEET, 0, 1, 2, 3),
     MAGNET("magnet", Pieces.FEET, 0, 1, 2, 3),
     HYDRO_FINS("hydro_fins", Pieces.FEET, 0, 2),
+    CRYO_TREADS("cryo_treads", Pieces.FEET, 0, 1),
     // any Exo piece (acts on its own piece, one per piece)
     CAPACITOR_PLATING("capacitor_plating", ARMOR, 0, 1, 2, 3),
+    // any Exo piece (counts once per suit)
+    REACH("reach", ARMOR, 0, 1, 2, 3),
+    HEAT_SHIELD("heat_shield", ARMOR, 0, 1, 3),
     // tools, weapons and armor
     POWER_REGULATOR("power_regulator", ALL, 0, 2, 3, 4);
 

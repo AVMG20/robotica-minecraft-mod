@@ -109,6 +109,13 @@
       "yes",
       "yes",
       "yes"
+     ],
+     [
+      "Cell slot",
+      "yes",
+      "yes",
+      "yes",
+      "yes"
      ]
     ]
    },
@@ -514,6 +521,31 @@
   },
   {
    "items": [
+    "glider_module"
+   ],
+   "what": "Elytra gliding: press jump in mid air. Firework rockets boost it.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo chestplate"
+     ],
+     [
+      "Min. Mk",
+      "Mk2"
+     ],
+     [
+      "Energy",
+      "40 FE/s gliding"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
     "servo_stride_module_1",
     "servo_stride_module_2",
     "servo_stride_module_3"
@@ -591,6 +623,54 @@
   },
   {
    "items": [
+    "gyro_stabilizer_module"
+   ],
+   "what": "Full mining speed while your feet are off the ground.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo leggings"
+     ],
+     [
+      "Min. Mk",
+      "Mk2"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "anchor_servos_module",
+    "anchor_servos_module_2",
+    "anchor_servos_module_3"
+   ],
+   "what": "Cuts knockback by 40 / 70 / 100%.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo leggings"
+     ],
+     [
+      "Min. Mk (I / II / III)",
+      "Mk1 / Mk2 / Mk3"
+     ],
+     [
+      "Energy",
+      "100 / 150 / 200 FE per knockback"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
     "step_assist_module"
    ],
    "what": "Walk up full blocks.",
@@ -647,7 +727,7 @@
     "fall_dampener_module_2",
     "fall_dampener_module_3"
    ],
-   "what": "Absorbs fall damage beyond 3 blocks.",
+   "what": "Cancels all fall damage while charged, also from Ender Pearls and flying into walls.",
    "stats": {
     "rows": [
      [
@@ -722,6 +802,31 @@
   },
   {
    "items": [
+    "cryo_treads_module"
+   ],
+   "what": "Freezes water under your feet so you can walk on it. Magma blocks do not burn.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo boots"
+     ],
+     [
+      "Min. Mk",
+      "Mk1"
+     ],
+     [
+      "Energy",
+      "20 FE/s freezing"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
     "capacitor_plating_module",
     "capacitor_plating_module_2",
     "capacitor_plating_module_3"
@@ -736,6 +841,59 @@
      [
       "Min. Mk (I / II / III)",
       "Mk1 / Mk2 / Mk3"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "reach_module",
+    "reach_module_2",
+    "reach_module_3"
+   ],
+   "what": "Reach blocks 1 / 2 / 3 blocks further.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "any Exo piece"
+     ],
+     [
+      "Min. Mk (I / II / III)",
+      "Mk1 / Mk2 / Mk3"
+     ],
+     [
+      "Energy",
+      "5 / 10 / 20 FE/s"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
+    "heat_shield_module",
+    "heat_shield_module_2"
+   ],
+   "what": "I puts you out quickly when you catch fire. II makes you immune to fire and lava.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "any Exo piece"
+     ],
+     [
+      "Min. Mk (I / II)",
+      "Mk1 / Mk3"
+     ],
+     [
+      "Energy",
+      "40 / 80 FE/s burning"
      ]
     ]
    },

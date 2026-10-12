@@ -28,13 +28,13 @@ import java.util.List;
 /**
  * Module screen: one row per armor piece (all four worn pieces with J, or the held piece) with the piece, its battery,
  * up to four module slots (locked ones show which mark opens them), a switch and level pips per module, the core
- * socket on the chestplate and the pooled suit battery on the right. Switch clicks are menu buttons (the server flips
+ * socket and the cell slot on the chestplate and the pooled suit battery on the right. Switch clicks are menu buttons (the server flips
  * the bit). Carrying a module over a slot that refuses it explains why.
  */
 public class ExoScreen extends MachineScreen<ExoMenu> {
     private static final int SWITCH_W = 8;
     private static final int SWITCH_H = 18;
-    private static final int POOL_X = 181;
+    private static final int POOL_X = 203;
 
     public ExoScreen(ExoMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -60,6 +60,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
     @Override
     protected ItemStack ghostIcon(Slot slot) {
         if (slot instanceof ExoMenu.CoreSlot) return new ItemStack(CoreItems.SERVO_CORE.get());
+        if (slot instanceof ExoMenu.CellSlot) return new ItemStack(CoreItems.COPPER_CELL.get());
         return ItemStack.EMPTY;
     }
 
@@ -69,6 +70,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
             return Component.translatable("exo.robotica.slot_hint", Component.translatable("exo.robotica.piece." + m.piece().getName()));
         }
         if (slot instanceof ExoMenu.CoreSlot) return Component.translatable("exo.robotica.core_hint");
+        if (slot instanceof ExoMenu.CellSlot) return Component.translatable("exo.robotica.cell_hint");
         return null;
     }
 
@@ -196,6 +198,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         Component reason = null;
         if (hoveredSlot instanceof ExoMenu.ModuleSlot m && !hoveredSlot.hasItem()) reason = m.refusal(carried);
         else if (hoveredSlot instanceof ExoMenu.CoreSlot c && !hoveredSlot.hasItem()) reason = c.refusal(carried);
+        else if (hoveredSlot instanceof ExoMenu.CellSlot c && !hoveredSlot.hasItem()) reason = c.refusal(carried);
         if (reason != null) {
             g.renderComponentTooltip(font, List.of(Component.translatable("exo.robotica.refuse").withStyle(ChatFormatting.RED),
                     reason.copy().withStyle(ChatFormatting.GRAY)), mouseX, mouseY);

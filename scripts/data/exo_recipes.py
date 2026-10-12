@@ -103,6 +103,7 @@ shaped('med_injector_module', ['GAG', 'CBC'], {'G': 'minecraft:glistering_melon_
 level3('med_injector', 'minecraft:golden_apple', 'med_injector_module', 'med_injector_module_2')
 level_null('med_injector_module_3', 'med_injector_module_2', 'minecraft:ghast_tear')
 shaped('hazard_seal_module', ['GQG', 'PMP'], {'G': '#c:glass_blocks', 'Q': 'quantum_circuit', 'P': PLATE, 'M': '#c:buckets/milk'})
+shaped('glider_module', ['PEP', 'ASA'], {'P': PLATE, 'E': 'minecraft:elytra', 'A': 'advanced_circuit', 'S': 'servo_actuator'})
 
 # ---- Leg modules
 shaped('servo_stride_module_1', ['CMC', 'PBP'], {'C': 'copper_coil', 'M': 'electric_motor', 'B': 'basic_circuit', 'P': PLATE})
@@ -111,6 +112,17 @@ shaped('servo_stride_module_3', ['QPQ', ' U '], {'Q': 'quantum_circuit', 'P': 'p
 shaped('kinetic_generator_module', ['PMP', 'CGC'], {'P': PLATE, 'M': 'electric_motor', 'C': 'copper_coil', 'G': '#c:gears/copper'})
 shaped('dash_thrusters_module', ['BPB', 'FCF'], {'B': 'minecraft:blaze_powder', 'P': 'plasma_actuator', 'F': 'minecraft:fire_charge',
                                                   'C': 'copper_coil'})
+shaped('gyro_stabilizer_module', ['PCP', 'ASA'], {'P': PLATE, 'C': 'minecraft:compass', 'A': 'advanced_circuit', 'S': 'servo_actuator'})
+shaped('anchor_servos_module', ['PIP', 'MBM'], {'P': PLATE, 'I': '#c:storage_blocks/iron', 'M': 'electric_motor', 'B': 'basic_circuit'})
+level2('anchor_servos', '#c:obsidians')
+level3('anchor_servos', 'plasma_actuator')
+
+# ---- Modules for any piece
+shaped('reach_module', ['PIP', 'MBM'], {'P': PLATE, 'I': 'minecraft:piston', 'M': 'electric_motor', 'B': 'basic_circuit'})
+level2('reach', 'servo_actuator')
+level3('reach', 'plasma_actuator')
+shaped('heat_shield_module', ['PWP', 'CBC'], {'P': PLATE, 'W': '#c:buckets/water', 'C': 'copper_coil', 'B': 'basic_circuit'})
+level3('heat_shield', 'minecraft:magma_cream', 'heat_shield_module', 'heat_shield_module_2')
 
 # ---- Boot modules
 shaped('step_assist_module', ['PIP', 'C C'], {'P': PLATE, 'I': 'minecraft:piston', 'C': 'copper_coil'})
@@ -125,6 +137,7 @@ level2('magnet', '#c:storage_blocks/iron')
 level3('magnet', 'minecraft:lodestone')
 # Age 2 like its mark: kelp fins on a Servo Actuator (prismarine is Age 3).
 shaped('hydro_fins_module', ['KAK', 'PSP'], {'K': '#c:storage_blocks/dried_kelp', 'A': 'advanced_circuit', 'P': PLATE, 'S': 'servo_actuator'})
+shaped('cryo_treads_module', ['IPI', 'CBC'], {'I': 'minecraft:packed_ice', 'P': PLATE, 'C': 'copper_coil', 'B': 'basic_circuit'})
 
 # ---- Any piece
 shaped('capacitor_plating_module', ['PCP', 'RBR'], {'P': PLATE, 'C': 'copper_cell', 'R': '#c:dusts/redstone', 'B': 'basic_circuit'})

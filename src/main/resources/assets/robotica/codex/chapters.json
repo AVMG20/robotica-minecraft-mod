@@ -491,6 +491,27 @@
           ]
         },
         {
+          "title": "More modules",
+          "text": "Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one off on the J screen to use the other.",
+          "items": [
+            "robotica:glider_module",
+            "robotica:gyro_stabilizer_module",
+            "robotica:anchor_servos_module",
+            "robotica:cryo_treads_module",
+            "robotica:reach_module",
+            "robotica:heat_shield_module"
+          ]
+        },
+        {
+          "title": "Cell slot",
+          "text": "Every chestplate has a cell slot on the J screen, right of its modules. The cell in it charges the worn suit.",
+          "items": [
+            "robotica:copper_cell",
+            "robotica:redstone_cell",
+            "robotica:ender_cell"
+          ]
+        },
+        {
           "title": "Core socket",
           "text": "Needs a Mk2 chestplate and all four pieces at Mk2 or higher.\nServo: Haste and Speed on the Overclock key (default O).\nMagma: fireproof, burning hits.\nAntigrav: no fall damage, cheaper Flight.",
           "items": [

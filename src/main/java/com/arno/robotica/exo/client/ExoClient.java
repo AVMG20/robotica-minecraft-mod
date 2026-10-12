@@ -5,6 +5,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -20,6 +21,7 @@ public final class ExoClient {
         container.registerConfig(ModConfig.Type.CLIENT, ExoClientConfig.SPEC, "robotica-exo-client.toml");
         modBus.addListener(RegisterKeyMappingsEvent.class, ExoKeys::register);
         modBus.addListener(RegisterGuiLayersEvent.class, ExoHud::register);
+        modBus.addListener(EntityRenderersEvent.AddLayers.class, ExoGliderLayer::register);
         modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ExoRegistry.EXO_MENU.get(), ExoScreen::new));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoKeys::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoXray::onClientTick);

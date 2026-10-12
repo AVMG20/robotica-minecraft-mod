@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Module screen of the Exo-Frame: one row per armor piece with up to four module slots, an on/off switch per module
- * and, on chestplates from Mk2 on, the core socket. Opened for all four worn pieces with the J key (absent pieces get
- * an empty row), or for one piece by sneak + right-click with the piece in hand. The switches are menu buttons
+ * Module screen of the Exo-Frame: one row per armor piece with up to four module slots, an on/off switch per module,
+ * the cell slot on chestplates and, on chestplates from Mk2 on, the core socket. Opened for all four worn pieces with
+ * the J key (absent pieces get an empty row), or for one piece by sneak + right-click with the piece in hand. The switches are menu buttons
  * ({@link #clickMenuButton}), so the server validates every click. The slots write straight into the piece's data
  * components; the energy and everything else on the piece is never touched (except that removing Capacitor Plating
  * caps the stored energy at the smaller battery).
@@ -44,8 +44,15 @@ import java.util.function.Supplier;
  * the held piece itself are refused outright.
  */
 public class ExoMenu extends MachineMenu {
-    /** Where a section's armor piece lives: 0 worn in its slot, 1 main hand, 2 off hand. {@code count} 0 = no piece. */
-    public record Section(EquipmentSlot slot, int source, int count, boolean core) {
+    /**
+     * Where a section's armor piece lives: 0 worn in its slot, 1 main hand, 2 off hand. {@code count} 0 = no module
+     * slots; {@code core} and {@code cell}: the row has the core socket or the cell slot.
+     */
+    public record Section(EquipmentSlot slot, int source, int count, boolean core, boolean cell) {
+        public Section(EquipmentSlot slot, int source, int count, boolean core) {
+            this(slot, source, count, core, false);
+        }
+
         public ItemStack resolve(Player player) {
             ItemStack stack = switch (source) {
                 case 1 -> player.getMainHandItem();
@@ -66,17 +73,18 @@ public class ExoMenu extends MachineMenu {
         }
 
         boolean hasPiece() {
-            return count > 0 || core;
+            return count > 0 || core || cell;
         }
     }
 
     // Layout, shared with the screen.
-    public static final int WIDTH = 196;
+    public static final int WIDTH = 218;
     public static final int ROW_HEIGHT = 24;
     public static final int FIRST_ROW_Y = 18;
     public static final int SLOT_X = 35;
     public static final int SLOT_STEP = 30;
     public static final int CORE_X = 157;
+    public static final int CELL_X = 179;
 
     public final List<Section> sections;
     /** Index of the first module slot of each section in {@link #slots}. */
@@ -119,6 +127,11 @@ public class ExoMenu extends MachineMenu {
                 addSlot(new CoreSlot(core, piece, CORE_X, y));
                 index++;
             }
+            if (section.cell()) {
+                Container cell = server ? new CellContainer(inv.player, piece) : new SimpleContainer(1);
+                addSlot(new CellSlot(cell, piece, CELL_X, y));
+                index++;
+            }
         }
         addPlayerInventory(inv, (WIDTH - 162) / 2, inventoryY(sections.size()));
     }
@@ -150,7 +163,7 @@ public class ExoMenu extends MachineMenu {
         for (EquipmentSlot slot : ExoSuit.SLOTS) {
             ItemStack piece = ExoSuit.piece(player, slot);
             list.add(piece.getItem() instanceof ExoArmorItem item
-                    ? new Section(slot, 0, Modules.slots(piece), item.hasCoreSocket())
+                    ? new Section(slot, 0, Modules.slots(piece), item.hasCoreSocket(), slot == EquipmentSlot.CHEST)
                     : new Section(slot, 0, 0, false));
         }
         open(player, list);
@@ -159,11 +172,12 @@ public class ExoMenu extends MachineMenu {
     public static void openForHand(ServerPlayer player, InteractionHand hand) {
         ItemStack piece = player.getItemInHand(hand);
         if (!(piece.getItem() instanceof ExoArmorItem item)) return;
-        open(player, List.of(new Section(item.getEquipmentSlot(), hand == InteractionHand.MAIN_HAND ? 1 : 2, Modules.slots(piece), item.hasCoreSocket())));
+        open(player, List.of(new Section(item.getEquipmentSlot(), hand == InteractionHand.MAIN_HAND ? 1 : 2, Modules.slots(piece),
+                item.hasCoreSocket(), item.getEquipmentSlot() == EquipmentSlot.CHEST)));
     }
 
     private static void open(ServerPlayer player, List<Section> sections) {
-        if (sections.stream().allMatch(s -> s.count() == 0)) return;
+        if (sections.stream().noneMatch(Section::hasPiece)) return;
         player.openMenu(new SimpleMenuProvider((id, inv, p) -> new ExoMenu(id, inv, sections, true),
                 Component.translatable("container.robotica.exo")), buf -> writeSections(buf, sections));
     }
@@ -175,6 +189,7 @@ public class ExoMenu extends MachineMenu {
             buf.writeVarInt(s.source());
             buf.writeVarInt(s.count());
             buf.writeBoolean(s.core());
+            buf.writeBoolean(s.cell());
         }
     }
 
@@ -185,7 +200,8 @@ public class ExoMenu extends MachineMenu {
             EquipmentSlot slot = EquipmentSlot.values()[Math.floorMod(buf.readVarInt(), EquipmentSlot.values().length)];
             int source = buf.readVarInt();
             int count = Math.max(0, Math.min(buf.readVarInt(), ExoArmorItem.MAX_SLOTS));
-            list.add(new Section(slot, source, count, buf.readBoolean()));
+            boolean core = buf.readBoolean();
+            list.add(new Section(slot, source, count, core, buf.readBoolean()));
         }
         return list;
     }
@@ -362,6 +378,41 @@ public class ExoMenu extends MachineMenu {
         }
     }
 
+    /** The chestplate's cell slot: one battery cell that charges the worn suit. */
+    public static class CellSlot extends Slot {
+        private final Supplier<ItemStack> piece;
+
+        public CellSlot(Container container, Supplier<ItemStack> piece, int x, int y) {
+            super(container, 0, x, y);
+            this.piece = piece;
+        }
+
+        @Nullable
+        public Component refusal(ItemStack stack) {
+            return ExoData.cellRefusal(piece.get(), stack);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return refusal(stack) == null;
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return !piece.get().isEmpty();
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return 1;
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            return 1;
+        }
+    }
+
     /**
      * Server side backing of the module slots: a small container loaded from the piece's component and written back
      * on every change, always into the stack the menu was opened for. Switching state follows the module (a freshly
@@ -423,9 +474,76 @@ public class ExoMenu extends MachineMenu {
         }
     }
 
-    /** Double-click collecting never pulls installed modules out of the item. */
+    /**
+     * Server side backing of the cell slot. It reads and writes the piece's component directly (never a copy made at
+     * open time), because the suit drains the cell while the screen is open.
+     */
+    public static final class CellContainer implements Container {
+        private final Player player;
+        private final Supplier<ItemStack> source;
+
+        public CellContainer(Player player, Supplier<ItemStack> source) {
+            this.player = player;
+            this.source = source;
+        }
+
+        @Override
+        public int getContainerSize() {
+            return 1;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return getItem(0).isEmpty();
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            ItemStack piece = source.get();
+            return slot != 0 || piece.isEmpty() ? ItemStack.EMPTY : ExoData.cell(piece);
+        }
+
+        @Override
+        public ItemStack removeItem(int slot, int amount) {
+            ItemStack cell = getItem(slot);
+            if (cell.isEmpty() || amount <= 0) return ItemStack.EMPTY;
+            ExoData.setCell(source.get(), ItemStack.EMPTY);
+            return cell;
+        }
+
+        @Override
+        public ItemStack removeItemNoUpdate(int slot) {
+            return removeItem(slot, 1);
+        }
+
+        @Override
+        public void setItem(int slot, ItemStack stack) {
+            ItemStack piece = source.get();
+            if (slot != 0 || piece.isEmpty()) return;
+            boolean had = !ExoData.cell(piece).isEmpty();
+            ExoData.setCell(piece, stack);
+            if (!had && !stack.isEmpty() && !player.level().isClientSide) {
+                CoreSounds.play(player, CoreSounds.UPGRADE_INSTALL, SoundSource.PLAYERS, 0.6F, 1.2F);
+            }
+        }
+
+        @Override
+        public void setChanged() {}
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+
+        @Override
+        public void clearContent() {
+            setItem(0, ItemStack.EMPTY);
+        }
+    }
+
+    /** Double-click collecting never pulls installed modules, the core or the cell out of the item. */
     @Override
     public boolean canTakeItemForPickAll(net.minecraft.world.item.ItemStack stack, net.minecraft.world.inventory.Slot slot) {
-        return !(slot instanceof ModuleSlot || slot instanceof CoreSlot) && super.canTakeItemForPickAll(stack, slot);
+        return !(slot instanceof ModuleSlot || slot instanceof CoreSlot || slot instanceof CellSlot) && super.canTakeItemForPickAll(stack, slot);
     }
 }

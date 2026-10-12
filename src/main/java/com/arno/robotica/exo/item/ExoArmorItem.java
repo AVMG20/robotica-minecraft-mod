@@ -8,6 +8,7 @@ import com.arno.robotica.core.module.ModuleItem;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.core.module.ModuleTarget;
 import com.arno.robotica.core.module.Modules;
+import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
 import com.arno.robotica.exo.ExoSuit;
@@ -19,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
@@ -27,6 +29,7 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 
 import java.util.List;
 
@@ -34,7 +37,8 @@ import java.util.List;
  * One piece of the Exo-Frame. An FE item with no durability: it never breaks and keeps its base protection when empty,
  * only the modules stop. Its mark sets its module slots (see {@link Modules}) and a battery
  * {@code markCapacityMultiplier}^(mk-1) times the Mk1 battery; Capacitor Plating adds to it. Chestplates from Mk2 on
- * have a core socket. Takes modules instead of enchantments.
+ * have a core socket; every chestplate has a cell slot. Takes modules instead of enchantments. A worn chestplate with
+ * a charged Glider module glides like an Elytra.
  */
 public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder {
     /** Module slots the J screen shows per piece. */
@@ -130,6 +134,19 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder 
         return false;
     }
 
+    // ---- Glider module: Elytra flight (the Exo ticker charges the time in the air) ----
+
+    @Override
+    public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
+        return getEquipmentSlot() == EquipmentSlot.CHEST && ExoSuit.pieceLevel(entity, EquipmentSlot.CHEST, ModuleKind.GLIDER) > 0;
+    }
+
+    @Override
+    public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks) {
+        if (!entity.level().isClientSide && (flightTicks + 1) % 10 == 0) entity.gameEvent(GameEvent.ELYTRA_GLIDE);
+        return true;
+    }
+
     /** Sneak + right-click opens the module screen for this piece; a normal right-click equips it like any armor. */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -159,6 +176,11 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder 
             tooltip.add(core.isEmpty()
                     ? Component.translatable("exo.robotica.tooltip.core_empty").withStyle(ChatFormatting.DARK_GRAY)
                     : Component.translatable("exo.robotica.tooltip.core", core.getHoverName()).withStyle(ChatFormatting.GOLD));
+        }
+        ItemStack cell = ExoData.cell(stack);
+        if (!cell.isEmpty()) {
+            tooltip.add(Component.translatable("exo.robotica.tooltip.cell", cell.getHoverName(),
+                    Fmt.energy(ItemEnergy.get(cell))).withStyle(ChatFormatting.AQUA));
         }
         tooltip.add(Component.translatable("exo.robotica.tooltip.keys", HasDetails.key("key.robotica.exo.open_modules"),
                 HasDetails.key("key.robotica.exo.toggle_flight"), HasDetails.key("key.robotica.exo.dash"),

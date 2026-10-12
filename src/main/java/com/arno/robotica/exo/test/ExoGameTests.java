@@ -34,12 +34,14 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmithingRecipeInput;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -349,10 +351,11 @@ public class ExoGameTests {
         helper.assertTrue(used == 7 * perBlock, "absorbing 7 damaging blocks costs " + 7 * perBlock + " FE, used " + used);
         helper.assertTrue(fall(player, 2.0F) == 1.0F, "a harmless fall costs nothing and changes nothing");
 
+        // Low on energy: still no damage, the boots pay what they have left.
         ItemEnergy.set(player.getItemBySlot(EquipmentSlot.FEET), 3 * perBlock);
         ticks(player, 1);
-        float partial = fall(player, 10.0F);
-        helper.assertTrue(partial > 0.4F && partial < 0.7F, "3 of 7 blocks paid leaves about 4/7 of the damage, multiplier " + partial);
+        helper.assertTrue(fall(player, 10.0F) == 0.0F, "a nearly empty fall dampener still cancels the whole fall");
+        helper.assertTrue(energy(player, EquipmentSlot.FEET) == 0, "and uses up what was left, left " + energy(player, EquipmentSlot.FEET));
 
         ItemEnergy.set(player.getItemBySlot(EquipmentSlot.FEET), 0);
         ticks(player, 1);
@@ -371,6 +374,152 @@ public class ExoGameTests {
         int reg = 100_000 - energy(player, EquipmentSlot.FEET);
         int want = (int) Math.round(7 * perBlock * (1.0 - ModuleConfig.regulatorSaving(3)));
         helper.assertTrue(Math.abs(reg - want) <= 1, "the regulator saves " + ModuleConfig.regulatorSaving(3) + ": " + want + " FE, used " + reg);
+
+        // Fall damage without a fall event (an Ender Pearl landing) and flying into a wall.
+        LivingIncomingDamageEvent pearl = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().fall(), 5.0F));
+        NeoForge.EVENT_BUS.post(pearl);
+        helper.assertTrue(pearl.isCanceled(), "the fall dampener cancels Ender Pearl fall damage");
+        LivingIncomingDamageEvent wall = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().flyIntoWall(), 6.0F));
+        NeoForge.EVENT_BUS.post(wall);
+        helper.assertTrue(wall.isCanceled(), "the fall dampener cancels flying into a wall");
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.FEET), 0);
+        ticks(player, 1);
+        LivingIncomingDamageEvent empty = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().fall(), 5.0F));
+        NeoForge.EVENT_BUS.post(empty);
+        helper.assertTrue(!empty.isCanceled(), "empty boots let pearl damage through");
+        helper.succeed();
+    }
+
+    // ---------------------------------------------------------------- newer modules
+
+    @GameTest(template = "empty")
+    public static void gliderAndReach(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        double reach = player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, 100_000, ModuleKind.GLIDER));
+        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK2, 100_000, mod(ModuleKind.REACH, 2)));
+        helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).canElytraFly(player), "a charged Glider glides");
+        ticks(player, 1);
+        double got = player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE);
+        helper.assertTrue(Math.abs(got - reach - ExoConfig.reachBlocks(2)) < 1.0E-6, "Reach II adds " + ExoConfig.reachBlocks(2) + " blocks, got " + (got - reach));
+
+        Modules.setEnabled(player.getItemBySlot(EquipmentSlot.LEGS), ModuleKind.REACH, false);
+        ticks(player, 1);
+        helper.assertTrue(player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE) == reach, "switched off: normal reach");
+
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.CHEST), 0);
+        helper.assertTrue(!player.getItemBySlot(EquipmentSlot.CHEST).canElytraFly(player), "an empty Glider does not glide");
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, 100_000));
+        helper.assertTrue(!player.getItemBySlot(EquipmentSlot.CHEST).canElytraFly(player), "no Glider, no gliding");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void heatShieldPutsOutAndBlocksFire(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, 100_000, ModuleKind.HEAT_SHIELD));
+        ticks(player, 1);
+        player.igniteForSeconds(10);
+        ticks(player, 6);
+        helper.assertTrue(!player.isOnFire(), "Heat Shield I puts you out");
+        helper.assertTrue(energy(player, EquipmentSlot.HEAD) < 100_000, "putting you out costs energy");
+        LivingIncomingDamageEvent lava = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().lava(), 4.0F));
+        NeoForge.EVENT_BUS.post(lava);
+        helper.assertTrue(!lava.isCanceled(), "Heat Shield I does not block lava");
+
+        player.setItemSlot(EquipmentSlot.HEAD, pieceM(ExoItems.HELMET_MK3, 100_000, mod(ModuleKind.HEAT_SHIELD, 2)));
+        ticks(player, 1);
+        helper.assertTrue(player.hasEffect(MobEffects.FIRE_RESISTANCE), "Heat Shield II gives Fire Resistance");
+        LivingIncomingDamageEvent lava2 = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().lava(), 4.0F));
+        NeoForge.EVENT_BUS.post(lava2);
+        helper.assertTrue(lava2.isCanceled(), "Heat Shield II blocks lava");
+
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.HEAD), 0);
+        ticks(player, 1);
+        helper.assertTrue(!player.hasEffect(MobEffects.FIRE_RESISTANCE), "an empty Heat Shield stops");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void gyroStabilizerAndAnchorServos(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setOnGround(false);
+        player.setItemSlot(EquipmentSlot.LEGS, pieceM(ExoItems.LEGGINGS_MK3, 100_000, mod(ModuleKind.GYRO_STABILIZER), mod(ModuleKind.ANCHOR_SERVOS, 3)));
+        ticks(player, 1);
+        BlockPos at = helper.absolutePos(new BlockPos(1, 1, 1));
+        var mining = new net.neoforged.neoforge.event.entity.player.PlayerEvent.BreakSpeed(player, Blocks.STONE.defaultBlockState(), 1.0F, at);
+        NeoForge.EVENT_BUS.post(mining);
+        helper.assertTrue(Math.abs(mining.getNewSpeed() - 5.0F) < 1.0E-4, "Gyro Stabilizer undoes the 5x slower mining in the air, got " + mining.getNewSpeed());
+
+        LivingKnockBackEvent full = new LivingKnockBackEvent(player, 0.4F, 1.0, 0.0);
+        NeoForge.EVENT_BUS.post(full);
+        helper.assertTrue(full.isCanceled(), "Anchor Servos III stop all knockback");
+        ExoTicker.flush(player);
+        helper.assertTrue(energy(player, EquipmentSlot.LEGS) == 100_000 - ExoConfig.cost(ModuleKind.ANCHOR_SERVOS, 3), "a stopped knockback costs its FE");
+
+        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK1, 100_000, ModuleKind.ANCHOR_SERVOS));
+        ticks(player, 1);
+        LivingKnockBackEvent part = new LivingKnockBackEvent(player, 0.4F, 1.0, 0.0);
+        NeoForge.EVENT_BUS.post(part);
+        float want = (float) (0.4 * (1.0 - ExoConfig.anchorResist(1)));
+        helper.assertTrue(!part.isCanceled() && Math.abs(part.getStrength() - want) < 1.0E-4, "Anchor Servos I cut knockback to " + want + ", got " + part.getStrength());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void cryoTreadsFreezeWater(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                helper.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+                helper.setBlock(new BlockPos(x, 1, z), x == 1 && z == 1 ? Blocks.STONE : Blocks.WATER);
+            }
+        }
+        BlockPos feet = helper.absolutePos(new BlockPos(1, 2, 1));
+        player.moveTo(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5);
+        player.setOnGround(true);
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ModuleKind.CRYO_TREADS));
+        ticks(player, 2);
+        helper.assertBlockPresent(Blocks.FROSTED_ICE, new BlockPos(0, 1, 1));
+        helper.assertBlockPresent(Blocks.FROSTED_ICE, new BlockPos(2, 1, 2));
+        helper.assertTrue(energy(player, EquipmentSlot.FEET) < 100_000, "freezing water costs FE");
+
+        LivingIncomingDamageEvent magma = new LivingIncomingDamageEvent(player, new DamageContainer(player.damageSources().hotFloor(), 1.0F));
+        NeoForge.EVENT_BUS.post(magma);
+        helper.assertTrue(magma.isCanceled(), "Cryo Treads: magma blocks do not burn");
+        // No water left to flow out of the test area.
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) helper.setBlock(new BlockPos(x, 1, z), Blocks.AIR);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void chestplateCellSlotChargesTheSuit(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK1, 0));
+        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK1, 0));
+        ExoMenu menu = new ExoMenu(1, player.getInventory(), List.of(new ExoMenu.Section(EquipmentSlot.CHEST, 0, 1, false, true)), true);
+        Slot cellSlot = menu.slots.get(1);
+        helper.assertTrue(cellSlot instanceof ExoMenu.CellSlot, "the chest row has a cell slot after its module slot");
+        helper.assertTrue(!cellSlot.mayPlace(new ItemStack(Items.DIRT)), "only cells go in the cell slot");
+        helper.assertTrue(!cellSlot.mayPlace(mod(ModuleKind.GLIDER)), "a module does not go in the cell slot");
+        ItemStack cell = new ItemStack(CoreItems.COPPER_CELL.get());
+        ItemEnergy.set(cell, 100_000);
+        helper.assertTrue(cellSlot.mayPlace(cell), "a Copper Cell fits");
+        cellSlot.set(cell);
+        helper.assertTrue(ItemEnergy.get(ExoData.cell(player.getItemBySlot(EquipmentSlot.CHEST))) == 100_000, "the cell is stored in the chestplate");
+
+        ticks(player, 20);
+        int suit = ExoSuit.totalEnergy(player);
+        int left = ItemEnergy.get(ExoData.cell(player.getItemBySlot(EquipmentSlot.CHEST)));
+        helper.assertTrue(suit > 0 && suit <= ExoConfig.cellSlotPerSecond(), "the cell charges the suit at most " + ExoConfig.cellSlotPerSecond() + " FE per second, got " + suit);
+        helper.assertTrue(left == 100_000 - suit, "what the suit got came out of the cell: cell " + left + ", suit " + suit);
+        helper.assertTrue(ItemEnergy.get(cellSlot.getItem()) == left, "the slot shows the live cell");
+
+        ItemStack taken = cellSlot.remove(1);
+        helper.assertTrue(taken.is(CoreItems.COPPER_CELL.get()) && ItemEnergy.get(taken) == left, "taking the cell out gives it back as it is now");
+        helper.assertTrue(ExoData.cell(player.getItemBySlot(EquipmentSlot.CHEST)).isEmpty(), "the cell slot is empty again");
         helper.succeed();
     }
 
