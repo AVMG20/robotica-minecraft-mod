@@ -35,7 +35,7 @@ The user is the only developer.
   `MachineEnergyStorage`, GUIs extend `MachineMenu`/`MachineScreen`.
 - Server config (`robotica-<module>-server.toml`) only for main knobs; other numbers stay constants.
 - Every item/block: recipe on the component ladder, generated texture and model, lang name, loot table, mineable tag.
-  Sounds reuse vanilla sound files through `sounds.json`. Game tests in `<module>/test` for core logic.
+  Sounds go through `sounds.json`: vanilla sound files or our own `.ogg` files in `assets/robotica/sounds/`. Game tests in `<module>/test` for core logic.
 - Balance numbers live in the data scripts and code; `python3 scripts/cost_report.py` prints raw-material costs.
 
 ## Every change
