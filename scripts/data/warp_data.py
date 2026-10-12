@@ -25,8 +25,8 @@ def face(tex, uv=None, **extra):
 
 # ---- Warp Pad: one 16x16x8 slab; side texture rows 0-7 map straight onto the 8 pixel height ----
 
-def pad_model(rift):
-    prefix = 'warp_pad_rift' if rift else 'warp_pad'
+def pad_model(mk2):
+    prefix = 'warp_pad_mk2' if mk2 else 'warp_pad'
     side_uv = [0, 0, 16, 8]
     elements = [{
         'from': [0, 0, 0], 'to': [16, 8, 16],
@@ -46,8 +46,8 @@ def pad_model(rift):
     textures = {'top': f'robotica:block/{prefix}_top', 'side': f'robotica:block/{prefix}_side',
                 'top_glow': f'robotica:block/{prefix}_top_glow', 'side_glow': f'robotica:block/{prefix}_side_glow',
                 'base': 'robotica:block/warp_pad_base', 'particle': f'robotica:block/{prefix}_side'}
-    if rift:
-        textures['stud'] = 'robotica:block/warp_pad_rift_stud'
+    if mk2:
+        textures['stud'] = 'robotica:block/warp_pad_mk2_stud'
         for x, z in ((1, 1), (13, 1), (1, 13), (13, 13)):
             elements.append({
                 'from': [x, 8, z], 'to': [x + 2, 10, z + 2],
@@ -127,22 +127,12 @@ def shaped(name, pattern, key, count=1, category='misc'):
         'result': {'id': f'robotica:{name}', 'count': count}})
 
 
-def smithing(name, template, base, addition, result):
-    write(DATA / f'recipe/{name}.json', {
-        'type': 'minecraft:smithing_transform',
-        'template': ing(template), 'base': ing(base), 'addition': ing(addition),
-        'result': {'id': f'robotica:{result}', 'count': 1}})
-
-
 def main():
-    # Warp Pad
-    write(ASSETS / 'models/block/warp_pad.json', pad_model(False))
-    write(ASSETS / 'models/block/warp_pad_rift.json', pad_model(True))
-    write(ASSETS / 'blockstates/warp_pad.json', {'variants': {
-        'rift=false': {'model': 'robotica:block/warp_pad'},
-        'rift=true': {'model': 'robotica:block/warp_pad_rift'},
-    }})
-    write(ASSETS / 'models/item/warp_pad.json', {'parent': 'robotica:block/warp_pad'})
+    # Warp Pad Mk1 and Mk2
+    for name, mk2 in (('warp_pad', False), ('warp_pad_mk2', True)):
+        write(ASSETS / f'models/block/{name}.json', pad_model(mk2))
+        write(ASSETS / f'blockstates/{name}.json', {'variants': {'': {'model': f'robotica:block/{name}'}}})
+        write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})
 
     # Portal Projector (registry id gate_controller): facing x active. The portal itself is drawn by a block entity renderer.
     write(ASSETS / 'models/block/gate_controller.json', projector_model(False))
@@ -158,23 +148,21 @@ def main():
     write(ASSETS / 'blockstates/gate_controller.json', {'variants': variants})
     write(ASSETS / 'models/item/gate_controller.json', {'parent': 'robotica:block/gate_controller_on'})
 
-    for name in ('warp_pad', 'gate_controller'):
+    for name in ('warp_pad', 'warp_pad_mk2', 'gate_controller'):
         loot(name)
 
-    # Recipes. Age 1 pad and remote (the remote binds to a pad, so both arrive together), Age 3 rift upgrade (with the
-    # Magma Core) and remote upgrade, Age 4 portal projector. Ender pearls keep the pad an evening's hunt away.
+    # Recipes. Age 1 pad and remote (the remote stores pads, so both arrive together), Age 3 Mk2 pad (the Mk1 pad plus
+    # Magma Core and Age 3 parts), Age 4 portal projector. Ender pearls keep the pad an evening's hunt away.
     shaped('warp_pad', ['EAE', 'GRG', 'PPP'], {
         'E': '#c:ender_pearls', 'A': 'basic_circuit', 'G': '#c:plates/gold', 'R': 'iron_casing', 'P': '#c:plates/iron'})
-    shaped('rift_upgrade', ['BQB', 'EME', ' P '], {
-        'B': 'blazing_casing', 'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'M': 'magma_core', 'P': 'plasma_actuator'})
-    shaped('recall_remote', ['PEP', 'ICI', 'PBP'], {
+    shaped('warp_pad_mk2', ['BQB', 'MWP', 'E E'], {
+        'B': 'blazing_casing', 'Q': 'quantum_circuit', 'M': 'magma_core', 'W': 'warp_pad', 'P': 'plasma_actuator', 'E': '#c:ender_pearls'})
+    shaped('warp_remote', ['PEP', 'ICI', 'PBP'], {
         'P': '#c:plates/iron', 'E': '#c:ender_pearls', 'I': 'iron_casing', 'C': 'copper_cell', 'B': 'basic_circuit'}, category='equipment')
-    smithing('rift_remote', 'tool_upgrade_kit_3', 'recall_remote', 'quantum_circuit', 'rift_remote')
     # The projector absorbs what the 4x5 frame used to cost (about 17 frame blocks per gate: obsidian, iron plate, null casing):
     # three Null Casings instead of one, in total about the same raw cost as controller plus frame had.
     shaped('gate_controller', ['ONO', 'EAE', 'NCN'], {
         'O': '#c:obsidians', 'N': 'null_casing', 'E': '#c:ender_pearls', 'A': 'antigrav_core', 'C': 'null_circuit'})
-    shaped('linking_card', [' N ', 'PEP'], {'N': 'null_circuit', 'E': '#c:ender_pearls', 'P': 'minecraft:paper'})
     print('warp data written')
 
 

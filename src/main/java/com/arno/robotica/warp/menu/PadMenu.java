@@ -3,6 +3,7 @@ package com.arno.robotica.warp.menu;
 import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.warp.WarpRegistry;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
+import com.arno.robotica.warp.pad.WarpPads;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -35,7 +36,7 @@ public class PadMenu extends MachineMenu {
         this.name = name;
         this.ownerName = ownerName;
         energyIndex = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());
-        flagsIndex = track(be == null ? () -> 0 : () -> (be.isPublic() ? 1 : 0) | (be.hasRift() ? 2 : 0));
+        flagsIndex = track(be == null ? () -> 0 : () -> (be.isPublic() ? 1 : 0) | (be.isMk2() ? 2 : 0));
     }
 
     public static void writeOpenData(FriendlyByteBuf buf, WarpPadBlockEntity be) {
@@ -65,12 +66,18 @@ public class PadMenu extends MachineMenu {
         return (synced(flagsIndex) & 1) != 0;
     }
 
-    public boolean hasRift() {
+    public boolean isMk2() {
         return (synced(flagsIndex) & 2) != 0;
     }
 
     @Override
     public boolean stillValid(Player player) {
-        return stillValid(access, player, WarpRegistry.WARP_PAD.get());
+        return padStillValid(access, player);
+    }
+
+    /** Like the vanilla check, for a Warp Pad of any Mk. */
+    public static boolean padStillValid(ContainerLevelAccess access, Player player) {
+        return access.evaluate((level, pos) -> WarpPads.isPad(level.getBlockState(pos))
+                && player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0, true);
     }
 }

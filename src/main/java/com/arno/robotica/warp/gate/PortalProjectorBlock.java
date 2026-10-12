@@ -151,9 +151,9 @@ public class PortalProjectorBlock extends Block implements EntityBlock {
                     nx * side * (0.6 + random.nextDouble() * 0.8), (random.nextDouble() - 0.5) * 0.4, nz * side * (0.6 + random.nextDouble() * 0.8));
         }
         if (random.nextInt(3) == 0) {
-            // end rod motes drift from the lens up towards the portal
+            // motes drift from the lens up towards the portal
             double a = random.nextDouble() * Math.PI * 2.0;
-            level.addParticle(ParticleTypes.END_ROD, pos.getX() + 0.5 + Math.cos(a) * 0.15, pos.getY() + PortalGeometry.TOP + 0.05,
+            level.addParticle(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET, 0.8F), pos.getX() + 0.5 + Math.cos(a) * 0.15, pos.getY() + PortalGeometry.TOP + 0.05,
                     pos.getZ() + 0.5 + Math.sin(a) * 0.15, (random.nextDouble() - 0.5) * 0.01, 0.045 + random.nextDouble() * 0.03,
                     (random.nextDouble() - 0.5) * 0.01);
         }

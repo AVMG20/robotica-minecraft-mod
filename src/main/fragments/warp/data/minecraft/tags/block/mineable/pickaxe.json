@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "robotica:warp_pad",
+    "robotica:warp_pad_mk2",
     "robotica:gate_controller"
   ]
 }

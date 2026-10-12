@@ -13,54 +13,65 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/** The pad list of a Rift Remote ({@link WarpComponents#BOUND_PADS}). Pure item-stack logic, no level access. */
-public final class RiftTargets {
-    private RiftTargets() {}
+/** The pad list of a Warp Remote ({@link WarpComponents#BOUND_PADS}); the first pad is home. Pure item-stack logic. */
+public final class RemoteTargets {
+    private RemoteTargets() {}
 
     public enum AddResult { ADDED, ALREADY_STORED, FULL }
 
-    /** The stored pads, including a single pad of an older remote that has not been migrated yet. Never null. */
+    /** The stored pads, home first. Never null. */
     public static List<BoundPad> list(ItemStack stack) {
         List<BoundPad> stored = stack.get(WarpComponents.BOUND_PADS.get());
-        List<BoundPad> out = stored == null ? new ArrayList<>() : new ArrayList<>(stored);
-        BoundPad legacy = stack.get(WarpComponents.BOUND_PAD.get());
-        if (legacy != null && find(out, legacy.id()) == null) out.add(0, legacy);
-        if (out.size() > WarpComponents.MAX_RIFT_PADS) out = new ArrayList<>(out.subList(0, WarpComponents.MAX_RIFT_PADS));
-        return out;
+        if (stored == null) return new ArrayList<>();
+        List<BoundPad> out = new ArrayList<>(stored);
+        return out.size() > WarpComponents.MAX_PADS ? new ArrayList<>(out.subList(0, WarpComponents.MAX_PADS)) : out;
     }
 
-    /** Moves the single pad of an older Rift Remote (or a smithed Recall Remote) into the list. */
-    public static void migrate(ItemStack stack) {
-        if (!stack.has(WarpComponents.BOUND_PAD.get())) return;
-        List<BoundPad> merged = list(stack);
-        stack.remove(WarpComponents.BOUND_PAD.get());
-        stack.set(WarpComponents.BOUND_PADS.get(), List.copyOf(merged));
+    /** The home pad, or null when nothing is stored. */
+    @Nullable
+    public static BoundPad home(ItemStack stack) {
+        List<BoundPad> stored = stack.get(WarpComponents.BOUND_PADS.get());
+        return stored == null || stored.isEmpty() ? null : stored.get(0);
     }
 
+    private static void store(ItemStack stack, List<BoundPad> list) {
+        if (list.isEmpty()) stack.remove(WarpComponents.BOUND_PADS.get());
+        else stack.set(WarpComponents.BOUND_PADS.get(), List.copyOf(list));
+    }
+
+    /** Adds the pad at the end (the first pad stored becomes home). A known pad only gets its snapshot refreshed. */
     public static AddResult add(ItemStack stack, PadRecord rec) {
-        migrate(stack);
         List<BoundPad> list = list(stack);
         BoundPad entry = new BoundPad(rec.id(), rec.name(), Optional.of(GlobalPos.of(rec.dimension(), rec.pos())));
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).id().equals(rec.id())) {
-                list.set(i, entry); // refresh the snapshot
-                stack.set(WarpComponents.BOUND_PADS.get(), List.copyOf(list));
+                list.set(i, entry);
+                store(stack, list);
                 return AddResult.ALREADY_STORED;
             }
         }
-        if (list.size() >= WarpComponents.MAX_RIFT_PADS) return AddResult.FULL;
+        if (list.size() >= WarpComponents.MAX_PADS) return AddResult.FULL;
         list.add(entry);
-        stack.set(WarpComponents.BOUND_PADS.get(), List.copyOf(list));
+        store(stack, list);
         return AddResult.ADDED;
     }
 
     /** Returns true when the pad was stored. */
     public static boolean remove(ItemStack stack, UUID id) {
-        migrate(stack);
         List<BoundPad> list = list(stack);
         if (!list.removeIf(b -> b.id().equals(id))) return false;
-        if (list.isEmpty()) stack.remove(WarpComponents.BOUND_PADS.get());
-        else stack.set(WarpComponents.BOUND_PADS.get(), List.copyOf(list));
+        store(stack, list);
+        return true;
+    }
+
+    /** Moves a stored pad to the front. Returns true when the pad was stored. */
+    public static boolean setHome(ItemStack stack, UUID id) {
+        List<BoundPad> list = list(stack);
+        BoundPad found = find(list, id);
+        if (found == null) return false;
+        list.remove(found);
+        list.add(0, found);
+        store(stack, list);
         return true;
     }
 
@@ -85,10 +96,7 @@ public final class RiftTargets {
                 changed = true;
             }
         }
-        if (changed || stack.has(WarpComponents.BOUND_PAD.get())) {
-            stack.remove(WarpComponents.BOUND_PAD.get());
-            stack.set(WarpComponents.BOUND_PADS.get(), List.copyOf(list));
-        }
+        if (changed) store(stack, list);
     }
 
     /** Current name of a stored pad: the registry's when the pad is known, else the snapshot. */

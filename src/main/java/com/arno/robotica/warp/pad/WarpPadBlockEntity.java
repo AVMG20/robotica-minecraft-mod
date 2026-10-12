@@ -16,7 +16,7 @@ import java.util.UUID;
 
 /**
  * Warp Pad data: identity, owner (UUID), name, visibility and the FE buffer. The registry ({@link WarpPads}) mirrors
- * everything but the energy; the rift flag lives in the block state.
+ * everything but the energy; the Mk is the block.
  */
 public class WarpPadBlockEntity extends SyncedBlockEntity {
     public static final int MAX_NAME = 24;
@@ -60,11 +60,12 @@ public class WarpPadBlockEntity extends SyncedBlockEntity {
         return isPublic;
     }
 
-    public boolean hasRift() {
-        return getBlockState().hasProperty(WarpPadBlock.RIFT) && getBlockState().getValue(WarpPadBlock.RIFT);
+    /** True for a Warp Pad Mk2 (trips to and from other dimensions). */
+    public boolean isMk2() {
+        return getBlockState().getBlock() instanceof WarpPadBlock block && block.isMk2();
     }
 
-    /** The owner, operators, and everybody for pads placed without a player may change name, visibility and upgrades. */
+    /** The owner, operators, and everybody for pads placed without a player may change name, visibility and the Mk. */
     public boolean canEdit(Player player) {
         return owner == null || owner.equals(player.getUUID()) || player.hasPermissions(2);
     }
@@ -114,7 +115,7 @@ public class WarpPadBlockEntity extends SyncedBlockEntity {
     }
 
     public PadRecord buildRecord() {
-        return new PadRecord(padId, worldPosition, level.dimension(), name, owner, ownerName, isPublic, hasRift());
+        return new PadRecord(padId, worldPosition, level.dimension(), name, owner, ownerName, isPublic, isMk2());
     }
 
     /**

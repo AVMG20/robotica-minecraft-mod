@@ -2,9 +2,9 @@ package com.arno.robotica.warp;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.warp.menu.DestinationMenu;
-import com.arno.robotica.warp.item.RiftTargets;
+import com.arno.robotica.warp.item.RemoteTargets;
 import com.arno.robotica.warp.menu.PadMenu;
-import com.arno.robotica.warp.menu.RiftRemoteMenu;
+import com.arno.robotica.warp.menu.RemoteMenu;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -21,7 +21,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Client to server requests of the warp GUIs. Everything is validated on the server again. */
+/** Requests of the warp GUIs (validated on the server again) and the warp effect sent to clients. */
 public final class WarpPayloads {
     private WarpPayloads() {}
 
@@ -66,12 +66,12 @@ public final class WarpPayloads {
         }
     }
 
-    /** Travel to a pad of the open Rift Remote list (starts the 3 second charge). */
-    public record RiftTravel(UUID pad) implements CustomPacketPayload {
-        public static final Type<RiftTravel> TYPE = new Type<>(Robotica.id("warp_rift_travel"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, RiftTravel> CODEC = StreamCodec.composite(
-                UUIDUtil.STREAM_CODEC, RiftTravel::pad,
-                RiftTravel::new);
+    /** Travel to a pad of the open Warp Remote list (starts the 3 second charge). */
+    public record RemoteTravel(UUID pad) implements CustomPacketPayload {
+        public static final Type<RemoteTravel> TYPE = new Type<>(Robotica.id("warp_remote_travel"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RemoteTravel> CODEC = StreamCodec.composite(
+                UUIDUtil.STREAM_CODEC, RemoteTravel::pad,
+                RemoteTravel::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -79,12 +79,25 @@ public final class WarpPayloads {
         }
     }
 
-    /** Remove a pad from the open Rift Remote list. */
-    public record RiftForget(UUID pad) implements CustomPacketPayload {
-        public static final Type<RiftForget> TYPE = new Type<>(Robotica.id("warp_rift_forget"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, RiftForget> CODEC = StreamCodec.composite(
-                UUIDUtil.STREAM_CODEC, RiftForget::pad,
-                RiftForget::new);
+    /** Remove a pad from the open Warp Remote list. */
+    public record RemoteForget(UUID pad) implements CustomPacketPayload {
+        public static final Type<RemoteForget> TYPE = new Type<>(Robotica.id("warp_remote_forget"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RemoteForget> CODEC = StreamCodec.composite(
+                UUIDUtil.STREAM_CODEC, RemoteForget::pad,
+                RemoteForget::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** Make a pad of the open Warp Remote list home. */
+    public record RemoteHome(UUID pad) implements CustomPacketPayload {
+        public static final Type<RemoteHome> TYPE = new Type<>(Robotica.id("warp_remote_home"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RemoteHome> CODEC = StreamCodec.composite(
+                UUIDUtil.STREAM_CODEC, RemoteHome::pad,
+                RemoteHome::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -97,8 +110,10 @@ public final class WarpPayloads {
         registrar.playToServer(Rename.TYPE, Rename.CODEC, WarpPayloads::onRename);
         registrar.playToServer(SetPublic.TYPE, SetPublic.CODEC, WarpPayloads::onSetPublic);
         registrar.playToServer(Travel.TYPE, Travel.CODEC, WarpPayloads::onTravel);
-        registrar.playToServer(RiftTravel.TYPE, RiftTravel.CODEC, WarpPayloads::onRiftTravel);
-        registrar.playToServer(RiftForget.TYPE, RiftForget.CODEC, WarpPayloads::onRiftForget);
+        registrar.playToServer(RemoteTravel.TYPE, RemoteTravel.CODEC, WarpPayloads::onRemoteTravel);
+        registrar.playToServer(RemoteForget.TYPE, RemoteForget.CODEC, WarpPayloads::onRemoteForget);
+        registrar.playToServer(RemoteHome.TYPE, RemoteHome.CODEC, WarpPayloads::onRemoteHome);
+        registrar.playToClient(WarpFxPayload.TYPE, WarpFxPayload.CODEC, (payload, context) -> WarpFxPayload.clientHandler.accept(payload));
     }
 
     /** The pad of the open Pad or Destination GUI at {@code pos}, when the player may edit it. */
@@ -134,18 +149,24 @@ public final class WarpPayloads {
         if (!(context.player() instanceof ServerPlayer player)) return;
         if (!(player.containerMenu instanceof DestinationMenu menu) || !menu.stillValid(player)) return;
         if (!(player.level().getBlockEntity(menu.pos()) instanceof WarpPadBlockEntity pad)) return;
-        if (WarpTravel.travelFromPad(player, pad, payload.destination())) player.closeContainer();
+        if (WarpTravel.requestPadTrip(player, pad, payload.destination())) player.closeContainer();
     }
 
-    private static void onRiftTravel(RiftTravel payload, IPayloadContext context) {
+    private static void onRemoteTravel(RemoteTravel payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
-        if (!(player.containerMenu instanceof RiftRemoteMenu menu) || !menu.stillValid(player)) return;
-        if (WarpTravel.requestRiftTrip(player, menu.hand(), payload.pad())) player.closeContainer();
+        if (!(player.containerMenu instanceof RemoteMenu menu) || !menu.stillValid(player)) return;
+        if (WarpTravel.requestRemoteTrip(player, menu.hand(), payload.pad())) player.closeContainer();
     }
 
-    private static void onRiftForget(RiftForget payload, IPayloadContext context) {
+    private static void onRemoteForget(RemoteForget payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
-        if (!(player.containerMenu instanceof RiftRemoteMenu menu) || !menu.stillValid(player)) return;
-        RiftTargets.remove(player.getItemInHand(menu.hand()), payload.pad());
+        if (!(player.containerMenu instanceof RemoteMenu menu) || !menu.stillValid(player)) return;
+        RemoteTargets.remove(player.getItemInHand(menu.hand()), payload.pad());
+    }
+
+    private static void onRemoteHome(RemoteHome payload, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        if (!(player.containerMenu instanceof RemoteMenu menu) || !menu.stillValid(player)) return;
+        RemoteTargets.setHome(player.getItemInHand(menu.hand()), payload.pad());
     }
 }

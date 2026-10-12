@@ -25,8 +25,8 @@ public final class WarpComponents {
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Robotica.MODID);
 
     /**
-     * A pad a remote is bound to. Name and position are only snapshots for tooltips and for pads that are gone; the
-     * current values come from the pad registry. The position is optional because older remotes did not store it.
+     * A pad stored in a Warp Remote. Name and position are snapshots for tooltips and for pads that are gone; the current
+     * values come from the pad registry.
      */
     public record BoundPad(UUID id, String name, Optional<GlobalPos> pos) {
         public static final Codec<BoundPad> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -38,25 +38,17 @@ public final class WarpComponents {
                 ByteBufCodecs.stringUtf8(64), BoundPad::name,
                 ByteBufCodecs.optional(GlobalPos.STREAM_CODEC), BoundPad::pos,
                 BoundPad::new);
-
-        public BoundPad(UUID id, String name) {
-            this(id, name, Optional.empty());
-        }
     }
 
-    /** Most pads a Rift Remote remembers. */
-    public static final int MAX_RIFT_PADS = 10;
+    /** Most pads a Warp Remote remembers. */
+    public static final int MAX_PADS = 10;
 
-    /** The pad of the Recall Remote (and of Rift Remotes from before the list, moved into {@link #BOUND_PADS} on first use). */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<BoundPad>> BOUND_PAD =
-            REGISTER.registerComponentType("bound_pad", b -> b.persistent(BoundPad.CODEC).networkSynchronized(BoundPad.STREAM_CODEC));
-
-    /** The pads of a Rift Remote, in binding order, at most {@link #MAX_RIFT_PADS}. */
+    /** The pads of a Warp Remote, at most {@link #MAX_PADS}. The first one is home. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<BoundPad>>> BOUND_PADS =
             REGISTER.registerComponentType("bound_pads", b -> b.persistent(BoundPad.CODEC.listOf())
-                    .networkSynchronized(BoundPad.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_RIFT_PADS))));
+                    .networkSynchronized(BoundPad.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_PADS))));
 
-    /** The first Gate Controller a Linking Card remembers. */
+    /** The first Portal Projector a Warp Remote is linking. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> LINK_SOURCE =
             REGISTER.registerComponentType("link_source", b -> b.persistent(GlobalPos.CODEC).networkSynchronized(GlobalPos.STREAM_CODEC));
 }

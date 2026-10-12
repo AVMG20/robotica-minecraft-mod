@@ -13,22 +13,22 @@ import java.util.UUID;
 
 /** One Warp Pad as stored in the registry. {@code owner} is null for pads placed without a player (anyone may use them). */
 public record PadRecord(UUID id, BlockPos pos, ResourceKey<Level> dimension, String name, @Nullable UUID owner,
-                        String ownerName, boolean isPublic, boolean rift) {
+                        String ownerName, boolean isPublic, boolean mk2) {
 
     public PadRecord withName(String newName) {
-        return new PadRecord(id, pos, dimension, newName, owner, ownerName, isPublic, rift);
+        return new PadRecord(id, pos, dimension, newName, owner, ownerName, isPublic, mk2);
     }
 
     public PadRecord withPublic(boolean value) {
-        return new PadRecord(id, pos, dimension, name, owner, ownerName, value, rift);
+        return new PadRecord(id, pos, dimension, name, owner, ownerName, value, mk2);
     }
 
-    public PadRecord withRift(boolean value) {
+    public PadRecord withMk2(boolean value) {
         return new PadRecord(id, pos, dimension, name, owner, ownerName, isPublic, value);
     }
 
     public PadRecord withOwnerName(String value) {
-        return new PadRecord(id, pos, dimension, name, owner, value, isPublic, rift);
+        return new PadRecord(id, pos, dimension, name, owner, value, isPublic, mk2);
     }
 
     public CompoundTag save() {
@@ -40,7 +40,7 @@ public record PadRecord(UUID id, BlockPos pos, ResourceKey<Level> dimension, Str
         if (owner != null) tag.putUUID("owner", owner);
         tag.putString("ownerName", ownerName);
         tag.putBoolean("public", isPublic);
-        tag.putBoolean("rift", rift);
+        tag.putBoolean("mk2", mk2);
         return tag;
     }
 
@@ -53,6 +53,6 @@ public record PadRecord(UUID id, BlockPos pos, ResourceKey<Level> dimension, Str
         if (pos == null || dim == null) return null;
         return new PadRecord(tag.getUUID("id"), pos, ResourceKey.create(Registries.DIMENSION, dim), tag.getString("name"),
                 tag.hasUUID("owner") ? tag.getUUID("owner") : null, tag.getString("ownerName"),
-                tag.getBoolean("public"), tag.getBoolean("rift"));
+                tag.getBoolean("public"), tag.getBoolean("mk2"));
     }
 }

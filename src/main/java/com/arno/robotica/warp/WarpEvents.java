@@ -3,7 +3,7 @@ package com.arno.robotica.warp;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.warp.item.RemoteItem;
 import com.arno.robotica.warp.pad.WarpPads;
-import com.arno.robotica.warp.teleport.RiftCharges;
+import com.arno.robotica.warp.teleport.WarpCharges;
 import com.arno.robotica.warp.teleport.WarpCooldowns;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,7 +20,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class WarpEvents {
     private WarpEvents() {}
 
-    /** Any damage that goes through cancels the 3 second remote charge. */
+    /** Any damage that goes through cancels a charging trip. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDamage(LivingIncomingDamageEvent event) {
         if (event.getAmount() <= 0.0F || !(event.getEntity() instanceof ServerPlayer player)) return;
@@ -28,17 +28,17 @@ public final class WarpEvents {
             player.stopUsingItem();
             WarpTravel.message(player, Component.translatable("message.robotica.warp.interrupted"));
         }
-        if (RiftCharges.cancel(player.getUUID())) WarpTravel.message(player, Component.translatable("message.robotica.warp.interrupted"));
+        if (WarpCharges.cancel(player.getUUID())) WarpTravel.message(player, Component.translatable("message.robotica.warp.interrupted"));
     }
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        RiftCharges.cancel(event.getEntity().getUUID());
+        WarpCharges.cancel(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
-        RiftCharges.clear();
+        WarpCharges.clear();
     }
 
     /** Pads show the owner's current name; names change, UUIDs do not. */
@@ -58,7 +58,7 @@ public final class WarpEvents {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
-        RiftCharges.tick(event.getServer());
+        WarpCharges.tick(event.getServer());
         long time = event.getServer().overworld().getGameTime();
         if (time % 1200 == 0) WarpCooldowns.get(event.getServer()).prune(time);
     }

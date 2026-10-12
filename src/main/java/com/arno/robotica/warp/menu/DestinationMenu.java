@@ -85,6 +85,6 @@ public class DestinationMenu extends MachineMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return stillValid(access, player, WarpRegistry.WARP_PAD.get());
+        return PadMenu.padStillValid(access, player);
     }
 }

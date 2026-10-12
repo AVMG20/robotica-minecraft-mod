@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BQB",
+    "MWP",
+    "E E"
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:blazing_casing"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "M": {
+      "item": "robotica:magma_core"
+    },
+    "W": {
+      "item": "robotica:warp_pad"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    }
+  },
+  "result": {
+    "id": "robotica:warp_pad_mk2",
+    "count": 1
+  }
+}

@@ -11,6 +11,7 @@ public final class WarpClient {
     private WarpClient() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        com.arno.robotica.warp.WarpFxPayload.clientHandler = WarpFx::play;
         modBus.addListener(WarpClient::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 event -> event.registerBlockEntityRenderer(WarpRegistry.GATE_CONTROLLER_BE.get(), PortalProjectorRenderer::new));
@@ -19,6 +20,6 @@ public final class WarpClient {
     private static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(WarpRegistry.PAD_MENU.get(), PadScreen::new);
         event.register(WarpRegistry.DESTINATION_MENU.get(), DestinationScreen::new);
-        event.register(WarpRegistry.RIFT_REMOTE_MENU.get(), RiftRemoteScreen::new);
+        event.register(WarpRegistry.REMOTE_MENU.get(), RemoteScreen::new);
     }
 }

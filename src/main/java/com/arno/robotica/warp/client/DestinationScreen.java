@@ -105,7 +105,7 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
             g.fill(rx + 1, ry + 1, rx + LIST_W - 1, ry + ROW_H - 3, index == hover && e.available() ? 0xFFA6B8BE : SLOT);
             String where = e.distance() < 0 ? prettyDimension(e.dimension().location()) : e.distance() + " m";
             int whereW = font.width(where);
-            Component cost = e.available() ? Component.literal(Fmt.energy(e.cost())) : Component.translatable("gui.robotica.warp.needs_rift");
+            Component cost = e.available() ? Component.literal(Fmt.energy(e.cost())) : Component.translatable("gui.robotica.warp.needs_mk2");
             int costColor = !e.available() ? 0xFF6A3FB0 : affordable ? 0xFF1B6E7A : 0xFFB03030;
             int right = Math.max(whereW, font.width(cost));
             int leftW = LIST_W - 10 - right - 8;
@@ -131,7 +131,7 @@ public class DestinationScreen extends MachineScreen<DestinationMenu> {
         if (hover >= 0) {
             DestinationEntry e = menu.entries().get(hover);
             if (!e.available()) {
-                g.renderTooltip(font, Component.translatable("gui.robotica.warp.needs_rift_tooltip"), mouseX, mouseY);
+                g.renderTooltip(font, Component.translatable("gui.robotica.warp.needs_mk2_tooltip"), mouseX, mouseY);
             } else if (menu.energy() < e.cost()) {
                 g.renderTooltip(font, Component.translatable("gui.robotica.warp.not_enough", Fmt.energy(e.cost() - menu.energy())), mouseX, mouseY);
             } else {
