@@ -21,6 +21,13 @@ final class WarpFx {
     static void play(WarpFxPayload fx) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
+        if (fx.kind() == WarpFxPayload.STOP) {
+            var player = Minecraft.getInstance().player;
+            if (player != null && player.isUsingItem() && player.getUseItem().getItem() instanceof com.arno.robotica.warp.item.RemoteItem) {
+                player.stopUsingItem();
+            }
+            return;
+        }
         switch (fx.kind()) {
             case WarpFxPayload.CHARGE -> charge(level, fx.x(), fx.y(), fx.z(), Mth.clamp(fx.value(), 0, 1));
             case WarpFxPayload.DEPART -> depart(level, fx.x(), fx.y(), fx.z(), fx.value() < 0.5F);
