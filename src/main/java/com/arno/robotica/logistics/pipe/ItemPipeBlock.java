@@ -243,7 +243,10 @@ public class ItemPipeBlock extends Block implements EntityBlock {
         if (level.getBlockState(pos.relative(side)).getBlock() instanceof ItemPipeBlock) {
             if (!player.isShiftKeyDown()) return InteractionResult.PASS;
             if (level.isClientSide) return InteractionResult.SUCCESS;
-            if (!level.mayInteract(player, pos) || !(level instanceof ServerLevel server)) return InteractionResult.FAIL;
+            if (!player.mayBuild() || !level.mayInteract(player, pos) || !(level instanceof ServerLevel server)) return InteractionResult.FAIL;
+            if (!(level.getBlockEntity(pos) instanceof ItemPipeBlockEntity) || !(level.getBlockEntity(pos.relative(side)) instanceof ItemPipeBlockEntity)) {
+                return InteractionResult.FAIL;
+            }
             boolean cut = toggleLink(server, pos, side);
             level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.3F, cut ? 0.6F : 1.2F);
             player.displayClientMessage(Component.translatable(cut ? "message.robotica.pipe_link.cut" : "message.robotica.pipe_link.joined")

@@ -58,7 +58,7 @@ public final class PipeNetwork {
     /** Players this far from a route (blocks) see it. */
     static final int GLOW_RANGE = 48;
     private static final int MAX_ROUTES = 512;
-    private final Map<Long, Route> routes = new HashMap<>();
+    private final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<Route> routes = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
     private final Long2LongOpenHashMap lastGlow = new Long2LongOpenHashMap();
     private long glowTick;
     private int glowsThisTick;

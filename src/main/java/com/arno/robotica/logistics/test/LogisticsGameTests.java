@@ -274,4 +274,23 @@ public class LogisticsGameTests {
             helper.assertTrue(count(target, Items.COBBLESTONE) == 20 && count(target, Items.IRON_INGOT) == 3, "everything arrived once joined");
         }));
     }
+
+    /** A cut survives saving (chunk unload and world reload) and goes to the client in the update tag. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void cutSurvivesSaveAndSync(GameTestHelper helper) {
+        line(helper);
+        helper.runAfterDelay(3, () -> {
+            ServerLevel level = helper.getLevel();
+            ItemPipeBlock.toggleLink(level, helper.absolutePos(MIDDLE), Direction.EAST);
+            ItemPipeBlockEntity middle = pipe(helper, MIDDLE);
+            var provider = level.registryAccess();
+            ItemPipeBlockEntity copy = new ItemPipeBlockEntity(middle.getBlockPos(), middle.getBlockState());
+            copy.loadWithComponents(middle.saveWithoutMetadata(provider), provider);
+            helper.assertTrue(copy.isCut(Direction.EAST) && !copy.isCut(Direction.WEST), "the cut is saved and loaded");
+            ItemPipeBlockEntity client = new ItemPipeBlockEntity(middle.getBlockPos(), middle.getBlockState());
+            client.handleUpdateTag(middle.getUpdateTag(provider), provider);
+            helper.assertTrue(client.isCut(Direction.EAST), "the cut reaches the client");
+            helper.succeed();
+        });
+    }
 }
