@@ -293,10 +293,12 @@ def excavator_side():
 # with tier metal L brackets) as a crate with a lid seam, a latch and cyan accents. Body DK, tier metal AC (pal(TIERS)).
 # The cyan pixels (q, Q, Y) are copied onto a full-bright *_glow overlay, so the accents stay lit at night.
 CRATE_CYAN = {'q': '#2FB8CC', 'Q': '#8CF4FF'}
+# Storage gets a lighter gunmetal body than the dark machine casing, so crates stand apart from machines.
+CRATE_BODY = dict(zip(DK, ('#23282E', '#3C434B', '#5D666F', '#86909A', '#B4BDC5')))
 
 
 def crate_pal(tier=1):
-    return pal(TIERS[tier], **CRATE_CYAN)
+    return pal(TIERS[tier], **CRATE_CYAN, **CRATE_BODY)
 
 
 def glow_only(c, keep='qQY'):
@@ -347,7 +349,7 @@ def crate_boards(c, y0=5):
     """Graphite boards below the lid: a dark joint with a lit edge every 3 rows, like a cargo crate."""
     for y in range(y0, 13):
         if (y - y0) % 3 == 0:
-            c.rect(3, y, 10, 1, 'f')
+            c.rect(3, y, 10, 1, 'g')
         elif (y - y0) % 3 == 1:
             c.rect(3, y, 10, 1, 'i')
     return c
@@ -384,7 +386,7 @@ def crate_top(tier):
     c = crate_shell(tier)
     for x in range(3, 13):
         if x % 3 == 0:
-            c.rect(x, 3, 1, 10, 'f')
+            c.rect(x, 3, 1, 10, 'g')
         elif x % 3 == 1:
             c.rect(x, 3, 1, 10, 'i')
     c.rect(3, 7, 10, 2, 'C').rect(3, 7, 10, 1, 'D')                      # straps
@@ -446,7 +448,7 @@ def main():
             if face == 'front' or tier == 1:                             # side and top glow are the same for every Mk
                 write_block(f'{name}_{face}_glow' if face == 'front' else f'supply_crate_{face}_glow', glow_only(c).rows(),
                             crate_pal(tier))
-    write_block('supply_crate_bottom', crate_bottom().rows(), pal())
+    write_block('supply_crate_bottom', crate_bottom().rows(), crate_pal())
     for tier in (2, 3, 4):
         write_item(f'farm_kit_mk{tier}', kit(tier).rows(), pal(TIERS[tier]))
 
