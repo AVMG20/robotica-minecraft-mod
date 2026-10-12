@@ -6,6 +6,8 @@ import com.arno.robotica.boss.entity.ScrapChunk;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 /** Client-only entry point of the boss module. Called from RoboticaClient. */
 public final class BossClient {
@@ -14,6 +16,14 @@ public final class BossClient {
     public static void init(IEventBus modBus, ModContainer container) {
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, BossClient::registerRenderers);
         modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class, BossClient::registerLayers);
+        NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, BossClient::onJoin);
+    }
+
+    /** A Null Sentinel coming into view starts its drone. */
+    private static void onJoin(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide && event.getEntity() instanceof com.arno.robotica.boss.entity.NullSentinel boss && boss.isAlive()) {
+            net.minecraft.client.Minecraft.getInstance().getSoundManager().play(new SentinelDrone(boss));
+        }
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

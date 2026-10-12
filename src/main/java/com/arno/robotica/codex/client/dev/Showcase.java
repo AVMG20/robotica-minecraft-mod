@@ -1286,11 +1286,11 @@ public final class Showcase {
 
     /** One posed moment of the Null Sentinel for the dev frames (null_dev_*, not in shots.py). */
     private static void sentinelFrame(String name, int delay, Consumer<com.arno.robotica.boss.entity.NullSentinel> pose) {
-        step(5, () -> server(sp -> {
+        step(delay, () -> server(sp -> {
             var e = sentinel(sp);
             if (e != null) pose.accept(e);
         }));
-        grab(delay, name);
+        grab(1, name);
     }
 
     /**
@@ -1348,7 +1348,7 @@ public final class Showcase {
                 step(5, () -> server(sp -> {
                     var stand = EntityType.ARMOR_STAND.create(sp.serverLevel());
                     if (stand == null) return;
-                    stand.moveTo(RELAY.getX() - 2.5, RELAY.getY() + 1, RELAY.getZ() + 6.5, 0, 0);
+                    stand.moveTo(RELAY.getX() - 1.0, RELAY.getY() + 1, RELAY.getZ() + 4.5, 0, 0);
                     sp.serverLevel().addFreshEntity(stand);
                 }));
                 sentinelFrame("null_dev_launch", 16, e -> {
@@ -1358,8 +1358,8 @@ public final class Showcase {
                 });
                 sentinelFrame("null_dev_rift", 45, e -> {
                     e.pose(com.arno.robotica.boss.entity.NullSentinel.Action.IDLE, e.aim());
-                    e.markRift(new Vec3(RELAY.getX() + 3.5, RELAY.getY() + 1, RELAY.getZ() + 5.5));
-                    e.markRift(new Vec3(RELAY.getX() - 4.5, RELAY.getY() + 1, RELAY.getZ() + 3.5));
+                    e.markRift(new Vec3(RELAY.getX() + 2.0, RELAY.getY() + 1, RELAY.getZ() + 3.5));
+                    e.markRift(new Vec3(RELAY.getX() - 3.0, RELAY.getY() + 1, RELAY.getZ() + 2.0));
                 });
                 sentinelFrame("null_dev_recharge", 16, e -> e.startRecharge());
                 sentinelFrame("null_dev_shift", 22, e -> e.startShift(3));

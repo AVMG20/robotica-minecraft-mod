@@ -131,6 +131,8 @@ public class NullSentinel extends Monster implements RoboticaBoss {
     public static final int MAX_RIFTS = 6;
     public static final int OUT_OF_REACH_TICKS = 60;
     public static final int DEATH_TICKS = 60;
+    /** Height of the antigrav core above its feet. */
+    public static final double CORE_HEIGHT = 2.15;
     public static final float PHASE_TWO_AT = 0.6F;
     public static final float PHASE_THREE_AT = 0.3F;
 
@@ -390,7 +392,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
     /** The antigrav core in its chest. */
     public Vec3 corePos() {
         Vec3 f = forward();
-        return new Vec3(getX() + f.x * 0.6, getY() + 2.15, getZ() + f.z * 0.6);
+        return new Vec3(getX() + f.x * 0.6, getY() + CORE_HEIGHT, getZ() + f.z * 0.6);
     }
 
     /** Where the beam ends: the first block on its way or its full range. */
@@ -565,6 +567,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
             server.broadcastEntityEvent(this, EV_SHIFT);
             playSound(SoundEvents.WARDEN_SONIC_BOOM, 3.0F, 0.5F);
             playSound(SoundEvents.GENERIC_EXPLODE.value(), 2.5F, 0.5F);
+            playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 2.0F, 0.6F);
             shove(server, 7.0, 0.8, 0.6);
             if (phase() == 2) raisePylons(server);
             else riftCooldown = 20;
@@ -619,7 +622,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
             server.addFreshEntity(pylon);
             pylons.add(pylon.getUUID());
             server.sendParticles(CoreParticles.flash(CoreParticles.WARP_CYAN, 2.5F), at.x, at.y + 1.8, at.z, 1, 0.0, 0.0, 0.0, 0.0);
-            server.sendParticles(ParticleTypes.END_ROD, at.x, at.y + 1.0, at.z, 16, 0.2, 0.8, 0.2, 0.05);
+            server.sendParticles(CoreParticles.mote(CoreParticles.WARP_CYAN, 1.2F), at.x, at.y + 1.0, at.z, 10, 0.2, 0.8, 0.2, 0.03);
             server.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.HOSTILE, 2.0F, 0.6F);
             raised++;
         }
@@ -834,7 +837,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
     /** Throws whoever stands in a gravity ring: hurt, then high up, nearly straight. Returns how many it hit. */
     private int launchAt(ServerLevel server, Vec3 pos) {
         server.sendParticles(CoreParticles.flash(CoreParticles.WARP_VIOLET, 2.0F), pos.x, pos.y + 0.3, pos.z, 1, 0.0, 0.0, 0.0, 0.0);
-        server.sendParticles(ParticleTypes.END_ROD, pos.x, pos.y + 0.5, pos.z, 24, 0.4, 0.2, 0.4, 0.25);
+        server.sendParticles(CoreParticles.spark(CoreParticles.WARP_VIOLET, 1.1F), pos.x, pos.y + 0.3, pos.z, 12, 0.4, 0.1, 0.4, 0.3);
         server.sendParticles(ParticleTypes.REVERSE_PORTAL, pos.x, pos.y + 1.0, pos.z, 30, 0.5, 1.2, 0.5, 0.1);
         server.playSound(null, pos.x, pos.y, pos.z, SoundEvents.SHULKER_BULLET_HIT, SoundSource.HOSTILE, 2.0F, 0.6F);
         server.playSound(null, pos.x, pos.y, pos.z, SoundEvents.FIREWORK_ROCKET_LAUNCH, SoundSource.HOSTILE, 2.0F, 0.6F);
@@ -1005,6 +1008,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
             playSound(SoundEvents.GENERIC_EXPLODE.value(), 3.0F, 0.5F);
             playSound(SoundEvents.WARDEN_SONIC_BOOM, 3.0F, 0.5F);
             playSound(SoundEvents.END_PORTAL_SPAWN, 2.0F, 1.5F);
+            playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 2.5F, 0.5F);
         }
         if (dyingTicks >= DEATH_TICKS && !isRemoved()) {
             server.broadcastEntityEvent(this, (byte) 60);
@@ -1047,7 +1051,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
                     level().addParticle(CoreParticles.spark(i % 2 == 0 ? CoreParticles.WARP_VIOLET : CoreParticles.WARP_CYAN, 1.5F), c.x, c.y, c.z,
                             random.nextGaussian() * 0.45, random.nextDouble() * 0.6, random.nextGaussian() * 0.45);
                 }
-                for (int i = 0; i < 30; i++) level().addParticle(ParticleTypes.END_ROD, c.x, c.y, c.z, random.nextGaussian() * 0.3, random.nextGaussian() * 0.3, random.nextGaussian() * 0.3);
+                for (int i = 0; i < 16; i++) level().addParticle(CoreParticles.mote(0xF2E8FF, 1.4F), c.x, c.y, c.z, random.nextGaussian() * 0.25, random.nextGaussian() * 0.25, random.nextGaussian() * 0.25);
                 ringFx(6.0, 64);
             }
             default -> super.handleEntityEvent(id);
@@ -1062,7 +1066,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
             level().addParticle(CoreParticles.spark(i % 2 == 0 ? CoreParticles.WARP_VIOLET : CoreParticles.WARP_CYAN, 1.4F), c.x, c.y, c.z,
                     random.nextGaussian() * 0.4, random.nextDouble() * 0.5, random.nextGaussian() * 0.4);
         }
-        for (int i = 0; i < 20; i++) level().addParticle(ParticleTypes.END_ROD, c.x, c.y, c.z, random.nextGaussian() * 0.25, random.nextGaussian() * 0.25, random.nextGaussian() * 0.25);
+        for (int i = 0; i < 12; i++) level().addParticle(CoreParticles.mote(0xF2E8FF, 1.3F), c.x, c.y, c.z, random.nextGaussian() * 0.2, random.nextGaussian() * 0.2, random.nextGaussian() * 0.2);
         ringFx(7.0 * scale, 56);
     }
 
@@ -1079,13 +1083,12 @@ public class NullSentinel extends Monster implements RoboticaBoss {
         if (isDeadOrDying()) return;
         Action a = action();
         Vec3 core = corePos();
-        // thrusters under the keel and the hum of the core
-        if (random.nextInt(3) == 0) {
-            level().addParticle(CoreParticles.mote(CoreParticles.WARP_VIOLET, 1.0F), getX() + random.nextGaussian() * 0.2, getY() + 0.5,
-                    getZ() + random.nextGaussian() * 0.2, 0.0, -0.04, 0.0);
+        // the thruster under the keel
+        if (random.nextInt(4) == 0) {
+            level().addParticle(CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.9F), getX() + random.nextGaussian() * 0.12, getY() + 0.45,
+                    getZ() + random.nextGaussian() * 0.12, 0.0, -0.05, 0.0);
         }
-        if (random.nextInt(6) == 0) level().addParticle(ParticleTypes.PORTAL, getX(), getY() + 0.4, getZ(), random.nextGaussian(), 0.2, random.nextGaussian());
-        if (phase() >= 3 && random.nextInt(4) == 0) {
+        if (phase() >= 3 && random.nextInt(7) == 0) {
             level().addParticle(CoreParticles.zap(random.nextBoolean() ? CoreParticles.WARP_VIOLET : CoreParticles.WARP_CYAN, 1.2F),
                     core.x + random.nextGaussian() * 0.7, core.y + random.nextGaussian() * 0.8, core.z + random.nextGaussian() * 0.7, 0.0, 0.0, 0.0);
         }
@@ -1104,21 +1107,16 @@ public class NullSentinel extends Monster implements RoboticaBoss {
                 level().addParticle(CoreParticles.warp(0xE8D8FF, 1.0F), l.x, l.y - 0.2, l.z, 0.9, 0.012, 0.0);
             }
             case BEAM -> {
+                // sparks and a wisp of scorch where it hits (the renderer draws the bloom)
                 if (actionTicks % 2 == 0) {
-                    Vec3 l = lensPos();
-                    Vec3 end = beamEnd(l, aim());
-                    level().addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 1.2F), end.x, end.y, end.z, 0.0, 0.0, 0.0);
-                    for (int i = 0; i < 2; i++) {
-                        level().addParticle(CoreParticles.spark(CoreParticles.WARP_VIOLET, 1.0F), end.x, end.y, end.z,
-                                random.nextGaussian() * 0.15, random.nextDouble() * 0.2, random.nextGaussian() * 0.15);
-                    }
-                    double t = random.nextDouble();
-                    Vec3 p = l.add(end.subtract(l).scale(t));
-                    level().addParticle(CoreParticles.zap(CoreParticles.WARP_CYAN, 1.0F), p.x, p.y, p.z, 0.0, 0.0, 0.0);
+                    Vec3 end = beamEnd(lensPos(), aim());
+                    level().addParticle(CoreParticles.spark(random.nextInt(3) == 0 ? 0xFFF4FF : CoreParticles.WARP_VIOLET, 1.0F), end.x, end.y, end.z,
+                            random.nextGaussian() * 0.18, 0.05 + random.nextDouble() * 0.2, random.nextGaussian() * 0.18);
+                    if (actionTicks % 6 == 0) level().addParticle(CoreParticles.puff(0x2A2238, 1.3F), end.x, end.y + 0.1, end.z, 0.0, 0.02, 0.0);
                 }
             }
             case WELL_WINDUP, WELL -> {
-                int n = a == Action.WELL ? 4 : 2;
+                int n = a == Action.WELL ? 2 : 1;
                 for (int i = 0; i < n; i++) {
                     level().addParticle(CoreParticles.warp(i % 2 == 0 ? CoreParticles.WARP_VIOLET : 0x4A2E7A, 2.0F),
                             getX(), getY() + 0.2 + random.nextDouble() * 2.5, getZ(), 6.0 + random.nextDouble() * (WELL_RANGE - 6.0), 0.0, 0.09);
@@ -1230,9 +1228,11 @@ public class NullSentinel extends Monster implements RoboticaBoss {
 
     // ------------------------------------------------------------------ sounds
 
+    /** None: the low drone while it is awake is a client loop (boss/client/SentinelDrone). */
+    @Nullable
     @Override
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.BEACON_AMBIENT;
+        return null;
     }
 
     @Override

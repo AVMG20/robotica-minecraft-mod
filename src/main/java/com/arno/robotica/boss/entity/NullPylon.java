@@ -110,9 +110,8 @@ public class NullPylon extends Monster {
 
     private void burst(ServerLevel server) {
         Vec3 c = getBoundingBox().getCenter();
-        server.sendParticles(CoreParticles.flash(CoreParticles.WARP_CYAN, 0.9F), c.x, c.y, c.z, 1, 0.0, 0.0, 0.0, 0.0);
-        server.sendParticles(CoreParticles.shard(0xC9B8F0, 1.4F), c.x, c.y, c.z, 14, 0.2, 0.3, 0.2, 0.3);
-        server.sendParticles(ParticleTypes.END_ROD, c.x, c.y, c.z, 10, 0.2, 0.3, 0.2, 0.12);
+        server.sendParticles(CoreParticles.shard(0x3FAFA0, 1.0F), c.x, c.y, c.z, 8, 0.2, 0.3, 0.2, 0.25);
+        server.sendParticles(CoreParticles.spark(CoreParticles.WARP_CYAN, 1.0F), c.x, c.y, c.z, 8, 0.2, 0.3, 0.2, 0.2);
         playSound(SoundEvents.AMETHYST_CLUSTER_BREAK, 2.0F, 0.7F);
         playSound(SoundEvents.GLASS_BREAK, 1.5F, 0.6F);
     }

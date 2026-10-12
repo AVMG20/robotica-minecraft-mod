@@ -5,6 +5,7 @@ import com.arno.robotica.boss.entity.NullPylon;
 import com.arno.robotica.boss.entity.NullSentinel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -18,20 +19,25 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 
 /**
  * Renderers of the Null Sentinel and its pylons. Besides the models (with a full-bright glow layer) they draw the
- * telegraphs as glowing geometry: the aim line and the null beam, the gravity well's ring, the gravity rings and rifts on
- * the floor, the shield around the Sentinel and the pylons' tethers. All additive ({@link RenderType#lightning()}).
+ * telegraphs as soft additive glow ({@link NullFx}): the null beam (white-hot core in a violet falloff, energy running
+ * along it, a charge at the lens and a bloom where it hits), the aim line, the gravity well's ring, the gravity rings and
+ * rifts on the floor, the shield around the Sentinel and the pylons' crackling tethers.
  */
 public final class NullRenderers {
     private NullRenderers() {}
 
-    private static final int VIOLET = 0xB07CFF;
-    private static final int PALE = 0xE8D8FF;
-    private static final int CYAN = 0x6FF2E0;
-    private static final int DEEP = 0x7A3CFF;
+    private static final int VIOLET = 0xA060FF;
+    private static final int LILAC = 0xCDA8FF;
+    private static final int HOT = 0xFFF4FF;
+    private static final int CYAN = 0x5FF2DC;
+    private static final int MINT = 0xDFFFF8;
+    private static final int DEEP = 0x6A30E0;
+    /** Dark band under the floor rings, and the black of an open rift. */
+    private static final int SHADOW = 0x14061F;
+    private static final int VOID = 0x05010A;
 
     private static <T extends Mob, M extends EntityModel<T>> EyesLayer<T, M> glow(RenderLayerParent<T, M> parent, ResourceLocation texture) {
         RenderType type = RenderType.eyes(texture);
@@ -43,9 +49,29 @@ public final class NullRenderers {
         };
     }
 
+    /** Sets {@link NullFx#camera} for a pose at {@code origin} (the entity's drawn position). */
+    private static void camera(Vec3 origin) {
+        Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        NullFx.camera(cam.x - origin.x, cam.y - origin.y, cam.z - origin.z);
+    }
+
+    /** Small deterministic noise in [-1, 1]. */
+    private static float hash(int a, int b, int c) {
+        int h = a * 73856093 ^ b * 19349663 ^ c * 83492791;
+        h ^= h >>> 13;
+        h *= 0x5bd1e995;
+        h ^= h >>> 15;
+        return (h & 0xFFFF) / 32767.5F - 1.0F;
+    }
+
     public static class Sentinel extends MobRenderer<NullSentinel, NullSentinelModel> {
         private static final ResourceLocation TEXTURE = Robotica.id("textures/entity/null_sentinel.png");
         public static final float SCALE = 1.25F;
+
+        /** The beam's ends, worked out once per tick per Sentinel (a block clip), not every frame. */
+        private int beamId = -1;
+        private long beamTick = Long.MIN_VALUE;
+        private double lx, ly, lz, dx, dy, dz, len;
 
         public Sentinel(EntityRendererProvider.Context ctx) {
             super(ctx, new NullSentinelModel(ctx.bakeLayer(NullSentinelModel.LAYER)), 1.2F);
@@ -75,74 +101,169 @@ public final class NullRenderers {
             return a == NullSentinel.Action.BEAM || a == NullSentinel.Action.BEAM_WINDUP || !entity.clientSpots().isEmpty();
         }
 
+        private void updateBeam(NullSentinel entity) {
+            long tick = entity.level().getGameTime();
+            if (beamId == entity.getId() && beamTick == tick) return;
+            beamId = entity.getId();
+            beamTick = tick;
+            Vec3 lens = entity.lensPos();
+            Vec3 dir = entity.aim();
+            Vec3 end = entity.beamEnd(lens, dir);
+            lx = lens.x - entity.getX();
+            ly = lens.y - entity.getY();
+            lz = lens.z - entity.getZ();
+            dx = dir.x;
+            dy = dir.y;
+            dz = dir.z;
+            len = end.distanceTo(lens);
+        }
+
+        /** Fills the line points from the lens along the beam, with energy running outwards and soft ends. */
+        private int beamPoints(float t, float width, boolean taperEnd) {
+            int n = Mth.clamp((int) (len / 0.35) + 2, 2, NullFx.MAX);
+            for (int i = 0; i < n; i++) {
+                float f = i / (float) (n - 1);
+                float s = (float) (len * f);
+                NullFx.X[i] = (float) (lx + dx * s);
+                NullFx.Y[i] = (float) (ly + dy * s);
+                NullFx.Z[i] = (float) (lz + dz * s);
+                float start = Mth.clamp(s / 0.4F, 0.0F, 1.0F);
+                float end = taperEnd ? Mth.clamp((float) (len - s) / 1.2F, 0.25F, 1.0F) : 1.0F;
+                NullFx.A[i] = start * (0.78F + 0.22F * NullFx.wave(s, t, 3));
+                NullFx.W[i] = width * (0.55F + 0.45F * start) * end * (0.9F + 0.1F * NullFx.wave(s * 1.7F, t * 1.3F, 7));
+            }
+            return n;
+        }
+
         @Override
         public void render(NullSentinel entity, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
+            // its collapse is its own animation: no red hurt tint after the killing blow's flash
+            if (entity.isDeadOrDying() && entity.dyingTicks() > 6) entity.hurtTime = 0;
             super.render(entity, yaw, partialTick, pose, buffers, light);
             if (entity.isDeadOrDying()) return;
-            VertexConsumer buf = buffers.getBuffer(RenderType.lightning());
             Vec3 origin = entity.getPosition(partialTick);
+            camera(origin);
+            Matrix4f m = pose.last().pose();
             float age = entity.tickCount + partialTick;
             float at = entity.actionTicks() + partialTick;
             NullSentinel.Action a = entity.action();
-            if (a == NullSentinel.Action.BEAM_WINDUP || a == NullSentinel.Action.BEAM) {
-                Vec3 lens = entity.lensPos();
-                Vec3 dir = entity.aim();
-                double len = entity.beamEnd(lens, dir).distanceTo(lens);
-                Vec3 from = lens.subtract(entity.position());
+            boolean beam = a == NullSentinel.Action.BEAM_WINDUP || a == NullSentinel.Action.BEAM;
+            if (beam) updateBeam(entity);
+
+            // floor telegraphs first, in one batch (switching render types ends the batch before it)
+            boolean well = a == NullSentinel.Action.WELL_WINDUP || a == NullSentinel.Action.WELL;
+            if (well || !entity.clientSpots().isEmpty() || a == NullSentinel.Action.BEAM) {
+                VertexConsumer shade = buffers.getBuffer(NullFx.SHADE);
+                floor(entity, shade, m, origin, age, at, partialTick, a, well);
+            }
+
+            VertexConsumer buf = buffers.getBuffer(NullFx.GLOW);
+            if (beam) {
+                float ex = (float) (lx + dx * len), ey = (float) (ly + dy * len), ez = (float) (lz + dz * len);
                 if (a == NullSentinel.Action.BEAM_WINDUP) {
+                    float charge = Mth.clamp(at / NullSentinel.BEAM_WINDUP, 0.0F, 1.0F);
                     boolean locked = at > NullSentinel.BEAM_WINDUP - NullSentinel.BEAM_LOCK;
-                    float flicker = 0.55F + 0.45F * Mth.sin(age * (locked ? 2.4F : 0.9F));
-                    float w = locked ? 0.06F : 0.03F;
-                    beam(buf, pose, from, dir, len, w, PALE, (locked ? 0.9F : 0.45F) * flicker);
-                    if (locked) beam(buf, pose, from, dir, len, 0.16F, VIOLET, 0.18F * flicker);
+                    // the lens gathers
+                    NullFx.dot(buf, m, (float) lx, (float) ly, (float) lz, 0.12F + 0.5F * charge, VIOLET, 70 + 130 * charge);
+                    NullFx.dot(buf, m, (float) lx, (float) ly, (float) lz, 0.05F + 0.18F * charge, HOT, 130 + 125 * charge);
+                    // aim line: thin, dashes marching out while it tracks, steady and blinking once it is frozen
+                    int n = beamPoints(age, 1.0F, false);
+                    for (int i = 0; i < n; i++) {
+                        float s = (float) (len * i / (n - 1));
+                        float dash = locked ? 1.0F : 0.3F + 0.7F * Math.max(0.0F, Mth.sin(s * 2.4F - age * 0.7F));
+                        NullFx.A[i] *= dash;
+                        NullFx.W[i] = 1.0F;
+                    }
+                    float blink = locked ? 0.75F + 0.25F * Mth.sin(age * 2.2F) : 1.0F;
+                    NullFx.strip(buf, m, n, locked ? 0.1F : 0.07F, VIOLET, (locked ? 120 : 70) * blink);
+                    NullFx.strip(buf, m, n, locked ? 0.028F : 0.018F, LILAC, (locked ? 255 : 200) * blink);
+                    NullFx.dot(buf, m, ex, ey, ez, locked ? 0.4F : 0.25F, LILAC, (locked ? 200 : 120) * blink);
                 } else {
                     float swell = Math.min(1.0F, at / 3.0F);
-                    float fade = Mth.clamp((NullSentinel.BEAM_TICKS - at) / 4.0F, 0.0F, 1.0F);
-                    float pulse = 1.0F + 0.12F * Mth.sin(age * 1.7F);
-                    beam(buf, pose, from, dir, len, 0.5F * swell * pulse, VIOLET, 0.32F * fade);
-                    beam(buf, pose, from, dir, len, 0.28F * swell * pulse, DEEP, 0.45F * fade);
-                    beam(buf, pose, from, dir, len, 0.1F * swell, PALE, 0.95F * fade);
+                    float fade = Mth.clamp((NullSentinel.BEAM_TICKS - at) / 5.0F, 0.0F, 1.0F);
+                    float flick = 0.92F + 0.08F * Mth.sin(age * 3.7F) + 0.04F * hash(entity.getId(), (int) age, 1);
+                    float k = swell * fade * flick;
+                    int n = beamPoints(age * 1.6F, 1.0F, true);
+                    NullFx.strip(buf, m, n, 0.5F * k, DEEP, 90 * fade);
+                    NullFx.strip(buf, m, n, 0.2F * k, VIOLET, 180 * fade);
+                    NullFx.strip(buf, m, n, 0.07F * k, LILAC, 235 * fade);
+                    NullFx.strip(buf, m, n, 0.028F * k, HOT, 255 * fade);
+                    // emitter and impact bloom
+                    NullFx.dot(buf, m, (float) lx, (float) ly, (float) lz, 0.6F * k, VIOLET, 160 * fade);
+                    NullFx.dot(buf, m, (float) lx, (float) ly, (float) lz, 0.24F * k, HOT, 255 * fade);
+                    float pulse = 0.85F + 0.15F * Mth.sin(age * 1.9F);
+                    NullFx.dot(buf, m, ex, ey, ez, 1.1F * k * pulse, VIOLET, 140 * fade);
+                    NullFx.dot(buf, m, ex, ey, ez, 0.38F * k, HOT, 240 * fade);
                 }
             }
-            double gy = 0.04;
-            if (a == NullSentinel.Action.WELL_WINDUP || a == NullSentinel.Action.WELL) {
+            if (entity.shieldUp()) {
+                float cy = (float) NullSentinel.CORE_HEIGHT;
+                float pulse = 0.7F + 0.3F * Mth.sin(age * 0.25F);
+                NullFx.ring(buf, m, 0.0F, cy - 0.7F, 0.0F, 1.7F, 0.045F, CYAN, 170 * pulse, 10, age * 0.08F);
+                NullFx.ring(buf, m, 0.0F, cy + 0.7F, 0.0F, 1.55F, 0.04F, CYAN, 140 * pulse, 10, -age * 0.08F);
+            }
+        }
+
+        /**
+         * A crisp floor ring: a soft dark band that makes it read on bright floors, a coloured line and a white-hot
+         * middle line (plain alpha blending, full bright).
+         */
+        private static void floorRing(VertexConsumer vc, Matrix4f m, float x, float y, float z, float r, float hw, int rgb, float alpha,
+                                      int dashes, float spin) {
+            NullFx.band(vc, m, x, y, z, r - hw * 2.4F, r - hw, r + hw, r + hw * 2.4F, SHADOW, alpha * 0.55F, 0, 0.0F);
+            NullFx.band(vc, m, x, y + 0.002F, z, r - hw, r - hw * 0.45F, r + hw * 0.45F, r + hw, rgb, alpha, dashes, spin);
+            NullFx.ring(vc, m, x, y + 0.004F, z, r, hw * 0.3F, HOT, alpha * 0.85F, dashes, spin);
+        }
+
+        private void floor(NullSentinel entity, VertexConsumer vc, Matrix4f m, Vec3 origin, float age, float at, float partialTick,
+                           NullSentinel.Action a, boolean well) {
+            float gy = 0.03F;
+            if (a == NullSentinel.Action.BEAM) {
+                // a scorch glow where the beam hits the floor
+                float ex = (float) (lx + dx * len), ey = (float) (ly + dy * len), ez = (float) (lz + dz * len);
+                float fade = Mth.clamp((NullSentinel.BEAM_TICKS - at) / 5.0F, 0.0F, 1.0F);
+                NullFx.floorGlow(vc, m, ex, ey + gy, ez, 1.0F, SHADOW, 90 * fade);
+                NullFx.floorGlow(vc, m, ex, ey + gy + 0.002F, ez, 0.5F, VIOLET, 120 * fade);
+            }
+            if (well) {
                 boolean pull = a == NullSentinel.Action.WELL;
                 float p = pull ? 1.0F : Mth.clamp(at / NullSentinel.WELL_WINDUP, 0.0F, 1.0F);
-                float pulse = 0.7F + 0.3F * Mth.sin(age * (pull ? 1.6F : 0.7F));
                 float r = (float) NullSentinel.BURST_RADIUS;
-                ring(buf, pose, 0.0, gy, 0.0, r - 0.22F, r + 0.06F, 64, age * 0.02F, VIOLET, (0.4F + 0.6F * p) * pulse);
-                ring(buf, pose, 0.0, gy, 0.0, 0.0F, r - 0.22F, 64, 0.0F, DEEP, 0.14F * p);
-            }
-            if (entity.shieldUp()) {
-                double cy = entity.corePos().y - entity.getY();
-                float pulse = 0.6F + 0.4F * Mth.sin(age * 0.3F);
-                ring(buf, pose, 0.0, cy - 0.8, 0.0, 1.65F, 1.75F, 48, age * 0.05F, CYAN, 0.5F * pulse);
-                ring(buf, pose, 0.0, cy + 0.6, 0.0, 1.55F, 1.65F, 48, -age * 0.05F, CYAN, 0.4F * pulse);
+                float pulse = pull ? 0.8F + 0.2F * Mth.sin(age * 1.4F) : 1.0F;
+                NullFx.floorGlow(vc, m, 0.0F, gy - 0.002F, 0.0F, r, SHADOW, 40 * p);
+                floorRing(vc, m, 0.0F, gy, 0.0F, r, 0.13F, VIOLET, (120 + 135 * p) * pulse, 18, -age * 0.12F);
+                // the pull: rings closing in from the well's reach
+                float reach = (float) NullSentinel.WELL_RANGE;
+                for (int k = 0; k < 2; k++) {
+                    float f = ((pull ? age * 0.06F : age * 0.03F) + k * 0.5F) % 1.0F;
+                    float rr = reach - (reach - r) * f;
+                    NullFx.ring(vc, m, 0.0F, gy, 0.0F, rr, 0.08F, LILAC, 150 * p * Mth.sin(f * Mth.PI), 0, 0.0F);
+                }
             }
             long now = entity.level().getGameTime();
             for (NullSentinel.Spot s : entity.clientSpots()) {
-                Vec3 p = s.pos().subtract(origin);
+                float px = (float) (s.pos().x - origin.x), py = (float) (s.pos().y - origin.y) + gy, pz = (float) (s.pos().z - origin.z);
                 if (s.kind() == NullSentinel.SPOT_LAUNCH) {
                     float left = s.at() - now - partialTick;
                     if (left < 0.0F) continue;
                     float t = 1.0F - left / NullSentinel.LAUNCH_DELAY;
-                    float blink = left < 10.0F ? 0.6F + 0.4F * Mth.sin(age * 2.5F) : 1.0F;
+                    float blink = left < 10.0F ? 0.65F + 0.35F * Mth.sin(age * 2.6F) : 1.0F;
                     float r = (float) NullSentinel.LAUNCH_RADIUS;
-                    ring(buf, pose, p.x, p.y + gy, p.z, r - 0.14F, r + 0.04F, 40, age * 0.08F, VIOLET, (0.45F + 0.5F * t) * blink);
-                    ring(buf, pose, p.x, p.y + gy, p.z, 0.0F, r * t, 32, 0.0F, PALE, 0.22F * t * blink);
+                    NullFx.floorGlow(vc, m, px, py - 0.002F, pz, r, VIOLET, 90 * t * blink);
+                    floorRing(vc, m, px, py, pz, r, 0.12F, VIOLET, (190 + 65 * t) * blink, 8, age * 0.15F);
+                    // the countdown: a ring closing in on the middle
+                    NullFx.ring(vc, m, px, py + 0.003F, pz, r * (1.0F - t) + 0.05F, 0.07F, LILAC, 230 * t, 0, 0.0F);
                 } else {
                     float r = (float) NullSentinel.RIFT_RADIUS;
-                    boolean open = now >= s.at();
-                    float closing = Mth.clamp((s.until() - now - partialTick) / 10.0F, 0.0F, 1.0F);
-                    if (!open) {
-                        ring(buf, pose, p.x, p.y + gy, p.z, r - 0.06F, r, 40, 0.0F, DEEP, 0.35F + 0.25F * Mth.sin(age * 0.8F));
+                    if (now < s.at()) {
+                        float arm = 1.0F - (s.at() - now - partialTick) / NullSentinel.RIFT_ARM;
+                        floorRing(vc, m, px, py, pz, r, 0.07F, VIOLET, 120 + 110 * arm, 12, age * 0.1F);
                     } else {
-                        ring(buf, pose, p.x, p.y + gy, p.z, r - 0.18F, r, 40, age * 0.03F, VIOLET, 0.6F * closing);
-                        for (int k = 0; k < 3; k++) {
-                            float ri = r * (0.25F + 0.25F * k);
-                            ring(buf, pose, p.x, p.y + gy + 0.005 * k, p.z, ri - 0.08F, ri, 24, age * (0.06F + k * 0.03F), DEEP, 0.35F * closing);
-                        }
-                        ring(buf, pose, p.x, p.y + gy, p.z, 0.0F, r - 0.18F, 32, 0.0F, DEEP, 0.12F * closing);
+                        float closing = Mth.clamp((s.until() - now - partialTick) / 10.0F, 0.0F, 1.0F);
+                        NullFx.floorGlow(vc, m, px, py - 0.002F, pz, r, VOID, 170 * closing);
+                        floorRing(vc, m, px, py, pz, r, 0.13F, VIOLET, 240 * closing, 0, 0.0F);
+                        NullFx.ring(vc, m, px, py + 0.003F, pz, r * 0.66F, 0.07F, VIOLET, 210 * closing, 6, age * 0.12F);
+                        NullFx.ring(vc, m, px, py + 0.003F, pz, r * 0.33F, 0.07F, LILAC, 210 * closing, 4, -age * 0.18F);
                     }
                 }
             }
@@ -151,6 +272,7 @@ public final class NullRenderers {
 
     public static class Pylon extends MobRenderer<NullPylon, NullPylonModel> {
         private static final ResourceLocation TEXTURE = Robotica.id("textures/entity/null_pylon.png");
+        private static final int POINTS = 22;
 
         public Pylon(EntityRendererProvider.Context ctx) {
             super(ctx, new NullPylonModel(ctx.bakeLayer(NullPylonModel.LAYER)), 0.4F);
@@ -167,80 +289,57 @@ public final class NullRenderers {
             return super.shouldRender(entity, frustum, x, y, z) || entity.owner() != null;
         }
 
-        /** The tether: a flickering cyan line from the crystal to the Sentinel's core. */
+        /** The tether: a thin crackling arc from the crystal to the Sentinel's core, with motes running along it. */
         @Override
         public void render(NullPylon entity, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
             super.render(entity, yaw, partialTick, pose, buffers, light);
             NullSentinel owner = entity.owner();
             if (owner == null || entity.isDeadOrDying()) return;
             Vec3 origin = entity.getPosition(partialTick);
-            Vec3 from = new Vec3(0.0, 0.95, 0.0);
-            Vec3 core = owner.getPosition(partialTick).add(owner.corePos().subtract(owner.position()));
-            Vec3 to = core.subtract(origin);
-            Vec3 d = to.subtract(from);
-            double len = d.length();
+            Vec3 ownerPos = owner.getPosition(partialTick);
+            double fx = 0.0, fy = 0.95, fz = 0.0;
+            double tx = ownerPos.x - origin.x, ty = ownerPos.y + NullSentinel.CORE_HEIGHT - origin.y, tz = ownerPos.z - origin.z;
+            double ddx = tx - fx, ddy = ty - fy, ddz = tz - fz;
+            double len = Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
             if (len < 0.5) return;
+            camera(origin);
+            VertexConsumer buf = buffers.getBuffer(NullFx.GLOW);
+            Matrix4f m = pose.last().pose();
             float age = entity.tickCount + partialTick;
-            float flicker = 0.6F + 0.4F * Mth.sin(age * 1.3F + entity.getId());
-            VertexConsumer buf = buffers.getBuffer(RenderType.lightning());
-            beam(buf, pose, from, d.scale(1.0 / len), len, 0.05F, CYAN, 0.8F * flicker);
-            beam(buf, pose, from, d.scale(1.0 / len), len, 0.14F, CYAN, 0.2F * flicker);
+            int step = entity.tickCount / 2;
+            // two sideways axes for the crackle
+            double ux = -ddz, uz = ddx, ul = Math.sqrt(ux * ux + uz * uz);
+            if (ul < 1.0E-4) {
+                ux = 1.0;
+                uz = 0.0;
+                ul = 1.0;
+            }
+            ux /= ul;
+            uz /= ul;
+            for (int i = 0; i < POINTS; i++) {
+                float f = i / (float) (POINTS - 1);
+                float env = Mth.sin(f * Mth.PI) * 0.12F;
+                float jx = hash(entity.getId(), step, i) * env, jy = hash(entity.getId(), step, i + 101) * env;
+                NullFx.X[i] = (float) (fx + ddx * f + ux * jx);
+                NullFx.Y[i] = (float) (fy + ddy * f + jy - Mth.sin(f * Mth.PI) * 0.25F);
+                NullFx.Z[i] = (float) (fz + ddz * f + uz * jx);
+                NullFx.A[i] = 0.75F + 0.25F * Mth.sin(f * 9.0F - age * 0.5F);
+                NullFx.W[i] = 1.0F;
+            }
+            float flicker = 0.75F + 0.25F * Mth.sin(age * 1.1F + entity.getId());
+            NullFx.strip(buf, m, POINTS, 0.07F, CYAN, 55 * flicker);
+            NullFx.strip(buf, m, POINTS, 0.016F, MINT, 210 * flicker);
+            // motes flowing to the Sentinel
+            for (int k = 0; k < 3; k++) {
+                float f = (age * 0.025F + k / 3.0F) % 1.0F;
+                int i = Math.min(POINTS - 2, (int) (f * (POINTS - 1)));
+                float u = f * (POINTS - 1) - i;
+                float x = Mth.lerp(u, NullFx.X[i], NullFx.X[i + 1]), y = Mth.lerp(u, NullFx.Y[i], NullFx.Y[i + 1]), z = Mth.lerp(u, NullFx.Z[i], NullFx.Z[i + 1]);
+                float a = Mth.sin(f * Mth.PI);
+                NullFx.dot(buf, m, x, y, z, 0.1F, CYAN, 120 * a);
+                NullFx.dot(buf, m, x, y, z, 0.04F, MINT, 230 * a);
+            }
+            NullFx.dot(buf, m, (float) fx, (float) fy, (float) fz, 0.3F, CYAN, 80 * flicker);
         }
-    }
-
-    // ------------------------------------------------------------------ geometry
-
-    /** Scratch rotation and the unit corners of a beam's cross-section (render thread only, nothing allocated per frame). */
-    private static final Quaternionf TURN = new Quaternionf();
-    private static final float[][] CORNERS = {{-1.0F, -1.0F}, {1.0F, -1.0F}, {1.0F, 1.0F}, {-1.0F, 1.0F}};
-
-    /** A square prism of half width {@code w} from {@code from} along {@code dir} (unit), both faces of every side. */
-    static void beam(VertexConsumer buf, PoseStack pose, Vec3 from, Vec3 dir, double len, float w, int rgb, float alpha) {
-        if (alpha <= 0.0F || w <= 0.0F) return;
-        pose.pushPose();
-        pose.translate(from.x, from.y, from.z);
-        pose.mulPose(TURN.rotationTo(0.0F, 1.0F, 0.0F, (float) dir.x, (float) dir.y, (float) dir.z));
-        Matrix4f m = pose.last().pose();
-        float r = (rgb >> 16 & 255) / 255.0F;
-        float g = (rgb >> 8 & 255) / 255.0F;
-        float b = (rgb & 255) / 255.0F;
-        float l = (float) len;
-        for (int i = 0; i < 4; i++) {
-            float x0 = CORNERS[i][0] * w, z0 = CORNERS[i][1] * w;
-            float x1 = CORNERS[(i + 1) % 4][0] * w, z1 = CORNERS[(i + 1) % 4][1] * w;
-            quad(buf, m, x0, 0.0F, z0, x1, 0.0F, z1, x1, l, z1, x0, l, z0, r, g, b, alpha);
-        }
-        pose.popPose();
-    }
-
-    /** A flat ring (annulus; a disc when {@code inner} is 0) on the floor, turned by {@code spin} radians. */
-    static void ring(VertexConsumer buf, PoseStack pose, double x, double y, double z, float inner, float outer, int segments, float spin,
-                     int rgb, float alpha) {
-        if (alpha <= 0.0F || outer <= 0.0F) return;
-        Matrix4f m = pose.last().pose();
-        float r = (rgb >> 16 & 255) / 255.0F;
-        float g = (rgb >> 8 & 255) / 255.0F;
-        float b = (rgb & 255) / 255.0F;
-        float fy = (float) y;
-        for (int i = 0; i < segments; i++) {
-            float a0 = spin + i * Mth.TWO_PI / segments;
-            float a1 = spin + (i + 1) * Mth.TWO_PI / segments;
-            float c0 = Mth.cos(a0), s0 = Mth.sin(a0), c1 = Mth.cos(a1), s1 = Mth.sin(a1);
-            quad(buf, m, (float) x + c0 * inner, fy, (float) z + s0 * inner, (float) x + c0 * outer, fy, (float) z + s0 * outer,
-                    (float) x + c1 * outer, fy, (float) z + s1 * outer, (float) x + c1 * inner, fy, (float) z + s1 * inner, r, g, b, alpha);
-        }
-    }
-
-    /** One quad, both windings (the lightning render type culls back faces). */
-    private static void quad(VertexConsumer buf, Matrix4f m, float x0, float y0, float z0, float x1, float y1, float z1,
-                             float x2, float y2, float z2, float x3, float y3, float z3, float r, float g, float b, float a) {
-        buf.addVertex(m, x0, y0, z0).setColor(r, g, b, a);
-        buf.addVertex(m, x1, y1, z1).setColor(r, g, b, a);
-        buf.addVertex(m, x2, y2, z2).setColor(r, g, b, a);
-        buf.addVertex(m, x3, y3, z3).setColor(r, g, b, a);
-        buf.addVertex(m, x3, y3, z3).setColor(r, g, b, a);
-        buf.addVertex(m, x2, y2, z2).setColor(r, g, b, a);
-        buf.addVertex(m, x1, y1, z1).setColor(r, g, b, a);
-        buf.addVertex(m, x0, y0, z0).setColor(r, g, b, a);
     }
 }
