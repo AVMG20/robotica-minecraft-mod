@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
  * to be installed (Auto-Pickup, Void Filter, Fortune...) is a module ({@link com.arno.robotica.core.module.ModuleKind}).
  */
 public enum ToggleKind {
-    KEEP_FLOOR("keep_floor", 1),
     AUTO_SMELT("auto_smelt", 2);
 
     public final String id;

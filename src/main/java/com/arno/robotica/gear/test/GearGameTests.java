@@ -55,52 +55,61 @@ public class GearGameTests {
         return new HashSet<>(list);
     }
 
+    private static void assertRows(GameTestHelper helper, List<BlockPos> box, int size, int minY, int maxY, String what) {
+        helper.assertTrue(box.size() == size, what + " should have " + size + " blocks, got " + box.size());
+        int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
+        for (BlockPos p : box) {
+            lo = Math.min(lo, p.getY());
+            hi = Math.max(hi, p.getY());
+        }
+        helper.assertTrue(lo == minY && hi == maxY, what + " should span y " + minY + ".." + maxY + ", got " + lo + ".." + hi);
+    }
+
     @GameTest(template = "empty")
     public static void areaShapeMath(GameTestHelper helper) {
         BlockPos o = new BlockPos(10, 20, 30);
-        int feet = 100; // far above: keep floor is bounded by the origin row
 
-        List<BlockPos> up3 = AreaShape.positions(o, Direction.UP, AreaMode.AREA_3, feet, false);
+        List<BlockPos> up3 = AreaShape.positions(o, Direction.UP, AreaMode.AREA_3);
         helper.assertTrue(up3.size() == 9, "3x3 on top face should have 9 blocks, got " + up3.size());
         helper.assertTrue(up3.get(0).equals(o), "origin should come first");
         for (BlockPos p : up3) {
             helper.assertTrue(p.getY() == 20 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getZ() - 30) <= 1, "3x3 up block off plane: " + p);
         }
 
-        List<BlockPos> north3 = AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3, feet, false);
+        List<BlockPos> north3 = AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3);
         helper.assertTrue(north3.size() == 9, "3x3 on north face should have 9 blocks");
         for (BlockPos p : north3) {
             helper.assertTrue(p.getZ() == 30 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getY() - 20) <= 1, "3x3 north block off plane: " + p);
         }
 
-        List<BlockPos> east3 = AreaShape.positions(o, Direction.EAST, AreaMode.AREA_3, feet, false);
+        List<BlockPos> east3 = AreaShape.positions(o, Direction.EAST, AreaMode.AREA_3);
         for (BlockPos p : east3) {
             helper.assertTrue(p.getX() == 10 && Math.abs(p.getZ() - 30) <= 1 && Math.abs(p.getY() - 20) <= 1, "3x3 east block off plane: " + p);
         }
 
         // 3x3x3 from the north face goes south (into the block, away from the player), centred in x and y.
-        List<BlockPos> cubeNorth = AreaShape.positions(o, Direction.NORTH, AreaMode.CUBE_3, feet, false);
+        List<BlockPos> cubeNorth = AreaShape.positions(o, Direction.NORTH, AreaMode.CUBE_3);
         helper.assertTrue(cubeNorth.size() == 27, "3x3x3 should have 27 blocks");
         for (BlockPos p : cubeNorth) {
             helper.assertTrue(p.getZ() >= 30 && p.getZ() <= 32 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getY() - 20) <= 1, "cube north off: " + p);
         }
         helper.assertTrue(set(cubeNorth).size() == 27, "cube positions must be unique");
 
-        List<BlockPos> cubeUp = AreaShape.positions(o, Direction.UP, AreaMode.CUBE_3, feet, false);
+        List<BlockPos> cubeUp = AreaShape.positions(o, Direction.UP, AreaMode.CUBE_3);
         for (BlockPos p : cubeUp) {
             helper.assertTrue(p.getY() <= 20 && p.getY() >= 18 && Math.abs(p.getX() - 10) <= 1 && Math.abs(p.getZ() - 30) <= 1, "cube up off: " + p);
         }
-        List<BlockPos> cubeDown = AreaShape.positions(o, Direction.DOWN, AreaMode.CUBE_3, feet, false);
+        List<BlockPos> cubeDown = AreaShape.positions(o, Direction.DOWN, AreaMode.CUBE_3);
         for (BlockPos p : cubeDown) {
             helper.assertTrue(p.getY() >= 20 && p.getY() <= 22, "cube down should extend up: " + p);
         }
-        List<BlockPos> cubeWest = AreaShape.positions(o, Direction.WEST, AreaMode.CUBE_3, feet, false);
+        List<BlockPos> cubeWest = AreaShape.positions(o, Direction.WEST, AreaMode.CUBE_3);
         for (BlockPos p : cubeWest) {
             helper.assertTrue(p.getX() >= 10 && p.getX() <= 12, "cube west should extend east: " + p);
         }
 
         // Even sizes extend one further in the positive direction.
-        List<BlockPos> big = AreaShape.positions(o, Direction.UP, AreaMode.AREA_12, feet, false);
+        List<BlockPos> big = AreaShape.positions(o, Direction.UP, AreaMode.AREA_12);
         helper.assertTrue(big.size() == 144, "12x12 should have 144 blocks");
         int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
         for (BlockPos p : big) {
@@ -108,22 +117,23 @@ public class GearGameTests {
             maxX = Math.max(maxX, p.getX());
         }
         helper.assertTrue(minX == 5 && maxX == 16, "12 wide should span -5..+6, got " + minX + ".." + maxX);
-        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.CUBE_12, feet, false).size() == 1728, "12x12x12 should have 1728 blocks");
-        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.AREA_5, feet, false).size() == 25, "5x5 should have 25 blocks");
-        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.CUBE_5, feet, false).size() == 125, "5x5x5 should have 125 blocks");
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.CUBE_12).size() == 1728, "12x12x12 should have 1728 blocks");
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.AREA_5).size() == 25, "5x5 should have 25 blocks");
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.CUBE_5).size() == 125, "5x5x5 should have 125 blocks");
 
-        // Keep floor: nothing below min(origin Y, feet Y).
-        List<BlockPos> floorOnWall = AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3, 20, true);
-        helper.assertTrue(floorOnWall.size() == 6, "keep floor on a wall at feet height should drop the bottom row, got " + floorOnWall.size());
-        for (BlockPos p : floorOnWall) helper.assertTrue(p.getY() >= 20, "below the floor: " + p);
-        List<BlockPos> floorCube = AreaShape.positions(o, Direction.NORTH, AreaMode.CUBE_3, 20, true);
-        helper.assertTrue(floorCube.size() == 18, "keep floor on a cube should have 18 blocks, got " + floorCube.size());
-        // Feet below the origin: the origin row is the limit, so digging a wall from above the feet keeps everything above feet.
-        List<BlockPos> feetLow = AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_3, 19, true);
-        helper.assertTrue(feetLow.size() == 9, "feet one below origin keeps the whole 3x3, got " + feetLow.size());
-        // Mining straight down never gets filtered: the whole plane is at the origin height.
-        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.AREA_3, 25, true).size() == 9, "flat plane stays complete");
-        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.SINGLE, feet, true).equals(List.of(o)), "single is just the origin");
+        // On a wall the box starts one row below the aimed block; mining up or down stays centred.
+        assertRows(helper, AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_5), 25, 19, 23, "5x5 north");
+        assertRows(helper, AreaShape.positions(o, Direction.EAST, AreaMode.CUBE_5), 125, 19, 23, "5x5x5 east");
+        assertRows(helper, AreaShape.positions(o, Direction.SOUTH, AreaMode.AREA_12), 144, 19, 30, "12x12 south");
+        assertRows(helper, AreaShape.positions(o, Direction.WEST, AreaMode.AREA_9), 81, 19, 27, "9x9 west");
+        assertRows(helper, AreaShape.positions(o, Direction.NORTH, AreaMode.CUBE_3), 27, 19, 21, "3x3x3 north");
+        for (BlockPos p : AreaShape.positions(o, Direction.NORTH, AreaMode.AREA_5)) {
+            helper.assertTrue(Math.abs(p.getX() - 10) <= 2, "5x5 north stays centred sideways: " + p);
+        }
+        for (BlockPos p : AreaShape.positions(o, Direction.UP, AreaMode.AREA_5)) {
+            helper.assertTrue(p.getY() == 20 && Math.abs(p.getX() - 10) <= 2 && Math.abs(p.getZ() - 30) <= 2, "5x5 up stays centred: " + p);
+        }
+        helper.assertTrue(AreaShape.positions(o, Direction.UP, AreaMode.SINGLE).equals(List.of(o)), "single is just the origin");
         helper.succeed();
     }
 
@@ -544,9 +554,9 @@ public class GearGameTests {
     @GameTest(template = "empty")
     public static void settingsAndModuleSwitches(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper, helper.absolutePos(new BlockPos(1, 1, 1)));
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(GearItems.BORE_DRILL.get()));
-        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.KEEP_FLOOR.ordinal());
-        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.KEEP_FLOOR), "keep floor (off by default) toggles on");
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(GearItems.MAGMA_DRILL.get()));
+        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.AUTO_SMELT.ordinal());
+        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.AUTO_SMELT), "auto-smelt (off by default) toggles on");
         GearActions.apply(player, GearActions.MODULE_TOGGLE, ModuleKind.VOID_FILTER.ordinal());
         helper.assertTrue(!player.getMainHandItem().has(com.arno.robotica.core.module.ModuleComponents.MODULES_OFF.get()),
                 "no Void Filter installed: nothing to switch");

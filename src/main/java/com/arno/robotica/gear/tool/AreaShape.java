@@ -14,12 +14,11 @@ public final class AreaShape {
     /**
      * All positions of the box for a hit block, origin included, nearest to the origin first.
      * Width and height lie in the plane of the hit face and are centred on the origin (even sizes extend one block
-     * further in the positive direction). Depth runs from the origin straight into the block, away from the player.
-     *
-     * @param feetY     block Y of the player's feet
-     * @param keepFloor never return blocks below min(origin Y, feetY)
+     * further in the positive direction). On a wall the box instead starts one row below the origin, so aiming at eye
+     * level keeps the floor and aiming at the bottom row digs one deeper. Depth runs from the origin straight into the
+     * block, away from the player.
      */
-    public static List<BlockPos> positions(BlockPos origin, Direction face, AreaMode mode, int feetY, boolean keepFloor) {
+    public static List<BlockPos> positions(BlockPos origin, Direction face, AreaMode mode) {
         List<BlockPos> out = new ArrayList<>();
         if (!mode.isBox()) {
             out.add(origin);
@@ -42,15 +41,15 @@ public final class AreaShape {
             }
         }
         Direction in = face.getOpposite();
-        int floorY = Math.min(origin.getY(), feetY);
+        int jLo = face.getAxis().isHorizontal() ? -1 : lo(mode.height);
+        int jHi = jLo + mode.height - 1;
         for (int k = 0; k < mode.depth; k++) {
-            for (int j = lo(mode.height); j <= hi(mode.height); j++) {
+            for (int j = jLo; j <= jHi; j++) {
                 for (int i = lo(mode.width); i <= hi(mode.width); i++) {
                     BlockPos p = origin.offset(
                             u.getStepX() * i + v.getStepX() * j + in.getStepX() * k,
                             u.getStepY() * i + v.getStepY() * j + in.getStepY() * k,
                             u.getStepZ() * i + v.getStepZ() * j + in.getStepZ() * k);
-                    if (keepFloor && p.getY() < floorY) continue;
                     out.add(p);
                 }
             }
