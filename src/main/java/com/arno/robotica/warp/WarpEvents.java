@@ -25,7 +25,7 @@ public final class WarpEvents {
     public static void onDamage(LivingIncomingDamageEvent event) {
         if (event.getAmount() <= 0.0F || !(event.getEntity() instanceof ServerPlayer player)) return;
         if (player.isUsingItem() && player.getUseItem().getItem() instanceof RemoteItem) {
-            player.stopUsingItem();
+            WarpFxPayload.stopUse(player);
             WarpTravel.message(player, Component.translatable("message.robotica.warp.interrupted"));
         }
         if (WarpCharges.cancel(player.getUUID())) WarpTravel.message(player, Component.translatable("message.robotica.warp.interrupted"));

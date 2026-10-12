@@ -19,10 +19,11 @@ import java.util.function.Consumer;
  * Server to client: one step of the shared warp effect, drawn by each client itself (warp.client.WarpFx).
  * {@link #CHARGE}: the vortex gathers around the traveller, {@code value} is the charge progress 0..1;
  * {@link #DEPART} / {@link #ARRIVE}: the flash at either end, {@code value} 1 for a full trip, 0 for a quiet one (portals).
- * Positions are the traveller's feet.
+ * Positions are the traveller's feet. {@link #STOP} (to one player): the server stopped or refused the go-home hold the
+ * client started, so the client ends its use animation too.
  */
 public record WarpFxPayload(byte kind, float x, float y, float z, float value) implements CustomPacketPayload {
-    public static final byte CHARGE = 0, DEPART = 1, ARRIVE = 2;
+    public static final byte CHARGE = 0, DEPART = 1, ARRIVE = 2, STOP = 3;
     /** Players further away than this get no effect. */
     public static final double RANGE = 48;
 
@@ -47,6 +48,14 @@ public record WarpFxPayload(byte kind, float x, float y, float z, float value) i
         for (ServerPlayer p : level.players()) {
             if (p instanceof FakePlayer || p.connection == null || p.distanceToSqr(x, y, z) > RANGE * RANGE) continue;
             if (p.connection.hasChannel(TYPE)) PacketDistributor.sendToPlayer(p, payload);
+        }
+    }
+
+    /** Ends the Warp Remote hold on this player's client too (a server-side stopUsingItem does not reach it). */
+    public static void stopUse(ServerPlayer player) {
+        player.stopUsingItem();
+        if (!(player instanceof FakePlayer) && player.connection != null && player.connection.hasChannel(TYPE)) {
+            PacketDistributor.sendToPlayer(player, new WarpFxPayload(STOP, 0, 0, 0, 0));
         }
     }
 

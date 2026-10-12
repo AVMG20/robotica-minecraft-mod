@@ -126,7 +126,11 @@ public class RemoteItem extends Item implements EnergyItem {
         }
         if (player instanceof ServerPlayer serverPlayer) {
             // every check of the trip up front (and its message), so a charge never runs into a known refusal
-            if (!WarpTravel.remoteListTrip(serverPlayer, stack, home.id(), true)) return InteractionResultHolder.fail(stack);
+            if (!WarpTravel.remoteListTrip(serverPlayer, stack, home.id(), true)) {
+                // the client predicted success and started the hold: stop it there too
+                WarpFxPayload.stopUse(serverPlayer);
+                return InteractionResultHolder.fail(stack);
+            }
         } else {
             boolean cross = home.pos().isPresent() && !home.pos().get().dimension().equals(level.dimension());
             if (player.getCooldowns().isOnCooldown(this)
@@ -155,7 +159,8 @@ public class RemoteItem extends Item implements EnergyItem {
         int elapsed = CHARGE_TICKS - remaining;
         if (user.hurtTime > 0 && elapsed > 1) {
             // damage interrupts the charge (LivingIncomingDamageEvent handles it too, this catches anything that slipped by)
-            user.stopUsingItem();
+            if (user instanceof ServerPlayer player) WarpFxPayload.stopUse(player);
+            else user.stopUsingItem();
             return;
         }
         WarpFxPayload.charge(serverLevel, user, elapsed, CHARGE_TICKS);
