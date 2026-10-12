@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,11 +23,13 @@ import java.util.UUID;
 /**
  * Client to server: the drone command key. {@link #TUNNEL}: the nearest own Buddy Bot digs along the direction the
  * player looks (or comes back when it is already digging). {@link #RECALL}: all own Buddy Bots in range stop and follow.
+ * {@link #OPEN}: the backpack key opens the cargo of the nearest own Buddy Bot.
  * The server checks ownership and distance itself and rate limits per player.
  */
 public record DroneCommandPayload(int action) implements CustomPacketPayload {
     public static final int TUNNEL = 0;
     public static final int RECALL = 1;
+    public static final int OPEN = 2;
 
     public static final Type<DroneCommandPayload> TYPE = new Type<>(Robotica.id("drones_command"));
     public static final StreamCodec<RegistryFriendlyByteBuf, DroneCommandPayload> CODEC = StreamCodec.composite(
@@ -63,6 +66,10 @@ public record DroneCommandPayload(int action) implements CustomPacketPayload {
         Long last = LAST_USE.get(player.getUUID());
         if (last != null && now - last < 10) return;
         LAST_USE.put(player.getUUID(), now);
+        if (action == OPEN) {
+            openBackpack(player);
+            return;
+        }
         double range = DronesConfig.commandDistance();
         List<DroneBase> drones = player.level().getEntitiesOfClass(DroneBase.class, player.getBoundingBox().inflate(range),
                 d -> d.isAlive() && d.getOwnerUUID() != null && d.getOwnerUUID().equals(player.getUUID()) && d.distanceToSqr(player) <= range * range);
@@ -92,5 +99,27 @@ public record DroneCommandPayload(int action) implements CustomPacketPayload {
             }
             player.displayClientMessage(Component.translatable("message.robotica.drone.recalled", n), true);
         }
+    }
+
+    /** Opens the cargo of the nearest own Buddy Bot in range, or says there is none. */
+    private static void openBackpack(ServerPlayer player) {
+        BuddyBot bot = backpackBot(player);
+        if (bot == null) {
+            player.displayClientMessage(Component.translatable("message.robotica.drone.no_buddy"), true);
+        } else {
+            bot.openRemote(player, DronesConfig.commandDistance());
+        }
+    }
+
+    /** The nearest own Buddy Bot in range that the player's client tracks, or null. */
+    @Nullable
+    public static BuddyBot backpackBot(ServerPlayer player) {
+        double range = DronesConfig.commandDistance();
+        BuddyBot nearest = null;
+        for (BuddyBot b : player.level().getEntitiesOfClass(BuddyBot.class, player.getBoundingBox().inflate(range),
+                d -> d.isAlive() && player.getUUID().equals(d.getOwnerUUID()) && d.isSeenBy(player) && d.distanceToSqr(player) <= range * range)) {
+            if (nearest == null || b.distanceToSqr(player) < nearest.distanceToSqr(player)) nearest = b;
+        }
+        return nearest;
     }
 }

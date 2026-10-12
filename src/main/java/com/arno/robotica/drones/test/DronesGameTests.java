@@ -15,7 +15,9 @@ import com.arno.robotica.drones.entity.HaulerDrone;
 import com.arno.robotica.drones.entity.BuddyBot;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.drones.menu.BuddyBotMenu;
+import com.arno.robotica.drones.net.DroneCommandPayload;
 import com.arno.robotica.gear.GearItems;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -34,6 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -251,6 +254,51 @@ public class DronesGameTests {
         player.getInventory().setItem(0, cell);
         menu.quickMoveStack(player, hotbar);
         helper.assertTrue(bot.battery.getStackInSlot(0).is(CoreItems.COPPER_CELL.get()), "shift-click puts a cell in the battery slot");
+        helper.succeed();
+    }
+
+    /** The backpack key picks the nearest own bot the player's client tracks, never another player's, and reaches past arm's reach. */
+    @GameTest(template = "empty")
+    public static void backpackKeyOpensOwnBot(GameTestHelper helper) {
+        // A fake player stays out of the level's player list: a listed mock player far away makes other tests' mobs despawn.
+        ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.fromString("5e1d2c3b-0000-4000-8000-00000000d001"), "backpack_owner"));
+        BlockPos at = helper.absolutePos(p(0, 1, 0));
+        player.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        BuddyBot theirs = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(1, 2, 0));
+        BuddyBot mine = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(3, 2, 0));
+        for (BuddyBot b : List.of(theirs, mine)) {
+            b.setTier(1);
+            b.setMode(BuddyBot.Mode.STAY);
+            b.setStance(BuddyBot.Stance.PASSIVE);
+            b.setPickup(false);
+        }
+        theirs.setOwnerUUID(UUID.randomUUID());
+        mine.setOwnerUUID(player.getUUID());
+        theirs.startSeenByPlayer(player);
+        mine.stopSeenByPlayer(player);
+        BuddyBot untracked = DroneCommandPayload.backpackBot(player);
+        mine.startSeenByPlayer(player);
+        BuddyBot picked = DroneCommandPayload.backpackBot(player);
+        BuddyBotMenu menu = new BuddyBotMenu(1, player.getInventory(), mine).remote(DronesConfig.commandDistance());
+        boolean openWhileTracked = menu.stillValid(player);
+        mine.stopSeenByPlayer(player);
+        boolean openAfterTracking = menu.stillValid(player);
+        theirs.discard();
+        mine.discard();
+        helper.assertTrue(untracked == null, "a bot the client does not track is not picked");
+        helper.assertTrue(picked == mine, "the own bot is picked, not the nearer one of another player");
+        helper.assertTrue(openWhileTracked, "the menu stays open while tracked");
+        helper.assertTrue(!openAfterTracking, "the menu closes when the client stops tracking the bot");
+
+        BuddyBot far = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        far.setTier(1);
+        far.setOwnerUUID(player.getUUID());
+        far.setPos(player.getX() + 12, player.getY(), player.getZ());
+        far.startSeenByPlayer(player);
+        helper.assertTrue(!new BuddyBotMenu(2, player.getInventory(), far).stillValid(player), "right-click reach is 8 blocks");
+        helper.assertTrue(new BuddyBotMenu(3, player.getInventory(), far).remote(DronesConfig.commandDistance()).stillValid(player),
+                "the backpack key reaches further");
         helper.succeed();
     }
 

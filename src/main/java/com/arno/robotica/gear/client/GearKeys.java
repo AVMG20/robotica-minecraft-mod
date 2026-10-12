@@ -15,7 +15,7 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
-/** Keybinds: V cycles the mode, B cycles the Fortune / Silk Touch modules, G opens the settings and module switches of the tool or FE weapon in hand. Sneak + scroll also cycles the mode. */
+/** Keybinds: V cycles the mode, Z cycles the Fortune / Silk Touch modules, G opens the settings and module switches of the tool or FE weapon in hand. Sneak + scroll also cycles the mode. */
 final class GearKeys {
     private GearKeys() {}
 
@@ -23,7 +23,7 @@ final class GearKeys {
     static final KeyMapping CYCLE_MODE = new KeyMapping("key.robotica.gear.cycle_mode", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
     static final KeyMapping SWAP_ENCHANT = new KeyMapping("key.robotica.gear.swap_enchant", KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY);
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, CATEGORY);
     static final KeyMapping OPEN_TOGGLES = new KeyMapping("key.robotica.gear.open_toggles", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY);
 
