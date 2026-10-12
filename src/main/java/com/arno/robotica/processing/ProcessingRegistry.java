@@ -42,9 +42,10 @@ public final class ProcessingRegistry {
     public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = DeferredRegister.create(Registries.RECIPE_TYPE, Robotica.MODID);
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, Robotica.MODID);
 
+    // noOcclusion: the model's inset work bay would render dark on an occluding block
     private static BlockBehaviour.Properties machine() {
         return BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL)
-                .requiresCorrectToolForDrops().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 9 : 0);
+                .requiresCorrectToolForDrops().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 9 : 0);
     }
 
     // ---- Machines: Mk1 (Age 1) to Mk4 (Age 4) ----

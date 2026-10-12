@@ -5,15 +5,18 @@ scripts/data/industry_data.py)
 
 Items follow the core item style: one dark outline 'k', light from the top-left (Canvas.auto_shade), a highlight pixel
 on the lit side. Chars: '12345' main material (deep -> highlight), 'abcde' steel, 'y Y z' glow (mid, bright, white).
-Machines are dark slate boxes with a trim in their Mk colour (Mk1 copper, Mk2 ferrothorium, Mk3 pyrosteel,
-Mk4 resonant alloy); what glows (molten metal, rotor, welding spark, the RTG core) sits on a full-bright overlay.
+The Alloy Smelter, Centrifuge and Assembler use the shared casing (machine_casing.py) with the tier metal (Mk1 copper,
+Mk2 ferrothorium, Mk3 pyrosteel, Mk4 resonant alloy) and inset bays on their own model elements (crucible, drum, work
+cell); what glows sits on full-bright overlays. The RTG is a dark slate box with the same kind of overlay.
 """
 import math
 import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import MATERIALS, Canvas, fbm, hash01, material, write_anim, write_block, write_item  # noqa: E402
+from pixelart import (MATERIALS, Canvas, fbm, hash01, material, write_anim, write_block, write_item,  # noqa: E402
+                      write_still)
+import machine_casing as casing  # noqa: E402
 
 M, S = '12345', 'abcde'
 SHADE = {'3': ('2', '4'), 'c': ('b', 'd')}
@@ -389,7 +392,6 @@ def blocks_ores():
 # Chars: 'abcde' slate body, 'fghij' tier trim, 'k K' dark, 'r R' hazard, 'y Y z Z' glow, 'l L' leds off/on.
 
 TIER_TRIM = {1: MATERIALS['copper'], 2: RAMPS['ferrothorium'], 3: RAMPS['pyrosteel'], 4: RAMPS['resonant']}
-MACHINE_GLOW = {'alloy_smelter': 'amber', 'centrifuge': 'green', 'assembler': 'cyan', 'rtg': 'green'}
 
 
 def mpal(tier=1, glow='amber'):
@@ -414,120 +416,377 @@ def shell(seed=0):
     return c
 
 
-def side(tier):
-    c = shell(10 + tier)
-    c.recess(4, 4, 8, 8, 'abcde', fill='b')
-    for y in range(5, 11, 2):
-        c.rect(5, y, 6, 1, 'K').rect(5, y + 1, 6, 1, 'd')
-    for i in range(tier):                                                # Mk pips
-        c.set(3 + i * 3, 13, 'j').set(4 + i * 3, 13, 'i')
+# Alloy Smelter: a bay 3 px deep holding a crucible (a real model part) wrapped in a cyan heating hoop; molten alloy
+# shows on its top and pours from a spout into a mould on the bay floor. Two textures shared by every tier: the
+# chamber (back wall, bay walls in its border) and the parts atlas (SMELTER_PARTS); while working both are animated
+# and full-bright. Top: a feed hopper with a cyan ring round its throat.
+
+SMELTER_HEAT = {
+    'm': '#2A0C08', 'n': '#7A2208', 'o': '#D4500E', 'p': '#FF9426', 'q': '#FFD070', 'y': '#FFF6D8',  # molten
+    'r': '#2E2C30', 's': '#4A474D', 't': '#6E6A70',                                                  # cooled alloy
+}
+SMELTER_BAY = (3, 3, 10, 10)                    # x, y, w, h of the bay on the front (corners stay casing)
+SMELTER_FRAMES, SMELTER_FRAMETIME = 16, 2
+# Parts atlas regions (x, y, w, h); scripts/data/industry_data.py maps the model faces onto them
+SMELTER_PARTS = {
+    'crucible_front': (0, 0, 6, 5), 'crucible_left': (6, 0, 2, 5), 'crucible_right': (8, 0, 2, 5),
+    'crucible_top': (0, 6, 6, 2), 'spout': (10, 0, 1, 1), 'spout_top': (10, 1, 1, 1), 'stream': (12, 0, 1, 5),
+    'mould_front': (0, 9, 4, 1), 'mould_top': (0, 10, 4, 2), 'mould_side': (4, 9, 2, 1),
+}
+HOOP_ROW = 2                                    # crucible row with the heating hoop
+
+
+def smelter_pal(tier=1):
+    return casing.casing_palette(casing.INDUSTRY_TIERS[tier], **SMELTER_HEAT)
+
+
+def smelter_chamber(lit, t=0):
+    """Back wall in the bay area; bay walls in the border: cols 0-2 left, 13-15 right, rows 0-2 floor, 13-15 roof."""
+    x0, y0, w, h = SMELTER_BAY
+    c = Canvas()
+    c.rect(x0, y0, w, h, 'm' if lit else 'a')
+    if lit:                                                               # heat glow behind the crucible mouth
+        for y in range(y0, y0 + h):
+            for x in range(x0, x0 + w):
+                d = math.hypot((x - 6.5) / 1.7, y - 6.0)
+                if d < 3.0:
+                    c.set(x, y, 'o' if d < 1.8 else 'n')
+    else:
+        for x in range(x0 + 1, x0 + w, 3):
+            c.rect(x, y0, 1, h, 'b')
+    for x, d in ((3, 0), (10, 0), (11, 1), (12, 2)):                       # emitters feeding the hoop, pulses flow in
+        c.set(x, 8, ('w' if (t // 2 + d) % 4 == 0 else 'v') if lit else 'u')
+    c.set(3, 7, 'b').set(3, 9, 'b').set(12, 7, 'b').set(12, 9, 'b')
+    if lit:
+        c.rect(0, y0, 3, h, 'm').rect(13, y0, 3, h, 'm').set(2, 7, 'n').set(13, 7, 'n')
+        c.rect(x0, 0, w, 3, 'm').rect(x0 + 1, 2, w - 2, 1, 'n')
+        c.rect(x0, 13, w, 3, 'm')
+    else:
+        c.rect(0, y0, 3, h, 'b').rect(13, y0, 3, h, 'b').rect(0, y0, 1, h, 'c').rect(15, y0, 1, h, 'c')
+        c.rect(x0, 0, w, 3, 'b').rect(x0, 0, w, 1, 'c')
+        c.rect(x0, 13, w, 3, 'a')
     return c
 
 
-def bottom():
+def hoop_spark(t):
+    """Where the hoop's spark is on its way round: ('left', u) / ('front', u) / ('right', u), or None while behind."""
+    path = [('left', 0), ('left', 1)] + [('front', u) for u in range(6)] + [('right', 0), ('right', 1)]
+    k = t * 16 // SMELTER_FRAMES                                          # once round per loop
+    return path[k] if k < len(path) else None
+
+
+def smelter_parts(lit, t=0):
+    """The crucible, spout, stream and mould faces (see SMELTER_PARTS)."""
     c = Canvas()
-    c.plate(0, 0, 16, 16, 'abcde', 40, density=0.25)
-    for x, y in ((0, 0), (13, 0), (0, 13), (13, 13)):
-        c.rect(x, y, 3, 3, 'a').set(x + 1, y + 1, 'k')
+    R = SMELTER_PARTS
+
+    def body(name):
+        x, y, w, h = R[name]
+        face = name.split('_')[1]
+        c.rect(x, y, w, h, 'c').rect(x, y, w, 1, 'e' if face == 'front' else 'd')
+        c.rect(x, y + 1, w, 1, 'd').rect(x, y + h - 1, w, 1, 'b')
+        if face == 'front':
+            c.set(x, y + h - 1, '.').set(x + w - 1, y + h - 1, '.')
+            c.rect(x + w - 1, y + 1, 1, h - 2, 'b').set(x, y + 1, 'e')
+        spark = hoop_spark(t) if lit else None
+        for u in range(w):
+            if not lit:
+                ch = 'u'
+            elif spark and spark[0] == face and spark[1] == u:
+                ch = 'x'
+            elif spark and spark[0] == face and abs(spark[1] - u) == 1:
+                ch = 'w'
+            else:
+                ch = 'v'
+            c.set(x + u, y + HOOP_ROW, ch)
+    for name in ('crucible_front', 'crucible_left', 'crucible_right'):
+        body(name)
+    x, y, w, h = R['crucible_top']
+    if lit:
+        glint = 1 + round(1.5 + 1.5 * math.sin(t / SMELTER_FRAMES * 2 * math.pi))
+        c.rect(x, y, w, h, 'q').rect(x, y + 1, w, 1, 'p').set(x + glint, y, 'y').set(x + 5 - glint, y + 1, 'q')
+    else:
+        c.rect(x, y, w, h, 's').rect(x, y + 1, w, 1, 'r')
+    c.rect(x, y, 1, h, 'e').rect(x + w - 1, y, 1, h, 'd')                # rim ends
+    x, y, _, _ = R['spout']
+    c.set(x, y, 'd')
+    x, y, _, _ = R['spout_top']
+    c.set(x, y, 'p' if lit else 's')
+    x, y, w, h = R['stream']
+    for v in range(h):                                                    # blobs sliding down
+        c.set(x, y + v, 'y' if (v - t) % 4 == 0 else 'q')
+    x, y, w, h = R['mould_front']
+    c.rect(x, y, w, h, 'd')
+    x, y, w, h = R['mould_top']
+    c.rect(x, y, w, h, 'c')
+    c.rect(x + 1, y, w - 2, h, 'p' if lit else 'r')
+    if lit:                                                               # splash where each blob lands
+        c.rect(x + 1, y, w - 2, 1, 'q').set(x + 1, y, 'y' if t % 4 < 2 else 'q')
+    x, y, w, h = R['mould_side']
+    c.rect(x, y, w, h, 'b')
     return c
 
 
 def smelter_front(tier, lit):
-    """Crucible window with molten metal, a pouring spout above, two feed hoppers at the top corners."""
-    c = shell(20 + tier)
-    c.rect(3, 2, 3, 2, 'n').rect(10, 2, 3, 2, 'n').set(3, 2, 'p').set(10, 2, 'p')
-    c.recess(4, 5, 8, 7, 'abcde', fill='K')
-    if lit:
-        c.vgradient(5, 8, 6, 3, 'yYZ')
-    else:
-        c.rect(5, 9, 6, 2, 'Z')
-    c.rect(7, 4, 2, 2, 'm').set(7, 4, 'o')
-    c.rect(4, 12, 8, 1, 'R').hazard(4, 12, 8, 1, 'r', 'R')
+    """The bay with tier metal corners; the bottom right one is the status lamp."""
+    x0, y0, w, h = SMELTER_BAY
+    c = casing.shell(tier)
+    c.rect(x0, y0, w, h, '.')
+    c.set(3, 3, 'i').set(12, 3, 'h').set(3, 12, 'h').set(12, 12, 'L' if lit else 'l')    # tier metal corners
+    return c
+
+
+def smelter_glow():
+    """Front overlay: the status lamp."""
+    c = Canvas()
+    c.set(12, 12, 'L')
+    return c
+
+
+def smelter_top(tier):
+    """Feed hopper: a stepped funnel down to a dark throat with a ring round it."""
+    c = casing.shell(tier)
+    c.recess(4, 4, 8, 8, 'abcde', fill='b')
+    c.recess(5, 5, 6, 6, 'abcde', fill='a')
+    c.ring(7.5, 7.5, 1.6, 2.6, 'u')
+    c.disc(7.5, 7.5, 1.5, 'K')
+    return c
+
+
+def smelter_top_glow(t):
+    """The throat ring lit, a spark running round it."""
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5, y - 7.5)
+            if 1.6 <= d <= 2.6:
+                a = (math.atan2(y - 7.5, x - 7.5) / (2 * math.pi) - t / SMELTER_FRAMES) % 1
+                c.set(x, y, 'x' if a < 0.1 else 'w' if a < 0.3 else 'v')
+    return c
+
+
+# Centrifuge: a drum spinning behind a round porthole. The drum sits 2 px deep on its own element
+# (scripts/data/industry_data.py): separated layers of material in rings round the hub and a glass track where green
+# light chases round while it spins. Chars on top of the casing: 'n o p q r' green glow (deep -> white core),
+# 's t y' material layers unlit (heavy outer -> light inner), 'S T Y' the same layers lit.
+
+CF_HOLE, CF_RIM = 5.0, 6.1                                               # porthole and bezel radius
+CF_TRACK, CF_HEAVY, CF_LIGHT = 3.8, 2.0, 1.4                             # drum rings: track, heavy, light layer
+CF_LAYERS = 2.9                                                          # outer edge of the material, a dark gap to the track
+CF_ARMS, CF_FRAMES, CF_FRAMETIME = 4, 8, 2                               # 4 light arms, one track pixel per frame
+CF_TAIL = 'rqpo'                                                      # an arm from its head back
+
+
+def cf_pal(tier=1):
+    return casing.casing_palette(casing.INDUSTRY_TIERS[tier], n='#123A22', o='#1F7A3A', p='#45D35C', q='#B2FF8A',
+                                 r='#F2FFE8', s='#1A2620', t='#22342A', y='#2E4636', S='#1E5C30', T='#3C9C48',
+                                 Y='#9AEC7A')
+
+
+def cf_dist(x, y):
+    return math.hypot(x - 7.5, y - 7.5)
+
+
+# The track: a one pixel ring of 32 pixels, one per 1/32 turn, in clockwise order
+CF_RING = sorted(((x, y) for y in range(16) for x in range(16) if CF_TRACK <= cf_dist(x, y) < CF_HOLE - 0.1),
+                 key=lambda p: math.atan2(p[1] - 7.5, p[0] - 7.5))
+
+
+def cf_clamps(c):
+    """Tier metal clamps holding the bezel at the four sides."""
+    for x, y, w, h in ((7, 2, 2, 1), (7, 13, 2, 1), (2, 7, 1, 2), (13, 7, 1, 2)):
+        c.rect(x, y, w, h, 'h')
+    c.set(7, 2, 'i').set(2, 7, 'i')
+
+
+def centrifuge_front(tier, lit):
+    """Casing with a round porthole (transparent: the drum shows through) in a bevelled bezel held by tier clamps."""
+    c = casing.shell(tier)
+    for y in range(16):
+        for x in range(16):
+            d = cf_dist(x, y)
+            lean = (x - 7.5) + (y - 7.5)                                 # < 0 towards the light (top-left)
+            if d < CF_HOLE:
+                c.set(x, y, '.')
+            elif d < CF_RIM:
+                if d < CF_HOLE + 0.55:                                   # inner lip: shadowed at the top-left
+                    c.set(x, y, 'a' if lean < -1 else 'd' if lean > 1 else 'b')
+                else:
+                    c.set(x, y, 'e' if lean < -2 else 'b' if lean > 2 else 'd')
+    cf_clamps(c)
     c.set(12, 3, 'L' if lit else 'l')
     return c
 
 
-def smelter_glow(frame):
+def centrifuge_drum():
+    """The drum face behind the porthole: hub, light and heavy layer, glass track, dark bore round it."""
     c = Canvas()
-    for x in range(5, 11):
-        h = 2 + int(1.5 + 1.5 * math.sin(frame * 1.3 + x * 1.7))
-        for i in range(h):
-            c.set(x, 10 - i, 'z' if i == 0 and (x + frame) % 3 == 0 else 'Y' if i < 2 else 'y')
-    c.set(7 + frame % 2, 6 + frame % 3, 'Y')                             # dripping metal
-    c.set(12, 3, 'L')
+    for y in range(16):
+        for x in range(16):
+            d = cf_dist(x, y)
+            if d < CF_LIGHT:
+                c.set(x, y, 'e' if (x, y) == (7, 7) else 'd')
+            elif d < CF_HEAVY:
+                c.set(x, y, 'y')
+            elif d < CF_LAYERS:
+                c.set(x, y, 't')
+            elif d < CF_TRACK:
+                c.set(x, y, 'K')
+            elif d < CF_HOLE - 0.1:
+                c.set(x, y, 'u')
+            else:
+                c.set(x, y, 'K' if d < CF_RIM else 'a')
     return c
 
 
-def centrifuge_front(tier, lit):
-    """Round porthole with a three-arm rotor inside, a gauge strip below."""
-    c = shell(30 + tier)
-    c.disc(7.5, 7.0, 5.0, 'm')
-    c.disc(7.5, 7.0, 4.2, 'K')
-    c.ring(7.5, 7.0, 4.2, 5.0, 'o')
-    for a in range(3):
-        ang = a * 2 * math.pi / 3
-        c.line(7, 7, round(7.5 + 3.3 * math.cos(ang)), round(7 + 3.3 * math.sin(ang)), 'c')
-    c.disc(7.5, 7.0, 1.1, 'e')
-    c.rect(4, 13, 8, 1, 'K')
-    if lit:
-        c.rect(4, 13, 5, 1, 'y')
-    c.set(13, 3, 'L' if lit else 'l')
-    return c
-
-
-def centrifuge_glow(frame):
+def centrifuge_glow(frame, layers=True):
+    """Four arms of green light chasing round the track one pixel per frame, each a bright head with a fading tail
+    (reads as a blur), and the glowing layers of material: heavy outside, light inside."""
     c = Canvas()
-    for a in range(3):
-        ang = a * 2 * math.pi / 3 + frame * math.pi / 6
-        for r in (1.6, 2.4, 3.2):
-            c.set(round(7.5 + r * math.cos(ang)), round(7.0 + r * math.sin(ang)), 'Y' if r < 3 else 'y')
-    c.set(7, 7, 'z')
-    for i in range(1 + frame % 6):
-        c.set(4 + i, 13, 'y')
-    c.set(13, 3, 'L')
+    if layers:
+        for y in range(16):
+            for x in range(16):
+                d = cf_dist(x, y)
+                if CF_LIGHT <= d < CF_LAYERS:
+                    c.set(x, y, 'Y' if d < CF_HEAVY else 'S')
+    arm = len(CF_RING) // CF_ARMS
+    for i, (x, y) in enumerate(CF_RING):
+        behind = (frame - i) % arm
+        c.set(x, y, CF_TAIL[behind] if behind < len(CF_TAIL) else 'n')
     return c
+
+
+def centrifuge_top(tier):
+    """Round lid over the drum: a bevelled rim, the glass track (lit by centrifuge_top_glow) and a vented hub cap."""
+    c = casing.shell(tier)
+    for y in range(16):
+        for x in range(16):
+            d = cf_dist(x, y)
+            lean = (x - 7.5) + (y - 7.5)
+            if d < CF_LIGHT + 0.9:
+                c.set(x, y, 'e' if lean < -1 else 'b' if lean > 1 else 'd')
+            elif d < CF_TRACK:
+                c.set(x, y, 'a')
+            elif d < CF_HOLE - 0.1:
+                c.set(x, y, 'u')
+            elif d < CF_RIM:
+                c.set(x, y, 'e' if lean < -2 else 'b' if lean > 2 else 'd')
+    cf_clamps(c)
+    return c
+
+
+def centrifuge_top_glow(frame):
+    """The lid's track with the same chasing arms as the porthole."""
+    return centrifuge_glow(frame, layers=False)
+
+
+# Assembler: a robot work cell. The front has an open bay 2 px deep (walls and back on their own elements, see
+# scripts/data/industry_data.py). A gantry carriage runs along the back, lowers its torch onto the part, welds a seam
+# from left to right with a cyan-white spark, lifts and travels back while the seam cools. Chars on top of the
+# casing: 'p q' part steel (body, lit edge), 'y s' a cooling seam (warm cyan, cool cyan); the spark uses 'v w x'.
+
+AS_FRAMES, AS_FRAMETIME = 32, 2                                          # one weld cycle: 64 ticks
+AS_LEFT, AS_RIGHT, AS_PARK = 5, 10, 7                                    # torch x: seam ends, parked while idle
+AS_PHASE = 8                                                             # the loop starts mid-weld
+AS_SEAM = 'xxwwvvvvyyyyssssss'                                           # a seam pixel cooling, one char per frame
+
+
+def as_pal(tier=1):
+    return casing.casing_palette(casing.INDUSTRY_TIERS[tier], p='#56626C', q='#9AA8B2', y='#2C8FA2', s='#1C4C58')
+
+
+def as_torch(frame):
+    """(torch x, head row, welding) of the weld cycle: lower, weld left to right, lift, ease back, rest."""
+    if frame < 2:
+        return AS_LEFT, 6 + frame, False
+    if frame < 14:
+        return AS_LEFT + (frame - 2) // 2, 8, True
+    if frame < 16:
+        return AS_RIGHT, 7 - (frame - 14), False
+    if frame < 28:
+        t = (frame - 16) / 11
+        t = t * t * (3 - 2 * t)
+        return round(AS_RIGHT - (AS_RIGHT - AS_LEFT) * t), 6, False
+    return AS_LEFT, 6, False
 
 
 def assembler_front(tier, lit):
-    """Work cell window: a gantry rail, a robot arm with a welding tip over a part on the bed."""
-    c = shell(40 + tier)
-    c.recess(3, 3, 10, 9, 'abcde', fill='K')
-    c.rect(4, 4, 8, 1, 'n').set(4, 4, 'p')                               # gantry
-    c.rect(8, 5, 1, 3, 'm').rect(7, 7, 3, 1, 'o').set(8, 8, 'c')         # arm and head
-    c.rect(4, 10, 8, 1, 'c').rect(6, 9, 4, 1, 'h')                       # bed and part
-    c.hazard(3, 12, 10, 1, 'r', 'R')
-    c.set(13, 13, 'L' if lit else 'l')
+    """Casing with the open work cell bay (transparent) above a lip with the status lamp."""
+    c = casing.shell(tier)
+    c.rect(3, 3, 10, 9, '.')
+    c.rect(3, 12, 10, 1, 'd')
+    c.set(12, 12, 'L' if lit else 'l')
     return c
 
 
-def assembler_glow(frame):
+def assembler_bay(frame=None):
+    """Back wall of the bay: the gantry rail, the carriage, arm and torch, the part on its bed. No frame: parked."""
     c = Canvas()
-    x = 6 + (frame % 4)
-    c.set(x, 8, 'z')
-    for dx, dy in ((-1, 0), (1, 0), (0, -1)):
-        if (frame + dx) % 2 == 0:
-            c.set(x + dx, 8 + dy, 'Y')
-    c.set(x - 1 + frame % 3, 9, 'y')
-    c.set(13, 13, 'L')
+    c.rect(0, 0, 16, 16, 'c')
+    c.rect(3, 3, 10, 1, 'a')
+    for x in range(4, 12, 3):                                            # back wall panel seams
+        c.rect(x, 6, 1, 4, 'b')
+    c.rect(3, 4, 10, 1, 'd').rect(3, 5, 10, 1, 'a')                      # gantry rail
+    c.rect(3, 11, 10, 1, 'a')                                            # bed
+    c.rect(AS_LEFT, 10, AS_RIGHT - AS_LEFT + 1, 1, 'q')                  # the part
+    c.set(AS_LEFT - 1, 10, 'p').set(AS_RIGHT + 1, 10, 'p')
+    x, head, _ = as_torch(frame) if frame is not None else (AS_PARK, 6, False)
+    c.rect(x - 1, 4, 3, 2, 'q').set(x + 1, 5, 'p').set(x - 1, 4, 'e')   # carriage on the rail
+    c.rect(x, 6, 1, head - 6, 'e')                                       # telescoping arm
+    c.rect(x - 1, head, 3, 1, 'q').set(x + 1, head, 'p')                 # torch head
+    c.set(x, head + 1, 'K')                                              # nozzle
     return c
 
 
-def top(machine):
-    c = shell(50 + len(machine))
-    if machine == 'alloy_smelter':                                       # chimney grille
-        c.disc(7.5, 7.5, 4.6, 'a')
-        c.grille(4, 4, 8, 8, 'K', 'd')
-    elif machine == 'centrifuge':                                        # round lid, hazard ring
-        for y in range(16):
-            for x in range(16):
-                d = math.hypot(x - 7.5, y - 7.5)
-                if 4.4 <= d <= 5.6:
-                    c.set(x, y, 'r' if int((math.atan2(y - 7.5, x - 7.5) + 3.2) * 2.6) % 2 else 'R')
-        c.disc(7.5, 7.5, 4.0, 'c').ring(7.5, 7.5, 2.5, 3.2, 'b').disc(7.5, 7.5, 1.2, 'e')
-    else:                                                                # parts hatch with a grid
-        c.recess(3, 3, 10, 10, 'abcde', fill='b')
-        for i in range(4, 12, 3):
-            c.rect(i, 4, 1, 8, 'a').rect(4, i, 8, 1, 'a')
+def assembler_bay_glow(frame):
+    """The spark at the nozzle flaring as it reaches each pixel, the seam cooling behind it, the carriage light."""
+    c = Canvas()
+    x, head, welding = as_torch(frame)
+    for sx in range(AS_LEFT, AS_RIGHT + 1):                              # frame each seam pixel was welded
+        age = (frame - (2 + (sx - AS_LEFT) * 2)) % AS_FRAMES
+        if age < len(AS_SEAM):
+            c.set(sx, 10, AS_SEAM[age])
+    if welding:
+        c.set(x, head + 1, 'x').set(x, 10, 'x')
+        flare = 'w' if frame % 2 == 0 else 'v'
+        c.set(x - 1, head + 1, flare).set(x + 1, head + 1, flare)
+    c.set(x, 4, 'w' if welding else 'v')
+    return c
+
+
+def assembler_front_glow():
+    """The status lamp, lit full-bright."""
+    c = Canvas()
+    c.set(12, 12, 'L')
+    return c
+
+
+def assembler_bay_wall():
+    """Bay walls and floor: rows 0-8 the side wall panel, rows 9-15 the floor (lit front edge first)."""
+    c = Canvas()
+    c.rect(0, 0, 16, 9, 'b')
+    c.rect(0, 0, 16, 1, 'a').rect(0, 4, 16, 1, 'a')
+    c.rect(0, 9, 16, 7, 'a')
+    c.rect(0, 9, 16, 1, 'c')
+    return c
+
+
+def assembler_top(tier):
+    """Parts hatch: two doors over the cell, a cyan seam between them, feed lights at the corners."""
+    c = casing.shell(tier)
+    c.recess(4, 4, 8, 8, 'abcde', fill='c')
+    c.rect(7, 5, 2, 6, 'u')
+    c.rect(5, 6, 1, 4, 'b').rect(10, 6, 1, 4, 'b')
+    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
+        c.set(x, y, 'u')
+    return c
+
+
+def assembler_top_glow():
+    c = Canvas()
+    c.rect(7, 5, 2, 6, 'v').rect(7, 7, 2, 2, 'w')
+    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
+        c.set(x, y, 'w')
     return c
 
 
@@ -581,20 +840,64 @@ def rtg_top_glow():
     return c
 
 
+def write_smelter():
+    frames = range(SMELTER_FRAMES)
+    for tier in (1, 2, 3, 4):
+        p = smelter_pal(tier)
+        write_block(f'alloy_smelter_mk{tier}_front', smelter_front(tier, False).rows(), p)
+        write_block(f'alloy_smelter_mk{tier}_front_on', smelter_front(tier, True).rows(), p)
+        write_block(f'alloy_smelter_mk{tier}_top', smelter_top(tier).rows(), p)
+    p = smelter_pal()
+    write_block('alloy_smelter_chamber', smelter_chamber(False).rows(), p)
+    write_block('alloy_smelter_parts', smelter_parts(False).rows(), p)
+    write_anim('block', 'alloy_smelter_parts_on', [smelter_parts(True, t) for t in frames], p,
+               frametime=SMELTER_FRAMETIME, interpolate=True)
+    write_anim('block', 'alloy_smelter_chamber_on', [smelter_chamber(True, t) for t in frames], p,
+               frametime=SMELTER_FRAMETIME, interpolate=True)
+    write_still('block', 'alloy_smelter_front_glow', smelter_glow(), p)
+    write_anim('block', 'alloy_smelter_top_glow', [smelter_top_glow(t) for t in frames], p,
+               frametime=SMELTER_FRAMETIME, interpolate=True)
+
+
+def write_centrifuge():
+    for tier in (1, 2, 3, 4):
+        p = cf_pal(tier)
+        write_block(f'centrifuge_mk{tier}_front', centrifuge_front(tier, False).rows(), p)
+        write_block(f'centrifuge_mk{tier}_front_on', centrifuge_front(tier, True).rows(), p)
+        write_block(f'centrifuge_mk{tier}_top', centrifuge_top(tier).rows(), p)
+    p = cf_pal()
+    write_block('centrifuge_drum', centrifuge_drum().rows(), p)
+    write_anim('block', 'centrifuge_front_glow', [centrifuge_glow(i) for i in range(CF_FRAMES)], p,
+               frametime=CF_FRAMETIME, interpolate=True)
+    write_anim('block', 'centrifuge_top_glow', [centrifuge_top_glow(i) for i in range(CF_FRAMES)], p,
+               frametime=CF_FRAMETIME, interpolate=True)
+
+
+def write_assembler():
+    for tier in (1, 2, 3, 4):
+        p = as_pal(tier)
+        write_block(f'assembler_mk{tier}_front', assembler_front(tier, False).rows(), p)
+        write_block(f'assembler_mk{tier}_front_on', assembler_front(tier, True).rows(), p)
+        write_block(f'assembler_mk{tier}_top', assembler_top(tier).rows(), p)
+    p = as_pal()
+    write_block('assembler_bay', assembler_bay().rows(), p)
+    write_block('assembler_bay_wall', assembler_bay_wall().rows(), p)
+    cycle = [(i + AS_PHASE) % AS_FRAMES for i in range(AS_FRAMES)]
+    write_anim('block', 'assembler_bay_on', [assembler_bay(i) for i in cycle], p, frametime=AS_FRAMETIME)
+    write_anim('block', 'assembler_bay_glow', [assembler_bay_glow(i) for i in cycle], p,
+               frametime=AS_FRAMETIME)
+    write_block('assembler_front_glow', assembler_front_glow().rows(), p)
+    write_block('assembler_top_glow', assembler_top_glow().rows(), p)
+
+
 def blocks_machines():
     for tier in (1, 2, 3, 4):
-        write_block(f'industry_side_mk{tier}', side(tier).rows(), mpal(tier))
-    write_block('industry_bottom', bottom().rows(), mpal())
-    fronts = {'alloy_smelter': smelter_front, 'centrifuge': centrifuge_front, 'assembler': assembler_front}
-    glows = {'alloy_smelter': (smelter_glow, 8, 3), 'centrifuge': (centrifuge_glow, 12, 1), 'assembler': (assembler_glow, 8, 2)}
-    for machine, front in fronts.items():
-        g = MACHINE_GLOW[machine]
-        for tier in (1, 2, 3, 4):
-            write_block(f'{machine}_mk{tier}_front', front(tier, False).rows(), mpal(tier, g))
-            write_block(f'{machine}_mk{tier}_front_on', front(tier, True).rows(), mpal(tier, g))
-        fn, frames, ft = glows[machine]
-        write_anim('block', f'{machine}_front_glow', [fn(i) for i in range(frames)], mpal(1, g), frametime=ft)
-        write_block(f'{machine}_top', top(machine).rows(), mpal(2, g))
+        write_block(f'industry_side_mk{tier}', casing.side(tier).rows(), casing.casing_palette(casing.INDUSTRY_TIERS[tier]))
+    write_block('industry_bottom', casing.bottom().rows(), casing.casing_palette(casing.INDUSTRY_TIERS[1]))
+    casing.write_side_glow()
+    write_smelter()
+    write_centrifuge()
+    write_assembler()
     p = mpal(2, 'green')
     write_block('rtg_front', rtg_front().rows(), p)
     write_block('rtg_front_glow', rtg_front_glow().rows(), p)
