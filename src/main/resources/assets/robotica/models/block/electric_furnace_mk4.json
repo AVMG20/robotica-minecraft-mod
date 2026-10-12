@@ -2,13 +2,14 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "north": "robotica:block/electric_furnace_mk4_front",
-    "up": "robotica:block/electric_furnace_mk4_top",
     "down": "robotica:block/processing_machine_bottom",
     "south": "robotica:block/processing_mk4_side",
     "west": "robotica:block/processing_mk4_side",
     "east": "robotica:block/processing_mk4_side",
-    "particle": "robotica:block/processing_mk4_side"
+    "north": "robotica:block/electric_furnace_mk4_front",
+    "up": "robotica:block/electric_furnace_mk4_top",
+    "particle": "robotica:block/processing_mk4_side",
+    "chamber": "robotica:block/electric_furnace_chamber"
   },
   "elements": [
     {
@@ -46,6 +47,180 @@
         "east": {
           "texture": "#east",
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        2
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chamber",
+          "uv": [
+            3,
+            3,
+            13,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        0
+      ],
+      "to": [
+        3,
+        13,
+        2
+      ],
+      "faces": {
+        "east": {
+          "texture": "#chamber",
+          "uv": [
+            14,
+            3,
+            16,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        5,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "west": {
+          "texture": "#chamber",
+          "uv": [
+            0,
+            3,
+            2,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        0
+      ],
+      "to": [
+        13,
+        5,
+        2
+      ],
+      "faces": {
+        "up": {
+          "texture": "#chamber",
+          "uv": [
+            13,
+            0,
+            3,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        13,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "down": {
+          "texture": "#chamber",
+          "uv": [
+            13,
+            14,
+            3,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        6,
+        0.5
+      ],
+      "to": [
+        11,
+        8,
+        1.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chamber",
+          "uv": [
+            3,
+            11,
+            9,
+            13
+          ]
+        },
+        "up": {
+          "texture": "#chamber",
+          "uv": [
+            9,
+            13,
+            3,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#chamber",
+          "uv": [
+            10,
+            11,
+            11,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#chamber",
+          "uv": [
+            10,
+            11,
+            11,
+            13
+          ]
+        },
+        "down": {
+          "texture": "#chamber",
+          "uv": [
+            3,
+            12,
+            9,
+            13
+          ]
         }
       }
     }

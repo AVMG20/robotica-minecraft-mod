@@ -3,12 +3,14 @@
   "render_type": "minecraft:cutout",
   "textures": {
     "down": "robotica:block/industry_bottom",
-    "up": "robotica:block/centrifuge_top",
     "south": "robotica:block/industry_side_mk2",
     "west": "robotica:block/industry_side_mk2",
     "east": "robotica:block/industry_side_mk2",
     "north": "robotica:block/centrifuge_mk2_front",
-    "particle": "robotica:block/industry_side_mk2"
+    "up": "robotica:block/centrifuge_mk2_top",
+    "particle": "robotica:block/industry_side_mk2",
+    "drum": "robotica:block/centrifuge_drum",
+    "drum_glow": "robotica:block/centrifuge_front_glow"
   },
   "elements": [
     {
@@ -46,6 +48,23 @@
         "east": {
           "texture": "#east",
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        2
+      ],
+      "to": [
+        16,
+        16,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#drum"
         }
       }
     }

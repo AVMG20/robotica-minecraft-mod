@@ -12,6 +12,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from pixelart import MATERIALS, Canvas, grain, hash01, material, write_anim, write_block, write_item, write_still  # noqa: E402
+import machine_casing as casing  # noqa: E402
 
 CU, ST, BR, AU, WD, SO = '01234', 'abcde', '56789', 'ABCDE', 'uvwWX', 'mnopP'
 MG, NV, SL = '!#$%&', '()[]{', '<>?;:'                                                 # magma, null, slate (solar Mk3 / Mk4)
@@ -154,48 +155,138 @@ def generator_top(lit):
 
 
 # ---------------------------------------------------------------- metal press
+# The processing machines' casing (scripts/textures/machine_casing.py) with a press bay cut 2 px deep into the front
+# between two cyan hydraulic columns (model: power_models.press_model). The bay texture holds the back wall in
+# 4..11 x 3..12 and the bay's ceiling (rows 0-1), floor (rows 14-15) and side walls (cols 0-1, 14-15) around it.
+# Working, one 32 tick stroke: an ingot slides onto the die, the ram drops on it, flattens it to a plate in a cyan
+# flash, holds, rises slowly and the plate slides out. Bay, glow, columns and top share the loop.
 
-def press_front(lit):
-    c = frame(6)
-    c.rect(3, 2, 1, 12, '7').rect(12, 2, 1, 12, '6')                     # hydraulic rods
-    c.set(3, 2, '9').set(12, 2, '8')
-    c.plate(4, 2, 8, 5, ST, 11)                                          # ram
-    c.rect(6, 3, 4, 1, 'a').rect(6, 4, 4, 1, 'd')
-    c.hazard(4, 6, 8, 1, 'h', 'H')
-    c.rect(4, 7, 8, 2, 'K')
-    c.rect(5, 8, 6, 1, '2').set(5, 8, '4').set(10, 8, '1')              # copper sheet in the die
-    c.hazard(4, 9, 8, 1, 'H', 'h')
-    c.plate(4, 10, 8, 3, ST, 12)                                         # anvil
-    c.rect(6, 11, 4, 1, 'a')
-    if lit:
-        c.rect(5, 7, 6, 1, 'Z')
-    led(c, 13, 6, lit, 'G')
+PRESS_TICKS = 32
+PRESS_PAL = casing.casing_palette(MATERIALS['copper'], **{
+    '6': '#8E99A2', '7': '#D6DEE3',                                       # ram rod
+})
+RAM = [0] * 8 + [1, 1, 2, 3] + [3] * 6 + [2, 2, 2, 1, 1, 1, 1] + [0] * 7    # ram drop (px) per tick
+IMPACT = RAM.index(3)
+
+
+def press_slide(t):
+    """Conveyor offset during the dwell: the plate leaves to the right, the next ingot comes in from the left."""
+    return min(t, 8)
+
+
+def press_bay(t, lit):
+    """Back wall and bay walls at tick t of the stroke (idle: ram up, an ingot on the die)."""
+    c = Canvas()
+    c.rect(4, 3, 8, 10, 'k')
+    c.rect(4, 3, 8, 1, 'b').rect(5, 3, 6, 1, 'c').rect(6, 4, 4, 1, 'a')  # crown and rod gland
+    c.rect(4, 12, 8, 1, 'd').set(4, 12, 'e')                             # die bed
+    p = RAM[t] if lit else 0
+    if p:
+        c.rect(7, 5, 2, p, '6').rect(7, 5, 1, p, '7')                    # rod
+    y = 5 + p                                                             # ram: bevelled head, guide shoes, die face
+    c.rect(4, y, 8, 1, 'e').rect(4, y + 1, 8, 1, 'd').rect(5, y + 2, 6, 1, 'u')
+    c.rect(4, y, 1, 3, 'h').rect(11, y, 1, 3, 'g').set(4, y, 'i').set(11, y + 2, 'f').set(4, y + 2, 'g')
+    s = press_slide(t) if lit else 8
+    if lit and IMPACT <= t:
+        c.rect(4, 11, 8, 1, 'h').set(4, 11, 'i').set(11, 11, 'g')         # flattened plate
+    else:
+        if lit and s < 8:
+            c.rect(4 + s, 11, 8 - s, 1, 'h')                              # last plate leaving
+        for x in range(s - 2, s + 2):                                     # ingot coming in
+            if 4 <= x < 12:
+                c.set(x, 10, 'i' if x < s + 1 else 'h').set(x, 11, 'h' if x < s + 1 else 'g')
+    c.rect(3, 0, 10, 2, 'a').rect(3, 1, 10, 1, 'b')                      # ceiling (row 0 at the back)
+    c.rect(3, 14, 10, 2, 'c').rect(3, 14, 10, 1, 'd')                    # floor: the die bed's front (row 14)
+    c.rect(0, 3, 2, 10, 'b').rect(0, 3, 1, 10, 'c')                      # side walls (col 0 and 15 at the front)
+    c.rect(14, 3, 2, 10, 'a').rect(15, 3, 1, 10, 'b')
     return c
 
 
-def press_glow(frame_no):
+def press_glow(t):
+    """Die face charging on the drop, the impact flash spreading along the die and fading."""
     c = Canvas()
-    c.rect(4, 7, 8, 1, 'y').rect(5, 7, 6, 1, 'Y')
-    c.set(4 + frame_no % 8, 7, 'z')
-    c.set(13, 6, 'G')
+    y = 5 + RAM[t] + 2
+    d = t - IMPACT
+    if 8 <= t < IMPACT:
+        c.rect(5, y, 6, 1, 'v').rect(6, y, 4, 1, 'w')
+    elif 0 <= d < 6:
+        c.rect(5, y, 6, 1, 'xxwwvv'[d])
+        for x in range(4, 12):
+            if abs(x - 7.5) <= 1.5 + d * 1.5:
+                c.set(x, 11, 'x' if d < 2 else 'w' if d < 4 else 'v')
+        if d < 4:
+            c.set(4, 10 - d, 'w').set(11, 10 - d, 'w')                    # sparks up the guides
+        c.rect(3, 14, 10, 1, 'xwwvv.'[d])                                 # floor lit by the flash
+        if d < 3:
+            c.rect(5, 15, 6, 1, 'v')
+    return c
+
+
+def press_front(lit):
+    """Casing face with the press bay between two hydraulic columns, and the status lamp."""
+    c = casing.shell(1)
+    c.rect(4, 3, 8, 10, '.')
+    for x in (3, 12):
+        c.rect(x, 3, 1, 10, 'v' if lit else 'u').set(x, 3, 'h').set(x, 12, 'g')
+    c.rect(7, 1, 2, 1, 'L' if lit else 'l')
+    return c
+
+
+def press_front_glow(t):
+    """Lamp, and the columns: pressure rushes down them on the drop, flashes on impact, drains up on the return."""
+    c = Canvas().rect(7, 1, 2, 1, 'L')
+    head = None
+    if 8 <= t < IMPACT:
+        head = 4 + (t - 8) * 3                                            # fast pulse down
+    elif IMPACT + 6 <= t < IMPACT + 13:
+        head = 11 - (t - IMPACT - 6)                                      # slow pulse up with the return
+    d = t - IMPACT
+    for x in (3, 12):
+        for y in range(4, 12):
+            ch = 'v'
+            if 0 <= d < 3:
+                ch = 'x' if d == 0 else 'w'
+            elif head is not None and abs(y - head) <= 1:
+                ch = 'x' if y == head else 'w'
+            c.set(x, y, ch)
     return c
 
 
 def press_top():
-    """Hydraulic cylinder head: a brass piston cap ringed with hazard stripes."""
-    c = frame(7, panel=ST)
-    for y in range(3, 13):
-        for x in range(3, 13):
-            d = math.hypot(x - 7.5, y - 7.5)
-            if 4.0 <= d <= 5.2:
-                c.set(x, y, 'h' if int((math.atan2(y - 7.5, x - 7.5) + 3.2) * 2.6) % 2 else 'H')
-    c.disc(7.5, 7.5, 3.6, '7')
-    c.ring(7.5, 7.5, 2.4, 3.6, '6')
-    for x, y in ((5, 5), (6, 4), (4, 6), (5, 4), (4, 5)):
-        c.set(x, y, '8')
-    c.set(5, 5, '9')
-    c.rect(6, 6, 4, 4, 'b').bevel(6, 6, 4, 4, 'd', 'a').set(7, 7, 'e')
+    """Hydraulic cylinder head: a round graphite cap in a copper ring around a cyan pressure core."""
+    c = casing.shell(1)
+    c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
+    c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 4.3,
+            lambda x, y: 'i' if x + y < 12 else 'h' if x + y < 17 else 'g')     # copper ring
+    c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 3.2,
+            lambda x, y: 'd' if x + y < 13 else 'c')                             # cap
+    c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 2.0, lambda x, y: 'a')  # core socket
+    c.rect(7, 7, 2, 2, 'u')
+    casing.tier_notches(c, 1)
     return c
+
+
+def press_top_glow(t):
+    """The pressure core flares on the drop and the impact."""
+    d = t - IMPACT
+    c = Canvas()
+    c.rect(7, 7, 2, 2, 'x' if 0 <= d < 3 else 'w' if 8 <= t < IMPACT or 3 <= d < 6 else 'v')
+    return c
+
+
+def write_press():
+    def anim(name, fn):
+        """The loop starts just after the impact, so a still (item, screenshot) shows the press at work."""
+        frames = [fn((t + IMPACT + 1) % PRESS_TICKS) for t in range(PRESS_TICKS)]
+        write_anim('block', name, frames, PRESS_PAL, frametime=1)
+    write_block('metal_press_front', press_front(False).rows(), PRESS_PAL)
+    write_block('metal_press_front_on', press_front(True).rows(), PRESS_PAL)
+    write_block('metal_press_bay', press_bay(0, False).rows(), PRESS_PAL)
+    write_block('metal_press_top', press_top().rows(), PRESS_PAL)
+    anim('metal_press_front_glow', press_front_glow)
+    anim('metal_press_bay_on', lambda t: press_bay(t, True))
+    anim('metal_press_bay_glow', press_glow)
+    anim('metal_press_top_glow', press_top_glow)
 
 
 # ---------------------------------------------------------------- charger
@@ -652,10 +743,10 @@ def main():
     write_block('combustion_generator_top', generator_top(False).rows(), P)
     write_block('combustion_generator_top_on', generator_top(True).rows(), P)
 
-    write_block('metal_press_front', press_front(False).rows(), P)
-    write_block('metal_press_front_on', press_front(True).rows(), P)
-    write_anim('block', 'metal_press_front_glow', [press_glow(i) for i in range(8)], P, frametime=2)
-    write_block('metal_press_top', press_top().rows(), P)
+    write_press()
+    write_block('metal_press_side', casing.side(1).rows(), casing.casing_palette(MATERIALS['copper']))
+    write_block('metal_press_bottom', casing.bottom().rows(), casing.casing_palette(MATERIALS['copper']))
+    casing.write_side_glow()
 
     write_block('charger_front', charger_front(False).rows(), P)
     write_block('charger_front_on', charger_front(True).rows(), P)

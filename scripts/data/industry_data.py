@@ -12,6 +12,10 @@ Recipe families (file name prefix):
 """
 import json
 import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from machine_models import machine_model  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 RES = ROOT / 'src/main/resources'
@@ -332,6 +336,73 @@ def loot_ore(name, drop):
         'random_sequence': f'robotica:blocks/{name}'})
 
 
+# The processing machines: the shared casing (scripts/data/machine_models.py) with each machine's own front and top.
+
+def machine_casing(tier):
+    side = f'industry_side_mk{tier}'
+    return {'down': 'industry_bottom', 'south': side, 'west': side, 'east': side}
+
+
+def smelter_model(tier, lit):
+    """The front opens into a bay 3 px deep (SMELTER_BAY in scripts/textures/industry.py: x 3..12, y 3..12 of the front
+    texture) with the chamber texture on its walls. In it a crucible floats over the bay floor, a spout pours (while
+    working) into a mould; their faces come from the parts atlas (SMELTER_PARTS there). Full-bright while working."""
+    name = f'alloy_smelter_mk{tier}'
+    faces = dict(machine_casing(tier), north=f'{name}_front' + ('_on' if lit else ''), up=f'{name}_top')
+    x0, x1, y0, y1, z = 3, 13, 3, 13, 3                                   # bay in model space
+
+    def wall(d, uv):
+        return {'from': [x0 if d != 'west' else x1, y0 if d != 'down' else y1, 0 if d != 'north' else z],
+                'to': [x1 if d != 'east' else x0, y1 if d != 'up' else y0, z],
+                'faces': {d: {'texture': '#chamber', 'uv': uv}}, 'glow': lit}
+
+    def part(a, b, uvs):
+        return {'from': a, 'to': b, 'faces': {d: {'texture': '#parts', 'uv': uv} for d, uv in uvs.items()}, 'glow': lit}
+    els = [wall('north', [3, 3, 13, 13]), wall('east', [13, 3, 16, 13]), wall('west', [0, 3, 3, 13]),
+           wall('up', [13, 0, 3, 3]), wall('down', [13, 13, 3, 16]),
+           part([6, 5, 0.5], [12, 10, 2.5], {'north': [0, 0, 6, 5], 'up': [6, 6, 0, 8], 'east': [6, 0, 8, 5],
+                                              'west': [8, 0, 10, 5], 'down': [0, 3, 6, 4]}),
+           part([5, 9, 1], [6, 10, 2], {'north': [10, 0, 11, 1], 'up': [10, 1, 11, 2], 'west': [10, 0, 11, 1],
+                                        'down': [10, 0, 11, 1]}),
+           part([3, 3, 0.5], [7, 4, 2.5], {'north': [0, 9, 4, 10], 'up': [4, 10, 0, 12], 'east': [4, 9, 6, 10],
+                                            'west': [4, 9, 6, 10]})]
+    if lit:                                                               # the pour
+        els.append(part([5, 4, 1], [6, 9, 2], {d: [12, 0, 13, 5] for d in ('north', 'east', 'west')}))
+    glow = {'north': 'alloy_smelter_front_glow', 'up': 'alloy_smelter_top_glow'} if lit else None
+    suffix = '_on' if lit else ''
+    return machine_model(faces, glow, els, {'chamber': 'alloy_smelter_chamber' + suffix,
+                                            'parts': 'alloy_smelter_parts' + suffix}, lit=lit)
+
+
+def centrifuge_model(tier, lit):
+    """The drum sits 2 px behind the round porthole of the front, its spinning light on a full-bright layer."""
+    faces = dict(machine_casing(tier), north=f'centrifuge_mk{tier}_front' + ('_on' if lit else ''), up=f'centrifuge_mk{tier}_top')
+    drum = [{'from': [0, 0, 2], 'to': [16, 16, 2], 'faces': {'north': {'texture': '#drum'}}}]
+    if lit:
+        drum.append({'from': [0, 0, 2], 'to': [16, 16, 2], 'glow': True, 'faces': {'north': {'texture': '#drum_glow'}}})
+    textures = {'drum': 'centrifuge_drum', 'drum_glow': 'centrifuge_front_glow'}
+    return machine_model(faces, {'up': 'centrifuge_top_glow'} if lit else None, drum, textures, lit=lit)
+
+
+def assembler_model(tier, lit):
+    """The front's work cell is an open bay 2 px deep: back wall with the gantry (animated while working), floor,
+    side walls and ceiling; the weld spark on a full-bright layer over the back."""
+    faces = dict(machine_casing(tier), north=f'assembler_mk{tier}_front' + ('_on' if lit else ''), up=f'assembler_mk{tier}_top')
+    bay = [{'from': [3, 4, 2], 'to': [13, 13, 2], 'faces': {'north': {'texture': '#bay'}}},
+           {'from': [3, 4, 0], 'to': [13, 4, 2], 'faces': {'up': {'uv': [3, 9, 13, 11], 'texture': '#wall'}}},
+           {'from': [3, 13, 0], 'to': [13, 13, 2], 'faces': {'down': {'uv': [3, 0, 13, 2], 'texture': '#wall'}}},
+           {'from': [3, 4, 0], 'to': [3, 13, 2], 'faces': {'east': {'uv': [0, 0, 2, 9], 'texture': '#wall'}}},
+           {'from': [13, 4, 0], 'to': [13, 13, 2], 'faces': {'west': {'uv': [14, 0, 16, 9], 'texture': '#wall'}}}]
+    if lit:
+        bay.append({'from': [3, 4, 2], 'to': [13, 13, 2], 'glow': True, 'faces': {'north': {'texture': '#bay_glow'}}})
+    textures = {'bay': 'assembler_bay' + ('_on' if lit else ''), 'wall': 'assembler_bay_wall', 'bay_glow': 'assembler_bay_glow'}
+    glow = {'north': 'assembler_front_glow', 'up': 'assembler_top_glow'} if lit else None
+    return machine_model(faces, glow, bay, textures, lit=lit)
+
+
+MACHINE_MODELS = {'alloy_smelter': smelter_model, 'centrifuge': centrifuge_model, 'assembler': assembler_model}
+
+
 def models():
     for name in ORES + STORAGE:
         if name in ORES:
@@ -351,10 +422,8 @@ def models():
     for machine in MACHINES:
         for tier in TIERS:
             name = f'{machine}_mk{tier}'
-            side = f'industry_side_mk{tier}'
-            faces = {'down': 'industry_bottom', 'up': f'{machine}_top', 'south': side, 'west': side, 'east': side}
-            block_model(name, cube(dict(faces, north=f'{name}_front')))
-            block_model(name + '_on', cube(dict(faces, north=f'{name}_front_on'), {'north': f'{machine}_front_glow'}))
+            for lit in (False, True):
+                block_model(name + ('_on' if lit else ''), MACHINE_MODELS[machine](tier, lit))
             machine_blockstate(name)
             item_block(name)
             loot_self(name)

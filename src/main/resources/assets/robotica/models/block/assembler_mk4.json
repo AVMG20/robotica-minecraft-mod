@@ -3,12 +3,15 @@
   "render_type": "minecraft:cutout",
   "textures": {
     "down": "robotica:block/industry_bottom",
-    "up": "robotica:block/assembler_top",
     "south": "robotica:block/industry_side_mk4",
     "west": "robotica:block/industry_side_mk4",
     "east": "robotica:block/industry_side_mk4",
     "north": "robotica:block/assembler_mk4_front",
-    "particle": "robotica:block/industry_side_mk4"
+    "up": "robotica:block/assembler_mk4_top",
+    "particle": "robotica:block/industry_side_mk4",
+    "bay": "robotica:block/assembler_bay",
+    "wall": "robotica:block/assembler_bay_wall",
+    "bay_glow": "robotica:block/assembler_bay_glow"
   },
   "elements": [
     {
@@ -46,6 +49,115 @@
         "east": {
           "texture": "#east",
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        2
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bay"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        0
+      ],
+      "to": [
+        13,
+        4,
+        2
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            3,
+            9,
+            13,
+            11
+          ],
+          "texture": "#wall"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        13,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            3,
+            0,
+            13,
+            2
+          ],
+          "texture": "#wall"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        0
+      ],
+      "to": [
+        3,
+        13,
+        2
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            9
+          ],
+          "texture": "#wall"
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        4,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            14,
+            0,
+            16,
+            9
+          ],
+          "texture": "#wall"
         }
       }
     }

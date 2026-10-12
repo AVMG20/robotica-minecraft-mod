@@ -2,6 +2,10 @@
 Run: python3 scripts/data/power_models.py   (overwrites files named after power blocks only)"""
 import json
 import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from machine_models import machine_model as casing_model  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ASSETS = ROOT / 'src/main/resources/assets/robotica'
@@ -85,7 +89,6 @@ def machine_model(textures, glow=None):
 MACHINES = {
     # name: (top off, top on, glow on top when lit)
     'combustion_generator': ('combustion_generator_top', 'combustion_generator_top_on', None),
-    'metal_press': ('metal_press_top', 'metal_press_top', None),
     'charger': ('charger_top', 'charger_top_on', 'charger_top_glow'),
 }
 for name, (top, top_on, top_glow) in MACHINES.items():
@@ -102,6 +105,39 @@ for name, (top, top_on, top_glow) in MACHINES.items():
     blockstate(name, {'variants': facing_variants(lambda c, n=name: n + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
     item_model(name, f'robotica:block/{name}')
     loot(name)
+
+# ---------- metal press: the processing machines' shared casing (scripts/data/machine_models.py) with a press bay 2 px
+# deep in the front: back wall at z 2 and four walls, all from the metal_press_bay texture (the back wall in 4..11 x
+# 3..12, the walls around it); lit, the animated bay plus its full-bright glow on the back wall and the floor.
+def press_model(lit):
+    faces = {'north': 'metal_press_front' + ('_on' if lit else ''), 'up': 'metal_press_top', 'down': 'metal_press_bottom',
+             'south': 'metal_press_side', 'west': 'metal_press_side', 'east': 'metal_press_side'}
+    bay = '#bay'
+    elements = [
+        {'from': [4, 3, 2], 'to': [12, 13, 3], 'faces': {'north': {'texture': bay, 'uv': [4, 3, 12, 13]}}},
+        {'from': [4, 13, 0], 'to': [12, 14, 2], 'faces': {'down': {'texture': bay, 'uv': [12, 0, 4, 2]}}},
+        {'from': [4, 2, 0], 'to': [12, 3, 2], 'faces': {'up': {'texture': bay, 'uv': [12, 14, 4, 16]}}},
+        {'from': [12, 3, 0], 'to': [13, 13, 2], 'faces': {'west': {'texture': bay, 'uv': [0, 3, 2, 13]}}},
+        {'from': [3, 3, 0], 'to': [4, 13, 2], 'faces': {'east': {'texture': bay, 'uv': [14, 3, 16, 13]}}},
+    ]
+    textures = {'bay': 'metal_press_bay_on' if lit else 'metal_press_bay'}
+    if lit:
+        textures['bay_glow'] = 'metal_press_bay_glow'
+        elements += [
+            {'from': [4, 3, 1.99], 'to': [12, 13, 2], 'glow': True,
+             'faces': {'north': {'texture': '#bay_glow', 'uv': [4, 3, 12, 13]}}},
+            {'from': [4, 2, 0], 'to': [12, 3.01, 2], 'glow': True,
+             'faces': {'up': {'texture': '#bay_glow', 'uv': [12, 14, 4, 16]}}},
+        ]
+    glow = {'north': 'metal_press_front_glow', 'up': 'metal_press_top_glow'} if lit else None
+    return casing_model(faces, glow, elements, textures, lit=lit)
+
+
+for lit in (False, True):
+    block_model('metal_press' + ('_on' if lit else ''), press_model(lit))
+blockstate('metal_press', {'variants': facing_variants(lambda c: 'metal_press' + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
+item_model('metal_press', 'robotica:block/metal_press')
+loot('metal_press')
 
 # ---------- wireless charger: the machine cube plus an emitter mast with a ball on top (full bright when lit) ----------
 for lit in (False, True):

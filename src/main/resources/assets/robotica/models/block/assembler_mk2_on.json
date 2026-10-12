@@ -3,13 +3,20 @@
   "render_type": "minecraft:cutout",
   "textures": {
     "down": "robotica:block/industry_bottom",
-    "up": "robotica:block/assembler_top",
     "south": "robotica:block/industry_side_mk2",
     "west": "robotica:block/industry_side_mk2",
     "east": "robotica:block/industry_side_mk2",
     "north": "robotica:block/assembler_mk2_front_on",
+    "up": "robotica:block/assembler_mk2_top",
     "particle": "robotica:block/industry_side_mk2",
-    "glow_north": "robotica:block/assembler_front_glow"
+    "bay": "robotica:block/assembler_bay_on",
+    "wall": "robotica:block/assembler_bay_wall",
+    "bay_glow": "robotica:block/assembler_bay_glow",
+    "glow_south": "robotica:block/machine_side_glow",
+    "glow_west": "robotica:block/machine_side_glow",
+    "glow_east": "robotica:block/machine_side_glow",
+    "glow_north": "robotica:block/assembler_front_glow",
+    "glow_up": "robotica:block/assembler_top_glow"
   },
   "elements": [
     {
@@ -52,6 +59,138 @@
     },
     {
       "from": [
+        3,
+        4,
+        2
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bay"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        0
+      ],
+      "to": [
+        13,
+        4,
+        2
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            3,
+            9,
+            13,
+            11
+          ],
+          "texture": "#wall"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        13,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            3,
+            0,
+            13,
+            2
+          ],
+          "texture": "#wall"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        0
+      ],
+      "to": [
+        3,
+        13,
+        2
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            9
+          ],
+          "texture": "#wall"
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        4,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            14,
+            0,
+            16,
+            9
+          ],
+          "texture": "#wall"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        2
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bay_glow",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        }
+      },
+      "shade": false
+    },
+    {
+      "from": [
         0,
         0,
         0
@@ -63,9 +202,45 @@
       ],
       "shade": false,
       "faces": {
+        "south": {
+          "texture": "#glow_south",
+          "cullface": "south",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#glow_west",
+          "cullface": "west",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#glow_east",
+          "cullface": "east",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
         "north": {
           "texture": "#glow_north",
           "cullface": "north",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#glow_up",
+          "cullface": "up",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15,

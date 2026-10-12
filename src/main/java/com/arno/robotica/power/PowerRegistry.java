@@ -88,7 +88,7 @@ public final class PowerRegistry {
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_4 = teslaEmitter(TeslaTier.IV);
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_5 = teslaEmitter(TeslaTier.V);
     public static final DeferredBlock<ChargerBlock> CHARGER = BLOCKS.registerBlock("charger", ChargerBlock::new, machine());
-    public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock("metal_press", MetalPressBlock::new, machine());
+    public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock("metal_press", MetalPressBlock::new, machine().noOcclusion());
     public static final DeferredBlock<com.arno.robotica.power.block.WirelessChargerBlock> WIRELESS_CHARGER = BLOCKS.registerBlock("wireless_charger",
             com.arno.robotica.power.block.WirelessChargerBlock::new, machine().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 9 : 3));
 
