@@ -1,6 +1,8 @@
 package com.arno.robotica.boss;
 
 import com.arno.robotica.boss.entity.ForgeTyrant;
+import com.arno.robotica.boss.entity.NullPylon;
+import com.arno.robotica.boss.entity.NullSentinel;
 import com.arno.robotica.boss.entity.RoboticaBoss;
 import com.arno.robotica.boss.entity.ScrapColossus;
 import com.arno.robotica.boss.entity.ScrapDrone;
@@ -17,7 +19,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 
 /**
  * Common (both sides) entry point of the boss module: the Scrap Colossus (Colossus Altar, Signal Flare, Rusted Foundry) and
- * the Forge Tyrant (Forge Altar, Ignition Charge, Cinder Forge).
+ * the Forge Tyrant (Forge Altar, Ignition Charge, Cinder Forge) and the Null Sentinel (Null Altar, Null Key, Null Relay).
  */
 public final class BossModule {
     private BossModule() {}
@@ -34,6 +36,8 @@ public final class BossModule {
         event.put(BossRegistry.SCRAP_COLOSSUS.get(), ScrapColossus.createAttributes().build());
         event.put(BossRegistry.SCRAP_DRONE.get(), ScrapDrone.createAttributes().build());
         event.put(BossRegistry.FORGE_TYRANT.get(), ForgeTyrant.createAttributes().build());
+        event.put(BossRegistry.NULL_SENTINEL.get(), NullSentinel.createAttributes().build());
+        event.put(BossRegistry.NULL_PYLON.get(), NullPylon.createAttributes().build());
     }
 
     /**

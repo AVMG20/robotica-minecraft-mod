@@ -8,11 +8,15 @@ import com.arno.robotica.boss.block.BossAltarBlockEntity;
 import com.arno.robotica.boss.BossLoot;
 import com.arno.robotica.boss.entity.ForgeTyrant;
 import com.arno.robotica.boss.entity.MagmaGlob;
+import com.arno.robotica.boss.entity.NullPylon;
+import com.arno.robotica.boss.entity.NullSentinel;
 import com.arno.robotica.boss.entity.ScrapChunk;
 import com.arno.robotica.boss.entity.ScrapColossus;
 import com.arno.robotica.boss.entity.ScrapDrone;
 import com.arno.robotica.boss.world.CinderForgePiece;
 import com.arno.robotica.boss.world.CinderForgeStructure;
+import com.arno.robotica.boss.world.NullRelayPiece;
+import com.arno.robotica.boss.world.NullRelayStructure;
 import com.arno.robotica.boss.world.RustedFoundryPiece;
 import com.arno.robotica.boss.world.RustedFoundryStructure;
 import com.arno.robotica.core.item.CoreItems;
@@ -29,6 +33,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSources;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
@@ -42,6 +47,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -74,7 +80,8 @@ public class BossGameTests {
         AABB area = new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(40);
         List<Entity> leftovers = level.getEntitiesOfClass(Entity.class, area,
                 e -> e instanceof ScrapColossus || e instanceof ScrapDrone || e instanceof ItemEntity || e instanceof Husk
-                        || e instanceof ScrapChunk || e instanceof ForgeTyrant || e instanceof MagmaGlob);
+                        || e instanceof ScrapChunk || e instanceof ForgeTyrant || e instanceof MagmaGlob || e instanceof NullSentinel
+                        || e instanceof NullPylon);
         leftovers.forEach(Entity::discard);
     }
 
@@ -637,5 +644,283 @@ public class BossGameTests {
             cleanup(helper);
             helper.succeed();
         });
+    }
+
+    // ------------------------------------------------------------------ Null Sentinel
+
+    private static NullSentinel sentinel(GameTestHelper helper) {
+        floor(helper);
+        NullSentinel boss = helper.spawn(BossRegistry.NULL_SENTINEL.get(), CENTRE);
+        boss.setHealth(boss.getMaxHealth());
+        boss.setAttackCooldown(100_000);
+        boss.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+        return boss;
+    }
+
+    /** A Null Key at a Null Altar wakes one Null Sentinel on top; it cannot be hurt until it has woken up. */
+    @GameTest(template = "boss_arena", batch = "sentinelAltar", timeoutTicks = 200)
+    public static void nullAltarWakesSentinel(GameTestHelper helper) {
+        floor(helper);
+        helper.setBlock(CENTRE, BossRegistry.NULL_ALTAR.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos altarPos = helper.absolutePos(CENTRE);
+        BossAltarBlock block = (BossAltarBlock) BossRegistry.NULL_ALTAR.get();
+        helper.assertTrue(new ItemStack(BossRegistry.NULL_KEY.get()).is(block.kind().summon().get()), "the Null Key wakes it");
+        helper.assertTrue(!new ItemStack(BossRegistry.IGNITION_CHARGE.get()).is(block.kind().summon().get()), "an Ignition Charge does not");
+        BossAltarBlock.Result first = BossAltarBlock.awaken(level, altarPos, null);
+        helper.assertTrue(first == BossAltarBlock.Result.SPAWNED, "the key wakes the Sentinel, got " + first);
+        NullSentinel boss = helper.findClosestEntity(BossRegistry.NULL_SENTINEL.get(), CENTRE.getX(), CENTRE.getY() + 1, CENTRE.getZ(), 3.0);
+        helper.assertTrue(boss != null && altarPos.equals(boss.altarPos()), "the Sentinel stands on its altar");
+        helper.assertTrue(Math.abs(boss.getMaxHealth() - BossConfig.sentinelHealth()) < 0.01, "health comes from the config, has " + boss.getMaxHealth());
+        helper.assertTrue(boss.action() == NullSentinel.Action.INTRO, "it wakes up first");
+        helper.assertTrue(BossAltarBlock.awaken(level, altarPos, null) == BossAltarBlock.Result.BOSS_ALIVE, "one Sentinel per altar");
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = level.damageSources();
+        helper.runAfterDelay(5, () -> {
+            helper.assertTrue(!boss.hurt(damage.mobAttack(attacker), 10.0F), "it cannot be hurt while it wakes");
+            helper.assertTrue(boss.getHealth() == boss.getMaxHealth(), "still at full health");
+        });
+        helper.runAfterDelay(NullSentinel.INTRO_TICKS + 5, () -> {
+            helper.assertTrue(boss.action() != NullSentinel.Action.INTRO, "awake after the intro");
+            helper.assertTrue(boss.hurt(damage.mobAttack(attacker), 10.0F), "now a real attack hurts");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** Lava, fire, suffocation and unowned damage do nothing; a living attacker's hit does. */
+    @GameTest(template = "boss_arena", batch = "sentinelTrap", timeoutTicks = 100)
+    public static void sentinelOnlyTakesDamageFromLivingAttackers(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = helper.getLevel().damageSources();
+        helper.runAfterDelay(2, () -> {
+            helper.assertTrue(!boss.hurt(damage.lava(), 5.0F), "lava does nothing");
+            helper.assertTrue(!boss.hurt(damage.inWall(), 5.0F), "suffocation does nothing");
+            helper.assertTrue(!boss.hurt(damage.magic(), 5.0F), "unowned magic does nothing");
+            helper.assertTrue(!boss.hurt(damage.explosion(null, null), 5.0F), "unowned TNT does nothing");
+            helper.assertTrue(boss.getHealth() == boss.getMaxHealth(), "still at full health");
+            helper.assertTrue(boss.hurt(damage.mobAttack(attacker), 5.0F), "a real attack hurts");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** A player kill drops the Antigrav Core at the killer, locked to them. */
+    @GameTest(template = "boss_arena", batch = "sentinelLoot", timeoutTicks = 200)
+    public static void sentinelDropsAntigravCoreToKiller(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        ServerPlayer killer = helper.makeMockServerPlayerInLevel();
+        BlockPos at = helper.absolutePos(new BlockPos(1, 1, 1));
+        killer.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        helper.runAfterDelay(2, () -> {
+            boss.setHealth(1.0F);
+            boss.hurt(helper.getLevel().damageSources().playerAttack(killer), 100.0F);
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(boss.isDeadOrDying(), "the Sentinel is dead");
+            List<ItemEntity> cores = helper.getLevel().getEntitiesOfClass(ItemEntity.class, killer.getBoundingBox().inflate(3.0),
+                    e -> e.getItem().is(CoreItems.ANTIGRAV_CORE.get()));
+            if (cores.isEmpty() && killer.getInventory().contains(new ItemStack(CoreItems.ANTIGRAV_CORE.get()))) {
+                cleanup(helper);
+                return;                                            // already picked up by the killer
+            }
+            helper.assertTrue(cores.size() == 1, "one Antigrav Core at the killer, found " + cores.size());
+            helper.assertTrue(killer.getUUID().equals(cores.get(0).getTarget()), "the core is locked to the killer");
+            cleanup(helper);
+        });
+    }
+
+    /** Its death is a slow collapse: it stays a few seconds, then it is gone. */
+    @GameTest(template = "boss_arena", batch = "sentinelDeath", timeoutTicks = 200)
+    public static void sentinelCollapsesThenVanishes(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        helper.runAfterDelay(2, boss::kill);
+        helper.runAfterDelay(2 + NullSentinel.DEATH_TICKS / 2, () -> {
+            helper.assertTrue(!boss.isRemoved() && boss.dyingTicks() > 0, "it is still collapsing");
+            helper.assertItemEntityPresent(CoreItems.ANTIGRAV_CORE.get(), CENTRE.above(), 6.0);
+        });
+        helper.runAfterDelay(2 + NullSentinel.DEATH_TICKS + 5, () -> {
+            helper.assertTrue(boss.isRemoved(), "gone after the collapse");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * At 60 % it shifts to phase 2 (untouchable while it does) and raises pylons that cut the damage it takes to a quarter;
+     * with the pylons broken it takes full damage again; at 30 % it shifts to phase 3.
+     */
+    @GameTest(template = "boss_arena", batch = "sentinelPhase", timeoutTicks = 300)
+    public static void sentinelPhasesAndPylons(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = helper.getLevel().damageSources();
+        helper.runAfterDelay(2, () -> {
+            helper.assertTrue(boss.phase() == 1, "a fresh Sentinel starts in phase 1");
+            boss.hurt(damage.indirectMagic(attacker, attacker), boss.getMaxHealth() * 0.45F);
+        });
+        helper.runAfterDelay(6, () -> {
+            helper.assertTrue(boss.phase() == 2 && boss.action() == NullSentinel.Action.SHIFT, "below 60 % it shifts to phase 2");
+            helper.assertTrue(!boss.hurt(damage.indirectMagic(attacker, attacker), 10.0F), "untouchable while it shifts");
+        });
+        int afterShift = 4 + NullSentinel.SHIFT_TICKS + 4;
+        helper.runAfterDelay(afterShift, () -> {
+            int pylons = boss.livingPylons().size();
+            helper.assertTrue(pylons >= 3 && pylons <= 5, "phase 2 raises 3 to 5 pylons, has " + pylons);
+            helper.assertTrue(boss.shieldUp(), "the pylons shield it");
+            helper.assertTrue(!boss.action().shielded(), "the shift is over");
+            float before = boss.getHealth();
+            boss.hurt(damage.indirectMagic(attacker, attacker), 40.0F);
+            float taken = before - boss.getHealth();
+            float expected = 40.0F * NullSentinel.SHIELD_MULTIPLIER;
+            helper.assertTrue(Math.abs(taken - expected) < 0.01F, "shielded it takes " + expected + ", took " + taken);
+            for (NullPylon p : boss.livingPylons()) p.hurt(damage.indirectMagic(attacker, attacker), 100.0F);
+        });
+        helper.runAfterDelay(afterShift + 15, () -> {
+            helper.assertTrue(boss.livingPylons().isEmpty(), "the pylons are broken");
+            helper.assertTrue(!boss.shieldUp(), "the shield is down");
+            float before = boss.getHealth();
+            boss.hurt(damage.indirectMagic(attacker, attacker), 40.0F);
+            float taken = before - boss.getHealth();
+            helper.assertTrue(Math.abs(taken - 40.0F) < 0.01F, "unshielded it takes full damage, took " + taken);
+        });
+        helper.runAfterDelay(afterShift + 30, () -> boss.hurt(damage.indirectMagic(attacker, attacker), boss.getHealth() - boss.getMaxHealth() * 0.25F));
+        helper.runAfterDelay(afterShift + 35, () -> {
+            helper.assertTrue(boss.phase() == 3 && boss.action() == NullSentinel.Action.SHIFT, "below 30 % it shifts to phase 3");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** While it recharges after its attacks, its open core takes double damage. */
+    @GameTest(template = "boss_arena", batch = "sentinelRecharge", timeoutTicks = 100)
+    public static void sentinelRechargeTakesDoubleDamage(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        Husk attacker = dummy(helper, new BlockPos(0, 1, 0));
+        DamageSources damage = helper.getLevel().damageSources();
+        helper.runAfterDelay(2, () -> {
+            boss.startRecharge();
+            helper.assertTrue(boss.isRecharging(), "it recharges");
+            float before = boss.getHealth();
+            boss.hurt(damage.indirectMagic(attacker, attacker), 10.0F);
+            float taken = before - boss.getHealth();
+            float expected = 10.0F * NullSentinel.RECHARGE_MULTIPLIER;
+            helper.assertTrue(Math.abs(taken - expected) < 0.01F, "recharging takes " + expected + ", took " + taken);
+        });
+        helper.runAfterDelay(4 + NullSentinel.RECHARGE_TICKS, () -> {
+            helper.assertTrue(!boss.isRecharging(), "the recharge ends");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** The beam hurts its target in line and spares a bystander standing in the same beam. */
+    @GameTest(template = "boss_arena", batch = "sentinelBeam", timeoutTicks = 100)
+    public static void sentinelBeamHitsTargetSparesBystanders(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        Husk target = dummy(helper, new BlockPos(4, 1, 8));
+        Husk bystander = dummy(helper, new BlockPos(4, 1, 7));
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(target);
+            var aim = target.getBoundingBox().getCenter().subtract(boss.lensPos()).normalize();
+            boss.pose(NullSentinel.Action.BEAM, aim);
+            aim = target.getBoundingBox().getCenter().subtract(boss.lensPos()).normalize();
+            boss.pose(NullSentinel.Action.BEAM, aim);
+            int hit = boss.beamTick(target);
+            helper.assertTrue(hit == 1, "the beam hits the target only, hit " + hit);
+            helper.assertTrue(target.getHealth() < target.getMaxHealth(), "the target is hurt");
+            helper.assertTrue(bystander.getHealth() == bystander.getMaxHealth(), "the bystander is not");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** The gravity well drags its target in and the burst hurts and throws up whoever is inside the ring. */
+    @GameTest(template = "boss_arena", batch = "sentinelWell", timeoutTicks = 100)
+    public static void sentinelWellPullsAndBursts(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        Husk target = dummy(helper, new BlockPos(1, 1, 4));
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(target);
+            boss.pose(NullSentinel.Action.WELL, boss.aim());
+            Vec3 before = target.getDeltaMovement();
+            helper.assertTrue(boss.wellTick() == 1, "the well pulls the target");
+            Vec3 toBoss = boss.position().subtract(target.position());
+            helper.assertTrue(target.getDeltaMovement().subtract(before).dot(toBoss) > 0.0, "towards the Sentinel");
+            helper.assertTrue(boss.burst() == 1, "the burst hits the target inside the ring");
+            helper.assertTrue(target.getHealth() < target.getMaxHealth(), "the target is hurt");
+            helper.assertTrue(target.getDeltaMovement().y > 0.5, "and thrown up, dy " + target.getDeltaMovement().y);
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** Gravity rings throw whoever stands in them after their delay; rifts hurt and slow whoever stands in them once open. */
+    @GameTest(template = "boss_arena", batch = "sentinelSpots", timeoutTicks = 200)
+    public static void sentinelRingsAndRifts(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        Husk ringed = dummy(helper, new BlockPos(0, 1, 0));
+        Husk rifted = dummy(helper, new BlockPos(8, 1, 8));
+        helper.runAfterDelay(2, () -> {
+            boss.setTarget(ringed);
+            helper.assertTrue(boss.markLaunches(ringed) >= 1, "a ring under the target");
+            boss.markRift(rifted.position());
+            helper.assertTrue(boss.pendingSpots(NullSentinel.SPOT_LAUNCH) >= 1 && boss.pendingSpots(NullSentinel.SPOT_RIFT) == 1, "rings and a rift are marked");
+            helper.assertTrue(ringed.getHealth() == ringed.getMaxHealth(), "nothing hurts before the delay");
+        });
+        helper.runAfterDelay(2 + NullSentinel.LAUNCH_DELAY + 5, () -> {
+            helper.assertTrue(ringed.getHealth() < ringed.getMaxHealth(), "the ring hurt the target");
+            helper.assertTrue(boss.pendingSpots(NullSentinel.SPOT_LAUNCH) == 0, "every ring went off");
+        });
+        helper.runAfterDelay(2 + NullSentinel.RIFT_ARM + 15, () -> {
+            boss.setTarget(rifted);
+        });
+        helper.runAfterDelay(2 + NullSentinel.RIFT_ARM + 30, () -> {
+            helper.assertTrue(rifted.getHealth() < rifted.getMaxHealth(), "the open rift hurt its target");
+            helper.assertTrue(rifted.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "and slowed it");
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** A Sentinel that falls far below its altar (off the island) is put back on it. */
+    @GameTest(template = "boss_arena", batch = "sentinelVoid", timeoutTicks = 100)
+    public static void sentinelReturnsToItsAltar(GameTestHelper helper) {
+        NullSentinel boss = sentinel(helper);
+        BlockPos altar = helper.absolutePos(CENTRE);
+        helper.runAfterDelay(2, () -> {
+            boss.setAltarPos(altar);
+            boss.teleportTo(boss.getX(), altar.getY() - 20, boss.getZ());
+        });
+        helper.runAfterDelay(5, () -> {
+            helper.assertTrue(boss.getY() > altar.getY() - 2, "back on its altar, at y " + boss.getY());
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
+    /** The Null Relay template loads with a natural Null Altar in the centre and a loot chest; its structure is registered. */
+    @GameTest(template = "empty")
+    public static void nullRelayTemplateHasAltar(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var template = level.getStructureManager().get(NullRelayPiece.TEMPLATE);
+        helper.assertTrue(template.isPresent(), "the null_relay template loads");
+        int size = NullRelayStructure.SIZE;
+        helper.assertTrue(template.get().getSize().getX() == size && template.get().getSize().getZ() == size,
+                "the relay is " + size + " wide, is " + template.get().getSize());
+        var altars = template.get().filterBlocks(BlockPos.ZERO, new StructurePlaceSettings(), BossRegistry.NULL_ALTAR.get());
+        helper.assertTrue(altars.size() == 1, "exactly one altar, found " + altars.size());
+        helper.assertTrue(altars.get(0).pos().equals(new BlockPos(NullRelayStructure.HALF, 1, NullRelayStructure.HALF)),
+                "the altar sits in the centre, at " + altars.get(0).pos());
+        helper.assertTrue(altars.get(0).state().getValue(BossAltarBlock.NATURAL), "the ruin's altar is marked natural");
+        var chests = template.get().filterBlocks(BlockPos.ZERO, new StructurePlaceSettings(), Blocks.CHEST);
+        helper.assertTrue(chests.size() == 1 && chests.get(0).nbt() != null
+                && "robotica:chests/null_relay".equals(chests.get(0).nbt().getString("LootTable")), "one loot chest with the relay loot");
+        Structure relay = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(Robotica.id("null_relay"));
+        helper.assertTrue(relay instanceof NullRelayStructure, "robotica:null_relay is registered with its own type");
+        helper.assertTrue(level.registryAccess().registryOrThrow(Registries.STRUCTURE_SET).containsKey(Robotica.id("null_relay")),
+                "robotica:null_relay has a structure set");
+        helper.succeed();
     }
 }

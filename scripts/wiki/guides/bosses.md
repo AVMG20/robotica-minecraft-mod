@@ -2,7 +2,7 @@
 title: Bosses
 icon: forge_altar
 order: 58
-summary: The Scrap Colossus (Servo Core) and the Forge Tyrant (Magma Core): where to find them and how to win.
+summary: The Scrap Colossus (Servo Core), the Forge Tyrant (Magma Core) and the Null Sentinel (Antigrav Core): where to find them and how to win.
 ---
 Each boss drops its age core every time and locks its loot to the killer for 2 minutes.
 
@@ -36,3 +36,25 @@ Find a Cinder Forge (blackstone ruins in Nether caves) or craft a [[forge_altar]
 | Doors swing open | Vent, after every 3 attacks | Hit it: double damage |
 
 > Below half health it rings itself with eruptions and attacks faster. Fire Resistance helps.
+
+## Null Sentinel (Age 4)
+
+{{items null_key null_altar antigrav_core}}
+
+{{image shots/31_null_sentinel.jpg|The Null Sentinel firing its null beam}}
+
+Find a Null Relay (round ruins on the outer End islands) or craft a [[null_altar]], then right-click it with a [[null_key]]. It takes a few seconds to wake and can't be hurt until it does.
+
+{{image shots/32_null_relay.jpg|A Null Relay}}
+
+| Tell | Attack | Answer |
+|---|---|---|
+| Thin line from its lens | Null beam, turns after you | Move before the line freezes, then circle it |
+| Arms spread, ring on the floor | Gravity well, then a burst inside the ring | Sprint out of the ring |
+| Arm up, rings under players | Gravity rings throw you up | Step off them |
+| Chest plates open | Recharge, after every 3 attacks | Hit it: double damage |
+
+- 60%: it raises Null Pylons. While one stands it takes a quarter of the damage. Break them first.
+- 30%: the sky darkens, it attacks faster and rifts open on the floor under you. Keep moving.
+
+> Fall protection (Feather Falling, Fall Dampener) takes the sting out of the gravity rings.

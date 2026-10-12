@@ -1,5 +1,5 @@
-"""Writes the data files of the boss module: recipes, loot tables, worldgen (structures + structure sets), and the
-Colossus Altar and Forge Altar blockstates and models. Textures: scripts/textures/boss.py. Structure template: scripts/data/boss_structure.py.
+"""Writes the data files of the boss module: recipes, loot tables, worldgen (structures + structure sets), the Null
+Sentinel's damage type, and the Colossus Altar, Forge Altar and Null Altar blockstates and models. Textures: scripts/textures/boss.py. Structure template: scripts/data/boss_structure.py.
 Run: python3 scripts/data/boss_data.py
 """
 import json
@@ -77,6 +77,15 @@ def recipes():
     shaped('forge_altar', ['RQR', 'NPN', 'RMR'],
            {'R': 'reinforced_casing', 'Q': 'quantum_circuit', 'N': 'minecraft:netherite_scrap', 'P': 'plasma_actuator',
             'M': 'minecraft:magma_block'})
+    # Age 4 summon: an Age 3 part (Quantum Circuit), resonite, ender pearls and popped chorus fruit (about 340 IE, an
+    # Ignition Charge is ~126). The fight is the price.
+    shaped('null_key', ['RCR', 'EQE', 'R R'],
+           {'R': '#c:gems/resonite', 'C': 'minecraft:popped_chorus_fruit', 'E': '#c:ender_pearls', 'Q': 'quantum_circuit'})
+    # Age 4 arena, expensive: four Blazing Casings, a Null Circuit, a Plasma Actuator and an End Crystal. No Antigrav Core
+    # needed, so servers without the Null Relay (config) can still build an arena.
+    shaped('null_altar', ['BNB', 'OPO', 'BEB'],
+           {'B': 'blazing_casing', 'N': 'null_circuit', 'O': 'minecraft:crying_obsidian', 'P': 'plasma_actuator',
+            'E': 'minecraft:end_crystal'})
 
 
 def loot_tables():
@@ -97,6 +106,17 @@ def loot_tables():
               item('pyrolite_shard', 2, 5, weight=2), item('minecraft:gilded_blackstone', 1, 3, weight=2),
               item('quantum_circuit', weight=1)], rolls=2),
     ])
+    loot('entities/null_sentinel', 'minecraft:entity', [
+        pool([item('antigrav_core')]),
+        pool([item('minecraft:ender_pearl', 4, 8, looting=3)]),
+        pool([item('minecraft:shulker_shell', 2, 4, looting=1)]),
+        pool([item('resonite_crystal', 3, 6, looting=2)]),
+        pool([item('minecraft:end_crystal')], conditions=[{'condition': 'minecraft:random_chance', 'chance': 0.5}]),
+        pool([item('minecraft:chorus_fruit', 6, 12, weight=3), item('minecraft:end_rod', 2, 6, weight=3),
+              item('minecraft:crying_obsidian', 2, 5, weight=2), item('minecraft:purpur_block', 4, 10, weight=2),
+              item('null_circuit', weight=1)], rolls=2),
+    ])
+    loot('entities/null_pylon', 'minecraft:entity', [])
     loot('entities/scrap_drone', 'minecraft:entity', [
         pool([item('minecraft:iron_nugget', 0, 2, looting=1)]),
         pool([item('minecraft:redstone', 0, 1)]),
@@ -104,6 +124,7 @@ def loot_tables():
     # the ruin's altar stays a ruin piece: mining it gives building blocks, not a free altar
     altar_loot('colossus_altar', 'minecraft:copper_block')
     altar_loot('forge_altar', 'minecraft:gilded_blackstone')
+    altar_loot('null_altar', 'minecraft:crying_obsidian')
     loot('chests/rusted_foundry', 'minecraft:chest', [
         pool([item('signal_flare')]),
         pool([item('signal_flare')], conditions=[{'condition': 'minecraft:random_chance', 'chance': 0.3}]),
@@ -119,6 +140,14 @@ def loot_tables():
               item('minecraft:magma_cream', 2, 4, weight=3), item('minecraft:quartz', 4, 10, weight=3),
               item('pyrolite_shard', 1, 3, weight=2), item('advanced_circuit', weight=2), item('servo_actuator', weight=1),
               item('minecraft:netherite_scrap', weight=1)], rolls=uniform(3, 6)),
+    ])
+    loot('chests/null_relay', 'minecraft:chest', [
+        pool([item('null_key')]),
+        pool([item('null_key')], conditions=[{'condition': 'minecraft:random_chance', 'chance': 0.3}]),
+        pool([item('minecraft:ender_pearl', 2, 6, weight=4), item('resonite_crystal', 1, 4, weight=3),
+              item('minecraft:popped_chorus_fruit', 2, 6, weight=3), item('minecraft:end_rod', 1, 4, weight=3),
+              item('minecraft:obsidian', 2, 5, weight=2), item('quantum_circuit', weight=2), item('plasma_actuator', weight=1),
+              item('minecraft:shulker_shell', weight=1)], rolls=uniform(3, 6)),
     ])
 
 
@@ -150,6 +179,20 @@ def worldgen():
         'structures': [{'structure': 'robotica:cinder_forge', 'weight': 1}],
         'placement': {'type': 'minecraft:random_spread', 'spacing': 32, 'separation': 12, 'salt': 19071906,
                       'exclusion_zone': {'other_set': 'minecraft:nether_complexes', 'chunk_count': 7}}})
+    # outer End islands: needs island under the whole arena (see NullRelayStructure), away from End cities
+    write(DATA / 'worldgen/structure/null_relay.json', {
+        'type': 'robotica:null_relay', 'biomes': '#robotica:has_structure/null_relay',
+        'step': 'surface_structures', 'spawn_overrides': {}, 'terrain_adaptation': 'beard_thin'})
+    write(DATA / 'worldgen/structure_set/null_relay.json', {
+        'structures': [{'structure': 'robotica:null_relay', 'weight': 1}],
+        'placement': {'type': 'minecraft:random_spread', 'spacing': 28, 'separation': 10, 'salt': 19071907,
+                      'exclusion_zone': {'other_set': 'minecraft:end_cities', 'chunk_count': 5}}})
+
+
+def damage_types():
+    # the Null Sentinel's attacks: armor counts, no knockback (it throws on its own terms)
+    write(DATA / 'damage_type/null_sentinel.json', {
+        'message_id': 'robotica.null_sentinel', 'scaling': 'when_caused_by_living_non_player', 'exhaustion': 0.1})
 
 
 def altar_models(name):
@@ -173,8 +216,10 @@ def main():
     recipes()
     loot_tables()
     worldgen()
+    damage_types()
     altar_models('colossus_altar')
     altar_models('forge_altar')
+    altar_models('null_altar')
     print('boss data written')
 
 

@@ -6,6 +6,8 @@
     "minecraft:warden",
     "minecraft:elder_guardian",
     "robotica:scrap_colossus",
-    "robotica:forge_tyrant"
+    "robotica:forge_tyrant",
+    "robotica:null_sentinel",
+    "robotica:null_pylon"
   ]
 }

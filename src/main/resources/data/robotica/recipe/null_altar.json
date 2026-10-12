@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BNB",
+    "OPO",
+    "BEB"
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:blazing_casing"
+    },
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "O": {
+      "item": "minecraft:crying_obsidian"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "E": {
+      "item": "minecraft:end_crystal"
+    }
+  },
+  "result": {
+    "id": "robotica:null_altar",
+    "count": 1
+  }
+}

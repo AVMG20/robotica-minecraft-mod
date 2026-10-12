@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RCR",
+    "EQE",
+    "R R"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:gems/resonite"
+    },
+    "C": {
+      "item": "minecraft:popped_chorus_fruit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:null_key",
+    "count": 1
+  }
+}

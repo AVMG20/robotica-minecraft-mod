@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "robotica:forge_altar"
+    "robotica:forge_altar",
+    "robotica:null_altar"
   ]
 }

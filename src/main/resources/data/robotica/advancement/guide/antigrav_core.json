@@ -1,5 +1,5 @@
 {
-  "parent": "robotica:guide/age4",
+  "parent": "robotica:guide/sentinel",
   "display": {
     "icon": {
       "id": "robotica:antigrav_core"

@@ -434,6 +434,23 @@
             "robotica:arc_blade",
             "robotica:rivet_gun"
           ]
+        },
+        {
+          "title": "Null Sentinel",
+          "text": "The chest in a Null Relay holds a Null Key.",
+          "items": [
+            "robotica:null_altar",
+            "robotica:null_key",
+            "robotica:antigrav_core"
+          ]
+        },
+        {
+          "title": "Sentinel fight",
+          "text": "Thin line from its lens: null beam. Move before it freezes.\nRing on the floor: sprint out before it bursts.\nRings under players: step off them.\nCore open: hit it for double damage.\n60%: break the pylons. 30%: rifts open under you.",
+          "items": [
+            "robotica:arc_blade",
+            "robotica:fall_dampener_module"
+          ]
         }
       ]
     },

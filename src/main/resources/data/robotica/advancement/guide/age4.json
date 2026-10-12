@@ -43,7 +43,6 @@
       "robotica:grinder_mk4",
       "robotica:electric_furnace_mk4",
       "robotica:resonant_grinding_balls",
-      "robotica:temp_antigrav_core",
       "robotica:tool_upgrade_kit_4",
       "robotica:tesla_coil_5",
       "robotica:tesla_emitter_5",
@@ -61,7 +60,9 @@
       "robotica:survey_rig_mk4",
       "robotica:buddy_bot_mk4",
       "robotica:chain_lightning_module_3",
-      "robotica:lifesteal_module"
+      "robotica:lifesteal_module",
+      "robotica:null_key",
+      "robotica:null_altar"
     ],
     "experience": 80
   }

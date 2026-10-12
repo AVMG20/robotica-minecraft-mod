@@ -22,11 +22,15 @@ public final class BossClient {
         event.registerEntityRenderer(BossRegistry.SCRAP_CHUNK.get(), ctx -> new BossRenderers.Chunk<>(ctx, ScrapChunk.LOOK, false));
         event.registerEntityRenderer(BossRegistry.FORGE_TYRANT.get(), BossRenderers.Tyrant::new);
         event.registerEntityRenderer(BossRegistry.MAGMA_GLOB.get(), ctx -> new BossRenderers.Chunk<>(ctx, MagmaGlob.LOOK, true));
+        event.registerEntityRenderer(BossRegistry.NULL_SENTINEL.get(), NullRenderers.Sentinel::new);
+        event.registerEntityRenderer(BossRegistry.NULL_PYLON.get(), NullRenderers.Pylon::new);
     }
 
     private static void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(ScrapColossusModel.LAYER, ScrapColossusModel::createLayer);
         event.registerLayerDefinition(ScrapDroneModel.LAYER, ScrapDroneModel::createLayer);
         event.registerLayerDefinition(ForgeTyrantModel.LAYER, ForgeTyrantModel::createLayer);
+        event.registerLayerDefinition(NullSentinelModel.LAYER, NullSentinelModel::createLayer);
+        event.registerLayerDefinition(NullPylonModel.LAYER, NullPylonModel::createLayer);
     }
 }
