@@ -15,6 +15,7 @@ import com.arno.robotica.drones.entity.HaulerDrone;
 import com.arno.robotica.drones.entity.BuddyBot;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.drones.menu.BuddyBotMenu;
+import com.arno.robotica.drones.net.DroneCommandPayload;
 import com.arno.robotica.gear.GearItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -251,6 +252,46 @@ public class DronesGameTests {
         player.getInventory().setItem(0, cell);
         menu.quickMoveStack(player, hotbar);
         helper.assertTrue(bot.battery.getStackInSlot(0).is(CoreItems.COPPER_CELL.get()), "shift-click puts a cell in the battery slot");
+        helper.succeed();
+    }
+
+    /** The backpack key opens the nearest own bot the player's client tracks, never another player's, and from past arm's reach. */
+    @GameTest(template = "empty", batch = "dronesBackpack")
+    public static void backpackKeyOpensOwnBot(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        BlockPos at = helper.absolutePos(p(0, 1, 0));
+        player.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        BuddyBot theirs = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(1, 2, 0));
+        BuddyBot mine = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(3, 2, 0));
+        for (BuddyBot b : List.of(theirs, mine)) {
+            b.setTier(1);
+            b.setMode(BuddyBot.Mode.STAY);
+            b.setPickup(false);
+        }
+        theirs.setOwnerUUID(UUID.randomUUID());
+        mine.setOwnerUUID(player.getUUID());
+        theirs.startSeenByPlayer(player);
+        mine.stopSeenByPlayer(player);
+        helper.assertTrue(!DroneCommandPayload.openBackpack(player), "a bot the client does not track is not opened");
+        helper.assertTrue(!(player.containerMenu instanceof BuddyBotMenu), "no menu without an own tracked bot");
+        mine.startSeenByPlayer(player);
+        helper.assertTrue(DroneCommandPayload.openBackpack(player), "the own tracked bot is opened");
+        helper.assertTrue(player.containerMenu instanceof BuddyBotMenu m && m.bot == mine, "the own bot opens, not the nearer one of another player");
+        helper.assertTrue(player.containerMenu.stillValid(player), "the menu stays open while tracked");
+        mine.stopSeenByPlayer(player);
+        helper.assertTrue(!player.containerMenu.stillValid(player), "the menu closes when the client stops tracking the bot");
+        player.closeContainer();
+
+        BuddyBot far = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        far.setTier(1);
+        far.setOwnerUUID(player.getUUID());
+        far.setPos(player.getX() + 12, player.getY(), player.getZ());
+        far.startSeenByPlayer(player);
+        helper.assertTrue(!new BuddyBotMenu(1, player.getInventory(), far).stillValid(player), "right-click reach is 8 blocks");
+        helper.assertTrue(new BuddyBotMenu(2, player.getInventory(), far).remote(DronesConfig.commandDistance()).stillValid(player),
+                "the backpack key reaches further");
+        theirs.discard();
+        mine.discard();
         helper.succeed();
     }
 

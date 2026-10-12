@@ -1191,7 +1191,7 @@
     "fortune_module_2",
     "fortune_module_3"
    ],
-   "what": "Drill module: mined blocks drop as with Fortune I / II / III. The Enchant key (default B) switches Fortune, Silk Touch or off.",
+   "what": "Drill module: mined blocks drop as with Fortune I / II / III. The Enchant key (default Z) switches Fortune, Silk Touch or off.",
    "stats": {
     "columns": [
      "I",
@@ -1218,7 +1218,7 @@
    "items": [
     "silk_touch_module"
    ],
-   "what": "Drill module: mined blocks drop themselves. The Enchant key (default B) switches Fortune, Silk Touch or off.",
+   "what": "Drill module: mined blocks drop themselves. The Enchant key (default Z) switches Fortune, Silk Touch or off.",
    "stats": {
     "rows": [
      [

@@ -104,6 +104,7 @@
   "gui.robotica.hauler.carrying": "Carrying a mob",
   "key.categories.robotica.drones": "Robotica Drones",
   "key.robotica.drones.command": "Buddy Bot: dig where I look / come back (sneak: call all back)",
+  "key.robotica.drones.backpack": "Buddy Bot: open cargo",
   "robotica.configuration.buddy_bot": "Buddy Bot",
   "robotica.configuration.buddyDamage": "Bolt damage (Mk1)",
   "robotica.configuration.buddyFePerShot": "FE per shot",

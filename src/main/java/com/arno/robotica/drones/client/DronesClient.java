@@ -27,13 +27,19 @@ public final class DronesClient {
     /** H: nearest Buddy Bot digs where you look (again: it comes back). Sneak + H: call all Buddy Bots back. */
     static final KeyMapping COMMAND = new KeyMapping("key.robotica.drones.command", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
+    /** B: open the cargo of the nearest own Buddy Bot, like a backpack. */
+    static final KeyMapping BACKPACK = new KeyMapping("key.robotica.drones.backpack", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY);
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, com.arno.robotica.drones.DronesClientConfig.SPEC, "robotica-drones-client.toml");
         modBus.addListener(RegisterMenuScreensEvent.class, DronesClient::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, DronesClient::registerRenderers);
         modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class, DronesClient::registerLayers);
-        modBus.addListener(RegisterKeyMappingsEvent.class, e -> e.register(COMMAND));
+        modBus.addListener(RegisterKeyMappingsEvent.class, e -> {
+            e.register(COMMAND);
+            e.register(BACKPACK);
+        });
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, DronesClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, BoltBeams::onClientTick);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, BoltBeams::onRenderLevel);
@@ -63,6 +69,9 @@ public final class DronesClient {
             if (mc.screen == null) {
                 PacketDistributor.sendToServer(new DroneCommandPayload(mc.player.isShiftKeyDown() ? DroneCommandPayload.RECALL : DroneCommandPayload.TUNNEL));
             }
+        }
+        while (BACKPACK.consumeClick()) {
+            if (mc.screen == null) PacketDistributor.sendToServer(new DroneCommandPayload(DroneCommandPayload.OPEN));
         }
     }
 }

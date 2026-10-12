@@ -39,6 +39,9 @@ public class BuddyBotMenu extends MachineMenu {
     private final int idxFlags;
     private final int idxProgress;
     private final int idxJob;
+    /** Server side: opened with the backpack key, so it stays open further away while the player's client tracks the bot. */
+    private boolean remote;
+    private double maxDistanceSqr = 64.0;
 
     public BuddyBotMenu(int id, Inventory inv, int entityId) {
         this(id, inv, resolve(inv, entityId));
@@ -69,6 +72,12 @@ public class BuddyBotMenu extends MachineMenu {
                 | (bot.hasTunnel() ? 8 : 0) | (bot.isEnergyLow() ? 16 : 0) | (bot.currentTarget() != null ? 32 : 0));
         idxProgress = track(bot::progress);
         idxJob = track(bot::jobLength);
+    }
+
+    public BuddyBotMenu remote(double range) {
+        remote = true;
+        maxDistanceSqr = range * range;
+        return this;
     }
 
     /** Y of the row under the cargo grid (battery slot, status, energy bar). */
@@ -184,7 +193,8 @@ public class BuddyBotMenu extends MachineMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        if (!bot.isAlive() || bot.isRemoved() || !bot.canInteract(player) || player.distanceToSqr(bot) > 64.0) return false;
+        if (!bot.isAlive() || bot.isRemoved() || !bot.canInteract(player) || player.distanceToSqr(bot) > maxDistanceSqr
+                || remote && !bot.isSeenBy(player)) return false;
         bot.holdForGui();
         return true;
     }

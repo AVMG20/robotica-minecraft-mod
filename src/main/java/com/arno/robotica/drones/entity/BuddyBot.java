@@ -69,8 +69,10 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -1333,6 +1335,25 @@ public class BuddyBot extends DroneBase {
 
     // ---------------------------------------------------------------- gui
 
+    /** Players whose client tracks this bot. Only they can open it with the backpack key: their client must know it. */
+    private final Set<UUID> seenBy = new HashSet<>();
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        seenBy.add(player.getUUID());
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        seenBy.remove(player.getUUID());
+    }
+
+    public boolean isSeenBy(Player player) {
+        return seenBy.contains(player.getUUID());
+    }
+
     /** The lid opens while its GUI is open. */
     @Override
     public void holdForGui() {
@@ -1362,6 +1383,12 @@ public class BuddyBot extends DroneBase {
     @Override
     protected void openGui(ServerPlayer player) {
         player.openMenu(new SimpleMenuProvider((id, inv, p) -> new BuddyBotMenu(id, inv, this), getDisplayName()),
+                buf -> buf.writeVarInt(getId()));
+    }
+
+    /** Backpack key: opens the GUI from up to {@code range} blocks away. */
+    public void openRemote(ServerPlayer player, double range) {
+        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new BuddyBotMenu(id, inv, this).remote(range), getDisplayName()),
                 buf -> buf.writeVarInt(getId()));
     }
 
