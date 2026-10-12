@@ -255,7 +255,7 @@ public class DronesGameTests {
         helper.succeed();
     }
 
-    /** The backpack key opens the nearest own bot the player's client tracks, never another player's, and from past arm's reach. */
+    /** The backpack key picks the nearest own bot the player's client tracks, never another player's, and reaches past arm's reach. */
     @GameTest(template = "empty", batch = "dronesBackpack")
     public static void backpackKeyOpensOwnBot(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
@@ -266,32 +266,35 @@ public class DronesGameTests {
         for (BuddyBot b : List.of(theirs, mine)) {
             b.setTier(1);
             b.setMode(BuddyBot.Mode.STAY);
+            b.setStance(BuddyBot.Stance.PASSIVE);
             b.setPickup(false);
         }
         theirs.setOwnerUUID(UUID.randomUUID());
         mine.setOwnerUUID(player.getUUID());
         theirs.startSeenByPlayer(player);
         mine.stopSeenByPlayer(player);
-        helper.assertTrue(!DroneCommandPayload.openBackpack(player), "a bot the client does not track is not opened");
-        helper.assertTrue(!(player.containerMenu instanceof BuddyBotMenu), "no menu without an own tracked bot");
+        BuddyBot untracked = DroneCommandPayload.backpackBot(player);
         mine.startSeenByPlayer(player);
-        helper.assertTrue(DroneCommandPayload.openBackpack(player), "the own tracked bot is opened");
-        helper.assertTrue(player.containerMenu instanceof BuddyBotMenu m && m.bot == mine, "the own bot opens, not the nearer one of another player");
-        helper.assertTrue(player.containerMenu.stillValid(player), "the menu stays open while tracked");
+        BuddyBot picked = DroneCommandPayload.backpackBot(player);
+        BuddyBotMenu menu = new BuddyBotMenu(1, player.getInventory(), mine).remote(DronesConfig.commandDistance());
+        boolean openWhileTracked = menu.stillValid(player);
         mine.stopSeenByPlayer(player);
-        helper.assertTrue(!player.containerMenu.stillValid(player), "the menu closes when the client stops tracking the bot");
-        player.closeContainer();
+        boolean openAfterTracking = menu.stillValid(player);
+        theirs.discard();
+        mine.discard();
+        helper.assertTrue(untracked == null, "a bot the client does not track is not picked");
+        helper.assertTrue(picked == mine, "the own bot is picked, not the nearer one of another player");
+        helper.assertTrue(openWhileTracked, "the menu stays open while tracked");
+        helper.assertTrue(!openAfterTracking, "the menu closes when the client stops tracking the bot");
 
         BuddyBot far = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
         far.setTier(1);
         far.setOwnerUUID(player.getUUID());
         far.setPos(player.getX() + 12, player.getY(), player.getZ());
         far.startSeenByPlayer(player);
-        helper.assertTrue(!new BuddyBotMenu(1, player.getInventory(), far).stillValid(player), "right-click reach is 8 blocks");
-        helper.assertTrue(new BuddyBotMenu(2, player.getInventory(), far).remote(DronesConfig.commandDistance()).stillValid(player),
+        helper.assertTrue(!new BuddyBotMenu(2, player.getInventory(), far).stillValid(player), "right-click reach is 8 blocks");
+        helper.assertTrue(new BuddyBotMenu(3, player.getInventory(), far).remote(DronesConfig.commandDistance()).stillValid(player),
                 "the backpack key reaches further");
-        theirs.discard();
-        mine.discard();
         helper.succeed();
     }
 

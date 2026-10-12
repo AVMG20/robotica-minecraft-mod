@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -100,19 +101,25 @@ public record DroneCommandPayload(int action) implements CustomPacketPayload {
         }
     }
 
-    /** Opens the cargo of the nearest own Buddy Bot in range that the player's client tracks. False when there is none. */
-    public static boolean openBackpack(ServerPlayer player) {
+    /** Opens the cargo of the nearest own Buddy Bot in range, or says there is none. */
+    private static void openBackpack(ServerPlayer player) {
+        BuddyBot bot = backpackBot(player);
+        if (bot == null) {
+            player.displayClientMessage(Component.translatable("message.robotica.drone.no_buddy"), true);
+        } else {
+            bot.openRemote(player, DronesConfig.commandDistance());
+        }
+    }
+
+    /** The nearest own Buddy Bot in range that the player's client tracks, or null. */
+    @Nullable
+    public static BuddyBot backpackBot(ServerPlayer player) {
         double range = DronesConfig.commandDistance();
         BuddyBot nearest = null;
         for (BuddyBot b : player.level().getEntitiesOfClass(BuddyBot.class, player.getBoundingBox().inflate(range),
                 d -> d.isAlive() && player.getUUID().equals(d.getOwnerUUID()) && d.isSeenBy(player) && d.distanceToSqr(player) <= range * range)) {
             if (nearest == null || b.distanceToSqr(player) < nearest.distanceToSqr(player)) nearest = b;
         }
-        if (nearest == null) {
-            player.displayClientMessage(Component.translatable("message.robotica.drone.no_buddy"), true);
-            return false;
-        }
-        nearest.openRemote(player, range);
-        return true;
+        return nearest;
     }
 }
