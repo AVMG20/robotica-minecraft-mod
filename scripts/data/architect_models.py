@@ -1,5 +1,5 @@
 """Writes blockstates, block/item models, loot tables, tag fragments (mineable + matter values) and the lang fragment
-of the architect module.
+of the architect module (Pocket Architect names too).
 Run: python3 scripts/data/architect_models.py   (overwrites files named after architect blocks and the architect fragments)"""
 import json
 import pathlib
@@ -300,6 +300,35 @@ lang.update({
     'robotica.configuration.allowClearTerrain': 'Allow clear terrain',
     'robotica.configuration.clearInterval': 'Ticks per cleared block',
     'robotica.configuration.builderDrones': 'Builder drones',
+    'item.robotica.pocket_architect': 'Pocket Architect Mk1',
+    'item.robotica.pocket_architect_mk2': 'Pocket Architect Mk2',
+    'tooltip.robotica.pocket_architect': 'Turns junk you pick up into rustic matter, and matter into building blocks',
+    'tooltip.robotica.pocket_architect_mk2': 'Turns junk you pick up into matter, and matter into building blocks of every style',
+    'tooltip.robotica.pocket_architect_use': 'Right-click a block: place the picked block. Sneak-right-click: open. Sneak-right-click an Architect Table: move the matter into it',
+    'tooltip.robotica.pocket_architect_matter': '%s %s',
+    'tooltip.robotica.pocket_architect_places': 'Places: %s',
+    'gui.robotica.pocket_architect_junk': 'Junk',
+    'gui.robotica.pocket_architect_junk_slot': 'Click with an item to add it, click to remove it',
+    'gui.robotica.pocket_architect_junk_on': 'Eat junk: ON',
+    'gui.robotica.pocket_architect_junk_off': 'Eat junk: OFF',
+    'gui.robotica.pocket_architect_junk_tip': 'Junk you pick up turns into matter',
+    'gui.robotica.pocket_architect_feed': 'Wood, stone and dirt turn into matter',
+    'gui.robotica.pocket_architect_feed_mk2': 'Wood, stone, ingots, glass and more turn into matter',
+    'gui.robotica.pocket_architect_cost': 'Per block: %s rustic',
+    'gui.robotica.pocket_architect_cost_refined': 'Per block: %s rustic, %s refined',
+    'gui.robotica.pocket_architect_needs_mk2': 'Needs a Pocket Architect Mk2',
+    'gui.robotica.pocket_architect_take': 'Click: take 1. Shift-click: take 64',
+    'gui.robotica.pocket_architect_pick': 'Right-click: pick it for placing',
+    'gui.robotica.pocket_architect_unpick': 'Right-click: unpick it',
+    'message.robotica.pocket_architect_locked': 'That style needs a Pocket Architect Mk2',
+    'message.robotica.pocket_architect_full': 'Inventory full',
+    'message.robotica.pocket_architect_no_rustic': 'Not enough rustic matter',
+    'message.robotica.pocket_architect_no_refined': 'Not enough refined matter',
+    'message.robotica.pocket_architect_empty': 'The Pocket Architect is empty',
+    'message.robotica.pocket_architect_table_full': 'The table is full',
+    'message.robotica.pocket_architect_moved': 'Moved %s rustic and %s refined into the table',
+    'message.robotica.pocket_architect_not_junk': 'Only items worth matter can be junk',
+    'message.robotica.pocket_architect_not_junk_mk1': 'The Mk1 only takes items worth rustic matter',
 })
 # keep keys added by hand (demolish, config) and overwrite only the generated ones
 _lang_file = FRAG / 'assets/robotica/lang/en_us.json'

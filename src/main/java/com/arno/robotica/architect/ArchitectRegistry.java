@@ -11,6 +11,9 @@ import com.arno.robotica.architect.block.StyleWindowBlock;
 import com.arno.robotica.architect.entity.BuilderDrone;
 import com.arno.robotica.architect.matter.Matter;
 import com.arno.robotica.architect.menu.ArchitectMenu;
+import com.arno.robotica.architect.pocket.PocketArchitectItem;
+import com.arno.robotica.architect.pocket.PocketMenu;
+import com.arno.robotica.architect.pocket.PocketSettings;
 import com.arno.robotica.architect.style.BuildStyle;
 import com.arno.robotica.architect.style.Role;
 import com.arno.robotica.core.RoboticaTab;
@@ -22,6 +25,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -59,9 +63,18 @@ public final class ArchitectRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> BUILD_STATE_COMPONENT =
             COMPONENTS.registerComponentType("architect_build", b -> b.persistent(CompoundTag.CODEC).networkSynchronized(ByteBufCodecs.COMPOUND_TAG));
 
+    /** Picked block, junk toggle and junk list of a Pocket Architect (its matter uses {@link #MATTER_COMPONENT}). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PocketSettings>> POCKET_SETTINGS =
+            COMPONENTS.registerComponentType("pocket_architect", b -> b.persistent(PocketSettings.CODEC).networkSynchronized(PocketSettings.STREAM_CODEC));
+
     public static final DeferredBlock<ArchitectTableBlock> ARCHITECT_TABLE = BLOCKS.registerBlock("architect_table", ArchitectTableBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL));
     public static final DeferredItem<BlockItem> ARCHITECT_TABLE_ITEM = ITEMS.registerSimpleBlockItem(ARCHITECT_TABLE);
+
+    public static final DeferredItem<PocketArchitectItem> POCKET_ARCHITECT = ITEMS.registerItem("pocket_architect",
+            p -> new PocketArchitectItem(p, false));
+    public static final DeferredItem<PocketArchitectItem> POCKET_ARCHITECT_MK2 = ITEMS.registerItem("pocket_architect_mk2",
+            p -> new PocketArchitectItem(p.rarity(Rarity.UNCOMMON), true));
 
     private static final Map<BuildStyle, Map<Role, DeferredBlock<Block>>> STYLE_BLOCKS = new EnumMap<>(BuildStyle.class);
     private static final Map<BuildStyle, Map<Role, DeferredItem<BlockItem>>> STYLE_ITEMS = new EnumMap<>(BuildStyle.class);
@@ -147,6 +160,9 @@ public final class ArchitectRegistry {
     public static final DeferredHolder<MenuType<?>, MenuType<ArchitectMenu>> ARCHITECT_MENU =
             MENUS.register("architect_table", () -> IMenuTypeExtension.create((id, inv, buf) -> new ArchitectMenu(id, inv, buf.readBlockPos())));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<PocketMenu>> POCKET_MENU =
+            MENUS.register("pocket_architect", () -> IMenuTypeExtension.create((id, inv, buf) -> new PocketMenu(id, inv, buf)));
+
     public static final DeferredHolder<EntityType<?>, EntityType<BuilderDrone>> BUILDER_DRONE =
             ENTITIES.register("builder_drone", () -> EntityType.Builder.<BuilderDrone>of(BuilderDrone::new, MobCategory.MISC)
                     .sized(0.4F, 0.4F).noSave().noSummon().fireImmune().clientTrackingRange(10).updateInterval(2)
@@ -162,6 +178,8 @@ public final class ArchitectRegistry {
         COMPONENTS.register(modBus);
 
         RoboticaTab.add(ARCHITECT_TABLE_ITEM);
+        RoboticaTab.add(POCKET_ARCHITECT);
+        RoboticaTab.add(POCKET_ARCHITECT_MK2);
         for (BuildStyle style : BuildStyle.values()) {
             for (Role role : Role.values()) RoboticaTab.add(styleItem(style, role));
         }

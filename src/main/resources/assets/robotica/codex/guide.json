@@ -169,6 +169,12 @@
       "age": 2
     },
     {
+      "id": "robotica:guide/pocket_architect",
+      "parent": "robotica:guide/basic_circuit",
+      "icon": "robotica:pocket_architect",
+      "age": 2
+    },
+    {
       "id": "robotica:guide/diamonds",
       "parent": "robotica:guide/basic_circuit",
       "icon": "minecraft:diamond",

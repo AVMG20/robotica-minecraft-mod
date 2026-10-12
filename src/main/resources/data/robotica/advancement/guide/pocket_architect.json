@@ -1,0 +1,44 @@
+{
+  "parent": "robotica:guide/basic_circuit",
+  "display": {
+    "icon": {
+      "id": "robotica:pocket_architect"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.pocket_architect.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.pocket_architect.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:ender_eye",
+              "robotica:pocket_architect"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "robotica:pocket_architect"
+    ],
+    "experience": 10
+  }
+}

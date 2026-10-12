@@ -2,6 +2,7 @@ package com.arno.robotica.architect.client;
 
 import com.arno.robotica.architect.ArchitectRegistry;
 import com.arno.robotica.architect.client.screen.ArchitectScreen;
+import com.arno.robotica.architect.client.screen.PocketScreen;
 import com.arno.robotica.architect.matter.Matter;
 import com.arno.robotica.architect.matter.MatterTable;
 import net.minecraft.ChatFormatting;
@@ -26,6 +27,7 @@ public final class ArchitectClient {
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ArchitectRegistry.ARCHITECT_MENU.get(), ArchitectScreen::new);
+        event.register(ArchitectRegistry.POCKET_MENU.get(), PocketScreen::new);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

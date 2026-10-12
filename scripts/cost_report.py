@@ -194,7 +194,9 @@ def age_of(name):
 def ing_key(i):
     if isinstance(i, list):
         i = i[0]
-    return ('#' + i['tag']) if 'tag' in i else i['item']
+    if 'tag' in i:
+        return '#' + i['tag']
+    return i['item'] if 'item' in i else i['items']  # neoforge:components
 
 
 def load_recipes():
