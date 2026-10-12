@@ -6,10 +6,12 @@ import com.arno.robotica.warp.WarpTravel;
 import com.arno.robotica.warp.pad.WarpPadBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -22,7 +24,7 @@ import java.util.UUID;
 /**
  * Server side wind-up of a trip picked in a GUI, keyed by player UUID: a pad trip (1 second, the player stays on the
  * pad) or a remote trip from the pad list (3 seconds, the remote stays in hand). Damage cancels it (WarpEvents).
- * Cleared on logout and server stop. The held charge of "go home" is the vanilla item use instead.
+ * Cleared on logout, death, a dimension change and server stop. The held charge of "go home" is the vanilla item use instead.
  */
 public final class WarpCharges {
     private WarpCharges() {}
@@ -31,6 +33,7 @@ public final class WarpCharges {
 
     private static final class Charge {
         final UUID destination;
+        final ResourceKey<Level> dimension;
         @Nullable
         final InteractionHand hand;
         @Nullable
@@ -38,8 +41,9 @@ public final class WarpCharges {
         final int total;
         int elapsed;
 
-        Charge(UUID destination, @Nullable InteractionHand hand, @Nullable BlockPos pad, int total) {
+        Charge(UUID destination, ResourceKey<Level> dimension, @Nullable InteractionHand hand, @Nullable BlockPos pad, int total) {
             this.destination = destination;
+            this.dimension = dimension;
             this.hand = hand;
             this.pad = pad;
             this.total = total;
@@ -52,12 +56,12 @@ public final class WarpCharges {
 
     /** Remote list trip: 3 seconds with the remote in {@code hand}. */
     public static void startRemote(ServerPlayer player, InteractionHand hand, UUID pad) {
-        CHARGES.put(player.getUUID(), new Charge(pad, hand, null, com.arno.robotica.warp.item.RemoteItem.CHARGE_TICKS));
+        CHARGES.put(player.getUUID(), new Charge(pad, player.level().dimension(), hand, null, com.arno.robotica.warp.item.RemoteItem.CHARGE_TICKS));
     }
 
     /** Pad trip: 1 second standing on the pad at {@code pad}. */
     public static void startPad(ServerPlayer player, BlockPos pad, UUID destination) {
-        CHARGES.put(player.getUUID(), new Charge(destination, null, pad.immutable(), PAD_TICKS));
+        CHARGES.put(player.getUUID(), new Charge(destination, player.level().dimension(), null, pad.immutable(), PAD_TICKS));
     }
 
     public static boolean isCharging(UUID player) {
@@ -114,6 +118,7 @@ public final class WarpCharges {
     }
 
     private static boolean stillValid(ServerPlayer player, Charge charge) {
+        if (player.level().dimension() != charge.dimension) return false;
         if (charge.pad != null) {
             return player.level().getBlockEntity(charge.pad) instanceof WarpPadBlockEntity && WarpTravel.standingOn(player, charge.pad);
         }
