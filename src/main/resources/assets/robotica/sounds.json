@@ -113,10 +113,10 @@
     "subtitle": "subtitles.robotica.machine_start",
     "sounds": [
       {
-        "name": "robotica:machine/start",
+        "name": "minecraft:block/copper_bulb/toggle",
         "type": "file",
-        "volume": 0.25,
-        "pitch": 1.0
+        "volume": 0.4,
+        "pitch": 1.2
       }
     ]
   },
@@ -124,10 +124,10 @@
     "subtitle": "subtitles.robotica.machine_stop",
     "sounds": [
       {
-        "name": "robotica:machine/stop",
+        "name": "minecraft:block/copper_bulb/toggle",
         "type": "file",
-        "volume": 0.35,
-        "pitch": 1.0
+        "volume": 0.4,
+        "pitch": 0.85
       }
     ]
   },
@@ -225,10 +225,10 @@
     "subtitle": "subtitles.robotica.rtg_hum",
     "sounds": [
       {
-        "name": "robotica:machine/hum",
+        "name": "robotica:machine/geiger",
         "type": "file",
-        "volume": 0.3,
-        "pitch": 0.8
+        "volume": 0.4,
+        "pitch": 1.0
       }
     ]
   },
@@ -236,10 +236,10 @@
     "subtitle": "subtitles.robotica.charger_hum",
     "sounds": [
       {
-        "name": "robotica:machine/hum",
+        "name": "minecraft:block/amethyst/shimmer",
         "type": "file",
         "volume": 0.3,
-        "pitch": 1.5
+        "pitch": 1.3
       }
     ]
   },

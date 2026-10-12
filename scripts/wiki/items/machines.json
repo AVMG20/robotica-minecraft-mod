@@ -487,9 +487,19 @@
   },
   {
    "items": [
-    "supply_crate"
+    "supply_crate",
+    "supply_crate_mk2",
+    "supply_crate_mk3",
+    "supply_crate_mk4"
    ],
-   "what": "27-slot crate. Robots and machines touching it put their drops in."
+   "what": "Storage crate. Robots and machines touching it put their drops in.",
+   "use": [
+    "Right-click it with the next Mk to upgrade it in place; the items stay."
+   ],
+   "stats": {
+    "columns": ["Mk1", "Mk2", "Mk3", "Mk4"],
+    "rows": [["Slots", "27", "54", "84", "108"]]
+   }
   },
   {
    "items": [

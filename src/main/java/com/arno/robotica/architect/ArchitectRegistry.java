@@ -68,7 +68,7 @@ public final class ArchitectRegistry {
             COMPONENTS.registerComponentType("pocket_architect", b -> b.persistent(PocketSettings.CODEC).networkSynchronized(PocketSettings.STREAM_CODEC));
 
     public static final DeferredBlock<ArchitectTableBlock> ARCHITECT_TABLE = BLOCKS.registerBlock("architect_table", ArchitectTableBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL));
+            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 6.0F).sound(SoundType.METAL).noOcclusion());
     public static final DeferredItem<BlockItem> ARCHITECT_TABLE_ITEM = ITEMS.registerSimpleBlockItem(ARCHITECT_TABLE);
 
     public static final DeferredItem<PocketArchitectItem> POCKET_ARCHITECT = ITEMS.registerItem("pocket_architect",

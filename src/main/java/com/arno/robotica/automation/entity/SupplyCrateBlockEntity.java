@@ -1,6 +1,7 @@
 package com.arno.robotica.automation.entity;
 
 import com.arno.robotica.automation.AutomationContent;
+import com.arno.robotica.automation.block.SupplyCrateBlock;
 import com.arno.robotica.automation.menu.SupplyCrateMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -16,19 +17,25 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-/** 27-slot chest-like storage with an item capability on every side. */
+/** Chest-like storage with an item capability on every side; the slot count comes from the crate's Mk. */
 public class SupplyCrateBlockEntity extends BlockEntity implements MenuProvider {
-    public static final int SLOTS = 27;
-
-    public final ItemStackHandler items = new ItemStackHandler(SLOTS) {
-        @Override
-        protected void onContentsChanged(int slot) {
-            setChanged();
-        }
-    };
+    public final ItemStackHandler items;
 
     public SupplyCrateBlockEntity(BlockPos pos, BlockState state) {
         super(AutomationContent.SUPPLY_CRATE_BE.get(), pos, state);
+        int slots = state.getBlock() instanceof SupplyCrateBlock crate ? crate.slots() : 27;
+        this.items = new ItemStackHandler(slots) {
+            @Override
+            protected void onContentsChanged(int slot) {
+                setChanged();
+            }
+
+            @Override
+            public void setSize(int size) {
+                // Loading resizes to the saved size; the slot count belongs to the block, so keep it.
+                super.setSize(slots);
+            }
+        };
     }
 
     public void dropContents() {
@@ -40,7 +47,7 @@ public class SupplyCrateBlockEntity extends BlockEntity implements MenuProvider 
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.robotica.supply_crate");
+        return getBlockState().getBlock().getName();
     }
 
     @Nullable

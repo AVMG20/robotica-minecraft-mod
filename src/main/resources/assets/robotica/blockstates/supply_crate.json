@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=north": {
       "model": "robotica:block/supply_crate"
+    },
+    "facing=east": {
+      "model": "robotica:block/supply_crate",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "robotica:block/supply_crate",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "robotica:block/supply_crate",
+      "y": 270
     }
   }
 }

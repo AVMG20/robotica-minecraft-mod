@@ -20,7 +20,8 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import ASSETS, MATERIALS, Canvas, write_block, write_item, write_png  # noqa: E402
+from pixelart import ASSETS, MATERIALS, Canvas, write_anim, write_block, write_item, write_png  # noqa: E402
+import machine_casing as casing  # noqa: E402
 
 # Glass glints shared by every window; light diffusers use f (edge) g (body) h (centre), nothing else does.
 CLEAN = {
@@ -330,52 +331,94 @@ def panel_light():
 
 # ---------------------------------------------------------------- Architect Table
 
-TABLE = {
-    'i': '#8D969B', 'I': '#C2CBCF', 'j': '#5A6367', 'k': '#2A3033',
-    'c': '#C87533', 'C': '#E8A060', 'd': '#8A4A22',
-    'b': '#2B5C8F', 'B': '#3E78B4', 'w': '#E6F0FF', 'y': '#5FE3F0', 'Y': '#D8FBFF',
-    'o': '#A97A44', 'O': '#C9985C',
-}
+# A design station in the machine set's language (model: scripts/data/architect_models.py): a light steel tabletop
+# with copper corner caps, graphite corner posts and plinth, and a body set 1 px back between the posts whose four
+# sides are azure tinted glass with a white elevation drawing of a house. The tabletop holds a holo blueprint 1 px
+# deep: a floor plan on a grid, full-bright, with a scan line sweeping across it (the table has no idle state).
+# Identity colour: blueprint azure. Chars on top of the casing palette (abcde light steel, fghij copper):
+#   12345  graphite (posts, plinth, bezel)   A..F  holo blueprint, deep -> white
+#   G H    side glass, its glare             I J   drawing lines, bright / dim     M N  light strip on the tabletop edge
 
-
-def table_top():
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'j').bevel(0, 0, 16, 16, 'I', 'k')
-    c.rect(1, 1, 14, 14, 'c').bevel(1, 1, 14, 14, 'C', 'd')
-    c.rect(2, 2, 12, 12, 'b')
-    for i in range(2, 14, 3):
-        c.rect(i, 2, 1, 12, 'B').rect(2, i, 12, 1, 'B')
-    # 5x5 plot grid with the table plot in the middle
-    for gy in range(5):
-        for gx in range(5):
-            x, y = 3 + gx * 2, 3 + gy * 2
-            c.rect(x, y, 2, 2, 'w' if (gx, gy) != (2, 2) else 'y')
-            c.rect(x, y, 1, 1, 'b' if (gx, gy) != (2, 2) else 'Y')
-    c.set(2, 2, 'I')
-    return c.rows()
+TABLE = casing.casing_palette(
+    casing.INDUSTRY_TIERS[1], a='#4A535B', b='#6F7A83', c='#9AA5AE', d='#C4CDD4', e='#EBF0F3',
+    **dict(zip('12345', casing.GRAPHITE)),
+    A='#123A6E', B='#1D5296', C='#3A7CD0', D='#7DB6FF', E='#C4E0FF', F='#FFFFFF',
+    G='#3C73B6', H='#6497D4', I='#D5E8FF', J='#8DB7E8', M='#4F8BD6', N='#A6CEFF')
+HOLO_FRAMES, HOLO_FRAMETIME = 32, 2           # one sweep across the blueprint: 64 ticks
 
 
 def table_side():
+    """One side as seen: tabletop edge (rows 0-2), posts (cols 0-1, 14-15) and the glass body between them
+    (rows 3-13), plinth (rows 14-15). The model maps each element onto its part of this picture."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'i').bevel(0, 0, 16, 16, 'I', 'j')
-    c.rect(0, 0, 16, 3, 'c').bevel(0, 0, 16, 3, 'C', 'd')
-    c.rect(2, 5, 12, 9, 'j').frame(2, 5, 12, 9, 'k')
-    c.rect(3, 6, 10, 7, 'b')
-    c.rect(3, 6, 10, 1, 'O').rect(3, 6, 1, 7, 'O')
-    c.rect(6, 8, 5, 3, 'w').frame(6, 8, 5, 3, 'w').rect(7, 9, 3, 1, 'b')
-    c.set(12, 12, 'y').set(11, 12, 'B')
-    for x in (1, 14):
-        c.set(x, 4, 'I').set(x, 14, 'j')
+    c.rect(0, 0, 16, 3, 'c').rect(0, 0, 16, 1, 'd').rect(0, 2, 16, 1, 'b')          # tabletop edge
+    c.rect(4, 1, 8, 1, 'N').set(4, 1, 'M').set(11, 1, 'M')                          # azure light strip (full-bright overlay)
+    for x0, s in ((0, 1), (15, -1)):                                                # copper corner caps
+        c.set(x0, 0, 'K').set(x0 + s, 0, 'j').set(x0 + 2 * s, 0, 'i')
+        c.set(x0, 1, 'h').set(x0 + s, 1, 'h').set(x0 + 2 * s, 1, 'g')
+        c.set(x0, 2, 'g').set(x0 + s, 2, 'f').set(x0 + 2 * s, 2, 'f')
+    c.rect(1, 3, 14, 11, 'c').bevel(2, 3, 12, 11, 'd', 'b')                         # body frame
+    c.rect(3, 4, 10, 9, 'G')                                                        # tinted glass
+    c.set(11, 4, 'H').set(12, 4, 'H').set(12, 5, 'H')                               # glare
+    c.rect(3, 12, 10, 1, 'J')                                                       # ground line
+    c.line(4, 8, 7, 5, 'I').line(8, 5, 11, 8, 'I').rect(4, 8, 8, 1, 'I')            # gable roof
+    c.rect(4, 9, 1, 3, 'I').rect(11, 9, 1, 3, 'I')                                  # walls
+    c.rect(7, 10, 2, 2, 'I')                                                        # door
+    c.set(5, 10, 'J').set(10, 10, 'J').set(6, 10, 'J').set(9, 10, 'J')              # windows
+    c.rect(7, 7, 2, 1, 'J')                                                         # attic window
+    for x, hi, lo in ((0, '4', '2'), (14, '3', '2')):                               # graphite posts
+        c.rect(x, 3, 1, 11, hi).rect(x + 1, 3, 1, 11, lo)
+        c.rect(x, 3, 2, 1, 'g').rect(x, 13, 2, 1, 'f').set(x, 3, 'h')               # copper collars
+    c.rect(0, 14, 16, 1, '3').rect(0, 15, 16, 1, '2')                               # plinth
+    c.rect(0, 14, 2, 2, 'g').rect(14, 14, 2, 2, 'g').set(0, 14, 'h').set(14, 14, 'h')
+    c.set(0, 15, 'K').set(15, 15, 'K')
+    return c.rows()
+
+
+def table_top():
+    """Tabletop: the light steel casing frame round the blueprint opening (cols/rows 2-13 transparent)."""
+    c = casing.shell(1)
+    c.rect(2, 2, 12, 12, '.')
     return c.rows()
 
 
 def table_bottom():
+    """Underside; the model also uses it for the plinth top, the tabletop underside and the blueprint bezel."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'j').bevel(0, 0, 16, 16, 'i', 'k')
-    c.rect(2, 2, 12, 12, 'i').bevel(2, 2, 12, 12, 'I', 'j')
-    for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
-        c.set(x, y, 'k')
+    c.rect(0, 0, 16, 16, '2').bevel(0, 0, 16, 16, '3', '1')
+    c.rect(3, 3, 10, 10, '1').bevel(3, 3, 10, 10, '1', '3')
+    for x, y in ((1, 1), (13, 1), (1, 13), (13, 13)):
+        c.rect(x, y, 2, 2, 'f').set(x, y, 'h')
     return c.rows()
+
+
+# Floor plan in the blueprint (x/y 4..11): outer walls with a doorway, an inner wall with a gap
+PLAN_WALLS = ([(x, 4) for x in range(4, 12)] + [(x, 11) for x in range(4, 12) if x not in (7, 8)]
+              + [(4, y) for y in range(4, 12)] + [(11, y) for y in range(4, 12)])
+PLAN_INNER = [(8, y) for y in range(5, 11) if y not in (7, 8)]
+PLAN_MARKS = [(2, 2), (3, 2), (2, 3), (13, 2), (12, 2), (13, 3), (2, 13), (3, 13), (2, 12), (13, 13), (12, 13), (13, 12)]
+
+
+def table_holo(frame):
+    """The blueprint (x/y 2..13): grid, floor plan and corner marks, brightened behind a scan line sweeping top to
+    bottom (12 rows plus a 4 row pause, half a row per frame; the mcmeta interpolates between frames)."""
+    ramp = 'ABCDEF'
+    c = Canvas()
+    c.rect(2, 2, 12, 12, 'A')
+    for i in (4, 7, 10):                                                            # grid
+        c.rect(2, i, 12, 1, 'B').rect(i, 2, 1, 12, 'B')
+    c.rect(5, 5, 6, 6, 'B')                                                         # building footprint
+    for x, y in PLAN_MARKS + PLAN_INNER:
+        c.set(x, y, 'C' if (x, y) in PLAN_MARKS else 'D')
+    for x, y in PLAN_WALLS:
+        c.set(x, y, 'E')
+    head = 2 + frame * 16 / HOLO_FRAMES                                             # scan line row, 2 .. 18
+    for y in range(2, 14):
+        d = head - y
+        boost = 2 if 0 <= d < 1 else 1 if 1 <= d < 3 else 0
+        for x in range(2, 14) if boost else ():
+            c.set(x, y, ramp[min(5, ramp.index(c.get(x, y)) + boost)])
+    return c
 
 
 # ---------------------------------------------------------------- builder drone (32x32 entity texture)
@@ -470,6 +513,9 @@ def main():
     write_block('architect_table_top', table_top(), TABLE)
     write_block('architect_table_side', table_side(), TABLE)
     write_block('architect_table_bottom', table_bottom(), TABLE)
+    write_block('architect_table_side_glow', glow_only(table_side(), 'MN'), TABLE)
+    write_anim('block', 'architect_table_holo', [table_holo(f) for f in range(HOLO_FRAMES)], TABLE,
+               frametime=HOLO_FRAMETIME, interpolate=True)
     write_png(ASSETS / 'textures/entity/builder_drone.png', drone_texture(), DRONE, size=32)
     write_item('pocket_architect', pocket(False), pocket_palette(False))
     write_item('pocket_architect_mk2', pocket(True), pocket_palette(True))

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " G ",
+    "GXG",
+    " G "
+  ],
+  "key": {
+    "G": {
+      "tag": "c:ingots/gold"
+    },
+    "X": {
+      "item": "robotica:supply_crate_mk2"
+    }
+  },
+  "result": {
+    "id": "robotica:supply_crate_mk3",
+    "count": 1
+  }
+}

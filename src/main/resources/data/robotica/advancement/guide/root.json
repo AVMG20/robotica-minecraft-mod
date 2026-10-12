@@ -42,7 +42,10 @@
       "robotica:tinkers_hammer",
       "robotica:felling_axe",
       "robotica:gearblade",
-      "robotica:supply_crate"
+      "robotica:supply_crate",
+      "robotica:supply_crate_mk2",
+      "robotica:supply_crate_mk3",
+      "robotica:supply_crate_mk4"
     ]
   }
 }

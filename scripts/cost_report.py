@@ -128,7 +128,7 @@ TAGS = {
 
 # --- ages ---------------------------------------------------------------------------------------------------------
 AGE = {
-    0: ['copper_gear', 'mainspring', 'clockwork_mechanism', 'wooden_chassis', 'stumpy', 'sprout', 'supply_crate',
+    0: ['copper_gear', 'mainspring', 'clockwork_mechanism', 'wooden_chassis', 'stumpy', 'sprout', 'supply_crate', 'supply_crate_mk*',
         'winding_crank', 'tinkers_hammer', 'felling_axe', 'gearblade', 'codex', 'timberframe_*', 'dark_stone_*'],
     1: ['iron_plate', 'copper_plate', 'gold_plate', 'copper_coil', 'iron_casing', 'basic_circuit', 'electric_motor',
         'copper_cell', 'combustion_generator', 'solar_panel_mk1', 'accumulator_1', 'tesla_linker', 'tesla_coil_1', 'tesla_emitter_1', 'tesla_coil_2', 'tesla_emitter_2',
