@@ -122,7 +122,7 @@ public final class IndustryRegistry {
             List<DeferredItem<BlockItem>> items = new ArrayList<>();
             for (int tier = 1; tier <= Machine.TIERS; tier++) {
                 int t = tier;
-                DeferredBlock<ProcessingBlock> block = BLOCKS.registerBlock(machine.id(tier), p -> new ProcessingBlock(p, machine, t), machine());
+                DeferredBlock<ProcessingBlock> block = BLOCKS.registerBlock(machine.id(tier), p -> new ProcessingBlock(p, machine, t), machine().noOcclusion());
                 blocks.add(block);
                 Rarity rarity = tier >= 4 ? Rarity.RARE : tier == 3 ? Rarity.UNCOMMON : Rarity.COMMON;
                 items.add(ITEMS.registerItem(machine.id(tier), p -> new BlockItem(block.get(), p.rarity(rarity))));
@@ -136,7 +136,7 @@ public final class IndustryRegistry {
         }
     }
 
-    public static final DeferredBlock<RtgBlock> RTG = BLOCKS.registerBlock("rtg", RtgBlock::new, machine());
+    public static final DeferredBlock<RtgBlock> RTG = BLOCKS.registerBlock("rtg", RtgBlock::new, machine().noOcclusion());
     public static final DeferredItem<BlockItem> RTG_ITEM = ITEMS.registerSimpleBlockItem(RTG);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RtgBlockEntity>> RTG_BE =
             BLOCK_ENTITIES.register("rtg", () -> BlockEntityType.Builder.of(RtgBlockEntity::new, RTG.get()).build(null));

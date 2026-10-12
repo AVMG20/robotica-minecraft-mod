@@ -4,11 +4,13 @@
   "textures": {
     "north": "robotica:block/combustion_generator_front",
     "up": "robotica:block/combustion_generator_top",
-    "down": "robotica:block/power_machine_bottom",
-    "south": "robotica:block/power_machine_side",
-    "west": "robotica:block/power_machine_side",
-    "east": "robotica:block/power_machine_side",
-    "particle": "robotica:block/power_machine_side"
+    "down": "robotica:block/combustion_generator_bottom",
+    "south": "robotica:block/combustion_generator_side",
+    "west": "robotica:block/combustion_generator_side",
+    "east": "robotica:block/combustion_generator_side",
+    "particle": "robotica:block/combustion_generator_side",
+    "chamber": "robotica:block/combustion_generator_chamber",
+    "glass": "robotica:block/combustion_generator_glass"
   },
   "elements": [
     {
@@ -46,6 +48,144 @@
         "east": {
           "texture": "#east",
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        2
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chamber",
+          "uv": [
+            3,
+            3,
+            13,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        0
+      ],
+      "to": [
+        3,
+        13,
+        2
+      ],
+      "faces": {
+        "east": {
+          "texture": "#chamber",
+          "uv": [
+            14,
+            3,
+            16,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        5,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "west": {
+          "texture": "#chamber",
+          "uv": [
+            0,
+            3,
+            2,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        0
+      ],
+      "to": [
+        13,
+        5,
+        2
+      ],
+      "faces": {
+        "up": {
+          "texture": "#chamber",
+          "uv": [
+            13,
+            0,
+            3,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        13,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "down": {
+          "texture": "#chamber",
+          "uv": [
+            13,
+            14,
+            3,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        0.5
+      ],
+      "to": [
+        13,
+        13,
+        0.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            3,
+            3,
+            13,
+            11
+          ]
         }
       }
     }

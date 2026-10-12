@@ -4,13 +4,13 @@
   "textures": {
     "north": "robotica:block/wireless_charger_front",
     "up": "robotica:block/wireless_charger_top",
-    "down": "robotica:block/power_machine_bottom",
-    "south": "robotica:block/power_machine_side",
-    "west": "robotica:block/power_machine_side",
-    "east": "robotica:block/power_machine_side",
-    "particle": "robotica:block/power_machine_side",
+    "down": "robotica:block/wireless_charger_bottom",
+    "south": "robotica:block/wireless_charger_side",
+    "west": "robotica:block/wireless_charger_side",
+    "east": "robotica:block/wireless_charger_side",
+    "particle": "robotica:block/wireless_charger_side",
     "mast": "robotica:block/wireless_charger_mast",
-    "ball": "robotica:block/tesla_coil_tip"
+    "orb": "robotica:block/wireless_charger_orb"
   },
   "elements": [
     {
@@ -64,19 +64,49 @@
       ],
       "faces": {
         "north": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
         },
         "south": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
         },
         "west": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
         },
         "east": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
         },
         "up": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
         }
       }
     },
@@ -93,16 +123,72 @@
       ],
       "faces": {
         "north": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
         },
         "south": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
         },
         "west": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
         },
         "east": {
-          "texture": "#mast"
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        18,
+        5
+      ],
+      "to": [
+        11,
+        18,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#mast",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#mast",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
         }
       }
     },
@@ -117,10 +203,9 @@
         22,
         9.25
       ],
-      "shade": true,
       "faces": {
         "down": {
-          "texture": "#ball",
+          "texture": "#orb",
           "uv": [
             5,
             5,
@@ -129,7 +214,7 @@
           ]
         },
         "up": {
-          "texture": "#ball",
+          "texture": "#orb",
           "uv": [
             5,
             5,
@@ -138,7 +223,7 @@
           ]
         },
         "north": {
-          "texture": "#ball",
+          "texture": "#orb",
           "uv": [
             5,
             5,
@@ -147,7 +232,7 @@
           ]
         },
         "south": {
-          "texture": "#ball",
+          "texture": "#orb",
           "uv": [
             5,
             5,
@@ -156,7 +241,7 @@
           ]
         },
         "west": {
-          "texture": "#ball",
+          "texture": "#orb",
           "uv": [
             5,
             5,
@@ -165,7 +250,7 @@
           ]
         },
         "east": {
-          "texture": "#ball",
+          "texture": "#orb",
           "uv": [
             5,
             5,

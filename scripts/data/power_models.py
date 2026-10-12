@@ -2,6 +2,10 @@
 Run: python3 scripts/data/power_models.py   (overwrites files named after power blocks only)"""
 import json
 import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from machine_models import machine_model as casing_model  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ASSETS = ROOT / 'src/main/resources/assets/robotica'
@@ -82,45 +86,126 @@ def machine_model(textures, glow=None):
     return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': tex_vars, 'elements': elements}
 
 
-MACHINES = {
-    # name: (top off, top on, glow on top when lit)
-    'combustion_generator': ('combustion_generator_top', 'combustion_generator_top_on', None),
-    'metal_press': ('metal_press_top', 'metal_press_top', None),
-    'charger': ('charger_top', 'charger_top_on', 'charger_top_glow'),
-}
-for name, (top, top_on, top_glow) in MACHINES.items():
+# ---------- combustion generator: the shared casing in the generators' gunmetal with a fire window 2 px deep in the
+# front (GEN_BAY in scripts/textures/power.py: x 3..12, y 3..10 of the front texture); the firebox faces come from one
+# chamber texture (GEN_PARTS there), full-bright while working; idle, a glass pane in front shows its glare.
+def generator_model(lit):
+    faces = {'north': 'combustion_generator_front' + ('_on' if lit else ''), 'up': 'combustion_generator_top',
+             'down': 'combustion_generator_bottom', 'south': 'combustion_generator_side',
+             'west': 'combustion_generator_side', 'east': 'combustion_generator_side'}
+    x0, x1, y0, y1, z = 3, 13, 5, 13, 2                                   # bay in model space
+
+    def face(d, uv):
+        return {'from': [x0 if d != 'west' else x1, y0 if d != 'down' else y1, 0 if d != 'north' else z],
+                'to': [x1 if d != 'east' else x0, y1 if d != 'up' else y0, z],
+                'faces': {d: {'texture': '#chamber', 'uv': uv}}, 'glow': lit}
+    bay = [face('north', [3, 3, 13, 11]), face('east', [14, 3, 16, 11]), face('west', [0, 3, 2, 11]),
+           face('up', [13, 0, 3, 2]), face('down', [13, 14, 3, 16])]
+    textures = {'chamber': 'combustion_generator_chamber' + ('_on' if lit else '')}
+    if not lit:                                                           # the fire outshines the glass glare
+        bay.append({'from': [x0, y0, 0.5], 'to': [x1, y1, 0.5],
+                    'faces': {'north': {'texture': '#glass', 'uv': [3, 3, 13, 11]}}})
+        textures['glass'] = 'combustion_generator_glass'
+    glow = {'north': 'combustion_generator_front_glow', 'up': 'combustion_generator_top_glow'} if lit else None
+    return casing_model(faces, glow, bay, textures, lit=lit)
+
+
+# ---------- charger: the shared casing in light steel with a charging dock 2 px deep in the front (dock texture layout in
+# scripts/textures/power.py): back wall at z 2, four walls, and the power cell standing 1.5 px proud of the back wall.
+# Working, a full-bright glow on the back wall and the cell.
+def charger_model(lit):
+    faces = {'north': 'charger_front' + ('_on' if lit else ''), 'up': 'charger_top', 'down': 'charger_bottom',
+             'south': 'charger_side', 'west': 'charger_side', 'east': 'charger_side'}
+    d = '#dock'
+    elements = [
+        {'from': [3, 4, 2], 'to': [13, 13, 3], 'faces': {'north': {'texture': d, 'uv': [3, 3, 13, 12]}}},
+        {'from': [3, 13, 0], 'to': [13, 14, 2], 'faces': {'down': {'texture': d, 'uv': [13, 1, 3, 2]}}},
+        {'from': [3, 3, 0], 'to': [13, 4, 2], 'faces': {'up': {'texture': d, 'uv': [13, 14, 3, 15]}}},
+        {'from': [13, 4, 0], 'to': [14, 13, 2], 'faces': {'west': {'texture': d, 'uv': [1, 3, 2, 12]}}},
+        {'from': [2, 4, 0], 'to': [3, 13, 2], 'faces': {'east': {'texture': d, 'uv': [14, 3, 15, 12]}}},
+        {'from': [5, 5, 0.5], 'to': [11, 12, 2], 'faces': {'north': {'texture': d, 'uv': [5, 4, 11, 11]},
+                                                        'up': {'texture': d, 'uv': [5, 12, 11, 13]},
+                                                        'east': {'texture': d, 'uv': [2, 4, 3, 11]},
+                                                        'west': {'texture': d, 'uv': [2, 4, 3, 11]}}},
+    ]
+    textures = {'dock': 'charger_dock'}
+    if lit:
+        textures['dock_glow'] = 'charger_dock_glow'
+        elements += [
+            {'from': [3, 4, 1.99], 'to': [13, 13, 2], 'glow': True,
+             'faces': {'north': {'texture': '#dock_glow', 'uv': [3, 3, 13, 12]}}},
+            {'from': [5, 5, 0.49], 'to': [11, 12, 0.5], 'glow': True,
+             'faces': {'north': {'texture': '#dock_glow', 'uv': [5, 4, 11, 11]}}},
+        ]
+    glow = {'north': 'charger_front_glow', 'up': 'charger_top_glow'} if lit else None
+    return casing_model(faces, glow, elements, textures, lit=lit)
+
+
+for name, model_fn in (('combustion_generator', generator_model), ('charger', charger_model)):
     for lit in (False, True):
-        faces = {'north': f'{name}_front' + ('_on' if lit else ''), 'up': top_on if lit else top,
-                 'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
-                 'east': 'power_machine_side'}
-        glow = None
-        if lit:
-            glow = {'north': f'{name}_front_glow'}
-            if top_glow:
-                glow['up'] = top_glow
-        block_model(name + ('_on' if lit else ''), machine_model(faces, glow))
+        block_model(name + ('_on' if lit else ''), model_fn(lit))
     blockstate(name, {'variants': facing_variants(lambda c, n=name: n + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
     item_model(name, f'robotica:block/{name}')
     loot(name)
 
-# ---------- wireless charger: the machine cube plus an emitter mast with a ball on top (full bright when lit) ----------
-for lit in (False, True):
-    name = 'wireless_charger' + ('_on' if lit else '')
-    faces = {'north': 'wireless_charger_front' + ('_on' if lit else ''), 'up': 'wireless_charger_top',
-             'down': 'power_machine_bottom', 'south': 'power_machine_side', 'west': 'power_machine_side',
-             'east': 'power_machine_side'}
-    model = machine_model(faces, {'north': 'wireless_charger_front_glow'} if lit else None)
-    model['textures']['mast'] = tex('wireless_charger_mast')
-    model['textures']['ball'] = tex('tesla_coil_tip')
-    sides = ('north', 'south', 'west', 'east')
-    model['elements'] += [
-        {'from': [6, 16, 6], 'to': [10, 17, 10], 'faces': {d: {'texture': '#mast'} for d in sides + ('up',)}},
-        {'from': [7.25, 17, 7.25], 'to': [8.75, 19.5, 8.75], 'faces': {d: {'texture': '#mast'} for d in sides}},
-        {'from': [6.75, 19.5, 6.75], 'to': [9.25, 22, 9.25], 'shade': not lit,
-         'faces': {d: dict({'texture': '#ball', 'uv': [5, 5, 11, 11]}, **({'neoforge_data': GLOW} if lit else {}))
-                   for d in DIRS}},
+# ---------- metal press: the processing machines' shared casing (scripts/data/machine_models.py) with a press bay 2 px
+# deep in the front: back wall at z 2 and four walls, all from the metal_press_bay texture (the back wall in 4..11 x
+# 3..12, the walls around it); lit, the animated bay plus its full-bright glow on the back wall and the floor.
+def press_model(lit):
+    faces = {'north': 'metal_press_front' + ('_on' if lit else ''), 'up': 'metal_press_top', 'down': 'metal_press_bottom',
+             'south': 'metal_press_side', 'west': 'metal_press_side', 'east': 'metal_press_side'}
+    bay = '#bay'
+    elements = [
+        {'from': [4, 3, 2], 'to': [12, 13, 3], 'faces': {'north': {'texture': bay, 'uv': [4, 3, 12, 13]}}},
+        {'from': [4, 13, 0], 'to': [12, 14, 2], 'faces': {'down': {'texture': bay, 'uv': [12, 0, 4, 2]}}},
+        {'from': [4, 2, 0], 'to': [12, 3, 2], 'faces': {'up': {'texture': bay, 'uv': [12, 14, 4, 16]}}},
+        {'from': [12, 3, 0], 'to': [13, 13, 2], 'faces': {'west': {'texture': bay, 'uv': [0, 3, 2, 13]}}},
+        {'from': [3, 3, 0], 'to': [4, 13, 2], 'faces': {'east': {'texture': bay, 'uv': [14, 3, 16, 13]}}},
     ]
-    block_model(name, model)
+    textures = {'bay': 'metal_press_bay_on' if lit else 'metal_press_bay'}
+    if lit:
+        textures['bay_glow'] = 'metal_press_bay_glow'
+        elements += [
+            {'from': [4, 3, 1.99], 'to': [12, 13, 2], 'glow': True,
+             'faces': {'north': {'texture': '#bay_glow', 'uv': [4, 3, 12, 13]}}},
+            {'from': [4, 2, 0], 'to': [12, 3.01, 2], 'glow': True,
+             'faces': {'up': {'texture': '#bay_glow', 'uv': [12, 14, 4, 16]}}},
+        ]
+    glow = {'north': 'metal_press_front_glow', 'up': 'metal_press_top_glow'} if lit else None
+    return casing_model(faces, glow, elements, textures, lit=lit)
+
+
+for lit in (False, True):
+    block_model('metal_press' + ('_on' if lit else ''), press_model(lit))
+blockstate('metal_press', {'variants': facing_variants(lambda c: 'metal_press' + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
+item_model('metal_press', 'robotica:block/metal_press')
+loot('metal_press')
+
+# ---------- wireless charger: the shared casing in light steel plus an emitter mast on top: a collar, a rod through a
+# halo ring and a violet orb (full bright when lit). Mast parts come from one texture (wireless_mast in
+# scripts/textures/power.py says where).
+def wireless_model(lit):
+    on = '_on' if lit else ''
+    faces = {'north': 'wireless_charger_front' + on, 'up': 'wireless_charger_top' + on, 'down': 'wireless_charger_bottom',
+             'south': 'wireless_charger_side', 'west': 'wireless_charger_side', 'east': 'wireless_charger_side'}
+    sides = ('north', 'south', 'west', 'east')
+    elements = [
+        {'from': [6, 16, 6], 'to': [10, 17, 10],
+         'faces': dict({d: {'texture': '#mast', 'uv': [0, 4, 4, 5]} for d in sides}, up={'texture': '#mast', 'uv': [0, 0, 4, 4]})},
+        {'from': [7.25, 17, 7.25], 'to': [8.75, 19.5, 8.75],
+         'faces': {d: {'texture': '#mast', 'uv': [12, 2, 14, 5]} for d in sides}},
+        {'from': [5, 18, 5], 'to': [11, 18, 11], 'glow': lit,
+         'faces': {d: {'texture': '#mast', 'uv': [5, 5, 11, 11]} for d in ('up', 'down')}},
+        {'from': [6.75, 19.5, 6.75], 'to': [9.25, 22, 9.25], 'glow': lit,
+         'faces': {d: {'texture': '#orb', 'uv': [5, 5, 11, 11]} for d in DIRS}},
+    ]
+    textures = {'mast': 'wireless_charger_mast' + on, 'orb': 'wireless_charger_orb' + on}
+    glow = {'north': 'wireless_charger_front_glow', 'up': 'wireless_charger_top_glow'} if lit else None
+    return casing_model(faces, glow, elements, textures, lit=lit)
+
+
+for lit in (False, True):
+    block_model('wireless_charger' + ('_on' if lit else ''), wireless_model(lit))
 blockstate('wireless_charger', {'variants': facing_variants(lambda c: 'wireless_charger' + ('_on' if c['lit'] else ''),
                                                             [('lit', [False, True])])})
 item_model('wireless_charger', 'robotica:block/wireless_charger')
@@ -128,16 +213,26 @@ loot('wireless_charger')
 
 # ---------- accumulators: the gauge shows the charge (block state `charge` 0-5, one lit cell per level) ----------
 ACC_CELLS = 5
+
+
+def accumulator_model(tier, level):
+    """The casing cube in light steel; charged, the cells on the front and sides fill on full-bright overlays and the
+    cell heads on top light up."""
+    name = f'accumulator_{tier}'
+    faces = {'north': f'{name}_front', 'up': f'{name}_top', 'down': 'accumulator_bottom',
+             'south': f'{name}_side', 'west': f'{name}_side', 'east': f'{name}_side'}
+    glow = None
+    if level:
+        side_glow = f'accumulator_side_glow_{level}'
+        glow = {'north': f'accumulator_front_glow_{level}', 'up': f'accumulator_top_glow_{level}',
+                'south': side_glow, 'west': side_glow, 'east': side_glow}
+    return casing_model(faces, glow)
+
+
 for tier in (1, 2, 3):
     name = f'accumulator_{tier}'
-    faces = {'north': f'{name}_front', 'up': f'{name}_top', 'down': 'power_machine_bottom',
-             'south': f'{name}_side', 'west': f'{name}_side', 'east': f'{name}_side'}
     for level in range(ACC_CELLS + 1):
-        glow = None
-        if level:
-            side_glow = f'accumulator_side_glow_{level}'
-            glow = {'north': f'accumulator_front_glow_{level}', 'south': side_glow, 'west': side_glow, 'east': side_glow}
-        block_model(f'{name}_{level}', machine_model(faces, glow))
+        block_model(f'{name}_{level}', accumulator_model(tier, level))
     blockstate(name, {'variants': facing_variants(lambda c, n=name: f"{n}_{c['charge']}",
                                                   [('charge', list(range(ACC_CELLS + 1)))])})
     # The item shows the stored charge too (item property robotica:charge = level / 5, see PowerClient).
@@ -148,15 +243,15 @@ for tier in (1, 2, 3):
     })
     loot(name, copy_energy=True)
 
-# ---------- solar panels: a 6 px slab, cells catch a faint glow ----------
-for mk in (1, 2, 3, 4):
+# ---------- solar panels: a 6 px slab in the generators' gunmetal; the animated top carries the cells and their glint
+def solar_model(mk):
     name = f'solar_panel_mk{mk}'
     side_uv = [0, 0, 16, 6]
-    block_model(name, {
+    return {
         'parent': 'minecraft:block/block',
         'render_type': 'minecraft:cutout',
-        'textures': {'top': tex(f'{name}_top'), 'side': tex(f'{name}_side'), 'bottom': tex('power_machine_bottom'),
-                     'glow': tex(f'{name}_glow'), 'particle': tex(f'{name}_side')},
+        'textures': {'top': tex(f'{name}_top'), 'side': tex(f'{name}_side'), 'bottom': tex('solar_panel_bottom'),
+                     'particle': tex(f'{name}_side')},
         'elements': [{
             'from': [0, 0, 0], 'to': [16, 6, 16],
             'faces': {
@@ -167,11 +262,13 @@ for mk in (1, 2, 3, 4):
                 'west': {'texture': '#side', 'uv': side_uv, 'cullface': 'west'},
                 'east': {'texture': '#side', 'uv': side_uv, 'cullface': 'east'},
             },
-        }, {
-            'from': [0, 0, 0], 'to': [16, 6, 16], 'shade': False,
-            'faces': {'up': {'texture': '#glow', 'neoforge_data': {'block_light': 9, 'sky_light': 9, 'ambient_occlusion': False}}},
         }],
-    })
+    }
+
+
+for mk in (1, 2, 3, 4):
+    name = f'solar_panel_mk{mk}'
+    block_model(name, solar_model(mk))
     blockstate(name, {'variants': {'': {'model': f'robotica:block/{name}'}}})
     item_model(name, f'robotica:block/{name}')
     loot(name)

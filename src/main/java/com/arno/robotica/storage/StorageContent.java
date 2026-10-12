@@ -31,7 +31,7 @@ public final class StorageContent {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
 
     public static final DeferredBlock<StorageTerminalBlock> TERMINAL = BLOCKS.registerBlock("storage_terminal", StorageTerminalBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5F, 8.0F).sound(SoundType.METAL)
+            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5F, 8.0F).sound(SoundType.METAL).noOcclusion()
                     .lightLevel(s -> s.getValue(StorageTerminalBlock.LIT) ? 5 : 0));
 
     public static final DeferredItem<BlockItem> TERMINAL_ITEM = ITEMS.registerItem("storage_terminal",
