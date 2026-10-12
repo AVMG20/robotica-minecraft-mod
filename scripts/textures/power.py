@@ -11,7 +11,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import MATERIALS, Canvas, grain, hash01, material, write_anim, write_block, write_item, write_still  # noqa: E402
+from pixelart import MATERIALS, Canvas, grain, hash01, material, smooth_noise, write_anim, write_block, write_item, write_still  # noqa: E402
 import machine_casing as casing  # noqa: E402
 
 CU, ST, BR, AU, WD, SO = '01234', 'abcde', '56789', 'ABCDE', 'uvwWX', 'mnopP'
@@ -101,56 +101,162 @@ def led(c, x, y, on, color='G'):
 
 
 # ---------------------------------------------------------------- combustion generator
+# Generator family body: gunmetal instead of the processing graphite, copper accents; identity colour orange-red
+# ember. The front is a chamfered fire window sunk 2 px into the casing: a white firebrick firebox with a coal heap on
+# a grate (the bay: GEN_PARTS of the chamber texture, model: power_models.generator_model) behind a glass glare, and
+# an ember strip that stays dim red while idle; the exhaust on top shows ember glass between its slats. Working: five
+# flame tongues rise, fall and sway over a glowing fuel bed in one 64 tick loop (with tileable noise scrolled upward
+# for rolling licks), a hot glint runs along the ember strip and heat rolls across the exhaust in the same loop.
+
+GEN_BODY = ('#1E2328', '#323A42', '#4C565F', '#6C7882', '#97A3AD')          # gunmetal (generators)
+GEN_PAL = casing.casing_palette(MATERIALS['copper'], **dict(zip(casing.BODY, GEN_BODY)), **{
+    'm': '#2A0A06', 'n': '#5C160A', 'o': '#9E2A0C', 'p': '#E0501A', 'q': '#FF8A24', 'r': '#FFC24A', 's': '#FFF4C8',
+    '1': '#5A524C', '2': '#7E756C', '3': '#A69C90', '4': '#CCC3B6', '5': '#EAE4DA',      # refractory ceramic
+    'E': '#6E1E0E', 'F': '#A8341A', 'G': '#D8E6EE', 'H': '#8FA6B4',                    # standby ember, glass glare
+})
+GEN_BAY = (3, 3, 10, 8)                           # x, y, w, h of the fire window on the front
+GEN_FRAMES, GEN_FRAMETIME = 32, 2
+# chamber texture regions (x, y, w, h) besides the back wall (the bay area); power_models.generator_model maps them
+GEN_PARTS = {'wall_left': (0, 3, 2, 8), 'wall_right': (14, 3, 2, 8), 'floor': (3, 0, 10, 2), 'roof': (3, 14, 10, 2)}
+FIRE = 'mnopqrs'
+GEN_HEAP = (1, 1, 2, 2, 3, 3, 2, 2, 1, 1)                                   # idle coal heap height per column
+
+
+# flame tongues: (centre x, width, mean height, height swing, cycles per loop, phase); heights as a fraction of the bay
+GEN_TONGUES = ((1.5, 1.8, 0.8, 0.2, 1, 0.0), (4.6, 2.3, 1.05, 0.18, 1, 0.45), (7.8, 1.9, 0.88, 0.2, 2, 0.2),
+               (3.0, 1.4, 0.7, 0.18, 2, 0.7), (6.2, 1.5, 0.75, 0.18, 1, 0.8))
+
+
+def gen_heat(x, y, t):
+    """Fire intensity at back wall pixel (x 0..9, y 0..7 from the top) at loop phase t (0..1): five flame tongues whose
+    heights rise and fall and whose tips sway, plus tileable noise scrolled up by whole periods for rolling licks, so
+    every frame follows from the last and the loop is seamless."""
+    h = (7.5 - y) / 8
+    v = -1.0
+    for cx, w, mean, swing, cycles, phase in GEN_TONGUES:
+        a = 2 * math.pi * (cycles * t + phase)
+        top = mean + swing * math.sin(a)
+        dx = x - cx - 0.8 * h * math.sin(a + 1.3 + h * 3)
+        v = max(v, 1.3 - 1.1 * h / top - (dx / w) ** 2 * (0.3 + 0.8 * h))
+    n = smooth_noise(1.5 * x, 1.0 * y + 16 * t, 11, 4, 16)
+    return v + (n - 0.5) * 0.55
+
+
+def gen_brick(x, y):
+    """Refractory brick pattern of the firebox wall (bay coordinates): 0 mortar, 1 brick, 2 lit brick edge."""
+    if y % 3 == 2:
+        return 0
+    if (x + (0 if (y // 3) % 2 == 0 else 3)) % 6 == 5:
+        return 0
+    return 2 if y % 3 == 0 else 1
+
+
+def gen_chamber(lit, t=0):
+    """Back wall (fire or cold firebox) in the bay area, the bay walls, floor and roof in GEN_PARTS."""
+    x0, y0, w, h = GEN_BAY
+    R = GEN_PARTS
+    c = Canvas()
+    ph = t / GEN_FRAMES
+    for y in range(h - 2):
+        for x in range(w):
+            b = gen_brick(x, y)
+            if lit:
+                v = gen_heat(x, y, ph)
+                i = sum(v >= k for k in (0.18, 0.32, 0.47, 0.64, 0.8, 0.97))
+                if i == 0 and y >= 3:
+                    i = 1                                                    # the firebox glows red behind the flames
+                c.set(x0 + x, y0 + y, FIRE[i])
+            else:
+                c.set(x0 + x, y0 + y, '2' if b == 0 else '4' if b == 1 else '5')
+    # burner rail: the fuel bed on a steel bar, glowing while working
+    yb = y0 + h - 2
+    for x in range(w):
+        if lit:
+            v = 0.5 + 0.5 * math.sin(2 * math.pi * (ph * 2 - x / 5))
+            c.set(x0 + x, yb, 'r' if v > 0.7 else 'q').set(x0 + x, yb + 1, 'p' if x % 2 else 'o')
+        else:
+            c.set(x0 + x, yb + 1, 'd' if x % 2 else 'c')                       # grate
+            top = yb + 1 - GEN_HEAP[x]                                            # cold coal heap with embers
+            for y in range(top, yb + 1):
+                ember = y == yb and x % 3 == 1 or y == yb - 1 and x in (4, 6)
+                c.set(x0 + x, y, 'F' if ember else 'c' if y == top else 'E' if y == yb else 'a')
+    # bay walls: ceramic lit by the fire, the floor is the burner rail's top
+    for name in ('wall_left', 'wall_right'):
+        x, y, ww, wh = R[name]
+        for yy in range(wh):
+            for xx in range(ww):
+                inner = (xx == 1) == (name == 'wall_left')
+                if lit:
+                    ch = 'q' if yy >= wh - 2 else 'p' if inner and yy >= wh - 4 else 'o' if inner else 'n'
+                else:
+                    ch = 'E' if yy == wh - 2 else 'c' if yy == wh - 1 else '4' if inner else '3'
+                c.set(x + xx, y + yy, ch)
+    x, y, fw, _ = R['floor']
+    for i in range(fw):
+        c.set(x + i, y, ('r' if i % 2 else 'q') if lit else ('F' if i % 2 else 'E'))
+        c.set(x + i, y + 1, ('q' if i % 2 else 'p') if lit else 'c')
+    x, y, rw, _ = R['roof']
+    c.rect(x, y, rw, 2, 'n' if lit else '2').rect(x, y + 1, rw, 1, 'm' if lit else '1')
+    return c
+
+
+def gen_glass():
+    """Glass pane over the window: only its glare shows (cutout)."""
+    return Canvas().set(4, 5, 'H').set(5, 4, 'G').set(6, 3, 'H')
+
 
 def generator_front(lit):
-    """Big firebox door with grate bars, a vent strip and a status LED above."""
-    c = frame(4)
-    c.draw(3, 3, ['KdKdKdKd', '3.3.3.3.'])                               # vent slots
-    led(c, 12, 3, lit, 'G')
-    led(c, 11, 3, not lit, 'R')
-    c.rect(3, 5, 10, 9, 'c').bevel(3, 5, 10, 9, 'd', 'a')                # door frame
-    c.set(3, 5, 'e')
-    c.rect(4, 6, 8, 6, 'K')
-    if lit:
-        c.vgradient(4, 6, 8, 6, 'XXXxxf')
-    for x in range(5, 12, 2):                                            # grate bars
-        c.rect(x, 6, 1, 6, 'b' if not lit else 'a')
-        c.set(x, 6, 'c')
-    c.rect(4, 12, 8, 1, 'b')
-    c.rect(6, 12, 4, 1, '7').set(6, 12, '8')                             # brass handle
+    """Casing face: the chamfered fire window on a copper sill, the ember strip and the status lamp under it."""
+    x0, y0, w, h = GEN_BAY
+    c = casing.shell(1)
+    c.rect(x0, y0, w, h, '.')
+    for x, y in ((x0, y0), (x0 + w - 1, y0), (x0, y0 + h - 1), (x0 + w - 1, y0 + h - 1)):
+        c.set(x, y, 'a')                                                  # chamfered window corners
+    c.rect(x0, y0 + h, w, 1, 'h').set(x0, y0 + h, 'i').set(x0 + w - 1, y0 + h, 'g')   # copper sill
+    c.rect(3, 12, 8, 1, 'k')
+    for x in range(4, 10):
+        c.set(x, 12, 'p' if lit else 'E' if x in (4, 9) else 'F')         # ember strip
+    c.set(12, 12, 'L' if lit else 'l')
     return c
 
 
-def generator_flames(frame_no):
-    """Overlay of the burning fire box: flame tongues behind the grate bars, flickering."""
+def generator_front_glow(t):
+    """The ember strip blazing, a hot glint running along it; the status lamp."""
     c = Canvas()
-    for x in range(4, 12, 2):
-        h = 2 + int(4.4 * (0.5 + 0.5 * math.sin(frame_no * 1.7 + x * 1.3)))
-        for i in range(h):
-            y = 11 - i
-            ch = 'O' if i == 0 else 'F' if i < 2 else 'f' if i < h - 1 else 'x'
-            c.set(x, y, ch)
-    c.set(4 + (frame_no * 3) % 8, 6 + frame_no % 2, 'F')                 # sparks
-    for x in range(5, 12, 2):                                            # glow on the bar feet
-        c.set(x, 11, 'f')
-    c.set(12, 3, 'G')                                                    # running LED
+    head = 4 + 6 * t / GEN_FRAMES
+    for x in range(4, 10):
+        d = abs(x - head)
+        c.set(x, 12, 's' if d < 0.6 else 'r' if d < 1.6 else 'q')
+    c.set(12, 12, 'L')
     return c
 
 
-def generator_top(lit):
-    """Exhaust fan: round grille with a cross brace and hub, the gaps glow faintly when burning."""
-    c = frame(5, panel=ST)
-    gap = 'X' if lit else 'K'
-    c.disc(7.5, 7.5, 5.0, 'a')
-    c.disc(7.5, 7.5, 4.3, gap)
-    c.ring(7.5, 7.5, 2.4, 3.1, 'c')
-    c.rect(7, 3, 2, 10, 'c').rect(3, 7, 10, 2, 'c')
-    c.rect(7, 3, 1, 10, 'd').rect(3, 7, 10, 1, 'd')
-    c.rect(6, 6, 4, 4, 'b').bevel(6, 6, 4, 4, 'e', 'a')
-    c.ring(7.5, 7.5, 4.3, 5.0, 'b')
-    for x, y in ((4, 3), (3, 4), (5, 2)):
-        c.set(x, y, 'd')
-    c.dither(2, 2, 12, 12, 'b', 0.2, only='c')                            # soot
+def generator_top():
+    """Exhaust: a round port in a gunmetal collar with four copper clamps, ember tinted glass under three slats."""
+    c = casing.shell(1)
+    c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
+    c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 4.6,
+            lambda x, y: 'e' if x + y < 11 else 'd' if x + y < 19 else 'c')     # collar
+    for x, y in ((7, 3), (8, 3), (7, 12), (8, 12), (3, 7), (3, 8), (12, 7), (12, 8)):
+        c.set(x, y, 'h' if x + y < 15 else 'g')                                 # copper clamps
+    c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 3.7, lambda x, y: 'F' if (x * 2 + y) % 5 == 0 else 'E')
+    for y in (5, 7, 9):
+        for x in range(3, 13):
+            if math.hypot(x - 7.5, y - 7.5) <= 3.8:
+                c.set(x, y, 'd' if x < 7 else 'c')
+    casing.tier_notches(c, 1)
+    return c
+
+
+def generator_top_glow(t):
+    """Heat glowing up through the exhaust grille, a brighter band rolling across with the fire."""
+    c = Canvas()
+    ph = t / GEN_FRAMES * 2 * math.pi
+    for y in range(3, 13):
+        for x in range(3, 13):
+            if math.hypot(x - 7.5, y - 7.5) <= 3.7 and y not in (5, 7, 9):
+                v = 0.5 + 0.5 * math.sin(x * 0.7 + y * 0.5 - 2 * ph)
+                c.set(x, y, 'r' if v > 0.8 else 'q' if v > 0.45 else 'p')
     return c
 
 
@@ -350,151 +456,236 @@ def charger_top_glow():
 
 
 # ---------------------------------------------------------------- wireless charger
+# Energy storage and charging family body: light steel, copper accents; identity colour violet. The front is a dark
+# glass broadcast dish (octagonal rings round an emitter node), the top the same dish round the mast, which carries a
+# halo ring and a violet orb (power_models.wireless_model). Working: a wave leaves the node every 24 ticks and glides
+# outward ring by ring, fading, on the front and the top at once; node and orb flash as it leaves.
 
-WAVE_ARCS = ((2.2, 3.0), (4.2, 5.0), (6.2, 7.0))
+WL_BODY = ('#4A535B', '#6F7A83', '#9AA5AE', '#C4CDD4', '#EBF0F3')           # light steel (storage and charging)
+WL_PAL = casing.casing_palette(MATERIALS['copper'], **dict(zip(casing.BODY, WL_BODY)), **{
+    '6': '#1E0E3C', '7': '#3E1F78', '8': '#6A3EC4', '9': '#A97CFF', '0': '#ECE2FF',       # violet, deep -> white
+    'D': '#151922', 'M': '#262C3A', 'N': '#3A4256',                                     # dark glass
+})
+WL_FRAMES, WL_FRAMETIME = 24, 1
+WL_WAVES = 1                                       # waves travelling at once
 
 
-def wave_pixels(r0, r1):
-    """Pixels of a wave arc opening upwards from the emitter dot at (7.5, 10.5) on the front."""
-    out = []
-    for y in range(3, 12):
+def wl_slot(x, y):
+    """Octagonal ring index of a pixel round the face centre: 1 the 2x2 node, 2..4 the rings, 5 the dish lip."""
+    ax, ay = abs(x - 7.5), abs(y - 7.5)
+    return int(max(ax, ay, (ax + ay) * 0.75) + 0.5)
+
+
+def wl_wave(slot, t, r0, r1):
+    """Brightness (0..1) of a ring slot at frame t: WL_WAVES waves travel from r0 to r1 per loop, handed from one slot
+    to the next (so they glide between pixels), dimming as they grow."""
+    best = 0.0
+    for k in range(WL_WAVES):
+        f = (t / WL_FRAMES + k / WL_WAVES) % 1
+        r = r0 + (r1 - r0) * f
+        best = max(best, max(0.0, 1 - 1.6 * abs(slot - r)) * (1 - 0.5 * f))
+    return best
+
+
+def wl_level(v):
+    return '0' if v > 0.6 else '9' if v > 0.32 else '8' if v > 0.12 else None
+
+
+def wl_dish(c, top=False, lit=False):
+    """The octagonal dark glass dish: a bevelled lip, the violet emitter node and a violet ring groove (dark while
+    working, so only the travelling waves light the rings)."""
+    for y in range(3, 13):
         for x in range(3, 13):
-            d = math.hypot(x - 7.5, y - 10.5)
-            if r0 <= d < r1 and y <= 10 and abs(x - 7.5) <= (10.5 - y) + 1.5:
-                out.append((x, y))
-    return out
+            s = wl_slot(x, y)
+            if s == 5:
+                c.set(x, y, 'e' if x + y < 15 else 'b')
+            elif s < 5:
+                groove = 'D' if lit else '7' if x + y > 14 else '8'
+                c.set(x, y, ('9' if lit else '8') if s == 1 else groove if s == 3 else
+                      'M' if s == 2 and x + y < 15 and not top else 'D')
+    return c
+
+
+def wl_pulse(t):
+    """Orb and node brightness (0..1): a flash as each wave is born, fading over the following frames."""
+    f = (t / WL_FRAMES * WL_WAVES) % 1
+    return max(0.0, 1 - f * 3)
 
 
 def wireless_front(lit):
-    """Dark window with three wave arcs over an emitter dot, a status LED below."""
-    c = frame(12, panel=ST)
-    c.recess(3, 3, 10, 9, ST, fill='K')
-    for r0, r1 in WAVE_ARCS:
-        for x, y in wave_pixels(r0, r1):
-            c.set(x, y, 'Z')
-    c.disc(7.5, 10.5, 1.0, 'y')
-    c.rect(4, 13, 8, 1, 'K')
-    led(c, 7, 13, lit, 'G')
-    led(c, 8, 13, lit, 'G')
+    """Light steel face with the dark glass dish, the status lamp above it."""
+    c = casing.shell(1)
+    c.rect(3, 3, 10, 10, 'c')
+    wl_dish(c, lit=lit)
+    c.rect(7, 1, 2, 1, 'L' if lit else 'l')
     return c
 
 
-def wireless_glow(frame_no):
-    """The arcs light up one after another, outward, like a signal."""
-    c = Canvas()
-    for i, (r0, r1) in enumerate(WAVE_ARCS):
-        bright = (frame_no - i) % 4 == 0
-        dim = (frame_no - i) % 4 == 1
-        if not (bright or dim):
-            continue
-        for x, y in wave_pixels(r0, r1):
-            c.set(x, y, 'z' if bright else 'y')
-    c.disc(7.5, 10.5, 1.0, 'Y')
-    c.set(7, 13, 'G').set(8, 13, 'G')
-    return c
-
-
-def wireless_top():
-    """Emitter plate seen from above: rings of copper windings round the mast socket."""
-    c = frame(14, panel=ST)
+def wireless_front_glow(t):
+    """The node flashing as each wave leaves it, the waves gliding out over the rings."""
+    c = Canvas().rect(7, 1, 2, 1, 'L')
     for y in range(3, 13):
         for x in range(3, 13):
-            d = math.hypot(x - 7.5, y - 7.5)
-            if 2.0 <= d <= 5.0:
-                c.set(x, y, '3' if int(d * 1.5) % 2 == 0 else '1')
-    c.ring(7.5, 7.5, 4.6, 5.3, '0')
-    c.disc(7.5, 7.5, 1.6, 'K')
+            s = wl_slot(x, y)
+            if s == 1:
+                c.set(x, y, wl_level(wl_wave(s, t, 1.0, 5.0)) or '9')
+            elif s < 5:
+                ch = wl_level(wl_wave(s, t, 1.0, 5.0))
+                if ch:
+                    c.set(x, y, ch)
     return c
 
 
-def wireless_mast():
-    """Brass mast for the emitter rod (16x16, the model samples a thin strip)."""
+def wireless_top(lit=False):
+    """Emitter plate: the same dish round the mast collar (which covers the node and the first ring)."""
+    c = casing.shell(1)
+    c.rect(3, 3, 10, 10, 'c')
+    wl_dish(c, top=True, lit=lit)
+    casing.tier_notches(c, 1)
+    return c
+
+
+def wireless_top_glow(t):
+    """The same waves gliding out from under the mast collar."""
     c = Canvas()
-    plate(c, 0, 0, 16, 16, BR, 5, vertical=True, density=0.3)
-    for y in range(0, 16, 4):
-        c.rect(0, y, 16, 1, '6')
+    for y in range(3, 13):
+        for x in range(3, 13):
+            s = wl_slot(x, y)
+            if 2 < s < 5:
+                ch = wl_level(wl_wave(s, t, 1.0, 5.0))
+                if ch:
+                    c.set(x, y, ch)
+    return c
+
+
+def wireless_mast(t=None):
+    """Mast parts (power_models.wireless_model maps them): collar top in 0..3 x 0..3, collar side in 0..3 x 4, halo
+    ring in 5..10 x 5..10, rod in 12..13 x 0..15. Working (frame t), the halo flashes with each wave."""
+    lit = t is not None
+    flash = lit and wl_pulse(t) > 0.4
+    c = Canvas()
+    c.rect(0, 0, 4, 4, 'd').bevel(0, 0, 4, 4, 'e', 'b').rect(1, 1, 2, 2, 'a')       # collar top round the rod
+    c.draw(0, 4, ['e8' + ('9' if lit else '8') + 'c'])                                 # collar side, violet band
+    for i in range(6):
+        for j in range(6):
+            if (i in (0, 5) or j in (0, 5)) and (i, j) not in ((0, 0), (0, 5), (5, 0), (5, 5)):
+                c.set(5 + i, 5 + j, '0' if flash else ('9' if lit else '8') if i + j < 5 else ('8' if lit else '7'))
+    c.rect(12, 0, 1, 16, 'e').rect(13, 0, 1, 16, 'c')                                 # rod
+    for y in (3, 9):
+        c.set(12, y, 'c').set(13, y, 'b')
+    return c
+
+
+def wireless_orb(t=None):
+    """Orb (sampled 5..10): violet glass, light from the top left; working, it flashes white with each ring."""
+    c = Canvas()
+    for x in range(5, 11):
+        for y in range(5, 11):
+            d = math.hypot(x - 7.0, y - 7.0)
+            if t is None:
+                c.set(x, y, '9' if d < 1.0 else '8' if d < 2.6 else '7')
+            else:
+                p = wl_pulse(t)
+                c.set(x, y, '0' if d < 1.0 + 2 * p else '9' if d < 2.8 + p else '8')
     return c
 
 
 # ---------------------------------------------------------------- solar panels
+# Generator family: a gunmetal slab with tier metal corner brackets (the processing ramp: Mk1 copper, Mk2 gold,
+# Mk3 magma, Mk4 null) round blue monocrystalline cells with clipped corners (Mk1 2x2, Mk2+ 3x3) and the light
+# backsheet showing where four cells meet. The cell glass deepens per Mk (Mk1 blue, Mk2 deep blue, Mk3 blue-black,
+# Mk4 blue-violet). A glint of sky light sweeps across the glass every 96 ticks (the top is animated, no overlay); the
+# sides carry a lip, a recessed rail and the Mk notches.
 
-SOLAR_FRAME = {1: CU, 2: AU, 3: MG, 4: SL}
+SOLAR_CELLS = {                                     # cell glass per Mk: gap, shadow edge, cell, lit edge
+    1: ('#0E2150', '#183A86', '#2A5CB8', '#4F86DA'),
+    2: ('#0A1840', '#122E70', '#1E4AA2', '#3E72CC'),
+    3: ('#070F2A', '#0E1F52', '#183684', '#3260B4'),
+    4: ('#0E0A30', '#1C1A66', '#2E34A0', '#5A62D8'),
+}
+SOLAR_FRAMES, SOLAR_FRAMETIME = 32, 3               # glint loop: a 12 frame sweep, then a pause
+SOLAR_GRID = {1: ((1, 9), 6), 2: ((1, 6, 11), 4)}  # cell origins (x and y) and size: Mk1 2x2, Mk2+ 3x3
 
 
-def solar_top(mk):
-    frame_r = SOLAR_FRAME[mk]
+def solar_pal(mk):
+    m, n, o, p = SOLAR_CELLS[mk]
+    return casing.casing_palette(casing.PROCESSING_TIERS[mk], **dict(zip(casing.BODY, GEN_BODY)), **{
+        'm': m, 'n': n, 'o': o, 'p': p, 'q': '#9CC8F6', 'r': '#EAF6FF',                  # cells, glint
+        's': '#56637A', 'S': '#93A2B8',                                                 # backsheet
+    })
+
+
+def solar_cell(mk, x, y):
+    """(x, y inside the cell, cell size) of a top pixel, or None on the frame and the gaps."""
+    origins, size = SOLAR_GRID[min(mk, 2)]
+    for cx in origins:
+        for cy in origins:
+            if cx <= x < cx + size and cy <= y < cy + size:
+                return x - cx, y - cy, size
+    return None
+
+
+def solar_top(mk, t):
+    """Top at frame t of the glint loop."""
     c = Canvas()
-    c.plate(0, 0, 16, 16, frame_r, 13, brushed=False)
-    if mk == 1:
-        for i in range(2):
-            for j in range(2):
-                x, y = 1 + i * 7, 1 + j * 7
-                c.vgradient(x, y, 7, 7, 'pon')
-                c.rect(x, y + 6, 7, 1, 'm').rect(x + 6, y, 1, 7, 'm')
-                c.rect(x, y, 7, 1, 'p').rect(x, y, 1, 7, 'p')
-                c.rect(x + 3, y + 1, 1, 5, 'n').rect(x + 1, y + 3, 5, 1, 'n')   # busbars
-                c.set(x + 1, y + 1, 'P')
-        c.rect(1, 7, 14, 1, frame_r[1]).rect(7, 1, 1, 14, frame_r[1]).rect(8, 1, 1, 14, frame_r[3])
-        c.line(2, 5, 5, 2, 'P').line(9, 12, 12, 9, 'p')                     # sky glint
-        return c
-    # Mk2-Mk4: 3x3 cells of 4 px; Mk3 dark cells with hot busbars, Mk4 violet-black cells around a null core
-    cell = {2: 'onnm', 3: 'nnmm', 4: 'nm(('}[mk]
-    edge_lo, edge_hi, glint = ('m', 'p', 'P') if mk < 4 else ('(', ']', '{')
-    for i in range(3):
-        for j in range(3):
-            x, y = 1 + i * 5, 1 + j * 5
-            c.vgradient(x, y, 4, 4, cell)
-            c.rect(x, y + 3, 4, 1, edge_lo).rect(x + 3, y, 1, 4, edge_lo)
-            c.rect(x, y, 4, 1, edge_hi).rect(x, y, 1, 4, edge_hi)
-            if mk == 3:
-                c.rect(x + 1, y + 2, 2, 1, '$')                              # heat busbar
-            c.set(x + 1, y + 1, glint)
-    for k in (5, 10):
-        c.rect(1, k, 14, 1, frame_r[1]).rect(k, 1, 1, 14, frame_r[1])
-    if mk == 4:
-        c.rect(6, 6, 4, 4, '(').rect(7, 7, 2, 2, '[').set(7, 7, '{')        # null core in the middle cell
-    c.line(2, 4, 4, 2, glint).line(12, 14, 14, 12, edge_hi)
-    if mk != 4:
-        c.line(7, 9, 9, 7, 'P')
-    for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):
-        c.set(x, y, frame_r[4] if mk < 4 else '{')
-    return c
-
-
-def solar_glow(mk):
-    """Faint charge glints on the cells (the cells catch the light even at dusk)."""
-    c = Canvas()
-    if mk == 1:
-        c.set(2, 2, 'Y').set(9, 2, 'Y').set(2, 9, 'Y').set(9, 9, 'Y')
-        return c
-    spark = {2: 'Y', 3: 'F', 4: '{'}[mk]
-    for i in range(3):
-        for j in range(3):
-            c.set(2 + i * 5, 2 + j * 5, spark)
-    c.set(7, 7, {2: 'z', 3: 'O', 4: '{'}[mk])
-    if mk == 3:
+    c.rect(0, 0, 16, 16, 'b')                                             # gaps: the dark backsheet rails
+    c.bevel(0, 0, 16, 16, 'd', 'a')
+    for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):                     # tier metal corner brackets
+        sx, sy = (1 if x == 0 else -1), (1 if y == 0 else -1)
         for i in range(3):
-            for j in range(3):
-                c.set(2 + i * 5, 3 + j * 5, '%')
-    if mk == 4:
-        c.set(8, 7, ']').set(7, 8, ']').set(8, 8, '[')
+            c.set(x + sx * i, y, 'h').set(x, y + sy * i, 'h')
+        c.set(x + sx * 2, y, 'g').set(x, y + sy * 2, 'g')
+        c.set(x, y, 'i' if x + y < 15 else 'f' if x + y > 15 else 'h')
+    c.rect(1, 1, 14, 14, 'm')                                             # dark gaps between the cells
+    for y in range(16):
+        for x in range(16):
+            cell = solar_cell(mk, x, y)
+            if not cell:
+                continue
+            u, v, n = cell
+            if u in (0, n - 1) and v in (0, n - 1):
+                continue                                                  # clipped cell corners
+            c.set(x, y, 'p' if u == 0 or v == 0 else 'n' if u == n - 1 or v == n - 1 else 'o')
+    origins, size = SOLAR_GRID[min(mk, 2)]
+    for x in origins[1:]:                                                 # backsheet diamonds where four cells meet
+        for y in origins[1:]:
+            gx, gy = x - 1, y - 1
+            if mk == 1:                                                   # 2 px gaps: a 2x2 centre
+                c.rect(gx - 1, gy - 2, 2, 4, 's').rect(gx - 2, gy - 1, 4, 2, 's').rect(gx - 1, gy - 1, 2, 2, 'S')
+            else:
+                c.set(gx, gy, 'S').set(gx - 1, gy, 's').set(gx + 1, gy, 's').set(gx, gy - 1, 's').set(gx, gy + 1, 's')
+    for i in range(mk):                                                   # Mk notches on the bottom rail
+        c.set(12 - i * 2, 15, 'i')
+    return solar_glint(c, t)
+
+
+def solar_glint(c, t):
+    """Sky glint: a soft diagonal band crossing the glass from the top left during the first 12 frames."""
+    if t >= 12:
+        return c
+    pos = -4 + t * 38 / 12                                                # x + y of the band centre
+    for y in range(1, 15):
+        for x in range(1, 15):
+            d = abs(x + y - pos)
+            ch = 'r' if d < 0.5 else 'q' if d < 1.3 else 'p' if d < 2.3 and c.get(x, y) in 'mno' else None
+            if ch:
+                c.set(x, y, ch)
     return c
 
 
 def solar_side(mk):
-    """Only rows 0-5 show on the 6 px tall sides: frame lip, cell edge, mounting rail with bolts."""
-    r = SOLAR_FRAME[mk]
+    """Only rows 0-5 show on the 6 px tall sides: top lip, a recessed rail with dark glass, the base with Mk notches,
+    tier metal brackets at both ends."""
     c = Canvas()
-    c.plate(0, 0, 16, 16, ST, 14, density=0.1)
-    c.rect(0, 0, 16, 2, r[3]).rect(0, 0, 16, 1, r[4]).rect(0, 2, 16, 1, r[1])
-    c.rect(0, 3, 16, 3, 'b').rect(0, 3, 16, 1, 'c').rect(0, 5, 16, 1, 'a')
-    for x in (1, 7, 13):
-        c.set(x, 4, 'e').set(x + 1, 5, 'a')
-    for x in (4, 10):
-        c.rect(x, 3, 2, 3, 'K')
-    if mk >= 3:
-        band = r if mk == 3 else NV
-        c.rect(7, 3, 2, 3, band[2]).set(7, 3, band[3])                      # tier band
+    c.rect(0, 0, 16, 16, 'c')
+    c.rect(0, 0, 16, 1, 'e').rect(0, 1, 16, 1, 'd')
+    c.rect(2, 2, 12, 2, 'a').rect(3, 2, 10, 1, 'u').rect(3, 3, 10, 1, 'k')
+    c.rect(0, 4, 16, 1, 'c').rect(0, 5, 16, 1, 'a')
+    for x in (0, 15):
+        c.rect(x, 0, 1, 6, 'h').set(x, 0, 'i').set(x, 5, 'f')
+    c.set(1, 0, 'h').set(14, 0, 'g').set(1, 5, 'g').set(14, 5, 'g')
+    for i in range(mk):
+        c.set(12 - i * 2, 4, 'i')
     return c
 
 
@@ -733,11 +924,20 @@ def crank_spring():
 # ---------------------------------------------------------------- output
 
 def write_generator():
-    write_block('combustion_generator_front', generator_front(False).rows(), P)
-    write_block('combustion_generator_front_on', generator_front(True).rows(), P)
-    write_anim('block', 'combustion_generator_front_glow', [generator_flames(i) for i in range(8)], P, frametime=3)
-    write_block('combustion_generator_top', generator_top(False).rows(), P)
-    write_block('combustion_generator_top_on', generator_top(True).rows(), P)
+    p, frames = GEN_PAL, range(GEN_FRAMES)
+    write_block('combustion_generator_front', generator_front(False).rows(), p)
+    write_block('combustion_generator_front_on', generator_front(True).rows(), p)
+    write_block('combustion_generator_top', generator_top().rows(), p)
+    write_block('combustion_generator_side', casing.side(1).rows(), p)
+    write_block('combustion_generator_bottom', casing.bottom().rows(), p)
+    write_block('combustion_generator_glass', gen_glass().rows(), p)
+    write_block('combustion_generator_chamber', gen_chamber(False).rows(), p)
+    write_anim('block', 'combustion_generator_chamber_on', [gen_chamber(True, t) for t in frames], p,
+               frametime=GEN_FRAMETIME, interpolate=True)
+    write_anim('block', 'combustion_generator_front_glow', [generator_front_glow(t) for t in frames], p,
+               frametime=GEN_FRAMETIME, interpolate=True)
+    write_anim('block', 'combustion_generator_top_glow', [generator_top_glow(t) for t in frames], p,
+               frametime=GEN_FRAMETIME, interpolate=True)
 
 
 def write_charger():
@@ -750,18 +950,33 @@ def write_charger():
 
 
 def write_wireless():
-    write_block('wireless_charger_front', wireless_front(False).rows(), P)
-    write_block('wireless_charger_front_on', wireless_front(True).rows(), P)
-    write_anim('block', 'wireless_charger_front_glow', [wireless_glow(i) for i in range(8)], P, frametime=3)
-    write_block('wireless_charger_top', wireless_top().rows(), P)
-    write_block('wireless_charger_mast', wireless_mast().rows(), P)
+    p, frames = WL_PAL, [(t + WL_FRAMES // 2) % WL_FRAMES for t in range(WL_FRAMES)]   # stills show a wave halfway
+    write_block('wireless_charger_front', wireless_front(False).rows(), p)
+    write_block('wireless_charger_front_on', wireless_front(True).rows(), p)
+    write_block('wireless_charger_top', wireless_top().rows(), p)
+    write_block('wireless_charger_top_on', wireless_top(True).rows(), p)
+    write_block('wireless_charger_side', casing.side(1).rows(), p)
+    write_block('wireless_charger_bottom', casing.bottom().rows(), p)
+    write_block('wireless_charger_mast', wireless_mast().rows(), p)
+    write_anim('block', 'wireless_charger_mast_on', [wireless_mast(t) for t in frames], p,
+               frametime=WL_FRAMETIME, interpolate=True)
+    write_block('wireless_charger_orb', wireless_orb().rows(), p)
+    write_anim('block', 'wireless_charger_orb_on', [wireless_orb(t) for t in frames], p,
+               frametime=WL_FRAMETIME, interpolate=True)
+    write_anim('block', 'wireless_charger_front_glow', [wireless_front_glow(t) for t in frames], p,
+               frametime=WL_FRAMETIME, interpolate=True)
+    write_anim('block', 'wireless_charger_top_glow', [wireless_top_glow(t) for t in frames], p,
+               frametime=WL_FRAMETIME, interpolate=True)
 
 
 def write_solar():
     for mk in (1, 2, 3, 4):
-        write_block(f'solar_panel_mk{mk}_top', solar_top(mk).rows(), P)
-        write_block(f'solar_panel_mk{mk}_side', solar_side(mk).rows(), P)
-        write_block(f'solar_panel_mk{mk}_glow', solar_glow(mk).rows(), P)
+        p = solar_pal(mk)
+        frames = [solar_top(mk, (t + 4) % SOLAR_FRAMES) for t in range(SOLAR_FRAMES)]   # stills show the glint
+        write_anim('block', f'solar_panel_mk{mk}_top', frames, p,
+                   frametime=SOLAR_FRAMETIME, interpolate=True)
+        write_block(f'solar_panel_mk{mk}_side', solar_side(mk).rows(), p)
+    write_block('solar_panel_bottom', casing.bottom().rows(), solar_pal(1))
 
 
 def write_accumulators():
