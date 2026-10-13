@@ -484,9 +484,14 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
 
     // ---------------------------------------------------------------- neighbours
 
+    /**
+     * Looks for Links next to this one. Every face gets its capability cache here, so a Link placed or broken next to it
+     * (even on a face it never used) triggers the next check.
+     */
     private void refreshNeighbours(ServerLevel level) {
         recheckNeighbours = false;
         for (Direction dir : DIRS) {
+            energyCache(level, dir);
             BlockPos at = worldPosition.relative(dir);
             linkNeighbour[dir.ordinal()] = level.isLoaded(at) && level.getBlockEntity(at) instanceof QuantumLinkBlockEntity;
         }
@@ -497,14 +502,18 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return !linkNeighbour[dir.ordinal()] && level.isLoaded(worldPosition.relative(dir));
     }
 
-    @Nullable
-    private IEnergyStorage energyCap(ServerLevel level, Direction dir) {
+    private BlockCapabilityCache<IEnergyStorage, Direction> energyCache(ServerLevel level, Direction dir) {
         int i = dir.ordinal();
         if (energyCaches[i] == null) {
             energyCaches[i] = BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, level, worldPosition.relative(dir), dir.getOpposite(),
                     () -> !isRemoved(), () -> recheckNeighbours = true);
         }
-        return energyCaches[i].getCapability();
+        return energyCaches[i];
+    }
+
+    @Nullable
+    private IEnergyStorage energyCap(ServerLevel level, Direction dir) {
+        return energyCache(level, dir).getCapability();
     }
 
     @Nullable
