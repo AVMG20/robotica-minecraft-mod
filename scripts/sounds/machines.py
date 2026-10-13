@@ -3,8 +3,8 @@ Run: python3 scripts/sounds/machines.py   (writes assets/robotica/sounds/machine
 
 Every clip is mono 44.1 kHz, built from sines and filtered noise with a seeded generator, faded in and out and
 normalized to the same peak, so machines sound alike in loudness. Low and muffled on purpose: they repeat a lot.
-No sustained low hums: start/stop, the press and the charger hum use vanilla sounds. Volumes and pitches per event
-live in sounds.json.
+No sustained low hums: start/stop, the press, the Assembler and the charger hum use vanilla sounds. Volumes and
+pitches per event live in sounds.json.
 """
 import pathlib
 import subprocess
@@ -36,13 +36,6 @@ def band(signal, low, high):
     if high:
         gain *= np.clip(1 - np.log2(np.maximum(f, 1) / high), 0, 1)
     return np.fft.irfft(spectrum * gain, len(signal))
-
-
-def sweep(t, f0, f1, harmonics=(1.0,)):
-    """Sine (plus harmonics) gliding exponentially from f0 to f1 Hz over t."""
-    freq = f0 * (f1 / f0) ** (t / t[-1])
-    phase = 2 * np.pi * np.cumsum(freq) / SR
-    return sum(a * np.sin(phase * (i + 1)) for i, a in enumerate(harmonics))
 
 
 def env(t, attack, release, decay=None):
@@ -93,16 +86,6 @@ def centrifuge():
     return band(noise(1.0, 8), 500, 3000) * (0.25 + 0.75 * swish) * env(t, 0.2, 0.3)
 
 
-def assemble():
-    """Servo glide, then two soft clicks as a part seats."""
-    total = 0.6
-    t = time(0.28)
-    servo = band(sweep(t, 300, 480, (1.0, 0.5, 0.3, 0.2)), 0, 1500) * env(t, 0.04, 0.08) * 0.6
-    c = time(0.08)
-    click = (np.sin(2 * np.pi * 850 * c) * 0.5 + band(noise(0.08, 9), 200, 2000)) * np.exp(-c / 0.012)
-    return at(total, 0, servo) + at(total, 0.3, click * 0.6) + at(total, 0.42, click * 0.45)
-
-
 def geiger():
     """Irregular ticks of a radiation counter (RTG)."""
     total = 1.4
@@ -128,7 +111,7 @@ def chime():
 
 
 CLIPS = {
-    'grind': grind, 'smelt': smelt, 'centrifuge': centrifuge, 'assemble': assemble, 'geiger': geiger,
+    'grind': grind, 'smelt': smelt, 'centrifuge': centrifuge, 'geiger': geiger,
     'chime': chime,
 }
 

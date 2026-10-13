@@ -88,10 +88,10 @@
      ],
      [
       "Daylight",
-      "20 FE/t",
-      "80 FE/t",
+      "40 FE/t",
       "200 FE/t",
-      "320 FE/t"
+      "480 FE/t",
+      "1,200 FE/t"
      ],
      [
       "Buffer",
@@ -102,10 +102,10 @@
      ],
      [
       "Push (all sides)",
-      "160 FE/t",
-      "640 FE/t",
+      "320 FE/t",
       "1,600 FE/t",
-      "2,560 FE/t"
+      "3,840 FE/t",
+      "9,600 FE/t"
      ]
     ]
    },
@@ -474,7 +474,7 @@
    ],
    "what": "Builds Thermocouples, Superconductor Coils and Resonant Lattices. Circuits, motors and casings cost about a quarter less material here than at the crafting table.",
    "use": [
-    "Put every input in its own slot."
+    "Fill the slots in any order; extra items wait for the next craft."
    ],
    "stats": {
     "columns": [

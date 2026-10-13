@@ -53,13 +53,13 @@ public final class PowerConfig {
         b.pop();
         b.push("solar");
         SOLAR_MK1 = b.comment("Solar Panel Mk1, FE/t in daylight with sky access.")
-                .defineInRange("solarMk1", 20, 1, 1_000_000);
+                .defineInRange("solarMk1", 40, 1, 1_000_000);
         SOLAR_MK2 = b.comment("Solar Panel Mk2, FE/t in daylight with sky access.")
-                .defineInRange("solarMk2", 80, 1, 1_000_000);
+                .defineInRange("solarMk2", 200, 1, 1_000_000);
         SOLAR_MK3 = b.comment("Solar Panel Mk3, FE/t in daylight with sky access.")
-                .defineInRange("solarMk3", 200, 1, 1_000_000);
+                .defineInRange("solarMk3", 480, 1, 1_000_000);
         SOLAR_MK4 = b.comment("Solar Panel Mk4, FE/t in daylight with sky access.")
-                .defineInRange("solarMk4", 320, 1, 1_000_000);
+                .defineInRange("solarMk4", 1_200, 1, 1_000_000);
         b.pop();
         b.push("tesla");
         int[] rates = {4_000, 16_000, 64_000, 256_000, 1_000_000};
