@@ -18,7 +18,7 @@ import java.util.Map;
  * Spark Lamp: a small floating electric wisp with torch light (14), no collision, breaks instantly and drops nothing.
  * Only the Lamp Rod and the Lamp Placer module put it down. It needs no supporting block. {@link #FACING} only sets where
  * in the block the wisp floats (up = low, down = high, a side = against that wall). The model is empty: the wisp, its
- * arcs, sparks and sounds are drawn client side by gear.client.SparkWisps, so the server keeps no state for it.
+ * arcs and sparks are drawn client side by gear.client.SparkWisps, so the server keeps no state for it.
  */
 public class SparkLampBlock extends Block {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
