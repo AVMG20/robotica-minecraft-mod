@@ -49,15 +49,20 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Altitude: +0.25% per block the crown sits above Y 64, capped by {@code spireAltitudeMaxBonus}. Weather at the
  *       crown: rain x1.25, thunder x1.5. Interference: see {@link SpireField}.</li>
  *   <li>Lightning: once a second a strike lands with chance 1 / {@code spireStrikeEvery<weather>} and adds
- *       {@code spireStrikeSeconds} of full output (at least 200k FE), fuel or not. Visual only: no fire, no damage.</li>
+ *       {@code spireStrikeSeconds} of full output (at least 200k FE) to the storm charge, fuel or not. Visual only: no
+ *       fire, no damage.</li>
+ *   <li>Storm charge: its own store of {@link #CHARGE_STRIKES} thunderstorm strikes. Each tick's output comes from the
+ *       charge first and from fuel only for the rest, so a full buffer keeps the lightning instead of losing it.</li>
  * </ul>
- * With less buffer room than a tick's output it burns only that share of fuel.
+ * With less buffer room than a tick's output it spends only that share of charge and fuel.
  */
 public class SpireBlockEntity extends StructureControllerBlockEntity {
     public static final int FUEL_SLOTS = 2;
     public static final int STRIKE_EVENT = 1;
     public static final double ALTITUDE_PER_BLOCK = 0.0025;
     public static final int STRIKE_MIN = 200_000;
+    /** The storm charge holds this many thunderstorm strikes. */
+    public static final int CHARGE_STRIKES = 10;
     public static final String MILESTONE = "spire_formed";
 
     public enum State { NOT_FORMED, RUNNING, NO_SKY, NO_FUEL, WASTE_FULL, BUFFER_FULL }
@@ -101,6 +106,8 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     private ItemStack pendingWaste = ItemStack.EMPTY;
     private long lastStrike = Long.MIN_VALUE / 2;
     private boolean strikeMuted;
+    /** Storm charge in FE: lightning waiting to be spent before fuel. */
+    private double charge;
 
     // from the last scan
     private int conductors;
@@ -265,6 +272,17 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         return basePower * altitude() * weatherFactor() * interference * CoreConfig.generation();
     }
 
+    /** FE a strike adds to the storm charge under the given weather factor. */
+    private long strikeBurst(double weatherFactor) {
+        double full = basePower * altitude() * weatherFactor * interference * CoreConfig.generation();
+        return Math.max(STRIKE_MIN, Math.round(full * 20.0 * EnergyConfig.spireStrikeSeconds()));
+    }
+
+    /** Most storm charge this spire holds: {@link #CHARGE_STRIKES} thunderstorm strikes. */
+    public long chargeCapacity() {
+        return CHARGE_STRIKES * strikeBurst(1.5);
+    }
+
     // ---------------------------------------------------------------- tick
 
     @Override
@@ -302,33 +320,36 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         double full = potentialNow();
         potential = (int) Math.min(Integer.MAX_VALUE, Math.round(full));
         fePerTick = 0;
-        boolean burning = false;
         if (!sky) state = State.NO_SKY;
         else if (energy.getEnergyStored() >= energy.getMaxEnergyStored()) state = State.BUFFER_FULL;
-        else if (!pendingWaste.isEmpty()) state = State.WASTE_FULL;
         else if (full <= 0) state = State.NO_FUEL;
         else {
-            int ready = ensureFuel();
-            if (ready == 1) {
-                double room = energy.getMaxEnergyStored() - energy.getEnergyStored();
-                double out = Math.min(full, room);
-                // fuel per tick: the FE it makes divided by the efficiency, never more than what is left
-                double need = out / Math.max(0.01, efficiency * CoreConfig.generation());
-                if (need > fuelLeft) {
-                    out *= fuelLeft / need;
-                    need = fuelLeft;
+            double out = Math.min(full, energy.getMaxEnergyStored() - energy.getEnergyStored());
+            // the storm charge pays first, fuel the rest
+            double fromCharge = Math.min(out, charge);
+            charge -= fromCharge;
+            double rest = out - fromCharge;
+            int ready = 1;
+            if (rest > 1e-9) {
+                ready = !pendingWaste.isEmpty() ? -1 : ensureFuel();
+                if (ready == 1) {
+                    // fuel per tick: the FE it makes divided by the efficiency, never more than what is left
+                    double need = rest / Math.max(0.01, efficiency * CoreConfig.generation());
+                    if (need > fuelLeft) {
+                        rest *= fuelLeft / need;
+                        need = fuelLeft;
+                    }
+                    fuelLeft -= need;
+                    if (fuelLeft <= 1e-6) finishUnit();
+                } else {
+                    rest = 0;
                 }
-                fuelLeft -= need;
-                fePerTick = (int) Math.round(out);
-                if (fePerTick > 0) energy.generate(fePerTick);
-                if (fuelLeft <= 1e-6) finishUnit();
-                state = State.RUNNING;
-                burning = fePerTick > 0;
-            } else {
-                state = ready == 0 ? State.NO_FUEL : State.WASTE_FULL;
             }
+            fePerTick = (int) Math.round(fromCharge + rest);
+            if (fePerTick > 0) energy.generate(fePerTick);
+            state = fePerTick > 0 || ready == 1 ? State.RUNNING : ready == 0 ? State.NO_FUEL : State.WASTE_FULL;
         }
-        if (burning) litHold = 40;
+        if (fePerTick > 0) litHold = 40;
         else if (litHold > 0) litHold--;
         setLit(litHold > 0);
         setRunning(litHold > 0);
@@ -373,9 +394,8 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     public void strike(ServerLevel level, long now) {
         BlockPos crown = crown();
         if (crown == null) return;
-        double full = basePower * altitude() * weatherFactor() * interference * CoreConfig.generation();
-        long burst = Math.max(STRIKE_MIN, Math.round(full * 20.0 * EnergyConfig.spireStrikeSeconds()));
-        energy.generate((int) Math.min(Integer.MAX_VALUE, burst));
+        // never more than the cap, but a cap that shrank (weather, a shorter column) takes nothing away
+        charge = Math.min(charge + strikeBurst(weatherFactor()), Math.max(charge, chargeCapacity()));
         lastStrike = now;
         // to every player who has the chunk loaded (a block event only reaches 64 blocks; the bolt draws out to 192)
         var event = new net.minecraft.network.protocol.game.ClientboundBlockEventPacket(worldPosition, getBlockState().getBlock(), STRIKE_EVENT, conductors);
@@ -451,6 +471,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
     public State state() { return state; }
     public boolean running() { return running; }
     public double fuelLeft() { return fuelLeft; }
+    public double charge() { return charge; }
 
     /** Test hook: the sky check without a real sky (the test arena has a roof of air but may be covered). */
     public void setSkyForTest(boolean value) {
@@ -523,6 +544,8 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         tag.putInt("energy", energy.getEnergyStored());
         tag.putInt("capacity", energy.getMaxEnergyStored());
         tag.putFloat("burn", fuelTotal > 0 ? (float) (fuelLeft / fuelTotal) : 0F);
+        tag.putLong("charge", (long) charge);
+        tag.putLong("chargeCap", chargeCapacity());
         tag.putInt("conductors", conductors);
         tag.putInt("basePower", basePower);
         tag.putInt("eff", (int) Math.round(efficiency * 100));
@@ -553,6 +576,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         tag.put("waste", waste.serializeNBT(registries));
         tag.put("energy", energy.serializeNBT(registries));
         tag.putDouble("fuelLeft", fuelLeft);
+        tag.putDouble("charge", charge);
         tag.putLong("lastStrike", lastStrike);
         tag.putInt("fuelTotal", fuelTotal);
         tag.putBoolean("strikeMuted", strikeMuted);
@@ -569,6 +593,7 @@ public class SpireBlockEntity extends StructureControllerBlockEntity {
         if (tag.contains("waste")) waste.deserializeNBT(registries, tag.getCompound("waste"));
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         fuelLeft = tag.getDouble("fuelLeft");
+        charge = tag.getDouble("charge");
         if (tag.contains("lastStrike")) lastStrike = tag.getLong("lastStrike");
         fuelTotal = tag.getInt("fuelTotal");
         strikeMuted = tag.getBoolean("strikeMuted");
