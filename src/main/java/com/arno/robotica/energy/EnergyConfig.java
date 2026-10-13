@@ -60,7 +60,7 @@ public final class EnergyConfig {
                 .defineInRange("spireSpacing", 64, 0, 1024);
         SPIRE_ALTITUDE_MAX = b.comment("Most extra output for height: +0.25% per block the crown sits above Y 64, up to this share.")
                 .defineInRange("spireAltitudeMaxBonus", 0.5, 0.0, 10.0);
-        SPIRE_STRIKE_SECONDS = b.comment("A lightning strike on the crown adds this many seconds of the spire's full output, fuel or not.")
+        SPIRE_STRIKE_SECONDS = b.comment("A lightning strike on the crown adds this many seconds of the spire's full output to its storm charge, fuel or not.")
                 .defineInRange("spireStrikeSeconds", 30, 0, 3600);
         String[] weather = {"Clear", "Rain", "Thunder"};
         int[] every = {360, 120, 30};

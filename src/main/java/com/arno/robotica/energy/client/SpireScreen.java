@@ -18,12 +18,13 @@ import java.util.Locale;
 
 /**
  * Tesla Spire GUI: FE buffer, output, the column (conductors, base power, efficiency), the crown's altitude, weather
- * and neighbours, the last lightning strike, fuel and waste slots with the burn bar, a strike sound switch, status and
- * structure lines.
+ * and neighbours, the last lightning strike, fuel and waste slots with the burn bar, the storm charge bar, a strike
+ * sound switch, status and structure lines.
  */
 public class SpireScreen extends ControllerScreen<SpireMenu> {
     private static final int BUFFER_X = 8, BUFFER_Y = 18, BUFFER_H = 58;
     private static final int TEXT_X = 24, TEXT_W = 104;
+    private static final int CHARGE_DARK = 0xFF2E2547, CHARGE_TOP = 0xFFF1E8FF, CHARGE_BOTTOM = 0xFF9A6BFF;
     private IconButton muteButton;
     private Boolean shownMuted;
     private boolean shownAllowed;
@@ -122,6 +123,8 @@ public class SpireScreen extends ControllerScreen<SpireMenu> {
                 : Component.translatable("gui.robotica.energy.not_burning"));
         smallRight(g, Component.translatable("gui.robotica.energy.fuel_waste"), x + 168, y + 8, 40);
 
+        drawCharge(g, x + SpireMenu.CHARGE_X, y + SpireMenu.CHARGE_Y, SpireMenu.CHARGE_W, SpireMenu.CHARGE_H, menu.charge(), menu.chargeCapacity());
+
         State state = menu.state();
         Tone tone = switch (state) {
             case RUNNING -> Tone.GOOD;
@@ -132,5 +135,19 @@ public class SpireScreen extends ControllerScreen<SpireMenu> {
         drawStatus(g, Component.translatable(key), x + 8, y + 82, 136, 1, tone);
         addTooltip(x + 8, y + 81, 136, 10, Component.translatable(key + ".tip"));
         drawStructure(g, x + 8, y + 95, 136, 2);
+    }
+
+    /** Storm charge: a vertical bar in storm colours, filling from the bottom. */
+    private void drawCharge(GuiGraphics g, int bx, int by, int w, int h, long charge, long capacity) {
+        drawInset(g, bx, by, w, h);
+        g.fill(bx, by, bx + w, by + h, CHARGE_DARK);
+        int filled = capacity <= 0 ? 0 : (int) Math.min(h, Math.round((double) h * charge / capacity));
+        if (filled > 0) {
+            g.fillGradient(bx, by + h - filled, bx + w, by + h, CHARGE_TOP, CHARGE_BOTTOM);
+            g.fill(bx, by + h - filled, bx + 1, by + h, 0x40FFFFFF);
+        }
+        for (int i = 1; i < 4; i++) g.fill(bx + w - 3, by + h * i / 4, bx + w, by + h * i / 4 + 1, 0x66000000);
+        addTooltip(bx, by, w, h, Component.translatable("gui.robotica.energy.spire.charge", Fmt.compact(charge), Fmt.compact(capacity)),
+                Component.translatable("gui.robotica.energy.spire.charge_tip").withStyle(ChatFormatting.GRAY));
     }
 }
