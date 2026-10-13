@@ -343,11 +343,11 @@ write(ASSETS / 'models/block/spire_coil_glow.json', {'parent': 'minecraft:block/
 
 # ---------- Ring Collider (textures: Ring Collider section of scripts/textures/energy.py) ----------
 # Controller: the machine casing look. The front's beam aperture shows the collision chamber 2 px deep (back plate,
-# bore walls, the beam tube across it); the sides carry beam ports, the back the energy channel, the top a beam
-# window. Formed: standby glow; running (formed + lit): animated full-bright overlays.
+# bore walls, the beam tube across it); the sides and the back carry beam ports (the controller turns its front away
+# from the loop when it forms, ColliderBlockEntity), the top a beam window. Formed: standby glow; running (formed + lit): animated full-bright overlays.
 from machine_models import machine_model  # noqa: E402
 
-CL_FACES = {'north': 'collider_controller_front', 'south': 'collider_controller_back',
+CL_FACES = {'north': 'collider_controller_front', 'south': 'collider_controller_port',
             'west': 'collider_controller_port', 'east': 'collider_controller_port',
             'up': 'collider_controller_top', 'down': 'collider_controller_bottom'}
 
@@ -374,9 +374,8 @@ def collider_controller_model(state):
         els.append(flat([3, 3, 2], [13, 13, 2], 'north', [3, 3, 13, 13], '#chamber_glow', True))
         els.append(flat([3, 7, 0.5], [13, 9, 0.5], 'north', [3, 0, 13, 2], '#chamber_glow', True))
         glow = {'north': f'collider_controller_front{suffix}', 'west': f'collider_controller_port{suffix}',
-                'east': f'collider_controller_port{suffix}', 'up': f'collider_controller_top{suffix}'}
-        if state == 'on':
-            glow['south'] = 'collider_controller_back_running'
+                'east': f'collider_controller_port{suffix}', 'south': f'collider_controller_port{suffix}',
+                'up': f'collider_controller_top{suffix}'}
     return machine_model(CL_FACES, glow, els, textures)
 
 

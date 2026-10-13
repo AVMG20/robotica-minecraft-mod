@@ -991,14 +991,6 @@ def collider_port_glow(state, frame=0):
     return c
 
 
-def collider_back():
-    return mc.side(0)
-
-
-def collider_back_glow(frame):
-    return mc.side_glow(frame, CL_FRAMES)
-
-
 def collider_top():
     """A window over the beam line and a lens over the collision point, held by four clamps."""
     c = mc.shell(4)
@@ -1145,8 +1137,6 @@ def write_collider():
     write_block('collider_controller_port', collider_port().rows(), pal)
     write_block('collider_controller_port_formed', collider_port_glow('formed').rows(), pal)
     anim('collider_controller_port_running', [collider_port_glow('on', f) for f in run])
-    write_block('collider_controller_back', collider_back().rows(), pal)
-    anim('collider_controller_back_running', [collider_back_glow(f) for f in run])
     write_block('collider_controller_top', collider_top().rows(), pal)
     write_block('collider_controller_top_formed', collider_top_glow('formed').rows(), pal)
     anim('collider_controller_top_running', [collider_top_glow('on', f) for f in run])

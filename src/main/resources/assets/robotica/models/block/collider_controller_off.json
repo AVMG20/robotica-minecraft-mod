@@ -3,12 +3,12 @@
   "render_type": "minecraft:cutout",
   "textures": {
     "north": "robotica:block/collider_controller_front",
-    "south": "robotica:block/collider_controller_back",
+    "south": "robotica:block/collider_controller_port",
     "west": "robotica:block/collider_controller_port",
     "east": "robotica:block/collider_controller_port",
     "up": "robotica:block/collider_controller_top",
     "down": "robotica:block/collider_controller_bottom",
-    "particle": "robotica:block/collider_controller_back",
+    "particle": "robotica:block/collider_controller_port",
     "chamber": "robotica:block/collider_controller_chamber"
   },
   "elements": [

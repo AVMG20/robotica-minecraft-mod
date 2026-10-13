@@ -20,7 +20,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.List;
 
@@ -32,6 +35,8 @@ import java.util.List;
 public class TinkersBenchBlock extends Block {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static final Component TITLE = Component.translatable("container.robotica.tinkers_bench");
+    /** Up to the worktop; the vice on top stays out of the hit box. */
+    private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 13, 16);
 
     public TinkersBenchBlock(Properties props) {
         super(props);
@@ -56,6 +61,11 @@ public class TinkersBenchBlock extends Block {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
+        return SHAPE;
     }
 
     @Override

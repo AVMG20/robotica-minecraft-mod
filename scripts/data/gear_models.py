@@ -27,34 +27,34 @@ JAW_FACE, JAW_SIDE, JAW_TOP, HANDLE, BASE_SIDE, BASE_TOP = (0, 0), (4, 0), (0, 4
 
 
 def tinkers_bench():
-    """Workshop bench, front (drawer, vice) to the north. Textures: scripts/textures/gear.py. Worktop y 12..16 over the
-    full block, apron y 8..12 and light steel legs inset 1 px, a graphite shelf y 2..4 between the legs, a steel vice
+    """Workshop bench, front (drawer, vice) to the north. Textures: scripts/textures/gear.py. Worktop y 9..13 over the
+    full block, apron y 5..9 and light steel legs inset 1 px, a graphite shelf y 2..4 between the legs, a steel vice up to y 16
     on the front left corner of the top and the lit module slot as a full-bright overlay on the top. Side faces use the
     default UVs, so every part maps onto its piece of the tinkers_bench_side / _front picture."""
     side = {d: {'texture': '#front' if d == 'north' else '#side'} for d in SIDES}
     leg = {d: {'texture': '#side'} for d in SIDES}
     els = [
-        box([0, 12, 0], [16, 16, 16], dict(side, up={'texture': '#top'}, down={'texture': '#bottom'}), SIDES + ('up',)),
-        box([1, 8, 1], [15, 12, 15], dict(side, down={'texture': '#bottom'})),
+        box([0, 9, 0], [16, 13, 16], dict(side, up={'texture': '#top'}, down={'texture': '#bottom'}), SIDES),
+        box([1, 5, 1], [15, 9, 15], dict(side, down={'texture': '#bottom'})),
         box([2, 2, 2], [14, 4, 14], dict(side, up={'texture': '#bottom'}, down={'texture': '#bottom'})),
     ]
     for x in (1, 12):
         for z in (1, 12):
-            els.append(box([x, 0, z], [x + 3, 8, z + 3], dict(leg, down={'texture': '#bottom'}), ('down',)))
+            els.append(box([x, 0, z], [x + 3, 5, z + 3], dict(leg, down={'texture': '#bottom'}), ('down',)))
     els += [
-        box([10, 16, 1], [14, 17, 6], {'north': vice_face(BASE_SIDE, (4, 1)), 'south': vice_face(BASE_SIDE, (4, 1)),
+        box([10, 13, 1], [14, 14, 6], {'north': vice_face(BASE_SIDE, (4, 1)), 'south': vice_face(BASE_SIDE, (4, 1)),
                                        'west': vice_face(BASE_SIDE, (5, 1)), 'east': vice_face(BASE_SIDE, (5, 1)),
                                        'up': vice_face(BASE_TOP, (4, 5))}),
-        box([10, 17, 1], [14, 19, 2], {'north': vice_face(JAW_FACE, (4, 2)), 'south': vice_face(JAW_FACE, (4, 2)),
+        box([10, 14, 1], [14, 16, 2], {'north': vice_face(JAW_FACE, (4, 2)), 'south': vice_face(JAW_FACE, (4, 2)),
                                        'west': vice_face(JAW_SIDE, (1, 2)), 'east': vice_face(JAW_SIDE, (1, 2)),
                                        'up': vice_face(JAW_TOP, (4, 1))}),
-        box([10, 17, 3], [14, 19, 6], {'north': vice_face(JAW_FACE, (4, 2)), 'south': vice_face(JAW_FACE, (4, 2)),
+        box([10, 14, 3], [14, 16, 6], {'north': vice_face(JAW_FACE, (4, 2)), 'south': vice_face(JAW_FACE, (4, 2)),
                                        'west': vice_face(JAW_SIDE, (3, 2)), 'east': vice_face(JAW_SIDE, (3, 2)),
                                        'up': vice_face(JAW_TOP, (4, 3))}),
-        box([9, 17, 0], [15, 18, 1], {d: vice_face(HANDLE, (1 if d in ('west', 'east') else 6, 1))
+        box([9, 14, 0], [15, 15, 1], {d: vice_face(HANDLE, (1 if d in ('west', 'east') else 6, 1))
                                       for d in ('north', 'south', 'up', 'down', 'west', 'east')}),
-        {'from': [0, 16, 0], 'to': [16, 16, 16], 'shade': False,
-         'faces': {'up': {'texture': '#glow', 'cullface': 'up', 'neoforge_data': dict(GLOW_FACE)}}},
+        {'from': [0, 13, 0], 'to': [16, 13, 16], 'shade': False,
+         'faces': {'up': {'texture': '#glow', 'neoforge_data': dict(GLOW_FACE)}}},
     ]
     t = {k: f'robotica:block/tinkers_bench_{k}' for k in ('top', 'side', 'front', 'bottom', 'vice')}
     t['glow'] = 'robotica:block/tinkers_bench_top_glow'

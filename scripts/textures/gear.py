@@ -243,26 +243,27 @@ BENCH = casing.casing_palette(
 
 
 def bench_side(front=False):
-    """One side as seen: worktop (rows 0-3: oak edge over a light steel band, copper caps), apron (rows 4-7, a drawer
-    on the front), legs (cols 1-3 and 12-14, rows 8-15, copper feet) and the shelf between them (rows 12-13)."""
+    """One side as seen: worktop (rows 3-6: oak edge over a light steel band, copper caps), apron (rows 7-10, a drawer
+    on the front), legs (cols 1-3 and 12-14, rows 11-15, copper feet) and the shelf between them (rows 12-13). Rows 0-2
+    are above the bench."""
     c = Canvas()
-    c.rect(0, 0, 16, 2, 'r').rect(0, 0, 16, 1, 's')                                  # oak edge
+    c.rect(0, 3, 16, 2, 'r').rect(0, 3, 16, 1, 's')                                  # oak edge
     for x in (4, 9, 13):
-        c.set(x, 1, 'q')
-    c.rect(0, 2, 16, 1, 'd').rect(0, 3, 16, 1, 'b')                                  # light steel band
+        c.set(x, 4, 'q')
+    c.rect(0, 5, 16, 1, 'd').rect(0, 6, 16, 1, 'b')                                  # light steel band
     for x0, s in ((0, 1), (15, -1)):                                                  # copper corner caps
-        c.set(x0, 0, 'K').set(x0 + s, 0, 'i').set(x0 + 2 * s, 0, 'h')
-        c.set(x0, 1, 'h').set(x0 + s, 1, 'g')
-        c.set(x0, 2, 'h').set(x0 + s, 2, 'g')
-        c.set(x0, 3, 'f').set(x0 + s, 3, 'f')
-    c.rect(1, 4, 14, 4, '3').rect(1, 4, 14, 1, '1').rect(1, 7, 14, 1, '2')           # graphite apron
+        c.set(x0, 3, 'K').set(x0 + s, 3, 'i').set(x0 + 2 * s, 3, 'h')
+        c.set(x0, 4, 'h').set(x0 + s, 4, 'g')
+        c.set(x0, 5, 'h').set(x0 + s, 5, 'g')
+        c.set(x0, 6, 'f').set(x0 + s, 6, 'f')
+    c.rect(1, 7, 14, 4, '3').rect(1, 7, 14, 1, '1').rect(1, 10, 14, 1, '2')          # graphite apron
     if front:                                                                         # drawer with a copper pull
-        c.rect(4, 5, 8, 2, 'c').rect(4, 5, 8, 1, 'd').rect(4, 7, 8, 1, 'b')
-        c.rect(7, 6, 2, 1, 'h').set(8, 6, 'f')
+        c.rect(4, 8, 8, 2, 'c').rect(4, 8, 8, 1, 'd').rect(4, 10, 8, 1, 'b')
+        c.rect(7, 9, 2, 1, 'h').set(8, 9, 'f')
     c.rect(2, 12, 12, 1, '4').rect(2, 13, 12, 1, '2')                                 # shelf edge
     for x in (1, 12):                                                                 # light steel legs
-        c.rect(x, 8, 1, 8, 'd').rect(x + 1, 8, 1, 8, 'c').rect(x + 2, 8, 1, 8, 'b')
-        c.rect(x, 8, 3, 1, 'a')                                                       # shadow under the apron
+        c.rect(x, 11, 1, 5, 'd').rect(x + 1, 11, 1, 5, 'c').rect(x + 2, 11, 1, 5, 'b')
+        c.rect(x, 11, 3, 1, 'a')                                                      # shadow under the apron
         c.rect(x, 14, 3, 2, 'g').set(x, 14, 'i').set(x + 2, 15, 'f').set(x + 1, 15, 'f')  # copper feet
     return c.rows()
 

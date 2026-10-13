@@ -745,6 +745,25 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /** A controller facing along its loop turns when the ring forms, so the beam pipes meet its side and back ports. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void colliderTurnsItsFrontAwayFromTheLoop(GameTestHelper helper) {
+        BlockPos min = new BlockPos(1, 1, 1);
+        BlockPos c = ring(helper, min);
+        helper.setBlock(c, EnergyRegistry.COLLIDER_CONTROLLER.get().defaultBlockState().setValue(ControllerBlock.FACING, Direction.EAST));
+        ColliderBlockEntity be = be(helper, c);
+        be.scanNow();
+        Direction facing = helper.getBlockState(c).getValue(ControllerBlock.FACING);
+        helper.assertTrue(be.isFormed() && facing.getAxis() == Direction.Axis.Z, "a straight run leaves the front free, got " + facing);
+        helper.setBlock(c, EnergyRegistry.ACCELERATOR_SEGMENT.get());
+        helper.setBlock(min, EnergyRegistry.COLLIDER_CONTROLLER.get().defaultBlockState().setValue(ControllerBlock.FACING, Direction.SOUTH));
+        ColliderBlockEntity corner = be(helper, min);
+        corner.scanNow();
+        facing = helper.getBlockState(min).getValue(ControllerBlock.FACING);
+        helper.assertTrue(corner.isFormed() && facing != Direction.SOUTH && facing != Direction.EAST, "a corner leaves the front free, got " + facing);
+        helper.succeed();
+    }
+
     /** A formed ring re-scans for changes on and next to its loop, not for a farm inside it or blocks above it. */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void colliderWatchesOnlyItsLoop(GameTestHelper helper) {

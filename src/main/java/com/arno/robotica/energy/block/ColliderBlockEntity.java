@@ -27,6 +27,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
@@ -235,6 +236,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
     @Override
     protected void onFormed(Visitor visitor) {
         RingVisitor v = (RingVisitor) visitor;
+        faceAwayFromRing(v.ring);
         boolean changed = !ring.equals(v.ring);
         ring.clear();
         ring.addAll(v.ring);
@@ -244,6 +246,26 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
             ringChanged();
             if (beamOn) collapse();
             setChangedAndSync();
+        }
+    }
+
+    /**
+     * The beam pipes join the controller through its side and back ports; when the loop runs into its front (the beam
+     * aperture), turn the controller so they meet ports instead.
+     */
+    private void faceAwayFromRing(List<BlockPos> loop) {
+        if (level == null || loop.size() < 3) return;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(ControllerBlock.FACING)) return;
+        Direction facing = state.getValue(ControllerBlock.FACING);
+        BlockPos front = worldPosition.relative(facing);
+        if (!front.equals(loop.get(1)) && !front.equals(loop.get(loop.size() - 1))) return;
+        for (Direction d : new Direction[]{facing.getClockWise(), facing.getCounterClockWise(), facing.getOpposite()}) {
+            BlockPos p = worldPosition.relative(d);
+            if (!p.equals(loop.get(1)) && !p.equals(loop.get(loop.size() - 1))) {
+                level.setBlock(worldPosition, state.setValue(ControllerBlock.FACING, d), Block.UPDATE_CLIENTS);
+                return;
+            }
         }
     }
 

@@ -3,19 +3,19 @@
   "render_type": "minecraft:cutout",
   "textures": {
     "north": "robotica:block/collider_controller_front",
-    "south": "robotica:block/collider_controller_back",
+    "south": "robotica:block/collider_controller_port",
     "west": "robotica:block/collider_controller_port",
     "east": "robotica:block/collider_controller_port",
     "up": "robotica:block/collider_controller_top",
     "down": "robotica:block/collider_controller_bottom",
-    "particle": "robotica:block/collider_controller_back",
+    "particle": "robotica:block/collider_controller_port",
     "chamber": "robotica:block/collider_controller_chamber",
     "chamber_glow": "robotica:block/collider_controller_chamber_running",
     "glow_north": "robotica:block/collider_controller_front_running",
     "glow_west": "robotica:block/collider_controller_port_running",
     "glow_east": "robotica:block/collider_controller_port_running",
-    "glow_up": "robotica:block/collider_controller_top_running",
-    "glow_south": "robotica:block/collider_controller_back_running"
+    "glow_south": "robotica:block/collider_controller_port_running",
+    "glow_up": "robotica:block/collider_controller_top_running"
   },
   "elements": [
     {
@@ -310,18 +310,18 @@
             "ambient_occlusion": false
           }
         },
-        "up": {
-          "texture": "#glow_up",
-          "cullface": "up",
+        "south": {
+          "texture": "#glow_south",
+          "cullface": "south",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15,
             "ambient_occlusion": false
           }
         },
-        "south": {
-          "texture": "#glow_south",
-          "cullface": "south",
+        "up": {
+          "texture": "#glow_up",
+          "cullface": "up",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15,
