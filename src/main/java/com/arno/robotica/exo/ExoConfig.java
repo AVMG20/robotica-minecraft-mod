@@ -15,7 +15,7 @@ public final class ExoConfig {
     public static final ModConfigSpec SPEC;
 
     // ---- energy costs (FE per unit of the module)
-    private static final ModConfigSpec.IntValue[] NIGHT_VISION, JET_ASSIST, JET_ASSIST_JUMP, KINETIC_SHIELD, SERVO, SPRING_HEELS,
+    private static final ModConfigSpec.IntValue[] NIGHT_VISION, JET_ASSIST, JET_ASSIST_JUMP, JET_THRUST, KINETIC_SHIELD, SERVO, SPRING_HEELS,
             MAGNET, SONAR, MED_INJECTOR, REACH, ANCHOR_SERVOS, HEAT_SHIELD;
     private static final ModConfigSpec.IntValue REBREATHER, ROBOT_HUD, FLIGHT, STEP_ASSIST, AUTO_FEEDER, SOLAR_WEAVE, HAZARD_SEAL,
             KINETIC_GEN_WALK, KINETIC_GEN_SPRINT, DASH, HYDRO_FINS, OVERCLOCK, GLIDER, CRYO_TREADS, FALL_DAMPENER;
@@ -23,7 +23,7 @@ public final class ExoConfig {
     private static final ModConfigSpec.BooleanValue CELL_RECHARGE;
 
     // ---- module numbers
-    private static final ModConfigSpec.IntValue[] MAGNET_RADIUS, AIR_JUMPS, THERMAL_RADIUS, SONAR_RADIUS, MED_COOLDOWN;
+    private static final ModConfigSpec.IntValue[] MAGNET_RADIUS, AIR_JUMPS, JET_BURN, THERMAL_RADIUS, SONAR_RADIUS, MED_COOLDOWN;
     private static final ModConfigSpec.DoubleValue[] SHIELD_ABSORB, SERVO_SPEED, SPRING_BOOST, MED_HEAL, CAPACITOR_BONUS, REACH_BLOCKS,
             ANCHOR_RESIST;
     private static final ModConfigSpec.DoubleValue STEP_BONUS, MED_THRESHOLD, HYDRO_SWIM, HYDRO_MINING, DASH_SPEED;
@@ -49,6 +49,7 @@ public final class ExoConfig {
         SONAR = costs(b, "sonarPulsePerPing", "FE per Sonar Pulse ping (I, II, III).", 4_000, 6_000, 8_000);
         JET_ASSIST = costs(b, "jetAssistPerSecond", "FE per second while Jet Assist slows a fall (I, II, III).", 40, 30, 20);
         JET_ASSIST_JUMP = costs(b, "jetAssistPerDoubleJump", "FE per Jet Assist double jump (I, II, III).", 400, 350, 300);
+        JET_THRUST = costs(b, "jetThrustPerSecond", "FE per second while Jet Assist thrusts upward (I, II, III); hover costs half.", 800, 1_000, 1_200);
         FLIGHT = cost(b, "flightPerSecond", "FE per second while flying (120 FE/t).", 2_400);
         KINETIC_SHIELD = costs(b, "kineticShieldPerDamage", "FE per point of damage the Kinetic Shield blocks (I, II, III).", 8_000, 6_000, 4_000);
         MED_INJECTOR = costs(b, "medInjectorPerUse", "FE per Med Injector shot (I, II, III).", 20_000, 30_000, 40_000);
@@ -87,6 +88,7 @@ public final class ExoConfig {
         SONAR_COOLDOWN = b.comment("Ticks between two Sonar Pulse pings.").defineInRange("sonarPulseCooldown", 100, 0, 72_000);
         SONAR_DURATION = b.comment("Ticks the Sonar Pulse outlines stay visible.").defineInRange("sonarPulseDuration", 200, 20, 1_200);
         AIR_JUMPS = ints(b, "airJumps", "Extra jumps in the air with Jet Assist before landing (I, II, III).", 0, 5, 1, 2, 3);
+        JET_BURN = ints(b, "jetBurnSeconds", "Seconds of Jet Assist thrust from cold to overheated (I, II, III).", 1, 600, 3, 8, 20);
         SHIELD_ABSORB = doubles(b, "kineticShieldAbsorb", "Share of each hit (after armor) the Kinetic Shield can absorb instead of health (I, II, III); the rest hurts as normal.",
                 0.0, 1.0, 0.75, 0.85, 0.95);
         MED_HEAL = doubles(b, "medInjectorHeal", "Health the Med Injector restores per shot (I, II, III; 2 = one heart).", 0.0, 40.0, 4.0, 6.0, 8.0);
@@ -229,6 +231,11 @@ public final class ExoConfig {
         return CoreConfig.scaleEnergy(get(lv(JET_ASSIST_JUMP, level)));
     }
 
+    /** FE per second of Jet Assist thrust (hover costs half). */
+    public static int jetThrustCost(int level) {
+        return CoreConfig.scaleEnergy(get(lv(JET_THRUST, level)));
+    }
+
     public static int kineticSprintPerBlock() {
         return CoreConfig.scaleGeneration(get(KINETIC_GEN_SPRINT));
     }
@@ -273,6 +280,11 @@ public final class ExoConfig {
 
     public static int airJumps(int level) {
         return get(lv(AIR_JUMPS, level));
+    }
+
+    /** Seconds of thrust that take the Jet Assist from cold to overheated. */
+    public static int jetBurnSeconds(int level) {
+        return get(lv(JET_BURN, level));
     }
 
     public static double shieldAbsorb(int level) {
@@ -407,7 +419,8 @@ public final class ExoConfig {
         return switch (kind) {
             case NIGHT_VISION -> new Object[]{thermalRadius(level)};
             case SONAR_PULSE -> new Object[]{sonarRadius(level)};
-            case JET_ASSIST -> new Object[]{airJumps(level)};
+            case JET_ASSIST -> new Object[]{airJumps(level), jetBurnSeconds(level),
+                    com.arno.robotica.core.item.HasDetails.key("key.robotica.exo.toggle_flight")};
             case KINETIC_SHIELD -> new Object[]{pct(shieldAbsorb(level))};
             case MED_INJECTOR -> new Object[]{String.format(java.util.Locale.ROOT, "%.0f", medHeal(level) / 2.0), medCooldown(level) / 20};
             case SERVO_STRIDE -> new Object[]{pct(servoSpeed(level))};

@@ -11,6 +11,7 @@ import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
+import com.arno.robotica.exo.ExoJet;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.menu.ExoMenu;
 import net.minecraft.ChatFormatting;
@@ -134,11 +135,12 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder 
         return false;
     }
 
-    // ---- Glider module: Elytra flight (the Exo ticker charges the time in the air) ----
+    // ---- Glider module: Elytra flight (the Exo ticker charges the time in the air; a Jet Assist goes first) ----
 
     @Override
     public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
-        return getEquipmentSlot() == EquipmentSlot.CHEST && ExoSuit.pieceLevel(entity, EquipmentSlot.CHEST, ModuleKind.GLIDER) > 0;
+        return getEquipmentSlot() == EquipmentSlot.CHEST && ExoSuit.pieceLevel(entity, EquipmentSlot.CHEST, ModuleKind.GLIDER) > 0
+                && ExoJet.gliderMayOpen(entity);
     }
 
     @Override

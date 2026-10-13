@@ -2345,5 +2345,38 @@
         "pitch": 0.85
       }
     ]
+  },
+  "exo_jet_loop": {
+    "subtitle": "subtitles.robotica.exo_jet_loop",
+    "sounds": [
+      {
+        "name": "robotica:exo/jet_loop",
+        "type": "file",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "exo_jet_overheat": {
+    "subtitle": "subtitles.robotica.exo_jet_overheat",
+    "sounds": [
+      {
+        "name": "robotica:exo/jet_overheat",
+        "type": "file",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "exo_jet_ready": {
+    "subtitle": "subtitles.robotica.exo_jet_ready",
+    "sounds": [
+      {
+        "name": "robotica:exo/jet_ready",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
   }
 }

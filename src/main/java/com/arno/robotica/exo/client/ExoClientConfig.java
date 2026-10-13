@@ -26,8 +26,8 @@ public final class ExoClientConfig {
         b.pop();
         b.push("exoEffects");
         OUTLINES = b.comment("Draw the Sonar Pulse and thermal sight outlines through walls.").define("xrayOutlines", true);
-        FLIGHT_SOUND = b.comment("Thruster sound of suits flying with the Flight module (yours and other players').").define("flightSound", true);
-        PARTICLES = b.comment("Thruster trails, dash, landing and spring puffs, shield and injector flashes, the sonar ring.")
+        FLIGHT_SOUND = b.comment("Thruster sounds of the Flight module and the Jet Assist (yours and other players').").define("flightSound", true);
+        PARTICLES = b.comment("Thruster trails and jetpack flames, dash, landing and spring puffs, shield and injector flashes, the sonar ring.")
                 .define("exoParticles", true);
         COOLDOWN_SOUNDS = b.comment("Quiet beep when Dash, Sonar, Med Injector or Overclock is ready again.").define("cooldownSounds", true);
         b.pop();

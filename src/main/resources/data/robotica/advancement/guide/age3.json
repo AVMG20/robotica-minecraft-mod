@@ -63,7 +63,7 @@
       "robotica:pyro_amplifier",
       "robotica:night_vision_module_3",
       "robotica:sonar_pulse_module_2",
-      "robotica:jet_assist_module_2",
+      "robotica:jet_assist_module_3",
       "robotica:med_injector_module_2",
       "robotica:hazard_seal_module",
       "robotica:dash_thrusters_module",

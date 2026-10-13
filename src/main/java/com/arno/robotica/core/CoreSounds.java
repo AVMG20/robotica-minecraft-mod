@@ -156,6 +156,12 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> LINK_HUM = reg("link_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> LINK_JOIN = reg("link_join");
     public static final DeferredHolder<SoundEvent, SoundEvent> LINK_LEAVE = reg("link_leave");
+    /** Jet Assist thruster loop, played client side for every firing jetpack nearby. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_JET_LOOP = reg("exo_jet_loop");
+    /** Jet Assist cutting out at full heat. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_JET_OVERHEAT = reg("exo_jet_overheat");
+    /** Jet Assist cooled down and ready again (only the wearer hears it). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_JET_READY = reg("exo_jet_ready");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {
