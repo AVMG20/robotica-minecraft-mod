@@ -1319,6 +1319,21 @@ public final class ExoTicker {
         p.getPersistentData().remove(FLIGHT_KEY);
     }
 
+    /**
+     * Dimension change: the client starts a new player object with a cold, idle Jet Assist, so the server's pack starts
+     * over too (otherwise a thrust held through a portal keeps burning FE and heat on the server only).
+     */
+    public static void onChangedDimension(ServerPlayer p) {
+        State st = STATES.get(p.getUUID());
+        if (st == null) return;
+        st.jetWant = ExoJet.OFF;
+        st.jetMode = ExoJet.OFF;
+        st.heat = 0;
+        st.overheated = false;
+        st.hoverMode = false;
+        st.thrustedAir = false;
+    }
+
     /** Respawn: new player object with fresh abilities and cooldowns; the remembered cooldowns come back. */
     public static void onRespawn(ServerPlayer p) {
         STATES.remove(p.getUUID());
