@@ -1375,18 +1375,23 @@ public class BuddyBot extends DroneBase {
         openTicks = 3;
     }
 
-    /** Repairing or charging it gets a happy spin. */
+    /** Charging it gets a happy spin. */
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-        float health = getHealth();
         int fe = getEnergy();
         boolean noBattery = battery.getStackInSlot(0).isEmpty();
         InteractionResult result = super.mobInteract(player, hand);
         if (!level().isClientSide && !isRemoved() && serverEmote == Emote.NONE
-                && (getHealth() > health || getEnergy() > fe || noBattery && !battery.getStackInSlot(0).isEmpty())) {
+                && (getEnergy() > fe || noBattery && !battery.getStackInSlot(0).isEmpty())) {
             emote(Emote.SPIN);
         }
         return result;
+    }
+
+    /** Back to full health: a happy spin. */
+    @Override
+    protected void onRepaired() {
+        if (serverEmote == Emote.NONE) emote(Emote.SPIN);
     }
 
     @Override

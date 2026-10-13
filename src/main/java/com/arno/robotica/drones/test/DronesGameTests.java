@@ -341,6 +341,41 @@ public class DronesGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty")
+    public static void buddyRegensOnlyWhenCharged(GameTestHelper helper) {
+        BuddyBot bot = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        bot.setTier(1);
+        int cap = bot.getEnergyCapacity();
+        int fe = CoreConfig.scaleEnergy(DroneBase.REGEN_FE_PER_HP);
+        bot.setHealth(10.0F);
+
+        bot.setEnergy(cap * DroneBase.REGEN_MIN_PERCENT / 100);
+        helper.assertFalse(bot.regenStep(), "no regen at 80% charge");
+        helper.assertTrue(bot.getHealth() == 10.0F && bot.getEnergy() == cap * DroneBase.REGEN_MIN_PERCENT / 100, "80% charge: nothing changes");
+
+        bot.setEnergy(cap);
+        helper.assertTrue(bot.regenStep(), "regen on a full charge");
+        helper.assertTrue(bot.getHealth() == 11.0F, "1 HP per step, is " + bot.getHealth());
+        helper.assertTrue(bot.getEnergy() == cap - fe, "regen costs " + fe + " FE, energy is " + bot.getEnergy());
+
+        bot.setHealth(bot.getMaxHealth());
+        bot.setEnergy(cap);
+        helper.assertFalse(bot.regenStep(), "no regen at full health");
+        helper.assertTrue(bot.getEnergy() == cap, "full health costs nothing");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void buddyRegensWhileDeployed(GameTestHelper helper) {
+        BuddyBot bot = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), new BlockPos(1, 2, 1));
+        bot.setTier(1);
+        bot.setOwnerUUID(UUID.randomUUID());
+        bot.setEnergy(bot.getEnergyCapacity());
+        bot.setMode(BuddyBot.Mode.STAY);
+        bot.setHealth(10.0F);
+        helper.succeedWhen(() -> helper.assertTrue(bot.getHealth() > 10.0F, "deployed bot heals over time, is " + bot.getHealth()));
+    }
+
     @GameTest(template = "drones_arena", batch = "dronesSentry", timeoutTicks = 400)
     public static void buddyShootsHostilesOnly(GameTestHelper helper) {
         clear(helper);

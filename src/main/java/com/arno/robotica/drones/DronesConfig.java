@@ -35,7 +35,6 @@ public final class DronesConfig {
 
     private static final ModConfigSpec.IntValue LOW_ENERGY_PERCENT;
     private static final ModConfigSpec.DoubleValue MK2_SPEED;
-    private static final ModConfigSpec.IntValue REPAIR_AMOUNT;
     private static final ModConfigSpec.IntValue COMMAND_DISTANCE;
 
     static {
@@ -69,7 +68,6 @@ public final class DronesConfig {
         LOW_ENERGY_PERCENT = b.comment("A drone stops working and returns when its energy falls below this percentage.")
                 .defineInRange("lowEnergyPercent", 10, 0, 90);
         MK2_SPEED = b.comment("Mk2 multiplier of the Hauler Drone speed.").defineInRange("mk2Speed", 1.5, 1.0, 10.0);
-        REPAIR_AMOUNT = b.comment("Hit points restored by one iron ingot or plate.").defineInRange("repairAmount", 8, 1, 1000);
         COMMAND_DISTANCE = b.comment("How far from the player a drone may be to obey the command key.").defineInRange("commandDistance", 48, 4, 256);
         b.pop();
         SPEC = b.build();
@@ -115,6 +113,5 @@ public final class DronesConfig {
 
     public static int lowEnergyPercent() { return i(LOW_ENERGY_PERCENT); }
     public static double mk2Speed() { return d(MK2_SPEED); }
-    public static int repairAmount() { return i(REPAIR_AMOUNT); }
     public static int commandDistance() { return i(COMMAND_DISTANCE); }
 }

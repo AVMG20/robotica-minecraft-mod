@@ -416,19 +416,18 @@ public class HaulerDrone extends DroneBase {
         ItemStack held = player.getItemInHand(hand);
         if (held.is(Items.NAME_TAG) || held.is(Items.LEAD)) return InteractionResult.PASS;
         boolean energyItem = isBattery(held);
-        boolean repair = !held.isEmpty() && (held.is(Tags.Items.INGOTS_IRON) || held.is(IRON_PLATES)) && getHealth() < getMaxHealth();
-        if (!player.isShiftKeyDown() && !held.isEmpty() && !energyItem && !repair) return InteractionResult.PASS;
-        return interact(player, hand, held, energyItem, repair);
+        if (!player.isShiftKeyDown() && !held.isEmpty() && !energyItem) return InteractionResult.PASS;
+        return interact(player, hand, held, energyItem);
     }
 
     /** Right-click on the drone or on the carried mob. */
     public InteractionResult interactFrom(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
         boolean energyItem = isBattery(held);
-        return interact(player, hand, held, energyItem, false);
+        return interact(player, hand, held, energyItem);
     }
 
-    private InteractionResult interact(Player player, InteractionHand hand, ItemStack held, boolean energyItem, boolean repair) {
+    private InteractionResult interact(Player player, InteractionHand hand, ItemStack held, boolean energyItem) {
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (!(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
         if (!canInteract(player)) {
@@ -439,7 +438,6 @@ public class HaulerDrone extends DroneBase {
             pickUp(sp);
             return InteractionResult.CONSUME;
         }
-        if (repair) return super.mobInteract(player, hand);
         if (energyItem) {
             chargeFromItem(sp, held);
             return InteractionResult.CONSUME;

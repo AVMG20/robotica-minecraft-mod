@@ -671,7 +671,7 @@
     "Right-click it to open its cargo and settings.",
     "Buddy key (default H): dig where you look. With sneak: all come back.",
     "Backpack key (default B): open the cargo of your nearest bot.",
-    "Sneak-right-click to pick it up. Repair it with iron."
+    "Sneak-right-click to pick it up. Heals above 80% charge."
    ],
    "stats": {
     "columns": [

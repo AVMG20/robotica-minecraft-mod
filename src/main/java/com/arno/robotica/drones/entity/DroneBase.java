@@ -11,7 +11,6 @@ import com.arno.robotica.drones.DronesRegistry;
 import com.arno.robotica.drones.item.DroneItem;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -25,7 +24,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -52,7 +50,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.scores.Team;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +66,10 @@ public abstract class DroneBase extends PathfinderMob {
     protected static final EntityDataAccessor<Integer> DATA_MODE = SynchedEntityData.defineId(DroneBase.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Boolean> DATA_ACTIVE = SynchedEntityData.defineId(DroneBase.class, EntityDataSerializers.BOOLEAN);
 
-    public static final TagKey<Item> IRON_PLATES = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "plates/iron"));
+    /** Self-repair: every {@value #REGEN_INTERVAL} ticks above {@value #REGEN_MIN_PERCENT}% charge it heals 1 HP for {@value #REGEN_FE_PER_HP} FE. */
+    public static final int REGEN_INTERVAL = 60;
+    public static final int REGEN_MIN_PERCENT = 80;
+    public static final int REGEN_FE_PER_HP = 500;
 
     @Nullable
     protected UUID owner;
@@ -316,13 +316,6 @@ public abstract class DroneBase extends PathfinderMob {
             pickUp(sp);
             return InteractionResult.CONSUME;
         }
-        if (!held.isEmpty() && (held.is(Tags.Items.INGOTS_IRON) || held.is(IRON_PLATES)) && getHealth() < getMaxHealth()) {
-            heal(DronesConfig.repairAmount());
-            if (!player.hasInfiniteMaterials()) held.shrink(1);
-            playSound(SoundEvents.IRON_GOLEM_REPAIR, 0.8F, 1.0F + random.nextFloat() * 0.2F);
-            sp.displayClientMessage(Component.translatable("message.robotica.drone.repaired", Math.round(getHealth()), Math.round(getMaxHealth())), true);
-            return InteractionResult.CONSUME;
-        }
         if (isBattery(held)) {
             if (chargeFrom(sp, held)) return InteractionResult.CONSUME;
         }
@@ -558,7 +551,23 @@ public abstract class DroneBase extends PathfinderMob {
     protected void customServerAiStep() {
         super.customServerAiStep();
         if (tickCount % 5 == 0 && energy < getEnergyCapacity()) pullFromBattery(getEnergyCapacity() - energy);
+        if ((tickCount + getId()) % REGEN_INTERVAL == 0) regenStep();
         if (level() instanceof ServerLevel sl) droneTick(sl);
+    }
+
+    /** One self-repair step: 1 HP for {@link #REGEN_FE_PER_HP} FE while damaged and charged above {@link #REGEN_MIN_PERCENT}%. */
+    public boolean regenStep() {
+        if (!isAlive() || getHealth() >= getMaxHealth()) return false;
+        int fe = scaled(REGEN_FE_PER_HP);
+        if ((long) energy * 100L <= (long) getEnergyCapacity() * REGEN_MIN_PERCENT || energy < fe) return false;
+        energy -= fe;
+        heal(1.0F);
+        if (getHealth() >= getMaxHealth()) onRepaired();
+        return true;
+    }
+
+    /** Called once when self-repair brings the drone back to full health. */
+    protected void onRepaired() {
     }
 
     /** Per tick behaviour on the server. */

@@ -58,7 +58,6 @@
   "tooltip.robotica.drone.hauler_mk2": "Also hostile and big mobs, %s FE/t while carrying",
   "message.robotica.drone.say": "%s: %s",
   "message.robotica.drone.not_yours": "This drone belongs to %s",
-  "message.robotica.drone.repaired": "Repaired: %s / %s",
   "message.robotica.drone.battery_in": "Battery installed",
   "message.robotica.drone.charged": "Charged +%s FE",
   "message.robotica.drone.destroyed": "%s was destroyed",
@@ -129,6 +128,5 @@
   "robotica.configuration.both": "All drones",
   "robotica.configuration.lowEnergyPercent": "Low energy threshold (%)",
   "robotica.configuration.mk2Speed": "Mk2 speed multiplier",
-  "robotica.configuration.repairAmount": "HP per iron ingot",
   "robotica.configuration.commandDistance": "Command key distance"
 }
