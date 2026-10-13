@@ -63,7 +63,7 @@ public class ChunkClaims extends SavedData {
 
         /** Chunks of the square: 1, 9, 25. */
         public int chunks() {
-            return chunks(radius);
+            return ChunkClaims.chunks(radius);
         }
 
         /** True while its tickets are held. */
