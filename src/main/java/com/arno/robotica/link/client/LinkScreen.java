@@ -182,6 +182,7 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
         super.containerTick();
         if (deleteArmed > 0) deleteArmed--;
         if (lastListVersion != menu.listVersion()) {
+            if (lastListVersion < 0) scrollToCurrent();
             lastListVersion = menu.listVersion();
             scroll = Math.min(scroll, maxScroll());
             // the network being edited was deleted by its owner elsewhere
@@ -213,6 +214,17 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
 
     private int maxScroll() {
         return Math.max(0, menu.entries().size() - ROWS);
+    }
+
+    /** On open: the network this Link is on is in view, even far down a long list. */
+    private void scrollToCurrent() {
+        List<NetworkEntry> entries = menu.entries();
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i).id().equals(menu.current())) {
+                if (i >= ROWS) scroll = i - ROWS + 1;
+                return;
+            }
+        }
     }
 
     private int rowAt(double mouseX, double mouseY) {
@@ -289,7 +301,7 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
             Component sub = here != null && !here.equals(e.home())
                     ? tr("row_away", who, Component.translatable(e.visibility().translationKey()), prettyDimension(e.home()))
                     : tr("row", who, Component.translatable(e.visibility().translationKey()));
-            drawFitted(g, font, sub, rx + 17, ry + 11, LIST_W - 21, TEXT, -1, false, 0.75F);
+            drawFitted(g, font, sub, rx + 17, ry + 10, LIST_W - 21, TEXT, -1, false, 0.75F);
         }
         if (entries.size() > ROWS) {
             int trackH = ROWS * ROW_H - 1;
