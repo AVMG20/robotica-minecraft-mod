@@ -6,6 +6,7 @@ import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.link.LinkRegistry;
 import com.arno.robotica.link.network.LinkNetwork;
 import com.arno.robotica.link.network.LinkNetworks;
+import com.arno.robotica.link.network.Visibility;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -112,15 +113,21 @@ public class QuantumLinkBlock extends Block implements EntityBlock {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
-    /** Owner is the placer; a network the placer may not use is dropped (the item came from someone else). */
+    /**
+     * Owner is the placer; a network the placer may not use is dropped (the item came from someone else). Placed without
+     * a player (a machine), the Link has no owner, so it keeps only a public network.
+     */
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (level.isClientSide || !(placer instanceof Player player) || !(level.getBlockEntity(pos) instanceof QuantumLinkBlockEntity be)) return;
-        be.setOwner(player);
-        if (be.networkId() != null && level.getServer() != null) {
+        if (level.isClientSide || level.getServer() == null || !(level.getBlockEntity(pos) instanceof QuantumLinkBlockEntity be)) return;
+        Player player = placer instanceof Player p ? p : null;
+        if (player != null) be.setOwner(player);
+        if (be.networkId() != null) {
             LinkNetwork net = LinkNetworks.get(level.getServer()).get(be.networkId());
-            if (net == null || !LinkNetworks.canUse(level.getServer(), net, player)) be.joinNetwork(null);
+            boolean keep = net != null && (player != null ? LinkNetworks.canUse(level.getServer(), net, player)
+                    : net.visibility() == Visibility.PUBLIC);
+            if (!keep) be.joinNetwork(null);
         }
     }
 
