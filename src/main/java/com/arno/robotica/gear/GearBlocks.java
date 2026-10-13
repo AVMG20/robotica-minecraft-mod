@@ -25,7 +25,7 @@ public final class GearBlocks {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
 
     public static final DeferredBlock<TinkersBenchBlock> TINKERS_BENCH = BLOCKS.registerBlock("tinkers_bench", TinkersBenchBlock::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5F).sound(SoundType.WOOD));
+            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5F).sound(SoundType.WOOD).noOcclusion());
     public static final DeferredItem<BlockItem> TINKERS_BENCH_ITEM = GearItems.ITEMS.registerSimpleBlockItem(TINKERS_BENCH);
 
     public static final DeferredBlock<SparkLampBlock> SPARK_LAMP = BLOCKS.registerBlock("spark_lamp", SparkLampBlock::new,

@@ -21,6 +21,26 @@ P.update({
 
 
 P.update({'g': '#323746', 'G': '#262A36'})
+# Tier metal of the pads' corner brackets (the machine set's language): '1'..'5' deep -> highlight
+PAD_TIER = {False: MATERIALS['copper'], True: MATERIALS['gold']}
+
+
+def pad_pal(rift):
+    return dict(P, **dict(zip('12345', PAD_TIER[rift])))
+
+
+def brackets(c):
+    """Chamfered corners with L brackets in the tier metal, as on the machine casings."""
+    for x, y, sx, sy in ((0, 0, 1, 1), (15, 0, -1, 1), (0, 15, 1, -1), (15, 15, -1, -1)):
+        for i in range(4):
+            for j in range(2):
+                c.set(x + sx * i, y + sy * j, '3').set(x + sx * j, y + sy * i, '3')
+        c.set(x + sx * 3, y, '2').set(x, y + sy * 3, '2')
+        c.set(x + sx * 3, y + sy, '1').set(x + sx, y + sy * 3, '1')
+        c.set(x + sx, y + sy, '2')
+        c.set(x, y, 'k')
+    for i in range(1, 3):
+        c.set(i, 0, '4').set(0, i, '4')
 
 
 def plate(c, x, y, w, h, seed=0):
@@ -53,8 +73,7 @@ def pad_top(rift):
     c.disc(7.5, 7.5, 1.6, 'k')
     for x, y in ((7, 0), (8, 0), (7, 15), (8, 15), (0, 7), (0, 8), (15, 7), (15, 8)):
         c.set(x, y, dim)
-    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
-        c.rivet(x, y, 'kGdmM')
+    brackets(c)
     return c.rows()
 
 
@@ -82,16 +101,19 @@ def pad_side(rift):
     c = Canvas()
     plate(c, 0, 0, 16, 16, 2)
     c.rect(0, 0, 16, 1, 'M').rect(0, 1, 16, 1, 'm')
-    c.rect(0, 2, 16, 3, 'k').rect(1, 3, 14, 1, dim)
+    c.rect(0, 2, 16, 3, 'k').rect(2, 3, 12, 1, dim)
     c.rect(0, 5, 16, 1, 'm').rect(0, 6, 16, 1, 'd').rect(0, 7, 16, 1, 'k')
-    for x in (2, 7, 12):
+    for x in (4, 7, 11):
         c.set(x, 6, 'M')
+    for x0, s in ((0, 1), (15, -1)):                                    # tier metal corner caps
+        c.rect(x0, 0, 1, 8, '3').rect(x0 + s, 0, 1, 8, '2')
+        c.set(x0, 0, 'k').set(x0 + s, 0, '4').set(x0, 7, '1').set(x0 + s, 7, '1')
     return c.rows()
 
 
 def pad_side_glow(rift):
     c = Canvas()
-    c.rect(1, 3, 14, 1, 'P' if rift else 'E')
+    c.rect(2, 3, 12, 1, 'P' if rift else 'E')
     c.set(4, 3, 'Q' if rift else 'W').set(11, 3, 'Q' if rift else 'W')
     return c
 
@@ -269,10 +291,10 @@ def remote():
 
 
 def main():
-    write_block('warp_pad_top', pad_top(False), P)
-    write_block('warp_pad_mk2_top', pad_top(True), P)
-    write_block('warp_pad_side', pad_side(False), P)
-    write_block('warp_pad_mk2_side', pad_side(True), P)
+    write_block('warp_pad_top', pad_top(False), pad_pal(False))
+    write_block('warp_pad_mk2_top', pad_top(True), pad_pal(True))
+    write_block('warp_pad_side', pad_side(False), pad_pal(False))
+    write_block('warp_pad_mk2_side', pad_side(True), pad_pal(True))
     for rift, name in ((False, 'warp_pad'), (True, 'warp_pad_mk2')):
         write_anim('block', f'{name}_top_glow', [pad_top_glow(rift, i) for i in range(16)], P, frametime=2)
         write_block(f'{name}_side_glow', pad_side_glow(rift).rows(), P)

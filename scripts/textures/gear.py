@@ -8,6 +8,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from pixelart import MATERIALS, Canvas, write_anim, write_block, write_item, write_still  # noqa: E402
+import machine_casing as casing  # noqa: E402
 
 # '12345' tier material (deep -> highlight), 'abcde' steel, '678' brass, 'w W v' wood, 'y Y z' tier glow
 TIER = {
@@ -228,48 +229,100 @@ def kit(level):
 
 # ---------------------------------------------------------------- Tinker's Bench (block)
 
-def planks(c, x0=0, y0=0, w=16, h=16):
-    """Oak-like planks: rows of 4 px boards, dark seams, staggered joints, light top edge per board."""
-    c.rect(x0, y0, w, h, 'W')
-    for y in range(y0, y0 + h):
-        if (y - y0) % 4 == 3:
-            c.rect(x0, y, w, 1, 'w')
-        elif (y - y0) % 4 == 0:
-            c.rect(x0, y, w, 1, 'v')
-    for y in range(y0, y0 + h, 4):
-        joint = x0 + (5 if (y // 4) % 2 == 0 else 11)
-        if joint < x0 + w:
-            c.rect(joint, y, 1, 3, 'w')
+# A workshop bench in the machine set's language (model: scripts/data/gear_models.py): an oak worktop on a light steel
+# band with copper corner caps, light steel legs on copper feet, a graphite apron (a drawer at the front) and a graphite
+# shelf. A steel vice sits on the front corner, and a calm cyan module slot (full-bright overlay) is let into the top.
+# Side pictures are drawn as seen; the model's default UVs map every part onto its piece of the picture.
+# Chars on top of the casing palette (abcde light steel, fghij copper, u v w unlit / lit cyan):
+#   12345  graphite (apron, shelf, vice base)   pqrst  oak worktop, deep -> highlight
+
+BENCH = casing.casing_palette(
+    casing.INDUSTRY_TIERS[1], a='#4A535B', b='#6F7A83', c='#9AA5AE', d='#C4CDD4', e='#EBF0F3',
+    **dict(zip('12345', casing.GRAPHITE)),
+    p='#3E2614', q='#5E3C20', r='#7E5530', s='#9C6E42', t='#BC8C5C')
 
 
-def bench_top():
-    """Work surface: planks with a steel plate holding a copper gear, and a glowing card slot."""
+def bench_side(front=False):
+    """One side as seen: worktop (rows 0-3: oak edge over a light steel band, copper caps), apron (rows 4-7, a drawer
+    on the front), legs (cols 1-3 and 12-14, rows 8-15, copper feet) and the shelf between them (rows 12-13)."""
     c = Canvas()
-    planks(c)
-    c.rect(2, 2, 7, 7, 'c').frame(2, 2, 7, 7, 'b').rect(2, 2, 7, 1, 'd').set(2, 2, 'e')
-    c.rect(4, 4, 3, 3, '3').set(4, 4, '4').set(6, 6, '2').set(5, 5, 'K')       # copper gear hub
-    for x, y in ((5, 3), (3, 5), (7, 5), (5, 7)):
-        c.set(x, y, '3')
-    c.rect(10, 10, 4, 4, 'b').rect(11, 11, 2, 2, 'y')                         # card slot glow
-    c.frame(0, 0, 16, 16, 'w')
+    c.rect(0, 0, 16, 2, 'r').rect(0, 0, 16, 1, 's')                                  # oak edge
+    for x in (4, 9, 13):
+        c.set(x, 1, 'q')
+    c.rect(0, 2, 16, 1, 'd').rect(0, 3, 16, 1, 'b')                                  # light steel band
+    for x0, s in ((0, 1), (15, -1)):                                                  # copper corner caps
+        c.set(x0, 0, 'K').set(x0 + s, 0, 'i').set(x0 + 2 * s, 0, 'h')
+        c.set(x0, 1, 'h').set(x0 + s, 1, 'g')
+        c.set(x0, 2, 'h').set(x0 + s, 2, 'g')
+        c.set(x0, 3, 'f').set(x0 + s, 3, 'f')
+    c.rect(1, 4, 14, 4, '3').rect(1, 4, 14, 1, '1').rect(1, 7, 14, 1, '2')           # graphite apron
+    if front:                                                                         # drawer with a copper pull
+        c.rect(4, 5, 8, 2, 'c').rect(4, 5, 8, 1, 'd').rect(4, 7, 8, 1, 'b')
+        c.rect(7, 6, 2, 1, 'h').set(8, 6, 'f')
+    c.rect(2, 12, 12, 1, '4').rect(2, 13, 12, 1, '2')                                 # shelf edge
+    for x in (1, 12):                                                                 # light steel legs
+        c.rect(x, 8, 1, 8, 'd').rect(x + 1, 8, 1, 8, 'c').rect(x + 2, 8, 1, 8, 'b')
+        c.rect(x, 8, 3, 1, 'a')                                                       # shadow under the apron
+        c.rect(x, 14, 3, 2, 'g').set(x, 14, 'i').set(x + 2, 15, 'f').set(x + 1, 15, 'f')  # copper feet
     return c.rows()
 
 
-def bench_side():
-    """Side: planks under a steel table edge, with a hammer hanging on two hooks."""
+def bench_top():
+    """Worktop from above (front = row 0): oak boards with copper corner caps, the vice's graphite mounting plate on the
+    front left corner (cols 9-14, rows 0-6) and the module slot plate at the back."""
     c = Canvas()
-    planks(c)
-    c.rect(0, 0, 16, 2, 'c').rect(0, 0, 16, 1, 'd').rect(0, 2, 16, 1, 'b')      # steel table edge
-    c.rect(4, 5, 8, 3, '3').rect(4, 5, 8, 1, '4').rect(4, 7, 8, 1, '2')         # copper hammer head
-    c.rect(7, 8, 2, 6, '7').set(7, 8, '8')                                      # brass handle
-    c.set(3, 4, 'a').set(12, 4, 'a')                                            # hooks
-    c.frame(0, 0, 16, 16, 'w')
+    c.rect(0, 0, 16, 16, 'r')
+    for y0 in range(0, 16, 4):                                                        # boards across the width
+        c.rect(0, y0, 16, 1, 's').rect(0, y0 + 3, 16, 1, 'q')
+        joint = 5 if (y0 // 4) % 2 == 0 else 11
+        c.rect(joint, y0, 1, 3, 'q').set(joint, y0, 'r')
+    c.speckle(0, 0, 16, 16, 'qs', density=0.04, seed=7, only='r')
+    for x, y, sx, sy in ((0, 0, 1, 1), (15, 0, -1, 1), (0, 15, 1, -1), (15, 15, -1, -1)):   # copper corner caps
+        c.set(x, y, 'K').set(x + sx, y, 'h').set(x + 2 * sx, y, 'g').set(x, y + sy, 'h').set(x, y + 2 * sy, 'g')
+        c.set(x + sx, y + sy, 'f')
+    c.rect(9, 0, 6, 7, '3').bevel(9, 0, 6, 7, '4', '2')                                # vice mounting plate
+    c.rect(2, 10, 7, 4, 'c').bevel(2, 10, 7, 4, 'd', 'a')                              # module slot plate
+    c.rect(3, 11, 5, 2, '1').rect(3, 12, 5, 1, 'u')
+    return c.rows()
+
+
+def bench_top_glow():
+    """Full-bright overlay of the top: the lit module slot."""
+    c = Canvas()
+    c.rect(3, 12, 5, 1, 'v').set(5, 12, 'w')
+    return c.rows()
+
+
+def bench_bottom():
+    """Graphite underside; also the shelf top."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, '3').bevel(0, 0, 16, 16, '4', '2')
+    c.rect(3, 3, 10, 10, '2').bevel(3, 3, 10, 10, '1', '4')
+    for x, y in ((1, 1), (13, 1), (1, 13), (13, 13)):
+        c.rect(x, y, 2, 2, 'f').set(x, y, 'h')
+    return c.rows()
+
+
+def bench_vice():
+    """Vice parts, one zone per face size (UVs in scripts/data/gear_models.py): (0,0) 4x2 jaw face, (4,0) 3x2 jaw
+    side, (0,4) 4x3 jaw top, (0,8) 6x1 copper handle, (0,10) 5x1 base side, (8,0) 4x5 base top."""
+    c = Canvas()
+    c.rect(0, 0, 4, 2, 'c').rect(0, 0, 4, 1, 'd')                                     # jaw face
+    c.rect(4, 0, 3, 2, 'b').rect(4, 0, 3, 1, 'c')                                     # jaw side
+    c.rect(0, 4, 4, 3, 'd').rect(0, 4, 4, 1, 'e').set(3, 6, 'c')                      # jaw top
+    c.rect(0, 8, 6, 1, 'h').set(0, 8, 'i').set(5, 8, 'f')                             # copper handle
+    c.rect(0, 10, 5, 1, '3').set(0, 10, '4').set(4, 10, '2')                          # graphite base
+    c.rect(8, 0, 4, 5, '2').rect(8, 0, 4, 1, '1')
     return c.rows()
 
 
 def write_bench():
-    write_block('tinkers_bench_top', bench_top(), pal('copper'))
-    write_block('tinkers_bench_side', bench_side(), pal('copper'))
+    write_block('tinkers_bench_top', bench_top(), BENCH)
+    write_block('tinkers_bench_top_glow', bench_top_glow(), BENCH)
+    write_block('tinkers_bench_side', bench_side(), BENCH)
+    write_block('tinkers_bench_front', bench_side(front=True), BENCH)
+    write_block('tinkers_bench_bottom', bench_bottom(), BENCH)
+    write_block('tinkers_bench_vice', bench_vice(), BENCH)
 
 
 # ---------------------------------------------------------------- tool and weapon modules (16x16 cards)
