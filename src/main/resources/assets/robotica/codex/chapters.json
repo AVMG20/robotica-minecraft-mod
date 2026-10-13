@@ -162,7 +162,7 @@
         },
         {
           "title": "Tesla Spire",
-          "text": "A column under open sky: Spire Base, conductor blocks, Spire Crown on top.\nEach metal sets power and how far fuel goes; mix them freely.\nBuild it high, and 64 blocks away from other spires.\nLightning fills the storm charge, used before fuel.",
+          "text": "A column under open sky: Spire Base, conductor blocks, Spire Crown on top.\nEach metal sets power and how far fuel goes; mix them freely.\nBuild it high, and 64 blocks away from other spires.\nLightning fills the storm charge, which runs before any fuel burns.",
           "items": [
             "robotica:spire_base",
             "robotica:spire_crown",
