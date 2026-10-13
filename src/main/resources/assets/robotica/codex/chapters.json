@@ -330,7 +330,7 @@
       "pages": [
         {
           "title": "Chunk Anchor",
-          "text": "Keeps the chunks around it loaded and ticking while it has FE.\nDry, it lets them go; powered again, it takes them back.\nMk2-3: right-click it with the next Mk.",
+          "text": "Dry, it lets its chunks go; powered again, it takes them back.",
           "items": [
             "robotica:chunk_anchor",
             "robotica:chunk_anchor_mk2",
