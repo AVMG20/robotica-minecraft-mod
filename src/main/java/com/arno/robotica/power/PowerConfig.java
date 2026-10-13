@@ -25,14 +25,12 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue[] TESLA_RANGE = new ModConfigSpec.IntValue[5];
     private static final ModConfigSpec.IntValue[] ACCUMULATOR_CAPACITY = new ModConfigSpec.IntValue[3];
     private static final ModConfigSpec.IntValue[] ACCUMULATOR_IO = new ModConfigSpec.IntValue[3];
-    private static final ModConfigSpec.IntValue CHARGER_RATE;
+    private static final ModConfigSpec.IntValue[] CHARGER_RATE = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue PRESS_POWER;
-    private static final ModConfigSpec.IntValue WIRELESS_RATE;
-    private static final ModConfigSpec.IntValue WIRELESS_RANGE;
+    private static final ModConfigSpec.IntValue[] WIRELESS_RATE = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue[] WIRELESS_RANGE = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue WIRELESS_RANGE_PER_CARD;
     private static final ModConfigSpec.IntValue WIRELESS_LOSS;
-    private static final ModConfigSpec.IntValue WIRELESS_BUFFER;
-    private static final ModConfigSpec.IntValue WIRELESS_INPUT;
     private static final ModConfigSpec.BooleanValue WIRELESS_ANYONE;
 
     static {
@@ -85,22 +83,25 @@ public final class PowerConfig {
         }
         b.pop();
         b.push("charger");
-        CHARGER_RATE = b.comment("FE/t the Charger pushes into the item (never more than the item accepts).")
-                .defineInRange("chargerRate", 2_000, 1, 100_000_000);
+        int[] chargerRates = {2_000, 8_000, 32_000, 128_000};
+        for (int i = 0; i < 4; i++) {
+            CHARGER_RATE[i] = b.comment("Charger Mk" + (i + 1) + ": FE/t it pushes into the item (never more than the item accepts). Its buffer holds 10 ticks of it.")
+                    .defineInRange("chargerRateMk" + (i + 1), chargerRates[i], 1, 100_000_000);
+        }
         b.pop();
         b.push("wireless_charger");
-        WIRELESS_RATE = b.comment("Wireless Charger: FE/t it pushes into each player in range (worn armor first, then held items, then the inventory), before speed cards.")
-                .defineInRange("wirelessRate", 1_000, 1, 100_000_000);
-        WIRELESS_RANGE = b.comment("Wireless Charger: range in blocks without range cards.")
-                .defineInRange("wirelessRange", 8, 1, 64);
+        int[] wirelessRates = {1_000, 4_000, 16_000, 64_000};
+        int[] wirelessRanges = {8, 12, 16, 24};
+        for (int i = 0; i < 4; i++) {
+            WIRELESS_RATE[i] = b.comment("Wireless Charger Mk" + (i + 1) + ": FE/t it pushes into each player in range (worn armor first, then held items, then the inventory), before speed cards. Its buffer holds 200 ticks of it and takes 20 times it per tick.")
+                    .defineInRange("wirelessRateMk" + (i + 1), wirelessRates[i], 1, 10_000_000);
+            WIRELESS_RANGE[i] = b.comment("Wireless Charger Mk" + (i + 1) + ": range in blocks without range cards.")
+                    .defineInRange("wirelessRangeMk" + (i + 1), wirelessRanges[i], 1, 64);
+        }
         WIRELESS_RANGE_PER_CARD = b.comment("Wireless Charger: blocks of range each range card adds.")
                 .defineInRange("wirelessRangePerCard", 4, 0, 32);
         WIRELESS_LOSS = b.comment("Wireless Charger: percent extra FE drawn from its buffer for every FE that reaches an item.")
                 .defineInRange("wirelessLoss", 10, 0, 500);
-        WIRELESS_BUFFER = b.comment("Wireless Charger: internal FE buffer.")
-                .defineInRange("wirelessBuffer", 200_000, 1_000, 1_000_000_000);
-        WIRELESS_INPUT = b.comment("Wireless Charger: FE/t it accepts from cables and Tesla Relays.")
-                .defineInRange("wirelessInput", 20_000, 1, 1_000_000_000);
         WIRELESS_ANYONE = b.comment("Wireless Charger: charge every player in range, not only the owner and the owner's team.")
                 .define("wirelessChargeAnyone", false);
         b.pop();
@@ -132,13 +133,13 @@ public final class PowerConfig {
     /** tier 1-3 */
     public static int accumulatorCapacity(int tier) { return get(ACCUMULATOR_CAPACITY[tier - 1]); }
     public static int accumulatorIo(int tier) { return get(ACCUMULATOR_IO[tier - 1]); }
-    public static int chargerRate() { return get(CHARGER_RATE); }
+    /** mk 1-4 */
+    public static int chargerRate(int mk) { return get(CHARGER_RATE[mk - 1]); }
     public static int pressPower() { return get(PRESS_POWER); }
-    public static int wirelessRate() { return get(WIRELESS_RATE); }
-    public static int wirelessRange() { return get(WIRELESS_RANGE); }
+    /** mk 1-4 */
+    public static int wirelessRate(int mk) { return get(WIRELESS_RATE[mk - 1]); }
+    public static int wirelessRange(int mk) { return get(WIRELESS_RANGE[mk - 1]); }
     public static int wirelessRangePerCard() { return get(WIRELESS_RANGE_PER_CARD); }
     public static int wirelessLoss() { return get(WIRELESS_LOSS); }
-    public static int wirelessBuffer() { return get(WIRELESS_BUFFER); }
-    public static int wirelessInput() { return get(WIRELESS_INPUT); }
     public static boolean wirelessChargeAnyone() { return SPEC.isLoaded() ? WIRELESS_ANYONE.get() : WIRELESS_ANYONE.getDefault(); }
 }

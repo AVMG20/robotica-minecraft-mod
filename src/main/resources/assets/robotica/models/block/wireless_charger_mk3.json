@@ -1,0 +1,264 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "north": "robotica:block/wireless_charger_mk3_front",
+    "up": "robotica:block/wireless_charger_mk3_top",
+    "down": "robotica:block/wireless_charger_bottom",
+    "south": "robotica:block/wireless_charger_mk3_side",
+    "west": "robotica:block/wireless_charger_mk3_side",
+    "east": "robotica:block/wireless_charger_mk3_side",
+    "particle": "robotica:block/wireless_charger_mk3_side",
+    "mast": "robotica:block/wireless_charger_mast",
+    "orb": "robotica:block/wireless_charger_orb"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#down",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#up",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#north",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#south",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#west",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#east",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        16,
+        6
+      ],
+      "to": [
+        10,
+        17,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "south": {
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "west": {
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "east": {
+          "texture": "#mast",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "up": {
+          "texture": "#mast",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.25,
+        17,
+        7.25
+      ],
+      "to": [
+        8.75,
+        19.5,
+        8.75
+      ],
+      "faces": {
+        "north": {
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
+        },
+        "south": {
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
+        },
+        "west": {
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
+        },
+        "east": {
+          "texture": "#mast",
+          "uv": [
+            12,
+            2,
+            14,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        18,
+        5
+      ],
+      "to": [
+        11,
+        18,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#mast",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#mast",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6.75,
+        19.5,
+        6.75
+      ],
+      "to": [
+        9.25,
+        22,
+        9.25
+      ],
+      "faces": {
+        "down": {
+          "texture": "#orb",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "up": {
+          "texture": "#orb",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#orb",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "south": {
+          "texture": "#orb",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "west": {
+          "texture": "#orb",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "east": {
+          "texture": "#orb",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        }
+      }
+    }
+  ]
+}

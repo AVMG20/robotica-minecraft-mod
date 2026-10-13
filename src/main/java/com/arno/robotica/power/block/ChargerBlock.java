@@ -16,13 +16,21 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 import java.util.List;
 
-/** Charges FE items (cells, tools). Age 1. */
+/** Charges FE items (cells, tools). Mk1 is Age 1, each Mk after it one Age later and 4 times faster. */
 public class ChargerBlock extends PowerBlock {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
-    public ChargerBlock(Properties props) {
+    private final int mk;
+
+    public ChargerBlock(Properties props, int mk) {
         super(props, PowerRegistry.CHARGER_BE::get);
+        this.mk = mk;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
+    }
+
+    /** 1-4 */
+    public int mk() {
+        return mk;
     }
 
     @Override
@@ -32,7 +40,7 @@ public class ChargerBlock extends PowerBlock {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.charger", PowerConfig.chargerRate()).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.charger", PowerConfig.chargerRate(mk)).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.charger_mainspring").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

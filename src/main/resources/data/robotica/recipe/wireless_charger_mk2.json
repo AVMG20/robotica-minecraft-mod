@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " T ",
+    "AWA",
+    "PXP"
+  ],
+  "key": {
+    "T": {
+      "item": "robotica:tesla_emitter_3"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "W": {
+      "item": "robotica:wireless_charger"
+    },
+    "P": {
+      "tag": "c:plates/gold"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:wireless_charger_mk2",
+    "count": 1
+  }
+}

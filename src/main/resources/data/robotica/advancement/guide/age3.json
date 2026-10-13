@@ -50,6 +50,8 @@
       "robotica:tesla_coil_4",
       "robotica:tesla_emitter_4",
       "robotica:tesla_coil_4_from_emitters",
+      "robotica:charger_mk3",
+      "robotica:wireless_charger_mk3",
       "robotica:item_pipe_mk4",
       "robotica:tool_upgrade_kit_3",
       "robotica:warp_pad_mk2",

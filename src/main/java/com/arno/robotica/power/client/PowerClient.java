@@ -64,7 +64,6 @@ public final class PowerClient {
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(PowerRegistry.TESLA_COIL_BE.get(), TeslaCoilRenderer::new);
-        event.registerBlockEntityRenderer(PowerRegistry.WIRELESS_CHARGER_BE.get(), WirelessChargerRenderer::new);
     }
 
     /** The Metal Press has no recipe book, but the client still looks every recipe up by category; avoid the "Unknown recipe category" warnings. */

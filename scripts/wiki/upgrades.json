@@ -254,11 +254,14 @@
       "id": "wireless_charger",
       "name": "Wireless Charger",
       "items": [
-        "wireless_charger"
+        "wireless_charger",
+        "wireless_charger_mk2",
+        "wireless_charger_mk3",
+        "wireless_charger_mk4"
       ],
       "effects": {
         "speed": "Charges faster: x2, x3, x4, x6 FE/t per player.",
-        "range": "+4 blocks of range per card (8 without, 24 with 4)."
+        "range": "+4 blocks of range per card (Mk1: 8 without, 24 with 4)."
       },
       "source": "power/block/WirelessChargerBlockEntity, PowerConfig wireless*",
       "rule": "fixed:WIRELESS_CHARGER"

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " T ",
+    "QWQ",
+    "PXP"
+  ],
+  "key": {
+    "T": {
+      "item": "robotica:tesla_emitter_4"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "W": {
+      "item": "robotica:wireless_charger_mk2"
+    },
+    "P": {
+      "tag": "c:plates/pyrosteel"
+    },
+    "X": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:wireless_charger_mk3",
+    "count": 1
+  }
+}

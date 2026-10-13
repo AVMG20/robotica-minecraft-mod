@@ -218,13 +218,43 @@ public class PowerGameTests {
         ChargerBlockEntity charger = (ChargerBlockEntity) helper.getBlockEntity(pos);
         helper.assertTrue(!ChargerBlockEntity.canCharge(new ItemStack(CoreItems.MAINSPRING.get())), "Mainspring only winds at the crank");
         charger.slot.setStackInSlot(0, new ItemStack(CoreItems.COPPER_CELL.get()));
-        charger.energy.setEnergy(ChargerBlockEntity.ENERGY_CAPACITY);
+        charger.energy.setEnergy(charger.energy.getMaxEnergyStored());
 
         helper.succeedWhen(() -> {
             int stored = ItemEnergy.get(charger.slot.getStackInSlot(0));
-            int rate = Math.min(com.arno.robotica.power.PowerConfig.chargerRate(), ChargerBlockEntity.MAX_RECEIVE);
+            int rate = charger.rate();
             helper.assertTrue(stored >= 3 * rate, "Cell should be charging at " + rate + " FE/t, has " + stored);
             helper.assertTrue(stored % rate == 0, "Charge rate is " + rate + " FE/t, has " + stored);
+        });
+    }
+
+    /** Each Charger Mk takes its rate from the config, charges 4x faster than the one before and buffers 10 ticks of it. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void chargerTiersChargeFaster(GameTestHelper helper) {
+        net.minecraft.world.level.block.Block[] tiers = {PowerRegistry.CHARGER.get(), PowerRegistry.CHARGER_MK2.get(),
+                PowerRegistry.CHARGER_MK3.get(), PowerRegistry.CHARGER_MK4.get()};
+        ChargerBlockEntity[] chargers = new ChargerBlockEntity[tiers.length];
+        for (int i = 0; i < tiers.length; i++) {
+            BlockPos pos = new BlockPos(1 + i, 1, 1);
+            helper.setBlock(pos, tiers[i].defaultBlockState());
+            ChargerBlockEntity charger = helper.getBlockEntity(pos);
+            int rate = com.arno.robotica.power.PowerConfig.chargerRate(i + 1);
+            helper.assertTrue(charger.rate() == rate, "Mk" + (i + 1) + " rate " + charger.rate() + ", config " + rate);
+            helper.assertTrue(charger.energy.getMaxEnergyStored() == rate * ChargerBlockEntity.BUFFER_TICKS,
+                    "Mk" + (i + 1) + " buffer " + charger.energy.getMaxEnergyStored());
+            if (i > 0) helper.assertTrue(rate == 4 * chargers[i - 1].rate(), "Mk" + (i + 1) + " is 4x Mk" + i);
+            // an Ender Cell takes up to 32,000 FE/t: Mk4 pulls ahead of Mk3 once Mk3's buffer runs dry (no FE comes in)
+            charger.slot.setStackInSlot(0, new ItemStack(CoreItems.ENDER_CELL.get()));
+            charger.energy.setEnergy(charger.energy.getMaxEnergyStored());
+            chargers[i] = charger;
+        }
+        helper.succeedWhen(() -> {
+            for (int i = 0; i < 3; i++) {
+                int slow = ItemEnergy.get(chargers[i].slot.getStackInSlot(0));
+                int fast = ItemEnergy.get(chargers[i + 1].slot.getStackInSlot(0));
+                helper.assertTrue(slow >= 2 * chargers[i].rate(), "Mk" + (i + 1) + " charging, has " + slow);
+                helper.assertTrue(fast > slow, "Mk" + (i + 2) + " charges faster than Mk" + (i + 1) + ": " + fast + " vs " + slow);
+            }
         });
     }
 

@@ -111,7 +111,9 @@
       "robotica:centrifuging_depleted_fuel_pellet",
       "robotica:centrifuging_magma_cream",
       "robotica:centrifuging_glistering_melon_slice",
-      "robotica:wireless_charger"
+      "robotica:wireless_charger",
+      "robotica:wireless_charger_mk2",
+      "robotica:charger_mk2"
     ],
     "experience": 30
   }

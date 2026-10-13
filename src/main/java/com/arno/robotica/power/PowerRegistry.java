@@ -14,6 +14,7 @@ import com.arno.robotica.power.block.MetalPressBlockEntity;
 import com.arno.robotica.power.block.SolarPanelBlock;
 import com.arno.robotica.power.block.SolarPanelBlockEntity;
 import com.arno.robotica.power.block.WindingCrankBlock;
+import com.arno.robotica.power.block.WirelessChargerBlock;
 import com.arno.robotica.power.block.WindingCrankBlockEntity;
 import com.arno.robotica.power.tesla.TeslaCoilBlock;
 import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
@@ -87,10 +88,23 @@ public final class PowerRegistry {
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_3 = teslaEmitter(TeslaTier.III);
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_4 = teslaEmitter(TeslaTier.IV);
     public static final DeferredBlock<TeslaEmitterBlock> TESLA_EMITTER_5 = teslaEmitter(TeslaTier.V);
-    public static final DeferredBlock<ChargerBlock> CHARGER = BLOCKS.registerBlock("charger", ChargerBlock::new, machine().noOcclusion());
+    public static final DeferredBlock<ChargerBlock> CHARGER = charger("charger", 1);
+    public static final DeferredBlock<ChargerBlock> CHARGER_MK2 = charger("charger_mk2", 2);
+    public static final DeferredBlock<ChargerBlock> CHARGER_MK3 = charger("charger_mk3", 3);
+    public static final DeferredBlock<ChargerBlock> CHARGER_MK4 = charger("charger_mk4", 4);
     public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock("metal_press", MetalPressBlock::new, machine().noOcclusion());
-    public static final DeferredBlock<com.arno.robotica.power.block.WirelessChargerBlock> WIRELESS_CHARGER = BLOCKS.registerBlock("wireless_charger",
-            com.arno.robotica.power.block.WirelessChargerBlock::new, machine().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 9 : 3));
+    public static final DeferredBlock<WirelessChargerBlock> WIRELESS_CHARGER = wirelessCharger("wireless_charger", 1);
+    public static final DeferredBlock<WirelessChargerBlock> WIRELESS_CHARGER_MK2 = wirelessCharger("wireless_charger_mk2", 2);
+    public static final DeferredBlock<WirelessChargerBlock> WIRELESS_CHARGER_MK3 = wirelessCharger("wireless_charger_mk3", 3);
+    public static final DeferredBlock<WirelessChargerBlock> WIRELESS_CHARGER_MK4 = wirelessCharger("wireless_charger_mk4", 4);
+
+    private static DeferredBlock<ChargerBlock> charger(String id, int mk) {
+        return BLOCKS.registerBlock(id, p -> new ChargerBlock(p, mk), machine().noOcclusion());
+    }
+
+    private static DeferredBlock<WirelessChargerBlock> wirelessCharger(String id, int mk) {
+        return BLOCKS.registerBlock(id, p -> new WirelessChargerBlock(p, mk), machine().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 9 : 3));
+    }
 
     private static DeferredBlock<AccumulatorBlock> accumulator(AccumulatorBlock.Tier tier) {
         return BLOCKS.registerBlock(tier.id(), p -> new AccumulatorBlock(p, tier), machine());
@@ -131,8 +145,14 @@ public final class PowerRegistry {
     public static final DeferredItem<BlockItem> TESLA_EMITTER_5_ITEM = ITEMS.registerSimpleBlockItem(TESLA_EMITTER_5);
     public static final DeferredItem<TeslaLinkerItem> TESLA_LINKER = ITEMS.registerItem("tesla_linker", TeslaLinkerItem::new);
     public static final DeferredItem<BlockItem> CHARGER_ITEM = ITEMS.registerSimpleBlockItem(CHARGER);
+    public static final DeferredItem<BlockItem> CHARGER_MK2_ITEM = ITEMS.registerSimpleBlockItem(CHARGER_MK2);
+    public static final DeferredItem<BlockItem> CHARGER_MK3_ITEM = ITEMS.registerSimpleBlockItem(CHARGER_MK3);
+    public static final DeferredItem<BlockItem> CHARGER_MK4_ITEM = ITEMS.registerSimpleBlockItem(CHARGER_MK4);
     public static final DeferredItem<BlockItem> METAL_PRESS_ITEM = ITEMS.registerSimpleBlockItem(METAL_PRESS);
     public static final DeferredItem<BlockItem> WIRELESS_CHARGER_ITEM = ITEMS.registerSimpleBlockItem(WIRELESS_CHARGER);
+    public static final DeferredItem<BlockItem> WIRELESS_CHARGER_MK2_ITEM = ITEMS.registerSimpleBlockItem(WIRELESS_CHARGER_MK2);
+    public static final DeferredItem<BlockItem> WIRELESS_CHARGER_MK3_ITEM = ITEMS.registerSimpleBlockItem(WIRELESS_CHARGER_MK3);
+    public static final DeferredItem<BlockItem> WIRELESS_CHARGER_MK4_ITEM = ITEMS.registerSimpleBlockItem(WIRELESS_CHARGER_MK4);
 
     private static DeferredItem<Item> accumulatorItem(DeferredBlock<AccumulatorBlock> block) {
         return ITEMS.registerItem(block.getId().getPath(), p -> new AccumulatorItem(block.get(), p));
@@ -164,12 +184,13 @@ public final class PowerRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> TESLA_SELECTION =
             COMPONENTS.registerComponentType("tesla_selection", b -> b.persistent(GlobalPos.CODEC).networkSynchronized(GlobalPos.STREAM_CODEC));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChargerBlockEntity>> CHARGER_BE =
-            BLOCK_ENTITIES.register("charger", () -> BlockEntityType.Builder.of(ChargerBlockEntity::new, CHARGER.get()).build(null));
+            BLOCK_ENTITIES.register("charger", () -> BlockEntityType.Builder.of(ChargerBlockEntity::new, CHARGER.get(),
+                    CHARGER_MK2.get(), CHARGER_MK3.get(), CHARGER_MK4.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MetalPressBlockEntity>> METAL_PRESS_BE =
             BLOCK_ENTITIES.register("metal_press", () -> BlockEntityType.Builder.of(MetalPressBlockEntity::new, METAL_PRESS.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.arno.robotica.power.block.WirelessChargerBlockEntity>> WIRELESS_CHARGER_BE =
             BLOCK_ENTITIES.register("wireless_charger", () -> BlockEntityType.Builder.of(com.arno.robotica.power.block.WirelessChargerBlockEntity::new,
-                    WIRELESS_CHARGER.get()).build(null));
+                    WIRELESS_CHARGER.get(), WIRELESS_CHARGER_MK2.get(), WIRELESS_CHARGER_MK3.get(), WIRELESS_CHARGER_MK4.get()).build(null));
 
     // ---- Menus ----
     public static final DeferredHolder<MenuType<?>, MenuType<CombustionGeneratorMenu>> COMBUSTION_GENERATOR_MENU =
@@ -222,7 +243,13 @@ public final class PowerRegistry {
         RoboticaTab.add(TESLA_EMITTER_4_ITEM);
         RoboticaTab.add(TESLA_EMITTER_5_ITEM);
         RoboticaTab.add(CHARGER_ITEM);
+        RoboticaTab.add(CHARGER_MK2_ITEM);
+        RoboticaTab.add(CHARGER_MK3_ITEM);
+        RoboticaTab.add(CHARGER_MK4_ITEM);
         RoboticaTab.add(WIRELESS_CHARGER_ITEM);
+        RoboticaTab.add(WIRELESS_CHARGER_MK2_ITEM);
+        RoboticaTab.add(WIRELESS_CHARGER_MK3_ITEM);
+        RoboticaTab.add(WIRELESS_CHARGER_MK4_ITEM);
         RoboticaTab.add(METAL_PRESS_ITEM);
     }
 }

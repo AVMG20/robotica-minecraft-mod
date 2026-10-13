@@ -17,7 +17,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,7 +25,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -40,12 +38,12 @@ import java.util.UUID;
 
 /**
  * Wireless Charger: charges the FE items of players in range, worn armor first (the Exo-Frame), then the held items,
- * then the rest of the inventory, at a fixed rate per player. Only the owner and the owner's team unless the server
+ * then the rest of the inventory, at its Mk's rate per player. Only the owner and the owner's team unless the server
  * config allows everyone. Every FE that reaches an item costs {@code wirelessLoss} percent more from the buffer.
  * Range and rate come from range and speed cards. Fed by cables or a Tesla link like any machine.
  *
  * <p>Players in range are collected every {@link #SCAN_INTERVAL} ticks; the list (entity ids and a state per player)
- * is synced to clients for the GUI and the arcs, only when it changed.
+ * is synced to clients for the GUI and the particles, only when it changed.
  */
 public class WirelessChargerBlockEntity extends PowerBlockEntity implements MenuProvider, InfoSource {
     public static final int SCAN_INTERVAL = 10;
@@ -57,7 +55,10 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     @Nullable
     public static Boolean anyoneOverride;
 
-    public final MachineEnergyStorage energy = new MachineEnergyStorage(PowerConfig.wirelessBuffer(), PowerConfig.wirelessInput(), 0, this::setChanged);
+    /** The buffer holds this many ticks of the base rate, and takes this many times the base rate per tick. */
+    public static final int BUFFER_TICKS = 200, INPUT_PLAYERS = 20;
+
+    public final MachineEnergyStorage energy;
     public final Upgrades upgrades = Upgrades.fixed(UpgradeRules.Fixed.WIRELESS_CHARGER, this::setChanged);
 
     @Nullable
@@ -78,19 +79,25 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     private int[] ids = new int[0];
     private byte[] states = new byte[0];
 
+    private final int mk;
+
     public WirelessChargerBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.WIRELESS_CHARGER_BE.get(), pos, state);
+        mk = state.getBlock() instanceof WirelessChargerBlock b ? b.mk() : 1;
+        long rate = PowerConfig.wirelessRate(mk);
+        energy = new MachineEnergyStorage((int) Math.min(Integer.MAX_VALUE, rate * BUFFER_TICKS),
+                (int) Math.min(Integer.MAX_VALUE, rate * INPUT_PLAYERS), 0, this::setChanged);
     }
 
     // ---- numbers ----
 
     public int range() {
-        return PowerConfig.wirelessRange() + PowerConfig.wirelessRangePerCard() * upgrades.level(UpgradeKind.RANGE);
+        return PowerConfig.wirelessRange(mk) + PowerConfig.wirelessRangePerCard() * upgrades.level(UpgradeKind.RANGE);
     }
 
     /** FE/t each player in range can get. */
     public int ratePerPlayer() {
-        return (int) Math.min(Integer.MAX_VALUE, (long) PowerConfig.wirelessRate() * Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
+        return (int) Math.min(Integer.MAX_VALUE, (long) PowerConfig.wirelessRate(mk) * Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
     }
 
     /** FE/t delivered into items, averaged over the last second. */
@@ -207,10 +214,6 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
             if (!mayCharge(player)) newStates[i] = DENIED;
             else if (at >= 0 && lastStates[at] != DENIED) newStates[i] = lastStates[at];
             else newStates[i] = energy.getEnergyStored() <= 0 ? NO_POWER : IDLE;
-            if (newStates[i] == CHARGING && (at < 0 || states.length <= at || states[at] != CHARGING) && player instanceof ServerPlayer sp) {
-                // a little zap at the player when charging starts
-                CoreSounds.play(level, sp.getX(), sp.getY() + 1.0, sp.getZ(), CoreSounds.SHOCK_ZAP, SoundSource.BLOCKS, 0.25F, 1.6F);
-            }
         }
         targets.clear();
         targets.addAll(found);
@@ -281,7 +284,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.robotica.wireless_charger");
+        return getBlockState().getBlock().getName();
     }
 
     @Nullable
@@ -325,10 +328,5 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     protected void saveClientData(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putIntArray("targetIds", ids);
         tag.putByteArray("targetStates", states);
-    }
-
-    /** Range box for the renderer, so arcs still draw when the block itself is off screen. */
-    public AABB renderBox() {
-        return new AABB(worldPosition).inflate(range() + 2);
     }
 }
