@@ -1612,7 +1612,7 @@ public final class Showcase {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
 
-        // Tinker's Bench in the world, from the front corner.
+        // Tinker's Bench in the world, from the front corner (for checking the model, not used on the site).
         if (wants("33_tinkers_bench")) {
             step(10, () -> server(sp -> setFacing(sp.serverLevel(), BENCH, block("tinkers_bench"), Direction.SOUTH)));
             camera(BENCH.getX() + 1.9, Y + 0.3, BENCH.getZ() + 2.1, 138, 30);

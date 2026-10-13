@@ -238,6 +238,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         RingVisitor v = (RingVisitor) visitor;
         faceAwayFromRing(v.ring);
         boolean changed = !ring.equals(v.ring);
+        boolean retiered = segments1 != v.tier1 || segments2 != v.tier2;
         ring.clear();
         ring.addAll(v.ring);
         segments1 = v.tier1;
@@ -245,8 +246,8 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         if (changed) {
             ringChanged();
             if (beamOn) collapse();
-            setChangedAndSync();
         }
+        if (changed || retiered) setChangedAndSync();               // the client re-reads the segment tiers on sync
     }
 
     /**

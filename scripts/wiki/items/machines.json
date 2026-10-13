@@ -748,6 +748,7 @@
    "what": "Carries items between inventories along up to 4 routes, with a filter.",
    "use": [
     "Sneak-click a source, then a target, with the drone or a [[courier_remote]].",
+    "Heals above 80% charge.",
     "Set an allow or block list in its menu."
    ],
    "stats": {
@@ -797,6 +798,7 @@
    "use": [
     "Right-click a mob with the drone to pick it up.",
     "Right-click the drone or the mob with an empty hand to set it down. Sneak-right-click to pick up the drone.",
+    "Heals above 80% charge.",
     "More than 64 blocks away or in another dimension, it waits in place.",
     "Out of FE, it hovers until there is safe ground below, then sets the mob down."
    ],
