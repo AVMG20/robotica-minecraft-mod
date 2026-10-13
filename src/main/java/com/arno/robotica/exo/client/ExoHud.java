@@ -83,10 +83,19 @@ final class ExoHud {
         int droneLines = robotHud ? Math.min(4, (int) drones.stream().filter(DroneBase::isAlive).count()) : 0;
 
         boolean jet = active.has(ModuleKind.JET_ASSIST) || ExoJetpack.heat() > 0;
+        double heat = ExoJetpack.heat();
+        boolean over = ExoJetpack.overheated();
+        String heatKey = ExoJetpack.hoverMode() ? "exo.robotica.hud.heat_hover" : "exo.robotica.hud.heat";
+        Component overLabel = Component.translatable("exo.robotica.hud.overheated");
         int bars = jet ? 13 : 8;
         int perRow = 8;
         int iconRows = (icons.size() + perRow - 1) / perRow;
         int width = Math.max(BAR_W + 40, Math.min(icons.size(), perRow) * ICON);
+        if (jet) {
+            // Room for the widest heat label (small print right of the bar), so it stays on screen in the right corners.
+            int label = Math.max(mc.font.width(overLabel), mc.font.width(Component.translatable(heatKey, 100)));
+            width = Math.max(width, BAR_W + 4 + (int) Math.ceil(label * 0.75F));
+        }
         int height = bars + iconRows * ICON + (sonarLeft > 0 ? 9 : 0) + droneLines * 9;
         int sw = g.guiWidth(), sh = g.guiHeight();
         ExoClientConfig.Corner corner = ExoClientConfig.corner();
@@ -106,8 +115,6 @@ final class ExoHud {
 
         // Jet Assist heat bar.
         if (jet) {
-            double heat = ExoJetpack.heat();
-            boolean over = ExoJetpack.overheated();
             boolean hot = over || heat >= ExoJet.HOT;
             boolean blink = over && (player.tickCount / 4) % 2 == 0;
             int hy = y + 8;
@@ -117,8 +124,7 @@ final class ExoHud {
             g.fill(x, hy, x + BAR_W, hy + 3, 0xFF2E211C);
             g.fill(x, hy, x + heatFill, hy + 3, hot ? hot1 : 0xFFE8A020);
             g.fill(x, hy, x + heatFill, hy + 1, hot ? 0xFFFF9A8A : 0xFFFFD27A);
-            Component label = over ? Component.translatable("exo.robotica.hud.overheated")
-                    : Component.translatable(ExoJetpack.hoverMode() ? "exo.robotica.hud.heat_hover" : "exo.robotica.hud.heat", Math.round(heat * 100));
+            Component label = over ? overLabel : Component.translatable(heatKey, Math.round(heat * 100));
             small(g, mc, label, x + BAR_W + 4, hy - 1, hot ? 0xFFFF6B5E : 0xFFFFD27A);
         }
 
