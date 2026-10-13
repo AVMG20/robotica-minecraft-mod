@@ -145,6 +145,10 @@ public final class CoreSounds {
     /** Kinetic Shield: a hit absorbed completely / partly. */
     public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_BLOCK = reg("exo_shield_block");
     public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_SPARK = reg("exo_shield_spark");
+    /** Quantum Link: soft hum while something moves, chimes when it joins or leaves a network. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_HUM = reg("link_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_JOIN = reg("link_join");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_LEAVE = reg("link_leave");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {
