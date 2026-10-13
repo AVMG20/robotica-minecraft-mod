@@ -2,21 +2,21 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "FAF",
-    "PSP"
+    "PBP",
+    "MGM"
   ],
   "key": {
-    "F": {
-      "tag": "c:feathers"
-    },
-    "A": {
-      "item": "robotica:advanced_circuit"
-    },
-    "S": {
-      "item": "robotica:servo_actuator"
-    },
     "P": {
       "tag": "c:plates/iron"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "G": {
+      "tag": "c:gunpowders"
     }
   },
   "result": {

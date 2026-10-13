@@ -2,15 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "QCQ",
+    "ACA",
     " U "
   ],
   "key": {
-    "Q": {
-      "item": "robotica:quantum_circuit"
+    "A": {
+      "item": "robotica:advanced_circuit"
     },
     "C": {
-      "item": "robotica:plasma_actuator"
+      "item": "robotica:servo_actuator"
     },
     "U": {
       "item": "robotica:jet_assist_module"

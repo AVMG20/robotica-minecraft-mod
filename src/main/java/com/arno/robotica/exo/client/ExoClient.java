@@ -1,5 +1,6 @@
 package com.arno.robotica.exo.client;
 
+import com.arno.robotica.exo.ExoJet;
 import com.arno.robotica.exo.ExoRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -19,9 +20,13 @@ public final class ExoClient {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, ExoClientConfig.SPEC, "robotica-exo-client.toml");
+        ExoJet.clientGliderGate = ExoJetpack::gliderMayOpen;
         modBus.addListener(RegisterKeyMappingsEvent.class, ExoKeys::register);
         modBus.addListener(RegisterGuiLayersEvent.class, ExoHud::register);
         modBus.addListener(EntityRenderersEvent.AddLayers.class, ExoGliderLayer::register);
+        modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class,
+                event -> event.registerLayerDefinition(ExoJetpackLayer.LAYER, ExoJetpackLayer::createLayer));
+        modBus.addListener(EntityRenderersEvent.AddLayers.class, ExoJetpackLayer::addLayers);
         modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ExoRegistry.EXO_MENU.get(), ExoScreen::new));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoKeys::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoXray::onClientTick);

@@ -394,7 +394,7 @@
     "jet_assist_module_2",
     "jet_assist_module_3"
    ],
-   "what": "Slows long falls; 1 / 2 / 3 extra jumps in the air.",
+   "what": "The jetpack. In mid air, tap jump for extra jumps or hold it to climb until the pack overheats. III hovers.",
    "stats": {
     "rows": [
      [
@@ -403,11 +403,23 @@
      ],
      [
       "Min. Mk (I / II / III)",
-      "Mk2 / Mk3 / Mk4"
+      "Mk1 / Mk2 / Mk3"
+     ],
+     [
+      "Climb",
+      "4 / 6 / 8 blocks/s"
+     ],
+     [
+      "Thrust to overheat",
+      "3 / 8 / 20 s"
+     ],
+     [
+      "Air jumps",
+      "1 / 2 / 3"
      ],
      [
       "Energy",
-      "400 / 350 / 300 FE per jump"
+      "800 / 1,000 / 1,200 FE/s thrust, 400 / 350 / 300 FE per jump"
      ]
     ]
    },

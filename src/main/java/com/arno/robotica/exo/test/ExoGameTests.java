@@ -7,6 +7,7 @@ import com.arno.robotica.exo.ExoActions;
 import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
 import com.arno.robotica.exo.ExoItems;
+import com.arno.robotica.exo.ExoJet;
 import com.arno.robotica.core.module.ModuleConfig;
 import com.arno.robotica.core.module.ModuleItems;
 import com.arno.robotica.core.module.ModuleKind;
@@ -878,6 +879,167 @@ public class ExoGameTests {
                 "the bowl comes back");
         helper.assertTrue(player.getInventory().countItem(Items.SUSPICIOUS_STEW) == 1, "suspicious stew is never eaten");
         helper.succeed();
+    }
+
+    // ---------------------------------------------------------------- Jet Assist (jetpack)
+
+    @GameTest(template = "empty")
+    public static void jetAssistLevelsFollowTheMarks(GameTestHelper helper) {
+        ItemStack mk1 = new ItemStack(ExoItems.CHESTPLATE_MK1.get()), mk2 = new ItemStack(ExoItems.CHESTPLATE_MK2.get()),
+                mk3 = new ItemStack(ExoItems.CHESTPLATE_MK3.get());
+        helper.assertTrue(Modules.refusal(mk1, 0, mod(ModuleKind.JET_ASSIST, 1), List.of()) == null, "Jet Assist I fits a Mk1 chestplate");
+        helper.assertTrue(Modules.refusal(mk1, 0, mod(ModuleKind.JET_ASSIST, 2), List.of()) != null, "Jet Assist II needs Mk2");
+        helper.assertTrue(Modules.refusal(mk2, 0, mod(ModuleKind.JET_ASSIST, 2), List.of()) == null, "Mk2 takes Jet Assist II");
+        helper.assertTrue(Modules.refusal(mk2, 0, mod(ModuleKind.JET_ASSIST, 3), List.of()) != null, "Jet Assist III needs Mk3");
+        helper.assertTrue(Modules.refusal(mk3, 0, mod(ModuleKind.JET_ASSIST, 3), List.of()) == null, "Mk3 takes Jet Assist III");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void jetThrustHeatsCutsOutAndCools(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        int start = 1_000_000;
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK1, start, ModuleKind.JET_ASSIST));
+        ticks(player, 1);
+        int burn = ExoConfig.jetBurnSeconds(1) * 20;
+
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, burn / 2);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST, "holding jump in mid air thrusts");
+        double half = ExoTicker.jetHeat(player);
+        helper.assertTrue(Math.abs(half - 0.5) < 0.05, "half the burn time is half the heat, got " + half);
+        int used = start - energy(player, EquipmentSlot.CHEST);
+        double expected = ExoConfig.jetThrustCost(1) * (burn / 2) / 20.0;
+        helper.assertTrue(used >= expected * 0.9 && used <= expected * 1.1, "thrust costs about " + expected + " FE, used " + used);
+
+        ticks(player, burn / 2 + 2);
+        helper.assertTrue(ExoTicker.jetOverheated(player), "full heat overheats the pack");
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "the thrusters cut out at full heat");
+        helper.assertTrue(player.hasEffect(MobEffects.SLOW_FALLING), "the slow fall takes over after the cut-out");
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 2);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "no thrust before it has cooled down");
+
+        double air0 = ExoTicker.jetHeat(player);
+        ticks(player, 10);
+        double airCool = air0 - ExoTicker.jetHeat(player);
+        player.setOnGround(true);
+        double ground0 = ExoTicker.jetHeat(player);
+        ticks(player, 10);
+        double groundCool = ground0 - ExoTicker.jetHeat(player);
+        helper.assertTrue(airCool > 0 && Math.abs(groundCool - 2 * airCool) < 1.0E-6,
+                "cools twice as fast on the ground, air " + airCool + " ground " + groundCool);
+        ticks(player, burn);
+        helper.assertTrue(!ExoTicker.jetOverheated(player) && ExoTicker.jetHeat(player) == 0, "cooled down completely, ready again");
+        player.setOnGround(false);
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST, "thrust works again once cool");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void jetNeedsEnergyAndAir(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK1, 0, ModuleKind.JET_ASSIST));
+        ticks(player, 1);
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 5);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF && ExoTicker.jetHeat(player) == 0, "no thrust on an empty battery");
+
+        // A few ticks of energy: it thrusts, runs dry and stops.
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.CHEST), (int) Math.ceil(ExoJet.costPerTick(1, false) * 3));
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST, "thrusts with energy");
+        ticks(player, 10);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "running dry cuts the thrust");
+
+        // Standing on the ground never thrusts.
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.CHEST), 100_000);
+        player.setOnGround(true);
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 5);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF && ExoTicker.jetHeat(player) == 0, "no thrust on the ground");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void magmaCoreHalvesJetHeat(GameTestHelper helper) {
+        ServerPlayer plain = survivalPlayer(helper);
+        ServerPlayer magma = survivalPlayer(helper);
+        jetMk2Set(plain, ItemStack.EMPTY);
+        jetMk2Set(magma, new ItemStack(CoreItems.MAGMA_CORE.get()));
+        helper.assertTrue(ExoSuit.setBonus(magma) == ExoData.Core.MAGMA, "the Magma Core set bonus is on");
+        ticks(plain, 1);
+        ticks(magma, 1);
+        ExoTicker.jetWant(plain, ExoJet.THRUST);
+        ExoTicker.jetWant(magma, ExoJet.THRUST);
+        ticks(plain, 40);
+        ticks(magma, 40);
+        double a = ExoTicker.jetHeat(plain), b = ExoTicker.jetHeat(magma);
+        helper.assertTrue(a > 0 && Math.abs(b - a / 2) < 1.0E-6, "Magma Core: half the heat, plain " + a + " magma " + b);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void jetHoverAtLevelThree(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, 1_000_000, ModuleKind.JET_ASSIST));
+        ticks(player, 1);
+        helper.assertTrue(!ExoActions.toggleFlight(player), "below level III the Flight key has nothing to switch");
+
+        int start = 4_000_000;
+        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK3, start, mod(ModuleKind.JET_ASSIST, 3)));
+        ticks(player, 1);
+        ExoTicker.jetWant(player, ExoJet.HOVER);
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "no hover before the Flight key switches it on");
+        helper.assertTrue(ExoActions.toggleFlight(player), "without a Flight module the Flight key toggles hover");
+        ExoTicker.jetWant(player, ExoJet.HOVER);
+        ticks(player, 20);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.HOVER, "hovering");
+        double heat = ExoTicker.jetHeat(player);
+        double expected = 20 * ExoJet.heatPerTick(3, false, false) / 2;
+        helper.assertTrue(Math.abs(heat - expected) < 1.0E-6, "hover heats at half rate, got " + heat);
+        int used = start - energy(player, EquipmentSlot.CHEST);
+        double cost = ExoConfig.jetThrustCost(3) / 2.0;
+        helper.assertTrue(used >= cost * 0.9 && used <= cost * 1.1, "a second of hover costs half the thrust, used " + used);
+        player.setOnGround(true);
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "landing ends the hover");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void gliderOpensAfterJetThrust(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, 1_000_000, ModuleKind.JET_ASSIST, ModuleKind.GLIDER));
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        ticks(player, 1);
+        helper.assertTrue(!chest.canElytraFly(player), "with a Jet Assist, jump in mid air fires the pack first");
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 5);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST && !chest.canElytraFly(player), "no Glider while thrusting");
+        ExoTicker.jetWant(player, ExoJet.OFF);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "a stop takes effect at once");
+        helper.assertTrue(chest.canElytraFly(player), "the Glider may open once thrust stopped in mid air");
+        helper.assertTrue(player.tryToStartFallFlying() && player.isFallFlying(), "the server lets the Glider open");
+        player.stopFallFlying();
+        player.setOnGround(true);
+        ticks(player, 1);
+        player.setOnGround(false);
+        helper.assertTrue(!chest.canElytraFly(player), "after landing the next jump goes to the pack again");
+        helper.succeed();
+    }
+
+    private static void jetMk2Set(ServerPlayer player, ItemStack core) {
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK2, 500_000));
+        ItemStack chest = piece(ExoItems.CHESTPLATE_MK2, 2_000_000, ModuleKind.JET_ASSIST);
+        if (!core.isEmpty()) ExoData.setCore(chest, core);
+        player.setItemSlot(EquipmentSlot.CHEST, chest);
+        player.setItemSlot(EquipmentSlot.LEGS, piece(ExoItems.LEGGINGS_MK2, 500_000));
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK2, 500_000));
     }
 
     /** An Assembler-only part from the industry module, looked up by id (the smithing addition of Mk3 / Mk4). */

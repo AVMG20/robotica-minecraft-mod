@@ -20,9 +20,25 @@ public final class ExoActions {
     public static final int DASH = 3;
     public static final int SONAR = 4;
     public static final int OVERCLOCK = 5;
+    /** Jet Assist: jump held in mid air, thrust upward. */
+    public static final int JET_THRUST = 6;
+    /** Jet Assist III in hover mode: jump released, hold the height. */
+    public static final int JET_HOVER = 7;
+    /** Jet Assist: thrust and hover end (released, landed, cut out on the client). */
+    public static final int JET_STOP = 8;
 
     public static void apply(ServerPlayer player, int action) {
-        if (player.isSpectator() || !ExoSuit.wearingAny(player) || !ExoTicker.actionAllowed(player, action)) return;
+        // Thrust intent only sets a flag (checked on the next tick), so it needs no rate limit; a stop acts at once and is never dropped.
+        if (action == JET_STOP) {
+            ExoTicker.jetWant(player, ExoJet.OFF);
+            return;
+        }
+        if (player.isSpectator() || !ExoSuit.wearingAny(player)) return;
+        if (action == JET_THRUST || action == JET_HOVER) {
+            ExoTicker.jetWant(player, action == JET_THRUST ? ExoJet.THRUST : ExoJet.HOVER);
+            return;
+        }
+        if (!ExoTicker.actionAllowed(player, action)) return;
         switch (action) {
             case OPEN_MODULES -> ExoMenu.openWorn(player);
             case TOGGLE_FLIGHT -> toggleFlight(player);
@@ -35,11 +51,15 @@ public final class ExoActions {
         }
     }
 
-    /** Flips the Flight module of the worn chestplate. Returns false when there is none. */
+    /**
+     * Flips the Flight module of the worn chestplate. Without one, Jet Assist III switches hover mode instead. Returns
+     * false when there is neither.
+     */
     public static boolean toggleFlight(ServerPlayer player) {
         ItemStack chest = ExoSuit.piece(player, EquipmentSlot.CHEST);
         int slot = chest.isEmpty() ? -1 : Modules.slotOf(chest, ModuleKind.FLIGHT);
         if (slot < 0) {
+            if (ExoTicker.toggleHover(player)) return true;
             player.displayClientMessage(Component.translatable("exo.robotica.no_flight"), true);
             return false;
         }

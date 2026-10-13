@@ -494,8 +494,16 @@
           ]
         },
         {
+          "title": "Jetpack",
+          "text": "Full heat bar: the pack cuts out until it has cooled, twice as fast on the ground. Your fall slows meanwhile.",
+          "items": [
+            "robotica:jet_assist_module",
+            "robotica:jet_assist_module_2",
+            "robotica:jet_assist_module_3"
+          ]
+        },
+        {
           "title": "More modules",
-          "text": "Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one off on the J screen to use the other.",
           "items": [
             "robotica:glider_module",
             "robotica:gyro_stabilizer_module",

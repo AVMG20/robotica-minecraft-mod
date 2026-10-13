@@ -91,9 +91,10 @@ level3('sonar_pulse', '#c:gems/prismarine', 'sonar_pulse_module', 'sonar_pulse_m
 level_null('sonar_pulse_module_3', 'sonar_pulse_module_2', 'minecraft:ender_eye')
 
 # ---- Chest modules
-shaped('jet_assist_module', ['FAF', 'PSP'], {'F': '#c:feathers', 'A': 'advanced_circuit', 'S': 'servo_actuator', 'P': PLATE})
-shaped('jet_assist_module_2', ['QCQ', ' U '], {'Q': 'quantum_circuit', 'C': 'plasma_actuator', 'U': 'jet_assist_module'})
-level_null('jet_assist_module_3', 'jet_assist_module_2', 'minecraft:shulker_shell')
+# Jet Assist is the jetpack: I is Age 1 (motors and gunpowder), II Age 2, III Age 3.
+shaped('jet_assist_module', ['PBP', 'MGM'], {'P': PLATE, 'B': 'basic_circuit', 'M': 'electric_motor', 'G': '#c:gunpowders'})
+level2('jet_assist', 'servo_actuator')
+level3('jet_assist', 'plasma_actuator')
 shaped('flight_module', ['NCN', 'PJP'], {'N': 'null_circuit', 'C': 'antigrav_core', 'P': 'plasma_actuator', 'J': 'jet_assist_module'})
 shaped('kinetic_shield_module', ['GQG', 'IAI'], {'G': GOLD_PLATE, 'Q': 'quantum_circuit', 'I': PLATE, 'A': 'plasma_actuator'})
 level_null('kinetic_shield_module_2', 'kinetic_shield_module', 'null_casing')
