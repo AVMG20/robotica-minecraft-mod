@@ -16,14 +16,15 @@ import java.util.Locale;
 /** GUI of the Buddy Bot: cargo grid, battery slot, status line, energy bar and one row of buttons. */
 public class BuddyBotScreen extends MachineScreen<BuddyBotMenu> {
     private static final ItemStack[] STANCE_ICONS = {new ItemStack(Items.IRON_SWORD), new ItemStack(Items.SHIELD), new ItemStack(Items.POPPY)};
+    private static final ItemStack[] MODE_ICONS = {new ItemStack(Items.LEAD), new ItemStack(Items.COMPASS), new ItemStack(Items.ANVIL)};
 
-    private IconButton follow;
-    private IconButton patrol;
-    private IconButton stay;
+    private IconButton mode;
     private IconButton stance;
     private IconButton pickup;
     private IconButton lights;
     private IconButton voidToggle;
+    private IconButton platform;
+    private IconButton size;
     private IconButton dig;
     private final int rowB;
     private final int rowC;
@@ -39,13 +40,13 @@ public class BuddyBotScreen extends MachineScreen<BuddyBotMenu> {
     @Override
     protected void init() {
         super.init();
-        follow = button(0, new ItemStack(Items.LEAD), true, BuddyBotMenu.BTN_FOLLOW, "gui.robotica.buddy.follow");
-        patrol = button(1, new ItemStack(Items.COMPASS), true, BuddyBotMenu.BTN_PATROL, "gui.robotica.buddy.patrol");
-        stay = button(2, new ItemStack(Items.ANVIL), true, BuddyBotMenu.BTN_STAY, "gui.robotica.buddy.stay");
-        stance = button(3, STANCE_ICONS[0], false, BuddyBotMenu.BTN_STANCE, "gui.robotica.buddy.stance.aggressive");
-        pickup = button(4, new ItemStack(Items.HOPPER), true, BuddyBotMenu.BTN_PICKUP, "gui.robotica.buddy.pickup");
-        lights = button(5, icon("lamp_rod"), true, BuddyBotMenu.BTN_LIGHTS, "gui.robotica.buddy.lights");
-        voidToggle = button(6, new ItemStack(Items.CACTUS), true, BuddyBotMenu.BTN_VOID, "gui.robotica.buddy.void");
+        mode = button(0, MODE_ICONS[0], false, BuddyBotMenu.BTN_MODE, "gui.robotica.buddy.move.follow");
+        stance = button(1, STANCE_ICONS[0], false, BuddyBotMenu.BTN_STANCE, "gui.robotica.buddy.stance.aggressive");
+        pickup = button(2, new ItemStack(Items.HOPPER), true, BuddyBotMenu.BTN_PICKUP, "gui.robotica.buddy.pickup");
+        lights = button(3, icon("lamp_rod"), true, BuddyBotMenu.BTN_LIGHTS, "gui.robotica.buddy.lights");
+        voidToggle = button(4, new ItemStack(Items.CACTUS), true, BuddyBotMenu.BTN_VOID, "gui.robotica.buddy.void");
+        platform = button(5, new ItemStack(Items.SCAFFOLDING), true, BuddyBotMenu.BTN_PLATFORM, "gui.robotica.buddy.platform");
+        size = button(6, ItemStack.EMPTY, false, BuddyBotMenu.BTN_SIZE, "gui.robotica.buddy.size");
         dig = button(7, new ItemStack(Items.IRON_PICKAXE), false, BuddyBotMenu.BTN_DIG, "gui.robotica.buddy.dig");
         update();
     }
@@ -60,17 +61,29 @@ public class BuddyBotScreen extends MachineScreen<BuddyBotMenu> {
         if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
     }
 
+    private BuddyBot.Mode shownMode;
     private BuddyBot.Stance shownStance;
+    private BuddyBot.Size shownSize;
     private boolean shownDigging;
 
     private void update() {
-        BuddyBot.Mode mode = menu.mode();
-        follow.setOn(mode == BuddyBot.Mode.FOLLOW);
-        patrol.setOn(mode == BuddyBot.Mode.PATROL);
-        stay.setOn(mode == BuddyBot.Mode.STAY);
+        // flying back after a tunnel ends in Follow
+        BuddyBot.Mode m = menu.mode() != null ? menu.mode() : BuddyBot.Mode.FOLLOW;
+        if (m != shownMode) {
+            shownMode = m;
+            mode.setIcon(MODE_ICONS[m.ordinal()]);
+            mode.hint(Component.translatable("gui.robotica.buddy.move." + m.name().toLowerCase(Locale.ROOT)));
+        }
         pickup.setOn(menu.pickupOn());
         lights.setOn(menu.lightsOn());
         voidToggle.setOn(menu.voidOn());
+        platform.setOn(menu.platformOn());
+        BuddyBot.Size sz = menu.size();
+        if (sz != shownSize) {
+            shownSize = sz;
+            size.label(sz.label);
+            size.hint(Component.translatable("gui.robotica.buddy.size", sz.label));
+        }
         BuddyBot.Stance s = menu.stance();
         if (s != shownStance) {
             shownStance = s;

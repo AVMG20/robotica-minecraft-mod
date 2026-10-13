@@ -17,13 +17,13 @@ import net.neoforged.neoforge.items.SlotItemHandler;
  * bar and one row of buttons. Button ids are the vanilla menu button channel, validated by the server on every click.
  */
 public class BuddyBotMenu extends MachineMenu {
-    public static final int BTN_FOLLOW = 0;
-    public static final int BTN_PATROL = 1;
-    public static final int BTN_STAY = 2;
-    public static final int BTN_STANCE = 3;
-    public static final int BTN_PICKUP = 4;
-    public static final int BTN_LIGHTS = 5;
-    public static final int BTN_VOID = 6;
+    public static final int BTN_MODE = 0;
+    public static final int BTN_STANCE = 1;
+    public static final int BTN_PICKUP = 2;
+    public static final int BTN_LIGHTS = 3;
+    public static final int BTN_VOID = 4;
+    public static final int BTN_PLATFORM = 5;
+    public static final int BTN_SIZE = 6;
     public static final int BTN_DIG = 7;
     /** Player inventory top, below the cargo row (rowB). */
     public static final int INVENTORY_OFFSET = 53;
@@ -37,6 +37,7 @@ public class BuddyBotMenu extends MachineMenu {
     private final int idxMode;
     private final int idxStance;
     private final int idxFlags;
+    private final int idxSize;
     private final int idxProgress;
     private final int idxJob;
     /** Server side: opened with the backpack key, so it stays open further away while the player's client tracks the bot. */
@@ -69,7 +70,8 @@ public class BuddyBotMenu extends MachineMenu {
         idxMode = track(() -> bot.isReturning() ? 3 : bot.mode().ordinal());
         idxStance = track(() -> bot.stance().ordinal());
         idxFlags = track(() -> (bot.pickupOn() ? 1 : 0) | (bot.lightsOn() ? 2 : 0) | (bot.voidOn() ? 4 : 0)
-                | (bot.hasTunnel() ? 8 : 0) | (bot.isEnergyLow() ? 16 : 0) | (bot.currentTarget() != null ? 32 : 0));
+                | (bot.hasTunnel() ? 8 : 0) | (bot.isEnergyLow() ? 16 : 0) | (bot.currentTarget() != null ? 32 : 0) | (bot.platformOn() ? 64 : 0));
+        idxSize = track(() -> bot.size().ordinal());
         idxProgress = track(bot::progress);
         idxJob = track(bot::jobLength);
     }
@@ -143,6 +145,14 @@ public class BuddyBotMenu extends MachineMenu {
         return flag(32);
     }
 
+    public boolean platformOn() {
+        return flag(64);
+    }
+
+    public BuddyBot.Size size() {
+        return BuddyBot.Size.byId(synced(idxSize));
+    }
+
     public int progress() {
         return synced(idxProgress);
     }
@@ -155,13 +165,13 @@ public class BuddyBotMenu extends MachineMenu {
     public boolean clickMenuButton(Player player, int id) {
         if (!(player instanceof ServerPlayer sp) || !bot.isAlive() || !bot.canInteract(player)) return false;
         switch (id) {
-            case BTN_FOLLOW -> bot.commandFollow();
-            case BTN_PATROL -> bot.setMode(BuddyBot.Mode.PATROL);
-            case BTN_STAY -> bot.setMode(BuddyBot.Mode.STAY);
+            case BTN_MODE -> bot.cycleMode();
             case BTN_STANCE -> bot.cycleStance();
             case BTN_PICKUP -> bot.setPickup(!bot.pickupOn());
             case BTN_LIGHTS -> bot.setLights(!bot.lightsOn());
             case BTN_VOID -> bot.setVoid(!bot.voidOn());
+            case BTN_PLATFORM -> bot.setPlatform(!bot.platformOn());
+            case BTN_SIZE -> bot.cycleSize();
             case BTN_DIG -> {
                 if (bot.hasTunnel()) bot.commandReturn();
                 else bot.commandTunnel(sp, sp.getDirection());

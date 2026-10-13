@@ -4,6 +4,8 @@ import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
 import com.arno.robotica.automation.menu.AreaWorkerMenu;
 import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.util.Fmt;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -69,7 +71,8 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 9, y + 18, 12, 52, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 9, y + 18, 12, 52, menu.energy(), menu.capacity(), false,
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.usePerTick())).withStyle(ChatFormatting.GRAY));
         AreaWorkerBlockEntity.Status status = menu.status();
         Tone tone = switch (status) {
             case WORKING -> Tone.GOOD;

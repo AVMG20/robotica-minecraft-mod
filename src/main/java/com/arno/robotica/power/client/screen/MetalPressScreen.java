@@ -1,7 +1,9 @@
 package com.arno.robotica.power.client.screen;
 
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.power.menu.MetalPressMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -39,7 +41,8 @@ public class MetalPressScreen extends MachineScreen<MetalPressMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 12, y + 17, 14, 52, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 12, y + 17, 14, 52, menu.energy(), menu.capacity(), false,
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.lastUse())).withStyle(ChatFormatting.GRAY));
         drawArrow(g, x + 74, y + 37, menu.progress());
         if (menu.progress() > 0) {
             drawStatusCentered(g, Component.translatable("gui.robotica.status.working"), x + 85, y + 58, 80, Tone.GOOD);

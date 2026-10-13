@@ -6,6 +6,8 @@ import com.arno.robotica.processing.block.ProcessingMachineBlock;
 import com.arno.robotica.processing.block.ProcessingMachineBlockEntity;
 import com.arno.robotica.processing.menu.ElectricFurnaceMenu;
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.util.Fmt;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -55,7 +57,7 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         drawEnergyBar(g, x + 160, y + 18, 8, 70, menu.energy(), menu.capacity(), false,
-                Component.translatable("gui.robotica.processing.using", menu.lastUse()));
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.lastUse())).withStyle(ChatFormatting.GRAY));
         for (int lane = 0; lane < menu.lanes(); lane++) {
             int lx = x + menu.laneX() + lane * 18;
             drawProgress(g, lx + 1, y + 38, 14, 4, menu.laneProgress(lane));

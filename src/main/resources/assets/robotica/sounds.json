@@ -232,10 +232,22 @@
     "subtitle": "subtitles.robotica.assembler_work",
     "sounds": [
       {
-        "name": "robotica:machine/assemble",
+        "name": "minecraft:block/crafter/craft",
         "type": "file",
-        "volume": 0.3,
+        "volume": 0.5,
         "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/crafter/craft",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 0.94
+      },
+      {
+        "name": "minecraft:block/crafter/craft",
+        "type": "file",
+        "volume": 0.5,
+        "pitch": 1.06
       }
     ]
   },
