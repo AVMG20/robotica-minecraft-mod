@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " Q ",
+    "PCP",
+    " X "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "P": {
+      "tag": "c:plates/pyrosteel"
+    },
+    "C": {
+      "item": "robotica:charger_mk2"
+    },
+    "X": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:charger_mk3",
+    "count": 1
+  }
+}

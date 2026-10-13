@@ -6,14 +6,19 @@ import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
 import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
+import com.arno.robotica.power.block.WirelessChargerBlock;
 import com.arno.robotica.power.block.WirelessChargerBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -96,7 +101,7 @@ public class WirelessChargerGameTests {
         ServerPlayer stranger = player(helper, -2);
         WirelessChargerBlockEntity be = charger(helper, owner);
         int range = be.range();
-        helper.assertTrue(range == PowerConfig.wirelessRange(), "base range " + range);
+        helper.assertTrue(range == PowerConfig.wirelessRange(1), "base range " + range);
 
         be.scanNow();
         helper.assertTrue(be.stateOf(owner) >= 0 && be.stateOf(owner) != WirelessChargerBlockEntity.DENIED, "the owner is charged");
@@ -123,7 +128,48 @@ public class WirelessChargerGameTests {
 
         be.upgrades.setStackInSlot(1, CoreItems.cards(UpgradeKind.SPEED, 8));
         helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == 4, "speed capped");
-        helper.assertTrue(be.ratePerPlayer() == PowerConfig.wirelessRate() * 6, "4 speed cards: x6 rate, is " + be.ratePerPlayer());
+        helper.assertTrue(be.ratePerPlayer() == PowerConfig.wirelessRate(1) * 6, "4 speed cards: x6 rate, is " + be.ratePerPlayer());
+        helper.succeed();
+    }
+
+    /** Each Mk reaches further and charges faster than the one before; its buffer and input scale with its rate. */
+    @GameTest(template = "empty")
+    public static void wirelessChargerTiers(GameTestHelper helper) {
+        net.minecraft.world.level.block.Block[] tiers = {PowerRegistry.WIRELESS_CHARGER.get(), PowerRegistry.WIRELESS_CHARGER_MK2.get(),
+                PowerRegistry.WIRELESS_CHARGER_MK3.get(), PowerRegistry.WIRELESS_CHARGER_MK4.get()};
+        int lastRate = 0, lastRange = 0;
+        for (int i = 0; i < tiers.length; i++) {
+            BlockPos pos = new BlockPos(1 + i, 1, 1);
+            helper.setBlock(pos, tiers[i]);
+            WirelessChargerBlockEntity be = helper.getBlockEntity(pos);
+            int mk = i + 1;
+            helper.assertTrue(be.ratePerPlayer() == PowerConfig.wirelessRate(mk), "Mk" + mk + " rate " + be.ratePerPlayer());
+            helper.assertTrue(be.range() == PowerConfig.wirelessRange(mk), "Mk" + mk + " range " + be.range());
+            helper.assertTrue(be.ratePerPlayer() > lastRate && be.range() > lastRange, "Mk" + mk + " beats Mk" + i);
+            helper.assertTrue(be.energy.getMaxEnergyStored() == be.ratePerPlayer() * WirelessChargerBlockEntity.BUFFER_TICKS,
+                    "Mk" + mk + " buffer " + be.energy.getMaxEnergyStored());
+            helper.assertTrue(be.energy.receiveEnergy(Integer.MAX_VALUE, true) == be.ratePerPlayer() * WirelessChargerBlockEntity.INPUT_PLAYERS,
+                    "Mk" + mk + " input");
+            lastRate = be.ratePerPlayer();
+            lastRange = be.range();
+        }
+        helper.succeed();
+    }
+
+    /** The mast points away from the face it is placed against: up from a floor, down from a ceiling, out of a wall. */
+    @GameTest(template = "empty")
+    public static void wirelessChargerFollowsPlacement(GameTestHelper helper) {
+        ServerPlayer player = player(helper, 2);
+        ItemStack stack = new ItemStack(PowerRegistry.WIRELESS_CHARGER_MK2_ITEM.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        BlockPos target = helper.absolutePos(new BlockPos(1, 2, 1));
+        for (Direction clicked : Direction.values()) {
+            BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(target), clicked, target.relative(clicked.getOpposite()), false);
+            BlockState state = PowerRegistry.WIRELESS_CHARGER_MK2.get().getStateForPlacement(
+                    new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit));
+            helper.assertTrue(state != null && WirelessChargerBlock.mastDirection(state) == clicked,
+                    "placed against " + clicked.getOpposite() + ": mast points " + (state == null ? null : WirelessChargerBlock.mastDirection(state)));
+        }
         helper.succeed();
     }
 

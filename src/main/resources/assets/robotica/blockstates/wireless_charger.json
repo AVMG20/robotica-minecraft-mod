@@ -1,33 +1,109 @@
 {
   "variants": {
-    "facing=north,lit=false": {
+    "face=floor,facing=north,lit=false": {
       "model": "robotica:block/wireless_charger"
     },
-    "facing=east,lit=false": {
+    "face=floor,facing=north,lit=true": {
+      "model": "robotica:block/wireless_charger_on"
+    },
+    "face=floor,facing=east,lit=false": {
       "model": "robotica:block/wireless_charger",
       "y": 90
     },
-    "facing=south,lit=false": {
+    "face=floor,facing=east,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "y": 90
+    },
+    "face=floor,facing=south,lit=false": {
       "model": "robotica:block/wireless_charger",
       "y": 180
     },
-    "facing=west,lit=false": {
+    "face=floor,facing=south,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "y": 180
+    },
+    "face=floor,facing=west,lit=false": {
       "model": "robotica:block/wireless_charger",
       "y": 270
     },
-    "facing=north,lit=true": {
-      "model": "robotica:block/wireless_charger_on"
-    },
-    "facing=east,lit=true": {
+    "face=floor,facing=west,lit=true": {
       "model": "robotica:block/wireless_charger_on",
-      "y": 90
+      "y": 270
     },
-    "facing=south,lit=true": {
-      "model": "robotica:block/wireless_charger_on",
+    "face=ceiling,facing=north,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 180,
       "y": 180
     },
-    "facing=west,lit=true": {
+    "face=ceiling,facing=north,lit=true": {
       "model": "robotica:block/wireless_charger_on",
+      "x": 180,
+      "y": 180
+    },
+    "face=ceiling,facing=east,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 180,
+      "y": 270
+    },
+    "face=ceiling,facing=east,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "x": 180,
+      "y": 270
+    },
+    "face=ceiling,facing=south,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 180
+    },
+    "face=ceiling,facing=south,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "x": 180
+    },
+    "face=ceiling,facing=west,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 180,
+      "y": 90
+    },
+    "face=ceiling,facing=west,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "x": 180,
+      "y": 90
+    },
+    "face=wall,facing=north,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 90
+    },
+    "face=wall,facing=north,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "x": 90
+    },
+    "face=wall,facing=east,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 90,
+      "y": 90
+    },
+    "face=wall,facing=east,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "x": 90,
+      "y": 90
+    },
+    "face=wall,facing=south,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 90,
+      "y": 180
+    },
+    "face=wall,facing=south,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "x": 90,
+      "y": 180
+    },
+    "face=wall,facing=west,lit=false": {
+      "model": "robotica:block/wireless_charger",
+      "x": 90,
+      "y": 270
+    },
+    "face=wall,facing=west,lit=true": {
+      "model": "robotica:block/wireless_charger_on",
+      "x": 90,
       "y": 270
     }
   }

@@ -26,10 +26,10 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-/** One slot, an FE buffer that accepts energy from every side, and a fixed charge rate into the item. */
+/** One slot, an FE buffer that accepts energy from every side, and the Mk's charge rate into the item. */
 public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
-    public static final int ENERGY_CAPACITY = 20_000;
-    public static final int MAX_RECEIVE = 2_000;
+    /** The buffer holds this many ticks of the charge rate. */
+    public static final int BUFFER_TICKS = 10;
 
     /** True for items that take FE from outside. A Mainspring does not (it only winds at the crank). */
     public static boolean canCharge(ItemStack stack) {
@@ -64,7 +64,7 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
         return slot;
     }
 
-    public final MachineEnergyStorage energy = new MachineEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0, this::setChanged);
+    public final MachineEnergyStorage energy;
 
     private final IItemHandler automation = new ItemAccess(slot, (s, stack) -> canCharge(stack), (s, stack) -> isDone(stack));
     /** Per-face item config (empty items in, charged items out); every face both ways by default. */
@@ -72,8 +72,17 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
 
     private boolean wasCharging;
 
+    private final int rate;
+
     public ChargerBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.CHARGER_BE.get(), pos, state);
+        rate = PowerConfig.chargerRate(state.getBlock() instanceof ChargerBlock b ? b.mk() : 1);
+        energy = new MachineEnergyStorage((int) Math.min(Integer.MAX_VALUE, (long) rate * BUFFER_TICKS), rate, 0, this::setChanged);
+    }
+
+    /** FE/t pushed into the item (never more than the item accepts). */
+    public int rate() {
+        return rate;
     }
 
     public IItemHandler automation() {
@@ -86,7 +95,7 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
         ItemStack stack = slot.getStackInSlot(0);
         boolean charging = false;
         if (!stack.isEmpty() && energy.getEnergyStored() > 0) {
-            int moved = EnergyUtil.chargeItem(energy, stack, PowerConfig.chargerRate());
+            int moved = EnergyUtil.chargeItem(energy, stack, rate);
             if (moved > 0) {
                 charging = true;
                 setChanged();
@@ -108,7 +117,7 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.robotica.charger");
+        return getBlockState().getBlock().getName();
     }
 
     @Nullable
