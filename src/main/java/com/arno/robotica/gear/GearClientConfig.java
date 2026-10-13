@@ -12,7 +12,6 @@ public final class GearClientConfig {
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.BooleanValue LAMP_ANIMATED;
     private static final ModConfigSpec.BooleanValue LAMP_PARTICLES;
-    private static final ModConfigSpec.BooleanValue LAMP_SOUNDS;
     private static final ModConfigSpec.IntValue LAMP_FX_RANGE;
     private static final ModConfigSpec.BooleanValue OUTLINE_ANIMATED, AREA_STATIC, WEAPON_PARTICLES;
 
@@ -22,8 +21,7 @@ public final class GearClientConfig {
         LAMP_ANIMATED = b.comment("Animated Spark Lamp wisps: floating, flickering, crackling filaments. Off: a still glow.")
                 .define("sparkLampAnimated", true);
         LAMP_PARTICLES = b.comment("Arcs and sparks at Spark Lamps.").define("sparkLampParticles", true);
-        LAMP_SOUNDS = b.comment("Quiet crackle and hum at Spark Lamps.").define("sparkLampSounds", true);
-        LAMP_FX_RANGE = b.comment("Spark Lamp arcs, sparks and sounds only play within this many blocks of the camera.")
+        LAMP_FX_RANGE = b.comment("Spark Lamp arcs and sparks only play within this many blocks of the camera.")
                 .defineInRange("sparkLampFxRange", 20, 4, 32);
         b.pop();
         b.push("tools");
@@ -42,10 +40,6 @@ public final class GearClientConfig {
 
     public static boolean lampParticles() {
         return !SPEC.isLoaded() || LAMP_PARTICLES.get();
-    }
-
-    public static boolean lampSounds() {
-        return !SPEC.isLoaded() || LAMP_SOUNDS.get();
     }
 
     public static int lampFxRange() {

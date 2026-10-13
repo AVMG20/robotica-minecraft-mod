@@ -1,12 +1,10 @@
 package com.arno.robotica.gear.lamp;
 
-import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.GearBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
@@ -30,7 +28,7 @@ public final class SparkLamps {
 
     /**
      * Places a lamp facing {@code facing} at {@code spot} after {@link #canPlace}, fires the place event (undone when a
-     * claim mod cancels it) and plays the zap. Returns true when the lamp stays.
+     * claim mod cancels it). Returns true when the lamp stays.
      */
     public static boolean place(ServerPlayer player, ServerLevel level, BlockPos spot, Direction facing) {
         if (!canPlace(player, level, spot)) return false;
@@ -40,21 +38,12 @@ public final class SparkLamps {
             snapshot.restore(Block.UPDATE_ALL);
             return false;
         }
-        zap(level, spot, true);
         return true;
     }
 
     /** Removes the lamp at {@code pos} if this player may break it there (break event included). */
     public static boolean remove(ServerPlayer player, ServerLevel level, BlockPos pos) {
         if (!level.getBlockState(pos).is(GearBlocks.SPARK_LAMP.get()) || !player.mayBuild() || !level.mayInteract(player, pos)) return false;
-        if (!player.gameMode.destroyBlock(pos)) return false;
-        zap(level, pos, false);
-        return true;
-    }
-
-    /** A rising charge (on) or a falling fizz (off). The flash and sparks are drawn by each client (gear.client.SparkWisps). */
-    public static void zap(ServerLevel level, BlockPos pos, boolean on) {
-        if (on) CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_ON, SoundSource.BLOCKS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
-        else CoreSounds.play(level, pos, CoreSounds.SPARK_LAMP_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
+        return player.gameMode.destroyBlock(pos);
     }
 }

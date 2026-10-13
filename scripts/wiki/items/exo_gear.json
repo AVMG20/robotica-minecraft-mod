@@ -1060,7 +1060,7 @@
    "items": [
     "lamp_rod"
    ],
-   "what": "FE tool that places Spark Lamps: floating electric wisps with light 14 that crackle and throw small arcs at nearby blocks and players. Walk-through, break instantly.",
+   "what": "FE tool that places Spark Lamps: floating electric wisps with light 14 that throw small arcs at nearby blocks and players. Walk-through, break instantly.",
    "use": [
     "Right-click a block face to place a lamp on the floor, a wall or the ceiling.",
     "Sneak-right-click a lamp to remove it."

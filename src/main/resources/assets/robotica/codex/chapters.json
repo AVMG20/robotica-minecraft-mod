@@ -355,7 +355,7 @@
         },
         {
           "title": "Tool modules",
-          "text": "Overclock, Fortune and Silk Touch only work while the tool has FE.\nSpark Lamps float and crackle. Sneak-right-click one with the Lamp Rod to remove it.",
+          "text": "Overclock, Fortune and Silk Touch only work while the tool has FE.\nSneak-right-click a Spark Lamp with the Lamp Rod to remove it.",
           "items": [
             "robotica:overclock_module",
             "robotica:fortune_module",
