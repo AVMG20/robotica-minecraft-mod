@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " Q ",
+    "EXE",
+    " B "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "X": {
+      "item": "robotica:chunk_anchor_mk2"
+    },
+    "B": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:chunk_anchor_mk3",
+    "count": 1
+  }
+}

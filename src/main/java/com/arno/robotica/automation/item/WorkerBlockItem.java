@@ -2,6 +2,7 @@ package com.arno.robotica.automation.item;
 
 import com.arno.robotica.automation.AutomationConfig;
 import com.arno.robotica.automation.block.AreaWorkerBlock;
+import com.arno.robotica.automation.block.ChunkAnchorBlock;
 import com.arno.robotica.automation.block.ExcavatorBlock;
 import com.arno.robotica.automation.block.SupplyCrateBlock;
 import com.arno.robotica.automation.block.SurveyRigBlock;
@@ -38,7 +39,8 @@ public class WorkerBlockItem extends BlockItem implements HasDetails {
             tooltip.add(Component.translatable(descriptionKey).withStyle(ChatFormatting.GRAY));
         }
         int tier = getBlock() instanceof AreaWorkerBlock worker ? worker.mkTier()
-                : getBlock() instanceof SupplyCrateBlock crate ? crate.tier() : 0;
+                : getBlock() instanceof SupplyCrateBlock crate ? crate.tier()
+                : getBlock() instanceof ChunkAnchorBlock anchor ? anchor.mkTier() : 0;
         if (getBlock() instanceof ExcavatorBlock) {
             int size = AutomationConfig.excavatorSize(tier);
             tooltip.add(Component.translatable("tooltip.robotica.excavator_mk", tier, size, size,
@@ -48,6 +50,10 @@ public class WorkerBlockItem extends BlockItem implements HasDetails {
             String speed = String.format(Locale.ROOT, "%.1f", AutomationConfig.surveySpeed(tier) / 100.0);
             tooltip.add(Component.translatable("tooltip.robotica.survey_rig_mk", tier, speed, AutomationConfig.surveyRareBonus(tier),
                     com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier)).withStyle(ChatFormatting.DARK_GRAY));
+        } else if (getBlock() instanceof ChunkAnchorBlock anchor) {
+            int side = 2 * anchor.radius() + 1;
+            tooltip.add(Component.translatable("tooltip.robotica.chunk_anchor_mk", tier, side, side,
+                    side * side * AutomationConfig.anchorFePerChunk()).withStyle(ChatFormatting.DARK_GRAY));
         }
         if (tier > 1) tooltip.add(Component.translatable("tooltip.robotica.worker_upgrade", tier - 1).withStyle(ChatFormatting.DARK_GRAY));
     }

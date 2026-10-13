@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " Q ",
+    "EXE",
+    " B "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "X": {
+      "item": "robotica:terminal_link"
+    },
+    "B": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:terminal_link_mk2",
+    "count": 1
+  }
+}

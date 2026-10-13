@@ -1,0 +1,6 @@
+{
+  "parent": "robotica:block/chunk_anchor",
+  "textures": {
+    "accent": "robotica:block/automation_mk3"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "mode=idle": {
+      "model": "robotica:block/chunk_anchor"
+    },
+    "mode=active": {
+      "model": "robotica:block/chunk_anchor_on"
+    },
+    "mode=alert": {
+      "model": "robotica:block/chunk_anchor_alert"
+    }
+  }
+}

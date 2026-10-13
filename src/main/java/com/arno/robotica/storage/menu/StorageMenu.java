@@ -4,6 +4,7 @@ import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.storage.StorageContent;
 import com.arno.robotica.storage.block.StorageTerminalBlockEntity;
 import com.arno.robotica.storage.item.StorageExpansionItem;
+import com.arno.robotica.storage.remote.RemoteAccess;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -78,6 +79,9 @@ public class StorageMenu extends MachineMenu {
     private final SimpleContainer view = new SimpleContainer(VIEW_SLOTS);
     private final Grid grid;
     private final ResultContainer result = new ResultContainer();
+    /** Set when opened through a Terminal Link: its checks replace the distance check. Server only. */
+    @Nullable
+    private final RemoteAccess remote;
 
     private String filter = "";
     private StorageView.Sort sort = StorageView.Sort.NAME;
@@ -98,8 +102,14 @@ public class StorageMenu extends MachineMenu {
 
     /** Server side ({@code be} non-null), or client side with null. */
     public StorageMenu(int id, Inventory inv, @Nullable StorageTerminalBlockEntity be) {
+        this(id, inv, be, null);
+    }
+
+    /** Server side, opened from afar through a Terminal Link ({@code remote} non-null). */
+    public StorageMenu(int id, Inventory inv, @Nullable StorageTerminalBlockEntity be, @Nullable RemoteAccess remote) {
         super(StorageContent.MENU.get(), id);
         this.be = be;
+        this.remote = remote;
         this.player = inv.player;
         this.grid = new Grid(be != null ? be.craft : NonNullList.withSize(9, ItemStack.EMPTY));
 
@@ -190,6 +200,7 @@ public class StorageMenu extends MachineMenu {
         this.sort = sort == null ? StorageView.Sort.NAME : sort;
         this.scrollRow = Math.max(0, Math.min(scrollRow, 100_000));
         viewDirty = true;
+        if (remote != null) remote.touch(player);
     }
 
     // ------------------------------------------------------------------ view (server)
@@ -228,6 +239,7 @@ public class StorageMenu extends MachineMenu {
 
     @Override
     public void broadcastChanges() {
+        if (remote != null && player instanceof ServerPlayer sp) remote.tick(sp);
         refreshIfStale();
         super.broadcastChanges();
     }
@@ -267,6 +279,7 @@ public class StorageMenu extends MachineMenu {
      */
     public void fillGrid(List<List<ItemStack>> wanted, boolean max) {
         if (be == null || wanted.size() > 9) return;
+        if (remote != null) remote.touch(player);
         for (int i = 0; i < 9; i++) {
             ItemStack old = grid.removeItemNoUpdate(i);
             if (old.isEmpty()) continue;
@@ -458,6 +471,7 @@ public class StorageMenu extends MachineMenu {
 
     @Override
     public void clicked(int slotId, int button, ClickType type, Player player) {
+        if (remote != null) remote.touch(player);
         if (slotId >= VIEW_START && slotId < VIEW_END && type != ClickType.QUICK_CRAFT) {
             // View slots are a picture: handled against the real inventory, on the server only.
             if (be != null && player instanceof ServerPlayer) {
@@ -593,8 +607,20 @@ public class StorageMenu extends MachineMenu {
     @Override
     public boolean stillValid(Player player) {
         if (be == null) return true;
+        if (remote != null) return remote.stillValid(player, be);
         if (be.isRemoved() || be.getLevel() == null) return false;
         return player.distanceToSqr(be.getBlockPos().getX() + 0.5, be.getBlockPos().getY() + 0.5, be.getBlockPos().getZ() + 0.5) <= 64.0;
+    }
+
+    /** True when this screen was opened through a Terminal Link. */
+    public boolean isRemote() {
+        return remote != null;
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        if (remote != null) remote.closed(player);
     }
 
     // ------------------------------------------------------------------ expansions

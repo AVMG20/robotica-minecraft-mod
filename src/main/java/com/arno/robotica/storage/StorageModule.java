@@ -18,6 +18,7 @@ public final class StorageModule {
         StorageContent.ITEMS.register(modBus);
         StorageContent.BLOCK_ENTITIES.register(modBus);
         StorageContent.MENUS.register(modBus);
+        StorageContent.COMPONENTS.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, StorageConfig.SPEC, "robotica-storage-server.toml");
         modBus.addListener(StorageModule::registerCapabilities);
         modBus.addListener(RegisterPayloadHandlersEvent.class, StorageViewPayload::register);
@@ -25,6 +26,8 @@ public final class StorageModule {
 
         RoboticaTab.add(StorageContent.TERMINAL_ITEM);
         StorageContent.EXPANSIONS.forEach(RoboticaTab::add);
+        RoboticaTab.add(StorageContent.TERMINAL_LINK);
+        RoboticaTab.add(StorageContent.TERMINAL_LINK_MK2);
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {

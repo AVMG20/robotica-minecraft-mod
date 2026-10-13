@@ -51,6 +51,7 @@
       "robotica:warp_remote",
       "robotica:storage_terminal",
       "robotica:storage_expansion_mk1",
+      "robotica:chunk_anchor",
       "robotica:courier_drone",
       "robotica:courier_remote",
       "robotica:exo_helmet_mk1",

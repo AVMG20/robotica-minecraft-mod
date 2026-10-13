@@ -1,6 +1,6 @@
 """Storage module textures: the Storage Terminal (a light steel console in the shared machine casing with a big screen)
 and the three Storage Expansion modules.
-Run: python3 scripts/textures/storage.py   (writes textures/block/storage_terminal_*.png and textures/item/storage_expansion_mk*.png;
+Run: python3 scripts/textures/storage.py   (writes textures/block/storage_terminal_*.png and textures/item/storage_expansion_mk*.png and terminal_link*.png;
 models, blockstates, loot and recipes are written by scripts/data/storage_data.py)
 
 The terminal's screen sits 1 px deep in the front on its own model element (scripts/data/storage_data.py): cyan tinted
@@ -154,12 +154,43 @@ def expansion(mk):
     return c
 
 
+LINK = {1: ('copper', 'teal'), 2: ('magma', 'purple')}
+A, G = 'FHIJX', 'MNPQU'
+LINK_P = {'V': '#0A1418', 'W': '#10242C', 'R': '#FF5A3A', 'L': '#5CFF6A'}   # screen glass, glare, LEDs
+
+
+def terminal_link(mk):
+    """A hand-held remote: steel body with a tier coloured trim, a screen showing the terminal's grid, two buttons and
+    an antenna with a glowing ender bead (violet on the Mk2)."""
+    c = Canvas()
+    c.rect(3, 4, 10, 12, 'k')                          # body outline
+    c.plate(4, 5, 8, 10, ST, 31 + mk, density=0.1)
+    c.rect(4, 5, 8, 1, A[3]).rect(4, 14, 8, 1, A[1])   # tier coloured top and bottom trim
+    c.set(4, 5, A[4]).set(11, 14, A[0])
+    c.screen(5, 6, 6, 5, DK, glass='V', glare='W')
+    for x in (6, 8):                                   # the terminal's item grid
+        for y in (7, 9):
+            c.set(x, y, G[3] if y == 7 else G[2]).set(x + 1, y, G[2] if y == 7 else G[1])
+    c.rect(5, 12, 2, 1, A[2]).set(5, 12, A[3])         # buttons
+    c.rect(9, 12, 2, 1, 'R' if mk == 1 else 'L')
+    c.rect(10, 1, 1, 3, 'k').rect(11, 1, 1, 3, 'k')    # antenna
+    c.set(10, 2, ST[3]).set(10, 3, ST[2])
+    c.rect(9, 0, 3, 2, 'k')
+    c.set(9, 0, G[3]).set(10, 0, G[4]).set(9, 1, G[2]).set(10, 1, G[3])
+    return c
+
+
 def main():
     write_terminal()
     for mk, name in TIER.items():
         pal = dict(P)
         pal.update(material(T, name))
         write_item(f'storage_expansion_mk{mk}', expansion(mk).rows(), pal)
+    for mk, (accent, glow) in LINK.items():
+        pal = dict(P, **LINK_P)
+        pal.update(material(A, accent))
+        pal.update(material(G, glow))
+        write_item('terminal_link' if mk == 1 else f'terminal_link_mk{mk}', terminal_link(mk).rows(), pal)
     print('storage textures written')
 
 

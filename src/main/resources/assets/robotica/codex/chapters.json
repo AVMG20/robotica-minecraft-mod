@@ -325,6 +325,29 @@
       ]
     },
     {
+      "title": "Chunk loading",
+      "icon": "robotica:chunk_anchor",
+      "pages": [
+        {
+          "title": "Chunk Anchor",
+          "text": "Keeps the chunks around it loaded and ticking while it has FE.\nDry, it lets them go; powered again, it takes them back.\nMk2-3: right-click it with the next Mk.",
+          "items": [
+            "robotica:chunk_anchor",
+            "robotica:chunk_anchor_mk2",
+            "robotica:chunk_anchor_mk3"
+          ]
+        },
+        {
+          "title": "Chunk limit",
+          "text": "- Each player has one chunk limit for all their anchors, in all dimensions.\n- Over it, an anchor turns red and loads nothing.\n- A cell in its battery slot carries it through a power cut.",
+          "items": [
+            "robotica:chunk_anchor",
+            "robotica:copper_cell"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Modules",
       "icon": "robotica:overclock_module",
       "pages": [
@@ -614,6 +637,14 @@
             "robotica:storage_expansion_mk1",
             "robotica:storage_expansion_mk2",
             "robotica:storage_expansion_mk3"
+          ]
+        },
+        {
+          "title": "Terminal Link",
+          "text": "- While its screen is open, the terminal's chunk stays loaded for you.\n- Closes after 60 s without a click, or when the link leaves your hand.",
+          "items": [
+            "robotica:terminal_link",
+            "robotica:terminal_link_mk2"
           ]
         }
       ]

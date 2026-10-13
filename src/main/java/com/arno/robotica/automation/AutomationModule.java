@@ -30,6 +30,7 @@ public final class AutomationModule {
         modBus.addListener(ModConfigEvent.Loading.class, e -> SurveyOrePool.invalidate());
         modBus.addListener(ModConfigEvent.Reloading.class, e -> SurveyOrePool.invalidate());
         NeoForge.EVENT_BUS.addListener(TagsUpdatedEvent.class, e -> SurveyOrePool.invalidate());
+        com.arno.robotica.core.chunk.ChunkClaims.configure(AutomationConfig::anchorChunksPerPlayer, AutomationConfig::anchorWhileOffline);
 
         RoboticaTab.add(AutomationContent.STUMPY_ITEM);
         RoboticaTab.add(AutomationContent.SPROUT_ITEM);
@@ -50,6 +51,9 @@ public final class AutomationModule {
         RoboticaTab.add(AutomationContent.SUPPLY_CRATE_MK2_ITEM);
         RoboticaTab.add(AutomationContent.SUPPLY_CRATE_MK3_ITEM);
         RoboticaTab.add(AutomationContent.SUPPLY_CRATE_MK4_ITEM);
+        RoboticaTab.add(AutomationContent.CHUNK_ANCHOR_ITEM);
+        RoboticaTab.add(AutomationContent.CHUNK_ANCHOR_MK2_ITEM);
+        RoboticaTab.add(AutomationContent.CHUNK_ANCHOR_MK3_ITEM);
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -58,6 +62,7 @@ public final class AutomationModule {
         registerWorker(event, AutomationContent.EXCAVATOR_BE.get());
         registerWorker(event, AutomationContent.SURVEY_RIG_BE.get());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, AutomationContent.SUPPLY_CRATE_BE.get(), (be, side) -> be.items);
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, AutomationContent.CHUNK_ANCHOR_BE.get(), (be, side) -> be.energy);
     }
 
     /** FE from cables on every side (receive only) and the buffer as an item handler for pipes and hoppers. */

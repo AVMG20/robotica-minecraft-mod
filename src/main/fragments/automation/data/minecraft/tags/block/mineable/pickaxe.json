@@ -10,6 +10,9 @@
     "robotica:survey_rig",
     "robotica:survey_rig_mk2",
     "robotica:survey_rig_mk3",
-    "robotica:survey_rig_mk4"
+    "robotica:survey_rig_mk4",
+    "robotica:chunk_anchor",
+    "robotica:chunk_anchor_mk2",
+    "robotica:chunk_anchor_mk3"
   ]
 }

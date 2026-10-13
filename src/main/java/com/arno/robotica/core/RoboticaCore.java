@@ -34,6 +34,7 @@ public final class RoboticaCore {
         modBus.addListener(com.arno.robotica.core.side.SideConfigPayload::register);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.TagsUpdatedEvent.class,
                 e -> com.arno.robotica.core.util.RecipeAcceptCache.bump());
+        com.arno.robotica.core.chunk.ChunkTickets.init(modBus);
     }
 
     /** Every item implementing {@link EnergyItem} (from any module) gets the FE item capability. */

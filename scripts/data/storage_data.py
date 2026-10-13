@@ -91,4 +91,9 @@ shaped('storage_expansion_mk2', ['CGC', 'AMX', 'CGC'],
        {'C': CHEST, 'G': GOLD_PLATE, 'A': 'advanced_circuit', 'M': 'storage_expansion_mk1', 'X': 'reinforced_casing'})
 shaped('storage_expansion_mk3', ['CDC', 'QMB', 'CDC'],
        {'C': CHEST, 'D': DIAMOND, 'Q': 'quantum_circuit', 'M': 'storage_expansion_mk2', 'B': 'blazing_casing'})
+# Terminal Links: Mk1 at Age 2 (an ender pearl for the link, a Redstone Cell as its battery), Mk2 at Age 3 eats the Mk1.
+shaped('terminal_link', [' E ', 'ACA', 'PRP'],
+       {'E': '#c:ender_pearls', 'A': 'advanced_circuit', 'C': 'redstone_cell', 'P': IRON_PLATE, 'R': 'reinforced_casing'})
+shaped('terminal_link_mk2', [' Q ', 'EXE', ' B '],
+       {'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'X': 'terminal_link', 'B': 'blazing_casing'})
 print('storage data written')

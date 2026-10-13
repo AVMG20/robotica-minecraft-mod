@@ -5,6 +5,9 @@ import com.arno.robotica.storage.block.StorageTerminalBlock;
 import com.arno.robotica.storage.block.StorageTerminalBlockEntity;
 import com.arno.robotica.storage.item.StorageExpansionItem;
 import com.arno.robotica.storage.menu.StorageMenu;
+import com.arno.robotica.storage.item.TerminalLinkItem;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
@@ -29,6 +32,12 @@ public final class StorageContent {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Robotica.MODID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Robotica.MODID);
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
+    public static final DeferredRegister.DataComponents COMPONENTS =
+            DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Robotica.MODID);
+
+    /** The Storage Terminal a Terminal Link is bound to. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> LINKED_TERMINAL =
+            COMPONENTS.registerComponentType("linked_terminal", b -> b.persistent(GlobalPos.CODEC).networkSynchronized(GlobalPos.STREAM_CODEC));
 
     public static final DeferredBlock<StorageTerminalBlock> TERMINAL = BLOCKS.registerBlock("storage_terminal", StorageTerminalBlock::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5F, 8.0F).sound(SoundType.METAL).noOcclusion()
@@ -44,6 +53,12 @@ public final class StorageContent {
     public static final DeferredItem<StorageExpansionItem> EXPANSION_MK3 = ITEMS.registerItem("storage_expansion_mk3",
             p -> new StorageExpansionItem(p.rarity(Rarity.RARE), 3, StorageTerminalBlockEntity.EXPANSION_SLOTS[2]));
     public static final List<DeferredItem<StorageExpansionItem>> EXPANSIONS = List.of(EXPANSION_MK1, EXPANSION_MK2, EXPANSION_MK3);
+
+    /** Terminal Link Mk1 (Age 2, same dimension) and Mk2 (Age 3, any dimension): capacity and FE per tick while open. */
+    public static final DeferredItem<TerminalLinkItem> TERMINAL_LINK = ITEMS.registerItem("terminal_link",
+            p -> new TerminalLinkItem(p.rarity(Rarity.UNCOMMON), 1, 400_000, 20));
+    public static final DeferredItem<TerminalLinkItem> TERMINAL_LINK_MK2 = ITEMS.registerItem("terminal_link_mk2",
+            p -> new TerminalLinkItem(p.rarity(Rarity.RARE), 2, 1_000_000, 40));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageTerminalBlockEntity>> TERMINAL_BE = BLOCK_ENTITIES.register("storage_terminal",
             () -> BlockEntityType.Builder.of(StorageTerminalBlockEntity::new, TERMINAL.get()).build(null));

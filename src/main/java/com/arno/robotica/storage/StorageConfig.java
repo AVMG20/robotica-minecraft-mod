@@ -13,6 +13,7 @@ public final class StorageConfig {
     public static final ModConfigSpec.IntValue IDLE_FE;
     public static final ModConfigSpec.IntValue PER_EXPANSION_FE;
     public static final ModConfigSpec.IntValue ENERGY_BUFFER;
+    public static final ModConfigSpec.BooleanValue LINK_LOADS_CHUNKS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -23,6 +24,11 @@ public final class StorageConfig {
                 .defineInRange("fePerExpansion", 1, 0, 1_000);
         ENERGY_BUFFER = b.comment("Internal FE buffer (a battery in the battery slot refills it).")
                 .defineInRange("storageEnergyBuffer", 40_000, 1_000, 100_000_000);
+        b.pop();
+        b.comment("Terminal Link").push("terminal_link");
+        LINK_LOADS_CHUNKS = b.comment("The Terminal Link loads the terminal's chunk while its screen is open (one chunk per player).",
+                        "Off: it only opens terminals whose chunk is already loaded.")
+                .define("terminalLinkLoadsChunks", true);
         b.pop();
         SPEC = b.build();
     }
@@ -37,5 +43,9 @@ public final class StorageConfig {
 
     public static int energyBuffer() {
         return SPEC.isLoaded() ? ENERGY_BUFFER.get() : 40_000;
+    }
+
+    public static boolean linkLoadsChunks() {
+        return !SPEC.isLoaded() || LINK_LOADS_CHUNKS.get();
     }
 }

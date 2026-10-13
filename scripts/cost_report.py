@@ -169,6 +169,9 @@ AGE = {
         'sonar_pulse_module_3', 'med_injector_module_3', 'power_regulator_module_3', 'kinetic_shield_module_2',
         'kinetic_shield_module_3', 'chain_lightning_module_3', 'lifesteal_module'],
 }
+AGE[1] += ['chunk_anchor']
+AGE[2] += ['chunk_anchor_mk2', 'terminal_link']
+AGE[3] += ['chunk_anchor_mk3', 'terminal_link_mk2']
 
 
 def match(pattern, name):
