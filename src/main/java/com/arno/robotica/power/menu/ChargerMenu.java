@@ -18,6 +18,7 @@ public class ChargerMenu extends MachineMenu {
     private final Block block;
     private final int energyIndex;
     private final int capacityIndex;
+    private final int useIndex;
 
     /** Client side. */
     public ChargerMenu(int id, Inventory inv, BlockPos pos) {
@@ -47,6 +48,7 @@ public class ChargerMenu extends MachineMenu {
         addPlayerInventory(inv, 8, 84);
         energyIndex = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());
+        useIndex = track(be == null ? () -> 0 : be::lastUse);
         trackSides(be == null ? null : be.sides);
     }
 
@@ -56,6 +58,11 @@ public class ChargerMenu extends MachineMenu {
 
     public int capacity() {
         return synced(capacityIndex);
+    }
+
+    /** FE/t moved into the item last tick. */
+    public int lastUse() {
+        return synced(useIndex);
     }
 
     /** The item in the slot (synced by the normal slot sync, including its energy component). */

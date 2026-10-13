@@ -1,11 +1,13 @@
 package com.arno.robotica.processing.client;
 
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.core.upgrade.UpgradeCardItem;
 import com.arno.robotica.processing.block.GrinderBlockEntity;
 import com.arno.robotica.processing.block.ProcessingMachineBlock;
 import com.arno.robotica.processing.block.ProcessingMachineBlockEntity;
 import com.arno.robotica.processing.menu.GrinderMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -55,7 +57,7 @@ public class GrinderScreen extends MachineScreen<GrinderMenu> {
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         drawEnergyBar(g, x + 8, y + 17, 10, 52, menu.energy(), menu.capacity(), false,
-                Component.translatable("gui.robotica.processing.using", menu.lastUse()));
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.lastUse())).withStyle(ChatFormatting.GRAY));
         drawArrow(g, x + 50, y + 18, menu.progress());
 
         int uses = menu.mediaUses();

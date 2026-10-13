@@ -24,6 +24,7 @@ public class AreaWorkerMenu extends MachineMenu {
     private final int idxSize;
     private final int idxExtra;
     private final int idxProgress;
+    private final int idxUse;
 
     public AreaWorkerMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv, resolve(inv, buf));
@@ -53,6 +54,7 @@ public class AreaWorkerMenu extends MachineMenu {
         idxSize = track(be::areaSize);
         idxExtra = track(be::guiExtra);
         idxProgress = track(be::guiProgress);
+        idxUse = track(be::usePerTick);
         trackSides(inv.player.level().isClientSide ? null : be.sides);
     }
 
@@ -78,6 +80,11 @@ public class AreaWorkerMenu extends MachineMenu {
 
     public int extra() {
         return synced(idxExtra);
+    }
+
+    /** Average FE/t drawn over the last second. */
+    public int usePerTick() {
+        return synced(idxUse);
     }
 
     /** Percent of the job done, -1 when the worker has no finite job. */
