@@ -175,6 +175,7 @@ public class PocketArchitectItem extends Item {
         ItemEntity entity = event.getItemEntity();
         Player player = event.getPlayer();
         if (player.level().isClientSide || entity.hasPickUpDelay() || event.canPickup() == TriState.FALSE) return;
+        if (entity.getTarget() != null && !entity.getTarget().equals(player.getUUID())) return;
         ItemStack stack = entity.getItem();
         int count = stack.getCount();
         if (!eatPickup(player, stack)) {

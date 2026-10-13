@@ -510,6 +510,7 @@ public final class ExoTicker {
         if (!p.isFallFlying() || !has(st, ModuleKind.GLIDER)) return;
         double cost = ExoConfig.perTick(ModuleKind.GLIDER, 1);
         if (afford(st, ModuleKind.GLIDER, cost)) spend(st, ModuleKind.GLIDER, cost);
+        else p.stopFallFlying();
     }
 
     /** Med Injector: heals once when health drops low, then waits out its cooldown. */
