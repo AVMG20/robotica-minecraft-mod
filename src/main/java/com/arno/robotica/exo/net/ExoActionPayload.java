@@ -1,6 +1,7 @@
 package com.arno.robotica.exo.net;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.exo.ExoActions;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -22,7 +23,7 @@ public record ExoActionPayload(int action) implements CustomPacketPayload {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(TYPE, CODEC, ExoActionPayload::handle);
         registrar.playToClient(ExoSonarPayload.TYPE, ExoSonarPayload.CODEC, ExoSonarPayload::handle);
         registrar.playToClient(ExoFxPayload.TYPE, ExoFxPayload.CODEC, ExoFxPayload::handle);

@@ -1,6 +1,7 @@
 package com.arno.robotica.replicator;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.replicator.menu.ReplicatorMenu;
 import net.minecraft.core.BlockPos;
@@ -29,7 +30,7 @@ public record ReplicatorModePayload(BlockPos pos, int mode) implements CustomPac
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(TYPE, CODEC, ReplicatorModePayload::handle);
+        event.registrar(NetworkVersion.get()).playToServer(TYPE, CODEC, ReplicatorModePayload::handle);
     }
 
     private static void handle(ReplicatorModePayload payload, IPayloadContext context) {

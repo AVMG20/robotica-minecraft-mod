@@ -1,6 +1,7 @@
 package com.arno.robotica.energy.net;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.energy.block.ColliderBlockEntity;
 import com.arno.robotica.energy.block.StructureControllerBlockEntity;
 import com.arno.robotica.energy.menu.ControllerMenu;
@@ -35,7 +36,7 @@ public record ControllerActionPayload(BlockPos pos, int action, int value) imple
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(TYPE, CODEC, ControllerActionPayload::handle);
         registrar.playToClient(ControllerSyncPayload.TYPE, ControllerSyncPayload.CODEC, ControllerSyncPayload::handle);
         registrar.playToClient(StructureFxPayload.TYPE, StructureFxPayload.CODEC, StructureFxPayload::handle);
