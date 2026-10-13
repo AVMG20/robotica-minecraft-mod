@@ -6,8 +6,12 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-/** Per-player chunk state: anchors pause and resume with their owner (offline loading off), on-demand chunks end on logout. */
+/**
+ * Per-player chunk state: anchors pause and resume with their owner (offline loading off), on-demand chunks end on
+ * logout. Now and then the claims of anchors that vanished are dropped.
+ */
 @EventBusSubscriber(modid = Robotica.MODID)
 public final class ChunkEvents {
     private ChunkEvents() {}
@@ -25,6 +29,12 @@ public final class ChunkEvents {
             ChunkTickets.releasePlayer(player.server, player.getUUID());
             ChunkClaims.get(player.server).ownerLeft(player.server, player.getUUID(), ChunkClaims.whileOffline());
         }
+    }
+
+    /** Every 10 seconds: claims of anchors that vanished without being broken let their chunks go. */
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (event.getServer().getTickCount() % 200 == 0) ChunkClaims.get(event.getServer()).sweep(event.getServer());
     }
 
     @SubscribeEvent

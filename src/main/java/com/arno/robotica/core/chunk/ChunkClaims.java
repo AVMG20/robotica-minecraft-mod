@@ -34,6 +34,9 @@ public class ChunkClaims extends SavedData {
     public static final String NAME = "robotica_chunk_claims";
     public static final SavedData.Factory<ChunkClaims> FACTORY = new SavedData.Factory<>(ChunkClaims::new, ChunkClaims::load, null);
 
+    /** Game ticks an active claim may go without its anchor checking in (once a second) before {@link #sweep} drops it. */
+    private static final long STALE_TICKS = 400;
+
     private static IntSupplier cap = () -> 25;
     private static BooleanSupplier whileOffline = () -> true;
 
@@ -45,6 +48,8 @@ public class ChunkClaims extends SavedData {
         private int radius;
         private boolean active;
         private boolean paused;
+        /** Game time its anchor last checked in, -1 until then. Runtime only. */
+        private long seen = -1;
 
         Claim(ResourceKey<Level> dimension, BlockPos pos, UUID owner, int radius) {
             this.dimension = dimension;
@@ -113,7 +118,8 @@ public class ChunkClaims extends SavedData {
     }
 
     /**
-     * The anchor's claim, made if missing. A new owner or radius (Mk upgrade) first lets the old chunks go.
+     * The anchor's claim, made if missing. A new owner or radius (Mk upgrade) first lets the old chunks go. The anchor
+     * asks on every check, which also marks it as still standing ({@link #sweep}).
      */
     public Claim claim(ServerLevel level, BlockPos pos, UUID owner, int radius) {
         Claim c = find(level.dimension(), pos);
@@ -127,7 +133,36 @@ public class ChunkClaims extends SavedData {
             c.radius = radius;
             setDirty();
         }
+        c.seen = level.getGameTime();
         return c;
+    }
+
+    /**
+     * Drops active claims whose anchor is gone without being broken (a chunk reset, a mod removing it raw): the claim
+     * keeps its own chunk loaded and ticking, yet no anchor checked in for {@link #STALE_TICKS}. Loads nothing; a level
+     * whose time stands still (frozen) never goes stale.
+     */
+    public void sweep(MinecraftServer server) {
+        List<Claim> stale = null;
+        for (Map.Entry<ResourceKey<Level>, Map<BlockPos, Claim>> entry : claims.entrySet()) {
+            ServerLevel level = server.getLevel(entry.getKey());
+            if (level == null) continue;
+            long now = level.getGameTime();
+            for (Claim c : entry.getValue().values()) {
+                if (!c.active || !level.isLoaded(c.pos)) continue;
+                if (c.seen < 0) {
+                    c.seen = now;    // after a restart: the anchor gets the full time to tick
+                } else if (now - c.seen > STALE_TICKS) {
+                    if (stale == null) stale = new ArrayList<>();
+                    stale.add(c);
+                }
+            }
+        }
+        if (stale == null) return;
+        for (Claim c : stale) {
+            ServerLevel level = server.getLevel(c.dimension);
+            if (level != null) remove(level, c.pos);
+        }
     }
 
     /** The anchor is gone: tickets released, claim forgotten. */
