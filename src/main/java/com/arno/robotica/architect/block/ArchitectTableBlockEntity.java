@@ -90,19 +90,25 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             ST_NO_ENERGY = 5, ST_LOCKED = 6, ST_UNLOADED = 7, ST_READY = 8, ST_DEMOLISHING = 9;
 
     // GUI actions (ArchitectActionPayload): a and b are the arguments.
-    /** a = plot, b = 1 to forget a built plot (shift-click). Empty plot: queue, queued plot: unqueue. */
+    /**
+     * a = plot, b = 1 to forget a built plot (shift-click). Empty plot: queue, queued plot: unqueue, built plot: select
+     * it (its style becomes the picked one) or, when selected already, deselect it. a = -1: deselect.
+     */
     public static final int ACTION_TOGGLE = 0;
-    /** a = plot, b = side. */
+    /** a = plot, b = side: add or remove a door, framed in the picked style. */
     public static final int ACTION_DOOR = 1;
     public static final int ACTION_BUILD = 2;
     public static final int ACTION_CANCEL = 3;
     /** a = 0 / 1. */
     public static final int ACTION_CLEAR = 4;
-    /** a = style ordinal. */
+    /** a = style ordinal: the style new plots, doors and walls get. Restyles the selected plot. */
     public static final int ACTION_STYLE = 5;
-    /** a = plot, b = shared side: open, wall with a doorway, solid wall, open. */
+    /** a = plot, b = shared side: open, wall with a doorway, solid wall, open; built in the picked style. */
     public static final int ACTION_WALL = 6;
-    /** a = {@link #DEMOLISH_CONFIRM} (the GUI's second click): take down every built plot. Cancel stops it. */
+    /**
+     * a = {@link #DEMOLISH_CONFIRM} (the GUI's second click), b = 0: take down every built plot, b = plot + 1: take
+     * down that built plot. Cancel stops it.
+     */
     public static final int ACTION_DEMOLISH = 7;
     public static final int DEMOLISH_CONFIRM = 0x44454D4F;
 
@@ -171,8 +177,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     private UUID owner;
     private String ownerName = "";
     private BuildStyle selectedStyle = BuildStyle.TIMBERFRAME;
-    /** The built plot clicked last: picking a style restyles it until Build, Cancel, Demolish or another plot click. Not saved. */
-    private int restyleTarget = -1;
+    /** The selected built plot (-1 none): picking a style restyles it, Demolish takes it down. Not saved. */
+    private int selected = -1;
     private boolean clearTerrain;
 
     private final Layout layout = new Layout();
@@ -186,6 +192,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     /** Plot being walked (-1 none), the signature its ops were made for and the position in them. */
     private int current = -1;
     private int currentSig;
+    private int currentAccent;
     private int cursor;
 
     // transient
@@ -412,14 +419,15 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         return (clearTerrain ? 1 : 0) | (running ? 2 : 0) | (selectedStyle().ordinal() << 2) | (unlockedMask() << 4) | (demolishing() ? 256 : 0);
     }
 
-    /** Two plots per word, 16 bits each (see {@link Layout#packed}). */
-    public int planWord(int word) {
-        int w = 0;
-        for (int i = 0; i < 2; i++) {
-            int plot = word * 2 + i;
-            if (plot < Plots.COUNT) w |= (layout.packed(plot) & 0xFFFF) << (16 * i);
-        }
-        return w;
+    /** One plot for the GUI (see {@link Layout#packed}). */
+    public int plotWord(int plot) {
+        return layout.packed(plot);
+    }
+
+    /** The selected built plot, -1 for none. */
+    public int selectedPlot() {
+        if (selected >= 0 && (demolishing() || layout.state(selected) != Layout.BUILT)) selected = -1;
+        return selected;
     }
 
     // ---------------------------------------------------------------- actions (called by the validated payload)
@@ -434,14 +442,16 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         switch (action) {
             case ACTION_TOGGLE -> feedback = toggle(a, b != 0);
             case ACTION_DOOR -> {
-                int result = layout.toggleDoor(a, b);
+                selected = -1;
+                int result = layout.toggleDoor(a, b, selectedStyle());
                 if (result == Layout.DOOR_LAST) feedback = Component.translatable("message.robotica.architect_last_door");
             }
             case ACTION_WALL -> {
-                if (layout.cycleWall(a, b) < 0) return Component.translatable("message.robotica.architect_no_wall");
+                selected = -1;
+                if (layout.cycleWall(a, b, selectedStyle()) < 0) return Component.translatable("message.robotica.architect_no_wall");
             }
             case ACTION_BUILD -> {
-                restyleTarget = -1;
+                selected = -1;
                 needs = 0;
                 if (layout.hasWork()) running = true;
             }
@@ -450,19 +460,22 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
                     stopDemolish();
                 } else {
                     layout.unqueueAll();
-                    restyleTarget = -1;
+                    selected = -1;
                     needs = 0;
                 }
             }
             case ACTION_DEMOLISH -> {
                 if (a != DEMOLISH_CONFIRM) return Component.translatable("message.robotica.architect_bad_request");
-                feedback = startDemolish();
+                if (b != 0 && (!Plots.valid(b - 1) || layout.state(b - 1) != Layout.BUILT)) {
+                    return Component.translatable("message.robotica.architect_nothing_built");
+                }
+                feedback = startDemolish(b - 1);
             }
             case ACTION_CLEAR -> clearTerrain = a != 0 && ArchitectConfig.allowClearTerrain();
             case ACTION_STYLE -> {
                 if (a >= 0 && a < BuildStyle.values().length && unlocked(BuildStyle.values()[a])) {
                     selectedStyle = BuildStyle.values()[a];
-                    if (restyleTarget >= 0 && !demolishing()) layout.restyle(restyleTarget, selectedStyle);
+                    if (selectedPlot() >= 0) layout.restyle(selected, selectedStyle);
                 }
             }
             default -> {
@@ -475,23 +488,30 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
 
     @Nullable
     private Component toggle(int plot, boolean forget) {
+        if (plot == -1) {
+            selected = -1;
+            return null;
+        }
         if (!Plots.valid(plot)) return Component.translatable("message.robotica.architect_bad_request");
         switch (layout.state(plot)) {
             case Layout.QUEUED -> {
                 layout.unqueue(plot);
-                restyleTarget = -1;
+                selected = -1;
             }
             case Layout.BUILT -> {
                 if (forget) {
                     layout.forget(plot);
-                    restyleTarget = -1;
+                    selected = -1;
+                } else if (selected == plot) {
+                    selected = -1;
                 } else {
-                    // the next style pick restyles it
-                    restyleTarget = plot;
+                    // picks its style, so the next pick of another style restyles it
+                    selected = plot;
+                    selectedStyle = layout.style(plot);
                 }
             }
             default -> {
-                restyleTarget = -1;
+                selected = -1;
                 if (layout.queuedCount() >= ArchitectConfig.maxQueue()) return Component.translatable("message.robotica.architect_queue_full");
                 BuildStyle style = selectedStyle();
                 if (!unlocked(style)) return Component.translatable("message.robotica.architect_style_locked");
@@ -552,6 +572,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             current = layout.nextWork();
             cursor = 0;
             currentSig = current < 0 ? 0 : layout.signature(current);
+            currentAccent = current < 0 ? 0 : layout.accent(current);
             setChanged();
         }
         if (current < 0) {
@@ -562,13 +583,15 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             return;
         }
         int sig = layout.signature(current);
-        if (sig != currentSig) {
+        int accent = layout.accent(current);
+        if (sig != currentSig || accent != currentAccent) {
             // The plan changed under this plot: walk it again, correct blocks are skipped for free.
             currentSig = sig;
+            currentAccent = accent;
             cursor = 0;
         }
         BuildStyle style = layout.style(current);
-        if (!unlocked(style)) {
+        if ((layout.usedStyles(current) & ~unlockedMask()) != 0) {
             status = ST_LOCKED;
             budget = 0;
             return;
@@ -581,7 +604,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         int actions = Math.min(MAX_ACTIONS_PER_TICK, (int) budget);
         budget -= actions;
         if (budget > 1) budget = 1;
-        int energyCost = (int) Math.max(0, Math.round(style.energyPerBlock(baseEnergy()) * Upgrades.energyMultiplier(speed, efficiency)));
+        double energyFactor = Upgrades.energyMultiplier(speed, efficiency);
+        int energyCost = (int) Math.max(0, Math.round(style.energyPerBlock(baseEnergy()) * energyFactor));
 
         // The status only changes when a block is really attempted: on ticks without an action it keeps the last one
         // (it used to be reset to "building" every tick, so a stall flickered between building and the stall reason).
@@ -597,8 +621,12 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             }
             if (actions <= 0 || skips > MAX_SKIPS_PER_TICK) break;
             BlockOp op = list.get(cursor);
-            int shared = opsShape.overlaps(op.x(), op.z()) ? layout.sharedStyles(current, op.x(), op.z()) | 1 << style.ordinal() : 0;
-            int result = step(level, origin, op, style, energyCost, layout.height(), shared, clear);
+            // inner wall and door frame blocks have their own style; every plot sharing them builds them the same
+            int feature = Shell.featureSide(opsShape, op.x(), op.y(), op.z());
+            BuildStyle pieceStyle = feature < 0 ? style : layout.edgeStyle(current, feature);
+            int shared = feature < 0 && opsShape.overlaps(op.x(), op.z()) ? layout.sharedStyles(current, op.x(), op.z()) | 1 << style.ordinal() : 0;
+            int cost = pieceStyle == style ? energyCost : (int) Math.max(0, Math.round(pieceStyle.energyPerBlock(baseEnergy()) * energyFactor));
+            int result = step(level, origin, op, pieceStyle, cost, layout.height(), shared, clear);
             if (result == STEP_SKIPPED) {
                 cursor++;
                 skips++;
@@ -639,7 +667,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     }
 
     private void finish(ServerLevel level) {
-        layout.markBuilt(current, currentSig);
+        layout.markBuilt(current, currentSig, currentAccent);
         current = -1;
         cursor = 0;
         budget = 0;
@@ -801,27 +829,32 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     // ---------------------------------------------------------------- demolish
 
     /**
-     * Starts taking down every built plot (and the plot a stopped build had started): its footprint, from the top of
-     * the building down to the floor, everything inside included. Queued plots leave the plan; the rest of the plan
-     * goes plot by plot as each is taken down, so it is empty at the end.
+     * Starts taking down every built plot (and the plot a stopped build had started), or only the built plot {@code only}
+     * (-1 for all): its footprint, from the top of the building down to the floor, everything inside included. Taking
+     * down all of them takes queued plots off the plan, and the plan is empty at the end. A single plot leaves the plan
+     * when it is down; the columns it shares with plots that stay are left standing, and those plots close their walls
+     * on the next pass (a running build carries on afterwards).
      */
     @Nullable
-    private Component startDemolish() {
+    private Component startDemolish(int only) {
         if (!ArchitectConfig.allowDemolish()) return Component.translatable("message.robotica.architect_demolish_off");
         if (demolishing()) return null;
-        restyleTarget = -1;
+        selected = -1;
         int count = 0;
         for (int plot = 0; plot < Plots.COUNT; plot++) {
             int height = layout.builtHeight(plot);
             if (plot == current && (cursor > 0 || layout.state(plot) == Layout.BUILT)) height = Math.max(height, layout.height());
+            if (only >= 0 && plot != only) height = 0;
             demolish[plot] = Math.max(0, Math.min(Plots.MAX_HEIGHT, height));
             demolishSig[plot] = demolish[plot] > 0 ? builtSignature(plot, demolish[plot]) : 0;
             if (demolish[plot] > 0) count++;
         }
         if (count == 0) return Component.translatable("message.robotica.architect_nothing_built");
-        layout.unqueueAll();
-        running = false;
-        needs = 0;
+        if (only < 0) {
+            layout.unqueueAll();
+            running = false;
+            needs = 0;
+        }
         current = -1;
         cursor = 0;
         budget = 0;
@@ -830,7 +863,8 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         demoCursor = 0;
         status = ST_DEMOLISHING;
         if (level != null) CoreSounds.play(level, worldPosition, CoreSounds.MACHINE_START, SoundSource.BLOCKS, 0.8F, 0.8F);
-        return Component.translatable("message.robotica.architect_demolish_started", count);
+        return only >= 0 ? Component.translatable("message.robotica.architect_demolish_started_one")
+                : Component.translatable("message.robotica.architect_demolish_started", count);
     }
 
     /** What the table built on a plot, as a signature at the given height (the plan's shape when no finished build is known). */
@@ -905,7 +939,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             BlockPos target = origin.offset(x, y, z);
             BlockState was = level.getBlockState(target);
             boolean own = shape != null && builtHere(shape, x, y, z, was);
-            int result = takeDown(level, target, was, energyCost, fake, tool, own);
+            int result = sharedWithStaying(demoPlot, x, z) ? STEP_SKIPPED : takeDown(level, target, was, energyCost, fake, tool, own);
             if (result == STEP_SKIPPED) {
                 demoCursor++;
                 skips++;
@@ -954,6 +988,19 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         }
         energy.consume(energyCost);
         return STEP_DONE;
+    }
+
+    /** True when an edge or corner column of the plot is shared with a planned plot that is not being taken down. */
+    private boolean sharedWithStaying(int plot, int x, int z) {
+        int sx = x == 0 ? Plots.W : x == Plots.SIZE - 1 ? Plots.E : -1;
+        int sz = z == 0 ? Plots.N : z == Plots.SIZE - 1 ? Plots.S : -1;
+        if (sx >= 0 && staying(Plots.neighbour(plot, sx))) return true;
+        if (sz >= 0 && staying(Plots.neighbour(plot, sz))) return true;
+        return sx >= 0 && sz >= 0 && staying(Plots.diagonal(plot, (z == 0 ? 0 : 2) + (x == 0 ? 0 : 1)));
+    }
+
+    private boolean staying(int plot) {
+        return layout.planned(plot) && demolish[plot] == 0;
     }
 
     /** The top of a door or tall plant and the foot of a bed: their partner drops the item and takes them along. */
@@ -1014,8 +1061,6 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
     }
 
     private void finishDemolish(ServerLevel level) {
-        layout.forgetBuilt();
-        layout.unqueueAll();
         demolishTotal = 0;
         demoPlot = -1;
         demoCursor = 0;
@@ -1118,6 +1163,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         tag.putInt("needs", needs);
         tag.putInt("current", current);
         tag.putInt("current_sig", currentSig);
+        tag.putInt("current_accent", currentAccent);
         tag.putInt("cursor", cursor);
         tag.putInt("selected_style", selectedStyle.ordinal());
         tag.putBoolean("clear_terrain", clearTerrain);
@@ -1140,6 +1186,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         current = tag.contains("current") ? tag.getInt("current") : -1;
         if (!Plots.valid(current)) current = -1;
         currentSig = tag.getInt("current_sig");
+        currentAccent = tag.getInt("current_accent");
         cursor = Math.max(0, tag.getInt("cursor"));
         selectedStyle = BuildStyle.byOrdinal(tag.getInt("selected_style"));
         clearTerrain = tag.getBoolean("clear_terrain");

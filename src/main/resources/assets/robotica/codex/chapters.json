@@ -531,7 +531,7 @@
       "pages": [
         {
           "title": "Architect Table",
-          "text": "It runs on a wound Mainspring from day one, or on any FE.\nPlots next to each other join into one hall. Click a plot edge for a door, a seam for an inner wall. Shift-click forgets a plot.",
+          "text": "It runs on a wound Mainspring from day one, or on any FE.\nPlots next to each other join into one hall. Click a plot edge for a door, a seam for an inner wall. Shift-click forgets a plot.\nClick a built plot to select it, then pick a style to restyle it.",
           "items": [
             "robotica:architect_table",
             "robotica:mainspring"
@@ -539,7 +539,7 @@
         },
         {
           "title": "Styles",
-          "text": "An Iron Casing opens Pearl Panel and Onyx Panel. A hall can mix styles.\nRestyling a plot gives the old blocks back as matter.\nThe stonecutter turns style blocks into other shapes.",
+          "text": "An Iron Casing opens Pearl Panel and Onyx Panel. A hall can mix styles. Doors and inner walls get the picked style.\nRestyling a plot gives the old blocks back as matter.\nThe stonecutter turns style blocks into other shapes.",
           "items": [
             "robotica:timberframe_wall",
             "robotica:dark_stone_wall",
@@ -549,7 +549,7 @@
         },
         {
           "title": "Clear and Demolish",
-          "text": "Clearing voids junk and puts the rest in a chest touching the table.\nDemolish gives back 75% of the matter for its own blocks.",
+          "text": "Clearing voids junk and puts the rest in a chest touching the table.\nDemolish gives back 75% of the matter for its own blocks. With a plot selected it takes down only that one.",
           "items": [
             "robotica:architect_table",
             "minecraft:chest"
