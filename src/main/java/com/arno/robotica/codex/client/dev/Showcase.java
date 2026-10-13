@@ -1173,12 +1173,10 @@ public final class Showcase {
                 if (i == 4) step(0, () -> server(sp -> {
                     BlockPos pos = new BlockPos(104, Y, 125);
                     sp.serverLevel().setBlock(pos, ((SparkLampBlock) block("spark_lamp")).facing(Direction.UP), 3);
-                    com.arno.robotica.gear.lamp.SparkLamps.zap(sp.serverLevel(), pos, true);
                 }));
                 if (i == 11) step(0, () -> server(sp -> {
                     BlockPos pos = new BlockPos(104, Y, 125);
                     sp.serverLevel().setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-                    com.arno.robotica.gear.lamp.SparkLamps.zap(sp.serverLevel(), pos, false);
                 }));
                 grab(1, "spark_lamp_frame_" + i);
             }

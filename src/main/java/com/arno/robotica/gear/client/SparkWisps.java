@@ -1,6 +1,5 @@
 package com.arno.robotica.gear.client;
 
-import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.GearBlocks;
 import com.arno.robotica.gear.GearClientConfig;
 import com.arno.robotica.gear.lamp.SparkLampBlock;
@@ -12,8 +11,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
@@ -41,9 +38,8 @@ import java.util.function.Predicate;
  * already seen zap in, lamps that vanish from one pop out.
  * <p>
  * Each client tick the lamps within the effect range (client config) get their events: arcs to a nearby wall, floor or
- * ceiling (or to a player standing close), a spark dripping from the core, a crackle or a faint hum. Every interval is
- * randomised per lamp and the sounds share one budget, so a field of lamps neither syncs up nor spams. Drawing is in
- * {@link SparkWispRenderer}. Render thread only.
+ * ceiling (or to a player standing close) and a spark dripping from the core. Every interval is randomised per lamp,
+ * so a field of lamps does not sync up. Lamps make no sound. Drawing is in {@link SparkWispRenderer}. Render thread only.
  */
 public final class SparkWisps {
     private SparkWisps() {}
@@ -72,7 +68,7 @@ public final class SparkWisps {
         boolean arcHit;
         double ax, ay, az;
         float nx, ny, nz;
-        long nextArc, nextDrip, reactSoundAt, dripStart = Long.MIN_VALUE;
+        long nextArc, nextDrip, reactAt, dripStart = Long.MIN_VALUE;
         float dripLife;
         // reaction to a player close by: 0..1, last tick's value (for interpolation) and the direction to them
         float react, reactPrev, leanX, leanY, leanZ;
@@ -128,7 +124,6 @@ public final class SparkWisps {
     public static boolean demo;
 
     static ClientLevel level;
-    private static long soundFreeAt, humAt;
 
     // ------------------------------------------------------------------ registry
 
@@ -214,7 +209,6 @@ public final class SparkWisps {
         SECTIONS.clear();
         SEEN.clear();
         GHOSTS.clear();
-        soundFreeAt = humAt = 0;
         level = current;
     }
 
@@ -234,13 +228,11 @@ public final class SparkWisps {
             if (now - GHOSTS.get(i).death > GHOST_TICKS || now < GHOSTS.get(i).death) GHOSTS.remove(i);
         }
         if (SECTIONS.isEmpty()) return;
-        boolean particles = GearClientConfig.lampParticles(), sounds = GearClientConfig.lampSounds(), animated = GearClientConfig.lampAnimated();
+        boolean particles = GearClientConfig.lampParticles(), animated = GearClientConfig.lampAnimated();
         Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
         int range = GearClientConfig.lampFxRange();
         double range2 = (double) range * range, sectionRange2 = (range + 14.0) * (range + 14.0);
         RandomSource random = current.random;
-        Wisp hum = null;
-        double humD2 = 36;
         for (int s = 0; s < SECTIONS.size(); s++) {
             Section section = SECTIONS.get(s);
             AABB b = section.box;
@@ -253,20 +245,12 @@ public final class SparkWisps {
                 }
                 // a section out of view is not re-meshed, so a lamp removed there (piston, explosion, water) stays listed
                 if (!current.getBlockState(CURSOR.set(w.pos)).is(GearBlocks.SPARK_LAMP.get())) continue;
-                tick(current, w, now, random, animated, particles, sounds);
-                if (d2 < humD2) {
-                    humD2 = d2;
-                    hum = w;
-                }
+                tick(current, w, now, random, animated, particles);
             }
-        }
-        if (sounds && hum != null && now >= humAt) {
-            humAt = now + 160 + random.nextInt(240);
-            play(current, hum, CoreSounds.SPARK_LAMP_HUM.get(), 1.0F, 0.9F + random.nextFloat() * 0.2F);
         }
     }
 
-    private static void tick(ClientLevel level, Wisp w, long now, RandomSource random, boolean animated, boolean particles, boolean sounds) {
+    private static void tick(ClientLevel level, Wisp w, long now, RandomSource random, boolean animated, boolean particles) {
         // the nearest player within reach (any player: the wisp reacts to everyone)
         Player near = null;
         double best = REACT_RANGE * REACT_RANGE;
@@ -291,19 +275,13 @@ public final class SparkWisps {
         }
         w.react += (target - w.react) * 0.25F;
         boolean born = w.birth == Long.MIN_VALUE || now - w.birth > BIRTH_TICKS;
-        if (target > 0.45F && now >= w.reactSoundAt && born) {
-            w.reactSoundAt = now + 60 + random.nextInt(100);
+        if (target > 0.45F && now >= w.reactAt && born) {
+            w.reactAt = now + 60 + random.nextInt(100);
             w.nextArc = Math.min(w.nextArc, now + 1);
         }
         if (!particles) return;
         if (demo) w.nextArc = Math.min(w.nextArc, now + 24);
-        if (now >= w.nextArc && born) {
-            startArc(level, w, near, now, random);
-            if (sounds && now >= soundFreeAt) {
-                soundFreeAt = now + 3 + random.nextInt(4);
-                play(level, w, CoreSounds.SPARK_LAMP_CRACKLE.get(), near != null ? 1.4F : 1.0F, 0.85F + random.nextFloat() * 0.35F);
-            }
-        }
+        if (now >= w.nextArc && born) startArc(level, w, near, now, random);
         if (now >= w.nextDrip) startDrip(level, w, now, random);
     }
 
@@ -407,9 +385,5 @@ public final class SparkWisps {
         return lx >= shape.min(Direction.Axis.X) && lx <= shape.max(Direction.Axis.X)
                 && ly >= shape.min(Direction.Axis.Y) && ly <= shape.max(Direction.Axis.Y)
                 && lz >= shape.min(Direction.Axis.Z) && lz <= shape.max(Direction.Axis.Z);
-    }
-
-    private static void play(ClientLevel level, Wisp w, SoundEvent sound, float volume, float pitch) {
-        level.playLocalSound(w.x, w.y, w.z, sound, SoundSource.BLOCKS, volume, pitch, false);
     }
 }

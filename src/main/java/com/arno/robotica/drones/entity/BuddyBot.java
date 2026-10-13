@@ -25,6 +25,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
@@ -917,6 +918,14 @@ public class BuddyBot extends DroneBase {
             if (sl.isLoaded(bp) && sl.getBlockState(bp).isAir() && sl.getBlockState(bp.above()).isAir()) return p;
         }
         return center.add(0, 1.5, 0);
+    }
+
+    // ---------------------------------------------------------------- sound
+
+    /** No flight buzz: it follows the owner all day. */
+    @Override
+    protected @Nullable SoundEvent getAmbientSound() {
+        return null;
     }
 
     // ---------------------------------------------------------------- lights

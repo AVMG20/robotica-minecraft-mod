@@ -217,7 +217,6 @@
   "robotica.configuration.sparkLamp": "Spark Lamp",
   "robotica.configuration.sparkLampAnimated": "Animated Spark Lamps",
   "robotica.configuration.sparkLampParticles": "Spark Lamp arcs and sparks",
-  "robotica.configuration.sparkLampSounds": "Spark Lamp crackle and hum",
   "robotica.configuration.sparkLampFxRange": "Spark Lamp effect range",
   "robotica.configuration.tools": "Tools",
   "robotica.configuration.areaOutlineAnimated": "Animated tool area outline",
