@@ -153,6 +153,34 @@ public class IndustryGameTests {
         });
     }
 
+    /** The Assembler takes its ingredients from any slots: extra items stay, and one ingredient may span two slots. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void assemblerTakesSplitAndExtraInputs(GameTestHelper helper) {
+        ProcessingRecipe recipe = recipeMaking(helper, Machine.ASSEMBLER, IndustryRegistry.THERMOCOUPLE.get());
+        ItemStack thorium = new ItemStack(IndustryRegistry.THORIUM_PLATE.get());
+        var shortInput = new ProcessingInput(List.of(thorium.copyWithCount(1), new ItemStack(CoreItems.COPPER_PLATE.get(), 2),
+                new ItemStack(CoreItems.BASIC_CIRCUIT.get()), ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY));
+        helper.assertTrue(recipe.assign(shortInput) == null, "one thorium plate is not enough");
+        var stray = new ProcessingInput(List.of(thorium.copyWithCount(2), new ItemStack(CoreItems.COPPER_PLATE.get(), 2),
+                new ItemStack(CoreItems.BASIC_CIRCUIT.get()), new ItemStack(Items.DIRT), ItemStack.EMPTY, ItemStack.EMPTY));
+        helper.assertTrue(recipe.assign(stray) == null, "a stray item in an input slot blocks the recipe");
+
+        ProcessingBlockEntity be = place(helper, Machine.ASSEMBLER, 4);
+        be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 8));
+        be.items.setStackInSlot(0, new ItemStack(CoreItems.COPPER_PLATE.get(), 5));
+        be.items.setStackInSlot(2, thorium.copyWithCount(1));
+        be.items.setStackInSlot(3, new ItemStack(CoreItems.BASIC_CIRCUIT.get(), 3));
+        be.items.setStackInSlot(5, thorium.copyWithCount(2));
+        helper.onEachTick(() -> be.energy.setEnergy(be.energy.getMaxEnergyStored()));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(be.items.getStackInSlot(6).is(IndustryRegistry.THERMOCOUPLE.get()), "the thermocouple is made");
+            int plates = be.items.getStackInSlot(2).getCount() + be.items.getStackInSlot(5).getCount();
+            helper.assertTrue(plates == 1, "two of the three thorium plates used: " + plates + " left");
+            helper.assertTrue(be.items.getStackInSlot(0).getCount() == 3, "extra copper plates stay");
+            helper.assertTrue(be.items.getStackInSlot(3).getCount() == 2, "extra circuits stay");
+        });
+    }
+
     /** Fortune only works on recipes that allow it: alloying by default, centrifuging and assembling not. */
     @GameTest(template = "empty")
     public static void fortuneIsPerRecipe(GameTestHelper helper) {
