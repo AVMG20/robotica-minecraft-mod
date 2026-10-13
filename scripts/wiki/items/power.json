@@ -474,7 +474,7 @@
    ],
    "what": "Builds Thermocouples, Superconductor Coils and Resonant Lattices. Circuits, motors and casings cost about a quarter less material here than at the crafting table.",
    "use": [
-    "Put every input in its own slot."
+    "Fill the slots in any order; extra items wait for the next craft."
    ],
    "stats": {
     "columns": [
