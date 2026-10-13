@@ -2,11 +2,14 @@
 Run: python3 scripts/textures/energy.py   (writes textures/block/*.png and textures/item/strange_matter.png; models
 come from scripts/data/energy_models.py)
 
-Four families, one construction (top-left light, bevelled plates, riveted corners, glow on separate overlays):
-- Core Reactor: dark graphite plating with hazard amber trim and a green glow; amplifiers glow in their tier colour.
-- Capacitor Bank: slate blue plating with cyan energy glow; its capacitors and coils are light steel modules.
+Four families, glow on separate full-bright overlays:
+- Capacitor Bank and Core Reactor: the machine casing language (machine_casing.py) at multiblock scale, see the
+  'Capacitor Bank and Core Reactor shells' section. Bank: light steel, copper brackets, cyan energy; its capacitors
+  and coils are light steel modules. Reactor: gunmetal, hazard amber brackets, green core light; amplifiers glow in
+  their tier colour.
 - Tesla Spire: brushed steel with copper windings and a cyan arc glow.
 - Ring Collider: null violet plating with a white-hot plasma glow; segments are a glass beam pipe between magnets.
+The Spire and the Collider share the older construction below (top-left light, bevelled plates, riveted corners).
 Casing faces tile seamlessly: the frame of a casing is drawn as half-width seams so walls read as one surface.
 """
 import math
@@ -14,7 +17,8 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from pixelart import Canvas, grain, material, write_anim, write_block  # noqa: E402
+import machine_casing as mc  # noqa: E402
+from pixelart import MATERIALS, Canvas, grain, material, write_anim, write_block  # noqa: E402
 
 DK, ST, SL, NU = 'abcde', 'fghij', 'lmnop', 'qrstu'
 CU, RD, TE, CY, GR, PU, AM = '01234', '56789', 'ABCDE', 'FGHIJ', 'KLMNO', 'PQRST', 'UVWXY'
@@ -83,107 +87,6 @@ def hazard_trim(c, a):
     return c
 
 
-def glass(r, tint, glint, joined=0):
-    """Translucent pane with streaked glints in a thin frame of the family's metal. Connected glass: `joined` has a bit
-    per side that joins a neighbour (1 top, 2 right, 4 bottom, 8 left) and loses its frame line, so a wall of panes
-    reads as one window with a frame round its outer edge."""
-    t, rt, b, lf = (not joined & 1, not joined & 2, not joined & 4, not joined & 8)
-    c = Canvas()
-    c.rect(0, 0, 16, 16, tint)
-    if b:
-        c.rect(0, 15, 16, 1, r[1])
-    if rt:
-        c.rect(15, 0, 1, 16, r[1])
-    if t:
-        c.rect(0, 0, 16, 1, r[3])
-    if lf:
-        c.rect(0, 0, 1, 16, r[3])
-    if t and lf:
-        c.set(0, 0, r[4])
-    if b and rt:
-        c.set(15, 15, r[0])
-    if joined:      # part of a pane: fewer glints, so a wall of them reads calm
-        c.line(2, 6, 6, 2, glint).line(3, 6, 6, 3, glint)
-        c.line(9, 14, 13, 10, glint)
-    else:
-        c.line(3, 10, 10, 3, glint).line(4, 10, 10, 4, glint)
-        c.line(10, 13, 13, 10, glint)
-    for x, y, s1, s2 in ((1, 1, t, lf), (14, 1, t, rt), (1, 14, b, lf), (14, 14, b, rt)):
-        if s1 and s2:
-            c.set(x, y, r[2])
-    return c
-
-
-# ---------------------------------------------------------------- formed look (casings once the controller has formed)
-
-def frame_side(r, accent, seed=0):
-    """Formed frame beam, running top to bottom and seamless along it: bevelled rails with rivet rows either side of a
-    sunken channel. The reactor's channel carries hazard stripes, the bank's a dark conduit (its light is the overlay)."""
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, r, seed, bevel=False, vertical=True, density=0.3)
-    for x, ch in ((0, r[0]), (1, r[4]), (2, r[3]), (13, r[1]), (14, r[0]), (15, r[0])):
-        c.rect(x, 0, 1, 16, ch)
-    for y in (3, 11):
-        c.rivet(3, y, r).rivet(11, y, r)
-    c.rect(5, 0, 6, 16, r[1])
-    c.rect(5, 0, 1, 16, r[0]).rect(10, 0, 1, 16, r[3])
-    if accent == AM:
-        c.hazard(6, 0, 4, 16, AM[2], 'k')
-        for y in range(16):
-            if (6 + y) % 4 == 0:
-                c.set(6, y, AM[3])
-    else:
-        c.rect(6, 0, 4, 16, 'z').rect(7, 0, 2, 16, accent[1])
-        for y in (2, 10):
-            c.rect(6, y, 4, 2, r[1])
-    return c
-
-
-def frame_side_glow(accent):
-    """Full-bright conduit line of the bank's frame (the reactor's beams carry no light)."""
-    c = Canvas()
-    c.rect(7, 0, 2, 16, accent[3])
-    for y in (0, 8):
-        c.set(7, y + 4, accent[4]).set(8, y + 4, accent[4])
-    for y in (2, 10):
-        c.rect(7, y, 2, 2, '.')
-    return c
-
-
-def frame_corner(r, accent, seed=0):
-    """Corner cap where three beams meet: a heavy bevelled plate with a bolted boss and four corner bolts."""
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, r, seed, density=0.25)
-    c.frame(0, 0, 16, 16, r[0])
-    c.bevel(1, 1, 14, 14, r[4], r[1])
-    c.recess(4, 4, 8, 8, r, fill=r[1])
-    c.disc(7.5, 7.5, 2.6, accent[2] if accent == AM else r[3])
-    c.disc(7.5, 7.5, 1.5, 'k' if accent == AM else r[4])
-    c.set(7, 7, accent[3]).set(8, 8, accent[1])
-    for x, y in ((2, 2), (12, 2), (2, 12), (12, 12)):
-        c.rivet(x, y, r)
-    return c
-
-
-def frame_corner_glow(accent):
-    c = Canvas()
-    c.set(7, 7, accent[4]).set(8, 7, accent[3]).set(7, 8, accent[3]).set(8, 8, accent[3])
-    return c
-
-
-def panel(r, seed=0):
-    """Formed wall plating: one brushed surface with vertical ribs every 8 pixels, no border, so a whole wall reads as
-    a single panel."""
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, r, seed, bevel=False, density=0.22)
-    for x in (3, 11):
-        c.rect(x, 0, 1, 16, r[1]).rect(x + 1, 0, 1, 16, r[3])
-    for x in (7, 15):
-        for y in (1, 9):
-            c.rivet(x, y, r)
-    return c
-
-
 def screen(c, x, y, w, h, r):
     c.screen(x, y, w, h, r, glass='z')
     return c
@@ -225,65 +128,273 @@ def controller_glow(r, state):
     return c
 
 
-# ---------------------------------------------------------------- ports
+# ---------------------------------------------------------------- Capacitor Bank and Core Reactor shells
+# The machine casing language (machine_casing.py) at multiblock scale. A formed face reads like one big machine face:
+# the corner caps are small shells with the family metal brackets, the edge beams are the frame (darker body, bevelled
+# edges, a channel down the middle) and the wall panels and windows are the sunk face plate, seamless across blocks.
+# Loose casings tile too: their edges are half seams, so blocks side by side show one groove.
+# - Bank (energy storage family): light steel body, copper brackets, cyan energy in the beam channels and corner lenses.
+# - Reactor (generator family): gunmetal body, hazard amber brackets, hazard striped beams, green core light.
+# Controllers carry a screen (off: dark, formed: still read-out, working: animated), ports an I/O socket.
 
-def power_port(r):
-    """Copper terminal block with a bolt mark: FE out."""
-    c = casing(r, 21)
-    c.recess(3, 3, 10, 10, r, fill='k')
-    c.ring(7.5, 7.5, 3.4, 4.3, CU[2]).ring(7.5, 7.5, 3.4, 3.8, CU[3])  # copper terminal ring
-    c.draw(6, 4, ['..WX', '.WX.', 'WXXW', '.XW.', 'XW..', 'W...'])       # bolt
-    if r == DK:
-        hazard_trim(c, AM)
+REACTOR_BODY = ('#1E2328', '#323A42', '#4C565F', '#6C7882', '#97A3AD')   # generator gunmetal
+HAZARD_AMBER = ('#6A3206', '#B0600C', '#F0A01C', '#FFC84A', '#FFE6A0')   # the reactor's bracket metal
+SHELL_EXTRA = {
+    'bank': {'[': '#5FE3F038', ']': '#E6FAFFA8',                        # glass tint and glint
+             'D': '#0B1A20', 'M': '#173740', 'N': '#21505C',            # screen glass, grid, glare
+             'q': '#1E6B2E', 'Q': '#7FD068', 'R': '#D8FFC0',            # input: green dim, lit, white
+             'o': '#7A3A06', 'O': '#FFB21E', 'P': '#FFE08A'},           # output: amber dim, lit, white
+    'reactor': {'(': '#6CF09A38', ')': '#D8FFE4A8',
+                'D': '#0A140E', 'M': '#14281A', 'N': '#1F3A27',
+                '5': '#0E3A1A', '6': '#1E6B2E', '7': '#3E9E3A', '8': '#7FD068', '9': '#D8FFC0',   # core green
+                **material('01234', 'copper')},
+}
+SHELL_GLOW = {'bank': 'vwx', 'reactor': '789'}                           # lens / screen light: lit, bright, white
+
+
+def shell_pal(fam):
+    if fam == 'bank':
+        return mc.casing_palette(MATERIALS['copper'], **dict(zip(mc.BODY, BANK_BODY)), **BANK_EXTRA,
+                                 **SHELL_EXTRA['bank'])
+    return mc.casing_palette(HAZARD_AMBER, **dict(zip(mc.BODY, REACTOR_BODY)), **SHELL_EXTRA['reactor'])
+
+
+def bolt(c, x, y):
+    """2x2 bolt head in the family metal."""
+    c.rect(x, y, 2, 2, 'h').set(x, y, 'i').set(x + 1, y + 1, 'g')
     return c
 
 
-def power_port_glow(r):
+def channel(c, fam, x=6):
+    """The family's 4 px strip down a beam or casing: the bank's a dark glass energy conduit, the reactor's hazard
+    stripes, sunk in a housing (shadow left, lit lip right)."""
+    c.rect(x - 1, 0, 1, 16, 'a').rect(x + 4, 0, 1, 16, 'd')
+    if fam == 'bank':
+        c.rect(x, 0, 4, 16, 'k').rect(x + 1, 0, 2, 16, 'u')
+    else:
+        c.hazard(x, 0, 4, 16, 'h', 'k')
+    return c
+
+
+def shell_casing(fam):
+    """Loose casing: a plate with half seams round it (a wall of them shows one groove between blocks), family metal
+    bolts in the corners and a sunk face plate with a short family strip."""
     c = Canvas()
-    g = GLOW[r]
-    c.ring(7.5, 7.5, 3.7, 4.4, g[2])
-    for x, y in ((7, 3), (8, 3), (7, 12), (8, 12), (3, 7), (3, 8), (12, 7), (12, 8)):
-        c.set(x, y, g[3])
+    c.rect(0, 0, 16, 16, 'c')
+    c.bevel(0, 0, 16, 16, 'd', 'a')
+    c.bevel(3, 3, 10, 10, 'a', 'd')
+    if fam == 'bank':
+        c.rect(6, 5, 4, 6, 'a').rect(7, 5, 2, 6, 'u').rect(7, 5, 2, 1, 'k').rect(9, 5, 1, 6, 'd')
+    else:
+        c.hazard(5, 6, 6, 4, 'h', 'k')
+        c.rect(5, 5, 6, 1, 'a').rect(5, 10, 6, 1, 'd')
+    for x, y in ((0, 0), (14, 0), (0, 14), (14, 14)):
+        bolt(c, x, y)
     return c
 
 
-def access_port(r):
-    """Hatch with a funnel grid: items in and out."""
-    c = casing(r, 31)
-    c.recess(3, 3, 10, 10, r, fill=r[0])
-    c.grille(4, 4, 8, 8, 'z', r[3])
-    c.rect(3, 7, 10, 2, ST[2]).rect(3, 7, 10, 1, ST[3])                  # cross bar
-    c.rect(7, 3, 2, 10, ST[2]).rect(7, 3, 1, 10, ST[3])
-    c.disc(7.5, 7.5, 1.4, AM[2])
-    if r == DK:
-        hazard_trim(c, AM)
+def shell_panel(fam):
+    """Formed wall: the sunk face plate, one surface across the wall: ribs every 8 px, a bolt between them."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'c')
+    for x in (3, 11):
+        c.rect(x, 0, 1, 16, 'b').rect(x + 1, 0, 1, 16, 'd')
+    for x, y in ((7, 3), (15, 11)):
+        c.set(x, y, 'e').set(x, y + 1, 'b')
     return c
+
+
+def shell_beam(fam):
+    """Formed edge beam, seamless top to bottom: the frame in the darker body, a lit outer edge and a shadowed inner
+    one, bolted rails either side of the family strip."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'b')
+    c.rect(0, 0, 1, 16, 'd').rect(1, 0, 1, 16, 'c').rect(14, 0, 1, 16, 'a').rect(15, 0, 1, 16, 'K')
+    channel(c, fam)
+    for y in (3, 11):
+        c.set(3, y, 'd').set(3, y + 1, 'a').set(12, y, 'd').set(12, y + 1, 'a')
+    return c
+
+
+def shell_beam_glow(fam):
+    """The bank's conduit lit, a brighter glint every 8 px."""
+    c = Canvas()
+    c.rect(7, 0, 2, 16, 'v')
+    for y in (3, 11):
+        c.set(7, y, 'w').set(8, y, 'w').set(7, y + 1, 'w')
+    return c
+
+
+BOSS = ['..dddd..', '.dcccccb', 'dccKKcca', 'dcKuuKba', 'dcKuuKba', 'dccKKbba', '.bbbbba.', '..aaaa..']
+
+
+def shell_corner(fam):
+    """Corner cap: a small shell round a round boss holding a lens (a steel boss with a cyan lens for the bank, an amber
+    one with a green lens for the reactor)."""
+    c = mc.shell(1)
+    boss = BOSS if fam == 'bank' else [r.translate(str.maketrans('dcbau', 'ihgf6')) for r in BOSS]
+    c.draw(4, 4, boss)
+    return c
+
+
+def shell_corner_glow(fam):
+    lit, bright, white = SHELL_GLOW[fam]
+    c = Canvas()
+    c.rect(7, 7, 2, 2, lit).set(7, 7, white).set(8, 7, bright).set(7, 8, bright)
+    return c
+
+
+def shell_glass(fam, joined=0):
+    """Window in the shell's 2 px frame: the frame only on the sides that join no neighbour (1 top, 2 right, 4 bottom,
+    8 left), family metal brackets where two framed sides meet, so a wall of panes reads as one window."""
+    tint, glint = ('[', ']') if fam == 'bank' else ('(', ')')
+    t, rt, b, lf = (not joined & 1, not joined & 2, not joined & 4, not joined & 8)
+    c = Canvas()
+    c.rect(0, 0, 16, 16, tint)
+    if joined:      # part of a pane: fewer glints, so a wall of them reads calm
+        c.line(3, 6, 6, 3, glint).line(4, 6, 6, 4, glint)
+        c.line(9, 13, 12, 10, glint)
+    else:
+        c.line(4, 10, 10, 4, glint).line(5, 10, 10, 5, glint)
+        c.line(10, 12, 12, 10, glint)
+    if t:
+        c.rect(0, 0, 16, 1, 'd').rect(0, 1, 16, 1, 'b')
+    if b:
+        c.rect(0, 15, 16, 1, 'a').rect(0, 14, 16, 1, 'b')
+    if lf:
+        c.rect(0, 0, 1, 16, 'd').rect(1, 0, 1, 16, 'b')
+    if rt:
+        c.rect(15, 0, 1, 16, 'a').rect(14, 0, 1, 16, 'b')
+    if t and lf:
+        c.set(1, 1, 'b')
+    if b and rt:
+        c.set(14, 14, 'b')
+    for x, y, sx, sy, s1, s2 in ((0, 0, 1, 1, t, lf), (15, 0, -1, 1, t, rt), (0, 15, 1, -1, b, lf),
+                                 (15, 15, -1, -1, b, rt)):
+        if s1 and s2:                                                    # bracket, as on the shell
+            for i in range(4):
+                for j in range(2):
+                    c.set(x + sx * i, y + sy * j, 'h').set(x + sx * j, y + sy * i, 'h')
+            c.set(x + sx * 3, y, 'g').set(x, y + sy * 3, 'g')
+            c.set(x + sx * 3, y + sy, 'f').set(x + sx, y + sy * 3, 'f')
+            c.set(x, y, 'K')
+    return c
+
+
+# ---- controllers: a screen in the shell, the status lamp above it
+
+CTRL_FRAMES, CTRL_FRAMETIME = 32, 3          # working screen loop: 96 ticks
+SCREEN = (3, 3, 10, 10)                      # x, y, w, h of the screen recess; the picture is the 8x8 inside it
+
+
+def shell_controller(fam, state):
+    """Off: dark glass with a glare. Formed and working: a faint grid on the glass, the picture on the overlay."""
+    c = mc.shell(1)
+    x, y, w, h = SCREEN
+    c.rect(x, y, w, h, 'D').bevel(x, y, w, h, 'a', 'd')
+    if state == 'off':
+        c.set(x + 1, y + 1, 'N').set(x + 2, y + 1, 'N').set(x + 1, y + 2, 'N')
+    else:
+        for gx in range(x + 1, x + w - 1):
+            for gy in range(y + 1, y + h - 1):
+                if (gx - x) % 3 == 0 and (gy - y) % 3 == 0:
+                    c.set(gx, gy, 'M')
+    c.rect(7, 1, 2, 1, 'l')
+    return c
+
+
+BANK_BARS = (4, 7, 10)                       # x of the bank screen's three 2 px bars
+
+
+def bank_screen(c, t=None):
+    """Charge read-out: three level bars on a base line. Still (t None) they stand at rest; working, they rise and
+    fall slowly out of step and a soft scan line sweeps down the glass once per loop."""
+    c.rect(4, 11, 8, 1, 'u')
+    for i, x in enumerate(BANK_BARS):
+        if t is None:
+            h = (4, 6, 5)[i]
+        else:
+            h = round(5 + 2.4 * math.sin(2 * math.pi * (t / CTRL_FRAMES + i / 3)))
+        top = 11 - h
+        c.rect(x, top, 2, h, 'v').rect(x + 1, top, 1, h, 'y')
+        c.rect(x, top, 2, 1, 'w').set(x, top, 'x')
+    if t is not None:
+        scan = 4 + (t * 8) // CTRL_FRAMES                                  # rows 4..11
+        for xx in range(4, 12):
+            ch = c.get(xx, scan)
+            c.set(xx, scan, {'v': 'w', 'y': 'v', 'w': 'x', 'u': 'v'}.get(ch, 'u') if ch != 'x' else 'x')
+    return c
+
+
+def reactor_screen(c, t=None):
+    """Core output trace: still, a flat line; working, a calm sine wave scrolling across, its crests brightest."""
+    for x in range(4, 12):
+        if t is None:
+            c.set(x, 8, '7')
+            continue
+        yy = 7.5 + 2.4 * math.sin(2 * math.pi * ((x - 4) / 8 - t / CTRL_FRAMES * 2))
+        y0 = 7.5 + 2.4 * math.sin(2 * math.pi * ((x - 5) / 8 - t / CTRL_FRAMES * 2))
+        a, b = sorted((round(yy), round(y0)))
+        for y in range(a, b + 1):
+            c.set(x, y, '7')
+        c.set(x, round(yy), '9' if round(yy) <= 5 else '8')
+    c.rect(4, 11, 8, 1, '6')
+    return c
+
+
+def shell_controller_glow(fam, t=None):
+    c = Canvas().rect(7, 1, 2, 1, 'L')
+    return bank_screen(c, t) if fam == 'bank' else reactor_screen(c, t)
+
+
+# ---- ports
+
+PORT_IN = ['Q........Q', 'QQ......QQ', '.QQ.RR.QQ.', '.QQ.RR.QQ.', 'QQ......QQ', 'Q........Q']
+PORT_OUT = ['..Q....Q..', '.QQ....QQ.', 'QQ..RR..QQ', 'QQ..RR..QQ', '.QQ....QQ.', '..Q....Q..']
 
 
 def bank_port(output):
-    """Bank Port: arrow pointing in (input, green) or out (output, amber), cyan rails."""
-    r = SL
-    c = casing(r, 41 if output else 42)
-    c.recess(3, 3, 10, 10, r, fill='k')
-    col = AM[1] if output else GR[1]
-    if output:
-        c.draw(4, 4, ['....11..', '.....11.', '11111111', '11111111', '.....11.', '....11..'])
-    else:
-        c.draw(4, 4, ['..11....', '.11.....', '11111111', '11111111', '.11.....', '..11....'])
-    c.replace('1', col, 4, 4, 8, 6)
-    c.rect(4, 11, 8, 1, CY[0])
+    """Bank Port: a dark glass socket with chevrons pointing in (input, green) or out (output, amber)."""
+    c = mc.shell(1)
+    c.rect(3, 3, 10, 10, 'm').rect(3, 3, 10, 1, 'p').rect(3, 3, 1, 10, 'p')
+    c.draw(3, 5, PORT_OUT if output else PORT_IN)
+    c.replace('QR', 'o' if output else 'q', 3, 5, 10, 6)
     return c
 
 
 def bank_port_glow(output):
     c = Canvas()
-    col = AM[3] if output else GR[3]
+    c.draw(3, 5, PORT_OUT if output else PORT_IN)
     if output:
-        c.draw(4, 4, ['....11..', '.....11.', '11111111', '11111111', '.....11.', '....11..'])
-    else:
-        c.draw(4, 4, ['..11....', '.11.....', '11111111', '11111111', '.11.....', '..11....'])
-    c.replace('1', col)
-    c.rect(4, 11, 8, 1, CY[2])
+        c.replace('Q', 'O').replace('R', 'P')
+    return c
+
+
+def power_port():
+    """Core Reactor Power Port: a copper terminal ring round a dark socket with the amber bolt mark (FE out)."""
+    c = mc.shell(1)
+    c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
+    c.disc(7.5, 7.5, 4.6, 'a')
+    c.ring(7.5, 7.5, 3.3, 4.2, '2').ring(7.5, 7.5, 3.3, 3.7, '3')
+    c.disc(7.5, 7.5, 3.0, 'D')
+    c.draw(6, 5, ['..hi', '.hi.', 'hiih', '.ih.', 'ih..', 'h...'])
+    return c
+
+
+def power_port_glow():
+    c = Canvas()
+    c.ring(7.5, 7.5, 3.3, 4.2, '7').ring(7.5, 7.5, 3.3, 3.7, '8')
+    return c
+
+
+def access_port():
+    """Core Reactor Access Port: a grilled hatch held by a steel cross with an amber hub (items in and out)."""
+    c = mc.shell(1)
+    c.rect(3, 3, 10, 10, 'a').bevel(3, 3, 10, 10, 'a', 'd')
+    c.grille(4, 4, 8, 8, 'K', 'b')
+    c.rect(3, 7, 10, 2, 'c').rect(3, 7, 10, 1, 'd')
+    c.rect(7, 3, 2, 10, 'c').rect(7, 3, 1, 10, 'd')
+    c.rect(7, 7, 2, 2, 'h').set(7, 7, 'i').set(8, 8, 'g')
     return c
 
 
@@ -397,8 +508,6 @@ def cryo_coolant(frame_no):
 # up), with pulses chasing round it, and round the ring on top. More pulses per tier.
 # Capacitor tiers (sleeve): copper, redstone red, ender green, resonant indigo. Coil tiers (windings): copper, gold,
 # superconductor frost.
-import machine_casing as mc  # noqa: E402
-from pixelart import MATERIALS  # noqa: E402
 
 BANK_BODY = ('#4A535B', '#6F7A83', '#9AA5AE', '#C4CDD4', '#EBF0F3')   # light steel
 BANK_EXTRA = {'m': '#163A44', 'n': '#2A6A78', 'p': '#0D2229', 'y': '#137489'}   # dark glass, lit edge, shade, deep charge
@@ -741,11 +850,34 @@ def strange_matter(frame_no):
 
 # ---------------------------------------------------------------- output
 
+def write_shells():
+    for fam in ('bank', 'reactor'):
+        pal = shell_pal(fam)
+        write_block(f'{fam}_casing', shell_casing(fam).rows(), pal)
+        write_block(f'{fam}_panel', shell_panel(fam).rows(), pal)
+        write_block(f'{fam}_frame', shell_beam(fam).rows(), pal)
+        write_block(f'{fam}_frame_corner', shell_corner(fam).rows(), pal)
+        write_block(f'{fam}_frame_corner_glow', shell_corner_glow(fam).rows(), pal)
+        for joined in range(16):
+            write_block(f'{fam}_glass/{joined}', shell_glass(fam, joined).rows(), pal)
+        for state in ('off', 'formed', 'on'):
+            write_block(f'{fam}_controller_{state}', shell_controller(fam, state).rows(), pal)
+        write_block(f'{fam}_controller_formed_glow', shell_controller_glow(fam).rows(), pal)
+        write_anim('block', f'{fam}_controller_on_glow',
+                   [shell_controller_glow(fam, t) for t in range(CTRL_FRAMES)], pal, frametime=CTRL_FRAMETIME)
+    pal = shell_pal('bank')
+    write_block('bank_frame_glow', shell_beam_glow('bank').rows(), pal)
+    for mode, output in (('input', False), ('output', True)):
+        write_block(f'bank_port_{mode}', bank_port(output).rows(), pal)
+        write_block(f'bank_port_{mode}_glow', bank_port_glow(output).rows(), pal)
+    pal = shell_pal('reactor')
+    write_block('reactor_power_port', power_port().rows(), pal)
+    write_block('reactor_power_port_glow', power_port_glow().rows(), pal)
+    write_block('reactor_access_port', access_port().rows(), pal)
+
+
 def main():
-    write_block('reactor_casing', hazard_trim(casing(DK, 1), AM).rows(), P)
-    write_block('reactor_power_port', power_port(DK).rows(), P)
-    write_block('reactor_power_port_glow', power_port_glow(DK).rows(), P)
-    write_block('reactor_access_port', access_port(DK).rows(), P)
+    write_shells()
     write_anim('block', 'cryo_coolant', [cryo_coolant(i) for i in range(8)], P, frametime=6, interpolate=True)
     for tier, name in ((1, 'flux'), (2, 'pyro'), (3, 'resonant')):
         write_block(f'{name}_amplifier', amplifier_side(tier).rows(), P)
@@ -755,20 +887,6 @@ def main():
     write_block('graphite_damper', damper_side().rows(), P)
     write_block('graphite_damper_top', damper_top().rows(), P)
 
-    for prefix, r, a, tint, glint in (('reactor', DK, AM, '(', ')'), ('bank', SL, CY, '[', ']')):
-        write_block(f'{prefix}_frame', frame_side(r, a, 6).rows(), P)
-        write_block(f'{prefix}_frame_corner', frame_corner(r, a, 7).rows(), P)
-        write_block(f'{prefix}_frame_corner_glow', frame_corner_glow(GLOW[r]).rows(), P)
-        write_block(f'{prefix}_panel', panel(r, 8).rows(), P)
-        for joined in range(16):
-            write_block(f'{prefix}_glass/{joined}', glass(r, tint, glint, joined).rows(), P)
-    write_block('bank_frame_glow', frame_side_glow(CY).rows(), P)
-
-    write_block('bank_casing', casing(SL, 3).rows(), P)
-    write_block('bank_port_input', bank_port(False).rows(), P)
-    write_block('bank_port_input_glow', bank_port_glow(False).rows(), P)
-    write_block('bank_port_output', bank_port(True).rows(), P)
-    write_block('bank_port_output_glow', bank_port_glow(True).rows(), P)
     write_bank_inside()
 
     write_block('spire_casing', casing(ST, 5).rows(), P)
@@ -792,7 +910,7 @@ def main():
         write_block(f'{name}_segment_pipe', segment_pipe(tier).rows(), P)
     write_anim('item', 'strange_matter', [strange_matter(i) for i in range(8)], P, frametime=3)
 
-    for prefix, r in (('reactor', DK), ('bank', SL), ('spire', ST), ('collider', NU)):
+    for prefix, r in (('spire', ST), ('collider', NU)):
         for state in ('off', 'formed', 'on'):
             write_block(f'{prefix}_controller_{state}', controller_front(r, state).rows(), P)
             write_block(f'{prefix}_controller_{state}_glow', controller_glow(r, state).rows(), P)

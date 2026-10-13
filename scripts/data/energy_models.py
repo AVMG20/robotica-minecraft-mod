@@ -177,10 +177,11 @@ loot('bank_port')
 BLOCKS.append('bank_port')
 
 # ---------- controllers: screen front (off / formed / working), casing elsewhere, four facings ----------
+# The bank's and the reactor's screens are dark while off (dark_off: no overlay); working, the overlay is animated.
 FACING_Y = {'north': 0, 'east': 90, 'south': 180, 'west': 270}
 CONTROLLERS = {
-    'reactor_controller': ('reactor', {}),
-    'bank_controller': ('bank', {}),
+    'reactor_controller': ('reactor', {'dark_off': True}),
+    'bank_controller': ('bank', {'dark_off': True}),
     # Spire Base: copper winding band on the sides, the terminal plate on top.
     'spire_base': ('spire', {'faces': {'south': 'spire_base', 'west': 'spire_base', 'east': 'spire_base',
                                        'up': 'spire_base_top'},
@@ -190,7 +191,9 @@ CONTROLLERS = {
 for name, (prefix, extra) in CONTROLLERS.items():
     for state in ('off', 'formed', 'on'):
         faces = {d: f'{prefix}_casing' for d in DIRS} | extra.get('faces', {}) | {'north': f'{prefix}_controller_{state}'}
-        glow = extra.get('glow', {}) | {'north': f'{prefix}_controller_{state}_glow'}
+        glow = dict(extra.get('glow', {}))
+        if state != 'off' or not extra.get('dark_off'):
+            glow |= {'north': f'{prefix}_controller_{state}_glow'}
         model = glow_cube(faces, glow)
         model['textures']['particle'] = tex(f'{prefix}_casing')
         if name == 'spire_base' and state == 'formed':          # the item keeps the plain block

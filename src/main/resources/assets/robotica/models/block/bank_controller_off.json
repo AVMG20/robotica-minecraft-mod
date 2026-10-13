@@ -8,7 +8,6 @@
     "f_south": "robotica:block/bank_casing",
     "f_west": "robotica:block/bank_casing",
     "f_east": "robotica:block/bank_casing",
-    "g_north": "robotica:block/bank_controller_off_glow",
     "particle": "robotica:block/bank_casing"
   },
   "elements": [
@@ -47,30 +46,6 @@
         "east": {
           "texture": "#f_east",
           "cullface": "east"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        16,
-        16
-      ],
-      "shade": false,
-      "faces": {
-        "north": {
-          "texture": "#g_north",
-          "cullface": "north",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
         }
       }
     }
