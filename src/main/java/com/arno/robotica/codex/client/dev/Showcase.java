@@ -1612,6 +1612,16 @@ public final class Showcase {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
 
+        // Tinker's Bench in the world, from the front corner.
+        if (wants("33_tinkers_bench")) {
+            step(10, () -> server(sp -> setFacing(sp.serverLevel(), BENCH, block("tinkers_bench"), Direction.SOUTH)));
+            camera(BENCH.getX() + 1.9, Y + 0.3, BENCH.getZ() + 2.1, 138, 30);
+            hud(false);
+            step(20, () -> {});
+            shot("33_tinkers_bench");
+            hud(true);
+        }
+
         // Tinker's Bench with a Null Drill full of modules, a few more modules in the inventory.
         if (wants("gui_97_tinkers_bench")) step(10, () -> server(sp -> {
             ServerLevel level = sp.serverLevel();
