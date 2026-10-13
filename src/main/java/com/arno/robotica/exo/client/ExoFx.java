@@ -44,6 +44,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
  *   <li>soft glowing rings (Spring, Med Injector, full Kinetic Shield) and the Sonar Pulse front, all additive and
  *   allocation free;</li>
  *   <li>a quiet beep when an ability's cooldown runs out (local player only).</li>
+ *   <li>Jet Assist kinds go to {@link ExoJetpack}, which draws the jetpacks.</li>
  * </ul>
  * Decorative parts follow {@link ExoClientConfig#particles()}; vanilla's particle setting thins particles further.
  */
@@ -148,6 +149,10 @@ final class ExoFx {
     }
 
     private static void handle(ClientLevel level, LocalPlayer self, int id, int kind, boolean particles) {
+        if (kind >= ExoFxPayload.JET_OFF) {
+            ExoJetpack.onEvent(level, self, id, kind);
+            return;
+        }
         if (kind == ExoFxPayload.FLIGHT_ON) {
             if (id != self.getId() && !contains(id) && flyerCount < MAX_FLYERS) FLYERS[flyerCount++] = id;
             return;

@@ -2,15 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "NCN",
+    "QCQ",
     " U "
   ],
   "key": {
-    "N": {
-      "item": "robotica:null_circuit"
+    "Q": {
+      "item": "robotica:quantum_circuit"
     },
     "C": {
-      "item": "minecraft:shulker_shell"
+      "item": "robotica:plasma_actuator"
     },
     "U": {
       "item": "robotica:jet_assist_module_2"

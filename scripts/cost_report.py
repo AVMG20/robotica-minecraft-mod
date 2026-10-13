@@ -143,7 +143,8 @@ AGE = {
         'silk_touch_module', 'looting_module', 'auto_pickup_module', 'void_filter_module', 'lamp_placer_module',
         'sharpened_edge_module', 'armor_pierce_module', 'thermal_edge_module', 'night_vision_module', 'step_assist_module',
         'magnet_module', 'capacitor_plating_module', 'fall_dampener_module', 'auto_feeder_module', 'spring_heels_module',
-        'kinetic_generator_module', 'reach_module', 'heat_shield_module', 'anchor_servos_module', 'cryo_treads_module'],
+        'kinetic_generator_module', 'reach_module', 'heat_shield_module', 'anchor_servos_module', 'cryo_treads_module',
+        'jet_assist_module'],
     2: ['reinforced_casing', 'advanced_circuit', 'servo_actuator', 'redstone_cell', 'servo_core', 'solar_panel_mk2',
         'accumulator_2', 'tesla_coil_3', 'tesla_emitter_3', 'rivet_gun', 'tool_upgrade_kit_2', 'servo_drill', 'farm_kit_mk3', 'essence_vial', 'excavator', 'survey_rig',
         'replicator_*', 'upgrade_range', 'upgrade_fortune', 'upgrade_silk',
@@ -152,23 +153,26 @@ AGE = {
         'survey_rig_mk2', 'grinder_mk2', 'electric_furnace_mk2', 'storage_expansion_mk2', 'buddy_bot_mk2',
         'courier_drone_mk2', 'hauler_drone_mk2', 'exo_*_mk2', 'radiant_isotope', 'servo_stride_module_2', '*_module_2',
         'robot_hud_module', 'rebreather_module', 'med_injector_module', 'sonar_pulse_module', 'power_regulator_module',
-        'solar_weave_module', 'hydro_fins_module', 'jet_assist_module', 'ricochet_module', 'glider_module', 'gyro_stabilizer_module'],
+        'solar_weave_module', 'hydro_fins_module', 'ricochet_module', 'glider_module', 'gyro_stabilizer_module'],
     3: ['blazing_casing', 'quantum_circuit', 'plasma_actuator', 'magma_core', 'accumulator_3', 'tesla_coil_4', 'tesla_emitter_4', 'charger_mk3', 'wireless_charger_mk3', 'tool_upgrade_kit_3',
         'magma_drill', 'arc_blade', 'warp_pad_mk2',
         'pyrolite_*', 'pyrosteel_*', 'superconductor_coil', 'enriched_fuel_pellet', 'alloy_smelter_mk3', 'centrifuge_mk2',
         'assembler_mk2', 'solar_panel_mk3', 'cryo_coolant', 'pyro_amplifier', 'transfer_coil_elite', 'excavator_mk3', 'survey_rig_mk3',
         'grinder_mk3', 'electric_furnace_mk3', 'storage_expansion_mk3', 'buddy_bot_mk3', 'exo_*_mk3',
-        'servo_stride_module_3', 'jet_assist_module_2', 'heat_shield_module_2', 'sonar_pulse_module_2', 'med_injector_module_2',
+        'servo_stride_module_3', 'heat_shield_module_2', 'sonar_pulse_module_2', 'med_injector_module_2',
         'power_regulator_module_2', '*_module_3', 'flight_module', 'kinetic_shield_module', 'hazard_seal_module',
         'dash_thrusters_module', 'chain_lightning_module', 'chain_lightning_module_2', 'ricochet_module_2'],
     4: ['null_casing', 'null_circuit', 'ender_cell', 'antigrav_core', 'tesla_coil_5', 'tesla_emitter_5', 'charger_mk4', 'wireless_charger_mk4', 'tool_upgrade_kit_4', 'null_drill',
         'null_lance', 'farm_kit_mk4', 'gate_controller',
         'resonite_*', 'resonant_*', 'fusion_fuel_pellet', 'alloy_smelter_mk4', 'centrifuge_mk3', 'centrifuge_mk4',
         'assembler_mk3', 'assembler_mk4', 'solar_panel_mk4', 'collider_controller', 'accelerator_segment', 'strange_matter', 'capacitor_ender', 'capacitor_resonant',
-        'excavator_mk4', 'survey_rig_mk4', 'buddy_bot_mk4', 'grinder_mk4', 'electric_furnace_mk4', 'exo_*_mk4', 'jet_assist_module_3',
+        'excavator_mk4', 'survey_rig_mk4', 'buddy_bot_mk4', 'grinder_mk4', 'electric_furnace_mk4', 'exo_*_mk4',
         'sonar_pulse_module_3', 'med_injector_module_3', 'power_regulator_module_3', 'kinetic_shield_module_2',
         'kinetic_shield_module_3', 'chain_lightning_module_3', 'lifesteal_module'],
 }
+AGE[1] += ['chunk_anchor']
+AGE[2] += ['chunk_anchor_mk2', 'terminal_link']
+AGE[3] += ['chunk_anchor_mk3', 'terminal_link_mk2']
 
 
 def match(pattern, name):

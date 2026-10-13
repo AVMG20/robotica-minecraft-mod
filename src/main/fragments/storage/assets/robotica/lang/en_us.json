@@ -36,5 +36,22 @@
   "gui.robotica.storage.jei_sync_on": "JEI search sync: on. Click to turn off",
   "gui.robotica.storage.jei_sync_off": "JEI search sync: off. Click to turn on",
   "robotica.configuration.storageTerminal": "Storage Terminal",
-  "robotica.configuration.jeiSearchSync": "Sync search with JEI"
+  "robotica.configuration.jeiSearchSync": "Sync search with JEI",
+  "item.robotica.terminal_link": "Terminal Link Mk1",
+  "item.robotica.terminal_link_mk2": "Terminal Link Mk2",
+  "tooltip.robotica.terminal_link": "Right-click to open the bound terminal from anywhere in its dimension",
+  "tooltip.robotica.terminal_link_mk2": "Right-click to open the bound terminal from any dimension",
+  "tooltip.robotica.terminal_link_use": "%s/t while open",
+  "tooltip.robotica.terminal_link_bound": "Bound to %s, %s, %s (%s)",
+  "tooltip.robotica.terminal_link_unbound": "Sneak-right-click a Storage Terminal to bind it",
+  "message.robotica.terminal_link_bound": "Bound to the terminal at %s, %s, %s",
+  "message.robotica.terminal_link.unbound": "Not bound to a terminal",
+  "message.robotica.terminal_link.dimension": "The terminal is in another dimension",
+  "message.robotica.terminal_link.missing": "The terminal is gone",
+  "message.robotica.terminal_link.empty": "The link is out of FE",
+  "message.robotica.terminal_link.unloaded": "The terminal's chunk is not loaded",
+  "message.robotica.terminal_link.lost": "Link no longer in hand",
+  "message.robotica.terminal_link.idle": "Closed after 60 s idle",
+  "robotica.configuration.terminal_link": "Terminal Link",
+  "robotica.configuration.terminalLinkLoadsChunks": "Terminal Links load the terminal's chunk"
 }

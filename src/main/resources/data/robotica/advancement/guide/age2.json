@@ -42,6 +42,8 @@
       "robotica:electric_furnace_mk2",
       "robotica:ferrothorium_grinding_balls",
       "robotica:storage_expansion_mk2",
+      "robotica:chunk_anchor_mk2",
+      "robotica:terminal_link",
       "robotica:redstone_cell",
       "robotica:temp_servo_core",
       "robotica:solar_panel_mk2",
@@ -67,7 +69,7 @@
       "robotica:exo_boots_mk2_from_mk1",
       "robotica:rebreather_module",
       "robotica:rebreather_module_from_prismarine",
-      "robotica:jet_assist_module",
+      "robotica:jet_assist_module_2",
       "robotica:servo_stride_module_2",
       "robotica:robot_hud_module",
       "robotica:capacitor_redstone",
@@ -112,7 +114,8 @@
       "robotica:centrifuging_glistering_melon_slice",
       "robotica:wireless_charger",
       "robotica:wireless_charger_mk2",
-      "robotica:charger_mk2"
+      "robotica:charger_mk2",
+      "robotica:quantum_link_mk1"
     ],
     "experience": 30
   }

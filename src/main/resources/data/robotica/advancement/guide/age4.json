@@ -55,7 +55,6 @@
       "robotica:gate_controller",
       "robotica:capacitor_ender",
       "robotica:sonar_pulse_module_3",
-      "robotica:jet_assist_module_3",
       "robotica:med_injector_module_3",
       "robotica:power_regulator_module_3",
       "robotica:excavator_mk4",
@@ -64,7 +63,8 @@
       "robotica:chain_lightning_module_3",
       "robotica:lifesteal_module",
       "robotica:null_key",
-      "robotica:null_altar"
+      "robotica:null_altar",
+      "robotica:quantum_link_mk3"
     ],
     "experience": 80
   }

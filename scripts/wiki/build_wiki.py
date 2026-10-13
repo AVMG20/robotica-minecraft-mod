@@ -41,6 +41,7 @@ MODULE_NAMES = {
     'automation': 'Robots and quarries', 'drones': 'Drones', 'gear': 'Tools and weapons', 'exo': 'Exo-Frame',
     'architect': 'Base builder', 'replicator': 'Mob replicator', 'warp': 'Warp', 'storage': 'Storage',
     'boss': 'Bosses', 'codex': 'Codex', 'multiblock': 'Multiblocks', 'compat': 'Compat', 'sounds': 'Sounds',
+    'link': 'Quantum Link',
 }
 MODULE_ORDER = ['core', 'power', 'automation', 'processing', 'industry', 'energy', 'gear', 'drones', 'exo',
                 'replicator', 'storage', 'warp', 'architect', 'boss', 'codex']

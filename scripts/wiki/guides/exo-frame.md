@@ -23,7 +23,7 @@ summary: Powered armor, Mk1 to Mk4, with modules and a core socket.
 
 {{items jet_assist_module flight_module kinetic_shield_module med_injector_module hazard_seal_module glider_module}}
 
-Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one off on the J screen to use the other.
+With both a Glider and a Jet Assist, jump in mid air fires the jetpack; the Glider opens once thrust stops while you fall.
 
 ### Leggings
 
@@ -44,7 +44,7 @@ Chestplate Mk2 and up holds one core. The bonus needs all four pieces worn, Mk2 
 | Core | Bonus |
 |---|---|
 | [[servo_core]] | Overclock key (default O): Haste II + Speed I for 10 s (60 s cooldown, 50,000 FE) |
-| [[magma_core]] | fire immunity, hits set targets on fire, lava doesn't slow you |
+| [[magma_core]] | fire immunity, hits set targets on fire, lava doesn't slow you, Jet Assist heats half as fast |
 | [[antigrav_core]] | no fall damage, Flight costs half, Dash cooldown halved |
 
 {{image shots/22_wireless_charger.jpg|A Wireless Charger charging an Exo-Frame}}

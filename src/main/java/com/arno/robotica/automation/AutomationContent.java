@@ -1,11 +1,13 @@
 package com.arno.robotica.automation;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.automation.block.ChunkAnchorBlock;
 import com.arno.robotica.automation.block.ExcavatorBlock;
 import com.arno.robotica.automation.block.SproutBlock;
 import com.arno.robotica.automation.block.StumpyBlock;
 import com.arno.robotica.automation.block.SupplyCrateBlock;
 import com.arno.robotica.automation.block.SurveyRigBlock;
+import com.arno.robotica.automation.entity.ChunkAnchorBlockEntity;
 import com.arno.robotica.automation.entity.ExcavatorBlockEntity;
 import com.arno.robotica.automation.entity.SproutBlockEntity;
 import com.arno.robotica.automation.entity.StumpyBlockEntity;
@@ -14,6 +16,7 @@ import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.automation.item.FarmKitItem;
 import com.arno.robotica.automation.item.WorkerBlockItem;
 import com.arno.robotica.automation.menu.AreaWorkerMenu;
+import com.arno.robotica.automation.menu.ChunkAnchorMenu;
 import com.arno.robotica.automation.menu.SupplyCrateMenu;
 import com.arno.robotica.automation.menu.SurveyRigMenu;
 import net.minecraft.core.registries.Registries;
@@ -60,6 +63,15 @@ public final class AutomationContent {
                 .strength(2.0F + tier * 0.5F, 3.0F + tier * 3.0F).sound(SoundType.WOOD));
     }
 
+    private static DeferredBlock<ChunkAnchorBlock> chunkAnchor(String id, int tier) {
+        return BLOCKS.registerBlock(id, p -> new ChunkAnchorBlock(p, tier), BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
+                .strength(4.0F, 10.0F).sound(SoundType.METAL).noOcclusion().lightLevel(s -> switch (s.getValue(ChunkAnchorBlock.MODE)) {
+                    case ACTIVE -> 11;
+                    case ALERT -> 5;
+                    case IDLE -> 2;
+                }));
+    }
+
     // ---- blocks ----
     public static final DeferredBlock<StumpyBlock> STUMPY = BLOCKS.registerBlock("stumpy", StumpyBlock::new, robot(MapColor.COLOR_ORANGE));
     public static final DeferredBlock<SproutBlock> SPROUT = BLOCKS.registerBlock("sprout", SproutBlock::new, robot(MapColor.COLOR_YELLOW));
@@ -75,6 +87,9 @@ public final class AutomationContent {
     public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE_MK2 = crate("supply_crate_mk2", 2);
     public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE_MK3 = crate("supply_crate_mk3", 3);
     public static final DeferredBlock<SupplyCrateBlock> SUPPLY_CRATE_MK4 = crate("supply_crate_mk4", 4);
+    public static final DeferredBlock<ChunkAnchorBlock> CHUNK_ANCHOR = chunkAnchor("chunk_anchor", 1);
+    public static final DeferredBlock<ChunkAnchorBlock> CHUNK_ANCHOR_MK2 = chunkAnchor("chunk_anchor_mk2", 2);
+    public static final DeferredBlock<ChunkAnchorBlock> CHUNK_ANCHOR_MK3 = chunkAnchor("chunk_anchor_mk3", 3);
 
     // ---- items ----
     public static final DeferredItem<BlockItem> STUMPY_ITEM = ITEMS.registerItem("stumpy",
@@ -97,6 +112,12 @@ public final class AutomationContent {
             p -> new WorkerBlockItem(SURVEY_RIG_MK3.get(), p.rarity(Rarity.RARE), 3, "tooltip.robotica.survey_rig"));
     public static final DeferredItem<BlockItem> SURVEY_RIG_MK4_ITEM = ITEMS.registerItem("survey_rig_mk4",
             p -> new WorkerBlockItem(SURVEY_RIG_MK4.get(), p.rarity(Rarity.EPIC), 4, "tooltip.robotica.survey_rig"));
+    public static final DeferredItem<BlockItem> CHUNK_ANCHOR_ITEM = ITEMS.registerItem("chunk_anchor",
+            p -> new WorkerBlockItem(CHUNK_ANCHOR.get(), p, 1, "tooltip.robotica.chunk_anchor"));
+    public static final DeferredItem<BlockItem> CHUNK_ANCHOR_MK2_ITEM = ITEMS.registerItem("chunk_anchor_mk2",
+            p -> new WorkerBlockItem(CHUNK_ANCHOR_MK2.get(), p.rarity(Rarity.UNCOMMON), 2, "tooltip.robotica.chunk_anchor"));
+    public static final DeferredItem<BlockItem> CHUNK_ANCHOR_MK3_ITEM = ITEMS.registerItem("chunk_anchor_mk3",
+            p -> new WorkerBlockItem(CHUNK_ANCHOR_MK3.get(), p.rarity(Rarity.RARE), 3, "tooltip.robotica.chunk_anchor"));
     public static final DeferredItem<BlockItem> SUPPLY_CRATE_ITEM = ITEMS.registerItem("supply_crate",
             p -> new WorkerBlockItem(SUPPLY_CRATE.get(), p, 0, "tooltip.robotica.supply_crate"));
     public static final DeferredItem<BlockItem> SUPPLY_CRATE_MK2_ITEM = ITEMS.registerItem("supply_crate_mk2",
@@ -130,6 +151,9 @@ public final class AutomationContent {
             () -> BlockEntityType.Builder.of(SupplyCrateBlockEntity::new, SUPPLY_CRATE.get(), SUPPLY_CRATE_MK2.get(),
                     SUPPLY_CRATE_MK3.get(), SUPPLY_CRATE_MK4.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChunkAnchorBlockEntity>> CHUNK_ANCHOR_BE = BLOCK_ENTITIES.register("chunk_anchor",
+            () -> BlockEntityType.Builder.of(ChunkAnchorBlockEntity::new, CHUNK_ANCHOR.get(), CHUNK_ANCHOR_MK2.get(), CHUNK_ANCHOR_MK3.get()).build(null));
+
     // ---- menus ----
     public static final DeferredHolder<MenuType<?>, MenuType<AreaWorkerMenu>> WORKER_MENU = MENUS.register("area_worker",
             () -> IMenuTypeExtension.create(AreaWorkerMenu::new));
@@ -137,4 +161,6 @@ public final class AutomationContent {
             () -> IMenuTypeExtension.create(SurveyRigMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<SupplyCrateMenu>> CRATE_MENU = MENUS.register("supply_crate",
             () -> IMenuTypeExtension.create(SupplyCrateMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<ChunkAnchorMenu>> CHUNK_ANCHOR_MENU = MENUS.register("chunk_anchor",
+            () -> IMenuTypeExtension.create(ChunkAnchorMenu::new));
 }

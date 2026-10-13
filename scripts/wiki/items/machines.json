@@ -660,6 +660,56 @@
   },
   {
    "items": [
+    "chunk_anchor",
+    "chunk_anchor_mk2",
+    "chunk_anchor_mk3"
+   ],
+   "what": "Keeps the chunks around it loaded and ticking while it has FE.",
+   "use": [
+    "Place it and power it. It starts once it holds 5 s of upkeep.",
+    "Sneak-right-click: shows its chunks for 10 s.",
+    "Dry, it lets its chunks go; powered again, it takes them back.",
+    "Right-click it with the next Mk to upgrade it in place."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3"
+    ],
+    "rows": [
+     [
+      "Age",
+      "1",
+      "2",
+      "3"
+     ],
+     [
+      "Area",
+      "1 chunk",
+      "3x3 chunks",
+      "5x5 chunks"
+     ],
+     [
+      "Upkeep",
+      "10 FE/t",
+      "90 FE/t",
+      "250 FE/t"
+     ],
+     [
+      "Buffer",
+      "120,000 FE",
+      "1,080,000 FE",
+      "3,000,000 FE"
+     ]
+    ]
+   },
+   "see": [
+    "item:terminal_link"
+   ]
+  },
+  {
+   "items": [
     "buddy_bot",
     "buddy_bot_mk2",
     "buddy_bot_mk3",

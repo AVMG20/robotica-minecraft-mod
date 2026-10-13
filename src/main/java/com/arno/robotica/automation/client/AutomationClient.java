@@ -24,6 +24,7 @@ public final class AutomationClient {
         event.register(AutomationContent.WORKER_MENU.get(), AreaWorkerScreen::new);
         event.register(AutomationContent.CRATE_MENU.get(), SupplyCrateScreen::new);
         event.register(AutomationContent.SURVEY_RIG_MENU.get(), SurveyRigScreen::new);
+        event.register(AutomationContent.CHUNK_ANCHOR_MENU.get(), ChunkAnchorScreen::new);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -31,5 +32,6 @@ public final class AutomationClient {
         event.registerBlockEntityRenderer(AutomationContent.SPROUT_BE.get(), ctx -> new FarmBotRenderer<>(false));
         event.registerBlockEntityRenderer(AutomationContent.EXCAVATOR_BE.get(), ctx -> new AreaOutlineRenderer<>());
         event.registerEntityRenderer(RancherContent.RANCHER_ENTITY.get(), RancherRenderer::new);
+        event.registerBlockEntityRenderer(AutomationContent.CHUNK_ANCHOR_BE.get(), ChunkAnchorRenderer::new);
     }
 }

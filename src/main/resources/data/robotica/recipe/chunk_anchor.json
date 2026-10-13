@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PEP",
+    "BIB",
+    "PCP"
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    },
+    "C": {
+      "item": "robotica:copper_coil"
+    }
+  },
+  "result": {
+    "id": "robotica:chunk_anchor",
+    "count": 1
+  }
+}

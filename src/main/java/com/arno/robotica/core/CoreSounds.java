@@ -145,6 +145,23 @@ public final class CoreSounds {
     /** Kinetic Shield: a hit absorbed completely / partly. */
     public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_BLOCK = reg("exo_shield_block");
     public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_SPARK = reg("exo_shield_spark");
+    /** Chunk Anchor: the hum while it holds its chunks, and its engage / release. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CHUNK_ANCHOR_HUM = reg("chunk_anchor_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CHUNK_ANCHOR_ON = reg("chunk_anchor_on");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CHUNK_ANCHOR_OFF = reg("chunk_anchor_off");
+    /** Terminal Link chirps when the remote terminal screen opens and closes. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> TERMINAL_LINK_OPEN = reg("terminal_link_open");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TERMINAL_LINK_CLOSE = reg("terminal_link_close");
+    /** Quantum Link: soft hum while something moves, chimes when it joins or leaves a network. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_HUM = reg("link_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_JOIN = reg("link_join");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_LEAVE = reg("link_leave");
+    /** Jet Assist thruster loop, played client side for every firing jetpack nearby. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_JET_LOOP = reg("exo_jet_loop");
+    /** Jet Assist cutting out at full heat. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_JET_OVERHEAT = reg("exo_jet_overheat");
+    /** Jet Assist cooled down and ready again (only the wearer hears it). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EXO_JET_READY = reg("exo_jet_ready");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {

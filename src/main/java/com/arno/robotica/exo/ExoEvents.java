@@ -96,6 +96,11 @@ public final class ExoEvents {
     }
 
     @SubscribeEvent
+    public static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onChangedDimension(player);
+    }
+
+    @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) ExoTicker.onLogin(player);
     }

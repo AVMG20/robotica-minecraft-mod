@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "EXE",
+    " R "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "X": {
+      "item": "robotica:chunk_anchor"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:chunk_anchor_mk2",
+    "count": 1
+  }
+}

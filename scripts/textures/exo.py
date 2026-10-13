@@ -5,6 +5,8 @@ Mk1 = copper plating with brass trim and cyan lights, Mk2 = steel plating with c
 plating with magma trim and amber lights, Mk4 = null-violet plating with lilac trim and teal lights.
 Armor layers go to textures/models/armor/exo_mk{1-4}_layer_{1,2}.png (layer 1: helmet, chestplate, boots; layer 2: leggings).
 The Glider wings (Elytra model UVs) go to textures/entity/exo_glider.png.
+Jet Assist thruster pods (a player render layer, 64x32): exo_jetpack_mk{1-4}.png in the mark's colors and
+exo_jetpack_glow.png, the full bright pass drawn while the pack fires (hot nozzles, heat strips).
 Module cards are coloured by the piece they fit (any-piece modules violet); leveled modules show one gold pip per level.
 """
 import pathlib
@@ -96,7 +98,7 @@ GLYPHS = {
     'night_vision': ['......', '.XXXX.', 'X.XX.X', 'X.XX.X', '.XXXX.', '......', '......', '......'],
     'rebreather': ['..X...', '.X.X..', '..X..X', '.....X.', 'X..X..', '.X.X..', '..X...', '......'],
     'robot_hud': ['XXXXXX', 'X....X', 'X.XX.X', 'X.X..X', 'X....X', 'XXXXXX', '..XX..', '.XXXX.'],
-    'jet_assist': ['..XX..', '.XXXX.', 'XXXXXX', '..XX..', '..XX..', '.x..x.', '.x..x.', '..xx..'],
+    'jet_assist': ['.X..X.', 'XXXXXX', 'XX..XX', 'XX..XX', 'XX..XX', '.X..X.', '.x..x.', 'x.xx.x'],
     'flight': ['X....X', 'XX..XX', 'XXXXXX', '.XXXX.', '..XX..', '..XX..', '......', '......'],
     'kinetic_shield': ['XXXXXX', 'XXXXXX', 'XXXXXX', 'XXXXXX', '.XXXX.', '.XXXX.', '..XX..', '..XX..'],
     'servo_stride_1': ['......', 'X.....', '.X....', '..X...', '.X....', 'X.....', '......', '......'],
@@ -363,6 +365,82 @@ def glider_wings():
     return t.rows()
 
 
+# ------------------------------------------------------------------ Jet Assist pods (64x32, see ExoJetpackLayer)
+
+# Glow pass colors: Y white-hot core, o orange, r dull red heat, h heat strip.
+JET_GLOW = {'Y': '#FFF4C0', 'o': '#FF9A2E', 'r': '#B8401A', 'h': '#FFB060'}
+
+
+def jet_bracket(face, lx, ly, fw, fh, glow=False):
+    if glow:
+        return '.'
+    if face in ('front', 'back') and lx in (0, fw - 1) and ly in (0, fh - 1):
+        return 'k'
+    if face == 'back' and ly == 1 and 1 < lx < fw - 2:
+        return 'T'
+    return plate(face, lx, ly, fw, fh)
+
+
+def jet_pod(face, lx, ly, fw, fh, glow=False):
+    strip = face == 'back' and lx == 1 and 2 <= ly <= 5
+    if glow:
+        if strip:
+            return 'h'
+        if face in ('left', 'right', 'back', 'front') and ly == fh - 1:
+            return 'r'
+        return '.'
+    if face == 'top':
+        return 'M'
+    if face == 'bottom':
+        return 'k'
+    if strip:
+        return 'a' if ly > 2 else 'A'
+    if ly == 1:
+        return 'T'
+    if ly == fh - 2:
+        return 't'
+    if face in ('left', 'right') and lx == 1 and ly in (3, 5):
+        return 'k'
+    return plate(face, lx, ly, fw, fh)
+
+
+def jet_cap(face, lx, ly, fw, fh, glow=False):
+    if glow:
+        return '.'
+    return 'M' if face == 'top' else 'T'
+
+
+def jet_throat(face, lx, ly, fw, fh, glow=False):
+    if glow:
+        return 'o' if face == 'bottom' or ly == fh - 1 else 'r'
+    if face == 'bottom':
+        return 'k'
+    return 'k' if ly == fh - 1 else ('n' if lx == fw - 1 else 'm')
+
+
+def jet_bell(face, lx, ly, fw, fh, glow=False):
+    if face == 'bottom':
+        if glow:
+            return 'Y' if (lx, ly) == (1, 1) else 'o'
+        return 'k' if (lx, ly) == (1, 1) else 'n'
+    if glow:
+        return 'r'
+    if face == 'top':
+        return 'n'
+    return 't' if lx != 0 else 'T'
+
+
+JET_BOXES = ((0, 0, 6, 4, 1, jet_bracket), (0, 6, 3, 8, 3, jet_pod), (16, 0, 2, 1, 2, jet_cap),
+             (24, 0, 2, 2, 2, jet_throat), (16, 6, 3, 1, 3, jet_bell))
+
+
+def jetpack(glow=False):
+    t = Layer()
+    for u, v, w, h, d, fn in JET_BOXES:
+        t.box(u, v, w, h, d, lambda face, lx, ly, fw, fh, fn=fn: fn(face, lx, ly, fw, fh, glow))
+    return t.rows()
+
+
 # ------------------------------------------------------------------ main
 
 def main():
@@ -372,6 +450,8 @@ def main():
             write_item(f'exo_{slot}_mk{mk}', fn(), p)
         write_png(ASSETS / f'textures/models/armor/exo_mk{mk}_layer_1.png', layer1(), p, size=None)
         write_png(ASSETS / f'textures/models/armor/exo_mk{mk}_layer_2.png', layer2(), p, size=None)
+        write_png(ASSETS / f'textures/models/armor/exo_jetpack_mk{mk}.png', jetpack(), p, size=None)
+    write_png(ASSETS / 'textures/models/armor/exo_jetpack_glow.png', jetpack(glow=True), pal(JET_GLOW), size=None)
     for fname, name, level in module_files():
         write_item(fname, module(name, MODULE_COLORS[name], level), pal(MODULE_COLORS[name]))
     write_png(ASSETS / 'textures/entity/exo_glider.png', glider_wings(), pal(MK2), size=None)

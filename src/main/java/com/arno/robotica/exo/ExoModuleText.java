@@ -19,12 +19,16 @@ final class ExoModuleText {
                     String key = "module.robotica." + kind.id + ".desc";
                     if (kind == ModuleKind.NIGHT_VISION && ExoConfig.thermalRadius(level) > 0) key += "_thermal";
                     if (kind == ModuleKind.HEAT_SHIELD && level >= 2) key += "_2";
+                    if (kind == ModuleKind.JET_ASSIST && level >= ExoJet.HOVER_LEVEL) key += "_hover";
                     return Component.translatable(key, ExoConfig.describeArgs(kind, level));
                 }
 
                 @Nullable
                 @Override
                 public Component cost(int level) {
+                    if (kind == ModuleKind.JET_ASSIST) {
+                        return Component.translatable("exo.robotica.unit.thrust", ExoConfig.jetThrustCost(level), ExoConfig.doubleJumpCost(level));
+                    }
                     String unit = unit(kind);
                     return unit == null ? null : Component.translatable("exo.robotica.unit." + unit, ExoConfig.cost(kind, level));
                 }
@@ -36,7 +40,7 @@ final class ExoModuleText {
     @Nullable
     private static String unit(ModuleKind kind) {
         return switch (kind) {
-            case NIGHT_VISION, REBREATHER, ROBOT_HUD, JET_ASSIST, FLIGHT, SERVO_STRIDE, STEP_ASSIST, MAGNET, HYDRO_FINS, GLIDER,
+            case NIGHT_VISION, REBREATHER, ROBOT_HUD, FLIGHT, SERVO_STRIDE, STEP_ASSIST, MAGNET, HYDRO_FINS, GLIDER,
                  REACH, CRYO_TREADS -> "second";
             case HEAT_SHIELD -> "burning";
             case ANCHOR_SERVOS -> "knockback";

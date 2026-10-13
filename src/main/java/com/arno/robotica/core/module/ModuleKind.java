@@ -41,7 +41,7 @@ public enum ModuleKind {
     SOLAR_WEAVE("solar_weave", Pieces.HEAD, 0, 2),
     SONAR_PULSE("sonar_pulse", Pieces.HEAD, 0, 2, 3, 4),
     // Exo chestplate
-    JET_ASSIST("jet_assist", Pieces.CHEST, 0, 2, 3, 4),
+    JET_ASSIST("jet_assist", Pieces.CHEST, 0, 1, 2, 3),
     FLIGHT("flight", Pieces.CHEST, 0, 3),
     KINETIC_SHIELD("kinetic_shield", Pieces.CHEST, 0, 3, 4, 4),
     MED_INJECTOR("med_injector", Pieces.CHEST, 0, 2, 3, 4),

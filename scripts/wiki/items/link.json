@@ -1,0 +1,14 @@
+{"entries": [
+  {"items": ["quantum_link_mk1", "quantum_link_mk2", "quantum_link_mk3"],
+   "what": "Moves FE and items between Links on the same named network.",
+   "use": ["Right-click it, press **New** and name a network, or click one in the list to join.",
+           "Set **Energy** and **Items** to Send on one Link and Receive on another.",
+           "Feed a sender by cable, pipe or hopper. A receiver pushes out of its faces; a [[tesla_emitter_1]] on it sends its FE on.",
+           "Right-click a placed Link with the next Mk to upgrade it in place."],
+   "stats": {"columns": ["Mk1", "Mk2", "Mk3"],
+             "rows": [["FE", "64,000 FE/t", "256,000 FE/t", "1,000,000 FE/t"],
+                      ["Items", "1 stack/s", "4 stacks/s", "16 stacks/s"],
+                      ["Upkeep", "20 FE/t", "100 FE/t", "400 FE/t"],
+                      ["Reach", "Home dimension", "Any dimension", "Any dimension"]]},
+   "see": ["guide:quantum-link"]}
+]}

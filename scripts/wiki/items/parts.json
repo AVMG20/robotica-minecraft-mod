@@ -520,6 +520,45 @@
   },
   {
    "items": [
+    "terminal_link",
+    "terminal_link_mk2"
+   ],
+   "what": "Opens a bound Storage Terminal from far away, crafting grid included.",
+   "use": [
+    "Sneak-right-click a Storage Terminal to bind it.",
+    "Right-click to open it. Mk1: same dimension. Mk2: any dimension.",
+    "While open, the terminal's chunk stays loaded for you.",
+    "Closes after 60 s without a click."
+   ],
+   "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2"
+    ],
+    "rows": [
+     [
+      "Age",
+      "2",
+      "3"
+     ],
+     [
+      "Battery",
+      "400,000 FE",
+      "1,000,000 FE"
+     ],
+     [
+      "Use while open",
+      "20 FE/t",
+      "40 FE/t"
+     ]
+    ]
+   },
+   "see": [
+    "item:storage_terminal"
+   ]
+  },
+  {
+   "items": [
     "storage_expansion_mk1",
     "storage_expansion_mk2",
     "storage_expansion_mk3"

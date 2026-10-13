@@ -1,0 +1,6 @@
+{
+  "parent": "robotica:block/chunk_anchor",
+  "textures": {
+    "core": "robotica:block/chunk_anchor_core_on"
+  }
+}

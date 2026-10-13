@@ -5,6 +5,7 @@ import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.exo.ExoData;
+import com.arno.robotica.exo.ExoJet;
 import com.arno.robotica.core.module.ModuleItems;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.core.module.Modules;
@@ -24,7 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Compact HUD while wearing Exo pieces (corner and offset in the client config, or off): suit energy bar, one icon per
+ * Compact HUD while wearing Exo pieces (corner and offset in the client config, or off): suit energy bar, the Jet
+ * Assist heat bar under it (red near the cut-out, blinking while it cools from an overheat), one icon per
  * installed module (dimmed when off, empty or a duplicate), cooldown rings (Dash, Med Injector, Sonar, Overclock),
  * sonar results and the Robot HUD's drone list.
  */
@@ -80,10 +82,21 @@ final class ExoHud {
         int sonarLeft = ExoXray.sonarTicksLeft();
         int droneLines = robotHud ? Math.min(4, (int) drones.stream().filter(DroneBase::isAlive).count()) : 0;
 
+        boolean jet = active.has(ModuleKind.JET_ASSIST) || ExoJetpack.heat() > 0;
+        double heat = ExoJetpack.heat();
+        boolean over = ExoJetpack.overheated();
+        String heatKey = ExoJetpack.hoverMode() ? "exo.robotica.hud.heat_hover" : "exo.robotica.hud.heat";
+        Component overLabel = Component.translatable("exo.robotica.hud.overheated");
+        int bars = jet ? 13 : 8;
         int perRow = 8;
         int iconRows = (icons.size() + perRow - 1) / perRow;
         int width = Math.max(BAR_W + 40, Math.min(icons.size(), perRow) * ICON);
-        int height = 8 + iconRows * ICON + (sonarLeft > 0 ? 9 : 0) + droneLines * 9;
+        if (jet) {
+            // Room for the widest heat label (small print right of the bar), so it stays on screen in the right corners.
+            int label = Math.max(mc.font.width(overLabel), mc.font.width(Component.translatable(heatKey, 100)));
+            width = Math.max(width, BAR_W + 4 + (int) Math.ceil(label * 0.75F));
+        }
+        int height = bars + iconRows * ICON + (sonarLeft > 0 ? 9 : 0) + droneLines * 9;
         int sw = g.guiWidth(), sh = g.guiHeight();
         ExoClientConfig.Corner corner = ExoClientConfig.corner();
         boolean right = corner == ExoClientConfig.Corner.TOP_RIGHT || corner == ExoClientConfig.Corner.BOTTOM_RIGHT;
@@ -100,8 +113,23 @@ final class ExoHud {
         g.fill(x, y, x + filled, y + 1, low ? 0xFFFF6B5E : 0xFF9BF0F8);
         small(g, mc, Component.literal(Fmt.compact(stored) + " FE"), x + BAR_W + 4, y, low ? 0xFFFF6B5E : 0xFFD8FBFF);
 
+        // Jet Assist heat bar.
+        if (jet) {
+            boolean hot = over || heat >= ExoJet.HOT;
+            boolean blink = over && (player.tickCount / 4) % 2 == 0;
+            int hy = y + 8;
+            int hot1 = blink ? 0xFFFF6B5E : 0xFFC9302A;
+            int heatFill = (int) Math.round(BAR_W * Math.min(1.0, heat));
+            g.fill(x - 1, hy - 1, x + BAR_W + 1, hy + 4, 0xAA000000);
+            g.fill(x, hy, x + BAR_W, hy + 3, 0xFF2E211C);
+            g.fill(x, hy, x + heatFill, hy + 3, hot ? hot1 : 0xFFE8A020);
+            g.fill(x, hy, x + heatFill, hy + 1, hot ? 0xFFFF9A8A : 0xFFFFD27A);
+            Component label = over ? overLabel : Component.translatable(heatKey, Math.round(heat * 100));
+            small(g, mc, label, x + BAR_W + 4, hy - 1, hot ? 0xFFFF6B5E : 0xFFFFD27A);
+        }
+
         // Module icons with cooldown rings.
-        int iy = y + 8;
+        int iy = y + bars;
         for (int n = 0; n < icons.size(); n++) {
             Icon icon = icons.get(n);
             int ix = x + (n % perRow) * ICON;

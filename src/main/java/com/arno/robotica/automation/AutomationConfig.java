@@ -59,6 +59,9 @@ public final class AutomationConfig {
     private static final ModConfigSpec.IntValue[] FARM_RADIUS = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] FARM_INTERVAL = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.DoubleValue[] FARM_GROWTH = new ModConfigSpec.DoubleValue[4];
+    private static final ModConfigSpec.IntValue ANCHOR_CHUNKS_PER_PLAYER;
+    private static final ModConfigSpec.BooleanValue ANCHOR_WHILE_OFFLINE;
+    private static final ModConfigSpec.IntValue ANCHOR_FE_PER_CHUNK;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -135,6 +138,14 @@ public final class AutomationConfig {
                 .defineInRange("rancherFePerAction", 200, 0, 1_000_000);
         RANCHER_FE_PER_CULL = b.comment("Rancher FE per culled animal.")
                 .defineInRange("rancherFePerCull", 500, 0, 1_000_000);
+        b.pop();
+        b.comment("Chunk Anchor: keeps chunks loaded and ticking while nobody is near.").push("chunk_anchor");
+        ANCHOR_CHUNKS_PER_PLAYER = b.comment("Most chunks one player's anchors keep loaded, all dimensions together. 0 turns anchors off.")
+                .defineInRange("anchorChunksPerPlayer", 25, 0, 10_000);
+        ANCHOR_WHILE_OFFLINE = b.comment("Anchors keep loading while their owner is offline. Off: their chunks go on logout and come back on login.")
+                .define("anchorWhileOffline", true);
+        ANCHOR_FE_PER_CHUNK = b.comment("FE per tick per loaded chunk. The buffer holds 10 minutes of upkeep.")
+                .defineInRange("anchorFePerChunk", 10, 0, 100_000);
         b.pop();
         SPEC = b.build();
     }
@@ -243,5 +254,17 @@ public final class AutomationConfig {
 
     public static List<? extends String> surveyCoreOres() {
         return SPEC.isLoaded() ? SURVEY_CORE_ORES.get() : DEFAULT_CORE_ORES;
+    }
+
+    public static int anchorChunksPerPlayer() {
+        return SPEC.isLoaded() ? ANCHOR_CHUNKS_PER_PLAYER.get() : 25;
+    }
+
+    public static boolean anchorWhileOffline() {
+        return !SPEC.isLoaded() || ANCHOR_WHILE_OFFLINE.get();
+    }
+
+    public static int anchorFePerChunk() {
+        return SPEC.isLoaded() ? ANCHOR_FE_PER_CHUNK.get() : 10;
     }
 }

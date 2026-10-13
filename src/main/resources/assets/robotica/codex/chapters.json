@@ -329,6 +329,29 @@
       ]
     },
     {
+      "title": "Chunk loading",
+      "icon": "robotica:chunk_anchor",
+      "pages": [
+        {
+          "title": "Chunk Anchor",
+          "text": "Dry, it lets its chunks go; powered again, it takes them back.",
+          "items": [
+            "robotica:chunk_anchor",
+            "robotica:chunk_anchor_mk2",
+            "robotica:chunk_anchor_mk3"
+          ]
+        },
+        {
+          "title": "Chunk limit",
+          "text": "- Each player has one chunk limit for all their anchors, in all dimensions.\n- Over it, an anchor turns red and loads nothing.\n- A cell in its battery slot carries it through a power cut.",
+          "items": [
+            "robotica:chunk_anchor",
+            "robotica:copper_cell"
+          ]
+        }
+      ]
+    },
+    {
       "title": "Modules",
       "icon": "robotica:overclock_module",
       "pages": [
@@ -498,8 +521,16 @@
           ]
         },
         {
+          "title": "Jetpack",
+          "text": "Full heat bar: the pack cuts out until it has cooled, twice as fast on the ground. Your fall slows meanwhile.",
+          "items": [
+            "robotica:jet_assist_module",
+            "robotica:jet_assist_module_2",
+            "robotica:jet_assist_module_3"
+          ]
+        },
+        {
           "title": "More modules",
-          "text": "Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one off on the J screen to use the other.",
           "items": [
             "robotica:glider_module",
             "robotica:gyro_stabilizer_module",
@@ -619,6 +650,14 @@
             "robotica:storage_expansion_mk2",
             "robotica:storage_expansion_mk3"
           ]
+        },
+        {
+          "title": "Terminal Link",
+          "text": "- While its screen is open, the terminal's chunk stays loaded for you.\n- Closes after 60 s without a click, or when the link leaves your hand.",
+          "items": [
+            "robotica:terminal_link",
+            "robotica:terminal_link_mk2"
+          ]
         }
       ]
     },
@@ -643,6 +682,28 @@
             "robotica:grinder_mk1",
             "robotica:alloy_smelter_mk1",
             "robotica:metal_press"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Quantum Link",
+      "icon": "robotica:quantum_link_mk1",
+      "pages": [
+        {
+          "title": "Networks",
+          "text": "The network holds 5 seconds of every sender's FE and 9 item slots per item sender. It fills while the receivers are unloaded and empties when they load again.",
+          "items": [
+            "robotica:quantum_link_mk1",
+            "robotica:quantum_link_mk2",
+            "robotica:quantum_link_mk3"
+          ]
+        },
+        {
+          "title": "Link tips",
+          "text": "Upkeep comes from the Link's own buffer, else from the network.\nLinks next to each other ignore each other.\nA broken Link keeps its network and settings.",
+          "items": [
+            "robotica:quantum_link_mk1"
           ]
         }
       ]
