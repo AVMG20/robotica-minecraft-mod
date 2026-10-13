@@ -3,8 +3,8 @@
   "render_type": "minecraft:translucent",
   "textures": {
     "base": "robotica:block/resonant_segment_base",
-    "coil": "robotica:block/resonant_segment_coil",
-    "glow": "robotica:block/resonant_segment_coil_glow",
+    "parts": "robotica:block/resonant_segment_parts",
+    "corner": "robotica:block/resonant_segment_corner",
     "pipe": "robotica:block/resonant_segment_pipe",
     "particle": "robotica:block/resonant_segment_base"
   },
@@ -32,6 +32,65 @@
         },
         "east": {
           "texture": "#pipe"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        5,
+        15
+      ],
+      "to": [
+        11,
+        11,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            6,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            6,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            6,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            1,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            1,
+            14
+          ]
         }
       }
     }
