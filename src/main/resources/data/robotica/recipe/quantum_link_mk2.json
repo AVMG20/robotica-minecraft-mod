@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BMB",
+    "QLQ",
+    "PEP"
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:blazing_casing"
+    },
+    "M": {
+      "item": "robotica:magma_core"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "L": {
+      "item": "robotica:quantum_link_mk1"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    }
+  },
+  "result": {
+    "id": "robotica:quantum_link_mk2",
+    "count": 1
+  }
+}

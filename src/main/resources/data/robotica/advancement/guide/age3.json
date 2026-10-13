@@ -86,7 +86,8 @@
       "robotica:sharpened_edge_module_3",
       "robotica:looting_module_3",
       "robotica:ignition_charge",
-      "robotica:forge_altar"
+      "robotica:forge_altar",
+      "robotica:quantum_link_mk2"
     ],
     "experience": 50
   }

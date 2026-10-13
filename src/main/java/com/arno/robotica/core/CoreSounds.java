@@ -152,6 +152,10 @@ public final class CoreSounds {
     /** Terminal Link chirps when the remote terminal screen opens and closes. */
     public static final DeferredHolder<SoundEvent, SoundEvent> TERMINAL_LINK_OPEN = reg("terminal_link_open");
     public static final DeferredHolder<SoundEvent, SoundEvent> TERMINAL_LINK_CLOSE = reg("terminal_link_close");
+    /** Quantum Link: soft hum while something moves, chimes when it joins or leaves a network. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_HUM = reg("link_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_JOIN = reg("link_join");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LINK_LEAVE = reg("link_leave");
 
     /** Plays a sound at a block position for every nearby player. Server side only, ignored on the client. */
     public static void play(Level level, BlockPos pos, Supplier<SoundEvent> sound, SoundSource source, float volume, float pitch) {

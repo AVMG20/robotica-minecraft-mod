@@ -2294,5 +2294,56 @@
         "pitch": 1.5
       }
     ]
+  },
+  "link_hum": {
+    "subtitle": "subtitles.robotica.link_hum",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "type": "file",
+        "volume": 0.14,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "link_join": {
+    "subtitle": "subtitles.robotica.link_join",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.7
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 1.8
+      }
+    ]
+  },
+  "link_leave": {
+    "subtitle": "subtitles.robotica.link_leave",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.85
+      }
+    ]
   }
 }

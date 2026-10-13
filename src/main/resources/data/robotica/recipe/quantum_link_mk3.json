@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ECE",
+    "NLN",
+    "ECE"
+  ],
+  "key": {
+    "E": {
+      "tag": "c:ender_pearls"
+    },
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "N": {
+      "item": "robotica:null_casing"
+    },
+    "L": {
+      "item": "robotica:quantum_link_mk2"
+    }
+  },
+  "result": {
+    "id": "robotica:quantum_link_mk3",
+    "count": 1
+  }
+}

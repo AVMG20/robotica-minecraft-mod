@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:quantum_link_mk1",
+    "robotica:quantum_link_mk2",
+    "robotica:quantum_link_mk3"
+  ]
+}

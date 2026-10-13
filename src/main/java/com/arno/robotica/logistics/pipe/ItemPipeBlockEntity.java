@@ -137,15 +137,19 @@ public class ItemPipeBlockEntity extends BlockEntity {
 
     /** Whitelist: only items matching an entry. Blacklist: everything else. An empty filter lets everything through. */
     public boolean passes(Direction side, ItemStack stack) {
-        ItemStackHandler filter = filters[side.ordinal()];
+        return passes(filters[side.ordinal()], whitelist[side.ordinal()], stack);
+    }
+
+    /** The filter rule shared with the Quantum Link: ghost entries in {@code filter}, matched by item only. */
+    public static boolean passes(IItemHandler filter, boolean whitelist, ItemStack stack) {
         boolean any = false;
-        for (int i = 0; i < FILTER_SLOTS; i++) {
+        for (int i = 0; i < filter.getSlots(); i++) {
             ItemStack entry = filter.getStackInSlot(i);
             if (entry.isEmpty()) continue;
             any = true;
-            if (ItemStack.isSameItem(entry, stack)) return whitelist[side.ordinal()];
+            if (ItemStack.isSameItem(entry, stack)) return whitelist;
         }
-        return !any || !whitelist[side.ordinal()];
+        return !any || !whitelist;
     }
 
     /** True when the link to the pipe on {@code side} is cut on this pipe's end. */

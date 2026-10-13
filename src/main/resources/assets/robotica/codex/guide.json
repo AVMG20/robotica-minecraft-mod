@@ -259,6 +259,12 @@
       "age": 2
     },
     {
+      "id": "robotica:guide/quantum_link",
+      "parent": "robotica:guide/age2",
+      "icon": "robotica:quantum_link_mk1",
+      "age": 2
+    },
+    {
       "id": "robotica:guide/age3",
       "parent": "robotica:guide/servo_core",
       "icon": "robotica:quantum_circuit",
