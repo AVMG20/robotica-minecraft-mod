@@ -723,9 +723,7 @@
   },
   {
    "items": [
-    "fall_dampener_module",
-    "fall_dampener_module_2",
-    "fall_dampener_module_3"
+    "fall_dampener_module"
    ],
    "what": "Cancels all fall damage while charged, also from Ender Pearls and flying into walls.",
    "stats": {
@@ -735,12 +733,12 @@
       "Exo boots"
      ],
      [
-      "Min. Mk (I / II / III)",
-      "Mk1 / Mk2 / Mk3"
+      "Min. Mk",
+      "Mk1"
      ],
      [
       "Energy",
-      "150 / 100 / 60 FE per block"
+      "100 FE per block"
      ]
     ]
    },

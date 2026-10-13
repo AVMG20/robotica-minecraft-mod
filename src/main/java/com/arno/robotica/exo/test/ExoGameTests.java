@@ -16,6 +16,7 @@ import com.arno.robotica.exo.ExoTicker;
 import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.menu.ExoMenu;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -345,6 +346,8 @@ public class ExoGameTests {
         player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ModuleKind.FALL_DAMPENER));
         ticks(player, 1);
         int perBlock = ExoConfig.cost(ModuleKind.FALL_DAMPENER, 1);
+        helper.assertTrue(BuiltInRegistries.ITEM.get(Robotica.id("fall_dampener_module_3")) == ModuleItems.get(ModuleKind.FALL_DAMPENER, 1).get(),
+                "old Fall Dampener III items load as the single module");
         helper.assertTrue(fall(player, 10.0F) == 0.0F, "a charged fall dampener removes the fall damage");
         ExoTicker.flush(player);
         int used = 100_000 - energy(player, EquipmentSlot.FEET);

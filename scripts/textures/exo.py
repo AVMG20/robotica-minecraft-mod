@@ -156,7 +156,7 @@ MODULE_COLORS = {
 }
 # Modules with levels: one file per level (level I keeps the plain name). Servo Stride has its own glyph per level.
 LEVELS = {name: 3 for name in ('night_vision', 'sonar_pulse', 'jet_assist', 'kinetic_shield', 'med_injector', 'spring_heels',
-                               'fall_dampener', 'magnet', 'capacitor_plating', 'power_regulator', 'reach', 'anchor_servos')}
+                               'magnet', 'capacitor_plating', 'power_regulator', 'reach', 'anchor_servos')}
 LEVELS['heat_shield'] = 2
 
 

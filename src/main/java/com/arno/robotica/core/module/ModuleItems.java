@@ -38,6 +38,9 @@ public final class ModuleItems {
             }
             ITEMS_BY_KIND.put(kind, List.copyOf(levels));
         }
+        // Retired levels: old stacks and installed modules load as the single module.
+        ITEMS.addAlias(Robotica.id("fall_dampener_module_2"), Robotica.id("fall_dampener_module"));
+        ITEMS.addAlias(Robotica.id("fall_dampener_module_3"), Robotica.id("fall_dampener_module"));
     }
 
     /** The module item of a kind at a level (clamped to the kind's levels). */

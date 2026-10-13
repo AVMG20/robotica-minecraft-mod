@@ -130,8 +130,6 @@ shapeless('spring_heels_module', ['#c:storage_blocks/slime', 'electric_motor', '
 level2('spring_heels', '#c:storage_blocks/slime')
 level3('spring_heels', '#c:storage_blocks/slime')
 shapeless('fall_dampener_module', ['#c:storage_blocks/slime', '#c:storage_blocks/slime', 'electric_motor', 'basic_circuit'])
-level2('fall_dampener', 'servo_actuator')
-level3('fall_dampener', 'minecraft:phantom_membrane')
 shaped('magnet_module', ['ICI', 'RBR'], {'I': '#c:ingots/iron', 'C': 'copper_coil', 'R': '#c:dusts/redstone', 'B': 'basic_circuit'})
 level2('magnet', '#c:storage_blocks/iron')
 level3('magnet', 'minecraft:lodestone')

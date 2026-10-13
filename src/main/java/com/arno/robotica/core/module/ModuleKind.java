@@ -56,7 +56,7 @@ public enum ModuleKind {
     // Exo boots
     STEP_ASSIST("step_assist", Pieces.FEET, 0, 1),
     SPRING_HEELS("spring_heels", Pieces.FEET, 0, 1, 2, 3),
-    FALL_DAMPENER("fall_dampener", Pieces.FEET, 0, 1, 2, 3),
+    FALL_DAMPENER("fall_dampener", Pieces.FEET, 0, 1),
     MAGNET("magnet", Pieces.FEET, 0, 1, 2, 3),
     HYDRO_FINS("hydro_fins", Pieces.FEET, 0, 2),
     CRYO_TREADS("cryo_treads", Pieces.FEET, 0, 1),
