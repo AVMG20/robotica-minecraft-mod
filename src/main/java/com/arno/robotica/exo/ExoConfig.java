@@ -16,9 +16,9 @@ public final class ExoConfig {
 
     // ---- energy costs (FE per unit of the module)
     private static final ModConfigSpec.IntValue[] NIGHT_VISION, JET_ASSIST, JET_ASSIST_JUMP, KINETIC_SHIELD, SERVO, SPRING_HEELS,
-            FALL_DAMPENER, MAGNET, SONAR, MED_INJECTOR, REACH, ANCHOR_SERVOS, HEAT_SHIELD;
+            MAGNET, SONAR, MED_INJECTOR, REACH, ANCHOR_SERVOS, HEAT_SHIELD;
     private static final ModConfigSpec.IntValue REBREATHER, ROBOT_HUD, FLIGHT, STEP_ASSIST, AUTO_FEEDER, SOLAR_WEAVE, HAZARD_SEAL,
-            KINETIC_GEN_WALK, KINETIC_GEN_SPRINT, DASH, HYDRO_FINS, OVERCLOCK, GLIDER, CRYO_TREADS;
+            KINETIC_GEN_WALK, KINETIC_GEN_SPRINT, DASH, HYDRO_FINS, OVERCLOCK, GLIDER, CRYO_TREADS, FALL_DAMPENER;
     private static final ModConfigSpec.IntValue CELL_RECHARGE_RATE, CELL_SLOT_RATE;
     private static final ModConfigSpec.BooleanValue CELL_RECHARGE;
 
@@ -62,7 +62,7 @@ public final class ExoConfig {
         DASH = cost(b, "dashThrustersPerDash", "FE per Dash Thrusters dash.", 3_000);
         STEP_ASSIST = cost(b, "stepAssistPerSecond", "FE per second while walking with Step Assist.", 10);
         SPRING_HEELS = costs(b, "springHeelsPerJump", "FE per boosted jump (I, II, III).", 100, 150, 200);
-        FALL_DAMPENER = costs(b, "fallDampenerPerBlock", "FE per block of a fall the Fall Dampener absorbs (I, II, III).", 150, 100, 60);
+        FALL_DAMPENER = cost(b, "fallDampenerPerBlock", "FE per block of a fall the Fall Dampener absorbs.", 100);
         CRYO_TREADS = cost(b, "cryoTreadsPerSecond", "FE per second while Cryo Treads freeze water.", 20);
         MAGNET = costs(b, "magnetPerSecond", "FE per second while the Magnet pulls items (I, II, III).", 40, 60, 80);
         HYDRO_FINS = cost(b, "hydroFinsPerSecond", "FE per second while swimming with Hydro Fins.", 20);
@@ -197,7 +197,7 @@ public final class ExoConfig {
             case DASH_THRUSTERS -> get(DASH);
             case STEP_ASSIST -> get(STEP_ASSIST);
             case SPRING_HEELS -> get(lv(SPRING_HEELS, level));
-            case FALL_DAMPENER -> get(lv(FALL_DAMPENER, level));
+            case FALL_DAMPENER -> get(FALL_DAMPENER);
             case MAGNET -> get(lv(MAGNET, level));
             case HYDRO_FINS -> get(HYDRO_FINS);
             case GLIDER -> get(GLIDER);

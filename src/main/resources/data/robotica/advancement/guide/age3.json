@@ -66,7 +66,6 @@
       "robotica:hazard_seal_module",
       "robotica:dash_thrusters_module",
       "robotica:spring_heels_module_3",
-      "robotica:fall_dampener_module_3",
       "robotica:magnet_module_3",
       "robotica:capacitor_plating_module_3",
       "robotica:reach_module_3",

@@ -16,6 +16,7 @@ import com.arno.robotica.exo.ExoTicker;
 import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.menu.ExoMenu;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -198,6 +199,9 @@ public class ExoGameTests {
         helper.assertTrue(menu.slots.get(0).mayPlace(mod(ModuleKind.CAPACITOR_PLATING)), "Capacitor Plating works per piece, one in every piece is fine");
         player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ModuleKind.POWER_REGULATOR));
         helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ModuleKind.POWER_REGULATOR)), "the Power Regulator works for the whole suit, once");
+        helper.assertTrue(menu.slots.get(0).mayPlace(mod(ModuleKind.MAGNET)), "the Magnet fits any piece");
+        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK3, 50_000, ModuleKind.MAGNET));
+        helper.assertTrue(!menu.slots.get(0).mayPlace(mod(ModuleKind.MAGNET)), "a second Magnet in the suit is refused");
 
         // Duplicates that got in anyway (two pieces put on) never stack: the highest level counts.
         player.setItemSlot(EquipmentSlot.HEAD, pieceM(ExoItems.HELMET_MK4, 50_000, mod(ModuleKind.POWER_REGULATOR, 3)));
@@ -314,7 +318,7 @@ public class ExoGameTests {
     public static void magnetRadiusGrowsWithLevel(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         int start = 50_000;
-        player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, start, ModuleKind.MAGNET));
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK1, start, ModuleKind.MAGNET));
         ServerLevel level = helper.getLevel();
         ItemEntity near = drop(level, player, 4.0);
         ItemEntity far = drop(level, player, 12.0);
@@ -322,8 +326,10 @@ public class ExoGameTests {
         Vec3 toPlayer = player.position().subtract(near.position());
         helper.assertTrue(near.getDeltaMovement().dot(toPlayer) > 0.05, "a nearby item is pulled toward the player, motion " + near.getDeltaMovement());
         helper.assertTrue(far.getDeltaMovement().lengthSqr() < 1.0E-6, "an item out of Magnet I range stays put");
-        helper.assertTrue(energy(player, EquipmentSlot.FEET) < start, "pulling costs energy");
+        helper.assertTrue(energy(player, EquipmentSlot.HEAD) < start, "pulling costs energy");
 
+        // Magnets in boots (their old place) still work.
+        player.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
         player.setItemSlot(EquipmentSlot.FEET, pieceM(ExoItems.BOOTS_MK3, start, mod(ModuleKind.MAGNET, 3)));
         ticks(player, 4);
         helper.assertTrue(ExoConfig.magnetRadius(3) >= 12 && far.getDeltaMovement().lengthSqr() > 1.0E-4, "Magnet III reaches " + ExoConfig.magnetRadius(3) + " blocks");
@@ -345,6 +351,8 @@ public class ExoGameTests {
         player.setItemSlot(EquipmentSlot.FEET, piece(ExoItems.BOOTS_MK1, 100_000, ModuleKind.FALL_DAMPENER));
         ticks(player, 1);
         int perBlock = ExoConfig.cost(ModuleKind.FALL_DAMPENER, 1);
+        helper.assertTrue(BuiltInRegistries.ITEM.get(Robotica.id("fall_dampener_module_3")) == ModuleItems.get(ModuleKind.FALL_DAMPENER, 1).get(),
+                "old Fall Dampener III items load as the single module");
         helper.assertTrue(fall(player, 10.0F) == 0.0F, "a charged fall dampener removes the fall damage");
         ExoTicker.flush(player);
         int used = 100_000 - energy(player, EquipmentSlot.FEET);

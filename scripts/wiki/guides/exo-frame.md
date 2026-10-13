@@ -31,11 +31,11 @@ Glider and Jet Assist both use jump in mid air, and the Glider wins. Switch one 
 
 ### Boots
 
-{{items step_assist_module spring_heels_module fall_dampener_module magnet_module hydro_fins_module cryo_treads_module dash_thrusters_module}}
+{{items step_assist_module spring_heels_module fall_dampener_module hydro_fins_module cryo_treads_module dash_thrusters_module}}
 
 ### Any piece
 
-{{items capacitor_plating_module power_regulator_module reach_module heat_shield_module}}
+{{items capacitor_plating_module power_regulator_module reach_module heat_shield_module magnet_module}}
 
 ## Core socket
 
