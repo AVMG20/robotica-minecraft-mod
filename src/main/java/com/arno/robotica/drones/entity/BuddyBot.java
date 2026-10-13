@@ -48,6 +48,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -62,8 +63,10 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -79,7 +82,8 @@ import java.util.UUID;
 /**
  * Buddy Bot: the player's flying companion (Mk1 to Mk4). It follows, patrols a spot or stays, shoots hostiles by
  * stance, sweeps up drops into its cargo (a flying chest) and digs a tunnel where the owner looks (H). Spark Lamps light
- * its tunnels, and with light-up on, dark places it flies through. Tiers only add numbers and cargo space.
+ * its tunnels, and with light-up on, dark places it flies through. With platform on it fills gaps in the tunnel floor
+ * with junk blocks from its cargo, also over open air. Tiers only add numbers, cargo space and the 5x5 tunnel size.
  * <p>
  * Blocks are broken through a fake player of the owner so protection and claim mods can veto; it never touches block
  * entities or unbreakable blocks and never loads chunks: an unloaded slice ends the tunnel. Emotes and reactions are
@@ -99,7 +103,9 @@ public class BuddyBot extends DroneBase {
 
     private static final EntityDataAccessor<Integer> DATA_STANCE = SynchedEntityData.defineId(BuddyBot.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(BuddyBot.class, EntityDataSerializers.BYTE);
-    private static final int FLAG_PICKUP = 1, FLAG_LIGHTS = 2, FLAG_VOID = 4, FLAG_DIGGING = 8, FLAG_LOW = 16, FLAG_OPEN = 32;
+    private static final int FLAG_PICKUP = 1, FLAG_LIGHTS = 2, FLAG_VOID = 4, FLAG_DIGGING = 8, FLAG_LOW = 16, FLAG_OPEN = 32, FLAG_PLATFORM = 64;
+    /** Junk blocks kept in the cargo with void on, for the floor and for plugging fluids. */
+    private static final int KEEP_BLOCKS = 64;
 
     /** Entity events (above the vanilla ids): a bite when it grabs loot, a recoil when it fires, then one per emote. */
     public static final byte EVENT_CHOMP = 100;
@@ -113,6 +119,30 @@ public class BuddyBot extends DroneBase {
         public static Mode byId(int id) {
             Mode[] all = values();
             return all[Math.floorMod(id, all.length)];
+        }
+
+        public Mode next() {
+            return byId(ordinal() + 1);
+        }
+    }
+
+    /** Tunnel size: half width and highest offset of a slice (the floor stays at foot level). Ids are stored, never reorder. */
+    public enum Size {
+        ONE_BY_TWO(0, 0, "1x2"), THREE(1, 1, "3x3"), FIVE(2, 3, "5x5");
+
+        public final int half;
+        public final int top;
+        public final String label;
+
+        Size(int half, int top, String label) {
+            this.half = half;
+            this.top = top;
+            this.label = label;
+        }
+
+        public static Size byId(int id) {
+            Size[] all = values();
+            return all[Mth.clamp(id, 0, all.length - 1)];
         }
     }
 
@@ -132,7 +162,7 @@ public class BuddyBot extends DroneBase {
 
     /** Why a tunnel ended. The lang key is {@code message.robotica.buddy.<lowercase name>}. */
     public enum Stop {
-        DONE, LAVA, WATER, FULL, ENERGY, UNLOADED, BLOCKED, EDGE, NOTHING;
+        DONE, LAVA, WATER, FULL, ENERGY, UNLOADED, BLOCKED, EDGE, NOTHING, NO_BLOCKS;
 
         public static Stop byId(int id) {
             Stop[] all = values();
@@ -166,6 +196,8 @@ public class BuddyBot extends DroneBase {
     /** Emotes it does on its own when nothing is going on. */
     private static final Emote[] IDLE = {Emote.SPIN, Emote.WAVE, Emote.HICCUP, Emote.SNEEZE, Emote.NOD, Emote.LOOK_AROUND, Emote.BOOP};
 
+    /** The 1x2 slice: the bot's own line and the cell below it. */
+    private static final int[][] CELLS_2 = {{0, 0}, {0, -1}};
     /** Tunnel slice cells in dig order: the bot's own line first, then up and down, then the sides. */
     private static final int[][] CELLS = {{0, 0}, {0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
     /** The 5x5 slice (Mk3, Mk4): floor at foot level like the 3x3, so lateral -2..2 and vertical -1..3, nearest cells first. */
@@ -242,6 +274,8 @@ public class BuddyBot extends DroneBase {
     };
 
     private BlockPos patrolCenter = BlockPos.ZERO;
+    /** Chosen tunnel size; {@link #size()} caps it to what the tier allows. */
+    private Size sizeSetting = Size.FIVE;
     @Nullable
     private Tunnel tunnel;
     /** Flying back to the owner after a tunnel; turns into Follow on arrival. */
@@ -300,7 +334,7 @@ public class BuddyBot extends DroneBase {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_STANCE, Stance.AGGRESSIVE.ordinal());
-        builder.define(DATA_FLAGS, (byte) FLAG_PICKUP);
+        builder.define(DATA_FLAGS, (byte) (FLAG_PICKUP | FLAG_PLATFORM));
     }
 
     @Override
@@ -364,18 +398,41 @@ public class BuddyBot extends DroneBase {
         return 2 + tier();
     }
 
-    /** Half width of the tunnel: 1 for 3x3 (Mk1, Mk2), 2 for 5x5 (Mk3, Mk4). */
+    /** Largest tunnel: 3x3 for Mk1 and Mk2, 5x5 for Mk3 and Mk4. */
+    public Size maxSize() {
+        return tier() >= 3 ? Size.FIVE : Size.THREE;
+    }
+
+    /** The tunnel size it digs: the chosen one, capped by the tier. */
+    public Size size() {
+        return sizeSetting.ordinal() > maxSize().ordinal() ? maxSize() : sizeSetting;
+    }
+
+    public void setSize(Size size) {
+        sizeSetting = size;
+    }
+
+    /** Next size up, back to 1x2 after the largest the tier allows. */
+    public void cycleSize() {
+        sizeSetting = Size.byId((size().ordinal() + 1) % (maxSize().ordinal() + 1));
+    }
+
+    /** Half width of the tunnel: 0 for 1x2, 1 for 3x3, 2 for 5x5. */
     public int radius() {
-        return tier() >= 3 ? 2 : 1;
+        return size().half;
     }
 
     private int[][] sliceCells() {
-        return radius() >= 2 ? CELLS_5 : CELLS;
+        return switch (size()) {
+            case ONE_BY_TWO -> CELLS_2;
+            case THREE -> CELLS;
+            case FIVE -> CELLS_5;
+        };
     }
 
-    /** Highest vertical offset of a slice: 1 for 3x3, 3 for 5x5 (the floor stays at foot level). */
+    /** Highest vertical offset of a slice: 0 for 1x2, 1 for 3x3, 3 for 5x5 (the floor stays at foot level). */
     private int top() {
-        return 2 * radius() - 1;
+        return size().top;
     }
 
     /** The pickaxe it digs with: iron, diamond, netherite with Fortune I, netherite with Fortune II. Drops are rolled with it. */
@@ -447,6 +504,15 @@ public class BuddyBot extends DroneBase {
 
     public void setVoid(boolean on) {
         setFlag(FLAG_VOID, on);
+    }
+
+    /** Fills gaps in the tunnel floor with junk blocks, also over open air. */
+    public boolean platformOn() {
+        return flag(FLAG_PLATFORM);
+    }
+
+    public void setPlatform(boolean on) {
+        setFlag(FLAG_PLATFORM, on);
     }
 
     /** Digging a tunnel (synced, the drill spins). */
@@ -531,7 +597,7 @@ public class BuddyBot extends DroneBase {
         return startTunnel(dir, DronesConfig.tunnelLength(), feet);
     }
 
-    /** Starts a job: the slices run from {@code feet} in direction {@code dir}, 3 (Mk3+: 5) wide and high from foot level. */
+    /** Starts a job: the slices run from {@code feet} in direction {@code dir}, {@link #size()} wide and high from foot level. */
     public boolean startTunnel(Direction dir, int length, BlockPos feet) {
         if (isEnergyLow() || getEnergy() + batteryReserve() < feeBlock() * sliceCells().length) {
             say(msg("buddy.energy"), false);
@@ -583,19 +649,37 @@ public class BuddyBot extends DroneBase {
         return n;
     }
 
-    private boolean takeOne(Item item) {
-        for (int i = 0; i < cargoSlots(); i++) {
-            if (storage.getStackInSlot(i).is(item)) {
-                storage.extractItem(i, 1, false);
-                return true;
-            }
-        }
-        return false;
+    /** A junk block it builds with: tag robotica:voidable, and no falling blocks such as gravel. */
+    public static boolean isPlatformBlock(ItemStack stack) {
+        return stack.is(VOIDABLE) && stack.getItem() instanceof BlockItem item && !(item.getBlock() instanceof FallingBlock);
     }
 
-    /** With void on, junk goes (a stack of cobblestone is kept for plugging fluids). */
+    public int platformBlocks() {
+        int n = 0;
+        for (int i = 0; i < cargoSlots(); i++) {
+            ItemStack s = storage.getStackInSlot(i);
+            if (isPlatformBlock(s)) n += s.getCount();
+        }
+        return n;
+    }
+
+    /** Takes one junk block from the cargo and returns its block state, or null when it has none. */
+    @Nullable
+    private BlockState takePlatformBlock() {
+        for (int i = 0; i < cargoSlots(); i++) {
+            ItemStack s = storage.getStackInSlot(i);
+            if (isPlatformBlock(s)) {
+                BlockState state = ((BlockItem) s.getItem()).getBlock().defaultBlockState();
+                storage.extractItem(i, 1, false);
+                return state;
+            }
+        }
+        return null;
+    }
+
+    /** With void on, junk goes (a stack of junk blocks is kept for the floor and for plugging fluids). */
     private boolean voids(ItemStack stack) {
-        return voidOn() && stack.is(VOIDABLE) && !(stack.is(Items.COBBLESTONE) && count(Items.COBBLESTONE) < 64);
+        return voidOn() && stack.is(VOIDABLE) && !(isPlatformBlock(stack) && platformBlocks() < KEEP_BLOCKS);
     }
 
     /** Stores a mined drop, unless it is voided. What does not fit drops. */
@@ -1114,6 +1198,8 @@ public class BuddyBot extends DroneBase {
             stopTunnel(Stop.DONE);
             return;
         }
+        // With platform on and junk blocks in the cargo it starts right away, so it bridges open air.
+        if (!t.started && platformOn() && platformBlocks() > 0) t.started = true;
         if (!t.started) {
             // Open air before the rock: skip it without counting, up to a limit.
             int skipped = 0;
@@ -1159,9 +1245,7 @@ public class BuddyBot extends DroneBase {
         }
         if (!fluids.isEmpty()) {
             for (BlockPos p : fluids) {
-                if (sl.getBlockState(p).getBlock() instanceof LiquidBlock && takeOne(Items.COBBLESTONE)) {
-                    sl.setBlock(p, Blocks.COBBLESTONE.defaultBlockState(), Block.UPDATE_ALL);
-                }
+                if (sl.getBlockState(p).getBlock() instanceof LiquidBlock) placeJunk(sl, p);
             }
             playSound(SoundEvents.LAVA_EXTINGUISH, 0.4F, 1.2F);
             stopTunnel(lava ? Stop.LAVA : Stop.WATER);
@@ -1287,7 +1371,7 @@ public class BuddyBot extends DroneBase {
         if (minedTotal % 4 == 0) CoreSounds.play(sl, pos, CoreSounds.EXCAVATOR_DIG, SoundSource.NEUTRAL, 0.5F, 0.9F + random.nextFloat() * 0.2F);
     }
 
-    /** End of a slice: wait for falling blocks, bridge the floor, light the slice behind it, step forward. */
+    /** End of a slice: wait for falling blocks, bridge the floor, light the slice behind it, step forward. Out of junk over a gap, it stops. */
     private void finishSlice(ServerLevel sl, Tunnel t) {
         if (t.recheck < 3 && hasFallingAbove(sl, t)) {
             t.recheck++;
@@ -1297,11 +1381,11 @@ public class BuddyBot extends DroneBase {
             return;
         }
         t.recheck = 0;
-        fillFloor(sl, t);
-        // two slices back the light engine has caught up: a lamp in a top corner when it is dark there
+        boolean floored = !platformOn() || fillFloor(sl, t);
+        // two slices back the light engine has caught up: a lamp in a top corner (1x2: on the floor) when it is dark there
         if (t.counted >= 2) {
             int r = radius();
-            BlockPos spot = cell(t, t.k - 2, (t.counted / 4) % 2 == 0 ? -r : r, top());
+            BlockPos spot = cell(t, t.k - 2, (t.counted / 4) % 2 == 0 ? -r : r, r == 0 ? -1 : top());
             if (sl.isLoaded(spot) && sl.getBlockState(spot).isAir() && LampPlacer.isDark(sl, spot)) {
                 lampCooldown = 0;
                 placeLamp(sl, spot);
@@ -1309,6 +1393,10 @@ public class BuddyBot extends DroneBase {
         }
         t.counted++;
         t.k++;
+        if (!floored) {
+            stopTunnel(Stop.NO_BLOCKS);
+            return;
+        }
         t.phase = PHASE_MOVE;
         t.moveTicks = 0;
     }
@@ -1320,15 +1408,41 @@ public class BuddyBot extends DroneBase {
         return false;
     }
 
-    /** Gaps in the floor of the finished slice are bridged with cobblestone it mined, so the tunnel can be walked. */
-    private void fillFloor(ServerLevel sl, Tunnel t) {
+    /** Gaps in the floor of the finished slice are bridged with junk blocks from the cargo. False when its own line keeps a gap. */
+    private boolean fillFloor(ServerLevel sl, Tunnel t) {
+        boolean floored = true;
         for (int lat = -radius(); lat <= radius(); lat++) {
             BlockPos p = cell(t, t.k, lat, -2);
             if (!sl.isLoaded(p)) continue;
-            if (sl.getBlockState(p).isAir() && takeOne(Items.COBBLESTONE)) {
-                sl.setBlock(p, Blocks.COBBLESTONE.defaultBlockState(), Block.UPDATE_ALL);
-            }
+            BlockState here = sl.getBlockState(p);
+            if (!here.canBeReplaced() || !here.getFluidState().isEmpty()) continue;
+            if (!placeJunk(sl, p) && lat == 0) floored = false;
         }
+        return floored;
+    }
+
+    /** Places a junk block from the cargo as the owner (claims can veto). Returns true when placed. */
+    private boolean placeJunk(ServerLevel sl, BlockPos pos) {
+        if (!sl.getWorldBorder().isWithinBounds(pos) || !sl.isInWorldBounds(pos)) return false;
+        BlockState state = takePlatformBlock();
+        if (state == null) return false;
+        BlockSnapshot snapshot = BlockSnapshot.create(sl.dimension(), sl, pos);
+        if (!sl.setBlock(pos, state, Block.UPDATE_ALL)) {
+            collect(new ItemStack(state.getBlock()));
+            return false;
+        }
+        boolean vetoed;
+        try {
+            vetoed = EventHooks.onBlockPlace(fakeOwner(sl), snapshot, Direction.UP);
+        } catch (RuntimeException e) {
+            vetoed = false;
+        }
+        if (vetoed) {
+            snapshot.restore(Block.UPDATE_ALL);
+            collect(new ItemStack(state.getBlock()));
+            return false;
+        }
+        return true;
     }
 
     /** Ends the job: the reason is stored, told to the owner, and it flies back (when the owner is around). */
@@ -1425,6 +1539,8 @@ public class BuddyBot extends DroneBase {
         tag.putBoolean("Pickup", pickupOn());
         tag.putBoolean("Lights", lightsOn());
         tag.putBoolean("Void", voidOn());
+        tag.putBoolean("Platform", platformOn());
+        tag.putInt("Size", sizeSetting.ordinal());
     }
 
     @Override
@@ -1435,6 +1551,8 @@ public class BuddyBot extends DroneBase {
         setPickup(!tag.contains("Pickup") || tag.getBoolean("Pickup"));
         setLights(tag.getBoolean("Lights"));
         setVoid(tag.getBoolean("Void"));
+        setPlatform(!tag.contains("Platform") || tag.getBoolean("Platform"));
+        sizeSetting = tag.contains("Size") ? Size.byId(tag.getInt("Size")) : Size.FIVE;
     }
 
     @Override

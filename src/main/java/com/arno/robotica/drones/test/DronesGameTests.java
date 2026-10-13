@@ -158,6 +158,94 @@ public class DronesGameTests {
         });
     }
 
+    /** Pointed at open air with junk blocks in its cargo, it bridges: the floor of every slice is filled. */
+    @GameTest(template = "drones_arena", batch = "dronesBridge", timeoutTicks = 600)
+    public static void buddyBridgesOpenAir(GameTestHelper helper) {
+        clear(helper);
+        BuddyBot bot = buddy(helper);
+        bot.storage.setStackInSlot(0, new ItemStack(Items.NETHERRACK, 20));
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 4, helper.absolutePos(p(0, 1, 1))));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.DONE, "the bridge should finish with DONE, is " + bot.lastStop());
+            for (int x = 1; x <= 4; x++) {
+                for (int z = 0; z <= 2; z++) helper.assertBlockPresent(Blocks.NETHERRACK, p(x, 0, z));
+            }
+            helper.assertBlockNotPresent(Blocks.NETHERRACK, p(5, 0, 1));
+            helper.assertTrue(bot.count(Items.NETHERRACK) == 8, "4 slices of 3 floor blocks use 12, has " + bot.count(Items.NETHERRACK));
+            clear(helper);
+        });
+    }
+
+    /** Out of junk blocks over a gap it stops. */
+    @GameTest(template = "drones_arena", batch = "dronesBridgeEnd", timeoutTicks = 600)
+    public static void buddyBridgeNeedsBlocks(GameTestHelper helper) {
+        clear(helper);
+        BuddyBot bot = buddy(helper);
+        bot.setSize(BuddyBot.Size.ONE_BY_TWO);
+        bot.storage.setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 2));
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 6, helper.absolutePos(p(0, 1, 1))));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.NO_BLOCKS, "out of blocks it stops with NO_BLOCKS, is " + bot.lastStop());
+            helper.assertBlockPresent(Blocks.COBBLESTONE, p(1, 0, 1));
+            helper.assertBlockPresent(Blocks.COBBLESTONE, p(2, 0, 1));
+            helper.assertBlockNotPresent(Blocks.COBBLESTONE, p(3, 0, 1));
+            helper.assertBlockNotPresent(Blocks.COBBLESTONE, p(1, 0, 0));
+            clear(helper);
+        });
+    }
+
+    /** With platform off, open air before the rock is skipped and not bridged. */
+    @GameTest(template = "drones_arena", batch = "dronesBridgeOff", timeoutTicks = 600)
+    public static void buddyPlatformOffSkipsAir(GameTestHelper helper) {
+        rock(helper);
+        fill(helper, 1, 3, -1, 3, Blocks.AIR);
+        BuddyBot bot = buddy(helper);
+        bot.setPlatform(false);
+        bot.storage.setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 2));
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 2, helper.absolutePos(p(0, 1, 1))));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.DONE, "tunnel should finish with DONE, is " + bot.lastStop());
+            for (int x = 1; x <= 3; x++) helper.assertBlockNotPresent(Blocks.COBBLESTONE, p(x, 0, 1));
+            helper.assertBlockNotPresent(Blocks.STONE, p(5, 2, 1));
+            helper.assertBlockPresent(Blocks.STONE, p(6, 2, 1));
+            helper.assertTrue(bot.count(Items.COBBLESTONE) == 20, "2 kept plus 2 slices of 9 stone, has " + bot.count(Items.COBBLESTONE));
+            clear(helper);
+        });
+    }
+
+    /** The size button steps through the sizes the tier allows; a 1x2 tunnel is two blocks high on its own line. */
+    @GameTest(template = "drones_arena", batch = "dronesSize", timeoutTicks = 600)
+    public static void buddySizeCycles(GameTestHelper helper) {
+        rock(helper);
+        BuddyBot bot = buddy(helper);
+        helper.assertTrue(bot.size() == BuddyBot.Size.THREE && bot.platformOn(), "a new Mk1 digs 3x3 with platform on");
+        bot.cycleSize();
+        helper.assertTrue(bot.size() == BuddyBot.Size.ONE_BY_TWO, "Mk1: 3x3 then 1x2, is " + bot.size());
+        bot.cycleSize();
+        helper.assertTrue(bot.size() == BuddyBot.Size.THREE, "Mk1: back to 3x3, is " + bot.size());
+        bot.setTier(3);
+        helper.assertTrue(bot.size() == BuddyBot.Size.THREE, "the chosen 3x3 stays on Mk3, is " + bot.size());
+        bot.cycleSize();
+        helper.assertTrue(bot.size() == BuddyBot.Size.FIVE, "Mk3: 3x3 then 5x5, is " + bot.size());
+        bot.cycleSize();
+        helper.assertTrue(bot.size() == BuddyBot.Size.ONE_BY_TWO, "Mk3: 5x5 then 1x2, is " + bot.size());
+        bot.setTier(1);
+        bot.setEnergy(bot.getEnergyCapacity());
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 3, helper.absolutePos(p(0, 1, 1))));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.DONE, "tunnel should finish with DONE, is " + bot.lastStop());
+            for (int x = 1; x <= 3; x++) {
+                helper.assertBlockNotPresent(Blocks.STONE, p(x, 1, 1));
+                helper.assertBlockNotPresent(Blocks.STONE, p(x, 2, 1));
+                helper.assertBlockPresent(Blocks.STONE, p(x, 3, 1));
+                helper.assertBlockPresent(Blocks.STONE, p(x, 2, 0));
+                helper.assertBlockPresent(Blocks.STONE, p(x, 2, 2));
+            }
+            helper.assertTrue(bot.count(Items.COBBLESTONE) == 6, "3 slices of 2 stone give 6 cobblestone, has " + bot.count(Items.COBBLESTONE));
+            clear(helper);
+        });
+    }
+
     /** Fills x {@code x0..x1}, y 0..6, z {@code z0..z1} (test coordinates). */
     private static void fill(GameTestHelper helper, int x0, int x1, int z0, int z1, net.minecraft.world.level.block.Block block) {
         for (int x = x0; x <= x1; x++) {
@@ -213,6 +301,8 @@ public class DronesGameTests {
         bot.setPickup(false);
         bot.setLights(true);
         bot.setVoid(true);
+        bot.setPlatform(false);
+        bot.setSize(BuddyBot.Size.ONE_BY_TWO);
         bot.storage.setStackInSlot(0, new ItemStack(Items.IRON_ORE, 17));
         bot.battery.setStackInSlot(0, new ItemStack(CoreItems.COPPER_CELL.get()));
         bot.setCustomName(Component.literal("Sparky"));
@@ -226,7 +316,8 @@ public class DronesGameTests {
         helper.assertTrue(again.getEnergy() == 123_456, "energy restored, is " + again.getEnergy());
         helper.assertTrue(again.storage.getStackInSlot(0).is(Items.IRON_ORE) && again.storage.getStackInSlot(0).getCount() == 17, "cargo restored");
         helper.assertTrue(again.battery.getStackInSlot(0).is(CoreItems.COPPER_CELL.get()), "battery restored");
-        helper.assertTrue(again.stance() == BuddyBot.Stance.DEFENSE && !again.pickupOn() && again.lightsOn() && again.voidOn(), "settings restored");
+        helper.assertTrue(again.stance() == BuddyBot.Stance.DEFENSE && !again.pickupOn() && again.lightsOn() && again.voidOn()
+                && !again.platformOn() && again.size() == BuddyBot.Size.ONE_BY_TWO, "settings restored");
         helper.assertTrue(again.hasCustomName() && again.getCustomName().getString().equals("Sparky"), "name restored");
         helper.succeed();
     }

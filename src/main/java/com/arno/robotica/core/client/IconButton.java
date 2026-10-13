@@ -1,5 +1,6 @@
 package com.arno.robotica.core.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -8,13 +9,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Small square vanilla-style button showing an item as its icon. A toggle shows a green dot when on and a dimmed icon when off.
- * The explanation lives in the tooltip ({@link #hint}), not on the button.
+ * Small square vanilla-style button showing an item as its icon, or a short {@link #label}. A toggle shows a green dot when on
+ * and a dimmed icon when off. The explanation lives in the tooltip ({@link #hint}), not on the button.
  */
 public class IconButton extends Button {
     private ItemStack icon;
     private final boolean toggle;
     private boolean on;
+    private String label = "";
 
     public IconButton(int x, int y, int size, ItemStack icon, boolean toggle, OnPress onPress) {
         super(x, y, size, size, Component.empty(), onPress, DEFAULT_NARRATION);
@@ -28,6 +30,11 @@ public class IconButton extends Button {
 
     public void setOn(boolean on) {
         this.on = on;
+    }
+
+    /** Short text drawn centered on the button, such as "3x3". */
+    public void label(String label) {
+        this.label = label;
     }
 
     /** Sets the tooltip (also used as the narration). */
@@ -44,6 +51,10 @@ public class IconButton extends Button {
         super.renderWidget(g, mouseX, mouseY, partialTick);
         int ix = getX() + (width - 16) / 2, iy = getY() + (height - 16) / 2;
         g.renderItem(icon, ix, iy);
+        if (!label.isEmpty()) {
+            Font font = Minecraft.getInstance().font;
+            g.drawString(font, label, getX() + (width - font.width(label) + 1) / 2, getY() + (height - 8) / 2, active ? 0xFFFFFF : 0xA0A0A0, true);
+        }
         if (toggle) {
             g.pose().pushPose();
             g.pose().translate(0, 0, 200);
