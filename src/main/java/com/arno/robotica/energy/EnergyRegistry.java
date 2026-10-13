@@ -130,7 +130,7 @@ public final class EnergyRegistry {
 
     // ---- Ring Collider ----
     public static final DeferredBlock<ControllerBlock> COLLIDER_CONTROLLER = block("collider_controller",
-            p -> new ControllerBlock(p, EnergyRegistry.COLLIDER_BE), controller(MapColor.COLOR_PURPLE));
+            p -> new ControllerBlock(p, EnergyRegistry.COLLIDER_BE), controller(MapColor.COLOR_PURPLE).noOcclusion());
     public static final DeferredBlock<AcceleratorSegmentBlock> ACCELERATOR_SEGMENT = block("accelerator_segment",
             p -> new AcceleratorSegmentBlock(p, 1), casing(MapColor.COLOR_BLUE).noOcclusion());
     public static final DeferredBlock<AcceleratorSegmentBlock> RESONANT_SEGMENT = block("resonant_segment",

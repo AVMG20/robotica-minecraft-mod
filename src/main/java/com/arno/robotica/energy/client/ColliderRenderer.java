@@ -106,11 +106,11 @@ public class ColliderRenderer extends ControllerHighlightRenderer<ColliderBlockE
             int alpha = (int) (255 * Math.min(1.0F, glow + 0.5F * flare));
             float x = (float) p.x, y = (float) p.y, z = (float) p.z;
             if (prev.z == next.z) {             // straight along x
-                GlowDraw.box(vc, m, x - SLOT_ALONG, y + SLOT_Y, z - SLOT_ACROSS, x + SLOT_ALONG, y + SLOT_Y + LIFT, z + SLOT_ACROSS, r, g, bl, alpha);
+                GlowDraw.box(vc, m, x - SLOT_ALONG, y + SLOT_Y + LIFT, z - SLOT_ACROSS, x + SLOT_ALONG, y + SLOT_Y + 2 * LIFT, z + SLOT_ACROSS, r, g, bl, alpha);
             } else if (prev.x == next.x) {      // straight along z
-                GlowDraw.box(vc, m, x - SLOT_ACROSS, y + SLOT_Y, z - SLOT_ALONG, x + SLOT_ACROSS, y + SLOT_Y + LIFT, z + SLOT_ALONG, r, g, bl, alpha);
+                GlowDraw.box(vc, m, x - SLOT_ACROSS, y + SLOT_Y + LIFT, z - SLOT_ALONG, x + SLOT_ACROSS, y + SLOT_Y + 2 * LIFT, z + SLOT_ALONG, r, g, bl, alpha);
             } else {                            // corner: the bending magnet
-                GlowDraw.box(vc, m, x - SLOT_ACROSS, y + CORNER_Y, z - SLOT_ACROSS, x + SLOT_ACROSS, y + CORNER_Y + LIFT, z + SLOT_ACROSS, r, g, bl, alpha);
+                GlowDraw.box(vc, m, x - SLOT_ACROSS, y + CORNER_Y + LIFT, z - SLOT_ACROSS, x + SLOT_ACROSS, y + CORNER_Y + 2 * LIFT, z + SLOT_ACROSS, r, g, bl, alpha);
             }
         }
     }
