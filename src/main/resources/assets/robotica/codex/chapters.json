@@ -692,7 +692,7 @@
       "pages": [
         {
           "title": "Networks",
-          "text": "The network holds 5 seconds of every sender's FE and 9 item slots per item sender. It fills while the receivers are unloaded and empties when they load again.\nMk1 only works in the dimension its network was made in.",
+          "text": "The network holds 5 seconds of every sender's FE and 9 item slots per item sender. It fills while the receivers are unloaded and empties when they load again.",
           "items": [
             "robotica:quantum_link_mk1",
             "robotica:quantum_link_mk2",
