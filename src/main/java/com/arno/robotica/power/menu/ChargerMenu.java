@@ -8,12 +8,14 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
 public class ChargerMenu extends MachineMenu {
     private final ContainerLevelAccess access;
+    private final Block block;
     private final int energyIndex;
     private final int capacityIndex;
 
@@ -30,6 +32,7 @@ public class ChargerMenu extends MachineMenu {
     private ChargerMenu(int id, Inventory inv, BlockPos pos, IItemHandler slot, ChargerBlockEntity be) {
         super(PowerRegistry.CHARGER_MENU.get(), id);
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
+        this.block = inv.player.level().getBlockState(pos).getBlock();
         addSlot(new SlotItemHandler(slot, 0, 80, 36) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -62,6 +65,6 @@ public class ChargerMenu extends MachineMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return stillValid(access, player, PowerRegistry.CHARGER.get());
+        return stillValid(access, player, block);
     }
 }

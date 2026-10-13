@@ -20,7 +20,13 @@
     "robotica:tesla_emitter_4",
     "robotica:tesla_emitter_5",
     "robotica:charger",
+    "robotica:charger_mk2",
+    "robotica:charger_mk3",
+    "robotica:charger_mk4",
     "robotica:wireless_charger",
+    "robotica:wireless_charger_mk2",
+    "robotica:wireless_charger_mk3",
+    "robotica:wireless_charger_mk4",
     "robotica:metal_press"
   ]
 }

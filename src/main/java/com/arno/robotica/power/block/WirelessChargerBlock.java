@@ -1,5 +1,6 @@
 package com.arno.robotica.power.block;
 
+import com.arno.robotica.core.particle.CoreParticles;
 import com.arno.robotica.power.PowerClientConfig;
 import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
@@ -17,29 +18,63 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/** Charges the FE items of the owner and their team in range, without plugging anything in. Age 2. */
+/** Charges the FE items of the owner and their team in range, without plugging anything in. Mk1 and Mk2 Age 2, Mk3 Age 3, Mk4 Age 4. */
 public class WirelessChargerBlock extends PowerBlock {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    /** Floor: mast up, ceiling: mast down, wall: mast out of the wall towards FACING. */
+    public static final EnumProperty<AttachFace> FACE = BlockStateProperties.ATTACH_FACE;
+    private static final int[] AGE = {2, 2, 3, 4};
 
-    public WirelessChargerBlock(Properties props) {
+    private final int mk;
+
+    public WirelessChargerBlock(Properties props, int mk) {
         super(props, PowerRegistry.WIRELESS_CHARGER_BE::get);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
+        this.mk = mk;
+        registerDefaultState(stateDefinition.any().setValue(FACE, AttachFace.FLOOR).setValue(FACING, Direction.NORTH).setValue(LIT, false));
+    }
+
+    /** 1-4 */
+    public int mk() {
+        return mk;
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, LIT);
+        builder.add(FACE, FACING, LIT);
+    }
+
+    /** The mast points away from the face it was placed against; on a floor or ceiling the front faces the player. */
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction clicked = context.getClickedFace();
+        BlockState state = defaultBlockState();
+        if (clicked.getAxis().isHorizontal()) return state.setValue(FACE, AttachFace.WALL).setValue(FACING, clicked);
+        return state.setValue(FACE, clicked == Direction.UP ? AttachFace.FLOOR : AttachFace.CEILING)
+                .setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    /** Where the emitter mast points. */
+    public static Direction mastDirection(BlockState state) {
+        return switch (state.getValue(FACE)) {
+            case FLOOR -> Direction.UP;
+            case CEILING -> Direction.DOWN;
+            case WALL -> state.getValue(FACING);
+        };
     }
 
     @Override
@@ -69,30 +104,34 @@ public class WirelessChargerBlock extends PowerBlock {
         return super.useWithoutItem(state, level, pos, player, hit);
     }
 
-    /** Sparks on the emitter while it works, and on the players it charges (client side, random display ticks). */
+    /** A faint violet mote now and then on the emitter while it works, and on the players it charges (client side, random display ticks). */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (!state.getValue(LIT) || !PowerClientConfig.teslaParticles()) return;
         if (random.nextInt(8) == 0) {
-            level.addParticle(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.6F), pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.3, pos.getY() + 1.25,
-                    pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.3, 0.0, 0.02, 0.0);
+            Direction mast = mastDirection(state);
+            level.addParticle(CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.4F),
+                    pos.getX() + 0.5 + mast.getStepX() * 0.8 + (random.nextDouble() - 0.5) * 0.2,
+                    pos.getY() + 0.5 + mast.getStepY() * 0.8 + (random.nextDouble() - 0.5) * 0.2,
+                    pos.getZ() + 0.5 + mast.getStepZ() * 0.8 + (random.nextDouble() - 0.5) * 0.2, 0.0, 0.01, 0.0);
         }
         if (!(level.getBlockEntity(pos) instanceof WirelessChargerBlockEntity be)) return;
         int[] ids = be.targetIds();
         byte[] states = be.targetStates();
         for (int i = 0; i < ids.length && i < states.length; i++) {
-            if (states[i] != WirelessChargerBlockEntity.CHARGING || random.nextInt(4) != 0) continue;
+            if (states[i] != WirelessChargerBlockEntity.CHARGING || random.nextInt(3) != 0) continue;
             Entity target = level.getEntity(ids[i]);
             if (target == null) continue;
-            level.addParticle(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 0.6F), target.getX() + (random.nextDouble() - 0.5) * 0.6,
-                    target.getY() + 0.4 + random.nextDouble() * 1.2, target.getZ() + (random.nextDouble() - 0.5) * 0.6, 0.0, 0.02, 0.0);
+            level.addParticle(CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.3F), target.getX() + (random.nextDouble() - 0.5) * 0.8,
+                    target.getY() + 0.3 + random.nextDouble() * 1.2, target.getZ() + (random.nextDouble() - 0.5) * 0.8, 0.0, 0.01, 0.0);
         }
     }
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.age", 2, Component.translatable("age.robotica.2")).withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable("tooltip.robotica.wireless_charger", PowerConfig.wirelessRate(), PowerConfig.wirelessRange())
+        int age = AGE[mk - 1];
+        tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age)).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.wireless_charger", PowerConfig.wirelessRate(mk), PowerConfig.wirelessRange(mk))
                 .withStyle(ChatFormatting.GRAY));
     }
 }

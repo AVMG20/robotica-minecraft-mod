@@ -112,10 +112,15 @@ def generator_model(lit):
 
 # ---------- charger: the shared casing in light steel with a charging dock 2 px deep in the front (dock texture layout in
 # scripts/textures/power.py): back wall at z 2, four walls, and the power cell standing 1.5 px proud of the back wall.
-# Working, a full-bright glow on the back wall and the cell.
-def charger_model(lit):
-    faces = {'north': 'charger_front' + ('_on' if lit else ''), 'up': 'charger_top', 'down': 'charger_bottom',
-             'south': 'charger_side', 'west': 'charger_side', 'east': 'charger_side'}
+# Working, a full-bright glow on the back wall and the cell. Mk2-Mk4 (charger_mk2 ...) swap in their tier textures.
+def tier_name(base, tier):
+    return base if tier == 1 else f'{base}_mk{tier}'
+
+
+def charger_model(lit, tier=1):
+    n = tier_name('charger', tier)
+    faces = {'north': f'{n}_front' + ('_on' if lit else ''), 'up': f'{n}_top', 'down': 'charger_bottom',
+             'south': f'{n}_side', 'west': f'{n}_side', 'east': f'{n}_side'}
     d = '#dock'
     elements = [
         {'from': [3, 4, 2], 'to': [13, 13, 3], 'faces': {'north': {'texture': d, 'uv': [3, 3, 13, 12]}}},
@@ -128,7 +133,7 @@ def charger_model(lit):
                                                         'east': {'texture': d, 'uv': [2, 4, 3, 11]},
                                                         'west': {'texture': d, 'uv': [2, 4, 3, 11]}}},
     ]
-    textures = {'dock': 'charger_dock'}
+    textures = {'dock': f'{n}_dock'}
     if lit:
         textures['dock_glow'] = 'charger_dock_glow'
         elements += [
@@ -141,7 +146,9 @@ def charger_model(lit):
     return casing_model(faces, glow, elements, textures, lit=lit)
 
 
-for name, model_fn in (('combustion_generator', generator_model), ('charger', charger_model)):
+ORIENTABLE = [('combustion_generator', generator_model)]
+ORIENTABLE += [(tier_name('charger', t), lambda lit, t=t: charger_model(lit, t)) for t in (1, 2, 3, 4)]
+for name, model_fn in ORIENTABLE:
     for lit in (False, True):
         block_model(name + ('_on' if lit else ''), model_fn(lit))
     blockstate(name, {'variants': facing_variants(lambda c, n=name: n + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
@@ -183,11 +190,13 @@ loot('metal_press')
 
 # ---------- wireless charger: the shared casing in light steel plus an emitter mast on top: a collar, a rod through a
 # halo ring and a violet orb (full bright when lit). Mast parts come from one texture (wireless_mast in
-# scripts/textures/power.py says where).
-def wireless_model(lit):
+# scripts/textures/power.py says where). Mk2-Mk4 swap in their tier textures. The block state `face` turns the model so the
+# mast points up (floor), down (ceiling) or out of a wall towards `facing` (the front then faces down).
+def wireless_model(lit, tier=1):
     on = '_on' if lit else ''
-    faces = {'north': 'wireless_charger_front' + on, 'up': 'wireless_charger_top' + on, 'down': 'wireless_charger_bottom',
-             'south': 'wireless_charger_side', 'west': 'wireless_charger_side', 'east': 'wireless_charger_side'}
+    n = tier_name('wireless_charger', tier)
+    faces = {'north': f'{n}_front' + on, 'up': f'{n}_top' + on, 'down': 'wireless_charger_bottom',
+             'south': f'{n}_side', 'west': f'{n}_side', 'east': f'{n}_side'}
     sides = ('north', 'south', 'west', 'east')
     elements = [
         {'from': [6, 16, 6], 'to': [10, 17, 10],
@@ -204,12 +213,30 @@ def wireless_model(lit):
     return casing_model(faces, glow, elements, textures, lit=lit)
 
 
-for lit in (False, True):
-    block_model('wireless_charger' + ('_on' if lit else ''), wireless_model(lit))
-blockstate('wireless_charger', {'variants': facing_variants(lambda c: 'wireless_charger' + ('_on' if c['lit'] else ''),
-                                                            [('lit', [False, True])])})
-item_model('wireless_charger', 'robotica:block/wireless_charger')
-loot('wireless_charger')
+def attached_variants(name):
+    """Variants for face (floor / ceiling / wall) x facing x lit: x turns the mast, y the front."""
+    variants = {}
+    for face, x in (('floor', 0), ('ceiling', 180), ('wall', 90)):
+        for facing, y in FACING_Y.items():
+            if face == 'ceiling':
+                y = (y + 180) % 360                                          # x 180 turns the front to the south
+            for lit in (False, True):
+                entry = {'model': f'robotica:block/{name}' + ('_on' if lit else '')}
+                if x:
+                    entry['x'] = x
+                if y:
+                    entry['y'] = y
+                variants[f'face={face},facing={facing},lit={str(lit).lower()}'] = entry
+    return variants
+
+
+for tier in (1, 2, 3, 4):
+    name = tier_name('wireless_charger', tier)
+    for lit in (False, True):
+        block_model(name + ('_on' if lit else ''), wireless_model(lit, tier))
+    blockstate(name, {'variants': attached_variants(name)})
+    item_model(name, f'robotica:block/{name}')
+    loot(name)
 
 # ---------- accumulators: the gauge shows the charge (block state `charge` 0-5, one lit cell per level) ----------
 ACC_CELLS = 5

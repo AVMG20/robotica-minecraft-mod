@@ -47,6 +47,8 @@
       "robotica:tesla_coil_5",
       "robotica:tesla_emitter_5",
       "robotica:tesla_coil_5_from_emitters",
+      "robotica:charger_mk4",
+      "robotica:wireless_charger_mk4",
       "robotica:collider_controller",
       "robotica:accelerator_segment",
       "robotica:farm_kit_mk4",

@@ -73,7 +73,10 @@
             "robotica:tesla_emitter_1",
             "robotica:tesla_linker",
             "robotica:accumulator_1",
-            "robotica:wireless_charger"
+            "robotica:wireless_charger",
+            "robotica:wireless_charger_mk2",
+            "robotica:wireless_charger_mk3",
+            "robotica:wireless_charger_mk4"
           ]
         }
       ]

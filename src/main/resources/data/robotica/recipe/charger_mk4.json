@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " N ",
+    "PCP",
+    " X "
+  ],
+  "key": {
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "P": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "C": {
+      "item": "robotica:charger_mk3"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:charger_mk4",
+    "count": 1
+  }
+}
