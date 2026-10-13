@@ -265,6 +265,10 @@
           ]
         },
         {
+          "title": "Bridging",
+          "text": "Aim the Buddy key over open air: it builds a bridge from junk blocks in its cargo."
+        },
+        {
           "title": "Courier and Hauler",
           "text": "A Courier Drone can run up to 4 routes.",
           "items": [

@@ -105,7 +105,13 @@ public class ScrapDrone extends Monster {
         if (tickCount > LIFETIME || orphan) fallApart();
     }
 
-    private void fallApart() {
+    /** A summoned drone lives and dies with its Colossus (or its lifetime), never despawns by player distance. */
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return ownerId == null;
+    }
+
+        private void fallApart() {
         if (level() instanceof ServerLevel server) {
             server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.2, getZ(), 6, 0.2, 0.2, 0.2, 0.02);
             playSound(SoundEvents.CHAIN_BREAK, 1.0F, 1.2F);
