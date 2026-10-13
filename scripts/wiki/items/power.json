@@ -237,51 +237,102 @@
   },
   {
    "items": [
-    "charger"
+    "charger",
+    "charger_mk2",
+    "charger_mk3",
+    "charger_mk4"
    ],
    "what": "Charges FE items: cells, tools, drills, armor.",
    "use": [
     "Right-click it with the item."
    ],
    "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
     "rows": [
      [
       "Rate",
-      "2,000 FE/t"
+      "2,000 FE/t",
+      "8,000 FE/t",
+      "32,000 FE/t",
+      "128,000 FE/t"
+     ],
+     [
+      "Buffer",
+      "20,000 FE",
+      "80,000 FE",
+      "320,000 FE",
+      "1,280,000 FE"
      ]
     ]
    }
   },
   {
    "items": [
-    "wireless_charger"
+    "wireless_charger",
+    "wireless_charger_mk2",
+    "wireless_charger_mk3",
+    "wireless_charger_mk4"
    ],
    "what": "Charges the FE items of you and your team in range: worn armor first, then held items, then the inventory.",
    "use": [
     "Feed it FE by cable or a [[tesla_coil_1]] link.",
-    "Stand within range: arcs show who it charges."
+    "Place it against a ceiling or wall to point its mast down or sideways.",
+    "Stand within range: faint violet motes show who it charges."
    ],
    "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
     "rows": [
      [
       "Rate",
-      "1,000 FE/t per player"
+      "1,000 FE/t per player",
+      "4,000 FE/t per player",
+      "16,000 FE/t per player",
+      "64,000 FE/t per player"
      ],
      [
       "Range",
-      "8 blocks"
-     ],
-     [
-      "Loss",
-      "10% extra FE from its buffer"
+      "8 blocks",
+      "12 blocks",
+      "16 blocks",
+      "24 blocks"
      ],
      [
       "Buffer",
-      "200,000 FE, input 20,000 FE/t"
+      "200,000 FE",
+      "800,000 FE",
+      "3,200,000 FE",
+      "12,800,000 FE"
+     ],
+     [
+      "Input",
+      "20,000 FE/t",
+      "80,000 FE/t",
+      "320,000 FE/t",
+      "1,280,000 FE/t"
+     ],
+     [
+      "Loss",
+      "10% extra FE from its buffer",
+      "",
+      "",
+      ""
      ],
      [
       "Who",
-      "owner and team (server config: everyone)"
+      "owner and team (server config: everyone)",
+      "",
+      "",
+      ""
      ]
     ]
    },

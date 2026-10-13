@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "PCP",
+    " X "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "P": {
+      "tag": "c:plates/gold"
+    },
+    "C": {
+      "item": "robotica:charger"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:charger_mk2",
+    "count": 1
+  }
+}

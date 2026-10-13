@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " T ",
+    "NWN",
+    "PXP"
+  ],
+  "key": {
+    "T": {
+      "item": "robotica:tesla_emitter_5"
+    },
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "W": {
+      "item": "robotica:wireless_charger_mk3"
+    },
+    "P": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:wireless_charger_mk4",
+    "count": 1
+  }
+}

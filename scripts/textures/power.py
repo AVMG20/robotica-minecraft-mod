@@ -415,7 +415,8 @@ def write_press():
 # ceiling (row 1), floor (row 14) and side walls (cols 1 and 14), and the cell's top (row 12) and sides (col 2); the
 # cell's front reuses its back wall pixels (CH_CELL). Working, one 48 tick loop: pulses run along the pillars into the
 # contacts, the cell's window fills row by row and flashes when full, energy chases along the rail under the dock into
-# it, and the induction rings on top light from the rim inwards.
+# it, and the induction rings on top light from the rim inwards. Mk1-Mk4 change the corner brackets and the cradle
+# to the tier metal (casing.PROCESSING_TIERS: copper, gold, magma, null) and add a notch per Mk.
 
 ACC_CHARGER_BODY = dict(zip('abcde', ('#4A535B', '#6F7A83', '#9AA5AE', '#C4CDD4', '#EBF0F3')))   # light steel
 CH_FRAMES, CH_FRAMETIME = 24, 2
@@ -428,8 +429,8 @@ CH_WINDOW = (7, 5, 2, 5)                                                  # its 
 CH_START = 16                                                             # loop start: cell nearly full (stills show it)
 
 
-def ch_pal():
-    return casing.casing_palette(MATERIALS['copper'], **ACC_CHARGER_BODY, **CH_EXTRA)
+def ch_pal(tier=1):
+    return casing.casing_palette(casing.PROCESSING_TIERS[tier], **ACC_CHARGER_BODY, **CH_EXTRA)
 
 
 def charger_dock():
@@ -476,13 +477,13 @@ def charger_dock_glow(f):
     return c
 
 
-def charger_front(lit):
+def charger_front(lit, tier=1):
     """Casing face with the dock opening, a teal rail under it and the status lamp."""
-    c = casing.shell(1)
+    c = casing.shell(tier)
     c.rect(3, 3, 10, 9, '.')
     c.rect(3, 12, 10, 1, 'T').set(3, 12, 'a').set(12, 12, 'a')            # rail
     c.rect(7, 1, 2, 1, 'L' if lit else 'l')
-    return casing.tier_notches(c, 1)
+    return casing.tier_notches(c, tier)
 
 
 def charger_glow(f):
@@ -504,9 +505,9 @@ def ch_rings():
     return outer, inner, centre
 
 
-def charger_top():
-    """Induction pad: an octagonal steel plate with two teal rings round a copper contact."""
-    c = casing.shell(1)
+def charger_top(tier=1):
+    """Induction pad: an octagonal steel plate with two teal rings round a tier metal contact."""
+    c = casing.shell(tier)
     c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
     c.rect(4, 4, 8, 8, 'd').rect(5, 5, 6, 6, 'c')
     outer, inner, centre = ch_rings()
@@ -515,7 +516,7 @@ def charger_top():
     for x, y in centre:
         c.set(x, y, 'h')
     c.set(7, 7, 'i').set(8, 8, 'g')
-    return casing.tier_notches(c, 1)
+    return casing.tier_notches(c, tier)
 
 
 def charger_top_glow(f):
@@ -533,13 +534,21 @@ def charger_top_glow(f):
 # Energy storage and charging family body: light steel, copper accents; identity colour violet. The front is a dark
 # glass broadcast dish (octagonal rings round an emitter node), the top the same dish round the mast, which carries a
 # halo ring and a violet orb (power_models.wireless_model). Working: a wave leaves the node every 24 ticks and glides
-# outward ring by ring, fading, on the front and the top at once; node and orb flash as it leaves.
+# outward ring by ring, fading, on the front and the top at once; node and orb flash as it leaves. Mk1-Mk4 change the
+# corner brackets to the tier metal (casing.PROCESSING_TIERS) and add a notch per Mk on the front and the top.
 
 WL_BODY = ('#4A535B', '#6F7A83', '#9AA5AE', '#C4CDD4', '#EBF0F3')           # light steel (storage and charging)
-WL_PAL = casing.casing_palette(MATERIALS['copper'], **dict(zip(casing.BODY, WL_BODY)), **{
+WL_EXTRA = {
     '6': '#1E0E3C', '7': '#3E1F78', '8': '#6A3EC4', '9': '#A97CFF', '0': '#ECE2FF',       # violet, deep -> white
     'D': '#151922', 'M': '#262C3A', 'N': '#3A4256',                                     # dark glass
-})
+}
+
+
+def wl_pal(tier=1):
+    return casing.casing_palette(casing.PROCESSING_TIERS[tier], **dict(zip(casing.BODY, WL_BODY)), **WL_EXTRA)
+
+
+WL_PAL = wl_pal()
 WL_FRAMES, WL_FRAMETIME = 24, 1
 WL_WAVES = 1                                       # waves travelling at once
 
@@ -586,13 +595,13 @@ def wl_pulse(t):
     return max(0.0, 1 - f * 3)
 
 
-def wireless_front(lit):
+def wireless_front(lit, tier=1):
     """Light steel face with the dark glass dish, the status lamp above it."""
-    c = casing.shell(1)
+    c = casing.shell(tier)
     c.rect(3, 3, 10, 10, 'c')
     wl_dish(c, lit=lit)
     c.rect(7, 1, 2, 1, 'L' if lit else 'l')
-    return c
+    return casing.tier_notches(c, tier)
 
 
 def wireless_front_glow(t):
@@ -610,12 +619,12 @@ def wireless_front_glow(t):
     return c
 
 
-def wireless_top(lit=False):
+def wireless_top(lit=False, tier=1):
     """Emitter plate: the same dish round the mast collar (which covers the node and the first ring)."""
-    c = casing.shell(1)
+    c = casing.shell(tier)
     c.rect(3, 3, 10, 10, 'c')
     wl_dish(c, top=True, lit=lit)
-    casing.tier_notches(c, 1)
+    casing.tier_notches(c, tier)
     return c
 
 
@@ -1042,15 +1051,22 @@ def write_generator():
                frametime=GEN_FRAMETIME, interpolate=True)
 
 
+def tier_name(base, tier):
+    """Texture prefix of a Mk: Mk1 keeps the plain name (charger_front), the others add it (charger_mk2_front)."""
+    return base if tier == 1 else f'{base}_mk{tier}'
+
+
 def write_charger():
     p = ch_pal()
     frames = [(f + CH_START) % CH_FRAMES for f in range(CH_FRAMES)]
-    write_block('charger_front', charger_front(False).rows(), p)
-    write_block('charger_front_on', charger_front(True).rows(), p)
-    write_block('charger_top', charger_top().rows(), p)
-    write_block('charger_side', casing.side(1).rows(), p)
+    for tier in (1, 2, 3, 4):
+        n, tp = tier_name('charger', tier), ch_pal(tier)
+        write_block(f'{n}_front', charger_front(False, tier).rows(), tp)
+        write_block(f'{n}_front_on', charger_front(True, tier).rows(), tp)
+        write_block(f'{n}_top', charger_top(tier).rows(), tp)
+        write_block(f'{n}_side', casing.side(tier).rows(), tp)
+        write_block(f'{n}_dock', charger_dock().rows(), tp)
     write_block('charger_bottom', casing.bottom().rows(), p)
-    write_block('charger_dock', charger_dock().rows(), p)
     write_anim('block', 'charger_dock_glow', [charger_dock_glow(f) for f in frames], p, frametime=CH_FRAMETIME)
     write_anim('block', 'charger_front_glow', [charger_glow(f) for f in frames], p, frametime=CH_FRAMETIME)
     write_anim('block', 'charger_top_glow', [charger_top_glow(f) for f in frames], p, frametime=CH_FRAMETIME,
@@ -1059,11 +1075,13 @@ def write_charger():
 
 def write_wireless():
     p, frames = WL_PAL, [(t + WL_FRAMES // 2) % WL_FRAMES for t in range(WL_FRAMES)]   # stills show a wave halfway
-    write_block('wireless_charger_front', wireless_front(False).rows(), p)
-    write_block('wireless_charger_front_on', wireless_front(True).rows(), p)
-    write_block('wireless_charger_top', wireless_top().rows(), p)
-    write_block('wireless_charger_top_on', wireless_top(True).rows(), p)
-    write_block('wireless_charger_side', casing.side(1).rows(), p)
+    for tier in (1, 2, 3, 4):
+        n, tp = tier_name('wireless_charger', tier), wl_pal(tier)
+        write_block(f'{n}_front', wireless_front(False, tier).rows(), tp)
+        write_block(f'{n}_front_on', wireless_front(True, tier).rows(), tp)
+        write_block(f'{n}_top', wireless_top(tier=tier).rows(), tp)
+        write_block(f'{n}_top_on', wireless_top(True, tier).rows(), tp)
+        write_block(f'{n}_side', casing.side(tier).rows(), tp)
     write_block('wireless_charger_bottom', casing.bottom().rows(), p)
     write_block('wireless_charger_mast', wireless_mast().rows(), p)
     write_anim('block', 'wireless_charger_mast_on', [wireless_mast(t) for t in frames], p,
