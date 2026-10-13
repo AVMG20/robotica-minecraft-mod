@@ -764,9 +764,8 @@ def solar_side(mk):
 
 
 # ---------------------------------------------------------------- accumulators
-# Energy storage family: the casing construction in light steel. Front: two dark glass cell columns (rows 3..12)
-# sunk into the panel either side of a level scale; sides: one wider cell column between cooling slats; top: four
-# cell heads on a glass bus cross. Tiers: copper, gold, magma (PROCESSING_TIERS 1-3).
+# Energy storage family: the casing construction in light steel. Every side: one dark glass cell column between
+# cooling slats, the front marked by a status lamp; top: four cell heads on a glass bus cross. Tiers: copper, gold, magma (PROCESSING_TIERS 1-3).
 # The block state `charge` (0-ACC_CELLS) fills the cells 2 rows per level on full-bright overlays shared by every tier,
 # with a calm shimmer rising through the charge.
 
@@ -776,7 +775,6 @@ ACC_EXTRA = {
     'm': '#1D5260', 'n': '#2E7A88', 'o': '#8AD4DE', 'p': '#123039',     # empty cell glass: mid, lit edge, glare, shade
     'y': '#137489',                                                     # deep charge
 }
-ACC_FRONT_CELLS = ((3, 6), (10, 13))                                     # x ranges of the front cell columns
 ACC_SIDE_CELL = (6, 10)
 
 
@@ -813,26 +811,6 @@ def acc_fill(c, x0, x1, level, t):
             c.set(x, y, ch)
 
 
-def accumulator_front(tier):
-    c = casing.shell(tier)
-    for x0, x1 in ACC_FRONT_CELLS:
-        acc_cell(c, x0, x1)
-    c.rect(7, 2, 2, 12, 'd').rect(8, 2, 1, 12, 'c').set(7, 2, 'e')       # level scale
-    for k in range(1, ACC_CELLS + 1):                                     # a glass mark at each level's top
-        c.set(7, 13 - 2 * k, 'n').set(8, 13 - 2 * k, 'm')
-    c.rect(7, 1, 2, 1, 'l')
-    return casing.tier_notches(c, tier)
-
-
-def accumulator_front_glow(level, t):
-    c = Canvas().rect(7, 1, 2, 1, 'L')
-    for x0, x1 in ACC_FRONT_CELLS:
-        acc_fill(c, x0, x1, level, t)
-    for k in range(1, level + 1):
-        c.set(7, 13 - 2 * k, 'x' if k == level else 'w').set(8, 13 - 2 * k, 'w' if k == level else 'v')
-    return c
-
-
 def accumulator_side(tier):
     c = casing.shell(tier)
     for y in range(4, 12, 2):                                             # cooling slats
@@ -846,6 +824,15 @@ def accumulator_side_glow(level, t):
     c = Canvas()
     acc_fill(c, *ACC_SIDE_CELL, level, t)
     return c
+
+
+def accumulator_front(tier):
+    """The side's cell column plus the status lamp that marks the front."""
+    return accumulator_side(tier).rect(7, 1, 2, 1, 'l')
+
+
+def accumulator_front_glow(level, t):
+    return accumulator_side_glow(level, t).rect(7, 1, 2, 1, 'L')
 
 
 ACC_HEADS = ((3, 3), (9, 3), (3, 9), (9, 9))                             # top left corners of the 4x4 cell heads
