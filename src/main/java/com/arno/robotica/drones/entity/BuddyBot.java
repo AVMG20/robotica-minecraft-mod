@@ -575,6 +575,13 @@ public class BuddyBot extends DroneBase {
 
     // ---------------------------------------------------------------- commands (server)
 
+    /** The GUI movement button: Follow, Patrol, Stay, round again. It never stops a tunnel (the dig button does). */
+    public void cycleMode() {
+        Mode next = (returning ? Mode.FOLLOW : mode()).next();
+        if (tunnel == null) returning = false;
+        setMode(next);
+    }
+
     public void commandFollow() {
         if (tunnel != null) stopTunnelQuiet();
         returning = false;
@@ -1233,10 +1240,11 @@ public class BuddyBot extends DroneBase {
             stopTunnel(Stop.EDGE);
             return;
         }
-        // Lava or water in the slice, around it or right in front of it: plug it with cobblestone and go home.
+        // Lava or water in the slice, around it or right in front of it: plug it with junk blocks and go home.
+        // While it can build the floor, fluids at floor level are bridged instead (a lava lake, the sea).
         List<BlockPos> fluids = new ArrayList<>();
         boolean lava = false;
-        for (BlockPos p : hazardArea(t, t.k)) {
+        for (BlockPos p : hazardArea(t, t.k, !(platformOn() && platformBlocks() > 0))) {
             FluidState fs = sl.getFluidState(p);
             if (!fs.isEmpty()) {
                 fluids.add(p);
@@ -1263,19 +1271,19 @@ public class BuddyBot extends DroneBase {
         t.phase = PHASE_MINE;
     }
 
-    /** Positions whose fluids matter for a slice: the slice, the ring around it and the slice after it. */
-    private List<BlockPos> hazardArea(Tunnel t, int k) {
+    /** Positions whose fluids matter for a slice: the slice, the ring around it (with or without the floor row) and the slice after it. */
+    private List<BlockPos> hazardArea(Tunnel t, int k, boolean floor) {
         int r = radius();
         List<BlockPos> list = new ArrayList<>(100);
         for (int lat = -r - 1; lat <= r + 1; lat++) {
-            for (int vert = -2; vert <= top() + 1; vert++) list.add(cell(t, k, lat, vert));
+            for (int vert = floor ? -2 : -1; vert <= top() + 1; vert++) list.add(cell(t, k, lat, vert));
         }
         for (int[] c : sliceCells()) list.add(cell(t, k + 1, c[0], c[1]));
         return list;
     }
 
     private boolean sliceLoaded(ServerLevel sl, Tunnel t, int k) {
-        for (BlockPos p : hazardArea(t, k)) {
+        for (BlockPos p : hazardArea(t, k, true)) {
             if (!sl.isLoaded(p)) return false;
         }
         return true;
@@ -1414,8 +1422,8 @@ public class BuddyBot extends DroneBase {
         for (int lat = -radius(); lat <= radius(); lat++) {
             BlockPos p = cell(t, t.k, lat, -2);
             if (!sl.isLoaded(p)) continue;
-            BlockState here = sl.getBlockState(p);
-            if (!here.canBeReplaced() || !here.getFluidState().isEmpty()) continue;
+            // air, plants, snow and fluids are gaps
+            if (!sl.getBlockState(p).canBeReplaced()) continue;
             if (!placeJunk(sl, p) && lat == 0) floored = false;
         }
         return floored;

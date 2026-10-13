@@ -165,11 +165,7 @@ public class BuddyBotMenu extends MachineMenu {
     public boolean clickMenuButton(Player player, int id) {
         if (!(player instanceof ServerPlayer sp) || !bot.isAlive() || !bot.canInteract(player)) return false;
         switch (id) {
-            case BTN_MODE -> {
-                BuddyBot.Mode next = bot.mode().next();
-                if (next == BuddyBot.Mode.FOLLOW) bot.commandFollow();
-                else bot.setMode(next);
-            }
+            case BTN_MODE -> bot.cycleMode();
             case BTN_STANCE -> bot.cycleStance();
             case BTN_PICKUP -> bot.setPickup(!bot.pickupOn());
             case BTN_LIGHTS -> bot.setLights(!bot.lightsOn());

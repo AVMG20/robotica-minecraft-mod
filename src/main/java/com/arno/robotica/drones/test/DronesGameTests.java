@@ -82,6 +82,9 @@ public class DronesGameTests {
         bot.setOwnerUUID(UUID.randomUUID());
         bot.setEnergy(bot.getEnergyCapacity());
         bot.setMode(BuddyBot.Mode.STAY);
+        // left behind in the test level: it must not shoot or sweep up what nearby tests spawn
+        bot.setStance(BuddyBot.Stance.PASSIVE);
+        bot.setPickup(false);
         bot.digTicksOverride = 1;
         return bot;
     }
@@ -173,6 +176,28 @@ public class DronesGameTests {
             helper.assertBlockNotPresent(Blocks.NETHERRACK, p(5, 0, 1));
             helper.assertTrue(bot.count(Items.NETHERRACK) == 8, "4 slices of 3 floor blocks use 12, has " + bot.count(Items.NETHERRACK));
             clear(helper);
+        });
+    }
+
+    /** Fluids at floor level are bridged, not a reason to turn back (a lava lake, the sea). */
+    @GameTest(template = "drones_arena", batch = "dronesBridgeWater", timeoutTicks = 600)
+    public static void buddyBridgesWater(GameTestHelper helper) {
+        clear(helper);
+        BlockPos below = p(3, -1, 1);
+        var under = helper.getBlockState(below);
+        // a single water source in the floor, walled in so it cannot spread
+        helper.setBlock(below, Blocks.STONE);
+        for (BlockPos side : new BlockPos[]{p(2, 0, 1), p(4, 0, 1), p(3, 0, 0), p(3, 0, 2)}) helper.setBlock(side, Blocks.STONE);
+        helper.setBlock(p(3, 0, 1), Blocks.WATER);
+        BuddyBot bot = buddy(helper);
+        bot.storage.setStackInSlot(0, new ItemStack(Items.NETHERRACK, 20));
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 4, helper.absolutePos(p(0, 1, 1))));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.DONE, "the bridge should cross the water with DONE, is " + bot.lastStop());
+            helper.assertBlockPresent(Blocks.NETHERRACK, p(3, 0, 1));
+            helper.assertTrue(bot.count(Items.NETHERRACK) == 12, "8 floor gaps filled, has " + bot.count(Items.NETHERRACK));
+            clear(helper);
+            helper.setBlock(below, under);
         });
     }
 
@@ -530,7 +555,7 @@ public class DronesGameTests {
         drop.setNoGravity(true);
         drop.setDeltaMovement(0, 0, 0);
         helper.getLevel().addFreshEntity(drop);
-        ItemEntity junk = new ItemEntity(helper.getLevel(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(Items.DIRT, 5));
+        ItemEntity junk = new ItemEntity(helper.getLevel(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, new ItemStack(Items.GRAVEL, 5));
         junk.setNoGravity(true);
         junk.setDeltaMovement(0, 0, 0);
         helper.getLevel().addFreshEntity(junk);
@@ -542,7 +567,7 @@ public class DronesGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(bot.pickupOn() && bot.count(Items.APPLE) == 3, "pick-up on: the drop is in the cargo");
             helper.assertTrue(!drop.isAlive(), "the item entity is gone");
-            helper.assertTrue(!junk.isAlive() && bot.count(Items.DIRT) == 0, "void on: the junk drop is deleted");
+            helper.assertTrue(!junk.isAlive() && bot.count(Items.GRAVEL) == 0, "void on: the junk drop is deleted");
             clear(helper);
         });
     }
