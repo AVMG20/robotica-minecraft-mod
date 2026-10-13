@@ -26,7 +26,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.UUID;
 
-/** Chunk Anchor: tickets taken and released, the per-owner cap across anchors and dimensions, offline pause, Mk upgrade. */
+/** Chunk Anchor: tickets taken and released, the per-owner cap across anchors and dimensions, offline pause, Mk upgrade, stale claims. */
 @GameTestHolder(Robotica.MODID)
 @PrefixGameTestTemplate(false)
 public class ChunkAnchorGameTests {
@@ -186,6 +186,21 @@ public class ChunkAnchorGameTests {
                         && allForced(helper, POS, 1, true), "the Mk2 loads all 9 chunks"))
                 .thenExecute(() -> helper.setBlock(POS, Blocks.AIR))
                 .thenExecute(() -> helper.assertTrue(allForced(helper, POS, 1, false), "broken, all 9 go"))
+                .thenSucceed();
+    }
+
+    /** A claim left behind by an anchor that vanished without breaking lets its chunk go once nobody checks in. */
+    @GameTest(template = "empty", timeoutTicks = 800)
+    public static void anchorClaimWithoutAnchorIsSwept(GameTestHelper helper) {
+        UUID owner = UUID.randomUUID();
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(POS);
+        ChunkClaims claims = claims(helper);
+        claims.activate(level, claims.claim(level, abs, owner, 0));
+        helper.assertTrue(claims.used(owner) == 1 && allForced(helper, POS, 0, true), "the claim holds its chunk with no anchor");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(claims.find(level.dimension(), abs) == null, "the stale claim is dropped"))
+                .thenExecute(() -> helper.assertTrue(claims.used(owner) == 0 && allForced(helper, POS, 0, false), "and its chunk let go"))
                 .thenSucceed();
     }
 
