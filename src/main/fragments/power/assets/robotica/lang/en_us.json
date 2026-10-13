@@ -45,6 +45,7 @@
   "robotica.configuration.combustion_generator": "Combustion Generator",
   "robotica.configuration.generatorOutput": "Output (FE/t)",
   "robotica.configuration.generatorBuffer": "Buffer (FE)",
+  "robotica.configuration.generatorFuelValue": "Burn time vs furnace (%)",
   "robotica.configuration.generatorEfficiencyPerCard": "Fuel saved per efficiency card (%)",
   "robotica.configuration.solar": "Solar Panels",
   "robotica.configuration.solarMk1": "Mk1 output (FE/t)",
