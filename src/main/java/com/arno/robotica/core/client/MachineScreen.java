@@ -356,6 +356,11 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
 
     /** Horizontal energy bar; the exact "stored / capacity FE" is in its hover tooltip. */
     protected void drawEnergyBarWide(GuiGraphics g, int x, int y, int w, int h, long stored, long capacity) {
+        drawEnergyBarWide(g, x, y, w, h, stored, capacity, null);
+    }
+
+    /** As above; {@code extra} is a second tooltip line (for example the FE/t). */
+    protected void drawEnergyBarWide(GuiGraphics g, int x, int y, int w, int h, long stored, long capacity, @Nullable Component extra) {
         drawInset(g, x, y, w, h);
         g.fill(x, y, x + w, y + h, ENERGY_DARK);
         int filled = capacity <= 0 ? 0 : (int) Math.min(w, Math.round((double) w * stored / capacity));
@@ -363,7 +368,7 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
         for (int i = 1; i < 4; i++) g.fill(x + w * i / 4, y + h - Math.max(2, h / 3), x + w * i / 4 + 1, y + h, 0x66000000);
         energyBars.add(new int[]{x, y, w, h});
         energyValues.add(new long[]{stored, capacity});
-        energyExtra.add(null);
+        energyExtra.add(extra);
     }
 
     /** Horizontal progress bar (0..1), framed, gradient fill. */

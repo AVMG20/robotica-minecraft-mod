@@ -4,6 +4,7 @@ import com.arno.robotica.automation.entity.ChunkAnchorBlockEntity.State;
 import com.arno.robotica.automation.menu.ChunkAnchorMenu;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -45,10 +46,11 @@ public class ChunkAnchorScreen extends MachineScreen<ChunkAnchorMenu> {
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         int upkeep = menu.upkeep();
-        drawEnergyBar(g, x + 9, y + 18, 12, 52, menu.energy(), menu.capacity(), false,
-                Component.translatable("gui.robotica.anchor.upkeep", Fmt.energy(upkeep)));
-
         State state = menu.state();
+        drawEnergyBar(g, x + 9, y + 18, 12, 52, menu.energy(), menu.capacity(), false,
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(state == State.LOADING ? upkeep : 0))
+                        .withStyle(ChatFormatting.GRAY));
+
         int tx = x + TEXT_X;
         drawStatus(g, Component.translatable("gui.robotica.anchor.state." + state.key()), tx, y + 19, TEXT_W, 1, tone(state));
         addTooltip(tx, y + 17, TEXT_W, 11, Component.translatable("gui.robotica.anchor_hint." + state.key()));

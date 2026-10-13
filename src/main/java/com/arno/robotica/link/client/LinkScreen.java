@@ -245,7 +245,9 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
         drawFitted(g, font, tr("items"), x + RX, y + 41, RW, TEXT, -1, false, 0.75F);
         drawFitted(g, font, tr("priority"), x + RX, y + 64, RW, TEXT, -1, false, 0.75F);
         long stored = menu.networkEnergy(), capacity = menu.networkCapacity();
-        drawEnergyBarWide(g, x + RX, y + 90, RW, 6, stored, capacity);
+        int use = menu.status().connected() ? menu.tier().upkeep() : 0;
+        drawEnergyBarWide(g, x + RX, y + 90, RW, 6, stored, capacity,
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(use)).withStyle(ChatFormatting.GRAY));
         drawFitted(g, font, tr("slots", menu.usedSlots(), menu.itemSlots()), x + RX, y + 99, RW, TEXT, -1, false, 0.75F);
         addTooltip(x + RX, y + 98, RW, 9, tr("buffer.items", menu.usedSlots(), menu.itemSlots()));
 
