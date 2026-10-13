@@ -20,6 +20,7 @@ public class MetalPressMenu extends MachineMenu {
     private final int capacityIndex;
     private final int progressIndex;
     private final int neededIndex;
+    private final int useIndex;
 
     /** Client side. */
     public MetalPressMenu(int id, Inventory inv, BlockPos pos) {
@@ -49,6 +50,7 @@ public class MetalPressMenu extends MachineMenu {
         capacityIndex = track(be == null ? () -> 0 : () -> be.energy.getMaxEnergyStored());
         progressIndex = track(be == null ? () -> 0 : be::progress);
         neededIndex = track(be == null ? () -> 0 : be::needed);
+        useIndex = track(be == null ? () -> 0 : be::lastUse);
         trackSides(be == null ? null : be.sides);
     }
 
@@ -58,6 +60,11 @@ public class MetalPressMenu extends MachineMenu {
 
     public int capacity() {
         return synced(capacityIndex);
+    }
+
+    /** FE/t drawn last tick. */
+    public int lastUse() {
+        return synced(useIndex);
     }
 
     public float progress() {

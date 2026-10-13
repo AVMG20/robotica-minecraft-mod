@@ -131,6 +131,9 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     private long lastWorking;
     private long lastBeep = -BEEP_GAP;
     private long lastWorkSound = -20;
+    /** FE consumed this second, and the average FE/t of the last full second. */
+    private long useWindow;
+    private int usePerTick;
 
     /** Card slots and caps follow the Mk rule ({@link Upgrades#forMk}) with this worker's {@link #tier()}. */
     protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds) {
@@ -141,7 +144,14 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
     protected AreaWorkerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, Set<UpgradeKind> kinds,
                                     int energyCapacity, int maxReceive) {
         super(type, pos, state);
-        this.energy = new MachineEnergyStorage(energyCapacity, maxReceive, 0, this::setChanged);
+        this.energy = new MachineEnergyStorage(energyCapacity, maxReceive, 0, this::setChanged) {
+            @Override
+            public boolean consume(int amount) {
+                boolean ok = super.consume(amount);
+                if (ok) useWindow += amount;
+                return ok;
+            }
+        };
         this.upgrades = Upgrades.forMk(this::tier, kinds, this::onUpgradesChanged);
     }
 
@@ -233,6 +243,11 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         if (level == null || level.isClientSide) return;
         previewUntil = level.getGameTime() + PREVIEW_TICKS;
         setChangedAndSync();
+    }
+
+    /** Average FE/t drawn over the last second. */
+    public int usePerTick() {
+        return usePerTick;
     }
 
     /** Percent of the job done, or -1 for workers without a finite job (farm bots). */
@@ -338,6 +353,10 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
         if (!pending.isEmpty()) flushPending(sl);
         Status next = pending.isEmpty() ? work(sl) : Status.OUTPUT_FULL;
         if (next != Status.WORKING && age % 5 == 0) energy.consume(1);
+        if (age % 20 == 0) {
+            usePerTick = (int) Math.min(Integer.MAX_VALUE, useWindow / 20);
+            useWindow = 0;
+        }
         if (next == Status.WORKING) lastWorking = age;
         if (next != status) {
             announce(sl, status, next);

@@ -71,6 +71,7 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
     public final com.arno.robotica.core.side.SideConfig sides = new com.arno.robotica.core.side.SideConfig(this, () -> automation);
 
     private boolean wasCharging;
+    private int lastUse;
 
     private final int rate;
 
@@ -85,6 +86,11 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
         return rate;
     }
 
+    /** FE moved into the item last tick. */
+    public int lastUse() {
+        return lastUse;
+    }
+
     public IItemHandler automation() {
         return automation;
     }
@@ -94,8 +100,10 @@ public class ChargerBlockEntity extends PowerBlockEntity implements MenuProvider
         sides.tick(level);
         ItemStack stack = slot.getStackInSlot(0);
         boolean charging = false;
+        lastUse = 0;
         if (!stack.isEmpty() && energy.getEnergyStored() > 0) {
             int moved = EnergyUtil.chargeItem(energy, stack, rate);
+            lastUse = moved;
             if (moved > 0) {
                 charging = true;
                 setChanged();

@@ -78,6 +78,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
 
     private int progress;
     private int needed = PressingRecipe.DEFAULT_TIME;
+    private int lastUse;
 
     public MetalPressBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.METAL_PRESS_BE.get(), pos, state);
@@ -99,6 +100,11 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
 
     public int needed() {
         return needed;
+    }
+
+    /** FE drawn last tick (0 when it did not work). */
+    public int lastUse() {
+        return lastUse;
     }
 
     private boolean hasRecipe(ItemStack stack) {
@@ -124,6 +130,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         PressingRecipe recipe = findRecipe(items.getStackInSlot(0));
         boolean working = false;
+        lastUse = 0;
         if (recipe != null && canOutput(recipe)) {
             int speed = upgrades.level(UpgradeKind.SPEED);
             int efficiency = upgrades.level(UpgradeKind.EFFICIENCY);
@@ -133,6 +140,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
             int perTick = base == 0 ? 0 : (int) Math.max(1, Math.round(base * multiplier * Upgrades.energyMultiplier(speed, efficiency)));
             if (energy.consume(perTick)) {
                 working = true;
+                lastUse = perTick;
                 progress++;
                 if (progress >= needed) {
                     finish(recipe);

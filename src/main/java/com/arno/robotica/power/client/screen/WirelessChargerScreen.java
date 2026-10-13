@@ -4,6 +4,7 @@ import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.power.block.WirelessChargerBlockEntity;
 import com.arno.robotica.power.menu.WirelessChargerMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -36,7 +37,8 @@ public class WirelessChargerScreen extends MachineScreen<WirelessChargerMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 9, y + 17, 12, 52, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 9, y + 17, 12, 52, menu.energy(), menu.capacity(), false,
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.fePerTick())).withStyle(ChatFormatting.GRAY));
         drawLabel(g, Component.translatable("gui.robotica.wireless.stats", menu.range(), Fmt.energy(menu.rate())), x + 26, y + 18, 120);
 
         WirelessChargerBlockEntity be = menu.charger();

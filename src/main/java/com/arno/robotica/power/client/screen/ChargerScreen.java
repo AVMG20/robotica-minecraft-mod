@@ -1,7 +1,9 @@
 package com.arno.robotica.power.client.screen;
 
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.power.menu.ChargerMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -17,7 +19,8 @@ public class ChargerScreen extends MachineScreen<ChargerMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 12, y + 17, 14, 52, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 12, y + 17, 14, 52, menu.energy(), menu.capacity(), false,
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.lastUse())).withStyle(ChatFormatting.GRAY));
         ItemStack stack = menu.chargedItem();
         IEnergyStorage item = stack.isEmpty() ? null : stack.getCapability(Capabilities.EnergyStorage.ITEM);
         long stored = item == null ? 0 : item.getEnergyStored();

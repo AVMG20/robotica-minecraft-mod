@@ -94,6 +94,26 @@ public class PowerGameTests {
         });
     }
 
+    /** The press reports the FE it draws per tick while working (the energy bar tooltip), and 0 once it is done. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void metalPressReportsUse(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(1, 1, 1);
+        helper.setBlock(pos, PowerRegistry.METAL_PRESS.get().defaultBlockState());
+        MetalPressBlockEntity press = (MetalPressBlockEntity) helper.getBlockEntity(pos);
+        press.items.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 1));
+        press.energy.setEnergy(MetalPressBlockEntity.ENERGY_CAPACITY);
+
+        helper.runAfterDelay(10, () -> {
+            int used = MetalPressBlockEntity.ENERGY_CAPACITY - press.energy.getEnergyStored();
+            helper.assertTrue(press.lastUse() > 0 && used == press.lastUse() * press.progress(),
+                    "use per tick " + press.lastUse() + " should match the drain " + used + " over " + press.progress() + " ticks");
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(press.items.getStackInSlot(1).is(CoreItems.IRON_PLATE.get()), "Press should output an iron plate");
+            helper.assertTrue(press.lastUse() == 0, "no use once the input is gone");
+        });
+    }
+
     /** Generic tag rule: a c:ingots/<m> item presses into the c:plates/<m> item; explicit recipes still win. */
     @GameTest(template = "empty")
     public static void metalPressTagRule(GameTestHelper helper) {
