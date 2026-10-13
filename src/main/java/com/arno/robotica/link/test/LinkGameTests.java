@@ -113,10 +113,10 @@ public class LinkGameTests {
         CompoundTag[] saved = new CompoundTag[1];
         helper.startSequence()
                 .thenExecuteAfter(2, () -> {
-                    // unload: save, then remove the block entity like a chunk unload does (it no longer ticks)
+                    // unload: save, then take the block entity and its ticker away like a chunk unload does
                     saved[0] = receiver.saveWithFullMetadata(level.registryAccess());
                     receiver.onChunkUnloaded();
-                    receiver.setRemoved();
+                    level.removeBlockEntity(receiverAbs);
                     helper.assertTrue(net.energyCapacity() == 64_000L * LinkNetwork.BUFFER_TICKS, "one Mk1 sender: 5 s of 64k FE/t");
                     net.setEnergy(net.energyCapacity() - 10_000);
                     sender.energy.setEnergy(64_000);
@@ -131,7 +131,6 @@ public class LinkGameTests {
                     helper.assertTrue(kept > 0 && net.energy() == net.energyCapacity(), "a full buffer makes the sender wait");
                     // load again: the chunk makes a fresh block entity from the saved tag
                     BlockEntity fresh = level.getBlockEntity(receiverAbs);
-                    if (fresh == null || fresh.isRemoved()) fresh = level.getBlockEntity(receiverAbs);
                     helper.assertTrue(fresh instanceof QuantumLinkBlockEntity && fresh != receiver, "a new block entity after the reload");
                     fresh.loadWithComponents(saved[0], level.registryAccess());
                     ((QuantumLinkBlockEntity) fresh).energy.setEnergy(0);
