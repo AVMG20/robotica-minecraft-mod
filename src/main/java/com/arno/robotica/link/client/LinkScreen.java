@@ -15,6 +15,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -60,7 +61,7 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
         this.inventoryLabelY = LinkMenu.INV_Y - 10;
     }
 
-    private static Component tr(String key, Object... args) {
+    private static MutableComponent tr(String key, Object... args) {
         return Component.translatable("gui.robotica.link." + key, args);
     }
 
@@ -241,8 +242,7 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
         long stored = menu.networkEnergy(), capacity = menu.networkCapacity();
         drawEnergyBarWide(g, x + RX, y + 90, RW, 6, stored, capacity);
         drawFitted(g, font, tr("slots", menu.usedSlots(), menu.itemSlots()), x + RX, y + 99, RW, TEXT, -1, false, 0.75F);
-        addTooltip(x + RX, y + 89, RW, 17, tr("buffer"), tr("buffer.energy", Fmt.energy(stored), Fmt.energy(capacity)),
-                tr("buffer.items", menu.usedSlots(), menu.itemSlots()));
+        addTooltip(x + RX, y + 98, RW, 9, tr("buffer.items", menu.usedSlots(), menu.itemSlots()));
 
         // status line
         QuantumLinkBlockEntity.Status status = menu.status();

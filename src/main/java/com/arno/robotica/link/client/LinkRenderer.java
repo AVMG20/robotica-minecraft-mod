@@ -32,7 +32,7 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
     private static final ResourceLocation CRYSTAL = Robotica.id("block/quantum_crystal");
     private static final int FULL_BRIGHT = 0xF000F0;
     private static final float PULSE_TICKS = 12.0F;
-    private static final float EMITTER_Y = 0.8125F;
+    private static final float EMITTER_Y = 0.875F;
     private static final int ARCS = 3, ARC_SEGMENTS = 5;
     /** The 8 faces of a unit octahedron, 3 corners each, wound outwards. */
     private static final float[][] FACES = octahedron();

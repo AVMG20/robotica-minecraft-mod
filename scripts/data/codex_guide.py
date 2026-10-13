@@ -75,6 +75,10 @@ INDUSTRY_RESONITE = ['exo_helmet_mk4_from_mk3', 'exo_chestplate_mk4_from_mk3', '
                      'assembling_resonant_lattice', 'assembling_fusion_fuel_pellet', 'assembling_null_circuit',
                      'assembling_null_casing', 'alloy_smelter_mk4', 'centrifuge_mk3', 'centrifuge_mk4', 'assembler_mk3',
                      'assembler_mk4']
+# Link module: Quantum Link Mk1-3, one per age.
+LINK_AGE2 = ['quantum_link_mk1']
+LINK_AGE3 = ['quantum_link_mk2']
+LINK_AGE4 = ['quantum_link_mk3']
 
 
 # (name, parent, icon, frame, age, title, description, criterion, recipes, xp). A list of criteria means any one of them.
@@ -204,7 +208,7 @@ STEPS = [
       'magnet_module_2', 'capacitor_plating_module_2', 'power_regulator_module', 'colossus_altar',
       'glider_module', 'gyro_stabilizer_module', 'reach_module_2', 'anchor_servos_module_2',
       'armor_pierce_module_2', 'ricochet_module', 'overclock_module_2', 'fortune_module_2', 'sharpened_edge_module_2',
-      'looting_module_2', 'pocket_architect_mk2'] + cards('range', 'fortune', 'silk') + INDUSTRY_AGE2 + ['wireless_charger', 'wireless_charger_mk2', 'charger_mk2'], 30),
+      'looting_module_2', 'pocket_architect_mk2'] + cards('range', 'fortune', 'silk') + INDUSTRY_AGE2 + ['wireless_charger', 'wireless_charger_mk2', 'charger_mk2'] + LINK_AGE2, 30),
     ('assembler', 'age2', 'assembler_mk1', 'task', 2, 'Machine Made',
      'Place an Assembler.',
      placed('assembler_mk1', 'assembler_mk2', 'assembler_mk3', 'assembler_mk4'), INDUSTRY_ASSEMBLER, 15),
@@ -235,6 +239,9 @@ STEPS = [
     ('replicator', 'servo_core', 'replicator_controller', 'goal', 2, 'Copy That',
      'Build the Mob Replicator.',
      milestone('replicator_formed'), [], 30),
+    ('quantum_link', 'age2', 'quantum_link_mk1', 'task', 2, 'Spooky Action',
+     'Place a Quantum Link.',
+     placed('quantum_link_mk1', 'quantum_link_mk2', 'quantum_link_mk3'), [], 15),
     ('age3', 'servo_core', 'quantum_circuit', 'goal', 3, 'Age 3: Deep',
      'Craft a Quantum Circuit.',
      has('quantum_circuit', 'plasma_actuator'),
@@ -244,7 +251,7 @@ STEPS = [
       'reach_module_3', 'heat_shield_module_2', 'anchor_servos_module_3',
       'power_regulator_module_2', 'buddy_bot_mk3', 'excavator_mk3', 'survey_rig_mk3', 'armor_pierce_module_3', 'ricochet_module_2',
       'chain_lightning_module', 'chain_lightning_module_2', 'overclock_module_3', 'fortune_module_3', 'sharpened_edge_module_3',
-      'looting_module_3', 'ignition_charge', 'forge_altar'], 50),
+      'looting_module_3', 'ignition_charge', 'forge_altar'] + LINK_AGE3, 50),
     ('pyrolite', 'age3', 'pyrolite_shard', 'task', 3, 'Fire Stone',
      'Mine Pyrolite Ore in the Nether, most of it in basalt deltas.',
      has('pyrolite_shard', 'pyrolite_ore'), INDUSTRY_PYROLITE, 20),
@@ -269,7 +276,7 @@ STEPS = [
      ['null_casing', 'null_circuit', 'ender_cell', 'solar_panel_mk4', 'grinder_mk4', 'electric_furnace_mk4', 'resonant_grinding_balls', 'tool_upgrade_kit_4', 'tesla_coil_5', 'tesla_emitter_5', 'tesla_coil_5_from_emitters', 'charger_mk4', 'wireless_charger_mk4', 'collider_controller', 'accelerator_segment',
       'farm_kit_mk4', 'gate_controller', 'capacitor_ender', 'sonar_pulse_module_3', 'jet_assist_module_3', 'med_injector_module_3',
       'power_regulator_module_3', 'excavator_mk4', 'survey_rig_mk4', 'buddy_bot_mk4', 'chain_lightning_module_3', 'lifesteal_module',
-      'null_key', 'null_altar'], 80),
+      'null_key', 'null_altar'] + LINK_AGE4, 80),
     ('resonite', 'age4', 'resonite_crystal', 'task', 4, 'Echoes',
      'Mine Resonite Ore on the outer End islands.',
      has('resonite_crystal', 'resonite_ore'), INDUSTRY_RESONITE, 30),

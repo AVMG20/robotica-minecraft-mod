@@ -642,6 +642,21 @@
           ]
         }
       ]
+    },
+    {
+      "title": "Quantum Link",
+      "icon": "robotica:quantum_link_mk1",
+      "pages": [
+        {
+          "title": "Networks",
+          "text": "The network holds 5 seconds of every sender's FE and 9 item slots per item sender. It fills while the receivers are unloaded and empties when they load again.\nUpkeep comes from the Link's own buffer, else from the network.\nMk1 only works in the dimension its network was made in.\nLinks next to each other ignore each other.\nA broken Link keeps its network and settings.",
+          "items": [
+            "robotica:quantum_link_mk1",
+            "robotica:quantum_link_mk2",
+            "robotica:quantum_link_mk3"
+          ]
+        }
+      ]
     }
   ]
 }

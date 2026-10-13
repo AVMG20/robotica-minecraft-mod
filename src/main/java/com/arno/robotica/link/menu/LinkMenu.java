@@ -206,6 +206,12 @@ public class LinkMenu extends MachineMenu {
         return be != null && !be.isRemoved() && be.canOpen(player) && player.mayBuild();
     }
 
+    /** Sides tab: only who may open the Link (checked on the server; the client copy has no block entity). */
+    @Override
+    public boolean mayConfigure(Player player) {
+        return be == null || canEdit(player);
+    }
+
     /** Ghost filter slots: a click copies the carried item or clears the slot (the pipe arm rule). */
     @Override
     public void clicked(int slotId, int button, ClickType type, Player player) {

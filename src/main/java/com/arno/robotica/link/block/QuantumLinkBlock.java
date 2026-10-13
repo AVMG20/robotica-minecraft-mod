@@ -53,7 +53,7 @@ public class QuantumLinkBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     /** Height of the crystal's centre above the block's base, in blocks. */
     public static final double CRYSTAL_Y = 1.12;
-    private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 3, 16), Block.box(2, 3, 2, 14, 11, 14),
+    private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 3, 16), Block.box(1, 3, 1, 15, 11, 15),
             Block.box(1, 11, 1, 15, 13, 15));
 
     private final LinkTier tier;

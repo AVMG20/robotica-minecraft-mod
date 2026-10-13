@@ -112,7 +112,8 @@
       "robotica:centrifuging_glistering_melon_slice",
       "robotica:wireless_charger",
       "robotica:wireless_charger_mk2",
-      "robotica:charger_mk2"
+      "robotica:charger_mk2",
+      "robotica:quantum_link_mk1"
     ],
     "experience": 30
   }

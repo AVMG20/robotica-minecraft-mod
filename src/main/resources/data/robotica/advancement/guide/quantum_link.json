@@ -1,0 +1,47 @@
+{
+  "parent": "robotica:guide/age2",
+  "display": {
+    "icon": {
+      "id": "robotica:quantum_link_mk1"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.quantum_link.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.quantum_link.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": [
+                  "robotica:quantum_link_mk1",
+                  "robotica:quantum_link_mk2",
+                  "robotica:quantum_link_mk3"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 15
+  }
+}

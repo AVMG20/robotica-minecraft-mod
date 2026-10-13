@@ -877,6 +877,7 @@ public final class Showcase {
     private static final BlockPos CHARGER = new BlockPos(82, Y, 100);
     private static final BlockPos TABLE = new BlockPos(170, Y, 160);
     private static final BlockPos BENCH = new BlockPos(200, Y, 100);
+    private static final BlockPos LINKS = new BlockPos(200, Y, 130);
     private static final BlockPos TYRANT = new BlockPos(230, Y, 100);
     private static final EquipmentSlot[] ARMOR = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
     private static final String[] ARMOR_NAMES = {"boots", "leggings", "chestplate", "helmet"};
@@ -1609,6 +1610,33 @@ public final class Showcase {
         step(5, () -> {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
+
+        // Quantum Links Mk1-3 on one network: the Mk1 sends an Accumulator's FE, the crystals pulse in the network colour.
+        if (wants("34_quantum_links")) {
+            step(10, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                var networks = com.arno.robotica.link.network.LinkNetworks.get(sp.server);
+                var net = networks.create(sp.getUUID(), sp.getGameProfile().getName(), "Showcase", 9,
+                        com.arno.robotica.link.network.Visibility.PUBLIC, level.dimension());
+                String[] tiers = {"quantum_link_mk1", "quantum_link_mk2", "quantum_link_mk3"};
+                for (int i = 0; i < tiers.length; i++) {
+                    BlockPos pos = new BlockPos(LINKS.getX() + i * 3, Y, LINKS.getZ());
+                    setFacing(level, pos, block(tiers[i]), Direction.SOUTH);
+                    if (level.getBlockEntity(pos) instanceof com.arno.robotica.link.block.QuantumLinkBlockEntity link) {
+                        link.joinNetwork(net);
+                        link.setEnergyMode(i == 0 ? com.arno.robotica.link.block.TransferMode.SEND : com.arno.robotica.link.block.TransferMode.RECEIVE);
+                    }
+                }
+                BlockPos source = LINKS.north();
+                setFacing(level, source, block("accumulator_1"), Direction.SOUTH);
+                fillEnergy(level, source);
+            }));
+            camera(LINKS.getX() + 3.5, Y + 2.2, LINKS.getZ() + 5.2, 180, 18);
+            hud(false);
+            step(20, () -> {});
+            shot("34_quantum_links");
+            hud(true);
+        }
 
         // Tinker's Bench in the world, from the front corner (for checking the model, not used on the site).
         if (wants("33_tinkers_bench")) {

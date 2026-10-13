@@ -146,8 +146,10 @@ public final class LinkNetwork {
     }
 
     void setName(String value) {
+        if (value.equals(name)) return;
         name = value;
         dirty();
+        for (QuantumLinkBlockEntity link : loaded) link.networkChanged();
     }
 
     void setColor(int value) {
