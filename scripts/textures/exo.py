@@ -151,8 +151,8 @@ MODULE_COLORS = {
     'glider': CHEST,
     'servo_stride_1': LEGS, 'servo_stride_2': LEGS, 'servo_stride_3': LEGS, 'kinetic_generator': LEGS, 'dash_thrusters': LEGS,
     'gyro_stabilizer': LEGS, 'anchor_servos': LEGS,
-    'step_assist': FEET, 'spring_heels': FEET, 'fall_dampener': FEET, 'magnet': FEET, 'hydro_fins': FEET, 'cryo_treads': FEET,
-    'capacitor_plating': ANY, 'power_regulator': ANY, 'reach': ANY, 'heat_shield': ANY,
+    'step_assist': FEET, 'spring_heels': FEET, 'fall_dampener': FEET, 'hydro_fins': FEET, 'cryo_treads': FEET,
+    'capacitor_plating': ANY, 'power_regulator': ANY, 'reach': ANY, 'heat_shield': ANY, 'magnet': ANY,
 }
 # Modules with levels: one file per level (level I keeps the plain name). Servo Stride has its own glyph per level.
 LEVELS = {name: 3 for name in ('night_vision', 'sonar_pulse', 'jet_assist', 'kinetic_shield', 'med_injector', 'spring_heels',

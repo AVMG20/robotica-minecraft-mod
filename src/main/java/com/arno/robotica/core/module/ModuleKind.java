@@ -57,12 +57,12 @@ public enum ModuleKind {
     STEP_ASSIST("step_assist", Pieces.FEET, 0, 1),
     SPRING_HEELS("spring_heels", Pieces.FEET, 0, 1, 2, 3),
     FALL_DAMPENER("fall_dampener", Pieces.FEET, 0, 1),
-    MAGNET("magnet", Pieces.FEET, 0, 1, 2, 3),
     HYDRO_FINS("hydro_fins", Pieces.FEET, 0, 2),
     CRYO_TREADS("cryo_treads", Pieces.FEET, 0, 1),
     // any Exo piece (acts on its own piece, one per piece)
     CAPACITOR_PLATING("capacitor_plating", ARMOR, 0, 1, 2, 3),
     // any Exo piece (counts once per suit)
+    MAGNET("magnet", ARMOR, 0, 1, 2, 3),
     REACH("reach", ARMOR, 0, 1, 2, 3),
     HEAT_SHIELD("heat_shield", ARMOR, 0, 1, 3),
     // tools, weapons and armor
