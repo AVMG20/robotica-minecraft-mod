@@ -3,8 +3,8 @@
   "render_type": "minecraft:translucent",
   "textures": {
     "base": "robotica:block/accelerator_segment_base",
-    "coil": "robotica:block/accelerator_segment_coil",
-    "glow": "robotica:block/accelerator_segment_coil_glow",
+    "parts": "robotica:block/accelerator_segment_parts",
+    "corner": "robotica:block/accelerator_segment_corner",
     "pipe": "robotica:block/accelerator_segment_pipe",
     "particle": "robotica:block/accelerator_segment_base"
   },
@@ -32,6 +32,65 @@
         },
         "east": {
           "texture": "#pipe"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        5,
+        0
+      ],
+      "to": [
+        11,
+        11,
+        1
+      ],
+      "faces": {
+        "south": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            6,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            6,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            6,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            1,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#corner",
+          "uv": [
+            0,
+            8,
+            1,
+            14
+          ]
         }
       }
     }

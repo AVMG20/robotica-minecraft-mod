@@ -116,6 +116,9 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
     private Vec3[] ringCentres;
     @Nullable
     private AABB ringBounds;
+    /** Client render cache: per ring block its segment tier (1, 2), 0 while not known (its chunk is not loaded). */
+    @Nullable
+    private int[] ringTiers;
 
     public ColliderBlockEntity(BlockPos pos, BlockState blockState) {
         super(EnergyRegistry.COLLIDER_BE.get(), pos, blockState);
@@ -256,6 +259,7 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
     private void ringChanged() {
         ringCentres = null;
         ringBounds = null;
+        ringTiers = null;
     }
 
     // ---------------------------------------------------------------- numbers
@@ -492,6 +496,16 @@ public class ColliderBlockEntity extends StructureControllerBlockEntity {
         }
         return ringBounds;
     }
+    /** Client: the segment tier of ring block i (1 Accelerator, 2 Resonant), 0 for the controller or while unknown. */
+    public int ringTier(int i) {
+        if (ringTiers == null || ringTiers.length != ring.size()) ringTiers = new int[ring.size()];
+        int tier = ringTiers[i];
+        if (tier == 0 && level != null && level.getBlockState(ring.get(i)).getBlock() instanceof AcceleratorSegmentBlock seg) {
+            tier = ringTiers[i] = seg.tier();
+        }
+        return tier;
+    }
+
     /** Client: beam strength 0-10 and charge 0-10 as last synced. */
     public int shownBeam() { return shownBeam; }
     public int shownCharge() { return shownCharge; }

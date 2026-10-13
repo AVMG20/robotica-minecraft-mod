@@ -658,62 +658,396 @@ def spire_coil_glow():
 
 
 # ---------------------------------------------------------------- ring collider
+# Ring Collider in the machine casing language (machine_casing.py). The controller is a violet-tinted graphite casing
+# with resonant alloy brackets. Its front is the beam aperture: a polished steel bezel held by four quadrupole clamps
+# on the diagonals, and 2 px behind it the collision chamber (its own elements, scripts/data/energy_models.py): eight
+# detector cells between steel spokes round the collision space, the beam tube across it. The beam line enters the
+# front frame at both sides. The sides where the pipes join carry a flanged beam port on the energy channel, the back
+# the plain channel, the top a window over the beam line round a lens. Formed: standby glow (dim tube and beam line,
+# standby lamps). Running: bunches stream in along the tube to a white collision point, two lights circle the
+# detector rim the opposite ways and meet at the tube ends; every running loop is CL_FRAMES x CL_FRAMETIME ticks,
+# interpolated.
+# Segments: a graphite slab with tier brackets, a glass beam pipe with steel flanges at the block edges, a magnet on
+# straights (two yoke plates round a coil pack with a slot on top) and a bending magnet on corners. Accelerator
+# Segments are graphite with copper windings and cyan, Resonant Segments violet-tinted graphite with resonant alloy
+# and violet. ColliderRenderer lights the beam and the magnet slots while the ring charges and runs.
+# Chars on top of the casing palette: '12345' light steel, 'm n o' chamber (void, dark, glass lit edge),
+# 'p q r s t' plasma light (deep -> white), '6 7 8' pipe glass (tint, wall, glint).
+import machine_casing as mc  # noqa: E402
 
-SEG = {1: (SL, CU, CY, '-', '_', '|'), 2: (NU, PU, PU, ':', ';', '?')}
+CL_FRAMES, CL_FRAMETIME = 16, 2
+CL_HOLE, CL_RIM = 5.0, 6.1                                               # aperture and bezel radius on the front
+CL_STEEL = ('#2E3440', '#4E5666', '#7A8496', '#AAB4C6', '#E2E8F4')
+CL_BODY = {1: mc.GRAPHITE, 2: ('#121119', '#1D1C28', '#2C2A3B', '#434158', '#68657F')}
+CL_METAL = {1: mc.INDUSTRY_TIERS[1], 2: mc.INDUSTRY_TIERS[4]}
+CL_LIGHT = {1: ('#0F3A46', '#1B8098', '#3FD6EE', '#B8F6FF', '#FFFFFF'),
+            2: ('#2A1458', '#5A36C4', '#9C70FF', '#DCCCFF', '#FFFFFF')}
+CL_ENERGY = {1: dict(mc.ENERGY), 2: {'u': '#1E1838', 'v': '#7A50F0', 'w': '#C8B0FF', 'x': '#F8F2FF'}}
+CL_GLASS = {1: ('#6FE0F560', '#3E98AAE0', '#E6FAFFC0'), 2: ('#A884FF68', '#7E5CD8E0', '#F0E2FFC0')}
+CL_SEG = {1: 'accelerator', 2: 'resonant'}
 
 
-def segment_base(tier):
-    """Mounting slab of a ring segment: riveted plate with a cable channel along the beam."""
-    r, m, g = SEG[tier][:3]
-    c = Canvas()
-    plate(c, 0, 0, 16, 16, r, 200 + tier, density=0.25)
-    c.rivets(0, 0, 16, 16, r, inset=1)
-    c.rect(1, 12, 14, 3, r[1]).bevel(1, 12, 14, 3, r[3], r[0])           # side face (the slab is 4 px tall)
-    c.rect(3, 13, 10, 1, 'k').rect(4, 13, 8, 1, g[0])
-    return c
+def cl_pal(tier):
+    """1: Accelerator Segment (graphite, copper, cyan); 2: Resonant Segment and the controller (violet-tinted
+    graphite, resonant alloy, violet)."""
+    extra = dict(zip(mc.BODY, CL_BODY[tier]))
+    extra.update(zip('12345', CL_STEEL))
+    extra.update(zip('pqrst', CL_LIGHT[tier]))
+    extra.update(zip('678', CL_GLASS[tier]))
+    extra.update(CL_ENERGY[tier])
+    extra.update({'m': '#07060C', 'n': '#1E1A30', 'o': '#3A2E6A'})
+    return mc.casing_palette(CL_METAL[tier], **extra)
 
 
-def segment_coil(tier):
-    """Dipole magnet: windings of the tier metal around a yoke, a charge line through the middle."""
-    r, m, g = SEG[tier][:3]
-    c = Canvas()
-    c.rect(0, 0, 16, 16, r[1])
+def cl_dist(x, y):
+    return math.hypot(x - 7.5, y - 7.5)
+
+
+def cl_lean(x, y):
+    """< 0 towards the light (top-left), > 0 away from it."""
+    return (x - 7.5) + (y - 7.5)
+
+
+def cl_wave(frame, offset=0.0):
+    """0..1 cosine over the loop, 1 at frame `offset` (in loop fractions)."""
+    return 0.5 + 0.5 * math.cos(2 * math.pi * (frame / CL_FRAMES - offset))
+
+
+def cl_stream(d, frame):
+    """Brightness 0..1 of a bunch train streaming inwards: d is the distance from the collision point in pixels,
+    one bunch every 4 px, moving 4 px per loop."""
+    phase = (d + 4.0 * frame / CL_FRAMES) % 4.0
+    return max(0.0, 1.0 - phase / 2.2)
+
+
+def cl_light(b, floor='q'):
+    """Brightness 0..1 -> plasma char."""
+    return 't' if b > 0.8 else 's' if b > 0.55 else 'r' if b > 0.25 else floor
+
+
+def bezel(c, cx, cy, r0, r1, lip=0.6):
+    """Polished steel ring: the inner lip shadowed at the top-left, the face lit there."""
     for y in range(16):
-        c.rect(0, y, 16, 1, m[2] if y % 2 else m[1])
-        c.set(0, y, m[3]).set(15, y, m[0])
-    c.rect(0, 0, 16, 1, r[3]).rect(0, 15, 16, 1, r[0])
-    c.rect(0, 7, 16, 2, 'z').rect(1, 7, 14, 1, g[1])
-    if tier == 2:
-        for x in (3, 8, 12):
-            c.set(x, 4, '&').set(x, 11, PU[4])
+        for x in range(16):
+            d, lean = math.hypot(x - cx, y - cy), (x - cx) + (y - cy)
+            if r0 <= d < r1:
+                if d < r0 + lip:
+                    c.set(x, y, '2' if lean < -1 else '4' if lean > 1 else '3')
+                else:
+                    c.set(x, y, '5' if lean < -2 else '2' if lean > 2 else '4')
     return c
 
 
-def segment_coil_glow(tier):
-    g = SEG[tier][2]
-    c = Canvas()
-    c.rect(1, 7, 14, 1, g[3])
-    for x in (2, 7, 12):
-        c.set(x, 7, g[4])
+BEAM_STUBS = (0, 1, 14, 15)                                              # beam line in the front frame, rows 7-8
+
+
+def collider_front():
+    """Beam aperture (transparent: the chamber shows through) in a steel bezel with four quadrupole clamps on the
+    diagonals, the beam line entering through the frame at both sides, standby and run lamps on the top frame and a
+    beam readout on the bottom frame."""
+    c = mc.shell(4)
+    bezel(c, 7.5, 7.5, CL_HOLE, CL_RIM)
+    for y in range(16):
+        for x in range(16):
+            if cl_dist(x, y) < CL_HOLE:
+                c.set(x, y, '.')
+    for x, y, sx, sy in ((3, 3, 1, 1), (12, 3, -1, 1), (3, 12, 1, -1), (12, 12, -1, -1)):
+        c.set(x, y, 'h').set(x + sx, y, 'h').set(x, y + sy, 'h')
+    c.set(3, 3, 'i').set(12, 12, 'g')
+    for x in BEAM_STUBS:
+        c.set(x, 7, 'u').set(x, 8, 'u')
+    c.rect(6, 1, 4, 1, 'k').set(6, 1, 'l').set(7, 1, 'l').set(9, 1, 'l')  # lamps: standby x2, running
+    c.rect(5, 14, 6, 1, 'k')                                              # beam readout
     return c
 
 
-def segment_pipe(tier):
-    """Glass beam pipe: tinted pane with darker walls along the edges and long glints."""
-    tint, glint, wall = SEG[tier][3:]
+def collider_front_glow(state, frame=0):
+    """formed: standby lamps, a dim beam line and readout; on: the run lamp, bunches streaming in along the beam line,
+    the readout breathing with the chamber."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, tint)
+    c.set(6, 1, 'r').set(7, 1, 'r')
+    if state == 'formed':
+        for x in BEAM_STUBS:
+            c.set(x, 7, 'p').set(x, 8, 'p')
+        c.rect(5, 14, 1, 1, 'p')
+        return c
+    c.set(9, 1, 'L')
+    for x in BEAM_STUBS:
+        ch = cl_light(cl_stream(abs(x - 7.5) - 1, frame))
+        c.set(x, 7, ch).set(x, 8, ch)
+    lvl = 4 + round(2 * cl_wave(frame))                                  # readout: 4..6 bars
+    for i in range(6):
+        c.set(5 + i, 14, ('s' if i == lvl - 1 else 'r') if i < lvl else 'p')
+    return c
+
+
+# Chamber texture: the visible disc (d < CL_HOLE) is the chamber back; rows 0-1 hold the beam tube's front face,
+# row 14 its top and bottom and row 15 the bore walls (outside the disc, so they never show on the back).
+TRACK = (2.1, 4.6)                                                       # detector: eight glass cells
+HALO = 2.1                                                               # collision space round the beam
+
+
+def track_cell(x, y):
+    """Index 0-7 of the detector cell at x, y, or None on the steel between the cells and off the track."""
+    if not TRACK[0] <= cl_dist(x, y) < TRACK[1]:
+        return None
+    a = math.degrees(math.atan2(y - 7.5, x - 7.5)) % 360
+    return None if a % 45 < 5 or a % 45 > 40 else int(a // 45)
+
+
+def collider_chamber():
+    """A detector of eight glass cells between steel spokes round the dark collision space; the beam tube across."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'm')
+    for y in range(16):
+        for x in range(16):
+            d, lean = cl_dist(x, y), cl_lean(x, y)
+            if d < HALO:
+                c.set(x, y, 'n')
+            elif d < TRACK[1]:
+                if track_cell(x, y) is None:
+                    c.set(x, y, '3' if lean < -1 else '2')              # steel spokes
+                else:
+                    c.set(x, y, 'o' if d < 3.0 else 'u' if lean < 2 else 'n')
+    c.rect(0, 0, 16, 1, 'o').rect(0, 1, 16, 1, 'u')                      # tube front: glass, lit at the top
+    c.rect(0, 14, 16, 1, '3')                                            # tube top and bottom: steel
+    c.rect(0, 15, 16, 1, 'a')                                            # bore walls
+    return c
+
+
+def cell_angle(i):
+    return math.radians(i * 45 + 22.5)
+
+
+def collider_chamber_glow(state, frame=0):
+    """formed: the tube and collision point dim; on: bunches streaming in along the tube to a white collision point
+    with a breathing halo, and two lights circling the detector rim the opposite ways (the ring's two bunches),
+    meeting at the tube ends."""
+    c = Canvas()
+    if state == 'formed':
+        c.rect(0, 0, 16, 2, 'p')
+        c.rect(7, 0, 2, 2, 'q')
+        return c
+    breathe = cl_wave(frame)
+    a1 = math.pi + math.pi * frame / 8                                   # half a turn per loop each way
+    a2 = math.pi - math.pi * frame / 8
+    cells = []
+    for i in range(8):
+        near = min(abs((cell_angle(i) - a + math.pi) % (2 * math.pi) - math.pi) for a in (a1, a2))
+        cells.append(max(0.0, 1.0 - near / 1.4))
+    for y in range(16):
+        for x in range(16):
+            d, i = cl_dist(x, y), track_cell(x, y)
+            if i is not None and d >= 3.5 and cells[i] > 0.15:
+                c.set(x, y, cl_light(cells[i], 'p'))
+            elif i is None and d < HALO and abs(y - 7.5) < 2:
+                c.set(x, y, 'q' if breathe > 0.5 and abs(x - 7.5) < 1 else 'p')
+    for x in range(16):
+        dx = abs(x - 7.5)
+        b = 1.0 if dx < 1 else cl_stream(dx - 1, frame)
+        c.set(x, 1, cl_light(b, 'r'))
+        c.set(x, 0, 't' if dx < 1 else 's' if b > 0.8 else 'r')
+    return c
+
+
+def port_flange(c):
+    """Square steel flange the beam pipe bolts onto (the pipe is 4 px, x/y 6..9), bolts in the tier metal."""
+    c.rect(5, 5, 6, 6, '3')
+    c.bevel(5, 5, 6, 6, '4', '1')
+    c.rect(6, 6, 4, 4, 'u')
+    c.bevel(6, 6, 4, 4, 'k', 'o')
+    for x, y in ((4, 4), (11, 4), (4, 11), (11, 11)):
+        c.set(x, y, 'h')
+    c.set(4, 4, 'i')
+    return c
+
+
+def collider_port():
+    """Side where a beam pipe joins: the casing side's energy channel feeding a flanged beam port."""
+    return port_flange(mc.side(0))
+
+
+def collider_port_glow(state, frame=0):
+    """formed: the port dim; on: the channel's pulse and the port glowing with the beam."""
+    c = Canvas()
+    if state == 'formed':
+        c.rect(7, 7, 2, 2, 'p')
+        return c
+    c.paste(mc.side_glow(frame, CL_FRAMES))
+    c.rect(5, 5, 6, 6, '.')
+    b = cl_wave(frame, 0.25)
+    c.rect(7, 7, 2, 2, 'q' if b < 0.3 else 'r').rect(7, 7, 2, 2, 'r')
+    c.set(7, 7, 's' if b > 0.5 else 'r').set(8, 8, 'q')
+    c.set(7, 6, 'q').set(8, 6, 'q').set(6, 7, 'q').set(6, 8, 'q')
+    return c
+
+
+def collider_back():
+    return mc.side(0)
+
+
+def collider_back_glow(frame):
+    return mc.side_glow(frame, CL_FRAMES)
+
+
+def collider_top():
+    """A window over the beam line and a lens over the collision point, held by four clamps."""
+    c = mc.shell(4)
+    for x in range(16):
+        c.set(x, 6, '1').set(x, 7, 'u').set(x, 8, 'u').set(x, 9, '4')
+    bezel(c, 7.5, 7.5, 2.0, 3.4, lip=0.5)
+    c.disc(7.5, 7.5, 1.9, 'u')
+    for x, y in ((4, 4), (10, 4), (4, 10), (10, 10)):
+        c.rect(x, y, 2, 2, 'h').set(x, y, 'i')
+    c.set(6, 6, 'o')
+    return c
+
+
+def collider_top_glow(state, frame=0):
+    """formed: the window and lens dim; on: bunches streaming in along the window, the lens breathing."""
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            d = cl_dist(x, y)
+            if d < 1.9:
+                c.set(x, y, 'p' if state == 'formed' else 't' if d < 0.6 + 0.8 * cl_wave(frame) else 's')
+            elif 7 <= y <= 8 and (x < 4 or x > 11):
+                c.set(x, y, 'p' if state == 'formed' else cl_light(cl_stream(abs(x - 7.5) - 3.4, frame)))
+    return c
+
+
+# ---------------------------------------------------------------- ring segments
+
+def seg_brackets(c, x0, y0, x1, y1, n=3):
+    """Tier metal L brackets on the corners of x0..x1, y0..y1 (inclusive), light from the top-left."""
+    for x, sx in ((x0, 1), (x1, -1)):
+        for y, sy in ((y0, 1), (y1, -1)):
+            for i in range(n):
+                c.set(x + sx * i, y, 'h').set(x, y + sy * i, 'h')
+            c.set(x + sx * (n - 1), y, 'g').set(x, y + sy * (n - 1), 'g')
+    c.set(x0, y0, 'j').set(x1, y1, 'f')
+    return c
+
+
+def segment_base():
+    """Top of the slab: a bevelled graphite deck with tier brackets in the corners and bolted pads, a sunken mount in
+    the middle where the pipe stands."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, 'c')
+    c.bevel(0, 0, 16, 16, 'd', 'a')
+    c.bevel(1, 1, 14, 14, 'c', 'b')
+    seg_brackets(c, 1, 1, 14, 14, 4)
+    c.recess(5, 5, 6, 6, 'abcde', fill='b')
+    c.rect(7, 7, 2, 2, 'a')
+    for x, y in ((7, 2), (2, 7), (13, 8), (8, 13)):                      # cable stubs on the edges, unlit energy
+        c.set(x, y, 'u').set(x + (1 if y in (2, 13) else 0), y + (1 if x in (2, 13) else 0), 'u')
+    return c
+
+
+# Parts atlases of a segment (explicit UVs in scripts/data/energy_models.py)
+SLAB_SIDE = (0, 0, 16, 4)
+YOKE_FACE = (0, 4, 10, 12)          # 10 wide (across the beam) x 8 tall, the beam port in the middle
+COIL = (10, 4, 16, 12)              # 6 along the beam x 8 across; windings run across, a slot down the middle
+CORNER_SIDE = (0, 0, 8, 8)          # bending magnet (segment_corner): side with the beam port
+CORNER_TOP = (8, 0, 16, 8)          # its top: a coil round a square yoke
+FLANGE = (0, 8, 6, 14)              # pipe flange face, its edge is the top row
+
+
+def port_plate(c, x0, y0, w, h, ring):
+    """Graphite plate with tier brackets and a steel port ring (6 px) round the 4 px pipe at (ring)."""
+    c.rect(x0, y0, w, h, 'c')
+    c.bevel(x0, y0, w, h, 'd', 'a')
+    seg_brackets(c, x0, y0, x0 + w - 1, y0 + h - 1, 2)
+    rx, ry = ring
+    c.rect(rx, ry, 6, 6, '2').bevel(rx, ry, 6, 6, '3', '1')
+    c.rect(rx + 1, ry + 1, 4, 4, 'm').bevel(rx + 1, ry + 1, 4, 4, 'k', 'n')
+    return c
+
+
+def segment_parts():
+    c = Canvas()
+    # slab side: lit edge, a band with an unlit energy slot, brackets at the ends
+    c.rect(0, 0, 16, 4, 'b')
+    c.rect(0, 0, 16, 1, 'd').rect(0, 3, 16, 1, 'a')
+    c.rect(3, 2, 10, 1, 'k').rect(4, 2, 8, 1, 'u')
+    for x in (0, 1, 14, 15):
+        c.rect(x, 0, 1, 4, 'h')
+    c.set(0, 0, 'j').set(1, 0, 'i').set(15, 3, 'f').set(14, 3, 'g')
+    c.set(2, 1, 'e').set(13, 1, 'e')
+    # yoke plate face: the port round the pipe (plate cols 3..6, rows 2..5)
+    x0, y0 = YOKE_FACE[:2]
+    port_plate(c, x0, y0, 10, 8, (x0 + 2, y0 + 1))
+    # coil pack: windings across the beam (stripes along u), a dark slot down the middle (lit by ColliderRenderer)
+    x0, y0, x1, y1 = COIL
+    for x in range(x0, x1):
+        for y in range(y0, y1):
+            c.set(x, y, 'h' if (x - x0) % 2 == 0 else 'g')
+        c.set(x, y0, 'i' if (x - x0) % 2 == 0 else 'h')
+        c.set(x, y1 - 1, 'f')
+        c.set(x, y0 + 3, 'k').set(x, y0 + 4, 'u')
+    return c
+
+
+def segment_corner():
+    """Bending magnet (side: windings round the beam port; top: a coil round a square yoke) and the pipe flange."""
+    c = Canvas()
+    for x in range(8):                                                   # side: windings round the beam port
+        for y in range(8):
+            c.set(x, y, 'h' if x % 2 == 0 else 'g')
+        c.set(x, 0, 'i' if x % 2 == 0 else 'h').set(x, 7, 'f')
+    c.rect(0, 0, 1, 8, 'c').rect(7, 0, 1, 8, 'a').set(0, 0, 'd')
+    c.rect(2, 2, 4, 4, 'm').rect(2, 2, 4, 1, 'k').rect(2, 2, 1, 4, 'k').rect(3, 5, 3, 1, 'n').rect(5, 3, 1, 3, 'n')
+    x0, y0 = CORNER_TOP[:2]
+    c.rect(x0, y0, 8, 8, 'h')
+    c.bevel(x0, y0, 8, 8, 'i', 'f')
+    for y in range(y0 + 1, y0 + 7, 2):
+        c.rect(x0 + 1, y, 6, 1, 'g')
+    c.rect(x0 + 2, y0 + 2, 4, 4, 'b').bevel(x0 + 2, y0 + 2, 4, 4, 'a', 'd')
+    c.rect(x0 + 3, y0 + 3, 2, 2, 'u').set(x0 + 3, y0 + 3, 'k')
+    x0, y0 = FLANGE[:2]
+    c.rect(x0, y0, 6, 6, '3').bevel(x0, y0, 6, 6, '4', '1')
+    c.rect(x0 + 1, y0 + 1, 4, 4, 'm').bevel(x0 + 1, y0 + 1, 4, 4, 'k', 'n')
+    return c
+
+
+def segment_pipe():
+    """Glass beam pipe, sampled at its element position: walls at 6 and 9 (both ways), glints along it."""
+    c = Canvas()
+    c.rect(0, 0, 16, 16, '6')
     for i in (6, 9):
-        c.rect(0, i, 16, 1, wall).rect(i, 0, 1, 16, wall)
-    for x in range(0, 16, 4):
-        c.set(x, 7, glint).set(7, x + 1, glint)
+        c.rect(0, i, 16, 1, '7').rect(i, 0, 1, 16, '7')
+    for x in (2, 5, 11, 14):
+        c.set(x, 7, '8').set(7, x, '8')
     return c
 
 
-def collider_casing():
-    c = casing(NU, 120)
-    c.set(7, 7, PU[2]).set(8, 8, PU[2])
-    return c
+def write_collider():
+    pal = cl_pal(2)
+    run = range(CL_FRAMES)
+
+    def anim(name, frames):
+        write_anim('block', name, frames, pal, frametime=CL_FRAMETIME, interpolate=True)
+    write_block('collider_controller_front', collider_front().rows(), pal)
+    write_block('collider_controller_front_formed', collider_front_glow('formed').rows(), pal)
+    anim('collider_controller_front_running', [collider_front_glow('on', f) for f in run])
+    write_block('collider_controller_chamber', collider_chamber().rows(), pal)
+    write_block('collider_controller_chamber_formed', collider_chamber_glow('formed').rows(), pal)
+    anim('collider_controller_chamber_running', [collider_chamber_glow('on', f) for f in run])
+    write_block('collider_controller_port', collider_port().rows(), pal)
+    write_block('collider_controller_port_formed', collider_port_glow('formed').rows(), pal)
+    anim('collider_controller_port_running', [collider_port_glow('on', f) for f in run])
+    write_block('collider_controller_back', collider_back().rows(), pal)
+    anim('collider_controller_back_running', [collider_back_glow(f) for f in run])
+    write_block('collider_controller_top', collider_top().rows(), pal)
+    write_block('collider_controller_top_formed', collider_top_glow('formed').rows(), pal)
+    anim('collider_controller_top_running', [collider_top_glow('on', f) for f in run])
+    write_block('collider_controller_bottom', mc.bottom().rows(), pal)
+    for tier, name in CL_SEG.items():
+        p = cl_pal(tier)
+        write_block(f'{name}_segment_base', segment_base().rows(), p)
+        write_block(f'{name}_segment_parts', segment_parts().rows(), p)
+        write_block(f'{name}_segment_corner', segment_corner().rows(), p)
+        write_block(f'{name}_segment_pipe', segment_pipe().rows(), p)
 
 
 def strange_matter(frame_no):
@@ -784,15 +1118,10 @@ def main():
     write_block('spire_coil_glow', spire_coil_glow().rows(), P)
     write_block('spire_rail', spire_rail().rows(), P)
 
-    write_block('collider_casing', collider_casing().rows(), P)
-    for tier, name in ((1, 'accelerator'), (2, 'resonant')):
-        write_block(f'{name}_segment_base', segment_base(tier).rows(), P)
-        write_block(f'{name}_segment_coil', segment_coil(tier).rows(), P)
-        write_block(f'{name}_segment_coil_glow', segment_coil_glow(tier).rows(), P)
-        write_block(f'{name}_segment_pipe', segment_pipe(tier).rows(), P)
+    write_collider()
     write_anim('item', 'strange_matter', [strange_matter(i) for i in range(8)], P, frametime=3)
 
-    for prefix, r in (('reactor', DK), ('bank', SL), ('spire', ST), ('collider', NU)):
+    for prefix, r in (('reactor', DK), ('bank', SL), ('spire', ST)):
         for state in ('off', 'formed', 'on'):
             write_block(f'{prefix}_controller_{state}', controller_front(r, state).rows(), P)
             write_block(f'{prefix}_controller_{state}_glow', controller_glow(r, state).rows(), P)

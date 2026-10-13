@@ -3,391 +3,172 @@
   "render_type": "minecraft:translucent",
   "textures": {
     "base": "robotica:block/resonant_segment_base",
-    "coil": "robotica:block/resonant_segment_coil",
-    "glow": "robotica:block/resonant_segment_coil_glow",
+    "parts": "robotica:block/resonant_segment_parts",
+    "corner": "robotica:block/resonant_segment_corner",
     "pipe": "robotica:block/resonant_segment_pipe",
     "particle": "robotica:block/resonant_segment_base"
   },
   "elements": [
     {
       "from": [
-        5,
+        4,
+        4,
+        3
+      ],
+      "to": [
+        6,
+        12,
+        13
+      ],
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            10,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            10,
+            12
+          ]
+        },
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            2,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            2,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            10,
+            6
+          ],
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "from": [
+        10,
+        4,
+        3
+      ],
+      "to": [
+        12,
+        12,
+        13
+      ],
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            10,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            10,
+            12
+          ]
+        },
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            2,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            2,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            4,
+            10,
+            6
+          ],
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "from": [
+        6,
         4,
         4
       ],
       "to": [
+        10,
         11,
-        6,
         12
       ],
       "faces": {
-        "down": {
-          "texture": "#coil"
-        },
         "up": {
-          "texture": "#coil"
+          "texture": "#parts",
+          "uv": [
+            11,
+            4,
+            15,
+            12
+          ]
         },
         "north": {
-          "texture": "#coil"
+          "texture": "#parts",
+          "uv": [
+            11,
+            4,
+            15,
+            11
+          ]
         },
         "south": {
-          "texture": "#coil"
-        },
-        "west": {
-          "texture": "#coil"
-        },
-        "east": {
-          "texture": "#coil"
+          "texture": "#parts",
+          "uv": [
+            11,
+            4,
+            15,
+            11
+          ]
         }
       }
-    },
-    {
-      "from": [
-        5,
-        10,
-        4
-      ],
-      "to": [
-        11,
-        12,
-        12
-      ],
-      "faces": {
-        "down": {
-          "texture": "#coil"
-        },
-        "up": {
-          "texture": "#coil"
-        },
-        "north": {
-          "texture": "#coil"
-        },
-        "south": {
-          "texture": "#coil"
-        },
-        "west": {
-          "texture": "#coil"
-        },
-        "east": {
-          "texture": "#coil"
-        }
-      }
-    },
-    {
-      "from": [
-        5,
-        6,
-        4
-      ],
-      "to": [
-        11,
-        10,
-        6
-      ],
-      "faces": {
-        "down": {
-          "texture": "#coil"
-        },
-        "up": {
-          "texture": "#coil"
-        },
-        "north": {
-          "texture": "#coil"
-        },
-        "south": {
-          "texture": "#coil"
-        },
-        "west": {
-          "texture": "#coil"
-        },
-        "east": {
-          "texture": "#coil"
-        }
-      }
-    },
-    {
-      "from": [
-        5,
-        6,
-        10
-      ],
-      "to": [
-        11,
-        10,
-        12
-      ],
-      "faces": {
-        "down": {
-          "texture": "#coil"
-        },
-        "up": {
-          "texture": "#coil"
-        },
-        "north": {
-          "texture": "#coil"
-        },
-        "south": {
-          "texture": "#coil"
-        },
-        "west": {
-          "texture": "#coil"
-        },
-        "east": {
-          "texture": "#coil"
-        }
-      }
-    },
-    {
-      "from": [
-        5,
-        4,
-        4
-      ],
-      "to": [
-        11,
-        6,
-        12
-      ],
-      "faces": {
-        "down": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "up": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "north": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "south": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "west": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "east": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        }
-      },
-      "shade": false
-    },
-    {
-      "from": [
-        5,
-        10,
-        4
-      ],
-      "to": [
-        11,
-        12,
-        12
-      ],
-      "faces": {
-        "down": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "up": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "north": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "south": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "west": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "east": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        }
-      },
-      "shade": false
-    },
-    {
-      "from": [
-        5,
-        6,
-        4
-      ],
-      "to": [
-        11,
-        10,
-        6
-      ],
-      "faces": {
-        "down": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "up": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "north": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "south": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "west": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "east": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        }
-      },
-      "shade": false
-    },
-    {
-      "from": [
-        5,
-        6,
-        10
-      ],
-      "to": [
-        11,
-        10,
-        12
-      ],
-      "faces": {
-        "down": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "up": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "north": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "south": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "west": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        },
-        "east": {
-          "texture": "#glow",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
-        }
-      },
-      "shade": false
     }
   ]
 }

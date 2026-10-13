@@ -185,7 +185,6 @@ CONTROLLERS = {
     'spire_base': ('spire', {'faces': {'south': 'spire_base', 'west': 'spire_base', 'east': 'spire_base',
                                        'up': 'spire_base_top'},
                              'glow': {'south': 'spire_base_glow', 'west': 'spire_base_glow', 'east': 'spire_base_glow'}}),
-    'collider_controller': ('collider', {}),
 }
 for name, (prefix, extra) in CONTROLLERS.items():
     for state in ('off', 'formed', 'on'):
@@ -339,16 +338,124 @@ for el in strips:
 write(ASSETS / 'models/block/spire_coil_glow.json', {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
       'textures': {'glow': tex('spire_coil_glow'), 'particle': tex('spire_coil_glow')}, 'elements': strips})
 
-# ---------- Ring segments: slab, glass beam pipe joining the neighbours (multipart), magnets on straights ----------
-# The pipe is centred at y 8 (ColliderRenderer.PIPE_Y = 0.5).
+# ---------- Ring Collider (textures: Ring Collider section of scripts/textures/energy.py) ----------
+# Controller: the machine casing look. The front's beam aperture shows the collision chamber 2 px deep (back plate,
+# bore walls, the beam tube across it); the sides carry beam ports, the back the energy channel, the top a beam
+# window. Formed: standby glow; running (formed + lit): animated full-bright overlays.
+from machine_models import machine_model  # noqa: E402
+
+CL_FACES = {'north': 'collider_controller_front', 'south': 'collider_controller_back',
+            'west': 'collider_controller_port', 'east': 'collider_controller_port',
+            'up': 'collider_controller_top', 'down': 'collider_controller_bottom'}
+
+
+def collider_controller_model(state):
+    lit = state != 'off'
+    suffix = '_formed' if state == 'formed' else '_running'
+
+    def flat(frm, to, d, uv, tex='#chamber', glow=False):
+        return {'from': frm, 'to': to, 'faces': {d: {'texture': tex, 'uv': uv}}, 'glow': glow}
+    els = [flat([3, 3, 2], [13, 13, 2], 'north', [3, 3, 13, 13]),               # chamber back
+           flat([3, 3, 0], [3, 13, 2], 'east', [0, 15, 2, 16]),                  # bore walls
+           flat([13, 3, 0], [13, 13, 2], 'west', [0, 15, 2, 16]),
+           flat([3, 13, 0], [13, 13, 2], 'down', [3, 15, 13, 16]),
+           flat([3, 3, 0], [13, 3, 2], 'up', [3, 15, 13, 16]),
+           {'from': [3, 7, 0.5], 'to': [13, 9, 1.5],                             # beam tube
+            'faces': {'north': {'texture': '#chamber', 'uv': [3, 0, 13, 2]},
+                      'up': {'texture': '#chamber', 'uv': [3, 14, 13, 15]},
+                      'down': {'texture': '#chamber', 'uv': [3, 14, 13, 15]}}}]
+    textures = {'chamber': 'collider_controller_chamber'}
+    glow = None
+    if lit:
+        textures['chamber_glow'] = f'collider_controller_chamber{suffix}'
+        els.append(flat([3, 3, 2], [13, 13, 2], 'north', [3, 3, 13, 13], '#chamber_glow', True))
+        els.append(flat([3, 7, 0.5], [13, 9, 0.5], 'north', [3, 0, 13, 2], '#chamber_glow', True))
+        glow = {'north': f'collider_controller_front{suffix}', 'west': f'collider_controller_port{suffix}',
+                'east': f'collider_controller_port{suffix}', 'up': f'collider_controller_top{suffix}'}
+        if state == 'on':
+            glow['south'] = 'collider_controller_back_running'
+    return machine_model(CL_FACES, glow, els, textures)
+
+
+for state in ('off', 'formed', 'on'):
+    write(ASSETS / 'models/block' / f'collider_controller_{state}.json', collider_controller_model(state))
+write(ASSETS / 'blockstates/collider_controller.json', {'variants': {
+    f'facing={facing},formed={str(formed).lower()},lit={str(lit).lower()}':
+        {'model': f'robotica:block/collider_controller_{"on" if formed and lit else "formed" if formed else "off"}'}
+        | ({'y': y} if y else {})
+    for facing, y in FACING_Y.items() for formed in (False, True) for lit in (False, True)}})
+write(ASSETS / 'models/item/collider_controller.json', {'parent': 'robotica:block/collider_controller_formed'})
+loot('collider_controller')
+BLOCKS.append('collider_controller')
+
+# Ring segments: slab, glass beam pipe joining the neighbours (multipart) with steel flanges at the block edges, a
+# magnet on straights (two yoke plates round a coil pack) and a bending magnet on corners. The pipe is centred at y 8
+# (ColliderBlockEntity.ringCentres: y + 0.5); ColliderRenderer lights the slot on a magnet's top (y 11, 4 x 2 px)
+# and a corner's (y 12, 2 x 2 px).
+# Atlases: <name>_parts (slab side 0,0-16,4; yoke face 0,4-10,12; coil 10,4-16,12, u along the beam) and
+# <name>_corner (bending magnet side 0,0-8,8 and top 8,0-16,8; flange 0,8-6,14).
 OPPOSITE = {'north': 'south', 'south': 'north', 'west': 'east', 'east': 'west'}
 ARMS = {'north': ([6, 6, 0], [10, 10, 6]), 'south': ([6, 6, 10], [10, 10, 16]),
         'west': ([0, 6, 6], [6, 10, 10]), 'east': ([10, 6, 6], [16, 10, 10])}
-# Straights: a square magnet collar round the pipe (four bars framing its 6..10 cross-section).
-COILS = {'x': [([5, 4, 4], [11, 6, 12]), ([5, 10, 4], [11, 12, 12]), ([5, 6, 4], [11, 10, 6]), ([5, 6, 10], [11, 10, 12])],
-         'z': [([4, 4, 5], [12, 6, 11]), ([4, 10, 5], [12, 12, 11]), ([4, 6, 5], [6, 10, 11]), ([10, 6, 5], [12, 10, 11])]}
+FLANGES = {'north': ([5, 5, 0], [11, 11, 1]), 'south': ([5, 5, 15], [11, 11, 16]),
+           'west': ([0, 5, 5], [1, 11, 11]), 'east': ([15, 5, 5], [16, 11, 11])}
+YOKE_FACE, YOKE_EDGE, YOKE_TOP = [0, 4, 10, 12], [0, 4, 2, 12], [0, 4, 10, 6]
+COIL_TOP, COIL_SIDE = [11, 4, 15, 12], [11, 4, 15, 11]
+
+
+def uv_face(tex_var, uv, rotation=0):
+    f = {'texture': tex_var, 'uv': uv}
+    if rotation:
+        f['rotation'] = rotation
+    return f
+
+
+def flange(d):
+    """Steel flange at the outer end of an arm: its face looks back along the pipe, its edges are 1 px strips."""
+    a, b = FLANGES[d]
+    faces = {OPPOSITE[d]: uv_face('#corner', [0, 8, 6, 14])}
+    for f in DIRS:
+        if f in (d, OPPOSITE[d]):
+            continue
+        u0, v0, u1, v1 = default_uv(f, a, b)
+        faces[f] = uv_face('#corner', [0, 8, 6, 9] if u1 - u0 > v1 - v0 else [0, 8, 1, 14])
+    return {'from': a, 'to': b, 'faces': faces}
+
+
+def magnet(axis):
+    """Two yoke plates (2 thick, 8 tall, 10 across) round a coil pack (7 tall, 8 across, 4 along) on a straight."""
+    def el(frm, to, faces):
+        return {'from': frm, 'to': to, 'faces': faces}
+    if axis == 'x':
+        plates = [el([4, 4, 3], [6, 12, 13], {'west': uv_face('#parts', YOKE_FACE), 'east': uv_face('#parts', YOKE_FACE),
+                                               'north': uv_face('#parts', YOKE_EDGE), 'south': uv_face('#parts', YOKE_EDGE),
+                                               'up': uv_face('#parts', YOKE_TOP, 90)}),
+                  el([10, 4, 3], [12, 12, 13], {'west': uv_face('#parts', YOKE_FACE), 'east': uv_face('#parts', YOKE_FACE),
+                                                 'north': uv_face('#parts', YOKE_EDGE), 'south': uv_face('#parts', YOKE_EDGE),
+                                                 'up': uv_face('#parts', YOKE_TOP, 90)})]
+        coil = el([6, 4, 4], [10, 11, 12], {'up': uv_face('#parts', COIL_TOP), 'north': uv_face('#parts', COIL_SIDE),
+                                             'south': uv_face('#parts', COIL_SIDE)})
+    else:
+        plates = [el([3, 4, 4], [13, 12, 6], {'north': uv_face('#parts', YOKE_FACE), 'south': uv_face('#parts', YOKE_FACE),
+                                               'west': uv_face('#parts', YOKE_EDGE), 'east': uv_face('#parts', YOKE_EDGE),
+                                               'up': uv_face('#parts', YOKE_TOP)}),
+                  el([3, 4, 10], [13, 12, 12], {'north': uv_face('#parts', YOKE_FACE), 'south': uv_face('#parts', YOKE_FACE),
+                                                 'west': uv_face('#parts', YOKE_EDGE), 'east': uv_face('#parts', YOKE_EDGE),
+                                                 'up': uv_face('#parts', YOKE_TOP)})]
+        coil = el([4, 4, 6], [12, 11, 10], {'up': uv_face('#parts', COIL_TOP, 90), 'west': uv_face('#parts', COIL_SIDE),
+                                             'east': uv_face('#parts', COIL_SIDE)})
+    return plates + [coil]
+
+
+SLAB = {'from': [0, 0, 0], 'to': [16, 4, 16],
+        'faces': {'up': {'texture': '#base'}, 'down': {'texture': '#base', 'cullface': 'down'},
+                  **{d: uv_face('#parts', [0, 0, 16, 4]) for d in SIDES}}}
+PEDESTAL = box([7, 4, 7], [9, 6, 9], {d: '#base' for d in SIDES})
+CORNER = {'from': [4, 4, 4], 'to': [12, 12, 12],
+          'faces': {'up': uv_face('#corner', [8, 0, 16, 8]), **{d: uv_face('#corner', [0, 0, 8, 8]) for d in SIDES}}}
+
 for name in ('accelerator_segment', 'resonant_segment'):
-    textures = {'base': tex(f'{name}_base'), 'coil': tex(f'{name}_coil'), 'glow': tex(f'{name}_coil_glow'),
+    textures = {'base': tex(f'{name}_base'), 'parts': tex(f'{name}_parts'), 'corner': tex(f'{name}_corner'),
                 'pipe': tex(f'{name}_pipe'), 'particle': tex(f'{name}_base')}
 
     def part(suffix, elements):
@@ -359,19 +466,12 @@ for name in ('accelerator_segment', 'resonant_segment'):
 
     # The glass has no faces inside the pipe: the centre piece closes only the sides without a neighbour, an arm has
     # neither its end (it meets the neighbour's arm) nor its root.
-    core = part('core', [box([0, 0, 0], [16, 4, 16], all_faces('#base')),
-                         box([7, 4, 7], [9, 6, 9], all_faces('#base')),
-                         box([6, 6, 6], [10, 10, 10], {'up': '#pipe', 'down': '#pipe'})])
+    core = part('core', [SLAB, PEDESTAL, box([6, 6, 6], [10, 10, 10], {'up': '#pipe', 'down': '#pipe'})])
     ends = {d: part(f'pipe_end_{d}', [box([6, 6, 6], [10, 10, 10], {d: '#pipe'})]) for d in SIDES}
-    arms = {d: part(f'pipe_{d}', [box(a, b, {f: '#pipe' for f in DIRS if f not in (d, OPPOSITE[d])})])
+    arms = {d: part(f'pipe_{d}', [box(a, b, {f: '#pipe' for f in DIRS if f not in (d, OPPOSITE[d])}), flange(d)])
             for d, (a, b) in ARMS.items()}
-    coils = {}
-    for axis, boxes in COILS.items():
-        elements = [box(a, b, all_faces('#coil')) for a, b in boxes]
-        elements += [box(a, b, all_faces('#glow'), shade=False, glow=True) for a, b in boxes]
-        coils[axis] = part(f'coil_{axis}', elements)
-    corner = part('corner', [box([5, 5, 5], [11, 11, 11], all_faces('#coil')),
-                             box([5, 5, 5], [11, 11, 11], all_faces('#glow'), shade=False, glow=True)])
+    coils = {axis: part(f'coil_{axis}', magnet(axis)) for axis in ('x', 'z')}
+    corner = part('corner', [CORNER])
     parts = [{'apply': {'model': core}}]
     parts += [{'when': {d: 'true'}, 'apply': {'model': arms[d]}} for d in SIDES]
     parts += [{'when': {d: 'false'}, 'apply': {'model': ends[d]}} for d in SIDES]
@@ -383,10 +483,7 @@ for name in ('accelerator_segment', 'resonant_segment'):
                   'apply': {'model': corner}})
     write(ASSETS / 'blockstates' / f'{name}.json', {'multipart': parts})
     # Item: a straight piece along x.
-    item = [box([0, 0, 0], [16, 4, 16], all_faces('#base')), box([7, 4, 7], [9, 6, 9], all_faces('#base')),
-            box([0, 6, 6], [16, 10, 10], all_faces('#pipe'))]
-    item += [box(a, b, all_faces('#coil')) for a, b in COILS['x']]
-    item += [box(a, b, all_faces('#glow'), shade=False, glow=True) for a, b in COILS['x']]
+    item = [SLAB, box([0, 6, 6], [16, 10, 10], all_faces('#pipe')), flange('west'), flange('east')] + magnet('x')
     write(ASSETS / 'models/item' / f'{name}.json',
           {'parent': 'minecraft:block/block', 'render_type': 'minecraft:translucent', 'textures': textures, 'elements': item})
     loot(name)
