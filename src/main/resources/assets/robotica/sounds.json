@@ -170,10 +170,28 @@
     "subtitle": "subtitles.robotica.press_stamp",
     "sounds": [
       {
-        "name": "robotica:machine/press",
+        "name": "minecraft:block/heavy_core/step1",
         "type": "file",
-        "volume": 0.4,
-        "pitch": 1.0
+        "volume": 0.6,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:block/heavy_core/step2",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:block/heavy_core/step3",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.85
+      },
+      {
+        "name": "minecraft:block/heavy_core/step4",
+        "type": "file",
+        "volume": 0.6,
+        "pitch": 0.85
       }
     ]
   },
@@ -205,7 +223,7 @@
       {
         "name": "robotica:machine/centrifuge",
         "type": "file",
-        "volume": 0.3,
+        "volume": 0.6,
         "pitch": 1.0
       }
     ]

@@ -3,8 +3,8 @@ Run: python3 scripts/sounds/machines.py   (writes assets/robotica/sounds/machine
 
 Every clip is mono 44.1 kHz, built from sines and filtered noise with a seeded generator, faded in and out and
 normalized to the same peak, so machines sound alike in loudness. Low and muffled on purpose: they repeat a lot.
-No sustained low hums: start/stop and the charger hum use vanilla sounds. Volumes and pitches per event live in
-sounds.json.
+No sustained low hums: start/stop, the press and the charger hum use vanilla sounds. Volumes and pitches per event
+live in sounds.json.
 """
 import pathlib
 import subprocess
@@ -63,23 +63,7 @@ def at(total, start, clip):
     return out
 
 
-def thump(seconds, f0, f1, decay, seed):
-    t = time(seconds)
-    body = sweep(t, f0, f1, (1.0, 0.25)) * np.exp(-t / decay)
-    knock = band(noise(seconds, seed), 60, 500) * np.exp(-t / (decay * 0.4)) * 0.3
-    return body + knock
-
-
 # ------------------------------------------------------------------------------------------------------------ clips
-
-def press():
-    """Muffled hydraulic thump, then the valve lets out a short hiss."""
-    total = 0.6
-    hit = thump(0.3, 150, 55, 0.09, 3)
-    t = time(0.45)
-    hiss = band(noise(0.45, 4), 1800, 5000) * env(t, 0.03, 0.2, 0.12) * 0.12
-    return at(total, 0, hit) + at(total, 0.1, hiss)
-
 
 def grind():
     """Rough low rumble of stone on steel."""
@@ -103,12 +87,10 @@ def smelt():
 
 
 def centrifuge():
-    """Rotor whir with a steady wobble."""
+    """Air swishing past a spinning drum."""
     t = time(1.0)
-    wobble = 0.75 + 0.25 * np.sin(2 * np.pi * 11 * t)
-    rotor = sweep(t, 175, 185, (1.0, 0.35, 0.1)) * wobble
-    air = band(noise(1.0, 8), 700, 2500) * wobble * 0.2
-    return (rotor + air) * env(t, 0.2, 0.3)
+    swish = (0.5 + 0.5 * np.sin(2 * np.pi * 9 * t)) ** 2
+    return band(noise(1.0, 8), 500, 3000) * (0.25 + 0.75 * swish) * env(t, 0.2, 0.3)
 
 
 def assemble():
@@ -146,7 +128,7 @@ def chime():
 
 
 CLIPS = {
-    'press': press, 'grind': grind, 'smelt': smelt, 'centrifuge': centrifuge, 'assemble': assemble, 'geiger': geiger,
+    'grind': grind, 'smelt': smelt, 'centrifuge': centrifuge, 'assemble': assemble, 'geiger': geiger,
     'chime': chime,
 }
 
