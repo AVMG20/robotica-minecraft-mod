@@ -4,6 +4,7 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.core.chunk.ChunkTickets;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.storage.StorageContent;
+import com.arno.robotica.storage.block.StorageTerminalBlockEntity;
 import com.arno.robotica.storage.menu.StorageMenu;
 import com.arno.robotica.storage.remote.RemoteAccess;
 import com.arno.robotica.storage.remote.TerminalLinks;
@@ -42,6 +43,15 @@ public class TerminalLinkGameTests {
         return stack;
     }
 
+    /** What {@link TerminalLinks#open} does, minus the packet. */
+    private static boolean openMenu(ServerPlayer player, ItemStack stack, int id) {
+        StorageTerminalBlockEntity terminal = TerminalLinks.reach(player, stack);
+        if (terminal == null) return false;
+        GlobalPos at = stack.get(StorageContent.LINKED_TERMINAL.get());
+        player.containerMenu = new StorageMenu(id, player.getInventory(), terminal, new RemoteAccess(at, player.serverLevel().getGameTime()));
+        return true;
+    }
+
     /** A Mk1 refuses a terminal in another dimension, a Mk2 does not; unbound and empty links refuse too. */
     @GameTest(template = "empty")
     public static void terminalLinkMk1StaysInItsDimension(GameTestHelper helper) {
@@ -75,7 +85,8 @@ public class TerminalLinkGameTests {
         ItemStack stack = link(false, target);
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
-        helper.assertTrue(TerminalLinks.open(player, InteractionHand.MAIN_HAND), "the bound terminal opens from 200 blocks");
+        // A mock player can not receive the open-screen packet, so the menu is built here the way open() builds it.
+        helper.assertTrue(openMenu(player, stack, 1), "the bound terminal opens from 200 blocks");
         helper.assertTrue(player.containerMenu instanceof StorageMenu menu && menu.isRemote(), "its normal screen, opened remotely");
         helper.assertTrue(ChunkTickets.holds(player.getUUID(), target.dimension(), chunk), "the terminal's chunk is held for the player");
         StorageMenu menu = (StorageMenu) player.containerMenu;
@@ -87,7 +98,7 @@ public class TerminalLinkGameTests {
         player.closeContainer();
         helper.assertTrue(!ChunkTickets.holdsAny(player.getUUID()), "closing releases the ticket");
 
-        helper.assertTrue(TerminalLinks.open(player, InteractionHand.MAIN_HAND), "opens again");
+        helper.assertTrue(openMenu(player, stack, 2), "opens again");
         helper.assertTrue(ChunkTickets.holdsAny(player.getUUID()), "held again");
         StorageMenu again = (StorageMenu) player.containerMenu;
         helper.setBlock(POS, Blocks.AIR);

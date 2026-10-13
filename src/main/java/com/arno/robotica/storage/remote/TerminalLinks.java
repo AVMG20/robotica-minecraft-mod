@@ -63,24 +63,9 @@ public final class TerminalLinks {
 
     /** Opens the bound terminal's screen. Tells the player why when it can not. */
     public static boolean open(ServerPlayer player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        Refusal refusal = check(player, stack);
-        if (refusal != null) return refuse(player, refusal);
-        GlobalPos at = target(stack);
-        ServerLevel level = player.server.getLevel(at.dimension());
-        ChunkPos chunk = new ChunkPos(at.pos());
-        if (player.containerMenu != player.inventoryMenu) player.closeContainer();
-        if (!level.isLoaded(at.pos())) {
-            if (!StorageConfig.linkLoadsChunks()) return refuse(player, Refusal.UNLOADED);
-        }
-        if (StorageConfig.linkLoadsChunks()) {
-            ChunkTickets.holdForPlayer(level, player.getUUID(), chunk);
-            level.getChunk(chunk.x, chunk.z);    // load it now, not a few ticks later
-        }
-        if (!(level.getBlockEntity(at.pos()) instanceof StorageTerminalBlockEntity terminal)) {
-            ChunkTickets.releasePlayer(player.server, player.getUUID());
-            return refuse(player, Refusal.MISSING);
-        }
+        StorageTerminalBlockEntity terminal = reach(player, player.getItemInHand(hand));
+        if (terminal == null) return false;
+        GlobalPos at = target(player.getItemInHand(hand));
         RemoteAccess access = new RemoteAccess(at, player.serverLevel().getGameTime());
         player.openMenu(new SimpleMenuProvider((id, inv, p) -> new StorageMenu(id, inv, terminal, access), terminal.getDisplayName()),
                 buf -> buf.writeBlockPos(at.pos()));
@@ -91,6 +76,38 @@ public final class TerminalLinks {
         CoreSounds.play(player, CoreSounds.TERMINAL_LINK_OPEN, SoundSource.PLAYERS, 0.7F, 1.0F);
         player.serverLevel().sendParticles(ParticleTypes.PORTAL, player.getX(), player.getY() + 1.0, player.getZ(), 16, 0.3, 0.5, 0.3, 0.4);
         return true;
+    }
+
+    /**
+     * Checks the link, closes the open screen and holds the bound terminal's chunk for the player. Returns the terminal,
+     * or null after telling the player why (nothing is left held then).
+     */
+    public static @Nullable StorageTerminalBlockEntity reach(ServerPlayer player, ItemStack stack) {
+        Refusal refusal = check(player, stack);
+        if (refusal != null) {
+            refuse(player, refusal);
+            return null;
+        }
+        GlobalPos at = target(stack);
+        ServerLevel level = player.server.getLevel(at.dimension());
+        ChunkPos chunk = new ChunkPos(at.pos());
+        if (player.containerMenu != player.inventoryMenu) player.closeContainer();
+        if (!level.isLoaded(at.pos())) {
+            if (!StorageConfig.linkLoadsChunks()) {
+                refuse(player, Refusal.UNLOADED);
+                return null;
+            }
+        }
+        if (StorageConfig.linkLoadsChunks()) {
+            ChunkTickets.holdForPlayer(level, player.getUUID(), chunk);
+            level.getChunk(chunk.x, chunk.z);    // load it now, not a few ticks later
+        }
+        if (!(level.getBlockEntity(at.pos()) instanceof StorageTerminalBlockEntity terminal)) {
+            ChunkTickets.releasePlayer(player.server, player.getUUID());
+            refuse(player, Refusal.MISSING);
+            return null;
+        }
+        return terminal;
     }
 
     private static boolean refuse(ServerPlayer player, Refusal refusal) {
