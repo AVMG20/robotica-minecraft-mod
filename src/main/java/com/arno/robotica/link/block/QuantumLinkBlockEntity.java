@@ -40,6 +40,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -157,6 +158,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     private boolean clientOnline;
     private long clientPulse = Long.MIN_VALUE / 2;
     private int clientPulseKind;
+    private @Nullable AABB renderBox;
 
     public QuantumLinkBlockEntity(BlockPos pos, BlockState state) {
         this(LinkRegistry.LINK_BE.get(), pos, state);
@@ -735,6 +737,13 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return clientPulseKind;
     }
 
+    /** The block plus the beam above it, for render culling. */
+    public AABB renderBox() {
+        if (renderBox == null) renderBox = new AABB(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                worldPosition.getX() + 1, worldPosition.getY() + 4.5, worldPosition.getZ() + 1);
+        return renderBox;
+    }
+
     /** Server: true so the event reaches watching clients. Client: pulse the crystal and throw a few particles. */
     @Override
     public boolean triggerEvent(int id, int param) {
@@ -857,7 +866,12 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     @Override
     protected void collectImplicitComponents(DataComponentMap.Builder components) {
         super.collectImplicitComponents(components);
-        if (level != null) components.set(LinkRegistry.LINK_SETTINGS.get(), writeSettings(level.registryAccess()));
+        if (level != null) {
+            // Settings a fresh Link already has stay off the item, so mined Links stack with new ones.
+            CompoundTag settings = writeSettings(level.registryAccess());
+            CompoundTag fresh = new QuantumLinkBlockEntity(getType(), worldPosition, getBlockState()).writeSettings(level.registryAccess());
+            if (!settings.equals(fresh)) components.set(LinkRegistry.LINK_SETTINGS.get(), settings);
+        }
         if (energy.getEnergyStored() > 0) components.set(CoreComponents.ENERGY.get(), energy.getEnergyStored());
     }
 

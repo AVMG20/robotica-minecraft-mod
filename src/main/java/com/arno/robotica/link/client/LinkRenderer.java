@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -199,8 +198,7 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
     /** The crystal floats above the block and the send beam goes a few blocks up. */
     @Override
     public AABB getRenderBoundingBox(QuantumLinkBlockEntity be) {
-        BlockPos p = be.getBlockPos();
-        return new AABB(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 4.5, p.getZ() + 1);
+        return be.renderBox();
     }
 
     @Override
