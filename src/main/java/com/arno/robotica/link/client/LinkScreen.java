@@ -192,10 +192,15 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (!editing || !nameBox.isFocused()) return super.keyPressed(keyCode, scanCode, modifiers);
+        if (!editing) return super.keyPressed(keyCode, scanCode, modifiers);
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             stopEdit();
             return true;
+        }
+        if (!nameBox.isFocused()) {
+            // A form button took the focus: the inventory key must not close the screen with the edit half done.
+            if (minecraft != null && minecraft.options.keyInventory.matches(keyCode, scanCode)) return true;
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
             save();
