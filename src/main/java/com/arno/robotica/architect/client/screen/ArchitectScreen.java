@@ -20,6 +20,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -32,10 +33,12 @@ import java.util.List;
 
 /**
  * Architect Table screen, drawn procedurally and almost without text. Left: the 5x5 plot grid (click a plot to queue or
- * unqueue it, click the outside edge of a planned plot to put a door there, click the seam between two joined plots to
- * step its inner wall: wall with a doorway, solid wall, open; shift-click a built plot to forget it). Right:
- * status, matter and energy bars, progress, Build and Cancel. Below: casing slot, style chips, upgrade slots, clear terrain,
- * the material input and the player inventory. Tooltips carry the words.
+ * unqueue it, click a built plot to select it (gold frame; its style is picked, so picking another restyles it and
+ * Demolish takes only it down), click the outside edge of a planned plot to put a door there, click the seam between
+ * two joined plots to step its inner wall: wall with a doorway, solid wall, open; doors and walls take the picked
+ * style; shift-click a built plot to forget it, right-click to deselect). Right: status, matter and energy bars,
+ * progress, Build, Cancel and Demolish. Below: casing slot, style chips, upgrade slots, clear terrain, the material
+ * input and the player inventory. Tooltips carry the words.
  */
 public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     private static final int GX = ArchitectMenu.GRID_X;
@@ -52,13 +55,18 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
     private static final int CELL_EMPTY = 0xFF4A4A4A;
     private static final int CELL_HOVER = 0xFF6A6A6A;
     private static final int DOOR = 0xFFFFE9A8;
+    /** Gold: the picked style chip and the selected plot. */
+    private static final int SELECTED = 0xFFFFD04A;
 
     private final StyleChip[] chips = new StyleChip[BuildStyle.values().length];
     private Button buildButton, cancelButton, demolishButton;
     /** Demolish asks twice: the first click arms the button for {@link #ARM_MILLIS}, the second sends the request. */
     private static final long ARM_MILLIS = 3000;
     private long demolishArmedUntil;
+    /** Plot the armed Demolish is for (-1 all): selecting another plot disarms it. */
+    private int demolishArmedFor = -1;
     private int demolishShown = -1;
+    private int chipsShown = Integer.MIN_VALUE;
     private boolean cancelDemolishShown;
     private IconButton clearButton;
 
@@ -83,13 +91,15 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
                 b -> send(ArchitectTableBlockEntity.ACTION_BUILD, 0, 0), Component.translatable("gui.robotica.architect_build_tip")));
         cancelButton = addRenderableWidget(new FitButton(leftPos + RX + 34, topPos + 82, 32, 13, Component.translatable("gui.robotica.architect_cancel"),
                 b -> send(ArchitectTableBlockEntity.ACTION_CANCEL, 0, 0), Component.translatable("gui.robotica.architect_cancel_tip")));
-        demolishButton = addRenderableWidget(new FitButton(leftPos + RX, topPos + 96, RW, 12, Component.translatable("gui.robotica.architect_demolish"), b -> {
+        demolishButton = addRenderableWidget(new FitButton(leftPos + RX, topPos + 96, RW, 12, Component.translatable("gui.robotica.architect_demolish_all"), b -> {
             long now = Util.getMillis();
-            if (now < demolishArmedUntil) {
+            int target = menu.selectedPlot();
+            if (now < demolishArmedUntil && demolishArmedFor == target) {
                 demolishArmedUntil = 0;
-                send(ArchitectTableBlockEntity.ACTION_DEMOLISH, ArchitectTableBlockEntity.DEMOLISH_CONFIRM, 0);
+                send(ArchitectTableBlockEntity.ACTION_DEMOLISH, ArchitectTableBlockEntity.DEMOLISH_CONFIRM, target + 1);
             } else {
                 demolishArmedUntil = now + ARM_MILLIS;
+                demolishArmedFor = target;
             }
         }));
         clearButton = addRenderableWidget(new IconButton(leftPos + ArchitectMenu.CLEAR_X, topPos + ArchitectMenu.SLOT_ROW_Y - 1, 18,
@@ -105,21 +115,25 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
 
     private void updateWidgets() {
         boolean demolishing = menu.demolishing();
+        int selected = menu.selectedPlot();
         buildButton.active = menu.hasWork() && !menu.running() && !demolishing;
-        cancelButton.active = menu.hasQueued() || demolishing;
+        cancelButton.active = menu.hasCancellable() || demolishing;
         if (demolishing != cancelDemolishShown || demolishShown < 0) {
             cancelDemolishShown = demolishing;
             cancelButton.setTooltip(Tooltip.create(Component.translatable(demolishing ? "gui.robotica.architect_cancel_demolish_tip" : "gui.robotica.architect_cancel_tip")));
         }
-        demolishButton.active = (menu.hasBuilt() || menu.running()) && !demolishing;
-        if (!demolishButton.active) demolishArmedUntil = 0;
-        int armed = Util.getMillis() < demolishArmedUntil ? 1 : 0;
-        if (armed != demolishShown) {
-            demolishShown = armed;
-            demolishButton.setMessage(armed == 1
+        demolishButton.active = (selected >= 0 || menu.hasBuilt() || menu.running()) && !demolishing;
+        if (!demolishButton.active || demolishArmedFor != selected) demolishArmedUntil = 0;
+        boolean armed = Util.getMillis() < demolishArmedUntil;
+        String which = selected >= 0 ? "plot" : "all";
+        int shown = (armed ? 1 : 0) | (selected >= 0 ? 2 : 0);
+        if (shown != demolishShown) {
+            demolishShown = shown;
+            demolishButton.setMessage(armed
                     ? Component.translatable("gui.robotica.architect_demolish_confirm").withStyle(ChatFormatting.RED)
-                    : Component.translatable("gui.robotica.architect_demolish"));
-            demolishButton.setTooltip(Tooltip.create(Component.translatable(armed == 1 ? "gui.robotica.architect_demolish_confirm_tip" : "gui.robotica.architect_demolish_tip")));
+                    : Component.translatable("gui.robotica.architect_demolish_" + which));
+            demolishButton.setTooltip(Tooltip.create(Component.translatable(armed ? "gui.robotica.architect_demolish_confirm_" + which
+                    : "gui.robotica.architect_demolish_" + which + "_tip")));
         }
         boolean clear = menu.clearTerrain();
         clearButton.setOn(clear);
@@ -129,7 +143,11 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             clearButton.hint(Component.translatable(clear ? "gui.robotica.architect_clear_on" : "gui.robotica.architect_clear_off")
                     .append(Component.literal("\n")).append(Component.translatable("gui.robotica.architect_clear_tip").withStyle(ChatFormatting.GRAY)));
         }
-        for (StyleChip chip : chips) chip.update();
+        // chip tooltips say what a click does: restyle the selected plot, or pick the style for new work
+        int chipsKey = menu.baseEnergy() << 8 | (selected + 1) << 2 | (selected >= 0 ? menu.plotStyle(selected).ordinal() : 0);
+        boolean refresh = chipsKey != chipsShown;
+        chipsShown = chipsKey;
+        for (StyleChip chip : chips) chip.update(refresh);
     }
 
     @Override
@@ -177,7 +195,8 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
                 : status == ArchitectTableBlockEntity.ST_IDLE || status == ArchitectTableBlockEntity.ST_READY || status == ArchitectTableBlockEntity.ST_UNLOADED
                 ? Tone.WARN : Tone.BAD;
         drawStatus(g, Component.translatable("gui.robotica.architect_status_" + status), rx, top + 18, RW, 1, tone);
-        if (status >= ArchitectTableBlockEntity.ST_NO_RUSTIC && status <= ArchitectTableBlockEntity.ST_LOCKED) {
+        if (status >= ArchitectTableBlockEntity.ST_NO_RUSTIC && status <= ArchitectTableBlockEntity.ST_LOCKED
+                || status == ArchitectTableBlockEntity.ST_IDLE || status == ArchitectTableBlockEntity.ST_READY) {
             addTooltip(rx, top + 17, RW, 10, Component.translatable("gui.robotica.architect_status_tip_" + status));
         }
 
@@ -217,6 +236,16 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         int hoverPlot = plotAt(mouseX, mouseY);
         int hoverDoor = hoverPlot >= 0 ? edgeSideAt(hoverPlot, mouseX, mouseY) : -1;
         int current = menu.currentPlot();
+        int selected = menu.selectedPlot();
+        BuildStyle picked = menu.selectedStyle();
+        int pickedColor = STYLE_COLORS[picked.ordinal()];
+        // a style chip under the mouse previews the restyle of the selected plot
+        BuildStyle preview = null;
+        if (selected >= 0) {
+            for (StyleChip chip : chips) {
+                if (chip.active && chip.isMouseOver(mouseX, mouseY) && chip.style != menu.plotStyle(selected)) preview = chip.style;
+            }
+        }
 
         for (int plot = 0; plot < Plots.COUNT; plot++) {
             int x = cellX(plot), y = cellY(plot);
@@ -231,11 +260,20 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             int l = x + (joined(plot, Plots.W) ? 0 : 1), r = x + CELL - (joined(plot, Plots.E) ? 0 : 1);
             int t = y + (joined(plot, Plots.N) ? 0 : 1), b = y + CELL - (joined(plot, Plots.S) ? 0 : 1);
             if (state == Layout.BUILT) {
-                int fill = hover ? blend(color, 0xFFFFFFFF, 0.2F) : color;
+                // a restyled plot shows the style it stands in around the one it will be rebuilt in
+                BuildStyle built = menu.builtStyle(plot);
+                BuildStyle next = plot == selected && preview != null ? preview : menu.restyled(plot) ? menu.plotStyle(plot) : null;
+                int base = next != null && built != null ? STYLE_COLORS[built.ordinal()] : color;
+                int fill = hover ? blend(base, 0xFFFFFFFF, 0.2F) : base;
                 g.fill(l, t, r, b, fill);
-                if (!joined(plot, Plots.N)) g.fill(l, t, r, t + 1, blend(color, 0xFFFFFFFF, 0.45F));
-                if (!joined(plot, Plots.S)) g.fill(l, b - 1, r, b, blend(color, 0xFF000000, 0.35F));
-                if (menu.plotNeedsWork(plot) && plot != current) g.fill(x + 7, y + 7, x + 11, y + 11, blend(0xFFFFFFFF, color, pulse * 0.6F));
+                if (!joined(plot, Plots.N)) g.fill(l, t, r, t + 1, blend(base, 0xFFFFFFFF, 0.45F));
+                if (!joined(plot, Plots.S)) g.fill(l, b - 1, r, b, blend(base, 0xFF000000, 0.35F));
+                if (next != null) {
+                    int c = STYLE_COLORS[next.ordinal()];
+                    g.fill(x + 4, y + 4, x + CELL - 4, y + CELL - 4, 0xFF202020);
+                    g.fill(x + 5, y + 5, x + CELL - 5, y + CELL - 5, next == preview ? blend(c, 0xFFFFFFFF, pulse * 0.3F) : c);
+                }
+                if (menu.plotNeedsWork(plot) && plot != current && next == null) g.fill(x + 7, y + 7, x + 11, y + 11, blend(0xFFFFFFFF, color, pulse * 0.6F));
             } else {
                 g.fill(l, t, r, b, hover ? 0xFF3C3C3C : 0xFF303030);
                 if (!joined(plot, Plots.N)) g.fill(l, t, r, t + 2, color);
@@ -250,6 +288,13 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
                 g.fill(x + 2, y + CELL - 2 - h, x + 4, y + CELL - 2, 0xC0FFFFFF);
             }
         }
+        if (selected >= 0) {
+            // gold frame (the colour of the picked chip) with a pulsing white line inside it
+            int x = cellX(selected), y = cellY(selected);
+            frame(g, x - 1, y - 1, CELL + 2, CELL + 2, SELECTED);
+            frame(g, x, y, CELL, CELL, SELECTED);
+            frame(g, x + 1, y + 1, CELL - 2, CELL - 2, (Math.round(80 + 175 * pulse) << 24) | 0xFFFFFF);
+        }
         // Inner walls, doors and the hovered edge on top of the cells. A seam is drawn by its west or north plot.
         int hoverOwner = -1, hoverSeam = -1;
         if (hoverDoor >= 0 && joined(hoverPlot, hoverDoor)) {
@@ -259,16 +304,17 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         }
         for (int plot = 0; plot < Plots.COUNT; plot++) {
             if (!menu.planned(plot)) continue;
-            int color = STYLE_COLORS[menu.plotStyle(plot).ordinal()];
-            int wallColor = menu.plotState(plot) == Layout.BUILT ? blend(color, 0xFF000000, 0.55F) : color;
+            boolean built = menu.plotState(plot) == Layout.BUILT;
             for (int side : new int[]{Plots.E, Plots.S}) {
                 if (!joined(plot, side)) continue;
                 int edge = menu.edge(plot, side);
+                int color = STYLE_COLORS[menu.edgeStyle(plot, side).ordinal()];
+                int wallColor = built ? blend(color, 0xFF000000, 0.45F) : color;
                 if (plot == hoverOwner && side == hoverSeam) {
-                    // Preview the next step: open -> doorway -> wall -> open.
-                    int next = (edge + 1) % 3;
+                    // Preview the click: a wall in another style takes the picked one, else the next step open -> doorway -> wall -> open.
+                    int next = edge != Layout.EDGE_OPEN && menu.edgeStyle(plot, side) != picked ? edge : (edge + 1) % 3;
                     if (next == Layout.EDGE_OPEN) drawSeam(g, plot, side, 0x60FFFFFF, false);
-                    else drawSeam(g, plot, side, 0xA0FFFFFF, next == Layout.EDGE_DOORWAY);
+                    else drawSeam(g, plot, side, blend(pickedColor, 0xFFFFFFFF, 0.25F), next == Layout.EDGE_DOORWAY);
                 } else if (edge != Layout.EDGE_OPEN) {
                     drawSeam(g, plot, side, wallColor, edge == Layout.EDGE_DOORWAY);
                 }
@@ -281,7 +327,11 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
                 if (joined(plot, side)) continue;
                 boolean on = (doors & Plots.bit(side)) != 0;
                 boolean hovered = plot == hoverPlot && side == hoverDoor;
-                if (on || hovered) drawDoor(g, plot, side, on ? (hovered ? 0xFFFFFFFF : DOOR) : 0xA0FFFFFF);
+                if (!on && !hovered) continue;
+                BuildStyle doorStyle = menu.edgeStyle(plot, side);
+                if (!hovered) drawDoor(g, plot, side, DOOR, STYLE_COLORS[doorStyle.ordinal()]);
+                else if (on && doorStyle == picked) drawDoor(g, plot, side, 0xFFFFFFFF, 0x80FFFFFF); // a click removes it
+                else drawDoor(g, plot, side, 0xFFFFFFFF, pickedColor); // a click adds it, or reframes it, in the picked style
             }
         }
         // The table: middle of the centre plot.
@@ -292,15 +342,26 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         if (hoverPlot >= 0) plotTooltip(hoverPlot, hoverDoor);
     }
 
-    private void drawDoor(GuiGraphics g, int plot, int side, int color) {
+    /** A door mark on an outside side: a light frame around its style colour. */
+    private void drawDoor(GuiGraphics g, int plot, int side, int color, int inner) {
         int x = cellX(plot), y = cellY(plot);
         int m = CELL / 2;
+        int x0, y0, x1, y1;
         switch (side) {
-            case Plots.N -> g.fill(x + m - 3, y, x + m + 3, y + 3, color);
-            case Plots.S -> g.fill(x + m - 3, y + CELL - 3, x + m + 3, y + CELL, color);
-            case Plots.W -> g.fill(x, y + m - 3, x + 3, y + m + 3, color);
-            default -> g.fill(x + CELL - 3, y + m - 3, x + CELL, y + m + 3, color);
+            case Plots.N -> { x0 = x + m - 4; y0 = y; x1 = x + m + 4; y1 = y + 4; }
+            case Plots.S -> { x0 = x + m - 4; y0 = y + CELL - 4; x1 = x + m + 4; y1 = y + CELL; }
+            case Plots.W -> { x0 = x; y0 = y + m - 4; x1 = x + 4; y1 = y + m + 4; }
+            default -> { x0 = x + CELL - 4; y0 = y + m - 4; x1 = x + CELL; y1 = y + m + 4; }
         }
+        g.fill(x0, y0, x1, y1, color);
+        g.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, inner);
+    }
+
+    private static void frame(GuiGraphics g, int x, int y, int w, int h, int color) {
+        g.fill(x, y, x + w, y + 1, color);
+        g.fill(x, y + h - 1, x + w, y + h, color);
+        g.fill(x, y + 1, x + 1, y + h - 1, color);
+        g.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
     }
 
     /** An inner wall on the E or S seam of a plot, 2 px across the line between the two cells, with a door mark in the middle. */
@@ -320,30 +381,49 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         int x = cellX(plot), y = cellY(plot);
         List<Component> lines = new ArrayList<>();
         int state = menu.plotState(plot);
+        BuildStyle picked = menu.selectedStyle();
         if (doorSide >= 0 && joined(plot, doorSide)) {
-            String key = switch (menu.edge(plot, doorSide)) {
+            int edge = menu.edge(plot, doorSide);
+            boolean reframe = edge != Layout.EDGE_OPEN && menu.edgeStyle(plot, doorSide) != picked;
+            String key = reframe ? "wall_restyle" : switch (edge) {
                 case Layout.EDGE_OPEN -> "wall_add";
                 case Layout.EDGE_DOORWAY -> "wall_close";
                 default -> "wall_remove";
             };
             lines.add(Component.translatable("gui.robotica.architect_" + key));
+            if (edge == Layout.EDGE_OPEN || reframe) lines.add(styleName(picked));
         } else if (doorSide >= 0) {
             boolean on = (menu.plotDoors(plot) & Plots.bit(doorSide)) != 0;
-            lines.add(Component.translatable(on ? "gui.robotica.architect_door_remove" : "gui.robotica.architect_door_add"));
+            boolean reframe = on && menu.edgeStyle(plot, doorSide) != picked;
+            lines.add(Component.translatable("gui.robotica.architect_door_" + (reframe ? "restyle" : on ? "remove" : "add")));
+            if (!on || reframe) lines.add(styleName(picked));
         } else if (state == Layout.EMPTY) {
             lines.add(Component.translatable(plot == Plots.CENTER ? "gui.robotica.architect_plot_table" : "gui.robotica.architect_plot_free"));
-            lines.add(Component.translatable(menu.selectedStyle().langKey()).withStyle(s -> s.withColor(STYLE_COLORS[menu.selectedStyle().ordinal()] & 0xFFFFFF)));
+            lines.add(styleName(picked));
         } else {
             BuildStyle style = menu.plotStyle(plot);
-            lines.add(Component.translatable(style.langKey()).withStyle(s -> s.withColor(STYLE_COLORS[style.ordinal()] & 0xFFFFFF)));
+            BuildStyle built = menu.builtStyle(plot);
+            lines.add(menu.restyled(plot) && built != null
+                    ? styleName(built).copy().append(Component.literal(" > ").withStyle(ChatFormatting.GRAY)).append(styleName(style))
+                    : styleName(style));
             String key = plot == menu.currentPlot() ? "building" : state == Layout.QUEUED ? "queued" : menu.plotNeedsWork(plot) ? "changed" : "built";
             lines.add(Component.translatable("gui.robotica.architect_plot_" + key).withStyle(ChatFormatting.GRAY));
-            if (state == Layout.BUILT) {
-                lines.add(Component.translatable("gui.robotica.architect_plot_restyle").withStyle(ChatFormatting.DARK_GRAY));
+            if (state == Layout.QUEUED) {
+                lines.add(Component.translatable("gui.robotica.architect_plot_unqueue").withStyle(ChatFormatting.DARK_GRAY));
+            } else if (plot == menu.selectedPlot()) {
+                lines.add(Component.translatable("gui.robotica.architect_plot_selected").withStyle(s -> s.withColor(SELECTED & 0xFFFFFF)));
+                lines.add(Component.translatable("gui.robotica.architect_plot_deselect").withStyle(ChatFormatting.DARK_GRAY));
+                lines.add(Component.translatable("gui.robotica.architect_plot_forget").withStyle(ChatFormatting.DARK_GRAY));
+            } else {
+                lines.add(Component.translatable("gui.robotica.architect_plot_select").withStyle(ChatFormatting.DARK_GRAY));
                 lines.add(Component.translatable("gui.robotica.architect_plot_forget").withStyle(ChatFormatting.DARK_GRAY));
             }
         }
         addTooltip(x, y, CELL, CELL, lines.toArray(Component[]::new));
+    }
+
+    private static Component styleName(BuildStyle style) {
+        return Component.translatable(style.langKey()).withStyle(s -> s.withColor(STYLE_COLORS[style.ordinal()] & 0xFFFFFF));
     }
 
     // ---------------------------------------------------------------- geometry
@@ -386,6 +466,10 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 1 && plotAt(mouseX, mouseY) >= 0 && menu.selectedPlot() >= 0) {
+            send(ArchitectTableBlockEntity.ACTION_TOGGLE, -1, 0);
+            return true;
+        }
         int plot = button == 0 ? plotAt(mouseX, mouseY) : -1;
         if (plot >= 0) {
             // shift-click always means the plot itself (forget a built plot), even on its edge
@@ -405,7 +489,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         return 0xFF000000 | r << 16 | gr << 8 | bl;
     }
 
-    /** Style chip: the style's wall block as the icon, a gold frame when selected, dimmed when locked. */
+    /** Style chip: the style's wall block as the icon, a gold frame when picked, dimmed when locked. */
     private final class StyleChip extends Button {
         private final BuildStyle style;
         private final ItemStack icon;
@@ -417,18 +501,27 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
             this.icon = new ItemStack(ArchitectRegistry.styleItem(style, Role.WALL).get());
         }
 
-        void update() {
+        void update(boolean refresh) {
             active = menu.styleUnlocked(style);
-            int key = (active ? 1 : 0) | menu.baseEnergy() << 1;
-            if (key == shown) return;
+            int key = active ? 1 : 0;
+            if (key == shown && !refresh) return;
             shown = key;
             Matter c = style.cost;
-            Component tip = Component.translatable(style.langKey()).withStyle(s -> s.withColor(STYLE_COLORS[style.ordinal()] & 0xFFFFFF))
+            int selected = menu.selectedPlot();
+            MutableComponent tip = styleName(style).copy()
                     .append(Component.literal("\n"))
                     .append(Component.translatable("gui.robotica.architect_cost_tip", c.rustic(), c.refined(),
                             style.energyPerBlock(menu.baseEnergy())).withStyle(ChatFormatting.GRAY));
-            if (!active) tip = tip.copy().append(Component.literal("\n"))
-                    .append(Component.translatable("gui.robotica.architect_needs_casing_" + style.casingLevel).withStyle(ChatFormatting.RED));
+            if (!active) {
+                tip.append(Component.literal("\n"))
+                        .append(Component.translatable("gui.robotica.architect_needs_casing_" + style.casingLevel).withStyle(ChatFormatting.RED));
+            } else if (selected >= 0 && menu.plotStyle(selected) != style) {
+                tip.append(Component.literal("\n"))
+                        .append(Component.translatable("gui.robotica.architect_chip_restyle").withStyle(s -> s.withColor(SELECTED & 0xFFFFFF)));
+            } else if (selected < 0) {
+                tip.append(Component.literal("\n"))
+                        .append(Component.translatable("gui.robotica.architect_chip_pick").withStyle(ChatFormatting.DARK_GRAY));
+            }
             setTooltip(Tooltip.create(tip));
         }
 
@@ -436,7 +529,7 @@ public class ArchitectScreen extends MachineScreen<ArchitectMenu> {
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
             int x = getX(), y = getY();
             boolean selected = menu.selectedStyle() == style;
-            g.fill(x, y, x + 18, y + 18, selected ? 0xFFFFD04A : isHoveredOrFocused() && active ? 0xFFFFFFFF : SLOT_DARK);
+            g.fill(x, y, x + 18, y + 18, selected ? SELECTED : isHoveredOrFocused() && active ? 0xFFFFFFFF : SLOT_DARK);
             g.fill(x + 1, y + 1, x + 17, y + 17, SLOT);
             g.renderItem(icon, x + 1, y + 1);
             if (!active) {

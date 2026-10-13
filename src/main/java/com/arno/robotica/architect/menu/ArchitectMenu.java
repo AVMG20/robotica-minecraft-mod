@@ -43,13 +43,11 @@ public class ArchitectMenu extends MachineMenu {
     public static final int INV_X = 8;
     public static final int INV_Y = 160;
 
-    private static final int PLAN_WORDS = (Plots.COUNT + 1) / 2;
-
     private final BlockPos pos;
     private final ContainerLevelAccess access;
     @Nullable
     private final ArchitectTableBlockEntity table;
-    private final int energyIndex, capacityIndex, matterCapIndex, statusIndex, progressIndex, flagsIndex, currentIndex, feIndex, planIndex;
+    private final int energyIndex, capacityIndex, matterCapIndex, statusIndex, progressIndex, flagsIndex, currentIndex, feIndex, selectedIndex, planIndex;
 
     /** Client side. */
     public ArchitectMenu(int id, Inventory inv, BlockPos pos) {
@@ -86,10 +84,11 @@ public class ArchitectMenu extends MachineMenu {
         flagsIndex = track(be == null ? zero : be::flags);
         currentIndex = track(be == null ? zero : be::currentPlot);
         feIndex = track(be == null ? zero : ArchitectTableBlockEntity::baseEnergy);
+        selectedIndex = track(be == null ? zero : () -> be.selectedPlot() + 1);
         int first = -1;
-        for (int w = 0; w < PLAN_WORDS; w++) {
-            final int word = w;
-            int index = track(be == null ? zero : () -> be.planWord(word));
+        for (int p = 0; p < Plots.COUNT; p++) {
+            final int plot = p;
+            int index = track(be == null ? zero : () -> be.plotWord(plot));
             if (first < 0) first = index;
         }
         planIndex = first;
@@ -160,9 +159,14 @@ public class ArchitectMenu extends MachineMenu {
         return synced(currentIndex);
     }
 
+    /** The selected built plot, -1 for none. */
+    public int selectedPlot() {
+        return synced(selectedIndex) - 1;
+    }
+
     private int cell(int plot) {
         if (!Plots.valid(plot)) return 0;
-        return (synced(planIndex + plot / 2) >>> (16 * (plot % 2))) & 0xFFFF;
+        return synced(planIndex + plot);
     }
 
     /** {@link Layout#EMPTY}, {@link Layout#QUEUED} or {@link Layout#BUILT}. */
@@ -180,6 +184,28 @@ public class ArchitectMenu extends MachineMenu {
 
     public int plotDoors(int plot) {
         return (cell(plot) >> 4) & 15;
+    }
+
+    /** Style the plot was built in, null when not built (or a re-pass is changing it). */
+    @Nullable
+    public BuildStyle builtStyle(int plot) {
+        int c = cell(plot);
+        return (c & 1 << 15) == 0 ? null : BuildStyle.byOrdinal((c >> 13) & 3);
+    }
+
+    /** True when a built plot is planned in another style than it stands in. */
+    public boolean restyled(int plot) {
+        BuildStyle built = builtStyle(plot);
+        return built != null && plotState(plot) == Layout.BUILT && built != plotStyle(plot);
+    }
+
+    /** Style of the door frame or inner wall on a side (an inner wall is stored by the west or north plot of the pair). */
+    public BuildStyle edgeStyle(int plot, int side) {
+        if ((side == Plots.N || side == Plots.W) && planned(Plots.neighbour(plot, side))) {
+            plot = Plots.neighbour(plot, side);
+            side = Plots.opposite(side);
+        }
+        return BuildStyle.byOrdinal((cell(plot) >>> (16 + 2 * side)) & 3);
     }
 
     /** {@link Layout#edge} of a side between two planned plots. */
@@ -210,6 +236,12 @@ public class ArchitectMenu extends MachineMenu {
 
     public boolean hasQueued() {
         for (int plot = 0; plot < Plots.COUNT; plot++) if (plotState(plot) == Layout.QUEUED) return true;
+        return false;
+    }
+
+    /** True when Cancel has something to take back: a queued plot or a restyle. */
+    public boolean hasCancellable() {
+        for (int plot = 0; plot < Plots.COUNT; plot++) if (plotState(plot) == Layout.QUEUED || restyled(plot)) return true;
         return false;
     }
 

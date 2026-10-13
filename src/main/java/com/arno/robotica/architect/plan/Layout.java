@@ -4,6 +4,7 @@ import com.arno.robotica.architect.style.BuildStyle;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.Tag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -21,6 +22,8 @@ import java.util.List;
  *       group without a door, the plot nearest the table gets one on its side facing the table (or any outside side).</li>
  *   <li>A shared side can hold an inner wall, with or without a doorway. Both plots build it (they share that column);
  *       it is stored once, on the E or S side of the plot west or north of it, and goes away with the neighbour.</li>
+ *   <li>Door frames and inner walls have their own style (the one picked when they were placed); restyling a plot
+ *       restyles its door frames and inner walls too.</li>
  *   <li>A built plot whose shape changed (a neighbour came or went, a door moved, an inner wall changed) needs a
  *       re-pass; the table re-walks its shell and only touches the blocks that differ. A re-pass never clears terrain,
  *       so what the player put inside a finished building stays.</li>
@@ -37,8 +40,12 @@ public final class Layout {
     /** Inner walls (bits for E and S only) and which of them have a doorway. */
     private final int[] walls = new int[Plots.COUNT];
     private final int[] wallDoors = new int[Plots.COUNT];
+    /** Style of each side's door frame (outside sides) or inner wall (E and S sides), 2 bits per side. */
+    private final int[] edgeStyle = new int[Plots.COUNT];
     /** Signature of the shape a built plot was last finished with (0 = none). */
     private final int[] builtSig = new int[Plots.COUNT];
+    /** {@link #accent} a built plot was last finished with. */
+    private final int[] builtAccent = new int[Plots.COUNT];
     /** Queued plots in the order they were clicked. */
     private final List<Integer> order = new ArrayList<>();
     private int height = Plots.HEIGHT;
@@ -80,6 +87,59 @@ public final class Layout {
         }
         int bit = Plots.bit(side);
         return (walls[plot] & bit) == 0 ? EDGE_OPEN : (wallDoors[plot] & bit) != 0 ? EDGE_DOORWAY : EDGE_WALL;
+    }
+
+    /** Style of the door frame or inner wall on a side. An inner wall is stored by the west or north plot of the pair. */
+    public BuildStyle edgeStyle(int plot, int side) {
+        if (!planned(plot) || side < 0 || side > 3) return BuildStyle.TIMBERFRAME;
+        int owner = owner(plot, side);
+        return BuildStyle.byOrdinal(edgeStyle[owner] >> 2 * ownerSide(plot, side) & 3);
+    }
+
+    /** The plot that stores a side: the neighbour for a shared N or W side, else the plot itself. */
+    private int owner(int plot, int side) {
+        return (WALL_SIDES & Plots.bit(side)) == 0 && planned(Plots.neighbour(plot, side)) ? Plots.neighbour(plot, side) : plot;
+    }
+
+    private int ownerSide(int plot, int side) {
+        return owner(plot, side) == plot ? side : Plots.opposite(side);
+    }
+
+    private void setEdgeStyle(int plot, int side, BuildStyle buildStyle) {
+        int owner = owner(plot, side), shift = 2 * ownerSide(plot, side);
+        edgeStyle[owner] = edgeStyle[owner] & ~(3 << shift) | buildStyle.ordinal() << shift;
+    }
+
+    private static int fill(BuildStyle buildStyle) {
+        return buildStyle.ordinal() * 0x55;
+    }
+
+    /** The styles of the plot's door frames and inner walls, 2 bits per side (0 on a side with neither). */
+    public int accent(int plot) {
+        if (!planned(plot)) return 0;
+        int shared = sides(plot), m = 0;
+        for (int side = 0; side < 4; side++) {
+            boolean feature = (shared & Plots.bit(side)) != 0 ? edge(plot, side) != EDGE_OPEN : (doors[plot] & Plots.bit(side)) != 0;
+            if (feature) m |= edgeStyle(plot, side).ordinal() << 2 * side;
+        }
+        return m;
+    }
+
+    /** Styles (bit per ordinal) a plot builds with: its own and those of its door frames and inner walls. */
+    public int usedStyles(int plot) {
+        int m = 1 << style[plot].ordinal();
+        int shared = sides(plot);
+        for (int side = 0; side < 4; side++) {
+            boolean feature = (shared & Plots.bit(side)) != 0 ? edge(plot, side) != EDGE_OPEN : (doors[plot] & Plots.bit(side)) != 0;
+            if (feature) m |= 1 << edgeStyle(plot, side).ordinal();
+        }
+        return m;
+    }
+
+    /** Style a built plot was finished with, null when unknown (not built, or a re-pass is changing it). */
+    @Nullable
+    public BuildStyle builtStyle(int plot) {
+        return state[plot] == BUILT && builtSig[plot] > 0 ? BuildStyle.byOrdinal(builtSig[plot] >> 28 & 3) : null;
     }
 
     /** Sides with a planned neighbour. */
@@ -158,7 +218,7 @@ public final class Layout {
     }
 
     public boolean needsWork(int plot) {
-        return state[plot] == QUEUED || (state[plot] == BUILT && builtSig[plot] != signature(plot));
+        return state[plot] == QUEUED || (state[plot] == BUILT && (builtSig[plot] != signature(plot) || builtAccent[plot] != accent(plot)));
     }
 
     public int queuedCount() {
@@ -194,19 +254,22 @@ public final class Layout {
         doors[plot] = 0;
         walls[plot] = 0;
         wallDoors[plot] = 0;
+        edgeStyle[plot] = fill(buildStyle);
         builtSig[plot] = 0;
+        builtAccent[plot] = 0;
         order.add(plot);
         normalize();
         return true;
     }
 
     /**
-     * Gives a built plot another style: the next pass swaps its blocks for the same pieces in that style. False when it
-     * is not built or has that style already.
+     * Gives a built plot another style, its door frames and inner walls included: the next pass swaps its blocks for
+     * the same pieces in that style. False when it is not built or has that style already.
      */
     public boolean restyle(int plot, BuildStyle buildStyle) {
         if (!Plots.valid(plot) || state[plot] != BUILT || style[plot] == buildStyle) return false;
         style[plot] = buildStyle;
+        for (int side = 0; side < 4; side++) setEdgeStyle(plot, side, buildStyle);
         return true;
     }
 
@@ -241,11 +304,20 @@ public final class Layout {
         return true;
     }
 
-    /** Takes every queued plot off the plan and undoes restyles that have not started. */
+    /** Takes every queued plot off the plan and undoes restyles (of plots, door frames and inner walls) that have not started. */
     public void unqueueAll() {
         for (int plot = 0; plot < Plots.COUNT; plot++) {
             if (state[plot] == QUEUED) clear(plot);
-            else if (state[plot] == BUILT && builtSig[plot] > 0) style[plot] = BuildStyle.byOrdinal(builtSig[plot] >> 28 & 3);
+            else if (state[plot] == BUILT && builtSig[plot] > 0) {
+                style[plot] = BuildStyle.byOrdinal(builtSig[plot] >> 28 & 3);
+                // door frames and inner walls this plot stores and was built with get their built style back
+                Shell.Shape built = Shell.Shape.fromSignature(builtSig[plot]);
+                for (int side = 0; side < 4; side++) {
+                    boolean had = built.shared(side) ? (WALL_SIDES & Plots.bit(side)) != 0 && built.wall(side) : built.door(side);
+                    int shift = 2 * side;
+                    if (had) edgeStyle[plot] = edgeStyle[plot] & ~(3 << shift) | (builtAccent[plot] >> shift & 3) << shift;
+                }
+            }
         }
         normalize();
     }
@@ -255,18 +327,32 @@ public final class Layout {
         doors[plot] = 0;
         walls[plot] = 0;
         wallDoors[plot] = 0;
+        edgeStyle[plot] = 0;
         builtSig[plot] = 0;
+        builtAccent[plot] = 0;
         order.remove(Integer.valueOf(plot));
     }
 
-    public static final int DOOR_OK = 0, DOOR_NOT_PLANNED = 1, DOOR_SHARED = 2, DOOR_LAST = 3;
+    public static final int DOOR_OK = 0, DOOR_NOT_PLANNED = 1, DOOR_SHARED = 2, DOOR_LAST = 3, DOOR_RESTYLED = 4;
 
-    /** Toggles the door of an outside side. A group's last door cannot be removed. */
+    /** Toggles the door of an outside side, a new door framed in the plot's style. */
     public int toggleDoor(int plot, int side) {
+        return toggleDoor(plot, side, null);
+    }
+
+    /**
+     * Toggles the door of an outside side. A new door is framed in {@code frame} (the plot's style when null); a door
+     * framed in another style gets that frame instead of going away. A group's last door cannot be removed.
+     */
+    public int toggleDoor(int plot, int side, @Nullable BuildStyle frame) {
         if (!planned(plot) || side < 0 || side > 3) return DOOR_NOT_PLANNED;
         if ((sides(plot) & Plots.bit(side)) != 0) return DOOR_SHARED;
         int bit = Plots.bit(side);
         if ((doors[plot] & bit) != 0) {
+            if (frame != null && edgeStyle(plot, side) != frame) {
+                setEdgeStyle(plot, side, frame);
+                return DOOR_RESTYLED;
+            }
             doors[plot] &= ~bit;
             if (groupDoors(group(plot)) == 0) {
                 doors[plot] |= bit;
@@ -274,25 +360,39 @@ public final class Layout {
             }
         } else {
             doors[plot] |= bit;
+            setEdgeStyle(plot, side, frame != null ? frame : style[plot]);
         }
         return DOOR_OK;
     }
 
-    /**
-     * Steps the inner wall on a shared side: open, wall with a doorway, solid wall, open again. Either plot of the
-     * pair may be named. Returns the new {@link #edge}, or -1 when the side is not shared.
-     */
+    /** Steps the inner wall on a shared side; a new wall takes the style of the plot that stores it. */
     public int cycleWall(int plot, int side) {
+        return cycleWall(plot, side, null);
+    }
+
+    /**
+     * Steps the inner wall on a shared side: open, wall with a doorway, solid wall, open again. A new wall is built in
+     * {@code wallStyle} (the style of the plot that stores it when null); a wall in another style gets that style
+     * instead of the next step. Either plot of the pair may be named. Returns the new {@link #edge}, or -1 when the
+     * side is not shared.
+     */
+    public int cycleWall(int plot, int side, @Nullable BuildStyle wallStyle) {
         if (!planned(plot) || side < 0 || side > 3 || (sides(plot) & Plots.bit(side)) == 0) return -1;
         if ((WALL_SIDES & Plots.bit(side)) == 0) {
             plot = Plots.neighbour(plot, side);
             side = Plots.opposite(side);
         }
         int bit = Plots.bit(side);
-        switch (edge(plot, side)) {
+        int edge = edge(plot, side);
+        if (edge != EDGE_OPEN && wallStyle != null && edgeStyle(plot, side) != wallStyle) {
+            setEdgeStyle(plot, side, wallStyle);
+            return edge;
+        }
+        switch (edge) {
             case EDGE_OPEN -> {
                 walls[plot] |= bit;
                 wallDoors[plot] |= bit;
+                setEdgeStyle(plot, side, wallStyle != null ? wallStyle : style[plot]);
             }
             case EDGE_DOORWAY -> wallDoors[plot] &= ~bit;
             default -> walls[plot] &= ~bit;
@@ -300,12 +400,18 @@ public final class Layout {
         return edge(plot, side);
     }
 
-    /** Called when the table finished walking a plot's shell for this signature. */
+    /** Called when the table finished walking a plot's shell for this signature, with the plot's current accent. */
     public void markBuilt(int plot, int signature) {
+        markBuilt(plot, signature, accent(plot));
+    }
+
+    /** Called when the table finished walking a plot's shell for this signature and {@link #accent}. */
+    public void markBuilt(int plot, int signature, int accent) {
         if (state[plot] == EMPTY) return;
         if (state[plot] == QUEUED) order.remove(Integer.valueOf(plot));
         state[plot] = BUILT;
         builtSig[plot] = signature;
+        builtAccent[plot] = accent;
     }
 
     /** After moving the table elsewhere: nothing that was built stands around it, queued plots stay queued. */
@@ -367,6 +473,7 @@ public final class Layout {
             int toward = Plots.sideTowardTable(p);
             if ((sides(p) & Plots.bit(toward)) == 0) {
                 doors[p] |= Plots.bit(toward);
+                setEdgeStyle(p, toward, style[p]);
                 return;
             }
         }
@@ -374,6 +481,7 @@ public final class Layout {
             for (int side : FALLBACK_SIDES) {
                 if ((sides(p) & Plots.bit(side)) == 0) {
                     doors[p] |= Plots.bit(side);
+                    setEdgeStyle(p, side, style[p]);
                     return;
                 }
             }
@@ -389,7 +497,9 @@ public final class Layout {
             packed[plot] = state[plot] | style[plot].ordinal() << 2 | doors[plot] << 4 | walls[plot] << 8 | wallDoors[plot] << 12;
         }
         tag.putIntArray("plots", packed);
+        tag.putIntArray("edge_style", edgeStyle.clone());
         tag.putIntArray("built_sig", builtSig.clone());
+        tag.putIntArray("built_accent", builtAccent.clone());
         tag.putIntArray("order", order.stream().mapToInt(Integer::intValue).toArray());
         return tag;
     }
@@ -400,7 +510,9 @@ public final class Layout {
         Arrays.fill(doors, 0);
         Arrays.fill(walls, 0);
         Arrays.fill(wallDoors, 0);
+        Arrays.fill(edgeStyle, 0);
         Arrays.fill(builtSig, 0);
+        Arrays.fill(builtAccent, 0);
         order.clear();
         if (tag.contains("plots", Tag.TAG_INT_ARRAY)) {
             int[] packed = tag.getIntArray("plots");
@@ -413,9 +525,21 @@ public final class Layout {
                 wallDoors[plot] = (packed[plot] >> 12) & 15;
             }
         }
+        // plans from before door and wall styles: everything in the plot's style
+        boolean edges = tag.get("edge_style") instanceof IntArrayTag;
+        for (int plot = 0; plot < Plots.COUNT; plot++) edgeStyle[plot] = fill(style[plot]);
+        if (tag.get("edge_style") instanceof IntArrayTag saved) {
+            int[] v = saved.getAsIntArray();
+            for (int plot = 0; plot < Math.min(v.length, Plots.COUNT); plot++) edgeStyle[plot] = v[plot] & 0xFF;
+        }
         if (tag.get("built_sig") instanceof IntArrayTag sigs) {
             int[] v = sigs.getAsIntArray();
             for (int plot = 0; plot < Math.min(v.length, Plots.COUNT); plot++) builtSig[plot] = v[plot];
+        }
+        boolean accents = tag.get("built_accent") instanceof IntArrayTag;
+        if (tag.get("built_accent") instanceof IntArrayTag saved) {
+            int[] v = saved.getAsIntArray();
+            for (int plot = 0; plot < Math.min(v.length, Plots.COUNT); plot++) builtAccent[plot] = v[plot];
         }
         for (int plot : tag.getIntArray("order")) {
             if (Plots.valid(plot) && state[plot] == QUEUED && !order.contains(plot)) order.add(plot);
@@ -424,11 +548,20 @@ public final class Layout {
             if (state[plot] == QUEUED && !order.contains(plot)) order.add(plot);
         }
         normalize();
+        // a plan from before door and wall styles: what stands counts as built in them, so nothing is rebuilt
+        if (!edges || !accents) {
+            for (int plot = 0; plot < Plots.COUNT; plot++) if (state[plot] == BUILT) builtAccent[plot] = accent(plot);
+        }
     }
 
-    /** 13 bits per plot for the GUI: state (2), style (2), doors (4), needs work (1), {@link #edge} of the E and S sides (2 each). */
+    /**
+     * One plot for the GUI: state (2 bits), style (2), doors (4), needs work (1), {@link #edge} of the E and S sides (2
+     * each), the built style (2) and whether it is known (1), then the door frame and inner wall styles (2 per side).
+     */
     public int packed(int plot) {
+        BuildStyle built = builtStyle(plot);
         return state[plot] | style[plot].ordinal() << 2 | doors[plot] << 4 | (needsWork(plot) ? 1 << 8 : 0)
-                | edge(plot, Plots.E) << 9 | edge(plot, Plots.S) << 11;
+                | edge(plot, Plots.E) << 9 | edge(plot, Plots.S) << 11
+                | (built == null ? 0 : built.ordinal() << 13 | 1 << 15) | (edgeStyle[plot] & 0xFF) << 16;
     }
 }

@@ -861,11 +861,147 @@ public class ArchitectGameTests {
         helper.succeed();
     }
 
+    /**
+     * Selecting a built plot picks its style; doors and inner walls are built in the picked style, a click with another
+     * style reframes them instead of stepping them, Cancel takes such a reframe back, and older plans load unchanged.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void doorsAndWallsUseThePickedStyle(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, 12, false);
+        table.styleSlot.setStackInSlot(0, new ItemStack(CoreItems.IRON_CASING.get()));
+        var level = helper.getLevel();
+        BlockPos t = table.getBlockPos();
+        Layout layout = table.layout();
+        int east = Plots.index(1, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.DARK_STONE.ordinal(), 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        runUntilDone(helper, table);
+
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
+        helper.assertTrue(table.selectedPlot() == Plots.CENTER && table.selectedStyle() == BuildStyle.TIMBERFRAME, "selecting a plot picks its style");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
+        helper.assertTrue(table.selectedPlot() == -1, "a second click deselects it");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, -1, 0);
+        helper.assertTrue(table.selectedPlot() == -1 && table.selectedStyle() == BuildStyle.DARK_STONE, "right-click deselects, the pick stays");
+
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.PEARL_PANEL.ordinal(), 0);
+        helper.assertTrue(layout.style(east) == BuildStyle.DARK_STONE && !layout.hasWork(), "picking a style without a selection restyles nothing");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_WALL, Plots.CENTER, Plots.E);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_DOOR, east, Plots.N);
+        helper.assertTrue(layout.edge(east, Plots.W) == Layout.EDGE_DOORWAY && layout.edgeStyle(east, Plots.W) == BuildStyle.PEARL_PANEL
+                && layout.edgeStyle(Plots.CENTER, Plots.E) == BuildStyle.PEARL_PANEL, "the new inner wall takes the picked style, seen from both plots");
+        helper.assertTrue((layout.doors(east) & Plots.bit(Plots.N)) != 0 && layout.edgeStyle(east, Plots.N) == BuildStyle.PEARL_PANEL, "the new door is framed in the picked style");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        runUntilDone(helper, table);
+
+        BlockPos eastOrigin = Plots.origin(t, east);
+        Shell.Shape shape = layout.shape(east);
+        int walls = 0, frames = 0;
+        for (BlockOp op : Shell.generate(shape, false)) {
+            int feature = Shell.featureSide(shape, op.x(), op.y(), op.z());
+            BuildStyle want = feature >= 0 ? BuildStyle.PEARL_PANEL : shape.overlaps(op.x(), op.z()) ? null : BuildStyle.DARK_STONE;
+            if (feature == Plots.W && !op.piece().isAir()) walls++;
+            if (feature == Plots.N && !op.piece().isAir()) frames++;
+            if (want == null) continue;
+            BlockState found = level.getBlockState(eastOrigin.offset(op.x(), op.y(), op.z()));
+            helper.assertTrue(op.piece().matches(want, found), "at " + op + " expected " + want + " but found " + found);
+        }
+        helper.assertTrue(walls > 10 && frames == 11, "checked the wall (" + walls + " blocks) and the door frame (" + frames + " blocks)");
+        BlockState centerFloor = level.getBlockState(Plots.origin(t, Plots.CENTER).offset(3, 0, 3));
+        helper.assertTrue(Piece.FLOOR.matches(BuildStyle.TIMBERFRAME, centerFloor), "the rest of the centre keeps its style: " + centerFloor);
+
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.ONYX_PANEL.ordinal(), 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_DOOR, east, Plots.N);
+        helper.assertTrue((layout.doors(east) & Plots.bit(Plots.N)) != 0 && layout.edgeStyle(east, Plots.N) == BuildStyle.ONYX_PANEL
+                && layout.needsWork(east), "a click with another style reframes the door");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_WALL, east, Plots.W);
+        helper.assertTrue(layout.edge(east, Plots.W) == Layout.EDGE_DOORWAY && layout.edgeStyle(Plots.CENTER, Plots.E) == BuildStyle.ONYX_PANEL, "and restyles the wall without stepping it");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_CANCEL, 0, 0);
+        helper.assertTrue(layout.edgeStyle(east, Plots.N) == BuildStyle.PEARL_PANEL && layout.edgeStyle(east, Plots.W) == BuildStyle.PEARL_PANEL
+                && !layout.hasWork(), "Cancel takes the reframes back");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.PEARL_PANEL.ordinal(), 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_DOOR, east, Plots.N);
+        helper.assertTrue((layout.doors(east) & Plots.bit(Plots.N)) == 0, "a click with the door's own style removes it");
+
+        // restyling a plot restyles its door frames and inner walls too
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_DOOR, east, Plots.N);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_STYLE, BuildStyle.ONYX_PANEL.ordinal(), 0);
+        helper.assertTrue(layout.style(east) == BuildStyle.ONYX_PANEL && layout.edgeStyle(east, Plots.N) == BuildStyle.ONYX_PANEL
+                && layout.edgeStyle(east, Plots.W) == BuildStyle.ONYX_PANEL, "restyle takes the door frame and the inner wall along");
+
+        Layout copy = new Layout();
+        copy.load(layout.save());
+        for (int p = 0; p < Plots.COUNT; p++) helper.assertTrue(copy.packed(p) == layout.packed(p), "plot " + p + " survives saving");
+        // a plan saved before door and wall styles: everything counts as built in the plot's style
+        Layout old = new Layout();
+        old.queue(Plots.CENTER, BuildStyle.DARK_STONE);
+        old.queue(east, BuildStyle.TIMBERFRAME);
+        old.cycleWall(Plots.CENTER, Plots.E);
+        old.markBuilt(Plots.CENTER, old.signature(Plots.CENTER));
+        old.markBuilt(east, old.signature(east));
+        var tag = old.save();
+        tag.remove("edge_style");
+        tag.remove("built_accent");
+        Layout loaded = new Layout();
+        loaded.load(tag);
+        helper.assertTrue(!loaded.hasWork() && loaded.edgeStyle(east, Plots.W) == BuildStyle.DARK_STONE, "an older plan loads without rebuilding anything");
+        helper.succeed();
+    }
+
+    /**
+     * Demolish with a plot selected takes down only that plot: the columns it shares with a plot that stays stand, the
+     * neighbour closes its wall on the next Build, and the queue keeps waiting.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void demolishTakesDownOnlyTheSelectedPlot(GameTestHelper helper) {
+        ArchitectTableBlockEntity table = preparedTable(helper, 13, false);
+        var level = helper.getLevel();
+        BlockPos t = table.getBlockPos();
+        Layout layout = table.layout();
+        int east = Plots.index(1, 0), far = Plots.index(-2, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, Plots.CENTER, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        runUntilDone(helper, table);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, far, 0);
+
+        helper.assertTrue(table.handleAction(null, ArchitectTableBlockEntity.ACTION_DEMOLISH, ArchitectTableBlockEntity.DEMOLISH_CONFIRM, far + 1) != null
+                && !table.demolishing(), "a plot that is not built cannot be demolished");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_TOGGLE, east, 0);
+        helper.assertTrue(table.selectedPlot() == east, "the east plot is selected");
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_DEMOLISH, ArchitectTableBlockEntity.DEMOLISH_CONFIRM, east + 1);
+        helper.assertTrue(table.demolishing() && table.selectedPlot() == -1, "demolish started and the selection is gone");
+        BlockState tableState = level.getBlockState(t);
+        for (int i = 0; i < 20_000 && table.demolishing(); i++) table.serverTick(level, t, tableState);
+        helper.assertTrue(!table.demolishing(), "demolish finished");
+
+        helper.assertTrue(layout.state(east) == Layout.EMPTY && layout.state(Plots.CENTER) == Layout.BUILT && layout.state(far) == Layout.QUEUED,
+                "only the east plot left the plan");
+        helper.assertTrue(layout.needsWork(Plots.CENTER), "the centre closes its wall toward it");
+        BlockPos eastOrigin = Plots.origin(t, east);
+        helper.assertTrue(level.getBlockState(eastOrigin.offset(4, 0, 4)).isAir() && level.getBlockState(eastOrigin.offset(8, 2, 4)).isAir(), "the east plot is down");
+        helper.assertTrue(Piece.FLOOR.matches(BuildStyle.TIMBERFRAME, level.getBlockState(eastOrigin.offset(0, 0, 4))), "the shared column stands");
+
+        layout.unqueue(far);
+        table.handleAction(null, ArchitectTableBlockEntity.ACTION_BUILD, 0, 0);
+        runUntilDone(helper, table);
+        BlockPos origin = Plots.origin(t, Plots.CENTER);
+        for (BlockOp op : Shell.generate(layout.shape(Plots.CENTER), true)) {
+            BlockState found = level.getBlockState(origin.offset(op.x(), op.y(), op.z()));
+            helper.assertTrue(op.piece().matches(BuildStyle.TIMBERFRAME, found), "the centre is whole again at " + op + ", found " + found);
+        }
+        helper.succeed();
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private static int[] planWords(ArchitectTableBlockEntity table) {
-        int[] w = new int[(Plots.COUNT + 1) / 2];
-        for (int i = 0; i < w.length; i++) w[i] = table.planWord(i);
+        int[] w = new int[Plots.COUNT];
+        for (int i = 0; i < w.length; i++) w[i] = table.plotWord(i);
         return w;
     }
 

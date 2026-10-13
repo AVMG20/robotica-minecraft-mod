@@ -638,8 +638,9 @@
    "use": [
     "Feed it cobble, wood or ingots (matter).",
     "A casing in the style slot opens higher styles.",
-    "Click a built plot and pick another style to restyle it. The old blocks come back as matter.",
-    "Demolish (click twice) clears every built plot: the table's own building blocks come back as matter, the rest goes into a chest touching the table."
+    "Doors and inner walls are built in the style picked when you place them.",
+    "Click a built plot to select it, then pick another style to restyle it. The old blocks come back as matter.",
+    "Demolish (click twice) clears the selected plot, or every built plot when none is selected: the table's own building blocks come back as matter, the rest goes into a chest touching the table."
    ],
    "stats": {
     "rows": [

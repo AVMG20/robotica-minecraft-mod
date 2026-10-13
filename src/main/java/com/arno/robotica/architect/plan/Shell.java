@@ -156,6 +156,20 @@ public final class Shell {
         return light(x, z) ? Piece.LIGHT : Piece.ROOF;
     }
 
+    /**
+     * The side whose inner wall or outside door frame this cell belongs to, -1 for any other cell. Those cells are
+     * built in the wall's or door's own style.
+     */
+    public static int featureSide(Shape shape, int x, int y, int z) {
+        boolean edgeX = x == 0 || x == S - 1;
+        boolean edgeZ = z == 0 || z == S - 1;
+        if (edgeX == edgeZ || y <= 0 || y >= shape.top()) return -1;
+        int side = edgeX ? (x == 0 ? Plots.W : Plots.E) : (z == 0 ? Plots.N : Plots.S);
+        int along = edgeX ? z : x;
+        if (shape.shared(side)) return shape.wall(side) ? side : -1;
+        return shape.door(side) && along >= 2 && along <= 6 && y <= LINTEL ? side : -1;
+    }
+
     /** Light panels at local 2 and 6 on both axes: 4 apart, and on the same grid across plots {@link Plots#PITCH} apart. */
     public static boolean light(int x, int z) {
         return (x == 2 || x == 6) && (z == 2 || z == 6);
