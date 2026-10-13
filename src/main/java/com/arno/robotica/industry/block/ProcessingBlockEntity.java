@@ -51,8 +51,8 @@ import net.minecraft.core.Direction;
 /**
  * One block entity class for every processing machine (Alloy Smelter, Centrifuge, Assembler) and every Mk.
  * Slots: {@link Machine#inputs} inputs then {@link Machine#outputs} outputs in {@link #items}, a battery slot, and
- * Mk + 1 upgrade slots. Each tick it works on the first recipe of its type that matches the inputs (shapeless, one
- * ingredient per slot), at {@code power} FE/t times the Mk speed and the card multipliers, for {@code time} ticks
+ * Mk + 1 upgrade slots. Each tick it works on the first recipe of its type that matches the inputs (shapeless, any
+ * slots, extras stay), at {@code power} FE/t times the Mk speed and the card multipliers, for {@code time} ticks
  * divided by the same speed (so FE per craft only rises by the speed cards' energy penalty).
  *
  * <p>Progress is counted in FE: a craft needs {@code power x time} FE. When that FE/t is more than the buffer or the
@@ -275,15 +275,18 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
     }
 
     private void craft(ServerLevel level, ProcessingRecipe recipe) {
-        int[] slots = recipe.assign(input());
-        if (slots == null) {
+        int[][] take = recipe.assign(input());
+        if (take == null) {
             inputsChanged = true;
             return;
         }
-        for (int i = 0; i < slots.length; i++) {
-            ItemStack in = items.getStackInSlot(slots[i]).copy();
-            in.shrink(recipe.inputs().get(i).count());
-            items.setStackInSlot(slots[i], in.isEmpty() ? ItemStack.EMPTY : in);
+        for (int[] fromSlot : take) {
+            for (int s = 0; s < fromSlot.length; s++) {
+                if (fromSlot[s] == 0) continue;
+                ItemStack in = items.getStackInSlot(s).copy();
+                in.shrink(fromSlot[s]);
+                items.setStackInSlot(s, in.isEmpty() ? ItemStack.EMPTY : in);
+            }
         }
         int fortune = recipe.fortune() ? upgrades.level(UpgradeKind.FORTUNE) : 0;
         for (int i = 0; i < recipe.results().size(); i++) {
