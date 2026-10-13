@@ -347,11 +347,12 @@ public class DronesGameTests {
         bot.setTier(1);
         int cap = bot.getEnergyCapacity();
         int fe = CoreConfig.scaleEnergy(DroneBase.REGEN_FE_PER_HP);
+        int line = (int) ((long) cap * DroneBase.REGEN_MIN_PERCENT / 100);
         bot.setHealth(10.0F);
 
-        bot.setEnergy(cap * DroneBase.REGEN_MIN_PERCENT / 100);
+        bot.setEnergy(line);
         helper.assertFalse(bot.regenStep(), "no regen at 80% charge");
-        helper.assertTrue(bot.getHealth() == 10.0F && bot.getEnergy() == cap * DroneBase.REGEN_MIN_PERCENT / 100, "80% charge: nothing changes");
+        helper.assertTrue(bot.getHealth() == 10.0F && bot.getEnergy() == line, "80% charge: nothing changes");
 
         bot.setEnergy(cap);
         helper.assertTrue(bot.regenStep(), "regen on a full charge");

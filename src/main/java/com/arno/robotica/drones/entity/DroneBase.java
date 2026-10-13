@@ -560,8 +560,10 @@ public abstract class DroneBase extends PathfinderMob {
         if (!isAlive() || getHealth() >= getMaxHealth()) return false;
         int fe = scaled(REGEN_FE_PER_HP);
         if ((long) energy * 100L <= (long) getEnergyCapacity() * REGEN_MIN_PERCENT || energy < fe) return false;
-        energy -= fe;
+        float before = getHealth();
         heal(1.0F);
+        if (getHealth() <= before) return false;
+        energy -= fe;
         if (getHealth() >= getMaxHealth()) onRepaired();
         return true;
     }

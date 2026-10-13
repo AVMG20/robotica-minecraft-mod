@@ -417,17 +417,17 @@ public class HaulerDrone extends DroneBase {
         if (held.is(Items.NAME_TAG) || held.is(Items.LEAD)) return InteractionResult.PASS;
         boolean energyItem = isBattery(held);
         if (!player.isShiftKeyDown() && !held.isEmpty() && !energyItem) return InteractionResult.PASS;
-        return interact(player, hand, held, energyItem);
+        return interact(player, held, energyItem);
     }
 
     /** Right-click on the drone or on the carried mob. */
     public InteractionResult interactFrom(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
         boolean energyItem = isBattery(held);
-        return interact(player, hand, held, energyItem);
+        return interact(player, held, energyItem);
     }
 
-    private InteractionResult interact(Player player, InteractionHand hand, ItemStack held, boolean energyItem) {
+    private InteractionResult interact(Player player, ItemStack held, boolean energyItem) {
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (!(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
         if (!canInteract(player)) {
