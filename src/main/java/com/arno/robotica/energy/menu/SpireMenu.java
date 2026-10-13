@@ -13,6 +13,8 @@ public class SpireMenu extends ControllerMenu {
     public static final int IMAGE_HEIGHT = 212;
     public static final int PLAYER_Y = 130;
     public static final int FUEL_X = 134, WASTE_X = 152, SLOT_Y = 18;
+    /** Storm charge bar, under the waste slot. */
+    public static final int CHARGE_X = 155, CHARGE_Y = 38, CHARGE_W = 10, CHARGE_H = 30;
 
     /** Client side. */
     public SpireMenu(int id, Inventory inv, BlockPos pos) {
@@ -42,6 +44,9 @@ public class SpireMenu extends ControllerMenu {
     public int energy() { return data().getInt("energy"); }
     public int capacity() { return data().getInt("capacity"); }
     public float burn() { return data().getFloat("burn"); }
+    /** Storm charge and its cap, in FE. */
+    public long charge() { return data().getLong("charge"); }
+    public long chargeCapacity() { return data().getLong("chargeCap"); }
     public int conductors() { return data().getInt("conductors"); }
     public int basePower() { return data().getInt("basePower"); }
     /** Efficiency in percent. */

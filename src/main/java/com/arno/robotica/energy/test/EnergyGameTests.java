@@ -517,7 +517,8 @@ public class EnergyGameTests {
 
     /**
      * 4 copper (30, x1.0) + 4 iron (45, x1.25): 300 FE/t base at x1.15 efficiency. Fuel pays the output divided by the
-     * efficiency, waste comes out, a strike adds a burst, no sky stops it, a neighbour 5.7 blocks away costs 45%.
+     * efficiency, waste comes out, a strike charges a burst spent before fuel, no sky stops it, a neighbour 5.7 blocks away
+     * costs 45%.
      */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void spireBurnsFuelAndCatchesLightning(GameTestHelper helper) {
@@ -539,10 +540,25 @@ public class EnergyGameTests {
         helper.assertTrue(gunpowder(be.waste) == 1, "one item burned leaves its waste, got " + gunpowder(be.waste));
         helper.assertTrue(Math.abs(be.energy.getEnergyStored() - 115_000 - expected) < expected * 3, "one item gives 100k x 1.15 FE, stored " + be.energy.getEnergyStored());
 
-        int before = be.energy.getEnergyStored();
+        // a strike on a full buffer waits in the storm charge, which pays before fuel and runs the spire without any
+        be.energy.setEnergy(be.energy.getMaxEnergyStored());
         be.strike(helper.getLevel(), helper.getLevel().getGameTime());
         long burst = Math.max(SpireBlockEntity.STRIKE_MIN, Math.round(expected * 20 * EnergyConfig.spireStrikeSeconds()));
-        helper.assertTrue(be.energy.getEnergyStored() - before == burst, "a strike adds " + burst + " FE, got " + (be.energy.getEnergyStored() - before));
+        helper.assertTrue(Math.abs(be.charge() - burst) < 1e-6, "a strike charges " + burst + " FE, got " + be.charge());
+        be.simulate(1);
+        helper.assertTrue(be.state() == SpireBlockEntity.State.BUFFER_FULL && Math.abs(be.charge() - burst) < 1e-6, "a full buffer keeps the charge");
+        be.energy.setEnergy(0);
+        be.fuel.setStackInSlot(0, new ItemStack(Items.JIGSAW, 1));
+        double fuelBefore = be.fuelLeft();
+        be.simulate(1);
+        helper.assertTrue(Math.abs(be.fePerTick() - expected) <= 1 && be.energy.getEnergyStored() == be.fePerTick(), "charge runs at full output, got " + be.fePerTick());
+        helper.assertTrue(Math.abs(burst - be.charge() - be.fePerTick()) <= 1 && be.fuelLeft() == fuelBefore && be.fuel.getStackInSlot(0).getCount() == 1,
+                "the charge pays before fuel: charge " + be.charge() + ", fuel left " + be.fuelLeft());
+        be.fuel.setStackInSlot(0, ItemStack.EMPTY);
+        be.simulate(5);
+        helper.assertTrue(be.state() == SpireBlockEntity.State.RUNNING && be.fePerTick() > 0, "and without fuel: " + be.state());
+        for (int i = 0; i < SpireBlockEntity.CHARGE_STRIKES * 2; i++) be.strike(helper.getLevel(), helper.getLevel().getGameTime());
+        helper.assertTrue(Math.abs(be.charge() - be.chargeCapacity()) < 1e-6, "the charge stops at its cap: " + be.charge() + " / " + be.chargeCapacity());
         helper.assertTrue(be.energyView(Direction.UP) == null && be.energyView(Direction.NORTH) != null, "FE out of every side but the column");
         IItemHandler items = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(basePos), Direction.NORTH);
         helper.assertTrue(items != null && items.insertItem(0, new ItemStack(Items.JIGSAW), false).isEmpty() && !items.insertItem(0, new ItemStack(Items.DIRT), true).isEmpty(),
