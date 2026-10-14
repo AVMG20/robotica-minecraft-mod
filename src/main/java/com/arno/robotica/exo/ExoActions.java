@@ -16,7 +16,6 @@ public final class ExoActions {
 
     public static final int OPEN_MODULES = 0;
     public static final int TOGGLE_FLIGHT = 1;
-    public static final int DOUBLE_JUMP = 2;
     public static final int DASH = 3;
     public static final int SONAR = 4;
     public static final int OVERCLOCK = 5;
@@ -43,7 +42,6 @@ public final class ExoActions {
         switch (action) {
             case OPEN_MODULES -> ExoMenu.openWorn(player);
             case TOGGLE_FLIGHT -> toggleFlight(player);
-            case DOUBLE_JUMP -> ExoTicker.doubleJump(player);
             case DASH -> ExoTicker.dash(player);
             case SONAR -> ExoTicker.sonar(player);
             case OVERCLOCK -> ExoTicker.overclock(player);

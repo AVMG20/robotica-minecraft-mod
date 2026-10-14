@@ -915,7 +915,8 @@ public class ExoGameTests {
         ticks(player, burn / 2 + 2);
         helper.assertTrue(ExoTicker.jetOverheated(player), "full heat overheats the pack");
         helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "the thrusters cut out at full heat");
-        helper.assertTrue(player.hasEffect(MobEffects.SLOW_FALLING), "the slow fall takes over after the cut-out");
+        helper.assertTrue(!player.hasEffect(MobEffects.SLOW_FALLING), "no slow fall after the cut-out");
+        int afterCut = energy(player, EquipmentSlot.CHEST);
         ExoTicker.jetWant(player, ExoJet.THRUST);
         ticks(player, 2);
         helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "no thrust before it has cooled down");
@@ -923,6 +924,8 @@ public class ExoGameTests {
         double air0 = ExoTicker.jetHeat(player);
         ticks(player, 10);
         double airCool = air0 - ExoTicker.jetHeat(player);
+        helper.assertTrue(energy(player, EquipmentSlot.CHEST) == afterCut && !player.hasEffect(MobEffects.SLOW_FALLING),
+                "falling with the pack off costs nothing and is not slowed");
         player.setOnGround(true);
         double ground0 = ExoTicker.jetHeat(player);
         ticks(player, 10);
@@ -1087,7 +1090,6 @@ public class ExoGameTests {
         ticks(player, 20);
         helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF && ExoTicker.jetHeat(player) == 0, "no thrust in creative");
         helper.assertTrue(energy(player, EquipmentSlot.CHEST) == start, "no FE spent in creative");
-        helper.assertTrue(!ExoTicker.doubleJump(player), "no air jumps in creative");
         helper.assertTrue(chest.canElytraFly(player), "the Glider opens as usual in creative");
 
         // A Flight module's flight is not creative flight: the pack works next to it.

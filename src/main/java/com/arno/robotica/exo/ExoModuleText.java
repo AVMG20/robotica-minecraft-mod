@@ -27,7 +27,7 @@ final class ExoModuleText {
                 @Override
                 public Component cost(int level) {
                     if (kind == ModuleKind.JET_ASSIST) {
-                        return Component.translatable("exo.robotica.unit.thrust", ExoConfig.jetThrustCost(level), ExoConfig.doubleJumpCost(level));
+                        return Component.translatable("exo.robotica.unit.thrust", ExoConfig.jetThrustCost(level));
                     }
                     String unit = unit(kind);
                     return unit == null ? null : Component.translatable("exo.robotica.unit." + unit, ExoConfig.cost(kind, level));

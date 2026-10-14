@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 
 /**
  * Jet Assist thrust rules, shared by the server ({@link ExoTicker}) and the client prediction so both sides agree on
- * climb speed, heat and cost (like {@link ExoSuit#canPayAirJump}). Safe on both sides.
+ * climb speed, heat and cost. Safe on both sides.
  *
  * <p>Heat counts ticks of thrust, the same for every level: a tick of thrust adds 1, the Magma Core set bonus and
  * hovering each halve that. The pack overheats once the heat reaches the fitted level's burn time ({@link #maxHeat}),
@@ -28,10 +28,7 @@ public final class ExoJet {
     public static final double ACCEL = 0.05;
     /** Sink speed while hovering and sneaking, in blocks per tick. */
     public static final double HOVER_SINK = 0.12;
-    /**
-     * Ticks a jump press that jumped (from the ground, or an air jump) must be held before thrust takes over, so a tap
-     * stays a jump.
-     */
+    /** Ticks a jump from the ground must be held before thrust takes over, so a tap stays a jump. */
     public static final int HOLD_TICKS = 5;
     /** Heat lost per tick without thrust (a full III cools in its 20 s burn time, as fast as it heated). */
     public static final double COOL = 1.0;
@@ -41,8 +38,13 @@ public final class ExoJet {
     public static final double GLIDER_SINK = -0.5;
     /** Lowest level with hover. */
     public static final int HOVER_LEVEL = 3;
-    /** Ticks of slow fall after thrust ends in mid air, so the top of the climb does not drop the player. */
-    public static final int AFTER_THRUST = 20;
+    /**
+     * Ticks after thrust ends in mid air over which the fall eases in: a short hang at the top of the climb that fades,
+     * then a normal fall.
+     */
+    public static final int SETTLE = 8;
+    /** Fall speed cap of the first settle tick in blocks per tick; it grows by this much every tick. */
+    public static final double SETTLE_STEP = 0.04;
     /** Heat share from which the HUD bar turns red. */
     public static final double HOT = 0.8;
 
@@ -62,6 +64,11 @@ public final class ExoJet {
     public static double nextSpeed(double v, int level, int mode, boolean sneaking) {
         double target = mode == THRUST ? climb(level) : sneaking ? -HOVER_SINK : 0.0;
         return approach(v, target);
+    }
+
+    /** Vertical speed {@code tick} ticks (from 0) into the settle after thrust: the fall is capped, less every tick. */
+    public static double settle(double v, int tick) {
+        return tick >= SETTLE ? v : Math.max(v, -SETTLE_STEP * (tick + 1));
     }
 
     /** Heat at which a pack of this level overheats: its burn time in ticks. */
