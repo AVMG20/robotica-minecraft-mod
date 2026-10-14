@@ -1262,12 +1262,16 @@
    "items": [
     "null_lance"
    ],
-   "what": "Hold to charge 1 s, then a beam pierces every mob in a 32-block line.",
+   "what": "Hold left-click to fire null bolts, like the Rivet Gun. Hold right-click 1 s, then release: a beam pierces every mob in a 32-block line.",
    "stats": {
     "rows": [
      [
       "Damage",
-      "30"
+      "8 bolt, 30 beam"
+     ],
+     [
+      "Rate",
+      "1.33 bolts/s"
      ],
      [
       "Energy",
@@ -1275,7 +1279,7 @@
      ],
      [
       "Per shot",
-      "8,000 FE"
+      "800 FE bolt, 8,000 FE beam"
      ],
      [
       "Module slots",

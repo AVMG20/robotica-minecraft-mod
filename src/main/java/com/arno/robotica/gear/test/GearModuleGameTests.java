@@ -415,6 +415,40 @@ public class GearModuleGameTests {
     }
 
     /**
+     * The Null Lance fires null bolts with left-click like the Rivet Gun: one per cooldown, a bit more damage than a
+     * rivet, its own FE per bolt (not the beam's).
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void nullLanceFiresBolts(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ServerPlayer player = GearGameTests.survivalPlayer(helper, helper.absolutePos(new BlockPos(1, 1, 1)));
+        Vec3 feet = helper.absoluteVec(new Vec3(0.2, 0.0, 1.5));
+        player.moveTo(feet.x, feet.y, feet.z, -90.0F, 0.0F);
+        var creeper = helper.spawn(EntityType.CREEPER, new Vec3(2.5, 0.0, 1.5));
+        creeper.setNoAi(true);
+        creeper.setNoGravity(true);
+        ItemStack lance = new ItemStack(GearItems.NULL_LANCE.get());
+        ItemEnergy.fill(lance);
+        player.setItemInHand(InteractionHand.MAIN_HAND, lance);
+        int before = ItemEnergy.get(player.getMainHandItem());
+        GearActions.apply(player, GearActions.FIRE, 0);
+        GearActions.apply(player, GearActions.FIRE, 0);
+        List<RivetEntity> bolts = level.getEntitiesOfClass(RivetEntity.class, new AABB(feet, feet).inflate(8));
+        helper.assertTrue(bolts.size() == 1, "one bolt should fly, found " + bolts.size());
+        helper.assertTrue(bolts.get(0).isNullBolt(), "the lance fires a null bolt");
+        int cost = com.arno.robotica.gear.weapon.NullLanceItem.boltCost(player.getMainHandItem());
+        helper.assertTrue(cost < ((com.arno.robotica.gear.weapon.NullLanceItem) lance.getItem()).cost(player.getMainHandItem()), "a bolt costs less than the beam");
+        helper.assertTrue(before - ItemEnergy.get(player.getMainHandItem()) == cost, "one bolt costs " + cost + " FE");
+        float damage = com.arno.robotica.gear.weapon.NullLanceItem.boltDamage();
+        helper.assertTrue(damage > GearConfig.rivetDamage(), "a bolt hits harder than a rivet");
+        float expected = creeper.getMaxHealth() - damage;
+        helper.succeedWhen(() -> {
+            helper.assertTrue(Math.abs(creeper.getHealth() - expected) < 0.01F, "bolt damage " + damage + ", creeper at " + creeper.getHealth());
+            helper.assertTrue(bolts.get(0).isRemoved(), "the bolt is gone after the hit");
+        });
+    }
+
+    /**
      * Lifesteal (Age 4): heals a share of the damage, pays FE per point, never more than the cap per second, then a
      * cooldown with no healing; no healing at full health or with an empty weapon.
      */

@@ -25,7 +25,7 @@
   "item.robotica.shock_baton.tooltip": "7 damage, Slowness II, %s FE per hit",
   "item.robotica.rivet_gun.tooltip": "Left-click: fast rivet, %s FE per shot",
   "item.robotica.arc_blade.tooltip": "Arcs half damage to 3 nearby hostiles, %s FE per hit",
-  "item.robotica.null_lance.tooltip": "Hold 1 s, release: piercing beam, %s FE per shot",
+  "item.robotica.null_lance.tooltip": "Left-click: null bolt, %s FE per shot. Hold right-click 1 s, release: piercing beam, %s FE",
   "tooltip.robotica.gear.mode": "Mode: %s",
   "gear.robotica.mode.single": "1x1",
   "gear.robotica.mode.area_3": "3x3",

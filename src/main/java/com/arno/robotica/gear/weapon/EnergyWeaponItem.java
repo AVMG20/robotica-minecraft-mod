@@ -51,7 +51,12 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem, Modul
 
     /** FE for one hit or shot of this stack: the base cost plus what its switched-on modules add, after the Power Regulator. */
     public int cost(ItemStack stack) {
-        int fe = cost() + GearConfig.pierceCost(Modules.active(stack, ModuleKind.ARMOR_PIERCE))
+        return withModules(stack, cost());
+    }
+
+    /** {@code base} FE plus what the stack's switched-on modules add, after the Power Regulator. */
+    public static int withModules(ItemStack stack, int base) {
+        int fe = base + GearConfig.pierceCost(Modules.active(stack, ModuleKind.ARMOR_PIERCE))
                 + GearConfig.ricochetCost(Modules.active(stack, ModuleKind.RICOCHET))
                 + GearConfig.edgeCost(Modules.active(stack, ModuleKind.SHARPENED_EDGE))
                 + GearConfig.thermalCost(Modules.active(stack, ModuleKind.THERMAL_EDGE));
@@ -173,11 +178,16 @@ public abstract class EnergyWeaponItem extends Item implements EnergyItem, Modul
         return true;
     }
 
+    /** Arguments of the {@code .tooltip} line: the FE per use. */
+    protected Object[] tooltipArgs(ItemStack stack) {
+        return new Object[]{cost(stack)};
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age))
                 .withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable(getDescriptionId() + ".tooltip", cost(stack)).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable(getDescriptionId() + ".tooltip", tooltipArgs(stack)).withStyle(ChatFormatting.GRAY));
         var modules = Modules.describe(stack);
         tooltip.add(modules != null ? Component.translatable("tooltip.robotica.gear.modules", modules).withStyle(ChatFormatting.GRAY)
                 : Component.translatable("tooltip.robotica.gear.weapon_modules", Modules.slots(stack)).withStyle(ChatFormatting.DARK_GRAY));
