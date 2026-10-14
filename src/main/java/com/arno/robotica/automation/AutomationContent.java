@@ -3,13 +3,10 @@ package com.arno.robotica.automation;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.automation.block.ChunkAnchorBlock;
 import com.arno.robotica.automation.block.ExcavatorBlock;
-import com.arno.robotica.automation.block.SproutBlock;
-import com.arno.robotica.automation.block.StumpyBlock;
 import com.arno.robotica.automation.block.SupplyCrateBlock;
 import com.arno.robotica.automation.block.SurveyRigBlock;
 import com.arno.robotica.automation.entity.ChunkAnchorBlockEntity;
 import com.arno.robotica.automation.entity.ExcavatorBlockEntity;
-import com.arno.robotica.automation.entity.FarmBotBlockEntity;
 import com.arno.robotica.automation.entity.SupplyCrateBlockEntity;
 import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.automation.item.WorkerBlockItem;
@@ -41,10 +38,6 @@ public final class AutomationContent {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Robotica.MODID);
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
 
-    private static BlockBehaviour.Properties robot(MapColor color) {
-        return BlockBehaviour.Properties.of().mapColor(color).strength(2.0F, 6.0F).sound(SoundType.COPPER).noOcclusion();
-    }
-
     private static DeferredBlock<ExcavatorBlock> excavator(String id, int tier) {
         return BLOCKS.registerBlock(id, p -> new ExcavatorBlock(p, tier), BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
                 .strength(3.5F, 8.0F).sound(SoundType.METAL).noOcclusion().lightLevel(s -> s.getValue(ExcavatorBlock.LIT) ? 6 : 0));
@@ -70,9 +63,6 @@ public final class AutomationContent {
     }
 
     // ---- blocks ----
-    /** Stumpy and Sprout from before the robots walked: no item, they turn into the robot entity (farmbot package). */
-    public static final DeferredBlock<StumpyBlock> STUMPY = BLOCKS.registerBlock("stumpy", StumpyBlock::new, robot(MapColor.COLOR_ORANGE));
-    public static final DeferredBlock<SproutBlock> SPROUT = BLOCKS.registerBlock("sprout", SproutBlock::new, robot(MapColor.COLOR_YELLOW));
     public static final DeferredBlock<ExcavatorBlock> EXCAVATOR = excavator("excavator", 1);
     public static final DeferredBlock<ExcavatorBlock> EXCAVATOR_MK2 = excavator("excavator_mk2", 2);
     public static final DeferredBlock<ExcavatorBlock> EXCAVATOR_MK3 = excavator("excavator_mk3", 3);
@@ -123,10 +113,6 @@ public final class AutomationContent {
 
 
     // ---- block entities ----
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FarmBotBlockEntity>> STUMPY_BE = BLOCK_ENTITIES.register("stumpy",
-            () -> BlockEntityType.Builder.of(FarmBotBlockEntity::new, STUMPY.get()).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FarmBotBlockEntity>> SPROUT_BE = BLOCK_ENTITIES.register("sprout",
-            () -> BlockEntityType.Builder.of(FarmBotBlockEntity::new, SPROUT.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ExcavatorBlockEntity>> EXCAVATOR_BE = BLOCK_ENTITIES.register("excavator",
             () -> BlockEntityType.Builder.of(ExcavatorBlockEntity::new, EXCAVATOR.get(), EXCAVATOR_MK2.get(), EXCAVATOR_MK3.get(),
                     EXCAVATOR_MK4.get()).build(null));

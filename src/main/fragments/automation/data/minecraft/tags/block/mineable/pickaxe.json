@@ -1,8 +1,6 @@
 {
   "replace": false,
   "values": [
-    "robotica:stumpy",
-    "robotica:sprout",
     "robotica:excavator",
     "robotica:excavator_mk2",
     "robotica:excavator_mk3",

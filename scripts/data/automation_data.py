@@ -210,16 +210,10 @@ def robot(name, elements, arms, body):
                 'accent': 'robotica:block/automation_mk1'}
     particle = f'robotica:block/{body}'
     write(ASSETS / f'models/block/{name}_base.json', model(textures, elements, particle))
-    variants = {}
+    # One body per Mk for the entity renderer.
     for tier in range(1, 5):
         write(ASSETS / f'models/block/{name}_mk{tier}.json',
               {'parent': base, 'textures': {'accent': f'robotica:block/automation_mk{tier}'}})
-        for i, facing in enumerate(('north', 'east', 'south', 'west')):
-            v = {'model': f'robotica:block/{name}_mk{tier}'}
-            if i:
-                v['y'] = 90 * i
-            variants[f'facing={facing},tier={tier}'] = v
-    write(ASSETS / f'blockstates/{name}.json', {'variants': variants})
     # Arm parts carry no accent, so one model each serves every Mk.
     all_arms = []
     for part, els in arms.items():
@@ -311,11 +305,6 @@ def main():
             for d, y in (('north', 0), ('east', 90), ('south', 180), ('west', 270))}})
         write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})
         loot(name)
-
-    # Legacy Stumpy and Sprout blocks: no loot, the block entity drops the robot item of the right Mk.
-    for name in ('stumpy', 'sprout'):
-        write(DATA / f'loot_table/blocks/{name}.json', {'type': 'minecraft:block', 'pools': [],
-                                                        'random_sequence': f'robotica:blocks/{name}'})
 
     # Recipes (component ladder: Age 0 bots, Age 1 excavator and bot Mk2, Age 2 bot Mk3, Age 4 bot Mk4)
     shapeless('stumpy', ['wooden_chassis', 'clockwork_mechanism', 'minecraft:stone_axe'])

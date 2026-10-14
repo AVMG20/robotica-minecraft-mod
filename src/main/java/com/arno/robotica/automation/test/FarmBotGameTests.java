@@ -2,9 +2,7 @@ package com.arno.robotica.automation.test;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.automation.AutomationConfig;
-import com.arno.robotica.automation.AutomationContent;
 import com.arno.robotica.automation.RobotArea;
-import com.arno.robotica.automation.block.FarmBotBlock;
 import com.arno.robotica.automation.farmbot.FarmBot;
 import com.arno.robotica.automation.farmbot.FarmBotContent;
 import com.arno.robotica.automation.farmbot.FarmBotItem;
@@ -460,20 +458,5 @@ public class FarmBotGameTests {
         helper.assertFalse(stumpy.upgradeInPlace(player, used, mk4), "a robot that was placed before is refused");
         helper.assertTrue(stumpy.tier() == 3 && !lower.isEmpty() && !used.isEmpty(), "nothing changed");
         helper.succeed();
-    }
-
-    /** A Sprout block from before the robots walked turns into the walking Sprout of its Mk, home where the block was. */
-    @GameTest(template = PEN, timeoutTicks = 100)
-    public static void legacyBlockTurnsIntoTheRobot(GameTestHelper helper) {
-        BlockPos at = new BlockPos(5, 2, 5);
-        helper.setBlock(at, AutomationContent.SPROUT.get().defaultBlockState().setValue(FarmBotBlock.TIER, 3));
-        helper.succeedWhen(() -> {
-            helper.assertBlockNotPresent(AutomationContent.SPROUT.get(), at);
-            var bots = helper.getEntities(FarmBotContent.SPROUT_ENTITY.get());
-            helper.assertTrue(bots.size() == 1, "one Sprout, found " + bots.size());
-            Sprout sprout = bots.get(0);
-            helper.assertTrue(sprout.tier() == 3, "Mk3 kept, is " + sprout.tier());
-            helper.assertTrue(sprout.home().equals(helper.absolutePos(at)), "home where the block was");
-        });
     }
 }

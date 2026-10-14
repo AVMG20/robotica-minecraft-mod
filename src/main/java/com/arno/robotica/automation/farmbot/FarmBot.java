@@ -17,7 +17,6 @@ import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -1329,30 +1328,6 @@ public abstract class FarmBot extends PathfinderMob {
         for (Tag t : tag.getList("Pending", Tag.TAG_COMPOUND)) ItemStack.parse(registryAccess(), t).ifPresent(pending::add);
         NbtUtils.readBlockPos(tag, "Home").ifPresent(this::setHome);
         loadExtra(tag);
-        recalc();
-    }
-
-    /**
-     * Takes over the data of a Stumpy or Sprout block from before the robots walked: owner, energy, battery, cards and
-     * buffer (into the pouch; what does not fit waits like any other output).
-     */
-    public void loadFromBlock(CompoundTag tag, int tier, HolderLookup.Provider registries) {
-        if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
-        setTier(tier);
-        if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
-        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
-        if (tag.contains("energy") && tag.get("energy") instanceof net.minecraft.nbt.NumericTag n) energy.setEnergy(n.getAsInt());
-        List<ItemStack> items = new ArrayList<>();
-        if (tag.contains("buffer")) {
-            ItemStackHandler old = new ItemStackHandler(POUCH_SLOTS);
-            old.deserializeNBT(registries, tag.getCompound("buffer"));
-            for (int i = 0; i < old.getSlots(); i++) items.add(old.getStackInSlot(i));
-        }
-        for (Tag t : tag.getList("pending", Tag.TAG_COMPOUND)) ItemStack.parse(registries, t).ifPresent(items::add);
-        for (ItemStack stack : items) {
-            ItemStack left = stack.isEmpty() ? ItemStack.EMPTY : ItemHandlerHelper.insertItem(pouch, stack, false);
-            if (!left.isEmpty()) pending.add(left);
-        }
         recalc();
     }
 }

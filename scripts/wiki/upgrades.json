@@ -212,10 +212,10 @@
         "Mk4"
       ],
       "effects": {
-        "speed": "Shorter rest between trees (x2 ... x20).",
-        "range": "+6 wide per card on every Mk (9x9 -> 33x33).",
-        "growth": "+50% sapling growth in the area per card.",
-        "efficiency": "-15% FE per log per card."
+        "speed": "Fells each tree sooner after reaching it (x2 to x20); FE use rises with it.",
+        "range": "+6 blocks wide per card on every Mk (9x9 up to 33x33).",
+        "growth": "Saplings in the area grow +50% faster per card.",
+        "efficiency": "-15% FE per card (never below 40%)."
       },
       "source": "automation/farmbot/FarmBot, automation/RobotArea",
       "rule": "robot"
@@ -236,10 +236,10 @@
         "Mk4"
       ],
       "effects": {
-        "speed": "Harvests more often (x2 ... x20).",
-        "range": "+6 wide per card on every Mk (9x9 -> 33x33).",
-        "growth": "+50% crop growth in the area per card.",
-        "efficiency": "-15% FE per harvest per card."
+        "speed": "Harvests, tills and plants each 3x3 sooner (x2 to x20); FE use rises with it.",
+        "range": "+6 blocks wide per card on every Mk (9x9 up to 33x33).",
+        "growth": "Crops in the area grow +50% faster per card.",
+        "efficiency": "-15% FE per card (never below 40%)."
       },
       "source": "automation/farmbot/FarmBot, automation/RobotArea",
       "rule": "robot"
@@ -256,9 +256,9 @@
         "Mk2"
       ],
       "effects": {
-        "speed": "Acts more often (x2, x3, then x4 and up on Mk2).",
-        "range": "+6 wide per card on every Mk (9x9 -> 33x33).",
-        "efficiency": "-15% FE per action per card."
+        "speed": "Feeds, breeds, shears and culls more often (x2 to x6); FE per action rises with it.",
+        "range": "+6 blocks wide per card on every Mk (9x9 up to 33x33).",
+        "efficiency": "-15% FE per card (never below 40%)."
       },
       "source": "automation/rancher/Rancher, automation/RobotArea",
       "rule": "robot",

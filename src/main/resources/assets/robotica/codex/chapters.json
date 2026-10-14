@@ -227,7 +227,7 @@
       "pages": [
         {
           "title": "Stumpy and Sprout",
-          "text": "Sprout also picks berries, melons, pumpkins, sugar cane, cactus, bamboo and kelp.\nA higher Mk works faster; Range cards make the area bigger on any Mk, so pick both to fit the farm.\nSmoke means no energy, angry sparks mean its chest is full. A robot boxed in by trees or blocks cuts its way out or teleports home.",
+          "text": "Sprout also picks berries, melons, pumpkins, sugar cane, cactus, bamboo and kelp.\nA higher Mk works faster and opens more card slots. Cards: Speed works each spot sooner, Range adds 6 blocks to the area on any Mk (9x9 up to 33x33), Growth makes saplings (Stumpy) or crops (Sprout) in the area grow faster, Efficiency cuts FE use.\nSmoke means no energy, angry sparks mean its chest is full. A robot boxed in by trees or blocks cuts its way out or teleports home.",
           "items": [
             "robotica:stumpy",
             "robotica:stumpy_mk2",
@@ -245,7 +245,7 @@
         },
         {
           "title": "Rancher",
-          "text": "Name or leash an animal to keep it from being culled.\nIts lamp is green while working, amber with no feed and red when stuck.",
+          "text": "Name or leash an animal to keep it from being culled.\nCards: Speed makes it act more often, Range adds 6 blocks to the area on any Mk (9x9 up to 33x33), Efficiency cuts FE use.\nIts lamp is green while working, amber with no feed and red when stuck.",
           "items": [
             "robotica:rancher",
             "robotica:rancher_mk2"
