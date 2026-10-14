@@ -104,7 +104,7 @@ public final class GearItems {
             p -> new ShockBatonItem(p.rarity(Rarity.COMMON).attributes(weaponAttributes(7.0, 1.6)), GearConfig::shockBatonCapacity,
                     () -> GearConfig.fe(GearConfig.SHOCK_BATON_COST, 250)));
     public static final DeferredItem<RivetGunItem> RIVET_GUN = ITEMS.registerItem("rivet_gun",
-            p -> new RivetGunItem(p.rarity(Rarity.UNCOMMON).attributes(weaponAttributes(3.0, 1.6)), GearConfig::rivetGunCapacity,
+            p -> new RivetGunItem(p.rarity(Rarity.UNCOMMON), GearConfig::rivetGunCapacity,
                     () -> GearConfig.fe(GearConfig.RIVET_GUN_COST, 400)));
     public static final DeferredItem<ArcBladeItem> ARC_BLADE = ITEMS.registerItem("arc_blade",
             p -> new ArcBladeItem(p.rarity(Rarity.RARE).fireResistant().attributes(weaponAttributes(ArcBladeItem.BASE_DAMAGE, 1.6)), GearConfig::arcBladeCapacity,

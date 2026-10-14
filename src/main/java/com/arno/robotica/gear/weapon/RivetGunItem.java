@@ -10,19 +10,20 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.IntSupplier;
 
 /**
- * Age 2 ranged weapon. Right-click fires a glowing steel rivet ({@link RivetEntity}) for {@link GearConfig#rivetDamage}
- * damage every {@link GearConfig#rivetCooldown} ticks, no ammo. Muzzle flash (kept out of the shooter's view), a punchy layered shot sound. Armor Pierce and Ricochet Rivets ride
+ * Age 2 ranged weapon. Left-click (hold to keep firing) fires a glowing steel rivet ({@link RivetEntity}) for
+ * {@link GearConfig#rivetDamage} damage every {@link GearConfig#rivetCooldown} ticks, no ammo. The client turns the
+ * attack key into GearActions.FIRE (RivetGunClient), so the gun never melees or breaks blocks. Muzzle flash (kept out of the shooter's view), a punchy layered shot sound. Armor Pierce and Ricochet Rivets ride
  * along on the rivet.
  */
 public class RivetGunItem extends EnergyWeaponItem {
@@ -30,23 +31,40 @@ public class RivetGunItem extends EnergyWeaponItem {
         super(props, capacity, cost, 2, ModuleTarget.RIVET_GUN);
     }
 
-    @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack gun = player.getItemInHand(hand);
-        if (!hasCharge(gun) && !player.getAbilities().instabuild) {
-            if (!level.isClientSide) {
-                CoreSounds.play(level, player.blockPosition(), CoreSounds.RIVET_EMPTY, SoundSource.PLAYERS, 0.6F, 1.0F);
-                player.getCooldowns().addCooldown(this, 8);
-            }
-            return InteractionResultHolder.fail(gun);
+    /** Ticks after a dry click before the gun clicks again. */
+    public static final int EMPTY_TICKS = 8;
+    /** A shot may arrive this many ticks early (client and server ticks drift); the next one still counts from the planned tick. */
+    private static final int SLACK = 2;
+    /** Game time of each player's next allowed shot. */
+    private static final Map<UUID, Long> NEXT_SHOT = new HashMap<>();
+
+    /**
+     * A left-click from the client (GearActions.FIRE): fires the gun in the main hand when it is ready, or clicks when it
+     * is empty. The client keeps its own cooldown for the hotbar; this check keeps the fire rate on the server.
+     */
+    public static void trigger(ServerPlayer player) {
+        ItemStack gun = player.getMainHandItem();
+        if (!(gun.getItem() instanceof RivetGunItem item) || player.isSpectator() || !player.isAlive()) return;
+        long now = player.serverLevel().getGameTime();
+        Long next = NEXT_SHOT.get(player.getUUID());
+        if (next != null && now < next - SLACK) return;
+        long start = next == null ? now : Math.max(now, next);
+        if (!item.hasCharge(gun) && !player.getAbilities().instabuild) {
+            CoreSounds.play(player.level(), player.blockPosition(), CoreSounds.RIVET_EMPTY, SoundSource.PLAYERS, 0.6F, 1.0F);
+            NEXT_SHOT.put(player.getUUID(), start + EMPTY_TICKS);
+            return;
         }
-        if (level instanceof ServerLevel server) {
-            pay(gun, player);
-            fire(server, player, gun);
-            player.getCooldowns().addCooldown(this, GearConfig.rivetCooldown());
-        }
-        player.swing(hand);
-        return InteractionResultHolder.sidedSuccess(gun, level.isClientSide);
+        item.pay(gun, player);
+        fire(player.serverLevel(), player, gun);
+        NEXT_SHOT.put(player.getUUID(), start + GearConfig.rivetCooldown());
+    }
+
+    public static void forget(UUID player) {
+        NEXT_SHOT.remove(player);
+    }
+
+    public static void clearAll() {
+        NEXT_SHOT.clear();
     }
 
     /** Spawns one rivet from the player's eyes along the look direction, with the gun's modules. Returns it. */
