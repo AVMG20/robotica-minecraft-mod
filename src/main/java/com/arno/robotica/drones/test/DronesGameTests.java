@@ -34,6 +34,7 @@ import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -215,6 +216,29 @@ public class DronesGameTests {
             helper.assertBlockPresent(Blocks.COBBLESTONE, p(2, 0, 1));
             helper.assertBlockNotPresent(Blocks.COBBLESTONE, p(3, 0, 1));
             helper.assertBlockNotPresent(Blocks.COBBLESTONE, p(1, 0, 0));
+            clear(helper);
+        });
+    }
+
+    /** Architect building blocks are platform blocks too, and go before the junk. */
+    @GameTest(template = "drones_arena", batch = "dronesBridgeStyled", timeoutTicks = 600)
+    public static void buddyBridgesWithBuildingBlocks(GameTestHelper helper) {
+        clear(helper);
+        BuddyBot bot = buddy(helper);
+        bot.setSize(BuddyBot.Size.ONE_BY_TWO);
+        Item floor = com.arno.robotica.architect.ArchitectRegistry.styleItem(
+                com.arno.robotica.architect.style.BuildStyle.DARK_STONE, com.arno.robotica.architect.style.Role.FLOOR).get();
+        bot.storage.setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 2));
+        bot.storage.setStackInSlot(1, new ItemStack(floor, 2));
+        helper.runAfterDelay(2, () -> bot.startTunnel(Direction.EAST, 6, helper.absolutePos(p(0, 1, 1))));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bot.lastStop() == BuddyBot.Stop.NO_BLOCKS, "out of blocks it stops with NO_BLOCKS, is " + bot.lastStop());
+            Block floorBlock = ((net.minecraft.world.item.BlockItem) floor).getBlock();
+            helper.assertBlockPresent(floorBlock, p(1, 0, 1));
+            helper.assertBlockPresent(floorBlock, p(2, 0, 1));
+            helper.assertBlockPresent(Blocks.COBBLESTONE, p(3, 0, 1));
+            helper.assertBlockPresent(Blocks.COBBLESTONE, p(4, 0, 1));
+            helper.assertBlockNotPresent(Blocks.COBBLESTONE, p(5, 0, 1));
             clear(helper);
         });
     }
