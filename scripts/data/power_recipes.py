@@ -74,7 +74,7 @@ shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'advanced_circuit', 'A': 'accumulator_1', 'X': 'reinforced_casing'})
 shaped('tesla_coil_3', [' A ', 'QTQ', ' X '], {'A': 'advanced_circuit', 'Q': QUARTZ, 'T': 'tesla_coil_2', 'X': 'reinforced_casing'})
 # Age 3
-# Solar Mk3 / Mk4: two panels of the tier below (2 x 200 -> 480, 2 x 480 -> 1,200 FE/t), that age's circuit and alloy plates.
+# Solar Mk3: two Mk2 panels (2 x 200 -> 480 FE/t). Mk4: one Mk3 panel (480 -> 1,200 FE/t). Both add that age's circuit and alloy plates.
 shaped('solar_panel_mk3', ['PGP', 'SCS', 'PGP'], {'P': '#c:plates/pyrosteel', 'G': '#c:glass_blocks', 'S': 'solar_panel_mk2',
                                                  'C': 'quantum_circuit'})
 shaped('accumulator_3', ['RCR', 'AXA', 'RCR'],
