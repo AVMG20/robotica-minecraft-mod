@@ -84,7 +84,7 @@ public final class ExoTicker {
     private ExoTicker() {}
 
     private static final ResourceLocation SERVO_ID = Robotica.id("exo_servo_stride");
-    private static final ResourceLocation STEP_ID = Robotica.id("exo_step_assist");
+    public static final ResourceLocation STEP_ID = Robotica.id("exo_step_assist");
     private static final ResourceLocation JUMP_ID = Robotica.id("exo_spring_heels");
     private static final ResourceLocation SWIM_ID = Robotica.id("exo_hydro_fins");
     private static final ResourceLocation DIG_ID = Robotica.id("exo_hydro_fins_mining");
@@ -829,7 +829,8 @@ public final class ExoTicker {
         setModifier(p, Attributes.MOVEMENT_SPEED, SERVO_ID, servoOn ? ExoConfig.servoSpeed(servo) : 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
         double stepCost = ExoConfig.perTick(ModuleKind.STEP_ASSIST, 1);
-        boolean stepOn = afford(st, ModuleKind.STEP_ASSIST, stepCost);
+        // Off while sneaking: the edge check looks one step height down, so a full block would no longer count as an edge.
+        boolean stepOn = !p.isShiftKeyDown() && afford(st, ModuleKind.STEP_ASSIST, stepCost);
         if (stepOn && st.moving) spend(st, ModuleKind.STEP_ASSIST, stepCost);
         setModifier(p, Attributes.STEP_HEIGHT, STEP_ID, stepOn ? ExoConfig.stepBonus() : 0, AttributeModifier.Operation.ADD_VALUE);
 
