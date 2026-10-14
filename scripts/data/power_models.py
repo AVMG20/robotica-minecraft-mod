@@ -158,9 +158,11 @@ for name, model_fn in ORIENTABLE:
 # ---------- metal press: the processing machines' shared casing (scripts/data/machine_models.py) with a press bay 2 px
 # deep in the front: back wall at z 2 and four walls, all from the metal_press_bay texture (the back wall in 4..11 x
 # 3..12, the walls around it); lit, the animated bay plus its full-bright glow on the back wall and the floor.
-def press_model(lit):
-    faces = {'north': 'metal_press_front' + ('_on' if lit else ''), 'up': 'metal_press_top', 'down': 'metal_press_bottom',
-             'south': 'metal_press_side', 'west': 'metal_press_side', 'east': 'metal_press_side'}
+# Mk2-Mk4 (metal_press_mk2 ...) swap in their tier textures.
+def press_model(lit, tier=1):
+    n = tier_name('metal_press', tier)
+    faces = {'north': f'{n}_front' + ('_on' if lit else ''), 'up': f'{n}_top', 'down': 'metal_press_bottom',
+             'south': f'{n}_side', 'west': f'{n}_side', 'east': f'{n}_side'}
     bay = '#bay'
     elements = [
         {'from': [4, 3, 2], 'to': [12, 13, 3], 'faces': {'north': {'texture': bay, 'uv': [4, 3, 12, 13]}}},
@@ -182,11 +184,13 @@ def press_model(lit):
     return casing_model(faces, glow, elements, textures, lit=lit)
 
 
-for lit in (False, True):
-    block_model('metal_press' + ('_on' if lit else ''), press_model(lit))
-blockstate('metal_press', {'variants': facing_variants(lambda c: 'metal_press' + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
-item_model('metal_press', 'robotica:block/metal_press')
-loot('metal_press')
+for t in (1, 2, 3, 4):
+    name = tier_name('metal_press', t)
+    for lit in (False, True):
+        block_model(name + ('_on' if lit else ''), press_model(lit, t))
+    blockstate(name, {'variants': facing_variants(lambda c, n=name: n + ('_on' if c['lit'] else ''), [('lit', [False, True])])})
+    item_model(name, f'robotica:block/{name}')
+    loot(name)
 
 # ---------- wireless charger: the shared casing in light steel plus an emitter mast on top: a collar, a rod through a
 # halo ring and a violet orb (full bright when lit). Mast parts come from one texture (wireless_mast in

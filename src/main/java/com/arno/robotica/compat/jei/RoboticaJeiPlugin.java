@@ -123,7 +123,8 @@ public class RoboticaJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addRecipeCatalysts(PRESSING, PowerRegistry.METAL_PRESS_ITEM.get());
+        registration.addRecipeCatalysts(PRESSING, PowerRegistry.METAL_PRESS_ITEM.get(), PowerRegistry.METAL_PRESS_MK2_ITEM.get(),
+                PowerRegistry.METAL_PRESS_MK3_ITEM.get(), PowerRegistry.METAL_PRESS_MK4_ITEM.get());
     }
 
     /** Seconds of winding at the Winding Crank to fill an empty Mainspring (config values). */

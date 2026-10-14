@@ -92,7 +92,10 @@ public final class PowerRegistry {
     public static final DeferredBlock<ChargerBlock> CHARGER_MK2 = charger("charger_mk2", 2);
     public static final DeferredBlock<ChargerBlock> CHARGER_MK3 = charger("charger_mk3", 3);
     public static final DeferredBlock<ChargerBlock> CHARGER_MK4 = charger("charger_mk4", 4);
-    public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock("metal_press", MetalPressBlock::new, machine().noOcclusion());
+    public static final DeferredBlock<MetalPressBlock> METAL_PRESS = metalPress("metal_press", 1);
+    public static final DeferredBlock<MetalPressBlock> METAL_PRESS_MK2 = metalPress("metal_press_mk2", 2);
+    public static final DeferredBlock<MetalPressBlock> METAL_PRESS_MK3 = metalPress("metal_press_mk3", 3);
+    public static final DeferredBlock<MetalPressBlock> METAL_PRESS_MK4 = metalPress("metal_press_mk4", 4);
     public static final DeferredBlock<WirelessChargerBlock> WIRELESS_CHARGER = wirelessCharger("wireless_charger", 1);
     public static final DeferredBlock<WirelessChargerBlock> WIRELESS_CHARGER_MK2 = wirelessCharger("wireless_charger_mk2", 2);
     public static final DeferredBlock<WirelessChargerBlock> WIRELESS_CHARGER_MK3 = wirelessCharger("wireless_charger_mk3", 3);
@@ -100,6 +103,10 @@ public final class PowerRegistry {
 
     private static DeferredBlock<ChargerBlock> charger(String id, int mk) {
         return BLOCKS.registerBlock(id, p -> new ChargerBlock(p, mk), machine().noOcclusion());
+    }
+
+    private static DeferredBlock<MetalPressBlock> metalPress(String id, int mk) {
+        return BLOCKS.registerBlock(id, p -> new MetalPressBlock(p, mk), machine().noOcclusion());
     }
 
     private static DeferredBlock<WirelessChargerBlock> wirelessCharger(String id, int mk) {
@@ -149,6 +156,9 @@ public final class PowerRegistry {
     public static final DeferredItem<BlockItem> CHARGER_MK3_ITEM = ITEMS.registerSimpleBlockItem(CHARGER_MK3);
     public static final DeferredItem<BlockItem> CHARGER_MK4_ITEM = ITEMS.registerSimpleBlockItem(CHARGER_MK4);
     public static final DeferredItem<BlockItem> METAL_PRESS_ITEM = ITEMS.registerSimpleBlockItem(METAL_PRESS);
+    public static final DeferredItem<BlockItem> METAL_PRESS_MK2_ITEM = ITEMS.registerSimpleBlockItem(METAL_PRESS_MK2);
+    public static final DeferredItem<BlockItem> METAL_PRESS_MK3_ITEM = ITEMS.registerSimpleBlockItem(METAL_PRESS_MK3);
+    public static final DeferredItem<BlockItem> METAL_PRESS_MK4_ITEM = ITEMS.registerSimpleBlockItem(METAL_PRESS_MK4);
     public static final DeferredItem<BlockItem> WIRELESS_CHARGER_ITEM = ITEMS.registerSimpleBlockItem(WIRELESS_CHARGER);
     public static final DeferredItem<BlockItem> WIRELESS_CHARGER_MK2_ITEM = ITEMS.registerSimpleBlockItem(WIRELESS_CHARGER_MK2);
     public static final DeferredItem<BlockItem> WIRELESS_CHARGER_MK3_ITEM = ITEMS.registerSimpleBlockItem(WIRELESS_CHARGER_MK3);
@@ -187,7 +197,8 @@ public final class PowerRegistry {
             BLOCK_ENTITIES.register("charger", () -> BlockEntityType.Builder.of(ChargerBlockEntity::new, CHARGER.get(),
                     CHARGER_MK2.get(), CHARGER_MK3.get(), CHARGER_MK4.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MetalPressBlockEntity>> METAL_PRESS_BE =
-            BLOCK_ENTITIES.register("metal_press", () -> BlockEntityType.Builder.of(MetalPressBlockEntity::new, METAL_PRESS.get()).build(null));
+            BLOCK_ENTITIES.register("metal_press", () -> BlockEntityType.Builder.of(MetalPressBlockEntity::new, METAL_PRESS.get(),
+                    METAL_PRESS_MK2.get(), METAL_PRESS_MK3.get(), METAL_PRESS_MK4.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.arno.robotica.power.block.WirelessChargerBlockEntity>> WIRELESS_CHARGER_BE =
             BLOCK_ENTITIES.register("wireless_charger", () -> BlockEntityType.Builder.of(com.arno.robotica.power.block.WirelessChargerBlockEntity::new,
                     WIRELESS_CHARGER.get(), WIRELESS_CHARGER_MK2.get(), WIRELESS_CHARGER_MK3.get(), WIRELESS_CHARGER_MK4.get()).build(null));
@@ -251,5 +262,8 @@ public final class PowerRegistry {
         RoboticaTab.add(WIRELESS_CHARGER_MK3_ITEM);
         RoboticaTab.add(WIRELESS_CHARGER_MK4_ITEM);
         RoboticaTab.add(METAL_PRESS_ITEM);
+        RoboticaTab.add(METAL_PRESS_MK2_ITEM);
+        RoboticaTab.add(METAL_PRESS_MK3_ITEM);
+        RoboticaTab.add(METAL_PRESS_MK4_ITEM);
     }
 }

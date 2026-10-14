@@ -27,6 +27,9 @@
     "robotica:wireless_charger_mk2",
     "robotica:wireless_charger_mk3",
     "robotica:wireless_charger_mk4",
-    "robotica:metal_press"
+    "robotica:metal_press",
+    "robotica:metal_press_mk2",
+    "robotica:metal_press_mk3",
+    "robotica:metal_press_mk4"
   ]
 }

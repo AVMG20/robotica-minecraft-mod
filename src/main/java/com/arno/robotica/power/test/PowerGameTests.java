@@ -87,7 +87,7 @@ public class PowerGameTests {
         helper.setBlock(pos, PowerRegistry.METAL_PRESS.get().defaultBlockState());
         MetalPressBlockEntity press = (MetalPressBlockEntity) helper.getBlockEntity(pos);
         press.items.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 1));
-        press.energy.setEnergy(MetalPressBlockEntity.ENERGY_CAPACITY);
+        press.energy.setEnergy(press.energy.getMaxEnergyStored());
 
         helper.succeedWhen(() -> {
             ItemStack out = press.items.getStackInSlot(1);
@@ -103,10 +103,10 @@ public class PowerGameTests {
         helper.setBlock(pos, PowerRegistry.METAL_PRESS.get().defaultBlockState());
         MetalPressBlockEntity press = (MetalPressBlockEntity) helper.getBlockEntity(pos);
         press.items.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 1));
-        press.energy.setEnergy(MetalPressBlockEntity.ENERGY_CAPACITY);
+        press.energy.setEnergy(press.energy.getMaxEnergyStored());
 
         helper.runAfterDelay(10, () -> {
-            int used = MetalPressBlockEntity.ENERGY_CAPACITY - press.energy.getEnergyStored();
+            int used = press.energy.getMaxEnergyStored() - press.energy.getEnergyStored();
             helper.assertTrue(press.lastUse() > 0 && used == press.lastUse() * press.progress(),
                     "use per tick " + press.lastUse() + " should match the drain " + used + " over " + press.progress() + " ticks");
         });
@@ -143,13 +143,63 @@ public class PowerGameTests {
         MetalPressBlockEntity press = (MetalPressBlockEntity) helper.getBlockEntity(pos);
         press.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 4));
         press.items.setStackInSlot(0, new ItemStack(Items.COPPER_INGOT, 2));
-        press.energy.setEnergy(MetalPressBlockEntity.ENERGY_CAPACITY);
+        press.energy.setEnergy(press.energy.getMaxEnergyStored());
 
         // Four speed cards are x6: 17 ticks per plate, so both ingots are done inside 60 ticks (base speed would need 200).
         helper.succeedWhen(() -> {
             ItemStack out = press.items.getStackInSlot(1);
             helper.assertTrue(out.is(CoreItems.COPPER_PLATE.get()) && out.getCount() == 2, "Two copper plates expected");
         });
+    }
+
+    /** Mk4 presses 5x as fast as Mk1 (20 ticks per plate) at 5x the FE/t, with a bigger buffer. */
+    @GameTest(template = "empty", timeoutTicks = 75)
+    public static void metalPressMk4IsFaster(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(1, 1, 1);
+        helper.setBlock(pos, PowerRegistry.METAL_PRESS_MK4.get().defaultBlockState());
+        MetalPressBlockEntity press = (MetalPressBlockEntity) helper.getBlockEntity(pos);
+        helper.assertTrue(press.mk() == 4 && press.energy.getMaxEnergyStored() > 20_000, "Mk4 should have a bigger buffer");
+        press.items.setStackInSlot(0, new ItemStack(Items.COPPER_INGOT, 3));
+        press.energy.setEnergy(press.energy.getMaxEnergyStored());
+
+        helper.runAfterDelay(5, () -> helper.assertTrue(press.lastUse() == (int) Math.round(PowerConfig.pressPower() * PowerConfig.pressSpeed(4)),
+                "Mk4 should draw " + PowerConfig.pressSpeed(4) + "x the base FE/t, drew " + press.lastUse()));
+        // Mk1 would need 300 ticks for three plates.
+        helper.succeedWhen(() -> {
+            ItemStack out = press.items.getStackInSlot(1);
+            helper.assertTrue(out.is(CoreItems.COPPER_PLATE.get()) && out.getCount() == 3, "Three copper plates expected");
+        });
+    }
+
+    /** Right-clicking a placed press with the next Mk swaps it in place and keeps input, output, cards and energy. */
+    @GameTest(template = "empty")
+    public static void metalPressUpgradesInPlace(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(1, 1, 1);
+        helper.setBlock(pos, PowerRegistry.METAL_PRESS.get().defaultBlockState().setValue(PowerBlock.FACING, Direction.EAST));
+        MetalPressBlockEntity old = (MetalPressBlockEntity) helper.getBlockEntity(pos);
+        old.items.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 5));
+        old.items.setStackInSlot(1, new ItemStack(CoreItems.IRON_PLATE.get(), 7));
+        old.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 2));
+        old.energy.setEnergy(15_000);
+
+        var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(PowerRegistry.METAL_PRESS_MK2_ITEM.get()));
+        BlockPos abs = helper.absolutePos(pos);
+        helper.getLevel().getBlockState(abs).useItemOn(player.getMainHandItem(), helper.getLevel(), player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(abs), Direction.UP, abs, false));
+
+        helper.assertBlockPresent(PowerRegistry.METAL_PRESS_MK2.get(), pos);
+        helper.assertTrue(helper.getBlockState(pos).getValue(PowerBlock.FACING) == Direction.EAST, "facing kept");
+        MetalPressBlockEntity fresh = (MetalPressBlockEntity) helper.getBlockEntity(pos);
+        helper.assertTrue(fresh.mk() == 2, "the new block entity is Mk2");
+        helper.assertTrue(fresh.items.getStackInSlot(0).getCount() == 5 && fresh.items.getStackInSlot(1).getCount() == 7, "items kept");
+        helper.assertTrue(fresh.upgrades.getStackInSlot(0).getCount() == 2, "cards kept");
+        helper.assertTrue(fresh.energy.getEnergyStored() == 15_000, "energy kept, got " + fresh.energy.getEnergyStored());
+        helper.assertTrue(player.getMainHandItem().isEmpty(), "the Mk2 is used up");
+        helper.assertTrue(player.getInventory().countItem(PowerRegistry.METAL_PRESS_ITEM.get()) == 1, "the Mk1 comes back");
+        helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(abs).inflate(2)).isEmpty(), "nothing spills");
+        helper.succeed();
     }
 
     @GameTest(template = "empty")

@@ -39,12 +39,14 @@ import net.minecraft.core.Direction;
 /**
  * Metal Press: slot 0 input, slot 1 output, two upgrade slots (speed, efficiency). Recipes: {@link PressingLogic}
  * ({@code robotica:pressing} recipes, then any {@code c:ingots/<m>} into {@code c:plates/<m>}).
- * Base cost is {@link PowerConfig#pressPower()} FE/t over the recipe time. A speed card divides the time and multiplies
- * the FE/t by the same factor (so the cost per plate only rises by the card's energy penalty); an efficiency card lowers it.
+ * Base cost is {@link PowerConfig#pressPower()} FE/t over the recipe time. The Mk ({@link PowerConfig#pressSpeed}) and
+ * speed cards divide the time and multiply the FE/t by the same factor (so the cost per plate only rises by the cards'
+ * energy penalty); an efficiency card lowers it. Buffer and input grow with the Mk.
  */
 public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvider, com.arno.robotica.compat.InfoSource {
-    public static final int ENERGY_CAPACITY = 20_000;
-    public static final int MAX_RECEIVE = 1_000;
+    /** Energy buffer and most FE/t accepted, per Mk. */
+    private static final int[] CAPACITY = {20_000, 50_000, 100_000, 200_000};
+    private static final int[] MAX_RECEIVE = {1_000, 2_000, 4_000, 8_000};
 
     private final RecipeManager.CachedCheck<SingleRecipeInput, PressingRecipe> recipeCheck = RecipeManager.createCheck(PowerRegistry.PRESSING_TYPE.get());
 
@@ -70,7 +72,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
         return upgrades;
     }
 
-    public final MachineEnergyStorage energy = new MachineEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0, this::setChanged);
+    public final MachineEnergyStorage energy;
 
     private final IItemHandler automation = new ItemAccess(items, (slot, stack) -> slot == 0, (slot, stack) -> slot == 1);
     /** Per-face item access and auto-transfer; every face in and out by default. */
@@ -80,8 +82,17 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
     private int needed = PressingRecipe.DEFAULT_TIME;
     private int lastUse;
 
+    private final int mk;
+
     public MetalPressBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.METAL_PRESS_BE.get(), pos, state);
+        mk = state.getBlock() instanceof MetalPressBlock b ? b.mk() : 1;
+        energy = new MachineEnergyStorage(CAPACITY[mk - 1], MAX_RECEIVE[mk - 1], 0, this::setChanged);
+    }
+
+    /** 1-4 */
+    public int mk() {
+        return mk;
     }
 
     public IItemHandler automation() {
@@ -134,8 +145,8 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
         if (recipe != null && canOutput(recipe)) {
             int speed = upgrades.level(UpgradeKind.SPEED);
             int efficiency = upgrades.level(UpgradeKind.EFFICIENCY);
-            int multiplier = Upgrades.speedMultiplier(speed);
-            needed = Math.max(1, CoreConfig.scaleInterval(recipe.time()) / multiplier);
+            double multiplier = Upgrades.speedMultiplier(speed) * PowerConfig.pressSpeed(mk);
+            needed = Math.max(1, (int) (CoreConfig.scaleInterval(recipe.time()) / multiplier));
             int base = CoreConfig.scaleEnergy(PowerConfig.pressPower());
             int perTick = base == 0 ? 0 : (int) Math.max(1, Math.round(base * multiplier * Upgrades.energyMultiplier(speed, efficiency)));
             if (energy.consume(perTick)) {
@@ -176,7 +187,7 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.robotica.metal_press");
+        return getBlockState().getBlock().getName();
     }
 
     @Nullable

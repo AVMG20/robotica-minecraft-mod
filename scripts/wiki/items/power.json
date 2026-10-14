@@ -342,24 +342,57 @@
   },
   {
    "items": [
-    "metal_press"
+    "metal_press",
+    "metal_press_mk2",
+    "metal_press_mk3",
+    "metal_press_mk4"
    ],
    "what": "Presses 1 ingot into 1 plate.",
    "use": [
-    "Right-click it with ingots, or feed it with a hopper or pipe."
+    "Right-click it with ingots, or feed it with a hopper or pipe.",
+    "Right-click it with the next Mk to upgrade it in place; everything inside stays."
    ],
    "stats": {
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
     "rows": [
      [
-      "Power",
-      "20 FE/t"
+      "Age",
+      "1",
+      "2",
+      "3",
+      "4"
      ],
      [
       "Time",
-      "100 ticks per plate"
+      "100 ticks",
+      "50 ticks",
+      "33 ticks",
+      "20 ticks"
+     ],
+     [
+      "Power",
+      "20 FE/t",
+      "40 FE/t",
+      "60 FE/t",
+      "100 FE/t"
+     ],
+     [
+      "Buffer",
+      "20k",
+      "50k",
+      "100k",
+      "200k FE"
      ],
      [
       "Card slots",
+      "2",
+      "2",
+      "2",
       "2"
      ]
     ]

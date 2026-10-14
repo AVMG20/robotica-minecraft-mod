@@ -1,0 +1,30 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "PMP",
+    " X "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "P": {
+      "tag": "c:plates/gold"
+    },
+    "M": {
+      "item": "robotica:metal_press"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:metal_press_mk2",
+    "count": 1
+  },
+  "source": {
+    "item": "robotica:metal_press"
+  }
+}

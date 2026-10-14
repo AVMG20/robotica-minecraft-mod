@@ -1,0 +1,30 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    " Q ",
+    "PMP",
+    " X "
+  ],
+  "key": {
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "P": {
+      "tag": "c:plates/pyrosteel"
+    },
+    "M": {
+      "item": "robotica:metal_press_mk2"
+    },
+    "X": {
+      "item": "robotica:blazing_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:metal_press_mk3",
+    "count": 1
+  },
+  "source": {
+    "item": "robotica:metal_press_mk2"
+  }
+}
