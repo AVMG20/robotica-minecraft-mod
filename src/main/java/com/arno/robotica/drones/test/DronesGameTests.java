@@ -569,6 +569,39 @@ public class DronesGameTests {
                 .thenSucceed();
     }
 
+    /** A destroyed bot goes to its online owner's inventory with its cargo; without one it drops where it died and cannot burn. */
+    @GameTest(template = "empty", batch = "dronesDeath")
+    public static void destroyedBotReturnsToOwner(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.getInventory().clearContent();
+        BuddyBot mine = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(1, 2, 1));
+        mine.setTier(1);
+        mine.setOwnerUUID(player.getUUID());
+        mine.storage.setStackInSlot(0, new ItemStack(Items.DIAMOND, 5));
+        mine.hurt(helper.getLevel().damageSources().generic(), 1000.0F);
+        ItemStack returned = ItemStack.EMPTY;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (player.getInventory().getItem(i).is(DronesRegistry.BUDDY_BOT.get())) returned = player.getInventory().getItem(i);
+        }
+        helper.assertTrue(mine.isDeadOrDying(), "the bot was destroyed");
+        helper.assertTrue(!returned.isEmpty(), "the bot item is in the owner's inventory");
+        BuddyBot again = DronesRegistry.BUDDY_BOT_ENTITY.get().create(helper.getLevel());
+        again.initFromStack(returned, null);
+        helper.assertTrue(again.storage.getStackInSlot(0).is(Items.DIAMOND) && again.storage.getStackInSlot(0).getCount() == 5, "its cargo came along");
+        helper.getLevel().getServer().getPlayerList().remove(player);
+
+        BuddyBot orphan = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), p(3, 2, 3));
+        orphan.setTier(1);
+        orphan.setOwnerUUID(UUID.randomUUID());
+        orphan.hurt(helper.getLevel().damageSources().generic(), 1000.0F);
+        List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, orphan.getBoundingBox().inflate(2.0),
+                e -> e.getItem().is(DronesRegistry.BUDDY_BOT.get()));
+        helper.assertTrue(drops.size() == 1, "an offline owner's bot drops where it died");
+        helper.assertTrue(!drops.get(0).hurt(helper.getLevel().damageSources().lava(), 4.0F), "the dropped bot cannot burn");
+        drops.get(0).discard();
+        helper.succeed();
+    }
+
     @GameTest(template = "drones_arena", batch = "dronesSentry", timeoutTicks = 400)
     public static void buddyShootsHostilesOnly(GameTestHelper helper) {
         clear(helper);

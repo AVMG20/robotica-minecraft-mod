@@ -418,16 +418,31 @@ public abstract class DroneBase extends PathfinderMob {
     public void onDeployed(@Nullable Player placer, BlockPos pos) {
     }
 
-    /** A destroyed drone is never lost: it drops as an item with everything it carried. */
+    /**
+     * A destroyed drone is never lost: its item, with everything it carried, goes to the living owner (inventory, else at
+     * their feet) in any dimension. Without one it drops where it died, safe from fire and despawning.
+     */
     @Override
     protected void dropAllDeathLoot(ServerLevel level, DamageSource source) {
         ItemStack stack = toItemStack(true);
+        ServerPlayer p = ownerPlayer();
+        if (p != null && p.isAlive()) {
+            if (!p.getInventory().add(stack)) p.drop(stack, false);
+            p.displayClientMessage(Component.translatable("message.robotica.drone.returned", getDisplayName()), true);
+            return;
+        }
         ItemEntity drop = new ItemEntity(level, getX(), getY() + 0.2, getZ(), stack);
         drop.setDefaultPickUpDelay();
+        drop.setInvulnerable(true);
+        drop.setUnlimitedLifetime();
         drop.setDeltaMovement(random.nextGaussian() * 0.05, 0.2, random.nextGaussian() * 0.05);
         level.addFreshEntity(drop);
-        ServerPlayer p = ownerPlayer();
-        if (p != null) p.displayClientMessage(Component.translatable("message.robotica.drone.destroyed", getDisplayName()), true);
+        if (p != null) {
+            Component line = Component.translatable("message.robotica.drone.destroyed", getDisplayName(),
+                    getBlockX(), getBlockY(), getBlockZ(), level.dimension().location().toString());
+            p.displayClientMessage(line, true);
+            p.sendSystemMessage(line);
+        }
     }
 
     @Override
