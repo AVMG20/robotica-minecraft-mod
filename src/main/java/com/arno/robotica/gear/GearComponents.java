@@ -23,6 +23,10 @@ public final class GearComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<AreaMode>> MODE =
             REGISTER.registerComponentType("gear_mode", b -> b.persistent(AreaMode.CODEC).networkSynchronized(AreaMode.STREAM_CODEC));
 
+    /** {@link AreaMode} used while sneaking. Absent means 1x1. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<AreaMode>> SNEAK_MODE =
+            REGISTER.registerComponentType("gear_sneak_mode", b -> b.persistent(AreaMode.CODEC).networkSynchronized(AreaMode.STREAM_CODEC));
+
     /** Bit set of {@link com.arno.robotica.gear.tool.ToggleKind}. Absent means all off. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> TOGGLES =
             REGISTER.registerComponentType("gear_toggles", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));

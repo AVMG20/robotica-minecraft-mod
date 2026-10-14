@@ -43,6 +43,8 @@
   "gear.robotica.off": "Off",
   "gear.robotica.screen.title": "Tool settings",
   "gear.robotica.screen.mode": "Mode: %s",
+  "gear.robotica.screen.sneak_mode": "Sneak mode: %s",
+  "gear.robotica.screen.sneak_mode.desc": "Mode used while sneaking. Click: next. Shift-click: previous",
   "gear.robotica.hud.durability": "Durability %s / %s",
   "gear.robotica.lance.no_energy": "Not enough energy (%s FE needed)",
   "key.categories.robotica.gear": "Robotica Tools",

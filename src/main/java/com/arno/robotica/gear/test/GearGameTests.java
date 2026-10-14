@@ -282,7 +282,12 @@ public class GearGameTests {
         ItemEnergy.fill(drill);
         helper.assertTrue(tool.activeMode(drill, player) == AreaMode.AREA_5, "charged tool uses its mode");
         player.setShiftKeyDown(true);
-        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "sneaking always mines 1x1");
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "sneaking mines 1x1 by default");
+        drill.set(GearComponents.SNEAK_MODE.get(), AreaMode.AREA_3);
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.AREA_3, "sneaking uses the sneak mode");
+        drill.set(GearComponents.SNEAK_MODE.get(), AreaMode.CUBE_12);
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "a sneak mode the tool does not have falls back to 1x1");
+        drill.remove(GearComponents.SNEAK_MODE.get());
         player.setShiftKeyDown(false);
         drill.set(GearComponents.MODE.get(), AreaMode.CUBE_12);
         helper.assertTrue(tool.mode(drill) == AreaMode.AREA_3, "a mode the tool does not have falls back to the default mode");
@@ -334,6 +339,30 @@ public class GearGameTests {
         helper.assertTrue(player.gameMode.destroyBlock(base), "origin ore should break");
         for (int i = 0; i < 6; i++) helper.assertTrue(level.getBlockState(base.offset(i, i % 2, 0)).isAir(), "vein block " + i + " should be mined");
         helper.assertTrue(level.getBlockState(base.offset(0, 0, 5)).is(Blocks.IRON_ORE), "a separate ore must stay");
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void sneakModeVeinMinesWhileSneaking(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos base = helper.absolutePos(new BlockPos(1, 1, 1));
+        ServerPlayer player = survivalPlayer(helper, base);
+        for (int i = 0; i < 4; i++) level.setBlock(base.offset(i, 0, 0), Blocks.IRON_ORE.defaultBlockState(), 3);
+        BlockPos stone = base.offset(0, 0, 3);
+        level.setBlock(stone, Blocks.STONE.defaultBlockState(), 3);
+        level.setBlock(stone.east(), Blocks.STONE.defaultBlockState(), 3);
+        ItemStack drill = new ItemStack(GearItems.SERVO_DRILL.get());
+        ItemEnergy.fill(drill);
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        GearActions.apply(player, GearActions.CYCLE_SNEAK_MODE, -1);
+        helper.assertTrue(((GearToolItem) drill.getItem()).sneakMode(player.getMainHandItem()) == AreaMode.VEIN,
+                "sneak mode starts at 1x1 and cycles back to vein");
+        player.setShiftKeyDown(true);
+        helper.assertTrue(player.gameMode.destroyBlock(base), "origin ore should break");
+        for (int i = 1; i < 4; i++) helper.assertTrue(level.getBlockState(base.offset(i, 0, 0)).isAir(), "vein block " + i + " should be mined");
+        helper.assertTrue(player.gameMode.destroyBlock(stone), "stone should break");
+        helper.assertTrue(level.getBlockState(stone.east()).is(Blocks.STONE), "sneaking on a non-ore still mines one block");
         BreakQueue.clear(player.getUUID());
         helper.succeed();
     }

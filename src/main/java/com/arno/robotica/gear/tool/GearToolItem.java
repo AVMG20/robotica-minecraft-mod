@@ -134,10 +134,16 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
         return m != null && spec.hasMode(m) ? m : spec.defaultMode;
     }
 
-    /** Mode that applies right now: sneaking or an empty tool always means single blocks. Server enforces this. */
+    /** The mode used while sneaking: 1x1 when unset or no longer allowed. */
+    public AreaMode sneakMode(ItemStack stack) {
+        AreaMode m = stack.get(com.arno.robotica.gear.GearComponents.SNEAK_MODE.get());
+        return m != null && spec.hasMode(m) ? m : AreaMode.SINGLE;
+    }
+
+    /** Mode that applies right now: an empty tool mines single blocks, sneaking uses the sneak mode. Server enforces this. */
     public AreaMode activeMode(ItemStack stack, Player player) {
-        if (player.isShiftKeyDown() || !hasPower(stack)) return AreaMode.SINGLE;
-        return mode(stack);
+        if (!hasPower(stack)) return AreaMode.SINGLE;
+        return player.isShiftKeyDown() ? sneakMode(stack) : mode(stack);
     }
 
     /** The tool has the setting and it is switched on. */
