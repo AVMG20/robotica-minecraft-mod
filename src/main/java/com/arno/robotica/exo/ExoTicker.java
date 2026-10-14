@@ -9,6 +9,7 @@ import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CellItem;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.exo.net.ExoFxPayload;
+import com.arno.robotica.exo.net.ExoJetHeatPayload;
 import com.arno.robotica.exo.net.ExoSonarPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -43,7 +44,6 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -100,6 +100,11 @@ public final class ExoTicker {
     /** Persistent data (inside PlayerPersisted, kept through death): cooldown end times in game ticks. */
     public static final String COOLDOWN_KEY = "robotica_exo_cooldowns";
     public static final String CD_DASH = "dash", CD_MED = "med_injector", CD_SONAR = "sonar", CD_OVERCLOCK = "overclock";
+    /**
+     * Persistent data (inside PlayerPersisted, kept through death): Jet Assist heat, overheat and the game time they
+     * were saved at, written when the runtime state goes (suit off, logout, death, respawn) and read when it comes back.
+     */
+    public static final String JET_KEY = "robotica_exo_jet";
     /** Fewest ticks between two handled key presses of the same action, and between two refusal beeps. */
     private static final int ACTION_GAP = 2, REFUSAL_GAP = 10;
     /** Most horizontal blocks per tick the Kinetic Generator counts (about a sprint jump). */
@@ -132,10 +137,10 @@ public final class ExoTicker {
         int jetWant, jetMode;
         /** Level of the last worn Jet Assist (cooling and effects go on after it comes out). */
         int jetLevel = 1;
-        /** Jet Assist heat, 0 to 1 (see {@link ExoJet}). */
+        /** Jet Assist heat in ticks of thrust (see {@link ExoJet}); kept with the player, not the chestplate. */
         double heat;
         boolean overheated;
-        /** Jet Assist III: the Flight key switched hover on. */
+        /** Jet Assist III: the Flight key switched hover on (read from the chestplate every tick). */
         boolean hoverMode;
         int jetEndTick = -100;
         /** Thrust or hover stopped in mid air since the player last stood: a Glider may open now. */
@@ -164,7 +169,7 @@ public final class ExoTicker {
         STATES.clear();
     }
 
-    /** Test and debug access: Jet Assist heat (0 to 1), 0 without state. */
+    /** Test and debug access: Jet Assist heat in ticks of thrust, 0 without state. */
     public static double jetHeat(ServerPlayer player) {
         State st = STATES.get(player.getUUID());
         return st == null ? 0 : st.heat;
@@ -191,6 +196,7 @@ public final class ExoTicker {
         if (!ExoSuit.wearingAny(p)) {
             if (st != null) {
                 release(p, st, false, true);
+                saveJet(p, st);
                 STATES.remove(id);
             } else if (p.getPersistentData().getBoolean(FLIGHT_KEY)) {
                 // A grant from before a restart, with no suit on any more.
@@ -235,12 +241,52 @@ public final class ExoTicker {
         if (st.tick % FLUSH_INTERVAL == 0) flush(p, st);
     }
 
-    /** A fresh state; the flight grant comes from the persistent data so it survives a restart. */
+    /**
+     * A fresh state; the flight grant and the Jet Assist heat come from the persistent data so they survive a restart,
+     * and the wearer's client learns the heat.
+     */
     private static State newState(ServerPlayer p) {
         State st = new State();
         st.flightGranted = p.getPersistentData().getBoolean(FLIGHT_KEY);
+        loadJet(p, st);
         STATES.put(p.getUUID(), st);
+        sendHeat(p, st);
         return st;
+    }
+
+    /** Keeps the Jet Assist heat with the player while the runtime state is gone; a cold pack leaves nothing behind. */
+    private static void saveJet(ServerPlayer p, State st) {
+        CompoundTag persisted = persistedTag(p);
+        if (st.heat <= 0 && !st.overheated) {
+            persisted.remove(JET_KEY);
+            return;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putDouble("heat", st.heat);
+        tag.putBoolean("overheated", st.overheated);
+        tag.putLong("time", gameTime(p));
+        persisted.put(JET_KEY, tag);
+    }
+
+    /** The saved heat, cooled (off the ground rate) by the game time since it was saved. */
+    private static void loadJet(ServerPlayer p, State st) {
+        CompoundTag root = p.getPersistentData();
+        if (!root.contains(Player.PERSISTED_NBT_TAG, Tag.TAG_COMPOUND)) return;
+        CompoundTag persisted = root.getCompound(Player.PERSISTED_NBT_TAG);
+        if (!persisted.contains(JET_KEY, Tag.TAG_COMPOUND)) return;
+        CompoundTag tag = persisted.getCompound(JET_KEY);
+        persisted.remove(JET_KEY);
+        double heat = tag.getDouble("heat");
+        if (!Double.isFinite(heat)) return;
+        st.heat = ExoJet.cooled(Math.max(0, heat), gameTime(p) - tag.getLong("time"));
+        st.overheated = tag.getBoolean("overheated") && st.heat > 0;
+    }
+
+    /** Tells the wearer's client the heat (its prediction starts cold on a new player object). */
+    private static void sendHeat(ServerPlayer p, State st) {
+        if (canReceive(p) && p.connection.hasChannel(ExoJetHeatPayload.TYPE)) {
+            PacketDistributor.sendToPlayer(p, new ExoJetHeatPayload((float) st.heat, st.overheated));
+        }
     }
 
     /** Writes the collected running costs and production to the armor items. Called every 10 ticks; public for tests. */
@@ -420,7 +466,8 @@ public final class ExoTicker {
             st.airJumps = 0;
             st.thrustedAir = false;
         }
-        int level = lvl(st, ModuleKind.JET_ASSIST);
+        // Creative and spectator: the pack is off (no thrust, hover, slow fall or cost), it only cools.
+        int level = ExoJet.creative(p) ? 0 : lvl(st, ModuleKind.JET_ASSIST);
         jetThrust(p, st, level, grounded);
         // Slow fall: on a long fall, and right after thrust or hover ends in mid air (let go, overheated or empty).
         double cost = level > 0 ? ExoConfig.perTick(ModuleKind.JET_ASSIST, level) : 0;
@@ -450,7 +497,7 @@ public final class ExoTicker {
      */
     private static void jetThrust(ServerPlayer p, State st, int level, boolean grounded) {
         if (level > 0) st.jetLevel = level;
-        if (level < ExoJet.HOVER_LEVEL) st.hoverMode = false;
+        st.hoverMode = level >= ExoJet.HOVER_LEVEL && ExoData.hover(ExoSuit.piece(p, EquipmentSlot.CHEST));
         int want = st.jetWant;
         boolean hover = want == ExoJet.HOVER;
         int mode = ExoJet.OFF;
@@ -478,22 +525,25 @@ public final class ExoTicker {
         }
         if (mode != ExoJet.OFF) {
             spend(st, ModuleKind.JET_ASSIST, ExoJet.costPerTick(level, hover));
-            st.heat = Math.min(1.0, st.heat + ExoJet.heatPerTick(level, st.core == ExoData.Core.MAGMA, hover));
+            st.heat = Math.min(ExoJet.maxHeat(level), st.heat + ExoJet.heatPerTick(st.core == ExoData.Core.MAGMA, hover));
             p.resetFallDistance();
             // Thrust and hover hold the player up without mayfly: keep vanilla from kicking them for flying.
             if (p.connection != null) p.connection.aboveGroundTickCount = 0;
-            if (st.heat >= 1.0) {
-                st.overheated = true;
-                st.jetWant = ExoJet.OFF;
-                mode = ExoJet.OFF;
-                cut = ExoFxPayload.JET_OVERHEAT;
-            }
         } else if (st.heat > 0) {
-            st.heat = Math.max(0.0, st.heat - ExoJet.coolPerTick(st.jetLevel, ExoJet.cooling(p)));
+            st.heat = Math.max(0.0, st.heat - ExoJet.coolPerTick(ExoJet.cooling(p)));
             if (st.heat <= 0 && st.overheated) {
                 st.overheated = false;
                 jetFx(p, ExoFxPayload.JET_READY, true, true);
                 notifySound(p, CoreSounds.EXO_JET_READY.get(), 0.7F, 1.0F);
+            }
+        }
+        // Full for the fitted level (also a lower level put in while hot): overheated until cold again.
+        if (level > 0 && st.heat >= ExoJet.maxHeat(level)) {
+            st.overheated = true;
+            if (mode != ExoJet.OFF) {
+                st.jetWant = ExoJet.OFF;
+                mode = ExoJet.OFF;
+                cut = ExoFxPayload.JET_OVERHEAT;
             }
         }
         setJetMode(p, st, mode, cut, grounded);
@@ -544,7 +594,8 @@ public final class ExoTicker {
 
     /**
      * The client's thrust intent ({@link ExoJet#OFF}, THRUST or HOVER), checked on the next tick. A stop takes effect at
-     * once, so a Glider opening right after it finds the pack off.
+     * once, so a Glider opening right after it finds the pack off. A thrust asked while gliding ends the glide at once
+     * when the pack can fire (the client predicted the same); otherwise the glide goes on and the client is told.
      */
     public static void jetWant(ServerPlayer p, int mode) {
         State st = STATES.get(p.getUUID());
@@ -553,27 +604,67 @@ public final class ExoTicker {
             if (mode == ExoJet.OFF || p instanceof FakePlayer || !ExoSuit.wearingAny(p)) return;
             st = newState(p);
         }
+        if (mode == ExoJet.THRUST && p.isFallFlying()) {
+            refresh(p, st);
+            if (jetReady(p, st)) {
+                p.stopFallFlying();
+            } else {
+                st.jetWant = ExoJet.OFF;
+                // The client already stopped gliding: send the glide again (a plain set would not resend the same value).
+                p.stopFallFlying();
+                p.startFallFlying();
+                jetFx(p, st.overheated ? ExoFxPayload.JET_OVERHEAT : ExoFxPayload.JET_REFUSED, false, true);
+                return;
+            }
+        }
         st.jetWant = mode;
         if (mode == ExoJet.OFF && st.jetMode != ExoJet.OFF) setJetMode(p, st, ExoJet.OFF, ExoFxPayload.JET_OFF, ExoJet.grounded(p));
     }
 
-    /** True when a Glider may open now: the Jet Assist is off after thrust in this fall, or overheated (see {@link ExoJet#gliderMayOpen}). */
+    /** True when the Jet Assist could thrust now (fitted, not creative, not overheated, energy for a tick). */
+    private static boolean jetReady(ServerPlayer p, State st) {
+        int level = lvl(st, ModuleKind.JET_ASSIST);
+        return level > 0 && !ExoJet.creative(p) && !st.overheated && afford(st, ModuleKind.JET_ASSIST, ExoJet.costPerTick(level, false));
+    }
+
+    /**
+     * True when a Glider may open now: the Jet Assist is off after thrust in this fall, or cannot fire (overheated, out
+     * of energy). See {@link ExoJet#gliderMayOpen}.
+     */
     public static boolean gliderMayOpen(ServerPlayer p) {
         State st = STATES.get(p.getUUID());
-        return st == null || st.overheated || (st.jetMode == ExoJet.OFF && st.thrustedAir);
+        return st == null || !jetReady(p, st) || (st.jetMode == ExoJet.OFF && st.thrustedAir);
+    }
+
+    /** True when the worn chestplate has Jet Assist III, so the Flight key can switch hover. */
+    public static boolean hoverAvailable(ServerPlayer p) {
+        State st = state(p);
+        return st != null && lvl(st, ModuleKind.JET_ASSIST) >= ExoJet.HOVER_LEVEL;
+    }
+
+    /**
+     * Switches Jet Assist III hover mode, kept on the chestplate. Returns false below level III. {@code tell}: show the
+     * new mode and click.
+     */
+    public static boolean setHover(ServerPlayer p, boolean on, boolean tell) {
+        if (!hoverAvailable(p)) return false;
+        State st = STATES.get(p.getUUID());
+        ExoData.setHover(ExoSuit.piece(p, EquipmentSlot.CHEST), on);
+        st.hoverMode = on;
+        if (!on && st.jetWant == ExoJet.HOVER) st.jetWant = ExoJet.OFF;
+        jetFx(p, on ? ExoFxPayload.HOVER_ON : ExoFxPayload.HOVER_OFF, false, true);
+        if (tell) {
+            p.displayClientMessage(Component.translatable("exo.robotica.hover", Component.translatable(on ? "exo.robotica.on" : "exo.robotica.off")), true);
+            notifySound(p, CoreSounds.TOOL_MODE.get(), 0.6F, on ? 1.3F : 0.8F);
+        }
+        return true;
     }
 
     /** Flight key without a Flight module: Jet Assist III switches hover mode. Returns false below level III. */
     public static boolean toggleHover(ServerPlayer p) {
-        State st = state(p);
-        if (st == null || lvl(st, ModuleKind.JET_ASSIST) < ExoJet.HOVER_LEVEL) return false;
-        st.hoverMode = !st.hoverMode;
-        if (!st.hoverMode && st.jetWant == ExoJet.HOVER) st.jetWant = ExoJet.OFF;
-        jetFx(p, st.hoverMode ? ExoFxPayload.HOVER_ON : ExoFxPayload.HOVER_OFF, false, true);
-        p.displayClientMessage(Component.translatable("exo.robotica.hover", Component.translatable(st.hoverMode ? "exo.robotica.on" : "exo.robotica.off")), true);
-        notifySound(p, CoreSounds.TOOL_MODE.get(), 0.6F, st.hoverMode ? 1.3F : 0.8F);
-        return true;
+        return hoverAvailable(p) && setHover(p, !ExoData.hover(ExoSuit.piece(p, EquipmentSlot.CHEST)), true);
     }
+
     /** Flight cost per tick after the Antigrav Core discount. */
     private static double flightCost(State st) {
         double cost = ExoConfig.perTick(ModuleKind.FLIGHT, 1);
@@ -658,8 +749,7 @@ public final class ExoTicker {
 
     /** Creative and spectator players fly by themselves; the suit never grants or revokes anything for them. */
     private static boolean creativeLike(ServerPlayer p) {
-        GameType type = p.gameMode.getGameModeForPlayer();
-        return type == GameType.CREATIVE || type == GameType.SPECTATOR;
+        return ExoJet.creative(p);
     }
 
     /** Takes back the flight we granted. Never touches creative or spectator abilities. {@code soft}: give a short slow fall. */
@@ -967,7 +1057,7 @@ public final class ExoTicker {
     public static boolean doubleJump(ServerPlayer p) {
         State st = state(p);
         int level = st == null ? 0 : lvl(st, ModuleKind.JET_ASSIST);
-        if (level <= 0) return false;
+        if (level <= 0 || ExoJet.creative(p)) return false;
         Abilities ab = p.getAbilities();
         if (p.onGround() || p.onClimbable() || p.isInWater() || p.isInLava() || ab.flying || p.isFallFlying() || p.isPassenger() || p.isSpectator()) return false;
         // Half the client's gap: packets can arrive bunched up.
@@ -1108,11 +1198,16 @@ public final class ExoTicker {
     }
 
     private static CompoundTag cooldownTag(ServerPlayer p) {
-        CompoundTag root = p.getPersistentData();
-        if (!root.contains(Player.PERSISTED_NBT_TAG, Tag.TAG_COMPOUND)) root.put(Player.PERSISTED_NBT_TAG, new CompoundTag());
-        CompoundTag persisted = root.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag persisted = persistedTag(p);
         if (!persisted.contains(COOLDOWN_KEY, Tag.TAG_COMPOUND)) persisted.put(COOLDOWN_KEY, new CompoundTag());
         return persisted.getCompound(COOLDOWN_KEY);
+    }
+
+    /** The player's PlayerPersisted tag (copied to the new player object on every respawn), made when missing. */
+    private static CompoundTag persistedTag(ServerPlayer p) {
+        CompoundTag root = p.getPersistentData();
+        if (!root.contains(Player.PERSISTED_NBT_TAG, Tag.TAG_COMPOUND)) root.put(Player.PERSISTED_NBT_TAG, new CompoundTag());
+        return root.getCompound(Player.PERSISTED_NBT_TAG);
     }
 
     // ---------------------------------------------------------------- event hooks
@@ -1313,37 +1408,45 @@ public final class ExoTicker {
         p.getPersistentData().remove(FLIGHT_KEY);
     }
 
-    /** Logout: undo the effects and forget the player, but keep a flight grant (checked again on login). */
+    /** Logout: undo the effects and forget the player, but keep a flight grant (checked again on login) and the jet heat. */
     public static void onLogout(ServerPlayer p) {
         State st = STATES.remove(p.getUUID());
-        if (st != null) release(p, st, false, false);
+        if (st == null) return;
+        release(p, st, false, false);
+        saveJet(p, st);
     }
 
-    /** Death: undo everything, flight included. */
+    /** Death: undo everything, flight included; the jet heat stays with the player. */
     public static void onDeath(ServerPlayer p) {
         State st = STATES.remove(p.getUUID());
-        if (st != null) release(p, st, false, true);
+        if (st != null) {
+            release(p, st, false, true);
+            saveJet(p, st);
+        }
         p.getPersistentData().remove(FLIGHT_KEY);
     }
 
     /**
-     * Dimension change: the client starts a new player object with a cold, idle Jet Assist, so the server's pack starts
-     * over too (otherwise a thrust held through a portal keeps burning FE and heat on the server only).
+     * Dimension change: the client starts a new player object with an idle Jet Assist, so the server's pack stops too
+     * (otherwise a thrust held through a portal keeps burning FE and heat on the server only). The heat stays, and the
+     * client is told.
      */
     public static void onChangedDimension(ServerPlayer p) {
         State st = STATES.get(p.getUUID());
         if (st == null) return;
         st.jetWant = ExoJet.OFF;
         st.jetMode = ExoJet.OFF;
-        st.heat = 0;
-        st.overheated = false;
-        st.hoverMode = false;
         st.thrustedAir = false;
+        sendHeat(p, st);
     }
 
-    /** Respawn: new player object with fresh abilities and cooldowns; the remembered cooldowns come back. */
+    /**
+     * Respawn: new player object with fresh abilities and cooldowns; the remembered cooldowns come back, and the jet
+     * heat (left by a trip out of the End) is kept for the next state.
+     */
     public static void onRespawn(ServerPlayer p) {
-        STATES.remove(p.getUUID());
+        State st = STATES.remove(p.getUUID());
+        if (st != null) saveJet(p, st);
         p.getPersistentData().remove(FLIGHT_KEY);
         restoreCooldowns(p);
     }
