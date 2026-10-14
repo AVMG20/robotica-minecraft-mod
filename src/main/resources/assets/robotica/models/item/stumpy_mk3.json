@@ -1,0 +1,6 @@
+{
+  "parent": "robotica:item/stumpy",
+  "textures": {
+    "accent": "robotica:block/automation_mk3"
+  }
+}

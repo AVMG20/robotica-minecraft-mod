@@ -2,13 +2,13 @@
   "parent": "robotica:guide/upgrade_card",
   "display": {
     "icon": {
-      "id": "robotica:farm_kit_mk2"
+      "id": "robotica:sprout_mk2"
     },
     "title": {
-      "translate": "advancements.robotica.guide.farm_kit.title"
+      "translate": "advancements.robotica.guide.robot_mk2.title"
     },
     "description": {
-      "translate": "advancements.robotica.guide.farm_kit.description"
+      "translate": "advancements.robotica.guide.robot_mk2.description"
     },
     "frame": "task",
     "show_toast": true,
@@ -17,9 +17,16 @@
   },
   "criteria": {
     "done": {
-      "trigger": "robotica:milestone",
+      "trigger": "minecraft:inventory_changed",
       "conditions": {
-        "milestone": "farm_kit"
+        "items": [
+          {
+            "items": [
+              "robotica:stumpy_mk2",
+              "robotica:sprout_mk2"
+            ]
+          }
+        ]
       }
     }
   },

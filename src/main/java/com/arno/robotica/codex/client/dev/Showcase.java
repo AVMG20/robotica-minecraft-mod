@@ -284,7 +284,7 @@ public final class Showcase {
                     }
                 }
             }
-            case "stumpy", "sprout", "excavator" -> {
+            case "excavator" -> {
                 if (energy != null) energy.receiveEnergy(40_000, false);
             }
             default -> {
@@ -761,6 +761,32 @@ public final class Showcase {
             grab(15, "gui_93_gear_settings");
             step(5, () -> mc().setScreen(null));
             step(10, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
+        }
+
+        // Stumpy's menu: a Mk2 with cards and a few saplings, owned by the player.
+        if (wants("gui_96_stumpy")) {
+            step(10, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                var stumpy = com.arno.robotica.automation.farmbot.FarmBotContent.STUMPY_ENTITY.get().create(level);
+                if (stumpy == null) return;
+                BlockPos at = new BlockPos(1, Y, 140);
+                stumpy.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
+                stumpy.setHome(at);
+                stumpy.setOwner(sp);
+                stumpy.setTier(2);
+                stumpy.energy.setEnergy(stumpy.energy.getMaxEnergyStored() * 2 / 3);
+                stumpy.upgrades.setStackInSlot(0, com.arno.robotica.core.item.CoreItems.cards(com.arno.robotica.core.upgrade.UpgradeKind.SPEED, 2));
+                stumpy.upgrades.setStackInSlot(1, com.arno.robotica.core.item.CoreItems.cards(com.arno.robotica.core.upgrade.UpgradeKind.RANGE, 1));
+                stumpy.pouch.setStackInSlot(0, new ItemStack(Items.OAK_SAPLING, 12));
+                level.addFreshEntity(stumpy);
+                sp.teleportTo(level, at.getX() + 0.5, Y, at.getZ() + 2.5, 180, 30);
+                sp.setShiftKeyDown(false);
+                stumpy.interact(sp, InteractionHand.MAIN_HAND);
+            }));
+            grab(25, "gui_96_stumpy");
+            step(5, () -> {
+                if (mc().player != null && mc().screen != null) mc().player.closeContainer();
+            });
         }
 
         // Codex pages and lab.

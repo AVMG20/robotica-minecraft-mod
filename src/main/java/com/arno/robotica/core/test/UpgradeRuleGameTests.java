@@ -4,7 +4,11 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.architect.ArchitectRegistry;
 import com.arno.robotica.architect.block.ArchitectTableBlockEntity;
 import com.arno.robotica.automation.AutomationContent;
-import com.arno.robotica.automation.block.FarmBotBlock;
+import com.arno.robotica.automation.RobotArea;
+import com.arno.robotica.automation.farmbot.FarmBot;
+import com.arno.robotica.automation.farmbot.FarmBotContent;
+import com.arno.robotica.automation.rancher.Rancher;
+import com.arno.robotica.automation.rancher.RancherContent;
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
@@ -106,21 +110,51 @@ public class UpgradeRuleGameTests {
         Block[] rigs = {AutomationContent.SURVEY_RIG.get(), AutomationContent.SURVEY_RIG_MK2.get(), AutomationContent.SURVEY_RIG_MK3.get(),
                 AutomationContent.SURVEY_RIG_MK4.get()};
         checkMk(helper, "Survey Rig", mk -> rigs[mk - 1].defaultBlockState(), EnumSet.of(SPEED, EFFICIENCY, FORTUNE, SILK, VOID));
-        Set<UpgradeKind> farm = EnumSet.of(SPEED, RANGE, EFFICIENCY, GROWTH);
-        checkMk(helper, "Stumpy", mk -> AutomationContent.STUMPY.get().defaultBlockState().setValue(FarmBotBlock.TIER, mk), farm);
-        checkMk(helper, "Sprout", mk -> AutomationContent.SPROUT.get().defaultBlockState().setValue(FarmBotBlock.TIER, mk), farm);
         helper.succeed();
     }
 
-    /** A farm kit raises the Mk of the placed bot: its slots and caps follow without anything else. */
+    /** Walking robots follow the Mk rule, except range: 4 range cards on every Mk. */
     @GameTest(template = "empty")
-    public static void mkRuleFollowsAKit(GameTestHelper helper) {
-        Upgrades up = cards(helper, AutomationContent.SPROUT.get().defaultBlockState());
+    public static void robotsFollowTheMkRuleWithFreeRange(GameTestHelper helper) {
+        FarmBot sprout = helper.spawn(FarmBotContent.SPROUT_ENTITY.get(), POS);
+        FarmBot stumpy = helper.spawn(FarmBotContent.STUMPY_ENTITY.get(), POS);
+        Rancher rancher = helper.spawn(RancherContent.RANCHER_ENTITY.get(), POS);
+        for (int mk = 1; mk <= 4; mk++) {
+            sprout.setTier(mk);
+            stumpy.setTier(mk);
+            checkRobot(helper, "Sprout Mk" + mk + ": ", sprout.upgrades, mk, FarmBot.KINDS);
+            checkRobot(helper, "Stumpy Mk" + mk + ": ", stumpy.upgrades, mk, FarmBot.KINDS);
+        }
+        for (int mk = 1; mk <= 2; mk++) {
+            rancher.setTier(mk);
+            checkRobot(helper, "Rancher Mk" + mk + ": ", rancher.upgrades, mk, Rancher.KINDS);
+        }
+        sprout.discard();
+        stumpy.discard();
+        rancher.discard();
+        helper.succeed();
+    }
+
+    private static void checkRobot(GameTestHelper helper, String at, Upgrades up, int mk, Set<UpgradeKind> kinds) {
+        helper.assertTrue(up.activeSlots() == mk + 1, at + "slots " + up.activeSlots());
+        helper.assertTrue(up.acceptedKinds().equals(kinds), at + "kinds " + up.acceptedKinds());
+        for (UpgradeKind kind : UpgradeKind.values()) {
+            int want = !kinds.contains(kind) ? 0 : kind == RANGE ? RobotArea.RANGE_CARDS : expectedCap(mk, kind);
+            helper.assertTrue(up.cap(kind) == want, at + kind + " cap " + up.cap(kind) + ", want " + want);
+        }
+    }
+
+    /** Raising a robot's Mk opens its slots and caps without anything else. */
+    @GameTest(template = "empty")
+    public static void mkRuleFollowsTheRobotTier(GameTestHelper helper) {
+        FarmBot sprout = helper.spawn(FarmBotContent.SPROUT_ENTITY.get(), POS);
+        Upgrades up = sprout.upgrades;
         up.setStackInSlot(0, CoreItems.cards(SPEED, 8));
         helper.assertTrue(up.level(SPEED) == 2 && up.activeSlots() == 2, "Mk1: 2 of 8 speed cards count, 2 slots");
-        helper.setBlock(POS, helper.getBlockState(POS).setValue(FarmBotBlock.TIER, 4));
+        sprout.setTier(4);
         helper.assertTrue(up.level(SPEED) == 8 && up.activeSlots() == 5, "Mk4: all 8 count, 5 slots");
         up.setStackInSlot(0, ItemStack.EMPTY);
+        sprout.discard();
         helper.succeed();
     }
 

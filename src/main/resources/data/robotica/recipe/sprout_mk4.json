@@ -1,9 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     "CPC",
-    "NEN"
+    "NXN",
+    " E "
   ],
   "key": {
     "C": {
@@ -15,12 +16,18 @@
     "N": {
       "item": "robotica:null_casing"
     },
+    "X": {
+      "item": "robotica:sprout_mk3"
+    },
     "E": {
       "tag": "c:ender_pearls"
     }
   },
   "result": {
-    "id": "robotica:farm_kit_mk4",
+    "id": "robotica:sprout_mk4",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:sprout_mk3"
   }
 }

@@ -1,0 +1,33 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    "CPC",
+    "NXN",
+    " E "
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:null_circuit"
+    },
+    "P": {
+      "item": "robotica:plasma_actuator"
+    },
+    "N": {
+      "item": "robotica:null_casing"
+    },
+    "X": {
+      "item": "robotica:stumpy_mk3"
+    },
+    "E": {
+      "tag": "c:ender_pearls"
+    }
+  },
+  "result": {
+    "id": "robotica:stumpy_mk4",
+    "count": 1
+  },
+  "source": {
+    "item": "robotica:stumpy_mk3"
+  }
+}

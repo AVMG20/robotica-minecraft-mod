@@ -10,11 +10,13 @@ Right-click a machine with a card, or put it in an upgrade slot. One kind per sl
 
 ## The Mk rule
 
-Every machine with a Mk (Alloy Smelter, Centrifuge, Assembler, Grinder, Electric Furnace, Excavator, Survey Rig, Stumpy and Sprout with Farm Kits):
+Every machine with a Mk (Alloy Smelter, Centrifuge, Assembler, Grinder, Electric Furnace, Excavator, Survey Rig, Stumpy, Sprout and Rancher):
 
 {{mkrule}}
 
 Right-click a placed machine with the next Mk: it swaps in place and keeps its contents, cards and energy.
+
+The walking robots (Stumpy, Sprout, Rancher) take 4 Range cards on every Mk: the Mk sets how fast they work, Range cards how big the area is.
 
 The Wireless Charger, Metal Press, Combustion Generator, Replicator, Architect Table and drones have fixed slots: see their pages.
 

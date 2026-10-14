@@ -227,17 +227,20 @@
       "pages": [
         {
           "title": "Stumpy and Sprout",
-          "text": "Sprout also picks berries, melons, pumpkins, sugar cane, cactus, bamboo and kelp.\nSneak-right-click a robot to see its status and work area. A robot that smokes is stuck; its status says why.",
+          "text": "Sprout also picks berries, melons, pumpkins, sugar cane, cactus, bamboo and kelp.\nA higher Mk works faster; Range cards make the area bigger on any Mk, so pick both to fit the farm.\nSmoke means no energy, angry sparks mean its chest is full. A robot boxed in by trees or blocks cuts its way out or teleports home.",
           "items": [
             "robotica:stumpy",
+            "robotica:stumpy_mk2",
+            "robotica:stumpy_mk3",
+            "robotica:stumpy_mk4",
             "robotica:sprout",
+            "robotica:sprout_mk2",
+            "robotica:sprout_mk3",
+            "robotica:sprout_mk4",
             "robotica:supply_crate",
             "robotica:supply_crate_mk2",
             "robotica:supply_crate_mk3",
-            "robotica:supply_crate_mk4",
-            "robotica:farm_kit_mk2",
-            "robotica:farm_kit_mk3",
-            "robotica:farm_kit_mk4"
+            "robotica:supply_crate_mk4"
           ]
         },
         {

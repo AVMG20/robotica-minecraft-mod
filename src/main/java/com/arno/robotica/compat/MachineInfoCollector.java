@@ -2,7 +2,6 @@ package com.arno.robotica.compat;
 
 import com.arno.robotica.architect.block.ArchitectTableBlockEntity;
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
-import com.arno.robotica.automation.entity.FarmBotBlockEntity;
 import com.arno.robotica.automation.entity.SurveyRigBlockEntity;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.power.block.WindingCrankBlockEntity;
@@ -40,7 +39,6 @@ public final class MachineInfoCollector {
             info.status = worker.status().name().toLowerCase(Locale.ROOT);
             info.progress = worker.guiProgress();
             info.owner = OwnerNames.name(level.getServer(), worker.owner());
-            if (worker instanceof FarmBotBlockEntity bot) info.tier = bot.tier();
             if (worker instanceof SurveyRigBlockEntity rig && rig.lastOre() != null) {
                 info.lastOre = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(rig.lastOre()).toString();
             }

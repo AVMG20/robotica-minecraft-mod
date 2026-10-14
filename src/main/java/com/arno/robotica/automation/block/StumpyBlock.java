@@ -1,16 +1,8 @@
 package com.arno.robotica.automation.block;
 
-import com.arno.robotica.automation.AutomationContent;
-import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
-import com.arno.robotica.automation.entity.StumpyBlockEntity;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
 
-/** Lumber bot. */
+/** Stumpy as a block, from before the robots walked: turns into the walking Stumpy on its first tick. */
 public class StumpyBlock extends FarmBotBlock {
     public static final MapCodec<StumpyBlock> CODEC = simpleCodec(StumpyBlock::new);
 
@@ -21,16 +13,5 @@ public class StumpyBlock extends FarmBotBlock {
     @Override
     protected MapCodec<StumpyBlock> codec() {
         return CODEC;
-    }
-
-    @Override
-    protected BlockEntityType<? extends AreaWorkerBlockEntity> beType() {
-        return AutomationContent.STUMPY_BE.get();
-    }
-
-    @Nullable
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new StumpyBlockEntity(pos, state);
     }
 }

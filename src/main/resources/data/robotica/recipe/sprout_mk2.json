@@ -1,9 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     "BMB",
-    "PIP"
+    "PXP",
+    " I "
   ],
   "key": {
     "B": {
@@ -15,12 +16,18 @@
     "P": {
       "tag": "c:plates/iron"
     },
+    "X": {
+      "item": "robotica:sprout"
+    },
     "I": {
       "item": "robotica:iron_casing"
     }
   },
   "result": {
-    "id": "robotica:farm_kit_mk2",
+    "id": "robotica:sprout_mk2",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:sprout"
   }
 }

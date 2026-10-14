@@ -13,7 +13,6 @@ public final class AutomationConfig {
 
     public static final ModConfigSpec SPEC;
 
-    private static final int[] DEF_RADIUS = {4, 6, 8, 12};
     private static final int[] DEF_INTERVAL = {40, 20, 5, 1};
     private static final double[] DEF_GROWTH = {1.5, 2.0, 3.0, 5.0};
 
@@ -56,7 +55,7 @@ public final class AutomationConfig {
             "#c:ores/osmium=40", "#c:ores/uranium=12", "#c:ores/pyrolite=15", "#c:ores/fluorite=20",
             "#c:ores/diamond=6", "#c:ores/emerald=4", "#c:ores/resonite=2", "#c:ores/netherite_scrap=1");
     public static final List<String> DEFAULT_CORE_ORES = List.of("#c:ores/netherite_scrap", "#c:ores/resonite");
-    private static final ModConfigSpec.IntValue[] FARM_RADIUS = new ModConfigSpec.IntValue[4];
+    private static final ModConfigSpec.IntValue FARM_RADIUS;
     private static final ModConfigSpec.IntValue[] FARM_INTERVAL = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.DoubleValue[] FARM_GROWTH = new ModConfigSpec.DoubleValue[4];
     private static final ModConfigSpec.IntValue ANCHOR_CHUNKS_PER_PLAYER;
@@ -65,14 +64,14 @@ public final class AutomationConfig {
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
-        b.comment("Area workers: Stumpy, Sprout, Excavator").push("automation");
+        b.comment("Robots and area workers: Stumpy, Sprout, Rancher, Excavator").push("automation");
         ENERGY_BUFFER = b.comment("Internal FE buffer of every area worker (the battery slot refills it).")
                 .defineInRange("energyBuffer", 20_000, 1_000, 100_000_000);
         STUMPY_FE_PER_TICK = b.comment("FE per tick while Stumpy works (before upgrade multipliers).")
                 .defineInRange("stumpyFePerTick", 4, 0, 10_000);
         STUMPY_FE_PER_LOG = b.comment("FE per log Stumpy fells, paid when the tree comes down (before efficiency cards). A tree never costs more than half the internal buffer.")
                 .defineInRange("stumpyFePerLog", 250, 0, 100_000);
-        STUMPY_TICKS_PER_LOG = b.comment("Rest after a tree, in ticks per log felled (speed cards shorten it). Stumpy's area is one block smaller on each side than Sprout's.")
+        STUMPY_TICKS_PER_LOG = b.comment("Rest after a tree, in ticks per log felled (speed cards shorten it).")
                 .defineInRange("stumpyTicksPerLog", 10, 0, 1_200);
         SPROUT_FE_PER_TICK = b.comment("FE per tick while Sprout works (before upgrade multipliers).")
                 .defineInRange("sproutFePerTick", 3, 0, 10_000);
@@ -80,10 +79,10 @@ public final class AutomationConfig {
                 .defineInRange("sproutFePerHarvest", 30, 0, 100_000);
         MAX_LOGS = b.comment("Maximum logs Stumpy fells in one action.")
                 .defineInRange("maxLogsPerTree", 256, 1, 4096);
+        FARM_RADIUS = b.comment("Stumpy, Sprout and Rancher work radius without range cards (area side = 2 * radius + 1), on every Mk. Range cards add to it.")
+                .defineInRange("farmRadius", 4, 1, 32);
         for (int i = 0; i < 4; i++) {
             int mk = i + 1;
-            FARM_RADIUS[i] = b.comment("Mk" + mk + " work radius in blocks (area side = 2 * radius + 1). Range cards add 2 per level.")
-                    .defineInRange("farmRadiusMk" + mk, DEF_RADIUS[i], 1, 32);
             FARM_INTERVAL[i] = b.comment("Mk" + mk + " ticks between actions.")
                     .defineInRange("farmIntervalMk" + mk, DEF_INTERVAL[i], 1, 1200);
             FARM_GROWTH[i] = b.comment("Mk" + mk + " growth multiplier (growth cards add 0.5 per level).")
@@ -190,9 +189,8 @@ public final class AutomationConfig {
         return SPEC.isLoaded() ? MAX_LOGS.get() : 256;
     }
 
-    public static int farmRadius(int tier) {
-        int i = tierIndex(tier);
-        return SPEC.isLoaded() ? FARM_RADIUS[i].get() : DEF_RADIUS[i];
+    public static int farmRadius() {
+        return SPEC.isLoaded() ? FARM_RADIUS.get() : 4;
     }
 
     public static int farmInterval(int tier) {

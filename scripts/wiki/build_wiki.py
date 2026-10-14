@@ -484,12 +484,14 @@ def card_rules():
     text = (f'Machines with a Mk: Mk + {extra} card slots; speed {per["speedCapPerMk"]} per Mk, efficiency '
             f'{per["efficiencyCapPerMk"]}, range {per["rangeCapPerMk"]} and growth 1 per Mk, fortune up to '
             f'{per["fortuneCapMax"]}, silk and void 1. Machines without a Mk have fixed slots.')
-    return kinds, [mk + extra for mk in mks], text, fixed, mks, mk_cap
+    robot_range = int(re.search(r'RANGE_CARDS = (\d+);', (JAVA / 'automation/RobotArea.java').read_text()).group(1))
+    return kinds, extra, text, fixed, mks, mk_cap, robot_range
 
 
 def load_upgrades(ids):
     up = json.loads((HERE / 'upgrades.json').read_text())
-    kinds, mk_slots, rule_text, fixed, mks, mk_cap = card_rules()
+    kinds, extra, rule_text, fixed, mks, mk_cap, robot_range = card_rules()
+    mk_slots = [mk + extra for mk in mks]
     for k, c in up['cards'].items():
         if k in kinds:
             c.update(kinds[k])
@@ -497,12 +499,14 @@ def load_upgrades(ids):
             warn(f'upgrades.json: unknown card kind {k}')
     for m in up['machines']:
         rule = m.get('rule', '')
-        if rule == 'mk':
-            m['slots'] = mk_slots
+        if rule in ('mk', 'robot'):
+            # robot: the walking robots (RobotArea), Mk rule but the same range cards on every Mk; maxMk for a shorter ladder
+            tiers = range(1, m.get('maxMk', max(mks)) + 1)
+            m['slots'] = [mk + extra for mk in tiers]
             m['caps'] = {}
             for k in m['effects']:
                 if k in kinds:
-                    caps = [mk_cap(mk, k) for mk in mks]
+                    caps = [robot_range if rule == 'robot' and k == 'range' else mk_cap(mk, k) for mk in tiers]
                     m['caps'][k] = caps[0] if len(set(caps)) == 1 else caps
         elif rule.startswith('fixed:') and rule[6:] in fixed:
             m['slots'] = fixed[rule[6:]]['slots']
@@ -511,7 +515,7 @@ def load_upgrades(ids):
                 if k not in m['caps']:
                     warn(f'upgrades.json {m["id"]}: {rule[6:]} takes no {k} card')
         else:
-            warn(f'upgrades.json {m["id"]}: rule must be mk or fixed:<UpgradeRules.Fixed name>, is {rule!r}')
+            warn(f'upgrades.json {m["id"]}: rule must be mk, robot or fixed:<UpgradeRules.Fixed name>, is {rule!r}')
             m['slots'], m['caps'] = 0, {}
         for i in m['items'] + [t for t in m.get('tierItems', []) if t]:
             if i not in ids:

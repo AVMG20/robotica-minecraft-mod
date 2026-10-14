@@ -17,21 +17,9 @@
   },
   "criteria": {
     "done": {
-      "trigger": "minecraft:placed_block",
+      "trigger": "robotica:milestone",
       "conditions": {
-        "location": [
-          {
-            "condition": "minecraft:location_check",
-            "predicate": {
-              "block": {
-                "blocks": [
-                  "robotica:stumpy",
-                  "robotica:sprout"
-                ]
-              }
-            }
-          }
-        ]
+        "milestone": "robot_placed"
       }
     }
   },

@@ -41,14 +41,14 @@ public final class LabActions {
                     Map.entry("basic_circuit", 8), Map.entry("electric_motor", 4), Map.entry("copper_cell", 4),
                     Map.entry("combustion_generator", 2), Map.entry("solar_panel_mk1", 4), Map.entry("accumulator_1", 1),
                     Map.entry("tesla_linker", 1), Map.entry("tesla_coil_1", 4), Map.entry("tesla_emitter_1", 4), Map.entry("tesla_coil_2", 4), Map.entry("charger", 1), Map.entry("metal_press", 1),
-                    Map.entry("excavator", 1), Map.entry("farm_kit_mk2", 2), Map.entry("bore_drill", 1), Map.entry("chainsaw", 1),
+                    Map.entry("excavator", 1), Map.entry("sprout_mk2", 1), Map.entry("stumpy_mk2", 1), Map.entry("bore_drill", 1), Map.entry("chainsaw", 1),
                     Map.entry("shock_baton", 1), Map.entry("warp_remote", 1), Map.entry("warp_pad", 2),
                     Map.entry("buddy_bot", 1), Map.entry("courier_drone", 1), Map.entry("courier_remote", 1), Map.entry("exo_helmet_mk1", 1), Map.entry("exo_chestplate_mk1", 1), Map.entry("exo_leggings_mk1", 1), Map.entry("exo_boots_mk1", 1), Map.entry("servo_stride_module_1", 1), Map.entry("magnet_module", 1),
                     Map.entry("storage_terminal", 1), Map.entry("storage_expansion_mk1", 1), Map.entry("upgrade_speed", 4), Map.entry("upgrade_efficiency", 4), Map.entry("upgrade_growth", 4), Map.entry("upgrade_void", 1), Map.entry("upgrade_height", 6), Map.entry("tinkers_bench", 1),
                     Map.entry("signal_flare", 2)),
             Map.ofEntries(Map.entry("reinforced_casing", 8), Map.entry("advanced_circuit", 8), Map.entry("servo_actuator", 4),
                     Map.entry("redstone_cell", 2), Map.entry("solar_panel_mk2", 2), Map.entry("accumulator_2", 1), Map.entry("tesla_coil_3", 4), Map.entry("tool_upgrade_kit_2", 1), Map.entry("servo_core", 2), Map.entry("servo_drill", 1), Map.entry("rivet_gun", 1),
-                    Map.entry("farm_kit_mk3", 2), Map.entry("essence_vial", 4),
+                    Map.entry("sprout_mk3", 1), Map.entry("stumpy_mk3", 1), Map.entry("essence_vial", 4),
                     Map.entry("storage_expansion_mk2", 1), Map.entry("replicator_controller", 1), Map.entry("replicator_frame", 24), Map.entry("replicator_glass", 4),
                     Map.entry("upgrade_speed", 8), Map.entry("upgrade_range", 4), Map.entry("upgrade_fortune", 3), Map.entry("upgrade_silk", 1),
                     Map.entry("signal_flare", 4), Map.entry("colossus_altar", 1)),
@@ -56,7 +56,7 @@ public final class LabActions {
                     Map.entry("magma_core", 2), Map.entry("storage_expansion_mk3", 1), Map.entry("warp_pad_mk2", 2), Map.entry("accumulator_3", 1), Map.entry("tesla_coil_4", 2), Map.entry("tool_upgrade_kit_3", 1), Map.entry("magma_drill", 1), Map.entry("arc_blade", 1),
                     Map.entry("upgrade_speed", 8), Map.entry("ignition_charge", 4), Map.entry("forge_altar", 1)),
             Map.ofEntries(Map.entry("null_casing", 8), Map.entry("null_circuit", 4), Map.entry("ender_cell", 2), Map.entry("tesla_coil_5", 2),
-                    Map.entry("antigrav_core", 2), Map.entry("tool_upgrade_kit_4", 1), Map.entry("flight_module", 1), Map.entry("null_drill", 1), Map.entry("null_lance", 1), Map.entry("farm_kit_mk4", 2),
+                    Map.entry("antigrav_core", 2), Map.entry("tool_upgrade_kit_4", 1), Map.entry("flight_module", 1), Map.entry("null_drill", 1), Map.entry("null_lance", 1), Map.entry("sprout_mk4", 1), Map.entry("stumpy_mk4", 1),
                     Map.entry("gate_controller", 2), Map.entry("null_key", 4), Map.entry("null_altar", 1)));
 
     public static void run(ServerPlayer player, String action, String arg, int count) {

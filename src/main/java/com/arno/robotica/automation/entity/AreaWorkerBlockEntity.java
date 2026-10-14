@@ -59,7 +59,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Shared base of every area worker (Stumpy, Sprout, Excavator): battery slot, FE buffer that also accepts FE from
+ * Shared base of every area worker (Excavator, Survey Rig): battery slot, FE buffer that also accepts FE from
  * cables, upgrade slots, 9-slot buffer, output into adjacent item handlers, idle drain, owner and "show area" flag.
  * Subclasses implement {@link #work} which runs every server tick and returns the resulting status.
  */

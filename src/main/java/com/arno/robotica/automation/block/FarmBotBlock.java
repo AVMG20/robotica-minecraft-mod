@@ -1,24 +1,15 @@
 package com.arno.robotica.automation.block;
 
 import com.arno.robotica.automation.AutomationContent;
-import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.automation.entity.FarmBotBlockEntity;
-import com.arno.robotica.automation.item.FarmKitItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.Containers;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -27,16 +18,16 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Stumpy and Sprout. Faces the player on placement. The Mk tier lives in the block state (the models show it as a
- * coloured band and bulb) and is raised in order with Farm Kits used on the placed bot.
+ * Stumpy and Sprout as placed blocks, kept so worlds from before the robots walked load them: on its first server tick
+ * the block turns into the walking robot (same Mk, owner, energy, battery, cards and buffer) and removes itself. No item
+ * places it any more.
  */
-public abstract class FarmBotBlock extends AreaWorkerBlock {
+public abstract class FarmBotBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final IntegerProperty TIER = IntegerProperty.create("tier", 1, 4);
     private static final VoxelShape SHAPE = Block.box(1, 0, 1, 15, 16, 15);
@@ -51,28 +42,9 @@ public abstract class FarmBotBlock extends AreaWorkerBlock {
         builder.add(FACING, TIER);
     }
 
-    @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
-    }
-
-    @Override
-    protected BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
-    }
-
-    @Override
-    protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
-    }
-
-    /** Client side the bot ticks only to time its swing effects. */
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (!level.isClientSide) return super.getTicker(level, state, type);
-        return type == beType() ? (lvl, pos, st, be) -> ((FarmBotBlockEntity) be).clientTick() : null;
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
@@ -80,40 +52,22 @@ public abstract class FarmBotBlock extends AreaWorkerBlock {
         return SHAPE;
     }
 
+    @Nullable
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
-                                              InteractionHand hand, BlockHitResult hit) {
-        if (!(stack.getItem() instanceof FarmKitItem kit)) return super.useItemOn(stack, state, level, pos, player, hand, hit);
-        int tier = state.getValue(TIER);
-        if (kit.tier() != tier + 1) {
-            if (!level.isClientSide) {
-                Component msg = kit.tier() <= tier
-                        ? Component.translatable("message.robotica.kit_already", tier)
-                        : Component.translatable("message.robotica.kit_order", tier + 1);
-                player.displayClientMessage(msg, true);
-            }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
-        }
-        if (!level.isClientSide) {
-            level.setBlock(pos, state.setValue(TIER, kit.tier()), Block.UPDATE_ALL);
-            if (level.getBlockEntity(pos) instanceof FarmBotBlockEntity bot) {
-                bot.onTierChanged();
-                bot.startPreview();
-            }
-            if (!player.getAbilities().instabuild) stack.shrink(1);
-            CoreSounds.play(level, pos, CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
-            player.displayClientMessage(Component.translatable("message.robotica.kit_applied", kit.tier()), true);
-            if (player instanceof net.minecraft.server.level.ServerPlayer sp) com.arno.robotica.core.progress.Milestones.award(sp, com.arno.robotica.core.progress.Milestones.FARM_KIT);
-        }
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new FarmBotBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide || (type != AutomationContent.STUMPY_BE.get() && type != AutomationContent.SPROUT_BE.get())) return null;
+        return (lvl, pos, st, be) -> ((FarmBotBlockEntity) be).convert((ServerLevel) lvl);
     }
 
     @Override
-    protected void dropExtras(Level level, BlockPos pos, BlockState state) {
-        // Give back the spent kits so breaking a Mk4 bot does not eat the investment.
-        for (int tier = 2; tier <= state.getValue(TIER); tier++) {
-            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                    new ItemStack(AutomationContent.FARM_KITS.get(tier - 2).get()));
-        }
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof FarmBotBlockEntity be) be.dropContents();
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 }

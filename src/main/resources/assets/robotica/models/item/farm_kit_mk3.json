@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "robotica:item/farm_kit_mk3"
-  }
-}

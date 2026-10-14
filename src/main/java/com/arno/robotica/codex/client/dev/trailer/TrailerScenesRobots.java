@@ -5,9 +5,9 @@ import com.arno.robotica.architect.matter.Matter;
 import com.arno.robotica.architect.plan.Layout;
 import com.arno.robotica.architect.plan.Plots;
 import com.arno.robotica.architect.style.BuildStyle;
-import com.arno.robotica.automation.block.FarmBotBlock;
 import com.arno.robotica.automation.entity.AreaWorkerBlockEntity;
-import com.arno.robotica.automation.entity.FarmBotBlockEntity;
+import com.arno.robotica.automation.farmbot.FarmBot;
+import com.arno.robotica.automation.farmbot.FarmBotContent;
 import com.arno.robotica.automation.rancher.Rancher;
 import com.arno.robotica.automation.rancher.RancherContent;
 import com.arno.robotica.core.item.CoreItems;
@@ -40,7 +40,24 @@ final class TrailerScenesRobots {
 
     // ------------------------------------------------------------------ helpers
 
-    /** Fills the FE buffer of an area worker (Stumpy, Sprout, Excavator) directly. */
+    /** A charged Stumpy or Sprout of that Mk with its home at the site, facing south, with these cards. */
+    private static FarmBot farmBot(ServerLevel level, EntityType<? extends FarmBot> type, BlockPos site, int tier, ItemStack... cards) {
+        FarmBot bot = spawn(level, type, site, 0, 0, 0);
+        if (bot == null) return null;
+        bot.setYBodyRot(0);
+        bot.setHome(site);
+        bot.setTier(tier);
+        for (int i = 0; i < cards.length; i++) bot.upgrades.setStackInSlot(i, cards[i]);
+        return bot;
+    }
+
+    /** Fills the FE buffer of an area worker (Excavator) directly. */
+    private static void chargeBots(ServerLevel level, BlockPos site) {
+        for (FarmBot bot : level.getEntitiesOfClass(FarmBot.class, new net.minecraft.world.phys.AABB(site).inflate(2))) {
+            bot.energy.setEnergy(bot.energy.getMaxEnergyStored());
+        }
+    }
+
     private static void charge(ServerLevel level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof AreaWorkerBlockEntity worker) worker.energy.setEnergy(worker.energy.getMaxEnergyStored());
     }
@@ -98,11 +115,10 @@ final class TrailerScenesRobots {
                     for (int[] t : trees) {
                         Trailer.run(level, "place feature minecraft:oak " + (site.getX() + t[0]) + " " + site.getY() + " " + (site.getZ() + t[1]));
                     }
-                    Trailer.place(level, site, Trailer.block("stumpy"), Direction.SOUTH);
-                    cards(level, site, CoreItems.cards(UpgradeKind.SPEED, 2));
+                    farmBot(level, FarmBotContent.STUMPY_ENTITY.get(), site, 1, CoreItems.cards(UpgradeKind.SPEED, 2));
                 })
                 // the energy arrives with the first recorded frame, so the first tree comes down early in the shot
-                .at(0, (level, player, site) -> charge(level, site))
+                .at(0, (level, player, site) -> chargeBots(level, site))
                 .camera(site -> CameraPath.builder()
                         .keyLookAt(0, v(site, 0.8, 0.75, 4.8), v(site, -0.2, 1.7, -2.0), 58)
                         .keyLookAt(70, v(site, 0.3, 0.8, 3.9), v(site, -0.5, 2.0, -2.0), 56)
@@ -120,10 +136,7 @@ final class TrailerScenesRobots {
                 .warmup(30)
                 .duration(150)
                 .setup((level, player, site) -> {
-                    BlockState tier3 = Trailer.block("sprout").defaultBlockState()
-                            .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.SOUTH).setValue(FarmBotBlock.TIER, 3);
-                    level.setBlock(site, tier3, 3);
-                    if (level.getBlockEntity(site) instanceof FarmBotBlockEntity bot) bot.onTierChanged();
+                    farmBot(level, FarmBotContent.SPROUT_ENTITY.get(), site, 3);
                     // a ripe field around Sprout: wheat and carrots in rows, a water channel through the middle
                     for (int x = -6; x <= 6; x++) {
                         for (int z = 1; z <= 7; z++) {
@@ -143,7 +156,7 @@ final class TrailerScenesRobots {
                         }
                     }
                 })
-                .at(0, (level, player, site) -> charge(level, site))
+                .at(0, (level, player, site) -> chargeBots(level, site))
                 .camera(site -> CameraPath.builder()
                         .keyLookAt(0, v(site, -3.6, 1.7, 4.4), v(site, -0.3, 0.8, 1.2), 56)
                         .keyLookAt(75, v(site, 0.0, 1.6, 4.0), v(site, 0.0, 0.8, 1.0), 54)

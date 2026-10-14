@@ -568,22 +568,6 @@ def crate_bottom():
     return crate_frame(crate_planks(Canvas(), seed=4), 1)
 
 
-def kit(tier):
-    """Mk kit: a tier coloured toolbox, latch, handle and one cyan pip per tier above 1."""
-    c = Canvas()
-    c.rect(1, 6, 14, 8, 'C')                                             # box
-    c.rect(1, 6, 14, 1, 'D').rect(1, 13, 14, 1, 'B').rect(1, 6, 1, 8, 'D').rect(14, 6, 1, 8, 'B')
-    c.rect(1, 4, 14, 2, 'B').rect(1, 4, 14, 1, 'E')                      # lid
-    c.rect(5, 1, 6, 1, 'b').rect(5, 2, 1, 2, 'b').rect(10, 2, 1, 2, 'b').set(5, 1, 'd')   # handle
-    c.rect(1, 8, 14, 1, 'A')                                             # lid seam
-    c.draw(7, 7, ['87', '65'])                                           # latch
-    for i in range(tier - 1):
-        c.set(3 + i * 2, 11, 'Y')
-    c.draw(11, 10, ['.o', 'on'])                                         # little sprout decal
-    c.outline('k')
-    return c
-
-
 def main():
     for kind in ('stumpy', 'sprout'):
         write_png(ASSETS / 'textures/block' / f'{kind}_body.png', robot_atlas(kind).rows(), pal(), size=32)
@@ -606,8 +590,6 @@ def main():
             if face == 'front':
                 write_block(f'{name}_front_glow', glow_only(c).rows(), crate_pal(tier))
     write_block('supply_crate_bottom', crate_bottom().rows(), crate_pal())
-    for tier in (2, 3, 4):
-        write_item(f'farm_kit_mk{tier}', kit(tier).rows(), pal(TIERS[tier]))
 
 
 if __name__ == '__main__':

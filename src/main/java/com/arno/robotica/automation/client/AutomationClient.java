@@ -1,6 +1,7 @@
 package com.arno.robotica.automation.client;
 
 import com.arno.robotica.automation.AutomationContent;
+import com.arno.robotica.automation.farmbot.FarmBotContent;
 import com.arno.robotica.automation.rancher.RancherContent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -21,6 +22,7 @@ public final class AutomationClient {
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(RancherContent.MENU.get(), RancherScreen::new);
+        event.register(FarmBotContent.MENU.get(), FarmBotScreen::new);
         event.register(AutomationContent.WORKER_MENU.get(), AreaWorkerScreen::new);
         event.register(AutomationContent.CRATE_MENU.get(), SupplyCrateScreen::new);
         event.register(AutomationContent.SURVEY_RIG_MENU.get(), SurveyRigScreen::new);
@@ -28,8 +30,8 @@ public final class AutomationClient {
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(AutomationContent.STUMPY_BE.get(), ctx -> new FarmBotRenderer<>(true));
-        event.registerBlockEntityRenderer(AutomationContent.SPROUT_BE.get(), ctx -> new FarmBotRenderer<>(false));
+        event.registerEntityRenderer(FarmBotContent.STUMPY_ENTITY.get(), ctx -> new FarmBotRenderer(ctx, true));
+        event.registerEntityRenderer(FarmBotContent.SPROUT_ENTITY.get(), ctx -> new FarmBotRenderer(ctx, false));
         event.registerBlockEntityRenderer(AutomationContent.EXCAVATOR_BE.get(), ctx -> new AreaOutlineRenderer<>());
         event.registerEntityRenderer(RancherContent.RANCHER_ENTITY.get(), RancherRenderer::new);
         event.registerBlockEntityRenderer(AutomationContent.CHUNK_ANCHOR_BE.get(), ChunkAnchorRenderer::new);

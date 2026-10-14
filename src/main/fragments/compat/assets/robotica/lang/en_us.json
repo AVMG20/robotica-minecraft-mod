@@ -31,5 +31,6 @@
   "jade.robotica.last_ore": "Last ore: %s",
   "jade.robotica.xp": "Stored XP: %s",
   "config.jade.plugin_robotica.rancher": "Robotica Rancher",
-  "jade.robotica.herd": "Adults: %s / %s"
+  "jade.robotica.herd": "Adults: %s / %s",
+  "config.jade.plugin_robotica.farm_bot": "Robotica Stumpy and Sprout"
 }

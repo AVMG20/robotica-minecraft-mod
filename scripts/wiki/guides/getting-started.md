@@ -10,7 +10,7 @@ Age 0 needs only wood, stone and copper. No iron.
 
 ## Day one
 
-Make a [[copper_gear]], then a [[winding_crank]] and a [[mainspring]]. Wind the spring at the crank and right-click a robot with it. Your first robots: [[stumpy]] for wood, [[sprout]] for crops.
+Make a [[copper_gear]], then a [[winding_crank]] and a [[mainspring]]. Your first robots: [[stumpy]] for wood, [[sprout]] for crops. Right-click the ground to place one, put a chest within 3 blocks of that spot, then wind the spring at the crank and right-click the robot with it.
 
 {{items copper_gear winding_crank mainspring clockwork_mechanism wooden_chassis stumpy sprout}}
 

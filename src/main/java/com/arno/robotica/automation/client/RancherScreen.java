@@ -21,6 +21,8 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
 
     public RancherScreen(RancherMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
+        this.imageHeight = 180;
+        this.inventoryLabelY = imageHeight - 94;
     }
 
     @Override
@@ -59,12 +61,16 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
 
     @Override
     protected ItemStack ghostIcon(Slot slot) {
-        return slot.index == 0 ? icon("copper_cell") : ItemStack.EMPTY;
+        if (slot.index == 0) return icon("copper_cell");
+        if (slot.index <= menu.rancher.upgrades.getSlots()) return icon("upgrade_speed");
+        return ItemStack.EMPTY;
     }
 
     @Override
     protected Component slotHint(Slot slot) {
-        return slot.index == 0 ? Component.translatable("gui.robotica.slot_battery") : null;
+        if (slot.index == 0) return Component.translatable("gui.robotica.slot_battery");
+        if (slot.index <= menu.rancher.upgrades.getSlots()) return Component.translatable("gui.robotica.slot_robot_card");
+        return null;
     }
 
     @Override
@@ -74,7 +80,11 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
 
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawEnergyBar(g, x + 9, y + 18, 12, 46, menu.energy(), menu.capacity());
+        drawEnergyBar(g, x + 9, y + 18, 12, 62, menu.energy(), menu.capacity());
+        int size = menu.size();
+        drawLabelRight(g, Component.translatable("gui.robotica.area", size, size), x + imageWidth - 8, y + 6, 40);
+        addTooltip(x + imageWidth - 50, y + 4, 44, 11, Component.translatable("gui.robotica.tier_area", menu.tier(), size, size),
+                Component.translatable("gui.robotica.robot_area_hint"));
         drawLabel(g, Component.translatable("gui.robotica.rancher.herd"), x + 48, y + 22, 30);
         drawInset(g, x + 97, y + 17, 30, 18);
         drawFitted(g, font, Component.literal(Integer.toString(menu.target())), x + 112, y + 22, 28, 0xFFFFFFFF, 0, true, 1.0F);
@@ -87,6 +97,6 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
             case IDLE -> Tone.WARN;
             default -> Tone.BAD;
         };
-        drawStatus(g, Component.translatable(status.key()), x + 26, y + 62, 140, 1, tone);
+        drawStatus(g, Component.translatable(status.key()), x + 84, y + 69, 84, 1, tone);
     }
 }

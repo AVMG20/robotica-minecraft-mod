@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
-/** Rancher GUI: battery slot, population target (-/+), shear, milk and overbreed (Mk2) toggles, status. Buttons use the vanilla menu button channel. */
+/** Rancher GUI: battery and card slots, population target (-/+), shear, milk and overbreed (Mk2) toggles, status. Buttons use the vanilla menu button channel. */
 public class RancherMenu extends MachineMenu {
     public static final int BTN_MINUS = 0;
     public static final int BTN_PLUS = 1;
@@ -24,6 +24,7 @@ public class RancherMenu extends MachineMenu {
     private final int idxFlags;
     private final int idxStatus;
     private final int idxAdults;
+    private final int idxRadius;
 
     public RancherMenu(int id, Inventory inv, int entityId) {
         this(id, inv, resolve(inv, entityId));
@@ -39,7 +40,8 @@ public class RancherMenu extends MachineMenu {
         super(RancherContent.MENU.get(), id);
         this.rancher = rancher;
         addSlot(new SlotItemHandler(rancher.battery, 0, 26, 18));
-        addPlayerInventory(inv, 8, 84);
+        for (int i = 0; i < rancher.upgrades.getSlots(); i++) addSlot(rancher.upgrades.slot(i, 26 + i * 18, 64));
+        addPlayerInventory(inv, 8, 98);
         idxEnergy = track(rancher::getEnergy);
         idxCapacity = track(rancher::getEnergyCapacity);
         idxTarget = track(rancher::target);
@@ -47,6 +49,16 @@ public class RancherMenu extends MachineMenu {
                 | (rancher.tier() >= 2 ? 8 : 0));
         idxStatus = track(() -> rancher.status().ordinal());
         idxAdults = track(rancher::lastAdults);
+        idxRadius = track(rancher::radius);
+    }
+
+    /** Side of the square work area. */
+    public int size() {
+        return 2 * synced(idxRadius) + 1;
+    }
+
+    public int tier() {
+        return canOverbreed() ? 2 : 1;
     }
 
     public int energy() {
