@@ -1,6 +1,7 @@
 package com.arno.robotica.core.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
@@ -53,6 +54,25 @@ public class CoreGameTests {
             }
         }
         if (!missing.isEmpty()) helper.fail("Energy items without FE capability: " + missing);
+        helper.succeed();
+    }
+
+    /**
+     * Chunks carry numeric block state ids, so a server and client whose blocks have different states see blocks swapped
+     * (0.8.0 server, 0.8.1 client: walls became Spark Lamps). The payload version hashes the state layout, so NeoForge
+     * turns such a pair away.
+     */
+    @GameTest(template = "empty")
+    public static void networkVersionTracksBlockStates(GameTestHelper helper) {
+        List<String> layout = NetworkVersion.layout();
+        String bench = "robotica:tinkers_bench";
+        helper.assertTrue(layout.stream().anyMatch(l -> l.startsWith(bench + " facing=") && l.split("[=,]").length == 5), "the Tinker's Bench line lists its four facings");
+        List<String> before = layout.stream().map(l -> l.startsWith(bench + " ") ? bench : l).toList();
+        helper.assertTrue(NetworkVersion.hash(before) != NetworkVersion.hash(layout), "a block gaining a property changes the version");
+        List<String> reordered = new ArrayList<>(layout);
+        java.util.Collections.swap(reordered, 0, 1);
+        helper.assertTrue(NetworkVersion.hash(reordered) != NetworkVersion.hash(layout), "reordered blocks change the version");
+        helper.assertTrue(NetworkVersion.get().endsWith("-" + Long.toHexString(NetworkVersion.hash(layout))), "version " + NetworkVersion.get());
         helper.succeed();
     }
 

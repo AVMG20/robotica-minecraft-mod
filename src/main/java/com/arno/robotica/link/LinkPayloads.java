@@ -1,6 +1,7 @@
 package com.arno.robotica.link;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.link.block.LinkPriority;
 import com.arno.robotica.link.block.QuantumLinkBlockEntity;
 import com.arno.robotica.link.block.TransferMode;
@@ -138,7 +139,7 @@ public final class LinkPayloads {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1");
+        PayloadRegistrar registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(Select.TYPE, Select.CODEC, LinkPayloads::onSelect);
         registrar.playToServer(Create.TYPE, Create.CODEC, LinkPayloads::onCreate);
         registrar.playToServer(Edit.TYPE, Edit.CODEC, LinkPayloads::onEdit);

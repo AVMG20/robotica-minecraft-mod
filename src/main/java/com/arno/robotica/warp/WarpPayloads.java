@@ -1,6 +1,7 @@
 package com.arno.robotica.warp;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.warp.menu.DestinationMenu;
 import com.arno.robotica.warp.item.RemoteTargets;
 import com.arno.robotica.warp.menu.PadMenu;
@@ -106,7 +107,7 @@ public final class WarpPayloads {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1");
+        PayloadRegistrar registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(Rename.TYPE, Rename.CODEC, WarpPayloads::onRename);
         registrar.playToServer(SetPublic.TYPE, SetPublic.CODEC, WarpPayloads::onSetPublic);
         registrar.playToServer(Travel.TYPE, Travel.CODEC, WarpPayloads::onTravel);

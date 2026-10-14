@@ -1,6 +1,7 @@
 package com.arno.robotica.storage.net;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.storage.menu.StorageMenu;
 import com.arno.robotica.storage.menu.StorageView;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -30,7 +31,7 @@ public record StorageViewPayload(int containerId, int scrollRow, int sort, Strin
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(TYPE, CODEC, StorageViewPayload::handle);
+        event.registrar(NetworkVersion.get()).playToServer(TYPE, CODEC, StorageViewPayload::handle);
     }
 
     private static void handle(StorageViewPayload payload, IPayloadContext context) {

@@ -1,6 +1,7 @@
 package com.arno.robotica.codex;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.core.RoboticaTab;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -56,7 +57,7 @@ public final class CodexModule {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(LabActionPayload.TYPE, LabActionPayload.STREAM_CODEC, LabActionPayload::handle);
         registrar.playToClient(GuideProgressPayload.TYPE, GuideProgressPayload.STREAM_CODEC, GuideProgressPayload::handle);
     }

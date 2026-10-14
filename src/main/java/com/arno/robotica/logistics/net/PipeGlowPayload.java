@@ -1,6 +1,7 @@
 package com.arno.robotica.logistics.net;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -55,7 +56,7 @@ public record PipeGlowPayload(long from, int fromSide, long to, int toSide, byte
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToClient(TYPE, CODEC, PipeGlowPayload::handle);
+        event.registrar(NetworkVersion.get()).playToClient(TYPE, CODEC, PipeGlowPayload::handle);
     }
 
     /** False for fake and mock players, which have no Robotica channel. */

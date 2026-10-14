@@ -1,6 +1,7 @@
 package com.arno.robotica.storage.net;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.storage.menu.StorageMenu;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -31,7 +32,7 @@ public record StorageCraftPayload(int containerId, List<List<ItemStack>> grid, b
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(TYPE, CODEC, StorageCraftPayload::handle);
+        event.registrar(NetworkVersion.get()).playToServer(TYPE, CODEC, StorageCraftPayload::handle);
     }
 
     private static void handle(StorageCraftPayload payload, IPayloadContext context) {

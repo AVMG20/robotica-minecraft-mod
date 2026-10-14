@@ -4,6 +4,7 @@ import com.arno.robotica.architect.matter.MatterTable;
 import com.arno.robotica.architect.net.ArchitectActionPayload;
 import com.arno.robotica.architect.pocket.PocketActionPayload;
 import com.arno.robotica.architect.pocket.PocketArchitectItem;
+import com.arno.robotica.core.NetworkVersion;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -35,7 +36,7 @@ public final class ArchitectModule {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(ArchitectActionPayload.TYPE, ArchitectActionPayload.STREAM_CODEC, ArchitectActionPayload::handle);
         registrar.playToServer(PocketActionPayload.TYPE, PocketActionPayload.STREAM_CODEC, PocketActionPayload::handle);
     }

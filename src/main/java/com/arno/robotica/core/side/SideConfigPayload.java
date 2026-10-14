@@ -1,6 +1,7 @@
 package com.arno.robotica.core.side;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.core.menu.MachineMenu;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -28,7 +29,7 @@ public record SideConfigPayload(int containerId, int action) implements CustomPa
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(TYPE, CODEC, SideConfigPayload::handle);
+        event.registrar(NetworkVersion.get()).playToServer(TYPE, CODEC, SideConfigPayload::handle);
     }
 
     private static void handle(SideConfigPayload payload, IPayloadContext context) {

@@ -1,6 +1,7 @@
 package com.arno.robotica.drones.net;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import com.arno.robotica.drones.DronesConfig;
 import com.arno.robotica.drones.entity.DroneBase;
 import com.arno.robotica.drones.entity.BuddyBot;
@@ -44,7 +45,7 @@ public record DroneCommandPayload(int action) implements CustomPacketPayload {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(TYPE, CODEC, DroneCommandPayload::handle);
         registrar.playToClient(SentryBoltPayload.TYPE, SentryBoltPayload.CODEC, SentryBoltPayload::handle);
     }

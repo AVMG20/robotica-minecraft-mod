@@ -1,6 +1,7 @@
 package com.arno.robotica.gear;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.NetworkVersion;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -23,7 +24,7 @@ public record GearActionPayload(int action, int arg) implements CustomPacketPayl
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar(NetworkVersion.get());
         registrar.playToServer(TYPE, CODEC, GearActionPayload::handle);
         registrar.playToClient(GearFxPayload.TYPE, GearFxPayload.CODEC, GearFxPayload::handle);
     }
