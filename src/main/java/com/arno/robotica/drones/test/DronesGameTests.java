@@ -520,7 +520,7 @@ public class DronesGameTests {
     }
 
     /** A following bot goes along when its owner changes dimension, there and back; a staying bot stays. */
-    @GameTest(template = "empty", batch = "dronesDimension", timeoutTicks = 800)
+    @GameTest(template = "empty", batch = "dronesDimension", timeoutTicks = 2000)
     public static void buddyFollowsOwnerAcrossDimensions(GameTestHelper helper) {
         ServerLevel home = helper.getLevel();
         ServerLevel nether = home.getServer().getLevel(Level.NETHER);
@@ -538,9 +538,15 @@ public class DronesGameTests {
         UUID id = follower.getUUID();
         Vec3 back = helper.absoluteVec(new Vec3(2.5, 2.0, 2.5));
         BuddyBot[] there = new BuddyBot[1];
+        // the test server ticks faster than chunks generate: have the Nether spot ready before the trip
+        nether.setChunkForced(4, 4, true);
+        for (int x = 2; x <= 6; x++) {
+            for (int z = 2; z <= 6; z++) nether.getChunk(x, z);
+        }
         helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(nether.isPositionEntityTicking(new BlockPos(72, 140, 72)), "the Nether spot is loaded"))
                 .thenExecute(() -> {
-                    player.teleportTo(nether, 8.5, 140.0, 8.5, 0.0F, 0.0F);
+                    player.teleportTo(nether, 72.5, 140.0, 72.5, 0.0F, 0.0F);
                     helper.assertTrue(follower.isRemoved(), "the following bot left with its owner");
                     helper.assertTrue(!stayer.isRemoved() && stayer.level() == home, "a staying bot stays");
                 })
@@ -558,6 +564,7 @@ public class DronesGameTests {
                 .thenExecute(() -> {
                     home.getEntity(id).discard();
                     stayer.discard();
+                    nether.setChunkForced(4, 4, false);
                 })
                 .thenSucceed();
     }
