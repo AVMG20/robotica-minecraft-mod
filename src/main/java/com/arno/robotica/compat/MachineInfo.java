@@ -11,7 +11,10 @@ public final class MachineInfo {
     /** Spring value of a Winding Crank without a Mainspring. */
     public static final int SPRING_NONE = -2;
 
-    /** Suffix of {@code gui.robotica.status.<status>}: idle, working, no_energy, output_full, finished. */
+    /**
+     * Suffix of {@code gui.robotica.status.<status>}: idle, working, no_energy, output_full, finished, off, no_network,
+     * wrong_dimension, no_access.
+     */
     @Nullable
     public String status;
     /** Percent 0-100, -1 when the machine has no finite job. */
