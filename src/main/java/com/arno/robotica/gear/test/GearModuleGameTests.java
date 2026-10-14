@@ -378,7 +378,10 @@ public class GearModuleGameTests {
         return mob.getHealth() < mob.getMaxHealth();
     }
 
-    /** Firing the Rivet Gun spawns a Rivet entity (no arrow, no pickup) that deals the configured damage and costs its FE. */
+    /**
+     * Firing the Rivet Gun (left-click) spawns a Rivet entity (no arrow, no pickup) that deals the configured damage and
+     * costs its FE. Right-click and a second click before the cooldown fire nothing.
+     */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void rivetGunFiresRivetEntity(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -393,6 +396,9 @@ public class GearModuleGameTests {
         player.setItemInHand(InteractionHand.MAIN_HAND, gun);
         int before = ItemEnergy.get(player.getMainHandItem());
         player.getMainHandItem().use(level, player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(level.getEntitiesOfClass(RivetEntity.class, new AABB(feet, feet).inflate(8)).isEmpty(), "right-click fires nothing");
+        GearActions.apply(player, GearActions.FIRE, 0);
+        GearActions.apply(player, GearActions.FIRE, 0);
         List<RivetEntity> rivets = level.getEntitiesOfClass(RivetEntity.class, new AABB(feet, feet).inflate(8));
         helper.assertTrue(rivets.size() == 1, "one rivet entity should fly, found " + rivets.size());
         helper.assertTrue(level.getEntitiesOfClass(net.minecraft.world.entity.projectile.AbstractArrow.class, new AABB(feet, feet).inflate(8)).isEmpty(),

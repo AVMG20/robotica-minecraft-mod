@@ -19,9 +19,15 @@ public final class GearActions {
     public static final int TOGGLE = 2;
     /** Switches an installed module (tools and weapons) on or off; arg = ModuleKind ordinal. */
     public static final int MODULE_TOGGLE = 3;
+    /** Left-click with the Rivet Gun in the main hand. */
+    public static final int FIRE = 4;
 
     public static void apply(ServerPlayer player, int action, int arg) {
         ItemStack stack = player.getMainHandItem();
+        if (action == FIRE) {
+            com.arno.robotica.gear.weapon.RivetGunItem.trigger(player);
+            return;
+        }
         if (action == MODULE_TOGGLE) {
             toggleModule(player, stack, arg);
             return;

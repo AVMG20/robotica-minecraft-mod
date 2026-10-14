@@ -1203,7 +1203,7 @@
    "items": [
     "rivet_gun"
    ],
-   "what": "Hold right-click to fire rivets. No ammo, runs on FE.",
+   "what": "Hold left-click to fire rivets. No ammo, runs on FE.",
    "stats": {
     "rows": [
      [
@@ -1212,7 +1212,7 @@
      ],
      [
       "Rate",
-      "2 shots/s"
+      "1.33 shots/s"
      ],
      [
       "Energy",

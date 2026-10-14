@@ -110,7 +110,7 @@ public final class GearConfig {
         b.pop();
         b.push("rivet");
         RIVET_DAMAGE = b.comment("Damage of one Rivet Gun rivet.").defineInRange("rivetDamage", 6.0, 0.0, 1000.0);
-        RIVET_COOLDOWN = b.comment("Ticks between two Rivet Gun shots (a mob can only be hurt every 10 ticks).").defineInRange("rivetCooldown", 10, 1, 1200);
+        RIVET_COOLDOWN = b.comment("Ticks between two Rivet Gun shots (a mob can only be hurt every 10 ticks).").defineInRange("rivetTicksPerShot", 15, 1, 1200);
         RIVET_STICK_TICKS = b.comment("Ticks a rivet stays stuck in a block before it shatters.").defineInRange("rivetStickTicks", 20, 1, 1200);
         RIVET_SPEED = b.comment("Rivet speed in blocks per tick (an arrow from a full bow is 3).").defineInRange("rivetSpeed", 4.5, 0.5, 10.0);
         RIVET_FLIGHT_TICKS = b.comment("Ticks a rivet flies before it drops out of the air.").defineInRange("rivetFlightTicks", 100, 10, 1200);
@@ -249,7 +249,7 @@ public final class GearConfig {
     }
 
     public static int rivetCooldown() {
-        return SPEC.isLoaded() ? RIVET_COOLDOWN.get() : 10;
+        return SPEC.isLoaded() ? RIVET_COOLDOWN.get() : 15;
     }
 
     public static int rivetStickTicks() {
