@@ -89,7 +89,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         if ((level.getGameTime() + pos.asLong()) % 20 == 0) {
             openSky = !level.dimensionType().hasFixedTime() && level.canSeeSky(pos.above());
-            sunny = openSky && level.isDay();
+            // Daylight from the sun's angle (the clear-weather isDay() edge): isDay() itself turns false in thunderstorms.
+            sunny = openSky && net.minecraft.util.Mth.cos(level.getTimeOfDay(1.0F) * net.minecraft.util.Mth.TWO_PI) > 0.0682F;
             raining = sunny && level.isRaining() && level.getBiome(pos).value().getPrecipitationAt(pos) != net.minecraft.world.level.biome.Biome.Precipitation.NONE;
         }
         int gen = currentOutput();
