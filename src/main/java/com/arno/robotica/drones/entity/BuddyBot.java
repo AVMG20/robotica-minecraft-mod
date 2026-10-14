@@ -1244,7 +1244,7 @@ public class BuddyBot extends DroneBase {
         // While it can build the floor, fluids at floor level are bridged instead (a lava lake, the sea).
         List<BlockPos> fluids = new ArrayList<>();
         boolean lava = false;
-        for (BlockPos p : hazardArea(t, t.k, !(platformOn() && platformBlocks() > 0))) {
+        for (BlockPos p : hazardArea(t, t.k, !(platformOn() && platformBlocks() >= 2 * radius() + 1))) {
             FluidState fs = sl.getFluidState(p);
             if (!fs.isEmpty()) {
                 fluids.add(p);
@@ -1419,7 +1419,9 @@ public class BuddyBot extends DroneBase {
     /** Gaps in the floor of the finished slice are bridged with junk blocks from the cargo. False when its own line keeps a gap. */
     private boolean fillFloor(ServerLevel sl, Tunnel t) {
         boolean floored = true;
-        for (int lat = -radius(); lat <= radius(); lat++) {
+        // centre first (0, -1, 1, -2, 2, ...), so the walkway gets the last blocks
+        for (int i = 0, n = 2 * radius() + 1; i < n; i++) {
+            int lat = (i & 1) == 0 ? i >> 1 : -((i + 1) >> 1);
             BlockPos p = cell(t, t.k, lat, -2);
             if (!sl.isLoaded(p)) continue;
             // air, plants, snow and fluids are gaps
