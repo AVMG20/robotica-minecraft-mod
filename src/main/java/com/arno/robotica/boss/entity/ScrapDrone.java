@@ -111,7 +111,7 @@ public class ScrapDrone extends Monster {
         return ownerId == null;
     }
 
-        private void fallApart() {
+    private void fallApart() {
         if (level() instanceof ServerLevel server) {
             server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.2, getZ(), 6, 0.2, 0.2, 0.2, 0.02);
             playSound(SoundEvents.CHAIN_BREAK, 1.0F, 1.2F);
