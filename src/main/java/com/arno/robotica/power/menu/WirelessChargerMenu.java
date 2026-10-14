@@ -20,7 +20,7 @@ public class WirelessChargerMenu extends MachineMenu {
     private final BlockPos pos;
     @Nullable
     private final WirelessChargerBlockEntity be;
-    private final int idxEnergy, idxCapacity, idxFlow, idxRange, idxRate;
+    private final int idxEnergy, idxCapacity, idxFlow, idxDrawn, idxRange, idxRate;
 
     /** Client side. */
     public WirelessChargerMenu(int id, Inventory inv, BlockPos pos) {
@@ -45,6 +45,7 @@ public class WirelessChargerMenu extends MachineMenu {
         idxEnergy = track(s == null ? () -> 0 : () -> s.energy.getEnergyStored());
         idxCapacity = track(s == null ? () -> 0 : () -> s.energy.getMaxEnergyStored());
         idxFlow = track(s == null ? () -> 0 : s::fePerTick);
+        idxDrawn = track(s == null ? () -> 0 : s::drawnPerTick);
         idxRange = track(s == null ? () -> 0 : s::range);
         idxRate = track(s == null ? () -> 0 : s::ratePerPlayer);
     }
@@ -52,6 +53,8 @@ public class WirelessChargerMenu extends MachineMenu {
     public int energy() { return synced(idxEnergy); }
     public int capacity() { return synced(idxCapacity); }
     public int fePerTick() { return synced(idxFlow); }
+    /** FE/t the buffer pays: delivered plus the loss. */
+    public int drawnPerTick() { return synced(idxDrawn); }
     public int range() { return synced(idxRange); }
     public int rate() { return synced(idxRate); }
 

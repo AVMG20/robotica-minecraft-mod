@@ -72,6 +72,9 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     private boolean[] satisfied = new boolean[0];
     private long window;
     private int fePerTick;
+    /** FE taken from the buffer (delivered plus loss) this second, and its last per-tick average. */
+    private long drawWindow;
+    private int drawnPerTick;
     private long totalDelivered;
     private long age;
 
@@ -103,6 +106,11 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     /** FE/t delivered into items, averaged over the last second. */
     public int fePerTick() {
         return fePerTick;
+    }
+
+    /** FE/t taken from the buffer (delivered plus the loss), averaged over the last second. */
+    public int drawnPerTick() {
+        return drawnPerTick;
     }
 
     /** FE that reached items since the block was placed (for tests and accounting). */
@@ -169,7 +177,9 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         totalDelivered += tickTotal;
         if (age % 20 == 0) {
             fePerTick = (int) Math.min(Integer.MAX_VALUE, window / 20);
+            drawnPerTick = (int) Math.min(Integer.MAX_VALUE, drawWindow / 20);
             window = 0;
+            drawWindow = 0;
         }
         boolean charging = isCharging();
         setLit(charging);
@@ -261,7 +271,9 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         if (accepted <= 0) return 0;
         int got = Math.min(accepted, item.receiveEnergy(accepted, false));
         if (got <= 0) return 0;
-        energy.consume((int) costOf(got, loss));
+        int cost = (int) costOf(got, loss);
+        energy.consume(cost);
+        drawWindow += cost;
         return got;
     }
 

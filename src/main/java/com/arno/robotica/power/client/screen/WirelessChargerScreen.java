@@ -12,7 +12,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-/** Wireless Charger GUI: energy bar, range and rate, FE/t delivered, the players in range and two card slots. */
+/** Wireless Charger GUI: energy bar with the FE/t drawn, range and rate, FE/t delivered, the players in range and two card slots. */
 public class WirelessChargerScreen extends MachineScreen<WirelessChargerMenu> {
     private static final int ROWS = 3;
 
@@ -38,7 +38,7 @@ public class WirelessChargerScreen extends MachineScreen<WirelessChargerMenu> {
     @Override
     protected void renderMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         drawEnergyBar(g, x + 9, y + 17, 12, 52, menu.energy(), menu.capacity(), false,
-                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.fePerTick())).withStyle(ChatFormatting.GRAY));
+                Component.translatable("gui.robotica.processing.using", Fmt.compact(menu.drawnPerTick())).withStyle(ChatFormatting.GRAY));
         drawLabel(g, Component.translatable("gui.robotica.wireless.stats", menu.range(), Fmt.energy(menu.rate())), x + 26, y + 18, 120);
 
         WirelessChargerBlockEntity be = menu.charger();
