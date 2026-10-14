@@ -76,7 +76,7 @@ public final class ExoConfig {
                 .define("cellsRechargeSuit", true);
         CELL_RECHARGE_RATE = b.comment("Most FE per second the inventory cells move into the suit, all cells together.")
                 .defineInRange("cellRechargePerSecond", 2_000, 0, 10_000_000);
-        CELL_SLOT_RATE = b.comment("Most FE per second the cell in the chestplate's cell slot moves into the suit.")
+        CELL_SLOT_RATE = b.comment("Most FE per second the cell in the chestplate's cell slot moves into the suit and the FE tools in the inventory.")
                 .defineInRange("cellSlotPerSecond", 4_000, 0, 10_000_000);
         b.pop();
 

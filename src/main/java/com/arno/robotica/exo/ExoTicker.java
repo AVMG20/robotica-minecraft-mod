@@ -8,6 +8,7 @@ import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CellItem;
 import com.arno.robotica.core.item.CoreItems;
+import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.net.ExoFxPayload;
 import com.arno.robotica.exo.net.ExoJetHeatPayload;
 import com.arno.robotica.exo.net.ExoSonarPayload;
@@ -41,6 +42,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -49,6 +51,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
@@ -56,6 +59,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Arrays;
@@ -996,16 +1000,37 @@ public final class ExoTicker {
         return rate - left;
     }
 
-    /** The cell in the worn chestplate's cell slot tops up the suit once per second (config cellSlotPerSecond). */
+    /**
+     * The cell in the worn chestplate's cell slot tops up the suit once per second (config cellSlotPerSecond), then
+     * with what is left of that rate the FE tools in the hands and the inventory (anything that holds FE but gives none
+     * out, like {@link CellItem#inventoryTick}).
+     */
     private static void chestCell(ServerPlayer p) {
         ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
         if (chest.isEmpty()) return;
         ItemStack cell = ExoData.cell(chest);
         if (!(cell.getItem() instanceof CellItem item) || ItemEnergy.get(cell) <= 0) return;
-        ItemStack[] pieces = chargeOrder(p);
-        if (!needsCharge(pieces)) return;
         int rate = (int) Math.min((long) item.getMaxExtract(cell) * 20, ExoConfig.cellSlotPerSecond());
-        if (feed(cell, pieces, rate) > 0) ExoData.setCell(chest, cell);
+        ItemStack[] pieces = chargeOrder(p);
+        int moved = needsCharge(pieces) ? feed(cell, pieces, rate) : 0;
+        var inv = p.getInventory();
+        for (int i = -2; i < inv.items.size() && moved < rate && ItemEnergy.get(cell) > 0; i++) {
+            if (i == inv.selected) continue;
+            ItemStack tool = i == -2 ? p.getMainHandItem() : i == -1 ? p.getOffhandItem() : inv.items.get(i);
+            moved += feedTool(cell, tool, rate - moved);
+        }
+        if (moved > 0) ExoData.setCell(chest, cell);
+    }
+
+    /** Moves up to {@code max} FE from {@code cell} into one FE tool. Returns the FE moved. */
+    private static int feedTool(ItemStack cell, ItemStack tool, int max) {
+        if (tool.isEmpty() || tool.getItem() instanceof BlockItem || tool.getItem() instanceof CellItem || tool.getItem() instanceof ExoArmorItem) return 0;
+        IEnergyStorage storage = tool.getCapability(Capabilities.EnergyStorage.ITEM);
+        if (storage == null || !storage.canReceive() || storage.canExtract()) return 0;
+        int offer = Math.min(max, ItemEnergy.get(cell));
+        int got = offer <= 0 ? 0 : storage.receiveEnergy(offer, false);
+        if (got > 0) ItemEnergy.drain(cell, got);
+        return Math.max(0, got);
     }
 
     /** Cells and Mainsprings in the inventory top up the worn suit once per second (config cellsRechargeSuit). */
