@@ -909,13 +909,14 @@ public final class Showcase {
     private static final String[] ARMOR_NAMES = {"boots", "leggings", "chestplate", "helmet"};
 
     private static void newScenes() {
-        // Exo-Frame Mk1 to Mk4 on armor stands.
+        // Exo-Frame Mk1 to Mk4 on armor stands, charged so the conduits glow.
         if (wants("14_exo_frames")) step(20, () -> server(sp -> {
             for (int mk = 1; mk <= 4; mk++) {
                 StringBuilder armor = new StringBuilder();
                 for (int i = 0; i < 4; i++) {
                     if (i > 0) armor.append(',');
-                    armor.append("{id:\"robotica:exo_").append(ARMOR_NAMES[i]).append("_mk").append(mk).append("\",count:1}");
+                    armor.append("{id:\"robotica:exo_").append(ARMOR_NAMES[i]).append("_mk").append(mk)
+                            .append("\",count:1,components:{\"robotica:energy\":1000}}");
                 }
                 sp.serverLevel().setBlock(new BlockPos(mk * 2 - 2, Y - 1, 100), Blocks.POLISHED_DEEPSLATE.defaultBlockState(), 3);
                 command(sp, "summon minecraft:armor_stand " + (mk * 2 - 1.5) + " " + Y + " 100.5 {Rotation:[0f,0f],NoBasePlate:1b,ShowArms:1b,ArmorItems:[" + armor + "]}");

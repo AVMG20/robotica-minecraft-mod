@@ -12,6 +12,7 @@ summary: Powered armor, Mk1 to Mk4, with modules and a core socket.
 - Cells in your inventory top the suit up (2,000 FE/s).
 - Every chestplate has a cell slot on the J screen, right of its modules. The cell charges the suit, then the FE tools in your inventory (up to 4,000 FE/s). Chargers refill it once the chestplate is full.
 - One module of each kind per suit ([[capacitor_plating_module]]: one per piece). Higher levels need a higher Mk.
+- A piece's lights go dark when it runs out of FE.
 
 ## Modules
 

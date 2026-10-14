@@ -285,7 +285,7 @@
     "wireless_charger_mk3",
     "wireless_charger_mk4"
    ],
-   "what": "Charges the FE items of you and your team in range.",
+   "what": "Charges the FE items of every player in range.",
    "use": [
     "Place it against a ceiling or wall to point its mast down or sideways.",
     "Stand within range: faint violet motes show who it charges."

@@ -38,8 +38,8 @@ import java.util.UUID;
 
 /**
  * Wireless Charger: charges the FE items of players in range, worn armor first (the Exo-Frame), then the held items,
- * then the rest of the inventory, at its Mk's rate per player. Only the owner and the owner's team unless the server
- * config allows everyone. Every FE that reaches an item costs {@code wirelessLoss} percent more from the buffer.
+ * then the rest of the inventory, at its Mk's rate per player. Every player in range is charged; only the owner, their
+ * team or an operator may open it. Every FE that reaches an item costs {@code wirelessLoss} percent more from the buffer.
  * Range and rate come from range and speed cards. Fed by cables or a Tesla link like any machine.
  *
  * <p>Players in range are collected every {@link #SCAN_INTERVAL} ticks; the list (entity ids and a state per player)
@@ -48,12 +48,8 @@ import java.util.UUID;
 public class WirelessChargerBlockEntity extends PowerBlockEntity implements MenuProvider, InfoSource {
     public static final int SCAN_INTERVAL = 10;
     public static final int UPGRADE_SLOTS = UpgradeRules.Fixed.WIRELESS_CHARGER.slots;
-    /** Per player state: items took energy since the last scan / nothing to charge / not allowed / buffer empty. */
-    public static final byte CHARGING = 0, IDLE = 1, DENIED = 2, NO_POWER = 3;
-
-    /** Game tests set this to force the "charge anyone" rule; null reads the config. */
-    @Nullable
-    public static Boolean anyoneOverride;
+    /** Per player state: items took energy since the last scan / nothing to charge / buffer empty. */
+    public static final byte CHARGING = 0, IDLE = 1, NO_POWER = 2;
 
     /** The buffer holds this many ticks of the base rate, and takes this many times the base rate per tick. */
     public static final int BUFFER_TICKS = 200, INPUT_PLAYERS = 20;
@@ -150,12 +146,6 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         return player.hasPermissions(2) || Owners.allied(level, owner, ownerName, player);
     }
 
-    /** Whether this charger feeds the player: the owner and the owner's team, or everyone when the config says so. */
-    public boolean mayCharge(Player player) {
-        boolean anyone = anyoneOverride != null ? anyoneOverride : PowerConfig.wirelessChargeAnyone();
-        return anyone || Owners.allied(level, owner, ownerName, player);
-    }
-
     // ---- tick ----
 
     @Override
@@ -167,7 +157,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         // an empty buffer charges nothing: skip the item lookups
         for (int i = 0; i < targets.size() && energy.getEnergyStored() > 0; i++) {
             Player player = targets.get(i);
-            if (satisfied[i] || states[i] == DENIED || player.isRemoved() || !player.isAlive()) continue;
+            if (satisfied[i] || player.isRemoved() || !player.isAlive()) continue;
             long got = chargePlayer(player, rate);
             if (got <= 0) satisfied[i] = true;
             deliveredSince[i] += got;
@@ -202,8 +192,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         // states for the players of the last scan, from what they got since
         byte[] lastStates = new byte[targets.size()];
         for (int i = 0; i < targets.size(); i++) {
-            byte old = states.length > i ? states[i] : IDLE;
-            lastStates[i] = old == DENIED ? DENIED : deliveredSince[i] > 0 ? CHARGING : energy.getEnergyStored() <= 0 ? NO_POWER : IDLE;
+            lastStates[i] = deliveredSince[i] > 0 ? CHARGING : energy.getEnergyStored() <= 0 ? NO_POWER : IDLE;
         }
         List<Player> previous = new ArrayList<>(targets);
         Vec3 center = Vec3.atCenterOf(pos);
@@ -221,8 +210,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
             Player player = found.get(i);
             newIds[i] = player.getId();
             int at = previous.indexOf(player);
-            if (!mayCharge(player)) newStates[i] = DENIED;
-            else if (at >= 0 && lastStates[at] != DENIED) newStates[i] = lastStates[at];
+            if (at >= 0) newStates[i] = lastStates[at];
             else newStates[i] = energy.getEnergyStored() <= 0 ? NO_POWER : IDLE;
         }
         targets.clear();
