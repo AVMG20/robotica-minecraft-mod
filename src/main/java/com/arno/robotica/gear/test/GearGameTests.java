@@ -11,6 +11,7 @@ import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.GearBlocks;
 import com.arno.robotica.gear.GearItems;
 import com.arno.robotica.gear.bench.TinkersBenchMenu;
+import com.arno.robotica.gear.tool.AreaBreaker;
 import com.arno.robotica.gear.tool.AreaMode;
 import com.arno.robotica.gear.tool.AreaShape;
 import com.arno.robotica.gear.tool.BreakQueue;
@@ -198,6 +199,35 @@ public class GearGameTests {
         helper.assertTrue(level.getBlockState(center.offset(2, 0, 0)).is(Blocks.STONE), "block outside the area must stay");
         int used = before - ItemEnergy.get(player.getMainHandItem());
         helper.assertTrue(used == 9 * perBlock, "should use 9 x " + perBlock + " FE, used " + used);
+        BreakQueue.clear(player.getUUID());
+        helper.succeed();
+    }
+
+    /** Hitting a torch (instant break, not a drill block) set in a stone floor mines only the torch. */
+    @GameTest(template = "empty")
+    public static void drillAreaIgnoresInstantBlocks(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos center = helper.absolutePos(new BlockPos(2, 2, 2));
+        ServerPlayer player = survivalPlayer(helper, center);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) level.setBlock(center.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
+        }
+        level.setBlock(center.below(), Blocks.STONE.defaultBlockState(), 3);
+        level.setBlock(center, Blocks.TORCH.defaultBlockState(), 3);
+        ItemStack drill = new ItemStack(GearItems.SERVO_DRILL.get());
+        ItemEnergy.fill(drill);
+        drill.set(GearComponents.MODE.get(), AreaMode.AREA_3);
+        player.setItemInHand(InteractionHand.MAIN_HAND, drill);
+        GearToolItem tool = (GearToolItem) drill.getItem();
+        helper.assertTrue(AreaBreaker.collect(level, player, drill, tool, center, Direction.UP).isEmpty(), "a torch starts no area");
+        helper.assertTrue(!AreaBreaker.collect(level, player, drill, tool, center.east(), Direction.UP).isEmpty(),
+                "the stone next to it still does");
+        helper.assertTrue(player.gameMode.destroyBlock(center), "the torch breaks");
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx != 0 || dz != 0) helper.assertTrue(level.getBlockState(center.offset(dx, 0, dz)).is(Blocks.STONE), "the stone stays");
+            }
+        }
         BreakQueue.clear(player.getUUID());
         helper.succeed();
     }
