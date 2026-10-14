@@ -16,12 +16,14 @@ import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.ExoTicker;
 import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.menu.ExoMenu;
+import com.arno.robotica.gear.GearItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -38,8 +40,10 @@ import net.minecraft.world.item.crafting.SmithingRecipeInput;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -529,6 +533,53 @@ public class ExoGameTests {
         ItemStack taken = cellSlot.remove(1);
         helper.assertTrue(taken.is(CoreItems.COPPER_CELL.get()) && ItemEnergy.get(taken) == left, "taking the cell out gives it back as it is now");
         helper.assertTrue(ExoData.cell(player.getItemBySlot(EquipmentSlot.CHEST)).isEmpty(), "the cell slot is empty again");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void chestplateCellChargesTools(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        ItemStack chest = piece(ExoItems.CHESTPLATE_MK1, 0);
+        ItemEnergy.fill(chest);
+        ItemStack cell = new ItemStack(CoreItems.COPPER_CELL.get());
+        ItemEnergy.set(cell, 100_000);
+        ExoData.setCell(chest, cell);
+        player.setItemSlot(EquipmentSlot.CHEST, chest);
+        ItemStack hand = new ItemStack(GearItems.BORE_DRILL.get());
+        ItemStack pocket = new ItemStack(GearItems.BORE_DRILL.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, hand);
+        player.getInventory().setItem(20, pocket);
+
+        ticks(player, 20);
+        int tools = ItemEnergy.get(hand) + ItemEnergy.get(pocket);
+        int left = ItemEnergy.get(ExoData.cell(player.getItemBySlot(EquipmentSlot.CHEST)));
+        helper.assertTrue(ItemEnergy.get(hand) > 0, "the cell charges the held drill");
+        helper.assertTrue(tools <= ExoConfig.cellSlotPerSecond(), "at most " + ExoConfig.cellSlotPerSecond() + " FE per second, got " + tools);
+        helper.assertTrue(left == 100_000 - tools, "what the tools got came out of the cell: cell " + left + ", tools " + tools);
+
+        ItemEnergy.fill(hand);
+        ticks(player, 20);
+        helper.assertTrue(ItemEnergy.get(pocket) > 0, "with the held drill full the cell charges the drill in the inventory");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void chargersFillTheChestplateCell(GameTestHelper helper) {
+        ItemStack chest = piece(ExoItems.CHESTPLATE_MK1, 0);
+        ItemStack cell = new ItemStack(CoreItems.COPPER_CELL.get());
+        ExoData.setCell(chest, cell);
+        int battery = ItemEnergy.capacity(chest);
+        IEnergyStorage storage = chest.getCapability(Capabilities.EnergyStorage.ITEM);
+        helper.assertTrue(storage != null && storage.getMaxEnergyStored() == battery + ItemEnergy.capacity(cell), "chargers see the battery plus the cell");
+
+        helper.assertTrue(storage.receiveEnergy(1_000, false) == 1_000, "an empty chestplate takes the FE");
+        helper.assertTrue(ItemEnergy.get(chest) == 1_000 && ItemEnergy.get(ExoData.cell(chest)) == 0, "the chestplate's own battery fills first");
+
+        ItemEnergy.fill(chest);
+        storage = chest.getCapability(Capabilities.EnergyStorage.ITEM);
+        helper.assertTrue(storage.receiveEnergy(1_000, false) == 1_000, "a full chestplate still takes FE for its cell");
+        helper.assertTrue(ItemEnergy.get(ExoData.cell(chest)) == 1_000, "the cell got it, has " + ItemEnergy.get(ExoData.cell(chest)));
+        helper.assertTrue(storage.getEnergyStored() == battery + 1_000, "chargers see the battery plus the cell");
         helper.succeed();
     }
 

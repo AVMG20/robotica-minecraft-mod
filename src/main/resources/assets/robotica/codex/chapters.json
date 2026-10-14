@@ -538,7 +538,7 @@
         },
         {
           "title": "Cell slot",
-          "text": "Every chestplate has a cell slot on the J screen, right of its modules. The cell in it charges the worn suit.",
+          "text": "Every chestplate has a cell slot on the J screen, right of its modules. The cell charges the suit, then the FE tools in your inventory. Chargers refill it once the chestplate is full.",
           "items": [
             "robotica:copper_cell",
             "robotica:redstone_cell",

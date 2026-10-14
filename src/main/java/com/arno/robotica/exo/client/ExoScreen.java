@@ -69,7 +69,13 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         if (slot instanceof ExoMenu.ModuleSlot m) {
             return Component.translatable("exo.robotica.slot_hint", Component.translatable("exo.robotica.piece." + m.piece().getName()));
         }
-        if (slot instanceof ExoMenu.CoreSlot) return Component.translatable("exo.robotica.core_hint");
+        if (slot instanceof ExoMenu.CoreSlot) {
+            return Component.empty()
+                    .append(Component.translatable("exo.robotica.core_hint.servo", ExoConfig.bonusArgs("servo"))).append("\n")
+                    .append(Component.translatable("exo.robotica.core_hint.magma")).append("\n")
+                    .append(Component.translatable("exo.robotica.core_hint.antigrav")).append("\n")
+                    .append(Component.translatable("exo.robotica.core_hint.needs", ExoConfig.setBonusMinMark()).withStyle(ChatFormatting.GRAY));
+        }
         if (slot instanceof ExoMenu.CellSlot) return Component.translatable("exo.robotica.cell_hint");
         return null;
     }

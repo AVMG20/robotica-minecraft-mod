@@ -31,6 +31,8 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -91,6 +93,62 @@ public class ExoArmorItem extends ArmorItem implements EnergyItem, ModuleHolder 
     @Override
     public int getMaxExtract(ItemStack stack) {
         return 0;
+    }
+
+    /** Chargers fill a chestplate's own battery first, then the cell in its cell slot. */
+    @Override
+    public IEnergyStorage energyStorage(ItemStack stack) {
+        IEnergyStorage own = EnergyItem.super.energyStorage(stack);
+        return getEquipmentSlot() == EquipmentSlot.CHEST ? new WithCell(stack, own) : own;
+    }
+
+    private record WithCell(ItemStack chest, IEnergyStorage own) implements IEnergyStorage {
+        /** The cell's storage (on a copy of the cell), or null without a cell that takes FE. */
+        @Nullable
+        private IEnergyStorage cell(ItemStack cell) {
+            return cell.getItem() instanceof EnergyItem e && e.getMaxReceive(cell) > 0 ? e.energyStorage(cell) : null;
+        }
+
+        @Override
+        public int receiveEnergy(int toReceive, boolean simulate) {
+            int got = own.receiveEnergy(toReceive, simulate);
+            if (got >= toReceive) return got;
+            ItemStack cell = ExoData.cell(chest);
+            IEnergyStorage storage = cell(cell);
+            if (storage == null) return got;
+            int more = storage.receiveEnergy(toReceive - got, simulate);
+            if (!simulate && more > 0) ExoData.setCell(chest, cell);
+            return got + more;
+        }
+
+        @Override
+        public int extractEnergy(int toExtract, boolean simulate) {
+            return own.extractEnergy(toExtract, simulate);
+        }
+
+        @Override
+        public int getEnergyStored() {
+            ItemStack cell = ExoData.cell(chest);
+            long cellStored = cell(cell) == null ? 0 : ItemEnergy.get(cell);
+            return (int) Math.min(Integer.MAX_VALUE, own.getEnergyStored() + cellStored);
+        }
+
+        @Override
+        public int getMaxEnergyStored() {
+            ItemStack cell = ExoData.cell(chest);
+            long cellCap = cell(cell) == null ? 0 : ItemEnergy.capacity(cell);
+            return (int) Math.min(Integer.MAX_VALUE, own.getMaxEnergyStored() + cellCap);
+        }
+
+        @Override
+        public boolean canExtract() {
+            return own.canExtract();
+        }
+
+        @Override
+        public boolean canReceive() {
+            return own.canReceive() || cell(ExoData.cell(chest)) != null;
+        }
     }
 
     @Override
