@@ -28,7 +28,8 @@ public final class ExoActions {
     public static final int JET_STOP = 8;
 
     public static void apply(ServerPlayer player, int action) {
-        // Thrust intent only sets a flag (checked on the next tick), so it needs no rate limit; a stop acts at once and is never dropped.
+        // Thrust intent only sets a flag (checked on the next tick; ending a glide is rate limited in jetWant); a stop acts at once
+        // and is never dropped.
         if (action == JET_STOP) {
             ExoTicker.jetWant(player, ExoJet.OFF);
             return;

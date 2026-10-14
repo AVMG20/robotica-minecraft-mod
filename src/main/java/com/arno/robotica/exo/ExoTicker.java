@@ -605,6 +605,8 @@ public final class ExoTicker {
             st = newState(p);
         }
         if (mode == ExoJet.THRUST && p.isFallFlying()) {
+            // Ending a glide does real work, so a flood of these is rate limited like a key press.
+            if (!actionAllowed(p, ExoActions.JET_THRUST)) return;
             refresh(p, st);
             if (jetReady(p, st)) {
                 p.stopFallFlying();
@@ -617,6 +619,8 @@ public final class ExoTicker {
                 return;
             }
         }
+        // A burst that started and stopped within one server tick still counts as thrust in this fall (Glider gate).
+        if (mode == ExoJet.OFF && st.jetWant != ExoJet.OFF && st.jetMode == ExoJet.OFF && !ExoJet.grounded(p)) st.thrustedAir = true;
         st.jetWant = mode;
         if (mode == ExoJet.OFF && st.jetMode != ExoJet.OFF) setJetMode(p, st, ExoJet.OFF, ExoFxPayload.JET_OFF, ExoJet.grounded(p));
     }
