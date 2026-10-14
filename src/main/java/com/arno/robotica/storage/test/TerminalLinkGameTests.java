@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +22,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.UUID;
 
 /** Terminal Link: dimension rule, refusals, the remote screen's chunk ticket and its checks. */
 @GameTestHolder(Robotica.MODID)
@@ -107,5 +110,32 @@ public class TerminalLinkGameTests {
         helper.assertTrue(!ChunkTickets.holdsAny(player.getUUID()), "and the ticket goes");
         helper.assertTrue(RemoteAccess.IDLE_TICKS == 1_200, "60 s idle limit");
         helper.succeed();
+    }
+
+    /**
+     * The player's ticket is not a ticking one: a terminal in a chunk loaded only by it still ticks (draining its FE), but
+     * the chunk gets no forced random ticks or spawns.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void terminalLinkTicketKeepsTheTerminalTicking(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos far = helper.absolutePos(POS).offset(2_048, 0, 2_048);
+        ChunkPos chunk = new ChunkPos(far);
+        UUID owner = UUID.randomUUID();
+        var distance = level.getChunkSource().chunkMap.getDistanceManager();
+        helper.assertTrue(!level.shouldTickBlocksAt(chunk.toLong()), "the far chunk starts unloaded");
+        ChunkTickets.holdForPlayer(level, owner, chunk);
+        level.getChunk(chunk.x, chunk.z);
+        level.setBlockAndUpdate(far, StorageContent.TERMINAL.get().defaultBlockState());
+        StorageTerminalBlockEntity terminal = (StorageTerminalBlockEntity) level.getBlockEntity(far);
+        terminal.energy.setEnergy(terminal.energy.getMaxEnergyStored());
+        int full = terminal.energy.getEnergyStored();
+        helper.succeedWhen(() -> {
+            helper.assertTrue(level.shouldTickBlocksAt(chunk.toLong()), "block entities tick in the held chunk");
+            helper.assertTrue(!distance.shouldForceTicks(chunk.toLong()), "no forced random ticks or spawns");
+            helper.assertTrue(terminal.isPowered() && terminal.energy.getEnergyStored() < full, "the terminal ticks and drains FE");
+            level.setBlockAndUpdate(far, Blocks.AIR.defaultBlockState());
+            ChunkTickets.releasePlayer(level.getServer(), owner);
+        });
     }
 }

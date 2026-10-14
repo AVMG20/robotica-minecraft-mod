@@ -23,8 +23,9 @@ import java.util.UUID;
  * <ul>
  * <li>{@link #ANCHORS}: Chunk Anchor tickets, owned by the anchor's position and ticking. They survive a restart; the
  * validation callback ({@link ChunkClaims#validate}) drops the tickets of anchors that are gone.</li>
- * <li>{@link #PLAYERS}: one on-demand chunk per player (the Terminal Link), owned by the player's UUID. Released on close,
- * logout and server stop, and all dropped on the next start.</li>
+ * <li>{@link #PLAYERS}: one on-demand chunk per player (the Terminal Link), owned by the player's UUID, not ticking: block
+ * entities there still tick (a NeoForge ticket loads the chunk at entity-ticking level either way), but it gets no forced
+ * random ticks or mob spawns. Released on close, logout and server stop, and all dropped on the next start.</li>
  * </ul>
  * Scans never call this: only those two features do.
  */
@@ -74,12 +75,12 @@ public final class ChunkTickets {
         return FORCED.contains(key(dimension, owner, chunk.x, chunk.z));
     }
 
-    /** Loads one chunk for a player (ticking), releasing any chunk the player held before. */
+    /** Loads one chunk for a player (not ticking), releasing any chunk the player held before. */
     public static void holdForPlayer(ServerLevel level, UUID player, ChunkPos chunk) {
         Held old = HELD.get(player);
         if (old != null && old.dimension().equals(level.dimension()) && old.chunk() == chunk.toLong()) return;
         releasePlayer(level.getServer(), player);
-        PLAYERS.forceChunk(level, player, chunk.x, chunk.z, true, true);
+        PLAYERS.forceChunk(level, player, chunk.x, chunk.z, true, false);
         HELD.put(player, new Held(level.dimension(), chunk.toLong()));
     }
 
@@ -89,7 +90,7 @@ public final class ChunkTickets {
         if (held == null) return;
         ServerLevel level = server.getLevel(held.dimension());
         if (level != null) {
-            PLAYERS.forceChunk(level, player, ChunkPos.getX(held.chunk()), ChunkPos.getZ(held.chunk()), false, true);
+            PLAYERS.forceChunk(level, player, ChunkPos.getX(held.chunk()), ChunkPos.getZ(held.chunk()), false, false);
         }
     }
 
