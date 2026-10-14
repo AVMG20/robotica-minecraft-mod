@@ -1,5 +1,5 @@
-"""Automation textures: robot body atlases (Stumpy, Sprout), shared robot parts, Mk tier accents, Excavator,
-Supply Crate and the Mk farm kits.
+"""Automation textures: robot body atlases (Stumpy, Sprout), shared robot parts, Mk tier accents, Excavator and
+Supply Crate.
 Run: python3 scripts/textures/automation.py
 
 <robot>_body.png is a 32x32 atlas at the same texel density as a 16x16 texture (the models address it with uv = texel / 2):

@@ -508,7 +508,8 @@ public class Rancher extends PathfinderMob {
         if (!held.isEmpty() && EnergyUtil.isEnergyItem(held) && !(held.getItem() instanceof RancherItem) && chargeFrom(sp, held)) {
             return InteractionResult.CONSUME;
         }
-        sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new RancherMenu(id, inv, this), getDisplayName()),
+        sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new RancherMenu(id, inv, this),
+                hasCustomName() ? getDisplayName() : getPickResult().getHoverName()),
                 buf -> buf.writeVarInt(getId()));
         return InteractionResult.CONSUME;
     }
@@ -632,6 +633,11 @@ public class Rancher extends PathfinderMob {
             return false;
         }
         return super.hurt(source, amount);
+    }
+
+    @Override
+    public boolean canUsePortal(boolean allowPassengers) {
+        return false;
     }
 
     @Override

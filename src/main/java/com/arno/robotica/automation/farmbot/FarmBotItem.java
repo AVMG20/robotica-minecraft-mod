@@ -131,6 +131,6 @@ public class FarmBotItem extends Item implements EnergyItem, HasDetails {
         lines.add(HasDetails.line("tooltip.robotica.farm_bot.storage"));
         lines.add(HasDetails.line("tooltip.robotica.farm_bot.power"));
         lines.add(HasDetails.line("tooltip.robotica.farm_bot.controls"));
-        if (tier > 1) lines.add(HasDetails.line("tooltip.robotica.farm_bot.upgrade", tier - 1));
+        if (tier > 1) lines.add(HasDetails.line("tooltip.robotica.farm_bot.upgrade"));
     }
 }

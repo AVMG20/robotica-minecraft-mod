@@ -5,7 +5,7 @@ import com.arno.robotica.automation.entity.BotFx;
 import com.arno.robotica.automation.entity.Drops;
 import com.arno.robotica.automation.entity.TreeScan;
 import com.arno.robotica.core.CoreSounds;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -48,10 +48,11 @@ public class Stumpy extends FarmBot {
     /** The tool the drops are rolled with (never changed). */
     private static final ItemStack TOOL = new ItemStack(Items.IRON_AXE);
     /**
-     * Logs of the trees being felled right now, per level, with the Stumpy felling them, so two Stumpys never fell (and pay
-     * for) the same tree twice. Server thread only; entries of a removed Stumpy count as free.
+     * Logs of the trees being felled right now, per level, with the entity id of the Stumpy felling them, so two Stumpys
+     * never fell (and pay for) the same tree twice. Ids, not entities, so a level can still be unloaded. Server thread
+     * only; entries of a removed Stumpy count as free.
      */
-    private static final Map<Level, Long2ObjectOpenHashMap<Stumpy>> CLAIMED = new WeakHashMap<>();
+    private static final Map<Level, Long2IntOpenHashMap> CLAIMED = new WeakHashMap<>();
 
     /** Log clusters without natural leaves (player builds). */
     private final LongOpenHashSet ignored = new LongOpenHashSet();
@@ -127,9 +128,14 @@ public class Stumpy extends FarmBot {
     }
 
     @Override
+    protected boolean canAfford(ServerLevel sl, BlockPos t) {
+        return energy.getEnergyStored() >= scaledDrain(AutomationConfig.stumpyFePerLog(), 1);
+    }
+
+    @Override
     protected boolean act(ServerLevel sl, BlockPos start) {
         BlockState startState = sl.getBlockState(start);
-        if (!startState.is(BlockTags.LOGS)) return false;
+        if (!startState.is(BlockTags.LOGS) || !mayBreak(sl, start, startState)) return false;
         TreeScan tree = TreeScan.scan(sl, start, AutomationConfig.maxLogs(), true);
         if (tree.naturalLeaves == 0) {
             for (BlockPos p : tree.logs) ignored.add(p.asLong());
@@ -203,11 +209,11 @@ public class Stumpy extends FarmBot {
     // ---- claims ----
 
     private boolean isClaimed(Level level, BlockPos pos) {
-        Long2ObjectOpenHashMap<Stumpy> map = CLAIMED.get(level);
-        if (map == null) return false;
-        Stumpy by = map.get(pos.asLong());
-        if (by == null || by == this) return false;
-        if (by.isRemoved() || !by.waveActive()) {
+        Long2IntOpenHashMap map = CLAIMED.get(level);
+        if (map == null || !map.containsKey(pos.asLong())) return false;
+        int id = map.get(pos.asLong());
+        if (id == getId()) return false;
+        if (!(level.getEntity(id) instanceof Stumpy by) || by.isRemoved() || !by.waveActive()) {
             map.remove(pos.asLong());
             return false;
         }
@@ -215,20 +221,20 @@ public class Stumpy extends FarmBot {
     }
 
     private void claimRemaining(Level level) {
-        Long2ObjectOpenHashMap<Stumpy> map = CLAIMED.computeIfAbsent(level, l -> new Long2ObjectOpenHashMap<>());
-        for (int i = logCursor; i < waveLogs.length; i++) map.put(waveLogs[i], this);
+        Long2IntOpenHashMap map = CLAIMED.computeIfAbsent(level, l -> new Long2IntOpenHashMap());
+        for (int i = logCursor; i < waveLogs.length; i++) map.put(waveLogs[i], getId());
     }
 
     private void release(long pos) {
-        Long2ObjectOpenHashMap<Stumpy> map = CLAIMED.get(level());
-        if (map != null && map.get(pos) == this) map.remove(pos);
+        Long2IntOpenHashMap map = CLAIMED.get(level());
+        if (map != null && map.containsKey(pos) && map.get(pos) == getId()) map.remove(pos);
     }
 
     private void releaseRemaining() {
-        Long2ObjectOpenHashMap<Stumpy> map = CLAIMED.get(level());
+        Long2IntOpenHashMap map = CLAIMED.get(level());
         if (map == null) return;
         for (int i = logCursor; i < waveLogs.length; i++) {
-            if (map.get(waveLogs[i]) == this) map.remove(waveLogs[i]);
+            if (map.containsKey(waveLogs[i]) && map.get(waveLogs[i]) == getId()) map.remove(waveLogs[i]);
         }
         if (map.isEmpty()) CLAIMED.remove(level());
     }
@@ -301,7 +307,17 @@ public class Stumpy extends FarmBot {
             if (inArea(p) && sl.isLoaded(p) && sl.getBlockState(p).isAir() && sl.getBlockState(p.below()).is(BlockTags.DIRT)
                     && plantSapling(sl, p, wavePrefix)) planted++;
         }
+        // Not one log came down (a claim protects the rest): leave this tree alone instead of paying for it again.
+        if (waveFelled == 0) {
+            for (long log : waveLogs) ignored.add(log);
+        }
         clearWave();
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!level().isClientSide) releaseRemaining();
+        super.remove(reason);
     }
 
     private void clearWave() {

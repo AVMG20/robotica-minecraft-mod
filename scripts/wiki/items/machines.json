@@ -488,7 +488,7 @@
     "supply_crate_mk3",
     "supply_crate_mk4"
    ],
-   "what": "Storage crate. Robots and machines touching it put their drops in.",
+   "what": "Storage crate. Machines touching it put their drops in. Stumpy, Sprout and the Rancher use the biggest one within 3 blocks of where they were placed.",
    "use": [
     "Right-click it with the next Mk to upgrade it in place; the items stay."
    ],

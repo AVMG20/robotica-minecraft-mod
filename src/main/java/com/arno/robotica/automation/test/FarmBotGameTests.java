@@ -26,6 +26,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.AttachedStemBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
@@ -105,24 +106,35 @@ public class FarmBotGameTests {
 
     // ---------------------------------------------------------------- Sprout
 
+    /** Below the floor is open: sand, gravel and water there need a block under them. */
+    private static void floorBlock(GameTestHelper helper, BlockPos at, Block block) {
+        helper.setBlock(at.below(), Blocks.STONE);
+        helper.setBlock(at, block);
+    }
+
     /**
-     * Nine ripe wheat in a 3x3 square: one stop per 3x3, so it is done long before nine single harvests (40 ticks each
-     * at Mk1) could be.
+     * Nine ripe wheat in a 3x3 square: the nearest is at its edge, yet one stop works the whole square, the 3x3 with
+     * the most work around it.
      */
     @GameTest(template = PEN, timeoutTicks = 300)
     public static void sproutHarvestsA3x3PerStop(GameTestHelper helper) {
         for (int x = 4; x <= 6; x++) {
-            for (int z = 1; z <= 3; z++) {
+            for (int z = 2; z <= 4; z++) {
                 helper.setBlock(new BlockPos(x, 1, z), Blocks.FARMLAND);
                 helper.setBlock(new BlockPos(x, 2, z), Blocks.WHEAT.defaultBlockState().setValue(CropBlock.AGE, 7));
             }
         }
         Sprout sprout = sprout(helper);
         sprout.pouch.setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 9));
+        int[] firstHarvest = {-1};
+        helper.onEachTick(() -> {
+            if (firstHarvest[0] < 0 && chest(helper, Items.WHEAT) > 0) firstHarvest[0] = chest(helper, Items.WHEAT);
+        });
         helper.succeedWhen(() -> {
+            helper.assertTrue(firstHarvest[0] == 9, "one stop should harvest all 9 wheat, the first brought " + firstHarvest[0]);
             helper.assertTrue(chest(helper, Items.WHEAT) == 9, "Chest should hold 9 wheat, has " + chest(helper, Items.WHEAT));
             for (int x = 4; x <= 6; x++) {
-                for (int z = 1; z <= 3; z++) {
+                for (int z = 2; z <= 4; z++) {
                     BlockState state = helper.getBlockState(new BlockPos(x, 2, z));
                     helper.assertTrue(state.is(Blocks.WHEAT) && state.getValue(CropBlock.AGE) < 7, "Replanted at " + x + "," + z + ": " + state);
                 }
@@ -134,9 +146,9 @@ public class FarmBotGameTests {
     @GameTest(template = PEN, timeoutTicks = 400)
     public static void sproutCutsCaneAndCactus(GameTestHelper helper) {
         BlockPos cane = new BlockPos(3, 2, 3), cactus = new BlockPos(7, 2, 3);
-        helper.setBlock(cane.below(), Blocks.SAND);
-        helper.setBlock(cane.below().north(), Blocks.WATER);
-        helper.setBlock(cactus.below(), Blocks.SAND);
+        floorBlock(helper, cane.below(), Blocks.SAND);
+        floorBlock(helper, cane.below().north(), Blocks.WATER);
+        floorBlock(helper, cactus.below(), Blocks.SAND);
         for (int i = 0; i < 3; i++) {
             helper.setBlock(cane.above(i), Blocks.SUGAR_CANE);
             helper.setBlock(cactus.above(i), Blocks.CACTUS);
@@ -161,7 +173,7 @@ public class FarmBotGameTests {
         helper.setBlock(pumpkinStem.below(), Blocks.FARMLAND);
         helper.setBlock(melon.below(), Blocks.DIRT);
         helper.setBlock(pumpkin.below(), Blocks.DIRT);
-        helper.setBlock(new BlockPos(5, 1, 2), Blocks.WATER);
+        floorBlock(helper, new BlockPos(5, 1, 2), Blocks.WATER);
         helper.setBlock(melon, Blocks.MELON);
         helper.setBlock(pumpkin, Blocks.PUMPKIN);
         helper.setBlock(melonStem, Blocks.ATTACHED_MELON_STEM.defaultBlockState().setValue(AttachedStemBlock.FACING, Direction.EAST));
@@ -171,7 +183,9 @@ public class FarmBotGameTests {
         sprout.pouch.setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 4));
         helper.startSequence()
                 .thenWaitUntil(() -> {
-                    helper.assertTrue(chest(helper, Items.MELON_SLICE) >= 3, "melon picked, got " + chest(helper, Items.MELON_SLICE));
+                    helper.assertTrue(chest(helper, Items.MELON_SLICE) >= 3, "melon picked, got " + chest(helper, Items.MELON_SLICE)
+                            + " (Sprout " + sprout.status() + " at " + helper.relativePos(sprout.blockPosition()) + ", melon stem "
+                            + helper.getBlockState(melonStem) + ", melon " + helper.getBlockState(melon) + ")");
                     helper.assertTrue(chest(helper, Items.PUMPKIN) >= 1, "pumpkin picked, got " + chest(helper, Items.PUMPKIN));
                 })
                 .thenIdle(100)

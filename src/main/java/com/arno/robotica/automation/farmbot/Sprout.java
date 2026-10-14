@@ -137,6 +137,11 @@ public class Sprout extends FarmBot {
     }
 
     private Kind classify(ServerLevel sl, BlockPos pos, BlockState state) {
+        return classify(sl, pos, state, false);
+    }
+
+    /** {@code quick}: leaves out tilling, which looks for water around the spot. */
+    private Kind classify(ServerLevel sl, BlockPos pos, BlockState state, boolean quick) {
         if (CropRules.isHarvestable(state)) return CropRules.isMature(state) ? Kind.HARVEST : Kind.NONE;
         // An attached stem always points at its grown melon or pumpkin.
         if (state.getBlock() instanceof AttachedStemBlock) return Kind.FRUIT;
@@ -155,7 +160,7 @@ public class Sprout extends FarmBot {
         if (farmland) {
             return aboveState.isAir() && findSeed(sl, above) >= 0 && !nextToStem(sl, above) ? Kind.PLANT : Kind.NONE;
         }
-        if (!replaceable(aboveState) || !hasFarmlandSeed() || sl.getRawBrightness(above, 0) < 8 || nextToStem(sl, above)) return Kind.NONE;
+        if (quick || !replaceable(aboveState) || !hasFarmlandSeed() || sl.getRawBrightness(above, 0) < 8 || nextToStem(sl, above)) return Kind.NONE;
         scanCost += 24;
         return nearWater(sl, pos) ? Kind.TILL : Kind.NONE;
     }
@@ -167,11 +172,49 @@ public class Sprout extends FarmBot {
 
     // ---- actions ----
 
-    /** Works the 3x3 columns around the job: harvests first, then plants and tills what the harvest left bare. */
+    /** Work per column in the 5x5 around a job, for {@link #bestCenter}. */
+    private final int[] columnWork = new int[25];
+    private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
+
+    /**
+     * The 3x3 that holds the job and the most other work: the job is often at the edge of a field (the nearest crop),
+     * so centering on it would leave a row for another stop.
+     */
+    private BlockPos bestCenter(ServerLevel sl, BlockPos job) {
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                int n = 0;
+                for (int layer = 0; layer < layerCount(); layer++) {
+                    probe.set(job.getX() + i - 2, layerBase() + layer, job.getZ() + j - 2);
+                    if (inArea(probe) && sl.isLoaded(probe) && classify(sl, probe, sl.getBlockState(probe), true) != Kind.NONE) n++;
+                }
+                columnWork[i * 5 + j] = n;
+            }
+        }
+        int best = -1, bestX = 0, bestZ = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int sum = 0;
+                for (int a = -1; a <= 1; a++) {
+                    for (int b = -1; b <= 1; b++) sum += columnWork[(2 + dx + a) * 5 + 2 + dz + b];
+                }
+                // Ties keep the job in the middle.
+                if (sum > best || (sum == best && dx == 0 && dz == 0)) {
+                    best = sum;
+                    bestX = dx;
+                    bestZ = dz;
+                }
+            }
+        }
+        return job.offset(bestX, 0, bestZ);
+    }
+
+    /** Works the 3x3 columns with the most work around the job: harvests first, then plants and tills what the harvest left bare. */
     @Override
-    protected boolean act(ServerLevel sl, BlockPos center) {
+    protected boolean act(ServerLevel sl, BlockPos job) {
+        BlockPos center = bestCenter(sl, job);
         int done = 0;
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos pos = probe;
         for (int pass = 0; pass < 2; pass++) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
@@ -198,6 +241,11 @@ public class Sprout extends FarmBot {
             case TILL -> till(sl, pos);
             case NONE -> false;
         };
+    }
+
+    @Override
+    protected boolean canAfford(ServerLevel sl, BlockPos t) {
+        return energy.getEnergyStored() >= scaledDrain(AutomationConfig.sproutFePerHarvest(), 1);
     }
 
     private boolean payHarvest() {

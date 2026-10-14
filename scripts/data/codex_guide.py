@@ -174,7 +174,7 @@ STEPS = [
     ('upgrade_card', 'basic_circuit', 'upgrade_speed', 'task', 1, 'Plug and Play',
      'Craft an upgrade card and right-click a robot or machine with it.',
      has(*cards('speed', 'efficiency', 'growth', 'void')), [], 5),
-    ('robot_mk2', 'upgrade_card', 'sprout_mk2', 'task', 1, 'Bigger Fields',
+    ('robot_mk2', 'upgrade_card', 'sprout_mk2', 'task', 1, 'Faster Hands',
      'Craft Stumpy or Sprout Mk2.',
      has('stumpy_mk2', 'sprout_mk2'), [], 10),
     ('warp', 'basic_circuit', 'warp_pad', 'task', 1, 'Home Run',

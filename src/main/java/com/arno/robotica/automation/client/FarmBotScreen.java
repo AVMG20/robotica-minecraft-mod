@@ -2,6 +2,7 @@ package com.arno.robotica.automation.client;
 
 import com.arno.robotica.automation.farmbot.FarmBot;
 import com.arno.robotica.automation.farmbot.FarmBotMenu;
+import com.arno.robotica.automation.farmbot.Stumpy;
 import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
@@ -16,6 +17,8 @@ import net.minecraft.world.item.Items;
 /** Stumpy and Sprout GUI: energy bar and battery, area toggle, storage check, card slots (the Mk opens them), pouch, status. */
 public class FarmBotScreen extends MachineScreen<FarmBotMenu> {
     private static final ItemStack CHEST = new ItemStack(Items.CHEST);
+    private static final ItemStack SAPLING = new ItemStack(Items.OAK_SAPLING);
+    private static final ItemStack SEEDS = new ItemStack(Items.WHEAT_SEEDS);
     private IconButton areaButton;
 
     public FarmBotScreen(FarmBotMenu menu, Inventory inv, Component title) {
@@ -55,6 +58,8 @@ public class FarmBotScreen extends MachineScreen<FarmBotMenu> {
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
         if (slot.index <= cardSlots()) return icon("upgrade_speed");
+        // The pouch keeps saplings or seeds to replant.
+        if (isMachineSlot(slot)) return menu.bot instanceof Stumpy ? SAPLING : SEEDS;
         return ItemStack.EMPTY;
     }
 
@@ -94,6 +99,6 @@ public class FarmBotScreen extends MachineScreen<FarmBotMenu> {
             case OUTPUT_FULL, IDLE -> Tone.WARN;
         };
         drawStatus(g, Component.translatable(status.key()), x + 8, y + 74, 104, 1, tone);
-        addTooltip(x + 8, y + 72, 104, 11, Component.translatable(status.hintKey()));
+        if (status != FarmBot.Status.WORKING) addTooltip(x + 8, y + 72, 104, 11, Component.translatable(status.hintKey()));
     }
 }

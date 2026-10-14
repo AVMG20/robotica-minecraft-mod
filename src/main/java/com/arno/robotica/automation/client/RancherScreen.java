@@ -5,6 +5,7 @@ import com.arno.robotica.automation.rancher.RancherMenu;
 import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -84,7 +85,7 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
         int size = menu.size();
         drawLabelRight(g, Component.translatable("gui.robotica.area", size, size), x + imageWidth - 8, y + 6, 40);
         addTooltip(x + imageWidth - 50, y + 4, 44, 11, Component.translatable("gui.robotica.tier_area", menu.tier(), size, size),
-                Component.translatable("gui.robotica.robot_area_hint"));
+                Component.translatable("gui.robotica.robot_area_hint").withStyle(ChatFormatting.GRAY));
         drawLabel(g, Component.translatable("gui.robotica.rancher.herd"), x + 48, y + 22, 30);
         drawInset(g, x + 97, y + 17, 30, 18);
         drawFitted(g, font, Component.literal(Integer.toString(menu.target())), x + 112, y + 22, 28, 0xFFFFFFFF, 0, true, 1.0F);

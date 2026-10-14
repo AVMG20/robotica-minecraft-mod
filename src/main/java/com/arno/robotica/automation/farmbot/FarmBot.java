@@ -513,7 +513,7 @@ public abstract class FarmBot extends PathfinderMob {
             pickUp(sp);
             return InteractionResult.CONSUME;
         }
-        if (held.getItem() instanceof FarmBotItem next && items().stream().anyMatch(i -> i.get() == next)) {
+        if (held.getItem() instanceof FarmBotItem next && next.entityType() == getType()) {
             upgradeInPlace(sp, held, next);
             return InteractionResult.CONSUME;
         }
@@ -530,7 +530,8 @@ public abstract class FarmBot extends PathfinderMob {
             sp.displayClientMessage(Component.translatable("message.robotica.battery_inserted", battery.getStackInSlot(0).getHoverName()), true);
             return InteractionResult.CONSUME;
         }
-        sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new FarmBotMenu(id, inv, this), getDisplayName()), buf -> buf.writeVarInt(getId()));
+        sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new FarmBotMenu(id, inv, this),
+                hasCustomName() ? getDisplayName() : item().getDescription()), buf -> buf.writeVarInt(getId()));
         return InteractionResult.CONSUME;
     }
 
@@ -549,8 +550,12 @@ public abstract class FarmBot extends PathfinderMob {
             return false;
         }
         ItemStack old = new ItemStack(item());
-        energy.setEnergy(Math.min(energy.getMaxEnergyStored(), energy.getEnergyStored() + ItemEnergy.get(held)));
         setTier(next.tier());
+        long total = (long) energy.getEnergyStored() + ItemEnergy.get(held);
+        energy.setEnergy((int) Math.min(energy.getMaxEnergyStored(), total));
+        // What does not fit stays in the old Mk the player gets back.
+        int overflow = (int) Math.min(Integer.MAX_VALUE, total - energy.getEnergyStored());
+        if (overflow > 0) ItemEnergy.set(old, Math.min(overflow, ItemEnergy.capacity(old)));
         if (!player.hasInfiniteMaterials()) {
             held.shrink(1);
             if (!player.getInventory().add(old)) player.drop(old, false);
@@ -628,7 +633,7 @@ public abstract class FarmBot extends PathfinderMob {
         for (ItemStack p : pending) spawnAtLocation(p);
         pending.clear();
         ServerPlayer p = owner == null ? null : level.getServer().getPlayerList().getPlayer(owner);
-        if (p != null) p.displayClientMessage(Component.translatable("message.robotica.rancher.destroyed", getDisplayName()), true);
+        if (p != null) p.displayClientMessage(Component.translatable("message.robotica.robot_destroyed", getDisplayName()), true);
     }
 
     @Override
@@ -657,6 +662,11 @@ public abstract class FarmBot extends PathfinderMob {
 
     @Override
     public boolean canTrample(BlockState state, BlockPos pos, float fallDistance) {
+        return false;
+    }
+
+    @Override
+    public boolean canUsePortal(boolean allowPassengers) {
         return false;
     }
 
@@ -756,6 +766,7 @@ public abstract class FarmBot extends PathfinderMob {
 
     private Status runJob(ServerLevel sl) {
         BlockPos t = job;
+        if (energy.getEnergyStored() <= 0) return Status.NO_ENERGY;
         if (jobTicks % 10 == 0) {
             scanCost = 0;
             if (!sl.isLoaded(t) || !isTarget(sl, t, sl.getBlockState(t))) {
@@ -769,6 +780,7 @@ public abstract class FarmBot extends PathfinderMob {
         if (inReach(t)) {
             navigation.stop();
             onWorkTick(sl);
+            if (progress + 1 >= actionInterval() && !canAfford(sl, t)) return Status.NO_ENERGY;
             if (++progress >= actionInterval()) {
                 progress = 0;
                 job = null;
@@ -807,6 +819,11 @@ public abstract class FarmBot extends PathfinderMob {
             }
         }
         return Status.WORKING;
+    }
+
+    /** Enough FE stored for the action at {@code t}; until then the robot waits at the job instead of skipping it. */
+    protected boolean canAfford(ServerLevel sl, BlockPos t) {
+        return true;
     }
 
     protected int pathAccuracy() {
@@ -907,6 +924,8 @@ public abstract class FarmBot extends PathfinderMob {
         return false;
     }
 
+    private final BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
+
     /** Sweeps the area a few hundred blocks per tick; a finished sweep becomes the candidate list. */
     private void scanStep(ServerLevel sl) {
         if (scanWait > 0) {
@@ -917,7 +936,7 @@ public abstract class FarmBot extends PathfinderMob {
         int layerSize = size * size;
         int total = layerSize * layerCount();
         int minX = areaMinX(), minZ = areaMinZ(), baseY = layerBase();
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos pos = scanPos;
         for (int n = 0; n < SCAN_PER_TICK; n++) {
             n += scanCost;
             scanCost = 0;
@@ -1103,7 +1122,7 @@ public abstract class FarmBot extends PathfinderMob {
             int z = areaMinZ() + sl.random.nextInt(size);
             for (int l = 0; l < layerCount(); l++) {
                 pos.set(x, layerBase() + l, z);
-                if (!sl.isLoaded(pos)) break;
+                if (!sl.shouldTickBlocksAt(net.minecraft.world.level.ChunkPos.asLong(pos))) break;
                 BlockState state = sl.getBlockState(pos);
                 if (isGrowable(state)) {
                     state.randomTick(sl, pos.immutable(), sl.random);
@@ -1183,12 +1202,12 @@ public abstract class FarmBot extends PathfinderMob {
         return found;
     }
 
-    /** Finds storage again on the next call (a chest was just placed). */
     /** A storage block near home was found at the last look (server side; the menu syncs it). */
     public boolean hasStorage() {
         return storagePos != null;
     }
 
+    /** Finds storage again on the next call (a chest was just placed). */
     public void forgetStorage() {
         storagePos = null;
         storageSearchedAt = -1000;
