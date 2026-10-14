@@ -37,11 +37,14 @@ import java.util.Comparator;
  * (arrow damage type, so it counts as a projectile), never drops as an item. In a block it sticks for a moment and then
  * shatters into sparks. With Ricochet Rivets it bounces off a hit monster to the next one (up to its bounce count),
  * each bounce dealing a share of the hit before it. Armor Pierce is carried as {@link #pierce()} and read by the damage
- * hook; Thermal Edge sets hit targets on fire. Rendered by {@code gear.client.RivetRenderer}.
+ * hook; Thermal Edge sets hit targets on fire. The Null Lance fires the same entity as a violet null bolt
+ * ({@link #isNullBolt()}). Rendered by {@code gear.client.RivetRenderer}.
  */
 public class RivetEntity extends ThrowableProjectile {
     private static final EntityDataAccessor<Boolean> STUCK = SynchedEntityData.defineId(RivetEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> NULL_BOLT = SynchedEntityData.defineId(RivetEntity.class, EntityDataSerializers.BOOLEAN);
     private static final DustParticleOptions TRACER = new DustParticleOptions(new Vector3f(1.0F, 0.78F, 0.35F), 0.7F);
+    private static final DustParticleOptions NULL_TRACER = new DustParticleOptions(new Vector3f(0.69F, 0.49F, 1.0F), 0.8F);
     private static final double TRAIL_GAP = 1.5;
 
     private float damage = 8.0F;
@@ -95,6 +98,20 @@ public class RivetEntity extends ThrowableProjectile {
         return bouncesDone;
     }
 
+    /** Fired by the Null Lance: drawn and traced violet. */
+    public boolean isNullBolt() {
+        return entityData.get(NULL_BOLT);
+    }
+
+    public void setNullBolt() {
+        entityData.set(NULL_BOLT, true);
+    }
+
+    /** Spark color of this projectile: ember for a rivet, violet for a null bolt. */
+    private int sparkColor() {
+        return isNullBolt() ? com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET : com.arno.robotica.core.particle.CoreParticles.EMBER;
+    }
+
     public boolean isStuck() {
         return entityData.get(STUCK) || clientStuck;
     }
@@ -102,6 +119,7 @@ public class RivetEntity extends ThrowableProjectile {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(STUCK, false);
+        builder.define(NULL_BOLT, false);
     }
 
     @Override
@@ -148,9 +166,9 @@ public class RivetEntity extends ThrowableProjectile {
         for (int i = 0; i < steps; i++) {
             Vec3 p = a.add(d.scale(i / (double) steps));
             if (p.distanceToSqr(trailStart) < TRAIL_GAP * TRAIL_GAP) continue;
-            level().addParticle(TRACER, p.x, p.y, p.z, 0, 0, 0);
+            level().addParticle(isNullBolt() ? NULL_TRACER : TRACER, p.x, p.y, p.z, 0, 0, 0);
         }
-        if (random.nextInt(3) == 0) level().addParticle(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 0.7F), b.x, b.y, b.z, 0, 0, 0);
+        if (random.nextInt(3) == 0) level().addParticle(com.arno.robotica.core.particle.CoreParticles.spark(sparkColor(), 0.7F), b.x, b.y, b.z, 0, 0, 0);
     }
 
     @Override
@@ -168,7 +186,7 @@ public class RivetEntity extends ThrowableProjectile {
         if (hurt && fireSeconds > 0) target.igniteForSeconds(fireSeconds);
         Vec3 at = result.getLocation();
         level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 4, 0.15, 0.15, 0.15, 0.3);
-        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.0F), at.x, at.y, at.z, 6, 0.1, 0.1, 0.1, 0.2);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(sparkColor(), 1.0F), at.x, at.y, at.z, 6, 0.1, 0.1, 0.1, 0.2);
         level.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 1.0F), at.x, at.y, at.z, 3, 0.1, 0.1, 0.1, 0.15);
         level.playSound(null, at.x, at.y, at.z, SoundEvents.ARROW_HIT, SoundSource.PLAYERS, 0.6F, 1.5F + random.nextFloat() * 0.2F);
         if (hurt && bouncesDone < bounces) {
@@ -225,7 +243,7 @@ public class RivetEntity extends ThrowableProjectile {
             return;
         }
         entityData.set(STUCK, true);
-        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 1.0F), at.x, at.y, at.z, 8, 0.05, 0.05, 0.05, 0.25);
+        level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(sparkColor(), 1.0F), at.x, at.y, at.z, 8, 0.05, 0.05, 0.05, 0.25);
         level.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 0.8F), at.x, at.y, at.z, 3, 0.05, 0.05, 0.05, 0.15);
         level.playSound(null, at.x, at.y, at.z, SoundEvents.CHAIN_HIT, SoundSource.PLAYERS, 0.7F, 1.4F + random.nextFloat() * 0.3F);
     }
@@ -234,7 +252,7 @@ public class RivetEntity extends ThrowableProjectile {
     private void shatter() {
         if (level() instanceof ServerLevel level) {
             level.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 1.0F), getX(), getY(), getZ(), 6, 0.05, 0.05, 0.05, 0.1);
-            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(com.arno.robotica.core.particle.CoreParticles.EMBER, 0.8F), getX(), getY(), getZ(), 4, 0.05, 0.05, 0.05, 0.15);
+            level.sendParticles(com.arno.robotica.core.particle.CoreParticles.spark(sparkColor(), 0.8F), getX(), getY(), getZ(), 4, 0.05, 0.05, 0.05, 0.15);
             level.playSound(null, getX(), getY(), getZ(), SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 0.4F, 1.7F);
         }
         discard();
@@ -254,6 +272,7 @@ public class RivetEntity extends ThrowableProjectile {
         tag.putInt("bounces", bounces);
         tag.putInt("bouncesDone", bouncesDone);
         tag.putBoolean("stuck", entityData.get(STUCK));
+        tag.putBoolean("nullBolt", isNullBolt());
     }
 
     @Override
@@ -264,5 +283,6 @@ public class RivetEntity extends ThrowableProjectile {
         bounces = tag.getInt("bounces");
         bouncesDone = tag.getInt("bouncesDone");
         entityData.set(STUCK, tag.getBoolean("stuck"));
+        entityData.set(NULL_BOLT, tag.getBoolean("nullBolt"));
     }
 }

@@ -56,6 +56,9 @@ public final class GearClient {
         NeoForge.EVENT_BUS.addListener(InputEvent.InteractionKeyMappingTriggered.class, RivetGunClient::onClick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, RivetGunClient::onClientTick);
         modBus.addListener(RegisterClientExtensionsEvent.class, RivetGunClient::register);
+        modBus.addListener(RegisterClientExtensionsEvent.class, LanceClient::register);
+        modBus.addListener(RegisterGuiLayersEvent.class, LanceClient::registerHud);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, LanceClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaOutline::onRenderLevel);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaStatic::onRenderLevel);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,

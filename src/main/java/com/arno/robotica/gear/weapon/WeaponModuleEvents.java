@@ -20,7 +20,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  * Server hooks of the weapon modules: Sharpened Edge raises the damage of a paid hit, Armor Pierce scales its armor
  * reduction down, Thermal Edge sets the target on fire and Lifesteal heals after a paid hit landed (rivets carry their
  * own damage, pierce and fire). Looting works through {@link EnergyWeaponItem#getEnchantmentLevel}. "Paid" means a use that cost FE: melee of the Shock Baton and Arc Blade (and the arcs), a rivet,
- * the Null Lance beam. Unpaid bumps (Rivet Gun or Lance used as a club) get no module effects.
+ * the Null Lance beam. A null bolt from the Null Lance also heals with Lifesteal.
  */
 @EventBusSubscriber(modid = Robotica.MODID)
 public final class WeaponModuleEvents {
@@ -43,7 +43,14 @@ public final class WeaponModuleEvents {
         LivingEntity target = event.getEntity();
         if (target == attacker || target instanceof ArmorStand) return;
         ItemStack weapon = paidWeapon(source);
-        if (weapon.isEmpty()) return;
+        if (weapon.isEmpty()) {
+            // a null bolt carries its own damage and fire; Lifesteal comes from the lance that fired it
+            if (source.getDirectEntity() instanceof RivetEntity bolt && bolt.isNullBolt() && attacker instanceof ServerPlayer player
+                    && player.getMainHandItem().getItem() instanceof NullLanceItem) {
+                Lifesteal.onHit(player, player.getMainHandItem(), target, event.getNewDamage());
+            }
+            return;
+        }
         if (Modules.active(weapon, ModuleKind.THERMAL_EDGE) > 0) target.igniteForSeconds(GearConfig.thermalSeconds());
         if (attacker instanceof ServerPlayer player) Lifesteal.onHit(player, weapon, target, event.getNewDamage());
     }

@@ -110,7 +110,7 @@ public final class GearItems {
             p -> new ArcBladeItem(p.rarity(Rarity.RARE).fireResistant().attributes(weaponAttributes(ArcBladeItem.BASE_DAMAGE, 1.6)), GearConfig::arcBladeCapacity,
                     () -> GearConfig.fe(GearConfig.ARC_BLADE_COST, 800)));
     public static final DeferredItem<NullLanceItem> NULL_LANCE = ITEMS.registerItem("null_lance",
-            p -> new NullLanceItem(p.rarity(Rarity.EPIC).fireResistant().attributes(weaponAttributes(6.0, 1.2)), GearConfig::nullLanceCapacity,
+            p -> new NullLanceItem(p.rarity(Rarity.EPIC).fireResistant(), GearConfig::nullLanceCapacity,
                     () -> GearConfig.fe(GearConfig.NULL_LANCE_COST, 8_000)));
 
     // Smithing templates

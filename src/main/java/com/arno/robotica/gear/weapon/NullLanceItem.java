@@ -5,7 +5,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.gear.GearConfig;
 import com.arno.robotica.gear.GearFxPayload;
+import com.arno.robotica.core.particle.CoreParticles;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -24,14 +26,26 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.function.IntSupplier;
 
-/** Age 4 weapon. Hold to charge for 1 s, release for a 32 block beam that pierces every mob for 30 damage (stops at blocks). */
+/**
+ * Age 4 weapon, the Rivet Gun's upgrade. Left-click fires null bolts like the Rivet Gun fires rivets (same rate, a bit
+ * more damage, see {@link RivetGunItem#trigger}). Hold right-click to charge for 1 s, release for a 32 block beam that
+ * pierces every mob for 30 damage (stops at blocks). Full charge is marked by a lock-in sound, a flash and a steady glow
+ * at the tip; the client adds a charge meter under the crosshair and the lance shaking while it is ready (LanceClient).
+ */
 public class NullLanceItem extends EnergyWeaponItem {
     public static final int CHARGE_TICKS = 20;
     public static final double RANGE = 32.0;
     public static final float DAMAGE = 30.0F;
     public static final int COOLDOWN_TICKS = 20;
+    /** A null bolt hits this much harder than a rivet and costs this many rivets of FE. */
+    public static final float BOLT_DAMAGE_SCALE = 4.0F / 3.0F;
+    public static final int BOLT_COST_SCALE = 2;
+    /** Ticks a release may come early and still fire: client and server count the charge a tick apart at times. */
+    private static final int RELEASE_SLACK = 1;
+    /** Releasing after at least this many ticks but before full charge fizzles audibly. */
+    private static final int FIZZLE_TICKS = 4;
 
-    /** True while the beam deals its damage (server thread), so module hooks can tell the beam from a club hit. */
+    /** True while the beam deals its damage (server thread), so module hooks can tell the beam from other damage. */
     private static boolean firing;
 
     public static boolean firing() {
@@ -40,6 +54,21 @@ public class NullLanceItem extends EnergyWeaponItem {
 
     public NullLanceItem(Properties props, IntSupplier capacity, IntSupplier cost) {
         super(props, capacity, cost, 4, ModuleTarget.NULL_LANCE);
+    }
+
+    /** Damage of one null bolt before modules. */
+    public static float boltDamage() {
+        return GearConfig.rivetDamage() * BOLT_DAMAGE_SCALE;
+    }
+
+    /** FE for one null bolt of this lance, with its modules. */
+    public static int boltCost(ItemStack lance) {
+        return withModules(lance, GearConfig.fe(GearConfig.RIVET_GUN_COST, 400) * BOLT_COST_SCALE);
+    }
+
+    @Override
+    protected Object[] tooltipArgs(ItemStack stack) {
+        return new Object[]{boltCost(stack), cost(stack)};
     }
 
     @Override
@@ -65,26 +94,46 @@ public class NullLanceItem extends EnergyWeaponItem {
 
     @Override
     public void onUseTick(Level level, LivingEntity user, ItemStack stack, int remaining) {
-        if (level.isClientSide) return;
+        if (!(level instanceof ServerLevel server)) return;
         int charged = getUseDuration(stack, user) - remaining;
         if (charged == 1) {
             CoreSounds.play(level, user.blockPosition(), CoreSounds.LANCE_CHARGE, SoundSource.PLAYERS, 0.7F, 1.0F);
         } else if (charged == CHARGE_TICKS) {
+            // full charge: a lock-in clunk with a bright ping on top, and a violet flash at the tip
             CoreSounds.play(level, user.blockPosition(), CoreSounds.LANCE_READY, SoundSource.PLAYERS, 0.8F, 1.0F);
-        } else if (charged > 0 && charged < CHARGE_TICKS && charged % 4 == 0 && level instanceof ServerLevel server) {
-            Vec3 tip = user.getEyePosition().add(user.getLookAngle().scale(1.2));
+            level.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 0.7F, 1.5F);
+            level.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0F, 1.4F);
+            Vec3 tip = tip(user);
+            server.sendParticles(CoreParticles.flash(CoreParticles.WARP_VIOLET, 0.6F), tip.x, tip.y, tip.z, 1, 0, 0, 0, 0);
+            server.sendParticles(CoreParticles.spark(CoreParticles.WARP_VIOLET, 0.8F), tip.x, tip.y, tip.z, 8, 0.05, 0.05, 0.05, 0.12);
+        } else if (charged > CHARGE_TICKS && charged % 5 == 0) {
+            // ready and held: a steady glow at the tip
+            Vec3 tip = tip(user);
+            server.sendParticles(CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.7F), tip.x, tip.y, tip.z, 1, 0.03, 0.03, 0.03, 0.0);
+        } else if (charged > 0 && charged < CHARGE_TICKS && charged % 4 == 0) {
+            Vec3 tip = tip(user);
             for (int i = 0; i < 2; i++) {
                 // count 0: the offsets are the vortex arguments (radius, rise, turn)
-                server.sendParticles(com.arno.robotica.core.particle.CoreParticles.warp(com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET, 0.8F), tip.x, tip.y - 0.25 + user.getRandom().nextDouble() * 0.1, tip.z,
+                server.sendParticles(CoreParticles.warp(CoreParticles.WARP_VIOLET, 0.8F), tip.x, tip.y + user.getRandom().nextDouble() * 0.1, tip.z,
                         0, 0.35 + user.getRandom().nextDouble() * 0.15, 0.0, 0.5, 1.0);
             }
         }
     }
 
+    /** Where the charge gathers: just in front of and below the eyes. */
+    private static Vec3 tip(LivingEntity user) {
+        return user.getEyePosition().add(user.getLookAngle().scale(1.2)).add(0, -0.25, 0);
+    }
+
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
         if (level.isClientSide || !(user instanceof ServerPlayer player) || !(level instanceof ServerLevel server)) return;
-        if (getUseDuration(stack, user) - timeLeft < CHARGE_TICKS) return;
+        int charged = getUseDuration(stack, user) - timeLeft;
+        if (charged < CHARGE_TICKS - RELEASE_SLACK) {
+            // let go too early: the charge fizzles out
+            if (charged >= FIZZLE_TICKS) level.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.3F, 1.8F);
+            return;
+        }
         if (!pay(stack, player)) return;
         fire(server, player);
         player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
