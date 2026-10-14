@@ -11,19 +11,28 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Generates while it is day and the sky is visible (checked once per second). Pushes into its neighbours (one shared rate for all faces). Takes no
- * cards.
+ * Generates while it is day and the sky is visible (checked once per second), at {@link #RAIN_PERCENT}% while it rains or
+ * thunders in a biome with rain or snow (Mekanism's rule). Pushes into its neighbours (one shared rate for all faces). Takes
+ * no cards.
  */
 public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source, com.arno.robotica.compat.InfoSource {
     public final MachineEnergyStorage energy;
     private final SolarPanelBlock.Tier tier;
     private final int pushRate;
+    /** Output in rain or thunder, percent of the daylight output. */
+    public static final int RAIN_PERCENT = 20;
     private boolean sunny;
+    private boolean raining;
     private boolean openSky;
     private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
 
     private int currentOutput() {
-        return sunny ? CoreConfig.scaleGeneration(tier.output()) : 0;
+        return sunny ? weatherOutput(CoreConfig.scaleGeneration(tier.output()), raining) : 0;
+    }
+
+    /** The daylight output {@code out}, cut to {@link #RAIN_PERCENT}% in rain (at least 1 FE/t). */
+    public static int weatherOutput(int out, boolean rain) {
+        return rain ? Math.max(1, out * RAIN_PERCENT / 100) : out;
     }
 
     public SolarPanelBlockEntity(BlockPos pos, BlockState state) {
@@ -63,7 +72,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
 
     @Override
     public int flag() {
-        return sunny ? 1 : 0;
+        return !sunny ? 0 : raining ? 2 : 1;
     }
 
     @Override
@@ -81,6 +90,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         if ((level.getGameTime() + pos.asLong()) % 20 == 0) {
             openSky = !level.dimensionType().hasFixedTime() && level.canSeeSky(pos.above());
             sunny = openSky && level.isDay();
+            raining = sunny && level.isRaining() && level.getBiome(pos).value().getPrecipitationAt(pos) != net.minecraft.world.level.biome.Biome.Precipitation.NONE;
         }
         int gen = currentOutput();
         if (gen > 0) energy.generate(gen);

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.level.block.Block;
 
-/** Solar Panel: charge, live FE/t, sun state. */
+/** Solar Panel: charge, live FE/t, sun state (0 no sun, 1 sun, 2 rain). */
 public class SolarPanelMenu extends MachineMenu {
     private final ContainerLevelAccess access;
     private final Block block;
@@ -50,6 +50,11 @@ public class SolarPanelMenu extends MachineMenu {
 
     public boolean sun() {
         return synced(flagIdx) != 0;
+    }
+
+    /** In the sun, but rain cuts the output. */
+    public boolean rain() {
+        return synced(flagIdx) == 2;
     }
 
     @Override

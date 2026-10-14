@@ -69,13 +69,13 @@ shaped('wireless_charger_mk2', [' T ', 'AWA', 'PXP'], {'T': 'tesla_emitter_3', '
                                                      'P': GOLD_PLATE, 'X': 'reinforced_casing'})
 # Charger Mk2-Mk4: the Mk below with that age's circuit, plates and casing (4x the charge rate each).
 shaped('charger_mk2', [' A ', 'PCP', ' X '], {'A': 'advanced_circuit', 'P': GOLD_PLATE, 'C': 'charger', 'X': 'reinforced_casing'})
-shaped('solar_panel_mk2', ['SQS', 'QAQ', 'SQS'], {'S': 'solar_panel_mk1', 'Q': QUARTZ, 'A': 'advanced_circuit'})
+# Solar Mk2-Mk4: the Mk below with that age's circuit and plates (40 -> 120 -> 300 -> 600 FE/t).
+shaped('solar_panel_mk2', ['QGQ', 'GSG', 'QAQ'], {'Q': QUARTZ, 'G': '#c:glass_blocks', 'S': 'solar_panel_mk1', 'A': 'advanced_circuit'})
 shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'advanced_circuit', 'A': 'accumulator_1', 'X': 'reinforced_casing'})
 shaped('tesla_coil_3', [' A ', 'QTQ', ' X '], {'A': 'advanced_circuit', 'Q': QUARTZ, 'T': 'tesla_coil_2', 'X': 'reinforced_casing'})
 # Age 3
-# Solar Mk3: two Mk2 panels (2 x 200 -> 480 FE/t). Mk4: one Mk3 panel (480 -> 1,200 FE/t). Both add that age's circuit and alloy plates.
-shaped('solar_panel_mk3', ['PGP', 'SCS', 'PGP'], {'P': '#c:plates/pyrosteel', 'G': '#c:glass_blocks', 'S': 'solar_panel_mk2',
+shaped('solar_panel_mk3', ['PGP', 'GSG', 'PCP'], {'P': '#c:plates/pyrosteel', 'G': '#c:glass_blocks', 'S': 'solar_panel_mk2',
                                                  'C': 'quantum_circuit'})
 shaped('accumulator_3', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'quantum_circuit', 'A': 'accumulator_2', 'X': 'blazing_casing'})

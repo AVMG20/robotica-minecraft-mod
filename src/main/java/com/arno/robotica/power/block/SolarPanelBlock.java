@@ -68,7 +68,9 @@ public class SolarPanelBlock extends PowerBlock {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.solar", com.arno.robotica.core.CoreConfig.scaleGeneration(tier.output())).withStyle(ChatFormatting.GRAY));
+        int output = com.arno.robotica.core.CoreConfig.scaleGeneration(tier.output());
+        tooltip.add(Component.translatable("tooltip.robotica.solar", output).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.solar_rain", SolarPanelBlockEntity.weatherOutput(output, true)).withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.solar_push").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

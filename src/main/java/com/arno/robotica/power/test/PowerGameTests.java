@@ -45,8 +45,8 @@ import net.minecraft.world.item.BlockItem;
 public class PowerGameTests {
 
     /**
-     * Solar Mk1-Mk4: each tier makes more than the one before, has a buffer and an FE port, and its recipe consumes
-     * the tier below (Mk3 and Mk4 are the Age 3 and Age 4 panels).
+     * Solar Mk1-Mk4: each tier makes more than the one before (a fifth in rain), has a buffer and an FE port, and its
+     * recipe consumes the tier below (Mk3 and Mk4 are the Age 3 and Age 4 panels).
      */
     @GameTest(template = "empty")
     public static void solarTiersClimb(GameTestHelper helper) {
@@ -56,6 +56,8 @@ public class PowerGameTests {
             var block = tiers.get(i).get();
             int output = block.tier().output();
             helper.assertTrue(output > lastOutput, "Mk" + (i + 1) + " makes more than the tier below: " + output);
+            helper.assertTrue(com.arno.robotica.power.block.SolarPanelBlockEntity.weatherOutput(output, true) == output / 5,
+                    "Mk" + (i + 1) + " makes a fifth in rain");
             lastOutput = output;
             BlockPos pos = new BlockPos(i % 3, 1, i / 3);
             helper.setBlock(pos, block.defaultBlockState());
