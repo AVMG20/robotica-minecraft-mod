@@ -49,6 +49,8 @@ public final class AreaBreaker {
     private static List<BlockPos> box(Level level, ItemStack stack, GearToolItem tool, BlockPos origin,
                                       BlockState originState, Direction face, AreaMode mode) {
         float originHardness = originState.getDestroySpeed(level, origin);
+        // An instant-break block (torch, Spark Lamp) or one the tool is not made for never starts an area.
+        if (originHardness <= 0 || !tool.canMine(originState)) return List.of();
         double limit = Math.max(originHardness, 0.5F) * GearConfig.hardnessRatio();
         List<BlockPos> out = new ArrayList<>();
         for (BlockPos p : AreaShape.positions(origin, face, mode)) {
