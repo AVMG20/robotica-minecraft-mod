@@ -3,10 +3,13 @@ package com.arno.robotica.exo.client;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.exo.item.ExoArmorItem;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
@@ -31,12 +34,28 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 final class ExoArmorGlowLayer<T extends LivingEntity, M extends HumanoidModel<T>> extends RenderLayer<T, M> {
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.HEAD};
     /** [mark - 1][0 = layer 1, 1 = layer 2]. */
-    private static final ResourceLocation[][] TEXTURES = new ResourceLocation[4][2];
+    private static final RenderType[][] TYPES = new RenderType[4][2];
 
     static {
         for (int mk = 1; mk <= 4; mk++) {
-            for (int i = 0; i < 2; i++) TEXTURES[mk - 1][i] = Robotica.id("textures/models/armor/exo_mk" + mk + "_layer_" + (i + 1) + "_glow.png");
+            for (int i = 0; i < 2; i++) TYPES[mk - 1][i] = type(Robotica.id("textures/models/armor/exo_mk" + mk + "_layer_" + (i + 1) + "_glow.png"));
         }
+    }
+
+    /**
+     * Like {@link RenderType#eyes} (additive, full bright, no depth write), but with the armor's own view offset
+     * ({@link RenderType#armorCutoutNoCull} draws a hair closer to the camera): without it the armor hides its own glow.
+     */
+    private static RenderType type(ResourceLocation texture) {
+        return RenderType.create("robotica_exo_armor_glow", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, false, true,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                        .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                        .setTransparencyState(RenderStateShard.ADDITIVE_TRANSPARENCY)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
+                        .createCompositeState(false));
     }
 
     private ExoArmorGlowLayer(RenderLayerParent<T, M> parent) {
@@ -74,7 +93,7 @@ final class ExoArmorGlowLayer<T extends LivingEntity, M extends HumanoidModel<T>
             getParentModel().copyPropertiesTo(model);
             show(model, slot);
             int mk = Mth.clamp(item.mk, 1, 4);
-            model.renderToBuffer(pose, buffers.getBuffer(RenderType.eyes(TEXTURES[mk - 1][inner ? 1 : 0])), LightTexture.FULL_BRIGHT,
+            model.renderToBuffer(pose, buffers.getBuffer(TYPES[mk - 1][inner ? 1 : 0]), LightTexture.FULL_BRIGHT,
                     OverlayTexture.NO_OVERLAY, color);
         }
     }
