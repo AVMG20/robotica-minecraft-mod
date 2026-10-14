@@ -1507,7 +1507,7 @@
    "items": [
     "lamp_placer_module"
    ],
-   "what": "Drill module: places a Spark Lamp where you mine in the dark.",
+   "what": "Drill module: places a Spark Lamp where you mine in the dark. Right-click a block with the drill to place one anywhere.",
    "stats": {
     "rows": [
      [
