@@ -23,8 +23,6 @@ summary: Powered armor, Mk1 to Mk4, with modules and a core socket.
 
 {{items jet_assist_module flight_module kinetic_shield_module med_injector_module hazard_seal_module glider_module}}
 
-With both a Glider and a Jet Assist, jump in mid air fires the jetpack; the Glider opens once thrust stops while you fall.
-
 ### Leggings
 
 {{items servo_stride_module_1 kinetic_generator_module dash_thrusters_module gyro_stabilizer_module anchor_servos_module}}

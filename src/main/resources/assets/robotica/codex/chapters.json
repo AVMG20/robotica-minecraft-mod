@@ -162,7 +162,7 @@
         },
         {
           "title": "Tesla Spire",
-          "text": "A column under open sky: Spire Base, conductor blocks, Spire Crown on top.\nEach metal sets power and how far fuel goes; mix them freely.\nBuild it high, and 64 blocks away from other spires.\nStorms bring lightning: strikes fill the storm charge, which runs the spire before any fuel burns.",
+          "text": "A column under open sky: Spire Base, conductor blocks, Spire Crown on top.\nBuild it high, and 64 blocks away from other spires.\nStorms bring lightning: strikes fill the storm charge, which runs the spire before any fuel burns.",
           "items": [
             "robotica:spire_base",
             "robotica:spire_crown",
@@ -266,7 +266,10 @@
         },
         {
           "title": "Bridging",
-          "text": "Aim the Buddy key over open air: it builds a bridge from junk blocks in its cargo."
+          "text": "Aim the Buddy key over open air: it builds a bridge from junk blocks in its cargo.",
+          "items": [
+            "robotica:buddy_bot"
+          ]
         },
         {
           "title": "Courier and Hauler",
@@ -334,18 +337,11 @@
       "pages": [
         {
           "title": "Chunk Anchor",
-          "text": "Dry, it lets its chunks go; powered again, it takes them back.",
+          "text": "A cell in its battery slot carries it through a power cut.",
           "items": [
             "robotica:chunk_anchor",
             "robotica:chunk_anchor_mk2",
-            "robotica:chunk_anchor_mk3"
-          ]
-        },
-        {
-          "title": "Chunk limit",
-          "text": "- Each player has one chunk limit for all their anchors, in all dimensions.\n- Over it, an anchor turns red and loads nothing.\n- A cell in its battery slot carries it through a power cut.",
-          "items": [
-            "robotica:chunk_anchor",
+            "robotica:chunk_anchor_mk3",
             "robotica:copper_cell"
           ]
         }
@@ -566,7 +562,7 @@
       "pages": [
         {
           "title": "Architect Table",
-          "text": "It runs on a wound Mainspring from day one, or on any FE.\nPlots next to each other join into one hall. Click a plot edge for a door, a seam for an inner wall. Shift-click forgets a plot.\nClick a built plot to select it, then pick a style to restyle it.",
+          "text": "It runs on a wound Mainspring from day one, or on any FE.\nPlots next to each other join into one hall. Click a plot edge for a door, a seam for an inner wall.",
           "items": [
             "robotica:architect_table",
             "robotica:mainspring"
@@ -574,7 +570,7 @@
         },
         {
           "title": "Styles",
-          "text": "An Iron Casing opens Pearl Panel and Onyx Panel. A hall can mix styles. Doors and inner walls get the picked style.\nRestyling a plot gives the old blocks back as matter.\nThe stonecutter turns style blocks into other shapes.",
+          "text": "An Iron Casing opens Pearl Panel and Onyx Panel. A hall can mix styles.\nThe stonecutter turns style blocks into other shapes.",
           "items": [
             "robotica:timberframe_wall",
             "robotica:dark_stone_wall",
@@ -583,11 +579,10 @@
           ]
         },
         {
-          "title": "Clear and Demolish",
-          "text": "Clearing voids junk and puts the rest in a chest touching the table.\nDemolish gives back 75% of the matter for its own blocks. With a plot selected it takes down only that one.",
+          "title": "Restyle and Demolish",
+          "text": "Both give back 75% of the matter of the table's own blocks.",
           "items": [
-            "robotica:architect_table",
-            "minecraft:chest"
+            "robotica:architect_table"
           ]
         },
         {

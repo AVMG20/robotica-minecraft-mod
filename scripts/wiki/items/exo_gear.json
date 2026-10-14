@@ -394,7 +394,7 @@
     "jet_assist_module_2",
     "jet_assist_module_3"
    ],
-   "what": "The jetpack. In mid air, tap jump for extra jumps or hold it to climb until the pack overheats. III hovers.",
+   "what": "The jetpack.",
    "stats": {
     "rows": [
      [
@@ -419,7 +419,7 @@
      ],
      [
       "Energy",
-      "800 / 1,000 / 1,200 FE/s thrust, 400 / 350 / 300 FE per jump"
+      "800 / 1,000 / 1,200 FE/s thrust (hover: half), 400 / 350 / 300 FE per jump, 40 / 30 / 20 FE/s slow fall"
      ]
     ]
    },
@@ -737,7 +737,7 @@
    "items": [
     "fall_dampener_module"
    ],
-   "what": "Cancels all fall damage while charged, also from Ender Pearls and flying into walls.",
+   "what": "Stops fall damage.",
    "stats": {
     "rows": [
      [

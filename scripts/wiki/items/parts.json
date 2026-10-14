@@ -525,8 +525,6 @@
    ],
    "what": "Opens a bound Storage Terminal from far away, crafting grid included.",
    "use": [
-    "Sneak-right-click a Storage Terminal to bind it.",
-    "Right-click to open it. Mk1: same dimension. Mk2: any dimension.",
     "While open, the terminal's chunk stays loaded for you.",
     "Closes after 60 s without a click."
    ],
@@ -675,11 +673,7 @@
    ],
    "what": "Builds halls from matter and takes them down again. Pick plots on a grid and press Build.",
    "use": [
-    "Feed it cobble, wood or ingots (matter).",
-    "A casing in the style slot opens higher styles.",
-    "Doors and inner walls are built in the style picked when you place them.",
-    "Click a built plot to select it, then pick another style to restyle it. The old blocks come back as matter.",
-    "Demolish (click twice) clears the selected plot, or every built plot when none is selected: the table's own building blocks come back as matter, the rest goes into a chest touching the table."
+    "A casing in the style slot opens higher styles."
    ],
    "stats": {
     "rows": [
@@ -701,7 +695,11 @@
      ],
      [
       "Demolish",
-      "1 block per tick, 5 FE each, 75% matter back"
+      "1 block per tick, 5 FE each"
+     ],
+     [
+      "Matter back",
+      "75% on restyle and demolish"
      ]
     ]
    },

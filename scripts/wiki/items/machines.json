@@ -666,9 +666,7 @@
    ],
    "what": "Keeps the chunks around it loaded and ticking while it has FE.",
    "use": [
-    "Place it and power it. It starts once it holds 5 s of upkeep.",
-    "Sneak-right-click: shows its chunks for 10 s.",
-    "Dry, it lets its chunks go; powered again, it takes them back.",
+    "A cell in its battery slot carries it through a power cut.",
     "Right-click it with the next Mk to upgrade it in place."
    ],
    "stats": {
@@ -717,12 +715,11 @@
    ],
    "what": "Flying companion: fights, picks up drops and digs lit tunnels.",
    "use": [
-    "Right-click a block to deploy it.",
+    "Right-click a block to deploy it. Sneak-right-click it to pick it up.",
     "Right-click it to open its cargo and settings.",
     "Buddy key (default H): dig where you look. With sneak: all come back.",
-    "Aim it over open air to build a bridge from junk blocks in its cargo.",
     "Backpack key (default B): open the cargo of your nearest bot.",
-    "Sneak-right-click to pick it up. Heals above 80% charge."
+    "Heals above 80% charge."
    ],
    "stats": {
     "columns": [

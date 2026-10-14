@@ -44,7 +44,7 @@ Blocks of other mods' metals count too: tin, lead, nickel, aluminum, bronze, con
 
 ## Lightning
 
-A strike lands about every 6 minutes in clear weather, every 2 minutes in rain and every 30 s in a thunderstorm. It adds 30 s of full output to the storm charge, fuel or not. The spire spends the charge before it burns fuel, so a full buffer keeps the lightning for later.
+A strike lands about every 6 minutes in clear weather, every 2 minutes in rain and every 30 s in a thunderstorm.
 
 ## Example outputs
 
