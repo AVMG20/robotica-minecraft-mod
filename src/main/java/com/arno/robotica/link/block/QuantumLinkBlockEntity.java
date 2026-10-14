@@ -90,6 +90,8 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     private static final int ACCESS_CHECK_TICKS = 100;
     private static final int PULSE_GAP = 10;
     private static final int HUM_PERIOD = 80;
+    /** A receiver whose inventories took nothing in a hand-out sits out this long (or until a neighbour changes). */
+    private static final int ITEM_BACKOFF_TICKS = 30;
     private static final Direction[] DIRS = Direction.values();
 
     private final LinkTier tier;
@@ -135,6 +137,11 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     /** Scratch value of the network's energy hand-out. */
     public int want;
     private int itemBudget;
+    /** Server tick of the last item hand-out that reached the inventories, and whether it tried and placed anything. */
+    private long itemPassTick = Long.MIN_VALUE / 2;
+    private boolean itemPassTried;
+    private boolean itemPassTook;
+    private long itemBackoffUntil;
     private boolean energyDirty;
     private long feWindow;
     private int itemWindow;
@@ -283,6 +290,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
 
     private void settingsChanged() {
         setChanged();
+        resetItemBackoff();
         // Cables and pipes cache capabilities: the views of every face change with the modes.
         if (level != null && !level.isClientSide) level.invalidateCapabilities(worldPosition);
     }
@@ -523,7 +531,10 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         int i = dir.ordinal();
         if (itemCaches[i] == null) {
             itemCaches[i] = BlockCapabilityCache.create(Capabilities.ItemHandler.BLOCK, level, worldPosition.relative(dir), dir.getOpposite(),
-                    () -> !isRemoved(), () -> recheckNeighbours = true);
+                    () -> !isRemoved(), () -> {
+                        recheckNeighbours = true;
+                        resetItemBackoff();
+                    });
         }
         return itemCaches[i].getCapability();
     }
@@ -598,17 +609,27 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
 
     /**
      * Pushes as much of {@code stack} as passes the filter and fits (this second's budget) into the inventories on
-     * Output faces. Shrinks the stack by what went in and returns that.
+     * Output faces. Shrinks the stack by what went in and returns that. After a hand-out where the inventories took
+     * nothing, this receiver sits out {@link #ITEM_BACKOFF_TICKS} so full ones are not scanned on every hand-out.
      */
     public int deliver(ItemStack stack) {
         if (isRemoved() || itemMode != TransferMode.RECEIVE || itemBudget <= 0 || !sides.autoEject()) return 0;
         if (!(level instanceof ServerLevel server) || !passes(stack)) return 0;
+        long now = server.getServer().getTickCount();
+        if (now != itemPassTick) {
+            if (itemPassTried && !itemPassTook) itemBackoffUntil = itemPassTick + ITEM_BACKOFF_TICKS;
+            itemPassTick = now;
+            itemPassTried = false;
+            itemPassTook = false;
+        }
+        if (now < itemBackoffUntil) return 0;
         int moved = 0;
         for (Direction dir : DIRS) {
             if (stack.isEmpty() || itemBudget <= 0) break;
             if (!sides.mode(dir).output || !usable(server, dir)) continue;
             IItemHandler target = itemCap(server, dir);
             if (target == null) continue;
+            itemPassTried = true;
             int n = Math.min(stack.getCount(), itemBudget);
             ItemStack rest = ItemHandlerHelper.insertItemStacked(target, stack.copyWithCount(n), false);
             int done = n - rest.getCount();
@@ -617,8 +638,22 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
             itemBudget -= done;
             moved += done;
         }
-        if (moved > 0) moved(false, true, moved);
+        if (moved > 0) {
+            itemPassTook = true;
+            moved(false, true, moved);
+        }
         return moved;
+    }
+
+    /** An inventory next to it changed (or its settings did): hand it items again on the next hand-out. */
+    public void resetItemBackoff() {
+        itemBackoffUntil = 0;
+        itemPassTried = false;
+    }
+
+    /** True while this receiver sits out the item hand-out after its inventories took nothing. */
+    public boolean itemBackedOff() {
+        return level instanceof ServerLevel server && server.getServer().getTickCount() < itemBackoffUntil;
     }
 
     /** Whitelist: only listed items. Blacklist: all but listed. Empty: everything (the pipe arm rule). */
@@ -798,7 +833,11 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         info.status = switch (status) {
             case ACTIVE -> "working";
             case NO_POWER -> "no_energy";
-            default -> "idle";
+            case NO_NETWORK -> "no_network";
+            case WRONG_DIMENSION -> "wrong_dimension";
+            case NO_ACCESS -> "no_access";
+            case OFF -> "off";
+            case IDLE -> "idle";
         };
         info.owner = owner == null ? null : OwnerNames.name(level.getServer(), owner);
     }

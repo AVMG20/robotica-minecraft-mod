@@ -26,6 +26,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.Mirror;
@@ -95,6 +96,12 @@ public class QuantumLinkBlock extends Block implements EntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide || type != LinkRegistry.LINK_BE.get()) return null;
         return (lvl, pos, st, be) -> ((QuantumLinkBlockEntity) be).serverTick((net.minecraft.server.level.ServerLevel) lvl, pos, st);
+    }
+
+    /** A container next to it changed (comparator update): a receiver that backed off tries it again. */
+    @Override
+    public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof QuantumLinkBlockEntity link) link.resetItemBackoff();
     }
 
     @Nullable

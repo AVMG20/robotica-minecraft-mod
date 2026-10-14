@@ -177,6 +177,37 @@ public class LinkGameTests {
         });
     }
 
+    /**
+     * A receiver whose chest is full sits out the hand-out instead of scanning the chest every time; the chest getting
+     * room (a neighbour change) ends that at once and the items arrive.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void fullReceiverBacksOff(GameTestHelper helper) {
+        LinkNetwork net = network(helper, "Backoff");
+        QuantumLinkBlockEntity sender = link(helper, new BlockPos(0, 1, 0), LinkTier.MK1, net, TransferMode.OFF, TransferMode.SEND);
+        ChestBlockEntity source = chest(helper, new BlockPos(0, 2, 0));
+        source.setItem(0, new ItemStack(Items.DIAMOND, 8));
+        QuantumLinkBlockEntity receiver = link(helper, new BlockPos(3, 1, 0), LinkTier.MK1, net, TransferMode.OFF, TransferMode.RECEIVE);
+        // beside the receiver: a container change there reaches it as a neighbour change
+        ChestBlockEntity target = chest(helper, new BlockPos(4, 1, 0));
+        for (int i = 0; i < target.getContainerSize(); i++) target.setItem(i, new ItemStack(Items.COBBLESTONE, 64));
+        for (QuantumLinkBlockEntity be : List.of(sender, receiver)) be.energy.setEnergy(64_000);
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(source.isEmpty(), "the sender pulled the diamonds");
+                    helper.assertTrue(receiver.itemBackedOff(), "a receiver whose chest took nothing sits out");
+                })
+                .thenExecute(() -> {
+                    helper.assertTrue(target.countItem(Items.DIAMOND) == 0, "the full chest got nothing");
+                    target.setItem(0, ItemStack.EMPTY);
+                    helper.assertFalse(receiver.itemBackedOff(), "room in the chest ends the wait");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(target.countItem(Items.DIAMOND) == 8,
+                        "the diamonds arrive, has " + target.countItem(Items.DIAMOND)))
+                .thenExecute(() -> delete(helper, net))
+                .thenSucceed();
+    }
+
     // ---- Access ----
 
     /** Someone else's private network refuses a player and their Link; a public one lets them in. */
