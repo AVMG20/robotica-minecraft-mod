@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "equipment",
   "pattern": [
     "C C",
@@ -23,5 +23,8 @@
   "result": {
     "id": "robotica:redstone_cell",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:copper_cell"
   }
 }

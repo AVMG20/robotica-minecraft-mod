@@ -87,9 +87,9 @@ def main():
     shaped('chunk_anchor', ['PEP', 'BIB', 'PCP'], {'P': '#c:plates/iron', 'E': '#c:ender_pearls', 'B': 'basic_circuit',
                                                 'I': 'iron_casing', 'C': 'copper_coil'})
     shaped('chunk_anchor_mk2', [' A ', 'EXE', ' R '], {'A': 'advanced_circuit', 'E': '#c:ender_pearls',
-                                                     'X': 'chunk_anchor', 'R': 'reinforced_casing'})
+                                                     'X': 'chunk_anchor', 'R': 'reinforced_casing'}, source='X')
     shaped('chunk_anchor_mk3', [' Q ', 'EXE', ' B '], {'Q': 'quantum_circuit', 'E': '#c:ender_pearls',
-                                                     'X': 'chunk_anchor_mk2', 'B': 'blazing_casing'})
+                                                     'X': 'chunk_anchor_mk2', 'B': 'blazing_casing'}, source='X')
     print('chunk anchor data written')
 
 

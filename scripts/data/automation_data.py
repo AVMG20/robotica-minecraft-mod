@@ -252,11 +252,14 @@ def ing(x):
     return {'item': x if ':' in x else f'robotica:{x}'}
 
 
-def shaped(name, pattern, key, count=1):
-    write(DATA / f'recipe/{name}.json', {
-        'type': 'minecraft:crafting_shaped', 'category': 'misc', 'pattern': pattern,
-        'key': {k: ing(v) for k, v in key.items()},
-        'result': {'id': f'robotica:{name}', 'count': count}})
+def shaped(name, pattern, key, count=1, source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': 'misc',
+            'pattern': pattern, 'key': {k: ing(v) for k, v in key.items()},
+            'result': {'id': f'robotica:{name}', 'count': count}}
+    if source:
+        data['source'] = ing(key[source])
+    write(DATA / f'recipe/{name}.json', data)
 
 
 def shapeless(name, items):
@@ -318,16 +321,16 @@ def main():
     # Excavator Mk2-4: each consumes the Mk before it plus that age's circuit, actuator and casing. Right-click the
     # placed machine with the next Mk to upgrade it in place (the old block comes back).
     shaped('excavator_mk2', [' A ', 'SXS', ' R '], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'X': 'excavator',
-                                                  'R': 'reinforced_casing'})
+                                                  'R': 'reinforced_casing'}, source='X')
     shaped('excavator_mk3', [' Q ', 'PXP', ' B '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'X': 'excavator_mk2',
-                                                  'B': 'blazing_casing'})
+                                                  'B': 'blazing_casing'}, source='X')
     shaped('excavator_mk4', [' N ', 'PXP', 'ECE'], {'N': 'null_circuit', 'P': 'plasma_actuator', 'X': 'excavator_mk3',
-                                                  'E': '#c:ender_pearls', 'C': 'null_casing'})
+                                                  'E': '#c:ender_pearls', 'C': 'null_casing'}, source='X')
     shaped('supply_crate', ['PPP', 'C C', 'PPP'], {'P': '#minecraft:planks', 'C': '#c:ingots/copper'})
     # Crate Mk2-4: the Mk before it plus a few plain ingots or gems, like a chest upgrade.
-    shaped('supply_crate_mk2', [' I ', 'IXI', ' I '], {'I': '#c:ingots/iron', 'X': 'supply_crate'})
-    shaped('supply_crate_mk3', [' G ', 'GXG', ' G '], {'G': '#c:ingots/gold', 'X': 'supply_crate_mk2'})
-    shaped('supply_crate_mk4', [' D ', 'OXO', ' D '], {'D': '#c:gems/diamond', 'O': '#c:obsidians', 'X': 'supply_crate_mk3'})
+    shaped('supply_crate_mk2', [' I ', 'IXI', ' I '], {'I': '#c:ingots/iron', 'X': 'supply_crate'}, source='X')
+    shaped('supply_crate_mk3', [' G ', 'GXG', ' G '], {'G': '#c:ingots/gold', 'X': 'supply_crate_mk2'}, source='X')
+    shaped('supply_crate_mk4', [' D ', 'OXO', ' D '], {'D': '#c:gems/diamond', 'O': '#c:obsidians', 'X': 'supply_crate_mk3'}, source='X')
     shaped('farm_kit_mk2', ['BMB', 'PIP'], {'B': 'basic_circuit', 'M': 'electric_motor', 'P': '#c:plates/iron', 'I': 'iron_casing'})
     shaped('farm_kit_mk3', ['ASA', 'GRG'], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'G': '#c:plates/gold', 'R': 'reinforced_casing'})
     shaped('farm_kit_mk4', ['CPC', 'NEN'], {'C': 'null_circuit', 'P': 'plasma_actuator', 'N': 'null_casing', 'E': '#c:ender_pearls'})

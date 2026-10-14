@@ -106,11 +106,11 @@ def main():
                                               'C': 'copper_coil'})
     # Mk2-4 consume the Mk before; a diamond-studded Mk2 at Age 2, then that age's circuit, actuator and casing.
     shaped('survey_rig_mk2', ['DAD', 'SXS', ' R '], {'D': '#c:gems/diamond', 'A': 'advanced_circuit', 'S': 'servo_actuator',
-                                                   'X': 'survey_rig', 'R': 'reinforced_casing'})
+                                                   'X': 'survey_rig', 'R': 'reinforced_casing'}, source='X')
     shaped('survey_rig_mk3', [' Q ', 'PXP', ' B '], {'Q': 'quantum_circuit', 'P': 'plasma_actuator', 'X': 'survey_rig_mk2',
-                                                   'B': 'blazing_casing'})
+                                                   'B': 'blazing_casing'}, source='X')
     shaped('survey_rig_mk4', [' N ', 'PXP', 'ECE'], {'N': 'null_circuit', 'P': 'plasma_actuator', 'X': 'survey_rig_mk3',
-                                                   'E': '#c:ender_pearls', 'C': 'null_casing'})
+                                                   'E': '#c:ender_pearls', 'C': 'null_casing'}, source='X')
     print('survey rig data written')
 
 

@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     " A ",
@@ -23,5 +23,8 @@
   "result": {
     "id": "robotica:excavator_mk2",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:excavator"
   }
 }

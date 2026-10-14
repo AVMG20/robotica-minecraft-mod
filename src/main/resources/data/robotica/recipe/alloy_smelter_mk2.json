@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     "PCP",
@@ -23,5 +23,8 @@
   "result": {
     "id": "robotica:alloy_smelter_mk2",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:alloy_smelter_mk1"
   }
 }

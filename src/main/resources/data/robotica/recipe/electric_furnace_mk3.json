@@ -23,5 +23,8 @@
   "result": {
     "id": "robotica:electric_furnace_mk3",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:electric_furnace_mk2"
   }
 }

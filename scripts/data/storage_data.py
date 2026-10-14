@@ -73,10 +73,13 @@ def ing(x):
     return {'item': x if ':' in x else f'robotica:{x}'}
 
 
-def shaped(name, pattern, key):
-    write(DATA / 'recipe' / f'{name}.json', {
-        'type': 'minecraft:crafting_shaped', 'category': 'misc', 'pattern': pattern,
-        'key': {k: ing(v) for k, v in key.items()}, 'result': {'id': f'robotica:{name}', 'count': 1}})
+def shaped(name, pattern, key, source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': 'misc',
+            'pattern': pattern, 'key': {k: ing(v) for k, v in key.items()}, 'result': {'id': f'robotica:{name}', 'count': 1}}
+    if source:
+        data['source'] = ing(key[source])
+    write(DATA / 'recipe' / f'{name}.json', data)
 
 
 CHEST, COPPER, IRON_PLATE, GOLD_PLATE, DIAMOND = '#c:chests/wooden', '#c:ingots/copper', '#c:plates/iron', '#c:plates/gold', '#c:gems/diamond'
@@ -88,12 +91,12 @@ shaped('storage_terminal', ['CIC', 'RTR', ' B '],
 shaped('storage_expansion_mk1', ['CPC', 'PIP', 'CBC'],
        {'C': CHEST, 'P': IRON_PLATE, 'I': 'iron_casing', 'B': 'basic_circuit'})
 shaped('storage_expansion_mk2', ['CGC', 'AMX', 'CGC'],
-       {'C': CHEST, 'G': GOLD_PLATE, 'A': 'advanced_circuit', 'M': 'storage_expansion_mk1', 'X': 'reinforced_casing'})
+       {'C': CHEST, 'G': GOLD_PLATE, 'A': 'advanced_circuit', 'M': 'storage_expansion_mk1', 'X': 'reinforced_casing'}, source='M')
 shaped('storage_expansion_mk3', ['CDC', 'QMB', 'CDC'],
-       {'C': CHEST, 'D': DIAMOND, 'Q': 'quantum_circuit', 'M': 'storage_expansion_mk2', 'B': 'blazing_casing'})
+       {'C': CHEST, 'D': DIAMOND, 'Q': 'quantum_circuit', 'M': 'storage_expansion_mk2', 'B': 'blazing_casing'}, source='M')
 # Terminal Links: Mk1 at Age 2 (an ender pearl for the link, a Redstone Cell as its battery), Mk2 at Age 3 eats the Mk1.
 shaped('terminal_link', [' E ', 'ACA', 'PRP'],
        {'E': '#c:ender_pearls', 'A': 'advanced_circuit', 'C': 'redstone_cell', 'P': IRON_PLATE, 'R': 'reinforced_casing'})
 shaped('terminal_link_mk2', [' Q ', 'EXE', ' B '],
-       {'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'X': 'terminal_link', 'B': 'blazing_casing'})
+       {'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'X': 'terminal_link', 'B': 'blazing_casing'}, source='X')
 print('storage data written')

@@ -12,11 +12,14 @@ def ing(x):
     return {'item': x if ':' in x else f'robotica:{x}'}
 
 
-def shaped(name, pattern, key, result=None, count=1, category='misc'):
+def shaped(name, pattern, key, result=None, count=1, category='misc', source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
     OUT.mkdir(parents=True, exist_ok=True)
-    data = {'type': 'minecraft:crafting_shaped', 'category': category, 'pattern': pattern,
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': category, 'pattern': pattern,
             'key': {k: ing(v) for k, v in key.items()},
             'result': {'id': f'robotica:{result or name}', 'count': count}}
+    if source:
+        data['source'] = ing(key[source])
     (OUT / f'{name}.json').write_text(json.dumps(data, indent=2) + '\n')
 
 
@@ -40,7 +43,7 @@ shaped('copper_cell', ['CRC', 'PRP', 'CRC'], {'C': COPPER, 'P': IRON_PLATE, 'R':
 shaped('reinforced_casing', ['OCO', 'CDC', 'OCO'], {'O': '#c:obsidians', 'C': 'iron_casing', 'D': DIAMOND})
 shaped('advanced_circuit', ['BGB', 'QDQ', 'BGB'], {'B': 'basic_circuit', 'G': GOLD, 'Q': '#c:gems/quartz', 'D': DIAMOND})
 shaped('servo_actuator', ['GPG', 'MAM', 'GPG'], {'G': GOLD, 'P': IRON_PLATE, 'M': 'electric_motor', 'A': 'advanced_circuit'})
-shaped('redstone_cell', ['C C', 'RAR', 'RXR'], {'R': '#c:storage_blocks/redstone', 'C': 'copper_cell', 'A': 'advanced_circuit', 'X': 'reinforced_casing'}, category='equipment')
+shaped('redstone_cell', ['C C', 'RAR', 'RXR'], {'R': '#c:storage_blocks/redstone', 'C': 'copper_cell', 'A': 'advanced_circuit', 'X': 'reinforced_casing'}, category='equipment', source='C')
 # The Scrap Colossus (boss module) is the real source of Servo Cores. This fallback stays for Peaceful worlds and servers
 # that turn the Rusted Foundry off, but it costs diamond blocks instead of diamonds (about 830 IE, a Signal Flare is ~24).
 shaped('temp_servo_core', ['DSD', 'SAS', 'DSD'], {'D': '#c:storage_blocks/diamond', 'S': 'servo_actuator', 'A': 'reinforced_casing'}, result='servo_core')
@@ -54,7 +57,7 @@ shaped('temp_magma_core', ['SQS', 'NPN', 'SQS'], {'S': 'servo_actuator', 'Q': 'q
 # Age 4
 shaped('null_casing', ['SBS', 'BAB', 'SBS'], {'S': 'minecraft:shulker_shell', 'B': 'blazing_casing', 'A': 'antigrav_core'}, count=2)
 shaped('null_circuit', ['QEQ', 'ENE', 'QEQ'], {'Q': 'quantum_circuit', 'E': '#c:ender_pearls', 'N': '#c:nether_stars'}, count=2)
-shaped('ender_cell', ['ERE', 'NCN', 'ERE'], {'E': '#c:ender_pearls', 'R': 'redstone_cell', 'N': 'null_casing', 'C': 'null_circuit'}, category='equipment')
+shaped('ender_cell', ['ERE', 'NCN', 'ERE'], {'E': '#c:ender_pearls', 'R': 'redstone_cell', 'N': 'null_casing', 'C': 'null_circuit'}, category='equipment', source='R')
 # The Null Sentinel (boss module) drops Antigrav Cores; the Assembler makes them from Strange Matter (Ring Collider).
 
 # Upgrade cards (machines only): one card per kind, stackable kinds stack in a machine slot (see Upgrades.java).
