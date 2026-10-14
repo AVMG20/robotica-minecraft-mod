@@ -1094,6 +1094,7 @@
    ],
    "what": "Adds 5x5 and vein mining (up to 64 ores).",
    "use": [
+    "Sneak vein mine (tool settings): sneaking vein mines ores instead of one block. Also on the Magma and Null Drill.",
     "On a wall, 5x5 starts one row below the block you aim at: aim at eye level to keep the floor, at your feet to dig one lower."
    ],
    "stats": {

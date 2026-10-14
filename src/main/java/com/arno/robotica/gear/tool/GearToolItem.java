@@ -134,9 +134,10 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
         return m != null && spec.hasMode(m) ? m : spec.defaultMode;
     }
 
-    /** Mode that applies right now: sneaking or an empty tool always means single blocks. Server enforces this. */
+    /** Mode that applies right now: an empty tool mines single blocks, sneaking too unless Sneak vein mine is on. Server enforces this. */
     public AreaMode activeMode(ItemStack stack, Player player) {
-        if (player.isShiftKeyDown() || !hasPower(stack)) return AreaMode.SINGLE;
+        if (!hasPower(stack)) return AreaMode.SINGLE;
+        if (player.isShiftKeyDown()) return toggleActive(stack, ToggleKind.SNEAK_VEIN) ? AreaMode.VEIN : AreaMode.SINGLE;
         return mode(stack);
     }
 
