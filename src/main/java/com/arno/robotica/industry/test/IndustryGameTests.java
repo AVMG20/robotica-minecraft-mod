@@ -12,6 +12,7 @@ import com.arno.robotica.industry.menu.ProcessingMenu;
 import com.arno.robotica.industry.recipe.Machine;
 import com.arno.robotica.industry.recipe.ProcessingInput;
 import com.arno.robotica.industry.recipe.ProcessingRecipe;
+import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.block.CombustionGeneratorBlockEntity;
 import com.arno.robotica.power.block.SolarPanelBlockEntity;
@@ -278,6 +279,7 @@ public class IndustryGameTests {
         helper.assertTrue(gen.output() == base * 4, "3 speed cards: x4 FE/t");
         gen.fuel.setStackInSlot(0, new ItemStack(Items.COAL));
         helper.runAfterDelay(10, () -> {
+            helper.assertTrue(gen.burnTotal() == PowerConfig.generatorBurnTicks(1600), "coal burns its fuel value share of 1,600 ticks: " + gen.burnTotal());
             int energy = gen.energy.getEnergyStored();
             helper.assertTrue(energy > 0 && energy % (base * 4) == 0, "FE comes in steps of " + base * 4 + ", has " + energy);
             helper.assertTrue(gen.burnTime() < gen.burnTotal() - 30, "speed burns the coal faster than one tick per tick");

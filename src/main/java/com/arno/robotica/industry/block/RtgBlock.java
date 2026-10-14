@@ -18,7 +18,7 @@ public class RtgBlock extends IndustryMachineBlock {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.robotica.rtg", IndustryConfig.rtgPower()).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.rtg", com.arno.robotica.core.CoreConfig.scaleGeneration(IndustryConfig.rtgPower())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.rtg_pellet", IndustryConfig.rtgPelletTicks() / 1200).withStyle(ChatFormatting.DARK_GRAY));
     }
 }

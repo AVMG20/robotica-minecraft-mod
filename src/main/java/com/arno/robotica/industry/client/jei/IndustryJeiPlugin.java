@@ -67,7 +67,8 @@ public class IndustryJeiPlugin implements IModPlugin {
         info(registration, IndustryRegistry.RESONITE_ORE.get().asItem(), "jei.robotica.info.resonite_ore");
         registration.addItemStackInfo(new ItemStack(IndustryRegistry.DEPLETED_FUEL_PELLET.get()), Component.translatable("jei.robotica.info.depleted_fuel_pellet"));
         registration.addItemStackInfo(new ItemStack(IndustryRegistry.THORIUM_FUEL_PELLET.get()),
-                Component.translatable("jei.robotica.info.thorium_fuel_pellet", IndustryConfig.rtgPower(), IndustryConfig.rtgPelletTicks() / 1200));
+                Component.translatable("jei.robotica.info.thorium_fuel_pellet",
+                        com.arno.robotica.core.CoreConfig.scaleGeneration(IndustryConfig.rtgPower()), IndustryConfig.rtgPelletTicks() / 1200));
     }
 
     private static void info(IRecipeRegistration registration, net.minecraft.world.item.Item item, String key) {
