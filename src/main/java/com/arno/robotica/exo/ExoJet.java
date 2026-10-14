@@ -83,10 +83,9 @@ public final class ExoJet {
         return ExoSuit.energyFor(entity, ExoSuit.SLOTS[a.piece(ModuleKind.JET_ASSIST)]) >= need;
     }
 
-    /** Standing, climbing, swimming, flying, gliding or riding: no air jumps and no thrust. */
+    /** Standing, swimming, flying, gliding or riding: no air jumps and no thrust. */
     public static boolean grounded(Player p) {
-        return p.onGround() || p.onClimbable() || p.isInWater() || p.isInLava() || p.getAbilities().flying || p.isFallFlying()
-                || p.isPassenger();
+        return p.onGround() || p.isInWater() || p.isInLava() || p.getAbilities().flying || p.isFallFlying() || p.isPassenger();
     }
 
     /** Where the pack cools twice as fast. */

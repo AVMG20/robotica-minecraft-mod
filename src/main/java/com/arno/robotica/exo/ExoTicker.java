@@ -416,7 +416,7 @@ public final class ExoTicker {
 
     private static void jetAssist(ServerPlayer p, State st) {
         boolean grounded = ExoJet.grounded(p);
-        if (grounded) {
+        if (grounded || p.onClimbable()) {
             st.airJumps = 0;
             st.thrustedAir = false;
         }
@@ -969,7 +969,7 @@ public final class ExoTicker {
         int level = st == null ? 0 : lvl(st, ModuleKind.JET_ASSIST);
         if (level <= 0) return false;
         Abilities ab = p.getAbilities();
-        if (p.onGround() || p.isInWater() || p.isInLava() || ab.flying || p.isFallFlying() || p.isPassenger() || p.isSpectator()) return false;
+        if (p.onGround() || p.onClimbable() || p.isInWater() || p.isInLava() || ab.flying || p.isFallFlying() || p.isPassenger() || p.isSpectator()) return false;
         // Half the client's gap: packets can arrive bunched up.
         if (st.airJumps >= ExoConfig.airJumps(level) || p.tickCount - st.lastAirJumpTick < ExoSuit.AIR_JUMP_GAP / 2) return false;
         if (!ExoSuit.canPayAirJump(p, st.act)) return false;

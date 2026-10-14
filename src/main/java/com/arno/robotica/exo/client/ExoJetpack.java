@@ -145,7 +145,9 @@ final class ExoJetpack {
         boolean press = jumpDown && !jumpWasDown;
         jumpWasDown = jumpDown;
         boolean grounded = ExoJet.grounded(player);
-        if (grounded) {
+        // On a ladder or scaffolding a press climbs: it neither spends an air jump nor starts thrust.
+        boolean climbing = player.onClimbable();
+        if (grounded || climbing) {
             airJumps = 0;
             thrustedAir = false;
         }
@@ -164,7 +166,7 @@ final class ExoJetpack {
         boolean usable = level > 0 && !player.isSpectator();
 
         if (!jumpDown || grounded) armed = false;
-        if (press && !grounded && usable) {
+        if (press && !grounded && !climbing && usable) {
             armed = true;
             pressTick = player.tickCount;
             pressJumped = false;
