@@ -285,10 +285,10 @@
     "wireless_charger_mk3",
     "wireless_charger_mk4"
    ],
-   "what": "Charges the FE items of every player in range.",
+   "what": "Charges the FE items of every player in range, and the robots and drones in range.",
    "use": [
     "Place it against a ceiling or wall to point its mast down or sideways.",
-    "Stand within range: faint violet motes show who it charges."
+    "Stand within range, or put it over your robots' work area: faint violet motes show what it charges."
    ],
    "stats": {
     "columns": [
@@ -300,10 +300,10 @@
     "rows": [
      [
       "Rate",
-      "1,000 FE/t per player",
-      "4,000 FE/t per player",
-      "16,000 FE/t per player",
-      "64,000 FE/t per player"
+      "1,000 FE/t each",
+      "4,000 FE/t each",
+      "16,000 FE/t each",
+      "64,000 FE/t each"
      ],
      [
       "Range",

@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * Work area of the walking robots (Stumpy, Sprout, Rancher): the same on every Mk, range cards make it bigger. The Mk
- * only sets speed, growth and card slots, so a small Mk4 or a big Mk1 are both possible.
+ * only sets speed, growth and card slots, so a small Mk4 or a big Mk1 are both possible. Stumpy starts a step smaller.
  */
 public final class RobotArea {
     private RobotArea() {}
@@ -32,12 +32,23 @@ public final class RobotArea {
         return Math.min(n, RANGE_CARDS);
     }
 
+    /** Radius of Sprout and the Rancher. */
     public static int radius(int rangeCards) {
-        return AutomationConfig.farmRadius() + RADIUS_PER_CARD * Math.max(0, Math.min(RANGE_CARDS, rangeCards));
+        return radius(AutomationConfig.farmRadius(), rangeCards);
     }
 
-    /** Side of the square area. */
+    /** Radius from a base radius (no cards) and the range cards. */
+    public static int radius(int base, int rangeCards) {
+        return base + RADIUS_PER_CARD * Math.max(0, Math.min(RANGE_CARDS, rangeCards));
+    }
+
+    /** Side of the square area of Sprout and the Rancher. */
     public static int size(int rangeCards) {
-        return 2 * radius(rangeCards) + 1;
+        return size(AutomationConfig.farmRadius(), rangeCards);
+    }
+
+    /** Side of the square area from a base radius and the range cards. */
+    public static int size(int base, int rangeCards) {
+        return 2 * radius(base, rangeCards) + 1;
     }
 }

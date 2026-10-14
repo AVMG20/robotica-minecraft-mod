@@ -37,6 +37,6 @@ Put a [[tesla_emitter_1]] on a generator or battery and link it to a machine wit
 
 ## Charging your gear
 
-A [[charger]] does one item at a time. The [[wireless_charger]] (Age 2) charges everything players carry while they work nearby.
+A [[charger]] does one item at a time. The [[wireless_charger]] (Age 2) charges everything players carry while they work nearby, and the robots in its range.
 
 {{image shots/gui_wireless_charger.jpg|Wireless Charger menu}}

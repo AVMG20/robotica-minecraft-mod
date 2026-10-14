@@ -41,7 +41,7 @@ public class Stumpy extends FarmBot {
     /** Effect kind of a chop. */
     static final int CHOP = 0;
     /** Ticks a tree takes to come down (more blocks per tick for big trees). */
-    private static final int WAVE_TICKS = 24;
+    private static final int WAVE_TICKS = 30;
     /** How far (horizontally) the saw reaches from where Stumpy stands. */
     private static final double REACH = 3.0;
     private static final long[] NO_WAVE = new long[0];
@@ -95,6 +95,11 @@ public class Stumpy extends FarmBot {
     @Override
     protected double reach() {
         return REACH;
+    }
+
+    @Override
+    protected int baseRadius() {
+        return AutomationConfig.stumpyRadius();
     }
 
     @Override

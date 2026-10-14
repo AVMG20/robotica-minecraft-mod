@@ -202,5 +202,6 @@
   "gui.robotica.farm_bot.storage_missing": "No chest within 3 blocks of where it was placed",
   "gui.robotica.slot_robot_card": "Upgrade card (a higher Mk opens more slots)",
   "gui.robotica.robot_area_hint": "Range cards make the area bigger",
-  "robotica.configuration.farmRadius": "Robot work radius"
+  "robotica.configuration.farmRadius": "Sprout and Rancher work radius",
+  "robotica.configuration.stumpyRadius": "Stumpy work radius"
 }

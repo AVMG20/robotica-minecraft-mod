@@ -56,6 +56,7 @@ public final class AutomationConfig {
             "#c:ores/diamond=6", "#c:ores/emerald=4", "#c:ores/resonite=2", "#c:ores/netherite_scrap=1");
     public static final List<String> DEFAULT_CORE_ORES = List.of("#c:ores/netherite_scrap", "#c:ores/resonite");
     private static final ModConfigSpec.IntValue FARM_RADIUS;
+    private static final ModConfigSpec.IntValue STUMPY_RADIUS;
     private static final ModConfigSpec.IntValue[] FARM_INTERVAL = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.DoubleValue[] FARM_GROWTH = new ModConfigSpec.DoubleValue[4];
     private static final ModConfigSpec.IntValue ANCHOR_CHUNKS_PER_PLAYER;
@@ -72,15 +73,17 @@ public final class AutomationConfig {
         STUMPY_FE_PER_LOG = b.comment("FE per log Stumpy fells, paid when the tree comes down (before efficiency cards). A tree never costs more than half the internal buffer.")
                 .defineInRange("stumpyFePerLog", 250, 0, 100_000);
         STUMPY_TICKS_PER_LOG = b.comment("Rest after a tree, in ticks per log felled (speed cards shorten it).")
-                .defineInRange("stumpyTicksPerLog", 10, 0, 1_200);
+                .defineInRange("stumpyTicksPerLog", 15, 0, 1_200);
         SPROUT_FE_PER_TICK = b.comment("FE per tick while Sprout works (before upgrade multipliers).")
                 .defineInRange("sproutFePerTick", 3, 0, 10_000);
         SPROUT_FE_PER_HARVEST = b.comment("FE per crop Sprout harvests (before efficiency cards). Without it the crop waits.")
                 .defineInRange("sproutFePerHarvest", 30, 0, 100_000);
         MAX_LOGS = b.comment("Maximum logs Stumpy fells in one action.")
                 .defineInRange("maxLogsPerTree", 256, 1, 4096);
-        FARM_RADIUS = b.comment("Stumpy, Sprout and Rancher work radius without range cards (area side = 2 * radius + 1), on every Mk. Range cards add to it.")
+        FARM_RADIUS = b.comment("Sprout and Rancher work radius without range cards (area side = 2 * radius + 1), on every Mk. Range cards add to it.")
                 .defineInRange("farmRadius", 4, 1, 32);
+        STUMPY_RADIUS = b.comment("Stumpy work radius without range cards (area side = 2 * radius + 1), on every Mk. Range cards add to it.")
+                .defineInRange("stumpyRadius", 3, 1, 32);
         for (int i = 0; i < 4; i++) {
             int mk = i + 1;
             FARM_INTERVAL[i] = b.comment("Mk" + mk + " ticks between actions.")
@@ -166,7 +169,7 @@ public final class AutomationConfig {
     }
 
     public static int stumpyTicksPerLog() {
-        return SPEC.isLoaded() ? STUMPY_TICKS_PER_LOG.get() : 10;
+        return SPEC.isLoaded() ? STUMPY_TICKS_PER_LOG.get() : 15;
     }
 
     public static int stumpyFePerLog() {
@@ -191,6 +194,10 @@ public final class AutomationConfig {
 
     public static int farmRadius() {
         return SPEC.isLoaded() ? FARM_RADIUS.get() : 4;
+    }
+
+    public static int stumpyRadius() {
+        return SPEC.isLoaded() ? STUMPY_RADIUS.get() : 3;
     }
 
     public static int farmInterval(int tier) {

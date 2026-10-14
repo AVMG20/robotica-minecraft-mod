@@ -213,7 +213,7 @@
       ],
       "effects": {
         "speed": "Fells each tree sooner after reaching it (x2 to x20); FE use rises with it.",
-        "range": "+6 blocks wide per card on every Mk (9x9 up to 33x33).",
+        "range": "+6 blocks wide per card on every Mk (7x7 up to 31x31).",
         "growth": "Saplings in the area grow +50% faster per card.",
         "efficiency": "-15% FE per card (never below 40%)."
       },
