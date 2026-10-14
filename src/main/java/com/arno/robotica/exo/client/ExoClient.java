@@ -11,6 +11,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
@@ -27,6 +28,10 @@ public final class ExoClient {
         modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class,
                 event -> event.registerLayerDefinition(ExoJetpackLayer.LAYER, ExoJetpackLayer::createLayer));
         modBus.addListener(EntityRenderersEvent.AddLayers.class, ExoJetpackLayer::addLayers);
+        modBus.addListener(EntityRenderersEvent.RegisterLayerDefinitions.class, ExoArmorModel::registerLayers);
+        modBus.addListener(EntityRenderersEvent.AddLayers.class, ExoArmorModel::bake);
+        modBus.addListener(EntityRenderersEvent.AddLayers.class, ExoArmorGlowLayer::addLayers);
+        modBus.addListener(RegisterClientExtensionsEvent.class, ExoArmorModel::registerExtensions);
         modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ExoRegistry.EXO_MENU.get(), ExoScreen::new));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoKeys::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ExoXray::onClientTick);
