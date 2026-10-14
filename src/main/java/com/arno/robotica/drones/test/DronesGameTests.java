@@ -34,8 +34,10 @@ import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -515,6 +517,49 @@ public class DronesGameTests {
         bot.setMode(BuddyBot.Mode.STAY);
         bot.setHealth(10.0F);
         helper.succeedWhen(() -> helper.assertTrue(bot.getHealth() > 10.0F, "deployed bot heals over time, is " + bot.getHealth()));
+    }
+
+    /** A following bot goes along when its owner changes dimension, there and back; a staying bot stays. */
+    @GameTest(template = "empty", batch = "dronesDimension", timeoutTicks = 800)
+    public static void buddyFollowsOwnerAcrossDimensions(GameTestHelper helper) {
+        ServerLevel home = helper.getLevel();
+        ServerLevel nether = home.getServer().getLevel(Level.NETHER);
+        helper.assertTrue(nether != null, "the test server has a Nether");
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        BuddyBot follower = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), new BlockPos(1, 2, 1));
+        follower.setTier(1);
+        follower.setOwnerUUID(player.getUUID());
+        follower.setEnergy(54_321);
+        follower.setMode(BuddyBot.Mode.FOLLOW);
+        BuddyBot stayer = helper.spawn(DronesRegistry.BUDDY_BOT_ENTITY.get(), new BlockPos(3, 2, 3));
+        stayer.setTier(1);
+        stayer.setOwnerUUID(player.getUUID());
+        stayer.setMode(BuddyBot.Mode.STAY);
+        UUID id = follower.getUUID();
+        Vec3 back = helper.absoluteVec(new Vec3(2.5, 2.0, 2.5));
+        BuddyBot[] there = new BuddyBot[1];
+        helper.startSequence()
+                .thenExecute(() -> {
+                    player.teleportTo(nether, 8.5, 140.0, 8.5, 0.0F, 0.0F);
+                    helper.assertTrue(follower.isRemoved(), "the following bot left with its owner");
+                    helper.assertTrue(!stayer.isRemoved() && stayer.level() == home, "a staying bot stays");
+                })
+                .thenWaitUntil(() -> {
+                    there[0] = nether.getEntity(id) instanceof BuddyBot b ? b : null;
+                    helper.assertTrue(there[0] != null, "the bot arrived in the Nether");
+                })
+                .thenExecute(() -> {
+                    helper.assertTrue(there[0].distanceTo(player) < 6.0, "it appears beside its owner");
+                    helper.assertTrue(there[0].getEnergy() == 54_321 && there[0].mode() == BuddyBot.Mode.FOLLOW, "it keeps its energy and mode");
+                    player.teleportTo(home, back.x, back.y, back.z, 0.0F, 0.0F);
+                    helper.assertTrue(there[0].isRemoved(), "it comes back with its owner");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(home.getEntity(id) instanceof BuddyBot b && b.distanceTo(player) < 6.0, "the bot is home again"))
+                .thenExecute(() -> {
+                    home.getEntity(id).discard();
+                    stayer.discard();
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = "drones_arena", batch = "dronesSentry", timeoutTicks = 400)

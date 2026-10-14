@@ -37,6 +37,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -60,6 +61,7 @@ import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
@@ -946,6 +948,13 @@ public class BuddyBot extends DroneBase {
             return;
         }
         ServerPlayer o = ownerHere();
+        if (o == null && (returning || mode() == Mode.FOLLOW) && tickCount % 20 == 0) {
+            ServerPlayer away = ownerPlayer();
+            if (away != null && away.isAlive() && away.level() != level()) {
+                joinOwner(away);
+                return;
+            }
+        }
         if (returning) {
             if (o == null) {
                 returning = false;
@@ -979,6 +988,40 @@ public class BuddyBot extends DroneBase {
             }
             case STAY -> navigation.stop();
         }
+    }
+
+    /** Brings the player's following bots from other dimensions to their side (portals, teleports, respawn). */
+    public static void joinOwnerFromOtherDimensions(ServerPlayer player) {
+        if (!player.isAlive()) return;
+        ServerLevel here = player.serverLevel();
+        for (ServerLevel level : player.server.getAllLevels()) {
+            if (level == here) continue;
+            for (BuddyBot bot : level.getEntities(DronesRegistry.BUDDY_BOT_ENTITY.get(), b -> b.followsAcrossDimensions(player))) {
+                bot.joinOwner(player);
+            }
+        }
+    }
+
+    private boolean followsAcrossDimensions(ServerPlayer player) {
+        return isAlive() && player.getUUID().equals(owner) && tunnel == null && (returning || mode() == Mode.FOLLOW)
+                && !isPassenger() && !isVehicle();
+    }
+
+    /** Moves to the owner's dimension and appears beside them. */
+    private void joinOwner(ServerPlayer o) {
+        ServerLevel to = o.serverLevel();
+        if (isRemoved() || !canChangeDimensions(level(), to)) return;
+        Entity moved = changeDimension(new DimensionTransition(to, o.position(), Vec3.ZERO, o.getYRot(), getXRot(), DimensionTransition.DO_NOTHING));
+        if (moved instanceof BuddyBot bot) {
+            bot.setMode(Mode.FOLLOW);
+            bot.teleportNear(bot.followPoint(o, 1.5, 0.8, 1.9));
+        }
+    }
+
+    /** It follows its owner to other dimensions by itself, so it never takes a portal on its own. */
+    @Override
+    public boolean canUsePortal(boolean allowPassengers) {
+        return false;
     }
 
     private void tickPatrol(ServerLevel sl) {

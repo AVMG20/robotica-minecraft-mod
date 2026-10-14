@@ -2,6 +2,7 @@ package com.arno.robotica.drones;
 
 import com.arno.robotica.drones.entity.BuddyBot;
 import com.arno.robotica.drones.net.DroneCommandPayload;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -22,7 +23,18 @@ public final class DronesModule {
         modBus.addListener(DronesModule::registerCapabilities);
         modBus.addListener(DroneCommandPayload::register);
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, DroneCommandPayload::onLogout);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerChangedDimensionEvent.class, DronesModule::onChangedDimension);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerRespawnEvent.class, DronesModule::onRespawn);
         com.arno.robotica.drones.entity.HaulerEvents.register();
+    }
+
+    /** Following Buddy Bots go along to the new dimension. */
+    private static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) BuddyBot.joinOwnerFromOtherDimensions(player);
+    }
+
+    private static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) BuddyBot.joinOwnerFromOtherDimensions(player);
     }
 
     private static void registerAttributes(EntityAttributeCreationEvent event) {
