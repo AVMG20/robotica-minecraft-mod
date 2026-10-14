@@ -1,9 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     "ASA",
-    "GRG"
+    "GXG",
+    " R "
   ],
   "key": {
     "A": {
@@ -15,12 +16,18 @@
     "G": {
       "tag": "c:plates/gold"
     },
+    "X": {
+      "item": "robotica:stumpy_mk2"
+    },
     "R": {
       "item": "robotica:reinforced_casing"
     }
   },
   "result": {
-    "id": "robotica:farm_kit_mk3",
+    "id": "robotica:stumpy_mk3",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:stumpy_mk2"
   }
 }

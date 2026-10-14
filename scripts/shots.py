@@ -57,7 +57,7 @@ SHOTS = {
     'hauler_drone': ('hauler_drone.png', 'scene'),
     'codex_01_start': ('codex_01_start.png', 'scene'),
     'codex_03_recipe': ('codex_03_recipe.png', 'scene'),
-    'gui_stumpy': ('gui_*_stumpy.png', 'gui'),
+    'gui_stumpy': ('gui_96_stumpy.png', 'gui'),
     'gui_architect_demolish': ('gui_96_architect_demolish.png', 'gui'),
     'gui_tinkers_bench': ('gui_97_tinkers_bench.png', 'gui'),
     'gui_core_reactor_formed': ('gui_98_core_reactor_formed.png', 'gui'),

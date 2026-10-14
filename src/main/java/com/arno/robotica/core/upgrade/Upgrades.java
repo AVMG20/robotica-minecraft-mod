@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.function.IntSupplier;
 import java.util.function.ToIntFunction;
@@ -39,6 +40,13 @@ public class Upgrades extends ItemStackHandler {
     public static Upgrades forMk(IntSupplier mk, Set<UpgradeKind> kinds, Runnable onChanged) {
         return new Upgrades(UpgradeRules.MAX_SLOTS, () -> UpgradeRules.mkSlots(mk.getAsInt()), kinds,
                 k -> UpgradeRules.mkCap(mk.getAsInt(), k), onChanged);
+    }
+
+    /** Like {@link #forMk(IntSupplier, Set, Runnable)}, but the kinds in {@code fixedCaps} take that many cards on every Mk. */
+    public static Upgrades forMk(IntSupplier mk, Set<UpgradeKind> kinds, Map<UpgradeKind, Integer> fixedCaps, Runnable onChanged) {
+        Map<UpgradeKind, Integer> fixed = Map.copyOf(fixedCaps);
+        return new Upgrades(UpgradeRules.MAX_SLOTS, () -> UpgradeRules.mkSlots(mk.getAsInt()), kinds,
+                k -> fixed.containsKey(k) ? fixed.get(k) : UpgradeRules.mkCap(mk.getAsInt(), k), onChanged);
     }
 
     /** Card slots of a machine without a Mk, as listed in {@link UpgradeRules.Fixed}. */

@@ -145,9 +145,9 @@
       "age": 1
     },
     {
-      "id": "robotica:guide/farm_kit",
+      "id": "robotica:guide/robot_mk2",
       "parent": "robotica:guide/upgrade_card",
-      "icon": "robotica:farm_kit_mk2",
+      "icon": "robotica:sprout_mk2",
       "age": 1
     },
     {

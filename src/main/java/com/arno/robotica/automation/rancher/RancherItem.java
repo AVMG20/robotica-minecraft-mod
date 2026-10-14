@@ -1,11 +1,13 @@
 package com.arno.robotica.automation.rancher;
 
+import com.arno.robotica.automation.RobotArea;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyItem;
 import com.arno.robotica.core.energy.ItemEnergy;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -85,7 +87,8 @@ public class RancherItem extends Item implements EnergyItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         ItemEnergy.appendTooltip(stack, tooltip);
-        int side = tier >= 2 ? 13 : 9;
+        CompoundTag state = stack.get(RancherContent.STATE.get());
+        int side = RobotArea.size(RobotArea.rangeCards(state == null ? null : state.getCompound("Upgrades")));
         tooltip.add(Component.translatable("tooltip.robotica.rancher", side, side).withStyle(ChatFormatting.GRAY));
     }
 }

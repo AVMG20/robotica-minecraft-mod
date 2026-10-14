@@ -1,0 +1,33 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    "BMB",
+    "PXP",
+    " I "
+  ],
+  "key": {
+    "B": {
+      "item": "robotica:basic_circuit"
+    },
+    "M": {
+      "item": "robotica:electric_motor"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    },
+    "X": {
+      "item": "robotica:stumpy"
+    },
+    "I": {
+      "item": "robotica:iron_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:stumpy_mk2",
+    "count": 1
+  },
+  "source": {
+    "item": "robotica:stumpy"
+  }
+}

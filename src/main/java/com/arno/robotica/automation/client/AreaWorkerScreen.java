@@ -15,7 +15,7 @@ import net.minecraft.world.item.Items;
 
 import java.util.Locale;
 
-/** GUI of Stumpy, Sprout and the Excavator: battery, upgrades, buffer, an area toggle, a status dot. */
+/** GUI of the Excavator and Survey Rig: battery, upgrades, buffer, an area toggle, a status dot. */
 public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
     private IconButton areaButton;
 
@@ -82,7 +82,7 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
         int size = menu.size();
         Component info = Component.translatable("gui.robotica.area", size, size);
         drawLabelRight(g, info, x + imageWidth - 8, y + 6, 40);
-        Component tierTip = isFarmBot() || menu.be instanceof com.arno.robotica.automation.entity.ExcavatorBlockEntity
+        Component tierTip = menu.be instanceof com.arno.robotica.automation.entity.ExcavatorBlockEntity
                 ? Component.translatable("gui.robotica.tier_area", menu.be.tier(), size, size)
                 : Component.translatable("gui.robotica.area", size, size);
         addTooltip(x + imageWidth - 50, y + 4, 44, 11, tierTip);
@@ -98,9 +98,5 @@ public class AreaWorkerScreen extends MachineScreen<AreaWorkerMenu> {
             drawLabelRight(g, progress, x + imageWidth - 8, y + 74, 66);
             drawProgress(g, x + 117, y + 84, 52, 2, menu.progress() / 100.0F);
         }
-    }
-
-    private boolean isFarmBot() {
-        return menu.be instanceof com.arno.robotica.automation.entity.FarmBotBlockEntity;
     }
 }

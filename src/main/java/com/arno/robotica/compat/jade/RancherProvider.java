@@ -13,7 +13,7 @@ import snownee.jade.api.config.IPluginConfig;
 import snownee.jade.api.ui.BoxStyle;
 import snownee.jade.api.ui.IElementHelper;
 
-/** Status, herd size, tier, energy bar and owner of the Rancher. */
+/** Status, herd size, Mk and area, energy bar and owner of the Rancher. */
 enum RancherProvider implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
     INSTANCE;
 
@@ -44,7 +44,9 @@ enum RancherProvider implements IEntityComponentProvider, IServerDataProvider<En
         if (!data.contains("robotica_capacity")) return;
         tooltip.add(Component.translatable("jade.robotica.status", Component.translatable(data.getString("robotica_status"))));
         tooltip.add(Component.translatable("jade.robotica.herd", data.getInt("robotica_adults"), data.getInt("robotica_target")));
-        tooltip.add(Component.translatable("jade.robotica.tier", data.getByte("robotica_tier")));
+        int size = accessor.getEntity() instanceof Rancher r ? 2 * r.radius() + 1 : 0;
+        tooltip.add(size > 0 ? Component.translatable("gui.robotica.tier_area", data.getByte("robotica_tier"), size, size)
+                : Component.translatable("jade.robotica.tier", data.getByte("robotica_tier")));
         int capacity = data.getInt("robotica_capacity");
         if (capacity > 0) {
             int energy = data.getInt("robotica_energy");

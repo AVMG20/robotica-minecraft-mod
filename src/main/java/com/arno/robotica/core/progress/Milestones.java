@@ -31,7 +31,7 @@ public final class Milestones {
 
     public static final String WIND_SPRING = "wind_spring";
     public static final String ROBOT_WORKING = "robot_working";
-    public static final String FARM_KIT = "farm_kit";
+    public static final String ROBOT_PLACED = "robot_placed";
     public static final String VIAL_COMPLETE = "vial_complete";
     public static final String REPLICATOR_FORMED = "replicator_formed";
     public static final String WARP = "warp";

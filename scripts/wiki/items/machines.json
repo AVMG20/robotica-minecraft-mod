@@ -364,13 +364,16 @@
   },
   {
    "items": [
-    "stumpy"
+    "stumpy",
+    "stumpy_mk2",
+    "stumpy_mk3",
+    "stumpy_mk4"
    ],
-   "what": "Lumber bot: fells whole trees, replants and collects drops.",
+   "what": "Lumber bot: walks to trees, fells them whole, replants and collects drops.",
    "use": [
-    "Place it among trees with a chest or [[supply_crate]] touching it.",
+    "Right-click the ground among trees, with a chest within 3 blocks of that spot.",
     "Right-click it with a wound [[mainspring]] or a cell.",
-    "Sneak-right-click: status and work area."
+    "Craft or right-click it with the next Mk to upgrade it."
    ],
    "stats": {
     "columns": [
@@ -381,11 +384,25 @@
     ],
     "rows": [
      [
+      "Interval",
+      "40 ticks",
+      "20 ticks",
+      "5 ticks",
+      "1 tick"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     [
       "Area",
-      "7x7",
-      "11x11",
-      "15x15",
-      "23x23"
+      "9x9, +6 wide per Range card",
+      "",
+      "",
+      ""
      ],
      [
       "Power",
@@ -398,18 +415,21 @@
    },
    "see": [
     "guide:getting-started",
-    "item:farm_kit_mk2"
+    "guide:upgrade-cards"
    ]
   },
   {
    "items": [
-    "sprout"
+    "sprout",
+    "sprout_mk2",
+    "sprout_mk3",
+    "sprout_mk4"
    ],
-   "what": "Crop bot: harvests and replants crops, picks berries, melons and pumpkins, cuts sugar cane, cactus, bamboo and kelp, tills dirt near water.",
+   "what": "Crop bot: harvests and replants a 3x3 patch per stop, picks berries, melons and pumpkins, cuts sugar cane, cactus, bamboo and kelp, tills dirt near water.",
    "use": [
-    "Place it in your field with a chest or [[supply_crate]] touching it.",
+    "Right-click the ground in your field, with a chest within 3 blocks of that spot.",
     "Right-click it with a wound [[mainspring]] or a cell.",
-    "Sneak-right-click: status and work area."
+    "Craft or right-click it with the next Mk to upgrade it."
    ],
    "stats": {
     "columns": [
@@ -420,11 +440,11 @@
     ],
     "rows": [
      [
-      "Area",
-      "9x9",
-      "13x13",
-      "17x17",
-      "25x25"
+      "Interval",
+      "40 ticks",
+      "20 ticks",
+      "5 ticks",
+      "1 tick"
      ],
      [
       "Growth",
@@ -432,6 +452,20 @@
       "x2",
       "x3",
       "x5"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     [
+      "Area",
+      "9x9, +6 wide per Range card",
+      "",
+      "",
+      ""
      ],
      [
       "Power",
@@ -444,46 +478,8 @@
    },
    "see": [
     "guide:getting-started",
-    "item:farm_kit_mk2"
+    "guide:upgrade-cards"
    ]
-  },
-  {
-   "items": [
-    "farm_kit_mk2",
-    "farm_kit_mk3",
-    "farm_kit_mk4"
-   ],
-   "what": "Upgrades a placed Stumpy or Sprout to the next Mk: bigger area, faster, one more card slot, higher card caps.",
-   "use": [
-    "Right-click the placed robot with the kit."
-   ],
-   "stats": {
-    "columns": [
-     "Mk2",
-     "Mk3",
-     "Mk4"
-    ],
-    "rows": [
-     [
-      "Age",
-      "1",
-      "2",
-      "4"
-     ],
-     [
-      "Sprout area",
-      "13x13",
-      "17x17",
-      "25x25"
-     ],
-     [
-      "Interval",
-      "20 ticks",
-      "5 ticks",
-      "1 tick"
-     ]
-    ]
-   }
   },
   {
    "items": [
@@ -492,13 +488,26 @@
     "supply_crate_mk3",
     "supply_crate_mk4"
    ],
-   "what": "Storage crate. Robots and machines touching it put their drops in.",
+   "what": "Storage crate. Machines touching it put their drops in. Stumpy, Sprout and the Rancher use the biggest one within 3 blocks of where they were placed.",
    "use": [
     "Right-click it with the next Mk to upgrade it in place; the items stay."
    ],
    "stats": {
-    "columns": ["Mk1", "Mk2", "Mk3", "Mk4"],
-    "rows": [["Slots", "27", "54", "84", "108"]]
+    "columns": [
+     "Mk1",
+     "Mk2",
+     "Mk3",
+     "Mk4"
+    ],
+    "rows": [
+     [
+      "Slots",
+      "27",
+      "54",
+      "84",
+      "108"
+     ]
+    ]
    }
   },
   {
@@ -522,13 +531,18 @@
     "rows": [
      [
       "Area",
-      "9x9, 2 below to 3 above",
-      "13x13"
+      "9x9, 2 below to 3 above, +6 wide per Range card",
+      ""
      ],
      [
       "Rest between actions",
       "2 s",
       "1 s"
+     ],
+     [
+      "Card slots",
+      "2",
+      "3"
      ],
      [
       "Buffer",
@@ -543,7 +557,8 @@
     ]
    },
    "see": [
-    "guide:animal-farm"
+    "guide:animal-farm",
+    "guide:upgrade-cards"
    ],
    "image": "shots/rancher_close.jpg|Rancher Mk1 feeding a cow, Mk2 shearing a sheep"
   },

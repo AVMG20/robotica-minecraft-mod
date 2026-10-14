@@ -210,23 +210,20 @@ def robot(name, elements, arms, body):
                 'accent': 'robotica:block/automation_mk1'}
     particle = f'robotica:block/{body}'
     write(ASSETS / f'models/block/{name}_base.json', model(textures, elements, particle))
-    variants = {}
+    # One body per Mk for the entity renderer.
     for tier in range(1, 5):
         write(ASSETS / f'models/block/{name}_mk{tier}.json',
               {'parent': base, 'textures': {'accent': f'robotica:block/automation_mk{tier}'}})
-        for i, facing in enumerate(('north', 'east', 'south', 'west')):
-            v = {'model': f'robotica:block/{name}_mk{tier}'}
-            if i:
-                v['y'] = 90 * i
-            variants[f'facing={facing},tier={tier}'] = v
-    write(ASSETS / f'blockstates/{name}.json', {'variants': variants})
     # Arm parts carry no accent, so one model each serves every Mk.
     all_arms = []
     for part, els in arms.items():
         write(ASSETS / f'models/block/{name}_{part}.json', model(textures, els, particle))
         all_arms += els
-    # The item shows the whole robot, arms included.
+    # The item shows the whole robot, arms included; Mk2-4 swap the accent color.
     write(ASSETS / f'models/item/{name}.json', model(textures, elements + all_arms, particle))
+    for tier in range(2, 5):
+        write(ASSETS / f'models/item/{name}_mk{tier}.json',
+              {'parent': f'robotica:item/{name}', 'textures': {'accent': f'robotica:block/automation_mk{tier}'}})
 
 
 def single(name, model_name):
@@ -309,10 +306,7 @@ def main():
         write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}'})
         loot(name)
 
-    for name in ('stumpy', 'sprout'):
-        loot(name)
-
-    # Recipes (component ladder: Age 0 bots, Age 1 excavator and Mk2 kit, Age 2 Mk3 kit, Age 4 Mk4 kit)
+    # Recipes (component ladder: Age 0 bots, Age 1 excavator and bot Mk2, Age 2 bot Mk3, Age 4 bot Mk4)
     shapeless('stumpy', ['wooden_chassis', 'clockwork_mechanism', 'minecraft:stone_axe'])
     shapeless('sprout', ['wooden_chassis', 'clockwork_mechanism', 'minecraft:stone_hoe'])
     # The real quarry waits for the first diamonds: a diamond pickaxe is its drill head.
@@ -331,9 +325,15 @@ def main():
     shaped('supply_crate_mk2', [' I ', 'IXI', ' I '], {'I': '#c:ingots/iron', 'X': 'supply_crate'}, source='X')
     shaped('supply_crate_mk3', [' G ', 'GXG', ' G '], {'G': '#c:ingots/gold', 'X': 'supply_crate_mk2'}, source='X')
     shaped('supply_crate_mk4', [' D ', 'OXO', ' D '], {'D': '#c:gems/diamond', 'O': '#c:obsidians', 'X': 'supply_crate_mk3'}, source='X')
-    shaped('farm_kit_mk2', ['BMB', 'PIP'], {'B': 'basic_circuit', 'M': 'electric_motor', 'P': '#c:plates/iron', 'I': 'iron_casing'})
-    shaped('farm_kit_mk3', ['ASA', 'GRG'], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'G': '#c:plates/gold', 'R': 'reinforced_casing'})
-    shaped('farm_kit_mk4', ['CPC', 'NEN'], {'C': 'null_circuit', 'P': 'plasma_actuator', 'N': 'null_casing', 'E': '#c:ender_pearls'})
+    # Stumpy and Sprout Mk2-4: the Mk before it plus that age's circuit, motor or actuator and casing. Keeps energy,
+    # cards and pouch. Right-click a placed robot with the next Mk to upgrade it in place (the old Mk comes back).
+    for bot in ('stumpy', 'sprout'):
+        shaped(f'{bot}_mk2', ['BMB', 'PXP', ' I '], {'B': 'basic_circuit', 'M': 'electric_motor', 'P': '#c:plates/iron',
+                                                    'X': bot, 'I': 'iron_casing'}, source='X')
+        shaped(f'{bot}_mk3', ['ASA', 'GXG', ' R '], {'A': 'advanced_circuit', 'S': 'servo_actuator', 'G': '#c:plates/gold',
+                                                    'X': f'{bot}_mk2', 'R': 'reinforced_casing'}, source='X')
+        shaped(f'{bot}_mk4', ['CPC', 'NXN', ' E '], {'C': 'null_circuit', 'P': 'plasma_actuator', 'N': 'null_casing',
+                                                    'X': f'{bot}_mk3', 'E': '#c:ender_pearls'}, source='X')
     print('automation data written')
 
 

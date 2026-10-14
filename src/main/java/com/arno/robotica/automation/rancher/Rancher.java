@@ -1,10 +1,14 @@
 package com.arno.robotica.automation.rancher;
 
 import com.arno.robotica.automation.AutomationConfig;
+import com.arno.robotica.automation.RobotArea;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.progress.Milestones;
+import com.arno.robotica.core.upgrade.UpgradeCardItem;
+import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.Upgrades;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -60,10 +64,12 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -116,6 +122,7 @@ public class Rancher extends PathfinderMob {
     private static final EntityDataAccessor<BlockPos> DATA_HOME = SynchedEntityData.defineId(Rancher.class, EntityDataSerializers.BLOCK_POS);
     /** Last action for the model: (count << 3) | (kind + 1), so a repeat of the same job still changes the value. */
     private static final EntityDataAccessor<Integer> DATA_ACTION = SynchedEntityData.defineId(Rancher.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_RADIUS = SynchedEntityData.defineId(Rancher.class, EntityDataSerializers.INT);
     /** Length of the job pose on the client. */
     public static final int ACTION_TICKS = 16;
 
@@ -174,6 +181,10 @@ public class Rancher extends PathfinderMob {
         }
     };
 
+    /** Speed (faster actions), range (bigger area, any Mk) and efficiency (less FE per action) cards. */
+    public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.RANGE, UpgradeKind.EFFICIENCY);
+    public final Upgrades upgrades = Upgrades.forMk(this::tier, KINDS, RobotArea.FIXED_CAPS, this::onUpgradesChanged);
+
     public Rancher(EntityType<? extends Rancher> type, Level level) {
         super(type, level);
         setPersistenceRequired();
@@ -196,6 +207,7 @@ public class Rancher extends PathfinderMob {
         builder.define(DATA_STATUS, Status.IDLE.ordinal());
         builder.define(DATA_HOME, BlockPos.ZERO);
         builder.define(DATA_ACTION, 0);
+        builder.define(DATA_RADIUS, AutomationConfig.farmRadius());
     }
 
     /** Shows a job pose and a status without doing the job (showcase). */
@@ -224,11 +236,16 @@ public class Rancher extends PathfinderMob {
 
     public void setTier(int tier) {
         entityData.set(DATA_TIER, Mth.clamp(tier, 1, 2));
+        onUpgradesChanged();
     }
 
-    /** Area radius: Mk1 4 (9x9), Mk2 6 (13x13). */
+    /** Area radius (synced): the same on every Mk, range cards add to it. */
     public int radius() {
-        return tier() >= 2 ? 6 : 4;
+        return entityData.get(DATA_RADIUS);
+    }
+
+    private void onUpgradesChanged() {
+        if (!level().isClientSide) entityData.set(DATA_RADIUS, RobotArea.radius(upgrades.level(UpgradeKind.RANGE)));
     }
 
     public static int energyCapacityFor(int tier) {
@@ -243,8 +260,17 @@ public class Rancher extends PathfinderMob {
         return tier() >= 2 ? 20 : 30;
     }
 
+    /** Ticks between actions: Mk2 twice as fast, speed cards divide it. */
     int actionCooldown() {
-        return tier() >= 2 ? 20 : 40;
+        int base = tier() >= 2 ? 20 : 40;
+        return Math.max(4, base / Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
+    }
+
+    /** FE of one action after speed and efficiency cards. */
+    public int costOf(Kind kind) {
+        int base = kind == Kind.CULL ? cullFe() : actionFe();
+        double mult = Upgrades.energyMultiplier(upgrades.level(UpgradeKind.SPEED), upgrades.level(UpgradeKind.EFFICIENCY));
+        return base <= 0 ? 0 : (int) Math.max(1, Math.round(base * mult));
     }
 
     double speed() {
@@ -475,10 +501,15 @@ public class Rancher extends PathfinderMob {
             pickUp(sp);
             return InteractionResult.CONSUME;
         }
+        if (held.getItem() instanceof UpgradeCardItem card) {
+            insertCard(sp, held, card);
+            return InteractionResult.CONSUME;
+        }
         if (!held.isEmpty() && EnergyUtil.isEnergyItem(held) && !(held.getItem() instanceof RancherItem) && chargeFrom(sp, held)) {
             return InteractionResult.CONSUME;
         }
-        sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new RancherMenu(id, inv, this), getDisplayName()),
+        sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new RancherMenu(id, inv, this),
+                hasCustomName() ? getDisplayName() : getPickResult().getHoverName()),
                 buf -> buf.writeVarInt(getId()));
         return InteractionResult.CONSUME;
     }
@@ -508,6 +539,19 @@ public class Rancher extends PathfinderMob {
         return total > 0;
     }
 
+    private void insertCard(ServerPlayer player, ItemStack held, UpgradeCardItem card) {
+        if (upgrades.insertOne(held)) {
+            held.consume(1, player);
+            CoreSounds.play(this, CoreSounds.UPGRADE_INSTALL, SoundSource.NEUTRAL, 0.8F, 1.0F);
+            player.displayClientMessage(Component.translatable("message.robotica.card_inserted", card.getDescription(),
+                    upgrades.level(card.getKind()), upgrades.cap(card.getKind())), true);
+            return;
+        }
+        int cap = upgrades.cap(card.getKind());
+        player.displayClientMessage(cap <= 0 ? Component.translatable("message.robotica.card_refused")
+                : Component.translatable("message.robotica.card_full", card.getDescription(), cap), true);
+    }
+
     /** Keeps the robot still while a GUI is open; called by the menu every tick. */
     public void holdForGui() {
         holdTicks = Math.max(holdTicks, 4);
@@ -515,13 +559,14 @@ public class Rancher extends PathfinderMob {
 
     // ---------------------------------------------------------------- item form
 
-    /** Settings and battery: kept by pick-up and smithing. */
+    /** Settings, battery and cards: kept by pick-up and smithing. */
     void writeSettings(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putInt("Target", target);
         tag.putBoolean("Shear", shear);
         tag.putBoolean("Milk", milk);
         tag.putBoolean("Overbreed", overbreed);
         tag.put("Battery", battery.serializeNBT(registries));
+        tag.put("Upgrades", upgrades.serializeNBT(registries));
     }
 
     void readSettings(CompoundTag tag, HolderLookup.Provider registries) {
@@ -530,6 +575,8 @@ public class Rancher extends PathfinderMob {
         milk = !tag.contains("Milk") || tag.getBoolean("Milk");
         overbreed = tag.getBoolean("Overbreed");
         if (tag.contains("Battery")) battery.deserializeNBT(registries, tag.getCompound("Battery"));
+        if (tag.contains("Upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("Upgrades"));
+        onUpgradesChanged();
     }
 
     public ItemStack toItemStack(boolean destroyed) {
@@ -586,6 +633,11 @@ public class Rancher extends PathfinderMob {
             return false;
         }
         return super.hurt(source, amount);
+    }
+
+    @Override
+    public boolean canUsePortal(boolean allowPassengers) {
+        return false;
     }
 
     @Override
@@ -746,7 +798,7 @@ public class Rancher extends PathfinderMob {
             endJob(20);
             return;
         }
-        int cost = j.kind == Kind.CULL ? cullFe() : actionFe();
+        int cost = costOf(j.kind);
         if (!hasEnergy(cost)) {
             setStatus(sl, Status.NO_ENERGY);
             endJob(actionCooldown());
@@ -1108,7 +1160,7 @@ public class Rancher extends PathfinderMob {
         }
         lastAdults = adultsTotal;
         Job next = cullJob != null ? cullJob : shearJob != null ? shearJob : milkJob != null ? milkJob : feedJob;
-        if (next != null && !hasEnergy(next.kind == Kind.CULL ? cullFe() : actionFe())) {
+        if (next != null && !hasEnergy(costOf(next.kind))) {
             setStatus(sl, Status.NO_ENERGY);
             return;
         }

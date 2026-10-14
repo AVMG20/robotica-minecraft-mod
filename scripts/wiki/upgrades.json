@@ -200,7 +200,10 @@
       "id": "stumpy",
       "name": "Stumpy",
       "items": [
-        "stumpy"
+        "stumpy",
+        "stumpy_mk2",
+        "stumpy_mk3",
+        "stumpy_mk4"
       ],
       "tiers": [
         "Mk1",
@@ -208,26 +211,23 @@
         "Mk3",
         "Mk4"
       ],
-      "tierItems": [
-        "",
-        "farm_kit_mk2",
-        "farm_kit_mk3",
-        "farm_kit_mk4"
-      ],
       "effects": {
-        "speed": "Shorter rest between trees (x2 ... x20).",
-        "range": "+2 radius per card.",
-        "growth": "+50% sapling growth in the area per card.",
-        "efficiency": "-15% FE per log per card."
+        "speed": "Fells each tree sooner after reaching it (x2 to x20); FE use rises with it.",
+        "range": "+6 blocks wide per card on every Mk (9x9 up to 33x33).",
+        "growth": "Saplings in the area grow +50% faster per card.",
+        "efficiency": "-15% FE per card (never below 40%)."
       },
-      "source": "automation/entity/FarmBotBlockEntity.upgradeCap (Mk tier)",
-      "rule": "mk"
+      "source": "automation/farmbot/FarmBot, automation/RobotArea",
+      "rule": "robot"
     },
     {
       "id": "sprout",
       "name": "Sprout",
       "items": [
-        "sprout"
+        "sprout",
+        "sprout_mk2",
+        "sprout_mk3",
+        "sprout_mk4"
       ],
       "tiers": [
         "Mk1",
@@ -235,20 +235,34 @@
         "Mk3",
         "Mk4"
       ],
-      "tierItems": [
-        "",
-        "farm_kit_mk2",
-        "farm_kit_mk3",
-        "farm_kit_mk4"
+      "effects": {
+        "speed": "Harvests, tills and plants each 3x3 sooner (x2 to x20); FE use rises with it.",
+        "range": "+6 blocks wide per card on every Mk (9x9 up to 33x33).",
+        "growth": "Crops in the area grow +50% faster per card.",
+        "efficiency": "-15% FE per card (never below 40%)."
+      },
+      "source": "automation/farmbot/FarmBot, automation/RobotArea",
+      "rule": "robot"
+    },
+    {
+      "id": "rancher",
+      "name": "Rancher",
+      "items": [
+        "rancher",
+        "rancher_mk2"
+      ],
+      "tiers": [
+        "Mk1",
+        "Mk2"
       ],
       "effects": {
-        "speed": "Harvests more often (x2 ... x20).",
-        "range": "+2 radius per card.",
-        "growth": "+50% crop growth in the area per card.",
-        "efficiency": "-15% FE per harvest per card."
+        "speed": "Feeds, breeds, shears and culls more often (x2 to x6); FE per action rises with it.",
+        "range": "+6 blocks wide per card on every Mk (9x9 up to 33x33).",
+        "efficiency": "-15% FE per card (never below 40%)."
       },
-      "source": "automation/entity/FarmBotBlockEntity.upgradeCap (Mk tier)",
-      "rule": "mk"
+      "source": "automation/rancher/Rancher, automation/RobotArea",
+      "rule": "robot",
+      "maxMk": 2
     },
     {
       "id": "wireless_charger",

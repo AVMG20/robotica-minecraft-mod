@@ -24,6 +24,7 @@ public final class AutomationModule {
         AutomationContent.BLOCK_ENTITIES.register(modBus);
         AutomationContent.MENUS.register(modBus);
         com.arno.robotica.automation.rancher.RancherContent.register(modBus);
+        com.arno.robotica.automation.farmbot.FarmBotContent.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, AutomationConfig.SPEC, "robotica-automation-server.toml");
         modBus.addListener(AutomationModule::registerCapabilities);
         // the Survey Rig's ore pool comes from the c:ores tag and the config: rebuild it after either changes
@@ -32,12 +33,9 @@ public final class AutomationModule {
         NeoForge.EVENT_BUS.addListener(TagsUpdatedEvent.class, e -> SurveyOrePool.invalidate());
         com.arno.robotica.core.chunk.ChunkClaims.configure(AutomationConfig::anchorChunksPerPlayer, AutomationConfig::anchorWhileOffline);
 
-        RoboticaTab.add(AutomationContent.STUMPY_ITEM);
-        RoboticaTab.add(AutomationContent.SPROUT_ITEM);
+        com.arno.robotica.automation.farmbot.FarmBotContent.STUMPY_ITEMS.forEach(RoboticaTab::add);
+        com.arno.robotica.automation.farmbot.FarmBotContent.SPROUT_ITEMS.forEach(RoboticaTab::add);
         RoboticaTab.add(com.arno.robotica.automation.rancher.RancherContent.RANCHER);
-        RoboticaTab.add(AutomationContent.FARM_KIT_MK2);
-        RoboticaTab.add(AutomationContent.FARM_KIT_MK3);
-        RoboticaTab.add(AutomationContent.FARM_KIT_MK4);
         RoboticaTab.add(AutomationContent.EXCAVATOR_ITEM);
         RoboticaTab.add(AutomationContent.EXCAVATOR_MK2_ITEM);
         RoboticaTab.add(AutomationContent.EXCAVATOR_MK3_ITEM);
@@ -57,8 +55,6 @@ public final class AutomationModule {
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        registerWorker(event, AutomationContent.STUMPY_BE.get());
-        registerWorker(event, AutomationContent.SPROUT_BE.get());
         registerWorker(event, AutomationContent.EXCAVATOR_BE.get());
         registerWorker(event, AutomationContent.SURVEY_RIG_BE.get());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, AutomationContent.SUPPLY_CRATE_BE.get(), (be, side) -> be.items);

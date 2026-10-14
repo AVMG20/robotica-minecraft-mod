@@ -67,7 +67,7 @@
   "tooltip.robotica.upgrade.void": "Deletes junk and outputs that don't fit",
   "tooltip.robotica.upgrade.height": "Architect Table: buildings one block taller per card",
   "tooltip.robotica.upgrade.speed.steps": "Cards: 1 = x2, 2 = x3, 3 = x4, 4 = x6, 5 = x8, 6 = x11, 7 = x15, 8 = x20",
-  "tooltip.robotica.upgrade.range.steps": "Robots +2 radius, Excavator +%s wide, Wireless Charger +%s blocks, Electric Furnace +1 item per lane per card",
+  "tooltip.robotica.upgrade.range.steps": "Robots +6 wide, Excavator +%s wide, Wireless Charger +%s blocks, Electric Furnace +1 item per lane per card",
   "tooltip.robotica.upgrade.efficiency.steps": "4 cards: -60%% FE, never below 40%%. Combustion Generator: -%s%% fuel per card",
   "tooltip.robotica.upgrade.fortune.steps": "1 to 3 cards: Fortune I to III",
   "tooltip.robotica.upgrade.silk.steps": "1 card",

@@ -1,0 +1,33 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    "ASA",
+    "GXG",
+    " R "
+  ],
+  "key": {
+    "A": {
+      "item": "robotica:advanced_circuit"
+    },
+    "S": {
+      "item": "robotica:servo_actuator"
+    },
+    "G": {
+      "tag": "c:plates/gold"
+    },
+    "X": {
+      "item": "robotica:sprout_mk2"
+    },
+    "R": {
+      "item": "robotica:reinforced_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:sprout_mk3",
+    "count": 1
+  },
+  "source": {
+    "item": "robotica:sprout_mk2"
+  }
+}

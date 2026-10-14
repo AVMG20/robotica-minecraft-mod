@@ -20,6 +20,7 @@ public class RoboticaJadePlugin implements IWailaPlugin {
         registration.registerBlockDataProvider(MachineProvider.INSTANCE, BlockEntity.class);
         registration.registerEntityDataProvider(DroneProvider.INSTANCE, DroneBase.class);
         registration.registerEntityDataProvider(RancherProvider.INSTANCE, com.arno.robotica.automation.rancher.Rancher.class);
+        registration.registerEntityDataProvider(FarmBotProvider.INSTANCE, com.arno.robotica.automation.farmbot.FarmBot.class);
     }
 
     @Override
@@ -27,5 +28,6 @@ public class RoboticaJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(MachineProvider.INSTANCE, Block.class);
         registration.registerEntityComponent(DroneProvider.INSTANCE, DroneBase.class);
         registration.registerEntityComponent(RancherProvider.INSTANCE, com.arno.robotica.automation.rancher.Rancher.class);
+        registration.registerEntityComponent(FarmBotProvider.INSTANCE, com.arno.robotica.automation.farmbot.FarmBot.class);
     }
 }
