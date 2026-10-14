@@ -129,6 +129,7 @@ public class CombustionGeneratorBlockEntity extends PowerBlockEntity implements 
         ItemStack stack = fuel.getStackInSlot(0);
         int time = stack.isEmpty() ? 0 : stack.getBurnTime(RecipeType.SMELTING);
         if (time <= 0) return;
+        time = PowerConfig.generatorBurnTicks(time);
         burnTime = time;
         burnTotal = time;
         ItemStack remainder = stack.getCraftingRemainingItem();

@@ -16,6 +16,7 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue CRANK_AUTO_RATE;
     private static final ModConfigSpec.IntValue GENERATOR_OUTPUT;
     private static final ModConfigSpec.IntValue GENERATOR_BUFFER;
+    private static final ModConfigSpec.IntValue GENERATOR_FUEL_VALUE;
     private static final ModConfigSpec.IntValue SOLAR_MK1;
     private static final ModConfigSpec.IntValue SOLAR_MK2;
     private static final ModConfigSpec.IntValue SOLAR_MK3;
@@ -36,7 +37,7 @@ public final class PowerConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.push("winding_crank");
-        CRANK_FE_PER_CLICK = b.comment("FE wound into the Mainspring per hand click. Holding right-click turns the crank 5 times a second (100 FE/t, a bit more than a Combustion Generator), so the default fills a Mainspring in 2 minutes: rewarding early, but a generator you can walk away from wins.")
+        CRANK_FE_PER_CLICK = b.comment("FE wound into the Mainspring per hand click. Holding right-click turns the crank 5 times a second (100 FE/t, more than a Combustion Generator), so the default fills a Mainspring in 2 minutes: rewarding early, but a generator you can walk away from wins.")
                 .defineInRange("crankFePerClick", 400, 1, 1_000_000);
         CRANK_CLICKS_PER_SECOND = b.comment("Server side cap on hand clicks per player and second.")
                 .defineInRange("crankClicksPerSecond", 5, 1, 20);
@@ -45,9 +46,11 @@ public final class PowerConfig {
         b.pop();
         b.push("combustion_generator");
         GENERATOR_OUTPUT = b.comment("FE/t while burning (before the global generation multiplier).")
-                .defineInRange("generatorOutput", 80, 1, 1_000_000);
+                .defineInRange("generatorFePerTick", 60, 1, 1_000_000);
         GENERATOR_BUFFER = b.comment("Internal FE buffer.")
                 .defineInRange("generatorBuffer", 40_000, 1_000, 100_000_000);
+        GENERATOR_FUEL_VALUE = b.comment("Percent of a fuel's furnace burn time it burns in the generator (50: coal burns 800 ticks, 48,000 FE at 60 FE/t).")
+                .defineInRange("generatorFuelValue", 50, 1, 1_000);
         GENERATOR_EFFICIENCY_PER_CARD = b.comment("Percent less fuel per FE for each efficiency card (4 cards at 10: 1.67x FE per fuel item).")
                 .defineInRange("generatorEfficiencyPerCard", 10, 0, 15);
         b.pop();
@@ -121,6 +124,8 @@ public final class PowerConfig {
     public static int crankAutoRate() { return get(CRANK_AUTO_RATE); }
     public static int generatorOutput() { return get(GENERATOR_OUTPUT); }
     public static int generatorBuffer() { return get(GENERATOR_BUFFER); }
+    /** Burn ticks in the generator for a fuel with this furnace burn time. */
+    public static int generatorBurnTicks(int furnaceTicks) { return Math.max(1, (int) ((long) furnaceTicks * get(GENERATOR_FUEL_VALUE) / 100)); }
     public static int solarMk1() { return get(SOLAR_MK1); }
     public static int solarMk2() { return get(SOLAR_MK2); }
     public static int solarMk3() { return get(SOLAR_MK3); }

@@ -43,7 +43,7 @@
     "rows": [
      [
       "Output",
-      "80 FE/t"
+      "60 FE/t"
      ],
      [
       "Push",
@@ -55,7 +55,7 @@
      ],
      [
       "Coal",
-      "128,000 FE"
+      "48,000 FE"
      ]
     ]
    },
@@ -524,11 +524,11 @@
     "rows": [
      [
       "Output",
-      "150 FE/t"
+      "200 FE/t"
      ],
      [
       "Per pellet",
-      "24,000 ticks (3.6M FE)"
+      "18,000 ticks (3.6M FE)"
      ],
      [
       "Buffer",
