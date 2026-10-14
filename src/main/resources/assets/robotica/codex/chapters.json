@@ -269,12 +269,19 @@
       "pages": [
         {
           "title": "Buddy Bot",
-          "text": "Right-click a block to deploy, sneak-right-click to pick up. Heals above 80% charge.\nBuddy key (H): dig where you look, sneak to recall.\nBackpack key (B): open your nearest bot's cargo.\nOn Patrol with pick-up on, it collects farm drops.\nDestroyed, it returns to you with its cargo.",
+          "text": "Right-click a block to deploy it, sneak-right-click to pick it up with its cargo. Heals above 80% charge.\nBuddy key (default H): dig where you look. With sneak: call it back.\nBackpack key (default B): open the cargo of your nearest bot.\nOn Patrol with pick-up on, it collects a farm's drops.",
           "items": [
             "robotica:buddy_bot",
             "robotica:buddy_bot_mk2",
             "robotica:buddy_bot_mk3",
             "robotica:buddy_bot_mk4"
+          ]
+        },
+        {
+          "title": "Destroyed",
+          "text": "A destroyed bot returns to your inventory with its cargo. If you are offline, it drops where it died and stays until picked up.",
+          "items": [
+            "robotica:buddy_bot"
           ]
         },
         {
