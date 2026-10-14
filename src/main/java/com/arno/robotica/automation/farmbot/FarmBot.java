@@ -245,7 +245,7 @@ public abstract class FarmBot extends PathfinderMob {
         builder.define(DATA_TIER, 1);
         builder.define(DATA_STATUS, Status.IDLE.ordinal());
         builder.define(DATA_HOME, BlockPos.ZERO);
-        builder.define(DATA_AREA, 9);
+        builder.define(DATA_AREA, RobotArea.size(baseRadius(), 0));
         builder.define(DATA_SHOW_AREA, false);
         builder.define(DATA_FX_POS, BlockPos.ZERO);
         builder.define(DATA_ACTION, 0);

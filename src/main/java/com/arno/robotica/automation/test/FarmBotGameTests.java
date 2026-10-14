@@ -367,7 +367,7 @@ public class FarmBotGameTests {
         Stumpy stumpy = bot(helper, FarmBotContent.STUMPY_ENTITY.get(), HOME);
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         var level = helper.getLevel();
-        Vec3 at = Vec3.atCenterOf(helper.absolutePos(new BlockPos(3, 2, 3)));
+        Vec3 at = Vec3.atCenterOf(helper.absolutePos(new BlockPos(4, 2, 4)));
         ItemEntity thrown = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.OAK_SAPLING, 3));
         thrown.setThrower(player);
         ItemEntity vetoed = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.APPLE, 2));
