@@ -149,10 +149,13 @@ public final class LinkPayloads {
 
     // ---------------------------------------------------------------- server
 
-    /** The Link of the screen the player has open at {@code pos}, when it is still in reach and the player may open it. */
+    /**
+     * The Link of the screen the player has open at {@code pos}, when it is still in reach and the player may open and
+     * change it (every caller changes something, so adventure mode and spectators get null, like the menu's edits).
+     */
     @Nullable
     private static QuantumLinkBlockEntity openLink(ServerPlayer player, BlockPos pos) {
-        if (player.isSpectator()) return null;
+        if (player.isSpectator() || !player.mayBuild()) return null;
         if (!(player.containerMenu instanceof LinkMenu menu) || !menu.pos().equals(pos) || !menu.stillValid(player)) return null;
         if (!(player.level().getBlockEntity(pos) instanceof QuantumLinkBlockEntity be) || !be.canOpen(player)) return null;
         return be;
