@@ -229,6 +229,13 @@ public class ExoGameTests {
         helper.assertTrue(speed != null && Math.abs(speed.amount() - ExoConfig.servoSpeed(2)) < 1.0E-9, "servo stride II gives +40% speed");
         helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.STEP_HEIGHT) - 1.0) < 1.0E-6,
                 "step assist on the boots walks up full blocks, step height " + player.getAttributeValue(Attributes.STEP_HEIGHT));
+        player.setShiftKeyDown(true);
+        ticks(player, 2);
+        helper.assertTrue(player.getAttribute(Attributes.STEP_HEIGHT).getModifier(Robotica.id("exo_step_assist")) == null,
+                "sneaking turns step assist off so the wearer stops at 1-block edges");
+        player.setShiftKeyDown(false);
+        ticks(player, 2);
+        helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.STEP_HEIGHT) - 1.0) < 1.0E-6, "step assist comes back after sneaking");
         int nvUsed = 100_000 - energy(player, EquipmentSlot.HEAD);
         helper.assertTrue(nvUsed > 0 && nvUsed <= ExoConfig.cost(ModuleKind.NIGHT_VISION, 1) * 3, "night vision costs a little FE, used " + nvUsed);
 
