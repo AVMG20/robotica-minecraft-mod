@@ -752,16 +752,20 @@ public abstract class FarmBot extends PathfinderMob {
             return Status.WORKING;
         }
         if (job == null && !pickJob(sl)) {
-            if (tickCount % 20 == 0) walkHome();
+            if (tickCount % 20 == 0) walkHome(sl);
             return energy.getEnergyStored() <= 0 ? Status.NO_ENERGY : Status.IDLE;
         }
         return runJob(sl);
     }
 
-    private void walkHome() {
+    /** Walks back home when there is nothing to do; a robot that cannot get there within half a minute teleports. */
+    private void walkHome(ServerLevel sl) {
         BlockPos h = home();
         Vec3 spot = new Vec3(h.getX() + 0.5, h.getY(), h.getZ() + 0.5);
-        if (position().distanceToSqr(spot) > 2.25 && navigation.isDone()) navigation.moveTo(spot.x, spot.y, spot.z, speed());
+        double d = position().distanceToSqr(spot);
+        awayTicks = d > 16.0 ? awayTicks + 20 : 0;
+        if (awayTicks >= 600 && teleportHome(sl)) awayTicks = 0;
+        else if (d > 2.25 && navigation.isDone()) navigation.moveTo(spot.x, spot.y, spot.z, speed());
     }
 
     private Status runJob(ServerLevel sl) {
@@ -925,6 +929,8 @@ public abstract class FarmBot extends PathfinderMob {
     }
 
     private final BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
+    /** Idle ticks spent away from home (counted every 20). */
+    private int awayTicks;
 
     /** Sweeps the area a few hundred blocks per tick; a finished sweep becomes the candidate list. */
     private void scanStep(ServerLevel sl) {

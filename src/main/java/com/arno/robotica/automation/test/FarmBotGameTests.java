@@ -106,6 +106,19 @@ public class FarmBotGameTests {
 
     // ---------------------------------------------------------------- Sprout
 
+    /** Where the robot is and what it does, in absolute coordinates, for failure messages. */
+    private static String where(GameTestHelper helper, FarmBot bot) {
+        BlockPos x = helper.absolutePos(new BlockPos(1, 0, 0)).subtract(helper.absolutePos(BlockPos.ZERO));
+        return " (" + bot.getType().getDescriptionId() + " " + bot.status() + (bot.isAlive() ? "" : " dead") + " at " + bot.blockPosition()
+                + ", home " + bot.home() + ", test home " + helper.absolutePos(HOME) + ", +x is " + x + ", energy " + bot.energy.getEnergyStored() + ")";
+    }
+
+    /** The side of {@code from} that {@code to} is on, in the world (the test may be rotated). */
+    private static Direction side(GameTestHelper helper, BlockPos from, BlockPos to) {
+        BlockPos d = helper.absolutePos(to).subtract(helper.absolutePos(from));
+        return Direction.getNearest(d.getX(), d.getY(), d.getZ());
+    }
+
     /** Below the floor is open: sand, gravel and water there need a block under them. */
     private static void floorBlock(GameTestHelper helper, BlockPos at, Block block) {
         helper.setBlock(at.below(), Blocks.STONE);
@@ -153,10 +166,11 @@ public class FarmBotGameTests {
             helper.setBlock(cane.above(i), Blocks.SUGAR_CANE);
             helper.setBlock(cactus.above(i), Blocks.CACTUS);
         }
-        sprout(helper);
+        Sprout sprout = sprout(helper);
         helper.succeedWhen(() -> {
-            helper.assertTrue(chest(helper, Items.SUGAR_CANE) >= 2, "sugar cane cut, got " + chest(helper, Items.SUGAR_CANE));
-            helper.assertTrue(chest(helper, Items.CACTUS) >= 2, "cactus cut, got " + chest(helper, Items.CACTUS));
+            String state = where(helper, sprout) + " cane " + helper.getBlockState(cane.above()) + " cactus " + helper.getBlockState(cactus.above());
+            helper.assertTrue(chest(helper, Items.SUGAR_CANE) >= 2, "sugar cane cut, got " + chest(helper, Items.SUGAR_CANE) + state);
+            helper.assertTrue(chest(helper, Items.CACTUS) >= 2, "cactus cut, got " + chest(helper, Items.CACTUS) + state);
             helper.assertBlockPresent(Blocks.SUGAR_CANE, cane);
             helper.assertBlockPresent(Blocks.CACTUS, cactus);
             helper.assertBlockNotPresent(Blocks.SUGAR_CANE, cane.above());
@@ -176,16 +190,15 @@ public class FarmBotGameTests {
         floorBlock(helper, new BlockPos(5, 1, 2), Blocks.WATER);
         helper.setBlock(melon, Blocks.MELON);
         helper.setBlock(pumpkin, Blocks.PUMPKIN);
-        helper.setBlock(melonStem, Blocks.ATTACHED_MELON_STEM.defaultBlockState().setValue(AttachedStemBlock.FACING, Direction.EAST));
-        helper.setBlock(pumpkinStem, Blocks.ATTACHED_PUMPKIN_STEM.defaultBlockState().setValue(AttachedStemBlock.FACING, Direction.WEST));
+        helper.setBlock(melonStem, Blocks.ATTACHED_MELON_STEM.defaultBlockState().setValue(AttachedStemBlock.FACING, side(helper, melonStem, melon)));
+        helper.setBlock(pumpkinStem, Blocks.ATTACHED_PUMPKIN_STEM.defaultBlockState().setValue(AttachedStemBlock.FACING, side(helper, pumpkinStem, pumpkin)));
         Sprout sprout = sprout(helper);
         // Seeds and water nearby: without the stem rule Sprout would till the fruit spots and plant wheat there.
         sprout.pouch.setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 4));
         helper.startSequence()
                 .thenWaitUntil(() -> {
                     helper.assertTrue(chest(helper, Items.MELON_SLICE) >= 3, "melon picked, got " + chest(helper, Items.MELON_SLICE)
-                            + " (Sprout " + sprout.status() + " at " + helper.relativePos(sprout.blockPosition()) + ", melon stem "
-                            + helper.getBlockState(melonStem) + ", melon " + helper.getBlockState(melon) + ")");
+                            + where(helper, sprout) + " stem " + helper.getBlockState(melonStem) + " at " + helper.absolutePos(melonStem));
                     helper.assertTrue(chest(helper, Items.PUMPKIN) >= 1, "pumpkin picked, got " + chest(helper, Items.PUMPKIN));
                 })
                 .thenIdle(100)
