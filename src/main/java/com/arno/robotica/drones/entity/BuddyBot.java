@@ -83,7 +83,7 @@ import java.util.UUID;
  * Buddy Bot: the player's flying companion (Mk1 to Mk4). It follows, patrols a spot or stays, shoots hostiles by
  * stance, sweeps up drops into its cargo (a flying chest) and digs a tunnel where the owner looks (H). Spark Lamps light
  * its tunnels, and with light-up on, dark places it flies through. With platform on it fills gaps in the tunnel floor
- * with junk blocks from its cargo, also over open air. Tiers only add numbers, cargo space and the 5x5 tunnel size.
+ * with junk or Architect building blocks from its cargo, also over open air. Tiers only add numbers, cargo space and the 5x5 tunnel size.
  * <p>
  * Blocks are broken through a fake player of the owner so protection and claim mods can veto; it never touches block
  * entities or unbreakable blocks and never loads chunks: an unloaded slice ends the tunnel. Emotes and reactions are
@@ -92,6 +92,8 @@ import java.util.UUID;
 public class BuddyBot extends DroneBase {
     public static final TagKey<EntityType<?>> IGNORE = TagKey.create(Registries.ENTITY_TYPE, Robotica.id("sentry_ignore"));
     public static final TagKey<Item> VOIDABLE = TagKey.create(Registries.ITEM, Robotica.id("voidable"));
+    /** Blocks it builds floors and plugs with: the junk tag and the Architect building blocks. */
+    public static final TagKey<Item> PLATFORM = TagKey.create(Registries.ITEM, Robotica.id("buddy_platform"));
     public static final ResourceKey<DamageType> ENERGY_BOLT = ResourceKey.create(Registries.DAMAGE_TYPE, Robotica.id("energy_bolt"));
     private static final UUID FALLBACK_OWNER = UUID.fromString("5a0b6c52-3f2b-4a39-9d5e-0d6f5f0e7a11");
 
@@ -104,7 +106,7 @@ public class BuddyBot extends DroneBase {
     private static final EntityDataAccessor<Integer> DATA_STANCE = SynchedEntityData.defineId(BuddyBot.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(BuddyBot.class, EntityDataSerializers.BYTE);
     private static final int FLAG_PICKUP = 1, FLAG_LIGHTS = 2, FLAG_VOID = 4, FLAG_DIGGING = 8, FLAG_LOW = 16, FLAG_OPEN = 32, FLAG_PLATFORM = 64;
-    /** Junk blocks kept in the cargo with void on, for the floor and for plugging fluids. */
+    /** Platform blocks kept in the cargo with void on (junk is kept below this), for the floor and for plugging fluids. */
     private static final int KEEP_BLOCKS = 64;
 
     /** Entity events (above the vanilla ids): a bite when it grabs loot, a recoil when it fires, then one per emote. */
@@ -506,7 +508,7 @@ public class BuddyBot extends DroneBase {
         setFlag(FLAG_VOID, on);
     }
 
-    /** Fills gaps in the tunnel floor with junk blocks, also over open air. */
+    /** Fills gaps in the tunnel floor with platform blocks, also over open air. */
     public boolean platformOn() {
         return flag(FLAG_PLATFORM);
     }
@@ -656,9 +658,9 @@ public class BuddyBot extends DroneBase {
         return n;
     }
 
-    /** A junk block it builds with: tag robotica:voidable, and no falling blocks such as gravel. */
+    /** A block it builds with: tag robotica:buddy_platform, and no falling blocks such as gravel. */
     public static boolean isPlatformBlock(ItemStack stack) {
-        return stack.is(VOIDABLE) && stack.getItem() instanceof BlockItem item && !(item.getBlock() instanceof FallingBlock);
+        return stack.is(PLATFORM) && stack.getItem() instanceof BlockItem item && !(item.getBlock() instanceof FallingBlock);
     }
 
     public int platformBlocks() {
@@ -670,15 +672,20 @@ public class BuddyBot extends DroneBase {
         return n;
     }
 
-    /** Takes one junk block from the cargo and returns its block state, or null when it has none. */
+    /**
+     * Takes one platform block from the cargo and returns its block state, or null when it has none. For floors the
+     * blocks the owner put in for paths go before junk; for plugging fluids junk goes first.
+     */
     @Nullable
-    private BlockState takePlatformBlock() {
-        for (int i = 0; i < cargoSlots(); i++) {
-            ItemStack s = storage.getStackInSlot(i);
-            if (isPlatformBlock(s)) {
-                BlockState state = ((BlockItem) s.getItem()).getBlock().defaultBlockState();
-                storage.extractItem(i, 1, false);
-                return state;
+    private BlockState takePlatformBlock(boolean floor) {
+        for (int pass = 0; pass < 2; pass++) {
+            for (int i = 0; i < cargoSlots(); i++) {
+                ItemStack s = storage.getStackInSlot(i);
+                if (isPlatformBlock(s) && (pass == 1 || s.is(VOIDABLE) != floor)) {
+                    BlockState state = ((BlockItem) s.getItem()).getBlock().defaultBlockState();
+                    storage.extractItem(i, 1, false);
+                    return state;
+                }
             }
         }
         return null;
@@ -1253,7 +1260,7 @@ public class BuddyBot extends DroneBase {
         }
         if (!fluids.isEmpty()) {
             for (BlockPos p : fluids) {
-                if (sl.getBlockState(p).getBlock() instanceof LiquidBlock) placeJunk(sl, p);
+                if (sl.getBlockState(p).getBlock() instanceof LiquidBlock) placeJunk(sl, p, false);
             }
             playSound(SoundEvents.LAVA_EXTINGUISH, 0.4F, 1.2F);
             stopTunnel(lava ? Stop.LAVA : Stop.WATER);
@@ -1416,7 +1423,7 @@ public class BuddyBot extends DroneBase {
         return false;
     }
 
-    /** Gaps in the floor of the finished slice are bridged with junk blocks from the cargo. False when its own line keeps a gap. */
+    /** Gaps in the floor of the finished slice are bridged with platform blocks from the cargo. False when its own line keeps a gap. */
     private boolean fillFloor(ServerLevel sl, Tunnel t) {
         boolean floored = true;
         // centre first (0, -1, 1, -2, 2, ...), so the walkway gets the last blocks
@@ -1426,16 +1433,17 @@ public class BuddyBot extends DroneBase {
             if (!sl.isLoaded(p)) continue;
             // air, plants, snow and fluids are gaps
             if (!sl.getBlockState(p).canBeReplaced()) continue;
-            if (!placeJunk(sl, p) && lat == 0) floored = false;
+            if (!placeJunk(sl, p, true) && lat == 0) floored = false;
         }
         return floored;
     }
 
-    /** Places a junk block from the cargo as the owner (claims can veto). Returns true when placed. */
-    private boolean placeJunk(ServerLevel sl, BlockPos pos) {
+    /** Places a platform block from the cargo as the owner (claims can veto). Returns true when placed. */
+    private boolean placeJunk(ServerLevel sl, BlockPos pos, boolean floor) {
         if (!sl.getWorldBorder().isWithinBounds(pos) || !sl.isInWorldBounds(pos)) return false;
-        BlockState state = takePlatformBlock();
+        BlockState state = takePlatformBlock(floor);
         if (state == null) return false;
+        state = Block.updateFromNeighbourShapes(state, sl, pos); // connected trim joins its neighbours
         BlockSnapshot snapshot = BlockSnapshot.create(sl.dimension(), sl, pos);
         if (!sl.setBlock(pos, state, Block.UPDATE_ALL)) {
             collect(new ItemStack(state.getBlock()));

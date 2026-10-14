@@ -20,6 +20,8 @@ PANEL_STYLES = {'pearl_panel', 'onyx_panel'}
 CONNECTED_TRIM = {'dark_stone', 'pearl_panel', 'onyx_panel'}
 ROLE_NAME = {'wall': 'Wall', 'floor': 'Floor', 'roof': 'Roof', 'pillar': 'Pillar', 'window': 'Window', 'light': 'Light'}
 ROLE_NAMES = {style: ROLE_NAME for style in STYLES}
+# Matter price per block (rustic, refined), same as BuildStyle.cost; a block fed back is worth its full price.
+STYLE_COST = {'timberframe': (2, 0), 'dark_stone': (2, 0), 'pearl_panel': (2, 1), 'onyx_panel': (2, 1)}
 
 
 def write(path, obj):
@@ -260,6 +262,13 @@ MATTER = {
     'refined_36': ['#c:storage_blocks/copper'],
     'refined_72': ['#c:storage_blocks/iron', '#c:storage_blocks/gold'],
 }
+for style in STYLES:
+    for grade, value in zip(('rustic', 'refined'), STYLE_COST[style]):
+        if value > 0:
+            MATTER.setdefault(f'{grade}_{value}', []).extend(f'robotica:{style}_{r}' for r in ROLES)
+# Every building block, for other modules (the Buddy Bot builds platforms with them).
+write(FRAG / 'data/robotica/tags/item/architect_blocks.json',
+      {'replace': False, 'values': [f'robotica:{style}_{r}' for style in STYLES for r in ROLES]})
 for _old in (FRAG / 'data/robotica/tags/item/matter').glob('*.json'):
     if _old.stem not in MATTER:
         _old.unlink()  # a grade or value that is gone
@@ -354,8 +363,8 @@ lang.update({
     'gui.robotica.pocket_architect_junk_on': 'Eat junk: ON',
     'gui.robotica.pocket_architect_junk_off': 'Eat junk: OFF',
     'gui.robotica.pocket_architect_junk_tip': 'Junk you pick up turns into matter',
-    'gui.robotica.pocket_architect_feed': 'Wood, stone and dirt turn into matter',
-    'gui.robotica.pocket_architect_feed_mk2': 'Wood, stone, ingots, glass and more turn into matter',
+    'gui.robotica.pocket_architect_feed': 'Wood, stone, dirt and building blocks turn into matter',
+    'gui.robotica.pocket_architect_feed_mk2': 'Wood, stone, ingots, building blocks and more turn into matter',
     'gui.robotica.pocket_architect_cost': 'Per block: %s rustic',
     'gui.robotica.pocket_architect_cost_refined': 'Per block: %s rustic, %s refined',
     'gui.robotica.pocket_architect_needs_mk2': 'Needs a Pocket Architect Mk2',

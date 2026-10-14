@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "robotica:timberframe_wall",
+    "robotica:timberframe_floor",
+    "robotica:timberframe_roof",
+    "robotica:timberframe_pillar",
+    "robotica:timberframe_window",
+    "robotica:timberframe_light",
+    "robotica:dark_stone_wall",
+    "robotica:dark_stone_floor",
+    "robotica:dark_stone_roof",
+    "robotica:dark_stone_pillar",
+    "robotica:dark_stone_window",
+    "robotica:dark_stone_light",
+    "robotica:pearl_panel_wall",
+    "robotica:pearl_panel_floor",
+    "robotica:pearl_panel_roof",
+    "robotica:pearl_panel_pillar",
+    "robotica:pearl_panel_window",
+    "robotica:pearl_panel_light",
+    "robotica:onyx_panel_wall",
+    "robotica:onyx_panel_floor",
+    "robotica:onyx_panel_roof",
+    "robotica:onyx_panel_pillar",
+    "robotica:onyx_panel_window",
+    "robotica:onyx_panel_light"
+  ]
+}
