@@ -59,9 +59,9 @@ public final class PowerConfig {
         SOLAR_MK2 = b.comment("Solar Panel Mk2, FE/t in daylight with sky access (20% in rain).")
                 .defineInRange("solarMk2FePerTick", 80, 1, 1_000_000);
         SOLAR_MK3 = b.comment("Solar Panel Mk3, FE/t in daylight with sky access (20% in rain).")
-                .defineInRange("solarMk3FePerTick", 400, 1, 1_000_000);
+                .defineInRange("solarMk3FePerTick", 300, 1, 1_000_000);
         SOLAR_MK4 = b.comment("Solar Panel Mk4, FE/t in daylight with sky access (20% in rain).")
-                .defineInRange("solarMk4FePerTick", 1_000, 1, 1_000_000);
+                .defineInRange("solarMk4FePerTick", 800, 1, 1_000_000);
         b.pop();
         b.push("tesla");
         int[] rates = {4_000, 16_000, 64_000, 256_000, 1_000_000};
