@@ -807,6 +807,11 @@ public abstract class FarmBot extends PathfinderMob {
         if (jobTicks == 1 || jobTicks - lastPathTick >= 20 || (navigation.isDone() && jobTicks - lastPathTick >= 10)) {
             lastPathTick = jobTicks;
             Path path = navigation.createPath(t, pathAccuracy());
+            // No path while in the air (just placed, a jump, a step down) says nothing about the job: try again next tick.
+            if (path == null && !onGround() && !isInLiquid()) {
+                lastPathTick = -100;
+                return Status.WORKING;
+            }
             if (path == null) {
                 blocked(sl, t);
                 return Status.WORKING;
