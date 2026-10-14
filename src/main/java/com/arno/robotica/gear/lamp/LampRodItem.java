@@ -50,9 +50,7 @@ public class LampRodItem extends Item implements EnergyItem {
      */
     public boolean use(ServerPlayer player, ServerLevel level, ItemStack stack, BlockPos clicked, Direction face) {
         if (player.getCooldowns().isOnCooldown(this)) return false;
-        BlockState state = level.getBlockState(clicked);
-        BlockPos spot = state.canBeReplaced() && !state.is(GearBlocks.SPARK_LAMP.get()) && state.getFluidState().isEmpty()
-                && !state.isAir() ? clicked : clicked.relative(face);
+        BlockPos spot = SparkLamps.spotOn(level, clicked, face);
         boolean creative = player.getAbilities().instabuild;
         int cost = GearConfig.rodCost();
         boolean ok = (creative || ItemEnergy.get(stack) >= cost) && player.mayUseItemAt(spot, face, stack)

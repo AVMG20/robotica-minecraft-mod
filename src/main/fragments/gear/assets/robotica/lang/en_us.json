@@ -181,7 +181,7 @@
   "module.robotica.silk_touch.desc": "Mined blocks drop themselves. %s: Fortune, Silk Touch or off",
   "module.robotica.auto_pickup.desc": "Drops go straight into your inventory",
   "module.robotica.void_filter.desc": "Deletes cobblestone, dirt, gravel and other junk",
-  "module.robotica.lamp_placer.desc": "Mined spot dark (light %s or less): places a Spark Lamp",
+  "module.robotica.lamp_placer.desc": "Places a Spark Lamp where you mine in the dark (light %s or less). Right-click a block to place one",
   "module.robotica.lamp_placer.cost": "%s FE per lamp",
   "module.robotica.sharpened_edge.desc": "+%s%% damage",
   "module.robotica.looting.desc": "Kills drop as with Looting %s",

@@ -27,6 +27,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -219,7 +220,7 @@ public class GearModuleGameTests {
 
     /**
      * The Lamp Placer puts a Spark Lamp in a dark spot, pays FE from the drill, needs build rights and FE, and waits for
-     * its cooldown. The lamp lights its spot to 14.
+     * its cooldown; right-click places one on the clicked face. The lamp lights its spot to 14.
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void lampPlacerLightsTheDark(GameTestHelper helper) {
@@ -252,8 +253,21 @@ public class GearModuleGameTests {
             helper.assertTrue(before - ItemEnergy.get(held) == GearConfig.lampCost(), "paid in FE");
             level.setBlock(spot.above(), Blocks.AIR.defaultBlockState(), 3);
             helper.assertTrue(!LampPlacer.tryPlace(player, level, held, spot.above()), "cooldown between lamps");
+            BlockPos ceiling = spot.above(2);
+            level.setBlock(ceiling, Blocks.STONE.defaultBlockState(), 3);
+            int beforeClick = ItemEnergy.get(held);
+            helper.assertTrue(held.getItem().useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(ceiling), Direction.DOWN, ceiling, false))) == InteractionResult.CONSUME,
+                    "right-click places a lamp, no cooldown");
+            BlockState hung = level.getBlockState(spot.above());
+            helper.assertTrue(hung.is(GearBlocks.SPARK_LAMP.get()) && hung.getValue(SparkLampBlock.FACING) == Direction.DOWN, "on the clicked face");
+            helper.assertTrue(beforeClick - ItemEnergy.get(held) == GearConfig.lampCost(), "right-click lamp paid in FE");
             Modules.setEnabled(held, ModuleKind.LAMP_PLACER, false);
             helper.assertTrue(Modules.active(held, ModuleKind.LAMP_PLACER) == 0, "switched off in G");
+            level.setBlock(spot.above(), Blocks.AIR.defaultBlockState(), 3);
+            helper.assertTrue(held.getItem().useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(ceiling), Direction.DOWN, ceiling, false))) == InteractionResult.PASS
+                    && level.getBlockState(spot.above()).isAir(), "switched off: right-click does nothing");
             LampPlacer.forget(player.getUUID());
         }).thenWaitUntil(() -> helper.assertTrue(level.getBrightness(LightLayer.BLOCK, spot) == SparkLampBlock.LIGHT, "the lamp gives light 14"))
                 .thenSucceed();
