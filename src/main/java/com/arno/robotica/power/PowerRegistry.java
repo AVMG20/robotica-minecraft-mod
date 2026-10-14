@@ -11,6 +11,7 @@ import com.arno.robotica.power.block.CombustionGeneratorBlock;
 import com.arno.robotica.power.block.CombustionGeneratorBlockEntity;
 import com.arno.robotica.power.block.MetalPressBlock;
 import com.arno.robotica.power.block.MetalPressBlockEntity;
+import com.arno.robotica.power.block.SolarArrayBlock;
 import com.arno.robotica.power.block.SolarPanelBlock;
 import com.arno.robotica.power.block.SolarPanelBlockEntity;
 import com.arno.robotica.power.block.WindingCrankBlock;
@@ -70,11 +71,11 @@ public final class PowerRegistry {
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK1 = BLOCKS.registerBlock("solar_panel_mk1",
             p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK1), machine().noOcclusion());
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK2 = BLOCKS.registerBlock("solar_panel_mk2",
-            p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK2), machine().noOcclusion());
+            p -> new SolarArrayBlock(p, SolarPanelBlock.Tier.MK2), machine().noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK3 = BLOCKS.registerBlock("solar_panel_mk3",
-            p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK3), machine().noOcclusion());
+            p -> new SolarArrayBlock(p, SolarPanelBlock.Tier.MK3), machine().noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK4 = BLOCKS.registerBlock("solar_panel_mk4",
-            p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK4), machine().noOcclusion());
+            p -> new SolarArrayBlock(p, SolarPanelBlock.Tier.MK4), machine().noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_1 = accumulator(AccumulatorBlock.Tier.I);
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_2 = accumulator(AccumulatorBlock.Tier.II);
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_3 = accumulator(AccumulatorBlock.Tier.III);

@@ -87,16 +87,23 @@
       "4"
      ],
      [
+      "Size",
+      "1x1",
+      "2x2",
+      "3x3",
+      "4x4"
+     ],
+     [
       "Daylight",
       "20 FE/t",
-      "80 FE/t",
+      "100 FE/t",
       "300 FE/t",
       "800 FE/t"
      ],
      [
       "Rain",
       "4 FE/t",
-      "16 FE/t",
+      "20 FE/t",
       "60 FE/t",
       "160 FE/t"
      ],
@@ -110,7 +117,7 @@
      [
       "Push (all sides)",
       "160 FE/t",
-      "640 FE/t",
+      "800 FE/t",
       "2,400 FE/t",
       "6,400 FE/t"
      ]
@@ -120,7 +127,8 @@
     "guide:power-ladder"
    ],
    "use": [
-    "Machines touching it get power, or put a [[tesla_emitter_1]] on it."
+    "Machines touching it get power, or put a [[tesla_emitter_1]] on it.",
+    "Shade on part of a big panel lowers its output."
    ],
    "image": "shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4"
   },

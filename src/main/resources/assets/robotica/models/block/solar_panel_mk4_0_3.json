@@ -1,0 +1,54 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "top": "robotica:block/solar_panel_mk4_top_0_3",
+    "bottom": "robotica:block/solar_panel_bottom",
+    "particle": "robotica:block/solar_panel_mk4_side",
+    "south": "robotica:block/solar_panel_mk4_side_left",
+    "west": "robotica:block/solar_panel_mk4_side_right"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        6,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#bottom",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#top"
+        },
+        "south": {
+          "texture": "#south",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#west",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "west"
+        }
+      }
+    }
+  ]
+}

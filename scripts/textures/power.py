@@ -678,7 +678,9 @@ def wireless_orb(t=None):
 # Mk3 magma, Mk4 null) round blue monocrystalline cells with clipped corners (Mk1 2x2, Mk2+ 3x3) and the light
 # backsheet showing where four cells meet. The cell glass deepens per Mk (Mk1 blue, Mk2 deep blue, Mk3 blue-black,
 # Mk4 blue-violet). A glint of sky light sweeps across the glass every 96 ticks (the top is animated, no overlay); the
-# sides carry a lip, a recessed rail and the Mk notches.
+# sides carry a lip, a recessed rail and the Mk notches. Mk2-Mk4 cover 2x2 to 4x4 blocks: each block of the panel has
+# its own top (frame on the outer edges only, the glint offset so it crosses the whole panel) and the sides lose
+# their brackets where the panel runs on.
 
 SOLAR_CELLS = {                                     # cell glass per Mk: gap, shadow edge, cell, lit edge
     1: ('#0E2150', '#183A86', '#2A5CB8', '#4F86DA'),
@@ -708,28 +710,40 @@ def solar_cell(mk, x, y):
     return None
 
 
-def solar_top(mk, t):
-    """Top at frame t of the glint loop."""
+def solar_top(mk, t, edges='nswe', cell=(0, 0), size=1, notches=True):
+    """Top at frame t of the glint loop. edges: the sides with the outer frame (n s w e; a big panel leaves them off
+    where it continues into the next block). cell: this block's place (x, z) in a size x size panel, so the glint
+    sweeps across the whole panel."""
     c = Canvas()
-    c.rect(0, 0, 16, 16, 'b')                                             # gaps: the dark backsheet rails
-    c.bevel(0, 0, 16, 16, 'd', 'a')
-    for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):                     # tier metal corner brackets
+    c.rect(0, 0, 16, 16, 'm')                                             # dark gaps between the cells
+    for xx in range(16):                                                  # the frame: dark rails, light top/left
+        if 'n' in edges:
+            c.set(xx, 0, 'd')
+        if 's' in edges:
+            c.set(xx, 15, 'a')
+    for yy in range(16):
+        if 'w' in edges:
+            c.set(0, yy, 'd')
+        if 'e' in edges:
+            c.set(15, yy, 'a')
+    for x, y, need in ((0, 0, 'nw'), (15, 0, 'ne'), (0, 15, 'sw'), (15, 15, 'se')):   # tier metal corner brackets
+        if not all(e in edges for e in need):
+            continue
         sx, sy = (1 if x == 0 else -1), (1 if y == 0 else -1)
         for i in range(3):
             c.set(x + sx * i, y, 'h').set(x, y + sy * i, 'h')
         c.set(x + sx * 2, y, 'g').set(x, y + sy * 2, 'g')
         c.set(x, y, 'i' if x + y < 15 else 'f' if x + y > 15 else 'h')
-    c.rect(1, 1, 14, 14, 'm')                                             # dark gaps between the cells
     for y in range(16):
         for x in range(16):
-            cell = solar_cell(mk, x, y)
-            if not cell:
+            sc = solar_cell(mk, x, y)
+            if not sc:
                 continue
-            u, v, n = cell
+            u, v, n = sc
             if u in (0, n - 1) and v in (0, n - 1):
                 continue                                                  # clipped cell corners
             c.set(x, y, 'p' if u == 0 or v == 0 else 'n' if u == n - 1 or v == n - 1 else 'o')
-    origins, size = SOLAR_GRID[min(mk, 2)]
+    origins, _ = SOLAR_GRID[min(mk, 2)]
     for x in origins[1:]:                                                 # backsheet diamonds where four cells meet
         for y in origins[1:]:
             gx, gy = x - 1, y - 1
@@ -737,36 +751,51 @@ def solar_top(mk, t):
                 c.rect(gx - 1, gy - 2, 2, 4, 's').rect(gx - 2, gy - 1, 4, 2, 's').rect(gx - 1, gy - 1, 2, 2, 'S')
             else:
                 c.set(gx, gy, 'S').set(gx - 1, gy, 's').set(gx + 1, gy, 's').set(gx, gy - 1, 's').set(gx, gy + 1, 's')
-    for i in range(mk):                                                   # Mk notches on the bottom rail
-        c.set(12 - i * 2, 15, 'i')
-    return solar_glint(c, t)
+    if notches:
+        for i in range(mk):                                               # Mk notches on the bottom rail
+            c.set(12 - i * 2, 15, 'i')
+    return solar_glint(c, t, edges, cell, size)
 
 
-def solar_glint(c, t):
-    """Sky glint: a soft diagonal band crossing the glass from the top left during the first 12 frames."""
-    if t >= 12:
+def solar_sweep(size):
+    """Frames the glint takes to cross a size x size panel (a longer diagonal sweeps longer)."""
+    return 12 + 4 * (size - 1)
+
+
+def solar_glint(c, t, edges='nswe', cell=(0, 0), size=1):
+    """Sky glint: a soft diagonal band crossing the glass from the top left during the first frames of the loop."""
+    sweep = solar_sweep(size)
+    if t >= sweep:
         return c
-    pos = -4 + t * 38 / 12                                                # x + y of the band centre
-    for y in range(1, 15):
-        for x in range(1, 15):
-            d = abs(x + y - pos)
+    pos = -4 + t * (32 * size + 6) / sweep                                # x + y of the band centre, panel pixels
+    ox, oy = cell[0] * 16, cell[1] * 16
+    for y in range(1 if 'n' in edges else 0, 15 if 's' in edges else 16):
+        for x in range(1 if 'w' in edges else 0, 15 if 'e' in edges else 16):
+            d = abs(x + ox + y + oy - pos)
             ch = 'r' if d < 0.5 else 'q' if d < 1.3 else 'p' if d < 2.3 and c.get(x, y) in 'mno' else None
             if ch:
                 c.set(x, y, ch)
     return c
 
 
-def solar_side(mk):
+def solar_side(mk, left=True, right=True):
     """Only rows 0-5 show on the 6 px tall sides: top lip, a recessed rail with dark glass, the base with Mk notches,
-    tier metal brackets at both ends."""
+    tier metal brackets on the ends that are a corner of the panel."""
     c = Canvas()
     c.rect(0, 0, 16, 16, 'c')
     c.rect(0, 0, 16, 1, 'e').rect(0, 1, 16, 1, 'd')
     c.rect(2, 2, 12, 2, 'a').rect(3, 2, 10, 1, 'u').rect(3, 3, 10, 1, 'k')
+    if not left:                                                          # the rail runs on into the next block
+        c.rect(0, 2, 3, 2, 'a').rect(0, 2, 3, 1, 'u').rect(0, 3, 3, 1, 'k')
+    if not right:
+        c.rect(13, 2, 3, 2, 'a').rect(13, 2, 3, 1, 'u').rect(13, 3, 3, 1, 'k')
     c.rect(0, 4, 16, 1, 'c').rect(0, 5, 16, 1, 'a')
-    for x in (0, 15):
-        c.rect(x, 0, 1, 6, 'h').set(x, 0, 'i').set(x, 5, 'f')
-    c.set(1, 0, 'h').set(14, 0, 'g').set(1, 5, 'g').set(14, 5, 'g')
+    if left:
+        c.rect(0, 0, 1, 6, 'h').set(0, 0, 'i').set(0, 5, 'f')
+        c.set(1, 0, 'h').set(1, 5, 'g')
+    if right:
+        c.rect(15, 0, 1, 6, 'h').set(15, 0, 'i').set(15, 5, 'f')
+        c.set(14, 0, 'g').set(14, 5, 'g')
     for i in range(mk):
         c.set(12 - i * 2, 4, 'i')
     return c
@@ -1102,6 +1131,19 @@ def write_solar():
         write_anim('block', f'solar_panel_mk{mk}_top', frames, p,
                    frametime=SOLAR_FRAMETIME, interpolate=True)
         write_block(f'solar_panel_mk{mk}_side', solar_side(mk).rows(), p)
+        if mk == 1:
+            continue
+        # Mk2-Mk4 cover mk x mk blocks: one top per block of the panel, the frame only on the outer edges.
+        n = mk
+        for x in range(n):
+            for z in range(n):
+                edges = ('n' if z == 0 else '') + ('s' if z == n - 1 else '') + ('w' if x == 0 else '') + ('e' if x == n - 1 else '')
+                frames = [solar_top(mk, (t + 4) % SOLAR_FRAMES, edges, (x, z), n, notches=(x, z) == (n - 1, n - 1))
+                          for t in range(SOLAR_FRAMES)]
+                write_anim('block', f'solar_panel_mk{mk}_top_{x}_{z}', frames, p, frametime=SOLAR_FRAMETIME, interpolate=True)
+        write_block(f'solar_panel_mk{mk}_side_left', solar_side(mk, right=False).rows(), p)
+        write_block(f'solar_panel_mk{mk}_side_right', solar_side(mk, left=False).rows(), p)
+        write_block(f'solar_panel_mk{mk}_side_mid', solar_side(mk, False, False).rows(), p)
     write_block('solar_panel_bottom', casing.bottom().rows(), solar_pal(1))
 
 

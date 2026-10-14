@@ -19,6 +19,8 @@
   "tooltip.robotica.solar": "Generates %s FE/t in daylight with open sky",
   "tooltip.robotica.solar_rain": "%s FE/t in rain",
   "tooltip.robotica.solar_push": "Powers touching blocks",
+  "tooltip.robotica.solar_area": "Covers %1$sx%1$s blocks",
+  "message.robotica.solar_no_room": "Needs a free %1$sx%1$s area",
   "tooltip.robotica.accumulator_io": "Input and output up to %s FE/t",
   "tooltip.robotica.accumulator_faces": "Accepts energy on all sides, gives it out on the front face",
   "tooltip.robotica.accumulator_keeps": "Keeps its energy when broken",

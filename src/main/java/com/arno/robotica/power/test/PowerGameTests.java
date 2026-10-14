@@ -75,6 +75,52 @@ public class PowerGameTests {
         helper.succeed();
     }
 
+    /**
+     * A Solar Panel Mk3 item fills a 3x3 square (the clicked block is the corner nearest the player, on the left), every
+     * block hands out the one buffer, a blocked square places nothing, a shaded block lowers the share of open blocks,
+     * and breaking one block removes the whole panel and drops one item.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void solarPanelCoversItsSquare(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK3.get();
+        ItemStack item = new ItemStack(PowerRegistry.SOLAR_PANEL_MK3_ITEM.get());
+        // no player: placed facing north, so the square runs north (towards z = 0) and east from the clicked block
+        BlockPos clicked = helper.absolutePos(new BlockPos(0, 1, 2));
+        var hit = new BlockHitResult(Vec3.atCenterOf(clicked), Direction.UP, clicked, false);
+        helper.assertTrue(((BlockItem) item.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, item.copy(), hit)).consumesAction(),
+                "the Mk3 is placed");
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(x, 1, z)), x, z), "block " + x + "," + z + " of the panel");
+            }
+        }
+        var panel = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        helper.assertTrue(level.getBlockEntity(helper.absolutePos(new BlockPos(2, 1, 2))) == null, "only the north-west block has a block entity");
+        IEnergyStorage far = level.getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(new BlockPos(2, 1, 2)), Direction.DOWN);
+        helper.assertTrue(far == panel.energy, "every block hands out the panel's buffer");
+
+        helper.setBlock(new BlockPos(1, 2, 1), Blocks.STONE);
+        BlockPos above = helper.absolutePos(new BlockPos(0, 2, 2));
+        var blocked = new BlockHitResult(Vec3.atCenterOf(above), Direction.UP, clicked, false);
+        helper.assertFalse(((BlockItem) item.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, item.copy(), blocked)).consumesAction(),
+                "a stone in the square blocks the panel");
+        helper.assertBlockNotPresent(block, new BlockPos(0, 2, 2));
+
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(panel.openCells() == 8, "the stone shades one block: " + panel.openCells() + " of 9 open");
+            level.destroyBlock(helper.absolutePos(new BlockPos(2, 1, 2)), true);
+            for (int x = 0; x < 3; x++) {
+                for (int z = 0; z < 3; z++) helper.assertBlockNotPresent(block, new BlockPos(x, 1, z));
+            }
+            var area = new net.minecraft.world.phys.AABB(helper.absolutePos(BlockPos.ZERO)).inflate(5);
+            int drops = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, area).stream()
+                    .filter(e -> e.getItem().is(item.getItem())).mapToInt(e -> e.getItem().getCount()).sum();
+            helper.assertTrue(drops == 1, "breaking one block drops one panel, got " + drops);
+            helper.succeed();
+        });
+    }
+
     /** The metal press turns an iron ingot into an iron plate, and a speed card makes it much faster. */
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void metalPressMakesIronPlate(GameTestHelper helper) {
