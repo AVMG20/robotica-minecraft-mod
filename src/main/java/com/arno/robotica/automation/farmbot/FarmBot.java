@@ -245,7 +245,7 @@ public abstract class FarmBot extends PathfinderMob {
         builder.define(DATA_TIER, 1);
         builder.define(DATA_STATUS, Status.IDLE.ordinal());
         builder.define(DATA_HOME, BlockPos.ZERO);
-        builder.define(DATA_AREA, 9);
+        builder.define(DATA_AREA, RobotArea.size(baseRadius(), 0));
         builder.define(DATA_SHOW_AREA, false);
         builder.define(DATA_FX_POS, BlockPos.ZERO);
         builder.define(DATA_ACTION, 0);
@@ -271,6 +271,11 @@ public abstract class FarmBot extends PathfinderMob {
 
     /** How close (horizontally, blocks from the job's centre) the robot must stand to work on it. */
     protected abstract double reach();
+
+    /** Work radius without range cards. */
+    protected int baseRadius() {
+        return AutomationConfig.farmRadius();
+    }
 
     /** True if this block position is worth a job right now. Must be cheap. */
     protected abstract boolean isTarget(ServerLevel level, BlockPos pos, BlockState state);
@@ -362,7 +367,7 @@ public abstract class FarmBot extends PathfinderMob {
 
     private void recalc() {
         if (level().isClientSide) return;
-        entityData.set(DATA_AREA, RobotArea.size(upgrades.level(UpgradeKind.RANGE)));
+        entityData.set(DATA_AREA, RobotArea.size(baseRadius(), upgrades.level(UpgradeKind.RANGE)));
         resetScan();
     }
 

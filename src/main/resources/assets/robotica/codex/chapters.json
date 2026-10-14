@@ -57,7 +57,7 @@
         },
         {
           "title": "Batteries",
-          "text": "Right-click a robot with a cell or Mainspring to swap it in.\nA cell anywhere in your inventory recharges the FE tool in your hand and your Exo suit.",
+          "text": "Right-click a robot with a cell or Mainspring to swap it in.\nA Wireless Charger keeps the robots in its range charged.\nA cell anywhere in your inventory recharges the FE tool in your hand and your Exo suit.",
           "items": [
             "robotica:mainspring",
             "robotica:copper_cell",
@@ -245,7 +245,7 @@
         },
         {
           "title": "Robot cards",
-          "text": "The Mk sets card slots, Range cards set the area.\nSpeed: works each spot sooner.\nRange: +6 blocks wide, 9x9 up to 33x33.\nGrowth: saplings (Stumpy) or crops (Sprout) grow faster.\nEfficiency: less FE.\nThe Rancher takes all but Growth.",
+          "text": "The Mk sets card slots, Range cards set the area.\nSpeed: works each spot sooner.\nRange: +6 blocks wide per card.\nGrowth: saplings (Stumpy) or crops (Sprout) grow faster.\nEfficiency: less FE.\nThe Rancher takes all but Growth.",
           "items": [
             "robotica:upgrade_speed",
             "robotica:upgrade_range",

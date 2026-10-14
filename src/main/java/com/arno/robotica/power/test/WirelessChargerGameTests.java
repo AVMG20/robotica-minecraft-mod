@@ -1,6 +1,11 @@
 package com.arno.robotica.power.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.automation.farmbot.FarmBotContent;
+import com.arno.robotica.automation.farmbot.Sprout;
+import com.arno.robotica.automation.farmbot.Stumpy;
+import com.arno.robotica.automation.rancher.Rancher;
+import com.arno.robotica.automation.rancher.RancherContent;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
@@ -16,7 +21,9 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.GameType;
@@ -26,7 +33,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-/** Wireless Charger: charge order, range and owner rules, FE accounting. */
+/** Wireless Charger: charge order, range and owner rules, FE accounting, robots. */
 @GameTestHolder(Robotica.MODID)
 @PrefixGameTestTemplate(false)
 public class WirelessChargerGameTests {
@@ -226,5 +233,36 @@ public class WirelessChargerGameTests {
                 helper.succeed();
             });
         });
+    }
+
+    /** Stumpy, Sprout and the Rancher in range are listed and charged like players. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void wirelessChargerChargesRobots(GameTestHelper helper) {
+        ServerPlayer owner = player(helper, 2);
+        WirelessChargerBlockEntity be = charger(helper, owner);
+        Stumpy stumpy = robot(helper, FarmBotContent.STUMPY_ENTITY.get(), new BlockPos(0, 1, 1));
+        Sprout sprout = robot(helper, FarmBotContent.SPROUT_ENTITY.get(), new BlockPos(1, 1, 0));
+        Rancher rancher = robot(helper, RancherContent.RANCHER_ENTITY.get(), new BlockPos(1, 1, 2));
+        stumpy.energy.setEnergy(0);
+        sprout.energy.setEnergy(0);
+        rancher.setEnergy(0);
+        be.scanNow();
+        helper.assertTrue(be.stateOf(stumpy) >= 0 && be.stateOf(sprout) >= 0 && be.stateOf(rancher) >= 0, "the robots in range are listed");
+        helper.runAfterDelay(20, () -> {
+            helper.assertTrue(stumpy.energy.getEnergyStored() > 0, "Stumpy is charged: " + stumpy.energy.getEnergyStored());
+            helper.assertTrue(sprout.energy.getEnergyStored() > 0, "Sprout is charged: " + sprout.energy.getEnergyStored());
+            helper.assertTrue(rancher.getEnergy() > 0, "the Rancher is charged: " + rancher.getEnergy());
+            long got = stumpy.energy.getEnergyStored() + sprout.energy.getEnergyStored() + (long) rancher.getEnergy();
+            helper.assertTrue(be.totalDelivered() >= got, "the charger paid for it: " + be.totalDelivered() + " for " + got);
+            helper.succeed();
+        });
+    }
+
+    /** A robot that stays put (no AI, no gravity) next to the charger. */
+    private static <T extends Mob> T robot(GameTestHelper helper, EntityType<T> type, BlockPos pos) {
+        T robot = helper.spawn(type, pos);
+        robot.setNoAi(true);
+        robot.setNoGravity(true);
+        return robot;
     }
 }

@@ -95,7 +95,7 @@ public final class PowerConfig {
         int[] wirelessRates = {1_000, 4_000, 16_000, 64_000};
         int[] wirelessRanges = {8, 12, 16, 24};
         for (int i = 0; i < 4; i++) {
-            WIRELESS_RATE[i] = b.comment("Wireless Charger Mk" + (i + 1) + ": FE/t it pushes into each player in range (worn armor first, then held items, then the inventory), before speed cards. Its buffer holds 200 ticks of it and takes 20 times it per tick.")
+            WIRELESS_RATE[i] = b.comment("Wireless Charger Mk" + (i + 1) + ": FE/t it pushes into each player (worn armor first, then held items, then the inventory) and robot in range, before speed cards. Its buffer holds 200 ticks of it and takes 20 times it per tick.")
                     .defineInRange("wirelessRateMk" + (i + 1), wirelessRates[i], 1, 10_000_000);
             WIRELESS_RANGE[i] = b.comment("Wireless Charger Mk" + (i + 1) + ": range in blocks without range cards.")
                     .defineInRange("wirelessRangeMk" + (i + 1), wirelessRanges[i], 1, 64);

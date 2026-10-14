@@ -367,7 +367,7 @@ public class FarmBotGameTests {
         Stumpy stumpy = bot(helper, FarmBotContent.STUMPY_ENTITY.get(), HOME);
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         var level = helper.getLevel();
-        Vec3 at = Vec3.atCenterOf(helper.absolutePos(new BlockPos(3, 2, 3)));
+        Vec3 at = Vec3.atCenterOf(helper.absolutePos(new BlockPos(4, 2, 4)));
         ItemEntity thrown = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.OAK_SAPLING, 3));
         thrown.setThrower(player);
         ItemEntity vetoed = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.APPLE, 2));
@@ -423,7 +423,7 @@ public class FarmBotGameTests {
         helper.succeed();
     }
 
-    /** The area comes from range cards on every Mk: a Mk4 without cards stays 9x9, a Mk1 with 4 cards works 33x33. */
+    /** The area comes from range cards on every Mk: a Mk4 without cards stays 9x9, a Mk1 with 4 cards works 33x33; Stumpy starts at 7x7. */
     @GameTest(template = PEN)
     public static void rangeCardsSetTheAreaOnEveryMk(GameTestHelper helper) {
         Sprout sprout = sprout(helper);
@@ -440,6 +440,12 @@ public class FarmBotGameTests {
         rancher.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.RANGE, 1));
         helper.assertTrue(rancher.radius() == radius + RobotArea.RADIUS_PER_CARD, "a range card grows the Rancher's area: " + rancher.radius());
         rancher.discard();
+        sprout.discard();
+        Stumpy stumpy = stumpy(helper);
+        helper.assertTrue(stumpy.areaSize() == RobotArea.size(AutomationConfig.stumpyRadius(), 0) && stumpy.areaSize() < base,
+                "Stumpy starts smaller: " + stumpy.areaSize());
+        stumpy.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.RANGE, 4));
+        helper.assertTrue(stumpy.areaSize() == RobotArea.size(AutomationConfig.stumpyRadius(), 4), "Stumpy with 4 range cards: " + stumpy.areaSize());
         helper.succeed();
     }
 

@@ -119,7 +119,8 @@ public class FarmBotItem extends Item implements EnergyItem, HasDetails {
         tooltip.add(Component.translatable("tooltip.robotica.age", age, Component.translatable("age.robotica." + age)).withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable(descriptionKey).withStyle(ChatFormatting.GRAY));
         CompoundTag state = stack.get(FarmBotContent.STATE.get());
-        int size = RobotArea.size(RobotArea.rangeCards(state == null ? null : state.getCompound("Upgrades")));
+        int base = type.get() == FarmBotContent.STUMPY_ENTITY.get() ? AutomationConfig.stumpyRadius() : AutomationConfig.farmRadius();
+        int size = RobotArea.size(base, RobotArea.rangeCards(state == null ? null : state.getCompound("Upgrades")));
         tooltip.add(Component.translatable("tooltip.robotica.farm_bot_stats", size, size, AutomationConfig.farmInterval(tier),
                 String.format(Locale.ROOT, "%.1f", AutomationConfig.farmGrowth(tier))).withStyle(ChatFormatting.DARK_GRAY));
         if (ItemEnergy.get(stack) > 0) ItemEnergy.appendTooltip(stack, tooltip);

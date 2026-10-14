@@ -19,12 +19,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -38,17 +40,18 @@ import java.util.UUID;
 
 /**
  * Wireless Charger: charges the FE items of players in range, worn armor first (the Exo-Frame), then the held items,
- * then the rest of the inventory, at its Mk's rate per player. Every player in range is charged; only the owner, their
+ * then the rest of the inventory, at its Mk's rate per player. Entities with an FE capability (Stumpy, Sprout, the
+ * Rancher, drones) in range are charged at the same rate. Every player and robot in range is charged; only the owner, their
  * team or an operator may open it. Every FE that reaches an item costs {@code wirelessLoss} percent more from the buffer.
  * Range and rate come from range and speed cards. Fed by cables or a Tesla link like any machine.
  *
- * <p>Players in range are collected every {@link #SCAN_INTERVAL} ticks; the list (entity ids and a state per player)
+ * <p>Players and robots in range are collected every {@link #SCAN_INTERVAL} ticks; the list (entity ids and a state each)
  * is synced to clients for the GUI and the particles, only when it changed.
  */
 public class WirelessChargerBlockEntity extends PowerBlockEntity implements MenuProvider, InfoSource {
     public static final int SCAN_INTERVAL = 10;
     public static final int UPGRADE_SLOTS = UpgradeRules.Fixed.WIRELESS_CHARGER.slots;
-    /** Per player state: items took energy since the last scan / nothing to charge / buffer empty. */
+    /** Per target state: took energy since the last scan / nothing to charge / buffer empty. */
     public static final byte CHARGING = 0, IDLE = 1, NO_POWER = 2;
 
     /** The buffer holds this many ticks of the base rate, and takes this many times the base rate per tick. */
@@ -61,10 +64,11 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     private UUID owner;
     private String ownerName = "";
 
-    /** Server: players in range at the last scan, and what they got since. */
-    private final List<Player> targets = new ArrayList<>();
+    /** Server: players and robots in range at the last scan, the robots' FE storage (null for a player), and what they got since. */
+    private final List<Entity> targets = new ArrayList<>();
+    private final List<IEnergyStorage> storages = new ArrayList<>();
     private long[] deliveredSince = new long[0];
-    /** Players whose items took nothing this scan window (all full or none): skipped until the next scan. */
+    /** Targets that took nothing this scan window (all full or none): skipped until the next scan. */
     private boolean[] satisfied = new boolean[0];
     private long window;
     private int fePerTick;
@@ -74,7 +78,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     private long totalDelivered;
     private long age;
 
-    /** Synced (server and client): entity ids and states of the players in range, nearest first. */
+    /** Synced (server and client): entity ids and states of the players and robots in range, nearest first. */
     private int[] ids = new int[0];
     private byte[] states = new byte[0];
 
@@ -94,7 +98,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         return PowerConfig.wirelessRange(mk) + PowerConfig.wirelessRangePerCard() * upgrades.level(UpgradeKind.RANGE);
     }
 
-    /** FE/t each player in range can get. */
+    /** FE/t each player or robot in range can get. */
     public int ratePerPlayer() {
         return (int) Math.min(Integer.MAX_VALUE, (long) PowerConfig.wirelessRate(mk) * Upgrades.speedMultiplier(upgrades.level(UpgradeKind.SPEED)));
     }
@@ -122,7 +126,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         return states;
     }
 
-    /** True when at least one player took energy since the last scan. */
+    /** True when at least one player or robot took energy since the last scan. */
     public boolean isCharging() {
         for (byte s : states) if (s == CHARGING) return true;
         return false;
@@ -156,9 +160,10 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         long tickTotal = 0;
         // an empty buffer charges nothing: skip the item lookups
         for (int i = 0; i < targets.size() && energy.getEnergyStored() > 0; i++) {
-            Player player = targets.get(i);
-            if (satisfied[i] || player.isRemoved() || !player.isAlive()) continue;
-            long got = chargePlayer(player, rate);
+            Entity target = targets.get(i);
+            if (satisfied[i] || target.isRemoved() || !target.isAlive()) continue;
+            IEnergyStorage storage = storages.get(i);
+            long got = storage != null ? charge(storage, rate) : target instanceof Player player ? chargePlayer(player, rate) : 0;
             if (got <= 0) satisfied[i] = true;
             deliveredSince[i] += got;
             tickTotal += got;
@@ -176,40 +181,50 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         if (charging && CoreSounds.due(level, pos, 80)) CoreSounds.play(level, pos, CoreSounds.CHARGER_HUM, SoundSource.BLOCKS, 0.5F, 1.3F);
     }
 
-    /** Rescans the players in range right away (game tests; the tick does it every {@link #SCAN_INTERVAL} ticks). */
+    /** Rescans the players and robots in range right away (game tests; the tick does it every {@link #SCAN_INTERVAL} ticks). */
     public void scanNow() {
         if (level instanceof ServerLevel sl) scan(sl, worldPosition);
     }
 
-    /** State of a player in the last scan, or -1 when the player is not in range. */
-    public int stateOf(Player player) {
-        for (int i = 0; i < ids.length; i++) if (ids[i] == player.getId()) return states[i];
+    /** State of a player or robot in the last scan, or -1 when it is not in range. */
+    public int stateOf(Entity target) {
+        for (int i = 0; i < ids.length; i++) if (ids[i] == target.getId()) return states[i];
         return -1;
     }
 
-    /** Collects the players in range (same level, not spectators), nearest first, and syncs the list when it changed. */
+    /**
+     * Collects the players (same level, not spectators) and the entities with an FE capability in range, nearest first,
+     * and syncs the list when it changed. The entity lookup only sees loaded chunks.
+     */
     private void scan(ServerLevel level, BlockPos pos) {
         // states for the players of the last scan, from what they got since
         byte[] lastStates = new byte[targets.size()];
         for (int i = 0; i < targets.size(); i++) {
             lastStates[i] = deliveredSince[i] > 0 ? CHARGING : energy.getEnergyStored() <= 0 ? NO_POWER : IDLE;
         }
-        List<Player> previous = new ArrayList<>(targets);
+        List<Entity> previous = new ArrayList<>(targets);
         Vec3 center = Vec3.atCenterOf(pos);
         double r = range();
-        List<Player> found = new ArrayList<>();
+        List<Entity> found = new ArrayList<>();
         // the level's player list, not an entity section lookup: a player just moved into a chunk whose entities are
         // not loaded yet would be missed there
         for (Player player : level.players()) {
             if (!player.isSpectator() && player.isAlive() && player.distanceToSqr(center) <= r * r) found.add(player);
         }
+        for (Entity entity : level.getEntities((Entity) null, new AABB(center, center).inflate(r),
+                e -> !(e instanceof Player) && e.isAlive() && e.distanceToSqr(center) <= r * r)) {
+            IEnergyStorage storage = entity.getCapability(Capabilities.EnergyStorage.ENTITY, null);
+            if (storage != null && storage.canReceive()) found.add(entity);
+        }
         found.sort((a, b) -> Double.compare(a.distanceToSqr(center), b.distanceToSqr(center)));
         int[] newIds = new int[found.size()];
         byte[] newStates = new byte[found.size()];
+        storages.clear();
         for (int i = 0; i < found.size(); i++) {
-            Player player = found.get(i);
-            newIds[i] = player.getId();
-            int at = previous.indexOf(player);
+            Entity target = found.get(i);
+            newIds[i] = target.getId();
+            storages.add(target instanceof Player ? null : target.getCapability(Capabilities.EnergyStorage.ENTITY, null));
+            int at = previous.indexOf(target);
             if (at >= 0) newStates[i] = lastStates[at];
             else newStates[i] = energy.getEnergyStored() <= 0 ? NO_POWER : IDLE;
         }
@@ -243,11 +258,15 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
         return budget - left;
     }
 
-    /** Puts up to {@code max} FE into one item and takes it plus the loss from the buffer. Returns the FE the item got. */
     private int chargeItem(ItemStack stack, long max) {
         if (stack.isEmpty()) return 0;
         IEnergyStorage item = stack.getCapability(Capabilities.EnergyStorage.ITEM);
-        if (item == null || !item.canReceive() || item.getEnergyStored() >= item.getMaxEnergyStored()) return 0;
+        return item == null ? 0 : charge(item, max);
+    }
+
+    /** Puts up to {@code max} FE into an item or robot and takes it plus the loss from the buffer. Returns the FE it got. */
+    private int charge(IEnergyStorage item, long max) {
+        if (!item.canReceive() || item.getEnergyStored() >= item.getMaxEnergyStored()) return 0;
         int loss = PowerConfig.wirelessLoss();
         long stored = energy.getEnergyStored();
         long affordable = stored * 100L / (100L + loss);
