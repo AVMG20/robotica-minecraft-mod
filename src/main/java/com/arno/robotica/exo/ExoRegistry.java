@@ -31,7 +31,7 @@ public final class ExoRegistry {
     public static final DeferredRegister<ArmorMaterial> MATERIALS = DeferredRegister.create(Registries.ARMOR_MATERIAL, Robotica.MODID);
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, Robotica.MODID);
 
-    /** The core in the chestplate's core socket (Mk2+): one Servo, Magma or Antigrav Core, never consumed. */
+    /** The core in the chestplate's core socket (Mk2+): one Magma or Antigrav Core, never consumed. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> CORE =
             COMPONENTS.registerComponentType("exo_core",
                     b -> b.persistent(ItemContainerContents.CODEC).networkSynchronized(ItemContainerContents.STREAM_CODEC));

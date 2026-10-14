@@ -157,7 +157,7 @@ public class ExoGameTests {
         ServerLevel level = helper.getLevel();
         ItemStack mk2 = pieceM(ExoItems.CHESTPLATE_MK2, 777_000, mod(ModuleKind.MED_INJECTOR), mod(ModuleKind.JET_ASSIST));
         Modules.setEnabled(mk2, 1, false);
-        ExoData.setCore(mk2, new ItemStack(CoreItems.SERVO_CORE.get()));
+        ExoData.setCore(mk2, new ItemStack(CoreItems.MAGMA_CORE.get()));
         SmithingRecipeInput in3 = new SmithingRecipeInput(new ItemStack(CoreItems.BLAZING_CASING.get()), mk2, part("superconductor_coil"));
         var r3 = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, in3, level);
         helper.assertTrue(r3.isPresent(), "a Mk3 smithing recipe exists");
@@ -166,7 +166,7 @@ public class ExoGameTests {
         helper.assertTrue(ItemEnergy.get(mk3) == 777_000, "energy survives smithing");
         helper.assertTrue(Modules.kind(mk3, 0) == ModuleKind.MED_INJECTOR && Modules.kind(mk3, 1) == ModuleKind.JET_ASSIST, "modules survive smithing");
         helper.assertTrue(!Modules.enabled(mk3, 1), "switches survive smithing");
-        helper.assertTrue(ExoData.coreKind(ExoData.core(mk3)) == ExoData.Core.SERVO, "the core survives smithing");
+        helper.assertTrue(ExoData.coreKind(ExoData.core(mk3)) == ExoData.Core.MAGMA, "the core survives smithing");
         SmithingRecipeInput in4 = new SmithingRecipeInput(new ItemStack(CoreItems.NULL_CASING.get()), mk3, part("resonant_lattice"));
         var r4 = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, in4, level);
         helper.assertTrue(r4.isPresent(), "a Mk4 smithing recipe exists");
@@ -730,17 +730,13 @@ public class ExoGameTests {
         ticks(player, 1);
         helper.assertTrue(fall(player, 30.0F) == 0.0F, "Antigrav Core: no fall damage");
 
-        // Servo Core: Overclock gives Haste and Speed, costs FE and then cools down.
+        // Servo Core: no longer fits; one already in a worn chestplate goes back to the wearer.
+        helper.assertTrue(!ExoData.isCore(new ItemStack(CoreItems.SERVO_CORE.get())), "the Servo Core does not fit the socket");
         fullMk2Set(player, new ItemStack(CoreItems.SERVO_CORE.get()));
-        ticks(player, 1);
-        int before = ExoSuit.totalEnergy(player);
-        helper.assertTrue(ExoTicker.overclock(player), "Overclock fires");
-        ExoTicker.flush(player);
-        MobEffectInstance haste = player.getEffect(MobEffects.DIG_SPEED);
-        helper.assertTrue(haste != null && haste.getAmplifier() == ExoConfig.overclockHaste() - 1, "Overclock gives Haste II");
-        helper.assertTrue(player.hasEffect(MobEffects.MOVEMENT_SPEED), "Overclock gives Speed");
-        helper.assertTrue(before - ExoSuit.totalEnergy(player) == ExoConfig.overclockCost(), "Overclock costs " + ExoConfig.overclockCost() + " FE");
-        helper.assertTrue(!ExoTicker.overclock(player), "Overclock cools down");
+        helper.assertTrue(ExoSuit.setBonus(player) == ExoData.Core.NONE, "a Servo Core gives no bonus");
+        ticks(player, 20);
+        helper.assertTrue(ExoData.core(player.getItemBySlot(EquipmentSlot.CHEST)).isEmpty(), "the Servo Core leaves the socket");
+        helper.assertTrue(player.getInventory().countItem(CoreItems.SERVO_CORE.get()) == 1, "and goes to the inventory");
         helper.succeed();
     }
 

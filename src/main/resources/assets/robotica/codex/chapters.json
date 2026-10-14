@@ -567,9 +567,8 @@
         },
         {
           "title": "Core socket",
-          "text": "Needs a Mk2 chestplate and all four pieces at Mk2 or higher.\nServo: Haste and Speed on the Overclock key (default O).\nMagma: fireproof, burning hits.\nAntigrav: no fall damage, cheaper Flight.",
+          "text": "Needs a Mk2 chestplate and all four pieces at Mk2 or higher.\nMagma: fireproof, burning hits.\nAntigrav: no fall damage, cheaper Flight.",
           "items": [
-            "robotica:servo_core",
             "robotica:magma_core",
             "robotica:antigrav_core"
           ]

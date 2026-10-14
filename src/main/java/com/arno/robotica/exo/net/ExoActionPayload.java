@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-/** Client to server: an Exo-Frame key press (open the module screen, toggle flight or hover, double jump, jet thrust and hover, dash, sonar, overclock). Validated in {@link ExoActions}. */
+/** Client to server: an Exo-Frame key press (open the module screen, toggle flight or hover, double jump, jet thrust and hover, dash, sonar). Validated in {@link ExoActions}. */
 public record ExoActionPayload(int action) implements CustomPacketPayload {
     public static final Type<ExoActionPayload> TYPE = new Type<>(Robotica.id("exo_action"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ExoActionPayload> CODEC =

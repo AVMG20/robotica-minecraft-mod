@@ -18,7 +18,6 @@ public final class ExoActions {
     public static final int TOGGLE_FLIGHT = 1;
     public static final int DASH = 3;
     public static final int SONAR = 4;
-    public static final int OVERCLOCK = 5;
     /** Jet Assist: jump held in mid air, thrust upward. */
     public static final int JET_THRUST = 6;
     /** Jet Assist III in hover mode: jump released, hold the height. */
@@ -44,7 +43,6 @@ public final class ExoActions {
             case TOGGLE_FLIGHT -> toggleFlight(player);
             case DASH -> ExoTicker.dash(player);
             case SONAR -> ExoTicker.sonar(player);
-            case OVERCLOCK -> ExoTicker.overclock(player);
             default -> {
             }
         }

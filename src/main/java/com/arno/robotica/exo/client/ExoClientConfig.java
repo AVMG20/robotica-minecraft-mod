@@ -29,7 +29,7 @@ public final class ExoClientConfig {
         FLIGHT_SOUND = b.comment("Thruster sounds of the Flight module and the Jet Assist (yours and other players').").define("flightSound", true);
         PARTICLES = b.comment("Thruster trails and jetpack flames, dash, landing and spring puffs, shield and injector flashes, the sonar ring.")
                 .define("exoParticles", true);
-        COOLDOWN_SOUNDS = b.comment("Quiet beep when Dash, Sonar, Med Injector or Overclock is ready again.").define("cooldownSounds", true);
+        COOLDOWN_SOUNDS = b.comment("Quiet beep when Dash, Sonar or Med Injector is ready again.").define("cooldownSounds", true);
         b.pop();
         SPEC = b.build();
     }

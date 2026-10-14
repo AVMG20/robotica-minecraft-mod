@@ -18,7 +18,7 @@ public final class ExoConfig {
     private static final ModConfigSpec.IntValue[] NIGHT_VISION, JET_THRUST, KINETIC_SHIELD, SERVO, SPRING_HEELS,
             MAGNET, SONAR, MED_INJECTOR, REACH, ANCHOR_SERVOS, HEAT_SHIELD;
     private static final ModConfigSpec.IntValue REBREATHER, ROBOT_HUD, FLIGHT, STEP_ASSIST, AUTO_FEEDER, SOLAR_WEAVE, HAZARD_SEAL,
-            KINETIC_GEN_WALK, KINETIC_GEN_SPRINT, DASH, HYDRO_FINS, OVERCLOCK, GLIDER, CRYO_TREADS, FALL_DAMPENER;
+            KINETIC_GEN_WALK, KINETIC_GEN_SPRINT, DASH, HYDRO_FINS, GLIDER, CRYO_TREADS, FALL_DAMPENER;
     private static final ModConfigSpec.IntValue CELL_RECHARGE_RATE, CELL_SLOT_RATE;
     private static final ModConfigSpec.BooleanValue CELL_RECHARGE;
 
@@ -34,7 +34,7 @@ public final class ExoConfig {
     private static final ModConfigSpec.IntValue MARK_MULTIPLIER;
 
     // ---- core socket set bonuses
-    private static final ModConfigSpec.IntValue OVERCLOCK_DURATION, OVERCLOCK_COOLDOWN, OVERCLOCK_HASTE, OVERCLOCK_SPEED, MAGMA_BURN;
+    private static final ModConfigSpec.IntValue MAGMA_BURN;
     private static final ModConfigSpec.DoubleValue ANTIGRAV_FLIGHT, ANTIGRAV_DASH;
     private static final ModConfigSpec.IntValue SET_BONUS_MARK;
 
@@ -69,7 +69,6 @@ public final class ExoConfig {
         REACH = costs(b, "reachPerSecond", "FE per second while Reach is on (I, II, III).", 5, 10, 20);
         HEAT_SHIELD = costs(b, "heatShieldPerSecond", "FE per second while Heat Shield works: putting you out (I) or keeping fire and lava off (II).", 40, 80);
         ANCHOR_SERVOS = costs(b, "anchorServosPerHit", "FE per knockback Anchor Servos reduce (I, II, III).", 100, 150, 200);
-        OVERCLOCK = cost(b, "overclockPerUse", "FE per Overclock (Servo Core set bonus).", 50_000);
         CELL_RECHARGE = b.comment("Energy cells (and Mainsprings) in the inventory top up the worn suit once per second.")
                 .define("cellsRechargeSuit", true);
         CELL_RECHARGE_RATE = b.comment("Most FE per second the inventory cells move into the suit, all cells together.")
@@ -121,10 +120,6 @@ public final class ExoConfig {
         b.push("exoCoreSocket");
         SET_BONUS_MARK = b.comment("Lowest mark all four worn pieces need for the chestplate core's set bonus.")
                 .defineInRange("setBonusMinMark", 2, 1, 4);
-        OVERCLOCK_DURATION = b.comment("Ticks an Overclock lasts (Servo Core).").defineInRange("overclockDuration", 200, 20, 6_000);
-        OVERCLOCK_COOLDOWN = b.comment("Ticks between two Overclocks.").defineInRange("overclockCooldown", 1_200, 0, 72_000);
-        OVERCLOCK_HASTE = b.comment("Haste level of an Overclock (2 = Haste II).").defineInRange("overclockHaste", 2, 0, 5);
-        OVERCLOCK_SPEED = b.comment("Speed level of an Overclock (1 = Speed I).").defineInRange("overclockSpeed", 1, 0, 5);
         MAGMA_BURN = b.comment("Seconds a melee hit sets the target on fire (Magma Core).").defineInRange("magmaBurnSeconds", 4, 0, 60);
         ANTIGRAV_FLIGHT = b.comment("Flight cost factor with the Antigrav Core (0.5 = half).").defineInRange("antigravFlightFactor", 0.5, 0.0, 1.0);
         ANTIGRAV_DASH = b.comment("Dash cooldown factor with the Antigrav Core (0.5 = half).").defineInRange("antigravDashFactor", 0.5, 0.0, 1.0);
@@ -230,10 +225,6 @@ public final class ExoConfig {
 
     public static int kineticSprintPerBlock() {
         return CoreConfig.scaleGeneration(get(KINETIC_GEN_SPRINT));
-    }
-
-    public static int overclockCost() {
-        return CoreConfig.scaleEnergy(get(OVERCLOCK));
     }
 
     public static int cellRechargePerSecond() {
@@ -350,22 +341,6 @@ public final class ExoConfig {
         return get(SET_BONUS_MARK);
     }
 
-    public static int overclockDuration() {
-        return get(OVERCLOCK_DURATION);
-    }
-
-    public static int overclockCooldown() {
-        return get(OVERCLOCK_COOLDOWN);
-    }
-
-    public static int overclockHaste() {
-        return get(OVERCLOCK_HASTE);
-    }
-
-    public static int overclockSpeed() {
-        return get(OVERCLOCK_SPEED);
-    }
-
     public static int magmaBurnSeconds() {
         return get(MAGMA_BURN);
     }
@@ -383,10 +358,6 @@ public final class ExoConfig {
     /** Format arguments of a core's set bonus description ({@code exo.robotica.bonus.<id>.desc}). */
     public static Object[] bonusArgs(String id) {
         return switch (id) {
-            case "servo" -> new Object[]{com.arno.robotica.core.item.HasDetails.key("key.robotica.exo.overclock"),
-                    net.minecraft.network.chat.Component.translatable("enchantment.level." + overclockHaste()),
-                    net.minecraft.network.chat.Component.translatable("enchantment.level." + overclockSpeed()),
-                    Math.round(overclockDuration() / 20.0), Math.round(overclockCooldown() / 20.0)};
             case "magma" -> new Object[]{magmaBurnSeconds()};
             case "antigrav" -> new Object[]{pct(antigravFlightFactor()), pct(antigravDashFactor())};
             default -> new Object[0];

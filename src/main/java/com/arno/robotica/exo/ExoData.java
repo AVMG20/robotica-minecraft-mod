@@ -20,7 +20,7 @@ public final class ExoData {
 
     /** The boss cores of the chestplate socket and their set bonus. */
     public enum Core {
-        NONE, SERVO, MAGMA, ANTIGRAV
+        NONE, MAGMA, ANTIGRAV
     }
 
     public static int mark(ItemStack piece) {
@@ -38,7 +38,6 @@ public final class ExoData {
     }
 
     public static Core coreKind(ItemStack core) {
-        if (core.is(CoreItems.SERVO_CORE.get())) return Core.SERVO;
         if (core.is(CoreItems.MAGMA_CORE.get())) return Core.MAGMA;
         if (core.is(CoreItems.ANTIGRAV_CORE.get())) return Core.ANTIGRAV;
         return Core.NONE;
