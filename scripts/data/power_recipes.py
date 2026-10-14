@@ -72,7 +72,7 @@ shaped('wireless_charger_mk2', [' T ', 'AWA', 'PXP'], {'T': 'tesla_emitter_3', '
                                                      'P': GOLD_PLATE, 'X': 'reinforced_casing'}, source='W')
 # Charger Mk2-Mk4: the Mk below with that age's circuit, plates and casing (4x the charge rate each).
 shaped('charger_mk2', [' A ', 'PCP', ' X '], {'A': 'advanced_circuit', 'P': GOLD_PLATE, 'C': 'charger', 'X': 'reinforced_casing'}, source='C')
-# Solar Mk2-Mk4: the Mk below with that age's circuit and plates (40 -> 120 -> 300 -> 800 FE/t).
+# Solar Mk2-Mk4: the Mk below with that age's circuit and plates (20 -> 120 -> 300 -> 800 FE/t).
 shaped('solar_panel_mk2', ['QGQ', 'GSG', 'QAQ'], {'Q': QUARTZ, 'G': '#c:glass_blocks', 'S': 'solar_panel_mk1', 'A': 'advanced_circuit'},
        source='S')
 shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],
