@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/** Charges the FE items of the owner and their team in range, without plugging anything in. Mk1 and Mk2 Age 2, Mk3 Age 3, Mk4 Age 4. */
+/** Charges the FE items of every player in range, without plugging anything in. Mk1 and Mk2 Age 2, Mk3 Age 3, Mk4 Age 4. */
 public class WirelessChargerBlock extends PowerBlock {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
     /** Floor: mast up, ceiling: mast down, wall: mast out of the wall towards FACING. */

@@ -71,12 +71,11 @@ public class WirelessChargerScreen extends MachineScreen<WirelessChargerMenu> {
             Component name = entity == null ? Component.literal("?") : entity.getName();
             Tone rowTone = switch (state) {
                 case WirelessChargerBlockEntity.CHARGING -> Tone.GOOD;
-                case WirelessChargerBlockEntity.DENIED, WirelessChargerBlockEntity.NO_POWER -> Tone.BAD;
+                case WirelessChargerBlockEntity.NO_POWER -> Tone.BAD;
                 default -> Tone.WARN;
             };
             String key = switch (state) {
                 case WirelessChargerBlockEntity.CHARGING -> "charging_one";
-                case WirelessChargerBlockEntity.DENIED -> "denied";
                 case WirelessChargerBlockEntity.NO_POWER -> "no_power";
                 default -> "full";
             };

@@ -94,7 +94,7 @@ public class WirelessChargerGameTests {
         helper.succeed();
     }
 
-    /** Only players in range are listed; strangers are refused unless the config allows everyone; range cards reach further. */
+    /** Only players in range are listed; strangers are charged too; range cards reach further. */
     @GameTest(template = "empty")
     public static void wirelessChargerRangeAndOwnerRules(GameTestHelper helper) {
         ServerPlayer owner = player(helper, 3);
@@ -104,18 +104,8 @@ public class WirelessChargerGameTests {
         helper.assertTrue(range == PowerConfig.wirelessRange(1), "base range " + range);
 
         be.scanNow();
-        helper.assertTrue(be.stateOf(owner) >= 0 && be.stateOf(owner) != WirelessChargerBlockEntity.DENIED, "the owner is charged");
-        helper.assertTrue(be.stateOf(stranger) == WirelessChargerBlockEntity.DENIED, "a stranger is refused");
-        helper.assertTrue(be.mayCharge(owner) && !be.mayCharge(stranger), "owner rule");
-
-        WirelessChargerBlockEntity.anyoneOverride = true;
-        try {
-            be.scanNow();
-            helper.assertTrue(be.stateOf(stranger) >= 0 && be.stateOf(stranger) != WirelessChargerBlockEntity.DENIED,
-                    "with wirelessChargeAnyone everybody is charged");
-        } finally {
-            WirelessChargerBlockEntity.anyoneOverride = null;
-        }
+        helper.assertTrue(be.stateOf(owner) >= 0, "the owner is listed");
+        helper.assertTrue(be.stateOf(stranger) >= 0, "a stranger is charged too");
 
         owner.moveTo(owner.getX() + range, owner.getY(), owner.getZ());
         be.scanNow();

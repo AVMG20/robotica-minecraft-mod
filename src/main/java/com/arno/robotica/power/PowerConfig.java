@@ -32,7 +32,6 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue[] WIRELESS_RANGE = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue WIRELESS_RANGE_PER_CARD;
     private static final ModConfigSpec.IntValue WIRELESS_LOSS;
-    private static final ModConfigSpec.BooleanValue WIRELESS_ANYONE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -105,8 +104,6 @@ public final class PowerConfig {
                 .defineInRange("wirelessRangePerCard", 4, 0, 32);
         WIRELESS_LOSS = b.comment("Wireless Charger: percent extra FE drawn from its buffer for every FE that reaches an item.")
                 .defineInRange("wirelessLoss", 10, 0, 500);
-        WIRELESS_ANYONE = b.comment("Wireless Charger: charge every player in range, not only the owner and the owner's team.")
-                .define("wirelessChargeAnyone", false);
         b.pop();
         b.push("metal_press");
         PRESS_POWER = b.comment("Base FE/t while pressing (recipes take 100 ticks by default).")
@@ -146,5 +143,4 @@ public final class PowerConfig {
     public static int wirelessRange(int mk) { return get(WIRELESS_RANGE[mk - 1]); }
     public static int wirelessRangePerCard() { return get(WIRELESS_RANGE_PER_CARD); }
     public static int wirelessLoss() { return get(WIRELESS_LOSS); }
-    public static boolean wirelessChargeAnyone() { return SPEC.isLoaded() ? WIRELESS_ANYONE.get() : WIRELESS_ANYONE.getDefault(); }
 }
