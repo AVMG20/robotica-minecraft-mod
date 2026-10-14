@@ -518,7 +518,7 @@
         },
         {
           "title": "Jetpack",
-          "text": "Full heat bar: the pack cuts out until it has cooled, twice as fast on the ground. Your fall slows meanwhile.\nThe heat stays with you: swapping chestplates or levels does not cool it.\nWith Flight and Jet Assist III, the Flight key cycles Flight, hover, off.",
+          "text": "Full heat bar: the pack cuts out until it has cooled, twice as fast on the ground. Your fall slows meanwhile.\nHeat stays with you across chestplates and Jet Assist levels.\nWith Flight and Jet Assist III, the Flight key cycles Flight, hover, off.",
           "items": [
             "robotica:jet_assist_module",
             "robotica:jet_assist_module_2",
