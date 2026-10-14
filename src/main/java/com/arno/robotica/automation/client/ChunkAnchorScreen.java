@@ -2,6 +2,7 @@ package com.arno.robotica.automation.client;
 
 import com.arno.robotica.automation.entity.ChunkAnchorBlockEntity.State;
 import com.arno.robotica.automation.menu.ChunkAnchorMenu;
+import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
 import com.arno.robotica.core.util.Fmt;
 import net.minecraft.ChatFormatting;
@@ -10,14 +11,41 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-/** Chunk Anchor GUI: energy and battery, the state, the loaded area, upkeep, the owner's chunks against the cap. */
+/** Chunk Anchor GUI: energy and battery, an area toggle, the state, the loaded area, upkeep, the owner's chunks against the cap. */
 public class ChunkAnchorScreen extends MachineScreen<ChunkAnchorMenu> {
     private static final int TEXT_X = 28;
     private static final int TEXT_W = 118;
+    private IconButton areaButton;
 
     public ChunkAnchorScreen(ChunkAnchorMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        areaButton = addRenderableWidget(new IconButton(leftPos + 150, topPos + 38, 20, new ItemStack(Items.SPYGLASS), true,
+                b -> press(ChunkAnchorMenu.BUTTON_SHOW_AREA)));
+        updateButtons();
+    }
+
+    private void press(int id) {
+        if (minecraft != null && minecraft.gameMode != null) {
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
+        }
+    }
+
+    private void updateButtons() {
+        areaButton.setOn(menu.showArea());
+        areaButton.hint(Component.translatable(menu.showArea() ? "gui.robotica.area_on" : "gui.robotica.area_off"));
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        updateButtons();
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.arno.robotica.automation.AutomationContent;
 import com.arno.robotica.automation.block.ChunkAnchorBlock;
 import com.arno.robotica.automation.entity.ChunkAnchorBlockEntity;
 import com.arno.robotica.automation.entity.ChunkAnchorBlockEntity.State;
+import com.arno.robotica.automation.menu.ChunkAnchorMenu;
 import com.arno.robotica.core.chunk.ChunkClaims;
 import com.arno.robotica.core.chunk.ChunkTickets;
 import net.minecraft.core.BlockPos;
@@ -159,7 +160,7 @@ public class ChunkAnchorGameTests {
                 .thenSucceed();
     }
 
-    /** Right-click with the next Mk: owner and energy stay, the old block comes back, the bigger area loads. */
+    /** Right-click with the next Mk: owner, energy and the area toggle stay, the old block comes back, the bigger area loads. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void anchorUpgradesInPlace(GameTestHelper helper) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
@@ -168,6 +169,12 @@ public class ChunkAnchorGameTests {
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(old.isLoading(), "Mk1 loads"))
                 .thenExecute(() -> {
+                    ChunkAnchorMenu menu = new ChunkAnchorMenu(0, player.getInventory(), old);
+                    helper.assertTrue(menu.clickMenuButton(player, ChunkAnchorMenu.BUTTON_SHOW_AREA) && old.showArea()
+                            && old.outlineVisible(), "the button shows the area");
+                    menu.clickMenuButton(player, ChunkAnchorMenu.BUTTON_SHOW_AREA);
+                    helper.assertTrue(!old.showArea(), "and hides it again");
+                    menu.clickMenuButton(player, ChunkAnchorMenu.BUTTON_SHOW_AREA);
                     ItemStack mk3 = new ItemStack(AutomationContent.CHUNK_ANCHOR_MK3_ITEM.get());
                     use(helper, player, mk3);
                     helper.assertTrue(helper.getBlockState(POS).is(AutomationContent.CHUNK_ANCHOR.get()) && mk3.getCount() == 1, "Mk3 can not skip Mk2");
@@ -178,6 +185,7 @@ public class ChunkAnchorGameTests {
                     ChunkAnchorBlockEntity fresh = helper.getBlockEntity(POS);
                     helper.assertTrue(fresh != old && fresh.tier() == 2 && fresh.chunkCount() == 9, "a fresh Mk2: 3x3 chunks");
                     helper.assertTrue(player.getUUID().equals(fresh.owner()), "owner kept");
+                    helper.assertTrue(fresh.showArea(), "area toggle kept");
                     int energy = fresh.energy.getEnergyStored();
                     helper.assertTrue(energy > 99_000 && energy <= 100_000, "energy kept, is " + energy);
                     helper.assertTrue(fresh.energy.getMaxEnergyStored() == 1_080_000, "Mk2 buffer: 10 minutes of 90 FE/t");

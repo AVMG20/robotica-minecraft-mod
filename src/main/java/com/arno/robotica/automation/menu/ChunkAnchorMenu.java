@@ -12,9 +12,11 @@ import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
  * Chunk Anchor GUI (176 x 166): energy bar, battery slot, state, area, upkeep and the owner's chunks against the cap.
- * Slot order: 0 battery, then the player inventory.
+ * Slot order: 0 battery, then the player inventory. Button ids: 0 toggles "show area".
  */
 public class ChunkAnchorMenu extends MachineMenu {
+    public static final int BUTTON_SHOW_AREA = 0;
+
     public final ChunkAnchorBlockEntity be;
     private final int idxEnergy;
     private final int idxCapacity;
@@ -22,6 +24,7 @@ public class ChunkAnchorMenu extends MachineMenu {
     private final int idxUpkeep;
     private final int idxUsed;
     private final int idxCap;
+    private final int idxShow;
 
     public ChunkAnchorMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv, resolve(inv, buf));
@@ -45,6 +48,7 @@ public class ChunkAnchorMenu extends MachineMenu {
         idxUpkeep = track(be::upkeep);
         idxUsed = track(client ? () -> 0 : be::ownerUsed);
         idxCap = track(client ? () -> 0 : ChunkClaims::cap);
+        idxShow = track(() -> be.showArea() ? 1 : 0);
     }
 
     public int energy() {
@@ -71,6 +75,20 @@ public class ChunkAnchorMenu extends MachineMenu {
     /** Chunk cap per player (0 = anchors off). */
     public int cap() {
         return synced(idxCap);
+    }
+
+    public boolean showArea() {
+        return synced(idxShow) != 0;
+    }
+
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (be.isRemoved()) return false;
+        if (id == BUTTON_SHOW_AREA) {
+            be.toggleShowArea();
+            return true;
+        }
+        return false;
     }
 
     @Override

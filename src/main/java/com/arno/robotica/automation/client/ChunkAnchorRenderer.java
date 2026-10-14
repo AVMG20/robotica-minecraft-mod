@@ -18,7 +18,7 @@ import org.joml.Matrix4f;
 
 /**
  * Chunk Anchor: two glowing rings spin around the core while it loads (cyan; slow and red when dry or over the cap), and
- * for 10 seconds after a sneak-right-click the loaded chunks are outlined, like the area of the other machines.
+ * the loaded chunks are outlined while the GUI toggle is on or for 10 seconds after placing or a sneak-right-click.
  * Additive lightning render type, no textures.
  */
 public class ChunkAnchorRenderer implements BlockEntityRenderer<ChunkAnchorBlockEntity> {
