@@ -56,9 +56,13 @@ def recipe(name, obj):
     write(RECIPES / f'{name}.json', obj)
 
 
-def shaped(name, pattern, key, result=None, count=1):
-    recipe(name, {'type': 'minecraft:crafting_shaped', 'category': 'misc', 'pattern': pattern,
-                  'key': {k: ing(v) for k, v in key.items()}, 'result': {'id': rid(result or name), 'count': count}})
+def shaped(name, pattern, key, result=None, count=1, source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': 'misc',
+            'pattern': pattern, 'key': {k: ing(v) for k, v in key.items()}, 'result': {'id': rid(result or name), 'count': count}}
+    if source:
+        data['source'] = ing(key[source])
+    recipe(name, data)
 
 
 def shapeless(name, ingredients, result, count=1):
@@ -246,7 +250,7 @@ def recipes():
             age = min(4, BASE_AGE[machine] + tier - 1)
             plate, circuit, special = AGE_PARTS[age]
             shaped(f'{machine}_mk{tier}', ['PCP', 'PMP', 'PSP'],
-                   {'P': plate, 'C': circuit, 'S': special, 'M': f'{machine}_mk{tier - 1}'})
+                   {'P': plate, 'C': circuit, 'S': special, 'M': f'{machine}_mk{tier - 1}'}, source='M')
     shaped('rtg', ['PTP', 'GXG', 'PTP'],
            {'P': FERRO, 'T': 'thermocouple', 'G': '#c:glass_blocks', 'X': 'reinforced_casing'})
 

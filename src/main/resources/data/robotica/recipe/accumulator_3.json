@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     "RCR",
@@ -23,5 +23,8 @@
   "result": {
     "id": "robotica:accumulator_3",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:accumulator_2"
   }
 }

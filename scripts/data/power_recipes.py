@@ -12,11 +12,14 @@ def ing(x):
     return {'item': x if ':' in x else f'robotica:{x}'}
 
 
-def shaped(name, pattern, key, count=1, category='misc'):
+def shaped(name, pattern, key, count=1, category='misc', source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
     OUT.mkdir(parents=True, exist_ok=True)
-    data = {'type': 'minecraft:crafting_shaped', 'category': category, 'pattern': pattern,
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': category, 'pattern': pattern,
             'key': {k: ing(v) for k, v in key.items()},
             'result': {'id': f'robotica:{name}', 'count': count}}
+    if source:
+        data['source'] = ing(key[source])
     (OUT / f'{name}.json').write_text(json.dumps(data, indent=2) + '\n')
 
 
@@ -66,29 +69,30 @@ shaped('wireless_charger', [' T ', 'ACA', 'QXQ'], {'T': 'tesla_coil_2', 'A': 'ad
                                                  'X': 'reinforced_casing'})
 # Wireless Charger Mk2-Mk4: the Mk below with a Tesla Emitter of the next tier on top, that age's circuit, plates and casing.
 shaped('wireless_charger_mk2', [' T ', 'AWA', 'PXP'], {'T': 'tesla_emitter_3', 'A': 'advanced_circuit', 'W': 'wireless_charger',
-                                                     'P': GOLD_PLATE, 'X': 'reinforced_casing'})
+                                                     'P': GOLD_PLATE, 'X': 'reinforced_casing'}, source='W')
 # Charger Mk2-Mk4: the Mk below with that age's circuit, plates and casing (4x the charge rate each).
-shaped('charger_mk2', [' A ', 'PCP', ' X '], {'A': 'advanced_circuit', 'P': GOLD_PLATE, 'C': 'charger', 'X': 'reinforced_casing'})
-# Solar Mk2-Mk4: the Mk below with that age's circuit and plates (40 -> 120 -> 300 -> 600 FE/t).
-shaped('solar_panel_mk2', ['QGQ', 'GSG', 'QAQ'], {'Q': QUARTZ, 'G': '#c:glass_blocks', 'S': 'solar_panel_mk1', 'A': 'advanced_circuit'})
+shaped('charger_mk2', [' A ', 'PCP', ' X '], {'A': 'advanced_circuit', 'P': GOLD_PLATE, 'C': 'charger', 'X': 'reinforced_casing'}, source='C')
+# Solar Mk2-Mk4: the Mk below with that age's circuit and plates (40 -> 120 -> 300 -> 800 FE/t).
+shaped('solar_panel_mk2', ['QGQ', 'GSG', 'QAQ'], {'Q': QUARTZ, 'G': '#c:glass_blocks', 'S': 'solar_panel_mk1', 'A': 'advanced_circuit'},
+       source='S')
 shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],
-       {'R': REDSTONE_BLOCK, 'C': 'advanced_circuit', 'A': 'accumulator_1', 'X': 'reinforced_casing'})
+       {'R': REDSTONE_BLOCK, 'C': 'advanced_circuit', 'A': 'accumulator_1', 'X': 'reinforced_casing'}, source='A')
 shaped('tesla_coil_3', [' A ', 'QTQ', ' X '], {'A': 'advanced_circuit', 'Q': QUARTZ, 'T': 'tesla_coil_2', 'X': 'reinforced_casing'})
 # Age 3
 shaped('solar_panel_mk3', ['PGP', 'GSG', 'PCP'], {'P': '#c:plates/pyrosteel', 'G': '#c:glass_blocks', 'S': 'solar_panel_mk2',
-                                                 'C': 'quantum_circuit'})
+                                                 'C': 'quantum_circuit'}, source='S')
 shaped('accumulator_3', ['RCR', 'AXA', 'RCR'],
-       {'R': REDSTONE_BLOCK, 'C': 'quantum_circuit', 'A': 'accumulator_2', 'X': 'blazing_casing'})
-shaped('charger_mk3', [' Q ', 'PCP', ' X '], {'Q': 'quantum_circuit', 'P': PYROSTEEL_PLATE, 'C': 'charger_mk2', 'X': 'blazing_casing'})
+       {'R': REDSTONE_BLOCK, 'C': 'quantum_circuit', 'A': 'accumulator_2', 'X': 'blazing_casing'}, source='A')
+shaped('charger_mk3', [' Q ', 'PCP', ' X '], {'Q': 'quantum_circuit', 'P': PYROSTEEL_PLATE, 'C': 'charger_mk2', 'X': 'blazing_casing'}, source='C')
 shaped('wireless_charger_mk3', [' T ', 'QWQ', 'PXP'], {'T': 'tesla_emitter_4', 'Q': 'quantum_circuit', 'W': 'wireless_charger_mk2',
-                                                     'P': PYROSTEEL_PLATE, 'X': 'blazing_casing'})
+                                                     'P': PYROSTEEL_PLATE, 'X': 'blazing_casing'}, source='W')
 shaped('tesla_coil_4', [' C ', 'BTB', ' X '], {'C': 'quantum_circuit', 'B': '#c:rods/blaze', 'T': 'tesla_coil_3', 'X': 'blazing_casing'})
 # Age 4
 shaped('solar_panel_mk4', ['PEP', 'ESE', 'PCP'], {'P': '#c:plates/resonant_alloy', 'E': '#c:ender_pearls', 'S': 'solar_panel_mk3',
-                                                 'C': 'null_circuit'})
-shaped('charger_mk4', [' N ', 'PCP', ' X '], {'N': 'null_circuit', 'P': RESONANT_PLATE, 'C': 'charger_mk3', 'X': 'null_casing'})
+                                                 'C': 'null_circuit'}, source='S')
+shaped('charger_mk4', [' N ', 'PCP', ' X '], {'N': 'null_circuit', 'P': RESONANT_PLATE, 'C': 'charger_mk3', 'X': 'null_casing'}, source='C')
 shaped('wireless_charger_mk4', [' T ', 'NWN', 'PXP'], {'T': 'tesla_emitter_5', 'N': 'null_circuit', 'W': 'wireless_charger_mk3',
-                                                     'P': RESONANT_PLATE, 'X': 'null_casing'})
+                                                     'P': RESONANT_PLATE, 'X': 'null_casing'}, source='W')
 shaped('tesla_coil_5', [' C ', 'ETE', ' X '], {'C': 'null_circuit', 'E': '#c:ender_pearls', 'T': 'tesla_coil_4', 'X': 'null_casing'})
 # Tesla Emitters: a coil splits into 4 one-link emitters of its tier, and 4 craft back into the coil.
 for t in range(1, 6):

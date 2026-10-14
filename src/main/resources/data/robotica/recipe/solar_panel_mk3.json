@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     "PGP",
@@ -23,5 +23,8 @@
   "result": {
     "id": "robotica:solar_panel_mk3",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:solar_panel_mk2"
   }
 }

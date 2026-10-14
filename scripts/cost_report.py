@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Raw-material cost report for every Robotica item.
 
-Parses all recipes in data/robotica/recipe (crafting_shaped, crafting_shapeless, smithing_transform, stonecutting,
+Parses all recipes in data/robotica/recipe (crafting_shaped, machine_upgrade, crafting_shapeless, smithing_transform, stonecutting,
 smelting, blasting, robotica:pressing, the industry machines and the Grinder), resolves every ingredient recursively (cheapest recipe wins) down to raw materials and writes
 prints a table sorted by age.
 
@@ -210,7 +210,7 @@ def load_recipes():
         r = json.loads(f.read_text())
         t = r['type'].split(':')[1]
         counts = defaultdict(int)
-        if t == 'crafting_shaped':
+        if t in ('crafting_shaped', 'machine_upgrade'):
             for row in r['pattern']:
                 for ch in row:
                     if ch != ' ':

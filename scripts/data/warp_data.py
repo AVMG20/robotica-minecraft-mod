@@ -120,11 +120,14 @@ def ing(x):
     return {'item': x if ':' in x else f'robotica:{x}'}
 
 
-def shaped(name, pattern, key, count=1, category='misc'):
-    write(DATA / f'recipe/{name}.json', {
-        'type': 'minecraft:crafting_shaped', 'category': category, 'pattern': pattern,
-        'key': {k: ing(v) for k, v in key.items()},
-        'result': {'id': f'robotica:{name}', 'count': count}})
+def shaped(name, pattern, key, count=1, category='misc', source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': category,
+            'pattern': pattern, 'key': {k: ing(v) for k, v in key.items()},
+            'result': {'id': f'robotica:{name}', 'count': count}}
+    if source:
+        data['source'] = ing(key[source])
+    write(DATA / f'recipe/{name}.json', data)
 
 
 def main():
@@ -155,7 +158,7 @@ def main():
     shaped('warp_pad', ['EAE', 'GRG', 'PPP'], {
         'E': '#c:ender_pearls', 'A': 'basic_circuit', 'G': '#c:plates/gold', 'R': 'iron_casing', 'P': '#c:plates/iron'})
     shaped('warp_pad_mk2', ['BQB', 'MWP', 'E E'], {
-        'B': 'blazing_casing', 'Q': 'quantum_circuit', 'M': 'magma_core', 'W': 'warp_pad', 'P': 'plasma_actuator', 'E': '#c:ender_pearls'})
+        'B': 'blazing_casing', 'Q': 'quantum_circuit', 'M': 'magma_core', 'W': 'warp_pad', 'P': 'plasma_actuator', 'E': '#c:ender_pearls'}, source='W')
     shaped('warp_remote', ['PEP', 'ICI', 'PBP'], {
         'P': '#c:plates/iron', 'E': '#c:ender_pearls', 'I': 'iron_casing', 'C': 'copper_cell', 'B': 'basic_circuit'}, category='equipment')
     # The projector absorbs what the 4x5 frame used to cost (about 17 frame blocks per gate: obsidian, iron plate, null casing):

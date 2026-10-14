@@ -32,15 +32,19 @@ def item_id(x):
     return x if ':' in x else f'robotica:{x}'
 
 
-def shaped(name, pattern, key, count=1, result=None, kind='minecraft:crafting_shaped'):
-    write(OUT / f'{name}.json', {'type': kind, 'category': 'misc', 'pattern': pattern,
-                                 'key': {k: ing(v) for k, v in key.items()},
-                                 'result': {'id': item_id(result or name), 'count': count}})
+def shaped(name, pattern, key, count=1, result=None, source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': 'misc',
+            'pattern': pattern, 'key': {k: ing(v) for k, v in key.items()},
+            'result': {'id': item_id(result or name), 'count': count}}
+    if source:
+        data['source'] = ing(key[source])
+    write(OUT / f'{name}.json', data)
 
 
 def upgrade(name, pattern, key):
-    """Next Mk of a machine: keeps the energy and the carried contents of the machine in the grid."""
-    shaped(name, pattern, key, kind='robotica:machine_upgrade')
+    """Next Mk of a machine: keeps the energy of the machine in the grid (key M)."""
+    shaped(name, pattern, key, source='M')
 
 
 def cooking(name, kind, ingredient, result, xp, time):
@@ -63,7 +67,7 @@ IRON_PLATE = '#c:plates/iron'
 
 # ---------------------------------------------------------------- machines
 # Mk1 (Age 1, after the Basic Circuit like the Metal Press). Every later Mk consumes the one before plus two casings and
-# a circuit of its age, and keeps energy and Carry contents (robotica:machine_upgrade).
+# a circuit of its age, and keeps the energy (robotica:machine_upgrade).
 shaped('grinder_mk1', ['PFP', 'GMG', 'PBP'],
        {'P': IRON_PLATE, 'F': 'minecraft:flint', 'G': '#c:gears/copper', 'M': 'electric_motor', 'B': 'basic_circuit'})
 shaped('electric_furnace_mk1', ['PCP', 'CFC', 'PBP'],

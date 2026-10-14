@@ -92,11 +92,14 @@ def ing(x):
     return {'item': x if ':' in x else f'robotica:{x}'}
 
 
-def shaped(name, pattern, key, count=1, category='misc'):
-    write(DATA / f'recipe/{name}.json', {
-        'type': 'minecraft:crafting_shaped', 'category': category, 'pattern': pattern,
-        'key': {k: ing(v) for k, v in key.items()},
-        'result': {'id': f'robotica:{name}', 'count': count}})
+def shaped(name, pattern, key, count=1, category='misc', source=None):
+    """source: key of the previous Mk; the result then keeps its data (robotica:machine_upgrade)."""
+    data = {'type': 'robotica:machine_upgrade' if source else 'minecraft:crafting_shaped', 'category': category,
+            'pattern': pattern, 'key': {k: ing(v) for k, v in key.items()},
+            'result': {'id': f'robotica:{name}', 'count': count}}
+    if source:
+        data['source'] = ing(key[source])
+    write(DATA / f'recipe/{name}.json', data)
 
 
 def main():
@@ -120,10 +123,10 @@ def main():
     # Age 3: reaches other dimensions (Magma Core, as the Warp Pad Mk2).
     shaped('quantum_link_mk2', ['BMB', 'QLQ', 'PEP'], {
         'B': 'blazing_casing', 'M': 'magma_core', 'Q': 'quantum_circuit', 'L': 'quantum_link_mk1',
-        'P': 'plasma_actuator', 'E': '#c:ender_pearls'})
+        'P': 'plasma_actuator', 'E': '#c:ender_pearls'}, source='L')
     # Age 4
     shaped('quantum_link_mk3', ['ECE', 'NLN', 'ECE'], {
-        'E': '#c:ender_pearls', 'C': 'null_circuit', 'N': 'null_casing', 'L': 'quantum_link_mk2'})
+        'E': '#c:ender_pearls', 'C': 'null_circuit', 'N': 'null_casing', 'L': 'quantum_link_mk2'}, source='L')
     print('link data written')
 
 

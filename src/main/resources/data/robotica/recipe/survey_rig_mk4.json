@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     " N ",
@@ -26,5 +26,8 @@
   "result": {
     "id": "robotica:survey_rig_mk4",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:survey_rig_mk3"
   }
 }

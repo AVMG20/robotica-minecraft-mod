@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "robotica:machine_upgrade",
   "category": "misc",
   "pattern": [
     "CDC",
@@ -26,5 +26,8 @@
   "result": {
     "id": "robotica:storage_expansion_mk3",
     "count": 1
+  },
+  "source": {
+    "item": "robotica:storage_expansion_mk2"
   }
 }
