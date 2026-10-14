@@ -139,6 +139,8 @@ final class ExoJetpack {
             reset();
             owner = player;
         }
+        // A paused singleplayer server neither heats nor cools the pack.
+        if (mc.isPaused()) return;
         boolean jumpDown = mc.screen == null && mc.options.keyJump.isDown();
         boolean press = jumpDown && !jumpWasDown;
         jumpWasDown = jumpDown;
@@ -214,7 +216,7 @@ final class ExoJetpack {
         }
         glider(player, grounded);
 
-        Jet self = jet(player.getId(), worn && (level > 0 || mode != ExoJet.OFF || overheated));
+        Jet self = jet(player.getId(), worn && (mode != ExoJet.OFF || overheated));
         if (self != null) {
             self.level = jetLevel;
             if (overheated && !self.hot && self.mode != ExoJet.OFF) sputter(mc.level, player, jetLevel, true);
