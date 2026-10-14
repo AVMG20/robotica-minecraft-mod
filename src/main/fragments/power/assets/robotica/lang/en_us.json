@@ -148,7 +148,7 @@
   "block.robotica.wireless_charger_mk2": "Wireless Charger Mk2",
   "block.robotica.wireless_charger_mk3": "Wireless Charger Mk3",
   "block.robotica.wireless_charger_mk4": "Wireless Charger Mk4",
-  "tooltip.robotica.wireless_charger": "Charges FE items of you and your team within %2$s blocks, %1$s FE/t each",
+  "tooltip.robotica.wireless_charger": "Charges FE items of every player within %2$s blocks, %1$s FE/t each",
   "tooltip.robotica.wireless_charger.details": "Worn armor first, then held items, then the inventory\nSpeed and range cards. Feed it by cable or Tesla Relay",
   "tooltip.robotica.wireless_charger_mk2.details": "Worn armor first, then held items, then the inventory\nSpeed and range cards. Feed it by cable or Tesla Relay",
   "tooltip.robotica.wireless_charger_mk3.details": "Worn armor first, then held items, then the inventory\nSpeed and range cards. Feed it by cable or Tesla Relay",
@@ -160,7 +160,6 @@
   "gui.robotica.wireless.empty": "No players in range",
   "gui.robotica.wireless.charging_one": "charging",
   "gui.robotica.wireless.full": "full",
-  "gui.robotica.wireless.denied": "not allowed",
   "gui.robotica.wireless.no_power": "no power",
   "gui.robotica.wireless.more": "%s more in range",
   "gui.robotica.wireless.slot": "Speed or range card",
@@ -174,6 +173,5 @@
   "robotica.configuration.wirelessRateMk4": "Mk4 FE/t per player",
   "robotica.configuration.wirelessRangeMk4": "Mk4 range (blocks)",
   "robotica.configuration.wirelessRangePerCard": "Range per range card",
-  "robotica.configuration.wirelessLoss": "Wireless loss (%)",
-  "robotica.configuration.wirelessChargeAnyone": "Charge every player"
+  "robotica.configuration.wirelessLoss": "Wireless loss (%)"
 }
