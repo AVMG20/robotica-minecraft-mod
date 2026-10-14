@@ -278,9 +278,8 @@
     "wireless_charger_mk3",
     "wireless_charger_mk4"
    ],
-   "what": "Charges the FE items of you and your team in range. Every FE it sends costs 10% extra from its buffer.",
+   "what": "Charges the FE items of you and your team in range.",
    "use": [
-    "Feed it FE by cable or a [[tesla_coil_1]] link.",
     "Place it against a ceiling or wall to point its mast down or sideways.",
     "Stand within range: faint violet motes show who it charges."
    ],
@@ -319,6 +318,13 @@
       "80,000 FE/t",
       "320,000 FE/t",
       "1,280,000 FE/t"
+     ],
+     [
+      "Loss",
+      "+10% FE",
+      "+10% FE",
+      "+10% FE",
+      "+10% FE"
      ]
     ]
    },

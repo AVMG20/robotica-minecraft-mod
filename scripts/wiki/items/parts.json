@@ -525,6 +525,7 @@
    ],
    "what": "Opens a bound Storage Terminal from far away, crafting grid included.",
    "use": [
+    "Sneak-right-click a Storage Terminal to bind it.",
     "While open, the terminal's chunk stays loaded for you.",
     "Closes after 60 s without a click."
    ],

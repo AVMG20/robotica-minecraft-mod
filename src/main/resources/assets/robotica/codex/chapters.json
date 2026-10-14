@@ -162,7 +162,7 @@
         },
         {
           "title": "Tesla Spire",
-          "text": "A column under open sky: Spire Base, conductor blocks, Spire Crown on top.\nBuild it high, and 64 blocks away from other spires.\nStorms bring lightning: strikes fill the storm charge, which runs the spire before any fuel burns.",
+          "text": "A column under open sky: Spire Base, conductor blocks, Spire Crown on top.\nBuild it high, and 64 blocks away from other spires.\nLightning strikes fill a storm charge, even in clear weather.",
           "items": [
             "robotica:spire_base",
             "robotica:spire_crown",

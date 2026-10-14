@@ -717,7 +717,7 @@
    "use": [
     "Right-click a block to deploy it. Sneak-right-click it to pick it up.",
     "Right-click it to open its cargo and settings.",
-    "Buddy key (default H): dig where you look. With sneak: all come back.",
+    "Buddy key (default H): dig where you look, or bridge open air with junk blocks from its cargo. With sneak: all come back.",
     "Backpack key (default B): open the cargo of your nearest bot.",
     "Heals above 80% charge."
    ],
