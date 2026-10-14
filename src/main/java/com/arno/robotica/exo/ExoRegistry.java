@@ -3,10 +3,12 @@ package com.arno.robotica.exo;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.exo.menu.ExoMenu;
+import com.mojang.serialization.Codec;
 import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ArmorItem;
@@ -20,7 +22,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.EnumMap;
 import java.util.List;
 
-/** Registries of the exo module: the core socket and cell slot components, armor materials and the module menu. */
+/** Registries of the exo module: the core socket, cell slot and hover components, armor materials and the module menu. */
 public final class ExoRegistry {
     private ExoRegistry() {}
 
@@ -38,6 +40,10 @@ public final class ExoRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> CELL =
             COMPONENTS.registerComponentType("exo_cell",
                     b -> b.persistent(ItemContainerContents.CODEC).networkSynchronized(ItemContainerContents.STREAM_CODEC));
+
+    /** Jet Assist III hover mode, switched with the Flight key; kept on the chestplate so it outlasts relogs and deaths. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> HOVER =
+            COMPONENTS.registerComponentType("exo_hover", b -> b.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
 
     /** Iron-tier protection (Mk1). Defense 2/5/6/2, no toughness. Layers: textures/models/armor/exo_mk1_layer_1/2.png. */
     public static final DeferredHolder<ArmorMaterial, ArmorMaterial> MK1 = MATERIALS.register("exo_mk1", () -> new ArmorMaterial(

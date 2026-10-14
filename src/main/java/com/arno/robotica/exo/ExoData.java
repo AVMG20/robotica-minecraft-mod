@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * The chestplate's core socket and cell slot, and the mark of an Exo armor piece. Modules use the shared framework
+ * The chestplate's core socket, cell slot and hover mode, and the mark of an Exo armor piece. Modules use the shared framework
  * ({@link com.arno.robotica.core.module.Modules}). Safe on both sides.
  */
 public final class ExoData {
@@ -54,6 +54,16 @@ public final class ExoData {
         if (!isCore(stack)) return Component.translatable("exo.robotica.refuse.not_core");
         if (!(piece.getItem() instanceof ExoArmorItem armor) || !armor.hasCoreSocket()) return Component.translatable("exo.robotica.refuse.no_socket");
         return null;
+    }
+
+    /** True when the Flight key switched Jet Assist III hover on for this chestplate. */
+    public static boolean hover(ItemStack piece) {
+        return Boolean.TRUE.equals(piece.get(ExoRegistry.HOVER.get()));
+    }
+
+    public static void setHover(ItemStack piece, boolean on) {
+        if (on) piece.set(ExoRegistry.HOVER.get(), true);
+        else piece.remove(ExoRegistry.HOVER.get());
     }
 
     /** The battery cell in a chestplate's cell slot, or EMPTY. */

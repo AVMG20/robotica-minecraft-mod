@@ -907,7 +907,7 @@ public class ExoGameTests {
         ticks(player, burn / 2);
         helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST, "holding jump in mid air thrusts");
         double half = ExoTicker.jetHeat(player);
-        helper.assertTrue(Math.abs(half - 0.5) < 0.05, "half the burn time is half the heat, got " + half);
+        helper.assertTrue(Math.abs(half - burn / 2) < 1.0E-6, "a tick of thrust is a tick of heat, got " + half);
         int used = start - energy(player, EquipmentSlot.CHEST);
         double expected = ExoConfig.jetThrustCost(1) * (burn / 2) / 20.0;
         helper.assertTrue(used >= expected * 0.9 && used <= expected * 1.1, "thrust costs about " + expected + " FE, used " + used);
@@ -1000,7 +1000,7 @@ public class ExoGameTests {
         ticks(player, 20);
         helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.HOVER, "hovering");
         double heat = ExoTicker.jetHeat(player);
-        double expected = 20 * ExoJet.heatPerTick(3, false, false) / 2;
+        double expected = 20 * ExoJet.heatPerTick(false, false) / 2;
         helper.assertTrue(Math.abs(heat - expected) < 1.0E-6, "hover heats at half rate, got " + heat);
         int used = start - energy(player, EquipmentSlot.CHEST);
         double cost = ExoConfig.jetThrustCost(3) / 2.0;
@@ -1030,6 +1030,118 @@ public class ExoGameTests {
         ticks(player, 1);
         player.setOnGround(false);
         helper.assertTrue(!chest.canElytraFly(player), "after landing the next jump goes to the pack again");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void jetHeatIsLevelFreeAndStaysWithThePlayer(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK3, 4_000_000, mod(ModuleKind.JET_ASSIST, 3)));
+        ticks(player, 1);
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 100);
+        helper.assertTrue(ExoTicker.jetHeat(player) == 100 && !ExoTicker.jetOverheated(player), "100 ticks of thrust: 100 heat, III is not full");
+        ExoTicker.jetWant(player, ExoJet.OFF);
+        ticks(player, 10);
+        helper.assertTrue(ExoTicker.jetHeat(player) == 90, "cools one per tick in the air, got " + ExoTicker.jetHeat(player));
+
+        // A Jet Assist I chestplate while hot: over its limit, so overheated, and it cools no faster.
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK1, 1_000_000, ModuleKind.JET_ASSIST));
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetOverheated(player), "a lower level put in while hot is overheated");
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 10);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF && ExoTicker.jetHeat(player) == 79,
+                "no thrust, same cooling as level III, got " + ExoTicker.jetHeat(player));
+
+        // Suit off and a fresh chestplate on, relog, dimension change, death and respawn: the heat stays.
+        player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+        ticks(player, 1);
+        helper.assertTrue(!ExoTicker.hasState(player), "the suit came off");
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK1, 1_000_000, ModuleKind.JET_ASSIST));
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetHeat(player) == 78 && ExoTicker.jetOverheated(player),
+                "another chestplate is just as hot, got " + ExoTicker.jetHeat(player));
+        ExoTicker.onLogout(player);
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetHeat(player) == 77 && ExoTicker.jetOverheated(player), "a relog keeps the heat");
+        ExoTicker.onChangedDimension(player);
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetHeat(player) == 76 && ExoTicker.jetOverheated(player), "a dimension change keeps the heat");
+        ExoTicker.onDeath(player);
+        ExoTicker.onRespawn(player);
+        ticks(player, 1);
+        helper.assertTrue(ExoTicker.jetHeat(player) == 75 && ExoTicker.jetOverheated(player), "a respawn keeps the heat");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void jetIgnoresCreativeFlight(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setGameMode(GameType.CREATIVE);
+        int start = 1_000_000;
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, start, ModuleKind.JET_ASSIST, ModuleKind.GLIDER));
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        ticks(player, 1);
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 20);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF && ExoTicker.jetHeat(player) == 0, "no thrust in creative");
+        helper.assertTrue(energy(player, EquipmentSlot.CHEST) == start, "no FE spent in creative");
+        helper.assertTrue(!ExoTicker.doubleJump(player), "no air jumps in creative");
+        helper.assertTrue(chest.canElytraFly(player), "the Glider opens as usual in creative");
+
+        // A Flight module's flight is not creative flight: the pack works next to it.
+        player.setGameMode(GameType.SURVIVAL);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK3, start, ModuleKind.FLIGHT, ModuleKind.JET_ASSIST));
+        ticks(player, 1);
+        helper.assertTrue(player.getAbilities().mayfly, "the suit grants flight");
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 2);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST, "thrust works with a Flight module's mayfly");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void jumpWhileGlidingFiresTheJet(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK2, 1_000_000, ModuleKind.JET_ASSIST, ModuleKind.GLIDER));
+        ticks(player, 1);
+        player.startFallFlying();
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        helper.assertTrue(!player.isFallFlying(), "a thrust request ends the glide");
+        ticks(player, 2);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST, "and the pack fires");
+
+        ExoTicker.jetWant(player, ExoJet.OFF);
+        player.startFallFlying();
+        ItemEnergy.set(player.getItemBySlot(EquipmentSlot.CHEST), 0);
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        helper.assertTrue(player.isFallFlying(), "a pack that cannot fire leaves the glide alone");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void flightKeyCyclesFlightHoverOff(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, pieceM(ExoItems.CHESTPLATE_MK3, 4_000_000, mod(ModuleKind.FLIGHT), mod(ModuleKind.JET_ASSIST, 3)));
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        int flight = Modules.slotOf(chest, ModuleKind.FLIGHT);
+        ticks(player, 1);
+        helper.assertTrue(Modules.enabled(chest, flight) && !ExoData.hover(chest), "starts with Flight on");
+        helper.assertTrue(ExoActions.toggleFlight(player) && !Modules.enabled(chest, flight) && ExoData.hover(chest), "Flight to hover");
+        helper.assertTrue(ExoActions.toggleFlight(player) && !Modules.enabled(chest, flight) && !ExoData.hover(chest), "hover to off");
+        helper.assertTrue(ExoActions.toggleFlight(player) && Modules.enabled(chest, flight) && !ExoData.hover(chest), "off to Flight");
+        helper.assertTrue(ExoActions.toggleFlight(player) && ExoData.hover(chest), "Flight to hover again");
+
+        // Hover mode stays with the chestplate through a relog and taking it off.
+        ExoTicker.onLogout(player);
+        player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+        ticks(player, 1);
+        player.setItemSlot(EquipmentSlot.CHEST, chest);
+        ticks(player, 1);
+        ExoTicker.jetWant(player, ExoJet.HOVER);
+        ticks(player, 2);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.HOVER, "hover mode is kept");
         helper.succeed();
     }
 

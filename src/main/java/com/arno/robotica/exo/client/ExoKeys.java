@@ -16,9 +16,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Keybinds: J opens the module screen of the worn suit, K toggles Flight (or Jet Assist III hover), R dashes (Dash
- * Thrusters), N pings (Sonar Pulse), O overclocks (Servo Core set bonus). None of them clash with vanilla defaults or
- * Robotica's V, B, G (tools) and H (drones). Jump in mid air is the Jet Assist ({@link ExoJetpack}).
+ * Keybinds: J opens the module screen of the worn suit, K toggles Flight or Jet Assist III hover (with both it cycles
+ * Flight, hover, off), R dashes (Dash Thrusters), N pings (Sonar Pulse), O overclocks (Servo Core set bonus). None of
+ * them clash with vanilla defaults or Robotica's V, B, G (tools) and H (drones). Jump is the Jet Assist
+ * ({@link ExoJetpack}).
  */
 final class ExoKeys {
     private ExoKeys() {}

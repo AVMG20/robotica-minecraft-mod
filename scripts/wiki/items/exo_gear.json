@@ -394,7 +394,7 @@
     "jet_assist_module_2",
     "jet_assist_module_3"
    ],
-   "what": "In mid air: tap jump for extra jumps, hold it to fly up until it overheats. III hovers.",
+   "what": "Hold jump to fly up until it overheats; tap it in mid air for extra jumps. III hovers; with a Flight module, the Flight key cycles Flight, hover, off.",
    "stats": {
     "rows": [
      [
@@ -535,7 +535,7 @@
    "items": [
     "glider_module"
    ],
-   "what": "Elytra gliding: press jump in mid air. Firework rockets boost it. With a Jet Assist, it opens once thrust stops while you fall.",
+   "what": "Elytra gliding: press jump in mid air. Firework rockets boost it. With a Jet Assist, it opens a moment after thrust stops in a fall, and jump fires the pack again.",
    "stats": {
     "rows": [
      [

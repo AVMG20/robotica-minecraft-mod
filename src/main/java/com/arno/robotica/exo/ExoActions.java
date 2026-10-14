@@ -52,8 +52,8 @@ public final class ExoActions {
     }
 
     /**
-     * Flips the Flight module of the worn chestplate. Without one, Jet Assist III switches hover mode instead. Returns
-     * false when there is neither.
+     * The Flight key. Flips the Flight module of the worn chestplate; without one, Jet Assist III switches hover mode
+     * instead; with both it cycles Flight, hover, off. Returns false when there is neither.
      */
     public static boolean toggleFlight(ServerPlayer player) {
         ItemStack chest = ExoSuit.piece(player, EquipmentSlot.CHEST);
@@ -63,10 +63,21 @@ public final class ExoActions {
             player.displayClientMessage(Component.translatable("exo.robotica.no_flight"), true);
             return false;
         }
-        boolean on = !Modules.enabled(chest, slot);
+        boolean flight = Modules.enabled(chest, slot);
+        if (ExoTicker.hoverAvailable(player)) {
+            if (flight) {
+                Modules.setEnabled(chest, slot, false);
+                return ExoTicker.setHover(player, true, true);
+            }
+            if (ExoData.hover(chest)) return ExoTicker.setHover(player, false, true);
+        }
+        setFlight(player, chest, slot, !flight);
+        return true;
+    }
+
+    private static void setFlight(ServerPlayer player, ItemStack chest, int slot, boolean on) {
         Modules.setEnabled(chest, slot, on);
         player.displayClientMessage(Component.translatable("exo.robotica.flight", Component.translatable(on ? "exo.robotica.on" : "exo.robotica.off")), true);
         ExoTicker.notifySound(player, CoreSounds.TOOL_MODE.get(), 0.6F, on ? 1.3F : 0.8F);
-        return true;
     }
 }

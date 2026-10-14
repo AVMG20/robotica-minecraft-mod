@@ -9,6 +9,7 @@ import com.arno.robotica.exo.ExoJet;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.net.ExoActionPayload;
 import com.arno.robotica.exo.net.ExoFxPayload;
+import com.arno.robotica.exo.net.ExoJetHeatPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -31,12 +32,14 @@ import java.util.List;
 /**
  * Client side of the Jet Assist. For the local player it reads the jump key, does the air jumps, and predicts thrust,
  * hover and heat under the server's rules ({@link ExoJet}); the server confirms or corrects with Jet Assist kinds of
- * {@link ExoFxPayload} (handed over by {@link ExoFx}). For every firing pack in view (the local one and the ones the
- * server reports) it draws the nozzle flames and smoke, runs the thruster loop and gives the pod layer its glow.
+ * {@link ExoFxPayload} (handed over by {@link ExoFx}) and sends the heat on a new player object
+ * ({@link ExoJetHeatPayload}). For every firing pack in view (the local one and the ones the server reports) it draws
+ * the nozzle flames and smoke, runs the thruster loop and gives the pod layer its glow.
  *
- * <p>Input: a jump press in mid air gives an air jump while any are left; holding it (or a press with none left)
- * thrusts upward. The ground jump never starts thrust, so holding jump on the ground jumps as usual. With a Glider in
- * the chestplate, the Glider opens by itself once thrust has stopped and the player falls.
+ * <p>Input: holding jump on the ground jumps as usual, and thrust takes over once it has been held
+ * {@link ExoJet#HOLD_TICKS}. A jump press in mid air gives an air jump while any are left; holding it (or a press with
+ * none left) thrusts upward. With a Glider in the chestplate, a press while gliding ends the glide and thrusts, and
+ * the Glider opens by itself a moment after thrust stopped in a fall. Creative and spectator players get none of it.
  */
 final class ExoJetpack {
     private ExoJetpack() {}
@@ -54,18 +57,29 @@ final class ExoJetpack {
     // ---- local prediction
     private static Player owner;
     private static boolean jumpWasDown;
+    /** At the end of the last tick: standing on a block, grounded, flying (what this tick's vanilla jump started from). */
+    private static boolean wasStanding, wasGrounded, wasFlying;
     private static int airJumps;
     private static int lastAirJump = -100;
-    /** The current jump press started in mid air, so holding it may thrust. */
+    /** The jump held now may thrust (it started in mid air, on the ground, or ended a glide). */
     private static boolean armed;
     private static boolean pressJumped;
     private static int pressTick;
     private static int mode = ExoJet.OFF;
     private static int jetLevel = 1;
+    /** Heat in ticks of thrust, like the server's. */
     private static double heat;
     private static boolean overheated, hoverMode;
-    /** Thrust or hover stopped in mid air since the player last stood (the Glider may open). */
+    /** The pack could fire now: a jump press goes to it, not to the Glider. */
+    private static boolean ready;
+    /** Thrust or hover stopped in mid air since the player last stood (the Glider may open), and when. */
     private static boolean thrustedAir;
+    private static int offTick = -100;
+    /** When flying (Flight module, vanilla) last ended: hover mode catches the player for a moment after. */
+    private static int flightEndTick = -100;
+    private static final int HOVER_CATCH = 10;
+    /** True while this class opens the Glider itself (the gate lets that through). */
+    private static boolean opening;
     private static int coldTicks;
     private static int lastGliderTry = -100;
     private static double vy;
@@ -87,9 +101,9 @@ final class ExoJetpack {
         }
     }
 
-    /** Local heat for the HUD, 0 to 1. */
+    /** Local heat for the HUD, 0 to 1 of the fitted level's limit. */
     static double heat() {
-        return heat;
+        return Math.min(1.0, heat / ExoJet.maxHeat(jetLevel));
     }
 
     static boolean overheated() {
@@ -106,14 +120,20 @@ final class ExoJetpack {
 
     private static void reset() {
         jumpWasDown = false;
+        wasStanding = false;
+        wasGrounded = false;
+        wasFlying = false;
         airJumps = 0;
         lastAirJump = -100;
         lastGliderTry = -100;
+        offTick = -100;
+        flightEndTick = -100;
         armed = false;
         mode = ExoJet.OFF;
         heat = 0;
         overheated = false;
         hoverMode = false;
+        ready = false;
         thrustedAir = false;
         coldTicks = 0;
         for (Jet jet : JETS) {
@@ -123,12 +143,12 @@ final class ExoJetpack {
     }
 
     /**
-     * {@link ExoJet#gliderMayOpen} on the client: for the local player the Glider waits until thrust stopped in this
-     * fall and the player sinks again (a press while still rising fires the pack once more), or the pack is overheated.
+     * {@link ExoJet#gliderMayOpen} on the client: for the local player a jump press goes to the pack while it can fire,
+     * so the Glider only opens by itself ({@link #glider}) or while the pack is overheated or out of energy.
      */
     static boolean gliderMayOpen(Player player) {
         if (player != owner) return true;
-        return overheated || (mode == ExoJet.OFF && thrustedAir && player.getDeltaMovement().y < 0);
+        return opening || !ready;
     }
 
     // ---------------------------------------------------------------- local player
@@ -139,42 +159,62 @@ final class ExoJetpack {
             reset();
             owner = player;
         }
+        if (ExoJetHeatPayload.take()) {
+            heat = ExoJetHeatPayload.heatValue();
+            overheated = ExoJetHeatPayload.overheatedValue();
+            coldTicks = 0;
+        }
         // A paused singleplayer server neither heats nor cools the pack.
         if (mc.isPaused()) return;
+        int now = player.tickCount;
         boolean jumpDown = mc.screen == null && mc.options.keyJump.isDown();
         boolean press = jumpDown && !jumpWasDown;
         jumpWasDown = jumpDown;
+        if (now < lastAirJump) lastAirJump = -100;
+        if (now < lastGliderTry) lastGliderTry = -100;
+        if (now < offTick) offTick = -100;
+        if (now < flightEndTick) flightEndTick = -100;
+        if (wasFlying && !player.getAbilities().flying) flightEndTick = now;
+
+        ExoSuit.Active active = worn ? ExoSuit.active(player) : null;
+        int level = active == null ? 0 : active.level(ModuleKind.JET_ASSIST);
+        if (level > 0) jetLevel = level;
+        hoverMode = level >= ExoJet.HOVER_LEVEL && ExoData.hover(ExoSuit.piece(player, EquipmentSlot.CHEST));
+        boolean usable = level > 0 && !ExoJet.creative(player);
+        ready = usable && !overheated && ExoJet.canPay(player, active, false);
+
+        // Gliding: a press with a ready pack ends the glide and thrusts. The thrust request ends it on the server too.
+        boolean unglide = press && ready && player.isFallFlying();
+        if (unglide) player.stopFallFlying();
+
         boolean grounded = ExoJet.grounded(player);
+        boolean standing = ExoJet.standing(player);
         // On a ladder or scaffolding a press climbs: it neither spends an air jump nor starts thrust.
         boolean climbing = player.onClimbable();
         if (grounded || climbing) {
             airJumps = 0;
             thrustedAir = false;
         }
-        if (player.tickCount < lastAirJump) lastAirJump = -100;
-        if (player.tickCount < lastGliderTry) lastGliderTry = -100;
 
-        ExoSuit.Active active = worn ? ExoSuit.active(player) : null;
-        int level = active == null ? 0 : active.level(ModuleKind.JET_ASSIST);
-        if (level > 0) jetLevel = level;
-        if (level < ExoJet.HOVER_LEVEL) hoverMode = false;
-        if (!worn) {
-            // The server forgets the pack when the suit comes off.
-            heat = 0;
-            overheated = false;
-        }
-        boolean usable = level > 0 && !player.isSpectator();
-
-        if (!jumpDown || grounded) armed = false;
-        if (press && !grounded && !climbing && usable) {
+        if (!jumpDown || (grounded && !standing)) armed = false;
+        if (unglide) {
             armed = true;
-            pressTick = player.tickCount;
+            pressTick = now;
+            pressJumped = false;
+        } else if (usable && jumpDown && !climbing && (standing || (press && wasStanding))) {
+            // Jump held on the ground: vanilla jumps, thrust takes over once it has been held a moment in the air.
+            armed = true;
+            pressTick = now;
+            pressJumped = true;
+        } else if (press && usable && !grounded && !wasGrounded && !climbing) {
+            armed = true;
+            pressTick = now;
             pressJumped = false;
             // Predicted only under the server's own rules: count, spacing and the energy the jump costs.
-            if (mode != ExoJet.HOVER && airJumps < ExoConfig.airJumps(level) && player.tickCount - lastAirJump >= ExoSuit.AIR_JUMP_GAP
+            if (mode != ExoJet.HOVER && airJumps < ExoConfig.airJumps(level) && now - lastAirJump >= ExoSuit.AIR_JUMP_GAP
                     && ExoSuit.canPayAirJump(player, active)) {
                 airJumps++;
-                lastAirJump = player.tickCount;
+                lastAirJump = now;
                 pressJumped = true;
                 send(ExoActions.DOUBLE_JUMP);
                 Vec3 v = player.getDeltaMovement();
@@ -184,20 +224,25 @@ final class ExoJetpack {
 
         int want = ExoJet.OFF;
         if (usable && !grounded && !overheated) {
-            if (armed && player.tickCount - pressTick >= (pressJumped ? ExoJet.HOLD_TICKS : 0)) want = ExoJet.THRUST;
-            else if (mode != ExoJet.OFF && !jumpDown && hoverMode && level >= ExoJet.HOVER_LEVEL) want = ExoJet.HOVER;
+            // Flight switched to hover in mid air (the Flight key cycle) hovers at once.
+            boolean caught = now - flightEndTick <= HOVER_CATCH;
+            if (armed && now - pressTick >= (pressJumped ? ExoJet.HOLD_TICKS : 0)) want = ExoJet.THRUST;
+            else if ((mode != ExoJet.OFF || caught) && !jumpDown && hoverMode) want = ExoJet.HOVER;
             if (want != ExoJet.OFF && !ExoJet.canPay(player, active, want == ExoJet.HOVER)) want = ExoJet.OFF;
         }
 
         if (want != ExoJet.OFF) {
-            heat = Math.min(1.0, heat + ExoJet.heatPerTick(level, ExoSuit.setBonus(player) == ExoData.Core.MAGMA, want == ExoJet.HOVER));
-            if (heat >= 1.0) {
-                overheated = true;
+            heat = Math.min(ExoJet.maxHeat(level), heat + ExoJet.heatPerTick(ExoSuit.setBonus(player) == ExoData.Core.MAGMA, want == ExoJet.HOVER));
+        } else if (heat > 0) {
+            // Unworn, the server keeps the heat and cools it at the rate off the ground.
+            heat = Math.max(0.0, heat - ExoJet.coolPerTick(worn && ExoJet.cooling(player)));
+        }
+        if (level > 0 && heat >= ExoJet.maxHeat(level)) {
+            overheated = true;
+            if (want != ExoJet.OFF) {
                 armed = false;
                 want = ExoJet.OFF;
             }
-        } else if (heat > 0) {
-            heat = Math.max(0.0, heat - ExoJet.coolPerTick(jetLevel, ExoJet.cooling(player)));
         }
         // The server's READY ends an overheat; a second of zero heat without it ends it too.
         coldTicks = overheated && heat <= 0 ? coldTicks + 1 : 0;
@@ -206,7 +251,10 @@ final class ExoJetpack {
         if (want != mode) {
             send(want == ExoJet.THRUST ? ExoActions.JET_THRUST : want == ExoJet.HOVER ? ExoActions.JET_HOVER : ExoActions.JET_STOP);
             if (mode == ExoJet.OFF) vy = player.getDeltaMovement().y;
-            if (want == ExoJet.OFF && !grounded) thrustedAir = true;
+            if (want == ExoJet.OFF && !grounded) {
+                thrustedAir = true;
+                offTick = now;
+            }
             mode = want;
         }
         if (mode != ExoJet.OFF) {
@@ -216,7 +264,10 @@ final class ExoJetpack {
             player.setDeltaMovement(v.x, vy, v.z);
             player.resetFallDistance();
         }
-        glider(player, grounded);
+        glider(player, grounded, now);
+        wasStanding = ExoJet.standing(player);
+        wasGrounded = ExoJet.grounded(player);
+        wasFlying = player.getAbilities().flying;
 
         Jet self = jet(player.getId(), worn && (mode != ExoJet.OFF || overheated));
         if (self != null) {
@@ -229,15 +280,23 @@ final class ExoJetpack {
     }
 
     /**
-     * Glider combo: once thrust stopped in mid air and the player sinks, the Glider opens by itself, the same way a jump
-     * press opens it (vanilla {@code LocalPlayer.aiStep}); the server checks it again.
+     * Glider combo: once thrust stopped in mid air and the player falls (for {@link ExoJet#GLIDER_DELAY} ticks, or fast),
+     * the Glider opens by itself, the same way a jump press opens it (vanilla {@code LocalPlayer.aiStep}); the server
+     * checks it again. Short gaps between bursts stay jetpack.
      */
-    private static void glider(LocalPlayer player, boolean grounded) {
-        if (grounded || mode != ExoJet.OFF || !thrustedAir || player.getDeltaMovement().y >= 0) return;
-        if (player.tickCount - lastGliderTry < GLIDER_RETRY || ExoSuit.pieceLevel(player, EquipmentSlot.CHEST, ModuleKind.GLIDER) <= 0) return;
-        lastGliderTry = player.tickCount;
-        if (player.tryToStartFallFlying()) {
-            player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
+    private static void glider(LocalPlayer player, boolean grounded, int now) {
+        if (grounded || mode != ExoJet.OFF || !thrustedAir) return;
+        double dy = player.getDeltaMovement().y;
+        if (!(dy < ExoJet.GLIDER_SINK || (dy < 0 && now - offTick >= ExoJet.GLIDER_DELAY))) return;
+        if (now - lastGliderTry < GLIDER_RETRY || ExoSuit.pieceLevel(player, EquipmentSlot.CHEST, ModuleKind.GLIDER) <= 0) return;
+        lastGliderTry = now;
+        opening = true;
+        try {
+            if (player.tryToStartFallFlying()) {
+                player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
+            }
+        } finally {
+            opening = false;
         }
     }
 
@@ -254,11 +313,14 @@ final class ExoJetpack {
                 case ExoFxPayload.JET_OVERHEAT, ExoFxPayload.JET_EMPTY, ExoFxPayload.JET_REFUSED -> {
                     mode = ExoJet.OFF;
                     armed = false;
-                    if (firing && !ExoJet.grounded(player)) thrustedAir = true;
+                    if (firing && !ExoJet.grounded(player)) {
+                        thrustedAir = true;
+                        offTick = player.tickCount;
+                    }
                     boolean wasHot = overheated;
                     if (kind == ExoFxPayload.JET_OVERHEAT) {
                         overheated = true;
-                        heat = 1.0;
+                        heat = Math.max(heat, ExoJet.maxHeat(jetLevel));
                     }
                     if (firing && particles && kind != ExoFxPayload.JET_REFUSED && !wasHot) {
                         sputter(level, player, jetLevel, kind == ExoFxPayload.JET_OVERHEAT);
@@ -268,9 +330,8 @@ final class ExoJetpack {
                     heat = 0;
                     overheated = false;
                 }
-                case ExoFxPayload.HOVER_ON -> hoverMode = true;
+                // Hover mode itself comes with the chestplate; a switch-off ends a predicted hover.
                 case ExoFxPayload.HOVER_OFF -> {
-                    hoverMode = false;
                     if (mode == ExoJet.HOVER) mode = ExoJet.OFF;
                 }
                 default -> {
