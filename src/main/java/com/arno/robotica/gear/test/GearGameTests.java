@@ -283,9 +283,11 @@ public class GearGameTests {
         helper.assertTrue(tool.activeMode(drill, player) == AreaMode.AREA_5, "charged tool uses its mode");
         player.setShiftKeyDown(true);
         helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "sneaking mines 1x1 by default");
-        ToolSettings.set(drill, ToggleKind.SNEAK_VEIN, true);
-        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.VEIN, "sneak vein mine makes sneaking vein mine");
-        ToolSettings.set(drill, ToggleKind.SNEAK_VEIN, false);
+        drill.set(GearComponents.SNEAK_MODE.get(), AreaMode.AREA_3);
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.AREA_3, "sneaking uses the sneak mode");
+        drill.set(GearComponents.SNEAK_MODE.get(), AreaMode.CUBE_12);
+        helper.assertTrue(tool.activeMode(drill, player) == AreaMode.SINGLE, "a sneak mode the tool does not have falls back to 1x1");
+        drill.remove(GearComponents.SNEAK_MODE.get());
         player.setShiftKeyDown(false);
         drill.set(GearComponents.MODE.get(), AreaMode.CUBE_12);
         helper.assertTrue(tool.mode(drill) == AreaMode.AREA_3, "a mode the tool does not have falls back to the default mode");
@@ -342,7 +344,7 @@ public class GearGameTests {
     }
 
     @GameTest(template = "empty")
-    public static void sneakVeinMineSettingVeinMinesWhileSneaking(GameTestHelper helper) {
+    public static void sneakModeVeinMinesWhileSneaking(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos base = helper.absolutePos(new BlockPos(1, 1, 1));
         ServerPlayer player = survivalPlayer(helper, base);
@@ -353,8 +355,9 @@ public class GearGameTests {
         ItemStack drill = new ItemStack(GearItems.SERVO_DRILL.get());
         ItemEnergy.fill(drill);
         player.setItemInHand(InteractionHand.MAIN_HAND, drill);
-        GearActions.apply(player, GearActions.TOGGLE, ToggleKind.SNEAK_VEIN.ordinal());
-        helper.assertTrue(ToolSettings.has(player.getMainHandItem(), ToggleKind.SNEAK_VEIN), "sneak vein mine (off by default) toggles on");
+        GearActions.apply(player, GearActions.CYCLE_SNEAK_MODE, -1);
+        helper.assertTrue(((GearToolItem) drill.getItem()).sneakMode(player.getMainHandItem()) == AreaMode.VEIN,
+                "sneak mode starts at 1x1 and cycles back to vein");
         player.setShiftKeyDown(true);
         helper.assertTrue(player.gameMode.destroyBlock(base), "origin ore should break");
         for (int i = 1; i < 4; i++) helper.assertTrue(level.getBlockState(base.offset(i, 0, 0)).isAir(), "vein block " + i + " should be mined");

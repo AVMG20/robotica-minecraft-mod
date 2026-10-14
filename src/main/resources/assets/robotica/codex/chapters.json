@@ -389,7 +389,7 @@
       "pages": [
         {
           "title": "Drills",
-          "text": "Hold sneak to mine a single block. On the Servo Drill and up, Sneak vein mine in the tool settings makes sneak vein mine ores instead.\nOn a wall, the area starts one row below the block you aim at: aim at eye level to keep the floor, at your feet to dig one lower.\nSmithing a tool up keeps its energy, settings and modules.",
+          "text": "Hold sneak to mine a single block, or pick another Sneak mode in the tool settings.\nOn a wall, the area starts one row below the block you aim at: aim at eye level to keep the floor, at your feet to dig one lower.\nSmithing a tool up keeps its energy, settings and modules.",
           "items": [
             "robotica:tinkers_hammer",
             "robotica:bore_drill",

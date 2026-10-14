@@ -7,9 +7,7 @@ import net.minecraft.network.chat.Component;
  * to be installed (Auto-Pickup, Void Filter, Fortune...) is a module ({@link com.arno.robotica.core.module.ModuleKind}).
  */
 public enum ToggleKind {
-    AUTO_SMELT("auto_smelt", 2),
-    /** Sneaking vein mines ores instead of mining one block (tools with a vein mode). */
-    SNEAK_VEIN("sneak_vein", 4);
+    AUTO_SMELT("auto_smelt", 2);
 
     public final String id;
     public final int bit;

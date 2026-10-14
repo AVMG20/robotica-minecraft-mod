@@ -77,7 +77,7 @@ public final class GearItems {
             ToolSpec.builder(Tiers.DIAMOND, 10.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.VEIN).defaultMode(AreaMode.AREA_3).areaSpeed(0.7F)
                     .energy(GearConfig::servoDrillCapacity, () -> GearConfig.fe(GearConfig.SERVO_DRILL_COST, 50))
-                    .toggles(ToggleKind.SNEAK_VEIN).age(2).build(),
+                    .age(2).build(),
             p -> p.rarity(Rarity.UNCOMMON), 3.5F, -2.8F, GearEnergyToolItem::new);
 
     // Age 3
@@ -85,7 +85,7 @@ public final class GearItems {
             ToolSpec.builder(Tiers.DIAMOND, 12.0F).tags(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_SHOVEL)
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9, AreaMode.VEIN).defaultMode(AreaMode.AREA_3).areaSpeed(0.85F)
                     .energy(GearConfig::magmaDrillCapacity, () -> GearConfig.fe(GearConfig.MAGMA_DRILL_COST, 60))
-                    .toggles(ToggleKind.AUTO_SMELT, ToggleKind.SNEAK_VEIN).age(3).build(),
+                    .toggles(ToggleKind.AUTO_SMELT).age(3).build(),
             p -> p.rarity(Rarity.RARE).fireResistant(), 4.0F, -2.8F, GearEnergyToolItem::new);
 
     // Age 4
@@ -94,7 +94,7 @@ public final class GearItems {
                     .modes(AreaMode.SINGLE, AreaMode.AREA_3, AreaMode.AREA_5, AreaMode.CUBE_3, AreaMode.AREA_9,
                             AreaMode.CUBE_5, AreaMode.AREA_12, AreaMode.CUBE_12, AreaMode.VEIN).defaultMode(AreaMode.AREA_3)
                     .energy(GearConfig::nullDrillCapacity, () -> GearConfig.fe(GearConfig.NULL_DRILL_COST, 80))
-                    .toggles(ToggleKind.AUTO_SMELT, ToggleKind.SNEAK_VEIN).age(4).build(),
+                    .toggles(ToggleKind.AUTO_SMELT).age(4).build(),
             p -> p.rarity(Rarity.EPIC).fireResistant(), 5.0F, -2.8F, GearEnergyToolItem::new);
 
     // Weapons

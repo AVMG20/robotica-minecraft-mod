@@ -95,7 +95,7 @@ final class GearHud {
         return line;
     }
 
-    /** "1x1 [3x3] 5x5  [V]": the active mode between its neighbours, then the key. Sneaking or empty shows the mode that applies (1x1, or vein with Sneak vein mine). */
+    /** "1x1 [3x3] 5x5  [V]": the active mode between its neighbours, then the key. Sneaking or empty shows the mode that applies (sneak mode or 1x1). */
     private static Component modeLine(GearToolItem tool, ItemStack stack, Minecraft mc) {
         AreaMode active = tool.activeMode(stack, mc.player);
         AreaMode selected = tool.mode(stack);

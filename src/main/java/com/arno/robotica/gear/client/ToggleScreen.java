@@ -100,6 +100,10 @@ public class ToggleScreen extends Screen {
             actions.add(() -> GearKeys.send(GearActions.CYCLE_MODE, hasShiftDown() ? -1 : 1));
             hints.add(Component.translatable("gear.robotica.screen.mode.desc"));
             enabled.add(() -> true);
+            labels.add(() -> Component.translatable("gear.robotica.screen.sneak_mode", tool.sneakMode(held()).displayName()));
+            actions.add(() -> GearKeys.send(GearActions.CYCLE_SNEAK_MODE, hasShiftDown() ? -1 : 1));
+            hints.add(Component.translatable("gear.robotica.screen.sneak_mode.desc"));
+            enabled.add(() -> true);
         }
         for (ToggleKind kind : ToggleKind.values()) {
             if (!tool.spec.toggles.contains(kind)) continue;

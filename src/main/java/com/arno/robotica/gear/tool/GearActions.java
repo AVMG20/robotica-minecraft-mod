@@ -21,6 +21,8 @@ public final class GearActions {
     public static final int MODULE_TOGGLE = 3;
     /** Left-click with the Rivet Gun in the main hand. */
     public static final int FIRE = 4;
+    /** Next (arg >= 0) or previous sneak mode of the held tool. */
+    public static final int CYCLE_SNEAK_MODE = 5;
 
     public static void apply(ServerPlayer player, int action, int arg) {
         ItemStack stack = player.getMainHandItem();
@@ -35,6 +37,7 @@ public final class GearActions {
         if (!(stack.getItem() instanceof GearToolItem tool)) return;
         switch (action) {
             case CYCLE_MODE -> cycleMode(player, stack, tool, arg);
+            case CYCLE_SNEAK_MODE -> cycleSneakMode(player, stack, tool, arg);
             case CYCLE_DROPS -> cycleDrops(player, stack);
             case TOGGLE -> toggle(player, stack, tool, arg);
             default -> {
@@ -55,6 +58,17 @@ public final class GearActions {
         stack.set(com.arno.robotica.gear.GearComponents.MODE.get(), next);
         GearSounds.modeSwitch(player, next);
         player.displayClientMessage(tool.modeStrip(next), true);
+    }
+
+    public static void cycleSneakMode(ServerPlayer player, ItemStack stack, GearToolItem tool, int direction) {
+        int n = tool.spec.modes.size();
+        if (n <= 1) return;
+        int index = tool.spec.modes.indexOf(tool.sneakMode(stack));
+        AreaMode next = tool.spec.modes.get(Math.floorMod(index + (direction >= 0 ? 1 : -1), n));
+        if (next == AreaMode.SINGLE) stack.remove(com.arno.robotica.gear.GearComponents.SNEAK_MODE.get());
+        else stack.set(com.arno.robotica.gear.GearComponents.SNEAK_MODE.get(), next);
+        click(player, next == AreaMode.SINGLE ? 0.85F : 1.2F);
+        player.displayClientMessage(Component.translatable("gear.robotica.screen.sneak_mode", next.displayName()), true);
     }
 
     /** Off, Fortune, Silk Touch, off... over the drop modules the tool has. */
