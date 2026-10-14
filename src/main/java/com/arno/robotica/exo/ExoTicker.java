@@ -528,11 +528,14 @@ public final class ExoTicker {
         }
     }
 
-    /** A Jet Assist effect for the wearer ({@code self}) and players near them ({@code others}); see {@link ExoFxPayload}. */
+    /**
+     * A Jet Assist state change for the wearer ({@code self}) and the other players in the level ({@code others}); see
+     * {@link ExoFxPayload}. Not range-limited: a watcher who saw the pack start must also see it stop.
+     */
     private static void jetFx(ServerPlayer p, byte kind, boolean others, boolean self) {
         ExoFxPayload msg = null;
         for (ServerPlayer o : p.serverLevel().players()) {
-            if (o == p ? !self : !others || o.distanceToSqr(p) > FX_RANGE * FX_RANGE) continue;
+            if (o == p ? !self : !others) continue;
             if (!canReceive(o)) continue;
             if (msg == null) msg = new ExoFxPayload(p.getId(), kind);
             PacketDistributor.sendToPlayer(o, msg);
@@ -617,11 +620,15 @@ public final class ExoTicker {
     /** Players further away than this do not get Exo-Frame effects (they can hardly see them). */
     private static final double FX_RANGE = 96;
 
-    /** An effect for the wearer and every player near them; each client draws it (ExoFx). Rare, so a plain loop. */
+    /**
+     * An effect for the wearer and every player near them; each client draws it (ExoFx). Flight state changes go to the
+     * whole level, so a watcher never misses the end of a flight. Rare, so a plain loop.
+     */
     private static void fx(ServerPlayer p, byte kind) {
+        boolean state = kind == ExoFxPayload.FLIGHT_ON || kind == ExoFxPayload.FLIGHT_OFF || kind == ExoFxPayload.LANDED;
         ExoFxPayload msg = null;
         for (ServerPlayer o : p.serverLevel().players()) {
-            if (o.distanceToSqr(p) > FX_RANGE * FX_RANGE || !canReceive(o)) continue;
+            if (!state && o.distanceToSqr(p) > FX_RANGE * FX_RANGE || !canReceive(o)) continue;
             if (msg == null) msg = new ExoFxPayload(p.getId(), kind);
             PacketDistributor.sendToPlayer(o, msg);
         }
