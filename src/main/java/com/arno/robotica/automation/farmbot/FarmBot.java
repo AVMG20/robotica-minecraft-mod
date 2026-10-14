@@ -804,7 +804,9 @@ public abstract class FarmBot extends PathfinderMob {
             blocked(sl, t);
             return Status.WORKING;
         }
-        if (jobTicks == 1 || jobTicks - lastPathTick >= 20 || (navigation.isDone() && jobTicks - lastPathTick >= 10)) {
+        // In the air (just placed or teleported) no path can be made yet: wait to land instead of calling the job blocked.
+        boolean canPath = onGround() || isInLiquid() || isPassenger();
+        if (canPath && (jobTicks == 1 || jobTicks - lastPathTick >= 20 || (navigation.isDone() && jobTicks - lastPathTick >= 10))) {
             lastPathTick = jobTicks;
             Path path = navigation.createPath(t, pathAccuracy());
             if (path == null) {
