@@ -27,6 +27,16 @@ public final class SparkLamps {
     }
 
     /**
+     * Where a lamp goes when a player clicks face {@code face} of {@code clicked}: the clicked block itself when it is
+     * replaceable (like grass), else the block in front of the face.
+     */
+    public static BlockPos spotOn(ServerLevel level, BlockPos clicked, Direction face) {
+        BlockState state = level.getBlockState(clicked);
+        return state.canBeReplaced() && !state.is(GearBlocks.SPARK_LAMP.get()) && state.getFluidState().isEmpty()
+                && !state.isAir() ? clicked : clicked.relative(face);
+    }
+
+    /**
      * Places a lamp facing {@code facing} at {@code spot} after {@link #canPlace}, fires the place event (undone when a
      * claim mod cancels it). Returns true when the lamp stays.
      */

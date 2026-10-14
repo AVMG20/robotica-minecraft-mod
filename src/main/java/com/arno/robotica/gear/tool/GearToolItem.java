@@ -15,8 +15,11 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,6 +27,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -112,6 +116,16 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         return true;
+    }
+
+    /** Lamp Placer module: right-click a block face to put a Spark Lamp there. */
+    @Override
+    public InteractionResult useOn(UseOnContext ctx) {
+        ItemStack stack = ctx.getItemInHand();
+        if (Modules.active(stack, ModuleKind.LAMP_PLACER) <= 0) return InteractionResult.PASS;
+        if (ctx.getLevel().isClientSide) return InteractionResult.SUCCESS;
+        if (!(ctx.getPlayer() instanceof ServerPlayer player) || !(ctx.getLevel() instanceof ServerLevel level)) return InteractionResult.PASS;
+        return LampPlacer.placeOn(player, level, stack, ctx.getClickedPos(), ctx.getClickedFace()) ? InteractionResult.CONSUME : InteractionResult.FAIL;
     }
 
     /** The stored mode, or the tool's default mode when unset or no longer allowed. */

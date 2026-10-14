@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -22,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Lamp Placer module (drills): a moment after you mine a block, if the spot is dark (light at or below
+ * Lamp Placer module (drills): right-click puts a Spark Lamp on the clicked face ({@link #placeOn}). A moment after you mine a block, if the spot is dark (light at or below
  * {@link GearConfig#lampLight}, sky or block light), a floating Spark Lamp goes there, or at your feet. For an area break the spot is the bottom row of the mined area (nearest the origin), so the lamp sits on
  * the floor instead of at eye level. Paid in FE from the drill, at most one lamp per {@link GearConfig#lampCooldown}
  * ticks. Placement goes through {@link SparkLamps} (build rights, spawn protection, world border, place event). State is per player UUID and
@@ -109,6 +111,25 @@ public final class LampPlacer {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Right-click with the drill: a Spark Lamp on the clicked face (light level does not matter), paid like an automatic
+     * lamp. Returns true when placed; a refusal plays a dull click.
+     */
+    public static boolean placeOn(ServerPlayer player, ServerLevel level, ItemStack tool, BlockPos clicked, Direction face) {
+        if (Modules.active(tool, ModuleKind.LAMP_PLACER) <= 0) return false;
+        BlockPos spot = SparkLamps.spotOn(level, clicked, face);
+        boolean creative = player.getAbilities().instabuild;
+        int cost = Modules.regulated(tool, GearConfig.lampCost());
+        boolean ok = (creative || ItemEnergy.get(tool) >= cost) && player.mayUseItemAt(spot, face, tool)
+                && SparkLamps.place(player, level, spot, spot.equals(clicked) ? Direction.UP : face);
+        if (!ok) {
+            level.playSound(null, player.blockPosition(), SoundEvents.DISPENSER_FAIL, SoundSource.PLAYERS, 0.4F, 1.8F);
+            return false;
+        }
+        if (!creative) ItemEnergy.drain(tool, cost);
+        return true;
     }
 
     public static void forget(UUID player) {
