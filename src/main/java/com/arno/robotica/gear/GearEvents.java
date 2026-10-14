@@ -13,6 +13,7 @@ import com.arno.robotica.gear.tool.ToggleKind;
 import com.arno.robotica.gear.tool.LampPlacer;
 import com.arno.robotica.gear.weapon.Lifesteal;
 import com.arno.robotica.gear.weapon.EnergyWeaponItem;
+import com.arno.robotica.gear.weapon.RivetGunItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -158,6 +159,7 @@ public final class GearEvents {
         GearSounds.forget(event.getEntity().getUUID());
         LampPlacer.forget(event.getEntity().getUUID());
         Lifesteal.forget(event.getEntity().getUUID());
+        RivetGunItem.forget(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
@@ -166,5 +168,6 @@ public final class GearEvents {
         GearSounds.clearAll();
         LampPlacer.clearAll();
         Lifesteal.clearAll();
+        RivetGunItem.clearAll();
     }
 }

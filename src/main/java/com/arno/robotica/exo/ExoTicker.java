@@ -8,6 +8,7 @@ import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CellItem;
 import com.arno.robotica.core.item.CoreItems;
+import com.arno.robotica.exo.item.ExoArmorItem;
 import com.arno.robotica.exo.net.ExoFxPayload;
 import com.arno.robotica.exo.net.ExoJetHeatPayload;
 import com.arno.robotica.exo.net.ExoSonarPayload;
@@ -41,6 +42,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -49,6 +51,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
@@ -56,6 +59,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Arrays;
@@ -123,16 +127,12 @@ public final class ExoTicker {
         ExoData.Core core = ExoData.Core.NONE;
         double factor = 1.0;
         int tick;
-        double lastX = Double.NaN, lastY, lastZ;
+        double lastX = Double.NaN, lastZ;
         boolean moving;
-        double dy;
         double walked;
         boolean flightGranted;
         boolean nv;
         boolean fireRes;
-        boolean gliding;
-        int airJumps;
-        int lastAirJumpTick = -100;
         /** Jet Assist: what the client asks for and what the pack does this tick ({@link ExoJet#OFF}, THRUST or HOVER). */
         int jetWant, jetMode;
         /** Level of the last worn Jet Assist (cooling and effects go on after it comes out). */
@@ -142,7 +142,6 @@ public final class ExoTicker {
         boolean overheated;
         /** Jet Assist III: the Flight key switched hover on (read from the chestplate every tick). */
         boolean hoverMode;
-        int jetEndTick = -100;
         /** Thrust or hover stopped in mid air since the player last stood: a Glider may open now. */
         boolean thrustedAir;
         /** Tick of the last hit the Kinetic Shield absorbed completely (its knockback is cancelled). */
@@ -214,9 +213,7 @@ public final class ExoTicker {
         double dist = first ? 0 : Math.sqrt(dx * dx + dz * dz);
         st.moving = dist > 0.02;
         st.walked = Math.min(dist, KINETIC_MAX_STEP);
-        st.dy = first ? 0 : p.getY() - st.lastY;
         st.lastX = p.getX();
-        st.lastY = p.getY();
         st.lastZ = p.getZ();
 
         helmet(p, st);
@@ -462,31 +459,10 @@ public final class ExoTicker {
 
     private static void jetAssist(ServerPlayer p, State st) {
         boolean grounded = ExoJet.grounded(p);
-        if (grounded || p.onClimbable()) {
-            st.airJumps = 0;
-            st.thrustedAir = false;
-        }
-        // Creative and spectator: the pack is off (no thrust, hover, slow fall or cost), it only cools.
+        if (grounded || p.onClimbable()) st.thrustedAir = false;
+        // Creative and spectator: the pack is off (no thrust, hover or cost), it only cools.
         int level = ExoJet.creative(p) ? 0 : lvl(st, ModuleKind.JET_ASSIST);
         jetThrust(p, st, level, grounded);
-        // Slow fall: on a long fall, and right after thrust or hover ends in mid air (let go, overheated or empty).
-        double cost = level > 0 ? ExoConfig.perTick(ModuleKind.JET_ASSIST, level) : 0;
-        boolean afterThrust = st.tick - st.jetEndTick <= ExoJet.AFTER_THRUST;
-        boolean glide = level > 0 && !grounded && st.jetMode == ExoJet.OFF && afford(st, ModuleKind.JET_ASSIST, cost)
-                && (afterThrust || (st.gliding ? st.dy < -0.01 : st.dy < -0.5));
-        if (glide) {
-            spend(st, ModuleKind.JET_ASSIST, cost);
-            MobEffectInstance cur = p.getEffect(MobEffects.SLOW_FALLING);
-            if (cur == null || (cur.isAmbient() && cur.getDuration() < 6)) {
-                p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 12, 0, true, false, false));
-            }
-            p.resetFallDistance();
-            st.gliding = true;
-            if (st.tick % 4 == 0) p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() - 0.1, p.getZ(), 2, 0.15, 0.02, 0.15, 0.01);
-        } else if (st.gliding) {
-            st.gliding = false;
-            removeOurs(p, MobEffects.SLOW_FALLING);
-        }
     }
 
     /**
@@ -562,10 +538,7 @@ public final class ExoTicker {
             return;
         }
         if (!wasOn) return;
-        if (!grounded) {
-            st.jetEndTick = st.tick;
-            st.thrustedAir = true;
-        }
+        if (!grounded) st.thrustedAir = true;
         if (cut == ExoFxPayload.JET_OFF) {
             jetFx(p, ExoFxPayload.JET_OFF, true, false);
             return;
@@ -996,16 +969,37 @@ public final class ExoTicker {
         return rate - left;
     }
 
-    /** The cell in the worn chestplate's cell slot tops up the suit once per second (config cellSlotPerSecond). */
+    /**
+     * The cell in the worn chestplate's cell slot tops up the suit once per second (config cellSlotPerSecond), then
+     * with what is left of that rate the FE tools in the hands and the inventory (anything that holds FE but gives none
+     * out, like {@link CellItem#inventoryTick}).
+     */
     private static void chestCell(ServerPlayer p) {
         ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
         if (chest.isEmpty()) return;
         ItemStack cell = ExoData.cell(chest);
         if (!(cell.getItem() instanceof CellItem item) || ItemEnergy.get(cell) <= 0) return;
-        ItemStack[] pieces = chargeOrder(p);
-        if (!needsCharge(pieces)) return;
         int rate = (int) Math.min((long) item.getMaxExtract(cell) * 20, ExoConfig.cellSlotPerSecond());
-        if (feed(cell, pieces, rate) > 0) ExoData.setCell(chest, cell);
+        ItemStack[] pieces = chargeOrder(p);
+        int moved = needsCharge(pieces) ? feed(cell, pieces, rate) : 0;
+        var inv = p.getInventory();
+        for (int i = -2; i < inv.items.size() && moved < rate && ItemEnergy.get(cell) > 0; i++) {
+            if (i == inv.selected) continue;
+            ItemStack tool = i == -2 ? p.getMainHandItem() : i == -1 ? p.getOffhandItem() : inv.items.get(i);
+            moved += feedTool(cell, tool, rate - moved);
+        }
+        if (moved > 0) ExoData.setCell(chest, cell);
+    }
+
+    /** Moves up to {@code max} FE from {@code cell} into one FE tool. Returns the FE moved. */
+    private static int feedTool(ItemStack cell, ItemStack tool, int max) {
+        if (tool.isEmpty() || tool.getItem() instanceof BlockItem || tool.getItem() instanceof CellItem || tool.getItem() instanceof ExoArmorItem) return 0;
+        IEnergyStorage storage = tool.getCapability(Capabilities.EnergyStorage.ITEM);
+        if (storage == null || !storage.canReceive() || storage.canExtract()) return 0;
+        int offer = Math.min(max, ItemEnergy.get(cell));
+        int got = offer <= 0 ? 0 : storage.receiveEnergy(offer, false);
+        if (got > 0) ItemEnergy.drain(cell, got);
+        return Math.max(0, got);
     }
 
     /** Cells and Mainsprings in the inventory top up the worn suit once per second (config cellsRechargeSuit). */
@@ -1052,32 +1046,6 @@ public final class ExoTicker {
         if (p.tickCount - st.lastRefusal < REFUSAL_GAP && p.tickCount >= st.lastRefusal) return;
         st.lastRefusal = p.tickCount;
         notifySound(p, CoreSounds.ROBOT_ERROR.get(), 0.4F, 1.2F);
-    }
-
-    /**
-     * Jet Assist double jump, requested by the client in mid air. All checks are repeated here with the same rules the
-     * client predicts with ({@link ExoSuit#canPayAirJump}); a refusal is silent. Returns true when it fired.
-     */
-    public static boolean doubleJump(ServerPlayer p) {
-        State st = state(p);
-        int level = st == null ? 0 : lvl(st, ModuleKind.JET_ASSIST);
-        if (level <= 0 || ExoJet.creative(p)) return false;
-        Abilities ab = p.getAbilities();
-        if (p.onGround() || p.onClimbable() || p.isInWater() || p.isInLava() || ab.flying || p.isFallFlying() || p.isPassenger() || p.isSpectator()) return false;
-        // Half the client's gap: packets can arrive bunched up.
-        if (st.airJumps >= ExoConfig.airJumps(level) || p.tickCount - st.lastAirJumpTick < ExoSuit.AIR_JUMP_GAP / 2) return false;
-        if (!ExoSuit.canPayAirJump(p, st.act)) return false;
-        spendNow(p, st, ModuleKind.JET_ASSIST, ExoConfig.doubleJumpCost(level));
-        st.airJumps++;
-        st.lastAirJumpTick = p.tickCount;
-        Vec3 v = p.getDeltaMovement();
-        p.setDeltaMovement(v.x, 0.55, v.z);
-        p.hurtMarked = true;
-        p.resetFallDistance();
-        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIREWORK_ROCKET_LAUNCH, SoundSource.PLAYERS, 0.35F, 1.6F);
-        p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.1, p.getZ(), 10, 0.2, 0.05, 0.2, 0.05);
-        p.serverLevel().sendParticles(ParticleTypes.SMALL_FLAME, p.getX(), p.getY(), p.getZ(), 6, 0.15, 0.05, 0.15, 0.02);
-        return true;
     }
 
     /**
@@ -1465,7 +1433,6 @@ public final class ExoTicker {
         setModifier(p, Attributes.BLOCK_INTERACTION_RANGE, REACH_ID, 0, AttributeModifier.Operation.ADD_VALUE);
         if (st.nv) removeOurs(p, MobEffects.NIGHT_VISION);
         if (st.fireRes) removeOurs(p, MobEffects.FIRE_RESISTANCE);
-        if (st.gliding) removeOurs(p, MobEffects.SLOW_FALLING);
         if (st.jetMode != ExoJet.OFF) {
             st.jetMode = ExoJet.OFF;
             jetFx(p, ExoFxPayload.JET_OFF, true, false);

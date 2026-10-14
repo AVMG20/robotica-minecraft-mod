@@ -98,22 +98,9 @@ public final class ExoSuit {
         return a;
     }
 
-    /** Ticks between two Jet Assist air jumps. */
-    public static final int AIR_JUMP_GAP = 6;
-
     /** What the Power Regulator leaves of every cost (1 = no regulator). */
     public static double costFactor(Active a) {
         return 1.0 - ModuleConfig.regulatorSaving(a.level(ModuleKind.POWER_REGULATOR));
-    }
-
-    /**
-     * True when the suit's Jet Assist can pay an air jump right now. The client checks exactly this before it predicts
-     * the jump, and the server repeats it, so both sides agree.
-     */
-    public static boolean canPayAirJump(LivingEntity entity, Active a) {
-        int level = a.level(ModuleKind.JET_ASSIST);
-        if (level <= 0) return false;
-        return energyFor(entity, SLOTS[a.piece(ModuleKind.JET_ASSIST)]) >= Math.max(ExoConfig.doubleJumpCost(level) * costFactor(a), 1);
     }
 
     /** Level of a switched-on module kind in the worn suit, 0 when absent. */

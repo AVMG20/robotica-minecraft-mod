@@ -2,7 +2,7 @@
 Run: python3 scripts/sounds/exo.py   (needs numpy and ffmpeg with libvorbis)
 
 Writes assets/robotica/sounds/exo/jet_{loop,overheat,ready}.ogg, mono (positional), made from seeded noise and sines,
-so every run gives the same files. The loop is 2 s and crossfaded into itself so it repeats without a click.
+so every run gives the same files. The loop is 3 s and crossfaded into itself so it repeats without a click.
 """
 import pathlib
 import subprocess
@@ -55,23 +55,17 @@ def loop_crossfade(x, fade):
 
 
 def jet_loop(rng):
-    """A steady rocket roar: low rumble, a band of hiss and soft crackle, with a slow flutter that loops evenly."""
-    seconds, fade = 2.0, int(0.25 * RATE)
+    """A soft, steady air rush: muffled low whoosh with a little breath on top, no crackle or flutter."""
+    seconds, fade = 3.0, int(0.5 * RATE)
     n = int(seconds * RATE) + fade
     white = rng.standard_normal(n)
-    rumble = lowpass(lowpass(white, 160.0), 220.0) * 3.2
-    roar = bandpass(white, 280.0, 2400.0) * 1.1
-    hiss = highpass(rng.standard_normal(n), 3500.0) * 0.18
-    crackle = np.zeros(n)
-    for at in rng.integers(0, n - 400, 70):
-        k = int(rng.integers(60, 260))
-        crackle[at:at + k] += rng.standard_normal(k) * np.exp(-np.arange(k) / (k / 4.0)) * rng.uniform(0.3, 0.8)
-    crackle = highpass(crackle, 900.0)
+    body = lowpass(lowpass(highpass(white, 90.0), 520.0), 700.0) * 2.4
+    breath = lowpass(bandpass(rng.standard_normal(n), 700.0, 1800.0), 2200.0) * 0.35
     t = np.arange(n) / RATE
-    # 26 cycles in 2 s and 6 in 2 s: whole numbers, so the flutter lines up with the loop.
-    flutter = 1.0 + 0.08 * np.sin(2 * np.pi * 13.0 * t) + 0.06 * np.sin(2 * np.pi * 3.0 * t + 1.3)
-    x = (rumble + roar + hiss) * flutter + crackle * 0.5
-    return normalize(loop_crossfade(x, fade), 0.8)
+    # 1 cycle in 3 s: a slow, even swell that lines up with the loop.
+    swell = 1.0 + 0.05 * np.sin(2 * np.pi * t / seconds)
+    x = (body + breath) * swell
+    return normalize(loop_crossfade(x, fade), 0.6)
 
 
 def jet_overheat(rng):

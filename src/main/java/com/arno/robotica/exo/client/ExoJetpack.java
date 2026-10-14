@@ -3,7 +3,6 @@ package com.arno.robotica.exo.client;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.exo.ExoActions;
-import com.arno.robotica.exo.ExoConfig;
 import com.arno.robotica.exo.ExoData;
 import com.arno.robotica.exo.ExoJet;
 import com.arno.robotica.exo.ExoSuit;
@@ -30,16 +29,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Client side of the Jet Assist. For the local player it reads the jump key, does the air jumps, and predicts thrust,
- * hover and heat under the server's rules ({@link ExoJet}); the server confirms or corrects with Jet Assist kinds of
- * {@link ExoFxPayload} (handed over by {@link ExoFx}) and sends the heat on a new player object
+ * Client side of the Jet Assist. For the local player it reads the jump key and predicts thrust, hover and heat under
+ * the server's rules ({@link ExoJet}); the server confirms or corrects with Jet Assist kinds of {@link ExoFxPayload}
+ * (handed over by {@link ExoFx}) and sends the heat on a new player object
  * ({@link ExoJetHeatPayload}). For every firing pack in view (the local one and the ones the server reports) it draws
  * the nozzle flames and smoke, runs the thruster loop and gives the pod layer its glow.
  *
  * <p>Input: holding jump on the ground jumps as usual, and thrust takes over once it has been held
- * {@link ExoJet#HOLD_TICKS}. A jump press in mid air gives an air jump while any are left; holding it (or a press with
- * none left) thrusts upward. With a Glider in the chestplate, a press while gliding ends the glide and thrusts, and
- * the Glider opens by itself a moment after thrust stopped in a fall. Creative and spectator players get none of it.
+ * {@link ExoJet#HOLD_TICKS}. Jump in mid air thrusts at once. Letting go eases into a normal fall
+ * ({@link ExoJet#settle}). With a Glider in the chestplate, a press while gliding ends the glide and thrusts, and the
+ * Glider opens by itself a moment after thrust stopped in a fall. Creative and spectator players get none of it.
  */
 final class ExoJetpack {
     private ExoJetpack() {}
@@ -59,8 +58,6 @@ final class ExoJetpack {
     private static boolean jumpWasDown;
     /** At the end of the last tick: standing on a block, grounded, flying (what this tick's vanilla jump started from). */
     private static boolean wasStanding, wasGrounded, wasFlying;
-    private static int airJumps;
-    private static int lastAirJump = -100;
     /** The jump held now may thrust (it started in mid air, on the ground, or ended a glide). */
     private static boolean armed;
     private static boolean pressJumped;
@@ -75,6 +72,8 @@ final class ExoJetpack {
     /** Thrust or hover stopped in mid air since the player last stood (the Glider may open), and when. */
     private static boolean thrustedAir;
     private static int offTick = -100;
+    /** Ticks into the settle after thrust stopped in mid air ({@link ExoJet#settle}), -1 when not settling. */
+    private static int settle = -1;
     /** When flying (Flight module, vanilla) last ended: hover mode catches the player for a moment after. */
     private static int flightEndTick = -100;
     private static final int HOVER_CATCH = 10;
@@ -123,10 +122,9 @@ final class ExoJetpack {
         wasStanding = false;
         wasGrounded = false;
         wasFlying = false;
-        airJumps = 0;
-        lastAirJump = -100;
         lastGliderTry = -100;
         offTick = -100;
+        settle = -1;
         flightEndTick = -100;
         armed = false;
         mode = ExoJet.OFF;
@@ -170,7 +168,6 @@ final class ExoJetpack {
         boolean jumpDown = mc.screen == null && mc.options.keyJump.isDown();
         boolean press = jumpDown && !jumpWasDown;
         jumpWasDown = jumpDown;
-        if (now < lastAirJump) lastAirJump = -100;
         if (now < lastGliderTry) lastGliderTry = -100;
         if (now < offTick) offTick = -100;
         if (now < flightEndTick) flightEndTick = -100;
@@ -189,12 +186,9 @@ final class ExoJetpack {
 
         boolean grounded = ExoJet.grounded(player);
         boolean standing = ExoJet.standing(player);
-        // On a ladder or scaffolding a press climbs: it neither spends an air jump nor starts thrust.
+        // On a ladder or scaffolding a press climbs: it does not start thrust.
         boolean climbing = player.onClimbable();
-        if (grounded || climbing) {
-            airJumps = 0;
-            thrustedAir = false;
-        }
+        if (grounded || climbing) thrustedAir = false;
 
         if (!jumpDown || (grounded && !standing)) armed = false;
         if (unglide) {
@@ -210,16 +204,6 @@ final class ExoJetpack {
             armed = true;
             pressTick = now;
             pressJumped = false;
-            // Predicted only under the server's own rules: count, spacing and the energy the jump costs.
-            if (mode != ExoJet.HOVER && airJumps < ExoConfig.airJumps(level) && now - lastAirJump >= ExoSuit.AIR_JUMP_GAP
-                    && ExoSuit.canPayAirJump(player, active)) {
-                airJumps++;
-                lastAirJump = now;
-                pressJumped = true;
-                send(ExoActions.DOUBLE_JUMP);
-                Vec3 v = player.getDeltaMovement();
-                player.setDeltaMovement(v.x, 0.55, v.z);
-            }
         }
 
         int want = ExoJet.OFF;
@@ -254,6 +238,7 @@ final class ExoJetpack {
             if (want == ExoJet.OFF && !grounded) {
                 thrustedAir = true;
                 offTick = now;
+                settle = 0;
             }
             mode = want;
         }
@@ -264,6 +249,7 @@ final class ExoJetpack {
             player.setDeltaMovement(v.x, vy, v.z);
             player.resetFallDistance();
         }
+        settle(player, grounded || climbing);
         glider(player, grounded, now);
         wasStanding = ExoJet.standing(player);
         wasGrounded = ExoJet.grounded(player);
@@ -277,6 +263,17 @@ final class ExoJetpack {
             self.hot = overheated;
         }
         effects(mc);
+    }
+
+    /** After thrust stopped in mid air: caps the fall speed for a few ticks, so the drop starts gently. */
+    private static void settle(LocalPlayer player, boolean held) {
+        if (mode != ExoJet.OFF || held) settle = -1;
+        if (settle < 0) return;
+        Vec3 v = player.getDeltaMovement();
+        // Still rising: the climb coasts out as usual, the settle starts at the top.
+        if (v.y > 0) return;
+        player.setDeltaMovement(v.x, ExoJet.settle(v.y, settle), v.z);
+        if (++settle >= ExoJet.SETTLE) settle = -1;
     }
 
     /**
@@ -316,6 +313,7 @@ final class ExoJetpack {
                     if (firing && !ExoJet.grounded(player)) {
                         thrustedAir = true;
                         offTick = player.tickCount;
+                        settle = 0;
                     }
                     boolean wasHot = overheated;
                     if (kind == ExoFxPayload.JET_OVERHEAT) {
@@ -498,7 +496,7 @@ final class ExoJetpack {
         }
     }
 
-    /** The thruster roar of one pack, following its player; fades out when it stops. Louder and higher per level. */
+    /** The thruster rush of one pack, following its player; fades out when it stops. A bit louder and higher per level. */
     private static final class JetLoop extends AbstractTickableSoundInstance {
         private final Jet jet;
         private final Player player;
@@ -539,8 +537,8 @@ final class ExoJetpack {
             this.y = player.getY() + 0.8;
             this.z = player.getZ();
             boolean hover = jet.mode == ExoJet.HOVER;
-            this.volume = (0.32F + 0.08F * jet.level) * (hover ? 0.6F : 1.0F) * fade / 4.0F;
-            this.pitch = 0.85F + 0.1F * jet.level + (hover ? -0.1F : 0.0F);
+            this.volume = (0.2F + 0.05F * jet.level) * (hover ? 0.6F : 1.0F) * fade / 4.0F;
+            this.pitch = 0.9F + 0.05F * jet.level + (hover ? -0.05F : 0.0F);
         }
     }
 }

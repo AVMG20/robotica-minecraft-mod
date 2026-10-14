@@ -266,7 +266,7 @@
         },
         {
           "title": "Bridging",
-          "text": "Aim the Buddy key over open air: it builds a bridge from junk blocks in its cargo.",
+          "text": "Aim the Buddy key over open air: it builds a bridge from junk in its cargo.\nGive it Architect building blocks for a nicer path: it uses those before junk.",
           "items": [
             "robotica:buddy_bot"
           ]
@@ -518,7 +518,7 @@
         },
         {
           "title": "Jetpack",
-          "text": "Full heat bar: the pack cuts out until it has cooled, twice as fast on the ground. Your fall slows meanwhile.\nHeat stays with you across chestplates and Jet Assist levels.\nWith Flight and Jet Assist III, the Flight key cycles Flight, hover, off.",
+          "text": "Full heat bar: the pack cuts out until it has cooled, twice as fast on the ground.\nHeat stays with you across chestplates and Jet Assist levels.\nWith Flight and Jet Assist III, the Flight key cycles Flight, hover, off.",
           "items": [
             "robotica:jet_assist_module",
             "robotica:jet_assist_module_2",
@@ -538,7 +538,7 @@
         },
         {
           "title": "Cell slot",
-          "text": "Every chestplate has a cell slot on the J screen, right of its modules. The cell in it charges the worn suit.",
+          "text": "Every chestplate has a cell slot on the J screen, right of its modules. The cell charges the suit, then the FE tools in your inventory. Chargers refill it once the chestplate is full.",
           "items": [
             "robotica:copper_cell",
             "robotica:redstone_cell",
@@ -587,7 +587,7 @@
         },
         {
           "title": "Pocket Architect",
-          "text": "Junk goes into it as you pick it up, even with a full inventory.\nSmithing it into a Mk2 keeps its matter.",
+          "text": "Junk goes into it as you pick it up, even with a full inventory.\nBuilding blocks you no longer need go back in for their full matter.\nSmithing it into a Mk2 keeps its matter.",
           "items": [
             "robotica:pocket_architect",
             "robotica:pocket_architect_mk2"

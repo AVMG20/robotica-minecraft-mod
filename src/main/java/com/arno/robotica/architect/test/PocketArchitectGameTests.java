@@ -87,6 +87,26 @@ public class PocketArchitectGameTests {
         helper.succeed();
     }
 
+    /** Building blocks go back in for their full price; the Mk1 only takes the rustic-only styles. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void pocketTakesBuildingBlocksBack(GameTestHelper helper) {
+        for (BuildStyle style : BuildStyle.values()) {
+            for (Role role : Role.values()) {
+                Matter v = com.arno.robotica.architect.matter.MatterTable.valueOf(ArchitectRegistry.styleItem(style, role).get());
+                helper.assertTrue(v.equals(style.cost), style.blockName(role) + " is worth its price " + style.cost + ", is " + v);
+            }
+        }
+        ItemStack mk1 = pocket(false);
+        ItemStack walls = new ItemStack(ArchitectRegistry.styleItem(BuildStyle.DARK_STONE, Role.WALL).get(), 5);
+        helper.assertTrue(item(mk1).absorb(mk1, walls) == 5 && walls.isEmpty(), "the Mk1 takes Dark Stone back");
+        helper.assertTrue(PocketArchitectItem.matter(mk1).equals(new Matter(10, 0)), "5 walls are 10 rustic, got " + PocketArchitectItem.matter(mk1));
+        ItemStack panels = new ItemStack(ArchitectRegistry.styleItem(BuildStyle.PEARL_PANEL, Role.FLOOR).get(), 3);
+        helper.assertTrue(!item(mk1).accepts(panels), "the Mk1 holds no refined matter");
+        ItemStack mk2 = pocket(true);
+        helper.assertTrue(item(mk2).absorb(mk2, panels) == 3 && PocketArchitectItem.matter(mk2).equals(new Matter(6, 3)), "3 panels are 6 rustic and 3 refined");
+        helper.succeed();
+    }
+
     /** The pickup event: a junk item on the ground goes into the pocket and the item entity is gone. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void pocketEatsJunkOnPickup(GameTestHelper helper) {

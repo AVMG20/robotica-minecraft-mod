@@ -4,6 +4,8 @@ import com.arno.robotica.Robotica;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.exo.ExoData;
+import com.arno.robotica.exo.ExoItems;
 import com.arno.robotica.power.PowerConfig;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.block.WirelessChargerBlock;
@@ -14,6 +16,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.GameType;
@@ -47,6 +50,22 @@ public class WirelessChargerGameTests {
 
     private static ItemStack emptyCell() {
         return new ItemStack(CoreItems.COPPER_CELL.get());
+    }
+
+    /** A worn Exo chestplate with a full battery still takes FE for the cell in its cell slot. */
+    @GameTest(template = "empty")
+    public static void wirelessChargerFillsTheExoCell(GameTestHelper helper) {
+        ServerPlayer owner = player(helper, 2);
+        WirelessChargerBlockEntity be = charger(helper, owner);
+        ItemStack chest = new ItemStack(ExoItems.CHESTPLATE_MK1.get());
+        ItemEnergy.fill(chest);
+        ExoData.setCell(chest, emptyCell());
+        owner.setItemSlot(EquipmentSlot.CHEST, chest);
+
+        long got = be.chargePlayer(owner, 1_000);
+        int cell = ItemEnergy.get(ExoData.cell(owner.getItemBySlot(EquipmentSlot.CHEST)));
+        helper.assertTrue(got == 1_000 && cell == 1_000, "the cell got the FE: delivered " + got + ", cell " + cell);
+        helper.succeed();
     }
 
     /** Worn armor first, then the held items, then the inventory; the buffer pays every FE plus the 10% loss. */

@@ -394,7 +394,7 @@
     "jet_assist_module_2",
     "jet_assist_module_3"
    ],
-   "what": "Hold jump to fly up until it overheats; tap it in mid air for extra jumps. III hovers; with a Flight module, the Flight key cycles Flight, hover, off.",
+   "what": "Hold jump to fly up until it overheats. III hovers; with a Flight module, the Flight key cycles Flight, hover, off.",
    "stats": {
     "rows": [
      [
@@ -414,12 +414,8 @@
       "3 / 8 / 20 s"
      ],
      [
-      "Air jumps",
-      "1 / 2 / 3"
-     ],
-     [
       "Energy",
-      "800 / 1,000 / 1,200 FE/s thrust (hover: half), 400 / 350 / 300 FE per jump, 40 / 30 / 20 FE/s slow fall"
+      "800 / 1,000 / 1,200 FE/s thrust (hover: half)"
      ]
     ]
    },
@@ -1203,7 +1199,7 @@
    "items": [
     "rivet_gun"
    ],
-   "what": "Hold right-click to fire rivets. No ammo, runs on FE.",
+   "what": "Hold left-click to fire rivets. No ammo, runs on FE.",
    "stats": {
     "rows": [
      [
@@ -1212,7 +1208,7 @@
      ],
      [
       "Rate",
-      "2 shots/s"
+      "1.33 shots/s"
      ],
      [
       "Energy",

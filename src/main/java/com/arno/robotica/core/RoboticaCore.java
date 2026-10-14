@@ -9,7 +9,6 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.energy.ComponentEnergyStorage;
 
 /** Shared foundation: data components, materials, cells, upgrade cards, the module framework, creative tab, core config. */
 public final class RoboticaCore {
@@ -41,12 +40,7 @@ public final class RoboticaCore {
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
         for (Item item : BuiltInRegistries.ITEM) {
             if (item instanceof EnergyItem energyItem) {
-                event.registerItem(Capabilities.EnergyStorage.ITEM,
-                        (stack, ctx) -> new ComponentEnergyStorage(stack, CoreComponents.ENERGY.get(),
-                                energyItem.getEnergyCapacity(stack),
-                                energyItem.getMaxReceive(stack),
-                                energyItem.getMaxExtract(stack)),
-                        item);
+                event.registerItem(Capabilities.EnergyStorage.ITEM, (stack, ctx) -> energyItem.energyStorage(stack), item);
             }
         }
     }
