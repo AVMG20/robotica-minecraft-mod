@@ -1,9 +1,8 @@
-"""Exo-Frame textures: armor item icons, module icons and the humanoid armor layers (64x32).
-Run: python3 scripts/textures/exo.py
+"""Exo-Frame textures: module icons, the Glider wings and the Jet Assist pods.
+Run: python3 scripts/textures/exo.py (the armor itself, icons and worn look: scripts/textures/exo_armor.py)
 
 Mk1 = copper plating with brass trim and cyan lights, Mk2 = steel plating with cyan trim and lights, Mk3 = dark netherite
 plating with magma trim and amber lights, Mk4 = null-violet plating with lilac trim and teal lights.
-Armor layers go to textures/models/armor/exo_mk{1-4}_layer_{1,2}.png (layer 1: helmet, chestplate, boots; layer 2: leggings).
 The Glider wings (Elytra model UVs) go to textures/entity/exo_glider.png.
 Jet Assist thruster pods (a player render layer, 64x32): exo_jetpack_mk{1-4}.png in the mark's colors and
 exo_jetpack_glow.png, the full bright pass drawn while the pack fires (hot nozzles, heat strips).
@@ -28,59 +27,6 @@ def pal(*dicts):
     for d in dicts:
         out.update(d)
     return out
-
-
-# ------------------------------------------------------------------ armor icons (16x16)
-
-def helmet():
-    c = Canvas()
-    c.rect(4, 2, 8, 2, 'm').rect(3, 4, 10, 6, 'm').rect(3, 10, 3, 3, 'm').rect(10, 10, 3, 3, 'm')
-    c.rect(4, 2, 8, 1, 'M').rect(3, 4, 1, 8, 'M').rect(12, 5, 1, 8, 'n').rect(3, 12, 3, 1, 'n').rect(10, 12, 3, 1, 'n')
-    c.rect(7, 1, 2, 3, 'T').set(7, 1, 'T')
-    c.rect(4, 6, 8, 3, 'k').rect(5, 7, 6, 1, 'a').set(5, 7, 'A').set(6, 7, 'A')
-    c.rect(4, 5, 8, 1, 't')
-    c.set(3, 8, 'T').set(12, 8, 'T')
-    c.outline('k')
-    return c.rows()
-
-
-def chestplate():
-    c = Canvas()
-    c.rect(1, 2, 4, 5, 'm').rect(11, 2, 4, 5, 'm')
-    c.rect(3, 3, 10, 11, 'm')
-    c.rect(6, 2, 4, 2, '.')
-    c.rect(1, 2, 4, 1, 'M').rect(11, 2, 4, 1, 'M').rect(3, 4, 1, 10, 'M').rect(12, 4, 1, 10, 'n')
-    c.rect(3, 13, 10, 1, 'n').rect(1, 6, 4, 1, 'n').rect(11, 6, 4, 1, 'n')
-    c.rect(6, 4, 4, 1, 'T').rect(3, 11, 10, 1, 'T')
-    c.rect(6, 6, 4, 4, 'k').rect(7, 7, 2, 2, 'a').set(7, 7, 'A')
-    c.set(1, 3, 'T').set(14, 3, 'T')
-    c.outline('k')
-    return c.rows()
-
-
-def leggings():
-    c = Canvas()
-    c.rect(3, 1, 10, 4, 'm').rect(3, 5, 4, 9, 'm').rect(9, 5, 4, 9, 'm')
-    c.rect(3, 1, 10, 1, 'M').rect(3, 5, 1, 9, 'M').rect(9, 5, 1, 9, 'M').rect(6, 5, 1, 9, 'n').rect(12, 5, 1, 9, 'n')
-    c.rect(3, 13, 4, 1, 'n').rect(9, 13, 4, 1, 'n').rect(3, 4, 10, 1, 'n')
-    c.rect(3, 3, 10, 1, 'T').rect(7, 2, 2, 2, 'k').set(7, 3, 'a')
-    c.rect(4, 8, 2, 2, 'T').rect(10, 8, 2, 2, 'T').set(4, 8, 'B').set(10, 8, 'B')
-    c.outline('k')
-    return c.rows()
-
-
-def boots():
-    c = Canvas()
-    for x0 in (1, 9):
-        c.rect(x0 + 1, 3, 4, 6, 'm').rect(x0, 9, 6, 4, 'm')
-        c.rect(x0 + 1, 3, 1, 6, 'M').rect(x0, 9, 6, 1, 'M').rect(x0 + 4, 4, 1, 5, 'n').rect(x0, 12, 6, 1, 'n')
-        c.rect(x0 + 1, 3, 4, 1, 'T').rect(x0, 11, 6, 1, 't')
-        c.set(x0 + 2, 6, 'a')
-    c.outline('k')
-    return c.rows()
-
-
-ICONS = {'helmet': helmet, 'chestplate': chestplate, 'leggings': leggings, 'boots': boots}
 
 
 # ------------------------------------------------------------------ module icons (16x16 circuit cards)
@@ -177,7 +123,7 @@ def module_files():
     return out
 
 
-# ------------------------------------------------------------------ armor layers (64x32)
+# ------------------------------------------------------------------ 64x32 model textures (glider, jetpack)
 
 class Layer:
     """64x32 humanoid armor texture. box() lays out the six faces of a cuboid like the vanilla model UVs."""
@@ -219,122 +165,6 @@ def plate(face, lx, ly, fw, fh):
     if ly == fh - 1 or lx == fw - 1:
         return 'n'
     return 'm'
-
-
-def helmet_paint(face, lx, ly, fw, fh):
-    ch = plate(face, lx, ly, fw, fh)
-    if face == 'top' and lx in (fw // 2 - 1, fw // 2):
-        return 'T'
-    if face in ('front',):
-        if ly == 3 and 1 <= lx <= fw - 2:
-            return 'k'
-        if ly == 4 and 1 <= lx <= fw - 2:
-            return 'k'
-        if ly == 4 and 2 <= lx <= fw - 3:
-            return 'a'
-        if ly == 2:
-            return 't'
-        if ly == fh - 1 and lx in (0, fw - 1):
-            return 'T'
-    if face in ('left', 'right') and ly == 4 and lx in (2, 3):
-        return 'T'
-    if face == 'back' and ly in (3, 5) and 1 <= lx <= fw - 2:
-        return 't'
-    return ch
-
-
-def chest_paint(face, lx, ly, fw, fh):
-    ch = plate(face, lx, ly, fw, fh)
-    if face == 'front':
-        if lx in (3, 4) and ly in (3, 4, 5):
-            return 'A' if (lx, ly) == (3, 3) else 'a'
-        if ly == 2 and 1 <= lx <= fw - 2:
-            return 'T'
-        if ly == 8 and 0 < lx < fw - 1:
-            return 'T'
-        if lx in (2, 5) and ly in (3, 4, 5):
-            return 'k'
-    if face == 'back' and lx in (3, 4) and 1 <= ly <= fh - 2:
-        return 't'
-    if face == 'back' and ly == 8 and 0 < lx < fw - 1:
-        return 'T'
-    return ch
-
-
-def arm_paint(face, lx, ly, fw, fh):
-    if face in ('top', 'bottom'):
-        return 'T' if face == 'top' else 'n'
-    if ly < 4:  # shoulder pad
-        if ly == 3:
-            return 't'
-        if lx in (0, fw - 1):
-            return 'T'
-        return 'T'
-    if ly == 7 and 0 < lx < fw - 1:
-        return 'a' if lx == 1 else 't'
-    return plate(face, lx, ly, fw, fh)
-
-
-def boots_paint(face, lx, ly, fw, fh):
-    if face == 'top':
-        return '.'
-    if face == 'bottom':
-        return 'n'
-    if ly < 6:
-        return '.'
-    if ly == 6:
-        return 'T'
-    if ly == 7 and face == 'front' and lx in (1, 2):
-        return 'a'
-    if ly == fh - 1:
-        return 'k'
-    return plate(face, lx, ly, fw, fh)
-
-
-def belt_paint(face, lx, ly, fw, fh):
-    if face == 'top':
-        return '.'
-    if face == 'bottom':
-        return 'n'
-    if ly < 7:
-        return '.'
-    if ly == 7:
-        return 'M'
-    if ly == 8:
-        return 'T'
-    if ly == 9 and face == 'front' and lx in (fw // 2 - 1, fw // 2):
-        return 'a'
-    if ly == 11:
-        return 'n'
-    return plate(face, lx, ly, fw, fh) if ly != 9 else 'm'
-
-
-def legs_paint(face, lx, ly, fw, fh):
-    if face == 'top':
-        return 'n'
-    if face == 'bottom':
-        return 'n'
-    if ly in (5, 6) and face in ('front', 'left', 'right', 'back'):
-        return 'T' if ly == 5 else 't'
-    if ly == 6 and face == 'front' and lx in (1, 2):
-        return 'a'
-    return plate(face, lx, ly, fw, fh)
-
-
-def layer1():
-    t = Layer()
-    t.box(0, 0, 8, 8, 8, helmet_paint)
-    t.box(16, 16, 8, 12, 4, chest_paint)
-    t.box(40, 16, 4, 12, 4, arm_paint)
-    t.box(0, 16, 4, 12, 4, boots_paint)
-    return t.rows()
-
-
-def layer2():
-    t = Layer()
-    t.box(16, 16, 8, 12, 4, belt_paint)
-    t.box(0, 16, 4, 12, 4, legs_paint)
-    return t.rows()
 
 
 # ------------------------------------------------------------------ glider wings (64x32, Elytra model UVs)
@@ -446,10 +276,6 @@ def jetpack(glow=False):
 def main():
     for mk, colors in MARKS.items():
         p = pal(colors)
-        for slot, fn in ICONS.items():
-            write_item(f'exo_{slot}_mk{mk}', fn(), p)
-        write_png(ASSETS / f'textures/models/armor/exo_mk{mk}_layer_1.png', layer1(), p, size=None)
-        write_png(ASSETS / f'textures/models/armor/exo_mk{mk}_layer_2.png', layer2(), p, size=None)
         write_png(ASSETS / f'textures/models/armor/exo_jetpack_mk{mk}.png', jetpack(), p, size=None)
     write_png(ASSETS / 'textures/models/armor/exo_jetpack_glow.png', jetpack(glow=True), pal(JET_GLOW), size=None)
     for fname, name, level in module_files():

@@ -489,7 +489,7 @@
       "pages": [
         {
           "title": "The suit",
-          "text": "Out of FE it still works as armor, but its modules stop.\nSmithing a piece up keeps its energy and modules. Mk4 pieces are fireproof.",
+          "text": "Out of FE it still works as armor, but its modules stop and its lights go dark.\nSmithing a piece up keeps its energy and modules. Mk4 pieces are fireproof.",
           "items": [
             "robotica:exo_helmet_mk1",
             "robotica:exo_chestplate_mk1",
