@@ -8,6 +8,7 @@ import com.arno.robotica.automation.entity.ChunkAnchorBlockEntity.State;
 import com.arno.robotica.automation.menu.ChunkAnchorMenu;
 import com.arno.robotica.core.chunk.ChunkClaims;
 import com.arno.robotica.core.chunk.ChunkTickets;
+import com.arno.robotica.core.util.Fmt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -71,13 +72,18 @@ public class ChunkAnchorGameTests {
                     helper.assertTrue(claims(helper).used(owner) == 1, "the owner uses one chunk");
                     helper.assertTrue(helper.getBlockState(POS).getValue(ChunkAnchorBlock.MODE) == ChunkAnchorBlock.Mode.ACTIVE, "the core glows");
                 })
-                .thenIdle(5)
-                .thenExecute(() -> helper.assertTrue(be.energy.getEnergyStored() < be.energy.getMaxEnergyStored(), "it pays its upkeep"))
+                .thenIdle(45)
+                .thenExecute(() -> {
+                    helper.assertTrue(be.energy.getEnergyStored() < be.energy.getMaxEnergyStored(), "it pays its upkeep");
+                    helper.assertTrue(be.loadedSeconds() >= 2, "it counts how long it has loaded");
+                    helper.assertTrue(Fmt.duration(20L * (2 * 86_400 + 5 * 3_600)).equals("2d 5h"), "days show past 24 hours");
+                })
                 .thenExecute(() -> be.energy.setEnergy(0))
                 .thenWaitUntil(() -> helper.assertTrue(!be.isLoading() && be.state() == State.NO_POWER, "dry, it lets the chunk go"))
                 .thenExecute(() -> {
                     helper.assertTrue(allForced(helper, POS, 0, false), "no ticket while dry");
                     helper.assertTrue(claims(helper).used(owner) == 0, "nothing counted while dry");
+                    helper.assertTrue(be.loadedSeconds() == 0, "the load time resets when it lets go");
                     helper.assertTrue(helper.getBlockState(POS).getValue(ChunkAnchorBlock.MODE) == ChunkAnchorBlock.Mode.ALERT, "red while dry");
                     be.energy.setEnergy(be.energy.getMaxEnergyStored());
                 })
