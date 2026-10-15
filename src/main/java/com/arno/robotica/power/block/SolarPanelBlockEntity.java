@@ -27,8 +27,10 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     private boolean openSky;
     /** Blocks of the panel that see the sky (all of them for a Mk1). */
     private int openCells;
-    /** A Mk2-Mk4 standing alone (placed as one block before panels covered a square): works like a Mk1 block. */
+    /** A Mk2-Mk4 standing alone (placed as one block before panels covered a square): pushes like a Mk1 block. */
     private boolean standalone;
+    /** Mk2-Mk4: every block of the square has been there at once. A formed panel that loses a block removes itself. */
+    private boolean formed;
     /** The sky has been checked since the block entity loaded. */
     private boolean checked;
     private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
@@ -62,6 +64,10 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
 
     public boolean isGenerating() {
         return sunny;
+    }
+
+    public boolean formed() {
+        return formed;
     }
 
     /** Blocks of the panel that saw the sky at the last check. */
@@ -108,7 +114,9 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         if (!checked || (level.getGameTime() + pos.asLong()) % 20 == 0) {
             checked = true;
-            openCells = level.dimensionType().hasFixedTime() ? 0 : countOpenCells(level, pos, state);
+            int open = countOpenCells(level, pos, state);
+            if (open < 0) return;   // the panel removed itself
+            openCells = level.dimensionType().hasFixedTime() ? 0 : open;
             openSky = openCells > 0;
             // Daylight from the sun's angle (the clear-weather isDay() edge): isDay() itself turns false in thunderstorms.
             sunny = openSky && net.minecraft.util.Mth.cos(level.getTimeOfDay(1.0F) * net.minecraft.util.Mth.TWO_PI) > 0.0682F;
@@ -122,13 +130,18 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     }
 
     /**
-     * Blocks of the panel that see the sky. Blocks in unloaded chunks count as open. A Mk2-Mk4 that stands alone (placed
-     * as one block before panels covered a square) grows into its square when the square is empty, else counts its own
-     * block for the whole panel.
+     * Blocks of the panel that see the sky, or -1 when the panel removed itself. Blocks in unloaded chunks count as open.
+     * A Mk2-Mk4 that stands alone (placed as one block before panels covered a square) grows into its square when the
+     * square is empty, else only its own block counts. A formed panel that lost a block, or whose block entity is no
+     * longer in the north-west block (rotated in place), removes itself without drops.
      */
     private int countOpenCells(ServerLevel level, BlockPos pos, BlockState state) {
         int n = tier.size;
         if (n == 1 || !(state.getBlock() instanceof SolarArrayBlock array)) return level.canSeeSky(pos.above()) ? 1 : 0;
+        if (!array.isCell(state, 0, 0)) {
+            array.removePanel(level, pos);
+            return -1;
+        }
         int open = 0, present = 0;
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (int x = 0; x < n; x++) {
@@ -143,9 +156,20 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
                 }
             }
         }
+        if (present == n * n) {
+            standalone = false;
+            if (!formed) {
+                formed = true;
+                setChanged();
+            }
+            return open;
+        }
+        if (formed) {
+            array.removePanel(level, pos);
+            return -1;
+        }
         standalone = present == 1;
         if (standalone && array.grow(level, pos)) return countOpenCells(level, pos, state);
-        if (standalone) return level.canSeeSky(pos.above()) ? n * n : 0;
         return open;
     }
 
@@ -182,12 +206,43 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.put("energy", energy.serializeNBT(registries));
+        if (formed) tag.putBoolean("formed", true);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
+        formed = tag.getBoolean("formed");
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        invalidateCells();
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        invalidateCells();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        invalidateCells();
+    }
+
+    /** Mk2-Mk4: the other blocks of the panel hand out this buffer, so their capability changes with this block entity. */
+    private void invalidateCells() {
+        if (level == null || level.isClientSide || tier.size == 1) return;
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int x = 0; x < tier.size; x++) {
+            for (int z = 0; z < tier.size; z++) {
+                if (x != 0 || z != 0) level.invalidateCapabilities(p.set(worldPosition.getX() + x, worldPosition.getY(), worldPosition.getZ() + z));
+            }
+        }
     }
 
     /** Jade: generating, generating into a full buffer, or idle (night, no sky). */

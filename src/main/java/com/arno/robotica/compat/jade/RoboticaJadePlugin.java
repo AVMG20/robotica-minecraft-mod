@@ -18,6 +18,8 @@ public class RoboticaJadePlugin implements IWailaPlugin {
     @Override
     public void register(IWailaCommonRegistration registration) {
         registration.registerBlockDataProvider(MachineProvider.INSTANCE, BlockEntity.class);
+        // Solar Panel Mk2-Mk4: the blocks without a block entity show the panel's status
+        registration.registerBlockDataProvider(MachineProvider.INSTANCE, com.arno.robotica.power.block.SolarArrayBlock.class);
         registration.registerEntityDataProvider(DroneProvider.INSTANCE, DroneBase.class);
         registration.registerEntityDataProvider(RancherProvider.INSTANCE, com.arno.robotica.automation.rancher.Rancher.class);
         registration.registerEntityDataProvider(FarmBotProvider.INSTANCE, com.arno.robotica.automation.farmbot.FarmBot.class);

@@ -116,6 +116,7 @@ public class PowerGameTests {
 
         helper.runAfterDelay(25, () -> {
             helper.assertTrue(panel.openCells() == 5, "the stones shade the four corners: " + panel.openCells() + " of 9 open");
+            helper.assertTrue(panel.formed(), "a full square is formed");
             level.destroyBlock(helper.absolutePos(new BlockPos(2, 1, 2)), true);
             for (int x = 0; x < 3; x++) {
                 for (int z = 0; z < 3; z++) helper.assertBlockNotPresent(block, new BlockPos(x, 1, z));
@@ -155,6 +156,77 @@ public class PowerGameTests {
                 }
             }
         });
+    }
+
+    /** A panel under another panel sees no sky; the top one still does. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void stackedSolarPanelsShade(GameTestHelper helper) {
+        BlockPos low = new BlockPos(1, 1, 1);
+        helper.setBlock(low, PowerRegistry.SOLAR_PANEL_MK1.get().defaultBlockState());
+        helper.setBlock(low.above(), PowerRegistry.SOLAR_PANEL_MK1.get().defaultBlockState());
+        var lower = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(low);
+        var upper = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(low.above());
+        helper.runAfterDelay(45, () -> {
+            helper.assertTrue(upper.openCells() == 1, "the top panel sees the sky");
+            helper.assertTrue(lower.openCells() == 0, "the panel below is shaded");
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A formed Mk2 that loses a block without the break reaching it (here: the chunk section edited directly) removes
+     * itself and drops nothing; a Mk2 whose block entity ends up in another cell (rotated in place) does the same.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void solarPanelMissingCellRemovesItself(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK2.get();
+        block.placeAll(level, helper.absolutePos(new BlockPos(0, 1, 0)));
+        block.placeAll(level, helper.absolutePos(new BlockPos(3, 1, 0)));
+        var first = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        var second = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(3, 1, 0));
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(first.formed() && second.formed(), "both panels formed");
+            BlockPos cut = helper.absolutePos(new BlockPos(1, 1, 1));
+            var chunk = level.getChunkAt(cut);
+            chunk.getSection(chunk.getSectionIndex(cut.getY())).setBlockState(cut.getX() & 15, cut.getY() & 15, cut.getZ() & 15, Blocks.AIR.defaultBlockState());
+            BlockPos nw = helper.absolutePos(new BlockPos(3, 1, 0));
+            level.setBlock(nw, level.getBlockState(nw).rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            helper.assertTrue(level.getBlockEntity(nw) == second, "the block entity stays in the rotated block");
+        });
+        helper.runAfterDelay(50, () -> {
+            for (int x = 0; x < 5; x++) {
+                for (int z = 0; z < 2; z++) helper.assertBlockNotPresent(block, new BlockPos(x, 1, z));
+            }
+            var area = new net.minecraft.world.phys.AABB(helper.absolutePos(BlockPos.ZERO)).inflate(6);
+            helper.assertTrue(level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, area).isEmpty(), "no drops");
+            helper.succeed();
+        });
+    }
+
+    /** Rotating or mirroring a placed panel (structures) renumbers its cells so the new north-west block is cell 0,0. */
+    @GameTest(template = "empty")
+    public static void solarPanelRotates(GameTestHelper helper) {
+        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK3.get();
+        int n = block.size();
+        for (var mirror : net.minecraft.world.level.block.Mirror.values()) {
+            for (var rotation : net.minecraft.world.level.block.Rotation.values()) {
+                BlockPos[] moved = new BlockPos[n * n];
+                int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+                for (int i = 0; i < n * n; i++) {
+                    moved[i] = net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.transform(
+                            new BlockPos(i % n, 0, i / n), mirror, rotation, BlockPos.ZERO);
+                    minX = Math.min(minX, moved[i].getX());
+                    minZ = Math.min(minZ, moved[i].getZ());
+                }
+                for (int i = 0; i < n * n; i++) {
+                    var state = block.cell(i % n, i / n).mirror(mirror).rotate(rotation);
+                    helper.assertTrue(block.isCell(state, moved[i].getX() - minX, moved[i].getZ() - minZ),
+                            mirror + " " + rotation + ": cell " + (i % n) + "," + (i / n) + " became " + state);
+                }
+            }
+        }
+        helper.succeed();
     }
 
     /** The metal press turns an iron ingot into an iron plate, and a speed card makes it much faster. */

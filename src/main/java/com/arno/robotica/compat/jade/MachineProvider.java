@@ -3,7 +3,9 @@ package com.arno.robotica.compat.jade;
 import com.arno.robotica.Robotica;
 import com.arno.robotica.compat.MachineInfo;
 import com.arno.robotica.compat.MachineInfoCollector;
+import com.arno.robotica.power.block.SolarArrayBlock;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -36,13 +38,14 @@ enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<Blo
 
     @Override
     public boolean shouldRequestData(BlockAccessor accessor) {
-        return isRobotica(accessor.getBlockEntity());
+        return isRobotica(target(accessor));
     }
 
     @Override
     public void appendServerData(CompoundTag data, BlockAccessor accessor) {
-        BlockEntity be = accessor.getBlockEntity();
-        if (!isRobotica(be) || !(accessor.getLevel() instanceof ServerLevel level)) return;
+        BlockEntity be = target(accessor);
+        // the north-west block of a Solar Panel Mk2-Mk4 reaches this through both its block and its block entity
+        if (data.contains(TAG) || !isRobotica(be) || !(accessor.getLevel() instanceof ServerLevel level)) return;
         MachineInfo info = MachineInfoCollector.collect(level, be);
         if (info == null) return;
         CompoundTag tag = new CompoundTag();
@@ -94,6 +97,16 @@ enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<Blo
             case "no_energy", "output_full", "no_network", "wrong_dimension", "no_access" -> ChatFormatting.RED;
             default -> ChatFormatting.GRAY;
         };
+    }
+
+    /** The block entity behind the looked-at block: for a Solar Panel Mk2-Mk4, the one in its north-west block. */
+    private static BlockEntity target(BlockAccessor accessor) {
+        BlockEntity be = accessor.getBlockEntity();
+        if (be == null && accessor.getBlock() instanceof SolarArrayBlock) {
+            BlockPos origin = SolarArrayBlock.origin(accessor.getPosition(), accessor.getBlockState());
+            if (accessor.getLevel().isLoaded(origin)) be = accessor.getLevel().getBlockEntity(origin);
+        }
+        return be;
     }
 
     private static boolean isRobotica(BlockEntity be) {

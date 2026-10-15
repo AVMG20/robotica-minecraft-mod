@@ -62,9 +62,12 @@ public final class PowerModule {
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.COMBUSTION_GENERATOR_BE.get(), (be, side) -> be.sides.access(side));
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK1_BE.get(), (be, side) -> be.energy);
-        // Mk2-Mk4: every block of the panel hands out the buffer of its north-west block
-        event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, be, side) ->
-                        level.getBlockEntity(com.arno.robotica.power.block.SolarArrayBlock.origin(pos, state)) instanceof com.arno.robotica.power.block.SolarPanelBlockEntity panel ? panel.energy : null,
+        // Mk2-Mk4: every block of the panel hands out the buffer of its north-west block (never loads its chunk)
+        event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, be, side) -> {
+                    net.minecraft.core.BlockPos origin = com.arno.robotica.power.block.SolarArrayBlock.origin(pos, state);
+                    return level.isLoaded(origin) && level.getBlockEntity(origin) instanceof com.arno.robotica.power.block.SolarPanelBlockEntity panel
+                            && panel.getBlockState().is(state.getBlock()) ? panel.energy : null;
+                },
                 PowerRegistry.SOLAR_PANEL_MK2.get(), PowerRegistry.SOLAR_PANEL_MK3.get(), PowerRegistry.SOLAR_PANEL_MK4.get());
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.ACCUMULATOR_BE.get(), (be, side) -> be.energyFor(side));

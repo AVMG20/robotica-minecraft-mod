@@ -72,6 +72,12 @@ public class SolarPanelBlock extends PowerBlock {
         return SHAPE;
     }
 
+    /** Shades what is below it, like leaves (light level 14 under it): a panel under another panel sees no sky. */
+    @Override
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+        return false;
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         int output = com.arno.robotica.core.CoreConfig.scaleGeneration(tier.output());
