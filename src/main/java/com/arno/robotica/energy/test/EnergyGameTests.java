@@ -632,6 +632,40 @@ public class EnergyGameTests {
         helper.succeed();
     }
 
+    /** Two spires in range, both muted: no thunder from either; unmuting one brings back only its own. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void spireMuteHoldsWithANeighbour(GameTestHelper helper) {
+        SpireBlockEntity a = spire(helper, new BlockPos(4, 1, 4), 4, 4);
+        SpireBlockEntity b = spire(helper, new BlockPos(0, 1, 0), 8, 0);
+        a.scanNow();
+        helper.assertTrue(a.isFormed() && b.isFormed() && a.interference() < 1.0, "two spires in range: " + why(a) + " / " + why(b));
+        java.util.Set<BlockPos> crowns = java.util.Set.of(a.crown(), b.crown());
+        java.util.List<BlockPos> heard = new java.util.ArrayList<>();
+        java.util.function.Consumer<net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition> listener = e -> {
+            if (e.getSound() != null && e.getSound().value() == com.arno.robotica.core.CoreSounds.SPIRE_STRIKE.get()) {
+                BlockPos at = BlockPos.containing(e.getPosition());
+                if (crowns.contains(at)) heard.add(at);
+            }
+        };
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(listener);
+        try {
+            a.setStrikeMuted(true);
+            b.setStrikeMuted(true);
+            for (int i = 0; i < 5; i++) {
+                a.strike(helper.getLevel(), helper.getLevel().getGameTime());
+                b.strike(helper.getLevel(), helper.getLevel().getGameTime());
+            }
+            helper.assertTrue(heard.isEmpty(), "both muted, yet thunder at " + heard);
+            b.setStrikeMuted(false);
+            a.strike(helper.getLevel(), helper.getLevel().getGameTime());
+            b.strike(helper.getLevel(), helper.getLevel().getGameTime());
+            helper.assertTrue(heard.equals(java.util.List.of(b.crown())), "only the unmuted spire thunders, heard " + heard);
+        } finally {
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);
+        }
+        helper.succeed();
+    }
+
     /** Too short, a stranger in the column, no crown, and the crown lights while it runs. */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void spireNamesTheWrongBlock(GameTestHelper helper) {
