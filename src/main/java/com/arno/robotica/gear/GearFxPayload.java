@@ -19,14 +19,16 @@ import java.util.ArrayDeque;
  * <ul>
  *   <li>{@link #ARC_CHAIN}: {@code points} is the chain of struck centres (x, y, z each), first the main target;</li>
  *   <li>{@link #LANCE}: {@code points} is eye, look direction, beam end, then each hit centre; {@code ints[0]} is 1
- *   when the beam hit a block;</li>
+ *   when the beam hit a block, {@code ints[1]} the shooter's entity id;</li>
+ *   <li>{@link #BOLT}: a Null Lance bolt left the muzzle: {@code points} is eye and look direction, {@code ints[0]} the
+ *   shooter's entity id;</li>
  *   <li>{@link #DRAIN}: {@code points} is the Lifesteal stream from the target to the player;</li>
  *   <li>{@link #STATIC}: {@code points} are the centres of a few blocks of an area break that get a static pop.</li>
  * </ul>
  * The handler only queues plain data (no client classes); the client takes it on its next tick.
  */
 public record GearFxPayload(byte kind, float[] points, int[] ints) implements CustomPacketPayload {
-    public static final byte ARC_CHAIN = 0, LANCE = 1, DRAIN = 2, STATIC = 3;
+    public static final byte ARC_CHAIN = 0, LANCE = 1, DRAIN = 2, STATIC = 3, BOLT = 4;
     private static final int MAX_FLOATS = 3 * 64, MAX_INTS = 8, MAX_QUEUED = 64;
     /** Players further away than this get no effect. */
     public static final double RANGE = 64;

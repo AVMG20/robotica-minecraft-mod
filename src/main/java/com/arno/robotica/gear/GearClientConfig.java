@@ -29,7 +29,7 @@ public final class GearClientConfig {
         AREA_STATIC = b.comment("A few static sparks on the blocks of an area, vein or tree break.").define("areaStatic", true);
         b.pop();
         b.push("weapons");
-        WEAPON_PARTICLES = b.comment("Arc Blade bolts, the Null Lance beam and the Lifesteal stream.").define("weaponParticles", true);
+        WEAPON_PARTICLES = b.comment("Arc Blade bolts, the Null Lance charge, beam and muzzle bursts, and the Lifesteal stream.").define("weaponParticles", true);
         b.pop();
         SPEC = b.build();
     }

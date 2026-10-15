@@ -22,8 +22,8 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 
 /**
  * Rivet Gun and Null Lance on the client: the attack key fires them (hold to keep firing) instead of swinging, mining or
- * hitting, and in first person the gun kicks back and up on each shot instead of swinging. The lance's charge pose and
- * meter are in LanceClient.
+ * hitting, and in first person the gun kicks back and up on each shot instead of swinging. The lance's charge pose is
+ * in LanceClient, its charge display in LanceHud, its effects in LanceFx.
  */
 final class RivetGunClient {
     private RivetGunClient() {}

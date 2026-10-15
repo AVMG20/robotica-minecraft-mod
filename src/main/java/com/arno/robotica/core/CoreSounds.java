@@ -66,9 +66,14 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> RIVET_SHOT = reg("rivet_shot");
     public static final DeferredHolder<SoundEvent, SoundEvent> RIVET_EMPTY = reg("rivet_empty");
     public static final DeferredHolder<SoundEvent, SoundEvent> ARC_STRIKE = reg("arc_strike");
+    /** Null Lance: one void family (scripts/sounds/lance.py). Charge, ready and hum play client side (gear LanceFx). */
     public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_CHARGE = reg("lance_charge");
     public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_READY = reg("lance_ready");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_HUM = reg("lance_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_FIRE = reg("lance_fire");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_IMPACT = reg("lance_impact");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_FIZZLE = reg("lance_fizzle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LANCE_BOLT = reg("lance_bolt");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_HUM = reg("replicator_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_CYCLE = reg("replicator_cycle");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_SPAWN = reg("replicator_spawn");

@@ -14,8 +14,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.joml.Vector3f;
 
 /**
- * Draws the weapon effects the server sends as one {@link GearFxPayload} each: Arc Blade chains, the Null Lance beam
- * and the Lifesteal stream; area break static goes to {@link AreaStatic}. Particles only, spawned locally, so the client config and vanilla's particle setting
+ * Draws the weapon effects the server sends as one {@link GearFxPayload} each: Arc Blade chains and the Lifesteal
+ * stream; the Null Lance beam and bolt muzzle go to {@link LanceFx}, area break static to {@link AreaStatic}. Particles only, spawned locally, so the client config and vanilla's particle setting
  * decide how much shows.
  */
 final class GearFx {
@@ -40,7 +40,12 @@ final class GearFx {
                     if (weapons && p.length >= 3) arcChain(level, p);
                 }
                 case GearFxPayload.LANCE -> {
-                    if (weapons && p.length >= 9) lance(level, p, fx.ints().length > 0 && fx.ints()[0] == 1);
+                    // drawn only with weapon particles on, but the own shot's camera kick and HUD flash always play
+                    int[] ints = fx.ints();
+                    if (p.length >= 9) LanceFx.beam(level, p, ints.length > 0 && ints[0] == 1, ints.length > 1 ? ints[1] : -1);
+                }
+                case GearFxPayload.BOLT -> {
+                    if (weapons && p.length >= 6) LanceFx.boltMuzzle(level, p, fx.ints().length > 0 ? fx.ints()[0] : -1);
                 }
                 case GearFxPayload.DRAIN -> {
                     if (weapons && p.length >= 6) drain(level, p);
@@ -111,46 +116,6 @@ final class GearFx {
             px = nx;
             py = ny;
             pz = nz;
-        }
-    }
-
-    /** Bright core with a slow purple spiral around it, a burst at the muzzle, the hits and the impact. */
-    private static void lance(ClientLevel level, float[] p, boolean hitBlock) {
-        double sx = p[0], sy = p[1], sz = p[2], lx = p[3], ly = p[4], lz = p[5], ex = p[6], ey = p[7], ez = p[8];
-        double length = Math.sqrt((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy) + (ez - sz) * (ez - sz));
-        double mx = sx + lx * 0.8, my = sy - 0.2 + ly * 0.8, mz = sz + lz * 0.8;
-        // side = look x up, up2 = side x look, both 0.3 long
-        double ax = -lz, az = lx, an = Math.sqrt(ax * ax + az * az);
-        double sideX, sideY = 0, sideZ;
-        if (an < 1.0E-2) {
-            sideX = 0.3;
-            sideZ = 0;
-        } else {
-            sideX = ax / an * 0.3;
-            sideZ = az / an * 0.3;
-        }
-        double ux = sideY * lz - sideZ * ly, uy = sideZ * lx - sideX * lz, uz = sideX * ly - sideY * lx;
-        double un = Math.max(1.0E-4, Math.sqrt(ux * ux + uy * uy + uz * uz));
-        ux = ux / un * 0.3;
-        uy = uy / un * 0.3;
-        uz = uz / un * 0.3;
-        TintParticleOptions core = CoreParticles.mote(0xE6D6FF, 0.9F);
-        TintParticleOptions spiral = CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.6F);
-        level.addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 0.8F), mx, my, mz, 0, 0, 0);
-        for (double d = 0.5; d <= length; d += 0.5) {
-            double x = mx + lx * d, y = my + ly * d, z = mz + lz * d;
-            level.addParticle(core, x, y, z, 0, 0, 0);
-            double a = d * 1.4, c = Math.cos(a), s = Math.sin(a);
-            level.addParticle(spiral, x + sideX * c + ux * s, y + sideY * c + uy * s, z + sideZ * c + uz * s, 0, 0, 0);
-        }
-        TintParticleOptions hit = CoreParticles.spark(CoreParticles.WARP_VIOLET, 1.0F);
-        for (int i = 9; i + 2 < p.length; i += 3) {
-            level.addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 1.2F), p[i], p[i + 1], p[i + 2], 0, 0, 0);
-            sparks(level, hit, p[i], p[i + 1], p[i + 2], 6, 0.15);
-        }
-        if (hitBlock) {
-            level.addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 1.6F), ex, ey, ez, 0, 0, 0);
-            sparks(level, hit, ex, ey, ez, 10, 0.18);
         }
     }
 

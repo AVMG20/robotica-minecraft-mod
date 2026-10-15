@@ -7,8 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.gear.GearConfig;
 import com.arno.robotica.gear.GearFxPayload;
-import com.arno.robotica.core.particle.CoreParticles;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -29,8 +27,9 @@ import java.util.function.IntSupplier;
 /**
  * Age 4 weapon, the Rivet Gun's upgrade. Left-click fires null bolts like the Rivet Gun fires rivets (same rate, a bit
  * more damage, see {@link RivetGunItem#trigger}). Hold right-click to charge for 1 s, release for a 32 block beam that
- * pierces every mob for 30 damage (stops at blocks). Full charge is marked by a lock-in sound, a flash and a steady glow
- * at the tip; the client adds a charge meter under the crosshair and the lance shaking while it is ready (LanceClient).
+ * pierces every mob for 30 damage (stops at blocks). The charge is drawn and heard on each client (gear.client.LanceFx:
+ * void motes, the lock-in, the hum while ready; LanceHud: the crosshair brackets); the server sends the beam as one
+ * {@link GearFxPayload#LANCE} and plays the shot, the impact and the fizzle of an early release.
  */
 public class NullLanceItem extends EnergyWeaponItem {
     public static final int CHARGE_TICKS = 20;
@@ -94,45 +93,12 @@ public class NullLanceItem extends EnergyWeaponItem {
     }
 
     @Override
-    public void onUseTick(Level level, LivingEntity user, ItemStack stack, int remaining) {
-        if (!(level instanceof ServerLevel server)) return;
-        int charged = getUseDuration(stack, user) - remaining;
-        if (charged == 1) {
-            CoreSounds.play(level, user.blockPosition(), CoreSounds.LANCE_CHARGE, SoundSource.PLAYERS, 0.7F, 1.0F);
-        } else if (charged == CHARGE_TICKS) {
-            // full charge: a lock-in clunk with a bright ping on top, and a violet flash at the tip
-            CoreSounds.play(level, user.blockPosition(), CoreSounds.LANCE_READY, SoundSource.PLAYERS, 0.8F, 1.0F);
-            level.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 0.7F, 1.5F);
-            level.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0F, 1.4F);
-            Vec3 tip = tip(user);
-            server.sendParticles(CoreParticles.flash(CoreParticles.WARP_VIOLET, 0.6F), tip.x, tip.y, tip.z, 1, 0, 0, 0, 0);
-            server.sendParticles(CoreParticles.spark(CoreParticles.WARP_VIOLET, 0.8F), tip.x, tip.y, tip.z, 8, 0.05, 0.05, 0.05, 0.12);
-        } else if (charged > CHARGE_TICKS && charged % 5 == 0) {
-            // ready and held: a steady glow at the tip
-            Vec3 tip = tip(user);
-            server.sendParticles(CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.7F), tip.x, tip.y, tip.z, 1, 0.03, 0.03, 0.03, 0.0);
-        } else if (charged > 0 && charged < CHARGE_TICKS && charged % 4 == 0) {
-            Vec3 tip = tip(user);
-            for (int i = 0; i < 2; i++) {
-                // count 0: the offsets are the vortex arguments (radius, rise, turn)
-                server.sendParticles(CoreParticles.warp(CoreParticles.WARP_VIOLET, 0.8F), tip.x, tip.y + user.getRandom().nextDouble() * 0.1, tip.z,
-                        0, 0.35 + user.getRandom().nextDouble() * 0.15, 0.0, 0.5, 1.0);
-            }
-        }
-    }
-
-    /** Where the charge gathers: just in front of and below the eyes. */
-    private static Vec3 tip(LivingEntity user) {
-        return user.getEyePosition().add(user.getLookAngle().scale(1.2)).add(0, -0.25, 0);
-    }
-
-    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
         if (level.isClientSide || !(user instanceof ServerPlayer player) || !(level instanceof ServerLevel server)) return;
         int charged = getUseDuration(stack, user) - timeLeft;
         if (charged < CHARGE_TICKS - RELEASE_SLACK) {
             // let go too early: the charge fizzles out
-            if (charged >= FIZZLE_TICKS) level.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.3F, 1.8F);
+            if (charged >= FIZZLE_TICKS) CoreSounds.play(user, CoreSounds.LANCE_FIZZLE, SoundSource.PLAYERS, 0.5F, 1.0F);
             return;
         }
         if (!pay(stack, player)) return;
@@ -185,9 +151,15 @@ public class NullLanceItem extends EnergyWeaponItem {
         points[8] = (float) end.z;
         System.arraycopy(hitPoints, 0, points, 9, 3 * shown);
         Vec3 mid = start.add(end).scale(0.5);
-        GearFxPayload.send(level, mid.x, mid.y, mid.z, new GearFxPayload(GearFxPayload.LANCE, points, new int[]{hitBlock ? 1 : 0}));
-        if (hitBlock) level.playSound(null, end.x, end.y, end.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.8F, 0.6F);
-        CoreSounds.play(level, shooter.blockPosition(), CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 0.9F, 1.0F);
+        GearFxPayload.send(level, mid.x, mid.y, mid.z, new GearFxPayload(GearFxPayload.LANCE, points, new int[]{hitBlock ? 1 : 0, shooter.getId()}));
+        // volume 2 gives the shot a 32 block range, the beam's length; sounds.json scales the gain back down
+        CoreSounds.play(shooter, CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 2.0F, 0.97F + level.random.nextFloat() * 0.06F);
+        if (hitBlock) {
+            CoreSounds.play(level, end.x, end.y, end.z, CoreSounds.LANCE_IMPACT, SoundSource.PLAYERS, 0.8F, 0.95F + level.random.nextFloat() * 0.1F);
+        } else if (shown > 0) {
+            int last = 9 + 3 * (shown - 1);
+            CoreSounds.play(level, points[last], points[last + 1], points[last + 2], CoreSounds.LANCE_IMPACT, SoundSource.PLAYERS, 0.6F, 1.05F);
+        }
         return hits;
     }
 }

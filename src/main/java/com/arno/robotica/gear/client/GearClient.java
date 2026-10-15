@@ -17,6 +17,7 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -57,8 +58,10 @@ public final class GearClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, RivetGunClient::onClientTick);
         modBus.addListener(RegisterClientExtensionsEvent.class, RivetGunClient::register);
         modBus.addListener(RegisterClientExtensionsEvent.class, LanceClient::register);
-        modBus.addListener(RegisterGuiLayersEvent.class, LanceClient::registerHud);
+        modBus.addListener(RegisterGuiLayersEvent.class, LanceHud::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, LanceClient::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, LanceFx::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, LanceFx::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaOutline::onRenderLevel);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaStatic::onRenderLevel);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,

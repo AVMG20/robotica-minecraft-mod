@@ -747,16 +747,10 @@
     "subtitle": "subtitles.robotica.lance_charge",
     "sounds": [
       {
-        "name": "minecraft:block/beacon/power1",
+        "name": "robotica:gear/lance_charge",
         "type": "file",
-        "volume": 0.4,
-        "pitch": 0.8
-      },
-      {
-        "name": "minecraft:block/beacon/power2",
-        "type": "file",
-        "volume": 0.4,
-        "pitch": 0.8
+        "volume": 1.0,
+        "pitch": 1.0
       }
     ]
   },
@@ -764,22 +758,21 @@
     "subtitle": "subtitles.robotica.lance_ready",
     "sounds": [
       {
-        "name": "minecraft:block/beacon/power1",
+        "name": "robotica:gear/lance_ready",
         "type": "file",
-        "volume": 0.6,
-        "pitch": 1.5
-      },
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "lance_hum": {
+    "subtitle": "subtitles.robotica.lance_hum",
+    "sounds": [
       {
-        "name": "minecraft:block/beacon/power2",
+        "name": "robotica:gear/lance_hum",
         "type": "file",
-        "volume": 0.6,
-        "pitch": 1.5
-      },
-      {
-        "name": "minecraft:block/beacon/power3",
-        "type": "file",
-        "volume": 0.6,
-        "pitch": 1.5
+        "volume": 1.0,
+        "pitch": 1.0
       }
     ]
   },
@@ -787,28 +780,44 @@
     "subtitle": "subtitles.robotica.lance_fire",
     "sounds": [
       {
-        "name": "minecraft:mob/warden/sonic_boom1",
+        "name": "robotica:gear/lance_fire",
         "type": "file",
-        "volume": 0.4,
-        "pitch": 1.4
-      },
+        "volume": 0.35,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "lance_impact": {
+    "subtitle": "subtitles.robotica.lance_impact",
+    "sounds": [
       {
-        "name": "minecraft:mob/warden/sonic_boom2",
+        "name": "robotica:gear/lance_impact",
         "type": "file",
-        "volume": 0.4,
-        "pitch": 1.4
-      },
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "lance_fizzle": {
+    "subtitle": "subtitles.robotica.lance_fizzle",
+    "sounds": [
       {
-        "name": "minecraft:mob/warden/sonic_boom3",
+        "name": "robotica:gear/lance_fizzle",
         "type": "file",
-        "volume": 0.4,
-        "pitch": 1.4
-      },
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "lance_bolt": {
+    "subtitle": "subtitles.robotica.lance_bolt",
+    "sounds": [
       {
-        "name": "minecraft:mob/warden/sonic_boom4",
+        "name": "robotica:gear/lance_bolt",
         "type": "file",
-        "volume": 0.4,
-        "pitch": 1.4
+        "volume": 1.0,
+        "pitch": 1.0
       }
     ]
   },

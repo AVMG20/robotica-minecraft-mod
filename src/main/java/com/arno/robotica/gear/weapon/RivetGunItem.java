@@ -4,6 +4,7 @@ import com.arno.robotica.core.module.ModuleTarget;
 import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.gear.GearConfig;
+import com.arno.robotica.gear.GearFxPayload;
 import com.arno.robotica.gear.entity.RivetEntity;
 import com.arno.robotica.core.module.ModuleKind;
 import com.arno.robotica.core.module.Modules;
@@ -24,7 +25,7 @@ import java.util.function.IntSupplier;
 /**
  * Age 2 ranged weapon. Left-click (hold to keep firing) fires a glowing steel rivet ({@link RivetEntity}) for
  * {@link GearConfig#rivetDamage} damage every {@link GearConfig#rivetCooldown} ticks, no ammo. The client turns the
- * attack key into GearActions.FIRE (RivetGunClient), so the gun never melees or breaks blocks. Muzzle flash (kept out of the shooter's view), a punchy layered shot sound. Armor Pierce and Ricochet Rivets ride
+ * attack key into GearActions.FIRE (RivetGunClient), so the gun never melees or breaks blocks. Muzzle flash (kept out of the shooter's view), a punchy layered shot sound; a null bolt has the lance's own void shot and muzzle burst. Armor Pierce and Ricochet Rivets ride
  * along on the rivet. Its upgrade, the {@link NullLanceItem}, fires the same way (null bolts) through {@link #trigger}.
  */
 public class RivetGunItem extends EnergyWeaponItem {
@@ -94,17 +95,19 @@ public class RivetGunItem extends EnergyWeaponItem {
         if (Modules.active(gun, ModuleKind.THERMAL_EDGE) > 0) rivet.setFireSeconds(GearConfig.thermalSeconds());
         rivet.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, GearConfig.rivetSpeed(), 0.5F);
         level.addFreshEntity(rivet);
-        muzzleFlash(level, player, gun, bolt ? com.arno.robotica.core.particle.CoreParticles.WARP_VIOLET : com.arno.robotica.core.particle.CoreParticles.EMBER);
-        float jitter = 0.92F + level.random.nextFloat() * 0.16F;
-        CoreSounds.play(level, player.blockPosition(), CoreSounds.RIVET_SHOT, SoundSource.PLAYERS, 0.8F, (bolt ? 0.8F : 1.0F) * jitter);
         if (bolt) {
-            // a lower shot with a warped hum on top: same gun family, heavier
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.35F, 1.3F * jitter);
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.5F, 1.8F * jitter);
-        } else {
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.35F, 1.7F * jitter);
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 0.4F, 1.5F * jitter);
+            // the Null Lance's own void shot; each client draws the muzzle burst at the rifle (gear.client.LanceFx)
+            Vec3 eye = player.getEyePosition(), look = player.getLookAngle();
+            GearFxPayload.send(level, eye.x, eye.y, eye.z, new GearFxPayload(GearFxPayload.BOLT,
+                    new float[]{(float) eye.x, (float) eye.y, (float) eye.z, (float) look.x, (float) look.y, (float) look.z}, new int[]{player.getId()}));
+            CoreSounds.play(player, CoreSounds.LANCE_BOLT, SoundSource.PLAYERS, 0.75F, 0.96F + level.random.nextFloat() * 0.08F);
+            return rivet;
         }
+        muzzleFlash(level, player, gun, com.arno.robotica.core.particle.CoreParticles.EMBER);
+        float jitter = 0.92F + level.random.nextFloat() * 0.16F;
+        CoreSounds.play(level, player.blockPosition(), CoreSounds.RIVET_SHOT, SoundSource.PLAYERS, 0.8F, jitter);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.35F, 1.7F * jitter);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 0.4F, 1.5F * jitter);
         return rivet;
     }
 
