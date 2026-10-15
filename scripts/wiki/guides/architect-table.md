@@ -12,7 +12,7 @@ summary: Where to put the table, clearing land, moving it, and the Pocket Archit
 
 - The table becomes the middle floor block of the centre plot. Place it on flat ground at the floor height you want.
 - The grid is 5x5 plots, 41x41 blocks, centred on the table. Neighbouring plots share a wall, so every room is 7x7 inside.
-- Put a chest against the table first. Cleared and demolished items go into it, else they pile up on top of the table. A container touching the table is never cleared.
+- Put a chest against the table first. Cleared and demolished items go into it, else they pile up on top of the table. Containers touching the table stay standing.
 
 ## Building
 
@@ -33,4 +33,4 @@ Breaking the table keeps its matter, energy and plan. Put back on the same block
 
 - It eats junk from anywhere in your inventory, off hand included.
 - The junk list starts with cobblestone, cobbled deepslate, dirt, gravel, netherrack, tuff, diorite, andesite and granite.
-- With a block picked, right-click in the air does nothing. Sneak-right-click to open it.
+- With a block picked, sneak-right-click to open it.

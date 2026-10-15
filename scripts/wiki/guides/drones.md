@@ -18,13 +18,13 @@ summary: Tunnels with the Buddy Bot, Courier routes, and moving mobs with the Ha
 - It flies over up to 24 blocks of open air before it starts digging.
 - Both keys reach your bots up to 48 blocks away. Press the Buddy key again to stop a tunnel.
 - Lava and water end the tunnel: it plugs them and comes back. With **Fill gaps** on and enough blocks, it bridges them instead.
-- It never breaks machines or chests, and stops where the next part is not loaded.
+- It digs around machines and chests, and stops at unloaded chunks.
 - **Void junk** keeps a stack of junk for floors and plugs.
 - Spark Lamps cost it FE only: no lamps needed in the cargo.
 
 ## Buddy Bot in a fight
 
-- It never shoots players, pets or villagers.
+- In every stance it leaves players, tamed pets and villagers alone.
 - Its kills count as yours: XP and player-only drops.
 
 ## Courier routes
@@ -39,5 +39,5 @@ summary: Tunnels with the Buddy Bot, Courier routes, and moving mobs with the Ha
 
 {{image shots/hauler_drone.jpg|Hauler Drones carrying a cow and a villager}}
 
-- It won't take other players' pets, bosses, or a mob that rides something or carries a rider. Get it out first.
+- It lifts unridden mobs that are not bosses or other players' pets. Get a mob out of a boat or minecart first.
 - Fly it over the spot and right-click: the mob goes down on the highest safe ground below.
