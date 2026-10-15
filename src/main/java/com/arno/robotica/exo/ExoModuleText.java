@@ -48,6 +48,7 @@ final class ExoModuleText {
             case FALL_DAMPENER -> "block";
             case KINETIC_SHIELD -> "damage";
             case AUTO_FEEDER -> "food";
+            case NUTRIENT_SYNTHESIZER -> "nutrition";
             case SONAR_PULSE, MED_INJECTOR, DASH_THRUSTERS -> "use";
             case HAZARD_SEAL -> "effect";
             case SOLAR_WEAVE -> "solar";

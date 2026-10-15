@@ -41,6 +41,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -229,6 +230,7 @@ public final class ExoTicker {
         }
         if (st.tick % 10 == 0) hazardSeal(p, st);
         if (st.tick % 20 == 0) {
+            nutrientSynthesizer(p, st);
             autoFeeder(p, st);
             solarWeave(p, st);
             chestCell(p);
@@ -432,6 +434,29 @@ public final class ExoTicker {
         // Player.eat hands back the container (bowl, bottle) instead of the used up stack; never lose it.
         if (left != best && !left.isEmpty() && !p.getInventory().add(left)) p.drop(left, false);
         spendNow(p, st, ModuleKind.AUTO_FEEDER, cost);
+    }
+
+    /**
+     * Nutrient Synthesizer: once a second, fills hunger and then saturation to full, paying per point filled. Short on
+     * FE, it fills what the energy covers.
+     */
+    private static void nutrientSynthesizer(ServerPlayer p, State st) {
+        if (!has(st, ModuleKind.NUTRIENT_SYNTHESIZER) || creativeLike(p)) return;
+        FoodData food = p.getFoodData();
+        int hunger = 20 - food.getFoodLevel();
+        if (hunger <= 0 && food.getSaturationLevel() >= 20) return;
+        double perPoint = ExoConfig.cost(ModuleKind.NUTRIENT_SYNTHESIZER, 1);
+        double points = hunger + 20 - food.getSaturationLevel();
+        if (perPoint > 0) {
+            double room = available(st, st.act.piece(ModuleKind.NUTRIENT_SYNTHESIZER)) / (perPoint * st.factor);
+            if (room < 1) return;
+            points = Math.min(points, room);
+        }
+        int fed = Math.min(hunger, (int) points);
+        food.setFoodLevel(food.getFoodLevel() + fed);
+        float before = food.getSaturationLevel();
+        food.setSaturation(Math.min(food.getFoodLevel(), before + (float) (points - fed)));
+        spend(st, ModuleKind.NUTRIENT_SYNTHESIZER, (fed + food.getSaturationLevel() - before) * perPoint);
     }
 
     /** Food the Auto-Feeder may eat: nothing whose use does more than feed (teleports, hidden effects). */
