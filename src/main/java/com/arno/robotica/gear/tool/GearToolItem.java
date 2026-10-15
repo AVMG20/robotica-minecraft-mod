@@ -113,6 +113,12 @@ public class GearToolItem extends Item implements HasDetails, ModuleHolder {
         if (!spec.isEnergy()) stack.hurtAndBreak(2, attacker, EquipmentSlot.MAINHAND);
     }
 
+    /** Age 0 durability tools repair in an anvil with the age0_repair tag; FE tools never break. */
+    @Override
+    public boolean isValidRepairItem(ItemStack stack, ItemStack repair) {
+        return !spec.isEnergy() && repair.is(com.arno.robotica.gear.GearItems.AGE0_REPAIR);
+    }
+
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         return true;

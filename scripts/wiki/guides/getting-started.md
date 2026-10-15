@@ -16,7 +16,7 @@ Make a [[copper_gear]], then a [[winding_crank]] and a [[mainspring]]. Your firs
 
 {{image shots/gui_stumpy.jpg|Stumpy's screen}}
 
-Until you have power, the [[tinkers_hammer]] makes plates and dust by hand.
+Until you have power, the [[tinkers_hammer]] makes plates and dust by hand. Repair Age 0 tools in an anvil with copper or bronze ingots.
 
 ## First iron hour
 

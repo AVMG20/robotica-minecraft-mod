@@ -568,6 +568,22 @@ public class GearGameTests {
         helper.succeed();
     }
 
+    /** Age 0 tools repair in an anvil with copper (the age0_repair tag), not their vanilla tier material; FE tools take none. */
+    @GameTest(template = "empty")
+    public static void age0ToolsRepairWithCopper(GameTestHelper helper) {
+        ItemStack copper = new ItemStack(Items.COPPER_INGOT);
+        for (var item : List.of(GearItems.TINKERS_HAMMER.get(), GearItems.FELLING_AXE.get(), GearItems.GEARBLADE.get())) {
+            ItemStack stack = new ItemStack(item);
+            helper.assertTrue(item.isValidRepairItem(stack, copper), item + " repairs with copper");
+            helper.assertTrue(!item.isValidRepairItem(stack, new ItemStack(Items.COBBLESTONE)), item + " must not repair with cobblestone");
+            helper.assertTrue(!item.isValidRepairItem(stack, new ItemStack(Items.OAK_PLANKS)), item + " must not repair with planks");
+        }
+        for (var item : List.of(GearItems.BORE_DRILL.get(), GearItems.CHAINSAW.get(), GearItems.NULL_DRILL.get())) {
+            helper.assertTrue(!item.isValidRepairItem(new ItemStack(item), copper), item + " (FE) must not repair with copper");
+        }
+        helper.succeed();
+    }
+
     /** Overclock mines faster (and costs a bit more FE per block); the Power Regulator lowers the cost of tools and weapons. */
     @GameTest(template = "empty")
     public static void overclockAndPowerRegulator(GameTestHelper helper) {

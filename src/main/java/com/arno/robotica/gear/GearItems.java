@@ -23,6 +23,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.DiggerItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tiers;
@@ -43,6 +44,9 @@ public final class GearItems {
 
     public static final TagKey<net.minecraft.world.item.Item> VOIDABLE =
             TagKey.create(Registries.ITEM, Robotica.id("voidable"));
+    /** Anvil repair material of the Age 0 tools: copper, plus bronze when another mod adds it. */
+    public static final TagKey<net.minecraft.world.item.Item> AGE0_REPAIR =
+            TagKey.create(Registries.ITEM, Robotica.id("age0_repair"));
 
     // Age 0: durability tools without modules (modules start with the FE tools)
     public static final DeferredItem<HammerItem> TINKERS_HAMMER = tool("tinkers_hammer",
@@ -99,7 +103,12 @@ public final class GearItems {
 
     // Weapons
     public static final DeferredItem<SwordItem> GEARBLADE = ITEMS.registerItem("gearblade",
-            p -> new SwordItem(Tiers.WOOD, p.durability(400).attributes(SwordItem.createAttributes(Tiers.WOOD, 5.0F, -2.0F))));
+            p -> new SwordItem(Tiers.WOOD, p.durability(400).attributes(SwordItem.createAttributes(Tiers.WOOD, 5.0F, -2.0F))) {
+                @Override
+                public boolean isValidRepairItem(ItemStack stack, ItemStack repair) {
+                    return repair.is(AGE0_REPAIR);
+                }
+            });
     public static final DeferredItem<ShockBatonItem> SHOCK_BATON = ITEMS.registerItem("shock_baton",
             p -> new ShockBatonItem(p.rarity(Rarity.COMMON).attributes(weaponAttributes(7.0, 1.6)), GearConfig::shockBatonCapacity,
                     () -> GearConfig.fe(GearConfig.SHOCK_BATON_COST, 250)));
