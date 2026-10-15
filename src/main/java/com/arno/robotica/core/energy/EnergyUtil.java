@@ -36,8 +36,18 @@ public final class EnergyUtil {
                     : level.getCapability(Capabilities.EnergyStorage.BLOCK, pos.relative(dir), dir.getOpposite());
             if (target != null && target.canReceive()) targets[count++] = target;
         }
+        return pushTo(targets, count, source, budget);
+    }
+
+    /**
+     * Pushes up to {@code maxPerTick} FE from source into the first {@code count} receivers of {@code targets}, split
+     * evenly (what one does not take goes to the next). Reorders {@code targets}. Returns total sent.
+     */
+    public static int pushTo(IEnergyStorage[] targets, int count, MachineEnergyStorage source, int maxPerTick) {
+        int budget = Math.min(maxPerTick, source.getEnergyStored());
+        if (budget <= 0) return 0;
         int left = budget;
-        // each pass splits what is left over the receivers that took their whole share last time (at most 6 passes)
+        // each pass splits what is left over the receivers that took their whole share last time (at most one pass per receiver)
         while (left > 0 && count > 0) {
             int active = 0;
             for (int i = 0; i < count && left > 0; i++) {

@@ -72,7 +72,89 @@ public class PowerGameTests {
             helper.assertTrue(recipe.get().value().getIngredients().stream().anyMatch(ing -> ing.test(below)),
                     "Mk" + (i + 1) + " consumes the Mk" + i);
         }
+        // a lone Mk2-Mk4 grows into its square on its first tick: clear them so none grows out of this test's area
+        for (int i = 0; i < tiers.size(); i++) helper.setBlock(new BlockPos(i % 3, 1, i / 3), Blocks.AIR);
         helper.succeed();
+    }
+
+    /**
+     * A Solar Panel Mk3 item fills a 3x3 square (the clicked block is the corner nearest the player, on the left), every
+     * block hands out the one buffer, a panel with no free square places nothing, shaded blocks lower the share of open
+     * blocks, and breaking one block removes the whole panel and drops one item.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void solarPanelCoversItsSquare(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK3.get();
+        ItemStack item = new ItemStack(PowerRegistry.SOLAR_PANEL_MK3_ITEM.get());
+        // no player: placed facing north, so the square runs north (towards z = 0) and east from the clicked block
+        BlockPos clicked = helper.absolutePos(new BlockPos(0, 1, 2));
+        var hit = new BlockHitResult(Vec3.atCenterOf(clicked), Direction.UP, clicked, false);
+        helper.assertTrue(((BlockItem) item.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, item.copy(), hit)).consumesAction(),
+                "the Mk3 is placed");
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(x, 1, z)), x, z), "block " + x + "," + z + " of the panel");
+            }
+        }
+        var panel = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        helper.assertTrue(level.getBlockEntity(helper.absolutePos(new BlockPos(2, 1, 2))) == null, "only the north-west block has a block entity");
+        IEnergyStorage far = level.getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(new BlockPos(2, 1, 2)), Direction.DOWN);
+        helper.assertTrue(far == panel.energy, "every block hands out the panel's buffer");
+
+        // a Mk2 on top, in the middle: a stone on each corner blocks all four squares it could take
+        for (int x = 0; x <= 2; x += 2) {
+            for (int z = 0; z <= 2; z += 2) helper.setBlock(new BlockPos(x, 2, z), Blocks.STONE);
+        }
+        var mk2 = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK2.get();
+        ItemStack small = new ItemStack(PowerRegistry.SOLAR_PANEL_MK2_ITEM.get());
+        BlockPos middle = helper.absolutePos(new BlockPos(1, 1, 1));
+        var blocked = new BlockHitResult(Vec3.atCenterOf(middle), Direction.UP, middle, false);
+        helper.assertFalse(((BlockItem) small.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, small, blocked)).consumesAction(),
+                "no free square, no panel");
+        helper.assertBlockNotPresent(mk2, new BlockPos(1, 2, 1));
+
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(panel.openCells() == 5, "the stones shade the four corners: " + panel.openCells() + " of 9 open");
+            level.destroyBlock(helper.absolutePos(new BlockPos(2, 1, 2)), true);
+            for (int x = 0; x < 3; x++) {
+                for (int z = 0; z < 3; z++) helper.assertBlockNotPresent(block, new BlockPos(x, 1, z));
+            }
+            var area = new net.minecraft.world.phys.AABB(helper.absolutePos(BlockPos.ZERO)).inflate(5);
+            int drops = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, area).stream()
+                    .filter(e -> e.getItem().is(item.getItem())).mapToInt(e -> e.getItem().getCount()).sum();
+            helper.assertTrue(drops == 1, "breaking one block drops one panel, got " + drops);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A Mk2 whose square forward and to the right is blocked takes the free square to the left instead, and a Mk2 that
+     * stands alone (placed before panels covered a square) grows into its empty square.
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void solarPanelFindsRoom(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK2.get();
+        ItemStack item = new ItemStack(PowerRegistry.SOLAR_PANEL_MK2_ITEM.get());
+        helper.setBlock(new BlockPos(2, 1, 0), Blocks.STONE);
+        // no player: facing north, so forward-right is x 1-2, z 0-1 (blocked by the stone) and forward-left x 0-1, z 0-1
+        BlockPos clicked = helper.absolutePos(new BlockPos(1, 1, 1));
+        var hit = new BlockHitResult(Vec3.atCenterOf(clicked), Direction.UP, clicked, false);
+        helper.assertTrue(((BlockItem) item.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, item, hit)).consumesAction(),
+                "the Mk2 finds room");
+        helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(0, 1, 0)), 0, 0), "north-west block at x 0, z 0");
+        helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(1, 1, 1)), 1, 1), "the clicked block is the south-east one");
+        helper.assertBlockPresent(Blocks.STONE, new BlockPos(2, 1, 0));
+
+        helper.setBlock(new BlockPos(0, 2, 0), block.defaultBlockState());
+        helper.succeedWhen(() -> {
+            for (int x = 0; x < 2; x++) {
+                for (int z = 0; z < 2; z++) {
+                    helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(x, 2, z)), x, z), "the lone Mk2 grew to " + x + "," + z);
+                }
+            }
+        });
     }
 
     /** The metal press turns an iron ingot into an iron plate, and a speed card makes it much faster. */

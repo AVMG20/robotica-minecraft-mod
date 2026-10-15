@@ -75,7 +75,7 @@ shaped('charger_mk2', [' A ', 'PCP', ' X '], {'A': 'advanced_circuit', 'P': GOLD
 # Metal Press Mk2-Mk4: the Mk below with that age's circuit, plates and casing (each Mk presses plates the next one needs).
 shaped('metal_press_mk2', [' A ', 'PMP', ' X '], {'A': 'advanced_circuit', 'P': GOLD_PLATE, 'M': 'metal_press', 'X': 'reinforced_casing'},
        source='M')
-# Solar Mk2-Mk4: the Mk below with that age's circuit and plates (20 -> 80 -> 300 -> 800 FE/t).
+# Solar Mk2-Mk4: the Mk below with that age's circuit and plates (20 -> 100 -> 300 -> 800 FE/t; Mk2-Mk4 cover 2x2 to 4x4 blocks).
 shaped('solar_panel_mk2', ['QGQ', 'GSG', 'QAQ'], {'Q': QUARTZ, 'G': '#c:glass_blocks', 'S': 'solar_panel_mk1', 'A': 'advanced_circuit'},
        source='S')
 shaped('accumulator_2', ['RCR', 'AXA', 'RCR'],

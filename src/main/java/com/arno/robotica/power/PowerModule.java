@@ -62,9 +62,10 @@ public final class PowerModule {
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.COMBUSTION_GENERATOR_BE.get(), (be, side) -> be.sides.access(side));
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK1_BE.get(), (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK2_BE.get(), (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK3_BE.get(), (be, side) -> be.energy);
-        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.SOLAR_MK4_BE.get(), (be, side) -> be.energy);
+        // Mk2-Mk4: every block of the panel hands out the buffer of its north-west block
+        event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, be, side) ->
+                        level.getBlockEntity(com.arno.robotica.power.block.SolarArrayBlock.origin(pos, state)) instanceof com.arno.robotica.power.block.SolarPanelBlockEntity panel ? panel.energy : null,
+                PowerRegistry.SOLAR_PANEL_MK2.get(), PowerRegistry.SOLAR_PANEL_MK3.get(), PowerRegistry.SOLAR_PANEL_MK4.get());
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.ACCUMULATOR_BE.get(), (be, side) -> be.energyFor(side));
 
