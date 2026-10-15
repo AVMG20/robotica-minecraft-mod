@@ -803,7 +803,10 @@
       ""
      ]
     ]
-   }
+   },
+   "see": [
+    "guide:drones"
+   ]
   },
   {
    "items": [
@@ -845,6 +848,7 @@
     ]
    },
    "see": [
+    "guide:drones",
     "guide:upgrade-cards"
    ]
   },
@@ -852,7 +856,10 @@
    "items": [
     "courier_remote"
    ],
-   "what": "Links Courier Drone routes from a distance: sneak-click a source, then a target."
+   "what": "Links Courier Drone routes from a distance: sneak-click a source, then a target.",
+   "see": [
+    "guide:drones"
+   ]
   },
   {
    "items": [
@@ -895,7 +902,10 @@
      ]
     ]
    },
-   "image": "shots/hauler_drone.jpg|Hauler Drones carrying a cow and a villager"
+   "image": "shots/hauler_drone.jpg|Hauler Drones carrying a cow and a villager",
+   "see": [
+    "guide:drones"
+   ]
   },
   {
    "items": [

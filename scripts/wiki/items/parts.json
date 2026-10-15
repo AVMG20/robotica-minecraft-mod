@@ -516,7 +516,10 @@
       "2 FE/t + 1 per expansion"
      ]
     ]
-   }
+   },
+   "see": [
+    "guide:storage-terminal"
+   ]
   },
   {
    "items": [
@@ -553,6 +556,7 @@
     ]
    },
    "see": [
+    "guide:storage-terminal",
     "item:storage_terminal"
    ]
   },
@@ -577,7 +581,10 @@
       "324"
      ]
     ]
-   }
+   },
+   "see": [
+    "guide:storage-terminal"
+   ]
   },
   {
    "items": [
@@ -704,7 +711,10 @@
      ]
     ]
    },
-   "image": "shots/25_architect_build.jpg|Halls in four styles built around an Architect Table"
+   "image": "shots/25_architect_build.jpg|Halls in four styles built around an Architect Table",
+   "see": [
+    "guide:architect-table"
+   ]
   },
   {
    "items": [
@@ -734,7 +744,10 @@
       "1 billion rustic and refined"
      ]
     ]
-   }
+   },
+   "see": [
+    "guide:architect-table"
+   ]
   },
   {
    "items": [
