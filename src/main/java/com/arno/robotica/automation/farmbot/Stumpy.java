@@ -35,7 +35,8 @@ import java.util.WeakHashMap;
 /**
  * Lumber robot: walks up to the nearest natural tree in its area and fells it whole (with its natural leaves) as one paid
  * action. The tree comes down bottom-up in a wave over about a second, leaves along with their level; then it replants
- * saplings from its pouch and rests. When a tree blocks its way (saplings grown up around it), it fells the closest one.
+ * saplings from its pouch and rests. A tree it can not get to (behind a wall) it fells from where it stands. When a tree
+ * blocks its way (saplings grown up around it), it fells the closest one.
  * Between trees it plants saplings from its pouch on a grid over its area: every third block from home, on lit dirt or
  * grass, with no trunk or sapling next to the spot.
  */
@@ -200,6 +201,11 @@ public class Stumpy extends FarmBot {
         workSound(sl, start, CoreSounds.STUMPY_CHOP, 1.0F, 0.9F + sl.random.nextFloat() * 0.2F);
         workFx(start, CHOP);
         return true;
+    }
+
+    @Override
+    protected boolean actFromAfar(ServerLevel sl, BlockPos target) {
+        return sl.getBlockState(target).is(BlockTags.LOGS) && act(sl, target);
     }
 
     /**

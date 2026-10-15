@@ -384,11 +384,11 @@ public class FarmBotGameTests {
     }
 
     /**
-     * The nearest tree is walled off in a corner, more than reach away from any spot Stumpy can stand on: it is skipped
-     * at once, whole, and the tree it can walk to comes down soon after.
+     * The nearest tree is walled off in a corner, more than reach away from any spot Stumpy can stand on: it is felled
+     * from where Stumpy stands, and the tree it can walk to comes down too.
      */
-    @GameTest(template = PEN, timeoutTicks = 220)
-    public static void stumpySkipsATreeItCanNotReach(GameTestHelper helper) {
+    @GameTest(template = PEN, timeoutTicks = 400)
+    public static void stumpyFellsATreeItCanNotReach(GameTestHelper helper) {
         columnTree(helper, 2, 2, 4);
         glassWall(helper, new BlockPos(5, 0, 1), new BlockPos(5, 0, 5));
         glassWall(helper, new BlockPos(1, 0, 5), new BlockPos(4, 0, 5));
@@ -396,8 +396,8 @@ public class FarmBotGameTests {
         Stumpy stumpy = bot(helper, FarmBotContent.STUMPY_ENTITY.get(), new BlockPos(7, 2, 2));
         stumpy.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.RANGE, 1));
         helper.succeedWhen(() -> {
+            helper.assertTrue(standingLogs(helper, 2, 2, 4) == 0, "the walled-off tree is felled" + where(helper, stumpy));
             helper.assertTrue(standingLogs(helper, 8, 8, 3) == 0, "the reachable tree is felled" + where(helper, stumpy));
-            helper.assertTrue(standingLogs(helper, 2, 2, 4) == 4, "the walled-off tree stands");
         });
     }
 
