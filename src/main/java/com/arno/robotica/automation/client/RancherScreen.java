@@ -63,14 +63,12 @@ public class RancherScreen extends MachineScreen<RancherMenu> {
     @Override
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
-        if (slot.index <= menu.rancher.upgrades.getSlots()) return icon("upgrade_speed");
         return ItemStack.EMPTY;
     }
 
     @Override
     protected Component slotHint(Slot slot) {
         if (slot.index == 0) return Component.translatable("gui.robotica.slot_battery");
-        if (slot.index <= menu.rancher.upgrades.getSlots()) return Component.translatable("gui.robotica.slot_robot_card");
         return null;
     }
 

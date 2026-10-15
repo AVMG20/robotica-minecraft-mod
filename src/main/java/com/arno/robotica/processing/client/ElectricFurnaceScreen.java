@@ -32,7 +32,7 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
         if (slot.index < LANES) return slot.index == 0 ? icon("iron_dust") : ItemStack.EMPTY;
         if (slot.index < LANES * 2) return slot.index == LANES ? new ItemStack(Items.IRON_INGOT) : ItemStack.EMPTY;
         if (slot.index == ElectricFurnaceBlockEntity.BATTERY) return icon("copper_cell");
-        return icon("upgrade_speed");
+        return ItemStack.EMPTY;
     }
 
     @Override
@@ -40,7 +40,7 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
         if (slot.index < LANES) return Component.translatable("gui.robotica.processing.slot_smelt");
         if (slot.index < LANES * 2) return Component.translatable("gui.robotica.slot_output");
         if (slot.index == ElectricFurnaceBlockEntity.BATTERY) return Component.translatable("gui.robotica.slot_battery");
-        return Component.translatable("gui.robotica.processing.slot_upgrade_furnace");
+        return null;
     }
 
     /** Upgrade cards (in the slots or the inventory) say what they do in this Electric Furnace. */

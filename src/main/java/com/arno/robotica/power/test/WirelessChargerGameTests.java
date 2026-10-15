@@ -138,13 +138,13 @@ public class WirelessChargerGameTests {
         helper.assertTrue(be.stateOf(owner) == -1, "out of range: not listed");
 
         be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.RANGE, 2));
-        helper.assertTrue(be.range() == range + 2 * PowerConfig.wirelessRangePerCard(), "range cards add range, is " + be.range());
+        helper.assertTrue(be.range() == range + PowerConfig.wirelessRangePerCard(), "Mk1 counts one range card, range " + be.range());
         be.scanNow();
         helper.assertTrue(be.stateOf(owner) >= 0, "in range again with range cards");
 
         be.upgrades.setStackInSlot(1, CoreItems.cards(UpgradeKind.SPEED, 8));
-        helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == 4, "speed capped");
-        helper.assertTrue(be.ratePerPlayer() == PowerConfig.wirelessRate(1) * 6, "4 speed cards: x6 rate, is " + be.ratePerPlayer());
+        helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == 2, "Mk1 counts two speed cards");
+        helper.assertTrue(be.ratePerPlayer() == PowerConfig.wirelessRate(1) * 3, "2 speed cards: x3 rate, is " + be.ratePerPlayer());
         helper.succeed();
     }
 

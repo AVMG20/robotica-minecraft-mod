@@ -44,12 +44,13 @@ public class WorkerBlockItem extends BlockItem implements HasDetails {
         if (getBlock() instanceof ExcavatorBlock) {
             int size = AutomationConfig.excavatorSize(tier);
             tooltip.add(Component.translatable("tooltip.robotica.excavator_mk", tier, size, size,
-                    CoreConfig.scaleInterval(AutomationConfig.excavatorInterval(tier)), com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier))
+                    CoreConfig.scaleInterval(AutomationConfig.excavatorInterval(tier)),
+                    com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier, com.arno.robotica.automation.entity.ExcavatorBlockEntity.KINDS))
                     .withStyle(ChatFormatting.DARK_GRAY));
         } else if (getBlock() instanceof SurveyRigBlock) {
             String speed = String.format(Locale.ROOT, "%.1f", AutomationConfig.surveySpeed(tier) / 100.0);
             tooltip.add(Component.translatable("tooltip.robotica.survey_rig_mk", tier, speed, AutomationConfig.surveyRareBonus(tier),
-                    com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier)).withStyle(ChatFormatting.DARK_GRAY));
+                    com.arno.robotica.core.upgrade.UpgradeRules.mkSlots(tier, com.arno.robotica.automation.entity.SurveyRigBlockEntity.KINDS)).withStyle(ChatFormatting.DARK_GRAY));
         } else if (getBlock() instanceof ChunkAnchorBlock anchor) {
             int side = 2 * anchor.radius() + 1;
             tooltip.add(Component.translatable("tooltip.robotica.chunk_anchor_mk", tier, side, side,

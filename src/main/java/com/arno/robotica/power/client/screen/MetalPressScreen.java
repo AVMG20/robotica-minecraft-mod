@@ -26,17 +26,17 @@ public class MetalPressScreen extends MachineScreen<MetalPressMenu> {
         return switch (slot.index) {
             case 0 -> new ItemStack(Items.IRON_INGOT);
             case 1 -> icon("iron_plate");
-            default -> icon("upgrade_speed");
+            default -> ItemStack.EMPTY;
         };
     }
 
     @Override
     protected Component slotHint(Slot slot) {
-        return Component.translatable(switch (slot.index) {
-            case 0 -> "gui.robotica.slot_input";
-            case 1 -> "gui.robotica.slot_output";
-            default -> "gui.robotica.slot_upgrade";
-        });
+        return switch (slot.index) {
+            case 0 -> Component.translatable("gui.robotica.slot_input");
+            case 1 -> Component.translatable("gui.robotica.slot_output");
+            default -> null;
+        };
     }
 
     @Override

@@ -93,7 +93,7 @@ public class IndustryGameTests {
         });
     }
 
-    /** Higher Mks are faster and have one more card slot; upgrading in place keeps inputs, cards and energy. */
+    /** Higher Mks are faster; upgrading in place keeps inputs, cards and energy. The Assembler has 2 card slots on every Mk. */
     @GameTest(template = "empty")
     public static void machineTiersAndUpgradeInPlace(GameTestHelper helper) {
         ProcessingBlockEntity mk1 = place(helper, Machine.ASSEMBLER, 1);
@@ -105,19 +105,19 @@ public class IndustryGameTests {
                 .stream().map(RecipeHolder::value).filter(r -> r.getResultItem(helper.getLevel().registryAccess()).is(IndustryRegistry.THERMOCOUPLE.get()))
                 .findFirst().orElseThrow();
         int mk1Ticks = mk1.ticksFor(recipe);
-        helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.FORTUNE, 2), true).getCount() == 1, "Mk1 takes one fortune card");
+        helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).getCount() == 1, "only the Alloy Smelter takes fortune");
         helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.VOID, 1), true).getCount() == 1, "only the Centrifuge takes a void card");
 
         BlockPos abs = helper.absolutePos(POS);
         ProcessingBlock.upgradeInPlace(helper.getLevel(), abs, helper.getBlockState(POS),
                 IndustryRegistry.machineBlock(Machine.ASSEMBLER, 2).get(), null);
         ProcessingBlockEntity mk2 = (ProcessingBlockEntity) helper.getBlockEntity(POS);
-        helper.assertTrue(mk2.tier == 2 && mk2.upgrades.activeSlots() == 3, "Mk2 with 3 card slots expected");
+        helper.assertTrue(mk2.tier == 2 && mk2.upgrades.activeSlots() == 2, "Mk2: still 2 card slots, one per card kind");
         helper.assertTrue(mk2.items.getStackInSlot(0).getCount() == 5, "inputs kept");
         helper.assertTrue(mk2.upgrades.level(UpgradeKind.SPEED) == 2, "cards kept");
         helper.assertTrue(mk2.energy.getEnergyStored() == 12_345, "energy kept");
         helper.assertTrue(mk2.ticksFor(recipe) < mk1Ticks, "Mk2 is faster: " + mk2.ticksFor(recipe) + " vs " + mk1Ticks);
-        helper.assertTrue(mk2.upgrades.insertItem(2, CoreItems.cards(UpgradeKind.FORTUNE, 3), true).getCount() == 1, "Mk2 takes two fortune cards");
+        helper.assertTrue(mk2.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.EFFICIENCY, 4), true).getCount() == 2, "Mk2 takes two efficiency cards");
         helper.succeed();
     }
 
@@ -182,7 +182,7 @@ public class IndustryGameTests {
         });
     }
 
-    /** Fortune only works on recipes that allow it: alloying by default, centrifuging and assembling not. */
+    /** Fortune only works on recipes that allow it: alloying by default, centrifuging and assembling not (those machines take no fortune card). */
     @GameTest(template = "empty")
     public static void fortuneIsPerRecipe(GameTestHelper helper) {
         helper.assertTrue(recipeMaking(helper, Machine.ALLOY_SMELTER, IndustryRegistry.FERROTHORIUM_INGOT.get()).fortune(), "alloying takes fortune");
@@ -193,6 +193,8 @@ public class IndustryGameTests {
         int before = be.powerFor(recipe);
         be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, 3));
         helper.assertTrue(be.powerFor(recipe) == before, "fortune cards cost nothing where they do nothing");
+        helper.assertTrue(be.upgrades.cap(UpgradeKind.FORTUNE) == 0 && place(helper, Machine.CENTRIFUGE, 4).upgrades.cap(UpgradeKind.FORTUNE) == 0,
+                "the Assembler and Centrifuge take no fortune card");
         helper.succeed();
     }
 

@@ -11,7 +11,8 @@ import java.util.Set;
  *
  * <p>A machine with a Mk (Mk1-Mk4) follows one rule: {@link #mkSlots} = Mk + 1, caps from {@link #mkCap} (speed 2 x Mk,
  * efficiency Mk, range Mk, growth Mk, fortune min(Mk, 3), silk and void 1; per-Mk numbers in {@link CoreConfig}).
- * Machines without a Mk are listed in {@link Fixed}; their caps are server config too.
+ * Machines without a Mk are listed in {@link Fixed}; their caps are server config too. No machine opens more slots
+ * than {@link #kindSlots}, so every open slot has a card that fits.
  */
 public final class UpgradeRules {
     private UpgradeRules() {}
@@ -27,6 +28,18 @@ public final class UpgradeRules {
     /** Card slots of a machine of this Mk: Mk + 1 (2 to 5). */
     public static int mkSlots(int mk) {
         return clampMk(mk) + 1;
+    }
+
+    /** Card slots a machine that takes these kinds can fill: one per kind, Fortune and Silk Touch share one. */
+    public static int kindSlots(Set<UpgradeKind> kinds) {
+        int n = kinds.size();
+        if (kinds.contains(UpgradeKind.FORTUNE) && kinds.contains(UpgradeKind.SILK)) n--;
+        return n;
+    }
+
+    /** Card slots of a machine of this Mk that takes these kinds: Mk + 1, at most {@link #kindSlots}. */
+    public static int mkSlots(int mk, Set<UpgradeKind> kinds) {
+        return Math.min(mkSlots(mk), kindSlots(kinds));
     }
 
     /** Most cards of a kind that count in a machine of this Mk (before the machine accepts the kind at all). */
@@ -45,9 +58,7 @@ public final class UpgradeRules {
 
     /** Machines without a Mk: fixed slots and caps. */
     public enum Fixed {
-        METAL_PRESS(2, limit(UpgradeKind.SPEED, 4), limit(UpgradeKind.EFFICIENCY, 4)),
-        COMBUSTION_GENERATOR(2, limit(UpgradeKind.SPEED, 3), limit(UpgradeKind.EFFICIENCY, 4)),
-        WIRELESS_CHARGER(2, limit(UpgradeKind.SPEED, 4), limit(UpgradeKind.RANGE, 4)),
+        COMBUSTION_GENERATOR(2, limit(UpgradeKind.SPEED, 4), limit(UpgradeKind.EFFICIENCY, 4)),
         REPLICATOR(3, limit(UpgradeKind.SPEED, 3), limit(UpgradeKind.FORTUNE, 3), limit(UpgradeKind.EFFICIENCY, 4)),
         ARCHITECT_TABLE(2, limit(UpgradeKind.SPEED, 8), limit(UpgradeKind.EFFICIENCY, 4), limit(UpgradeKind.HEIGHT, 6)),
         COURIER_DRONE(2, limit(UpgradeKind.SPEED, 2), limit(UpgradeKind.RANGE, 4), limit(UpgradeKind.EFFICIENCY, 4));

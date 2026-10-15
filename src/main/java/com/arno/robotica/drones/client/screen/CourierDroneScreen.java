@@ -67,14 +67,14 @@ public class CourierDroneScreen extends MachineScreen<CourierDroneMenu> {
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index < CourierDrone.FILTER_SLOTS) return new ItemStack(Items.HOPPER);
         if (slot.index == CourierDrone.FILTER_SLOTS) return icon("copper_cell");
-        return icon("upgrade_speed");
+        return ItemStack.EMPTY;
     }
 
     @Override
     protected Component slotHint(Slot slot) {
         if (slot.index < CourierDrone.FILTER_SLOTS) return Component.translatable("gui.robotica.courier.slot_filter");
         if (slot.index == CourierDrone.FILTER_SLOTS) return Component.translatable("gui.robotica.slot_battery");
-        return Component.translatable("gui.robotica.slot_upgrade");
+        return null;
     }
 
     private static String pos(net.minecraft.core.BlockPos p) {

@@ -9,8 +9,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 
 /** Wireless Charger GUI: energy bar with the FE/t drawn, range and rate, FE/t delivered, the players in range and two card slots. */
 public class WirelessChargerScreen extends MachineScreen<WirelessChargerMenu> {
@@ -23,16 +21,6 @@ public class WirelessChargerScreen extends MachineScreen<WirelessChargerMenu> {
     @Override
     protected int titleMaxWidth() {
         return 140;
-    }
-
-    @Override
-    protected ItemStack ghostIcon(Slot slot) {
-        return icon(slot.index == 0 ? "upgrade_speed" : "upgrade_range");
-    }
-
-    @Override
-    protected Component slotHint(Slot slot) {
-        return Component.translatable("gui.robotica.wireless.slot");
     }
 
     @Override

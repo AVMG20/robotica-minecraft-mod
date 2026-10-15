@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -50,7 +51,9 @@ import java.util.UUID;
  */
 public class WirelessChargerBlockEntity extends PowerBlockEntity implements MenuProvider, InfoSource {
     public static final int SCAN_INTERVAL = 10;
-    public static final int UPGRADE_SLOTS = UpgradeRules.Fixed.WIRELESS_CHARGER.slots;
+    /** Speed and range cards; slots and caps follow the Mk rule. */
+    public static final Set<UpgradeKind> KINDS = Set.of(UpgradeKind.SPEED, UpgradeKind.RANGE);
+    public static final int UPGRADE_SLOTS = UpgradeRules.kindSlots(KINDS);
     /** Per target state: took energy since the last scan / nothing to charge / buffer empty. */
     public static final byte CHARGING = 0, IDLE = 1, NO_POWER = 2;
 
@@ -58,7 +61,7 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     public static final int BUFFER_TICKS = 200, INPUT_PLAYERS = 20;
 
     public final MachineEnergyStorage energy;
-    public final Upgrades upgrades = Upgrades.fixed(UpgradeRules.Fixed.WIRELESS_CHARGER, this::setChanged);
+    public final Upgrades upgrades = Upgrades.forMk(this::mk, KINDS, this::setChanged);
 
     @Nullable
     private UUID owner;
@@ -93,6 +96,11 @@ public class WirelessChargerBlockEntity extends PowerBlockEntity implements Menu
     }
 
     // ---- numbers ----
+
+    /** 1-4 */
+    public int mk() {
+        return mk;
+    }
 
     public int range() {
         return PowerConfig.wirelessRange(mk) + PowerConfig.wirelessRangePerCard() * upgrades.level(UpgradeKind.RANGE);

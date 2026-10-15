@@ -30,6 +30,8 @@ public class ProcessingMenu extends MachineMenu {
     private final Block block;
     public final Machine machine;
     public final int tier;
+    /** Open card slots, right-aligned before the panel edge. */
+    public final int cardSlots;
     private final int energyIdx, capacityIdx, progressIdx, neededIdx, useIdx, statusIdx;
 
     /** Client side: machine and Mk come from the open-menu buffer (the client may not know the block yet). */
@@ -83,8 +85,8 @@ public class ProcessingMenu extends MachineMenu {
                 return IndustryBlockEntity.isBattery(stack);
             }
         });
-        int n = upgrades.activeSlots();
-        for (int i = 0; i < upgrades.getSlots(); i++) addSlot(upgrades.slot(i, 152 - 18 * (n - 1 - i), UPGRADE_Y));
+        cardSlots = upgrades.activeSlots();
+        for (int i = 0; i < upgrades.getSlots(); i++) addSlot(upgrades.slot(i, 152 - 18 * (cardSlots - 1 - i), UPGRADE_Y));
         addPlayerInventory(inv, 8, HEIGHT - 82);
 
         energyIdx = track(be == null ? () -> 0 : () -> be.energy.getEnergyStored());

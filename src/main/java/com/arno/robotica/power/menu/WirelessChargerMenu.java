@@ -2,6 +2,7 @@ package com.arno.robotica.power.menu;
 
 import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.power.PowerRegistry;
+import com.arno.robotica.power.block.WirelessChargerBlock;
 import com.arno.robotica.power.block.WirelessChargerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
@@ -36,7 +37,8 @@ public class WirelessChargerMenu extends MachineMenu {
         super(PowerRegistry.WIRELESS_CHARGER_MENU.get(), id);
         this.pos = pos;
         this.be = be;
-        var upgrades = be != null ? be.upgrades : com.arno.robotica.core.upgrade.Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.WIRELESS_CHARGER, () -> {});
+        var upgrades = be != null ? be.upgrades : com.arno.robotica.core.upgrade.Upgrades.forMk(
+                () -> inv.player.level().getBlockState(pos).getBlock() instanceof WirelessChargerBlock b ? b.mk() : 1, WirelessChargerBlockEntity.KINDS, () -> {});
         for (int i = 0; i < WirelessChargerBlockEntity.UPGRADE_SLOTS; i++) {
             addSlot(new SlotItemHandler(upgrades, i, SLOT_X, SLOT_Y + i * 18));
         }
