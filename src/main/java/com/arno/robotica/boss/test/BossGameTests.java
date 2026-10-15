@@ -2,6 +2,7 @@ package com.arno.robotica.boss.test;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.boss.BossConfig;
+import com.arno.robotica.boss.BossNews;
 import com.arno.robotica.boss.BossRegistry;
 import com.arno.robotica.boss.block.BossAltarBlock;
 import com.arno.robotica.boss.block.BossAltarBlockEntity;
@@ -24,6 +25,8 @@ import com.mojang.authlib.GameProfile;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.core.Vec3i;
@@ -33,6 +36,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSources;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.Entity;
@@ -50,8 +54,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /** Headless tests of the boss module: {@code ./gradlew runGameTestServer}. */
@@ -923,4 +929,77 @@ public class BossGameTests {
                 "robotica:null_relay has a structure set");
         helper.succeed();
     }
+
+    /** A server player in the level that keeps every system message it gets. */
+    private static ServerPlayer listener(GameTestHelper helper, String name, List<Component> heard) {
+        ServerLevel level = helper.getLevel();
+        CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), name), false);
+        ServerPlayer player = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation()) {
+            @Override
+            public void sendSystemMessage(Component message, boolean overlay) {
+                heard.add(message);
+                super.sendSystemMessage(message, overlay);
+            }
+        };
+        Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        new EmbeddedChannel(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        return player;
+    }
+
+    /** A translated line with this key was heard, with an argument that reads {@code arg}. */
+    private static boolean said(List<Component> heard, String key, String arg) {
+        for (Component c : heard) {
+            if (!(c.getContents() instanceof TranslatableContents t) || !t.getKey().equals(key)) continue;
+            for (Object a : t.getArgs()) {
+                if (a instanceof Component ac && ac.getString().equals(arg)) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean onlyLine(List<Component> heard, String key) {
+        return heard.size() == 1 && heard.get(0).getContents() instanceof TranslatableContents t && t.getKey().equals(key);
+    }
+
+    /** A summon and a player's kill reach every player; with server news off the kill is not announced and a summon stays local. */
+    @GameTest(template = "boss_arena", batch = "bossNews", timeoutTicks = 100)
+    public static void bossNewsReachesTheServer(GameTestHelper helper) {
+        ForgeTyrant boss = tyrant(helper);
+        List<Component> heard = new ArrayList<>();
+        ServerPlayer killer = listener(helper, "test-slayer", heard);
+        BlockPos at = helper.absolutePos(new BlockPos(1, 1, 1));
+        killer.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        helper.runAfterDelay(2, () -> {
+            String altarKey = "message.robotica.boss.tyrant.awakened";
+            heard.clear();
+            BossNews.awakened(boss, killer, Component.translatable(altarKey), true);
+            helper.assertTrue(said(heard, "message.robotica.boss.awakened_by", "test-slayer"), "the summoner is named, heard " + heard);
+            heard.clear();
+            Player machine = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.randomUUID(), "test-machine"));
+            BossNews.awakened(boss, machine, Component.translatable(altarKey), true);
+            helper.assertTrue(onlyLine(heard, altarKey), "a fake player is never named, heard " + heard);
+            heard.clear();
+            BossNews.awakened(boss, killer, Component.translatable(altarKey), false);
+            helper.assertTrue(onlyLine(heard, altarKey), "news off: nearby players get the altar line only, heard " + heard);
+            heard.clear();
+
+            DamageSource hit = helper.getLevel().damageSources().playerAttack(killer);
+            helper.assertTrue(BossNews.defeated(boss, hit, false) == null && heard.isEmpty(), "news off: no kill line");
+            boss.setHealth(1.0F);
+            boss.hurt(hit, 100.0F);
+            helper.assertTrue(boss.isDeadOrDying(), "the Tyrant is dead");
+            helper.assertTrue(said(heard, "message.robotica.boss.defeated_by", "test-slayer"), "the kill names the killer, heard " + heard);
+            int lines = heard.size();
+            boss.die(hit);
+            boss.discard();
+            ForgeTyrant other = helper.spawn(BossRegistry.FORGE_TYRANT.get(), CENTRE);
+            other.discard();
+            helper.assertTrue(heard.size() == lines, "a second die call or a discard is not announced, heard " + heard);
+            helper.getLevel().getServer().getPlayerList().remove(killer);
+            cleanup(helper);
+            helper.succeed();
+        });
+    }
+
 }

@@ -1,10 +1,10 @@
 package com.arno.robotica.boss.block;
 
 import com.arno.robotica.boss.BossConfig;
+import com.arno.robotica.boss.BossNews;
 import com.arno.robotica.boss.BossRegistry;
 import com.arno.robotica.boss.entity.RoboticaBoss;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleOptions;
@@ -12,7 +12,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -175,10 +174,7 @@ public class BossAltarBlock extends Block implements EntityBlock {
             level.scheduleTick(pos, level.getBlockState(pos).getBlock(), cooldown);
         }
         awakenEffects(level, pos, kind);
-        Component news = kind.message("awakened").withStyle(ChatFormatting.GOLD);
-        for (ServerPlayer near : level.getPlayers(p -> p.distanceToSqr(x, y, z) < 64.0 * 64.0)) {
-            near.sendSystemMessage(news);
-        }
+        BossNews.awakened(boss, player, kind.message("awakened"));
         return Result.SPAWNED;
     }
 

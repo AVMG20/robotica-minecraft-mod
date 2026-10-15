@@ -38,6 +38,7 @@ public final class BossConfig {
     private static final ModConfigSpec.DoubleValue REGEN_PERCENT;
     private static final ModConfigSpec.IntValue ALTAR_COOLDOWN;
     private static final ModConfigSpec.IntValue LOOT_LOCK;
+    private static final ModConfigSpec.BooleanValue ANNOUNCE;
     private static final ModConfigSpec.BooleanValue FOUNDRY_ENABLED;
     private static final ModConfigSpec.BooleanValue CINDER_FORGE_ENABLED;
     private static final ModConfigSpec.BooleanValue NULL_RELAY_ENABLED;
@@ -107,6 +108,8 @@ public final class BossConfig {
                 .defineInRange("altarCooldownSeconds", 300, 0, 86_400);
         LOOT_LOCK = b.comment("Seconds a boss's loot belongs to its killer alone.")
                 .defineInRange("lootLockSeconds", 120, 0, 3600);
+        ANNOUNCE = b.comment("Tell every player on the server when a boss is awakened or defeated. Off: only players near the altar hear about a summon.")
+                .define("announceToServer", true);
         b.pop();
         b.push("worldgen");
         FOUNDRY_ENABLED = b.comment("Generate Rusted Foundry ruins (with a Colossus Altar) in plains, deserts and badlands. Only affects new chunks.")
@@ -235,6 +238,10 @@ public final class BossConfig {
 
     public static int lootLockTicks() {
         return 20 * get(LOOT_LOCK);
+    }
+
+    public static boolean announceToServer() {
+        return get(ANNOUNCE);
     }
 
     public static boolean foundryEnabled() {

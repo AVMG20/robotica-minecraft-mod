@@ -2,6 +2,7 @@ package com.arno.robotica.boss.entity;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.boss.BossConfig;
+import com.arno.robotica.boss.BossNews;
 import com.arno.robotica.boss.BossRegistry;
 import com.arno.robotica.core.particle.CoreParticles;
 import net.minecraft.advancements.AdvancementHolder;
@@ -978,7 +979,9 @@ public class NullSentinel extends Monster implements RoboticaBoss {
 
     @Override
     public void die(DamageSource source) {
+        boolean alive = !dead && !isRemoved();
         super.die(source);
+        if (alive && dead) BossNews.defeated(this, source);
         spots.clear();
         syncSpots();
         bossEvent.setProgress(0.0F);

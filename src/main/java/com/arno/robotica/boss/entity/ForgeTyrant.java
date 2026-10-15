@@ -2,6 +2,7 @@ package com.arno.robotica.boss.entity;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.boss.BossConfig;
+import com.arno.robotica.boss.BossNews;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -643,7 +644,9 @@ public class ForgeTyrant extends Monster implements RoboticaBoss {
     /** Everyone who fought it (had the boss bar and stayed close) gets the guide step, not only the killer. */
     @Override
     public void die(DamageSource source) {
+        boolean alive = !dead && !isRemoved();
         super.die(source);
+        if (alive && dead) BossNews.defeated(this, source);
         spots.clear();
         syncSpots();
         if (!(level() instanceof ServerLevel server)) return;

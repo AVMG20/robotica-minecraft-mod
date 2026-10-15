@@ -2,6 +2,7 @@ package com.arno.robotica.boss.entity;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.boss.BossConfig;
+import com.arno.robotica.boss.BossNews;
 import com.arno.robotica.boss.BossRegistry;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.BlockPos;
@@ -435,7 +436,9 @@ public class ScrapColossus extends Monster implements RoboticaBoss {
     /** Everyone who fought it (had the boss bar and stayed close) gets the guide step, not only the killer. */
     @Override
     public void die(DamageSource source) {
+        boolean alive = !dead && !isRemoved();
         super.die(source);
+        if (alive && dead) BossNews.defeated(this, source);
         if (!(level() instanceof ServerLevel server)) return;
         server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.5, getZ(), 1, 0.0, 0.0, 0.0, 0.0);
         server.sendParticles(com.arno.robotica.core.particle.CoreParticles.shard(com.arno.robotica.core.particle.CoreParticles.STEEL, 1.8F), getX(), getY() + 1.5, getZ(), 20, 0.7, 0.9, 0.7, 0.4);
