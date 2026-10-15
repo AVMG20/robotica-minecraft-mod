@@ -239,12 +239,12 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
             oldSize = tag.getInt("old_size");
             return;
         }
-        // Saved by 0.9.7 ("square": Mk2-Mk4 squares of 2x2 to 4x4) or older (one block per panel). A formed square, also
-        // one grown from an old single block, had the 0.9.7 width of its Mk; anything else was a one-block panel, except a
-        // lone 0.9.7 block that never formed, which grows like a moved block.
+        // Saved by 0.9.7 ("square": Mk2-Mk4 squares of 2x2 to 4x4) or older (one block per panel). A 0.9.7 square, formed
+        // or not (migrate leaves a lone block alone), or one grown from an old single block, had the 0.9.7 width of its
+        // Mk; anything else was a one-block panel.
         int width = tier.ordinal() + 1;
-        if (formed && tier != SolarPanelBlock.Tier.MK1) oldSize = width == SolarArrayBlock.SIZE ? 0 : width;
-        else oldSize = tier == SolarPanelBlock.Tier.MK1 || !tag.contains("square") ? 1 : 0;
+        if (tier != SolarPanelBlock.Tier.MK1 && (formed || tag.contains("square"))) oldSize = width == SolarArrayBlock.SIZE ? 0 : width;
+        else oldSize = 1;
         if (oldSize > 0) formed = false;
     }
 

@@ -163,15 +163,17 @@ public class SolarArrayBlock extends SolarPanelBlock {
 
     /**
      * Removes every block of this panel type in the square at {@code origin}, whatever its cell, without drops: a panel
-     * that lost a block or whose block entity ended up in another cell. Skips unloaded blocks and old single panels.
+     * that lost a block or whose block entity ended up in another cell. Also the outer ring of a 0.9.7 Mk4 that has not
+     * shrunk yet. Skips unloaded blocks and old single panels.
      */
     public void removePanel(Level level, BlockPos origin) {
-        for (int x = 0; x < SIZE; x++) {
-            for (int z = 0; z < SIZE; z++) {
+        for (int x = 0; x <= MAX_CELL; x++) {
+            for (int z = 0; z <= MAX_CELL; z++) {
                 BlockPos p = origin.offset(x, 0, z);
                 if (!level.isLoaded(p)) continue;
                 BlockState state = level.getBlockState(p);
-                if (state.is(this) && !state.getValue(SINGLE)) level.destroyBlock(p, false);
+                boolean ring = x >= SIZE || z >= SIZE;
+                if (ring ? isCell(state, x, z) : state.is(this) && !state.getValue(SINGLE)) level.destroyBlock(p, false);
             }
         }
     }
@@ -186,6 +188,18 @@ public class SolarArrayBlock extends SolarPanelBlock {
         if (!fits(level, target, origin, player)) {
             noRoom(level, player);
             return false;
+        }
+        if (player != null) {
+            // the blocks the panel grows into are placed by the player: claim mods may refuse them
+            java.util.List<net.neoforged.neoforge.common.util.BlockSnapshot> grown = new java.util.ArrayList<>();
+            for (int x = 0; x < SIZE; x++) {
+                for (int z = 0; z < SIZE; z++) {
+                    BlockPos p = target.offset(x, 0, z);
+                    BlockState there = level.getBlockState(p);
+                    if (!there.is(this) || !origin(p, there).equals(origin)) grown.add(net.neoforged.neoforge.common.util.BlockSnapshot.create(level.dimension(), level, p));
+                }
+            }
+            if (!grown.isEmpty() && net.neoforged.neoforge.event.EventHooks.onMultiBlockPlace(player, grown, net.minecraft.core.Direction.UP)) return false;
         }
         int energy = old.energy.getEnergyStored();
         for (int x = SIZE - 1; x >= 0; x--) {
@@ -208,8 +222,8 @@ public class SolarArrayBlock extends SolarPanelBlock {
             // Swapping the blocks is building: adventure mode and protected spots may not.
             if (!player.mayBuild()) return ItemInteractionResult.FAIL;
             if (level.isClientSide) return ItemInteractionResult.SUCCESS;
-            if (!upgradeInPlace(level, origin(pos, state), next, player)) return ItemInteractionResult.FAIL;
-            if (!player.getAbilities().instabuild) stack.shrink(1);
+            // consumed even when it fails, so the item is not placed as a new panel on top instead
+            if (upgradeInPlace(level, origin(pos, state), next, player) && !player.getAbilities().instabuild) stack.shrink(1);
             return ItemInteractionResult.CONSUME;
         }
         return super.useItemOn(stack, state, level, pos, player, hand, hit);
@@ -269,6 +283,7 @@ public class SolarArrayBlock extends SolarPanelBlock {
         for (int x = 0; x <= MAX_CELL; x++) {
             for (int z = 0; z <= MAX_CELL; z++) {
                 BlockPos p = origin.offset(x, 0, z);
+                if ((x >= SIZE || z >= SIZE) && !level.isLoaded(p)) continue;   // never load a chunk for an old Mk4's ring
                 if (!p.equals(pos) && isCell(level.getBlockState(p), x, z)) level.destroyBlock(p, false);
             }
         }
@@ -276,10 +291,17 @@ public class SolarArrayBlock extends SolarPanelBlock {
 
     /**
      * Brings a panel saved by an older version to the current layout without placing any block: a 4x4 Mk4 loses its
-     * outer blocks ({@code oldSize} 4), a 2x2 Mk2 keeps only its corner as a single panel ({@code oldSize} 2) and a one-block
-     * panel turns single ({@code oldSize} 1). Returns false while an old block to remove is not loaded (try again later).
+     * outer blocks ({@code oldSize} 4), a 2x2 Mk2 keeps only its corner as a single panel ({@code oldSize} 2; a lone block
+     * that never formed stays as it is) and a one-block panel turns single ({@code oldSize} 1). Returns false while an old
+     * block to remove is not loaded (try again later).
      */
     boolean migrate(Level level, BlockPos origin, int oldSize) {
+        boolean square = oldSize != 2;
+        for (int i = 1; i < 4 && !square; i++) {
+            BlockPos p = origin.offset(i & 1, 0, i >> 1);
+            square = !level.isLoaded(p) || isCell(level.getBlockState(p), i & 1, i >> 1);
+        }
+        if (!square) return true;
         if (oldSize <= 2 && !level.getBlockState(origin).getValue(SINGLE)) setQuietly(level, origin, single());
         boolean done = true;
         for (int x = 0; x < oldSize; x++) {

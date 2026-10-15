@@ -205,7 +205,8 @@ public class PowerGameTests {
 
     /**
      * Panels saved by 0.9.7 and older move to 3x3 without placing a block or dropping anything: a 1x1 Mk1 and a 2x2 Mk2
-     * become single panels with their full output, a 4x4 Mk4 drops its outer ring, a 3x3 Mk3 stays as it is.
+     * become single panels with their full output, a 4x4 Mk4 drops its outer ring, a 3x3 Mk3 stays as it is, and a lone
+     * 0.9.7 Mk2 block that never formed grows like a moved block.
      */
     @GameTest(template = SOLAR_AREA, timeoutTicks = 60)
     public static void oldSolarPanelsMigrate(GameTestHelper helper) {
@@ -214,6 +215,8 @@ public class PowerGameTests {
         var oldMk2 = oldSolar(helper, 2, mk2, 2, true);
         var oldMk4 = oldSolar(helper, 4, mk4, 4, true);
         var oldMk3 = oldSolar(helper, 3, mk3, 3, true);
+        BlockPos lone = mk3.above(2);
+        oldSolar(helper, 2, lone, 1, true);
         helper.runAfterDelay(45, () -> {
             for (var c : new Object[][]{{mk1, oldMk1, 1}, {mk2, oldMk2, 2}}) {
                 BlockPos p = (BlockPos) c[0];
@@ -232,6 +235,7 @@ public class PowerGameTests {
             helper.assertTrue(oldMk4.formed() && oldMk4.openCells() == 9, "the Mk4 is formed with all 9 open");
             assertSolarSquare(helper, solar(3), mk3, "the Mk3 stays");
             helper.assertTrue(oldMk3.formed(), "the Mk3 stays formed");
+            assertSolarSquare(helper, solar(2), lone, "the lone 0.9.7 Mk2 grew");
             helper.assertTrue(solarDrops(helper) == 0, "no drops");
             helper.succeed();
         });
