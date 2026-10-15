@@ -297,13 +297,14 @@ def solar_model(mk):
     }
 
 
-# Mk2-Mk4 fill mk x mk blocks when placed (SolarArrayBlock). Each block's cell_x / cell_z is its place in the panel,
+# Every Mk fills 3x3 blocks when placed (SolarArrayBlock). Each block's cell_x / cell_z is its place in the panel,
 # counted from the north-west corner; its model has the sides only where the panel ends. A side's texture keeps the
 # bracket on the end that is a corner of the panel (u runs west on north faces, east on south, south on west faces,
-# north on east faces).
+# north on east faces). single=true is a one-block panel saved by an older version: the whole slab.
+SOLAR_SIZE = 3
 def solar_cell_model(mk, x, z):
     name = f'solar_panel_mk{mk}'
-    n = mk
+    n = SOLAR_SIZE
     side_uv = [0, 0, 16, 6]
 
     def side(left, right):
@@ -321,18 +322,19 @@ def solar_cell_model(mk, x, z):
             'elements': [{'from': [0, 0, 0], 'to': [16, 6, 16], 'faces': faces}]}
 
 
-CELL_RANGE = range(4)   # SolarArrayBlock.CELL_X / CELL_Z: 0-3 for every Mk (a Mk2 never uses 2 or 3)
+CELL_RANGE = range(4)   # SolarArrayBlock.CELL_X / CELL_Z: 0-3 (3 only on a 0.9.7 Mk4 until it shrinks to 3x3)
 for mk in (1, 2, 3, 4):
     name = f'solar_panel_mk{mk}'
     block_model(name, solar_model(mk))
-    if mk == 1:
-        blockstate(name, {'variants': {'': {'model': f'robotica:block/{name}'}}})
-    else:
-        for x in range(mk):
-            for z in range(mk):
-                block_model(f'{name}_{x}_{z}', solar_cell_model(mk, x, z))
-        blockstate(name, {'variants': {f'cell_x={x},cell_z={z}': {'model': f'robotica:block/{name}_{min(x, mk - 1)}_{min(z, mk - 1)}'}
-                                       for x in CELL_RANGE for z in CELL_RANGE}})
+    for x in range(SOLAR_SIZE):
+        for z in range(SOLAR_SIZE):
+            block_model(f'{name}_{x}_{z}', solar_cell_model(mk, x, z))
+    variants = {}
+    for x in CELL_RANGE:
+        for z in CELL_RANGE:
+            variants[f'cell_x={x},cell_z={z},single=false'] = {'model': f'robotica:block/{name}_{min(x, SOLAR_SIZE - 1)}_{min(z, SOLAR_SIZE - 1)}'}
+            variants[f'cell_x={x},cell_z={z},single=true'] = {'model': f'robotica:block/{name}'}
+    blockstate(name, {'variants': variants})
     item_model(name, f'robotica:block/{name}')
     loot(name)
 

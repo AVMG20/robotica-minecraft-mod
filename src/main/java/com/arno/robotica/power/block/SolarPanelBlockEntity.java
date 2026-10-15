@@ -13,8 +13,8 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Generates while it is day and the sky is visible (checked once per second), at {@link #RAIN_PERCENT}% while it rains or
  * thunders in a biome with rain or snow (Mekanism's rule). Pushes into its neighbours (one shared rate for all faces). Takes
- * no cards. A Mk2-Mk4 panel ({@link SolarArrayBlock}) has this block entity in its north-west block only: it makes its
- * output times the share of the panel's blocks that see the sky and pushes into the blocks around the whole panel.
+ * no cards. A panel ({@link SolarArrayBlock}) has this block entity in its north-west block only: it makes its output
+ * times the share of the panel's blocks that see the sky and pushes into the blocks around the whole panel.
  */
 public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minecraft.world.MenuProvider, com.arno.robotica.power.menu.EnergyInfoMenu.Source, com.arno.robotica.compat.InfoSource {
     public final MachineEnergyStorage energy;
@@ -25,18 +25,21 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     private boolean sunny;
     private boolean raining;
     private boolean openSky;
-    /** Blocks of the panel that see the sky (all of them for a Mk1). */
+    /** Blocks of the panel that see the sky (all of them for an old single panel that sees it). */
     private int openCells;
-    /** A Mk2-Mk4 standing alone (placed as one block before panels covered a square): pushes like a Mk1 block. */
+    /** One block on its own (an old single panel, or a block a mod moved alone): pushes into its own neighbours. */
     private boolean standalone;
-    /** Mk2-Mk4: every block of the square has been there at once. A formed panel that loses a block removes itself. */
+    /** Every block of the square has been there at once. A formed panel that loses a block removes itself. */
     private boolean formed;
-    /** Saved before panels covered a square: a Mk2-Mk4 left on its own keeps its full output. */
-    private boolean legacy;
+    /**
+     * Saved by an older version and not yet brought to the 3x3 layout ({@link SolarArrayBlock#migrate}): its old width
+     * (4 for a 0.9.7 Mk4, 2 for a 0.9.7 Mk2, 1 for a one-block panel), 0 when done.
+     */
+    private int oldSize;
     /** The sky has been checked since the block entity loaded. */
     private boolean checked;
     private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
-    /** Mk2-Mk4: cached FE neighbours around the panel, one per block and face that faces out of it (null for a Mk1). */
+    /** Cached FE neighbours around the panel, one per block and face that faces out of it. */
     @org.jetbrains.annotations.Nullable
     private net.neoforged.neoforge.capabilities.BlockCapabilityCache<net.neoforged.neoforge.energy.IEnergyStorage, net.minecraft.core.Direction>[] around;
     @org.jetbrains.annotations.Nullable
@@ -44,7 +47,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
 
     private int currentOutput() {
         if (!sunny) return 0;
-        int cells = tier.size * tier.size;
+        int cells = SolarArrayBlock.SIZE * SolarArrayBlock.SIZE;
         return weatherOutput((int) ((long) CoreConfig.scaleGeneration(tier.output()) * openCells / cells), raining);
     }
 
@@ -116,7 +119,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         if (!checked || (level.getGameTime() + pos.asLong()) % 20 == 0) {
             checked = true;
-            int open = countOpenCells(level, pos, state);
+            int open = countOpenCells(level, pos);
             if (open < 0) return;   // the panel removed itself
             openCells = level.dimensionType().hasFixedTime() ? 0 : open;
             openSky = openCells > 0;
@@ -127,19 +130,28 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         int gen = currentOutput();
         if (gen > 0) energy.generate(gen);
         if (energy.getEnergyStored() <= 0) return;
-        if (tier.size == 1 || standalone) EnergyUtil.pushToNeighbors(level, pos, energy, pushRate, neighbors);
+        if (standalone) EnergyUtil.pushToNeighbors(level, pos, energy, pushRate, neighbors);
         else pushAround(level, pos);
     }
 
     /**
      * Blocks of the panel that see the sky, or -1 when the panel removed itself. Blocks in unloaded chunks count as open.
-     * A Mk2-Mk4 that stands alone (placed as one block before panels covered a square) grows into its square when the
-     * square is empty, else only its own block counts. A formed panel that lost a block, or whose block entity is no
-     * longer in the north-west block (rotated in place), removes itself without drops.
+     * An old single panel counts all its blocks when it sees the sky. A block standing alone (moved on its own by another
+     * mod) grows into its square when the square is empty, else only its own block counts. A formed panel that lost a
+     * block, or whose block entity is no longer in the north-west block (rotated in place), removes itself without drops.
      */
-    private int countOpenCells(ServerLevel level, BlockPos pos, BlockState state) {
-        int n = tier.size;
-        if (n == 1 || !(state.getBlock() instanceof SolarArrayBlock array)) return level.canSeeSky(pos.above()) ? 1 : 0;
+    private int countOpenCells(ServerLevel level, BlockPos pos) {
+        if (!(getBlockState().getBlock() instanceof SolarArrayBlock array)) return 0;
+        if (oldSize > 0 && array.migrate(level, pos, oldSize)) {
+            oldSize = 0;
+            setChanged();
+        }
+        BlockState state = getBlockState();
+        int n = SolarArrayBlock.SIZE;
+        if (state.getValue(SolarArrayBlock.SINGLE)) {
+            standalone = true;
+            return level.canSeeSky(pos.above()) ? n * n : 0;
+        }
         if (!array.isCell(state, 0, 0)) {
             array.removePanel(level, pos);
             return -1;
@@ -171,20 +183,19 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
             return -1;
         }
         if (formed) {
-            // Only its own block left (moved on its own by another mod): grow again like an old single panel.
+            // Only its own block left (moved on its own by another mod): grow again.
             formed = false;
             setChanged();
         }
         standalone = present == 1;
-        if (standalone && array.grow(level, pos)) return countOpenCells(level, pos, state);
-        // An old single panel without room to grow works as before; a lone block from another mod's placer counts one block.
-        return standalone && legacy && open > 0 ? n * n : open;
+        if (standalone && array.grow(level, pos)) return countOpenCells(level, pos);
+        return open;
     }
 
-    /** {@link EnergyUtil#pushToNeighbors} for a Mk2-Mk4: into the receivers around the whole panel, one shared rate. */
+    /** {@link EnergyUtil#pushToNeighbors} for a panel: into the receivers around the whole panel, one shared rate. */
     @SuppressWarnings("unchecked")
     private void pushAround(ServerLevel level, BlockPos pos) {
-        int n = tier.size;
+        int n = SolarArrayBlock.SIZE;
         if (around == null) {
             java.util.List<net.neoforged.neoforge.capabilities.BlockCapabilityCache<net.neoforged.neoforge.energy.IEnergyStorage, net.minecraft.core.Direction>> list = new java.util.ArrayList<>();
             for (int x = 0; x < n; x++) {
@@ -215,7 +226,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         super.saveAdditional(tag, registries);
         tag.put("energy", energy.serializeNBT(registries));
         if (formed) tag.putBoolean("formed", true);
-        if (!legacy) tag.putBoolean("square", true);
+        tag.putInt("size", SolarArrayBlock.SIZE);
+        if (oldSize > 0) tag.putInt("old_size", oldSize);
     }
 
     @Override
@@ -223,7 +235,17 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         super.loadAdditional(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         formed = tag.getBoolean("formed");
-        legacy = !tag.contains("square");
+        if (tag.contains("size")) {
+            oldSize = tag.getInt("old_size");
+            return;
+        }
+        // Saved by 0.9.7 ("square": Mk2-Mk4 squares of 2x2 to 4x4) or older (one block per panel). A formed square, also
+        // one grown from an old single block, had the 0.9.7 width of its Mk; anything else was a one-block panel, except a
+        // lone 0.9.7 block that never formed, which grows like a moved block.
+        int width = tier.ordinal() + 1;
+        if (formed && tier != SolarPanelBlock.Tier.MK1) oldSize = width == SolarArrayBlock.SIZE ? 0 : width;
+        else oldSize = tier == SolarPanelBlock.Tier.MK1 || !tag.contains("square") ? 1 : 0;
+        if (oldSize > 0) formed = false;
     }
 
     @Override
@@ -244,12 +266,12 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         invalidateCells();
     }
 
-    /** Mk2-Mk4: the other blocks of the panel hand out this buffer, so their capability changes with this block entity. */
+    /** The other blocks of the panel hand out this buffer, so their capability changes with this block entity. */
     private void invalidateCells() {
-        if (level == null || level.isClientSide || tier.size == 1) return;
+        if (level == null || level.isClientSide) return;
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-        for (int x = 0; x < tier.size; x++) {
-            for (int z = 0; z < tier.size; z++) {
+        for (int x = 0; x < SolarArrayBlock.SIZE; x++) {
+            for (int z = 0; z < SolarArrayBlock.SIZE; z++) {
                 if (x != 0 || z != 0) level.invalidateCapabilities(p.set(worldPosition.getX() + x, worldPosition.getY(), worldPosition.getZ() + z));
             }
         }

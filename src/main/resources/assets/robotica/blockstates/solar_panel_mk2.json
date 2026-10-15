@@ -1,52 +1,100 @@
 {
   "variants": {
-    "cell_x=0,cell_z=0": {
+    "cell_x=0,cell_z=0,single=false": {
       "model": "robotica:block/solar_panel_mk2_0_0"
     },
-    "cell_x=0,cell_z=1": {
+    "cell_x=0,cell_z=0,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=0,cell_z=1,single=false": {
       "model": "robotica:block/solar_panel_mk2_0_1"
     },
-    "cell_x=0,cell_z=2": {
-      "model": "robotica:block/solar_panel_mk2_0_1"
+    "cell_x=0,cell_z=1,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
     },
-    "cell_x=0,cell_z=3": {
-      "model": "robotica:block/solar_panel_mk2_0_1"
+    "cell_x=0,cell_z=2,single=false": {
+      "model": "robotica:block/solar_panel_mk2_0_2"
     },
-    "cell_x=1,cell_z=0": {
+    "cell_x=0,cell_z=2,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=0,cell_z=3,single=false": {
+      "model": "robotica:block/solar_panel_mk2_0_2"
+    },
+    "cell_x=0,cell_z=3,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=1,cell_z=0,single=false": {
       "model": "robotica:block/solar_panel_mk2_1_0"
     },
-    "cell_x=1,cell_z=1": {
+    "cell_x=1,cell_z=0,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=1,cell_z=1,single=false": {
       "model": "robotica:block/solar_panel_mk2_1_1"
     },
-    "cell_x=1,cell_z=2": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=1,cell_z=1,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
     },
-    "cell_x=1,cell_z=3": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=1,cell_z=2,single=false": {
+      "model": "robotica:block/solar_panel_mk2_1_2"
     },
-    "cell_x=2,cell_z=0": {
-      "model": "robotica:block/solar_panel_mk2_1_0"
+    "cell_x=1,cell_z=2,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
     },
-    "cell_x=2,cell_z=1": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=1,cell_z=3,single=false": {
+      "model": "robotica:block/solar_panel_mk2_1_2"
     },
-    "cell_x=2,cell_z=2": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=1,cell_z=3,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
     },
-    "cell_x=2,cell_z=3": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=2,cell_z=0,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_0"
     },
-    "cell_x=3,cell_z=0": {
-      "model": "robotica:block/solar_panel_mk2_1_0"
+    "cell_x=2,cell_z=0,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
     },
-    "cell_x=3,cell_z=1": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=2,cell_z=1,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_1"
     },
-    "cell_x=3,cell_z=2": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=2,cell_z=1,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
     },
-    "cell_x=3,cell_z=3": {
-      "model": "robotica:block/solar_panel_mk2_1_1"
+    "cell_x=2,cell_z=2,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_2"
+    },
+    "cell_x=2,cell_z=2,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=2,cell_z=3,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_2"
+    },
+    "cell_x=2,cell_z=3,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=3,cell_z=0,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_0"
+    },
+    "cell_x=3,cell_z=0,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=3,cell_z=1,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_1"
+    },
+    "cell_x=3,cell_z=1,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=3,cell_z=2,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_2"
+    },
+    "cell_x=3,cell_z=2,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
+    },
+    "cell_x=3,cell_z=3,single=false": {
+      "model": "robotica:block/solar_panel_mk2_2_2"
+    },
+    "cell_x=3,cell_z=3,single=true": {
+      "model": "robotica:block/solar_panel_mk2"
     }
   }
 }

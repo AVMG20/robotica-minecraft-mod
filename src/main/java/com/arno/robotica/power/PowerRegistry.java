@@ -68,13 +68,13 @@ public final class PowerRegistry {
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F, 3.0F).sound(SoundType.WOOD).noOcclusion());
     public static final DeferredBlock<CombustionGeneratorBlock> COMBUSTION_GENERATOR = BLOCKS.registerBlock("combustion_generator",
             CombustionGeneratorBlock::new, machine().noOcclusion().lightLevel(s -> s.getValue(BlockStateProperties.LIT) ? 13 : 0));
-    public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK1 = BLOCKS.registerBlock("solar_panel_mk1",
-            p -> new SolarPanelBlock(p, SolarPanelBlock.Tier.MK1), machine().noOcclusion());
-    public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK2 = BLOCKS.registerBlock("solar_panel_mk2",
+    public static final DeferredBlock<SolarArrayBlock> SOLAR_PANEL_MK1 = BLOCKS.registerBlock("solar_panel_mk1",
+            p -> new SolarArrayBlock(p, SolarPanelBlock.Tier.MK1), machine().noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<SolarArrayBlock> SOLAR_PANEL_MK2 = BLOCKS.registerBlock("solar_panel_mk2",
             p -> new SolarArrayBlock(p, SolarPanelBlock.Tier.MK2), machine().noOcclusion().pushReaction(PushReaction.BLOCK));
-    public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK3 = BLOCKS.registerBlock("solar_panel_mk3",
+    public static final DeferredBlock<SolarArrayBlock> SOLAR_PANEL_MK3 = BLOCKS.registerBlock("solar_panel_mk3",
             p -> new SolarArrayBlock(p, SolarPanelBlock.Tier.MK3), machine().noOcclusion().pushReaction(PushReaction.BLOCK));
-    public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL_MK4 = BLOCKS.registerBlock("solar_panel_mk4",
+    public static final DeferredBlock<SolarArrayBlock> SOLAR_PANEL_MK4 = BLOCKS.registerBlock("solar_panel_mk4",
             p -> new SolarArrayBlock(p, SolarPanelBlock.Tier.MK4), machine().noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_1 = accumulator(AccumulatorBlock.Tier.I);
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR_2 = accumulator(AccumulatorBlock.Tier.II);

@@ -1,51 +1,66 @@
 package com.arno.robotica.power.block;
 
+import com.arno.robotica.core.CoreSounds;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Solar Panel Mk2-Mk4: one item that fills a {@code size x size} square when placed. Every block of the square is this
- * block; {@link #CELL_X} / {@link #CELL_Z} give its place in the square, counted from the north-west corner, which holds
- * the {@link SolarPanelBlockEntity}. Any block opens the GUI and hands out the FE; breaking one removes the whole panel
- * (the broken block drops the item). Rotating or mirroring the block (structures) renumbers the cells.
+ * Solar Panel Mk1-Mk4: one item that fills a {@link #SIZE}x{@link #SIZE} square around the block it is placed on. Every
+ * block of the square is this block; {@link #CELL_X} / {@link #CELL_Z} give its place in the square, counted from the
+ * north-west corner, which holds the {@link SolarPanelBlockEntity}. Any block opens the GUI and hands out the FE; breaking
+ * one removes the whole panel (the broken block drops the item). Rotating or mirroring the block (structures) renumbers
+ * the cells. Right-click a panel with the next Mk to upgrade it in place.
+ * <p>
+ * {@link #SINGLE}: a panel saved as one block by an older version (Mk1, or a 2x2 Mk2 cut down to its corner) that keeps
+ * its full output on its own. Cells 3 on either axis only exist on a 4x4 Mk4 saved by 0.9.7 until it shrinks to 3x3.
  */
 public class SolarArrayBlock extends SolarPanelBlock {
-    public static final IntegerProperty CELL_X = IntegerProperty.create("cell_x", 0, 3);
-    public static final IntegerProperty CELL_Z = IntegerProperty.create("cell_z", 0, 3);
+    /** Width of every panel, in blocks. */
+    public static final int SIZE = 3;
+    /** Highest cell number: 0.9.7 saved Mk4 panels of 4x4. */
+    private static final int MAX_CELL = 3;
+    public static final IntegerProperty CELL_X = IntegerProperty.create("cell_x", 0, MAX_CELL);
+    public static final IntegerProperty CELL_Z = IntegerProperty.create("cell_z", 0, MAX_CELL);
+    public static final BooleanProperty SINGLE = BooleanProperty.create("single");
+
+    /** Set while a panel swaps or trims its own blocks: their removal does not take the rest of the panel with it. */
+    private static boolean quiet;
 
     public SolarArrayBlock(Properties props, Tier tier) {
         super(props, tier);
-        registerDefaultState(stateDefinition.any().setValue(CELL_X, 0).setValue(CELL_Z, 0));
+        registerDefaultState(stateDefinition.any().setValue(CELL_X, 0).setValue(CELL_Z, 0).setValue(SINGLE, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(CELL_X, CELL_Z);
-    }
-
-    public int size() {
-        return tier().size;
+        builder.add(CELL_X, CELL_Z, SINGLE);
     }
 
     /** The north-west corner of the panel that {@code state} at {@code pos} belongs to (the block with the block entity). */
     public static BlockPos origin(BlockPos pos, BlockState state) {
+        if (state.getValue(SINGLE)) return pos;
         return pos.offset(-state.getValue(CELL_X), 0, -state.getValue(CELL_Z));
     }
 
@@ -53,81 +68,93 @@ public class SolarArrayBlock extends SolarPanelBlock {
         return defaultBlockState().setValue(CELL_X, x).setValue(CELL_Z, z);
     }
 
-    /** Whether {@code state} is the block at (x, z) of a panel of this block. */
+    /** The one-block panel of an older version. */
+    public BlockState single() {
+        return defaultBlockState().setValue(SINGLE, true);
+    }
+
+    /** Whether {@code state} is the block at (x, z) of a 3x3 panel of this block. */
     public boolean isCell(BlockState state, int x, int z) {
-        return state.is(this) && state.getValue(CELL_X) == x && state.getValue(CELL_Z) == z;
+        return state.is(this) && !state.getValue(SINGLE) && state.getValue(CELL_X) == x && state.getValue(CELL_Z) == z;
     }
 
     /** Places the whole panel with its north-west corner at {@code origin} (tests, showcase). */
     public void placeAll(Level level, BlockPos origin) {
-        for (int x = 0; x < size(); x++) {
-            for (int z = 0; z < size(); z++) {
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
                 level.setBlock(origin.offset(x, 0, z), cell(x, z), Block.UPDATE_ALL);
             }
+        }
+    }
+
+    /** Sets a block of a panel without the removal of the old block taking the rest of its panel with it. */
+    static void setQuietly(Level level, BlockPos pos, BlockState state) {
+        quiet = true;
+        try {
+            level.setBlock(pos, state, Block.UPDATE_ALL);
+        } finally {
+            quiet = false;
         }
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return state.getValue(CELL_X) == 0 && state.getValue(CELL_Z) == 0 ? super.newBlockEntity(pos, state) : null;
+        return state.getValue(SINGLE) || state.getValue(CELL_X) == 0 && state.getValue(CELL_Z) == 0 ? super.newBlockEntity(pos, state) : null;
     }
 
-    /**
-     * The clicked block becomes a corner of the panel: the panel grows forward and to the right of the player, or, when
-     * that square is blocked, to the left, back right or back left. Null (no placement) when every square is blocked by
-     * a block or an entity.
-     */
+    /** The placed block is the middle of the panel. Null (no placement) when the square is blocked by a block or an entity. */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Level level = context.getLevel();
         BlockPos clicked = context.getClickedPos();
-        Direction forward = context.getHorizontalDirection();
-        Direction right = forward.getClockWise();
         Player player = context.getPlayer();
-        CollisionContext collision = player == null ? CollisionContext.empty() : CollisionContext.of(player);
-        int n = size();
-        for (Direction depth : new Direction[]{forward, forward.getOpposite()}) {
-            for (Direction side : new Direction[]{right, right.getOpposite()}) {
-                BlockPos far = clicked.relative(depth, n - 1).relative(side, n - 1);
-                BlockPos origin = new BlockPos(Math.min(clicked.getX(), far.getX()), clicked.getY(), Math.min(clicked.getZ(), far.getZ()));
-                if (fits(level, origin, clicked, collision, player)) return cell(clicked.getX() - origin.getX(), clicked.getZ() - origin.getZ());
-            }
-        }
-        if (player != null && !level.isClientSide) {
-            player.displayClientMessage(Component.translatable("message.robotica.solar_no_room", n), true);
-        }
+        BlockPos origin = clicked.offset(-1, 0, -1);
+        if (fits(level, origin, null, player)) return cell(1, 1);
+        noRoom(level, player);
         return null;
     }
 
-    /** Whether the panel can stand with its north-west corner at {@code origin} ({@code skip} is checked by the caller). */
-    private boolean fits(Level level, BlockPos origin, BlockPos skip, CollisionContext collision, @Nullable Player player) {
-        for (int x = 0; x < size(); x++) {
-            for (int z = 0; z < size(); z++) {
+    private static void noRoom(Level level, @Nullable Player player) {
+        if (player != null && !level.isClientSide) player.displayClientMessage(Component.translatable("message.robotica.solar_no_room", SIZE), true);
+    }
+
+    /**
+     * Whether a panel can stand with its north-west corner at {@code origin}: every block is free (or, with {@code old},
+     * already part of that panel), loaded, inside the world border, clear of entities and, with a player, not protected.
+     * The middle block of a fresh placement is checked by the caller.
+     */
+    private boolean fits(Level level, BlockPos origin, @Nullable BlockPos old, @Nullable Player player) {
+        CollisionContext collision = player == null ? CollisionContext.empty() : CollisionContext.of(player);
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
                 BlockPos p = origin.offset(x, 0, z);
-                if (p.equals(skip)) continue;
-                if (!level.isLoaded(p) || !level.getWorldBorder().isWithinBounds(p) || !level.getBlockState(p).canBeReplaced()
-                        || !level.isUnobstructed(cell(x, z), p, collision) || player != null && !level.mayInteract(player, p)) return false;
+                if (old == null && x == 1 && z == 1) continue;
+                if (!level.isLoaded(p) || !level.getWorldBorder().isWithinBounds(p) || player != null && !level.mayInteract(player, p)) return false;
+                BlockState there = level.getBlockState(p);
+                if (old != null && there.is(this) && origin(p, there).equals(old)) continue;
+                if (!there.canBeReplaced() || !level.isUnobstructed(cell(x, z), p, collision)) return false;
             }
         }
         return true;
     }
 
     /**
-     * Grows a panel that stands alone (placed as one block before panels covered a square) into its square, when every
-     * other block of the square is loaded air inside the world border with no entity in the way. Returns whether it grew.
+     * Grows a panel that stands alone (a block of a panel moved on its own by another mod, or placed as one block) into
+     * its square, when every other block of the square is loaded air inside the world border with no entity in the way.
+     * Returns whether it grew.
      */
     public boolean grow(Level level, BlockPos origin) {
-        for (int x = 0; x < size(); x++) {
-            for (int z = 0; z < size(); z++) {
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
                 BlockPos p = origin.offset(x, 0, z);
                 if ((x != 0 || z != 0) && (!level.isLoaded(p) || !level.getWorldBorder().isWithinBounds(p) || !level.isEmptyBlock(p)
                         || !level.isUnobstructed(cell(x, z), p, CollisionContext.empty()))) return false;
             }
         }
-        for (int x = 0; x < size(); x++) {
-            for (int z = 0; z < size(); z++) {
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
                 if (x != 0 || z != 0) level.setBlock(origin.offset(x, 0, z), cell(x, z), Block.UPDATE_ALL);
             }
         }
@@ -136,21 +163,62 @@ public class SolarArrayBlock extends SolarPanelBlock {
 
     /**
      * Removes every block of this panel type in the square at {@code origin}, whatever its cell, without drops: a panel
-     * that lost a block or whose block entity ended up in another cell. Skips unloaded blocks.
+     * that lost a block or whose block entity ended up in another cell. Skips unloaded blocks and old single panels.
      */
     public void removePanel(Level level, BlockPos origin) {
-        for (int x = 0; x < size(); x++) {
-            for (int z = 0; z < size(); z++) {
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
                 BlockPos p = origin.offset(x, 0, z);
-                if (level.isLoaded(p) && level.getBlockState(p).is(this)) level.destroyBlock(p, false);
+                if (!level.isLoaded(p)) continue;
+                BlockState state = level.getBlockState(p);
+                if (state.is(this) && !state.getValue(SINGLE)) level.destroyBlock(p, false);
             }
         }
     }
 
+    /**
+     * Swaps the panel at {@code origin} for the next Mk, keeping its energy, and gives the old panel back (the next Mk's
+     * recipe consumed one). An old single panel becomes a full panel around itself, so its square must be free.
+     */
+    public boolean upgradeInPlace(Level level, BlockPos origin, SolarArrayBlock next, @Nullable Player player) {
+        if (!(level.getBlockEntity(origin) instanceof SolarPanelBlockEntity old) || !old.getBlockState().is(this)) return false;
+        BlockPos target = old.getBlockState().getValue(SINGLE) ? origin.offset(-1, 0, -1) : origin;
+        if (!fits(level, target, origin, player)) {
+            noRoom(level, player);
+            return false;
+        }
+        int energy = old.energy.getEnergyStored();
+        for (int x = SIZE - 1; x >= 0; x--) {
+            for (int z = SIZE - 1; z >= 0; z--) setQuietly(level, target.offset(x, 0, z), next.cell(x, z));   // the corner with the block entity last
+        }
+        if (level.getBlockEntity(target) instanceof SolarPanelBlockEntity fresh) fresh.energy.setEnergy(Math.min(energy, fresh.energy.getMaxEnergyStored()));
+        if (player != null) {
+            ItemStack back = new ItemStack(asItem());
+            if (!player.getInventory().add(back)) player.drop(back, false);
+            player.displayClientMessage(Component.translatable("message.robotica.machine_upgraded", next.getName()), true);
+        }
+        CoreSounds.play(level, target.offset(1, 0, 1), CoreSounds.UPGRADE_INSTALL, SoundSource.BLOCKS, 0.8F, 1.0F);
+        return true;
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof BlockItem item && item.getBlock() instanceof SolarArrayBlock next && next.tier().ordinal() == tier().ordinal() + 1) {
+            // Swapping the blocks is building: adventure mode and protected spots may not.
+            if (!player.mayBuild()) return ItemInteractionResult.FAIL;
+            if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+            if (!upgradeInPlace(level, origin(pos, state), next, player)) return ItemInteractionResult.FAIL;
+            if (!player.getAbilities().instabuild) stack.shrink(1);
+            return ItemInteractionResult.CONSUME;
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
+    }
+
     @Override
     protected BlockState rotate(BlockState state, Rotation rotation) {
-        int n = size(), x = state.getValue(CELL_X), z = state.getValue(CELL_Z);
-        if (x >= n || z >= n) return state;
+        int n = SIZE, x = state.getValue(CELL_X), z = state.getValue(CELL_Z);
+        if (state.getValue(SINGLE) || x >= n || z >= n) return state;
         return switch (rotation) {
             case CLOCKWISE_90 -> cell(n - 1 - z, x);
             case CLOCKWISE_180 -> cell(n - 1 - x, n - 1 - z);
@@ -161,8 +229,8 @@ public class SolarArrayBlock extends SolarPanelBlock {
 
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
-        int n = size(), x = state.getValue(CELL_X), z = state.getValue(CELL_Z);
-        if (x >= n || z >= n) return state;
+        int n = SIZE, x = state.getValue(CELL_X), z = state.getValue(CELL_Z);
+        if (state.getValue(SINGLE) || x >= n || z >= n) return state;
         return switch (mirror) {
             case LEFT_RIGHT -> cell(x, n - 1 - z);
             case FRONT_BACK -> cell(n - 1 - x, z);
@@ -179,10 +247,10 @@ public class SolarArrayBlock extends SolarPanelBlock {
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (level.isClientSide) return;
+        if (level.isClientSide || state.getValue(SINGLE)) return;
         BlockPos origin = origin(pos, state);
-        for (int x = 0; x < size(); x++) {
-            for (int z = 0; z < size(); z++) {
+        for (int x = 0; x < SIZE; x++) {
+            for (int z = 0; z < SIZE; z++) {
                 BlockPos p = origin.offset(x, 0, z);
                 if (!p.equals(pos)) level.setBlock(p, cell(x, z), Block.UPDATE_ALL);
             }
@@ -194,15 +262,35 @@ public class SolarArrayBlock extends SolarPanelBlock {
         super.onRemove(state, level, pos, newState, movedByPiston);
         if (level.isClientSide) return;
         level.invalidateCapabilities(pos);
-        if (state.is(newState.getBlock())) return;
-        // one break event: loads a neighbouring chunk if the panel crosses into one, so no part of the panel stays behind
+        if (quiet || state.is(newState.getBlock()) || state.getValue(SINGLE)) return;
+        // one break event: loads a neighbouring chunk if the panel crosses into one, so no part of the panel stays behind;
+        // up to cell 3 so a 0.9.7 Mk4 that has not shrunk yet goes whole
         BlockPos origin = origin(pos, state);
-        for (int x = 0; x < size(); x++) {
-            for (int z = 0; z < size(); z++) {
+        for (int x = 0; x <= MAX_CELL; x++) {
+            for (int z = 0; z <= MAX_CELL; z++) {
                 BlockPos p = origin.offset(x, 0, z);
                 if (!p.equals(pos) && isCell(level.getBlockState(p), x, z)) level.destroyBlock(p, false);
             }
         }
+    }
+
+    /**
+     * Brings a panel saved by an older version to the current layout without placing any block: a 4x4 Mk4 loses its
+     * outer blocks ({@code oldSize} 4), a 2x2 Mk2 keeps only its corner as a single panel ({@code oldSize} 2) and a one-block
+     * panel turns single ({@code oldSize} 1). Returns false while an old block to remove is not loaded (try again later).
+     */
+    boolean migrate(Level level, BlockPos origin, int oldSize) {
+        if (oldSize <= 2 && !level.getBlockState(origin).getValue(SINGLE)) setQuietly(level, origin, single());
+        boolean done = true;
+        for (int x = 0; x < oldSize; x++) {
+            for (int z = 0; z < oldSize; z++) {
+                if (x == 0 && z == 0 || oldSize == 4 && x < SIZE && z < SIZE) continue;
+                BlockPos p = origin.offset(x, 0, z);
+                if (!level.isLoaded(p)) done = false;
+                else if (isCell(level.getBlockState(p), x, z)) setQuietly(level, p, Blocks.AIR.defaultBlockState());
+            }
+        }
+        return done;
     }
 
     @Override

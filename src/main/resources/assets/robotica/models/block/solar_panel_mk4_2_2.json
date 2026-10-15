@@ -4,7 +4,9 @@
   "textures": {
     "top": "robotica:block/solar_panel_mk4_top_2_2",
     "bottom": "robotica:block/solar_panel_bottom",
-    "particle": "robotica:block/solar_panel_mk4_side"
+    "particle": "robotica:block/solar_panel_mk4_side",
+    "south": "robotica:block/solar_panel_mk4_side_right",
+    "east": "robotica:block/solar_panel_mk4_side_left"
   },
   "elements": [
     {
@@ -25,6 +27,26 @@
         },
         "up": {
           "texture": "#top"
+        },
+        "south": {
+          "texture": "#south",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#east",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "east"
         }
       }
     }

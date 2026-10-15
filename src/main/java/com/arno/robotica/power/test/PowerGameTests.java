@@ -72,47 +72,73 @@ public class PowerGameTests {
             helper.assertTrue(recipe.get().value().getIngredients().stream().anyMatch(ing -> ing.test(below)),
                     "Mk" + (i + 1) + " consumes the Mk" + i);
         }
-        // a lone Mk2-Mk4 grows into its square on its first tick: clear them so none grows out of this test's area
+        // a lone block grows into its square on its first tick: clear them so none grows out of this test's area
         for (int i = 0; i < tiers.size(); i++) helper.setBlock(new BlockPos(i % 3, 1, i / 3), Blocks.AIR);
         helper.succeed();
     }
 
-    /**
-     * A Solar Panel Mk3 item fills a 3x3 square (the clicked block is the corner nearest the player, on the left), every
-     * block hands out the one buffer, a panel with no free square places nothing, shaded blocks lower the share of open
-     * blocks, and breaking one block removes the whole panel and drops one item.
-     */
-    @GameTest(template = "empty", timeoutTicks = 60)
-    public static void solarPanelCoversItsSquare(GameTestHelper helper) {
-        var level = helper.getLevel();
-        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK3.get();
-        ItemStack item = new ItemStack(PowerRegistry.SOLAR_PANEL_MK3_ITEM.get());
-        // no player: placed facing north, so the square runs north (towards z = 0) and east from the clicked block
-        BlockPos clicked = helper.absolutePos(new BlockPos(0, 1, 2));
+    private static final String SOLAR_AREA = "energy_arena";   // empty 9x9x9
+
+    private static com.arno.robotica.power.block.SolarArrayBlock solar(int mk) {
+        return (com.arno.robotica.power.block.SolarArrayBlock) java.util.List.of(PowerRegistry.SOLAR_PANEL_MK1, PowerRegistry.SOLAR_PANEL_MK2,
+                PowerRegistry.SOLAR_PANEL_MK3, PowerRegistry.SOLAR_PANEL_MK4).get(mk - 1).get();
+    }
+
+    private static boolean placeSolar(GameTestHelper helper, int mk, BlockPos at) {
+        ItemStack item = new ItemStack(solar(mk));
+        BlockPos clicked = helper.absolutePos(at);
         var hit = new BlockHitResult(Vec3.atCenterOf(clicked), Direction.UP, clicked, false);
-        helper.assertTrue(((BlockItem) item.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, item.copy(), hit)).consumesAction(),
-                "the Mk3 is placed");
+        return ((BlockItem) item.getItem()).place(new BlockPlaceContext(helper.getLevel(), null, InteractionHand.MAIN_HAND, item, hit)).consumesAction();
+    }
+
+    private static void assertSolarSquare(GameTestHelper helper, com.arno.robotica.power.block.SolarArrayBlock block, BlockPos origin, String what) {
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 3; z++) {
-                helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(x, 1, z)), x, z), "block " + x + "," + z + " of the panel");
+                helper.assertTrue(block.isCell(helper.getBlockState(origin.offset(x, 0, z)), x, z), what + ": block " + x + "," + z);
             }
         }
+    }
+
+    private static int solarDrops(GameTestHelper helper) {
+        return helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, helper.getBounds().inflate(1)).stream()
+                .mapToInt(e -> e.getItem().getCount()).sum();
+    }
+
+    /**
+     * Every Mk places a 3x3 panel around the placed block, every block hands out the one buffer, a panel with no free
+     * 3x3 places nothing, shaded blocks lower the share of open blocks, and breaking one block removes the whole panel
+     * and drops one item.
+     */
+    @GameTest(template = SOLAR_AREA, timeoutTicks = 60)
+    public static void solarPanelCoversItsSquare(GameTestHelper helper) {
+        var level = helper.getLevel();
+        for (int mk = 1; mk <= 4; mk++) {
+            BlockPos mid = new BlockPos(1 + (mk - 1) % 2 * 4, 1, 1 + (mk - 1) / 2 * 4);
+            helper.assertTrue(placeSolar(helper, mk, mid), "the Mk" + mk + " is placed");
+            assertSolarSquare(helper, solar(mk), mid.offset(-1, 0, -1), "Mk" + mk);
+        }
+        var block = solar(1);
         var panel = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
         helper.assertTrue(level.getBlockEntity(helper.absolutePos(new BlockPos(2, 1, 2))) == null, "only the north-west block has a block entity");
-        IEnergyStorage far = level.getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(new BlockPos(2, 1, 2)), Direction.DOWN);
-        helper.assertTrue(far == panel.energy, "every block hands out the panel's buffer");
-
-        // a Mk2 on top, in the middle: a stone on each corner blocks all four squares it could take
-        for (int x = 0; x <= 2; x += 2) {
-            for (int z = 0; z <= 2; z += 2) helper.setBlock(new BlockPos(x, 2, z), Blocks.STONE);
+        for (BlockPos p : new BlockPos[]{new BlockPos(2, 1, 2), new BlockPos(1, 1, 1), new BlockPos(0, 1, 2)}) {
+            IEnergyStorage cap = level.getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(p), Direction.DOWN);
+            helper.assertTrue(cap == panel.energy, "every block hands out the panel's buffer");
         }
-        var mk2 = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK2.get();
-        ItemStack small = new ItemStack(PowerRegistry.SOLAR_PANEL_MK2_ITEM.get());
-        BlockPos middle = helper.absolutePos(new BlockPos(1, 1, 1));
-        var blocked = new BlockHitResult(Vec3.atCenterOf(middle), Direction.UP, middle, false);
-        helper.assertFalse(((BlockItem) small.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, small, blocked)).consumesAction(),
-                "no free square, no panel");
-        helper.assertBlockNotPresent(mk2, new BlockPos(1, 2, 1));
+
+        // blocked: a Mk1 in the gap between the Mk1 and the Mk2 has no free 3x3; a stone in one corner blocks a Mk3 on top
+        helper.assertFalse(placeSolar(helper, 1, new BlockPos(3, 1, 1)), "a Mk1 overlapping two panels is not placed");
+        helper.assertBlockNotPresent(block, new BlockPos(3, 1, 1));
+        helper.setBlock(new BlockPos(2, 2, 2), Blocks.STONE);
+        helper.assertFalse(placeSolar(helper, 3, new BlockPos(1, 2, 1)), "a stone in the square, no panel");
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                if (x != 2 || z != 2) helper.assertBlockNotPresent(solar(3), new BlockPos(x, 2, z));
+            }
+        }
+        // shade: stones over the other three corners
+        helper.setBlock(new BlockPos(0, 2, 0), Blocks.STONE);
+        helper.setBlock(new BlockPos(2, 2, 0), Blocks.STONE);
+        helper.setBlock(new BlockPos(0, 2, 2), Blocks.STONE);
 
         helper.runAfterDelay(25, () -> {
             helper.assertTrue(panel.openCells() == 5, "the stones shade the four corners: " + panel.openCells() + " of 9 open");
@@ -121,60 +147,92 @@ public class PowerGameTests {
             for (int x = 0; x < 3; x++) {
                 for (int z = 0; z < 3; z++) helper.assertBlockNotPresent(block, new BlockPos(x, 1, z));
             }
-            var area = new net.minecraft.world.phys.AABB(helper.absolutePos(BlockPos.ZERO)).inflate(5);
-            int drops = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, area).stream()
-                    .filter(e -> e.getItem().is(item.getItem())).mapToInt(e -> e.getItem().getCount()).sum();
-            helper.assertTrue(drops == 1, "breaking one block drops one panel, got " + drops);
+            assertSolarSquare(helper, solar(2), new BlockPos(4, 1, 0), "the Mk2 next to it");
+            helper.assertTrue(solarDrops(helper) == 1, "breaking one block drops one panel, got " + solarDrops(helper));
             helper.succeed();
         });
     }
 
-    /**
-     * A Mk2 whose square forward and to the right is blocked takes the free square to the left instead, and a Mk2 that
-     * stands alone (placed before panels covered a square) grows into its empty square.
-     */
+    /** A block standing alone (a panel block moved on its own by another mod) grows into its square. */
     @GameTest(template = "empty", timeoutTicks = 40)
-    public static void solarPanelFindsRoom(GameTestHelper helper) {
-        var level = helper.getLevel();
-        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK2.get();
-        ItemStack item = new ItemStack(PowerRegistry.SOLAR_PANEL_MK2_ITEM.get());
-        helper.setBlock(new BlockPos(2, 1, 0), Blocks.STONE);
-        // no player: facing north, so forward-right is x 1-2, z 0-1 (blocked by the stone) and forward-left x 0-1, z 0-1
-        BlockPos clicked = helper.absolutePos(new BlockPos(1, 1, 1));
-        var hit = new BlockHitResult(Vec3.atCenterOf(clicked), Direction.UP, clicked, false);
-        helper.assertTrue(((BlockItem) item.getItem()).place(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, item, hit)).consumesAction(),
-                "the Mk2 finds room");
-        helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(0, 1, 0)), 0, 0), "north-west block at x 0, z 0");
-        helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(1, 1, 1)), 1, 1), "the clicked block is the south-east one");
-        helper.assertBlockPresent(Blocks.STONE, new BlockPos(2, 1, 0));
-
-        helper.setBlock(new BlockPos(0, 2, 0), block.defaultBlockState());
-        helper.succeedWhen(() -> {
-            for (int x = 0; x < 2; x++) {
-                for (int z = 0; z < 2; z++) {
-                    helper.assertTrue(block.isCell(helper.getBlockState(new BlockPos(x, 2, z)), x, z), "the lone Mk2 grew to " + x + "," + z);
-                }
-            }
-        });
+    public static void loneSolarBlockGrows(GameTestHelper helper) {
+        var block = solar(2);
+        helper.setBlock(new BlockPos(0, 1, 0), block.defaultBlockState());
+        helper.succeedWhen(() -> assertSolarSquare(helper, block, new BlockPos(0, 1, 0), "the lone Mk2 grew"));
     }
 
     /**
-     * A Mk2 saved as one block before panels covered a square keeps its full output when it has no room to grow; a lone
-     * block placed by anything else counts one block.
+     * Upgrading in place swaps all nine blocks for the next Mk and keeps the energy; an old single panel becomes a full
+     * panel around itself when that square is free and stays as it is when it is not.
      */
-    @GameTest(template = "empty", timeoutTicks = 60)
-    public static void oldSingleSolarPanelKeepsItsOutput(GameTestHelper helper) {
-        BlockPos old = new BlockPos(1, 1, 1), lone = new BlockPos(4, 1, 1);
-        for (BlockPos p : new BlockPos[]{old, lone}) {
-            helper.setBlock(p, PowerRegistry.SOLAR_PANEL_MK2.get().defaultBlockState());
-            helper.setBlock(p.east(), Blocks.STONE);
+    @GameTest(template = SOLAR_AREA, timeoutTicks = 20)
+    public static void solarPanelUpgradesInPlace(GameTestHelper helper) {
+        var level = helper.getLevel();
+        solar(1).placeAll(level, helper.absolutePos(new BlockPos(0, 1, 0)));
+        var mk1 = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        mk1.energy.setEnergy(1_000);
+        helper.assertTrue(solar(1).upgradeInPlace(level, helper.absolutePos(new BlockPos(0, 1, 0)), solar(2), null), "Mk1 to Mk2");
+        assertSolarSquare(helper, solar(2), new BlockPos(0, 1, 0), "upgraded");
+        var mk2 = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        helper.assertTrue(mk2.energy.getEnergyStored() == 1_000, "keeps its energy: " + mk2.energy.getEnergyStored());
+        helper.assertTrue(solarDrops(helper) == 0, "no drops");
+
+        BlockPos free = new BlockPos(5, 1, 5), boxed = new BlockPos(5, 1, 1);
+        helper.setBlock(free, solar(2).single());
+        helper.setBlock(boxed, solar(2).single());
+        helper.setBlock(boxed.east(), Blocks.STONE);
+        helper.assertTrue(solar(2).upgradeInPlace(level, helper.absolutePos(free), solar(3), null), "an old single panel with room");
+        assertSolarSquare(helper, solar(3), free.offset(-1, 0, -1), "the single grew around itself");
+        helper.assertFalse(solar(2).upgradeInPlace(level, helper.absolutePos(boxed), solar(3), null), "an old single panel without room");
+        helper.assertTrue(helper.getBlockState(boxed).is(solar(2)) && helper.getBlockState(boxed).getValue(com.arno.robotica.power.block.SolarArrayBlock.SINGLE),
+                "the boxed single stays");
+        helper.succeed();
+    }
+
+    private static com.arno.robotica.power.block.SolarPanelBlockEntity oldSolar(GameTestHelper helper, int mk, BlockPos origin, int width, boolean square) {
+        var block = solar(mk);
+        // older versions placed the corner first; setBlock skips setPlacedBy, so nothing fills the 3x3
+        for (int x = width - 1; x >= 0; x--) {
+            for (int z = width - 1; z >= 0; z--) helper.setBlock(origin.offset(x, 0, z), block.cell(x, z));
         }
-        var oldPanel = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(old);
-        var lonePanel = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(lone);
-        oldPanel.loadWithComponents(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess());
+        var be = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(origin);
+        var tag = new net.minecraft.nbt.CompoundTag();
+        if (width > 1) tag.putBoolean("formed", true);
+        if (square) tag.putBoolean("square", true);
+        be.loadWithComponents(tag, helper.getLevel().registryAccess());
+        return be;
+    }
+
+    /**
+     * Panels saved by 0.9.7 and older move to 3x3 without placing a block or dropping anything: a 1x1 Mk1 and a 2x2 Mk2
+     * become single panels with their full output, a 4x4 Mk4 drops its outer ring, a 3x3 Mk3 stays as it is.
+     */
+    @GameTest(template = SOLAR_AREA, timeoutTicks = 60)
+    public static void oldSolarPanelsMigrate(GameTestHelper helper) {
+        BlockPos mk1 = new BlockPos(0, 1, 0), mk2 = new BlockPos(0, 1, 5), mk4 = new BlockPos(4, 1, 0), mk3 = new BlockPos(4, 1, 5);
+        var oldMk1 = oldSolar(helper, 1, mk1, 1, true);
+        var oldMk2 = oldSolar(helper, 2, mk2, 2, true);
+        var oldMk4 = oldSolar(helper, 4, mk4, 4, true);
+        var oldMk3 = oldSolar(helper, 3, mk3, 3, true);
         helper.runAfterDelay(45, () -> {
-            helper.assertTrue(oldPanel.openCells() == 4, "the old panel keeps a Mk2's output: " + oldPanel.openCells());
-            helper.assertTrue(lonePanel.openCells() == 1, "a lone new block counts one block: " + lonePanel.openCells());
+            for (var c : new Object[][]{{mk1, oldMk1, 1}, {mk2, oldMk2, 2}}) {
+                BlockPos p = (BlockPos) c[0];
+                var state = helper.getBlockState(p);
+                helper.assertTrue(state.getValue(com.arno.robotica.power.block.SolarArrayBlock.SINGLE), "Mk" + c[2] + " is single now");
+                helper.assertTrue(((com.arno.robotica.power.block.SolarPanelBlockEntity) c[1]).openCells() == 9, "Mk" + c[2] + " keeps its full output");
+                for (int x = 0; x < 3; x++) {
+                    for (int z = 0; z < 3; z++) if (x != 0 || z != 0) helper.assertBlockNotPresent(solar((int) c[2]), p.offset(x, 0, z));
+                }
+            }
+            assertSolarSquare(helper, solar(4), mk4, "the Mk4 keeps 3x3");
+            for (int i = 0; i < 4; i++) {
+                helper.assertBlockNotPresent(solar(4), mk4.offset(3, 0, i));
+                helper.assertBlockNotPresent(solar(4), mk4.offset(i, 0, 3));
+            }
+            helper.assertTrue(oldMk4.formed() && oldMk4.openCells() == 9, "the Mk4 is formed with all 9 open");
+            assertSolarSquare(helper, solar(3), mk3, "the Mk3 stays");
+            helper.assertTrue(oldMk3.formed(), "the Mk3 stays formed");
+            helper.assertTrue(solarDrops(helper) == 0, "no drops");
             helper.succeed();
         });
     }
@@ -182,13 +240,12 @@ public class PowerGameTests {
     /** A panel under another panel sees no sky; the top one still does. */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void stackedSolarPanelsShade(GameTestHelper helper) {
-        BlockPos low = new BlockPos(1, 1, 1);
-        helper.setBlock(low, PowerRegistry.SOLAR_PANEL_MK1.get().defaultBlockState());
-        helper.setBlock(low.above(), PowerRegistry.SOLAR_PANEL_MK1.get().defaultBlockState());
-        var lower = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(low);
-        var upper = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(low.above());
+        solar(1).placeAll(helper.getLevel(), helper.absolutePos(new BlockPos(0, 1, 0)));
+        solar(1).placeAll(helper.getLevel(), helper.absolutePos(new BlockPos(0, 2, 0)));
+        var lower = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        var upper = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 2, 0));
         helper.runAfterDelay(45, () -> {
-            helper.assertTrue(upper.openCells() == 1, "the top panel sees the sky");
+            helper.assertTrue(upper.openCells() == 9, "the top panel sees the sky");
             helper.assertTrue(lower.openCells() == 0, "the panel below is shaded");
             helper.succeed();
         });
@@ -198,29 +255,28 @@ public class PowerGameTests {
      * A formed Mk2 that loses a block without the break reaching it (here: the chunk section edited directly) removes
      * itself and drops nothing; a Mk2 whose block entity ends up in another cell (rotated in place) does the same.
      */
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @GameTest(template = SOLAR_AREA, timeoutTicks = 100)
     public static void solarPanelMissingCellRemovesItself(GameTestHelper helper) {
         var level = helper.getLevel();
-        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK2.get();
+        var block = solar(2);
         block.placeAll(level, helper.absolutePos(new BlockPos(0, 1, 0)));
-        block.placeAll(level, helper.absolutePos(new BlockPos(3, 1, 0)));
+        block.placeAll(level, helper.absolutePos(new BlockPos(4, 1, 0)));
         var first = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
-        var second = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(3, 1, 0));
+        var second = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(new BlockPos(4, 1, 0));
         helper.runAfterDelay(25, () -> {
             helper.assertTrue(first.formed() && second.formed(), "both panels formed");
             BlockPos cut = helper.absolutePos(new BlockPos(1, 1, 1));
             var chunk = level.getChunkAt(cut);
             chunk.getSection(chunk.getSectionIndex(cut.getY())).setBlockState(cut.getX() & 15, cut.getY() & 15, cut.getZ() & 15, Blocks.AIR.defaultBlockState());
-            BlockPos nw = helper.absolutePos(new BlockPos(3, 1, 0));
+            BlockPos nw = helper.absolutePos(new BlockPos(4, 1, 0));
             level.setBlock(nw, level.getBlockState(nw).rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
             helper.assertTrue(level.getBlockEntity(nw) == second, "the block entity stays in the rotated block");
         });
         helper.runAfterDelay(50, () -> {
-            for (int x = 0; x < 5; x++) {
-                for (int z = 0; z < 2; z++) helper.assertBlockNotPresent(block, new BlockPos(x, 1, z));
+            for (int x = 0; x < 7; x++) {
+                for (int z = 0; z < 3; z++) helper.assertBlockNotPresent(block, new BlockPos(x, 1, z));
             }
-            var area = new net.minecraft.world.phys.AABB(helper.absolutePos(BlockPos.ZERO)).inflate(6);
-            helper.assertTrue(level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, area).isEmpty(), "no drops");
+            helper.assertTrue(solarDrops(helper) == 0, "no drops");
             helper.succeed();
         });
     }
@@ -228,8 +284,8 @@ public class PowerGameTests {
     /** Rotating or mirroring a placed panel (structures) renumbers its cells so the new north-west block is cell 0,0. */
     @GameTest(template = "empty")
     public static void solarPanelRotates(GameTestHelper helper) {
-        var block = (com.arno.robotica.power.block.SolarArrayBlock) PowerRegistry.SOLAR_PANEL_MK3.get();
-        int n = block.size();
+        var block = solar(3);
+        int n = com.arno.robotica.power.block.SolarArrayBlock.SIZE;
         for (var mirror : net.minecraft.world.level.block.Mirror.values()) {
             for (var rotation : net.minecraft.world.level.block.Rotation.values()) {
                 BlockPos[] moved = new BlockPos[n * n];
@@ -245,6 +301,7 @@ public class PowerGameTests {
                     helper.assertTrue(block.isCell(state, moved[i].getX() - minX, moved[i].getZ() - minZ),
                             mirror + " " + rotation + ": cell " + (i % n) + "," + (i / n) + " became " + state);
                 }
+                helper.assertTrue(block.single().mirror(mirror).rotate(rotation) == block.single(), "a single panel stays single");
             }
         }
         helper.succeed();

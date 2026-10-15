@@ -2,10 +2,10 @@
   "parent": "minecraft:block/block",
   "render_type": "minecraft:cutout",
   "textures": {
-    "top": "robotica:block/solar_panel_mk4_top_3_2",
+    "top": "robotica:block/solar_panel_mk1_top_2_1",
     "bottom": "robotica:block/solar_panel_bottom",
-    "particle": "robotica:block/solar_panel_mk4_side",
-    "east": "robotica:block/solar_panel_mk4_side_mid"
+    "particle": "robotica:block/solar_panel_mk1_side",
+    "east": "robotica:block/solar_panel_mk1_side_mid"
   },
   "elements": [
     {

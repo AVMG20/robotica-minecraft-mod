@@ -44,7 +44,7 @@ enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<Blo
     @Override
     public void appendServerData(CompoundTag data, BlockAccessor accessor) {
         BlockEntity be = target(accessor);
-        // the north-west block of a Solar Panel Mk2-Mk4 reaches this through both its block and its block entity
+        // the north-west block of a Solar Panel reaches this through both its block and its block entity
         if (data.contains(TAG) || !isRobotica(be) || !(accessor.getLevel() instanceof ServerLevel level)) return;
         MachineInfo info = MachineInfoCollector.collect(level, be);
         if (info == null) return;
@@ -99,7 +99,7 @@ enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<Blo
         };
     }
 
-    /** The block entity behind the looked-at block: for a Solar Panel Mk2-Mk4, the one in its north-west block. */
+    /** The block entity behind the looked-at block: for a Solar Panel, the one in its north-west block. */
     private static BlockEntity target(BlockAccessor accessor) {
         BlockEntity be = accessor.getBlockEntity();
         if (be == null && accessor.getBlock() instanceof SolarArrayBlock) {

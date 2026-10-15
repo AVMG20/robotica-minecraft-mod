@@ -57,10 +57,10 @@ public class SolarPanelMenu extends MachineMenu {
         return synced(flagIdx) == 2;
     }
 
-    /** A Mk2-Mk4 opens from any block of its square: its width counts on top of the usual reach to the north-west block. */
+    /** A panel opens from any block of its square: its width counts on top of the usual reach to the north-west block. */
     @Override
     public boolean stillValid(Player player) {
-        double extra = block instanceof com.arno.robotica.power.block.SolarArrayBlock array ? (array.size() - 1) * 1.5 : 0;
+        double extra = (com.arno.robotica.power.block.SolarArrayBlock.SIZE - 1) * 1.5;
         return access.evaluate((level, pos) -> level.getBlockState(pos).is(block) && player.canInteractWithBlock(pos, 4.0 + extra), true);
     }
 }

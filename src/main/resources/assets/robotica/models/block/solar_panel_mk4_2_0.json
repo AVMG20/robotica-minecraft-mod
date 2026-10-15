@@ -5,7 +5,8 @@
     "top": "robotica:block/solar_panel_mk4_top_2_0",
     "bottom": "robotica:block/solar_panel_bottom",
     "particle": "robotica:block/solar_panel_mk4_side",
-    "north": "robotica:block/solar_panel_mk4_side_mid"
+    "north": "robotica:block/solar_panel_mk4_side_left",
+    "east": "robotica:block/solar_panel_mk4_side_right"
   },
   "elements": [
     {
@@ -36,6 +37,16 @@
             6
           ],
           "cullface": "north"
+        },
+        "east": {
+          "texture": "#east",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "cullface": "east"
         }
       }
     }

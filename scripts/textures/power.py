@@ -688,7 +688,7 @@ def wireless_orb(t=None):
 # Mk3 magma, Mk4 null) round blue monocrystalline cells with clipped corners (Mk1 2x2, Mk2+ 3x3) and the light
 # backsheet showing where four cells meet. The cell glass deepens per Mk (Mk1 blue, Mk2 deep blue, Mk3 blue-black,
 # Mk4 blue-violet). A glint of sky light sweeps across the glass every 96 ticks (the top is animated, no overlay); the
-# sides carry a lip, a recessed rail and the Mk notches. Mk2-Mk4 cover 2x2 to 4x4 blocks: each block of the panel has
+# sides carry a lip, a recessed rail and the Mk notches. Every Mk covers 3x3 blocks: each block of the panel has
 # its own top (frame on the outer edges only, the glint offset so it crosses the whole panel) and the sides lose
 # their brackets where the panel runs on.
 
@@ -1141,10 +1141,8 @@ def write_solar():
         write_anim('block', f'solar_panel_mk{mk}_top', frames, p,
                    frametime=SOLAR_FRAMETIME, interpolate=True)
         write_block(f'solar_panel_mk{mk}_side', solar_side(mk).rows(), p)
-        if mk == 1:
-            continue
-        # Mk2-Mk4 cover mk x mk blocks: one top per block of the panel, the frame only on the outer edges.
-        n = mk
+        # Every Mk covers 3x3 blocks: one top per block of the panel, the frame only on the outer edges.
+        n = 3
         for x in range(n):
             for z in range(n):
                 edges = ('n' if z == 0 else '') + ('s' if z == n - 1 else '') + ('w' if x == 0 else '') + ('e' if x == n - 1 else '')

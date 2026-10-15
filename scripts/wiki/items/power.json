@@ -70,7 +70,7 @@
     "solar_panel_mk3",
     "solar_panel_mk4"
    ],
-   "what": "Makes FE by day under open sky.",
+   "what": "Makes FE by day under open sky. Fills the 3x3 around the block you place it on.",
    "stats": {
     "columns": [
      "Mk1",
@@ -85,13 +85,6 @@
       "2",
       "3",
       "4"
-     ],
-     [
-      "Size",
-      "1x1",
-      "2x2",
-      "3x3",
-      "4x4"
      ],
      [
       "Daylight",
@@ -128,7 +121,8 @@
    ],
    "use": [
     "Machines touching it get power, or put a [[tesla_emitter_1]] on it.",
-    "Shade on part of a big panel lowers its output."
+    "Shade on part of a panel lowers its output.",
+    "Every Mk takes the same space: upgrade for more FE per block."
    ],
    "image": "shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4"
   },

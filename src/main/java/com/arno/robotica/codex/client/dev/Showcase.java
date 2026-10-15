@@ -1262,13 +1262,10 @@ public final class Showcase {
             shot(name);
         }
 
-        // Solar Panels Mk1 to Mk4 (1x1 to 4x4), one block apart.
+        // Solar Panels Mk1 to Mk4, every one 3x3, one block apart.
         if (wants("26_solar_panels")) step(20, () -> server(sp -> {
-            setFacing(sp.serverLevel(), new BlockPos(60, Y, 140), block("solar_panel_mk1"), Direction.SOUTH);
-            int x = 62;
-            for (int mk = 2; mk <= 4; mk++) {
-                ((com.arno.robotica.power.block.SolarArrayBlock) block("solar_panel_mk" + mk)).placeAll(sp.serverLevel(), new BlockPos(x, Y, 140));
-                x += mk + 1;
+            for (int mk = 1; mk <= 4; mk++) {
+                ((com.arno.robotica.power.block.SolarArrayBlock) block("solar_panel_mk" + mk)).placeAll(sp.serverLevel(), new BlockPos(60 + (mk - 1) * 4, Y, 140));
             }
         }));
         if (wants("26_solar_panels")) {

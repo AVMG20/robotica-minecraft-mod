@@ -18,25 +18,22 @@ import java.util.List;
 import java.util.function.IntSupplier;
 
 /**
- * Daylight generator. Produces only while the sun is up and the block above has sky access. Mk2-Mk4 cover a square of
- * blocks ({@link SolarArrayBlock}).
+ * Daylight generator. Produces only while the sun is up and the block above has sky access. Every Mk covers a 3x3 square
+ * of blocks ({@link SolarArrayBlock}).
  */
-public class SolarPanelBlock extends PowerBlock {
+public abstract class SolarPanelBlock extends PowerBlock {
     public enum Tier {
-        MK1(PowerConfig::solarMk1, 4_000, 1),
-        MK2(PowerConfig::solarMk2, 16_000, 2),
-        MK3(PowerConfig::solarMk3, 40_000, 3),
-        MK4(PowerConfig::solarMk4, 100_000, 4);
+        MK1(PowerConfig::solarMk1, 4_000),
+        MK2(PowerConfig::solarMk2, 16_000),
+        MK3(PowerConfig::solarMk3, 40_000),
+        MK4(PowerConfig::solarMk4, 100_000);
 
         private final IntSupplier output;
         public final int buffer;
-        /** Width of the square the panel covers, in blocks. */
-        public final int size;
 
-        Tier(IntSupplier output, int buffer, int size) {
+        Tier(IntSupplier output, int buffer) {
             this.output = output;
             this.buffer = buffer;
-            this.size = size;
         }
 
         /** FE/t in full daylight before the global generation multiplier. */
@@ -49,7 +46,7 @@ public class SolarPanelBlock extends PowerBlock {
 
     private final Tier tier;
 
-    public SolarPanelBlock(Properties props, Tier tier) {
+    protected SolarPanelBlock(Properties props, Tier tier) {
         super(props, () -> typeFor(tier));
         this.tier = tier;
     }
@@ -82,8 +79,9 @@ public class SolarPanelBlock extends PowerBlock {
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         int output = com.arno.robotica.core.CoreConfig.scaleGeneration(tier.output());
         tooltip.add(Component.translatable("tooltip.robotica.solar", output).withStyle(ChatFormatting.GRAY));
-        if (tier.size > 1) tooltip.add(Component.translatable("tooltip.robotica.solar_area", tier.size).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.robotica.solar_area", SolarArrayBlock.SIZE).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.solar_rain", SolarPanelBlockEntity.weatherOutput(output, true)).withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.solar_push").withStyle(ChatFormatting.DARK_GRAY));
+        if (tier != Tier.MK1) tooltip.add(Component.translatable("tooltip.robotica.industry_upgrade").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

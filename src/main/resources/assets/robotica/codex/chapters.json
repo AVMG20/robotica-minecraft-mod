@@ -46,7 +46,7 @@
       "pages": [
         {
           "title": "Making FE",
-          "text": "Start with the Winding Crank: wind a Mainspring by hand to run your first robots.\nOnce you have iron, build a Combustion Generator and feed it coal or logs.\nIn Age 1, add Solar Panels: no fuel to keep up.\nAfter that come the RTG, the Tesla Spire and the Core Reactor.",
+          "text": "Start with the Winding Crank: wind a Mainspring by hand to run your first robots.\nOnce you have iron, build a Combustion Generator and feed it coal or logs.\nIn Age 1, add Solar Panels: no fuel, 3x3 each.\nAfter that come the RTG, the Tesla Spire and the Core Reactor.",
           "items": [
             "robotica:winding_crank",
             "robotica:combustion_generator",
