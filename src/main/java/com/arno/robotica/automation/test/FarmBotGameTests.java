@@ -245,6 +245,26 @@ public class FarmBotGameTests {
         });
     }
 
+    /** A tree spot it saw (a sapling) that someone cleared gets a new sapling; plain dirt next to it stays empty. */
+    @GameTest(template = PEN, timeoutTicks = 400)
+    public static void stumpyReplantsClearedTreeSpots(GameTestHelper helper) {
+        BlockPos spot = new BlockPos(5, 2, 3), bare = new BlockPos(3, 2, 3);
+        helper.setBlock(spot.below(), Blocks.DIRT);
+        helper.setBlock(bare.below(), Blocks.DIRT);
+        helper.setBlock(spot, Blocks.BIRCH_SAPLING);
+        Stumpy stumpy = stumpy(helper);
+        helper.runAfterDelay(40, () -> {
+            helper.setBlock(spot, Blocks.AIR);
+            stumpy.pouch.setStackInSlot(0, new ItemStack(Items.OAK_SAPLING, 4));
+            stumpy.pouch.setStackInSlot(1, new ItemStack(Items.BIRCH_SAPLING, 4));
+        });
+        helper.runAfterDelay(41, () -> helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.BIRCH_SAPLING, spot);
+            helper.assertBlockPresent(Blocks.AIR, bare);
+            helper.assertTrue(count(stumpy.pouch, Items.BIRCH_SAPLING) == 3, "the birch sapling came from the pouch");
+        }));
+    }
+
     /** A huge tree (90 logs) costs at most half the buffer, so a working Stumpy (never exactly full) still fells it. */
     @GameTest(template = PEN, timeoutTicks = 400)
     public static void stumpyFellsHugeTrees(GameTestHelper helper) {

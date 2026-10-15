@@ -184,7 +184,7 @@
   "robotica.configuration.anchorWhileOffline": "Load while the owner is offline",
   "robotica.configuration.anchorFePerChunk": "FE per tick per chunk",
   "tooltip.robotica.farm_bot_stats": "%sx%s area, an action every %s ticks, growth x%s",
-  "tooltip.robotica.stumpy_tip": "Plants saplings from its pouch where the trunk stood",
+  "tooltip.robotica.stumpy_tip": "Replants saplings from its pouch wherever a tree stood, also trees you cut yourself",
   "tooltip.robotica.sprout_tip": "Plants seeds from its pouch and tills dirt near water",
   "tooltip.robotica.farm_bot.storage": "Puts the harvest in the biggest chest within 3 blocks of where you place it",
   "tooltip.robotica.farm_bot.power": "Runs on a battery: right-click it with a wound Mainspring or a charged cell",
