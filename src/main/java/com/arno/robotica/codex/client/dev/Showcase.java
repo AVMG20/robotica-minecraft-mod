@@ -1272,7 +1272,7 @@ public final class Showcase {
             }
         }));
         if (wants("26_solar_panels")) {
-            camera(66.5, Y + 7.0, 151.0, 180, 36);
+            camera(67.5, Y + 5.0, 148.0, 180, 38);
             step(20, () -> {});
             shot("26_solar_panels");
         }
