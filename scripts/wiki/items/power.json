@@ -88,14 +88,14 @@
      ],
      [
       "Daylight",
-      "20 FE/t",
+      "40 FE/t",
       "100 FE/t",
       "300 FE/t",
       "800 FE/t"
      ],
      [
       "Rain",
-      "4 FE/t",
+      "8 FE/t",
       "20 FE/t",
       "60 FE/t",
       "160 FE/t"
@@ -109,7 +109,7 @@
      ],
      [
       "Push (all sides)",
-      "160 FE/t",
+      "320 FE/t",
       "800 FE/t",
       "2,400 FE/t",
       "6,400 FE/t"

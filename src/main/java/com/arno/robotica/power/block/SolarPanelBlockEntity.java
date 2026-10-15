@@ -22,6 +22,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     private final int pushRate;
     /** Output in rain or thunder, percent of the daylight output. */
     public static final int RAIN_PERCENT = 20;
+    /** Daylight FE/t of an old single Mk1 (one block, saved before panels covered 3x3), before the generation multiplier. */
+    public static final int OLD_MK1_OUTPUT = 20;
     private boolean sunny;
     private boolean raining;
     private boolean openSky;
@@ -29,6 +31,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     private int openCells;
     /** One block on its own (an old single panel, or a block a mod moved alone): pushes into its own neighbours. */
     private boolean standalone;
+    /** An old single panel ({@link SolarArrayBlock#SINGLE}). */
+    private boolean single;
     /** Every block of the square has been there at once. A formed panel that loses a block removes itself. */
     private boolean formed;
     /**
@@ -48,7 +52,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     private int currentOutput() {
         if (!sunny) return 0;
         int cells = SolarArrayBlock.SIZE * SolarArrayBlock.SIZE;
-        return weatherOutput((int) ((long) CoreConfig.scaleGeneration(tier.output()) * openCells / cells), raining);
+        int base = single && tier == SolarPanelBlock.Tier.MK1 ? Math.min(tier.output(), OLD_MK1_OUTPUT) : tier.output();
+        return weatherOutput((int) ((long) CoreConfig.scaleGeneration(base) * openCells / cells), raining);
     }
 
     /** The daylight output {@code out}, cut to {@link #RAIN_PERCENT}% in rain (at least 1 FE/t). */
@@ -148,7 +153,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         }
         BlockState state = getBlockState();
         int n = SolarArrayBlock.SIZE;
-        if (state.getValue(SolarArrayBlock.SINGLE)) {
+        single = state.getValue(SolarArrayBlock.SINGLE);
+        if (single) {
             standalone = true;
             return level.canSeeSky(pos.above()) ? n * n : 0;
         }

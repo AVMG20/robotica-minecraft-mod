@@ -227,6 +227,10 @@ public class PowerGameTests {
                     for (int z = 0; z < 3; z++) if (x != 0 || z != 0) helper.assertBlockNotPresent(solar((int) c[2]), p.offset(x, 0, z));
                 }
             }
+            // an old single Mk1 keeps the 20 FE/t it made as one block
+            int old = com.arno.robotica.core.CoreConfig.scaleGeneration(com.arno.robotica.power.block.SolarPanelBlockEntity.OLD_MK1_OUTPUT);
+            int expect = com.arno.robotica.power.block.SolarPanelBlockEntity.weatherOutput(old, oldMk1.flag() == 2);
+            helper.assertTrue(oldMk1.flag() == 0 || oldMk1.rate() == expect, "the old single Mk1 makes " + expect + ", got " + oldMk1.rate());
             assertSolarSquare(helper, solar(4), mk4, "the Mk4 keeps 3x3");
             for (int i = 0; i < 4; i++) {
                 helper.assertBlockNotPresent(solar(4), mk4.offset(3, 0, i));
