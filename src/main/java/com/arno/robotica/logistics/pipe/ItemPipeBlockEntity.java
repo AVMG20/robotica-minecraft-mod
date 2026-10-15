@@ -89,6 +89,7 @@ public class ItemPipeBlockEntity extends BlockEntity {
     public void setMode(Direction side, PipeMode mode) {
         modes[side.ordinal()] = mode;
         setChanged();
+        invalidateNetwork();
     }
 
     /** Sets the mode and shows it on the arm at once (server). */

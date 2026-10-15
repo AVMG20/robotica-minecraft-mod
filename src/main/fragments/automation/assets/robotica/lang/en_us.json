@@ -99,7 +99,7 @@
   "tooltip.robotica.survey_rig_mk": "Mk%s: x%s speed, rare ores +%s%%, %s card slots",
   "tooltip.robotica.worker_upgrade": "Right-click a placed Mk%s with it to upgrade in place",
   "message.robotica.worker_upgraded": "Upgraded to %s",
-  "message.robotica.worker_locked": "Only the owner, their team or an operator can upgrade this",
+  "message.robotica.worker_locked": "Only the owner, their team or an operator can use this",
   "message.robotica.worker_order": "Upgrade it to Mk%s first",
   "robotica.configuration.excavatorSizeMk1": "Excavator Mk1 size",
   "robotica.configuration.excavatorIntervalMk1": "Excavator Mk1 ticks per block",

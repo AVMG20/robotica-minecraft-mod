@@ -1208,7 +1208,12 @@ public final class ExoTicker {
         }
         if (source.is(DamageTypes.HOT_FLOOR)) {
             refresh(p, st);
-            if (afford(st, ModuleKind.CRYO_TREADS, 0)) event.setCanceled(true);
+            // magma hurts every tick it is walked on (before i-frames): the running per-tick cost
+            double cost = ExoConfig.perTick(ModuleKind.CRYO_TREADS, 1);
+            if (afford(st, ModuleKind.CRYO_TREADS, cost)) {
+                spend(st, ModuleKind.CRYO_TREADS, cost);
+                event.setCanceled(true);
+            }
         }
     }
 

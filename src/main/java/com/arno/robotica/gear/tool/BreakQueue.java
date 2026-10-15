@@ -139,6 +139,7 @@ public final class BreakQueue {
                 consumed++;
                 if (state.isAir() || state.getBlock() instanceof LiquidBlock
                         || state.getDestroySpeed(level, pos) < 0 || !level.mayInteract(player, pos)
+                        || (level.getBlockEntity(pos) != null && !GearConfig.areaBreaksBlockEntities())
                         || pos.distSqr(player.blockPosition()) > 48 * 48) {
                     continue;
                 }

@@ -482,7 +482,7 @@ public abstract class FarmBot extends PathfinderMob {
             NeoForge.EVENT_BUS.post(event);
             return !event.isCanceled();
         } catch (RuntimeException e) {
-            return true;
+            return false;
         }
     }
 

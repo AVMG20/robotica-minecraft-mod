@@ -446,7 +446,7 @@ public class CourierDrone extends DroneBase {
             NeoForge.EVENT_BUS.post(event);
             return !event.isCanceled() && event.getUseBlock() != TriState.FALSE;
         } catch (RuntimeException e) {
-            return true;
+            return false;
         }
     }
 

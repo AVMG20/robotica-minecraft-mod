@@ -130,6 +130,11 @@ public abstract class AreaWorkerBlock extends BaseEntityBlock {
             if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.robotica.worker_order", mkTier() + 1), true);
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
+        if ((AreaWorkerBlockEntity.canUseAsBattery(stack) || stack.getItem() instanceof UpgradeCardItem)
+                && !level.isClientSide && !worker.canUse(player)) {
+            player.displayClientMessage(Component.translatable("message.robotica.worker_locked"), true);
+            return ItemInteractionResult.CONSUME;
+        }
         if (AreaWorkerBlockEntity.canUseAsBattery(stack)) {
             if (!level.isClientSide) {
                 ItemStack old = worker.battery.getStackInSlot(0).copy();
@@ -169,6 +174,8 @@ public abstract class AreaWorkerBlock extends BaseEntityBlock {
                 // Sneak + empty hand: a quick status check and the work area for a few seconds, without the GUI.
                 worker.startPreview();
                 sp.displayClientMessage(worker.statusLine(), true);
+            } else if (!worker.canUse(sp)) {
+                sp.displayClientMessage(Component.translatable("message.robotica.worker_locked"), true);
             } else {
                 sp.openMenu(worker, buf -> buf.writeBlockPos(pos));
             }

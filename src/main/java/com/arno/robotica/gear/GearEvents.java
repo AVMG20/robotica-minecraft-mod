@@ -74,7 +74,7 @@ public final class GearEvents {
         List<BlockPos> targets = AreaBreaker.collect(level, player, stack, tool, origin, face);
         AreaMode mode = tool.activeMode(stack, player);
         LampPlacer.schedule(player, level, stack, origin, mode.isBox() ? targets : List.of());
-        if (targets.isEmpty() && !(mode == AreaMode.TREE && tool.spec.replants)) return;
+        if (targets.isEmpty()) return;
         BreakQueue.start(player, level, tool, stack, origin, targets);
         if (!targets.isEmpty()) GearSounds.breakStarted(player, level, tool, mode, origin, targets.size() + 1);
     }

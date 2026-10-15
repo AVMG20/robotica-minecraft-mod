@@ -27,11 +27,15 @@ public final class Guide {
 
     public static final String PREFIX = "guide/";
 
-    /** Step order of the guide: tips name the next steps in this order. Unknown steps sort last. */
-    static final List<String> ORDER = List.of("root", "copper_gear", "robot_built", "mainspring", "first_robot", "robot_working", "hammer",
-            "first_iron", "generator", "charger", "copper_cell", "tesla", "power_tool", "basic_circuit", "metal_press",
-            "upgrade_card", "robot_mk2", "warp", "diamonds", "excavator", "survey_rig", "storage", "foundry", "age2", "colossus", "servo_core", "servo_drill", "vial",
-            "replicator", "age3", "cinder_forge", "tyrant", "magma_core", "magma_drill", "age4", "null_relay", "sentinel", "antigrav_core", "null_drill", "portal");
+    /** Step order of the guide (as in codex/guide.json): tips name the next steps in this order. Unknown steps sort last. */
+    public static final List<String> ORDER = List.of("root", "copper_gear", "robot_built", "mainspring", "first_robot", "robot_working", "hammer", "first_iron",
+            "buddy_bot", "hauler_drone", "generator", "charger", "copper_cell", "tesla", "power_tool", "basic_circuit",
+            "exo", "drones", "rancher", "grinder", "metal_press", "storage", "capacitor_bank", "upgrade_card", "robot_mk2",
+            "warp", "thorium", "ferrothorium", "pocket_architect", "diamonds", "excavator", "survey_rig", "age2",
+            "assembler", "rtg", "tesla_spire", "core_reactor", "foundry", "colossus", "servo_core", "servo_drill", "vial",
+            "replicator", "quantum_link", "age3", "pyrolite", "cinder_forge", "tyrant", "magma_core", "magma_drill",
+            "exo_mk3", "age4", "resonite", "null_relay", "sentinel", "antigrav_core", "null_drill", "ring_collider",
+            "flight", "exo_mk4", "portal");
 
     public static boolean isGuide(ResourceLocation id) {
         return Robotica.MODID.equals(id.getNamespace()) && id.getPath().startsWith(PREFIX);

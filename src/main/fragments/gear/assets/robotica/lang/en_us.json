@@ -76,7 +76,7 @@
   "robotica.configuration.arcBladeCapacity": "Arc Blade battery (FE)",
   "robotica.configuration.nullLanceCapacity": "Null Lance battery (FE)",
   "gear.robotica.mode_label": "Mode:",
-  "gear.robotica.toggle.auto_smelt.desc": "Ores and sand come out smelted",
+  "gear.robotica.toggle.auto_smelt.desc": "Drops come out smelted",
   "gear.robotica.screen.mode.desc": "Click: next mode. Shift-click: previous. Same as the mode key",
   "gear.robotica.hud.sneaking": "  sneaking",
   "gear.robotica.hud.no_power": "  no energy",

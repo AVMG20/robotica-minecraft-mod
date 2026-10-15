@@ -32,6 +32,19 @@ public class CodexGameTests {
         helper.succeed();
     }
 
+    /** Every guide step has a place in Guide.ORDER, so chat tips name the next steps in guide order. */
+    @GameTest(template = "empty")
+    public static void guideOrderListsEveryStep(GameTestHelper helper) {
+        List<String> missing = new ArrayList<>();
+        for (var holder : helper.getLevel().getServer().getAdvancements().getAllAdvancements()) {
+            if (!com.arno.robotica.codex.Guide.isGuide(holder.id())) continue;
+            String step = holder.id().getPath().substring(com.arno.robotica.codex.Guide.PREFIX.length());
+            if (!com.arno.robotica.codex.Guide.ORDER.contains(step)) missing.add(step);
+        }
+        helper.assertTrue(missing.isEmpty(), "guide steps missing from Guide.ORDER: " + missing);
+        helper.succeed();
+    }
+
     /**
      * The guide advancements load, form one tree under robotica:guide/root, and together unlock every Robotica recipe in
      * the recipe book (except the Architect's, which the architect module owns).

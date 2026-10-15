@@ -1376,7 +1376,7 @@ public class BuddyBot extends DroneBase {
             NeoForge.EVENT_BUS.post(event);
             return !event.isCanceled();
         } catch (RuntimeException e) {
-            return true;
+            return false;
         }
     }
 
@@ -1496,7 +1496,7 @@ public class BuddyBot extends DroneBase {
         try {
             vetoed = EventHooks.onBlockPlace(fakeOwner(sl), snapshot, Direction.UP);
         } catch (RuntimeException e) {
-            vetoed = false;
+            vetoed = true;
         }
         if (vetoed) {
             snapshot.restore(Block.UPDATE_ALL);

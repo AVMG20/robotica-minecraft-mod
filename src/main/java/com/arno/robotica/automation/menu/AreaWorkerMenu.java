@@ -105,6 +105,7 @@ public class AreaWorkerMenu extends MachineMenu {
     @Override
     public boolean stillValid(Player player) {
         if (be.isRemoved() || be.getLevel() == null) return false;
+        if (!player.level().isClientSide && !be.canUse(player)) return false;
         return player.distanceToSqr(be.getBlockPos().getX() + 0.5, be.getBlockPos().getY() + 0.5, be.getBlockPos().getZ() + 0.5) <= 64.0;
     }
 }

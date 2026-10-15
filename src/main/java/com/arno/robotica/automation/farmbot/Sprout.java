@@ -341,7 +341,10 @@ public class Sprout extends FarmBot {
         BlockPos above = pos.above();
         BlockState aboveState = sl.getBlockState(above);
         if (!mayBreak(sl, pos, sl.getBlockState(pos))) return false;
-        if (!aboveState.isAir()) sl.setBlock(above, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        if (!aboveState.isAir()) {
+            if (!mayBreak(sl, above, aboveState)) return false;
+            sl.destroyBlock(above, true);
+        }
         sl.setBlock(pos, Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7), Block.UPDATE_ALL);
         workSound(sl, pos, () -> SoundEvents.HOE_TILL, 0.8F, 1.0F);
         workFx(pos, FX_TILL);

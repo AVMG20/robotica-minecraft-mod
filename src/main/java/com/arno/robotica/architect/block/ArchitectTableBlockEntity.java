@@ -736,8 +736,10 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
             breakAndStash(level, target, current, fake, new ItemStack(Items.DIAMOND_PICKAXE));
             clearCooldown = ArchitectConfig.clearInterval();
         }
+        boolean building = ArchitectRegistry.isBuildingBlock(current);
         if (desired.isAir()) {
-            level.setBlock(target, desired, Block.UPDATE_ALL);
+            if (!level.setBlock(target, desired, Block.UPDATE_ALL)) return STEP_SKIPPED;
+            if (building && !refund(current)) stash(level, new ItemStack(current.getBlock()));
             return STEP_DONE;
         }
         if (!level.setBlock(target, desired, Block.UPDATE_ALL)) return STEP_SKIPPED;
@@ -745,7 +747,7 @@ public class ArchitectTableBlockEntity extends BlockEntity implements MenuProvid
         refined -= cost.refined();
         energy.consume(energyCost);
         // the old block is refunded as matter, or stashed as an item when the matter does not fit
-        if (restyled && !refund(current)) stash(level, new ItemStack(current.getBlock()));
+        if ((restyled || building) && !refund(current)) stash(level, new ItemStack(current.getBlock()));
         return STEP_DONE;
     }
 

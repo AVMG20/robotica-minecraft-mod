@@ -185,6 +185,8 @@ public class NullSentinel extends Monster implements RoboticaBoss {
     private final List<Spot> spots = new ArrayList<>();
     private List<Spot> clientSpots = List.of();
     private final List<UUID> pylons = new ArrayList<>();
+    /** Ticks after a load before missing pylons count as gone. */
+    private int pylonGrace;
     private int actionTicks;
     private int dyingTicks;
     private float ringAngle;
@@ -651,6 +653,11 @@ public class NullSentinel extends Monster implements RoboticaBoss {
     private void countPylons(ServerLevel server) {
         if (pylons.isEmpty()) {
             if (entityData.get(PYLONS) != 0) entityData.set(PYLONS, (byte) 0);
+            return;
+        }
+        // loaded from disk: the pylons' entity sections may still be loading
+        if (pylonGrace > 0) {
+            pylonGrace -= 10;
             return;
         }
         pylons.removeIf(id -> !(server.getEntity(id) instanceof NullPylon p && p.isAlive()));
@@ -1290,6 +1297,7 @@ public class NullSentinel extends Monster implements RoboticaBoss {
         attacksSinceRecharge = tag.getInt("AttacksSinceRecharge");
         pylons.clear();
         for (Tag t : tag.getList("Pylons", Tag.TAG_INT_ARRAY)) pylons.add(NbtUtils.loadUUID(t));
+        pylonGrace = 100;
         entityData.set(PYLONS, (byte) pylons.size());
         Optional<BlockPos> altar = NbtUtils.readBlockPos(tag, "Altar");
         altar.ifPresent(this::setAltarPos);

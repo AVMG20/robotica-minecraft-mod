@@ -657,6 +657,9 @@ public abstract class DroneBase extends PathfinderMob {
     protected boolean clearLine(Vec3 target) {
         Vec3 from = position().add(0, getBbHeight() * 0.5, 0);
         Vec3 to = target.add(0, getBbHeight() * 0.5, 0);
+        // a ray through an unloaded chunk would load it
+        if (!level().hasChunksAt(BlockPos.containing(Math.min(from.x, to.x), 0, Math.min(from.z, to.z)),
+                BlockPos.containing(Math.max(from.x, to.x), 0, Math.max(from.z, to.z)))) return false;
         return level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
     }
 

@@ -84,6 +84,7 @@ public class NullLanceItem extends EnergyWeaponItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack lance = player.getItemInHand(hand);
+        if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.pass(lance);
         if (!hasCharge(lance) && !player.getAbilities().instabuild) {
             if (!level.isClientSide) player.displayClientMessage(Component.translatable("gear.robotica.lance.no_energy", cost(lance)), true);
             return InteractionResultHolder.fail(lance);

@@ -102,7 +102,9 @@ public abstract class IndustryBlockEntity extends SyncedBlockEntity {
     protected static void drop(Level level, BlockPos pos, IItemHandler handler) {
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack stack = handler.getStackInSlot(i);
-            if (!stack.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+            if (stack.isEmpty()) continue;
+            if (handler instanceof net.neoforged.neoforge.items.IItemHandlerModifiable m) m.setStackInSlot(i, ItemStack.EMPTY);
+            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
         }
     }
 

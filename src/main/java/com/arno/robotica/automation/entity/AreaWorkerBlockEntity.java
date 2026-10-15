@@ -596,7 +596,7 @@ public abstract class AreaWorkerBlockEntity extends SyncedBlockEntity implements
             NeoForge.EVENT_BUS.post(event);
             return !event.isCanceled();
         } catch (RuntimeException e) {
-            return true;
+            return false;
         }
     }
 

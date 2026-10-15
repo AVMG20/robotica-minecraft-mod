@@ -452,7 +452,7 @@ public abstract class StructureControllerBlockEntity extends SyncedBlockEntity i
     protected long pushOut(ServerLevel level, Predicate<Port> accept, long budget, LongSupplier available, LongConsumer drain) {
         long sent = 0;
         for (Port port : ports) {
-            if (!accept.test(port)) continue;
+            if (!level.isLoaded(port.pos()) || !accept.test(port)) continue;
             long left = Math.min(budget - sent, available.getAsLong());
             if (left <= 0) break;
             BlockPos target = port.pos().relative(port.outward());
