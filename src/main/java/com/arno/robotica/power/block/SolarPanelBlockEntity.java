@@ -29,6 +29,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     private int openCells;
     /** A Mk2-Mk4 standing alone (placed as one block before panels covered a square): works like a Mk1 block. */
     private boolean standalone;
+    /** The sky has been checked since the block entity loaded. */
+    private boolean checked;
     private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
     /** Mk2-Mk4: cached FE neighbours around the panel, one per block and face that faces out of it (null for a Mk1). */
     @org.jetbrains.annotations.Nullable
@@ -104,7 +106,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
 
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
-        if ((level.getGameTime() + pos.asLong()) % 20 == 0) {
+        if (!checked || (level.getGameTime() + pos.asLong()) % 20 == 0) {
+            checked = true;
             openCells = level.dimensionType().hasFixedTime() ? 0 : countOpenCells(level, pos, state);
             openSky = openCells > 0;
             // Daylight from the sun's angle (the clear-weather isDay() edge): isDay() itself turns false in thunderstorms.
@@ -120,7 +123,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
 
     /**
      * Blocks of the panel that see the sky. Blocks in unloaded chunks count as open. A Mk2-Mk4 that stands alone (placed
-     * as one block before panels covered a square) counts its own block for the whole panel.
+     * as one block before panels covered a square) grows into its square when the square is empty, else counts its own
+     * block for the whole panel.
      */
     private int countOpenCells(ServerLevel level, BlockPos pos, BlockState state) {
         int n = tier.size;
@@ -140,6 +144,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
             }
         }
         standalone = present == 1;
+        if (standalone && array.grow(level, pos)) return countOpenCells(level, pos, state);
         if (standalone) return level.canSeeSky(pos.above()) ? n * n : 0;
         return open;
     }

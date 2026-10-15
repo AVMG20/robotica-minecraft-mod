@@ -72,8 +72,9 @@ public class SolarArrayBlock extends SolarPanelBlock {
     }
 
     /**
-     * The clicked block becomes the corner nearest the player on their left; the panel grows forward and to the right.
-     * Null (no placement) when a block or an entity is in the way.
+     * The clicked block becomes a corner of the panel: the panel grows forward and to the right of the player, or, when
+     * that square is blocked, to the left, back right or back left. Null (no placement) when every square is blocked by
+     * a block or an entity.
      */
     @Nullable
     @Override
@@ -81,25 +82,53 @@ public class SolarArrayBlock extends SolarPanelBlock {
         Level level = context.getLevel();
         BlockPos clicked = context.getClickedPos();
         Direction forward = context.getHorizontalDirection();
-        int n = size();
-        BlockPos far = clicked.relative(forward, n - 1).relative(forward.getClockWise(), n - 1);
-        BlockPos origin = new BlockPos(Math.min(clicked.getX(), far.getX()), clicked.getY(), Math.min(clicked.getZ(), far.getZ()));
+        Direction right = forward.getClockWise();
         Player player = context.getPlayer();
         CollisionContext collision = player == null ? CollisionContext.empty() : CollisionContext.of(player);
-        for (int x = 0; x < n; x++) {
-            for (int z = 0; z < n; z++) {
-                BlockPos p = origin.offset(x, 0, z);
-                if (p.equals(clicked)) continue;
-                if (!level.getWorldBorder().isWithinBounds(p) || !level.getBlockState(p).canBeReplaced()
-                        || !level.isUnobstructed(cell(x, z), p, collision)) {
-                    if (player != null && !level.isClientSide) {
-                        player.displayClientMessage(Component.translatable("message.robotica.solar_no_room", n), true);
-                    }
-                    return null;
-                }
+        int n = size();
+        for (Direction depth : new Direction[]{forward, forward.getOpposite()}) {
+            for (Direction side : new Direction[]{right, right.getOpposite()}) {
+                BlockPos far = clicked.relative(depth, n - 1).relative(side, n - 1);
+                BlockPos origin = new BlockPos(Math.min(clicked.getX(), far.getX()), clicked.getY(), Math.min(clicked.getZ(), far.getZ()));
+                if (fits(level, origin, clicked, collision)) return cell(clicked.getX() - origin.getX(), clicked.getZ() - origin.getZ());
             }
         }
-        return cell(clicked.getX() - origin.getX(), clicked.getZ() - origin.getZ());
+        if (player != null && !level.isClientSide) {
+            player.displayClientMessage(Component.translatable("message.robotica.solar_no_room", n), true);
+        }
+        return null;
+    }
+
+    /** Whether the panel can stand with its north-west corner at {@code origin} ({@code skip} is checked by the caller). */
+    private boolean fits(Level level, BlockPos origin, BlockPos skip, CollisionContext collision) {
+        for (int x = 0; x < size(); x++) {
+            for (int z = 0; z < size(); z++) {
+                BlockPos p = origin.offset(x, 0, z);
+                if (p.equals(skip)) continue;
+                if (!level.isLoaded(p) || !level.getWorldBorder().isWithinBounds(p) || !level.getBlockState(p).canBeReplaced()
+                        || !level.isUnobstructed(cell(x, z), p, collision)) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Grows a panel that stands alone (placed as one block before panels covered a square) into its square, when every
+     * other block of the square is loaded air. Returns whether it grew.
+     */
+    public boolean grow(Level level, BlockPos origin) {
+        for (int x = 0; x < size(); x++) {
+            for (int z = 0; z < size(); z++) {
+                BlockPos p = origin.offset(x, 0, z);
+                if ((x != 0 || z != 0) && (!level.isLoaded(p) || !level.isEmptyBlock(p))) return false;
+            }
+        }
+        for (int x = 0; x < size(); x++) {
+            for (int z = 0; z < size(); z++) {
+                if (x != 0 || z != 0) level.setBlock(origin.offset(x, 0, z), cell(x, z), Block.UPDATE_ALL);
+            }
+        }
+        return true;
     }
 
     @Override
