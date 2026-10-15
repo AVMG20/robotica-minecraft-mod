@@ -2,10 +2,8 @@ package com.arno.robotica.exo.client;
 
 import com.arno.robotica.Robotica;
 import com.arno.robotica.core.CoreSounds;
-import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.module.ModuleItems;
 import com.arno.robotica.core.module.ModuleKind;
-import com.arno.robotica.exo.ExoData;
 import com.arno.robotica.exo.ExoSuit;
 import com.arno.robotica.exo.net.ExoFxPayload;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -75,9 +73,9 @@ final class ExoFx {
     private static final float[] ringFrom = new float[RINGS], ringTo = new float[RINGS], ringDy = new float[RINGS], ringAlpha = new float[RINGS];
     private static int ringNext;
 
-    /** Cooldown edges: Dash, Sonar, Med Injector, Overclock. */
-    private static final boolean[] cooling = new boolean[4];
-    private static final long[] readyAt = {Long.MIN_VALUE, Long.MIN_VALUE, Long.MIN_VALUE, Long.MIN_VALUE};
+    /** Cooldown edges: Dash, Sonar, Med Injector. */
+    private static final boolean[] cooling = new boolean[3];
+    private static final long[] readyAt = {Long.MIN_VALUE, Long.MIN_VALUE, Long.MIN_VALUE};
     private static long lastBeep = Long.MIN_VALUE, lastDeny = Long.MIN_VALUE;
 
     // ---------------------------------------------------------------- tick
@@ -312,16 +310,10 @@ final class ExoFx {
         }
         ExoSuit.Active act = ExoSuit.active(player);
         boolean beep = false;
-        for (int k = 0; k < 4; k++) {
-            boolean has, cd;
-            if (k == 3) {
-                has = ExoSuit.setBonus(player) == ExoData.Core.SERVO;
-                cd = onCooldown(player, CoreItems.SERVO_CORE.get());
-            } else {
-                ModuleKind kind = k == 0 ? ModuleKind.DASH_THRUSTERS : k == 1 ? ModuleKind.SONAR_PULSE : ModuleKind.MED_INJECTOR;
-                has = act.has(kind);
-                cd = onCooldown(player, ModuleItems.get(kind, 1).get());
-            }
+        for (int k = 0; k < 3; k++) {
+            ModuleKind kind = k == 0 ? ModuleKind.DASH_THRUSTERS : k == 1 ? ModuleKind.SONAR_PULSE : ModuleKind.MED_INJECTOR;
+            boolean has = act.has(kind);
+            boolean cd = onCooldown(player, ModuleItems.get(kind, 1).get());
             if (cooling[k] && !cd && has) {
                 readyAt[k] = tick;
                 beep = true;
@@ -337,8 +329,7 @@ final class ExoFx {
     /** 1 just after the cooldown of {@code item} ran out, fading to 0 over 10 ticks (HUD flash). */
     static float readyFlash(Item item, float partial) {
         int k;
-        if (item == CoreItems.SERVO_CORE.get()) k = 3;
-        else if (item instanceof com.arno.robotica.core.module.ModuleItem m) {
+        if (item instanceof com.arno.robotica.core.module.ModuleItem m) {
             k = m.kind == ModuleKind.DASH_THRUSTERS ? 0 : m.kind == ModuleKind.SONAR_PULSE ? 1 : m.kind == ModuleKind.MED_INJECTOR ? 2 : -1;
         } else k = -1;
         ClientLevel level = Minecraft.getInstance().level;

@@ -343,7 +343,7 @@ public class ExoMenu extends MachineMenu {
         }
     }
 
-    /** The chestplate's core socket: one Servo, Magma or Antigrav Core. */
+    /** The chestplate's core socket: one Magma or Antigrav Core. */
     public static class CoreSlot extends Slot {
         private final Supplier<ItemStack> piece;
 

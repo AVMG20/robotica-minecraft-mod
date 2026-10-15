@@ -59,7 +59,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
 
     @Override
     protected ItemStack ghostIcon(Slot slot) {
-        if (slot instanceof ExoMenu.CoreSlot) return new ItemStack(CoreItems.SERVO_CORE.get());
+        if (slot instanceof ExoMenu.CoreSlot) return new ItemStack(CoreItems.MAGMA_CORE.get());
         if (slot instanceof ExoMenu.CellSlot) return new ItemStack(CoreItems.COPPER_CELL.get());
         return ItemStack.EMPTY;
     }
@@ -71,7 +71,6 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         }
         if (slot instanceof ExoMenu.CoreSlot) {
             return Component.empty()
-                    .append(Component.translatable("exo.robotica.core_hint.servo", ExoConfig.bonusArgs("servo"))).append("\n")
                     .append(Component.translatable("exo.robotica.core_hint.magma")).append("\n")
                     .append(Component.translatable("exo.robotica.core_hint.antigrav")).append("\n")
                     .append(Component.translatable("exo.robotica.core_hint.needs", ExoConfig.setBonusMinMark()).withStyle(ChatFormatting.GRAY));
@@ -171,6 +170,7 @@ public class ExoScreen extends MachineScreen<ExoMenu> {
         ItemStack core = ExoData.core(chest);
         if (core.isEmpty()) return;
         ExoData.Core kind = ExoData.coreKind(core);
+        if (kind == ExoData.Core.NONE) return;
         boolean active = worn && ExoSuit.setBonus(player) == kind;
         String id = kind.name().toLowerCase(java.util.Locale.ROOT);
         Component label = Component.translatable("exo.robotica.bonus." + id);

@@ -16,7 +16,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
@@ -27,7 +26,7 @@ import java.util.List;
 /**
  * Compact HUD while wearing Exo pieces (corner and offset in the client config, or off): suit energy bar, the Jet
  * Assist heat bar under it (red near the cut-out, blinking while it cools from an overheat), one icon per
- * installed module (dimmed when off, empty or a duplicate), cooldown rings (Dash, Med Injector, Sonar, Overclock),
+ * installed module (dimmed when off, empty or a duplicate), cooldown rings (Dash, Med Injector, Sonar),
  * sonar results and the Robot HUD's drone list.
  */
 final class ExoHud {
@@ -66,15 +65,9 @@ final class ExoHud {
             }
         }
         ExoData.Core bonus = ExoSuit.setBonus(player);
-        boolean servo = bonus == ExoData.Core.SERVO;
         if (bonus != ExoData.Core.NONE) {
-            Item core = switch (bonus) {
-                case SERVO -> CoreItems.SERVO_CORE.get();
-                case MAGMA -> CoreItems.MAGMA_CORE.get();
-                default -> CoreItems.ANTIGRAV_CORE.get();
-            };
-            float cd = servo ? player.getCooldowns().getCooldownPercent(core, partial) : 0;
-            icons.add(new Icon(new ItemStack(core), true, cd, servo && player.hasEffect(MobEffects.DIG_SPEED)));
+            Item core = bonus == ExoData.Core.MAGMA ? CoreItems.MAGMA_CORE.get() : CoreItems.ANTIGRAV_CORE.get();
+            icons.add(new Icon(new ItemStack(core), true, 0, false));
         }
 
         boolean robotHud = active.has(ModuleKind.ROBOT_HUD) && ExoSuit.isActive(player, ModuleKind.ROBOT_HUD);

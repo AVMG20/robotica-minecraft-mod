@@ -79,8 +79,7 @@ import java.util.UUID;
  * player) on every tick. One-shot costs (a dash, a jump, a hit, a fall, a heal, a meal, a ping) are drained from the
  * worn stacks at once, so swapping a piece cannot dodge them.
  *
- * <p>Cooldowns (Dash, Sonar, Med Injector, Overclock) are vanilla item cooldowns on the module item (the Servo Core for
- * Overclock), so the client sees them without extra packets. Their end times and the flight grant are also kept in the
+ * <p>Cooldowns (Dash, Sonar, Med Injector) are vanilla item cooldowns on the module item, so the client sees them without extra packets. Their end times and the flight grant are also kept in the
  * player's persistent data, so a relog neither resets a cooldown nor drops a flying player, and a crash cannot leave a
  * stale {@code mayfly} behind (see {@link #onLogin}).
  */
@@ -103,7 +102,7 @@ public final class ExoTicker {
     public static final String FLIGHT_KEY = "robotica_exo_flight";
     /** Persistent data (inside PlayerPersisted, kept through death): cooldown end times in game ticks. */
     public static final String COOLDOWN_KEY = "robotica_exo_cooldowns";
-    public static final String CD_DASH = "dash", CD_MED = "med_injector", CD_SONAR = "sonar", CD_OVERCLOCK = "overclock";
+    public static final String CD_DASH = "dash", CD_MED = "med_injector", CD_SONAR = "sonar";
     /**
      * Persistent data (inside PlayerPersisted, kept through death): Jet Assist heat, overheat and the game time they
      * were saved at, written when the runtime state goes (suit off, logout, death, respawn) and read when it comes back.
@@ -233,6 +232,7 @@ public final class ExoTicker {
             autoFeeder(p, st);
             solarWeave(p, st);
             chestCell(p);
+            returnOldCore(p);
             if (ExoConfig.cellRecharge()) rechargeFromCells(p);
         }
         if (st.tick % FLUSH_INTERVAL == 0) flush(p, st);
@@ -1003,6 +1003,15 @@ public final class ExoTicker {
         return Math.max(0, got);
     }
 
+    /** A Servo Core from before the socket dropped it goes back to the wearer (inventory, or dropped when full). */
+    private static void returnOldCore(ServerPlayer p) {
+        ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
+        ItemStack core = ExoData.core(chest);
+        if (!core.is(CoreItems.SERVO_CORE.get())) return;
+        ExoData.setCore(chest, ItemStack.EMPTY);
+        p.getInventory().placeItemBackInInventory(core);
+    }
+
     /** Cells and Mainsprings in the inventory top up the worn suit once per second (config cellsRechargeSuit). */
     private static void rechargeFromCells(ServerPlayer p) {
         ItemStack[] pieces = chargeOrder(p);
@@ -1102,32 +1111,6 @@ public final class ExoTicker {
         return true;
     }
 
-    /** Overclock (Servo Core set bonus): Haste and Speed for a while, then a long cooldown. Returns true when it fired. */
-    public static boolean overclock(ServerPlayer p) {
-        State st = state(p);
-        if (st == null || st.core != ExoData.Core.SERVO) {
-            p.displayClientMessage(net.minecraft.network.chat.Component.translatable("exo.robotica.no_overclock", ExoConfig.setBonusMinMark()), true);
-            return false;
-        }
-        Item core = CoreItems.SERVO_CORE.get();
-        if (p.getCooldowns().isOnCooldown(core)) return false;
-        int cost = ExoConfig.overclockCost();
-        if (available(st, CHEST) < Math.max(cost, 1)) {
-            refuse(p, st);
-            return false;
-        }
-        payNow(p, st, CHEST, cost);
-        int duration = ExoConfig.overclockDuration();
-        if (ExoConfig.overclockHaste() > 0) p.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, duration, ExoConfig.overclockHaste() - 1, false, false, true));
-        if (ExoConfig.overclockSpeed() > 0) p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, duration, ExoConfig.overclockSpeed() - 1, false, false, true));
-        startCooldown(p, CD_OVERCLOCK, ExoConfig.overclockCooldown());
-        CoreSounds.play(p, CoreSounds.MACHINE_START, SoundSource.PLAYERS, 0.8F, 1.5F);
-        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.5F, 1.8F);
-        p.serverLevel().sendParticles(com.arno.robotica.core.particle.CoreParticles.mote(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), p.getX(), p.getY() + 1.0, p.getZ(), 8, 0.4, 0.6, 0.4, 0.04);
-        p.serverLevel().sendParticles(com.arno.robotica.core.particle.CoreParticles.zap(com.arno.robotica.core.particle.CoreParticles.ELECTRIC, 1.0F), p.getX(), p.getY() + 1.0, p.getZ(), 4, 0.4, 0.6, 0.4, 0);
-        return true;
-    }
-
     // ---------------------------------------------------------------- cooldowns
 
     /** The items a named cooldown sits on (every level of the module, so the HUD shows it whichever is installed). */
@@ -1138,7 +1121,7 @@ public final class ExoTicker {
             case CD_SONAR -> ModuleKind.SONAR_PULSE;
             default -> null;
         };
-        if (kind == null) return CD_OVERCLOCK.equals(name) ? new Item[]{CoreItems.SERVO_CORE.get()} : new Item[0];
+        if (kind == null) return new Item[0];
         Item[] items = new Item[kind.maxLevel()];
         for (int l = 1; l <= kind.maxLevel(); l++) items[l - 1] = ModuleItems.get(kind, l).get();
         return items;

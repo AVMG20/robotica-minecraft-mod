@@ -42,7 +42,6 @@ Chestplate Mk2 and up holds one core. The bonus needs all four pieces worn, Mk2 
 
 | Core | Bonus |
 |---|---|
-| [[servo_core]] | Overclock key (default O): Haste II + Speed I for 10 s (60 s cooldown, 50,000 FE) |
 | [[magma_core]] | fire immunity, hits set targets on fire, lava doesn't slow you, Jet Assist heats half as fast |
 | [[antigrav_core]] | no fall damage, Flight costs half, Dash cooldown halved |
 

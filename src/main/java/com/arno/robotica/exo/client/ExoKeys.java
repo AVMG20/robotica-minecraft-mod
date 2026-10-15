@@ -17,7 +17,7 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * Keybinds: J opens the module screen of the worn suit, K toggles Flight or Jet Assist III hover (with both it cycles
- * Flight, hover, off), R dashes (Dash Thrusters), N pings (Sonar Pulse), O overclocks (Servo Core set bonus). None of
+ * Flight, hover, off), R dashes (Dash Thrusters), N pings (Sonar Pulse). None of
  * them clash with vanilla defaults or Robotica's V, B, G (tools) and H (drones). Jump is the Jet Assist
  * ({@link ExoJetpack}).
  */
@@ -29,7 +29,6 @@ final class ExoKeys {
     static final KeyMapping TOGGLE_FLIGHT = key("toggle_flight", GLFW.GLFW_KEY_K);
     static final KeyMapping DASH = key("dash", GLFW.GLFW_KEY_R);
     static final KeyMapping SONAR = key("sonar", GLFW.GLFW_KEY_N);
-    static final KeyMapping OVERCLOCK = key("overclock", GLFW.GLFW_KEY_O);
 
     private static KeyMapping key(String name, int key) {
         return new KeyMapping("key.robotica.exo." + name, KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, key, CATEGORY);
@@ -40,7 +39,6 @@ final class ExoKeys {
         event.register(TOGGLE_FLIGHT);
         event.register(DASH);
         event.register(SONAR);
-        event.register(OVERCLOCK);
     }
 
     private static void send(int action) {
@@ -61,9 +59,6 @@ final class ExoKeys {
         }
         while (SONAR.consumeClick()) {
             if (free) send(ExoActions.SONAR);
-        }
-        while (OVERCLOCK.consumeClick()) {
-            if (free) send(ExoActions.OVERCLOCK);
         }
         while (DASH.consumeClick()) {
             // No prediction: the server applies the burst and sends the motion, so a refused dash moves nothing.
