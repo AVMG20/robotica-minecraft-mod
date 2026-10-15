@@ -1005,6 +1005,8 @@ public final class ExoTicker {
 
     /** A Servo Core from before the socket dropped it goes back to the wearer (inventory, or dropped when full). */
     private static void returnOldCore(ServerPlayer p) {
+        // The J screen holds its own copy of the core slot: wait until it is closed, or the core could be taken twice.
+        if (p.containerMenu instanceof com.arno.robotica.exo.menu.ExoMenu) return;
         ItemStack chest = ExoSuit.piece(p, EquipmentSlot.CHEST);
         ItemStack core = ExoData.core(chest);
         if (!core.is(CoreItems.SERVO_CORE.get())) return;
