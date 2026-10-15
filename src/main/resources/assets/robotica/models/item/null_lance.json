@@ -1,6 +1,53 @@
 {
-  "parent": "minecraft:item/handheld",
-  "textures": {
-    "layer0": "robotica:item/null_lance"
-  }
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "robotica:item/null_lance_held"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "robotica:item/null_lance"
+      }
+    },
+    "ground": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "robotica:item/null_lance"
+      }
+    },
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "robotica:item/null_lance"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "robotica:charge": 0.25
+      },
+      "model": "robotica:item/null_lance_charge_1"
+    },
+    {
+      "predicate": {
+        "robotica:charge": 0.5
+      },
+      "model": "robotica:item/null_lance_charge_2"
+    },
+    {
+      "predicate": {
+        "robotica:charge": 0.75
+      },
+      "model": "robotica:item/null_lance_charge_3"
+    },
+    {
+      "predicate": {
+        "robotica:charge": 1.0
+      },
+      "model": "robotica:item/null_lance_charge_4"
+    }
+  ]
 }

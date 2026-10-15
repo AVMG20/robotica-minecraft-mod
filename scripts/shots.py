@@ -55,6 +55,8 @@ SHOTS = {
     'rancher_pen': ('rancher_pen.png', 'scene'),
     'rancher_close': ('rancher_close.png', 'scene'),
     'hauler_drone': ('hauler_drone.png', 'scene'),
+    'lance_rifle_charge': ('lance_rifle_charge.png', 'scene'),
+    'lance_rifle_first_person': ('lance_rifle_first_person.png', 'scene'),
     'codex_01_start': ('codex_01_start.png', 'scene'),
     'codex_03_recipe': ('codex_03_recipe.png', 'scene'),
     'gui_stumpy': ('gui_96_stumpy.png', 'gui'),

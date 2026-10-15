@@ -11,6 +11,7 @@ import com.arno.robotica.codex.client.CodexScreen;
 import com.arno.robotica.core.energy.ItemEnergy;
 import com.arno.robotica.core.module.Modules;
 import com.arno.robotica.gear.GearComponents;
+import com.arno.robotica.gear.GearItems;
 import com.arno.robotica.gear.bench.TinkersBenchMenu;
 import com.arno.robotica.gear.client.ToggleScreen;
 import com.arno.robotica.gear.lamp.SparkLampBlock;
@@ -1301,6 +1302,63 @@ public final class Showcase {
         }
         nullScenes();
         robotScenes();
+        lanceScenes();
+    }
+
+    private static final BlockPos LANCE = new BlockPos(300, Y, 160);
+    private static int savedFov = 70;
+
+    /**
+     * Null Lance mid-charge (2 of 4 coils lit): third person from the front right, then first person with the HUD.
+     * The lance_idle_* shots (not charging) are for checking the held model, not used on the site.
+     */
+    private static void lanceScenes() {
+        boolean third = wants("lance_rifle_charge", "lance_idle_third_person");
+        boolean first = wants("lance_rifle_first_person", "lance_idle_first_person");
+        if (!third && !first) return;
+        for (int delay : new int[]{40, 5}) {
+            step(delay, () -> server(sp -> {
+                ItemStack lance = new ItemStack(GearItems.NULL_LANCE.get());
+                ItemEnergy.fill(lance);
+                sp.setItemInHand(InteractionHand.MAIN_HAND, lance);
+                sp.getAbilities().flying = false;
+                sp.onUpdateAbilities();
+                sp.teleportTo(sp.serverLevel(), LANCE.getX() + 0.5, Y, LANCE.getZ() + 0.5, 180, -14);
+            }));
+        }
+        if (third) {
+            step(5, () -> {
+                mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                savedFov = mc().options.fov().get();
+                mc().options.fov().set(40);      // closer in on the player
+            });
+            hud(false);
+            // the head looks at the camera, the body (and the lance) turns to show its right side
+            step(20, () -> {
+                if (mc().player == null) return;
+                mc().player.yBodyRot = mc().player.getYRot() - 45.0F;
+                mc().player.yBodyRotO = mc().player.yBodyRot;
+            });
+            grab(5, "lance_idle_third_person");
+            chargeShot("lance_rifle_charge");
+            step(2, () -> mc().options.fov().set(savedFov));
+            hud(true);
+        }
+        step(5, () -> mc().options.setCameraType(CameraType.FIRST_PERSON));
+        if (first) {
+            step(5, () -> server(sp -> sp.teleportTo(sp.serverLevel(), LANCE.getX() + 0.5, Y, LANCE.getZ() + 0.5, 180, 4)));
+            grab(20, "lance_idle_first_person");
+            chargeShot("lance_rifle_first_person");
+        }
+        step(5, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
+    }
+
+    /** Holds right-click with the lance for 12 ticks (2 of 4 coils lit), takes the shot and lets go. */
+    private static void chargeShot(String name) {
+        if (!wants(name)) return;
+        for (int i = 0; i < 6; i++) step(1, () -> mc().options.keyUse.setDown(true));   // a step of delay 1 takes 2 ticks
+        grab(2, name);
+        step(10, () -> mc().options.keyUse.setDown(false));
     }
 
     /** Centre of the showcase Null Relay, far out in the End (no dragon fight in sight); the altar stands on it. */

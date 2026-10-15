@@ -8,6 +8,7 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
@@ -59,6 +60,7 @@ public final class GearClient {
         modBus.addListener(RegisterClientExtensionsEvent.class, RivetGunClient::register);
         modBus.addListener(RegisterClientExtensionsEvent.class, LanceClient::register);
         modBus.addListener(RegisterGuiLayersEvent.class, LanceHud::register);
+        modBus.addListener(FMLClientSetupEvent.class, LanceModel::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, LanceClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, LanceFx::onClientTick);
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, LanceFx::onCameraAngles);

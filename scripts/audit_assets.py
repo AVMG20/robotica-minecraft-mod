@@ -40,12 +40,21 @@ def check_model(ref, owner, seen):
     if not p.exists():
         problems.append(f'{owner}: missing model {ref}')
         return
-    m = json.loads(p.read_text())
+    check_body(json.loads(p.read_text()), ref, owner, seen)
+
+
+def check_body(m, ref, owner, seen):
+    """A model's textures and parent, plus the models inside it: separate_transforms parts and overrides."""
     for tex in m.get('textures', {}).values():
         if not tex.startswith('#') and not texture_ok(tex):
             problems.append(f'{owner}: model {ref} uses missing texture {tex}')
     if 'parent' in m:
         check_model(m['parent'], owner, seen)
+    for inner in [m.get('base', {}), *m.get('perspectives', {}).values()]:
+        if inner:
+            check_body(inner, ref, owner, seen)
+    for o in m.get('overrides', []):
+        check_model(o['model'], owner, seen)
 
 
 def models_in_blockstate(bs):
