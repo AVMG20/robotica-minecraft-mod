@@ -130,14 +130,14 @@ public class Stumpy extends FarmBot {
     }
 
     /**
-     * A grid spot (every {@link #SPACING} blocks from home, home and its neighbours left free) on dirt in the area, lit
+     * A grid spot (every {@link #SPACING} blocks from home, home itself left free) on dirt in the area, lit
      * enough for a sapling, with no trunk or sapling next to it and a sapling in the pouch that can grow there.
      */
     private boolean canPlant(ServerLevel level, BlockPos pos) {
         BlockPos h = home();
         int dx = pos.getX() - h.getX(), dz = pos.getZ() - h.getZ();
         if (Math.floorMod(dx, SPACING) != 0 || Math.floorMod(dz, SPACING) != 0) return false;
-        if (Math.abs(dx) <= 1 && Math.abs(dz) <= 1) return false;
+        if (dx == 0 && dz == 0) return false;
         if (!inArea(pos) || !level.getBlockState(pos.below()).is(BlockTags.DIRT)) return false;
         if (level.getRawBrightness(pos, 0) < SAPLING_LIGHT) return false;
         for (int x = -1; x <= 1; x++) {
@@ -149,7 +149,7 @@ public class Stumpy extends FarmBot {
                 if (n.is(BlockTags.LOGS) || n.is(BlockTags.SAPLINGS)) return false;
             }
         }
-        return findSapling(level, pos, "") >= 0;
+        return findSapling(level, pos, "", true) >= 0;
     }
 
     @Override
@@ -351,7 +351,7 @@ public class Stumpy extends FarmBot {
             if (planted >= 4) break;
             BlockPos p = BlockPos.of(base);
             if (inArea(p) && sl.isLoaded(p) && sl.getBlockState(p).isAir() && sl.getBlockState(p.below()).is(BlockTags.DIRT)
-                    && plantSapling(sl, p, wavePrefix)) planted++;
+                    && plantSapling(sl, p, wavePrefix, false)) planted++;
         }
         // Not one log came down (a claim protects the rest): leave this tree alone instead of paying for it again.
         if (waveFelled == 0) {
@@ -377,13 +377,17 @@ public class Stumpy extends FarmBot {
         waveCarry = 0;
     }
 
-    /** Pouch slot with the sapling to plant at {@code pos}, its own kind ({@code prefix}) first, or -1. */
-    private int findSapling(ServerLevel sl, BlockPos pos, String prefix) {
+    /**
+     * Pouch slot with the sapling to plant at {@code pos}, its own kind ({@code prefix}) first, or -1. {@code alone}: a
+     * grid spot, so no dark oak (it only grows as a 2x2).
+     */
+    private int findSapling(ServerLevel sl, BlockPos pos, String prefix, boolean alone) {
         int bestSlot = -1;
         int bestScore = 0;
         for (int i = 0; i < pouch.getSlots(); i++) {
             ItemStack stack = pouch.getStackInSlot(i);
             if (stack.isEmpty() || !stack.is(ItemTags.SAPLINGS) || !(stack.getItem() instanceof BlockItem bi)) continue;
+            if (alone && stack.is(Items.DARK_OAK_SAPLING)) continue;
             if (!bi.getBlock().defaultBlockState().canSurvive(sl, pos)) continue;
             String name = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
             int score = !prefix.isEmpty() && name.startsWith(prefix + "_") ? 2 : 1;
@@ -395,8 +399,8 @@ public class Stumpy extends FarmBot {
         return bestSlot;
     }
 
-    private boolean plantSapling(ServerLevel sl, BlockPos pos, String prefix) {
-        int slot = findSapling(sl, pos, prefix);
+    private boolean plantSapling(ServerLevel sl, BlockPos pos, String prefix, boolean alone) {
+        int slot = findSapling(sl, pos, prefix, alone);
         if (slot < 0) return false;
         BlockState sapling = ((BlockItem) pouch.getStackInSlot(slot).getItem()).getBlock().defaultBlockState();
         sl.setBlock(pos, sapling, Block.UPDATE_ALL);
@@ -410,7 +414,7 @@ public class Stumpy extends FarmBot {
         if (!state.isAir() && !mayBreak(sl, pos, state)) return false;
         if (!energy.consume(scaledDrain(AutomationConfig.stumpyFePerLog(), 1))) return false;
         if (!state.isAir()) sl.destroyBlock(pos, true);
-        if (!plantSapling(sl, pos, "")) return false;
+        if (!plantSapling(sl, pos, "", true)) return false;
         BlockState planted = sl.getBlockState(pos);
         sl.playSound(null, pos, planted.getSoundType(sl, pos, this).getPlaceSound(), SoundSource.BLOCKS, 0.8F, 1.0F);
         return true;
