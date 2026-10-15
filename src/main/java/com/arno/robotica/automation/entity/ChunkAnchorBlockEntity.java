@@ -106,6 +106,8 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
     @Nullable
     private ChunkClaims.Claim claim;
     private long age;
+    /** Outline toggled on in the GUI. Synced. */
+    private boolean showArea;
     /** Game time until which the loaded chunks are outlined. Synced. */
     private long previewUntil;
     @Nullable
@@ -298,9 +300,18 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
         setChangedAndSync();
     }
 
-    /** Client side: true while the outline shows. */
+    public boolean showArea() {
+        return showArea;
+    }
+
+    public void toggleShowArea() {
+        showArea = !showArea;
+        setChangedAndSync();
+    }
+
+    /** Client side: true while the outline shows (the toggle, or a few seconds after placing or sneak-right-clicking). */
     public boolean outlineVisible() {
-        return level != null && level.getGameTime() < previewUntil;
+        return showArea || (level != null && level.getGameTime() < previewUntil);
     }
 
     /** The anchor's square of chunks, full world height. */
@@ -383,6 +394,7 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
         tag.put("energy", energy.serializeNBT(registries));
         tag.put("battery", battery.serializeNBT(registries));
         if (owner != null) tag.putUUID("owner", owner);
+        tag.putBoolean("showArea", showArea);
     }
 
     @Override
@@ -394,11 +406,13 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
         }
         if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
+        if (tag.contains("showArea")) showArea = tag.getBoolean("showArea");
         if (tag.contains("previewUntil")) previewUntil = tag.getLong("previewUntil"); // client update tag
     }
 
     @Override
     protected void saveClientData(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putBoolean("showArea", showArea);
         tag.putLong("previewUntil", previewUntil);
     }
 }
