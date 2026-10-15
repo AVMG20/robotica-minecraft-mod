@@ -85,8 +85,9 @@ import java.util.function.Supplier;
  * biggest inventory within {@link #STORAGE_RANGE} blocks of home; seeds and saplings it keeps in its 9-slot pouch.
  *
  * <p>Getting unstuck: a job no path gets it in reach of (behind a wall, up a pillar), that it can not reach within
- * {@link #JOB_TIMEOUT} ticks, or that it stands still at without getting closer, is skipped for a while ({@link #clearWay}
- * gets a try first: Stumpy fells the closest tree). After a few skips in a row without moving, or when it ends up inside a
+ * {@link #JOB_TIMEOUT} ticks, or that it stands still at without getting closer, is done from where it stands if it can
+ * be ({@link #actFromAfar}: Stumpy fells the tree), else skipped for a while ({@link #clearWay} gets a try first: Stumpy
+ * fells the closest tree). After a few skips in a row without moving, or when it ends up inside a
  * block, far from home or under its area, it teleports home.
  */
 public abstract class FarmBot extends PathfinderMob {
@@ -305,6 +306,11 @@ public abstract class FarmBot extends PathfinderMob {
     }
 
     protected void onScanWrapped() {
+    }
+
+    /** Does a job it could not get to from where it stands (Stumpy fells the tree). True if it did. */
+    protected boolean actFromAfar(ServerLevel sl, BlockPos target) {
+        return false;
     }
 
     /** Tries to free the way when a job is blocked (Stumpy fells the closest tree). True if it found something to do. */
@@ -877,6 +883,13 @@ public abstract class FarmBot extends PathfinderMob {
     private void blocked(ServerLevel sl, BlockPos t) {
         navigation.stop();
         job = null;
+        if (canAfford(sl, t) && actFromAfar(sl, t)) {
+            strikes.remove(t.asLong());
+            fails = 0;
+            failAnchor = null;
+            lastWorking = tickCount;
+            return;
+        }
         if (clearWay(sl)) return;
         skip(t);
         if (failAnchor == null || position().distanceToSqr(failAnchor) > 4.0) {
