@@ -198,16 +198,116 @@ def rivet_gun():
 
 
 def lance():
+    """Null Lance: the Rivet Gun's big brother, a void rifle. Stock, receiver with a void cell on top (where the Rivet
+    Gun has its magazine), raked grip, long barrel with coil rings and a forked muzzle."""
     c = Canvas()
-    stamp(c, 1, 14, 9, 6, '2', 2)                                        # shaft
-    c.draw(9, 1, ['....4z', '...45Y', '..453.', '.343..', '.33...', 'c.....'])   # crystal head
-    c.auto_shade(SHADE)
-    for x, y in ((3, 11), (6, 8)):
-        c.set(x, y, 'y')
-    c.set(12, 4, 'Y')
-    c.draw(7, 6, ['cc', 'c.'])
+    c.draw(0, 3, [
+        '......UX........',
+        '....cVUUVc......',
+        '.d..333335.5.5d.',
+        '.c22333334b4b4U.',
+        '.c22yyyyY4a4a4U.',
+        '.c11222223.3.3d.',
+        '.b1...22c.......',
+        '.....22.........',
+        '.....12.........',
+        '....11..........',
+    ])
     c.outline('k')
     return c.rows()
+
+
+def lance_pal():
+    return {**pal('null'), 'V': '#7C4FD8', 'U': '#B48CFF', 'X': '#F4ECFF', 'Q': '#4A2A8C'}
+
+
+# Faces of the 3D held lance (scripts/data/gear_lance_model.py). Each part maps small rects of these, so they tile.
+LANCE_PARTS_PAL = {
+    **{k: v for k, v in zip('12345', MATERIALS['null'])},
+    **{k: v for k, v in zip('abcde', MATERIALS['dark'])},
+    't': MATERIALS['teal'][2], 'T': MATERIALS['teal'][3],
+    'V': '#7C4FD8', 'U': '#B48CFF', 'W': '#D9C6FF', 'X': '#F4ECFF', 'Q': '#4A2A8C',
+}
+
+
+def lance_body():
+    """Void plate: purple panels, dark seams, a light top edge, small rivets."""
+    c = Canvas(fill='3')
+    c.rect(0, 0, 16, 1, '4')
+    for x in (7, 15):
+        c.rect(x, 1, 1, 15, '2')
+    for y in (6, 12):
+        c.rect(0, y, 16, 1, '2')
+    for x, y in ((1, 2), (5, 2), (9, 2), (13, 2), (1, 9), (9, 9)):
+        c.set(x, y, '4')
+    for x, y in ((3, 4), (11, 4), (4, 14), (12, 10)):
+        c.set(x, y, 'Q')
+    return c.rows()
+
+
+def lance_metal():
+    """Gunmetal for the barrel, grip, muzzle and pad: brushed dark steel with a light top edge."""
+    c = Canvas(fill='c')
+    c.rect(0, 0, 16, 1, 'd')
+    for y in range(2, 16, 3):
+        c.rect(0, y, 16, 1, 'b')
+    for x, y in ((2, 1), (9, 4), (5, 7), (13, 10), (3, 13)):
+        c.set(x, y, 'd')
+    return c.rows()
+
+
+def lance_coil(lit):
+    """Coil windings: dark purple when idle, hot violet with a white core when lit (full-bright)."""
+    c = Canvas(fill='U' if lit else 'Q')
+    for y in range(0, 16, 2):
+        c.rect(0, y, 16, 1, 'W' if lit else '2')
+    if lit:
+        for y in range(1, 16, 4):
+            c.rect(0, y, 16, 1, 'X')
+    else:
+        for x in range(0, 16, 4):
+            c.set(x, 1, '3').set(x + 2, 3, '3')
+    return c.rows()
+
+
+def lance_trim():
+    """Teal trim strip along the receiver and stock."""
+    c = Canvas(fill='t')
+    c.rect(0, 0, 16, 1, 'T')
+    for x in range(0, 16, 5):
+        c.set(x, 1, 'T')
+    return c.rows()
+
+
+def lance_core(hot):
+    """The void cell crystal (full-bright): a soft violet glow idle, white-violet at full charge."""
+    lo, mid, hi, top = ('U', 'W', 'X', 'X') if hot else ('Q', 'V', 'U', 'W')
+    c = Canvas(fill=mid)
+    for y in range(16):
+        for x in range(16):
+            d = (x + y) % 8
+            if d in (0, 1):
+                c.set(x, y, hi)
+            elif d in (5, 6):
+                c.set(x, y, lo)
+    for x, y in ((2, 3), (10, 5), (6, 11), (13, 13)):
+        c.set(x, y, top)
+    if not hot:
+        for x, y in ((4, 6), (12, 2), (9, 12)):
+            c.set(x, y, 'T')
+    return c.rows()
+
+
+def write_lance_parts():
+    from pixelart import ASSETS, write_png
+    tex = ASSETS / 'textures/item'
+    write_png(tex / 'null_lance_body.png', lance_body(), LANCE_PARTS_PAL)
+    write_png(tex / 'null_lance_metal.png', lance_metal(), LANCE_PARTS_PAL)
+    write_png(tex / 'null_lance_trim.png', lance_trim(), LANCE_PARTS_PAL)
+    write_png(tex / 'null_lance_coil.png', lance_coil(False), LANCE_PARTS_PAL)
+    write_png(tex / 'null_lance_coil_lit.png', lance_coil(True), LANCE_PARTS_PAL)
+    write_png(tex / 'null_lance_core.png', lance_core(False), LANCE_PARTS_PAL)
+    write_png(tex / 'null_lance_core_hot.png', lance_core(True), LANCE_PARTS_PAL)
 
 
 def kit(level):
@@ -601,7 +701,8 @@ def main():
     write_item('shock_baton', baton(), pal('steel'), handheld=True)
     write_item('rivet_gun', rivet_gun(), pal('servo'), handheld=True)
     write_item('arc_blade', sword(glow_edge=True), pal('magma'), handheld=True)
-    write_item('null_lance', lance(), pal('null'), handheld=True)
+    write_item('null_lance', lance(), lance_pal(), model=False)        # 3D held model: scripts/data/gear_lance_model.py
+    write_lance_parts()
     for level, tier in ((1, 'steel'), (2, 'servo'), (3, 'magma'), (4, 'null')):
         write_item(f'tool_upgrade_kit_{level}', kit(level), pal(tier))
 
