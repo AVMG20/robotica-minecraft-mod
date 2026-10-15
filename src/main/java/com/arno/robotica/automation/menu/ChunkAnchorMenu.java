@@ -25,6 +25,7 @@ public class ChunkAnchorMenu extends MachineMenu {
     private final int idxUsed;
     private final int idxCap;
     private final int idxShow;
+    private final int idxLoaded;
 
     public ChunkAnchorMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv, resolve(inv, buf));
@@ -49,6 +50,7 @@ public class ChunkAnchorMenu extends MachineMenu {
         idxUsed = track(client ? () -> 0 : be::ownerUsed);
         idxCap = track(client ? () -> 0 : ChunkClaims::cap);
         idxShow = track(() -> be.showArea() ? 1 : 0);
+        idxLoaded = track(client ? () -> 0 : be::loadedSeconds);
     }
 
     public int energy() {
@@ -79,6 +81,11 @@ public class ChunkAnchorMenu extends MachineMenu {
 
     public boolean showArea() {
         return synced(idxShow) != 0;
+    }
+
+    /** Seconds it has loaded its chunks without a break. */
+    public int loadedSeconds() {
+        return synced(idxLoaded);
     }
 
     @Override

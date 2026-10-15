@@ -18,10 +18,11 @@ public final class Fmt {
         return Long.toString(n);
     }
 
-    /** Ticks to "1h 42m" / "3m 10s". */
+    /** Ticks to "2d 5h" / "1h 42m" / "3m 10s". */
     public static String duration(long ticks) {
         long s = ticks / 20;
-        long h = s / 3600, m = (s % 3600) / 60, sec = s % 60;
+        long d = s / 86400, h = (s % 86400) / 3600, m = (s % 3600) / 60, sec = s % 60;
+        if (d > 0) return d + "d " + h + "h";
         if (h > 0) return h + "h " + m + "m";
         if (m > 0) return m + "m " + sec + "s";
         return sec + "s";

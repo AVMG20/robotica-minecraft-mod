@@ -97,9 +97,6 @@
   "subtitles.robotica.codex_open": "Codex opens",
   "subtitles.robotica.codex_page": "Page turns",
   "subtitles.robotica.codex_unlock": "Guide step done",
-  "subtitles.robotica.chunk_anchor_hum": "Chunk Anchor hums",
-  "subtitles.robotica.chunk_anchor_on": "Chunk Anchor locks on",
-  "subtitles.robotica.chunk_anchor_off": "Chunk Anchor lets go",
   "subtitles.robotica.terminal_link_open": "Terminal Link chirps",
   "subtitles.robotica.terminal_link_close": "Terminal Link closes"
 }
