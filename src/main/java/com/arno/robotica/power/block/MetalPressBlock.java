@@ -93,7 +93,7 @@ public class MetalPressBlock extends PowerBlock {
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         double speed = PowerConfig.pressSpeed(mk);
-        tooltip.add(Component.translatable("tooltip.robotica.metal_press", (int) Math.ceil(PowerConfig.pressPower() * speed))
+        tooltip.add(Component.translatable("tooltip.robotica.metal_press", (int) Math.round(com.arno.robotica.core.CoreConfig.scaleEnergy(PowerConfig.pressPower()) * speed))
                 .withStyle(ChatFormatting.GRAY));
         if (mk > 1) {
             String x = speed == Math.rint(speed) ? String.valueOf((int) speed) : String.format(Locale.ROOT, "%.1f", speed);
