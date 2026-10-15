@@ -166,9 +166,14 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
             }
             return open;
         }
-        if (formed) {
+        if (formed && present > 1) {
             array.removePanel(level, pos);
             return -1;
+        }
+        if (formed) {
+            // Only its own block left (moved on its own by another mod): grow again like an old single panel.
+            formed = false;
+            setChanged();
         }
         standalone = present == 1;
         if (standalone && array.grow(level, pos)) return countOpenCells(level, pos, state);
