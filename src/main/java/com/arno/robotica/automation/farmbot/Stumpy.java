@@ -124,10 +124,15 @@ public class Stumpy extends FarmBot {
             return false;
         }
         if (plots.isEmpty() || !plots.containsKey(pos.asLong())) return false;
-        if (state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty())) return canReplant(level, pos);
-        // built over: no tree spot any more
-        if (!state.is(BlockTags.LEAVES)) plots.remove(pos.asLong());
+        if (freeSpot(state)) return canReplant(level, pos);
+        // built over: no tree spot any more (leaves, flowers and water come and go)
+        if (!state.is(BlockTags.LEAVES) && !state.is(BlockTags.FLOWERS) && state.getFluidState().isEmpty()) plots.remove(pos.asLong());
         return false;
+    }
+
+    /** Air, or grass and snow a sapling may take the place of. */
+    private static boolean freeSpot(BlockState state) {
+        return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty());
     }
 
     private boolean isTree(ServerLevel level, BlockPos pos) {
@@ -151,12 +156,13 @@ public class Stumpy extends FarmBot {
 
     /** An empty tree spot on dirt with a sapling in the pouch that can grow there. */
     private boolean canReplant(ServerLevel level, BlockPos pos) {
-        if (!inArea(pos)) return false;
+        String kind = plots.get(pos.asLong());
+        if (kind == null || !inArea(pos)) return false;
         if (!level.getBlockState(pos.below()).is(BlockTags.DIRT)) {
             plots.remove(pos.asLong());
             return false;
         }
-        return findSapling(level, pos, plots.get(pos.asLong())) >= 0;
+        return findSapling(level, pos, kind) >= 0;
     }
 
     @Override
@@ -177,6 +183,13 @@ public class Stumpy extends FarmBot {
     @Override
     protected void onScanWrapped() {
         if (++wraps % 8 == 0) ignored.clear();
+        // spots the sweep no longer visits (a Range card came out) are forgotten
+        if (plots.isEmpty()) return;
+        int low = layerBase(), high = low + layerCount();
+        plots.keySet().removeIf((long p) -> {
+            BlockPos at = BlockPos.of(p);
+            return !inArea(at) || at.getY() < low || at.getY() >= high;
+        });
     }
 
     @Override
@@ -188,7 +201,7 @@ public class Stumpy extends FarmBot {
     protected boolean act(ServerLevel sl, BlockPos start) {
         BlockState startState = sl.getBlockState(start);
         if (!startState.is(BlockTags.LOGS)) return replant(sl, start, startState);
-        if (!startState.is(BlockTags.LOGS) || !mayBreak(sl, start, startState)) return false;
+        if (!mayBreak(sl, start, startState)) return false;
         TreeScan tree = TreeScan.scan(sl, start, AutomationConfig.maxLogs(), true);
         if (tree.naturalLeaves == 0) {
             for (BlockPos p : tree.logs) ignored.add(p.asLong());
@@ -412,14 +425,12 @@ public class Stumpy extends FarmBot {
         return true;
     }
 
-    /** Plants a sapling on a remembered empty tree spot (grass or flowers there make way). */
+    /** Plants a sapling on a remembered empty tree spot (grass or snow there makes way). */
     private boolean replant(ServerLevel sl, BlockPos pos, BlockState state) {
-        if (!canReplant(sl, pos)) return false;
-        if (!state.isAir()) {
-            if (!mayBreak(sl, pos, state)) return false;
-            sl.destroyBlock(pos, true);
-        }
+        if (!freeSpot(state) || !canReplant(sl, pos)) return false;
+        if (!state.isAir() && !mayBreak(sl, pos, state)) return false;
         if (!energy.consume(scaledDrain(AutomationConfig.stumpyFePerLog(), 1))) return false;
+        if (!state.isAir()) sl.destroyBlock(pos, true);
         if (!plantSapling(sl, pos, plots.get(pos.asLong()))) return false;
         BlockState planted = sl.getBlockState(pos);
         sl.playSound(null, pos, planted.getSoundType(sl, pos, this).getPlaceSound(), SoundSource.BLOCKS, 0.8F, 1.0F);
