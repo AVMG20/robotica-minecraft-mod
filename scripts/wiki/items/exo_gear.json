@@ -338,6 +338,31 @@
   },
   {
    "items": [
+    "nutrient_synthesizer_module"
+   ],
+   "what": "Keeps your hunger and saturation full with FE.",
+   "stats": {
+    "rows": [
+     [
+      "Fits",
+      "Exo helmet"
+     ],
+     [
+      "Min. Mk",
+      "Mk4"
+     ],
+     [
+      "Energy",
+      "1,000 FE per hunger or saturation point"
+     ]
+    ]
+   },
+   "see": [
+    "guide:exo-frame"
+   ]
+  },
+  {
+   "items": [
     "solar_weave_module"
    ],
    "what": "Charges the suit by day under open sky.",

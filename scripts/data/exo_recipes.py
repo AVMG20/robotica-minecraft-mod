@@ -89,6 +89,8 @@ shaped('sonar_pulse_module', ['ZAZ', 'CNC'], {'Z': '#c:gems/amethyst', 'A': 'adv
 # Sonar levels run one age later: II is Age 3, III Age 4.
 level3('sonar_pulse', '#c:gems/prismarine', 'sonar_pulse_module', 'sonar_pulse_module_2')
 level_null('sonar_pulse_module_3', 'sonar_pulse_module_2', 'minecraft:ender_eye')
+shaped('nutrient_synthesizer_module', ['NRN', 'GUG'], {'N': 'null_circuit', 'R': 'resonant_lattice', 'G': 'minecraft:golden_carrot',
+                                                        'U': 'auto_feeder_module'})
 
 # ---- Chest modules
 # Jet Assist is the jetpack: I is Age 1 (motors and gunpowder), II Age 2, III Age 3.

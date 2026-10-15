@@ -168,7 +168,7 @@ AGE = {
         'assembler_mk3', 'assembler_mk4', 'solar_panel_mk4', 'collider_controller', 'accelerator_segment', 'strange_matter', 'capacitor_ender', 'capacitor_resonant',
         'excavator_mk4', 'survey_rig_mk4', 'buddy_bot_mk4', 'grinder_mk4', 'electric_furnace_mk4', 'exo_*_mk4',
         'sonar_pulse_module_3', 'med_injector_module_3', 'power_regulator_module_3', 'kinetic_shield_module_2',
-        'kinetic_shield_module_3', 'chain_lightning_module_3', 'lifesteal_module'],
+        'kinetic_shield_module_3', 'chain_lightning_module_3', 'lifesteal_module', 'nutrient_synthesizer_module'],
 }
 AGE[1] += ['chunk_anchor']
 AGE[2] += ['chunk_anchor_mk2', 'terminal_link']
