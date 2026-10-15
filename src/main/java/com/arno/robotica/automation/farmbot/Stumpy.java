@@ -6,7 +6,6 @@ import com.arno.robotica.automation.entity.Drops;
 import com.arno.robotica.automation.entity.TreeScan;
 import com.arno.robotica.core.CoreSounds;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -14,8 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
@@ -39,8 +36,8 @@ import java.util.WeakHashMap;
  * Lumber robot: walks up to the nearest natural tree in its area and fells it whole (with its natural leaves) as one paid
  * action. The tree comes down bottom-up in a wave over about a second, leaves along with their level; then it replants
  * saplings from its pouch and rests. When a tree blocks its way (saplings grown up around it), it fells the closest one.
- * It remembers where trees stood (saplings it saw, trunks it felled) and replants such a spot whenever it is empty, also
- * when the tree was cut by someone else.
+ * Between trees it plants saplings from its pouch on a grid over its area: every third block from home, on lit dirt or
+ * grass, with no trunk or sapling next to the spot.
  */
 public class Stumpy extends FarmBot {
     /** Effect kind of a chop. */
@@ -52,8 +49,10 @@ public class Stumpy extends FarmBot {
     private static final long[] NO_WAVE = new long[0];
     /** The tool the drops are rolled with (never changed). */
     private static final ItemStack TOOL = new ItemStack(Items.IRON_AXE);
-    /** Most tree spots one Stumpy remembers. */
-    private static final int MAX_PLOTS = 1024;
+    /** Blocks between the rows of the planting grid. */
+    private static final int SPACING = 3;
+    /** Light a sapling needs to grow. */
+    private static final int SAPLING_LIGHT = 9;
     /**
      * Logs of the trees being felled right now, per level, with the entity id of the Stumpy felling them, so two Stumpys
      * never fell (and pay for) the same tree twice. Ids, not entities, so a level can still be unloaded. Server thread
@@ -63,8 +62,7 @@ public class Stumpy extends FarmBot {
 
     /** Log clusters without natural leaves (player builds). */
     private final LongOpenHashSet ignored = new LongOpenHashSet();
-    /** Where trees stood, with the sapling kind that grew there ("" when unknown). Saved. */
-    private final Long2ObjectOpenHashMap<String> plots = new Long2ObjectOpenHashMap<>();
+    private final BlockPos.MutableBlockPos near = new BlockPos.MutableBlockPos();
     private int wraps;
 
     /** The felling wave: logs and leaves, each sorted bottom-up, broken a few per tick. Saved. */
@@ -119,15 +117,7 @@ public class Stumpy extends FarmBot {
     @Override
     protected boolean isTarget(ServerLevel level, BlockPos pos, BlockState state) {
         if (state.is(BlockTags.LOGS)) return isTree(level, pos);
-        if (state.is(BlockTags.SAPLINGS)) {
-            remember(pos, saplingKind(BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath()));
-            return false;
-        }
-        if (plots.isEmpty() || !plots.containsKey(pos.asLong())) return false;
-        if (freeSpot(state)) return canReplant(level, pos);
-        // built over: no tree spot any more (leaves, flowers and water come and go)
-        if (!state.is(BlockTags.LEAVES) && !state.is(BlockTags.FLOWERS) && state.getFluidState().isEmpty()) plots.remove(pos.asLong());
-        return false;
+        return freeSpot(state) && canPlant(level, pos);
     }
 
     /** Air, or grass and snow a sapling may take the place of. */
@@ -139,30 +129,27 @@ public class Stumpy extends FarmBot {
         return !ignored.contains(pos.asLong()) && !isClaimed(level, pos);
     }
 
-    /** "oak" for oak_sapling, so a spot gets its own kind back. */
-    private static String saplingKind(String path) {
-        return path.endsWith("_sapling") ? path.substring(0, path.length() - "_sapling".length()) : path;
-    }
-
-    private void remember(BlockPos pos, String kind) {
-        if (!inArea(pos)) return;
-        long key = pos.asLong();
-        if (plots.containsKey(key)) {
-            if (!kind.isEmpty()) plots.put(key, kind);
-        } else if (plots.size() < MAX_PLOTS) {
-            plots.put(key, kind);
+    /**
+     * A grid spot (every {@link #SPACING} blocks from home, home and its neighbours left free) on dirt in the area, lit
+     * enough for a sapling, with no trunk or sapling next to it and a sapling in the pouch that can grow there.
+     */
+    private boolean canPlant(ServerLevel level, BlockPos pos) {
+        BlockPos h = home();
+        int dx = pos.getX() - h.getX(), dz = pos.getZ() - h.getZ();
+        if (Math.floorMod(dx, SPACING) != 0 || Math.floorMod(dz, SPACING) != 0) return false;
+        if (Math.abs(dx) <= 1 && Math.abs(dz) <= 1) return false;
+        if (!inArea(pos) || !level.getBlockState(pos.below()).is(BlockTags.DIRT)) return false;
+        if (level.getRawBrightness(pos, 0) < SAPLING_LIGHT) return false;
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                if (x == 0 && z == 0) continue;
+                near.set(pos.getX() + x, pos.getY(), pos.getZ() + z);
+                if (!level.isLoaded(near)) return false;
+                BlockState n = level.getBlockState(near);
+                if (n.is(BlockTags.LOGS) || n.is(BlockTags.SAPLINGS)) return false;
+            }
         }
-    }
-
-    /** An empty tree spot on dirt with a sapling in the pouch that can grow there. */
-    private boolean canReplant(ServerLevel level, BlockPos pos) {
-        String kind = plots.get(pos.asLong());
-        if (kind == null || !inArea(pos)) return false;
-        if (!level.getBlockState(pos.below()).is(BlockTags.DIRT)) {
-            plots.remove(pos.asLong());
-            return false;
-        }
-        return findSapling(level, pos, kind) >= 0;
+        return findSapling(level, pos, "") >= 0;
     }
 
     @Override
@@ -183,13 +170,6 @@ public class Stumpy extends FarmBot {
     @Override
     protected void onScanWrapped() {
         if (++wraps % 8 == 0) ignored.clear();
-        // spots the sweep no longer visits (a Range card came out) are forgotten
-        if (plots.isEmpty()) return;
-        int low = layerBase(), high = low + layerCount();
-        plots.keySet().removeIf((long p) -> {
-            BlockPos at = BlockPos.of(p);
-            return !inArea(at) || at.getY() < low || at.getY() >= high;
-        });
     }
 
     @Override
@@ -200,7 +180,7 @@ public class Stumpy extends FarmBot {
     @Override
     protected boolean act(ServerLevel sl, BlockPos start) {
         BlockState startState = sl.getBlockState(start);
-        if (!startState.is(BlockTags.LOGS)) return replant(sl, start, startState);
+        if (!startState.is(BlockTags.LOGS)) return plant(sl, start, startState);
         if (!mayBreak(sl, start, startState)) return false;
         TreeScan tree = TreeScan.scan(sl, start, AutomationConfig.maxLogs(), true);
         if (tree.naturalLeaves == 0) {
@@ -370,7 +350,6 @@ public class Stumpy extends FarmBot {
         for (long base : waveBases) {
             if (planted >= 4) break;
             BlockPos p = BlockPos.of(base);
-            remember(p, wavePrefix);
             if (inArea(p) && sl.isLoaded(p) && sl.getBlockState(p).isAir() && sl.getBlockState(p.below()).is(BlockTags.DIRT)
                     && plantSapling(sl, p, wavePrefix)) planted++;
         }
@@ -425,13 +404,13 @@ public class Stumpy extends FarmBot {
         return true;
     }
 
-    /** Plants a sapling on a remembered empty tree spot (grass or snow there makes way). */
-    private boolean replant(ServerLevel sl, BlockPos pos, BlockState state) {
-        if (!freeSpot(state) || !canReplant(sl, pos)) return false;
+    /** Plants a sapling on a free grid spot (grass or snow there makes way). */
+    private boolean plant(ServerLevel sl, BlockPos pos, BlockState state) {
+        if (!freeSpot(state) || !canPlant(sl, pos)) return false;
         if (!state.isAir() && !mayBreak(sl, pos, state)) return false;
         if (!energy.consume(scaledDrain(AutomationConfig.stumpyFePerLog(), 1))) return false;
         if (!state.isAir()) sl.destroyBlock(pos, true);
-        if (!plantSapling(sl, pos, plots.get(pos.asLong()))) return false;
+        if (!plantSapling(sl, pos, "")) return false;
         BlockState planted = sl.getBlockState(pos);
         sl.playSound(null, pos, planted.getSoundType(sl, pos, this).getPlaceSound(), SoundSource.BLOCKS, 0.8F, 1.0F);
         return true;
@@ -456,16 +435,6 @@ public class Stumpy extends FarmBot {
 
     @Override
     protected void saveExtra(CompoundTag tag) {
-        if (!plots.isEmpty()) {
-            ListTag list = new ListTag();
-            for (var e : plots.long2ObjectEntrySet()) {
-                CompoundTag plot = new CompoundTag();
-                plot.putLong("Pos", e.getLongKey());
-                plot.putString("Kind", e.getValue());
-                list.add(plot);
-            }
-            tag.put("Plots", list);
-        }
         if (!waveActive()) return;
         CompoundTag w = new CompoundTag();
         w.putLongArray("Logs", Arrays.copyOfRange(waveLogs, logCursor, waveLogs.length));
@@ -479,12 +448,6 @@ public class Stumpy extends FarmBot {
 
     @Override
     protected void loadExtra(CompoundTag tag) {
-        plots.clear();
-        for (Tag t : tag.getList("Plots", Tag.TAG_COMPOUND)) {
-            if (plots.size() >= MAX_PLOTS) break;
-            CompoundTag plot = (CompoundTag) t;
-            plots.put(plot.getLong("Pos"), plot.getString("Kind"));
-        }
         clearWave();
         if (!tag.contains("Wave")) return;
         CompoundTag w = tag.getCompound("Wave");

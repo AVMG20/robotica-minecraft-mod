@@ -369,7 +369,7 @@
     "stumpy_mk3",
     "stumpy_mk4"
    ],
-   "what": "Lumber bot: walks to trees, fells them whole, replants and collects drops.",
+   "what": "Lumber bot: walks to trees, fells them whole, plants saplings across its area and collects drops.",
    "use": [
     "Right-click the ground among trees, with a chest within 3 blocks of that spot.",
     "Right-click it with a wound [[mainspring]] or a cell.",
