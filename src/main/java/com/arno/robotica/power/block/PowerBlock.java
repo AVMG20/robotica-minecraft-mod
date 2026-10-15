@@ -111,7 +111,7 @@ public abstract class PowerBlock extends Block implements EntityBlock {
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof PowerBlockEntity be) {
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof PowerBlockEntity be && !be.keepContents) {
             be.dropContents(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

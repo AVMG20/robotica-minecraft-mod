@@ -72,6 +72,9 @@ shaped('wireless_charger_mk2', [' T ', 'AWA', 'PXP'], {'T': 'tesla_emitter_3', '
                                                      'P': GOLD_PLATE, 'X': 'reinforced_casing'}, source='W')
 # Charger Mk2-Mk4: the Mk below with that age's circuit, plates and casing (4x the charge rate each).
 shaped('charger_mk2', [' A ', 'PCP', ' X '], {'A': 'advanced_circuit', 'P': GOLD_PLATE, 'C': 'charger', 'X': 'reinforced_casing'}, source='C')
+# Metal Press Mk2-Mk4: the Mk below with that age's circuit, plates and casing (each Mk presses plates the next one needs).
+shaped('metal_press_mk2', [' A ', 'PMP', ' X '], {'A': 'advanced_circuit', 'P': GOLD_PLATE, 'M': 'metal_press', 'X': 'reinforced_casing'},
+       source='M')
 # Solar Mk2-Mk4: the Mk below with that age's circuit and plates (20 -> 80 -> 300 -> 800 FE/t).
 shaped('solar_panel_mk2', ['QGQ', 'GSG', 'QAQ'], {'Q': QUARTZ, 'G': '#c:glass_blocks', 'S': 'solar_panel_mk1', 'A': 'advanced_circuit'},
        source='S')
@@ -84,6 +87,8 @@ shaped('solar_panel_mk3', ['PGP', 'GSG', 'PCP'], {'P': '#c:plates/pyrosteel', 'G
 shaped('accumulator_3', ['RCR', 'AXA', 'RCR'],
        {'R': REDSTONE_BLOCK, 'C': 'quantum_circuit', 'A': 'accumulator_2', 'X': 'blazing_casing'}, source='A')
 shaped('charger_mk3', [' Q ', 'PCP', ' X '], {'Q': 'quantum_circuit', 'P': PYROSTEEL_PLATE, 'C': 'charger_mk2', 'X': 'blazing_casing'}, source='C')
+shaped('metal_press_mk3', [' Q ', 'PMP', ' X '], {'Q': 'quantum_circuit', 'P': PYROSTEEL_PLATE, 'M': 'metal_press_mk2',
+                                                'X': 'blazing_casing'}, source='M')
 shaped('wireless_charger_mk3', [' T ', 'QWQ', 'PXP'], {'T': 'tesla_emitter_4', 'Q': 'quantum_circuit', 'W': 'wireless_charger_mk2',
                                                      'P': PYROSTEEL_PLATE, 'X': 'blazing_casing'}, source='W')
 shaped('tesla_coil_4', [' C ', 'BTB', ' X '], {'C': 'quantum_circuit', 'B': '#c:rods/blaze', 'T': 'tesla_coil_3', 'X': 'blazing_casing'})
@@ -91,6 +96,8 @@ shaped('tesla_coil_4', [' C ', 'BTB', ' X '], {'C': 'quantum_circuit', 'B': '#c:
 shaped('solar_panel_mk4', ['PEP', 'ESE', 'PCP'], {'P': '#c:plates/resonant_alloy', 'E': '#c:ender_pearls', 'S': 'solar_panel_mk3',
                                                  'C': 'null_circuit'}, source='S')
 shaped('charger_mk4', [' N ', 'PCP', ' X '], {'N': 'null_circuit', 'P': RESONANT_PLATE, 'C': 'charger_mk3', 'X': 'null_casing'}, source='C')
+shaped('metal_press_mk4', [' N ', 'PMP', ' X '], {'N': 'null_circuit', 'P': RESONANT_PLATE, 'M': 'metal_press_mk3', 'X': 'null_casing'},
+       source='M')
 shaped('wireless_charger_mk4', [' T ', 'NWN', 'PXP'], {'T': 'tesla_emitter_5', 'N': 'null_circuit', 'W': 'wireless_charger_mk3',
                                                      'P': RESONANT_PLATE, 'X': 'null_casing'}, source='W')
 shaped('tesla_coil_5', [' C ', 'ETE', ' X '], {'C': 'null_circuit', 'E': '#c:ender_pearls', 'T': 'tesla_coil_4', 'X': 'null_casing'})

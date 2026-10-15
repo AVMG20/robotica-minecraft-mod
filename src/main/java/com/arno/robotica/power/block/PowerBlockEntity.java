@@ -16,6 +16,9 @@ import net.neoforged.neoforge.items.IItemHandler;
 
 /** Block entity base of the power module. Ticks on the server only. */
 public abstract class PowerBlockEntity extends SyncedBlockEntity {
+    /** Set while the block is swapped for its next Mk, so its contents move over instead of dropping. */
+    public boolean keepContents;
+
     protected PowerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }

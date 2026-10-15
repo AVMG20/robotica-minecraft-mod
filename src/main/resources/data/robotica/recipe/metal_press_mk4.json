@@ -1,0 +1,30 @@
+{
+  "type": "robotica:machine_upgrade",
+  "category": "misc",
+  "pattern": [
+    " N ",
+    "PMP",
+    " X "
+  ],
+  "key": {
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "P": {
+      "tag": "c:plates/resonant_alloy"
+    },
+    "M": {
+      "item": "robotica:metal_press_mk3"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:metal_press_mk4",
+    "count": 1
+  },
+  "source": {
+    "item": "robotica:metal_press_mk3"
+  }
+}

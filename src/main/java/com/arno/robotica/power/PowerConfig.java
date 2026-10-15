@@ -28,6 +28,7 @@ public final class PowerConfig {
     private static final ModConfigSpec.IntValue[] ACCUMULATOR_IO = new ModConfigSpec.IntValue[3];
     private static final ModConfigSpec.IntValue[] CHARGER_RATE = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue PRESS_POWER;
+    private static final ModConfigSpec.DoubleValue[] PRESS_SPEED = new ModConfigSpec.DoubleValue[4];
     private static final ModConfigSpec.IntValue[] WIRELESS_RATE = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue[] WIRELESS_RANGE = new ModConfigSpec.IntValue[4];
     private static final ModConfigSpec.IntValue WIRELESS_RANGE_PER_CARD;
@@ -108,6 +109,11 @@ public final class PowerConfig {
         b.push("metal_press");
         PRESS_POWER = b.comment("Base FE/t while pressing (recipes take 100 ticks by default).")
                 .defineInRange("pressPower", 20, 1, 1_000_000);
+        double[] pressSpeeds = {1.0, 2.0, 3.0, 5.0};
+        for (int i = 0; i < 4; i++) {
+            PRESS_SPEED[i] = b.comment("Metal Press Mk" + (i + 1) + ": works this many times faster than Mk1 (and draws that much more FE/t, so FE per plate stays the same).")
+                    .defineInRange("pressSpeedMk" + (i + 1), pressSpeeds[i], 0.1, 100.0);
+        }
         b.pop();
         SPEC = b.build();
     }
@@ -138,6 +144,11 @@ public final class PowerConfig {
     /** mk 1-4 */
     public static int chargerRate(int mk) { return get(CHARGER_RATE[mk - 1]); }
     public static int pressPower() { return get(PRESS_POWER); }
+    /** mk 1-4 */
+    public static double pressSpeed(int mk) {
+        ModConfigSpec.DoubleValue v = PRESS_SPEED[Math.max(1, Math.min(4, mk)) - 1];
+        return SPEC.isLoaded() ? v.get() : v.getDefault();
+    }
     /** mk 1-4 */
     public static int wirelessRate(int mk) { return get(WIRELESS_RATE[mk - 1]); }
     public static int wirelessRange(int mk) { return get(WIRELESS_RANGE[mk - 1]); }

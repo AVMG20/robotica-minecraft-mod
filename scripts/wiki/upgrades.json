@@ -174,7 +174,10 @@
       "id": "metal_press",
       "name": "Metal Press",
       "items": [
-        "metal_press"
+        "metal_press",
+        "metal_press_mk2",
+        "metal_press_mk3",
+        "metal_press_mk4"
       ],
       "effects": {
         "speed": "Presses faster (x2, x3, x4, x6).",

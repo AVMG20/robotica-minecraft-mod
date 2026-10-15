@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
@@ -16,6 +17,7 @@ import net.neoforged.neoforge.items.SlotItemHandler;
 
 public class MetalPressMenu extends MachineMenu {
     private final ContainerLevelAccess access;
+    private final Block block;
     private final int energyIndex;
     private final int capacityIndex;
     private final int progressIndex;
@@ -36,6 +38,7 @@ public class MetalPressMenu extends MachineMenu {
     private MetalPressMenu(int id, Inventory inv, BlockPos pos, IItemHandler items, IItemHandler upgrades, MetalPressBlockEntity be) {
         super(PowerRegistry.METAL_PRESS_MENU.get(), id);
         this.access = ContainerLevelAccess.create(inv.player.level(), pos);
+        this.block = inv.player.level().getBlockState(pos).getBlock();
         addSlot(new SlotItemHandler(items, 0, 44, 36));
         addSlot(new SlotItemHandler(items, 1, 108, 36) {
             @Override
@@ -74,6 +77,6 @@ public class MetalPressMenu extends MachineMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return stillValid(access, player, PowerRegistry.METAL_PRESS.get());
+        return stillValid(access, player, block);
     }
 }

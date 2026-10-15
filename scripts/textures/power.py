@@ -268,14 +268,21 @@ def generator_top_glow(t):
 # walls (cols 0-1, 14-15) around it.
 # Working, one 32 tick stroke: an ingot slides onto the die, the ram drops on it, flattens it to a plate in a cyan
 # flash, holds, rises slowly and the plate slides out. Bay, glow, columns, bed lamp and top share the loop.
+# Mk1-Mk4 change the corner brackets to the tier metal (casing.PROCESSING_TIERS: copper, gold, magma, null) and add a
+# notch per Mk; the bay and the glow overlays are shared.
 
 PRESS_TICKS = 32
-PRESS_PAL = casing.casing_palette(MATERIALS['copper'], **{
+PRESS_EXTRA = {
     '6': '#8E99A2', '7': '#D6DEE3',                                       # ram rod
     'm': '#3C454D', 'n': '#56616A', 'o': '#7A868F', 'p': '#A6B1B9', 'q': '#D2DAE0',      # light steel frame
     'r': '#4A3A10', 's': '#8E6A12', 't': '#D49E1C', 'y': '#F6C93A', 'z': '#FFF2A6',      # safety yellow
     '8': '#7A6018', 'G': '#2A5762', 'H': '#4C8C99',                       # bed lamp off, column glass
-})
+}
+PRESS_PAL = casing.casing_palette(MATERIALS['copper'], **PRESS_EXTRA)
+
+
+def press_pal(tier=1):
+    return casing.casing_palette(casing.PROCESSING_TIERS[tier], **PRESS_EXTRA)
 RAM = [0] * 8 + [1, 1, 2, 3] + [3] * 6 + [2, 2, 2, 1, 1, 1, 1] + [0] * 7    # ram drop (px) per tick
 IMPACT = RAM.index(3)
 
@@ -333,10 +340,10 @@ def press_glow(t):
     return c
 
 
-def press_front(lit):
+def press_front(lit, tier=1):
     """Casing face with the press bay in a light steel press frame (crown, uprights, hydraulic columns), the yellow
     bed lamp under the bay and the status lamp."""
-    c = casing.shell(1)
+    c = casing.shell(tier)
     c.rect(2, 2, 12, 1, 'q').rect(2, 2, 1, 12, 'p').rect(13, 2, 1, 12, 'o')   # crown and uprights
     c.set(13, 2, 'p').set(2, 13, 'o')
     for x in (3, 12):                                                     # hydraulic columns
@@ -346,7 +353,7 @@ def press_front(lit):
     c.rect(3, 13, 10, 1, 's').rect(4, 13, 8, 1, 't' if lit else '8')     # bed lamp
     c.rect(4, 3, 8, 10, '.')
     c.rect(7, 1, 2, 1, 'L' if lit else 'l')
-    return c
+    return casing.tier_notches(c, tier)
 
 
 def press_front_glow(t):
@@ -371,9 +378,9 @@ def press_front_glow(t):
     return c
 
 
-def press_top():
+def press_top(tier=1):
     """Hydraulic cylinder head: a light steel cap in a safety-yellow ring around a cyan pressure core."""
-    c = casing.shell(1)
+    c = casing.shell(tier)
     c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
     c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 4.3,
             lambda x, y: 'y' if x + y < 12 else 't' if x + y < 17 else 's')     # yellow ring
@@ -381,8 +388,7 @@ def press_top():
             lambda x, y: 'q' if x + y < 11 else 'p' if x + y < 15 else 'o')     # cap
     c.shape(lambda x, y: math.hypot(x - 7.5, y - 7.5) <= 2.0, lambda x, y: 'm')  # core socket
     c.rect(7, 7, 2, 2, 'u')
-    casing.tier_notches(c, 1)
-    return c
+    return casing.tier_notches(c, tier)
 
 
 def press_top_glow(t):
@@ -398,10 +404,14 @@ def write_press():
         """The loop starts just after the impact, so a still (item, screenshot) shows the press at work."""
         frames = [fn((t + IMPACT + 1) % PRESS_TICKS) for t in range(PRESS_TICKS)]
         write_anim('block', name, frames, PRESS_PAL, frametime=1)
-    write_block('metal_press_front', press_front(False).rows(), PRESS_PAL)
-    write_block('metal_press_front_on', press_front(True).rows(), PRESS_PAL)
+    for tier in (1, 2, 3, 4):
+        n, tp = tier_name('metal_press', tier), press_pal(tier)
+        write_block(f'{n}_front', press_front(False, tier).rows(), tp)
+        write_block(f'{n}_front_on', press_front(True, tier).rows(), tp)
+        write_block(f'{n}_top', press_top(tier).rows(), tp)
+        write_block(f'{n}_side', casing.side(tier).rows(), tp)
+    write_block('metal_press_bottom', casing.bottom().rows(), PRESS_PAL)
     write_block('metal_press_bay', press_bay(0, False).rows(), PRESS_PAL)
-    write_block('metal_press_top', press_top().rows(), PRESS_PAL)
     anim('metal_press_front_glow', press_front_glow)
     anim('metal_press_bay_on', lambda t: press_bay(t, True))
     anim('metal_press_bay_glow', press_glow)
@@ -1127,8 +1137,6 @@ def main():
 
     write_generator()
     write_press()
-    write_block('metal_press_side', casing.side(1).rows(), casing.casing_palette(MATERIALS['copper']))
-    write_block('metal_press_bottom', casing.bottom().rows(), casing.casing_palette(MATERIALS['copper']))
     write_charger()
     write_wireless()
     write_solar()
