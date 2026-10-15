@@ -142,7 +142,7 @@ public class CoreGameTests {
     public static void upgradeCardsStack(GameTestHelper helper) {
         var up = com.arno.robotica.core.upgrade.Upgrades.forMk(() -> 2, java.util.Set.of(
                 com.arno.robotica.core.upgrade.UpgradeKind.SPEED, com.arno.robotica.core.upgrade.UpgradeKind.SILK,
-                com.arno.robotica.core.upgrade.UpgradeKind.FORTUNE), () -> {});
+                com.arno.robotica.core.upgrade.UpgradeKind.FORTUNE, com.arno.robotica.core.upgrade.UpgradeKind.EFFICIENCY), () -> {});
         var speed = com.arno.robotica.core.upgrade.UpgradeKind.SPEED;
         ItemStack rest = up.insertItem(0, CoreItems.cards(speed, 6), false);
         helper.assertTrue(up.level(speed) == 4 && rest.getCount() == 2, "speed stacks to the cap of 4, rest " + rest.getCount());
