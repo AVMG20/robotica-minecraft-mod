@@ -455,7 +455,7 @@ public final class ExoTicker {
         int fed = Math.min(hunger, (int) points);
         food.setFoodLevel(food.getFoodLevel() + fed);
         float before = food.getSaturationLevel();
-        food.setSaturation(Math.min(food.getFoodLevel(), before + (float) (points - fed)));
+        food.setSaturation(Math.max(before, Math.min(food.getFoodLevel(), before + (float) (points - fed))));
         spend(st, ModuleKind.NUTRIENT_SYNTHESIZER, (fed + food.getSaturationLevel() - before) * perPoint);
     }
 
