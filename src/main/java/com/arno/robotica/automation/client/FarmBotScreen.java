@@ -57,7 +57,7 @@ public class FarmBotScreen extends MachineScreen<FarmBotMenu> {
     @Override
     protected ItemStack ghostIcon(Slot slot) {
         if (slot.index == 0) return icon("copper_cell");
-        if (slot.index <= cardSlots()) return icon("upgrade_speed");
+        if (slot.index <= cardSlots()) return ItemStack.EMPTY;
         // The pouch keeps saplings or seeds to replant.
         if (isMachineSlot(slot)) return menu.bot instanceof Stumpy ? SAPLING : SEEDS;
         return ItemStack.EMPTY;
@@ -66,7 +66,7 @@ public class FarmBotScreen extends MachineScreen<FarmBotMenu> {
     @Override
     protected Component slotHint(Slot slot) {
         if (slot.index == 0) return Component.translatable("gui.robotica.slot_battery");
-        if (slot.index <= cardSlots()) return Component.translatable("gui.robotica.slot_robot_card");
+        if (slot.index <= cardSlots()) return null;
         if (isMachineSlot(slot)) return Component.translatable("gui.robotica.farm_bot.pouch");
         return null;
     }

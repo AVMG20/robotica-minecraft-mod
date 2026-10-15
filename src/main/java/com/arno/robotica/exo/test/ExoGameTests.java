@@ -935,6 +935,30 @@ public class ExoGameTests {
         helper.succeed();
     }
 
+    /** The Nutrient Synthesizer fills hunger and saturation from FE alone, as far as the energy reaches. */
+    @GameTest(template = "empty")
+    public static void nutrientSynthesizerFeedsFromPower(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        ItemStack mk3 = new ItemStack(ExoItems.HELMET_MK3.get());
+        helper.assertTrue(Modules.refusal(mk3, 0, mod(ModuleKind.NUTRIENT_SYNTHESIZER), List.of()) != null, "it needs a Mk4 helmet");
+        int perPoint = ExoConfig.cost(ModuleKind.NUTRIENT_SYNTHESIZER, 1);
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK4, 1_000_000, ModuleKind.NUTRIENT_SYNTHESIZER));
+        player.getFoodData().setFoodLevel(6);
+        player.getFoodData().setSaturation(0);
+        ticks(player, 20);
+        helper.assertTrue(player.getFoodData().getFoodLevel() == 20 && player.getFoodData().getSaturationLevel() == 20,
+                "food and saturation are full, food " + player.getFoodData().getFoodLevel() + ", saturation " + player.getFoodData().getSaturationLevel());
+        helper.assertTrue(1_000_000 - energy(player, EquipmentSlot.HEAD) == 34 * perPoint, "34 points paid, used " + (1_000_000 - energy(player, EquipmentSlot.HEAD)));
+
+        player.setItemSlot(EquipmentSlot.HEAD, piece(ExoItems.HELMET_MK4, 5 * perPoint, ModuleKind.NUTRIENT_SYNTHESIZER));
+        player.getFoodData().setFoodLevel(10);
+        player.getFoodData().setSaturation(0);
+        ticks(player, 20);
+        helper.assertTrue(player.getFoodData().getFoodLevel() == 15 && energy(player, EquipmentSlot.HEAD) == 0,
+                "short on FE it fills what the energy covers, food " + player.getFoodData().getFoodLevel());
+        helper.succeed();
+    }
+
     // ---------------------------------------------------------------- Jet Assist (jetpack)
 
     @GameTest(template = "empty")

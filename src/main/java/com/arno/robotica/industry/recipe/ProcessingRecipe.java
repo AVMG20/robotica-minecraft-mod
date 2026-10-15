@@ -34,7 +34,8 @@ import java.util.List;
  * carry a {@code chance}. {@code time} is in ticks at base speed (default per machine), {@code power} the FE/t
  * (0 = the machine's config value). Both are base values: the machine's Mk and its cards scale them.
  * {@code fortune} says whether Fortune cards can add a main result (default: only for alloying, so loops like
- * centrifuging magma cream or extra casings from one assembler craft cannot multiply items).
+ * centrifuging magma cream or extra casings from one assembler craft cannot multiply items). Only the Alloy Smelter
+ * takes Fortune cards.
  */
 public record ProcessingRecipe(Machine machine, List<SizedIngredient> inputs, List<ChanceResult> results, int time, int power, boolean fortune)
         implements Recipe<ProcessingInput> {

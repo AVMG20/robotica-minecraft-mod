@@ -23,7 +23,6 @@
   "gui.robotica.status.no_energy": "No energy",
   "gui.robotica.status.output_full": "Output full",
   "gui.robotica.slot_battery": "Battery (cell or Mainspring)",
-  "gui.robotica.slot_upgrade": "Upgrade card",
   "gui.robotica.area_on": "Area outline: shown",
   "gui.robotica.area_off": "Area outline: hidden",
   "gui.robotica.tier_area": "Mk%s  %sx%s",
@@ -201,7 +200,6 @@
   "gui.robotica.farm_bot.pouch": "Pouch: seeds and saplings to plant",
   "gui.robotica.farm_bot.storage_found": "Chest found",
   "gui.robotica.farm_bot.storage_missing": "No chest within 3 blocks of where it was placed",
-  "gui.robotica.slot_robot_card": "Upgrade card (a higher Mk opens more slots)",
   "gui.robotica.robot_area_hint": "Range cards make the area bigger",
   "robotica.configuration.farmRadius": "Sprout and Rancher work radius",
   "robotica.configuration.stumpyRadius": "Stumpy work radius"

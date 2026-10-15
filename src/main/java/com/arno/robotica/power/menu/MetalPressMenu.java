@@ -3,6 +3,7 @@ package com.arno.robotica.power.menu;
 import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.power.PowerRegistry;
+import com.arno.robotica.power.block.MetalPressBlock;
 import com.arno.robotica.power.block.MetalPressBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,8 +27,8 @@ public class MetalPressMenu extends MachineMenu {
 
     /** Client side. */
     public MetalPressMenu(int id, Inventory inv, BlockPos pos) {
-        this(id, inv, pos, new ItemStackHandler(2),
-                Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.METAL_PRESS, () -> {}), null);
+        this(id, inv, pos, new ItemStackHandler(2), Upgrades.forMk(() -> inv.player.level().getBlockState(pos).getBlock() instanceof MetalPressBlock b ? b.mk() : 1,
+                MetalPressBlockEntity.KINDS, () -> {}), null);
     }
 
     /** Server side. */

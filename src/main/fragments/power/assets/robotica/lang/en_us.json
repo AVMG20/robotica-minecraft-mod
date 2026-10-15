@@ -172,7 +172,6 @@
   "gui.robotica.wireless.full": "full",
   "gui.robotica.wireless.no_power": "no power",
   "gui.robotica.wireless.more": "%s more in range",
-  "gui.robotica.wireless.slot": "Speed or range card",
   "robotica.configuration.wireless_charger": "Wireless Charger",
   "robotica.configuration.wirelessRateMk1": "Mk1 FE/t per player or robot",
   "robotica.configuration.wirelessRangeMk1": "Mk1 range (blocks)",

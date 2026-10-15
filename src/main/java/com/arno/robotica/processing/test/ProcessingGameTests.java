@@ -188,7 +188,7 @@ public class ProcessingGameTests {
         helper.succeed();
     }
 
-    /** Each Mk has one more upgrade slot and higher caps. */
+    /** Each Mk has one more upgrade slot (up to one per card kind) and higher caps. */
     @GameTest(template = "empty")
     public static void upgradeSlotsPerMk(GameTestHelper helper) {
         List<DeferredBlock<ProcessingMachineBlock>> grinders = ProcessingRegistry.GRINDERS;
@@ -196,8 +196,9 @@ public class ProcessingGameTests {
             int mk = i + 1;
             GrinderBlockEntity be = place(helper, grinders.get(i));
             helper.assertTrue(be.tier() == mk, "tier from the block");
-            helper.assertTrue(be.upgrades.activeSlots() == mk + 1, "Mk" + mk + " has " + (mk + 1) + " slots, got " + be.upgrades.activeSlots());
-            helper.assertTrue(be.upgrades.insertItem(mk + 1 > 4 ? 4 : mk + 1, CoreItems.cards(UpgradeKind.VOID, 1), true).getCount() == (mk + 1 > 4 ? 0 : 1),
+            int slots = Math.min(mk + 1, 4);
+            helper.assertTrue(be.upgrades.activeSlots() == slots, "Mk" + mk + " has " + slots + " slots, got " + be.upgrades.activeSlots());
+            helper.assertTrue(be.upgrades.insertItem(slots, CoreItems.cards(UpgradeKind.VOID, 1), true).getCount() == 1,
                     "Mk" + mk + ": the slot after the last is closed");
             ItemStack rest = be.upgrades.insertItem(0, CoreItems.cards(UpgradeKind.SPEED, 8), false);
             helper.assertTrue(be.upgrades.level(UpgradeKind.SPEED) == 2 * mk, "speed cap per Mk");
@@ -205,6 +206,8 @@ public class ProcessingGameTests {
         }
         ElectricFurnaceBlockEntity furnace = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK2);
         helper.assertTrue(furnace.upgrades.activeSlots() == 3, "furnace Mk2: 3 slots");
+        ElectricFurnaceBlockEntity furnace4 = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4);
+        helper.assertTrue(furnace4.upgrades.activeSlots() == 3, "furnace Mk4: 3 slots, one per card kind");
         helper.succeed();
     }
 

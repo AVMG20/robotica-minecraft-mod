@@ -18,7 +18,7 @@ summary: Powered armor, Mk1 to Mk4, with modules and a core socket.
 
 ### Helmet
 
-{{items night_vision_module rebreather_module robot_hud_module auto_feeder_module solar_weave_module sonar_pulse_module}}
+{{items night_vision_module rebreather_module robot_hud_module auto_feeder_module nutrient_synthesizer_module solar_weave_module sonar_pulse_module}}
 
 ### Chestplate
 

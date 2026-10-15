@@ -40,6 +40,7 @@ public enum ModuleKind {
     AUTO_FEEDER("auto_feeder", Pieces.HEAD, 0, 1),
     SOLAR_WEAVE("solar_weave", Pieces.HEAD, 0, 2),
     SONAR_PULSE("sonar_pulse", Pieces.HEAD, 0, 2, 3, 4),
+    NUTRIENT_SYNTHESIZER("nutrient_synthesizer", Pieces.HEAD, 0, 4),
     // Exo chestplate
     JET_ASSIST("jet_assist", Pieces.CHEST, 0, 1, 2, 3),
     FLIGHT("flight", Pieces.CHEST, 0, 3),
