@@ -31,6 +31,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
     private boolean standalone;
     /** Mk2-Mk4: every block of the square has been there at once. A formed panel that loses a block removes itself. */
     private boolean formed;
+    /** Saved before panels covered a square: a Mk2-Mk4 left on its own keeps its full output. */
+    private boolean legacy;
     /** The sky has been checked since the block entity loaded. */
     private boolean checked;
     private final com.arno.robotica.core.energy.EnergyNeighbors neighbors = new com.arno.robotica.core.energy.EnergyNeighbors();
@@ -170,7 +172,8 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         }
         standalone = present == 1;
         if (standalone && array.grow(level, pos)) return countOpenCells(level, pos, state);
-        return open;
+        // An old single panel without room to grow works as before; a lone block from another mod's placer counts one block.
+        return standalone && legacy && open > 0 ? n * n : open;
     }
 
     /** {@link EnergyUtil#pushToNeighbors} for a Mk2-Mk4: into the receivers around the whole panel, one shared rate. */
@@ -207,6 +210,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         super.saveAdditional(tag, registries);
         tag.put("energy", energy.serializeNBT(registries));
         if (formed) tag.putBoolean("formed", true);
+        if (!legacy) tag.putBoolean("square", true);
     }
 
     @Override
@@ -214,6 +218,7 @@ public class SolarPanelBlockEntity extends PowerBlockEntity implements net.minec
         super.loadAdditional(tag, registries);
         if (tag.contains("energy")) energy.deserializeNBT(registries, tag.get("energy"));
         formed = tag.getBoolean("formed");
+        legacy = !tag.contains("square");
     }
 
     @Override

@@ -158,6 +158,27 @@ public class PowerGameTests {
         });
     }
 
+    /**
+     * A Mk2 saved as one block before panels covered a square keeps its full output when it has no room to grow; a lone
+     * block placed by anything else counts one block.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void oldSingleSolarPanelKeepsItsOutput(GameTestHelper helper) {
+        BlockPos old = new BlockPos(1, 1, 1), lone = new BlockPos(4, 1, 1);
+        for (BlockPos p : new BlockPos[]{old, lone}) {
+            helper.setBlock(p, PowerRegistry.SOLAR_PANEL_MK2.get().defaultBlockState());
+            helper.setBlock(p.east(), Blocks.STONE);
+        }
+        var oldPanel = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(old);
+        var lonePanel = (com.arno.robotica.power.block.SolarPanelBlockEntity) helper.getBlockEntity(lone);
+        oldPanel.loadWithComponents(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess());
+        helper.runAfterDelay(45, () -> {
+            helper.assertTrue(oldPanel.openCells() == 4, "the old panel keeps a Mk2's output: " + oldPanel.openCells());
+            helper.assertTrue(lonePanel.openCells() == 1, "a lone new block counts one block: " + lonePanel.openCells());
+            helper.succeed();
+        });
+    }
+
     /** A panel under another panel sees no sky; the top one still does. */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void stackedSolarPanelsShade(GameTestHelper helper) {
