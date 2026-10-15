@@ -376,19 +376,20 @@ public class PowerGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 60)
+    @GameTest(template = "empty", timeoutTicks = 100)
     public static void metalPressSpeedCardIsFaster(GameTestHelper helper) {
         BlockPos pos = new BlockPos(1, 1, 1);
         helper.setBlock(pos, PowerRegistry.METAL_PRESS.get().defaultBlockState());
         MetalPressBlockEntity press = (MetalPressBlockEntity) helper.getBlockEntity(pos);
         press.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SPEED, 4));
-        press.items.setStackInSlot(0, new ItemStack(Items.COPPER_INGOT, 2));
+        helper.assertTrue(press.upgrades.level(UpgradeKind.SPEED) == 2, "Mk1 counts two speed cards");
+        press.items.setStackInSlot(0, new ItemStack(Items.COPPER_INGOT, 1));
         press.energy.setEnergy(press.energy.getMaxEnergyStored());
 
-        // Four speed cards are x6: 17 ticks per plate, so both ingots are done inside 60 ticks (base speed would need 200).
+        // Two speed cards are x3: 67 ticks per plate, done inside 100 ticks (base speed would need 200).
         helper.succeedWhen(() -> {
             ItemStack out = press.items.getStackInSlot(1);
-            helper.assertTrue(out.is(CoreItems.COPPER_PLATE.get()) && out.getCount() == 2, "Two copper plates expected");
+            helper.assertTrue(out.is(CoreItems.COPPER_PLATE.get()) && out.getCount() == 1, "A copper plate expected");
         });
     }
 

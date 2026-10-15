@@ -6,6 +6,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntSupplier;
@@ -17,18 +19,25 @@ import java.util.function.ToIntFunction;
  * <p>How cards work: each card kind takes one slot; stackable kinds stack there and every card adds one step, up to
  * the machine's cap. Silk and fortune exclude each other. Slots and caps come from {@link UpgradeRules}: create a Mk
  * machine's slots with {@link #forMk} and a fixed machine's with {@link #fixed}, read the effect with {@link #level}
- * and use the static helpers so every machine agrees on the numbers.
+ * and use the static helpers so every machine agrees on the numbers. No machine opens more slots than it takes card
+ * kinds ({@link UpgradeRules#kindSlots}).
  */
 public class Upgrades extends ItemStackHandler {
+    /** Order of the empty slot backdrops ({@link #fitting}). */
+    private static final UpgradeKind[] SLOT_ORDER = {UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.RANGE, UpgradeKind.GROWTH,
+            UpgradeKind.HEIGHT, UpgradeKind.FORTUNE, UpgradeKind.SILK, UpgradeKind.VOID};
+
     private final Set<UpgradeKind> accepted;
     private final ToIntFunction<UpgradeKind> caps;
     private final IntSupplier active;
+    private final int kindSlots;
     private final Runnable onChanged;
 
     private Upgrades(int slots, IntSupplier active, Set<UpgradeKind> accepted, ToIntFunction<UpgradeKind> caps, Runnable onChanged) {
         super(slots);
         this.active = active;
         this.accepted = Set.copyOf(accepted);
+        this.kindSlots = UpgradeRules.kindSlots(this.accepted);
         this.caps = caps;
         this.onChanged = onChanged;
     }
@@ -54,9 +63,9 @@ public class Upgrades extends ItemStackHandler {
         return new Upgrades(machine.slots, () -> machine.slots, machine.kinds(), machine::cap, onChanged);
     }
 
-    /** Slots that take cards now (the Mk opens them); cards only count there. */
+    /** Slots that take cards now (the Mk opens them, at most one per kind the machine takes); cards only count there. */
     public int activeSlots() {
-        return Math.max(0, Math.min(getSlots(), active.getAsInt()));
+        return Math.max(0, Math.min(Math.min(getSlots(), kindSlots), active.getAsInt()));
     }
 
     /** How many cards of this kind the machine accepts, 0 if none. */
@@ -104,12 +113,26 @@ public class Upgrades extends ItemStackHandler {
         onChanged.run();
     }
 
-    /** Loads slot by slot: the slot count never changes, whatever the tag says. */
+    /**
+     * Loads slot by slot: the slot count never changes, whatever the tag says. Cards saved in a slot that is no longer
+     * open (machines used to open more) move to a free open slot; with none free they stay and drop with the machine.
+     */
     @Override
     public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag) {
         ItemStackHandler saved = new ItemStackHandler();
         saved.deserializeNBT(registries, tag);
         for (int i = 0; i < getSlots(); i++) stacks.set(i, i < saved.getSlots() ? saved.getStackInSlot(i) : ItemStack.EMPTY);
+        int open = activeSlots();
+        for (int i = open; i < getSlots(); i++) {
+            if (stacks.get(i).isEmpty()) continue;
+            for (int j = 0; j < open; j++) {
+                if (stacks.get(j).isEmpty()) {
+                    stacks.set(j, stacks.get(i));
+                    stacks.set(i, ItemStack.EMPTY);
+                    break;
+                }
+            }
+        }
         onLoad();
     }
 
@@ -121,6 +144,42 @@ public class Upgrades extends ItemStackHandler {
             if (stack.getItem() instanceof UpgradeCardItem card && card.getKind() == kind) n += stack.getCount();
         }
         return Math.min(n, cap(kind));
+    }
+
+    /**
+     * Card kinds that fit the empty open slot {@code slot}, for its backdrop: the kinds not installed yet, one per empty
+     * slot in order (Fortune and Silk Touch share one), the last empty slot gets all that are left. Empty if none.
+     */
+    public List<UpgradeKind> fitting(int slot) {
+        int open = activeSlots();
+        if (slot < 0 || slot >= open || !getStackInSlot(slot).isEmpty()) return List.of();
+        int place = 0, empty = 0;
+        for (int i = 0; i < open; i++) {
+            if (!getStackInSlot(i).isEmpty()) continue;
+            if (i < slot) place++;
+            empty++;
+        }
+        List<List<UpgradeKind>> groups = new ArrayList<>();
+        for (UpgradeKind kind : SLOT_ORDER) {
+            if (!fitsAnywhere(kind)) continue;
+            if (kind == UpgradeKind.SILK && !groups.isEmpty() && groups.getLast().contains(UpgradeKind.FORTUNE)) groups.getLast().add(kind);
+            else groups.add(new ArrayList<>(List.of(kind)));
+        }
+        if (place >= groups.size()) return List.of();
+        if (place < empty - 1) return groups.get(place);
+        List<UpgradeKind> rest = new ArrayList<>();
+        for (int i = place; i < groups.size(); i++) rest.addAll(groups.get(i));
+        return rest;
+    }
+
+    /** True if the machine takes the kind and no slot holds it (or the card it excludes). */
+    private boolean fitsAnywhere(UpgradeKind kind) {
+        if (cap(kind) <= 0) return false;
+        for (int i = 0; i < getSlots(); i++) {
+            if (getStackInSlot(i).getItem() instanceof UpgradeCardItem card
+                    && (card.getKind() == kind || isSilkFortunePair(card.getKind(), kind))) return false;
+        }
+        return true;
     }
 
     /** Puts one card from {@code stack} into the slot of its kind (or a free slot); the caller removes the card. */

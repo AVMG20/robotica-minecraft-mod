@@ -51,8 +51,8 @@ import net.minecraft.core.Direction;
 /**
  * One block entity class for every processing machine (Alloy Smelter, Centrifuge, Assembler) and every Mk.
  * Slots: {@link Machine#inputs} inputs then {@link Machine#outputs} outputs in {@link #items}, a battery slot, and
- * Mk + 1 upgrade slots. Each tick it works on the first recipe of its type that matches the inputs (shapeless, any
- * slots, extras stay), at {@code power} FE/t times the Mk speed and the card multipliers, for {@code time} ticks
+ * Mk + 1 upgrade slots (at most one per card kind). Each tick it works on the first recipe of its type that matches the
+ * inputs (shapeless, any slots, extras stay), at {@code power} FE/t times the Mk speed and the card multipliers, for {@code time} ticks
  * divided by the same speed (so FE per craft only rises by the speed cards' energy penalty).
  *
  * <p>Progress is counted in FE: a craft needs {@code power x time} FE. When that FE/t is more than the buffer or the
@@ -120,9 +120,13 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
 
     // ---------------------------------------------------------------- cards
 
-    /** Every machine takes speed, efficiency and fortune; the Centrifuge also a void card. Slots and caps: the Mk rule. */
+    /**
+     * Every machine takes speed and efficiency; the Alloy Smelter also fortune (its recipes are the ones that allow it),
+     * the Centrifuge a void card. Slots and caps: the Mk rule.
+     */
     public static Set<UpgradeKind> acceptedKinds(Machine machine) {
-        Set<UpgradeKind> kinds = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.FORTUNE);
+        Set<UpgradeKind> kinds = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY);
+        if (machine == Machine.ALLOY_SMELTER) kinds.add(UpgradeKind.FORTUNE);
         if (machine == Machine.CENTRIFUGE) kinds.add(UpgradeKind.VOID);
         return kinds;
     }

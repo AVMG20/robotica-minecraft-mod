@@ -32,11 +32,11 @@ public class ProcessingMachineItem extends BlockItem implements HasDetails {
         String speed = String.format(java.util.Locale.ROOT, "%.1f", ProcessingConfig.tierSpeed(tier));
         if (machine().kind() == ProcessingMachineBlock.Kind.GRINDER) {
             tooltip.add(Component.translatable("tooltip.robotica.grinder", ProcessingConfig.oreDustCount()).withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.translatable("tooltip.robotica.processing_tier", speed, UpgradeRules.mkSlots(tier))
+            tooltip.add(Component.translatable("tooltip.robotica.processing_tier", speed, UpgradeRules.mkSlots(tier, GrinderBlockEntity.KINDS))
                     .withStyle(ChatFormatting.DARK_GRAY));
         } else {
             tooltip.add(Component.translatable("tooltip.robotica.electric_furnace", ProcessingConfig.lanes(tier)).withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.translatable("tooltip.robotica.processing_tier", speed, UpgradeRules.mkSlots(tier))
+            tooltip.add(Component.translatable("tooltip.robotica.processing_tier", speed, UpgradeRules.mkSlots(tier, ElectricFurnaceBlockEntity.KINDS))
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
         Integer energy = stack.get(CoreComponents.ENERGY.get());

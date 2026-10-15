@@ -34,15 +34,11 @@ public class CombustionGeneratorScreen extends MachineScreen<CombustionGenerator
 
     @Override
     protected ItemStack ghostIcon(Slot slot) {
-        return switch (slot.index) {
-            case 0 -> new ItemStack(Items.COAL);
-            case 1 -> icon("upgrade_speed");
-            default -> icon("upgrade_efficiency");
-        };
+        return slot.index == 0 ? new ItemStack(Items.COAL) : ItemStack.EMPTY;
     }
 
     @Override
     protected Component slotHint(Slot slot) {
-        return Component.translatable(slot.index == 0 ? "gui.robotica.slot_fuel" : "gui.robotica.slot_upgrade");
+        return slot.index == 0 ? Component.translatable("gui.robotica.slot_fuel") : null;
     }
 }

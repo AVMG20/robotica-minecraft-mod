@@ -61,7 +61,10 @@ public class MetalPressBlockEntity extends PowerBlockEntity implements MenuProvi
             setChanged();
         }
     };
-    public final Upgrades upgrades = Upgrades.fixed(com.arno.robotica.core.upgrade.UpgradeRules.Fixed.METAL_PRESS, this::setChanged);
+    /** Speed and efficiency cards; slots and caps follow the Mk rule. */
+    public static final Set<UpgradeKind> KINDS = Set.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY);
+    public final Upgrades upgrades = Upgrades.forMk(this::mk, KINDS, this::setChanged);
+
     @Override
     public net.neoforged.neoforge.items.IItemHandler quickInsertTarget() {
         return new net.neoforged.neoforge.items.wrapper.RangedWrapper(items, 0, 1);

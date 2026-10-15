@@ -72,8 +72,6 @@
   "robotica.configuration.bufferMk4": "Mk4 energy buffer (FE)",
   "robotica.configuration.maxInputMk4": "Mk4 max input (FE/t)",
   "robotica.configuration.lanesMk4": "Mk4 furnace lanes",
-  "gui.robotica.processing.slot_upgrade_grinder": "Upgrade card: Speed, Efficiency, Fortune, Void",
-  "gui.robotica.processing.slot_upgrade_furnace": "Upgrade card: Speed, Efficiency, Range",
   "gui.robotica.processing.card.unused": "Does nothing in this machine",
   "gui.robotica.processing.card.cap": "Up to %s count in this Mk%s",
   "gui.robotica.processing.card.grinder.speed": "In this Grinder: grinds faster (FE/t rises with it)",
