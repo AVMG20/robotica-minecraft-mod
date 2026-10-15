@@ -447,7 +447,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("items")) loadInto(items, registries, tag.getCompound("items"));
-        if (tag.contains("upgrades")) loadInto(upgrades, registries, tag.getCompound("upgrades"));
+        if (tag.contains("upgrades")) upgrades.deserializeNBT(registries, tag.getCompound("upgrades"));
         work = tag.getLong("work");
         sides.load(tag.getCompound("sides"));
         inputsChanged = true;

@@ -205,7 +205,7 @@ public class Stumpy extends FarmBot {
 
     @Override
     protected boolean actFromAfar(ServerLevel sl, BlockPos target) {
-        return sl.getBlockState(target).is(BlockTags.LOGS) && act(sl, target);
+        return sl.isLoaded(target) && sl.getBlockState(target).is(BlockTags.LOGS) && act(sl, target);
     }
 
     /**

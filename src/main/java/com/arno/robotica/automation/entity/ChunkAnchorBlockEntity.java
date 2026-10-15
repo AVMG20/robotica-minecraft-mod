@@ -246,6 +246,7 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
     }
 
     private void setState(ServerLevel sl, State next) {
+        if (next != State.LOADING) loadingSince = 0;
         if (next != state) {
             state = next;
             setChanged();
@@ -254,8 +255,6 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
                 if (loadingSince == 0) loadingSince = sl.getGameTime();
                 sl.sendParticles(ParticleTypes.REVERSE_PORTAL, worldPosition.getX() + 0.5, worldPosition.getY() + 0.6,
                         worldPosition.getZ() + 0.5, 24, 0.3, 0.3, 0.3, 0.05);
-            } else {
-                loadingSince = 0;
             }
             if (next == State.NO_POWER || next == State.OVER_CAP) {
                 ServerPlayer near = Milestones.nearbyOwner(sl, worldPosition, owner, 32);
