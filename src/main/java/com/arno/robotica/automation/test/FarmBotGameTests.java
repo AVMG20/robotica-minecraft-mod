@@ -376,6 +376,41 @@ public class FarmBotGameTests {
         });
     }
 
+    /** A 3-high glass wall from {@code from} to {@code to} (inclusive) on the floor. */
+    private static void glassWall(GameTestHelper helper, BlockPos from, BlockPos to) {
+        for (BlockPos p : BlockPos.betweenClosed(from, to)) {
+            for (int y = 2; y <= 4; y++) helper.setBlock(new BlockPos(p.getX(), y, p.getZ()), Blocks.GLASS);
+        }
+    }
+
+    /**
+     * The nearest tree is walled off in a corner, more than reach away from any spot Stumpy can stand on: it is skipped
+     * at once, whole, and the tree it can walk to comes down soon after.
+     */
+    @GameTest(template = PEN, timeoutTicks = 220)
+    public static void stumpySkipsATreeItCanNotReach(GameTestHelper helper) {
+        columnTree(helper, 2, 2, 4);
+        glassWall(helper, new BlockPos(5, 0, 1), new BlockPos(5, 0, 5));
+        glassWall(helper, new BlockPos(1, 0, 5), new BlockPos(4, 0, 5));
+        columnTree(helper, 8, 8, 3);
+        Stumpy stumpy = bot(helper, FarmBotContent.STUMPY_ENTITY.get(), new BlockPos(7, 2, 2));
+        stumpy.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.RANGE, 1));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(standingLogs(helper, 8, 8, 3) == 0, "the reachable tree is felled" + where(helper, stumpy));
+            helper.assertTrue(standingLogs(helper, 2, 2, 4) == 4, "the walled-off tree stands");
+        });
+    }
+
+    /** The only tree is behind a wall with a gap at the far end: walking away from it to the gap is not being stuck. */
+    @GameTest(template = PEN, timeoutTicks = 400)
+    public static void stumpyWalksAroundAWall(GameTestHelper helper) {
+        columnTree(helper, 2, 2, 3);
+        glassWall(helper, new BlockPos(1, 0, 5), new BlockPos(8, 0, 5));
+        Stumpy stumpy = bot(helper, FarmBotContent.STUMPY_ENTITY.get(), new BlockPos(2, 2, 7));
+        stumpy.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.RANGE, 1));
+        helper.succeedWhen(() -> helper.assertTrue(standingLogs(helper, 2, 2, 3) == 0, "the tree behind the wall is felled" + where(helper, stumpy)));
+    }
+
     /** The vacuum leaves a player's thrown items alone and obeys the pickup event veto. */
     @GameTest(template = PEN, timeoutTicks = 300)
     public static void vacuumSkipsPlayerItemsAndHonoursVeto(GameTestHelper helper) {

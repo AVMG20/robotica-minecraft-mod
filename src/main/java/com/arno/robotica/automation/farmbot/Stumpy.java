@@ -231,6 +231,16 @@ public class Stumpy extends FarmBot {
         return true;
     }
 
+    /** A tree it can not reach or fell is left alone whole, not tried again log by log. */
+    @Override
+    protected void skip(BlockPos pos) {
+        super.skip(pos);
+        if (!(level() instanceof ServerLevel sl) || !sl.isLoaded(pos) || !sl.getBlockState(pos).is(BlockTags.LOGS)) return;
+        for (BlockPos p : TreeScan.scan(sl, pos, AutomationConfig.maxLogs(), false).logs) {
+            if (!p.equals(pos)) super.skip(p);
+        }
+    }
+
     // ---- felling wave ----
 
     /** Queues the paid-for tree: logs bottom-up (nearest the trunk first on a level) and leaves bottom-up. */
