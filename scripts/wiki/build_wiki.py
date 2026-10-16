@@ -154,6 +154,10 @@ def block_icon(model_ref):
 def make_icon(item_id):
     """Returns (png bytes, kind) for a Robotica item: 'block' isometric render or 'item' flat texture."""
     ref = f'robotica:item/{item_id}'
+    gui = mp.load_model(ref).get('perspectives', {}).get('gui', {})
+    if gui.get('textures', {}).get('layer0'):
+        # separate_transforms with a flat GUI icon (Null Lance): use the icon, not the held 3D model
+        return png(flat_icon(gui['textures'])), 'item'
     try:
         textures, elements = mp.resolve(ref)
     except (FileNotFoundError, KeyError) as e:
