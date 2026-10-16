@@ -103,6 +103,7 @@ final class LanceFx {
         int coils;
         int ticks;
         int seen;
+        HumSound hum;
 
         Charge(Player player, int coils) {
             this.player = player;
@@ -136,10 +137,11 @@ final class LanceFx {
             int ticks = p.getTicksUsingItem();
             Charge c = CHARGES.get(p.getId());
             if (c == null || c.player != p || ticks < c.ticks) {
+                if (c != null) endHum(c);
                 c = new Charge(p, Math.min(COILS, ticks / COIL_TICKS));
                 CHARGES.put(p.getId(), c);
                 if (ticks <= LATE_START) mc.getSoundManager().play(new ChargeSound(p));
-                if (c.coils == COILS) mc.getSoundManager().play(new HumSound(p));
+                if (c.coils == COILS) startHum(mc, c);
             }
             c.seen = stamp;
             c.ticks = ticks;
@@ -148,8 +150,21 @@ final class LanceFx {
         if (!CHARGES.isEmpty()) CHARGES.values().removeIf(LanceFx::stale);
     }
 
+    /** A charge out of range or let go is dropped with its hum, so a player never has two hums. */
     private static boolean stale(Charge c) {
-        return c.seen != stamp;
+        if (c.seen == stamp) return false;
+        endHum(c);
+        return true;
+    }
+
+    private static void startHum(Minecraft mc, Charge c) {
+        c.hum = new HumSound(c.player);
+        mc.getSoundManager().play(c.hum);
+    }
+
+    private static void endHum(Charge c) {
+        if (c.hum != null) c.hum.end();
+        c.hum = null;
     }
 
     private static void tick(Minecraft mc, ClientLevel level, Charge c, int ticks) {
@@ -163,7 +178,7 @@ final class LanceFx {
             if (c.coils == COILS) {
                 level.playLocalSound(p.getX(), p.getEyeY(), p.getZ(), CoreSounds.LANCE_READY.get(), SoundSource.PLAYERS, READY_VOLUME,
                         0.98F + level.random.nextFloat() * 0.04F, false);
-                mc.getSoundManager().play(new HumSound(p));
+                startHum(mc, c);
                 if (particles) readyFlash(level, p, own);
             } else if (particles) {
                 coilPulse(level, c.coils, own);
@@ -441,6 +456,7 @@ final class LanceFx {
             MUZ[4] = p[4];
             MUZ[5] = p[5];
         }
+        if (!GearClientConfig.weaponParticles()) return;
         TintParticleOptions spark = CoreParticles.spark(VOID_BRIGHT, 0.8F);
         if (own) {
             level.addParticle(CoreParticles.flash(CoreParticles.WARP_VIOLET, 0.2F), MUZ[0], MUZ[1], MUZ[2], 0, 0, 0);
@@ -531,6 +547,10 @@ final class LanceFx {
         @Override
         public boolean canStartSilent() {
             return true;
+        }
+
+        void end() {
+            stop();
         }
 
         @Override

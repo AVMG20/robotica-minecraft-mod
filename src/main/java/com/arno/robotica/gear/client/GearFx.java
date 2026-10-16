@@ -45,7 +45,8 @@ final class GearFx {
                     if (p.length >= 9) LanceFx.beam(level, p, ints.length > 0 && ints[0] == 1, ints.length > 1 ? ints[1] : -1);
                 }
                 case GearFxPayload.BOLT -> {
-                    if (weapons && p.length >= 6) LanceFx.boltMuzzle(level, p, fx.ints().length > 0 ? fx.ints()[0] : -1);
+                    // drawn only with weapon particles on, but the shooter's arm kick always plays
+                    if (p.length >= 6) LanceFx.boltMuzzle(level, p, fx.ints().length > 0 ? fx.ints()[0] : -1);
                 }
                 case GearFxPayload.DRAIN -> {
                     if (weapons && p.length >= 6) drain(level, p);
