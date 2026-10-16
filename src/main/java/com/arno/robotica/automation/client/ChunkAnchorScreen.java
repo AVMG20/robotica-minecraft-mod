@@ -93,10 +93,11 @@ public class ChunkAnchorScreen extends MachineScreen<ChunkAnchorMenu> {
         drawFitted(g, font, use, tx, y + 55, TEXT_W, over ? Tone.BAD.textColor() : TEXT, -1, false, 1.0F);
         addTooltip(tx, y + 53, TEXT_W, 11, Component.translatable("gui.robotica.anchor.owner_use_hint"));
 
-        if (upkeep > 0) {
-            long ticks = menu.energy() / upkeep;
-            drawFitted(g, font, Component.translatable("gui.robotica.anchor.runtime", Fmt.duration(ticks)), tx, y + 64, TEXT_W,
-                    TEXT_MUTED, -1, false, 0.75F);
+        if (state == State.LOADING && upkeep > 0) {
+            drawFitted(g, font, Component.translatable("gui.robotica.anchor.uptime", Fmt.duration(menu.loadedSeconds() * 20L)),
+                    tx, y + 64, TEXT_W, TEXT_MUTED, -1, false, 0.75F);
+            addTooltip(tx, y + 63, TEXT_W, 8, Component.translatable("gui.robotica.anchor.buffer",
+                    Fmt.duration(menu.energy() / upkeep)));
         }
     }
 }

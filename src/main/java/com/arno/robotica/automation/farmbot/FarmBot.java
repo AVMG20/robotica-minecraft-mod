@@ -54,6 +54,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -83,9 +84,11 @@ import java.util.function.Supplier;
  * area a few hundred blocks per tick for work, walks to the nearest job and does it once in reach. Drops go into the
  * biggest inventory within {@link #STORAGE_RANGE} blocks of home; seeds and saplings it keeps in its 9-slot pouch.
  *
- * <p>Getting unstuck: a job it can not reach within {@link #JOB_TIMEOUT} ticks, or that it walks toward without getting
- * closer, is skipped for a while ({@link #clearWay} gets a try first: Stumpy fells the closest tree). After a few skips in
- * a row without moving, or when it ends up inside a block, far from home or under its area, it teleports home.
+ * <p>Getting unstuck: a job no path gets it in reach of (behind a wall, up a pillar), that it can not reach within
+ * {@link #JOB_TIMEOUT} ticks, or that it stands still at without getting closer, is done from where it stands if it can
+ * be ({@link #actFromAfar}: Stumpy fells the tree), else skipped for a while ({@link #clearWay} gets a try first: Stumpy
+ * fells the closest tree). After a few skips in a row without moving, or when it ends up inside a
+ * block, far from home or under its area, it teleports home.
  */
 public abstract class FarmBot extends PathfinderMob {
     public enum Status {
@@ -196,6 +199,8 @@ public abstract class FarmBot extends PathfinderMob {
     private int progress;
     private int stuckChecks;
     private double bestDist;
+    @Nullable
+    private Vec3 lastCheckPos;
     private int lastPathTick = -100;
     private int fails;
     @Nullable
@@ -301,6 +306,11 @@ public abstract class FarmBot extends PathfinderMob {
     }
 
     protected void onScanWrapped() {
+    }
+
+    /** Does a job it could not get to from where it stands (Stumpy fells the tree). True if it did. */
+    protected boolean actFromAfar(ServerLevel sl, BlockPos target) {
+        return false;
     }
 
     /** Tries to free the way when a job is blocked (Stumpy fells the closest tree). True if it found something to do. */
@@ -814,7 +824,8 @@ public abstract class FarmBot extends PathfinderMob {
         if (canPath && (jobTicks == 1 || jobTicks - lastPathTick >= 20 || (navigation.isDone() && jobTicks - lastPathTick >= 10))) {
             lastPathTick = jobTicks;
             Path path = navigation.createPath(t, pathAccuracy());
-            if (path == null) {
+            // A partial path ends as close as it gets (behind a wall, on a chest by a tall trunk): standing there does nothing.
+            if (path == null || !reaches(path, t)) {
                 blocked(sl, t);
                 return Status.WORKING;
             }
@@ -822,14 +833,26 @@ public abstract class FarmBot extends PathfinderMob {
         }
         if (jobTicks % 20 == 0) {
             double d = horizontalDistance(t);
+            // Walking a detour (around a wall, out of a base) is progress too, until the job times out.
+            boolean moved = lastCheckPos != null && position().distanceToSqr(lastCheckPos) > 1.0;
+            lastCheckPos = position();
             if (d < bestDist - 0.3) {
                 bestDist = d;
                 stuckChecks = 0;
-            } else {
+            } else if (!moved) {
                 stuckChecks++;
             }
         }
         return Status.WORKING;
+    }
+
+    /** Some point of the path is in reach of the job. */
+    private boolean reaches(Path path, BlockPos t) {
+        for (int i = 0; i < path.getNodeCount(); i++) {
+            Node n = path.getNode(i);
+            if (inReachFrom(n.x + 0.5, n.y, n.z + 0.5, t)) return true;
+        }
+        return false;
     }
 
     /** Enough FE stored for the action at {@code t}; until then the robot waits at the job instead of skipping it. */
@@ -848,14 +871,25 @@ public abstract class FarmBot extends PathfinderMob {
 
     /** In reach of a job: close enough horizontally and within a few blocks up or down. */
     protected boolean inReach(BlockPos t) {
-        double dy = t.getY() + 0.5 - getY();
-        return horizontalDistance(t) <= reach() && dy > -3.0 && dy < 4.5;
+        return inReachFrom(getX(), getY(), getZ(), t);
+    }
+
+    private boolean inReachFrom(double x, double y, double z, BlockPos t) {
+        double dx = x - (t.getX() + 0.5), dy = t.getY() + 0.5 - y, dz = z - (t.getZ() + 0.5);
+        return Math.sqrt(dx * dx + dz * dz) <= reach() && dy > -3.0 && dy < 4.5;
     }
 
     /** The job could not be reached: free the way, else skip the job; teleport home when nothing works from here. */
     private void blocked(ServerLevel sl, BlockPos t) {
         navigation.stop();
         job = null;
+        if (canAfford(sl, t) && actFromAfar(sl, t)) {
+            strikes.remove(t.asLong());
+            fails = 0;
+            failAnchor = null;
+            lastWorking = tickCount;
+            return;
+        }
         if (clearWay(sl)) return;
         skip(t);
         if (failAnchor == null || position().distanceToSqr(failAnchor) > 4.0) {
@@ -876,6 +910,7 @@ public abstract class FarmBot extends PathfinderMob {
         progress = 0;
         stuckChecks = 0;
         bestDist = Double.MAX_VALUE;
+        lastCheckPos = null;
         lastPathTick = -100;
     }
 

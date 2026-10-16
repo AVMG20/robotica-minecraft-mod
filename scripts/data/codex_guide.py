@@ -276,6 +276,7 @@ STEPS = [
      ['null_casing', 'null_circuit', 'ender_cell', 'solar_panel_mk4', 'grinder_mk4', 'electric_furnace_mk4', 'metal_press_mk4', 'resonant_grinding_balls', 'tool_upgrade_kit_4', 'tesla_coil_5', 'tesla_emitter_5', 'tesla_coil_5_from_emitters', 'charger_mk4', 'wireless_charger_mk4', 'collider_controller', 'accelerator_segment',
       'stumpy_mk4', 'sprout_mk4', 'gate_controller', 'capacitor_ender', 'sonar_pulse_module_3', 'med_injector_module_3',
       'power_regulator_module_3', 'excavator_mk4', 'survey_rig_mk4', 'buddy_bot_mk4', 'chain_lightning_module_3', 'lifesteal_module',
+      'nutrient_synthesizer_module',
       'null_key', 'null_altar'] + LINK_AGE4, 80),
     ('resonite', 'age4', 'resonite_crystal', 'task', 4, 'Echoes',
      'Mine Resonite Ore on the outer End islands.',

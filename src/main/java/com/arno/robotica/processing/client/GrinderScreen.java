@@ -31,7 +31,7 @@ public class GrinderScreen extends MachineScreen<GrinderMenu> {
             return slot.index == GrinderBlockEntity.OUT_FIRST ? icon("iron_dust") : ItemStack.EMPTY;
         }
         if (slot.index == GrinderBlockEntity.BATTERY) return icon("copper_cell");
-        return icon("upgrade_speed");
+        return ItemStack.EMPTY;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class GrinderScreen extends MachineScreen<GrinderMenu> {
         if (slot.index == GrinderBlockEntity.INPUT) return Component.translatable("gui.robotica.processing.slot_grind");
         if (slot.index == GrinderBlockEntity.MEDIA) return Component.translatable("gui.robotica.processing.slot_media");
         if (slot.index == GrinderBlockEntity.BATTERY) return Component.translatable("gui.robotica.slot_battery");
-        if (slot.index > GrinderBlockEntity.BATTERY) return Component.translatable("gui.robotica.processing.slot_upgrade_grinder");
+        if (slot.index > GrinderBlockEntity.BATTERY) return null;
         return Component.translatable("gui.robotica.slot_output");
     }
 

@@ -553,7 +553,8 @@
             "robotica:anchor_servos_module",
             "robotica:cryo_treads_module",
             "robotica:reach_module",
-            "robotica:heat_shield_module"
+            "robotica:heat_shield_module",
+            "robotica:nutrient_synthesizer_module"
           ]
         },
         {

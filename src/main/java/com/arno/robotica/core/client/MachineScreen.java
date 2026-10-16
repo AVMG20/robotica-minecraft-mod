@@ -1,12 +1,16 @@
 package com.arno.robotica.core.client;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.item.CoreItems;
 import com.arno.robotica.core.menu.MachineMenu;
 import com.arno.robotica.core.side.RelativeSide;
 import com.arno.robotica.core.side.SideConfig;
 import com.arno.robotica.core.side.SideConfigPayload;
 import com.arno.robotica.core.side.SideMode;
+import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.core.util.Fmt;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -15,6 +19,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
@@ -23,6 +28,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +43,7 @@ import java.util.List;
  * Layout rules: 8 px margins, section labels in {@link #TEXT}, nothing but slots below y = 70 on a 166 px high panel
  * (the "Inventory" label sits at y = 72).
  * Menus that call {@code MachineMenu.trackSides} get a side config tab on the right edge of the panel, drawn here.
+ * Empty upgrade card slots show the cards that fit there ({@link Upgrades#fitting}), cycling when several do.
  */
 public abstract class MachineScreen<M extends AbstractContainerMenu> extends AbstractContainerScreen<M> {
     public static final int PANEL = 0xFFC6C6C6;
@@ -101,7 +108,9 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
             if (!slot.isActive()) continue;
             drawSlot(g, leftPos + slot.x - 1, topPos + slot.y - 1);
             if (!slot.hasItem() && isMachineSlot(slot)) {
-                ItemStack ghost = ghostIcon(slot);
+                List<UpgradeKind> cards = cardKinds(slot);
+                ItemStack ghost = cards == null ? ghostIcon(slot) : cards.isEmpty() ? ItemStack.EMPTY
+                        : CoreItems.cards(cards.get((int) (Util.getMillis() / 1000 % cards.size())), 1);
                 if (!ghost.isEmpty()) drawGhost(g, ghost, leftPos + slot.x, topPos + slot.y);
             }
         }
@@ -114,12 +123,26 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
         return !(slot.container instanceof Inventory);
     }
 
-    /** Faint icon shown in an empty slot to say what goes in it. Return {@link ItemStack#EMPTY} for none. */
+    /** Card kinds that fit an empty upgrade card slot, or null if the slot holds no cards. */
+    @Nullable
+    private static List<UpgradeKind> cardKinds(Slot slot) {
+        return slot instanceof SlotItemHandler s && s.getItemHandler() instanceof Upgrades up ? up.fitting(s.getSlotIndex()) : null;
+    }
+
+    /** Hint of an empty upgrade card slot: the cards that fit there. */
+    private static Component cardHint(List<UpgradeKind> cards) {
+        if (cards.isEmpty()) return Component.translatable("gui.robotica.slot_upgrade");
+        List<Component> names = new ArrayList<>();
+        for (UpgradeKind kind : cards) names.add(CoreItems.cards(kind, 1).getHoverName());
+        return Component.translatable("gui.robotica.slot_upgrade_fits", ComponentUtils.formatList(names, Component.literal(", ")));
+    }
+
+    /** Faint icon shown in an empty slot to say what goes in it (upgrade card slots draw their own). Return {@link ItemStack#EMPTY} for none. */
     protected ItemStack ghostIcon(Slot slot) {
         return ItemStack.EMPTY;
     }
 
-    /** Tooltip of an empty slot (name of what goes in it), or null. */
+    /** Tooltip of an empty slot (name of what goes in it; upgrade card slots have their own), or null. */
     protected Component slotHint(Slot slot) {
         return null;
     }
@@ -164,7 +187,8 @@ public abstract class MachineScreen<M extends AbstractContainerMenu> extends Abs
         super.render(g, mouseX, mouseY, partialTick);
         renderTooltip(g, mouseX, mouseY);
         if (hoveredSlot != null && !hoveredSlot.hasItem() && isMachineSlot(hoveredSlot) && menu.getCarried().isEmpty()) {
-            Component hint = slotHint(hoveredSlot);
+            List<UpgradeKind> cards = cardKinds(hoveredSlot);
+            Component hint = cards == null ? slotHint(hoveredSlot) : cardHint(cards);
             if (hint != null) g.renderTooltip(font, font.split(hint, 200), mouseX, mouseY);
         }
         for (int i = 0; i < tipRects.size(); i++) {

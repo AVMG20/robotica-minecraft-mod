@@ -17,7 +17,7 @@ public final class ExoConfig {
     // ---- energy costs (FE per unit of the module)
     private static final ModConfigSpec.IntValue[] NIGHT_VISION, JET_THRUST, KINETIC_SHIELD, SERVO, SPRING_HEELS,
             MAGNET, SONAR, MED_INJECTOR, REACH, ANCHOR_SERVOS, HEAT_SHIELD;
-    private static final ModConfigSpec.IntValue REBREATHER, ROBOT_HUD, FLIGHT, STEP_ASSIST, AUTO_FEEDER, SOLAR_WEAVE, HAZARD_SEAL,
+    private static final ModConfigSpec.IntValue REBREATHER, ROBOT_HUD, FLIGHT, STEP_ASSIST, AUTO_FEEDER, NUTRIENT_SYNTHESIZER, SOLAR_WEAVE, HAZARD_SEAL,
             KINETIC_GEN_WALK, KINETIC_GEN_SPRINT, DASH, HYDRO_FINS, GLIDER, CRYO_TREADS, FALL_DAMPENER;
     private static final ModConfigSpec.IntValue CELL_RECHARGE_RATE, CELL_SLOT_RATE;
     private static final ModConfigSpec.BooleanValue CELL_RECHARGE;
@@ -45,6 +45,7 @@ public final class ExoConfig {
         REBREATHER = cost(b, "rebreatherPerSecond", "FE per second while breathing underwater with the Rebreather.", 60);
         ROBOT_HUD = cost(b, "robotHudPerSecond", "FE per second while the Robot HUD is on.", 5);
         AUTO_FEEDER = cost(b, "autoFeederPerFood", "FE per food item the Auto-Feeder feeds you.", 500);
+        NUTRIENT_SYNTHESIZER = cost(b, "nutrientSynthesizerPerPoint", "FE per hunger or saturation point the Nutrient Synthesizer fills.", 1_000);
         SOLAR_WEAVE = cost(b, "solarWeavePerSecond", "FE per second Solar Weave makes in full sunlight (scaled by the generation multiplier).", 200);
         SONAR = costs(b, "sonarPulsePerPing", "FE per Sonar Pulse ping (I, II, III).", 4_000, 6_000, 8_000);
         JET_THRUST = costs(b, "jetThrustPerSecond", "FE per second while Jet Assist thrusts upward (I, II, III); hover costs half.", 800, 1_000, 1_200);
@@ -179,6 +180,7 @@ public final class ExoConfig {
             case REBREATHER -> get(REBREATHER);
             case ROBOT_HUD -> get(ROBOT_HUD);
             case AUTO_FEEDER -> get(AUTO_FEEDER);
+            case NUTRIENT_SYNTHESIZER -> get(NUTRIENT_SYNTHESIZER);
             case SOLAR_WEAVE -> get(SOLAR_WEAVE);
             case SONAR_PULSE -> get(lv(SONAR, level));
             case FLIGHT -> get(FLIGHT);

@@ -126,7 +126,6 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
         return switch (slot.index) {
             case 0 -> icon("essence_vial");
             case 1 -> icon("plasma_actuator");
-            case 2, 3, 4 -> icon("upgrade_speed");
             case 23 -> icon("magma_core");
             default -> ItemStack.EMPTY;
         };
@@ -137,7 +136,6 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
         return switch (slot.index) {
             case 0 -> Component.translatable("gui.robotica.replicator.slot_vial");
             case 1 -> Component.translatable("gui.robotica.replicator.slot_boost");
-            case 2, 3, 4 -> Component.translatable("gui.robotica.slot_upgrade");
             case 23 -> Component.translatable("gui.robotica.replicator.slot_core");
             default -> null;
         };

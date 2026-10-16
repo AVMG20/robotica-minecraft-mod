@@ -485,11 +485,16 @@ def card_rules():
         return min(kinds[kind]['maxStack'], cap)
 
     mks = range(1, max_mk + 1)
-    text = (f'Machines with a Mk: Mk + {extra} card slots; speed {per["speedCapPerMk"]} per Mk, efficiency '
+    text = (f'Machines with a Mk: Mk + {extra} card slots, at most one per card kind; speed {per["speedCapPerMk"]} per Mk, efficiency '
             f'{per["efficiencyCapPerMk"]}, range {per["rangeCapPerMk"]} and growth 1 per Mk, fortune up to '
             f'{per["fortuneCapMax"]}, silk and void 1. Machines without a Mk have fixed slots.')
     robot_range = int(re.search(r'RANGE_CARDS = (\d+);', (JAVA / 'automation/RobotArea.java').read_text()).group(1))
     return kinds, extra, text, fixed, mks, mk_cap, robot_range
+
+
+def kind_slots(kinds):
+    """Card slots a machine can fill (UpgradeRules.kindSlots): one per kind, fortune and silk share one."""
+    return len(kinds) - (1 if 'fortune' in kinds and 'silk' in kinds else 0)
 
 
 def load_upgrades(ids):
@@ -506,14 +511,14 @@ def load_upgrades(ids):
         if rule in ('mk', 'robot'):
             # robot: the walking robots (RobotArea), Mk rule but the same range cards on every Mk; maxMk for a shorter ladder
             tiers = range(1, m.get('maxMk', max(mks)) + 1)
-            m['slots'] = [mk + extra for mk in tiers]
+            m['slots'] = [min(mk + extra, kind_slots(m['effects'])) for mk in tiers]
             m['caps'] = {}
             for k in m['effects']:
                 if k in kinds:
                     caps = [robot_range if rule == 'robot' and k == 'range' else mk_cap(mk, k) for mk in tiers]
                     m['caps'][k] = caps[0] if len(set(caps)) == 1 else caps
         elif rule.startswith('fixed:') and rule[6:] in fixed:
-            m['slots'] = fixed[rule[6:]]['slots']
+            m['slots'] = min(fixed[rule[6:]]['slots'], kind_slots(fixed[rule[6:]]['caps']))
             m['caps'] = fixed[rule[6:]]['caps']
             for k in m['effects']:
                 if k not in m['caps']:

@@ -150,10 +150,6 @@ public final class CoreSounds {
     /** Kinetic Shield: a hit absorbed completely / partly. */
     public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_BLOCK = reg("exo_shield_block");
     public static final DeferredHolder<SoundEvent, SoundEvent> EXO_SHIELD_SPARK = reg("exo_shield_spark");
-    /** Chunk Anchor: the hum while it holds its chunks, and its engage / release. */
-    public static final DeferredHolder<SoundEvent, SoundEvent> CHUNK_ANCHOR_HUM = reg("chunk_anchor_hum");
-    public static final DeferredHolder<SoundEvent, SoundEvent> CHUNK_ANCHOR_ON = reg("chunk_anchor_on");
-    public static final DeferredHolder<SoundEvent, SoundEvent> CHUNK_ANCHOR_OFF = reg("chunk_anchor_off");
     /** Terminal Link chirps when the remote terminal screen opens and closes. */
     public static final DeferredHolder<SoundEvent, SoundEvent> TERMINAL_LINK_OPEN = reg("terminal_link_open");
     public static final DeferredHolder<SoundEvent, SoundEvent> TERMINAL_LINK_CLOSE = reg("terminal_link_close");

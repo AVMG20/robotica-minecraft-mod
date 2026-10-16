@@ -7,7 +7,6 @@ import com.arno.robotica.automation.menu.ChunkAnchorMenu;
 import com.arno.robotica.compat.InfoSource;
 import com.arno.robotica.compat.MachineInfo;
 import com.arno.robotica.compat.OwnerNames;
-import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.chunk.ChunkClaims;
 import com.arno.robotica.core.energy.EnergyUtil;
@@ -23,7 +22,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -106,6 +104,8 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
     @Nullable
     private ChunkClaims.Claim claim;
     private long age;
+    /** Game time it took its chunks, 0 while it does not load. Saved. */
+    private long loadingSince;
     /** Outline toggled on in the GUI. Synced. */
     private boolean showArea;
     /** Game time until which the loaded chunks are outlined. Synced. */
@@ -158,6 +158,12 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
         return claim != null && claim.active();
     }
 
+    /** Seconds it has loaded its chunks without a break (0 while it does not load). Server side. */
+    public int loadedSeconds() {
+        if (state != State.LOADING || loadingSince == 0 || level == null) return 0;
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(0, level.getGameTime() - loadingSince) / 20);
+    }
+
     /** Chunks the owner's anchors load right now (all dimensions). Server side. */
     public int ownerUsed() {
         if (owner == null || !(level instanceof ServerLevel sl)) return 0;
@@ -184,9 +190,7 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
         age++;
         pullBattery();
         if (claim != null && claim.active()) {
-            if (energy.consume(upkeep())) {
-                if (CoreSounds.due(sl, worldPosition, 80)) CoreSounds.play(sl, worldPosition, CoreSounds.CHUNK_ANCHOR_HUM, SoundSource.BLOCKS, 0.6F, 1.0F);
-            } else {
+            if (!energy.consume(upkeep())) {
                 ChunkClaims.get(sl.getServer()).deactivate(sl, claim);
                 setState(sl, State.NO_POWER);
             }
@@ -242,16 +246,15 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
     }
 
     private void setState(ServerLevel sl, State next) {
+        if (next != State.LOADING) loadingSince = 0;
         if (next != state) {
-            State from = state;
             state = next;
             setChanged();
             if (next == State.LOADING) {
-                CoreSounds.play(sl, worldPosition, CoreSounds.CHUNK_ANCHOR_ON, SoundSource.BLOCKS, 0.8F, 1.0F);
+                // Kept across restarts: the anchor starts unloaded and takes its chunks back on its first check.
+                if (loadingSince == 0) loadingSince = sl.getGameTime();
                 sl.sendParticles(ParticleTypes.REVERSE_PORTAL, worldPosition.getX() + 0.5, worldPosition.getY() + 0.6,
                         worldPosition.getZ() + 0.5, 24, 0.3, 0.3, 0.3, 0.05);
-            } else if (from == State.LOADING) {
-                CoreSounds.play(sl, worldPosition, CoreSounds.CHUNK_ANCHOR_OFF, SoundSource.BLOCKS, 0.8F, 1.0F);
             }
             if (next == State.NO_POWER || next == State.OVER_CAP) {
                 ServerPlayer near = Milestones.nearbyOwner(sl, worldPosition, owner, 32);
@@ -395,6 +398,7 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
         tag.put("battery", battery.serializeNBT(registries));
         if (owner != null) tag.putUUID("owner", owner);
         tag.putBoolean("showArea", showArea);
+        if (loadingSince != 0) tag.putLong("loadingSince", loadingSince);
     }
 
     @Override
@@ -407,6 +411,7 @@ public class ChunkAnchorBlockEntity extends SyncedBlockEntity implements MenuPro
         if (tag.contains("battery")) battery.deserializeNBT(registries, tag.getCompound("battery"));
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
         if (tag.contains("showArea")) showArea = tag.getBoolean("showArea");
+        loadingSince = tag.getLong("loadingSince");
         if (tag.contains("previewUntil")) previewUntil = tag.getLong("previewUntil"); // client update tag
     }
 

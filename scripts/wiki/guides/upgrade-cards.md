@@ -10,7 +10,7 @@ Right-click a machine with a card, or put it in an upgrade slot. One kind per sl
 
 ## The Mk rule
 
-Every machine with a Mk (Alloy Smelter, Centrifuge, Assembler, Grinder, Electric Furnace, Excavator, Survey Rig, Stumpy, Sprout and Rancher):
+Every machine with a Mk (Alloy Smelter, Centrifuge, Assembler, Grinder, Electric Furnace, Metal Press, Wireless Charger, Excavator, Survey Rig, Stumpy, Sprout and Rancher):
 
 {{mkrule}}
 
@@ -18,7 +18,7 @@ Right-click a placed machine with the next Mk: it swaps in place and keeps its c
 
 The walking robots (Stumpy, Sprout, Rancher) take 4 Range cards on every Mk: the Mk sets how fast they work, Range cards how big the area is.
 
-The Wireless Charger, Metal Press, Combustion Generator, Replicator, Architect Table and drones have fixed slots: see their pages.
+The Combustion Generator, Replicator, Architect Table and drones have fixed slots: see their pages.
 
 > Every speed card costs more FE per action than the one before: 1 card +30%, 8 cards x6.2. The quarries pay a steeper price: 8 cards cost 21x the FE per block in the [[excavator_mk4]].
 

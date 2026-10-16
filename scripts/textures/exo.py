@@ -55,6 +55,7 @@ GLYPHS = {
     'fall_dampener': ['..XX..', '..XX..', '..XX..', 'XXXXXX', '.XXXX.', '..XX..', 'XXXXXX', 'xxxxxx'],
     'magnet': ['XX..XX', 'XX..XX', 'XX..XX', 'XX..XX', 'XXXXXX', '.XXXX.', '......', '......'],
     'auto_feeder': ['...X..', '..X...', '.XXXX.', 'XXXXXX', 'XXXXXX', 'XXXXXX', '.XXXX.', '......'],
+    'nutrient_synthesizer': ['...X..', '..X...', '.XXXX.', 'XXXxXX', 'XXxxXX', 'XXXxXX', '.XxXX.', 'xxxxxx'],
     'solar_weave': ['..X...', 'X.X.X.', '.XXX..', 'XXXXX.', '.XXX..', 'X.X.X.', '..X...', '......'],
     'sonar_pulse': ['.xxxx.', 'x....x', 'x.XX.x', 'x.XX.x', 'x....x', '.xxxx.', '......', '......'],
     'med_injector': ['..XX..', '..XX..', 'XXXXXX', 'XXXXXX', '..XX..', '..XX..', '......', '......'],
@@ -95,6 +96,7 @@ def module(name, colors, level=0):
 
 MODULE_COLORS = {
     'night_vision': HEAD, 'rebreather': HEAD, 'robot_hud': HEAD, 'auto_feeder': HEAD, 'solar_weave': HEAD, 'sonar_pulse': HEAD,
+    'nutrient_synthesizer': HEAD,
     'jet_assist': CHEST, 'flight': CHEST, 'kinetic_shield': CHEST, 'med_injector': CHEST, 'hazard_seal': CHEST,
     'glider': CHEST,
     'servo_stride_1': LEGS, 'servo_stride_2': LEGS, 'servo_stride_3': LEGS, 'kinetic_generator': LEGS, 'dash_thrusters': LEGS,
