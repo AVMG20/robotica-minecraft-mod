@@ -41,7 +41,7 @@ A core is used up like fuel: it loads from the core slot and lasts 168 hours of 
 | [[graphite_damper]] | -4% | -5.5% |
 | [[cryo_coolant]] | -6% | -9% |
 
-Burn speeds up both the pellet and the core. Power and burn never drop below x0.25.
+Burn speeds up the pellet. Above x1 it wears the core by burn squared: at burn x2 a core lasts a quarter as long. Power and burn never drop below x0.25.
 
 Amplifiers give fewer FE per pellet, stabilizers more. The most FE per pellet: 8 Cryo Coolant (power x0.52, burn x0.28, 1.86x FE per pellet).
 
@@ -50,9 +50,9 @@ Amplifiers give fewer FE per pellet, stabilizers more. The most FE per pellet: 8
 | Build | Output | Core lasts |
 |---|---|---|
 | Servo Core, thorium, empty | 1,200 FE/t | 168 h |
-| Servo Core, thorium, 26 Flux Amplifiers | 3,700 FE/t | 36 h |
+| Servo Core, thorium, 26 Flux Amplifiers | 3,700 FE/t | 7.8 h |
 | Magma Core, enriched, empty | 9,000 FE/t | 168 h |
-| Magma Core, enriched, 26 Pyro Amplifiers | 44,000 FE/t | 22 h |
-| Antigrav Core, enriched, 26 Resonant Amplifiers | 180,000 FE/t | 15 h |
+| Magma Core, enriched, 26 Pyro Amplifiers | 44,000 FE/t | 3 h |
+| Antigrav Core, enriched, 26 Resonant Amplifiers | 180,000 FE/t | 1.3 h |
 
 It pauses while its buffer is full, so a core never burns unused.

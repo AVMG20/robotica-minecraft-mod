@@ -247,8 +247,8 @@ public class EnergyGameTests {
     // ---------------------------------------------------------------- core reactor
 
     /**
-     * Pellet 400 FE/t x core 2 x modulators 1.03 = 824 FE/t; pellet and core burn 1.08 ticks per tick. Waste comes out,
-     * the Access Port takes fuel and cores, the core burns out and the reactor waits for the next one.
+     * Pellet 400 FE/t x core 2 x modulators 1.03 = 824 FE/t; the pellet burns 1.08 ticks per tick, the core 1.08 x 1.08.
+     * Waste comes out, the Access Port takes fuel and cores, the core burns out and the reactor waits for the next one.
      */
     @GameTest(template = ARENA, timeoutTicks = 40)
     public static void coreReactorBurnsFuelAndCores(GameTestHelper helper) {
@@ -263,12 +263,12 @@ public class EnergyGameTests {
         be.simulate(100);
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.RUNNING, "should run, is " + be.state());
         helper.assertTrue(be.fePerTick() == 824, "824 FE/t, got " + be.fePerTick());
-        helper.assertTrue(Math.abs(be.coreWear() - 108) < 1e-6, "core wears 1.08 per tick, got " + be.coreWear());
+        helper.assertTrue(Math.abs(be.coreWear() - 116.64) < 1e-6, "core wears 1.08 x 1.08 per tick, got " + be.coreWear());
         helper.assertTrue(gunpowder(be.waste) == 1, "108 ticks of burn = 1 pellet done, waste " + gunpowder(be.waste));
         var tag = new net.minecraft.nbt.CompoundTag();
         be.writeSync(tag, helper.getLevel().registryAccess());
-        helper.assertTrue(tag.getInt("fe") == 824 && tag.getInt("powerPct") == 103 && Math.abs(tag.getFloat("integrity") - 0.892F) < 0.001F,
-                "GUI sync of the reactor");
+        helper.assertTrue(tag.getInt("fe") == 824 && tag.getInt("powerPct") == 103 && Math.abs(tag.getFloat("integrity") - 0.8834F) < 0.001F
+                && tag.getLong("coreTicks") == 757, "GUI sync of the reactor, " + tag.getLong("coreTicks") + " core ticks left");
 
         // Access Port: fuel and cores go in, waste comes out, fuel can not be pulled.
         IItemHandler access = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(new BlockPos(2, 3, 5)), Direction.SOUTH);
@@ -285,7 +285,7 @@ public class EnergyGameTests {
         helper.assertTrue(port != null && port.canExtract() && !port.canReceive(), "power port: out only");
         helper.assertTrue(stored > 0 && port.extractEnergy(1_000, false) == Math.min(1_000, stored), "power port gives FE");
 
-        // 1,000 ticks of life at 1.08 per tick: gone after 926 ticks, then it waits for a core.
+        // 1,000 ticks of life at 1.1664 per tick: gone after 858 ticks, then it waits for a core.
         be.simulate(860);
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.NO_CORE && be.activeCore().isEmpty(), "the core burned out: " + be.state());
         helper.assertTrue(helper.getBlockState(new BlockPos(3, 3, 1)).getValue(ControllerBlock.FORMED), "nothing breaks");
@@ -434,13 +434,47 @@ public class EnergyGameTests {
         double used = before - be.burnLeft();
         helper.assertTrue(be.energy.getEnergyStored() >= max - 2, "fills the buffer to the brim, has " + (max - be.energy.getEnergyStored()) + " room");
         helper.assertTrue(used > 0 && used < 1.08 * 0.15, "burns only the share that fits: " + used);
-        helper.assertTrue(Math.abs((be.coreWear() - wear) - used) < 1e-9, "the core wears as much as the pellet");
+        helper.assertTrue(Math.abs((be.coreWear() - wear) - used * 1.08) < 1e-9, "the core wears 1.08x the pellet");
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.RUNNING, "still running");
         be.energy.setEnergy(max);
         before = be.burnLeft();
         be.simulate(1);
         helper.assertTrue(be.state() == CoreReactorBlockEntity.State.BUFFER_FULL && be.burnLeft() == before, "a full buffer burns nothing");
         helper.assertTrue(helper.getBlockState(new BlockPos(3, 3, 1)).getValue(ControllerBlock.LIT), "the glow does not flicker off at the brim");
+        helper.succeed();
+    }
+
+    /** Amplifiers (burn x1.28) wear the core by burn squared; stabilizers (burn x0.64) wear it as much as the pellet. */
+    @GameTest(template = ARENA, timeoutTicks = 40)
+    public static void coreWearsByBurnSquared(GameTestHelper helper) {
+        BlockPos min = new BlockPos(1, 1, 1);
+        BlockPos c = cuboid(helper, min, 5, 5, 5, EnergyRegistry.REACTOR_CASING.get(), EnergyRegistry.REACTOR_CONTROLLER.get());
+        helper.setBlock(min.offset(2, 2, 4), EnergyRegistry.REACTOR_POWER_PORT.get());
+        helper.setBlock(min.offset(1, 1, 1), EnergyRegistry.FLUX_AMPLIFIER.get());
+        helper.setBlock(min.offset(3, 1, 1), EnergyRegistry.FLUX_AMPLIFIER.get());
+        CoreReactorBlockEntity be = be(helper, c);
+        be.scanNow();
+        helper.assertTrue(be.isFormed(), "reactor forms: " + why(be));
+        be.fuel.setStackInSlot(0, new ItemStack(Items.BARRIER, 8));
+        be.cores.setStackInSlot(0, new ItemStack(Items.STRUCTURE_BLOCK));
+        be.simulate(1);
+        double fuel = be.burnLeft(), wear = be.coreWear();
+        be.simulate(10);
+        helper.assertTrue(Math.abs(be.burnMultiplier() - 1.28) < 1e-6, "2 Flux Amplifiers: burn x1.28, got " + be.burnMultiplier());
+        helper.assertTrue(Math.abs((fuel - be.burnLeft()) - 12.8) < 1e-6, "the pellet burns 1.28 per tick, used " + (fuel - be.burnLeft()));
+        helper.assertTrue(Math.abs((be.coreWear() - wear) - 16.384) < 1e-6, "the core wears 1.28 x 1.28 per tick, wore " + (be.coreWear() - wear));
+
+        helper.setBlock(min.offset(1, 1, 1), EnergyRegistry.CRYO_COOLANT.get());
+        helper.setBlock(min.offset(3, 1, 1), EnergyRegistry.CRYO_COOLANT.get());
+        helper.setBlock(min.offset(1, 3, 1), EnergyRegistry.CRYO_COOLANT.get());
+        helper.setBlock(min.offset(3, 3, 1), EnergyRegistry.CRYO_COOLANT.get());
+        be.scanNow();
+        fuel = be.burnLeft();
+        wear = be.coreWear();
+        be.simulate(10);
+        helper.assertTrue(Math.abs(be.burnMultiplier() - 0.64) < 1e-6, "4 Cryo Coolant: burn x0.64, got " + be.burnMultiplier());
+        helper.assertTrue(Math.abs((fuel - be.burnLeft()) - 6.4) < 1e-6, "the pellet burns 0.64 per tick, used " + (fuel - be.burnLeft()));
+        helper.assertTrue(Math.abs((be.coreWear() - wear) - 6.4) < 1e-6, "the core wears 0.64 per tick, wore " + (be.coreWear() - wear));
         helper.succeed();
     }
 

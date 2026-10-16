@@ -49,8 +49,9 @@ import java.util.List;
  *       ticks, shown as a life bar; when it runs out the next one loads. The loaded core is used up like fuel: breaking the
  *       controller gives it back only if it never burned.</li>
  *   <li>Fuel pellets (robotica:reactor_fuel) burn one at a time. Output {@code = pellet power x core power x P} FE/t,
- *       where {@code P = 1 + sum of the modulators' power}; the pellet and the core both burn {@code B = 1 + sum of the
- *       modulators' burn} ticks per tick. P and B never drop below 0.25.</li>
+ *       where {@code P = 1 + sum of the modulators' power}; the pellet burns {@code B = 1 + sum of the modulators'
+ *       burn} ticks per tick and the core {@code B x max(1, B)}, so amplifiers wear it by B squared and stabilizers by
+ *       B. P and B never drop below 0.25.</li>
  *   <li>With less buffer room than a full tick's output it burns only that share (fuel, core and FE alike); with no
  *       room, no core, no fuel or no room for waste it pauses. No heat, no meltdown, no block changes.</li>
  * </ul>
@@ -232,6 +233,12 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
         return Math.max(MIN_MULTIPLIER, 1.0 + burnMod);
     }
 
+    /** Core wear per tick: B squared under amplifiers, B at or below x1. */
+    public double coreWearMultiplier() {
+        double b = burnMultiplier();
+        return Math.max(1.0, b) * b;
+    }
+
     @Nullable
     private ReactorCore core() {
         return EnergyDataMaps.reactorCore(activeCore);
@@ -281,7 +288,7 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
                 if (fePerTick > 0) energy.generate(fePerTick);
                 burnLeft -= burn;
                 if (burnLeft <= 1e-9) finishUnit();
-                coreWear += burn;
+                coreWear += coreWearMultiplier() * share;
                 if (coreWear >= core.life()) breakCore();
                 state = State.RUNNING;
                 burning = true;
@@ -504,7 +511,7 @@ public class CoreReactorBlockEntity extends StructureControllerBlockEntity {
             tag.putString("core", BuiltInRegistries.ITEM.getKey(activeCore.getItem()).toString());
             tag.putFloat("corePower", core.power());
             tag.putFloat("integrity", (float) Math.max(0, (core.life() - coreWear) / core.life()));
-            tag.putLong("coreTicks", (long) Math.max(0, (core.life() - coreWear) / burnMultiplier()));
+            tag.putLong("coreTicks", (long) Math.max(0, (core.life() - coreWear) / coreWearMultiplier()));
         }
         tag.putInt("state", state.ordinal());
     }
