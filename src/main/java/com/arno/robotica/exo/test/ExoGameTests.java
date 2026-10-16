@@ -42,6 +42,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -1042,6 +1043,37 @@ public class ExoGameTests {
         ExoTicker.jetWant(player, ExoJet.THRUST);
         ticks(player, 5);
         helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF && ExoTicker.jetHeat(player) == 0, "no thrust on the ground");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void jetThrustsInShallowWaterNotSubmerged(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        player.setItemSlot(EquipmentSlot.CHEST, piece(ExoItems.CHESTPLATE_MK1, 100_000, ModuleKind.JET_ASSIST));
+        helper.setBlock(new BlockPos(1, 0, 1), Blocks.STONE);
+        helper.setBlock(new BlockPos(1, 1, 1), Blocks.WATER);
+        BlockPos feet = helper.absolutePos(new BlockPos(1, 1, 1));
+        player.moveTo(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5);
+        player.updateFluidHeightAndDoFluidPushing();
+        player.setOnGround(true);
+        double depth = player.getFluidTypeHeight(NeoForgeMod.WATER_TYPE.value());
+        helper.assertTrue(depth > 0 && !ExoJet.submerged(player) && ExoJet.standing(player),
+                "knee-deep water: standing, not submerged, depth " + depth);
+        player.setOnGround(false);
+        ticks(player, 1);
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 2);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.THRUST, "thrusts in shallow water");
+
+        helper.setBlock(new BlockPos(1, 2, 1), Blocks.WATER);
+        player.updateFluidHeightAndDoFluidPushing();
+        ticks(player, 1);
+        helper.assertTrue(ExoJet.submerged(player) && ExoJet.grounded(player), "two blocks deep: submerged");
+        ExoTicker.jetWant(player, ExoJet.THRUST);
+        ticks(player, 2);
+        helper.assertTrue(ExoTicker.jetMode(player) == ExoJet.OFF, "no thrust under water");
+        helper.setBlock(new BlockPos(1, 1, 1), Blocks.AIR);
+        helper.setBlock(new BlockPos(1, 2, 1), Blocks.AIR);
         helper.succeed();
     }
 

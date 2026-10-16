@@ -4,8 +4,10 @@ import com.arno.robotica.core.module.ModuleKind;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
+import net.neoforged.neoforge.common.NeoForgeMod;
 
 import java.util.function.Predicate;
 
@@ -126,13 +128,24 @@ public final class ExoJet {
         return p.onGround() && !grounded(p, false);
     }
 
-    /** Standing, swimming, flying, gliding or riding: no air jumps and no thrust. */
+    /** Standing, under water (or lava), flying, gliding or riding: no air jumps and no thrust. */
     public static boolean grounded(Player p) {
         return grounded(p, true);
     }
 
     private static boolean grounded(Player p, boolean ground) {
-        return (ground && p.onGround()) || p.isInWater() || p.isInLava() || p.getAbilities().flying || p.isFallFlying() || p.isPassenger();
+        return (ground && p.onGround()) || submerged(p) || p.getAbilities().flying || p.isFallFlying() || p.isPassenger();
+    }
+
+    /**
+     * Water or lava above half the body (always so with the head under): the pack cuts out. Shallow or flowing water and
+     * floating at the surface still thrust. Both sides update fluid heights every tick, so client and server agree.
+     */
+    public static boolean submerged(Player p) {
+        // Crouching keeps the standing measure, so a sneak in a knee-deep pool does not count as deeper.
+        double half = (p.isCrouching() ? p.getDimensions(Pose.STANDING).height() : p.getBbHeight()) * 0.5;
+        return p.getFluidTypeHeight(NeoForgeMod.WATER_TYPE.value()) > half
+                || p.getFluidTypeHeight(NeoForgeMod.LAVA_TYPE.value()) > half;
     }
 
     /** Where the pack cools twice as fast. */
