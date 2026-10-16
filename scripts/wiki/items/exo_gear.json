@@ -419,7 +419,7 @@
     "jet_assist_module_2",
     "jet_assist_module_3"
    ],
-   "what": "Hold jump to fly up until it overheats. Cuts out under water, not in shallow water or at the surface. III hovers; with a Flight module, the Flight key cycles Flight, hover, off.",
+   "what": "Hold jump to fly up until it overheats. Cuts out only under water. III hovers; with a Flight module, the Flight key cycles Flight, hover, off.",
    "stats": {
     "rows": [
      [
