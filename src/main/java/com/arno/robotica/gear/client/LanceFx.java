@@ -190,7 +190,7 @@ final class LanceFx {
         } else if (ticks % 4 == 0) {
             // ready and held: one soft mote at the tip
             RandomSource r = level.random;
-            level.addParticle(CoreParticles.mote(VOID_BRIGHT, own ? 0.4F : 0.6F), MUZ[0], MUZ[1], MUZ[2],
+            level.addParticle(chargeMote(own ? 0 : 1), MUZ[0], MUZ[1], MUZ[2],
                     p.getDeltaMovement().x + r.nextGaussian() * 0.004, p.getDeltaMovement().y * 0.5 + 0.004, p.getDeltaMovement().z + r.nextGaussian() * 0.004);
         }
     }
@@ -256,6 +256,19 @@ final class LanceFx {
         ACROSS[5] = dx * ay - dy * ax;
     }
 
+    /** The charge motes, made once: held tip (own, other view), then gathering bright and violet (own, other view). */
+    private static TintParticleOptions[] chargeMotes;
+
+    private static TintParticleOptions chargeMote(int i) {
+        if (chargeMotes == null) {
+            chargeMotes = new TintParticleOptions[]{
+                    CoreParticles.mote(VOID_BRIGHT, 0.4F), CoreParticles.mote(VOID_BRIGHT, 0.6F),
+                    CoreParticles.mote(VOID_BRIGHT, 0.4F), CoreParticles.mote(VOID_BRIGHT, 0.65F),
+                    CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.4F), CoreParticles.mote(CoreParticles.WARP_VIOLET, 0.65F)};
+        }
+        return chargeMotes[i];
+    }
+
     /** Void motes drawn into the muzzle; more as the coils light. The own view only gets them from the outer side. */
     private static void gather(ClientLevel level, Player p, int coils, boolean own) {
         RandomSource r = level.random;
@@ -271,7 +284,7 @@ final class LanceFx {
             inZ /= n;
         }
         int count = own ? 1 : 1 + coils / 2;
-        int color = coils >= 2 ? VOID_BRIGHT : CoreParticles.WARP_VIOLET;
+        int motes = coils >= 2 ? 2 : 4;   // bright once two coils are lit, else violet
         double vx = p.getDeltaMovement().x, vz = p.getDeltaMovement().z;
         for (int i = 0; i < count; i++) {
             double ox = r.nextGaussian(), oy = r.nextGaussian(), oz = r.nextGaussian();
@@ -292,7 +305,7 @@ final class LanceFx {
             oy *= radius;
             oz *= radius;
             // a mote's speed decays by 0.93 a tick, so 1/14 of the offset carries it into the muzzle
-            level.addParticle(CoreParticles.mote(color, own ? 0.4F : 0.65F), MUZ[0] + ox, MUZ[1] + oy, MUZ[2] + oz,
+            level.addParticle(chargeMote(motes + (own ? 0 : 1)), MUZ[0] + ox, MUZ[1] + oy, MUZ[2] + oz,
                     vx - ox / 14.0, -oy / 14.0, vz - oz / 14.0);
         }
     }
