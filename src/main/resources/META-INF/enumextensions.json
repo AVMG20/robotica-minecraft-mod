@@ -1,0 +1,13 @@
+{
+  "entries": [
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "ROBOTICA_LANCE_RIFLE",
+      "constructor": "(ZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "com/arno/robotica/gear/client/LanceArms",
+        "field": "RIFLE"
+      }
+    }
+  ]
+}

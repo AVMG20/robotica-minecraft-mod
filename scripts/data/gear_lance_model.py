@@ -2,7 +2,7 @@
 ground and in item frames (neoforge:separate_transforms). Run: python3 scripts/data/gear_lance_model.py
 Textures: scripts/textures/gear.py (lance, write_lance_parts).
 
-Model space: the barrel runs along -z (muzzle at z -14, butt pad at z 26.5), barrel axis at x 8, y 8, top up.
+Model space: the barrel runs along -z (muzzle at z -16, butt pad at z 26.5), barrel axis at x 8, y 8, top up.
 Charge stages: the item property robotica:charge (gear.client.LanceModel) is 0.25/0.5/0.75 for 1/2/3 of the 4 barrel
 coils lit (rear to front) and 1.0 at full charge: all coils, the void cell, the side windows and the emitter run hot.
 null_lance_held is the idle 3D model (it holds the textures and display transforms), null_lance_held_<n> the staged
@@ -16,7 +16,7 @@ from pixelart import ASSETS, GLOW_FACE  # noqa: E402
 
 MODELS = ASSETS / 'models/item'
 DIRS = ('north', 'south', 'west', 'east', 'up', 'down')
-COILS = (4.5, 1.0, -2.5, -6.0)          # rear face z of each coil ring is this + 1.5, rear to front
+COILS = (4.5, 0.25, -4.0, -8.25)         # rear face z of each coil ring is this + 1.5, rear to front
 STAGES = (0.25, 0.5, 0.75, 1.0)
 
 
@@ -48,7 +48,7 @@ def elements(lit=0, hot=False):
     core = 'core_hot' if hot else 'core'
     els = [
         # stock and butt pad
-        part([6.5, 3.5, 25], [9.5, 9.75, 26.5], 'metal', at=(0, 4)),
+        part([6.75, 4, 25], [9.25, 9.5, 26.5], 'metal', at=(0, 4)),
         part([7, 5, 18], [9, 9.5, 25], 'body', at=(0, 7)),
         part([6.75, 8.75, 19], [9.25, 10, 23.5], 'body', at=(8, 0)),
         # receiver, its side windows onto the void core, the raked grip and the trigger
@@ -65,12 +65,12 @@ def elements(lit=0, hot=False):
         part([6.5, 11, 16], [9.5, 13, 17], 'metal', at=(9, 1)),
         part([7, 11.75, 10], [9, 13.75, 16], core, glow=True, at=(3, 3), rot={'angle': 45, 'axis': 'z', 'origin': [8, 12.75, 13]}),
         # barrel with its top spine, muzzle, fork prongs and the emitter between them
-        part([7, 7, -9], [9, 9, 8], 'metal', at=(0, 0)),
-        part([7.5, 9, -7], [8.5, 9.5, 8], 'body', at=(0, 0)),
-        part([6.5, 6.5, -11], [9.5, 9.5, -9], 'metal', at=(4, 9)),
-        part([7.5, 9.5, -14], [8.5, 10.25, -9.5], 'metal', at=(2, 12)),
-        part([7.5, 5.75, -14], [8.5, 6.5, -9.5], 'metal', at=(2, 12)),
-        part([7.5, 7.5, -12], [8.5, 8.5, -11], core if hot else 'metal', glow=hot, at=(6, 6), only=('north', 'west', 'east', 'up', 'down')),
+        part([7, 7, -11], [9, 9, 8], 'metal', at=(0, 0)),
+        part([7.5, 9, -9], [8.5, 9.5, 8], 'body', at=(0, 0)),
+        part([6.5, 6.5, -13], [9.5, 9.5, -11], 'metal', at=(4, 9)),
+        part([7.5, 9.5, -16], [8.5, 10.25, -11.5], 'metal', at=(2, 12)),
+        part([7.5, 5.75, -16], [8.5, 6.5, -11.5], 'metal', at=(2, 12)),
+        part([7.5, 7.5, -14], [8.5, 8.5, -13], core if hot else 'metal', glow=hot, at=(6, 6), only=('north', 'west', 'east', 'up', 'down')),
     ]
     for i, z in enumerate(COILS):
         on = i < lit
@@ -78,11 +78,13 @@ def elements(lit=0, hot=False):
     return els
 
 
-# Rifle hold. First person sits on the plain hand translation of RivetGunClient.heldPose (side * 0.56, -0.52, -0.72):
-# the barrel runs straight down the view to the lower right of the crosshair. Third person: the grip in the hand, the
-# barrel forward. Left-hand views mirror these (ItemTransform.apply).
+# Rifle hold. First person sits on the hand translation of gear.client.LanceClient (the hip one is
+# RivetGunClient.heldPose, side * 0.56, -0.52, -0.72): the barrel runs straight down the view to the lower right of the
+# crosshair. Third person is fitted to the two-handed arm pose of gear.client.LanceArms (the gun arm points along the
+# barrel): the grip in the hand, the stock along the arm into the shoulder, tilted 10 degrees up and 12 out to make up
+# for the arm sitting below and inside the aim line. Left-hand views mirror these (ItemTransform.apply).
 HAND_1P = {'rotation': [0, 10, 0], 'translation': [-4, 3.4, -6.6], 'scale': [0.42, 0.42, 0.42]}
-HAND_3P = {'rotation': [90, 0, 0], 'translation': [0, 4.5, 3], 'scale': [0.6, 0.6, 0.6]}
+HAND_3P = {'rotation': [10, -12, 0], 'translation': [-0.6, 1.45, -0.1], 'scale': [0.55, 0.55, 0.55]}
 DISPLAY = {
     'firstperson_righthand': HAND_1P, 'firstperson_lefthand': HAND_1P,
     'thirdperson_righthand': HAND_3P, 'thirdperson_lefthand': HAND_3P,

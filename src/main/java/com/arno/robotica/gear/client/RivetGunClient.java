@@ -57,6 +57,11 @@ final class RivetGunClient {
         event.registerItem(EXTENSIONS, GearItems.RIVET_GUN.get());
     }
 
+    /** Wall time of the own last shot that fired (0 before the first); the Null Lance kicks from it (LanceClient). */
+    static long lastShot() {
+        return lastShot;
+    }
+
     /** 1 right after a shot, easing out to 0. */
     private static float recoil() {
         float t = (Util.getMillis() - lastShot) / (float) RECOIL_MS;

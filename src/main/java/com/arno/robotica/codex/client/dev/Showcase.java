@@ -1309,13 +1309,16 @@ public final class Showcase {
     private static int savedFov = 70;
 
     /**
-     * Null Lance mid-charge (2 of 4 coils lit): third person from the front right, then first person with the HUD.
-     * The lance_idle_* shots (not charging) are for checking the held model, not used on the site.
+     * Null Lance mid-charge (2 of 4 coils lit): third person from the front right (seen from a hidden armor stand, so the
+     * player can aim past the camera), then first person with the HUD.
+     * The lance_idle_* and lance_dev_* shots (rest hold, side and back views, full charge, right after a beam) are for
+     * checking the poses, not used on the site.
      */
     private static void lanceScenes() {
         boolean third = wants("lance_rifle_charge", "lance_idle_third_person");
-        boolean first = wants("lance_rifle_first_person", "lance_idle_first_person");
-        if (!third && !first) return;
+        boolean first = wants("lance_rifle_first_person", "lance_idle_first_person", "lance_dev_first");
+        boolean dev = wants("lance_dev_side", "lance_dev_back", "lance_dev_left");
+        if (!third && !first && !dev) return;
         for (int delay : new int[]{40, 5}) {
             step(delay, () -> server(sp -> {
                 ItemStack lance = new ItemStack(GearItems.NULL_LANCE.get());
@@ -1326,22 +1329,43 @@ public final class Showcase {
                 sp.teleportTo(sp.serverLevel(), LANCE.getX() + 0.5, Y, LANCE.getZ() + 0.5, 180, -14);
             }));
         }
-        if (third) {
+        if (third || dev) {
+            // the player looks north; a hidden armor stand is the camera: front right (the gun side), east, behind
             step(5, () -> {
-                mc().options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                mc().options.setCameraType(CameraType.FIRST_PERSON);
                 savedFov = mc().options.fov().get();
                 mc().options.fov().set(40);      // closer in on the player
             });
             hud(false);
-            // the head looks at the camera, the body (and the lance) turns to show its right side
-            step(20, () -> {
-                if (mc().player == null) return;
-                mc().player.yBodyRot = mc().player.getYRot() - 45.0F;
-                mc().player.yBodyRotO = mc().player.yBodyRot;
+            step(5, () -> server(sp -> sp.teleportTo(sp.serverLevel(), LANCE.getX() + 0.5, Y, LANCE.getZ() + 0.5, 180, 0)));
+            if (third) {
+                lanceCamera(LANCE.getX() + 3.3, Y - 0.25, LANCE.getZ() - 1.4, 67, 4);
+                grab(10, "lance_idle_third_person");
+                chargeShot("lance_rifle_charge");
+            }
+            if (dev) {
+                lanceCamera(LANCE.getX() + 3.6, Y - 0.35, LANCE.getZ() + 0.2, 90, 0);
+                grab(10, "lance_dev_side_idle");
+                step(1, () -> server(com.arno.robotica.gear.weapon.RivetGunItem::trigger));
+                step(1, () -> {});
+                grab(10, "lance_dev_side_bolt");
+                chargeShot("lance_dev_side_aim", 6);
+                lanceCamera(LANCE.getX() + 1.6, Y - 0.1, LANCE.getZ() + 3.6, 157, 4);
+                grab(10, "lance_dev_back_idle");
+                chargeShot("lance_dev_back_aim", 12);
+                // a left-handed player: the hold mirrors
+                step(2, () -> mc().options.mainHand().set(net.minecraft.world.entity.HumanoidArm.LEFT));
+                lanceCamera(LANCE.getX() - 2.6, Y - 0.35, LANCE.getZ() + 0.2, -90, 0);
+                grab(10, "lance_dev_left_idle");
+                chargeShot("lance_dev_left_aim", 6);
+                step(2, () -> mc().options.mainHand().set(net.minecraft.world.entity.HumanoidArm.RIGHT));
+            }
+            step(5, () -> {
+                mc().setCameraEntity(mc().player);
+                mc().options.fov().set(savedFov);
             });
-            grab(5, "lance_idle_third_person");
-            chargeShot("lance_rifle_charge");
-            step(2, () -> mc().options.fov().set(savedFov));
+            step(2, () -> server(sp -> sp.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class,
+                    new net.minecraft.world.phys.AABB(LANCE).inflate(8)).forEach(e -> e.discard())));
             hud(true);
         }
         step(5, () -> mc().options.setCameraType(CameraType.FIRST_PERSON));
@@ -1349,16 +1373,53 @@ public final class Showcase {
             step(5, () -> server(sp -> sp.teleportTo(sp.serverLevel(), LANCE.getX() + 0.5, Y, LANCE.getZ() + 0.5, 180, 4)));
             grab(20, "lance_idle_first_person");
             chargeShot("lance_rifle_first_person");
+            if (wants("lance_dev_first")) {
+                // full charge held, then the moment right after the beam goes out
+                step(30, () -> {});
+                for (int i = 0; i < 13; i++) step(1, () -> mc().options.keyUse.setDown(true));
+                grab(2, "lance_dev_first_full");
+                step(2, () -> mc().options.keyUse.setDown(false));   // a grab is taken first, then waits its delay
+                grab(6, "lance_dev_first_beam");
+                grab(6, "lance_dev_first_after");
+                step(30, () -> {});
+            }
         }
         step(5, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
     }
 
     /** Holds right-click with the lance for 12 ticks (2 of 4 coils lit), takes the shot and lets go. */
     private static void chargeShot(String name) {
+        chargeShot(name, 6);
+    }
+
+    /** Holds right-click with the lance for 2 * {@code steps} ticks, takes the shot and lets go. */
+    private static void chargeShot(String name, int steps) {
         if (!wants(name)) return;
-        for (int i = 0; i < 6; i++) step(1, () -> mc().options.keyUse.setDown(true));   // a step of delay 1 takes 2 ticks
+        for (int i = 0; i < steps; i++) step(1, () -> mc().options.keyUse.setDown(true));   // a step of delay 1 takes 2 ticks
         grab(2, name);
         step(10, () -> mc().options.keyUse.setDown(false));
+        step(30, () -> {});
+    }
+
+    /** Views the player from a hidden armor stand at this spot (eye height about 1.7 above it). */
+    private static void lanceCamera(double x, double y, double z, float yaw, float pitch) {
+        int[] id = {-1};
+        step(3, () -> server(sp -> {
+            sp.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class,
+                    new net.minecraft.world.phys.AABB(LANCE).inflate(8)).forEach(e -> e.discard());
+            var stand = new net.minecraft.world.entity.decoration.ArmorStand(EntityType.ARMOR_STAND, sp.serverLevel());
+            stand.setInvisible(true);
+            stand.setNoGravity(true);
+            stand.moveTo(x, y, z, yaw, pitch);
+            stand.setYHeadRot(yaw);
+            stand.setYBodyRot(yaw);
+            sp.serverLevel().addFreshEntity(stand);
+            id[0] = stand.getId();
+        }));
+        step(5, () -> {
+            var e = mc().level == null ? null : mc().level.getEntity(id[0]);
+            if (e != null) mc().setCameraEntity(e);
+        });
     }
 
     /** Centre of the showcase Null Relay, far out in the End (no dragon fight in sight); the altar stands on it. */

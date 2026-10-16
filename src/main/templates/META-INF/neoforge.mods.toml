@@ -44,6 +44,9 @@ displayName="${mod_name}" #mandatory
 # The authors of the mod, displayed in the mod UI (optional)
 authors="Arno"
 
+# Extra enum constants: the Null Lance rifle arm pose (HumanoidModel is client only, so the server never loads it)
+enumExtensions="META-INF/enumextensions.json"
+
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 Robots, drones, farms, machines and power tools, from the stone age to the End. Uses Forge Energy, so it works with Thermal, Mekanism, Refined Storage and other FE mods.

@@ -39,15 +39,24 @@ import java.util.List;
 final class LanceFx {
     private LanceFx() {}
 
-    // ---- Muzzle: where the rifle tip is. Tune these to the model.
-    /** Own first-person view: blocks along the look, to the gun side and below the crosshair (camera space). */
-    static final double OWN_MUZZLE_FORWARD = 1.9;
-    static final double OWN_MUZZLE_SIDE = 0.36;
-    static final double OWN_MUZZLE_DOWN = 0.30;
-    /** Other players and the own third-person view: blocks along the look, to the gun arm, and down from the eyes. */
-    static final double HELD_MUZZLE_FORWARD = 1.15;
-    static final double HELD_MUZZLE_SIDE = 0.34;
-    static final double HELD_MUZZLE_DOWN = 0.42;
+    // ---- Muzzle: where the rifle tip is, at the hip or rest hold and shouldered (LanceClient, LanceArms, the model's
+    // display transforms in scripts/data/gear_lance_model.py). The effects follow the blend between the two.
+    /** Own first-person view at the hip: blocks along the look, to the gun side and below the crosshair (camera space). */
+    static final double OWN_MUZZLE_FORWARD = 1.75;
+    static final double OWN_MUZZLE_SIDE = 0.20;
+    static final double OWN_MUZZLE_DOWN = 0.31;
+    /** Own first-person view, shouldered. */
+    static final double OWN_AIM_FORWARD = 1.61;
+    static final double OWN_AIM_SIDE = 0.053;
+    static final double OWN_AIM_DOWN = 0.21;
+    /** Other players and the own third-person view, shouldered: blocks along the look, to the gun arm, down from the eyes. */
+    static final double HELD_MUZZLE_FORWARD = 1.14;
+    static final double HELD_MUZZLE_SIDE = 0.17;
+    static final double HELD_MUZZLE_DOWN = 0.35;
+    /** At rest (carried low across the body, barrel forward and down): blocks ahead of the body, to the gun arm, down. */
+    static final double REST_MUZZLE_FORWARD = 1.40;
+    static final double REST_MUZZLE_SIDE = 0.0;
+    static final double REST_MUZZLE_DOWN = 0.67;
 
     // ---- Colours
     /** White-violet beam core. */
@@ -173,7 +182,8 @@ final class LanceFx {
 
     /**
      * Muzzle of the lance held by {@code p} into {@code out} (x, y, z) and its look direction into out[3..5]. The own
-     * first-person view offsets in camera space (it follows the screen); the held one hangs from the eyes.
+     * first-person view offsets in camera space (it follows the screen); the held one hangs from the eyes, along the
+     * look when shouldered and ahead of the body at rest.
      */
     static void muzzle(Player p, boolean own, double[] out) {
         float yaw = p.getYRot() * Mth.DEG_TO_RAD, pitch = p.getXRot() * Mth.DEG_TO_RAD;
@@ -184,14 +194,22 @@ final class LanceFx {
         int side = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
         double x = p.getX(), y = p.getEyeY(), z = p.getZ();
         if (own) {
+            float a = p == Minecraft.getInstance().player ? LanceClient.aim(1.0F) : 0.0F;
+            double forward = Mth.lerp(a, OWN_MUZZLE_FORWARD, OWN_AIM_FORWARD);
+            double across = side * Mth.lerp(a, OWN_MUZZLE_SIDE, OWN_AIM_SIDE), down = Mth.lerp(a, OWN_MUZZLE_DOWN, OWN_AIM_DOWN);
             double ux = sy * ly, uy = -sy * lx + cy * lz, uz = -cy * ly;
-            out[0] = x + lx * OWN_MUZZLE_FORWARD + rx * side * OWN_MUZZLE_SIDE - ux * OWN_MUZZLE_DOWN;
-            out[1] = y + ly * OWN_MUZZLE_FORWARD - uy * OWN_MUZZLE_DOWN;
-            out[2] = z + lz * OWN_MUZZLE_FORWARD + rz * side * OWN_MUZZLE_SIDE - uz * OWN_MUZZLE_DOWN;
+            out[0] = x + lx * forward + rx * across - ux * down;
+            out[1] = y + ly * forward - uy * down;
+            out[2] = z + lz * forward + rz * across - uz * down;
         } else {
-            out[0] = x + lx * HELD_MUZZLE_FORWARD + rx * side * HELD_MUZZLE_SIDE;
-            out[1] = y + ly * HELD_MUZZLE_FORWARD - HELD_MUZZLE_DOWN;
-            out[2] = z + lz * HELD_MUZZLE_FORWARD + rz * side * HELD_MUZZLE_SIDE;
+            float a = LanceArms.aim(p);
+            float body = p.yBodyRot * Mth.DEG_TO_RAD;
+            double bc = Mth.cos(body), bs = Mth.sin(body);
+            double restX = x - bs * REST_MUZZLE_FORWARD - bc * side * REST_MUZZLE_SIDE;
+            double restZ = z + bc * REST_MUZZLE_FORWARD - bs * side * REST_MUZZLE_SIDE;
+            out[0] = Mth.lerp(a, restX, x + lx * HELD_MUZZLE_FORWARD + rx * side * HELD_MUZZLE_SIDE);
+            out[1] = Mth.lerp(a, y - REST_MUZZLE_DOWN, y + ly * HELD_MUZZLE_FORWARD - HELD_MUZZLE_DOWN);
+            out[2] = Mth.lerp(a, restZ, z + lz * HELD_MUZZLE_FORWARD + rz * side * HELD_MUZZLE_SIDE);
         }
         out[3] = lx;
         out[4] = ly;
@@ -336,11 +354,13 @@ final class LanceFx {
         boolean own = false;
         if (e instanceof Player shooter) {
             own = ownView(mc, shooter);
-            muzzle(shooter, own, MUZ);
+            LanceArms.shot(shooterId, true);
             if (shooter == mc.player) {
                 kickStart = Util.getMillis();
                 LanceHud.fired();
+                LanceClient.beamFired();
             }
+            muzzle(shooter, own, MUZ);
         } else {
             MUZ[0] = p[0] + p[3] * HELD_MUZZLE_FORWARD;
             MUZ[1] = p[1] + p[4] * HELD_MUZZLE_FORWARD - HELD_MUZZLE_DOWN;
@@ -411,6 +431,7 @@ final class LanceFx {
         boolean own = false;
         if (e instanceof Player shooter) {
             own = ownView(mc, shooter);
+            LanceArms.shot(shooterId, false);
             muzzle(shooter, own, MUZ);
         } else {
             MUZ[0] = p[0] + p[3] * HELD_MUZZLE_FORWARD;

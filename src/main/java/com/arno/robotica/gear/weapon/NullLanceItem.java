@@ -72,7 +72,8 @@ public class NullLanceItem extends EnergyWeaponItem {
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.SPEAR;
+        // no vanilla use pose: gear.client.LanceClient draws the rifle hold, the aim and the recoil
+        return UseAnim.NONE;
     }
 
     @Override
