@@ -13,6 +13,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -94,6 +95,9 @@ final class LanceFx {
     private static final double[] MUZ = new double[6];
     /** Scratch: two unit vectors across a direction. */
     private static final double[] ACROSS = new double[6];
+    /** Camera position for {@link #put}, taken at the start of each effect (client thread only). */
+    private static double camX, camY, camZ;
+    private static boolean fewParticles;
     private static ClientLevel lastLevel;
     private static int stamp;
     private static long kickStart;
@@ -129,6 +133,7 @@ final class LanceFx {
         }
         Entity camera = mc.getCameraEntity();
         if (level == null || camera == null || mc.isPaused()) return;
+        syncCamera(mc);
         stamp++;
         List<AbstractClientPlayer> players = level.players();
         for (int i = 0; i < players.size(); i++) {
@@ -229,6 +234,25 @@ final class LanceFx {
         out[3] = lx;
         out[4] = ly;
         out[5] = lz;
+    }
+
+    /** Takes the camera position and particle setting for {@link #put}. */
+    private static void syncCamera(Minecraft mc) {
+        var cam = mc.gameRenderer.getMainCamera().getPosition();
+        camX = cam.x;
+        camY = cam.y;
+        camZ = cam.z;
+        fewParticles = mc.options.particles().get() == net.minecraft.client.ParticleStatus.MINIMAL;
+    }
+
+    /**
+     * A lance particle. Vanilla drops particles more than 32 blocks from the camera; past that they are forced, so the
+     * beam is drawn all the way to its end (the beam reaches {@link NullLanceItem#RANGE} blocks).
+     */
+    private static void put(ClientLevel level, ParticleOptions o, double x, double y, double z, double vx, double vy, double vz) {
+        double dx = x - camX, dy = y - camY, dz = z - camZ;
+        if (dx * dx + dy * dy + dz * dz <= 1024.0) level.addParticle(o, x, y, z, vx, vy, vz);
+        else if (!fewParticles) level.addAlwaysVisibleParticle(o, true, x, y, z, vx, vy, vz);
     }
 
     /** Two unit vectors across the direction (dx, dy, dz, unit length) into {@link #ACROSS}. */
@@ -337,7 +361,7 @@ final class LanceFx {
         for (int i = 0; i < count; i++) {
             double a = phase + i * Math.PI * 2 / count, c = Math.cos(a), s = Math.sin(a);
             double ox = ACROSS[0] * c + ACROSS[3] * s, oy = ACROSS[1] * c + ACROSS[4] * s, oz = ACROSS[2] * c + ACROSS[5] * s;
-            level.addParticle(mote, x + ox * radius, y + oy * radius, z + oz * radius, ox * speed, oy * speed, oz * speed);
+            put(level, mote, x + ox * radius, y + oy * radius, z + oz * radius, ox * speed, oy * speed, oz * speed);
         }
     }
 
@@ -345,15 +369,15 @@ final class LanceFx {
     private static void sparks(ClientLevel level, TintParticleOptions spark, double x, double y, double z, int count, double speed) {
         RandomSource r = level.random;
         for (int i = 0; i < count; i++) {
-            level.addParticle(spark, x, y, z, r.nextGaussian() * speed, 0.05 + r.nextDouble() * speed, r.nextGaussian() * speed);
+            put(level, spark, x, y, z, r.nextGaussian() * speed, 0.05 + r.nextDouble() * speed, r.nextGaussian() * speed);
         }
     }
 
     /** Motes on a sphere around a point, all pulled into it, with a flash and dark smoke: the void collapsing. */
     private static void implode(ClientLevel level, double x, double y, double z, double radius, int count, float flash, int smoke) {
         RandomSource r = level.random;
-        level.addParticle(CoreParticles.flash(VOID_CORE, flash), x, y, z, 0, 0, 0);
-        level.addParticle(CoreParticles.flash(VOID_DEEP, flash * 1.6F), x, y, z, 0, 0, 0);
+        put(level, CoreParticles.flash(VOID_CORE, flash), x, y, z, 0, 0, 0);
+        put(level, CoreParticles.flash(VOID_DEEP, flash * 1.6F), x, y, z, 0, 0, 0);
         TintParticleOptions bright = CoreParticles.mote(VOID_BRIGHT, 0.9F), deep = CoreParticles.mote(VOID_DEEP, 1.1F);
         for (int i = 0; i < count; i++) {
             double ox = r.nextGaussian(), oy = r.nextGaussian(), oz = r.nextGaussian();
@@ -361,11 +385,11 @@ final class LanceFx {
             ox /= n;
             oy /= n;
             oz /= n;
-            level.addParticle((i & 1) == 0 ? bright : deep, x + ox, y + oy, z + oz, -ox / 14.0, -oy / 14.0, -oz / 14.0);
+            put(level, (i & 1) == 0 ? bright : deep, x + ox, y + oy, z + oz, -ox / 14.0, -oy / 14.0, -oz / 14.0);
         }
         TintParticleOptions puff = CoreParticles.puff(VOID_SMOKE, 1.4F);
         for (int i = 0; i < smoke; i++) {
-            level.addParticle(puff, x + r.nextGaussian() * 0.2, y + r.nextGaussian() * 0.2, z + r.nextGaussian() * 0.2,
+            put(level, puff, x + r.nextGaussian() * 0.2, y + r.nextGaussian() * 0.2, z + r.nextGaussian() * 0.2,
                     r.nextGaussian() * 0.02, 0.01, r.nextGaussian() * 0.02);
         }
         sparks(level, CoreParticles.spark(VOID_BRIGHT, 1.0F), x, y, z, count / 2, 0.16);
@@ -378,6 +402,7 @@ final class LanceFx {
      */
     static void beam(ClientLevel level, float[] p, boolean hitBlock, int shooterId) {
         Minecraft mc = Minecraft.getInstance();
+        syncCamera(mc);
         Entity e = shooterId >= 0 ? level.getEntity(shooterId) : null;
         boolean own = false;
         if (e instanceof Player shooter) {
@@ -407,15 +432,15 @@ final class LanceFx {
         across(dx, dy, dz);
 
         // muzzle: a flash and a void shock ring (small in the own view, so it stays off the crosshair)
-        level.addParticle(CoreParticles.flash(VOID_CORE, own ? 0.4F : 1.0F), sx, sy, sz, 0, 0, 0);
+        put(level, CoreParticles.flash(VOID_CORE, own ? 0.4F : 1.0F), sx, sy, sz, 0, 0, 0);
         if (own) {
             ring(level, CoreParticles.mote(VOID_BRIGHT, 0.4F), sx, sy, sz, 10, 0.04, 0.012);
         } else {
-            level.addParticle(CoreParticles.flash(VOID_DEEP, 1.6F), sx, sy, sz, 0, 0, 0);
+            put(level, CoreParticles.flash(VOID_DEEP, 1.6F), sx, sy, sz, 0, 0, 0);
             ring(level, CoreParticles.mote(VOID_BRIGHT, 0.8F), sx, sy, sz, 18, 0.1, 0.07);
             sparks(level, CoreParticles.spark(VOID_BRIGHT, 0.8F), sx, sy, sz, 6, 0.12);
             TintParticleOptions puff = CoreParticles.puff(VOID_SMOKE, 1.0F);
-            for (int i = 0; i < 3; i++) level.addParticle(puff, sx, sy, sz, dx * 0.04 + r.nextGaussian() * 0.02, 0.01, dz * 0.04 + r.nextGaussian() * 0.02);
+            for (int i = 0; i < 3; i++) put(level, puff, sx, sy, sz, dx * 0.04 + r.nextGaussian() * 0.02, 0.01, dz * 0.04 + r.nextGaussian() * 0.02);
         }
 
         TintParticleOptions core = CoreParticles.mote(VOID_CORE, 1.1F);
@@ -426,15 +451,15 @@ final class LanceFx {
         for (int i = 0; i <= steps; i++) {
             double s = i * CORE_STEP;
             double x = sx + dx * s, y = sy + dy * s, z = sz + dz * s;
-            level.addParticle(core, x, y, z, 0, 0, 0);
-            if (i % 3 == 0) level.addParticle(halo, x, y, z, 0, 0, 0);
+            put(level, core, x, y, z, 0, 0, 0);
+            if (i % 3 == 0) put(level, halo, x, y, z, 0, 0, 0);
             if (own && s < OWN_CLEAR) continue;
             for (int strand = 0; strand < 2; strand++) {
                 double a = s * HELIX_TWIST + strand * Math.PI, c = Math.cos(a), sn = Math.sin(a);
                 double ox = ACROSS[0] * c + ACROSS[3] * sn, oy = ACROSS[1] * c + ACROSS[4] * sn, oz = ACROSS[2] * c + ACROSS[5] * sn;
                 // the tangent (d/da of the offset) twists the spiral on; a little outward drift widens it as it fades
                 double tx = -ACROSS[0] * sn + ACROSS[3] * c, ty = -ACROSS[1] * sn + ACROSS[4] * c, tz = -ACROSS[2] * sn + ACROSS[5] * c;
-                level.addParticle(spiral, x + ox * HELIX_RADIUS, y + oy * HELIX_RADIUS, z + oz * HELIX_RADIUS,
+                put(level, spiral, x + ox * HELIX_RADIUS, y + oy * HELIX_RADIUS, z + oz * HELIX_RADIUS,
                         tx * HELIX_SPIN + ox * 0.008, ty * HELIX_SPIN + oy * 0.008, tz * HELIX_SPIN + oz * 0.008);
             }
             if (i >= RING_START && (i - RING_START) % RING_EVERY == 0) ring(level, ringMote, x, y, z, 10, 0.12, 0.03);
@@ -455,6 +480,7 @@ final class LanceFx {
     /** A null bolt left the muzzle ({@link com.arno.robotica.gear.GearFxPayload#BOLT}): {@code p} is eye and look. */
     static void boltMuzzle(ClientLevel level, float[] p, int shooterId) {
         Minecraft mc = Minecraft.getInstance();
+        syncCamera(mc);
         Entity e = shooterId >= 0 ? level.getEntity(shooterId) : null;
         boolean own = false;
         if (e instanceof Player shooter) {

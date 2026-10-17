@@ -782,7 +782,7 @@
       {
         "name": "robotica:gear/lance_fire",
         "type": "file",
-        "volume": 0.35,
+        "volume": 0.28,
         "pitch": 1.0
       }
     ]

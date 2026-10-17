@@ -26,14 +26,14 @@ import java.util.function.IntSupplier;
 
 /**
  * Age 4 weapon, the Rivet Gun's upgrade. Left-click fires null bolts like the Rivet Gun fires rivets (same rate, a bit
- * more damage, see {@link RivetGunItem#trigger}). Hold right-click to charge for 1 s, release for a 32 block beam that
+ * more damage, see {@link RivetGunItem#trigger}). Hold right-click to charge for 1 s, release for a 40 block beam that
  * pierces every mob for 30 damage (stops at blocks). The charge is drawn and heard on each client (gear.client.LanceFx:
  * void motes, the lock-in, the hum while ready; LanceHud: the crosshair brackets); the server sends the beam as one
  * {@link GearFxPayload#LANCE} and plays the shot, the impact and the fizzle of an early release.
  */
 public class NullLanceItem extends EnergyWeaponItem {
     public static final int CHARGE_TICKS = 20;
-    public static final double RANGE = 32.0;
+    public static final double RANGE = 40.0;
     public static final float DAMAGE = 30.0F;
     public static final int COOLDOWN_TICKS = 20;
     /** A null bolt hits this much harder than a rivet and costs this many rivets of FE. */
@@ -153,8 +153,8 @@ public class NullLanceItem extends EnergyWeaponItem {
         System.arraycopy(hitPoints, 0, points, 9, 3 * shown);
         Vec3 mid = start.add(end).scale(0.5);
         GearFxPayload.send(level, mid.x, mid.y, mid.z, new GearFxPayload(GearFxPayload.LANCE, points, new int[]{hitBlock ? 1 : 0, shooter.getId()}));
-        // volume 2 gives the shot a 32 block range, the beam's length; sounds.json scales the gain back down
-        CoreSounds.play(shooter, CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 2.0F, 0.97F + level.random.nextFloat() * 0.06F);
+        // volume 2.5 gives the shot a 40 block range, the beam's length; sounds.json scales the gain back down
+        CoreSounds.play(shooter, CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 2.5F, 0.97F + level.random.nextFloat() * 0.06F);
         if (hitBlock) {
             CoreSounds.play(level, end.x, end.y, end.z, CoreSounds.LANCE_IMPACT, SoundSource.PLAYERS, 0.8F, 0.95F + level.random.nextFloat() * 0.1F);
         } else if (shown > 0) {

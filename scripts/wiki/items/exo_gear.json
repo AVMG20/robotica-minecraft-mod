@@ -1287,7 +1287,7 @@
    "items": [
     "null_lance"
    ],
-   "what": "Hold left-click to fire null bolts, like the Rivet Gun. Hold right-click 1 s, then release: a beam pierces every mob in a 32-block line.",
+   "what": "Hold left-click to fire null bolts, like the Rivet Gun. Hold right-click 1 s, then release: a beam pierces every mob in a 40-block line.",
    "stats": {
     "rows": [
      [
