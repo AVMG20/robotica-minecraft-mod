@@ -19,8 +19,8 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 
 /**
  * Null Lance rifle in the own first-person view. At rest it sits at the hip like the Rivet Gun; holding right-click
- * raises it to the shoulder over a few ticks (more centred, higher, barrel level toward the crosshair), it trembles a
- * little more as each coil lights, settles with a small lock when full and then hums in the hands. A beam shot kicks it
+ * draws it back a little over a few ticks (it stays at the hip), it trembles a little more as each coil lights,
+ * settles with a small lock when full and then hums in the hands. A beam shot kicks it
  * hard (back and muzzle up) before it is lowered again; each bolt kicks it a little. No vanilla swing or use pose is
  * ever drawn. The third-person hold is {@link LanceArms}, the charge display LanceHud, the effects LanceFx.
  */
@@ -29,10 +29,11 @@ final class LanceClient {
 
     // Hand positions (camera space, right hand; x mirrors for the left). The hip one is RivetGunClient.heldPose.
     private static final float HIP_X = 0.56F, HIP_Y = -0.52F, HIP_Z = -0.72F;
-    private static final float AIM_X = 0.50F, AIM_Y = -0.46F, AIM_Z = -0.62F;
-    /** Turn of the aimed rifle in toward the crosshair and its muzzle up (degrees, about the hand near the butt). */
-    private static final float AIM_YAW = 5.0F, AIM_PITCH = 2.0F;
-    /** Raise and lower speed of the aim, per tick. */
+    /** Charging: the rifle drawn back a little toward the player, muzzle a touch up. */
+    private static final float AIM_X = 0.555F, AIM_Y = -0.51F, AIM_Z = -0.66F;
+    /** Turn of the drawn rifle in toward the crosshair and its muzzle up (degrees, about the hand). */
+    private static final float AIM_YAW = 0.0F, AIM_PITCH = 1.0F;
+    /** Draw and release speed of the aim, per tick. */
     private static final float RAISE = 1.0F / 4.5F, LOWER = 1.0F / 7.0F;
     /** Ticks the aim stays up after a full charge is let go (until the beam is out), and after the beam. */
     private static final int HOLD_RELEASE = 7, HOLD_SHOT = 5;
@@ -44,7 +45,7 @@ final class LanceClient {
     /** Lock-in settle at full charge. */
     private static final long LOCK_MS = 220;
 
-    /** Aim of the own lance, 0 at the hip to 1 shouldered, this tick and last tick. */
+    /** Aim of the own lance, 0 at rest to 1 drawn (shouldered in third person), this tick and last tick. */
     private static float aim, aimO;
     private static int hold;
     private static boolean wasFull;
@@ -110,7 +111,7 @@ final class LanceClient {
         hold = Math.max(hold, HOLD_SHOT);
     }
 
-    /** Own aim, 0 at the hip to 1 shouldered, eased; also used for the third-person pose and the muzzle effects. */
+    /** Own aim, 0 at rest to 1 charging, eased; also used for the third-person pose and the muzzle effects. */
     static float aim(float partialTick) {
         float t = Mth.lerp(partialTick, aimO, aim);
         return t * t * (3.0F - 2.0F * t);

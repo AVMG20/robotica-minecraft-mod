@@ -83,7 +83,7 @@ def elements(lit=0, hot=False):
 # crosshair. Third person is fitted to the two-handed arm pose of gear.client.LanceArms (the gun arm points along the
 # barrel): the grip in the hand, the stock along the arm into the shoulder, tilted 10 degrees up and 12 out to make up
 # for the arm sitting below and inside the aim line. Left-hand views mirror these (ItemTransform.apply).
-HAND_1P = {'rotation': [0, 10, 0], 'translation': [-4, 3.4, -6.6], 'scale': [0.42, 0.42, 0.42]}
+HAND_1P = {'rotation': [2.5, 4.3, 0], 'translation': [-1.4, 1.56, -4.7], 'scale': [0.55, 0.55, 0.55]}
 HAND_3P = {'rotation': [10, -12, 0], 'translation': [-0.6, 1.45, -0.1], 'scale': [0.55, 0.55, 0.55]}
 DISPLAY = {
     'firstperson_righthand': HAND_1P, 'firstperson_lefthand': HAND_1P,

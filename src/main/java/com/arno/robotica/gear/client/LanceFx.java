@@ -42,13 +42,13 @@ final class LanceFx {
     // ---- Muzzle: where the rifle tip is, at the hip or rest hold and shouldered (LanceClient, LanceArms, the model's
     // display transforms in scripts/data/gear_lance_model.py). The effects follow the blend between the two.
     /** Own first-person view at the hip: blocks along the look, to the gun side and below the crosshair (camera space). */
-    static final double OWN_MUZZLE_FORWARD = 1.75;
-    static final double OWN_MUZZLE_SIDE = 0.20;
-    static final double OWN_MUZZLE_DOWN = 0.31;
-    /** Own first-person view, shouldered. */
-    static final double OWN_AIM_FORWARD = 1.61;
-    static final double OWN_AIM_SIDE = 0.053;
-    static final double OWN_AIM_DOWN = 0.21;
+    static final double OWN_MUZZLE_FORWARD = 1.836;
+    static final double OWN_MUZZLE_SIDE = 0.411;
+    static final double OWN_MUZZLE_DOWN = 0.387;
+    /** Own first-person view, drawn back while charging. */
+    static final double OWN_AIM_FORWARD = 1.773;
+    static final double OWN_AIM_SIDE = 0.406;
+    static final double OWN_AIM_DOWN = 0.357;
     /** Other players and the own third-person view, shouldered: blocks along the look, to the gun arm, down from the eyes. */
     static final double HELD_MUZZLE_FORWARD = 1.14;
     static final double HELD_MUZZLE_SIDE = 0.17;
