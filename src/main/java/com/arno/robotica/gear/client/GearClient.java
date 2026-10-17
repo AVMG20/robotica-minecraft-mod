@@ -41,6 +41,12 @@ public final class GearClient {
         }
     };
 
+    /** Dev showcase: fires the held Rivet Gun or Null Lance as a left-click does (recoil, then the shot from the server). */
+    public static void fireHeld() {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player != null) RivetGunClient.tryFire(player);
+    }
+
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, com.arno.robotica.gear.GearClientConfig.SPEC, "robotica-gear-client.toml");
         NeoForge.EVENT_BUS.addListener(AddSectionGeometryEvent.class, SparkWisps::onSectionGeometry);
@@ -63,6 +69,7 @@ public final class GearClient {
         modBus.addListener(FMLClientSetupEvent.class, LanceModel::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, LanceClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, LanceFx::onClientTick);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent.class, RivetRenderer::onJoin);
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, LanceFx::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaOutline::onRenderLevel);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AreaStatic::onRenderLevel);

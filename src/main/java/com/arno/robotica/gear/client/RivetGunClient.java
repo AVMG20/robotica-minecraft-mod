@@ -90,7 +90,7 @@ final class RivetGunClient {
         return RivetGunItem.firesOnClick(player.getMainHandItem());
     }
 
-    private static void tryFire(LocalPlayer player) {
+    static void tryFire(LocalPlayer player) {
         ItemStack gun = player.getMainHandItem();
         Item item = gun.getItem();
         if (player.isSpectator() || player.isUsingItem() || player.isHandsBusy() || player.getCooldowns().isOnCooldown(item)) return;

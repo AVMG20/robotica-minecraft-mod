@@ -1311,8 +1311,8 @@ public final class Showcase {
     /**
      * Null Lance mid-charge (2 of 4 coils lit): third person from the front right (seen from a hidden armor stand, so the
      * player can aim past the camera), then first person with the HUD.
-     * The lance_idle_* and lance_dev_* shots (rest hold, side and back views, full charge, right after a beam) are for
-     * checking the poses, not used on the site.
+     * The lance_idle_* and lance_dev_* shots (rest hold, side and back views, full charge, right after a beam, the first
+     * ticks of a bolt, the Rivet Gun's hold and shot from the same spot) are for checking the poses, not used on the site.
      */
     private static void lanceScenes() {
         boolean third = wants("lance_rifle_charge", "lance_idle_third_person");
@@ -1346,9 +1346,11 @@ public final class Showcase {
             if (dev) {
                 lanceCamera(LANCE.getX() + 3.6, Y - 0.35, LANCE.getZ() + 0.2, 90, 0);
                 grab(10, "lance_dev_side_idle");
-                step(1, () -> server(com.arno.robotica.gear.weapon.RivetGunItem::trigger));
-                step(1, () -> {});
-                grab(10, "lance_dev_side_bolt");
+                boltShots("lance_dev_side_bolt");
+                // the Rivet Gun's shot from the same spot
+                holdGun(GearItems.RIVET_GUN.get());
+                boltShots("lance_dev_side_rivet_bolt");
+                holdGun(GearItems.NULL_LANCE.get());
                 chargeShot("lance_dev_side_aim", 6);
                 lanceCamera(LANCE.getX() + 1.6, Y - 0.1, LANCE.getZ() + 3.6, 157, 4);
                 grab(10, "lance_dev_back_idle");
@@ -1382,9 +1384,31 @@ public final class Showcase {
                 grab(6, "lance_dev_first_beam");
                 grab(6, "lance_dev_first_after");
                 step(30, () -> {});
+                boltShots("lance_dev_first_bolt");
+                // the Rivet Gun in the same spot, to compare the hold and the shot
+                holdGun(GearItems.RIVET_GUN.get());
+                grab(20, "lance_dev_first_rivet_idle");
+                boltShots("lance_dev_first_rivet_bolt");
             }
         }
         step(5, () -> server(sp -> sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)));
+    }
+
+    /** Puts a full gun in the main hand. */
+    private static void holdGun(Item gun) {
+        step(10, () -> server(sp -> {
+            ItemStack stack = new ItemStack(gun);
+            ItemEnergy.fill(stack);
+            sp.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        }));
+    }
+
+    /** Left-clicks the held gun and grabs the next ticks, to see the shot leave the muzzle. */
+    private static void boltShots(String name) {
+        if (!wants(name)) return;
+        step(0, com.arno.robotica.gear.client.GearClient::fireHeld);
+        for (int i = 1; i <= 5; i++) grab(0, name + "_" + i);
+        step(30, () -> {});
     }
 
     /** Holds right-click with the lance for 12 ticks (2 of 4 coils lit), takes the shot and lets go. */

@@ -83,7 +83,7 @@ public class RivetGunItem extends EnergyWeaponItem {
         NEXT_SHOT.clear();
     }
 
-    /** Spawns one rivet from the player's eyes along the look direction, with the gun's modules. Returns it. */
+    /** Spawns one rivet from the player's eyes along the look direction (so it hits what the crosshair is on; each client draws it leaving the muzzle, gear.client.RivetRenderer), with the gun's modules. Returns it. */
     public static RivetEntity fire(ServerLevel level, Player player, ItemStack gun) {
         boolean bolt = gun.getItem() instanceof NullLanceItem;
         float pierce = (float) GearConfig.pierceShare(Modules.active(gun, ModuleKind.ARMOR_PIERCE));
@@ -119,7 +119,8 @@ public class RivetGunItem extends EnergyWeaponItem {
         Vec3 look = player.getLookAngle();
         boolean rightArm = (player.getMainHandItem() == gun) == (player.getMainArm() == HumanoidArm.RIGHT);
         Vec3 side = Vec3.directionFromRotation(0, player.getYRot() + (rightArm ? 90 : -90));
-        Vec3 held = player.getEyePosition().add(look.scale(0.8)).add(side.scale(0.35)).add(0, -0.45, 0);
+        // the gun's tip in the hand (gear.client.RivetRenderer draws a fresh rivet from the same spot)
+        Vec3 held = player.getEyePosition().add(look.scale(0.3)).add(side.scale(0.35)).add(0, -0.65, 0);
         Vec3 own = player.getEyePosition().add(look.scale(1.8)).add(side.scale(0.3)).add(0, -0.3, 0);
         for (ServerPlayer viewer : level.players()) {
             if (viewer == player) {

@@ -46,6 +46,8 @@ public class RivetEntity extends ThrowableProjectile {
     private static final DustParticleOptions TRACER = new DustParticleOptions(new Vector3f(1.0F, 0.78F, 0.35F), 0.7F);
     private static final DustParticleOptions NULL_TRACER = new DustParticleOptions(new Vector3f(0.69F, 0.49F, 1.0F), 0.8F);
     private static final double TRAIL_GAP = 1.5;
+    /** Client: ticks over which the drawn rivet closes from the gun's muzzle onto its true flight line. */
+    public static final float MUZZLE_TICKS = 2.0F;
 
     private float damage = 8.0F;
     private float pierce;
@@ -62,6 +64,13 @@ public class RivetEntity extends ThrowableProjectile {
     /** Client: where the tracer started (see {@link #trail}). */
     @Nullable
     private Vec3 trailStart;
+    /**
+     * Client: from where the rivet appeared (the shooter's eyes, where the server fires it) to the gun's muzzle. The
+     * rivet and its tracer are drawn this much off at first, closing onto the true flight line over
+     * {@link #MUZZLE_TICKS}, so a shot leaves the gun while it still flies (and hits) along the crosshair.
+     */
+    private float muzzleX, muzzleY, muzzleZ;
+    private boolean fromMuzzle;
     /** Entity ids already hit by this rivet (a ricochet never comes back). */
     private final IntList hit = new IntArrayList();
 
@@ -116,6 +125,36 @@ public class RivetEntity extends ThrowableProjectile {
         return entityData.get(STUCK) || clientStuck;
     }
 
+    /** Client: draw this rivet from the gun's muzzle, {@code (x, y, z)} away from where it appeared. */
+    public void setMuzzleOffset(double x, double y, double z) {
+        muzzleX = (float) x;
+        muzzleY = (float) y;
+        muzzleZ = (float) z;
+        fromMuzzle = true;
+    }
+
+    public boolean fromMuzzle() {
+        return fromMuzzle;
+    }
+
+    /** Client: share of the muzzle offset still drawn {@code age} ticks after the rivet appeared (0 once stuck). */
+    public float muzzleShare(float age) {
+        if (!fromMuzzle || isStuck()) return 0.0F;
+        return Math.max(0.0F, 1.0F - age / MUZZLE_TICKS);
+    }
+
+    public float muzzleX() {
+        return muzzleX;
+    }
+
+    public float muzzleY() {
+        return muzzleY;
+    }
+
+    public float muzzleZ() {
+        return muzzleZ;
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(STUCK, false);
@@ -140,7 +179,7 @@ public class RivetEntity extends ThrowableProjectile {
             }
             return;
         }
-        Vec3 before = position();
+        double bx = getX(), by = getY(), bz = getZ();
         super.tick();
         if (bounceTo != null && level() instanceof ServerLevel server) {
             // The projectile tick already moved on along the old line; restart from the monster that was hit.
@@ -149,26 +188,34 @@ public class RivetEntity extends ThrowableProjectile {
             bounceTo = null;
         }
         if (level().isClientSide) {
-            trail(before, position());
+            trail(bx, by, bz);
         } else if (tickCount > GearConfig.rivetFlightTicks()) {
             discard();
         }
     }
 
     /**
-     * Client: a bright dotted tracer between last and this tick's position, a spark now and then. The first
-     * {@link #TRAIL_GAP} blocks from where the rivet appeared stay clear, so the tracer never starts in the shooter's face.
+     * Client: a bright dotted tracer from last tick's position (ax, ay, az) to this one, a spark now and then. The first
+     * {@link #TRAIL_GAP} blocks from where the rivet appeared stay clear, so the tracer never starts in the shooter's
+     * face; while the rivet closes from the muzzle onto its flight line the tracer follows the drawn path.
      */
-    private void trail(Vec3 a, Vec3 b) {
-        if (trailStart == null) trailStart = a;
-        Vec3 d = b.subtract(a);
-        int steps = Math.min(12, Math.max(1, (int) (d.length() / 0.35)));
+    private void trail(double ax, double ay, double az) {
+        if (trailStart == null) trailStart = new Vec3(ax, ay, az);
+        double dx = getX() - ax, dy = getY() - ay, dz = getZ() - az;
+        int steps = Math.min(12, Math.max(1, (int) (Math.sqrt(dx * dx + dy * dy + dz * dz) / 0.35)));
+        DustParticleOptions tracer = isNullBolt() ? NULL_TRACER : TRACER;
         for (int i = 0; i < steps; i++) {
-            Vec3 p = a.add(d.scale(i / (double) steps));
-            if (p.distanceToSqr(trailStart) < TRAIL_GAP * TRAIL_GAP) continue;
-            level().addParticle(isNullBolt() ? NULL_TRACER : TRACER, p.x, p.y, p.z, 0, 0, 0);
+            double f = i / (double) steps;
+            double x = ax + dx * f, y = ay + dy * f, z = az + dz * f;
+            if (trailStart.distanceToSqr(x, y, z) < TRAIL_GAP * TRAIL_GAP) continue;
+            float share = muzzleShare(tickCount - 1 + (float) f);
+            level().addParticle(tracer, x + muzzleX * share, y + muzzleY * share, z + muzzleZ * share, 0, 0, 0);
         }
-        if (random.nextInt(3) == 0) level().addParticle(com.arno.robotica.core.particle.CoreParticles.spark(sparkColor(), 0.7F), b.x, b.y, b.z, 0, 0, 0);
+        if (random.nextInt(3) == 0) {
+            float share = muzzleShare(tickCount);
+            level().addParticle(com.arno.robotica.core.particle.CoreParticles.spark(sparkColor(), 0.7F),
+                    getX() + muzzleX * share, getY() + muzzleY * share, getZ() + muzzleZ * share, 0, 0, 0);
+        }
     }
 
     @Override
