@@ -783,7 +783,8 @@
         "name": "robotica:gear/lance_fire",
         "type": "file",
         "volume": 0.28,
-        "pitch": 1.0
+        "pitch": 1.0,
+        "attenuation_distance": 40
       }
     ]
   },

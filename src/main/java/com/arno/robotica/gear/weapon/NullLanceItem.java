@@ -153,7 +153,8 @@ public class NullLanceItem extends EnergyWeaponItem {
         System.arraycopy(hitPoints, 0, points, 9, 3 * shown);
         Vec3 mid = start.add(end).scale(0.5);
         GearFxPayload.send(level, mid.x, mid.y, mid.z, new GearFxPayload(GearFxPayload.LANCE, points, new int[]{hitBlock ? 1 : 0, shooter.getId()}));
-        // volume 2.5 gives the shot a 40 block range, the beam's length; sounds.json scales the gain back down
+        // volume 2.5 sends the shot to players within 40 blocks (the beam's length); sounds.json's attenuation_distance 40 lets
+        // them hear it that far and scales the gain back down
         CoreSounds.play(shooter, CoreSounds.LANCE_FIRE, SoundSource.PLAYERS, 2.5F, 0.97F + level.random.nextFloat() * 0.06F);
         if (hitBlock) {
             CoreSounds.play(level, end.x, end.y, end.z, CoreSounds.LANCE_IMPACT, SoundSource.PLAYERS, 0.8F, 0.95F + level.random.nextFloat() * 0.1F);
