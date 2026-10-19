@@ -17,6 +17,8 @@ import com.arno.robotica.replicator.logic.Harvest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -32,12 +34,14 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +61,8 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
     private static final int LIT_GRACE = 20;
     /** Finished cycles are synced to watching clients at most this often. */
     private static final int SYNC_INTERVAL = 10;
+    /** Ticks between two forming or two death effects (short cycles skip some). */
+    private static final int FX_INTERVAL = 20;
 
     /** Why the farm is not working (GUI word). */
     public enum State { NOT_FORMED, RUNNING, NO_VIALS, NO_ENERGY, OUTPUT_FULL }
@@ -141,7 +147,10 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
     private boolean working;
     private boolean syncPending;
     private long lastSync = Long.MIN_VALUE / 2;
-    private long lastStrikeSound = Long.MIN_VALUE / 2, lastDeathSound = Long.MIN_VALUE / 2;
+    private long lastStrikeSound = Long.MIN_VALUE / 2, lastDeathSound = Long.MIN_VALUE / 2, lastFormFx = Long.MIN_VALUE / 2;
+    /** Effect particles: motes in the farm's colour, chips of the mob's body (iron, or soul sand for the Wither). */
+    private final DustParticleOptions glowDust;
+    private final BlockParticleOption debris;
 
     // client mirror (see saveClientData)
     private long clientSyncTime = Long.MIN_VALUE;
@@ -150,6 +159,10 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
         super(ReplicatorRegistry.FARM_BE.get(), pos, blockState);
         this.kind = FarmKind.of(blockState);
         this.vials = newVialHandler(kind, this::setChanged);
+        int c = kind.color();
+        this.glowDust = new DustParticleOptions(new Vector3f((c >> 16 & 0xFF) / 255F, (c >> 8 & 0xFF) / 255F, (c & 0xFF) / 255F), 1.0F);
+        this.debris = new BlockParticleOption(ParticleTypes.BLOCK,
+                (kind == FarmKind.WITHER ? Blocks.SOUL_SAND : Blocks.IRON_BLOCK).defaultBlockState());
     }
 
     public FarmKind kind() {
@@ -260,6 +273,7 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
             state = State.RUNNING;
             worked = true;
             progress++;
+            if (progress == 1) form(level, now);
             strike(level, now);
             if (progress >= needed) {
                 progress = 0;
@@ -287,7 +301,17 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
         }
     }
 
-    /** A ram hits on this tick of the cycle: its sound, the mob's hurt sound and sparks where it hits. */
+    /** A new mob starts to form: a beam of motes from the roof matrix down into the chamber, a glow round the mob. */
+    private void form(ServerLevel level, long now) {
+        if (center == null || now - lastFormFx < FX_INTERVAL) return;
+        lastFormFx = now;
+        double x = center.getX() + 0.5, y = center.getY(), z = center.getZ() + 0.5;
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y + 1.9, z, 6, 0.2, 0.02, 0.2, 0.05);
+        level.sendParticles(glowDust, x, y + 1.1, z, 14, 0.05, 0.45, 0.05, 0);
+        level.sendParticles(glowDust, x, y + 0.2, z, 20, 0.35, 0.6, 0.35, 0);
+    }
+
+    /** A ram hits on this tick of the cycle: its sound, the mob's hurt sound, sparks and chips where it hits, smoke at its bore. */
     private void strike(ServerLevel level, long now) {
         int i = FarmCycle.strikeAt(progress, needed);
         if (i < 0 || i >= rams.size() || center == null) return;
@@ -299,8 +323,12 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
         BoundingBox box = box();
         if (box == null) return;
         Direction push = FarmStructure.ramPush(box, ram);
-        double x = ram.getX() + 0.5 + push.getStepX() * 1.6, y = ram.getY() + 0.5, z = ram.getZ() + 0.5 + push.getStepZ() * 1.6;
-        level.sendParticles(ParticleTypes.CRIT, x, y, z, 8, 0.15, 0.25, 0.15, 0.25);
+        double rx = ram.getX() + 0.5, ry = ram.getY() + 0.5, rz = ram.getZ() + 0.5;
+        double x = rx + push.getStepX() * 1.6, z = rz + push.getStepZ() * 1.6;
+        level.sendParticles(ParticleTypes.CRIT, x, ry, z, 10, 0.15, 0.25, 0.15, 0.3);
+        level.sendParticles(debris, x, ry, z, 8, 0.15, 0.3, 0.15, 0.1);
+        level.sendParticles(ParticleTypes.SMOKE, rx + push.getStepX() * 0.6, ry, rz + push.getStepZ() * 0.6,
+                4, 0.15, 0.15, 0.15, 0.01);
     }
 
     /** The mob falls: its loot goes to the output (what does not fit waits in {@link #pending}). */
@@ -316,12 +344,17 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
         }
         cycles++;
         syncPending = true;
-        if (now - lastDeathSound >= 20) {
+        if (now - lastDeathSound >= FX_INTERVAL) {
             lastDeathSound = now;
             if (result != null && result.deathSound() != null) {
                 level.playSound(null, center, result.deathSound(), SoundSource.BLOCKS, 0.6F, 0.9F + level.random.nextFloat() * 0.2F);
             }
-            level.sendParticles(ParticleTypes.POOF, center.getX() + 0.5, center.getY(), center.getZ() + 0.5, 12, 0.4, 0.5, 0.4, 0.02);
+            // the mob breaks up on the chamber floor
+            double x = center.getX() + 0.5, y = center.getY() - 0.5, z = center.getZ() + 0.5;
+            level.sendParticles(ParticleTypes.POOF, x, y, z, 14, 0.5, 0.3, 0.5, 0.03);
+            level.sendParticles(debris, x, y, z, 24, 0.6, 0.25, 0.6, 0.15);
+            level.sendParticles(glowDust, x, y + 0.4, z, 12, 0.6, 0.4, 0.6, 0);
+            if (kind == FarmKind.WITHER) level.sendParticles(ParticleTypes.SOUL, x, y, z, 8, 0.5, 0.2, 0.5, 0.04);
         }
     }
 

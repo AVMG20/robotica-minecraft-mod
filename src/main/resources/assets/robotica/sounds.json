@@ -888,10 +888,10 @@
     "subtitle": "subtitles.robotica.farm_ram",
     "sounds": [
       {
-        "name": "minecraft:tile/piston/out",
+        "name": "robotica:machine/ram",
         "type": "file",
         "volume": 0.8,
-        "pitch": 0.55
+        "pitch": 1.0
       }
     ]
   },

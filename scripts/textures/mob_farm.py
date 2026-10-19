@@ -49,25 +49,19 @@ def pal(mob='golem'):
 
 # ---------------------------------------------------------------- shell
 
-def tread(c, x, y, w, h, phase=0):
-    """Tread plate: raised 2 px dashes, alternating diagonals on a 4 px grid (lit top-left pixel, shade below)."""
-    for gy in range(y, y + h - 1, 4):
-        for gx in range(x, x + w - 1, 4):
-            if ((gx - x) // 4 + (gy - y) // 4 + phase) % 2:
-                c.set(gx, gy + 1, 'e').set(gx + 1, gy, 'd').set(gx + 1, gy + 1, 'a').set(gx, gy + 2, 'a')
-            else:
-                c.set(gx, gy, 'e').set(gx + 1, gy + 1, 'd').set(gx + 1, gy + 2, 'a').set(gx + 2, gy + 1, 'a')
-    return c
-
-
 def farm_casing():
-    """Loose casing: a heavy bevelled plate, red bolts in the corners, a sunk tread plate with a hazard strip."""
+    """Loose casing: the shell plate (half seams, red bolts in the corners) round a sunk knurled tread plate."""
     c = Canvas()
     c.rect(0, 0, 16, 16, 'c')
     c.bevel(0, 0, 16, 16, 'd', 'a')
-    c.recess(3, 3, 10, 10, mc.BODY, fill='b')
-    tread(c, 4, 4, 8, 6)
-    c.hazard(4, 10, 8, 2, 'h', 'k')
+    c.bevel(3, 3, 10, 10, 'a', 'd')
+    c.rect(4, 4, 8, 8, 'b')
+    for y in range(4, 12):                                               # diagonal knurl: lit ridge, shadow below it
+        for x in range(4, 12):
+            if (x + y) % 4 == 0:
+                c.set(x, y, 'd')
+            elif (x + y) % 4 == 1:
+                c.set(x, y, 'a')
     for x, y in ((0, 0), (14, 0), (0, 14), (14, 14)):
         en.bolt(c, x, y)
     return c
@@ -125,24 +119,25 @@ def farm_glass(joined):
 
 # ---- port
 
-BOLT = ['.wx', 'wx.', 'xxx', '.xw', 'xw.', 'w..']
-CHUTE = ['wwww', 'vwwv', '.vv.', '.vv.', '.wv.', '..v.']
+BOLT = ['..ab', '.ab.', 'abba', '.ba.', 'ba..', 'a...']
 
 
 def farm_port():
-    """Farm Port: a dark socket with the energy bolt (FE in) beside a hopper chute (loot out), marks dim."""
+    """Farm Port: a red terminal ring round a dark socket with the energy bolt, on a grilled hatch (FE in, loot out)."""
     c = mc.shell(1)
-    c.rect(3, 3, 10, 10, 'D').bevel(3, 3, 10, 10, 'a', 'd')
-    c.draw(4, 5, [r.replace('w', '6').replace('x', 'r') for r in BOLT])
-    c.rect(7, 4, 1, 8, 'b')                                              # divider
-    c.draw(8, 5, [r.replace('w', '6').replace('v', 'r') for r in CHUTE])
+    c.rect(3, 3, 10, 10, 'b').bevel(3, 3, 10, 10, 'a', 'd')
+    c.grille(4, 4, 8, 8, 'K', 'a')
+    c.disc(7.5, 7.5, 4.6, 'a')
+    c.ring(7.5, 7.5, 3.3, 4.2, 'g').ring(7.5, 7.5, 3.3, 3.7, 'h')
+    c.disc(7.5, 7.5, 3.0, 'D')
+    c.draw(6, 5, [r.replace('a', '6').replace('b', 'r') for r in BOLT])
     return c
 
 
 def farm_port_glow():
     c = Canvas()
-    c.draw(4, 5, BOLT).replace('x', 'Y').replace('w', 'y')
-    c.draw(8, 5, CHUTE)
+    c.ring(7.5, 7.5, 3.3, 4.2, 'v').ring(7.5, 7.5, 3.3, 3.7, 'w')
+    c.draw(6, 5, [r.replace('a', 'y').replace('b', 'Y') for r in BOLT])
     return c
 
 
@@ -152,20 +147,22 @@ def farm_port_glow():
 # same head out of the inner face, from textures/entity/impact_ram.png.
 
 def ram_head(c, x, y):
-    """10x10 ram head face: red hazard stripes round a polished steel plate, a nut where the rod sits behind it."""
+    """10x10 ram head face: a polished steel striking plate in a red hazard metal rim, a nut where the rod sits."""
     for j in range(10):
         for i in range(10):
             if i in (0, 9) or j in (0, 9):
                 ch = 'K'
-            elif i in (1, 8) or j in (1, 8):
-                ch = 'h' if (i + j) % 4 < 2 else 'k'
+            elif i == 1 or j == 1:
+                ch = 'i'
+            elif i == 8 or j == 8:
+                ch = 'g'
             else:
-                t = i + j
-                ch = '3' if t < 7 else '1' if t > 11 else '2'
+                ch = '2'
             c.set(x + i, y + j, ch)
-    c.rect(x + 2, y + 2, 6, 1, '4').rect(x + 2, y + 2, 1, 6, '4').set(x + 2, y + 2, 'W')
-    c.rect(x + 2, y + 7, 6, 1, '0').rect(x + 7, y + 2, 1, 6, '0')
-    c.rect(x + 4, y + 4, 2, 2, '1').set(x + 4, y + 4, '3').set(x + 5, y + 5, '0')
+    c.set(x + 1, y + 8, 'h').set(x + 8, y + 1, 'h')
+    c.rect(x + 2, y + 2, 6, 1, '4').rect(x + 2, y + 2, 1, 6, '3').set(x + 2, y + 2, 'W')
+    c.rect(x + 2, y + 7, 6, 1, '0').rect(x + 7, y + 2, 1, 6, '1')
+    c.rect(x + 4, y + 4, 2, 2, '1').set(x + 4, y + 4, '0').set(x + 5, y + 5, '3')
     return c
 
 
@@ -184,15 +181,15 @@ def impact_ram_head():
 
 
 def impact_ram_top():
-    """Housing top: the hazard bracketed shell over a vented hydraulic block round the cylinder cap."""
+    """Housing top: the hazard bracketed shell over the hydraulic cylinder's polished cap."""
     c = mc.shell(1)
     c.recess(3, 3, 10, 10, mc.BODY, fill='b')
-    c.vents(4, 4, 8, 8, mc.BODY)
-    c.disc(7.5, 7.5, 3.4, 'K')
-    c.disc(7.5, 7.5, 2.8, '1')
-    c.disc(7.0, 7.0, 2.0, '2')
-    c.set(6, 6, '4').set(7, 6, '3').set(6, 7, '3')
-    c.set(7, 8, '0').set(8, 8, '0').set(8, 7, '0')
+    c.disc(7.5, 7.5, 4.2, 'K')
+    c.disc(7.5, 7.5, 3.6, '1')
+    c.disc(7.0, 7.0, 3.0, '2')
+    c.disc(7.0, 7.0, 2.0, '3')
+    c.disc(7.5, 7.5, 1.2, '0')
+    c.set(5, 5, '4').set(6, 5, '4').set(5, 6, '4')
     return c
 
 
@@ -202,7 +199,7 @@ def ram_entity():
     c = Canvas(32)
     ram_head(c, 0, 0)
     for i in range(10):
-        c.set(10 + i, 0, 'h' if i % 4 < 2 else 'k')
+        c.set(10 + i, 0, 'h')
         c.set(10 + i, 1, '3').set(10 + i, 2, '2').set(10 + i, 3, '0')
     c.set(10, 1, '2').set(19, 2, '1')
     for y in range(16):
@@ -244,7 +241,7 @@ SKULL = ['.ZZZZZZ.', 'ZzzZZZZZ', 'ZeeZZeeZ', 'ZeeZZeeZ', 'ZZZmmZZZ', '.ZZZZZZ.',
 
 
 def wither_matrix():
-    """The shell round sunk soul sand holding a wither skull; its eye sockets glow violet."""
+    """The shell round sunk soul sand holding a wither skull; its eye sockets glow violet, nose and teeth soul blue."""
     c = mc.shell(1)
     c.rect(3, 3, 10, 10, 'n')
     c.speckle(3, 3, 10, 10, 'mos', 0.35, 21)
@@ -256,8 +253,8 @@ def wither_matrix():
 
 def wither_matrix_glow():
     c = Canvas()
-    c.draw(4, 5, [r.replace('Z', '.').replace('z', '.').replace('m', '.') for r in SKULL])
-    c.replace('e', 'Q')
+    c.draw(4, 5, [r.replace('Z', '.').replace('z', '.') for r in SKULL])
+    c.replace('e', 'Q').replace('m', 'B')
     c.set(5, 7, 'S').set(9, 7, 'S').set(6, 8, 'P').set(10, 8, 'P')
     return c
 
