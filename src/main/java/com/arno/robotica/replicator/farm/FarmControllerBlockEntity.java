@@ -272,10 +272,12 @@ public class FarmControllerBlockEntity extends StructureControllerBlockEntity {
         if (worked) litUntil = now + LIT_GRACE;
         boolean lit = isFormed() && now < litUntil;
         setLit(lit);
-        if (worked != working) {
-            working = worked;
+        // a start or a stop is shown at once, so the client's cycle stays in step; a farm short of power (working every
+        // other tick) keeps counting as running through the glow's grace, so it does not sync every tick
+        boolean running = worked || (state == State.NO_ENERGY && lit);
+        if (running != working) {
+            working = running;
             syncPending = true;
-            // a stall or a restart is shown at once, so the client's cycle stays in step
             lastSync = Long.MIN_VALUE / 2;
         }
         if (syncPending && now - lastSync >= SYNC_INTERVAL) {

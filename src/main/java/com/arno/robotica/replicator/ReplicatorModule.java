@@ -1,10 +1,16 @@
 package com.arno.robotica.replicator;
 
+import com.arno.robotica.replicator.logic.Essence;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /**
@@ -20,6 +26,16 @@ public final class ReplicatorModule {
         modBus.addListener(RegisterCapabilitiesEvent.class, ReplicatorModule::registerCapabilities);
         modBus.addListener(RegisterPayloadHandlersEvent.class, ReplicatorModePayload::register);
         modBus.addListener(RegisterPayloadHandlersEvent.class, ReplicatorMutePayload::register);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, false, PlayerInteractEvent.EntityInteract.class, ReplicatorModule::onInteract);
+    }
+
+    /** An Essence Vial samples a villager before the villager's own right-click (trades) runs. */
+    private static void onInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!Essence.isVial(event.getItemStack()) || !(event.getTarget() instanceof LivingEntity target)
+                || !Essence.isFarmOnly(target.getType())) return;
+        InteractionResult result = event.getItemStack().interactLivingEntity(event.getEntity(), target, event.getHand());
+        event.setCanceled(true);
+        event.setCancellationResult(result);
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
