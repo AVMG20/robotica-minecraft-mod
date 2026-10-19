@@ -616,7 +616,7 @@
       ]
     },
     {
-      "title": "Mob replicator and farms",
+      "title": "Mob machines",
       "icon": "robotica:replicator_controller",
       "pages": [
         {
@@ -651,7 +651,7 @@
         {
           "title": "Iron Golem Farm layout",
           "layout": "iron_golem_farm",
-          "text": "The controller can sit anywhere in a side wall, as long as three wall middles stay free for the rams."
+          "text": "The controller can sit in any side wall spot the rams don't need."
         },
         {
           "title": "Wither Farm layout",

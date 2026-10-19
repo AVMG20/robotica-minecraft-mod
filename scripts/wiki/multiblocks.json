@@ -390,7 +390,7 @@
     "check": "golem_farm",
     "about": "Controller in the middle of the north wall, Impact Rams in the middle of the other three, the Golem Matrix in the middle of the roof, the chamber empty.",
     "notes": [
-      "The controller can sit anywhere in a side wall, as long as three wall middles stay free for the rams."
+      "The controller can sit in any side wall spot the rams don't need."
     ],
     "legend": {
       "C": "farm_casing",
