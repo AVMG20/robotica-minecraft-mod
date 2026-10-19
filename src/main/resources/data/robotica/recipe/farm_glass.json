@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CGC",
+    "GQG",
+    "CGC"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:farm_casing"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "Q": {
+      "tag": "c:gems/quartz"
+    }
+  },
+  "result": {
+    "id": "robotica:farm_glass",
+    "count": 4
+  }
+}

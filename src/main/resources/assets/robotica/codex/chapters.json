@@ -616,7 +616,7 @@
       ]
     },
     {
-      "title": "Mob replicator",
+      "title": "Mob replicator and farms",
       "icon": "robotica:replicator_controller",
       "pages": [
         {
@@ -633,6 +633,29 @@
           "title": "Replicator layout",
           "layout": "mob_replicator",
           "text": "Any frame block can be glass, edges and corners too."
+        },
+        {
+          "title": "Mob farms",
+          "text": "Sampling a villager does not hurt it.\nThe vials stay in the controller and are never used up.\nThe Wither Farmer gives a Nether Star per Wither.",
+          "items": [
+            "robotica:iron_golem_farmer",
+            "robotica:wither_farmer",
+            "robotica:farm_casing",
+            "robotica:farm_glass",
+            "robotica:farm_port",
+            "robotica:impact_ram",
+            "robotica:golem_matrix",
+            "robotica:wither_matrix"
+          ]
+        },
+        {
+          "title": "Iron Golem Farm layout",
+          "layout": "iron_golem_farm",
+          "text": "The controller can sit anywhere in a side wall, as long as three wall middles stay free for the rams."
+        },
+        {
+          "title": "Wither Farm layout",
+          "layout": "wither_farm"
         }
       ]
     },

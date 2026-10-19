@@ -271,6 +271,12 @@
       "age": 3
     },
     {
+      "id": "robotica:guide/golem_farm",
+      "parent": "robotica:guide/age3",
+      "icon": "robotica:iron_golem_farmer",
+      "age": 3
+    },
+    {
       "id": "robotica:guide/pyrolite",
       "parent": "robotica:guide/age3",
       "icon": "robotica:pyrolite_shard",
@@ -334,6 +340,18 @@
       "id": "robotica:guide/antigrav_core",
       "parent": "robotica:guide/sentinel",
       "icon": "robotica:antigrav_core",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/nether_star",
+      "parent": "robotica:guide/age4",
+      "icon": "minecraft:nether_star",
+      "age": 4
+    },
+    {
+      "id": "robotica:guide/wither_farm",
+      "parent": "robotica:guide/nether_star",
+      "icon": "robotica:wither_farmer",
       "age": 4
     },
     {

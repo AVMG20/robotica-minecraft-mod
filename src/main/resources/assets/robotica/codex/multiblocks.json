@@ -313,6 +313,102 @@
         "K": "robotica:replicator_controller",
         ".": ""
       }
+    },
+    "iron_golem_farm": {
+      "layers": [
+        [
+          "CCCCC",
+          "CCCCC",
+          "CCCCC",
+          "CCCCC",
+          "CCCCC"
+        ],
+        [
+          "CGGGC",
+          "G...G",
+          "G...G",
+          "G...G",
+          "CGGGC"
+        ],
+        [
+          "CGKGC",
+          "P...G",
+          "R...R",
+          "G...G",
+          "CGRGC"
+        ],
+        [
+          "CGGGC",
+          "G...G",
+          "G...G",
+          "G...G",
+          "CGGGC"
+        ],
+        [
+          "CCCCC",
+          "CGGGC",
+          "CGMGC",
+          "CGGGC",
+          "CCCCC"
+        ]
+      ],
+      "legend": {
+        "C": "robotica:farm_casing",
+        "G": "robotica:farm_glass",
+        "K": "robotica:iron_golem_farmer",
+        "P": "robotica:farm_port",
+        "R": "robotica:impact_ram",
+        "M": "robotica:golem_matrix",
+        ".": ""
+      }
+    },
+    "wither_farm": {
+      "layers": [
+        [
+          "CCCCC",
+          "CCCCC",
+          "CCCCC",
+          "CCCCC",
+          "CCCCC"
+        ],
+        [
+          "CGGGC",
+          "G...G",
+          "G...G",
+          "G...G",
+          "CGGGC"
+        ],
+        [
+          "CGKGC",
+          "P...G",
+          "R...R",
+          "G...G",
+          "CGRGC"
+        ],
+        [
+          "CGGGC",
+          "G...G",
+          "G...G",
+          "G...G",
+          "CGGGC"
+        ],
+        [
+          "CCCCC",
+          "CGGGC",
+          "CGMGC",
+          "CGGGC",
+          "CCCCC"
+        ]
+      ],
+      "legend": {
+        "C": "robotica:farm_casing",
+        "G": "robotica:farm_glass",
+        "K": "robotica:wither_farmer",
+        "P": "robotica:farm_port",
+        "R": "robotica:impact_ram",
+        "M": "robotica:wither_matrix",
+        ".": ""
+      }
     }
   }
 }

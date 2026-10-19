@@ -359,6 +359,20 @@
       "rule": "fixed:REPLICATOR"
     },
     {
+      "id": "mob_farm",
+      "name": "Mob farms",
+      "items": [
+        "iron_golem_farmer",
+        "wither_farmer"
+      ],
+      "effects": {
+        "speed": "Shorter cycles (x2, x3, x4).",
+        "efficiency": "-15% FE per mob per card."
+      },
+      "source": "replicator/farm/FarmControllerBlockEntity",
+      "rule": "fixed:MOB_FARM"
+    },
+    {
       "id": "architect_table",
       "name": "Architect Table",
       "items": [

@@ -382,5 +382,115 @@
         "FFF"
       ]
     ]
+  },
+  "iron_golem_farm": {
+    "title": "Iron Golem Farm 5x5x5",
+    "controller": "iron_golem_farmer",
+    "guide": "mob-farms",
+    "check": "golem_farm",
+    "about": "Controller in the middle of the north wall, Impact Rams in the middle of the other three, the Golem Matrix in the middle of the roof, the chamber empty.",
+    "notes": [
+      "The controller can sit anywhere in a side wall, as long as three wall middles stay free for the rams."
+    ],
+    "legend": {
+      "C": "farm_casing",
+      "G": "farm_glass",
+      "K": "iron_golem_farmer",
+      "P": "farm_port",
+      "R": "impact_ram",
+      "M": "golem_matrix",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "CCCCC",
+        "CCCCC",
+        "CCCCC",
+        "CCCCC",
+        "CCCCC"
+      ],
+      [
+        "CGGGC",
+        "G...G",
+        "G...G",
+        "G...G",
+        "CGGGC"
+      ],
+      [
+        "CGKGC",
+        "P...G",
+        "R...R",
+        "G...G",
+        "CGRGC"
+      ],
+      [
+        "CGGGC",
+        "G...G",
+        "G...G",
+        "G...G",
+        "CGGGC"
+      ],
+      [
+        "CCCCC",
+        "CGGGC",
+        "CGMGC",
+        "CGGGC",
+        "CCCCC"
+      ]
+    ]
+  },
+  "wither_farm": {
+    "title": "Wither Farm 5x5x5",
+    "controller": "wither_farmer",
+    "guide": "mob-farms",
+    "check": "wither_farm",
+    "about": "The Iron Golem Farm's shell with a Wither Matrix in the roof.",
+    "notes": [],
+    "legend": {
+      "C": "farm_casing",
+      "G": "farm_glass",
+      "K": "wither_farmer",
+      "P": "farm_port",
+      "R": "impact_ram",
+      "M": "wither_matrix",
+      ".": "air"
+    },
+    "layers": [
+      [
+        "CCCCC",
+        "CCCCC",
+        "CCCCC",
+        "CCCCC",
+        "CCCCC"
+      ],
+      [
+        "CGGGC",
+        "G...G",
+        "G...G",
+        "G...G",
+        "CGGGC"
+      ],
+      [
+        "CGKGC",
+        "P...G",
+        "R...R",
+        "G...G",
+        "CGRGC"
+      ],
+      [
+        "CGGGC",
+        "G...G",
+        "G...G",
+        "G...G",
+        "CGGGC"
+      ],
+      [
+        "CCCCC",
+        "CGGGC",
+        "CGMGC",
+        "CGGGC",
+        "CCCCC"
+      ]
+    ]
   }
 }

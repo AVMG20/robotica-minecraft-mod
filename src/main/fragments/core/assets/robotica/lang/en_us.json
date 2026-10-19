@@ -141,5 +141,7 @@
   "robotica.configuration.architectTableHeightCap": "Architect Table: most height cards",
   "robotica.configuration.courierDroneSpeedCap": "Courier Drone: most speed cards",
   "robotica.configuration.courierDroneRangeCap": "Courier Drone: most range cards",
-  "robotica.configuration.courierDroneEfficiencyCap": "Courier Drone: most efficiency cards"
+  "robotica.configuration.courierDroneEfficiencyCap": "Courier Drone: most efficiency cards",
+  "robotica.configuration.mobFarmSpeedCap": "Mob farms: most speed cards",
+  "robotica.configuration.mobFarmEfficiencyCap": "Mob farms: most efficiency cards"
 }
