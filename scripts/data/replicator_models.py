@@ -134,7 +134,41 @@ def farm_part(name, faces, glow):
 
 
 farm_part('farm_port', {d: 'farm_port' for d in DIRS}, {d: 'farm_port_glow' for d in DIRS})
-farm_part('impact_ram', {d: 'impact_ram' for d in SIDES} | {'up': 'impact_ram_top', 'down': 'impact_ram_top'}, {})
+
+
+# Impact Ram: a full cube whose four sides open on a 10 px bore, the ram head 2 px down it (FarmRenderer punches the
+# same head out of the inner face). The bore is drawn for the north side and turned round for the others.
+TURN = {'north': 'east', 'east': 'south', 'south': 'west', 'west': 'north', 'up': 'up', 'down': 'down'}
+BORE = [([3, 3, 2], [13, 13, 2], 'north', [3, 3, 13, 13]), ([3, 3, 0], [3, 13, 2], 'east', [3, 14, 5, 16]),
+        ([13, 3, 0], [13, 13, 2], 'west', [3, 14, 5, 16]), ([3, 3, 0], [13, 3, 2], 'up', [3, 14, 5, 16]),
+        ([3, 13, 0], [13, 13, 2], 'down', [3, 14, 5, 16])]
+
+
+def turned(p, n):
+    x, y, z = p
+    for _ in range(n):
+        x, z = 16 - z, x
+    return [x, y, z]
+
+
+ram_elements = [{'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {
+    d: {'texture': '#side' if d in SIDES else '#top', 'cullface': d} for d in DIRS}}]
+for n, side in enumerate(('north', 'east', 'south', 'west')):
+    for frm, to, face, uv in BORE:
+        a, b = turned(frm, n), turned(to, n)
+        d = face
+        for _ in range(n):
+            d = TURN[d]
+        ram_elements.append({'from': [min(a[i], b[i]) for i in range(3)], 'to': [max(a[i], b[i]) for i in range(3)],
+                             'faces': {d: {'texture': '#head', 'uv': uv, 'cullface': side}}})
+write(ASSETS / 'models/block/impact_ram.json', {
+    'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+    'textures': {'side': tex('impact_ram'), 'top': tex('impact_ram_top'), 'head': tex('impact_ram_head'),
+                 'particle': tex('impact_ram_top')},
+    'elements': ram_elements})
+write(ASSETS / 'blockstates/impact_ram.json', {'variants': {'': {'model': 'robotica:block/impact_ram'}}})
+write(ASSETS / 'models/item/impact_ram.json', {'parent': 'robotica:block/impact_ram'})
+loot('impact_ram')
 for matrix in ('golem_matrix', 'wither_matrix'):
     farm_part(matrix, {d: matrix for d in DIRS}, {d: f'{matrix}_glow' for d in DIRS})
 

@@ -88,7 +88,7 @@ public final class ReplicatorRegistry {
     public static final DeferredBlock<PartBlock> IMPACT_RAM = BLOCKS.registerBlock("impact_ram", PartBlock::new,
             farmCasing().mapColor(MapColor.COLOR_RED).pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<PartBlock> GOLEM_MATRIX = BLOCKS.registerBlock("golem_matrix", PartBlock::new,
-            farmCasing().mapColor(MapColor.COLOR_CYAN).lightLevel(s -> 5).pushReaction(PushReaction.BLOCK));
+            farmCasing().mapColor(MapColor.METAL).lightLevel(s -> 5).pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<PartBlock> WITHER_MATRIX = BLOCKS.registerBlock("wither_matrix", PartBlock::new,
             farmCasing().mapColor(MapColor.COLOR_BLACK).lightLevel(s -> 5).pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<ControllerBlock> IRON_GOLEM_FARMER = BLOCKS.registerBlock("iron_golem_farmer",

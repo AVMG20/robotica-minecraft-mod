@@ -10,7 +10,7 @@ Chars on top of the casing palette (machine_casing.py: k K, abcde body, fghij ha
   6           dim corner lens              01234      iron / polished steel (dark -> light), W white glint
   r R y Y     poppy core: dim, lit, hot, white          7 8        golem vine
   p P Q S T   violet: deep, dim, mid, lit, white         B C E      soul blue: dim, lit, white
-  m n o s     soul sand plating: black, dark, mid, light            Z      wither bone
+  m n o s     soul sand: black, dark, mid, light                    Z z    wither skull, its lit brow
 """
 import math
 import pathlib
@@ -33,7 +33,7 @@ FARM_EXTRA = {
     '7': '#2E6B24', '8': '#5FB04A',
     'p': '#140A28', 'P': '#3A2470', 'Q': '#6A4CC8', 'S': '#9A7CFF', 'T': '#E6DCFF',
     'B': '#0B5E6A', 'C': '#3CD8EA', 'E': '#CFFAFF',
-    'm': '#0B0908', 'n': '#1E1712', 'o': '#2E241B', 's': '#433526', 'Z': '#34343A',
+    'm': '#0B0908', 'n': '#1E1712', 'o': '#2E241B', 's': '#433526', 'Z': '#585862', 'z': '#8C8C98',
 }
 WITHER_SCREEN = {'D': '#0D0A16', 'M': '#1C1530', 'N': '#2C2246'}
 
@@ -87,16 +87,13 @@ def farm_panel():
 
 
 def farm_frame():
-    """Edge beam, seamless top to bottom: bolted rails either side of a dark glass channel (lit on the overlay),
-    hazard ticks on the rails every 8 px."""
+    """Edge beam, seamless top to bottom: bolted rails either side of a dark glass channel (lit on the overlay)."""
     c = Canvas()
     c.rect(0, 0, 16, 16, 'b')
     c.rect(0, 0, 1, 16, 'd').rect(1, 0, 1, 16, 'c').rect(14, 0, 1, 16, 'a').rect(15, 0, 1, 16, 'K')
     en.channel(c, 'bank')                                                # 4 px conduit: k housing, u glass
     for y in (3, 11):
         c.set(3, y, 'd').set(3, y + 1, 'a').set(12, y, 'd').set(12, y + 1, 'a')
-    for y in (7, 15):
-        c.rect(2, y, 3, 1, 'h').rect(11, y, 3, 1, 'h').set(2, y, 'g').set(13, y, 'g')
     return c
 
 
@@ -150,32 +147,39 @@ def farm_port_glow():
 
 
 # ---- impact ram
+# The block model sinks the ram head 2 px into a 10 px bore on each side (replicator_models.py): the side texture has
+# the hole, impact_ram_head the head face (3..12) and the bore wall (rows 14-15). The renderer (FarmRenderer) punches the
+# same head out of the inner face, from textures/entity/impact_ram.png.
 
-def hazard_ring(c, cx, cy, r0, r1, a='h', b='k', n=10):
-    for y in range(16):
-        for x in range(16):
-            d = math.hypot(x - cx, y - cy)
-            if r0 <= d <= r1:
-                ang = (math.atan2(y - cy, x - cx) + math.pi) / (2 * math.pi)
-                c.set(x, y, a if int(ang * n) % 2 == 0 else b)
+def ram_head(c, x, y):
+    """10x10 ram head face: red hazard stripes round a polished steel plate, a nut where the rod sits behind it."""
+    for j in range(10):
+        for i in range(10):
+            if i in (0, 9) or j in (0, 9):
+                ch = 'K'
+            elif i in (1, 8) or j in (1, 8):
+                ch = 'h' if (i + j) % 4 < 2 else 'k'
+            else:
+                t = i + j
+                ch = '3' if t < 7 else '1' if t > 11 else '2'
+            c.set(x + i, y + j, ch)
+    c.rect(x + 2, y + 2, 6, 1, '4').rect(x + 2, y + 2, 1, 6, '4').set(x + 2, y + 2, 'W')
+    c.rect(x + 2, y + 7, 6, 1, '0').rect(x + 7, y + 2, 1, 6, '0')
+    c.rect(x + 4, y + 4, 2, 2, '1').set(x + 4, y + 4, '3').set(x + 5, y + 5, '0')
     return c
 
 
 def impact_ram_side():
-    """Piston housing face: a heavy shell with a round polished ram head in a red hazard rim."""
+    """Housing face: the heavy shell round an open 10 px bore (the head sits 2 px down it)."""
     c = mc.shell(1)
-    c.disc(7.5, 7.5, 6.0, 'a')
-    hazard_ring(c, 7.5, 7.5, 4.3, 5.6)
-    c.ring(7.5, 7.5, 5.6, 6.0, 'K')
-    c.disc(7.5, 7.5, 4.2, '2')
-    for y in range(16):                                                  # polished: lit top-left, shade bottom-right
-        for x in range(16):
-            if c.get(x, y) == '2':
-                t = (x - 7.5) + (y - 7.5)
-                c.set(x, y, '3' if t < -3 else '1' if t > 3 else '2')
-    c.ring(7.5, 7.5, 3.6, 4.2, '1')
-    c.line(5, 5, 6, 4, 'W').set(5, 6, '4')
-    c.disc(7.5, 7.5, 1.2, 'K').set(7, 7, '1')                            # centre bolt
+    c.rect(3, 3, 10, 10, '.')
+    return c
+
+
+def impact_ram_head():
+    c = Canvas()
+    ram_head(c, 3, 3)
+    c.rect(3, 14, 10, 2, 'a')                                            # bore wall
     return c
 
 
@@ -193,28 +197,19 @@ def impact_ram_top():
 
 
 def ram_entity():
-    """Moving ram head (entity renderer, every box face maps one half). Rows 0-7: the head plate, polished steel in a
-    red hazard rim. Rows 8-15: the rod, chrome streaks along it."""
-    c = Canvas()
-    for y in range(8):
-        for x in range(16):
-            c.set(x, y, '3' if y < 3 else '2' if y < 6 else '1')
-    c.rect(2, 2, 12, 1, '4').rect(3, 2, 3, 1, 'W')
-    c.rect(1, 1, 14, 1, '2')
-    c.rect(1, 6, 14, 1, '0')
-    for x in range(16):                                                  # hazard rim top and bottom
-        c.set(x, 0, 'h' if (x // 2) % 2 == 0 else 'k')
-        c.set(x, 7, 'k' if (x // 2) % 2 == 0 else 'h')
-    for y in range(1, 7):
-        c.set(0, y, 'h' if y % 2 else 'f').set(15, y, 'f' if y % 2 else 'h')
-    c.set(4, 4, '0').set(11, 4, '0')                                     # bolt heads
-    c.set(4, 3, '4').set(11, 3, '4')
-    rod = '01234W32'
-    for y in range(8, 16):
-        c.rect(0, y, 16, 1, rod[y - 8])
-    for x, y, ch in ((3, 11, '3'), (4, 11, '3'), (10, 12, 'W'), (11, 12, 'W'), (7, 10, '4'), (13, 14, '1'),
-                     (1, 13, '4'), (8, 9, '2')):
-        c.set(x, y, ch)
+    """Moving ram (FarmRenderer, 32x16): head face 0,0-10,10; head edge 10,0-20,4 (u across, v front to back); rod
+    20,0-24,16 (u across, v along); bore bottom 24,0-32,8 (drawn over the model's head while the ram is out)."""
+    c = Canvas(32)
+    ram_head(c, 0, 0)
+    for i in range(10):
+        c.set(10 + i, 0, 'h' if i % 4 < 2 else 'k')
+        c.set(10 + i, 1, '3').set(10 + i, 2, '2').set(10 + i, 3, '0')
+    c.set(10, 1, '2').set(19, 2, '1')
+    for y in range(16):
+        c.set(20, y, '1').set(21, y, '3').set(22, y, '4').set(23, y, '1')
+    for y in (3, 9, 14):
+        c.set(22, y, 'W')
+    c.rect(24, 0, 8, 8, 'K').rect(25, 1, 6, 6, 'a').rect(27, 3, 2, 2, 'K')
     return c
 
 
@@ -224,16 +219,15 @@ CELLS = (4, 7, 10)                           # x / y of the golem core's 2x2 cel
 
 
 def golem_matrix():
-    """Iron block plating round a sunk core grid of poppy red cells between iron bars."""
-    c = Canvas()
-    c.plate(0, 0, 16, 16, '01234', 11, density=0.25)
-    c.bevel(1, 1, 14, 14, '3', '1')
-    c.recess(3, 3, 10, 10, '01234', fill='2')
+    """The shell round a sunk iron core: a 3x3 grid of poppy red cells between iron bars (the cells glow)."""
+    c = mc.shell(1)
+    c.rect(3, 3, 10, 10, '1')
+    c.rect(3, 3, 10, 1, '0').rect(3, 3, 1, 10, '0').rect(3, 12, 10, 1, '2').rect(12, 3, 1, 10, '2')
+    for b in (6, 9):                                                     # iron bars
+        c.rect(4, b, 8, 1, '2').rect(b, 4, 1, 8, '2')
     for gx in CELLS:
         for gy in CELLS:
             c.rect(gx, gy, 2, 2, 'r')
-    for x, y in ((1, 1), (13, 1), (1, 13), (13, 13)):
-        c.rect(x, y, 2, 2, '3').set(x, y, '4').set(x + 1, y + 1, '1')
     return c
 
 
@@ -246,40 +240,32 @@ def golem_matrix_glow():
     return c
 
 
-SKULL = ['.ZZZZ.', 'ZZZZZZ', 'ZmZZmZ', 'ZZZZZZ', '.Z..Z.']
-SKULLS = ((5, 2), (1, 9), (10, 9))
+SKULL = ['.ZZZZZZ.', 'ZzzZZZZZ', 'ZeeZZeeZ', 'ZeeZZeeZ', 'ZZZmmZZZ', '.ZZZZZZ.', '.ZmZmZm.']
 
 
 def wither_matrix():
-    """Soul sand and black plating with three wither skull sockets; their eyes glow violet."""
-    c = Canvas()
-    c.rect(0, 0, 16, 16, 'n')
-    c.speckle(0, 0, 16, 16, 'mos', 0.35, 21)
-    c.bevel(0, 0, 16, 16, 's', 'm')
-    for x, y in SKULLS:
-        c.rect(x - 1, y - 1, 8, 7, 'm')
-        c.rect(x - 1, y + 5, 8, 1, 'o')
-        c.draw(x, y, SKULL)
-        c.set(x + 1, y, 'c').set(x, y + 1, 'c')                          # bone highlight
-        c.set(x + 1, y + 2, 'p').set(x + 4, y + 2, 'p')
+    """The shell round sunk soul sand holding a wither skull; its eye sockets glow violet."""
+    c = mc.shell(1)
+    c.rect(3, 3, 10, 10, 'n')
+    c.speckle(3, 3, 10, 10, 'mos', 0.35, 21)
+    c.rect(3, 3, 10, 1, 'm').rect(3, 3, 1, 10, 'm')
+    c.draw(4, 5, SKULL)
+    c.replace('e', 'p', 4, 5, 8, 7)
     return c
 
 
 def wither_matrix_glow():
     c = Canvas()
-    for x, y in SKULLS:
-        c.set(x + 1, y + 2, 'S').set(x + 4, y + 2, 'S')
-        c.set(x + 1, y + 1, 'Q').set(x + 4, y + 1, 'Q')
-        c.set(x + 2, y + 4, 'P').set(x + 3, y + 4, 'P')
-    x, y = SKULLS[0]
-    c.set(x + 1, y + 2, 'T').set(x + 4, y + 2, 'T')
+    c.draw(4, 5, [r.replace('Z', '.').replace('z', '.').replace('m', '.') for r in SKULL])
+    c.replace('e', 'Q')
+    c.set(5, 7, 'S').set(9, 7, 'S').set(6, 8, 'P').set(10, 8, 'P')
     return c
 
 
 # ---- controllers: a screen in the shell (energy.shell_controller), the mob on the overlay
 
 GOLEM = ['.IIIIII.', 'IHHHHHHI', 'I.eNNe.I', 'IIINNIII', 'gIINNIIg', '.IINNII.', '..IIII..']
-WITHER = ['.HHHHHH.', '.HeHHeH.', '.HHHHHH.', '...HH...', 'sss..sss', 'ses..ses', 'sss..sss']
+WITHER = [r.replace('Z', 'H').replace('m', '.').replace('e', 'E') for r in SKULL]     # the skull, sockets lit
 
 
 def farmer_controller(state):
@@ -300,26 +286,21 @@ def farmer_controller(state):
 ICON = {
     'golem': (GOLEM, {'dim': {'I': '1', 'H': '2', 'N': '0', 'e': 'r', 'g': '7'},
                       'lit': {'I': '3', 'H': '4', 'N': '2', 'e': 'R', 'g': '8'}}),
-    'wither': (WITHER, {'dim': {'H': 'P', 's': 'P'}, 'lit': {'H': 'S', 's': 'Q'}}),
+    'wither': (WITHER, {'dim': {'H': 'P', 'z': 'Q', 'E': 'B'}, 'lit': {'H': 'Q', 'z': 'S', 'E': 'C'}}),
 }
 
 
 def farmer_glow(mob, t=None):
     """Formed (t None): the mob mark dim. Working: the mark lit, a status bar filling once per loop (red for the golem,
-    soul blue for the wither); the golem's eyes flash, the wither's heads light their eyes one after another."""
+    soul blue for the wither); the eyes flash once a loop."""
     c = Canvas().rect(7, 1, 2, 1, 'L')
     rows, shades = ICON[mob]
     shade = shades['dim' if t is None else 'lit']
     c.draw(4, 4, [''.join(shade.get(ch, '.') for ch in r) for r in rows])
     if t is None:
         return c
-    if mob == 'golem':
-        if t % 16 >= 14:
-            c.replace('R', 'y')
-    else:
-        head = t * 3 // CTRL_FRAMES                                      # centre, left, right
-        for i, (x, y) in enumerate(((6, 5), (9, 5), (5, 9), (10, 9))):
-            c.set(x, y, 'T' if (0 if i < 2 else i - 1) == head else 'S')
+    if t % 16 >= 14:
+        c.replace('R', 'y').replace('C', 'E')
     bar, hot = ('v', 'x') if mob == 'golem' else ('C', 'E')
     n = 1 + t * 8 // CTRL_FRAMES
     c.rect(4, 11, n, 1, bar).set(3 + n, 11, hot)
@@ -341,12 +322,13 @@ def main():
     write_block('farm_port', farm_port().rows(), p)
     write_block('farm_port_glow', farm_port_glow().rows(), p)
     write_block('impact_ram', impact_ram_side().rows(), p)
+    write_block('impact_ram_head', impact_ram_head().rows(), p)
     write_block('impact_ram_top', impact_ram_top().rows(), p)
     write_block('golem_matrix', golem_matrix().rows(), p)
     write_block('golem_matrix_glow', golem_matrix_glow().rows(), p)
     write_block('wither_matrix', wither_matrix().rows(), p)
     write_block('wither_matrix_glow', wither_matrix_glow().rows(), p)
-    write_png(ASSETS / 'textures/entity/impact_ram.png', ram_entity().rows(), p)
+    write_png(ASSETS / 'textures/entity/impact_ram.png', ram_entity().rows()[:16], p, size=None)
     for mob, name in (('golem', 'iron_golem_farmer'), ('wither', 'wither_farmer')):
         mp = pal(mob)
         for state in ('off', 'formed', 'on'):

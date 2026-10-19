@@ -890,14 +890,8 @@
       {
         "name": "minecraft:tile/piston/out",
         "type": "file",
-        "volume": 0.7,
-        "pitch": 0.6
-      },
-      {
-        "name": "minecraft:random/anvil_land",
-        "type": "file",
-        "volume": 0.25,
-        "pitch": 1.4
+        "volume": 0.8,
+        "pitch": 0.55
       }
     ]
   },
