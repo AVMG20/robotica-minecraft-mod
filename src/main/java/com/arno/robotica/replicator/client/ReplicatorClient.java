@@ -19,9 +19,14 @@ public final class ReplicatorClient {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, com.arno.robotica.replicator.ReplicatorClientConfig.SPEC, "robotica-replicator-client.toml");
-        modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(ReplicatorRegistry.REPLICATOR_MENU.get(), ReplicatorScreen::new));
-        modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
-                event -> event.registerBlockEntityRenderer(ReplicatorRegistry.CONTROLLER_BE.get(), ReplicatorControllerRenderer::new));
+        modBus.addListener(RegisterMenuScreensEvent.class, event -> {
+            event.register(ReplicatorRegistry.REPLICATOR_MENU.get(), ReplicatorScreen::new);
+            event.register(ReplicatorRegistry.FARM_MENU.get(), FarmScreen::new);
+        });
+        modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, event -> {
+            event.registerBlockEntityRenderer(ReplicatorRegistry.CONTROLLER_BE.get(), ReplicatorControllerRenderer::new);
+            event.registerBlockEntityRenderer(ReplicatorRegistry.FARM_BE.get(), FarmRenderer::new);
+        });
         modBus.addListener(FMLClientSetupEvent.class, event -> event.enqueueWork(() ->
                 // 0 empty, then the vial model switches at the first sample and when it is complete.
                 ItemProperties.register(ReplicatorRegistry.ESSENCE_VIAL.get(), Robotica.id("essence_fill"),

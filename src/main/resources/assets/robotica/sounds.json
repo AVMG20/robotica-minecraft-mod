@@ -884,6 +884,23 @@
       }
     ]
   },
+  "farm_ram": {
+    "subtitle": "subtitles.robotica.farm_ram",
+    "sounds": [
+      {
+        "name": "minecraft:tile/piston/out",
+        "type": "file",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:random/anvil_land",
+        "type": "file",
+        "volume": 0.25,
+        "pitch": 1.4
+      }
+    ]
+  },
   "essence_sample": {
     "subtitle": "subtitles.robotica.essence_sample",
     "sounds": [

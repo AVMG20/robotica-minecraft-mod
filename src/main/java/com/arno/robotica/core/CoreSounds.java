@@ -77,6 +77,7 @@ public final class CoreSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_HUM = reg("replicator_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_CYCLE = reg("replicator_cycle");
     public static final DeferredHolder<SoundEvent, SoundEvent> REPLICATOR_SPAWN = reg("replicator_spawn");
+    public static final DeferredHolder<SoundEvent, SoundEvent> FARM_RAM = reg("farm_ram");
     public static final DeferredHolder<SoundEvent, SoundEvent> ESSENCE_SAMPLE = reg("essence_sample");
     public static final DeferredHolder<SoundEvent, SoundEvent> ESSENCE_COMPLETE = reg("essence_complete");
     public static final DeferredHolder<SoundEvent, SoundEvent> ARCHITECT_PLACE = reg("architect_place");
