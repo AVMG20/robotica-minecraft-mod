@@ -26,6 +26,7 @@ summary: Sample a mob with an Essence Vial, then farm its drops (or spawn it) in
 - **To Lv** gives exactly enough XP to reach the target level (default 30).
 - Breaking the controller drops the stored XP as orbs.
 - A [[plasma_actuator]] in the boost slot doubles speed for extra FE.
+- Pipes, cables and hoppers work on any block of the formed Replicator. With Auto-eject on, it fills containers touching it.
 
 ## Tier gates
 

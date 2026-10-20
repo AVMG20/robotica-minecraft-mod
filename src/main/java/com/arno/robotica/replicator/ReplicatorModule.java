@@ -1,5 +1,6 @@
 package com.arno.robotica.replicator;
 
+import com.arno.robotica.replicator.block.ReplicatorControllerBlockEntity;
 import com.arno.robotica.replicator.logic.Essence;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,5 +43,14 @@ public final class ReplicatorModule {
         // FE on every side, items extract-only (the output) on the faces the side config allows.
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ReplicatorRegistry.CONTROLLER_BE.get(), (be, side) -> be.energy());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ReplicatorRegistry.CONTROLLER_BE.get(), (be, side) -> be.automation(side));
+        // the frames and glass of a formed Replicator act as the controller: FE in, the output out
+        event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, be, side) -> {
+            ReplicatorControllerBlockEntity controller = ReplicatorControllerBlockEntity.ofPart(level, pos, state);
+            return controller == null ? null : controller.energy();
+        }, ReplicatorRegistry.REPLICATOR_FRAME.get(), ReplicatorRegistry.REPLICATOR_GLASS.get());
+        event.registerBlock(Capabilities.ItemHandler.BLOCK, (level, pos, state, be, side) -> {
+            ReplicatorControllerBlockEntity controller = ReplicatorControllerBlockEntity.ofPart(level, pos, state);
+            return controller == null ? null : controller.automation();
+        }, ReplicatorRegistry.REPLICATOR_FRAME.get(), ReplicatorRegistry.REPLICATOR_GLASS.get());
     }
 }

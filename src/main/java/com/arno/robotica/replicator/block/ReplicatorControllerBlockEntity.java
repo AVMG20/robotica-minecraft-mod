@@ -9,6 +9,8 @@ import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.side.RelativeSide;
 import com.arno.robotica.core.multiblock.MultiblockWatcher;
+import com.arno.robotica.energy.block.FramedPartBlock;
+import com.arno.robotica.energy.block.StructureGlassBlock;
 import com.arno.robotica.energy.block.StructureLook;
 import com.arno.robotica.energy.net.StructureFxPayload;
 import com.arno.robotica.core.side.SideConfig;
@@ -53,6 +55,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -402,6 +405,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (now == ReplicatorStructure.Status.UNLOADED) return;
         // after a load the block state still knows whether it stood, so a standing Replicator stays quiet
         boolean wasFormed = validated ? status.formed() : state.getValue(ReplicatorControllerBlock.FORMED);
+        boolean first = !validated;
         validated = true;
         status = now;
         problem = result.wrong();
@@ -423,6 +427,11 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         } else if (lookBox != null && StructureLook.dress(level, lookBox, false)) {
             lookBox = null;
             setChanged();
+        }
+        if (first || wasFormed != now.formed()) {
+            // pipes and cables on the frame cache what they found there: they look again
+            invalidateParts(level, fxBox);
+            if (!fxBox.equals(cube)) invalidateParts(level, cube);
         }
         if (wasFormed != now.formed()) {
             if (now.formed()) com.arno.robotica.core.progress.Milestones.awardOwner(level, pos, owner, com.arno.robotica.core.progress.Milestones.REPLICATOR_FORMED);
@@ -455,6 +464,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
 
     /** The controller broke: the formed look comes off and, if it stood, the frame lets go of its light. */
     public void onControllerRemoved(ServerLevel level, BlockPos pos, BlockState state) {
+        if (status.formed()) invalidateParts(level, cube(pos));
         if (lookBox != null) {
             StructureLook.dress(level, lookBox, false);
             lookBox = null;
@@ -462,6 +472,67 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (status.formed()) {
             CoreSounds.play(level, pos, CoreSounds.STRUCTURE_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
             frameFx(level, pos, StructureFxPayload.UNFORM);
+        }
+    }
+
+    // ---- the formed cube works as the machine ----
+
+    /**
+     * The formed Replicator a dressed frame or glass at {@code part} belongs to, or null: pipes, cables and hoppers on
+     * any block of the cube reach the controller's FE buffer and output. Server side; never loads chunks.
+     */
+    @Nullable
+    public static ReplicatorControllerBlockEntity ofPart(Level level, BlockPos part, BlockState state) {
+        if (level.isClientSide) return null;
+        boolean dressed = state.hasProperty(FramedPartBlock.FRAME) ? state.getValue(FramedPartBlock.FRAME) != FramedPartBlock.Shape.NONE
+                : state.hasProperty(StructureGlassBlock.FORMED) && state.getValue(StructureGlassBlock.FORMED);
+        if (!dressed) return null;
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    p.setWithOffset(part, dx, dy, dz);
+                    if (!level.isLoaded(p)) continue;
+                    BlockState at = level.getBlockState(p);
+                    if (!at.is(ReplicatorRegistry.REPLICATOR_CONTROLLER.get()) || !at.getValue(ReplicatorControllerBlock.FORMED)) continue;
+                    if (level.getBlockEntity(p) instanceof ReplicatorControllerBlockEntity be && be.isFormed() && be.cube(p).isInside(part)) {
+                        return be;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void invalidateParts(ServerLevel level, BoundingBox box) {
+        BlockPos.betweenClosedStream(box).forEach(p -> level.invalidateCapabilities(p.immutable()));
+    }
+
+    /** Next face of the cube Auto-eject serves: one face per transfer, so the 54 spots around the cube spread over ticks. */
+    private int ejectFace;
+
+    /** With Auto-eject on, the output also goes into containers touching the formed cube, not only the controller. */
+    private void ejectAroundCube(ServerLevel level, BlockPos pos) {
+        if (!status.formed() || !sides.autoEject()) return;
+        if (Math.floorMod(level.getGameTime() + pos.asLong(), CoreConfig.sideTransferInterval()) != 0) return;
+        Direction face = Direction.from3DDataValue(ejectFace);
+        ejectFace = (ejectFace + 1) % 6;
+        BlockPos outside = ReplicatorStructure.center(pos, facing).relative(face, 2);
+        BlockPos front = pos.relative(facing);
+        int budget = CoreConfig.sideTransferItems();
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int a = -1; a <= 1 && budget > 0; a++) {
+            for (int b = -1; b <= 1 && budget > 0; b++) {
+                switch (face.getAxis()) {
+                    case X -> p.setWithOffset(outside, 0, a, b);
+                    case Y -> p.setWithOffset(outside, a, 0, b);
+                    case Z -> p.setWithOffset(outside, a, b, 0);
+                }
+                // the spot in front of the controller follows the controller's own side config
+                if (p.equals(front) || !level.isLoaded(p)) continue;
+                IItemHandler target = level.getCapability(Capabilities.ItemHandler.BLOCK, p, face.getOpposite());
+                if (target != null) budget -= SideConfig.move(level, pos, automation, target, budget);
+            }
         }
     }
 
@@ -539,6 +610,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             setChangedAndSync();
         }
         sides.tick(level);
+        ejectAroundCube(level, pos);
         if (working && !muted && CoreSounds.due(level, pos, 80)) {
             CoreSounds.play(level, pos, CoreSounds.REPLICATOR_HUM, SoundSource.BLOCKS, 0.8F, 1.0F);
         }
