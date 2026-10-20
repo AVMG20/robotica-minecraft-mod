@@ -38,7 +38,8 @@ import java.util.UUID;
 
 /**
  * Links of one Tesla Relay or Tesla Emitter plus its per-tick bookkeeping. An emitter on a block that gives out FE runs
- * its network ({@link TeslaGrid}) every tick; relays only hand out what the network gives them. The links and coarse
+ * its network ({@link TeslaGrid}) every tick; so does a relay on such a block (one it does not link to: that one it
+ * feeds). Other relays only hand out what the network gives them. The links and coarse
  * flow levels (0-4, how hard the block and each link work) are synced to the client for the link glow; nothing else is.
  */
 public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvider, EnergyInfoMenu.Source {
@@ -51,9 +52,12 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
 
     @Nullable
     private BlockCapabilityCache<IEnergyStorage, Direction> sourceSided, sourceAny;
+    /** The block it sits on, cached (relays look it up every tick); reset with the block state. */
+    @Nullable
+    private BlockPos support;
     private long windowSent;
     private int lastRate;
-    /** Emitter: sits on a block that gives out FE. */
+    /** Sits on a block that gives out FE (a relay: one it does not link to) and feeds its network from it. */
     private boolean root;
     /** Relay: game time its network last moved energy. */
     private long activeTick = Long.MIN_VALUE / 2;
@@ -108,7 +112,8 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
 
     /** The block the coil sits on. */
     public BlockPos supportPos() {
-        return worldPosition.relative(facing().getOpposite());
+        if (support == null) support = worldPosition.relative(facing().getOpposite());
+        return support;
     }
 
     public List<TeslaLink> links() {
@@ -138,7 +143,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return lastRate;
     }
 
-    /** Emitter: true while the support block gives out FE. */
+    /** True while the support block gives out FE into the network. */
     public boolean isRoot() {
         return root;
     }
@@ -280,6 +285,15 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return any != null && any.canExtract() ? any : null;
     }
 
+    /**
+     * What a relay feeds its network from: the support block's FE storage, unless the relay links to that block (then it
+     * is one of its machines). Null for emitters.
+     */
+    @Nullable
+    IEnergyStorage relaySource() {
+        return isEmitter() || indexOf(supportPos()) >= 0 ? null : source();
+    }
+
     /** The support block's own FE view (no side), to hand back what could not be delivered. */
     @Nullable
     IEnergyStorage sourceBuffer() {
@@ -291,6 +305,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         super.setBlockState(state);
         sourceSided = null;
         sourceAny = null;
+        support = null;
     }
 
     /** Counts {@code amount} FE sent this tick, for the rate and flow level. */
@@ -359,6 +374,9 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             root = !links.isEmpty() && source() != null;
             if (root && links.get(0).coil()) TeslaGrid.tick(this, now);
             else if (root) TeslaGrid.sendDirect(this);
+        } else {
+            root = relaySource() != null;
+            if (root) TeslaGrid.tick(this, now);
         }
         if ((now + (pos.asLong() & 31)) % 40 == 0) validateLinks();
         if (now % 20 == 0) {

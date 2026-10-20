@@ -77,7 +77,7 @@ public class UpgradeRecipeGameTests {
     @GameTest(template = "empty")
     public static void quantumLinkUpgradeKeepsSettings(GameTestHelper helper) {
         LinkNetwork net = LinkNetworks.get(helper.getLevel().getServer())
-                .create(UUID.randomUUID(), "Tester", "Upgrade", 9, Visibility.PUBLIC, helper.getLevel().dimension());
+                .create(UUID.randomUUID(), "Tester", "Upgrade", 9, Visibility.PUBLIC);
         BlockPos a = new BlockPos(1, 1, 1), b = new BlockPos(3, 1, 1);
         helper.setBlock(a, LinkRegistry.LINK_MK1.get().defaultBlockState());
         QuantumLinkBlockEntity old = (QuantumLinkBlockEntity) helper.getBlockEntity(a);

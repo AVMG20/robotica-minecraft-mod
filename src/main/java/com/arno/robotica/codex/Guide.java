@@ -33,9 +33,9 @@ public final class Guide {
             "exo", "drones", "rancher", "grinder", "metal_press", "storage", "capacitor_bank", "upgrade_card", "robot_mk2",
             "warp", "thorium", "ferrothorium", "pocket_architect", "diamonds", "excavator", "survey_rig", "age2",
             "assembler", "rtg", "tesla_spire", "core_reactor", "foundry", "colossus", "servo_core", "servo_drill", "vial",
-            "replicator", "quantum_link", "age3", "pyrolite", "cinder_forge", "tyrant", "magma_core", "magma_drill",
-            "exo_mk3", "age4", "resonite", "null_relay", "sentinel", "antigrav_core", "null_drill", "ring_collider",
-            "flight", "exo_mk4", "portal");
+            "replicator", "quantum_link", "age3", "golem_farm", "pyrolite", "cinder_forge", "tyrant", "magma_core",
+            "magma_drill", "exo_mk3", "age4", "resonite", "null_relay", "sentinel", "antigrav_core", "nether_star",
+            "wither_farm", "null_drill", "ring_collider", "flight", "exo_mk4", "portal");
 
     public static boolean isGuide(ResourceLocation id) {
         return Robotica.MODID.equals(id.getNamespace()) && id.getPath().startsWith(PREFIX);

@@ -432,12 +432,95 @@
    "items": [
     "essence_vial"
    ],
-   "what": "Takes samples from a hostile mob. The first sample binds it to that mob type; 8 samples fill it.",
+   "what": "Takes samples from a hostile mob or a villager. The first sample binds it to that mob type; 8 samples fill it.",
    "use": [
-    "Right-click a mob (2 damage, 3 s cooldown)."
+    "Right-click a mob (2 damage, 3 s cooldown). Villagers take no damage."
    ],
    "see": [
-    "guide:mob-replicator"
+    "guide:mob-replicator",
+    "guide:mob-farms"
+   ]
+  },
+  {
+   "items": [
+    "iron_golem_farmer"
+   ],
+   "what": "Controller of the Iron Golem Farm: builds iron golems in its chamber and strikes them down for their loot.",
+   "use": [
+    "Fill its vial slots: three Villager vials and one Zombie vial (any zombie).",
+    "Feed FE and take the loot through a Farm Port."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Power",
+      "240 FE/t"
+     ],
+     [
+      "Cycle",
+      "600 ticks"
+     ],
+     [
+      "Output",
+      "18 slots"
+     ],
+     [
+      "Buffer",
+      "4,000,000 FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:mob-farms",
+    "multiblock:iron_golem_farm"
+   ]
+  },
+  {
+   "items": [
+    "wither_farmer"
+   ],
+   "what": "Controller of the Wither Farm: builds Withers in its chamber and strikes them down. Each one gives a Nether Star.",
+   "use": [
+    "Fill its vial slots with three Wither Skeleton vials.",
+    "Feed FE and take the stars through a Farm Port."
+   ],
+   "stats": {
+    "rows": [
+     [
+      "Power",
+      "2,000 FE/t"
+     ],
+     [
+      "Cycle",
+      "6,000 ticks"
+     ],
+     [
+      "Output",
+      "18 slots"
+     ],
+     [
+      "Buffer",
+      "4,000,000 FE"
+     ]
+    ]
+   },
+   "see": [
+    "guide:mob-farms",
+    "multiblock:wither_farm"
+   ]
+  },
+  {
+   "items": [
+    "farm_casing",
+    "farm_glass",
+    "farm_port",
+    "impact_ram",
+    "golem_matrix",
+    "wither_matrix"
+   ],
+   "what": "Shell blocks of the mob farms. Three Impact Rams in the middle of three side walls, the farm's matrix in the middle of the roof, at least one Farm Port.",
+   "see": [
+    "guide:mob-farms"
    ]
   },
   {

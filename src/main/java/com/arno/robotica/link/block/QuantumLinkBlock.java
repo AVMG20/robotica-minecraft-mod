@@ -47,16 +47,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Quantum Link Mk1-3: a pedestal with a crystal floating above it (drawn by the block entity renderer). Right-click
+ * Quantum Link Mk1-3: a flat-topped block (a Tesla Relay can sit on it) whose top core and side windows show the network
+ * colour (drawn by the block entity renderer). Right-click
  * opens its screen (owner, team, operators); right-click with the next Mk upgrades it in place, keeping network,
  * settings and energy. Breaking it keeps its network and settings in the item.
  */
 public class QuantumLinkBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    /** Height of the crystal's centre above the block's base, in blocks. */
-    public static final double CRYSTAL_Y = 1.12;
-    private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 3, 16), Block.box(1, 3, 1, 15, 11, 15),
-            Block.box(1, 11, 1, 15, 13, 15));
+    /** Height of the top core above the block's base, in blocks (the top is flat, a Tesla Relay sits on it). */
+    public static final double TOP_Y = 1.0;
+    private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 3, 16), Block.box(1, 3, 1, 15, 13, 15),
+            Block.box(0, 13, 0, 16, 16, 16));
 
     private final LinkTier tier;
 
@@ -200,7 +201,7 @@ public class QuantumLinkBlock extends Block implements EntityBlock {
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
-    /** Block events (the crystal pulse) go to the block entity. */
+    /** Block events (the core pulse) go to the block entity. */
     @Override
     protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
         super.triggerEvent(state, level, pos, id, param);
@@ -215,8 +216,6 @@ public class QuantumLinkBlock extends Block implements EntityBlock {
         tooltip.add(Component.translatable("tooltip.robotica.quantum_link").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.robotica.quantum_link_rate", Fmt.compact(tier.rate), tier.stacks,
                 Fmt.compact(tier.upkeep())).withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable(tier.homeOnly ? "tooltip.robotica.quantum_link_home" : "tooltip.robotica.quantum_link_any")
-                .withStyle(ChatFormatting.DARK_GRAY));
         CompoundTag settings = stack.get(LinkRegistry.LINK_SETTINGS.get());
         if (settings != null && settings.hasUUID("network")) {
             tooltip.add(Component.translatable("tooltip.robotica.quantum_link_network", settings.getString("networkName"))

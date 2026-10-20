@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CNC",
+    "ASA",
+    "CVC"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:farm_casing"
+    },
+    "N": {
+      "item": "robotica:null_circuit"
+    },
+    "A": {
+      "item": "robotica:plasma_actuator"
+    },
+    "S": {
+      "tag": "c:nether_stars"
+    },
+    "V": {
+      "item": "robotica:essence_vial"
+    }
+  },
+  "result": {
+    "id": "robotica:wither_farmer",
+    "count": 1
+  }
+}

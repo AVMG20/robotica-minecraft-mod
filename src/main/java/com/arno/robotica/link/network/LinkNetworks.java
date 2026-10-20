@@ -8,12 +8,10 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
@@ -32,7 +30,8 @@ import java.util.UUID;
 /**
  * Every Quantum Link network of the world, stored on the overworld data storage next to the Warp Pad registry, keyed
  * by network UUID. A network belongs to its owner's UUID and stays when all its Links are broken; only the owner
- * deletes it. {@link #tick} runs once per server tick and hands each network's buffer to the receivers that ticked.
+ * deletes it. {@link #tick} runs once per server tick: it charges each network's upkeep and hands its buffer to the
+ * receivers that ticked.
  */
 public class LinkNetworks extends SavedData {
     public static final String NAME = "robotica_link_networks";
@@ -89,9 +88,8 @@ public class LinkNetworks extends SavedData {
         return n;
     }
 
-    /** A new network; {@code home} is the dimension it is made in (Mk1 Links only work there). */
-    public LinkNetwork create(UUID owner, String ownerName, String name, int color, Visibility visibility, ResourceKey<Level> home) {
-        LinkNetwork net = new LinkNetwork(UUID.randomUUID(), owner, ownerName, name, color, visibility, home);
+    public LinkNetwork create(UUID owner, String ownerName, String name, int color, Visibility visibility) {
+        LinkNetwork net = new LinkNetwork(UUID.randomUUID(), owner, ownerName, name, color, visibility);
         net.data = this;
         networks.put(net.id(), net);
         setDirty();
@@ -132,6 +130,12 @@ public class LinkNetworks extends SavedData {
         touched.add(net);
     }
 
+    /** A Link that works this tick: it owes its upkeep at the end of the tick, whoever pays it. */
+    public void addUpkeep(LinkNetwork net, QuantumLinkBlockEntity link, long now) {
+        touch(net, now);
+        net.upkeepLinks.add(link);
+    }
+
     public void addEnergyReceiver(LinkNetwork net, QuantumLinkBlockEntity link, long now) {
         touch(net, now);
         net.energyReceivers[link.priority().ordinal()].add(link);
@@ -142,12 +146,16 @@ public class LinkNetworks extends SavedData {
         net.itemReceivers[link.priority().ordinal()].add(link);
     }
 
-    /** After all levels ticked: energy every tick, items every {@link #ITEM_INTERVAL} ticks, one sender check now and then. */
+    /**
+     * After all levels ticked: upkeep and energy every tick, items every {@link #ITEM_INTERVAL} ticks, one sender check
+     * now and then. Upkeep goes first, so the receivers only get what is left.
+     */
     public void tick(MinecraftServer server) {
         long now = server.getTickCount();
         for (int i = 0; i < touched.size(); i++) {
             LinkNetwork net = touched.get(i);
             if (net.removed()) continue;
+            net.payUpkeep();
             net.distributeEnergy();
             if (Math.floorMod(now + net.id().hashCode(), ITEM_INTERVAL) == 0 && net.hasItems()) net.distributeItems();
             if (Math.floorMod(now + net.id().hashCode(), VALIDATE_INTERVAL) == 0) validateOneSender(server, net);
@@ -235,7 +243,7 @@ public class LinkNetworks extends SavedData {
             if (!canUse(server, net, player)) continue;
             String ownerName = OwnerNames.name(server, net.owner());
             out.add(new NetworkEntry(net.id(), net.name(), ownerName != null ? ownerName : net.ownerName(), net.color(),
-                    net.visibility(), net.home().location(), group(server, net, player), canManage(net, player)));
+                    net.visibility(), group(server, net, player), canManage(net, player)));
         }
         out.sort(Comparator.comparingInt(NetworkEntry::group).thenComparing(NetworkEntry::name, String.CASE_INSENSITIVE_ORDER));
         return out;

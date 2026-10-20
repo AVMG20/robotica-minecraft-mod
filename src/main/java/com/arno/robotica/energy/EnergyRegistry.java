@@ -167,7 +167,8 @@ public final class EnergyRegistry {
             BLOCK_ENTITIES.register("collider_controller", () -> BlockEntityType.Builder.of(ColliderBlockEntity::new, COLLIDER_CONTROLLER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PortBlockEntity>> PORT_BE =
             BLOCK_ENTITIES.register("energy_port", () -> BlockEntityType.Builder.of(PortBlockEntity::new,
-                    REACTOR_POWER_PORT.get(), REACTOR_ACCESS_PORT.get(), BANK_PORT.get()).build(null));
+                    REACTOR_POWER_PORT.get(), REACTOR_ACCESS_PORT.get(), BANK_PORT.get(),
+                    com.arno.robotica.replicator.ReplicatorRegistry.FARM_PORT.get()).build(null));
 
     // ---- Menus ----
     public static final DeferredHolder<MenuType<?>, MenuType<CoreReactorMenu>> REACTOR_MENU =

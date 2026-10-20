@@ -88,6 +88,12 @@
       "robotica:looting_module_3",
       "robotica:ignition_charge",
       "robotica:forge_altar",
+      "robotica:farm_casing",
+      "robotica:farm_glass",
+      "robotica:farm_port",
+      "robotica:impact_ram",
+      "robotica:golem_matrix",
+      "robotica:iron_golem_farmer",
       "robotica:quantum_link_mk2"
     ],
     "experience": 50

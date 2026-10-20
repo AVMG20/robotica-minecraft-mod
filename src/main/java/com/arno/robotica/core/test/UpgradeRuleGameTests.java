@@ -193,6 +193,9 @@ public class UpgradeRuleGameTests {
         checkFixed(helper, rep, cards(helper, ReplicatorRegistry.REPLICATOR_CONTROLLER.get().defaultBlockState()));
         checkFixed(helper, table, cards(helper, ArchitectRegistry.ARCHITECT_TABLE.get().defaultBlockState()));
         checkFixed(helper, UpgradeRules.Fixed.COURIER_DRONE, DronesRegistry.COURIER_DRONE_ENTITY.get().create(helper.getLevel()).upgrades);
+        UpgradeRules.Fixed farm = UpgradeRules.Fixed.MOB_FARM;
+        helper.assertTrue(farm.slots == 2 && farm.cap(SPEED) == 3 && farm.cap(EFFICIENCY) == 4, "Mob farms: speed 3, efficiency 4");
+        checkFixed(helper, farm, com.arno.robotica.replicator.farm.FarmControllerBlockEntity.newUpgrades(() -> {}));
 
         Upgrades up = cards(helper, PowerRegistry.COMBUSTION_GENERATOR.get().defaultBlockState());
         ItemStack rest = up.insertItem(0, CoreItems.cards(SPEED, 8), false);

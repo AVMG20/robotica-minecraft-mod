@@ -884,6 +884,17 @@
       }
     ]
   },
+  "farm_ram": {
+    "subtitle": "subtitles.robotica.farm_ram",
+    "sounds": [
+      {
+        "name": "robotica:machine/ram",
+        "type": "file",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
   "essence_sample": {
     "subtitle": "subtitles.robotica.essence_sample",
     "sounds": [

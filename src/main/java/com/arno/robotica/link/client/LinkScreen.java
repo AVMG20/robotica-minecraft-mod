@@ -16,7 +16,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.DyeColor;
@@ -257,7 +256,7 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
         drawFitted(g, font, tr("items"), x + RX, y + 41, RW, TEXT, -1, false, 0.75F);
         drawFitted(g, font, tr("priority"), x + RX, y + 64, RW, TEXT, -1, false, 0.75F);
         long stored = menu.networkEnergy(), capacity = menu.networkCapacity();
-        int use = menu.status().connected() ? menu.tier().upkeep() : 0;
+        long use = menu.status().connected() ? menu.networkUpkeep() : 0;
         drawEnergyBarWide(g, x + RX, y + 90, RW, 6, stored, capacity,
                 Component.translatable("gui.robotica.processing.using", Fmt.compact(use)).withStyle(ChatFormatting.GRAY));
         drawFitted(g, font, tr("slots", menu.usedSlots(), menu.itemSlots()), x + RX, y + 99, RW, TEXT, -1, false, 0.75F);
@@ -272,7 +271,7 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
         };
         Component text = switch (status) {
             case ACTIVE -> tr("status.active", Fmt.compact(menu.feRate()), menu.itemRate());
-            case NO_POWER -> tr("status.no_power", Fmt.compact(menu.tier().upkeep()));
+            case NO_POWER -> tr("status.no_power", Fmt.compact(Math.max(menu.tier().upkeep(), menu.networkUpkeep())));
             default -> Component.translatable(status.translationKey());
         };
         drawStatus(g, text, x + 8, y + STATUS_Y, imageWidth - 16, 1, tone);
@@ -284,7 +283,6 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
         if (entries.isEmpty()) {
             drawFitted(g, font, tr("none"), x + LIST_X + LIST_W / 2, y + LIST_Y + 30, LIST_W, TEXT, 0, false, 1.0F);
         }
-        ResourceLocation here = minecraft != null && minecraft.level != null ? minecraft.level.dimension().location() : null;
         for (int r = 0; r < ROWS; r++) {
             int index = scroll + r;
             if (index >= entries.size()) break;
@@ -298,9 +296,7 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
             g.fill(rx + 4, ry + 4, rx + 12, ry + 5, 0x60FFFFFF);
             drawFitted(g, font, Component.literal(e.name()), rx + 17, ry + 2, LIST_W - 21, 0xFF202020, -1, false, 1.0F);
             Component who = e.group() == 0 ? tr("yours") : Component.literal(e.ownerName());
-            Component sub = here != null && !here.equals(e.home())
-                    ? tr("row_away", who, Component.translatable(e.visibility().translationKey()), prettyDimension(e.home()))
-                    : tr("row", who, Component.translatable(e.visibility().translationKey()));
+            Component sub = tr("row", who, Component.translatable(e.visibility().translationKey()));
             drawFitted(g, font, sub, rx + 17, ry + 10, LIST_W - 21, TEXT, -1, false, 0.75F);
         }
         if (entries.size() > ROWS) {
@@ -323,11 +319,6 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
             if (selected) g.fill(sx + SWATCH_W / 2 - 1, sy + SWATCH_H / 2 - 1, sx + SWATCH_W / 2 + 1, sy + SWATCH_H / 2 + 1, 0xFFFFFFFF);
             addTooltip(sx, sy, SWATCH_W, SWATCH_H, Component.translatable("color.minecraft." + DyeColor.byId(i).getName()));
         }
-        NetworkEntry current = menu.currentEntry();
-        ResourceLocation home = creating
-                ? (minecraft != null && minecraft.level != null ? minecraft.level.dimension().location() : null)
-                : current != null ? current.home() : null;
-        if (home != null) drawFitted(g, font, tr("home", prettyDimension(home)), x + LIST_X, y + 79, LIST_W, TEXT, -1, false, 0.75F);
     }
 
     @Override
@@ -378,16 +369,5 @@ public class LinkScreen extends MachineScreen<LinkMenu> {
     @Override
     protected Component slotHint(Slot slot) {
         return slot.index < QuantumLinkBlockEntity.FILTER_SLOTS ? tr("slot_filter") : null;
-    }
-
-    /** "minecraft:the_nether" becomes "The Nether". */
-    static String prettyDimension(ResourceLocation id) {
-        StringBuilder out = new StringBuilder();
-        for (String word : id.getPath().split("[_/]")) {
-            if (word.isEmpty()) continue;
-            if (out.length() > 0) out.append(' ');
-            out.append(word.substring(0, 1).toUpperCase(Locale.ROOT)).append(word.substring(1));
-        }
-        return out.toString();
     }
 }

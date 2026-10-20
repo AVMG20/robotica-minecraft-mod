@@ -618,17 +618,31 @@ public class PowerGameTests {
         });
     }
 
-    /** A relay on an Accumulator does not pull from it: only emitters put energy in. */
+    /** A relay on an Accumulator feeds its network from it, like an emitter, and hands it straight to its machines. */
     @GameTest(template = "empty", timeoutTicks = 60)
-    public static void teslaRelayOnlyHandsOut(GameTestHelper helper) {
-        accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
+    public static void teslaRelayOnSourceFeedsItsNetwork(GameTestHelper helper) {
+        AccumulatorBlockEntity source = accumulator(helper, new BlockPos(0, 1, 0), Direction.NORTH, 500_000);
         TeslaCoilBlockEntity relay = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
         AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(2, 1, 0), Direction.NORTH, 0);
         link(helper, relay, sink.getBlockPos(), Direction.EAST, "relay -> sink");
-        helper.runAfterDelay(30, () -> {
-            helper.assertTrue(!relay.isRoot(), "a relay is never a source");
-            helper.assertTrue(sink.energy.getEnergyStored() == 0, "nothing flows without an emitter, has " + sink.energy.getEnergyStored());
-            helper.succeed();
+        helper.succeedWhen(() -> {
+            helper.assertTrue(relay.isRoot(), "a relay on an Accumulator is a source");
+            helper.assertTrue(sink.energy.getEnergyStored() > 0, "the sink fills from the relay's Accumulator");
+            helper.assertTrue(source.energy.getEnergyStored() + sink.energy.getEnergyStored() == 500_000, "nothing is lost");
+        });
+    }
+
+    /** A relay linked to the Accumulator it sits on feeds it: it does not pull from one of its own machines. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaRelayFeedsLinkedSupport(GameTestHelper helper) {
+        TeslaCoilBlockEntity emitter = emitterOn(helper, new BlockPos(0, 1, 0), 500_000);
+        AccumulatorBlockEntity support = accumulator(helper, new BlockPos(2, 1, 2), Direction.NORTH, 0);
+        TeslaCoilBlockEntity relay = coil(helper, new BlockPos(2, 2, 2), PowerRegistry.TESLA_COIL_1.get());
+        link(helper, emitter, relay.getBlockPos(), Direction.UP, "emitter -> relay");
+        link(helper, relay, support.getBlockPos(), Direction.UP, "relay -> the block it sits on");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!relay.isRoot(), "a relay is no source for its own machine");
+            helper.assertTrue(support.energy.getEnergyStored() > 2_000, "the relay fills the block it sits on, has " + support.energy.getEnergyStored());
         });
     }
 

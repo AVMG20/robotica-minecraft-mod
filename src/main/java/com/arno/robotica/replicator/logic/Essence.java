@@ -63,6 +63,21 @@ public final class Essence {
         }
     }
 
+    /** Zombies that scare villagers, for the Iron Golem Farmer: zombie, husk, drowned, zombie villager. */
+    public static boolean isZombie(EntityType<?> type) {
+        return type == EntityType.ZOMBIE || type == EntityType.HUSK || type == EntityType.DROWNED || type == EntityType.ZOMBIE_VILLAGER;
+    }
+
+    /** Peaceful mobs a vial may sample: only villagers, for the Iron Golem Farmer. They take no damage. */
+    public static boolean isFarmOnly(EntityType<?> type) {
+        return type == EntityType.VILLAGER;
+    }
+
+    /** Whether a vial can be used on this mob at all: hostile mobs and villagers. */
+    public static boolean canTarget(Entity entity) {
+        return isHostile(entity) || isFarmOnly(entity.getType());
+    }
+
     /** Hostile means Enemy (slimes, ghasts, phantoms...) or the MONSTER category. Players never count. */
     public static boolean isHostile(Entity entity) {
         return !(entity instanceof Player) && (entity instanceof Enemy || entity.getType().getCategory() == MobCategory.MONSTER);
@@ -117,7 +132,7 @@ public final class Essence {
     public static boolean isUsable(ItemStack stack) {
         if (!isComplete(stack)) return false;
         EntityType<?> type = type(stack);
-        return type != null && !isBlacklisted(type);
+        return type != null && !isBlacklisted(type) && !isFarmOnly(type);
     }
 
     /** What taking a sample of {@code type} would do to this vial, without changing it. */

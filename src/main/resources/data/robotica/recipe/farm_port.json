@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RHR",
+    "KCK",
+    "RAR"
+  ],
+  "key": {
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "K": {
+      "item": "robotica:copper_coil"
+    },
+    "C": {
+      "item": "robotica:farm_casing"
+    },
+    "A": {
+      "item": "robotica:advanced_circuit"
+    }
+  },
+  "result": {
+    "id": "robotica:farm_port",
+    "count": 1
+  }
+}

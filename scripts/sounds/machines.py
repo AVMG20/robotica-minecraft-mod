@@ -1,4 +1,4 @@
-"""Machine sounds: soft synthesized clips for the processing machines, the RTG and chargers.
+"""Machine sounds: soft synthesized clips for the processing machines, the RTG, chargers and the Impact Ram.
 Run: python3 scripts/sounds/machines.py   (writes assets/robotica/sounds/machine/*.ogg; needs numpy and ffmpeg)
 
 Every clip is mono 44.1 kHz, built from sines and filtered noise with a seeded generator, faded in and out and
@@ -110,9 +110,26 @@ def chime():
     return at(total, 0, bell(1046.5, 0.6)) + at(total, 0.11, bell(1568.0, 0.75) * 0.8)
 
 
+def ram():
+    """Impact Ram strike: a heavy low thump with a steel clank on top, then the hiss of the ram pulling back. The hit
+    starts the clip, as the sound plays on the tick the head lands."""
+    total = 0.6
+    t = time(total)
+    k = time(0.45)
+    freq = 55 + 85 * np.exp(-k / 0.03)                                    # thump falling from 140 to 55 Hz
+    thump = np.sin(2 * np.pi * np.cumsum(freq) / SR) * np.exp(-k / 0.085)
+    body = band(noise(0.45, 32), 60, 400) * np.exp(-k / 0.05) * 0.5
+    crack = band(noise(0.45, 33), 300, 2500) * np.exp(-k / 0.012) * 0.45
+    partials = ((310, 0.22), (737, 0.16), (1290, 0.08))                  # steel clank, inharmonic
+    clank = sum(a * np.sin(2 * np.pi * f * k) for f, a in partials) * np.exp(-k / 0.07)
+    hit = np.tanh(1.6 * (thump + body + crack + clank)) / np.tanh(1.6) * env(k, 0.002, 0.08)  # soft clip
+    vent = band(noise(0.35, 34), 1200, 4500) * np.exp(-time(0.35) / 0.09) * env(time(0.35), 0.03, 0.12) * 0.09
+    return (at(total, 0.005, hit) + at(total, 0.12, vent)) * env(t, 0.001, 0.1)
+
+
 CLIPS = {
     'grind': grind, 'smelt': smelt, 'centrifuge': centrifuge, 'geiger': geiger,
-    'chime': chime,
+    'chime': chime, 'ram': ram,
 }
 
 

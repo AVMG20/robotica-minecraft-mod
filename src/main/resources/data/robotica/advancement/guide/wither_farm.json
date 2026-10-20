@@ -1,0 +1,34 @@
+{
+  "parent": "robotica:guide/nether_star",
+  "display": {
+    "icon": {
+      "id": "robotica:wither_farmer"
+    },
+    "title": {
+      "translate": "advancements.robotica.guide.wither_farm.title"
+    },
+    "description": {
+      "translate": "advancements.robotica.guide.wither_farm.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "robotica:milestone",
+      "conditions": {
+        "milestone": "wither_farm_formed"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}

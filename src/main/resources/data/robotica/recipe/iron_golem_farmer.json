@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CQC",
+    "AXA",
+    "CVC"
+  ],
+  "key": {
+    "C": {
+      "item": "robotica:farm_casing"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "A": {
+      "item": "robotica:plasma_actuator"
+    },
+    "X": {
+      "item": "robotica:reinforced_casing"
+    },
+    "V": {
+      "item": "robotica:essence_vial"
+    }
+  },
+  "result": {
+    "id": "robotica:iron_golem_farmer",
+    "count": 1
+  }
+}

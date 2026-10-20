@@ -19,9 +19,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 STATES = ROOT / 'src/main/resources/assets/robotica/blockstates'
 MBS = json.loads((ROOT / 'scripts/wiki/multiblocks.json').read_text())
 
-FRAMED = {'reactor_casing', 'bank_casing', 'replicator_frame'}     # FramedPartBlock: frame=none|wall|x|y|z|corner
-GLASS = {'reactor_glass', 'bank_glass', 'replicator_glass'}          # StructureGlassBlock: connected, formed
-CONTROLLERS = {'reactor_controller', 'bank_controller', 'spire_base', 'collider_controller', 'replicator_controller'}
+FRAMED = {'reactor_casing', 'bank_casing', 'replicator_frame', 'farm_casing'}     # FramedPartBlock: frame=none|wall|x|y|z|corner
+GLASS = {'reactor_glass', 'bank_glass', 'replicator_glass', 'farm_glass'}        # StructureGlassBlock: connected, formed
+CONTROLLERS = {'reactor_controller', 'bank_controller', 'spire_base', 'collider_controller', 'replicator_controller',
+               'iron_golem_farmer', 'wither_farmer'}
 RING = {'accelerator_segment', 'resonant_segment', 'collider_controller'}
 # MapColor of the vanilla conductor blocks (the Spire renderer tints the coil shell with the block's map colour)
 MAP_COLORS = {
@@ -30,9 +31,10 @@ MAP_COLORS = {
     'emerald_block': 0x00D93A, 'netherite_block': 0x191919, 'redstone_block': 0xFF0000, 'lapis_block': 0x4A80FF,
 }
 ARC_TINT = (0.55, 0.95, 1.0)                         # SpireRenderer's arc colour on the coil slits
-FORMED_CHECKS = {'bank', 'core_reactor', 'spire', 'collider', 'replicator'}      # multiblocks with a formed look
+FORMED_CHECKS = {'bank', 'core_reactor', 'spire', 'collider', 'replicator', 'golem_farm', 'wither_farm'}    # multiblocks with a formed look
 # Full opaque cubes: a neighbour's face towards one is culled, like in a chunk. Glass also culls against its own kind.
-FULL = FRAMED | CONTROLLERS | {'bank_port', 'reactor_power_port', 'reactor_access_port', 'cryo_coolant'}
+FULL = FRAMED | CONTROLLERS | {'bank_port', 'reactor_power_port', 'reactor_access_port', 'cryo_coolant', 'farm_port',
+                               'impact_ram', 'golem_matrix', 'wither_matrix'}
 FULL_PREFIXES = ('minecraft:', 'capacitor_', 'transfer_coil_')
 
 
@@ -136,7 +138,7 @@ def scene(mb_id, formed=True):
     for (x, y, z), b in sorted(grid.items(), key=lambda kv: (kv[0][1], kv[0][2], kv[0][0])):
         props, tint, block = {}, None, b
         if b in CONTROLLERS:
-            if kind in ('bank', 'core_reactor', 'replicator'):
+            if kind in ('bank', 'core_reactor', 'replicator', 'golem_farm', 'wither_farm'):
                 props['facing'] = 'north' if z == 0 else 'south' if z == D - 1 else 'west' if x == 0 else 'east'
             else:
                 props['facing'] = 'north'

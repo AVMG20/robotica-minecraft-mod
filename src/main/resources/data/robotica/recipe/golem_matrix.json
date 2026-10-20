@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IPI",
+    "QFQ",
+    "IPI"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:storage_blocks/iron"
+    },
+    "P": {
+      "item": "minecraft:carved_pumpkin"
+    },
+    "Q": {
+      "item": "robotica:quantum_circuit"
+    },
+    "F": {
+      "item": "robotica:farm_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:golem_matrix",
+    "count": 1
+  }
+}
