@@ -8,8 +8,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The 3x3x3 shape: the controller replaces the centre of one face (facing outward), the other 25 shell blocks are
- * frames or glass (at least one glass) and the single block in the middle of the cube is air.
+ * The 3x3x3 shape: the controller replaces the centre of one face, the other 25 shell blocks are frames or glass (at
+ * least one glass) and the single block in the middle of the cube is air. A facing here is the controller's outward
+ * side: the cube lies behind it.
  */
 public final class ReplicatorStructure {
     private ReplicatorStructure() {}
@@ -83,9 +84,9 @@ public final class ReplicatorStructure {
     }
 
     /**
-     * Checks the cube behind {@code facing} and, when that one does not form, the cubes on the other five sides of the
-     * controller: a controller placed against the wrong block still forms. Returns the cube that forms, else the one
-     * with the most frame and glass blocks (the given facing on a tie), whose problem is the one to show.
+     * Checks the cube behind {@code facing} (the side found last time) and, when that one does not form, the cubes on
+     * the other five sides of the controller. Returns the cube that forms, else the one with the most frame and glass
+     * blocks (the given facing on a tie), whose problem is the one to show.
      */
     public static Result find(Level level, BlockPos controller, Direction facing) {
         Result best = check(level, controller, facing);
@@ -95,24 +96,6 @@ public final class ReplicatorStructure {
             Result alt = check(level, controller, side);
             if (alt.status() == Status.FORMED) return alt;
             if (alt.status() != Status.UNLOADED && alt.parts() > best.parts()) best = alt;
-        }
-        return best;
-    }
-
-    /**
-     * Facing for a controller placed at {@code pos}: towards the outside of the cube with the most frame and glass,
-     * {@code preferred} on a tie or with nothing built yet.
-     */
-    public static Direction guessFacing(Level level, BlockPos pos, Direction preferred) {
-        Direction best = preferred;
-        int bestParts = check(level, pos, preferred).parts();
-        for (Direction side : Direction.values()) {
-            if (side == preferred) continue;
-            int parts = check(level, pos, side).parts();
-            if (parts > bestParts) {
-                best = side;
-                bestParts = parts;
-            }
         }
         return best;
     }

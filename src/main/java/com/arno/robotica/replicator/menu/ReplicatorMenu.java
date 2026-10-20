@@ -133,7 +133,7 @@ public class ReplicatorMenu extends MachineMenu {
         return pos.offset(code / 25 - 2, code / 5 % 5 - 2, code % 5 - 2);
     }
 
-    /** A position within 2 blocks of the controller as 1..125 (0 for none): fits a 16 bit data slot. */
+    /** A position within 2 blocks of the controller as 1..125, 0 for none. */
     private static int encodeProblem(BlockPos controller, @Nullable BlockPos problem) {
         if (problem == null) return 0;
         int dx = problem.getX() - controller.getX() + 2, dy = problem.getY() - controller.getY() + 2, dz = problem.getZ() - controller.getZ() + 2;

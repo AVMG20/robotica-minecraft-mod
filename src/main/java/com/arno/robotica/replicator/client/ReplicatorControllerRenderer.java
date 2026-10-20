@@ -55,7 +55,7 @@ public class ReplicatorControllerRenderer implements BlockEntityRenderer<Replica
         float height = Math.max(0.1F, entity.getBbHeight());
         float scale = Mth.clamp(0.8F / Math.max(width, height), 0.12F, 1.0F) * (1.0F + 0.3F * pulse);
 
-        Direction facing = state.getValue(ReplicatorControllerBlock.FACING);
+        Direction facing = be.facing();
         entity.tickCount = (int) time;
 
         // Idle mobs are dim; a working one glows. The flash goes toward white and almost opaque.

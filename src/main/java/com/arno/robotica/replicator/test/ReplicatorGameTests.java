@@ -57,8 +57,7 @@ public class ReplicatorGameTests {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (pos.equals(CENTER)) continue;
                     if (pos.equals(CONTROLLER)) {
-                        helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_CONTROLLER.get().defaultBlockState()
-                                .setValue(ReplicatorControllerBlock.FACING, Direction.NORTH));
+                        helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_CONTROLLER.get());
                     } else if (withGlass && pos.equals(GLASS)) {
                         helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_GLASS.get());
                     } else {
@@ -169,7 +168,7 @@ public class ReplicatorGameTests {
             {"FKF", "G.G", "FGF"},
             {"FFF", "FGF", "FFF"}};
 
-    private static void buildDocumented(GameTestHelper helper, Direction controllerFacing) {
+    private static void buildDocumented(GameTestHelper helper) {
         for (int y = 0; y < 3; y++) {
             for (int z = 0; z < 3; z++) {
                 for (int x = 0; x < 3; x++) {
@@ -177,8 +176,7 @@ public class ReplicatorGameTests {
                     switch (DOCUMENTED[y][z].charAt(x)) {
                         case 'F' -> helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_FRAME.get());
                         case 'G' -> helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_GLASS.get());
-                        case 'K' -> helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_CONTROLLER.get().defaultBlockState()
-                                .setValue(ReplicatorControllerBlock.FACING, controllerFacing));
+                        case 'K' -> helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_CONTROLLER.get());
                         default -> helper.setBlock(pos, Blocks.AIR);
                     }
                 }
@@ -186,39 +184,43 @@ public class ReplicatorGameTests {
         }
     }
 
-    /** The documented layout forms, also with the controller facing the wrong way (placed against the frame below it). */
+    /** The documented layout forms, and so does the same cube with the controller in any of the six face centres. */
     @GameTest(template = "empty")
     public static void documentedLayoutForms(GameTestHelper helper) {
-        buildDocumented(helper, Direction.NORTH);
+        buildDocumented(helper);
         helper.assertTrue(CONTROLLER.equals(new BlockPos(1, 1, 0)), "K in the layout is the test controller");
         helper.assertTrue(check(helper) == ReplicatorStructure.Status.FORMED, "the documented layout forms, got " + check(helper));
 
-        for (Direction wrong : new Direction[]{Direction.UP, Direction.DOWN, Direction.EAST, Direction.SOUTH}) {
-            buildDocumented(helper, wrong);
-            ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
-            be.validate(helper.getLevel(), helper.absolutePos(CONTROLLER), helper.getBlockState(CONTROLLER));
-            helper.assertTrue(be.isFormed(), "forms with the controller facing " + wrong);
-            helper.assertTrue(helper.getBlockState(CONTROLLER).getValue(ReplicatorControllerBlock.FACING) == Direction.NORTH,
-                    "the controller facing " + wrong + " turns out of the cube");
+        for (Direction out : Direction.values()) {
+            buildDocumented(helper);
+            BlockPos at = CENTER.relative(out);
+            if (!at.equals(CONTROLLER)) {
+                helper.setBlock(CONTROLLER, ReplicatorRegistry.REPLICATOR_FRAME.get());
+                helper.setBlock(at, ReplicatorRegistry.REPLICATOR_CONTROLLER.get());
+            }
+            ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(at);
+            be.validate(helper.getLevel(), helper.absolutePos(at), helper.getBlockState(at));
+            helper.assertTrue(be.isFormed(), "forms with the controller in the " + out + " face, got " + be.status());
+            helper.assertTrue(be.facing() == out, "the cube lies behind the " + out + " face, got " + be.facing());
             helper.assertTrue(be.problem() == null, "no problem once formed");
         }
-
-        // placing the controller last into the hole picks the outward facing, whichever frame was clicked
-        helper.setBlock(CONTROLLER, Blocks.AIR);
-        Direction guessed = ReplicatorStructure.guessFacing(helper.getLevel(), helper.absolutePos(CONTROLLER), Direction.DOWN);
-        helper.assertTrue(guessed == Direction.NORTH, "placement faces out of the cube, got " + guessed);
         helper.succeed();
     }
 
-    /** Not formed: the first wrong block is reported for the cube the controller belongs to, even facing the wrong way. */
+    /** Not formed: the first wrong block is reported for the cube with the most frame and glass, whatever side was found before. */
     @GameTest(template = "empty")
     public static void structureReportsWrongBlock(GameTestHelper helper) {
-        buildDocumented(helper, Direction.UP);
+        buildDocumented(helper);
         BlockPos hole = new BlockPos(2, 0, 2);
         helper.setBlock(hole, Blocks.NETHERRACK);
         ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        var registries = helper.getLevel().registryAccess();
+        net.minecraft.nbt.CompoundTag tag = be.saveWithFullMetadata(registries);
+        tag.putString("facing", "up");
+        be.loadWithComponents(tag, registries);
         be.validate(helper.getLevel(), helper.absolutePos(CONTROLLER), helper.getBlockState(CONTROLLER));
         helper.assertTrue(be.status() == ReplicatorStructure.Status.INCOMPLETE, "incomplete, got " + be.status());
+        helper.assertTrue(be.facing() == Direction.NORTH, "the cube behind the controller is the one checked, got " + be.facing());
         helper.assertTrue(helper.absolutePos(hole).equals(be.problem()), "names the netherrack, got " + be.problem());
 
         helper.setBlock(hole, ReplicatorRegistry.REPLICATOR_FRAME.get());
@@ -553,8 +555,7 @@ public class ReplicatorGameTests {
     // ---- experience, output and sides ----
 
     private static ReplicatorControllerBlockEntity placeController(GameTestHelper helper) {
-        helper.setBlock(CONTROLLER, ReplicatorRegistry.REPLICATOR_CONTROLLER.get().defaultBlockState()
-                .setValue(ReplicatorControllerBlock.FACING, Direction.NORTH));
+        helper.setBlock(CONTROLLER, ReplicatorRegistry.REPLICATOR_CONTROLLER.get());
         return (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
     }
 

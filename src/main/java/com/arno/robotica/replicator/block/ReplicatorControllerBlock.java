@@ -3,10 +3,8 @@ package com.arno.robotica.replicator.block;
 import com.arno.robotica.replicator.ReplicatorConfig;
 import com.arno.robotica.replicator.ReplicatorRegistry;
 import com.arno.robotica.replicator.logic.Essence;
-import com.arno.robotica.replicator.logic.ReplicatorStructure;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,12 +15,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -30,48 +25,27 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * Centre of one face of the 3x3x3 Mob Replicator. FACING points outward (away from the cube).
- * FORMED shows that the structure check passed, LIT that it is working.
+ * Centre of one face of the 3x3x3 Mob Replicator. It has no facing: the structure check finds the cube on any of its
+ * six sides. FORMED shows that the check passed, LIT that it is working.
  */
 public class ReplicatorControllerBlock extends Block implements EntityBlock {
-    public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty FORMED = BooleanProperty.create("formed");
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public ReplicatorControllerBlock(Properties props) {
         super(props);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FORMED, false).setValue(LIT, false));
+        registerDefaultState(stateDefinition.any().setValue(FORMED, false).setValue(LIT, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, FORMED, LIT);
-    }
-
-    @Nullable
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        // Faces out of the cube already built around it (whichever block was clicked), else towards the player.
-        Direction facing = ReplicatorStructure.guessFacing(context.getLevel(), context.getClickedPos(),
-                context.getNearestLookingDirection().getOpposite());
-        return defaultBlockState().setValue(FACING, facing);
-    }
-
-    @Override
-    protected BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
-    }
-
-    @Override
-    protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        builder.add(FORMED, LIT);
     }
 
     @Override

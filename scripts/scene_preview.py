@@ -138,9 +138,9 @@ def scene(mb_id, formed=True):
     for (x, y, z), b in sorted(grid.items(), key=lambda kv: (kv[0][1], kv[0][2], kv[0][0])):
         props, tint, block = {}, None, b
         if b in CONTROLLERS:
-            if kind in ('bank', 'core_reactor', 'replicator', 'golem_farm', 'wither_farm'):
+            if kind in ('bank', 'core_reactor', 'golem_farm', 'wither_farm'):
                 props['facing'] = 'north' if z == 0 else 'south' if z == D - 1 else 'west' if x == 0 else 'east'
-            else:
+            elif b != 'replicator_controller':                        # the Replicator Controller has no facing
                 props['facing'] = 'north'
             props.update(formed=str(formed).lower(), lit=str(formed).lower())
         if formed and b in FRAMED:
