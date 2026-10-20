@@ -406,10 +406,12 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         // after a load the block state still knows whether it stood, so a standing Replicator stays quiet
         boolean wasFormed = validated ? status.formed() : state.getValue(ReplicatorControllerBlock.FORMED);
         boolean first = !validated;
+        boolean turned = result.facing() != facing;
+        BoundingBox oldLook = lookBox;
         validated = true;
         status = now;
         problem = result.wrong();
-        if (result.facing() != facing) {
+        if (turned) {
             facing = result.facing();
             setChangedAndSync();
         }
@@ -428,10 +430,11 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             lookBox = null;
             setChanged();
         }
-        if (first || wasFormed != now.formed()) {
-            // pipes and cables on the frame cache what they found there: they look again
-            invalidateParts(level, fxBox);
-            if (!fxBox.equals(cube)) invalidateParts(level, cube);
+        if (first || turned || wasFormed != now.formed()) {
+            // pipes and cables on the frame cache what they found there: they look again (also when a cube on
+            // another side formed as this one broke)
+            invalidateParts(level, cube);
+            if (oldLook != null && !oldLook.equals(cube)) invalidateParts(level, oldLook);
         }
         if (wasFormed != now.formed()) {
             if (now.formed()) com.arno.robotica.core.progress.Milestones.awardOwner(level, pos, owner, com.arno.robotica.core.progress.Milestones.REPLICATOR_FORMED);
@@ -464,7 +467,6 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
 
     /** The controller broke: the formed look comes off and, if it stood, the frame lets go of its light. */
     public void onControllerRemoved(ServerLevel level, BlockPos pos, BlockState state) {
-        if (status.formed()) invalidateParts(level, cube(pos));
         if (lookBox != null) {
             StructureLook.dress(level, lookBox, false);
             lookBox = null;
@@ -491,6 +493,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         for (int dx = -2; dx <= 2; dx++) {
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dz = -2; dz <= 2; dz++) {
+                    // a face centre lies at most one block off the part on the two axes across its face
+                    if ((Math.abs(dx) == 2 ? 1 : 0) + (Math.abs(dy) == 2 ? 1 : 0) + (Math.abs(dz) == 2 ? 1 : 0) > 1) continue;
                     p.setWithOffset(part, dx, dy, dz);
                     if (!level.isLoaded(p)) continue;
                     BlockState at = level.getBlockState(p);
@@ -504,7 +508,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         return null;
     }
 
-    private static void invalidateParts(ServerLevel level, BoundingBox box) {
+    private static void invalidateParts(Level level, BoundingBox box) {
         BlockPos.betweenClosedStream(box).forEach(p -> level.invalidateCapabilities(p.immutable()));
     }
 
@@ -520,14 +524,14 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         BlockPos outside = ReplicatorStructure.center(pos, facing).relative(face, 2);
         BlockPos front = pos.relative(facing);
         int budget = CoreConfig.sideTransferItems();
-        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (int a = -1; a <= 1 && budget > 0; a++) {
             for (int b = -1; b <= 1 && budget > 0; b++) {
-                switch (face.getAxis()) {
-                    case X -> p.setWithOffset(outside, 0, a, b);
-                    case Y -> p.setWithOffset(outside, a, 0, b);
-                    case Z -> p.setWithOffset(outside, a, b, 0);
-                }
+                // immutable: other mods' providers may keep the position they are asked about
+                BlockPos p = switch (face.getAxis()) {
+                    case X -> outside.offset(0, a, b);
+                    case Y -> outside.offset(a, 0, b);
+                    case Z -> outside.offset(a, b, 0);
+                };
                 // the spot in front of the controller follows the controller's own side config
                 if (p.equals(front) || !level.isLoaded(p)) continue;
                 IItemHandler target = level.getCapability(Capabilities.ItemHandler.BLOCK, p, face.getOpposite());
@@ -546,7 +550,11 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (level != null && !level.isClientSide) MultiblockWatcher.unwatch(level, worldPosition);
+        if (level != null && !level.isClientSide) {
+            MultiblockWatcher.unwatch(level, worldPosition);
+            // broken or its chunk unloaded: frames in a chunk that stays loaded must not keep handing out this buffer
+            if (status.formed()) invalidateParts(level, cube(worldPosition));
+        }
         watching = false;
     }
 
