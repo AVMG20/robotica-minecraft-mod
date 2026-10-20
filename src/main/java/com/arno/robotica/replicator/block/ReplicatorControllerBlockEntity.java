@@ -409,6 +409,8 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             setChangedAndSync();
         }
         BoundingBox cube = cube(pos);
+        // a cube that breaks lets go of its light where it stood, even when the check now picks another side
+        BoundingBox fxBox = !now.formed() && lookBox != null ? lookBox : cube;
         if (now.formed()) {
             // every check, so a frame swapped for glass (or back) takes the look too
             if (lookBox != null && !lookBox.equals(cube)) StructureLook.dress(level, lookBox, false);
@@ -426,7 +428,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             if (age - lastFormFx >= 10) {
                 lastFormFx = age;
                 CoreSounds.play(level, pos, now.formed() ? CoreSounds.STRUCTURE_FORM : CoreSounds.STRUCTURE_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
-                frameFx(level, pos, now.formed() ? StructureFxPayload.FORM : StructureFxPayload.UNFORM);
+                StructureFxPayload.send(level, now.formed() ? StructureFxPayload.FORM : StructureFxPayload.UNFORM, pos, fxBox, FX_COLOR);
             }
         }
         if (state.getValue(ReplicatorControllerBlock.FORMED) != now.formed()) {
