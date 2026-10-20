@@ -2,7 +2,7 @@
   "_sources": [
     "Generated parts: build_wiki.py fills cards.maxStack / age from core/upgrade/UpgradeKind.java, the slots and caps of 'rule': 'mk' rows from the Mk rule (UpgradeRules.mkSlots / mkCap, defaults from CoreConfig speedCapPerMk, efficiencyCapPerMk, rangeCapPerMk, fortuneCapMax) and of 'rule': 'fixed:<NAME>' rows from UpgradeRules.Fixed.",
     "Hand-written: names, summaries and the effect of each card per machine. Kinds of a Mk row = its effects keys; keep them equal to the machine's accepted kinds in Java (UpgradeRuleGameTests checks the Java side).",
-    "Effects: Upgrades.speedMultiplier (x2 ... x20), Upgrades.energyMultiplier (-15% per efficiency card, floor 40%), steepEnergyMultiplier for the Excavator and Survey Rig."
+    "Effects: Upgrades.speedMultiplier (x2 ... x20), Upgrades.energyMultiplier (-15% per efficiency card, floor 40%), steepEnergyMultiplier for the Excavator and Survey Rig, dropEnergyMultiplier (CoreConfig fortuneEnergyPerCard) and bonusFortuneEnergyMultiplier for Fortune and Silk Touch."
   ],
   "cards": {
     "speed": {
@@ -26,14 +26,14 @@
     "fortune": {
       "item": "upgrade_fortune",
       "name": "Fortune Upgrade",
-      "summary": "Fortune I-III on mined blocks, more Grinder and Alloy Smelter output, Looting in the Replicator.",
-      "rules": "Not together with a Silk Touch card."
+      "summary": "Fortune I-III on mined blocks, more Grinder output, Looting in the Replicator.",
+      "rules": "Each card: +50% FE (Grinder +25%). Not together with a Silk Touch card."
     },
     "silk": {
       "item": "upgrade_silk",
       "name": "Silk Touch Upgrade",
       "summary": "Mined blocks drop themselves.",
-      "rules": "Single card. Not together with Fortune."
+      "rules": "Single card, +100% FE. Not together with Fortune."
     },
     "growth": {
       "item": "upgrade_growth",
@@ -71,7 +71,7 @@
       "effects": {
         "speed": "Grinds faster (x2, x3, x4, x6, x8, x11, x15, x20); FE/t rises with it.",
         "efficiency": "-15% FE per item per card.",
-        "fortune": "+10% main output per card on ores and raw ores, not gem ores.",
+        "fortune": "+10% main output per card on ores and raw ores, not gem ores; +25% FE/t each there.",
         "void": "Extra outputs that don't fit are deleted instead of stalling."
       },
       "source": "processing/block/GrinderBlockEntity, ProcessingConfig",
@@ -117,8 +117,7 @@
       ],
       "effects": {
         "speed": "Faster crafts (x2, x3, x4, x6, x8, x11, x15, x20); FE/t rises.",
-        "efficiency": "-15% FE per craft per card.",
-        "fortune": "10% chance per card of one more alloy; +25% FE/t each."
+        "efficiency": "-15% FE per craft per card."
       },
       "source": "industry/block/ProcessingBlockEntity, IndustryConfig",
       "rule": "mk"
@@ -306,8 +305,8 @@
         "speed": "Digs faster (x2, x3, x4, x6, x8, x11, x15, x20); FE per block x1.75 / x3 / x7 / x21 at 1 / 2 / 4 / 8 cards.",
         "range": "Hole +10 blocks wide per card (Mk1 8 -> 18, Mk4 24 -> 64).",
         "efficiency": "-15% FE per block per card.",
-        "fortune": "Fortune I-III on mined blocks.",
-        "silk": "Blocks drop themselves.",
+        "fortune": "Fortune I-III on mined blocks; FE per block x1.5 / x2 / x2.5.",
+        "silk": "Blocks drop themselves; FE per block x2.",
         "void": "Deletes cobblestone, dirt, gravel and other junk."
       },
       "source": "automation/entity/ExcavatorBlockEntity, AutomationConfig excavator*Mk1-4",
@@ -331,8 +330,8 @@
       "effects": {
         "speed": "More ores (x2 ... x20); FE/t climbs much faster: x3.5 / x9 / x42 / x420 at 1 / 2 / 4 / 8 cards.",
         "efficiency": "Takes 15% per card off the steep speed factor.",
-        "fortune": "Fortune I-III on every ore roll.",
-        "silk": "Ores come out as ore blocks.",
+        "fortune": "Fortune I-III on every ore roll; FE/t x1.5 / x2 / x2.5.",
+        "silk": "Ores come out as ore blocks; FE/t x2.",
         "void": "Deletes junk drops."
       },
       "source": "automation/entity/SurveyRigBlockEntity, AutomationConfig surveyRig*Mk1-4",
@@ -352,7 +351,7 @@
       ],
       "effects": {
         "speed": "Shorter cycles (x2, x3, x4).",
-        "fortune": "Looting I-III on the mob's loot.",
+        "fortune": "Looting I-III on the mob's loot; FE/t x1.5 / x2 / x2.5 in Harvest mode.",
         "efficiency": "-15% FE per cycle per card."
       },
       "source": "replicator/block/ReplicatorControllerBlockEntity",

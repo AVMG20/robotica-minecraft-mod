@@ -348,11 +348,12 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         return Math.max(1, CoreConfig.scaleInterval(ReplicatorConfig.cycleTicks()) / speedMultiplier());
     }
 
-    /** FE per tick while working with the current cards. */
+    /** FE per tick while working with the current cards; the fortune card (Looting) only costs FE in Harvest mode. */
     public int energyPerTick() {
         int base = CoreConfig.scaleEnergy(ReplicatorConfig.energyPerTick());
         if (base == 0) return 0;
-        double factor = Upgrades.energyMultiplier(speedLevel(), upgrades.level(UpgradeKind.EFFICIENCY)) * (hasBoost() ? BOOST_ENERGY_FACTOR : 1.0);
+        double factor = Upgrades.energyMultiplier(speedLevel(), upgrades.level(UpgradeKind.EFFICIENCY)) * (hasBoost() ? BOOST_ENERGY_FACTOR : 1.0)
+                * (mode == Mode.HARVEST ? Upgrades.dropEnergyMultiplier(lootingLevel(), 0) : 1.0);
         return (int) Math.max(1, Math.round(base * speedMultiplier() * factor));
     }
 

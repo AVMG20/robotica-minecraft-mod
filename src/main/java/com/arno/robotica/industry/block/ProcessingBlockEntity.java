@@ -25,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -85,6 +86,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
     private int needed;
     private int lastUse;
     private int status = IDLE;
+    private boolean cardsTidied;
 
     public ProcessingBlockEntity(BlockPos pos, BlockState state) {
         super(IndustryRegistry.machineBlockEntity(((ProcessingBlock) state.getBlock()).machine()).get(), pos, state);
@@ -121,12 +123,10 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
     // ---------------------------------------------------------------- cards
 
     /**
-     * Every machine takes speed and efficiency; the Alloy Smelter also fortune (its recipes are the ones that allow it),
-     * the Centrifuge a void card. Slots and caps: the Mk rule.
+     * Every machine takes speed and efficiency, the Centrifuge also a void card. Slots and caps: the Mk rule.
      */
     public static Set<UpgradeKind> acceptedKinds(Machine machine) {
         Set<UpgradeKind> kinds = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY);
-        if (machine == Machine.ALLOY_SMELTER) kinds.add(UpgradeKind.FORTUNE);
         if (machine == Machine.CENTRIFUGE) kinds.add(UpgradeKind.VOID);
         return kinds;
     }
@@ -192,8 +192,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         int base = CoreConfig.scaleEnergy(recipe.effectivePower());
         if (base == 0) return 0;
         int speed = upgrades.level(UpgradeKind.SPEED);
-        int fortune = recipe.fortune() ? upgrades.level(UpgradeKind.FORTUNE) : 0;
-        double m = speedFactor() * Upgrades.energyMultiplier(speed, upgrades.level(UpgradeKind.EFFICIENCY)) * (1.0 + 0.25 * fortune);
+        double m = speedFactor() * Upgrades.energyMultiplier(speed, upgrades.level(UpgradeKind.EFFICIENCY));
         return (int) Math.max(1, Math.min(Integer.MAX_VALUE / 2, Math.round(base * m)));
     }
 
@@ -225,6 +224,7 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
 
     @Override
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
+        if (!cardsTidied) popRefusedCards(level, pos);
         pullBattery();
         if (inputsChanged || (current == null && (level.getGameTime() + pos.asLong()) % 100 == 0)) {
             inputsChanged = false;
@@ -278,6 +278,32 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         sides.tick(level);
     }
 
+    /**
+     * Cards the machine no longer takes (Fortune in older Alloy Smelters) pop out on top, once per load; cards waiting
+     * in a closed slot move into the slots that frees.
+     */
+    private void popRefusedCards(ServerLevel level, BlockPos pos) {
+        cardsTidied = true;
+        for (int i = 0; i < upgrades.getSlots(); i++) {
+            ItemStack card = upgrades.getStackInSlot(i);
+            if (card.getItem() instanceof UpgradeCardItem item && !upgrades.acceptedKinds().contains(item.getKind())) {
+                upgrades.setStackInSlot(i, ItemStack.EMPTY);
+                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, card);
+            }
+        }
+        int open = upgrades.activeSlots();
+        for (int i = open; i < upgrades.getSlots(); i++) {
+            if (upgrades.getStackInSlot(i).isEmpty()) continue;
+            for (int j = 0; j < open; j++) {
+                if (upgrades.getStackInSlot(j).isEmpty()) {
+                    upgrades.setStackInSlot(j, upgrades.getStackInSlot(i));
+                    upgrades.setStackInSlot(i, ItemStack.EMPTY);
+                    break;
+                }
+            }
+        }
+    }
+
     private void craft(ServerLevel level, ProcessingRecipe recipe) {
         int[][] take = recipe.assign(input());
         if (take == null) {
@@ -292,11 +318,9 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
                 items.setStackInSlot(s, in.isEmpty() ? ItemStack.EMPTY : in);
             }
         }
-        int fortune = recipe.fortune() ? upgrades.level(UpgradeKind.FORTUNE) : 0;
         for (int i = 0; i < recipe.results().size(); i++) {
             ItemStack out = recipe.results().get(i).roll(level.random);
             if (out.isEmpty()) continue;
-            if (i == 0 && fortune > 0 && level.random.nextInt(100) < fortune * IndustryConfig.fortuneBonus()) out.grow(1);
             insertOutput(out, false);
         }
         playSound(level, worldPosition, true);
@@ -308,11 +332,9 @@ public class ProcessingBlockEntity extends IndustryBlockEntity implements MenuPr
         List<ItemStack> sim = new ArrayList<>(machine.outputs);
         for (int i = 0; i < machine.outputs; i++) sim.add(items.getStackInSlot(machine.inputs + i).copy());
         boolean voids = upgrades.level(UpgradeKind.VOID) > 0;
-        boolean fortune = recipe.fortune() && upgrades.level(UpgradeKind.FORTUNE) > 0;
         for (int i = 0; i < recipe.results().size(); i++) {
             ChanceResult r = recipe.results().get(i);
             ItemStack stack = r.stack().copy();
-            if (i == 0 && fortune) stack.grow(1);
             if (!merge(sim, stack).isEmpty() && !(voids && !r.guaranteed())) return false;
         }
         return true;

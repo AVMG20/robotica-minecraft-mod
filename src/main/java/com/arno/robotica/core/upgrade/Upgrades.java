@@ -1,5 +1,6 @@
 package com.arno.robotica.core.upgrade;
 
+import com.arno.robotica.core.CoreConfig;
 import com.arno.robotica.core.menu.MachineSlot;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -256,6 +257,26 @@ public class Upgrades extends ItemStackHandler {
     /** Fortune cards 0-3 → Fortune (or Looting) level 0-3. */
     public static int fortuneEnchantLevel(int fortuneCards) {
         return Math.max(0, Math.min(3, fortuneCards));
+    }
+
+    /** A Silk Touch card costs FE like this many Fortune cards (silk ores ground in a Grinder give about Fortune II). */
+    public static final int SILK_AS_FORTUNE = 2;
+    /** FE/t added per Fortune card where it only adds a bonus chance (Grinder). */
+    public static final double BONUS_FORTUNE_ENERGY = 0.25;
+
+    /**
+     * FE factor of the drop cards in machines that roll loot with them (Excavator, Survey Rig, Replicator): each Fortune
+     * card adds {@link CoreConfig#fortuneEnergyPerCard} percent (50: x1.5, x2, x2.5), a Silk Touch card as much as
+     * {@link #SILK_AS_FORTUNE} Fortune cards.
+     */
+    public static double dropEnergyMultiplier(int fortuneCards, int silkCards) {
+        int steps = fortuneEnchantLevel(fortuneCards) + (silkCards > 0 ? SILK_AS_FORTUNE : 0);
+        return 1.0 + CoreConfig.fortuneEnergyPerCard() / 100.0 * steps;
+    }
+
+    /** FE factor of Fortune cards that add a bonus output: +{@link #BONUS_FORTUNE_ENERGY} per card. */
+    public static double bonusFortuneEnergyMultiplier(int fortuneCards) {
+        return 1.0 + BONUS_FORTUNE_ENERGY * Math.max(0, fortuneCards);
     }
 
     /** Growth cards 0-4 → extra growth multiplier added on top of the machine's own boost. */

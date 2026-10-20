@@ -98,9 +98,8 @@ def result(item, count=1, chance=None):
     return r
 
 
-def processing(kind, name, inputs, results, time=None, power=None, fortune=None):
-    """inputs: list of (ingredient, count) or ingredient; results: list of result() dicts.
-    fortune: whether Fortune cards may add a main result; left out it is the machine default (alloying only)."""
+def processing(kind, name, inputs, results, time=None, power=None):
+    """inputs: list of (ingredient, count) or ingredient; results: list of result() dicts."""
     data = {'type': f'robotica:{kind}',
             'inputs': [sized(*i) if isinstance(i, tuple) else sized(i) for i in inputs],
             'results': results}
@@ -108,8 +107,6 @@ def processing(kind, name, inputs, results, time=None, power=None, fortune=None)
         data['time'] = time
     if power:
         data['power'] = power
-    if fortune is not None:
-        data['fortune'] = fortune
     recipe(f'{kind}_{name}', data)
 
 
@@ -613,7 +610,6 @@ def lang():
         'robotica.configuration.assemblerPower': 'Assembler power (FE/t)',
         'robotica.configuration.machineBuffer': 'Machine buffer (FE)',
         'robotica.configuration.machineInput': 'Machine input (FE/t)',
-        'robotica.configuration.fortuneBonus': 'Fortune card bonus (% per card)',
         'robotica.configuration.rtg': 'Radioisotope Generator',
         'robotica.configuration.rtgFePerTick': 'Output (FE/t)',
         'robotica.configuration.rtgTicksPerPellet': 'Ticks per pellet',

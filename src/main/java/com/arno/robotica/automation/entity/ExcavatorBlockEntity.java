@@ -130,7 +130,8 @@ public class ExcavatorBlockEntity extends AreaWorkerBlockEntity {
         int speed = upgrades.level(UpgradeKind.SPEED);
         int eff = upgrades.level(UpgradeKind.EFFICIENCY);
         // Steep on purpose: the Excavator is the strongest machine, each speed card costs more FE per block than the last.
-        return (int) Math.round(CoreConfig.scaleEnergy(AutomationConfig.excavatorFe()) * Upgrades.steepEnergyMultiplier(speed, eff));
+        return (int) Math.round(CoreConfig.scaleEnergy(AutomationConfig.excavatorFe()) * Upgrades.steepEnergyMultiplier(speed, eff)
+                * Upgrades.dropEnergyMultiplier(upgrades.level(UpgradeKind.FORTUNE), upgrades.level(UpgradeKind.SILK)));
     }
 
     // ---- work loop ----

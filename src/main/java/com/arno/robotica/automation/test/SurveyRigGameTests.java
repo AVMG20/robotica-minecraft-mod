@@ -119,4 +119,27 @@ public class SurveyRigGameTests {
         helper.assertTrue(mk4.energy.getMaxEnergyStored() >= 252_000 * 6, "the buffer holds at least one top speed ore");
         helper.succeed();
     }
+
+    /** Fortune cards raise the FE/t by 50% each, a Silk Touch card like two; the Excavator pays the same per block. */
+    @GameTest(template = "empty")
+    public static void fortuneAndSilkCostFe(GameTestHelper helper) {
+        helper.setBlock(RIG, AutomationContent.SURVEY_RIG_MK4.get());
+        SurveyRigBlockEntity rig = helper.getBlockEntity(RIG);
+        int base = rig.energyPerTick();
+        int[] percent = {150, 200, 250};
+        for (int cards = 1; cards <= 3; cards++) {
+            rig.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, cards));
+            helper.assertTrue(rig.energyPerTick() == base * percent[cards - 1] / 100, "Fortune " + cards + ": x" + percent[cards - 1] / 100.0 + " FE/t, is " + rig.energyPerTick());
+        }
+        rig.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SILK, 1));
+        helper.assertTrue(rig.energyPerTick() == base * 2, "Silk Touch: x2 FE/t, is " + rig.energyPerTick());
+
+        helper.setBlock(RIG, AutomationContent.EXCAVATOR_MK4.get());
+        com.arno.robotica.automation.entity.ExcavatorBlockEntity excavator = helper.getBlockEntity(RIG);
+        excavator.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, 3));
+        helper.assertTrue(excavator.energyPerBlock() == 100, "Excavator Fortune III: 40 x 2.5 FE per block, is " + excavator.energyPerBlock());
+        excavator.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.SILK, 1));
+        helper.assertTrue(excavator.energyPerBlock() == 80, "Excavator Silk Touch: 40 x 2 FE per block, is " + excavator.energyPerBlock());
+        helper.succeed();
+    }
 }

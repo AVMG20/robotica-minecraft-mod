@@ -38,7 +38,8 @@ import java.util.Set;
  * Survey Rig: placed once and powered, it slowly turns a lot of FE into random ores. Every {@link #actionInterval}
  * ticks it rolls one ore kind of {@link SurveyOrePool} by weight (coal and iron often, diamonds rarely, ancient debris
  * only with a Magma Core) and rolls that ore's loot table with a pickaxe carrying the Fortune or Silk Touch of its cards.
- * The world is never touched. Speed cards cut the interval but raise the FE per tick steeply (speed x per-ore factor).
+ * The world is never touched. Speed cards cut the interval but raise the FE per tick steeply (speed x per-ore factor);
+ * Fortune and Silk Touch cards raise it too.
  */
 public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.FORTUNE,
@@ -156,13 +157,15 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
 
     /**
      * FE per tick while working: base x speed multiplier x the steep per-ore factor, so each speed card costs more than
-     * the one before (1 card x3.5, 2 x9, 4 x42, 8 x420 FE/t). Efficiency cards take 15% each off the factor.
+     * the one before (1 card x3.5, 2 x9, 4 x42, 8 x420 FE/t). Efficiency cards take 15% each off the factor. Fortune
+     * and Silk Touch cards multiply it too ({@link Upgrades#dropEnergyMultiplier}).
      */
     public int energyPerTick() {
         int speed = upgrades.level(UpgradeKind.SPEED);
         int eff = upgrades.level(UpgradeKind.EFFICIENCY);
         double value = CoreConfig.scaleEnergy(AutomationConfig.surveyFePerTick()) * (AutomationConfig.surveySpeed(tier()) / 100.0)
-                * Upgrades.speedMultiplier(speed) * Upgrades.steepEnergyMultiplier(speed, eff);
+                * Upgrades.speedMultiplier(speed) * Upgrades.steepEnergyMultiplier(speed, eff)
+                * Upgrades.dropEnergyMultiplier(upgrades.level(UpgradeKind.FORTUNE), upgrades.level(UpgradeKind.SILK));
         return (int) Math.min(Integer.MAX_VALUE, Math.round(value));
     }
 

@@ -64,7 +64,7 @@ public final class ProcessingConfig {
                 .defineInRange("rawBonusChance", 0.25, 0.0, 1.0);
         INGOT_DUST_COUNT = b.comment("Dusts per ingot (c:ingots/<metal>). 0 turns ingot grinding off.")
                 .defineInRange("ingotDustCount", 1, 0, 16);
-        FORTUNE_BONUS = b.comment("Extra main output per Fortune card on ores and raw ores (0.1 = +10%). Gem ores and ingots get none.")
+        FORTUNE_BONUS = b.comment("Extra main output per Fortune card on ores and raw ores (0.1 = +10%). Gem ores and ingots get none. Every card adds 25% FE/t there.")
                 .defineInRange("fortuneBonus", 0.10, 0.0, 10.0);
         FALLBACK_BYPRODUCTS = b.comment("Byproducts of grinding media when a metal ore or raw ore (one with a c:ingots/<name> tag) has no entry "
                         + "in the robotica:grinding_byproducts data map. Item ids or #tags; one that exists is picked at random.")

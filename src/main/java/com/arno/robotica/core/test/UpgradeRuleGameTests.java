@@ -103,7 +103,7 @@ public class UpgradeRuleGameTests {
     @GameTest(template = "empty")
     public static void mkRule(GameTestHelper helper) {
         checkMk(helper, "Alloy Smelter", mk -> IndustryRegistry.machineBlock(Machine.ALLOY_SMELTER, mk).get().defaultBlockState(),
-                EnumSet.of(SPEED, EFFICIENCY, FORTUNE));
+                EnumSet.of(SPEED, EFFICIENCY));
         checkMk(helper, "Assembler", mk -> IndustryRegistry.machineBlock(Machine.ASSEMBLER, mk).get().defaultBlockState(), EnumSet.of(SPEED, EFFICIENCY));
         checkMk(helper, "Centrifuge", mk -> IndustryRegistry.machineBlock(Machine.CENTRIFUGE, mk).get().defaultBlockState(),
                 EnumSet.of(SPEED, EFFICIENCY, VOID));
