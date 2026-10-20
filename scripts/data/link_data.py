@@ -1,7 +1,7 @@
 """Link data: Quantum Link block models, blockstates, item models, loot tables and recipes.
 Run: python3 scripts/data/link_data.py   (overwrites only files of link blocks and items)
-Textures come from scripts/textures/link.py. The network colour (top core, side windows) is drawn by the block entity
-renderer (LinkRenderer).
+Textures come from scripts/textures/link.py. The network colour (the core in the chamber, the top socket) is drawn by
+the block entity renderer (LinkRenderer).
 """
 import json
 import pathlib
@@ -33,41 +33,56 @@ def box(x0, y0, z0, x1, y1, z1, faces, **extra):
     return el
 
 
-def profile_faces(x0, x1, y0, y1, side='side', front='front', **extra):
-    """The four sides of a box, reading rows 16 - y1 .. 16 - y0 of the profile textures; north is the front."""
-    uv = [x0, 16 - y1, x1, 16 - y0]
-    return {d: face(front if d == 'north' else side, uv, **extra) for d in SIDES}
+def shell_faces(y0, y1, glow=False, cull=False, **extra):
+    """The four sides of a full-width band (base or cap) from the shell profile textures; north is the front."""
+    side, front = ('shell_glow', 'shell_front_glow') if glow else ('shell', 'shell_front')
+    uv = [0, 16 - y1, 16, 16 - y0]
+    faces = {}
+    for d in SIDES:
+        f = face(front if d == 'north' else side, uv, **extra)
+        if cull:
+            f['cullface'] = d
+        faces[d] = f
+    return faces
+
+
+# corner pillars, 3 px square, y 3-13; the faces towards the middle of x and z edge the windows and carry light rails
+PILLARS = ((0, 0), (13, 0), (0, 13), (13, 13))
 
 
 def link_model(tier, item=False):
-    """Flat-topped block (a Tesla Relay sits on it): base slab, body with a window on each face, four corner pillars and
-    a full cap. Light parts are full-bright overlay faces. The item adds the core and windows the renderer draws in the
-    world."""
+    """Open containment chamber with a flat top (a Tesla Relay sits on it): base, flat cap, four corner pillars with
+    light rails, emitter pads on the chamber floor and ceiling. The renderer draws the core floating in the chamber and
+    the socket in the top; the item shows a crystal in their place. Light parts are full-bright overlay faces."""
     p = f'robotica:block/quantum_link_{tier}'
-    textures = {'side': f'{p}_side', 'front': f'{p}_front', 'side_glow': f'{p}_side_glow', 'front_glow': f'{p}_front_glow',
-                'top': f'{p}_top', 'top_glow': f'{p}_top_glow', 'trim': f'{p}_trim',
-                'bottom': 'robotica:block/quantum_link_bottom', 'particle': f'{p}_side'}
+    textures = {k: f'{p}_{k}' for k in ('shell', 'shell_front', 'shell_glow', 'shell_front_glow', 'pillar', 'pillar_glow',
+                                         'top', 'top_glow', 'pad', 'pad_glow')}
+    textures.update({'bottom': 'robotica:block/quantum_link_bottom', 'particle': f'{p}_shell'})
     full = [0, 0, 16, 16]
+    lit = {'neoforge_data': GLOW}
     elements = [
-        # base y 0-3
-        box(0, 0, 0, 16, 3, 16, dict(profile_faces(0, 16, 0, 3),
-                                     up=face('bottom', full), down=face('bottom', full, cullface='down'))),
-        # body y 3-13
-        box(2, 3, 2, 14, 13, 14, profile_faces(2, 14, 3, 13)),
-        box(2, 3, 2, 14, 13, 14, profile_faces(2, 14, 3, 13, 'side_glow', 'front_glow', neoforge_data=GLOW), shade=False),
-        # cap y 13-16, flat top
-        box(0, 13, 0, 16, 16, 16, dict({d: dict(f, cullface=d) for d, f in profile_faces(0, 16, 13, 16).items()},
-                                       up=face('top', full, cullface='up'), down=face('bottom', full))),
-        box(0, 13, 0, 16, 16, 16, {'up': face('top_glow', full, cullface='up', neoforge_data=GLOW)}, shade=False),
+        # base y 0-3, its top is the chamber floor
+        box(0, 0, 0, 16, 3, 16, dict(shell_faces(0, 3), up=face('pad', full), down=face('bottom', full, cullface='down'))),
+        box(0, 0, 0, 16, 3, 16, dict(shell_faces(0, 3, glow=True, **lit), up=face('pad_glow', full, **lit)), shade=False),
+        # cap y 13-16, flat top, its underside is the chamber ceiling
+        box(0, 13, 0, 16, 16, 16, dict(shell_faces(13, 16, cull=True), up=face('top', full, cullface='up'),
+                                       down=face('pad', full))),
+        box(0, 13, 0, 16, 16, 16, dict(shell_faces(13, 16, glow=True, **lit), up=face('top_glow', full, cullface='up', **lit),
+                                       down=face('pad_glow', full, **lit)), shade=False),
     ]
-    # corner pillars y 3-13
-    for x, z in ((1, 1), (13, 1), (1, 13), (13, 13)):
-        elements.append(box(x, 3, z, x + 2, 13, z + 2, {d: face('trim', [x, 3, x + 2, 13]) for d in SIDES}))
+    for x, z in PILLARS:
+        uv = [0, 3, 3, 13]
+        elements.append(box(x, 3, z, x + 3, 13, z + 3, {d: face('pillar', uv) for d in SIDES}))
+        inner = ('east' if x == 0 else 'west', 'south' if z == 0 else 'north')
+        elements.append(box(x, 3, z, x + 3, 13, z + 3, {d: face('pillar_glow', uv, **lit) for d in inner}, shade=False))
     if item:
         textures['core'] = 'robotica:block/quantum_link_item_core'
-        textures['window'] = 'robotica:block/quantum_link_item_window'
-        elements.append(box(2, 3, 2, 14, 13, 14, profile_faces(2, 14, 3, 13, 'window', 'window', neoforge_data=GLOW), shade=False))
-        elements.append(box(0, 13, 0, 16, 16, 16, {'up': face('core', full, neoforge_data=GLOW)}, shade=False))
+        textures['crystal'] = 'robotica:block/quantum_link_item_crystal'
+        elements.append(box(0, 13, 0, 16, 16, 16, {'up': face('core', full, **lit)}, shade=False))
+        gem = {d: face('crystal', [4, 0, 12, 16], **lit) for d in SIDES}
+        gem['up'] = face('crystal', [4, 4, 12, 12], **lit)
+        gem['down'] = face('crystal', [4, 4, 12, 12], **lit)
+        elements.append(box(6.5, 5.5, 6.5, 9.5, 10.5, 9.5, gem, shade=False, rotation={'origin': [8, 8, 8], 'axis': 'y', 'angle': 45}))
     return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures, 'elements': elements}
 
 

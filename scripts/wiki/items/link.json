@@ -3,7 +3,7 @@
    "what": "Moves FE and items between Links on the same named network, across dimensions.",
    "use": ["Right-click it, press **New** and name a network, or click one in the list to join.",
            "Set **Energy** and **Items** to Send on one Link and Receive on another.",
-           "Feed a sender by cable, pipe or hopper. A receiver pushes out of its faces; a [[tesla_coil_1]] on it hands its FE to the machines it links.",
+           "Feed a sender by cable, pipe or hopper. A receiver pushes FE out of all its faces and items out of its Output faces; a [[tesla_coil_1]] on it hands its FE to the machines it links.",
            "Right-click a placed Link with the next Mk to upgrade it in place."],
    "stats": {"columns": ["Mk1", "Mk2", "Mk3"],
              "rows": [["FE", "64,000 FE/t", "256,000 FE/t", "1,000,000 FE/t"],

@@ -174,7 +174,7 @@
     "Sneak-right-click it with a [[tesla_linker]].",
     "Right-click machines (the face you click is where power goes in) or other relays.",
     "Linked relays share one network, whichever side you link from.",
-    "On a generator, battery or receiving [[quantum_link_mk1]] it feeds its network from that block. Link the block it sits on to charge it instead."
+    "On any block that gives out FE (a generator, battery or receiving [[quantum_link_mk1]]) it feeds its network from that block. Link the block it sits on to charge it instead."
    ],
    "stats": {
     "columns": [

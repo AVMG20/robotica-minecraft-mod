@@ -8,7 +8,6 @@ import com.arno.robotica.core.CoreSounds;
 import com.arno.robotica.core.block.SyncedBlockEntity;
 import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.core.side.SideConfig;
-import com.arno.robotica.core.side.SideMode;
 import com.arno.robotica.link.LinkRegistry;
 import com.arno.robotica.link.menu.LinkMenu;
 import com.arno.robotica.link.menu.NetworkEntry;
@@ -22,22 +21,18 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -48,7 +43,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Locale;
@@ -60,8 +54,9 @@ import java.util.UUID;
  * buffer while their own chunk ticks; receivers register every tick from their own chunk and the network hands its
  * buffer out after all levels ticked ({@link LinkNetworks#tick}), so no Link ever reaches into an unloaded chunk.
  *
- * <p>Faces follow the Sides tab: Input faces take FE and items in (and auto-input pulls from them while sending),
- * Output faces give them out (auto-eject pushes into them while receiving), None connects nothing. Pipes, cables,
+ * <p>FE goes in and out of every face: a receiver gives it out of all six (auto-eject pushes it), anything else takes it
+ * in on all six (auto-input pulls it while sending). Items follow the Sides tab: Input faces take them in (auto-input
+ * pulls from them while sending), Output faces give them out (auto-eject pushes while receiving). Pipes, cables,
  * hoppers and a Tesla Relay or Emitter sitting on top work through the capabilities. The network pays the upkeep of
  * all its Links together ({@link LinkNetwork#payUpkeep}), so one powered Link runs them all. No loss and no FE per item.
  */
@@ -157,14 +152,13 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     private final BlockCapabilityCache<IEnergyStorage, Direction>[] energyCaches = new BlockCapabilityCache[6];
     @SuppressWarnings("unchecked")
     private final BlockCapabilityCache<IItemHandler, Direction>[] itemCaches = new BlockCapabilityCache[6];
-    private final IEnergyStorage[] energyViews = new IEnergyStorage[4];
+    private final IEnergyStorage[] energyViews = new IEnergyStorage[2];
     private final IItemHandler items = new LinkItems();
 
     // ---- client ----
     private int clientColor = -1;
     private boolean clientOnline;
     private long clientPulse = Long.MIN_VALUE / 2;
-    private int clientPulseKind;
     private @Nullable AABB renderBox;
 
     public QuantumLinkBlockEntity(BlockPos pos, BlockState state) {
@@ -360,21 +354,11 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
 
     // ---------------------------------------------------------------- capabilities
 
-    /** FE capability of a face: in on Input faces unless receiving, out on Output faces while receiving, none on None. */
-    @Nullable
+    /** FE capability of every face: out while receiving, in otherwise (the Sides tab is for items only). */
     public IEnergyStorage energyFor(@Nullable Direction side) {
-        boolean in, out;
-        if (side == null) {
-            in = energyMode != TransferMode.RECEIVE;
-            out = energyMode == TransferMode.RECEIVE;
-        } else {
-            SideMode mode = sides.mode(side);
-            if (mode == SideMode.NONE) return null;
-            in = mode.input && energyMode != TransferMode.RECEIVE;
-            out = mode.output && energyMode == TransferMode.RECEIVE;
-        }
-        int index = (in ? 1 : 0) | (out ? 2 : 0);
-        if (energyViews[index] == null) energyViews[index] = new SidedEnergy(energy, in, out);
+        boolean out = energyMode == TransferMode.RECEIVE;
+        int index = out ? 1 : 0;
+        if (energyViews[index] == null) energyViews[index] = new SidedEnergy(energy, !out, out);
         return energyViews[index];
     }
 
@@ -537,7 +521,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         for (Direction dir : DIRS) {
             int space = energy.getSpace();
             if (space <= 0) return;
-            if (!sides.mode(dir).input || !usable(level, dir)) continue;
+            if (!usable(level, dir)) continue;
             IEnergyStorage source = energyCap(level, dir);
             if (source == null || !source.canExtract()) continue;
             int got = source.extractEnergy(space, false);
@@ -549,7 +533,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         int budget = Math.min(energy.getEnergyStored(), tier.rate);
         for (Direction dir : DIRS) {
             if (budget <= 0) return;
-            if (!sides.mode(dir).output || !usable(level, dir)) continue;
+            if (!usable(level, dir)) continue;
             IEnergyStorage target = energyCap(level, dir);
             if (target == null || !target.canReceive()) continue;
             int sent = target.receiveEnergy(budget, false);
@@ -773,45 +757,20 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return clientPulse;
     }
 
-    public int clientPulseKind() {
-        return clientPulseKind;
-    }
-
     /** The block with a hair of room for the core and windows, for render culling. */
     public AABB renderBox() {
         if (renderBox == null) renderBox = new AABB(worldPosition).inflate(0.01);
         return renderBox;
     }
 
-    /** Server: true so the event reaches watching clients. Client: pulse the core and throw a few particles. */
+    /** Server: true so the event reaches watching clients. Client: the renderer flares the core. */
     @Override
     public boolean triggerEvent(int id, int param) {
         if (id != EVENT_SEND && id != EVENT_RECEIVE) return super.triggerEvent(id, param);
         if (level != null && level.isClientSide) {
             clientPulse = level.getGameTime();
-            clientPulseKind = id;
-            particles(level, id == EVENT_SEND, param == 1);
         }
         return true;
-    }
-
-    private void particles(Level level, boolean send, boolean isItems) {
-        RandomSource random = level.random;
-        int rgb = LinkNetwork.rgb(Math.max(0, clientColor));
-        DustParticleOptions dust = new DustParticleOptions(new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F), 0.7F);
-        double cx = worldPosition.getX() + 0.5, cy = worldPosition.getY() + QuantumLinkBlock.TOP_Y + 0.05, cz = worldPosition.getZ() + 0.5;
-        for (int i = 0; i < 5; i++) {
-            double a = random.nextDouble() * Math.PI * 2;
-            double r = 0.35 + random.nextDouble() * 0.25;
-            double dx = Math.cos(a) * r, dz = Math.sin(a) * r;
-            if (send) level.addParticle(dust, cx + dx * 0.3, cy, cz + dz * 0.3, dx * 0.8, 0.6 + random.nextDouble() * 0.6, dz * 0.8);
-            else level.addParticle(dust, cx + dx, cy + 0.2 + random.nextDouble() * 0.3, cz + dz, -dx * 0.8, -0.1, -dz * 0.8);
-        }
-        if (isItems) {
-            level.addParticle(ParticleTypes.REVERSE_PORTAL, cx, cy, cz, 0.0, send ? 0.05 : -0.02, 0.0);
-        } else {
-            level.addParticle(ParticleTypes.ELECTRIC_SPARK, cx, cy + (send ? 0.2 : -0.2), cz, 0.0, send ? 0.08 : -0.04, 0.0);
-        }
     }
 
     // ---------------------------------------------------------------- menu, info

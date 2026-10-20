@@ -19,7 +19,7 @@ Each network holds 5 seconds of every sender's FE and 9 item slots per item send
 ## Links
 
 - The filter works like a pipe arm's: allow list or block list, matched by item.
-- Set faces in the **Sides** tab. Auto-input and auto-eject start on.
+- FE goes in and out of every face. Set the item faces in the **Sides** tab. Auto-input and auto-eject start on.
 - Links next to each other ignore each other.
 
 > The network pays the upkeep of all its Links together. Power one Link, by cable or as an energy sender, and the rest run off it.

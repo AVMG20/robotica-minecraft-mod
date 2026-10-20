@@ -1783,7 +1783,8 @@ public final class Showcase {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
 
-        // Quantum Links Mk1-3 on one network: the Mk1 sends an Accumulator's FE, the cores glow in the network colour.
+        // Quantum Links Mk1-3 on one network: the Mk1 sends an Accumulator's FE, the cores glow in the network colour, a
+        // Tesla Relay sits on the Mk3.
         if (wants("34_quantum_links")) {
             step(10, () -> server(sp -> {
                 ServerLevel level = sp.serverLevel();
@@ -1802,6 +1803,8 @@ public final class Showcase {
                 BlockPos source = LINKS.north();
                 setFacing(level, source, block("accumulator_1"), Direction.SOUTH);
                 fillEnergy(level, source);
+                // a Tesla Relay sits on the flat top of the receiving Mk3
+                level.setBlockAndUpdate(new BlockPos(LINKS.getX() + 6, Y + 1, LINKS.getZ()), block("tesla_coil_3").defaultBlockState());
             }));
             camera(LINKS.getX() + 3.5, Y + 2.2, LINKS.getZ() + 5.2, 180, 18);
             hud(false);
