@@ -743,7 +743,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         tag.putBoolean("online", syncedOnline);
     }
 
-    /** Colour index of the core and windows on the client, -1 without a network. */
+    /** Colour index of the core and socket on the client, -1 without a network. */
     public int clientColor() {
         return clientColor;
     }
@@ -757,7 +757,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return clientPulse;
     }
 
-    /** The block with a hair of room for the core and windows, for render culling. */
+    /** The block with a hair of room for the socket on top, for render culling. */
     public AABB renderBox() {
         if (renderBox == null) renderBox = new AABB(worldPosition).inflate(0.01);
         return renderBox;

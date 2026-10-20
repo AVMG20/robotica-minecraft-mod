@@ -54,8 +54,8 @@ import java.util.List;
  */
 public class QuantumLinkBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 3, 16), Block.box(1, 3, 1, 15, 13, 15),
-            Block.box(0, 13, 0, 16, 16, 16));
+    /** Base, cap and corner pillars span the whole block; the open chamber still takes clicks. */
+    private static final VoxelShape SHAPE = Shapes.block();
 
     private final LinkTier tier;
 

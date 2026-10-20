@@ -1800,13 +1800,13 @@ public final class Showcase {
                         link.setEnergyMode(i == 0 ? com.arno.robotica.link.block.TransferMode.SEND : com.arno.robotica.link.block.TransferMode.RECEIVE);
                     }
                 }
-                BlockPos source = LINKS.north();
-                setFacing(level, source, block("accumulator_1"), Direction.SOUTH);
+                BlockPos source = LINKS.west();
+                setFacing(level, source, block("accumulator_1"), Direction.EAST);
                 fillEnergy(level, source);
                 // a Tesla Relay sits on the flat top of the receiving Mk3
                 level.setBlockAndUpdate(new BlockPos(LINKS.getX() + 6, Y + 1, LINKS.getZ()), block("tesla_coil_3").defaultBlockState());
             }));
-            camera(LINKS.getX() + 3.5, Y + 2.2, LINKS.getZ() + 5.2, 180, 18);
+            camera(LINKS.getX() + 3.5, Y + 0.2, LINKS.getZ() + 4.6, 180, 14);
             hud(false);
             step(20, () -> {});
             shot("34_quantum_links");

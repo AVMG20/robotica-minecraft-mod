@@ -238,8 +238,13 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         resetLinkFlow();
         TeslaGrid.invalidate(this);
         setChangedAndSync();
-        // linking the block it sits on closes the intake on that face
-        if (level != null && !level.isClientSide) level.invalidateCapabilities(worldPosition);
+        // linking the block it sits on closes the intake on that face; what is still in it goes into that block
+        if (level != null && !level.isClientSide) {
+            level.invalidateCapabilities(worldPosition);
+            int k = isEmitter() || intake.getEnergyStored() <= 0 ? -1 : indexOf(supportPos());
+            IEnergyStorage block = k < 0 ? null : level.getCapability(Capabilities.EnergyStorage.BLOCK, supportPos(), links.get(k).face());
+            if (block != null) intake.setEnergy(intake.getEnergyStored() - Math.max(0, block.receiveEnergy(intake.getEnergyStored(), false)));
+        }
     }
 
     List<BlockPos> backlinks() {
@@ -329,10 +334,15 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return isEmitter() || indexOf(supportPos()) >= 0 ? null : source();
     }
 
-    /** Where FE that could not be delivered goes back: the support block's own FE view (no side), else the intake. */
-    IEnergyStorage sourceBuffer() {
+    /**
+     * Puts back {@code amount} FE that could not be delivered: into the support block's own FE view (no side), the rest
+     * into the intake (a view that only gives out, such as a receiving Link's, takes nothing back). Returns what went back.
+     */
+    int giveBack(int amount) {
         IEnergyStorage any = supportSource() == null || sourceAny == null ? null : sourceAny.getCapability();
-        return any != null ? any : intake;
+        int back = any == null ? 0 : Math.max(0, any.receiveEnergy(amount, false));
+        if (back < amount) back += intake.receiveEnergy(amount - back, false);
+        return back;
     }
 
     /** Takes from the intake first, then from the support block. Server thread only; {@link #block} is set per use. */

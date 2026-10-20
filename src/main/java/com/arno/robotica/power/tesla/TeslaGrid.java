@@ -285,10 +285,9 @@ final class TeslaGrid {
         return sent;
     }
 
-    /** Puts {@code amount} back into the block under {@code source} (its own buffer, not a side). Returns what went back. */
+    /** Puts {@code amount} back into the block under {@code source} or its intake. Returns what went back. */
     private static int giveBack(TeslaCoilBlockEntity source, int amount) {
-        IEnergyStorage back = source.sourceBuffer();
-        return back == null ? 0 : Math.max(0, back.receiveEnergy(amount, false));
+        return source.giveBack(amount);
     }
 
     private static int deliver(TeslaCoilBlockEntity relay, int index, int amount) {

@@ -5,7 +5,6 @@ import com.arno.robotica.link.block.QuantumLinkBlockEntity;
 import com.arno.robotica.link.network.LinkNetwork;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -19,6 +18,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 
 /**
  * The network colour of a Quantum Link: the quantum core floating in its chamber (an octahedron with a glow shell and
@@ -35,7 +35,7 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
     private static final float SOCKET_LO = 5 * P, SOCKET_HI = 11 * P, TOP = 1.002F;
     /** Chamber floor and ceiling (pads), and the core's middle. */
     private static final float FLOOR = 3 * P, CEILING = 13 * P, MIDDLE = 0.5F;
-    private static final float CORE_W = 0.13F, CORE_H = 0.19F, RING_R = 0.29F, RING_W = 0.018F;
+    private static final float CORE_W = 0.16F, CORE_H = 0.2F, RING_R = 0.29F, RING_W = 0.018F;
     private static final int RING_SEGMENTS = 16;
     /** The 8 faces of a unit octahedron: apex, two corners, normal. */
     private static final float[][] FACES = octahedron();
@@ -50,17 +50,23 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
         }
     }
 
+    /** Half height the core's glow may reach above its middle and stay under the ceiling while it bobs. */
+    private static final float REACH = CEILING - MIDDLE - 0.02F;
+    /** Reused for every turn (render thread only). */
+    private final Quaternionf turn = new Quaternionf();
+
     public LinkRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
     public void render(QuantumLinkBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         Level level = be.getLevel();
         if (level == null) return;
-        float time = level.getGameTime() + partialTick;
+        // wrapped (a whole number of turns for the core and rings) so a float keeps sub-tick precision on old worlds
+        float time = (level.getGameTime() % 72000L) + partialTick;
         int colorIndex = be.clientColor();
         boolean online = be.clientOnline() && colorIndex >= 0;
         int rgb = colorIndex >= 0 ? LinkNetwork.rgb(colorIndex) : 0x8A8F96;
-        float age = time - be.clientPulse();
+        float age = (level.getGameTime() - be.clientPulse()) + partialTick;
         float pulse = age >= 0.0F && age < PULSE_TICKS ? 1.0F - age / PULSE_TICKS : 0.0F;
         pulse *= pulse;
         if (!online) pulse = 0.0F;
@@ -84,15 +90,15 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
         float scale = 1.0F + pulse * 0.3F;
         pose.pushPose();
         pose.translate(0.5F, MIDDLE + bob, 0.5F);
-        pose.mulPose(Axis.YP.rotationDegrees(spin));
+        pose.mulPose(turn.rotationY(spin * Mth.DEG_TO_RAD));
         pose.pushPose();
         pose.scale(CORE_W * scale, CORE_H * scale, CORE_W * scale);
         drawOctahedron(pose, vc, sprite, r, g, b, 240);
         pose.popPose();
         float glow = 1.4F + pulse * 0.4F + (online ? Mth.sin(time * 0.15F) * 0.06F : 0.0F);
         pose.pushPose();
-        pose.mulPose(Axis.YP.rotationDegrees(-spin * 1.6F + 45.0F));
-        pose.scale(CORE_W * glow, CORE_H * glow, CORE_W * glow);
+        pose.mulPose(turn.rotationY((-spin * 1.6F + 45.0F) * Mth.DEG_TO_RAD));
+        pose.scale(CORE_W * glow, Math.min(CORE_H * glow, REACH), CORE_W * glow);
         drawOctahedron(pose, vc, sprite, r, g, b, online ? Math.round(50 + 90 * pulse) : 20);
         pose.popPose();
         pose.popPose();
@@ -104,9 +110,10 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
         for (int i = 0; i < 2; i++) {
             pose.pushPose();
             pose.translate(0.5F, MIDDLE + bob, 0.5F);
-            pose.mulPose(Axis.YP.rotationDegrees(i == 0 ? time * 1.5F : -time * 1.1F + 90.0F));
-            pose.mulPose(Axis.XP.rotationDegrees(i == 0 ? 62.0F : -62.0F));
-            ring(fx, pose.last().pose(), RING_R * (1.0F + pulse * 0.12F), r, g, b, ringAlpha);
+            pose.mulPose(turn.rotationY((i == 0 ? time * 1.5F : -time * 1.1F + 90.0F) * Mth.DEG_TO_RAD));
+            pose.mulPose(turn.rotationX((i == 0 ? 62.0F : -62.0F) * Mth.DEG_TO_RAD));
+            // tilted 62 degrees, the ring stays between the pads while it swells and bobs
+            ring(fx, pose.last().pose(), RING_R * (1.0F + pulse * 0.06F), r, g, b, ringAlpha);
             pose.popPose();
         }
         // a beam from pad to pad while something moves
