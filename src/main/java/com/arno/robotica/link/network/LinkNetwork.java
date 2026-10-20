@@ -13,7 +13,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,13 +25,17 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * One named network: owner, name, colour, visibility, home dimension, and its buffer (FE and item stacks). The buffer
- * lives in saved data so it keeps what senders put in while the receivers are unloaded. It holds 5 s of FE and 9 item
- * slots per sending Link; the senders are listed by position so the size stays right while they are unloaded.
+ * One named network: owner, name, colour, visibility, and its buffer (FE and item stacks). The buffer lives in saved
+ * data so it keeps what senders put in while the receivers are unloaded. It holds 5 s of FE and 9 item slots per sending
+ * Link; the senders are listed by position so the size stays right while they are unloaded.
  *
- * <p>Runtime state (not saved): the receiving Links that ticked this server tick, bucketed by priority, and the loaded
- * Links of the network (for colour changes). Links register themselves every tick from their own (loaded) chunk, so
- * nothing here ever reaches into an unloaded chunk.
+ * <p>Runtime state (not saved): the Links that worked this server tick (for the shared upkeep), the receiving ones
+ * bucketed by priority, and the loaded Links of the network (for colour changes). Links register themselves every tick
+ * from their own (loaded) chunk, so nothing here ever reaches into an unloaded chunk.
+ *
+ * <p>Upkeep is paid by the network as a whole: every tick the Links that worked owe the sum of their upkeep, paid from
+ * any of their own buffers and then from the network's. One powered Link keeps every Link of the network running, in
+ * any dimension. When the sum can not be paid, nothing is taken and every Link waits a tick.
  */
 public final class LinkNetwork {
     public static final int MAX_NAME = 24;
@@ -42,7 +45,7 @@ public final class LinkNetwork {
     /** Ticks of each sender's rate the FE buffer holds (5 s). */
     public static final int BUFFER_TICKS = 100;
 
-    /** Crystal and swatch colour per colour index, in dye order (white, orange, ... black), brightened to glow. */
+    /** Core, window and swatch colour per colour index, in dye order (white, orange, ... black), brightened to glow. */
     private static final int[] RGB = {
             0xF4F6FA, 0xFF9A2E, 0xE05BE0, 0x6CC8FF, 0xFFE04A, 0x86E83A, 0xFF9CC4, 0x8A929C,
             0xC6CCD2, 0x2ED8D0, 0xA45CFF, 0x4A6CFF, 0xB0784A, 0x4FAE3A, 0xFF4A3E, 0x4A4060};
@@ -56,7 +59,6 @@ public final class LinkNetwork {
     private String name;
     private int color;
     private Visibility visibility;
-    private final ResourceKey<Level> home;
     private long energy;
     private final List<ItemStack> items = new ArrayList<>();
     private final Map<GlobalPos, Sender> senders = new LinkedHashMap<>();
@@ -74,17 +76,21 @@ public final class LinkNetwork {
     @SuppressWarnings("unchecked")
     final List<QuantumLinkBlockEntity>[] itemReceivers = new List[LinkPriority.COUNT];
     private final int[] itemCursor = new int[LinkPriority.COUNT];
+    /** Links that worked this tick; they owe their upkeep at the end of it. */
+    final List<QuantumLinkBlockEntity> upkeepLinks = new ArrayList<>();
+    /** Whether the last tick's upkeep was paid (Links wait while it was not), and what it came to. */
+    private boolean powered;
+    private long upkeepDue;
     private final Set<QuantumLinkBlockEntity> loaded = new HashSet<>();
     int validateCursor;
 
-    public LinkNetwork(UUID id, UUID owner, String ownerName, String name, int color, Visibility visibility, ResourceKey<Level> home) {
+    public LinkNetwork(UUID id, UUID owner, String ownerName, String name, int color, Visibility visibility) {
         this.id = id;
         this.owner = owner;
         this.ownerName = ownerName;
         this.name = name;
         this.color = Math.floorMod(color, COLORS);
         this.visibility = visibility;
-        this.home = home;
         for (int i = 0; i < LinkPriority.COUNT; i++) {
             energyReceivers[i] = new ArrayList<>();
             itemReceivers[i] = new ArrayList<>();
@@ -116,10 +122,6 @@ public final class LinkNetwork {
 
     public Visibility visibility() {
         return visibility;
-    }
-
-    public ResourceKey<Level> home() {
-        return home;
     }
 
     /** 0xRRGGBB of a colour index. */
@@ -354,6 +356,46 @@ public final class LinkNetwork {
             energyReceivers[i].clear();
             itemReceivers[i].clear();
         }
+        upkeepLinks.clear();
+    }
+
+    /** True when the last tick's upkeep was paid: the network's Links may work. */
+    public boolean powered() {
+        return powered;
+    }
+
+    /** FE per tick the network's working Links owed in the last tick. */
+    public long upkeep() {
+        return upkeepDue;
+    }
+
+    /**
+     * Charges the upkeep of every Link that worked this tick, as one sum: from the Links' own buffers in turn, then from
+     * the network's buffer. All or nothing; the result decides whether the Links work next tick.
+     */
+    void payUpkeep() {
+        long due = 0, funds = energy;
+        for (int i = 0; i < upkeepLinks.size(); i++) {
+            QuantumLinkBlockEntity link = upkeepLinks.get(i);
+            if (link.isRemoved()) continue;
+            due += link.tier().upkeep();
+            funds += link.upkeepFunds();
+        }
+        upkeepDue = due;
+        if (funds < due) {
+            powered = false;
+            return;
+        }
+        powered = true;
+        long left = due;
+        for (int i = 0; i < upkeepLinks.size() && left > 0; i++) {
+            QuantumLinkBlockEntity link = upkeepLinks.get(i);
+            if (!link.isRemoved()) left -= link.payUpkeep((int) Math.min(Integer.MAX_VALUE, left));
+        }
+        if (left > 0) {
+            energy -= left;
+            dirty();
+        }
     }
 
     /**
@@ -447,7 +489,6 @@ public final class LinkNetwork {
         tag.putString("name", name);
         tag.putByte("color", (byte) color);
         tag.putByte("visibility", (byte) visibility.ordinal());
-        tag.putString("home", home.location().toString());
         tag.putLong("energy", energy);
         ListTag stacks = new ListTag();
         for (int i = 0; i < items.size(); i++) {
@@ -476,10 +517,8 @@ public final class LinkNetwork {
     @Nullable
     static LinkNetwork load(CompoundTag tag, HolderLookup.Provider registries) {
         if (!tag.hasUUID("id") || !tag.hasUUID("owner")) return null;
-        ResourceLocation home = ResourceLocation.tryParse(tag.getString("home"));
-        if (home == null) return null;
         LinkNetwork net = new LinkNetwork(tag.getUUID("id"), tag.getUUID("owner"), tag.getString("ownerName"), tag.getString("name"),
-                tag.getByte("color"), Visibility.byId(tag.getByte("visibility")), ResourceKey.create(Registries.DIMENSION, home));
+                tag.getByte("color"), Visibility.byId(tag.getByte("visibility")));
         for (Tag t : tag.getList("senders", Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) t;
             BlockPos pos = NbtUtils.readBlockPos(entry, "pos").orElse(null);

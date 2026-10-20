@@ -1783,13 +1783,13 @@ public final class Showcase {
             if (mc().player != null && mc().screen != null) mc().player.closeContainer();
         });
 
-        // Quantum Links Mk1-3 on one network: the Mk1 sends an Accumulator's FE, the crystals pulse in the network colour.
+        // Quantum Links Mk1-3 on one network: the Mk1 sends an Accumulator's FE, the cores glow in the network colour.
         if (wants("34_quantum_links")) {
             step(10, () -> server(sp -> {
                 ServerLevel level = sp.serverLevel();
                 var networks = com.arno.robotica.link.network.LinkNetworks.get(sp.server);
                 var net = networks.create(sp.getUUID(), sp.getGameProfile().getName(), "Showcase", 9,
-                        com.arno.robotica.link.network.Visibility.PUBLIC, level.dimension());
+                        com.arno.robotica.link.network.Visibility.PUBLIC);
                 String[] tiers = {"quantum_link_mk1", "quantum_link_mk2", "quantum_link_mk3"};
                 for (int i = 0; i < tiers.length; i++) {
                     BlockPos pos = new BlockPos(LINKS.getX() + i * 3, Y, LINKS.getZ());

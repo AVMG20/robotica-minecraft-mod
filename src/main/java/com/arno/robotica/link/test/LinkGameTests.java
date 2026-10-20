@@ -12,16 +12,22 @@ import com.arno.robotica.link.menu.NetworkEntry;
 import com.arno.robotica.link.network.LinkNetwork;
 import com.arno.robotica.link.network.LinkNetworks;
 import com.arno.robotica.link.network.Visibility;
+import com.arno.robotica.power.PowerRegistry;
+import com.arno.robotica.power.block.AccumulatorBlockEntity;
+import com.arno.robotica.power.tesla.TeslaCoilBlock;
+import com.arno.robotica.power.tesla.TeslaCoilBlockEntity;
+import com.arno.robotica.power.tesla.TeslaNetwork;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -39,12 +45,12 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public class LinkGameTests {
 
-    private static LinkNetwork network(GameTestHelper helper, String name, Visibility visibility, ResourceKey<Level> home) {
-        return LinkNetworks.get(helper.getLevel().getServer()).create(UUID.randomUUID(), "Tester", name, 9, visibility, home);
+    private static LinkNetwork network(GameTestHelper helper, String name, Visibility visibility) {
+        return LinkNetworks.get(helper.getLevel().getServer()).create(UUID.randomUUID(), "Tester", name, 9, visibility);
     }
 
     private static LinkNetwork network(GameTestHelper helper, String name) {
-        return network(helper, name, Visibility.PUBLIC, helper.getLevel().dimension());
+        return network(helper, name, Visibility.PUBLIC);
     }
 
     private static void delete(GameTestHelper helper, LinkNetwork net) {
@@ -93,6 +99,27 @@ public class LinkGameTests {
             helper.assertTrue(net.senders().size() == 1 && net.energyCapacity() == 64_000L * LinkNetwork.BUFFER_TICKS,
                     "the sender sizes the buffer: 5 s of its rate");
             helper.assertTrue(total <= 64_000 && total >= 64_000 - 2L * upkeep * elapsed, "nothing but upkeep is lost, total " + total);
+            delete(helper, net);
+        });
+    }
+
+    /** A Tesla Relay on top of a receiving Link hands the network's FE to the machine it links. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void relayOnReceiverSharesNetworkPower(GameTestHelper helper) {
+        LinkNetwork net = network(helper, "Relay Feed");
+        QuantumLinkBlockEntity sender = link(helper, new BlockPos(0, 1, 0), LinkTier.MK1, net, TransferMode.SEND, TransferMode.OFF);
+        sender.energy.setEnergy(64_000);
+        link(helper, new BlockPos(2, 1, 2), LinkTier.MK1, net, TransferMode.RECEIVE, TransferMode.OFF);
+        BlockPos relayPos = new BlockPos(2, 2, 2);
+        helper.setBlock(relayPos, PowerRegistry.TESLA_COIL_1.get().defaultBlockState().setValue(TeslaCoilBlock.FACING, Direction.UP));
+        TeslaCoilBlockEntity relay = (TeslaCoilBlockEntity) helper.getBlockEntity(relayPos);
+        BlockPos sinkPos = new BlockPos(4, 1, 4);
+        helper.setBlock(sinkPos, PowerRegistry.ACCUMULATOR_1.get().defaultBlockState());
+        AccumulatorBlockEntity sink = (AccumulatorBlockEntity) helper.getBlockEntity(sinkPos);
+        helper.assertTrue(TeslaNetwork.toggle(relay, helper.absolutePos(sinkPos), Direction.UP) == TeslaNetwork.LinkResult.LINKED, "link relay -> sink");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(relay.isRoot(), "the relay draws from the Link under it");
+            helper.assertTrue(sink.energy.getEnergyStored() > 10_000, "the sink fills, has " + sink.energy.getEnergyStored());
             delete(helper, net);
         });
     }
@@ -215,8 +242,8 @@ public class LinkGameTests {
     public static void privateNetworkRefusesOthers(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         LinkNetworks data = LinkNetworks.get(server);
-        LinkNetwork vault = network(helper, "Vault", Visibility.PRIVATE, helper.getLevel().dimension());
-        LinkNetwork square = network(helper, "Square", Visibility.PUBLIC, helper.getLevel().dimension());
+        LinkNetwork vault = network(helper, "Vault", Visibility.PRIVATE);
+        LinkNetwork square = network(helper, "Square", Visibility.PUBLIC);
         Player stranger = helper.makeMockPlayer(GameType.SURVIVAL);
         BlockPos pos = new BlockPos(1, 1, 1);
         helper.setBlock(pos, LinkRegistry.LINK_MK1.get().defaultBlockState());
@@ -241,25 +268,74 @@ public class LinkGameTests {
         });
     }
 
+    // ---- Upkeep ----
+
+    /**
+     * Three Links on an item network, only one with FE: the network pays all three upkeeps (3 x 20 FE/t) from that one
+     * buffer and every Link works. Once it runs dry nothing is taken and all of them wait.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void upkeepIsSharedByTheNetwork(GameTestHelper helper) {
+        LinkNetwork net = network(helper, "Shared");
+        QuantumLinkBlockEntity powered = link(helper, new BlockPos(0, 1, 0), LinkTier.MK1, net, TransferMode.OFF, TransferMode.SEND);
+        QuantumLinkBlockEntity a = link(helper, new BlockPos(2, 1, 0), LinkTier.MK1, net, TransferMode.OFF, TransferMode.RECEIVE);
+        QuantumLinkBlockEntity b = link(helper, new BlockPos(4, 1, 0), LinkTier.MK1, net, TransferMode.OFF, TransferMode.RECEIVE);
+        powered.energy.setEnergy(50_000);
+        int upkeep = LinkTier.MK1.upkeep();
+        int[] mark = new int[1];
+        helper.startSequence()
+                .thenExecuteAfter(5, () -> {
+                    for (QuantumLinkBlockEntity be : List.of(powered, a, b)) {
+                        helper.assertTrue(be.status().connected(), "every Link runs off the one powered Link, one is " + be.status());
+                    }
+                    helper.assertTrue(net.upkeep() == 3L * upkeep, "the network owes 3 x " + upkeep + ", owes " + net.upkeep());
+                    helper.assertTrue(a.energy.getEnergyStored() == 0 && b.energy.getEnergyStored() == 0, "the others need no FE of their own");
+                    mark[0] = powered.energy.getEnergyStored();
+                })
+                .thenExecuteAfter(10, () -> helper.assertTrue(powered.energy.getEnergyStored() == mark[0] - 10 * 3 * upkeep,
+                        "10 ticks of 3 upkeeps, used " + (mark[0] - powered.energy.getEnergyStored())))
+                .thenExecute(() -> powered.energy.setEnergy(3 * upkeep - 1))
+                .thenExecuteAfter(3, () -> {
+                    for (QuantumLinkBlockEntity be : List.of(powered, a, b)) {
+                        helper.assertTrue(be.status() == Status.NO_POWER, "short of the whole upkeep, all wait, one is " + be.status());
+                    }
+                    helper.assertTrue(powered.energy.getEnergyStored() == 3 * upkeep - 1, "an unpaid upkeep takes nothing");
+                })
+                .thenExecute(() -> a.energy.setEnergy(1_000))
+                .thenExecuteAfter(3, () -> helper.assertTrue(powered.status().connected() && b.status().connected(),
+                        "FE in any Link pays for all of them"))
+                .thenExecute(() -> delete(helper, net))
+                .thenSucceed();
+    }
+
     // ---- Dimensions ----
 
-    /** A network made in the Nether: a Mk1 in the Overworld does nothing (not even upkeep), a Mk2 works. */
-    @GameTest(template = "empty", timeoutTicks = 60)
-    public static void mk1OutsideHomeDimensionIdles(GameTestHelper helper) {
-        LinkNetwork net = network(helper, "Nether Line", Visibility.PUBLIC, Level.NETHER);
-        QuantumLinkBlockEntity mk1 = link(helper, new BlockPos(0, 1, 0), LinkTier.MK1, net, TransferMode.SEND, TransferMode.SEND);
-        QuantumLinkBlockEntity mk2 = link(helper, new BlockPos(2, 1, 2), LinkTier.MK2, net, TransferMode.SEND, TransferMode.OFF);
-        mk1.energy.setEnergy(64_000);
-        mk2.energy.setEnergy(64_000);
+    /** A Mk1 in the Nether sends FE to a Mk1 in the Overworld on the same network. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void mk1WorksAcrossDimensions(GameTestHelper helper) {
+        ServerLevel nether = helper.getLevel().getServer().getLevel(Level.NETHER);
+        helper.assertTrue(nether != null, "the test server has a Nether");
+        LinkNetwork net = network(helper, "Nether Line");
+        BlockPos far = new BlockPos(8, 100, 8);
+        ChunkPos chunk = new ChunkPos(far);
+        nether.setChunkForced(chunk.x, chunk.z, true);
+        nether.setBlockAndUpdate(far, LinkRegistry.LINK_MK1.get().defaultBlockState());
+        QuantumLinkBlockEntity sender = (QuantumLinkBlockEntity) nether.getBlockEntity(far);
+        sender.joinNetwork(net);
+        sender.setEnergyMode(TransferMode.SEND);
+        sender.energy.setEnergy(64_000);
+        QuantumLinkBlockEntity receiver = link(helper, new BlockPos(1, 1, 1), LinkTier.MK1, net, TransferMode.RECEIVE, TransferMode.OFF);
         helper.startSequence()
-                .thenExecuteAfter(10, () -> {
-                    helper.assertTrue(mk1.status() == Status.WRONG_DIMENSION, "Mk1 away from home, is " + mk1.status());
-                    helper.assertTrue(mk1.energy.getEnergyStored() == 64_000, "an idle Mk1 uses nothing");
-                    helper.assertTrue(mk2.status().connected() && mk2.energy.getEnergyStored() < 64_000, "Mk2 works in any dimension");
-                    helper.assertTrue(net.senders().size() == 1 && net.energy() > 0, "only the Mk2 sends");
-                    helper.assertTrue(net.itemSlots() == 0, "the Mk1 adds no item slots");
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(sender.status().connected(), "the Nether Mk1 is connected, is " + sender.status());
+                    helper.assertTrue(receiver.energy.getEnergyStored() > 50_000, "the Overworld Mk1 gets its FE, has " + receiver.energy.getEnergyStored());
                 })
-                .thenExecute(() -> delete(helper, net))
+                .thenExecute(() -> {
+                    sender.onBroken();
+                    nether.removeBlock(far, false);
+                    nether.setChunkForced(chunk.x, chunk.z, false);
+                    delete(helper, net);
+                })
                 .thenSucceed();
     }
 

@@ -47,7 +47,7 @@ public class LinkMenu extends MachineMenu {
     private int listVersion;
     private final int idxEnergyMode, idxItemMode, idxPriority, idxWhitelist, idxStatus, idxStored, idxRate, idxItemRate,
             idxUsedSlots, idxSlots;
-    private final int[] idxNetEnergy, idxNetCapacity;
+    private final int[] idxNetEnergy, idxNetCapacity, idxNetUpkeep;
 
     public static LinkMenu client(int id, Inventory inv, RegistryFriendlyByteBuf buf) {
         BlockPos pos = buf.readBlockPos();
@@ -94,6 +94,7 @@ public class LinkMenu extends MachineMenu {
         idxSlots = track(be == null ? () -> 0 : () -> be.network() == null ? 0 : be.network().itemSlots());
         idxNetEnergy = trackLong(be == null ? () -> 0 : () -> be.network() == null ? 0 : be.network().energy());
         idxNetCapacity = trackLong(be == null ? () -> 0 : () -> be.network() == null ? 0 : be.network().energyCapacity());
+        idxNetUpkeep = trackLong(be == null ? () -> 0 : () -> be.network() == null ? 0 : be.network().upkeep());
         trackSides(be == null ? null : be.sides);
     }
 
@@ -193,6 +194,11 @@ public class LinkMenu extends MachineMenu {
 
     public long networkCapacity() {
         return syncedLong(idxNetCapacity);
+    }
+
+    /** FE per tick the whole network's upkeep comes to. */
+    public long networkUpkeep() {
+        return syncedLong(idxNetUpkeep);
     }
 
     // ---------------------------------------------------------------- server

@@ -67,7 +67,7 @@
         },
         {
           "title": "Moving FE",
-          "text": "Put a Tesla Emitter on a generator or battery and link it to a machine, or to a Tesla Relay to power many.\nLinked relays form one network, whichever side you link from.",
+          "text": "Put a Tesla Emitter on a generator or battery and link it to a machine, or to a Tesla Relay to power many.\nA relay on a generator or battery feeds its network from it too.\nLinked relays form one network, whichever side you link from.",
           "items": [
             "robotica:tesla_coil_1",
             "robotica:tesla_emitter_1",
@@ -739,7 +739,7 @@
         },
         {
           "title": "Link tips",
-          "text": "Upkeep comes from the Link's own buffer, else from the network.\nLinks next to each other ignore each other.\nA broken Link keeps its network and settings.",
+          "text": "The network pays the upkeep of all its Links together: one powered Link runs them all.\nA Tesla Relay on a receiving Link hands its FE to the machines it links.\nLinks next to each other ignore each other.\nA broken Link keeps its network and settings.",
           "items": [
             "robotica:quantum_link_mk1"
           ]

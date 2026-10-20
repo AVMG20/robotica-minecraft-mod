@@ -102,7 +102,7 @@ public class CourierDroneMenu extends MachineMenu {
                 if (drone.canInteract(player)) {
                     ItemStack carried = getCarried();
                     if (carried.isEmpty() || button == 1 || type == ClickType.QUICK_MOVE) ghost.set(ItemStack.EMPTY);
-                    else ghost.set(carried.copyWithCount(1));
+                    else ghost.set(new ItemStack(carried.getItem()));
                     broadcastChanges();
                 }
             }
