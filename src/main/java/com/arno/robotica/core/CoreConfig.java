@@ -51,7 +51,7 @@ public final class CoreConfig {
                 .defineInRange("fortuneCapMax", 3, 0, 3);
         GROWTH_CAP_PER_MK = b.comment("Growth cards that count per Mk.")
                 .defineInRange("growthCapPerMk", 1, 0, 4);
-        FORTUNE_ENERGY_PER_CARD = b.comment("Percent more FE per Fortune card in the Excavator, Survey Rig and Replicator (50: Fortune III x2.5). A Silk Touch card costs as much as 2 Fortune cards.")
+        FORTUNE_ENERGY_PER_CARD = b.comment("Percent more FE per Fortune card in the Excavator, Survey Rig and Replicator Harvest mode (50: Fortune III x2.5). A Silk Touch card costs as much as 2 Fortune cards.")
                 .defineInRange("fortuneEnergyPerCard", 50, 0, 1_000);
         b.pop();
         b.comment("Upgrade cards in machines without a Mk: most cards of a kind that count.").push("fixedMachines");
