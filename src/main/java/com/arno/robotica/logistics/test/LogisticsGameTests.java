@@ -16,16 +16,21 @@ import com.arno.robotica.processing.block.GrinderBlockEntity;
 import com.arno.robotica.processing.block.ProcessingMachineBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 /** Item pipes: chest to chest along a pipe line, Off links, filters, Closest First, arms that follow a machine's side config, and the glow route. */
 @GameTestHolder(Robotica.MODID)
@@ -125,6 +130,21 @@ public class LogisticsGameTests {
             helper.assertTrue(count(target, Items.GOLD_INGOT) == 4 && count(target, Items.IRON_INGOT) == 0, "gold went to the open chest");
             helper.assertTrue(count(source, Items.COBBLESTONE) == 20 && count(target, Items.COBBLESTONE) == 0, "blacklisted cobblestone stayed");
         });
+    }
+
+    /** A filter entry matches its item whatever the damage, enchantments or name. */
+    @GameTest(template = "empty")
+    public static void filtersIgnoreItemData(GameTestHelper helper) {
+        ItemStackHandler filter = new ItemStackHandler(ItemPipeBlockEntity.FILTER_SLOTS);
+        filter.setStackInSlot(0, new ItemStack(Items.IRON_BOOTS));
+        ItemStack worn = new ItemStack(Items.IRON_BOOTS);
+        worn.setDamageValue(100);
+        worn.enchant(helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.PROTECTION), 2);
+        worn.set(DataComponents.CUSTOM_NAME, Component.literal("Old boots"));
+        ItemStack gold = new ItemStack(Items.GOLDEN_BOOTS);
+        helper.assertTrue(ItemPipeBlockEntity.passes(filter, true, worn) && !ItemPipeBlockEntity.passes(filter, true, gold), "whitelist takes worn iron boots only");
+        helper.assertTrue(!ItemPipeBlockEntity.passes(filter, false, worn) && ItemPipeBlockEntity.passes(filter, false, gold), "blacklist stops worn iron boots");
+        helper.succeed();
     }
 
     /** Closest First fills the barrel next to the Extract pipe; the far chest gets nothing while the barrel has room. */
