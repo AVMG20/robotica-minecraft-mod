@@ -189,6 +189,9 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     private int xpStored;
     private final List<ItemStack> pending = new ArrayList<>();
     private ReplicatorStructure.Status status = ReplicatorStructure.Status.INCOMPLETE;
+    /** The first wrong shell block or the blocked centre, shown in the GUI. */
+    @Nullable
+    private BlockPos problem;
     private Pause pause = Pause.NOT_FORMED;
     private boolean revalidate = true;
     private int age;
@@ -298,6 +301,11 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         return status;
     }
 
+    @Nullable
+    public BlockPos problem() {
+        return problem;
+    }
+
     public Pause pause() {
         return pause;
     }
@@ -382,12 +390,19 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     /** Checks the 3x3x3 now and updates the blockstate. Server side. */
     public void validate(ServerLevel level, BlockPos pos, BlockState state) {
         revalidate = false;
-        ReplicatorStructure.Status now = ReplicatorStructure.validate(level, pos, state.getValue(ReplicatorControllerBlock.FACING));
+        ReplicatorStructure.Result result = ReplicatorStructure.find(level, pos, state.getValue(ReplicatorControllerBlock.FACING));
+        ReplicatorStructure.Status now = result.status();
         if (now == ReplicatorStructure.Status.UNLOADED) return;
         // after a load the block state still knows whether it stood, so a standing Replicator stays quiet
         boolean wasFormed = validated ? status.formed() : state.getValue(ReplicatorControllerBlock.FORMED);
         validated = true;
         status = now;
+        problem = result.wrong();
+        if (now.formed() && result.facing() != state.getValue(ReplicatorControllerBlock.FACING)) {
+            // placed against the wrong block: turn the screen out of the cube that formed
+            state = state.setValue(ReplicatorControllerBlock.FACING, result.facing());
+            level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+        }
         BoundingBox cube = cube(pos, state);
         if (now.formed()) {
             // every check, so a frame swapped for glass (or back) takes the look too
@@ -442,10 +457,10 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         }
     }
 
-    /** Any block change in or next to the cube checks it again on the next tick. */
-    private void watchCube(BlockPos pos, BlockState state) {
+    /** Any block change in or next to a cube the controller may belong to checks it again on the next tick. */
+    private void watchCube(BlockPos pos) {
         if (level == null || level.isClientSide) return;
-        MultiblockWatcher.watch(level, pos, cube(pos, state), this::requestValidation);
+        MultiblockWatcher.watch(level, pos, new BoundingBox(pos).inflatedBy(2), this::requestValidation);
         watching = true;
     }
 
@@ -460,7 +475,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
 
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         age++;
-        if (!watching) watchCube(pos, state);
+        if (!watching) watchCube(pos);
         if (revalidate || age % VALIDATE_INTERVAL == 0) {
             validate(level, pos, state);
             state = getBlockState();

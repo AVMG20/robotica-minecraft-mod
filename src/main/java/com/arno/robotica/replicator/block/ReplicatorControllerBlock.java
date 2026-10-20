@@ -3,6 +3,7 @@ package com.arno.robotica.replicator.block;
 import com.arno.robotica.replicator.ReplicatorConfig;
 import com.arno.robotica.replicator.ReplicatorRegistry;
 import com.arno.robotica.replicator.logic.Essence;
+import com.arno.robotica.replicator.logic.ReplicatorStructure;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -57,11 +58,9 @@ public class ReplicatorControllerBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        // Clicking the outside of a frame block: the controller faces away from it, so it ends up in the face centre.
-        Direction clicked = context.getClickedFace();
-        BlockState behind = context.getLevel().getBlockState(context.getClickedPos().relative(clicked.getOpposite()));
-        boolean onShell = behind.is(ReplicatorRegistry.REPLICATOR_FRAME.get()) || behind.is(ReplicatorRegistry.REPLICATOR_GLASS.get());
-        Direction facing = onShell ? clicked : context.getNearestLookingDirection().getOpposite();
+        // Faces out of the cube already built around it (whichever block was clicked), else towards the player.
+        Direction facing = ReplicatorStructure.guessFacing(context.getLevel(), context.getClickedPos(),
+                context.getNearestLookingDirection().getOpposite());
         return defaultBlockState().setValue(FACING, facing);
     }
 

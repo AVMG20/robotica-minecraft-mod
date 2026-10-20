@@ -163,6 +163,72 @@ public class ReplicatorGameTests {
         helper.succeed();
     }
 
+    /** The wiki and Codex layout (scripts/wiki/multiblocks.json, bottom layer first, rows north to south). */
+    private static final String[][] DOCUMENTED = {
+            {"FFF", "FFF", "FFF"},
+            {"FKF", "G.G", "FGF"},
+            {"FFF", "FGF", "FFF"}};
+
+    private static void buildDocumented(GameTestHelper helper, Direction controllerFacing) {
+        for (int y = 0; y < 3; y++) {
+            for (int z = 0; z < 3; z++) {
+                for (int x = 0; x < 3; x++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    switch (DOCUMENTED[y][z].charAt(x)) {
+                        case 'F' -> helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_FRAME.get());
+                        case 'G' -> helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_GLASS.get());
+                        case 'K' -> helper.setBlock(pos, ReplicatorRegistry.REPLICATOR_CONTROLLER.get().defaultBlockState()
+                                .setValue(ReplicatorControllerBlock.FACING, controllerFacing));
+                        default -> helper.setBlock(pos, Blocks.AIR);
+                    }
+                }
+            }
+        }
+    }
+
+    /** The documented layout forms, also with the controller facing the wrong way (placed against the frame below it). */
+    @GameTest(template = "empty")
+    public static void documentedLayoutForms(GameTestHelper helper) {
+        buildDocumented(helper, Direction.NORTH);
+        helper.assertTrue(CONTROLLER.equals(new BlockPos(1, 1, 0)), "K in the layout is the test controller");
+        helper.assertTrue(check(helper) == ReplicatorStructure.Status.FORMED, "the documented layout forms, got " + check(helper));
+
+        for (Direction wrong : new Direction[]{Direction.UP, Direction.DOWN, Direction.EAST, Direction.SOUTH}) {
+            buildDocumented(helper, wrong);
+            ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+            be.validate(helper.getLevel(), helper.absolutePos(CONTROLLER), helper.getBlockState(CONTROLLER));
+            helper.assertTrue(be.isFormed(), "forms with the controller facing " + wrong);
+            helper.assertTrue(helper.getBlockState(CONTROLLER).getValue(ReplicatorControllerBlock.FACING) == Direction.NORTH,
+                    "the controller facing " + wrong + " turns out of the cube");
+            helper.assertTrue(be.problem() == null, "no problem once formed");
+        }
+
+        // placing the controller last into the hole picks the outward facing, whichever frame was clicked
+        helper.setBlock(CONTROLLER, Blocks.AIR);
+        Direction guessed = ReplicatorStructure.guessFacing(helper.getLevel(), helper.absolutePos(CONTROLLER), Direction.DOWN);
+        helper.assertTrue(guessed == Direction.NORTH, "placement faces out of the cube, got " + guessed);
+        helper.succeed();
+    }
+
+    /** Not formed: the first wrong block is reported for the cube the controller belongs to, even facing the wrong way. */
+    @GameTest(template = "empty")
+    public static void structureReportsWrongBlock(GameTestHelper helper) {
+        buildDocumented(helper, Direction.UP);
+        BlockPos hole = new BlockPos(2, 0, 2);
+        helper.setBlock(hole, Blocks.NETHERRACK);
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        be.validate(helper.getLevel(), helper.absolutePos(CONTROLLER), helper.getBlockState(CONTROLLER));
+        helper.assertTrue(be.status() == ReplicatorStructure.Status.INCOMPLETE, "incomplete, got " + be.status());
+        helper.assertTrue(helper.absolutePos(hole).equals(be.problem()), "names the netherrack, got " + be.problem());
+
+        helper.setBlock(hole, ReplicatorRegistry.REPLICATOR_FRAME.get());
+        helper.setBlock(CENTER, Blocks.STONE);
+        be.validate(helper.getLevel(), helper.absolutePos(CONTROLLER), helper.getBlockState(CONTROLLER));
+        helper.assertTrue(be.status() == ReplicatorStructure.Status.CENTER_BLOCKED, "centre blocked, got " + be.status());
+        helper.assertTrue(helper.absolutePos(CENTER).equals(be.problem()), "names the centre, got " + be.problem());
+        helper.succeed();
+    }
+
     /** The controller notices the structure on its own and shows it in the blockstate. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void controllerShowsFormedState(GameTestHelper helper) {

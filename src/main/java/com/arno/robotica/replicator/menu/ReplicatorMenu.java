@@ -36,6 +36,7 @@ public class ReplicatorMenu extends MachineMenu {
     private final int speedIndex;
     private final int costIndex;
     private final int xpIndex;
+    private final int problemIndex;
     @Nullable
     private final ReplicatorControllerBlockEntity be;
 
@@ -84,6 +85,7 @@ public class ReplicatorMenu extends MachineMenu {
         speedIndex = track(be == null ? () -> 0 : be::speedMultiplier);
         costIndex = track(be == null ? () -> 0 : be::energyPerTick);
         xpIndex = track(be == null ? () -> 0 : be::xpStored);
+        problemIndex = track(be == null ? () -> 0 : () -> encodeProblem(pos, be.problem()));
         trackSides(be == null ? null : be.sides);
     }
 
@@ -120,6 +122,23 @@ public class ReplicatorMenu extends MachineMenu {
         int id = (synced(statusIndex) >> 2) & 7;
         ReplicatorStructure.Status[] all = ReplicatorStructure.Status.values();
         return id < all.length ? all[id] : ReplicatorStructure.Status.INCOMPLETE;
+    }
+
+    /** The first wrong block of the cube, or null. */
+    @Nullable
+    public BlockPos problem() {
+        int code = synced(problemIndex);
+        if (code <= 0) return null;
+        code--;
+        return pos.offset(code / 25 - 2, code / 5 % 5 - 2, code % 5 - 2);
+    }
+
+    /** A position within 2 blocks of the controller as 1..125 (0 for none): fits a 16 bit data slot. */
+    private static int encodeProblem(BlockPos controller, @Nullable BlockPos problem) {
+        if (problem == null) return 0;
+        int dx = problem.getX() - controller.getX() + 2, dy = problem.getY() - controller.getY() + 2, dz = problem.getZ() - controller.getZ() + 2;
+        if (dx < 0 || dx > 4 || dy < 0 || dy > 4 || dz < 0 || dz > 4) return 0;
+        return dx * 25 + dy * 5 + dz + 1;
     }
 
     public Pause pause() {
