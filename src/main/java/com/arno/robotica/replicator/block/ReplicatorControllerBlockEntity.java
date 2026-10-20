@@ -189,6 +189,11 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     private int xpStored;
     private final List<ItemStack> pending = new ArrayList<>();
     private ReplicatorStructure.Status status = ReplicatorStructure.Status.INCOMPLETE;
+    /** The controller's outward side: the cube lies behind it. Found by the structure check (saved, synced for the hologram). */
+    private Direction facing = Direction.NORTH;
+    /** The first wrong shell block or the blocked centre, shown in the GUI. */
+    @Nullable
+    private BlockPos problem;
     private Pause pause = Pause.NOT_FORMED;
     private boolean revalidate = true;
     private int age;
@@ -298,6 +303,15 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         return status;
     }
 
+    public Direction facing() {
+        return facing;
+    }
+
+    @Nullable
+    public BlockPos problem() {
+        return problem;
+    }
+
     public Pause pause() {
         return pause;
     }
@@ -383,13 +397,21 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     /** Checks the 3x3x3 now and updates the blockstate. Server side. */
     public void validate(ServerLevel level, BlockPos pos, BlockState state) {
         revalidate = false;
-        ReplicatorStructure.Status now = ReplicatorStructure.validate(level, pos, state.getValue(ReplicatorControllerBlock.FACING));
+        ReplicatorStructure.Result result = ReplicatorStructure.find(level, pos, facing);
+        ReplicatorStructure.Status now = result.status();
         if (now == ReplicatorStructure.Status.UNLOADED) return;
         // after a load the block state still knows whether it stood, so a standing Replicator stays quiet
         boolean wasFormed = validated ? status.formed() : state.getValue(ReplicatorControllerBlock.FORMED);
         validated = true;
         status = now;
-        BoundingBox cube = cube(pos, state);
+        problem = result.wrong();
+        if (result.facing() != facing) {
+            facing = result.facing();
+            setChangedAndSync();
+        }
+        BoundingBox cube = cube(pos);
+        // a cube that breaks lets go of its light where it stood, even when the check now picks another side
+        BoundingBox fxBox = !now.formed() && lookBox != null ? lookBox : cube;
         if (now.formed()) {
             // every check, so a frame swapped for glass (or back) takes the look too
             if (lookBox != null && !lookBox.equals(cube)) StructureLook.dress(level, lookBox, false);
@@ -407,7 +429,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             if (age - lastFormFx >= 10) {
                 lastFormFx = age;
                 CoreSounds.play(level, pos, now.formed() ? CoreSounds.STRUCTURE_FORM : CoreSounds.STRUCTURE_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
-                frameFx(level, pos, state, now.formed() ? StructureFxPayload.FORM : StructureFxPayload.UNFORM);
+                StructureFxPayload.send(level, now.formed() ? StructureFxPayload.FORM : StructureFxPayload.UNFORM, pos, fxBox, FX_COLOR);
             }
         }
         if (state.getValue(ReplicatorControllerBlock.FORMED) != now.formed()) {
@@ -421,14 +443,14 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     private static final int FX_COLOR = 0x5CFFC8;
 
     /** The 3x3x3 the controller at {@code pos} belongs to. */
-    private static BoundingBox cube(BlockPos pos, BlockState state) {
-        BlockPos center = ReplicatorStructure.center(pos, state.getValue(ReplicatorControllerBlock.FACING));
+    private BoundingBox cube(BlockPos pos) {
+        BlockPos center = ReplicatorStructure.center(pos, facing);
         return BoundingBox.fromCorners(center.offset(-1, -1, -1), center.offset(1, 1, 1));
     }
 
     /** Light along the 3x3x3 frame edges as it forms or breaks (client drawn). */
-    private static void frameFx(ServerLevel level, BlockPos pos, BlockState state, int kind) {
-        StructureFxPayload.send(level, kind, pos, cube(pos, state), FX_COLOR);
+    private void frameFx(ServerLevel level, BlockPos pos, int kind) {
+        StructureFxPayload.send(level, kind, pos, cube(pos), FX_COLOR);
     }
 
     /** The controller broke: the formed look comes off and, if it stood, the frame lets go of its light. */
@@ -439,14 +461,14 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         }
         if (status.formed()) {
             CoreSounds.play(level, pos, CoreSounds.STRUCTURE_UNFORM, SoundSource.BLOCKS, 1.0F, 1.0F);
-            frameFx(level, pos, state, StructureFxPayload.UNFORM);
+            frameFx(level, pos, StructureFxPayload.UNFORM);
         }
     }
 
-    /** Any block change in or next to the cube checks it again on the next tick. */
-    private void watchCube(BlockPos pos, BlockState state) {
+    /** Any block change in or next to a cube the controller may belong to checks it again on the next tick. */
+    private void watchCube(BlockPos pos) {
         if (level == null || level.isClientSide) return;
-        MultiblockWatcher.watch(level, pos, cube(pos, state), this::requestValidation);
+        MultiblockWatcher.watch(level, pos, new BoundingBox(pos).inflatedBy(2), this::requestValidation);
         watching = true;
     }
 
@@ -461,7 +483,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
 
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
         age++;
-        if (!watching) watchCube(pos, state);
+        if (!watching) watchCube(pos);
         if (revalidate || age % VALIDATE_INTERVAL == 0) {
             validate(level, pos, state);
             state = getBlockState();
@@ -535,7 +557,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             if (blocked != Pause.NONE) return blocked;
             cycleSound(level, pos, CoreSounds.REPLICATOR_SPAWN, null);
         } else {
-            Harvest.Result result = Harvest.roll(level, type, pos.relative(state.getValue(ReplicatorControllerBlock.FACING).getOpposite()),
+            Harvest.Result result = Harvest.roll(level, type, ReplicatorStructure.center(pos, facing),
                     owner, lootingLevel());
             if (result != null) {
                 for (ItemStack drop : result.drops()) {
@@ -563,7 +585,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         lastCycleSound = age;
         CoreSounds.play(level, pos, sound, SoundSource.BLOCKS, 0.9F, 1.0F);
         if (death != null) {
-            BlockPos center = ReplicatorStructure.center(pos, getBlockState().getValue(ReplicatorControllerBlock.FACING));
+            BlockPos center = ReplicatorStructure.center(pos, facing);
             level.playSound(null, center, death, SoundSource.BLOCKS, 0.6F, 0.9F + level.random.nextFloat() * 0.2F);
         }
     }
@@ -587,7 +609,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (!ReplicatorConfig.allowSpawnMode()) return Pause.SPAWN_DISABLED;
         if (level.getDifficulty() == Difficulty.PEACEFUL && type.getCategory() == MobCategory.MONSTER) return Pause.PEACEFUL;
 
-        BlockPos center = ReplicatorStructure.center(pos, state.getValue(ReplicatorControllerBlock.FACING));
+        BlockPos center = ReplicatorStructure.center(pos, facing);
         // A count at the cap is checked again right away: mobs killed since then free room.
         boolean capped = nearbySame >= ReplicatorConfig.spawnMaxSameType() || nearbyTotal >= ReplicatorConfig.spawnMaxTotal();
         if (type != countedType || age - countedAt >= 20 || capped) {
@@ -604,7 +626,6 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         }
         if (nearbySame >= ReplicatorConfig.spawnMaxSameType() || nearbyTotal >= ReplicatorConfig.spawnMaxTotal()) return Pause.SPAWN_CAP;
 
-        Direction facing = state.getValue(ReplicatorControllerBlock.FACING);
         BlockPos front = pos.relative(facing);
         for (BlockPos candidate : new BlockPos[]{front, front.above(), center.above(2)}) {
             if (!level.noCollision(type.getSpawnAABB(candidate.getX() + 0.5, candidate.getY(), candidate.getZ() + 0.5))) continue;
@@ -733,6 +754,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         tag.putInt("mode", mode.ordinal());
         if (muted) tag.putBoolean("muted", true);
         tag.put("sides", sides.save());
+        tag.putString("facing", facing.getSerializedName());
         if (owner != null) tag.putUUID("owner", owner);
         if (lookBox != null) {
             tag.putIntArray("look", new int[]{lookBox.minX(), lookBox.minY(), lookBox.minZ(), lookBox.maxX(), lookBox.maxY(), lookBox.maxZ()});
@@ -759,6 +781,10 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (tag.contains("mode")) mode = Mode.byId(tag.getInt("mode"));
         muted = tag.getBoolean("muted");
         if (tag.hasUUID("owner")) owner = tag.getUUID("owner");
+        if (tag.contains("facing")) {
+            Direction saved = Direction.byName(tag.getString("facing"));
+            if (saved != null) facing = saved;
+        }
         int[] look = tag.getIntArray("look");
         lookBox = look.length == 6 ? new BoundingBox(look[0], look[1], look[2], look[3], look[4], look[5]) : null;
         // a controller moved with its data must not strip the look off its old spot
@@ -817,6 +843,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         tag.putInt("cycles", cycles);
         tag.putInt("mode", mode.ordinal());
         if (muted) tag.putBoolean("muted", true);
+        tag.putString("facing", facing.getSerializedName());
     }
 
     /** Extract-only view for hoppers, pipes and storage networks: they can empty the output but never insert. */

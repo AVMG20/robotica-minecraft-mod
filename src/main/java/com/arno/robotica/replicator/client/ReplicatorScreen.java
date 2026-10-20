@@ -3,6 +3,7 @@ package com.arno.robotica.replicator.client;
 import com.arno.robotica.core.client.FitButton;
 import com.arno.robotica.core.client.IconButton;
 import com.arno.robotica.core.client.MachineScreen;
+import com.arno.robotica.core.multiblock.StructureProblem;
 import com.arno.robotica.core.util.Fmt;
 import com.arno.robotica.replicator.ReplicatorModePayload;
 import com.arno.robotica.replicator.ReplicatorMutePayload;
@@ -15,6 +16,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -174,7 +176,10 @@ public class ReplicatorScreen extends MachineScreen<ReplicatorMenu> {
         } else {
             String key = menu.structure().translationKey();
             shortText = Component.translatable(key + ".short");
-            longText = Component.translatable(key);
+            BlockPos at = menu.problem();
+            longText = at != null && minecraft != null && minecraft.level != null
+                    ? Component.translatable(key + ".at", StructureProblem.name(minecraft.level.getBlockState(at)), StructureProblem.at(at))
+                    : Component.translatable(key);
             tone = Tone.BAD;
         }
         drawStatus(g, shortText, x + 64, y + 35, 70, 2, tone);

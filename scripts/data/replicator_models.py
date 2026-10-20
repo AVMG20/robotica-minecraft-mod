@@ -71,23 +71,17 @@ loot('replicator_frame')
 connected_glass.write_glass(write, ASSETS, 'replicator_glass')
 loot('replicator_glass')
 
-# ---------- controller: three faces (not formed / formed / working), six facings ----------
+# ---------- controller: no facing, the screen on every side (not formed / formed / working) ----------
 for state in ('off', 'formed', 'on'):
-    faces = {'north': f'replicator_controller_front_{state}', 'up': 'replicator_controller_top',
-             'down': 'replicator_controller_top', 'south': 'replicator_controller_side',
-             'west': 'replicator_controller_side', 'east': 'replicator_controller_side'}
     write(ASSETS / f'models/block/replicator_controller_{state}.json',
-          glow_cube(faces, {'north': f'replicator_controller_front_{state}_glow'}))
+          glow_cube({d: f'replicator_controller_front_{state}' for d in DIRS},
+                    {d: f'replicator_controller_front_{state}_glow' for d in DIRS}))
 
-# model north faces -z; y turns it around the vertical axis, x 270 turns the front up and x 90 down
-ROTATION = {'north': {}, 'east': {'y': 90}, 'south': {'y': 180}, 'west': {'y': 270}, 'up': {'x': 270}, 'down': {'x': 90}}
 variants = {}
-for facing, rot in ROTATION.items():
-    for formed in (False, True):
-        for lit in (False, True):
-            state = 'on' if (formed and lit) else 'formed' if formed else 'off'
-            variants[f'facing={facing},formed={str(formed).lower()},lit={str(lit).lower()}'] = dict(
-                {'model': f'robotica:block/replicator_controller_{state}'}, **rot)
+for formed in (False, True):
+    for lit in (False, True):
+        state = 'on' if (formed and lit) else 'formed' if formed else 'off'
+        variants[f'formed={str(formed).lower()},lit={str(lit).lower()}'] = {'model': f'robotica:block/replicator_controller_{state}'}
 write(ASSETS / 'blockstates/replicator_controller.json', {'variants': variants})
 write(ASSETS / 'models/item/replicator_controller.json', {'parent': 'robotica:block/replicator_controller_formed'})
 loot('replicator_controller')

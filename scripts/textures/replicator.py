@@ -165,26 +165,6 @@ def panel():
     return c
 
 
-def controller_side():
-    c = plate(seed=4)
-    rivets(c)
-    c.recess(3, 5, 10, 6, DS, fill='n')
-    for x in range(4, 12, 2):                                     # coolant tubes
-        c.rect(x, 6, 1, 4, 'e').set(x, 6, 'E')
-    return c.rows()
-
-
-def controller_top():
-    c = plate(seed=5)
-    rivets(c)
-    c.disc(7.5, 7.5, 4.6, 'z')
-    c.disc(7.5, 7.5, 3.8, 'q')
-    c.ring(7.5, 7.5, 2.2, 3.0, 'e')
-    c.disc(7.5, 7.5, 1.2, 'E')
-    c.set(5, 4, 'A').set(4, 5, 'A')
-    return c.rows()
-
-
 def screen(c):
     c.screen(2, 2, 12, 12, DS, glass='n')
     return c
@@ -292,8 +272,6 @@ def main():
     write_block('replicator_frame_corner', frame_corner().rows(), P)
     write_block('replicator_frame_corner_glow', frame_corner_glow().rows(), P)
     write_block('replicator_panel', panel().rows(), P)
-    write_block('replicator_controller_side', controller_side(), P)
-    write_block('replicator_controller_top', controller_top(), P)
     for state in ('off', 'formed', 'on'):
         write_block(f'replicator_controller_front_{state}', controller_front(state), P)
         n = {'off': 4, 'formed': 12, 'on': 8}[state]

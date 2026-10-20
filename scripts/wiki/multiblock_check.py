@@ -332,8 +332,8 @@ def _check_cuboid(mb, kind):
 
 
 def _check_replicator(mb):
-    """replicator/logic/ReplicatorStructure.validate: 3x3x3, controller in a face centre (FACING is any of the six
-    directions), the other 26-1 shell blocks frames or glass (at least one glass), the centre block air."""
+    """replicator/logic/ReplicatorStructure.validate: 3x3x3, controller in a face centre (any of the six faces, it
+    has no facing), the other 26-1 shell blocks frames or glass (at least one glass), the centre block air."""
     grid = Grid(mb)
     if grid.problems:
         return grid.problems
@@ -345,7 +345,7 @@ def _check_replicator(mb):
     box = ((0, 0, 0), (2, 2, 2))
     c = ctrls[0]
     if faces(box, c) != 1:
-        return [f"controller at {c} must be the centre of a face (center = controller.relative(facing.getOpposite()))"]
+        return [f"controller at {c} must be the centre of a face"]
     glass = 0
     for p, blk in sorted(grid.blocks.items()):
         if p == (1, 1, 1) or p == c:
