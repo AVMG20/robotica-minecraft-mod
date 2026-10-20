@@ -62,12 +62,12 @@ import java.util.UUID;
  *
  * <p>Faces follow the Sides tab: Input faces take FE and items in (and auto-input pulls from them while sending),
  * Output faces give them out (auto-eject pushes into them while receiving), None connects nothing. Pipes, cables,
- * hoppers and a Tesla Coil sitting on top work through the capabilities. Upkeep comes from the Link's own buffer, else
- * from the network's. No loss and no FE per item.
+ * hoppers and a Tesla Relay or Emitter sitting on top work through the capabilities. The network pays the upkeep of
+ * all its Links together ({@link LinkNetwork#payUpkeep}), so one powered Link runs them all. No loss and no FE per item.
  */
 public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuProvider, InfoSource {
     public enum Status {
-        NO_NETWORK, WRONG_DIMENSION, NO_ACCESS, NO_POWER, OFF, IDLE, ACTIVE;
+        NO_NETWORK, NO_ACCESS, NO_POWER, OFF, IDLE, ACTIVE;
 
         private static final Status[] VALUES = values();
 
@@ -246,7 +246,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     /** True when this Link sends anything into the network {@code id} (for the stale sender check). */
     public boolean sendsTo(UUID id) {
         if (!id.equals(networkId) || (energyMode != TransferMode.SEND && itemMode != TransferMode.SEND)) return false;
-        return status != Status.WRONG_DIMENSION && status != Status.NO_ACCESS;
+        return status != Status.NO_ACCESS;
     }
 
     private GlobalPos key() {
@@ -413,7 +413,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         syncVisuals();
     }
 
-    /** Checks the network, the dimension and access. IDLE means: connected, ready to work this tick. */
+    /** Checks the network and access. IDLE means: connected, ready to work this tick. */
     private Status resolve(ServerLevel level, long now) {
         if (networkId == null) return Status.NO_NETWORK;
         MinecraftServer server = level.getServer();
@@ -429,10 +429,6 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
                 return Status.NO_NETWORK;
             }
             attach(found);
-        }
-        if (tier.homeOnly && !level.dimension().equals(net.home())) {
-            syncSender(false);
-            return Status.WRONG_DIMENSION;
         }
         if (seenAccessVersion != net.accessVersion() || now >= nextAccessCheck) {
             accessOk = LinkNetworks.canUse(server, net, owner, ownerName);
@@ -466,13 +462,11 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         LinkNetwork network = Objects.requireNonNull(net);
         LinkNetworks data = LinkNetworks.get(level.getServer());
         if (energyMode == TransferMode.SEND && sides.autoInput()) pullEnergy(level, pos);
-        int upkeep = tier.upkeep();
-        if (upkeep > 0 && !energy.consume(upkeep)) {
-            if (network.energy() < upkeep) {
-                status = Status.NO_POWER;
-                return;
-            }
-            network.extractEnergy(upkeep);
+        // The network charges this tick's upkeep after all levels ticked; until it was paid nothing moves.
+        data.addUpkeep(network, this, now);
+        if (!network.powered()) {
+            status = Status.NO_POWER;
+            return;
         }
         if (energyMode == TransferMode.SEND) {
             int n = (int) Math.min(Math.min(energy.getEnergyStored(), tier.rate), network.energySpace());
@@ -596,6 +590,17 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
 
     // ---------------------------------------------------------------- called by the network hand-out
 
+    /** FE in this Link's own buffer that can go to the network's upkeep. */
+    public int upkeepFunds() {
+        return energy.getEnergyStored();
+    }
+
+    /** Pays up to {@code max} FE of the network's upkeep from this Link's own buffer. Returns what it paid. */
+    public int payUpkeep(int max) {
+        int n = Math.min(Math.max(0, max), energy.getEnergyStored());
+        return n > 0 && energy.consume(n) ? n : 0;
+    }
+
     /** FE this receiver takes this tick: the room in its own buffer (one tick of its rate). */
     public int energyDemand() {
         if (isRemoved() || energyMode != TransferMode.RECEIVE) return 0;
@@ -661,7 +666,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return ItemPipeBlockEntity.passes(filter, whitelist, stack);
     }
 
-    /** Book-keeping, the crystal pulse (a block event, at most every {@link #PULSE_GAP} ticks) and the hum. */
+    /** Book-keeping, the core pulse (a block event, at most every {@link #PULSE_GAP} ticks) and the hum. */
     private void moved(boolean send, boolean isItems, int amount) {
         if (isItems) itemWindow += amount;
         else feWindow += amount;
@@ -754,7 +759,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         tag.putBoolean("online", syncedOnline);
     }
 
-    /** Colour index of the crystal on the client, -1 without a network. */
+    /** Colour index of the core and windows on the client, -1 without a network. */
     public int clientColor() {
         return clientColor;
     }
@@ -772,14 +777,13 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return clientPulseKind;
     }
 
-    /** The block plus the beam above it, for render culling. */
+    /** The block with a hair of room for the core and windows, for render culling. */
     public AABB renderBox() {
-        if (renderBox == null) renderBox = new AABB(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                worldPosition.getX() + 1, worldPosition.getY() + 4.5, worldPosition.getZ() + 1);
+        if (renderBox == null) renderBox = new AABB(worldPosition).inflate(0.01);
         return renderBox;
     }
 
-    /** Server: true so the event reaches watching clients. Client: pulse the crystal and throw a few particles. */
+    /** Server: true so the event reaches watching clients. Client: pulse the core and throw a few particles. */
     @Override
     public boolean triggerEvent(int id, int param) {
         if (id != EVENT_SEND && id != EVENT_RECEIVE) return super.triggerEvent(id, param);
@@ -795,7 +799,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         RandomSource random = level.random;
         int rgb = LinkNetwork.rgb(Math.max(0, clientColor));
         DustParticleOptions dust = new DustParticleOptions(new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F), 0.7F);
-        double cx = worldPosition.getX() + 0.5, cy = worldPosition.getY() + QuantumLinkBlock.CRYSTAL_Y, cz = worldPosition.getZ() + 0.5;
+        double cx = worldPosition.getX() + 0.5, cy = worldPosition.getY() + QuantumLinkBlock.TOP_Y + 0.05, cz = worldPosition.getZ() + 0.5;
         for (int i = 0; i < 5; i++) {
             double a = random.nextDouble() * Math.PI * 2;
             double r = 0.35 + random.nextDouble() * 0.25;
@@ -834,7 +838,6 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
             case ACTIVE -> "working";
             case NO_POWER -> "no_energy";
             case NO_NETWORK -> "no_network";
-            case WRONG_DIMENSION -> "wrong_dimension";
             case NO_ACCESS -> "no_access";
             case OFF -> "off";
             case IDLE -> "idle";

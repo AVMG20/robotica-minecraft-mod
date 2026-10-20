@@ -9,9 +9,9 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /**
  * Common (both sides) entry point of the link module: Quantum Links Mk1-3 that move FE and items on named networks
- * (saved data, see {@code network/LinkNetworks}), across dimensions from Mk2. Links only ever touch their own loaded
+ * (saved data, see {@code network/LinkNetworks}), across dimensions. Links only ever touch their own loaded
  * chunk; each network's buffer carries things while one end is unloaded.
- * Client side ({@code client/LinkClient}): the screen and the floating crystal.
+ * Client side ({@code client/LinkClient}): the screen and the network colour renderer.
  */
 public final class LinkModule {
     private LinkModule() {}
