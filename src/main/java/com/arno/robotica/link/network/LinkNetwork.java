@@ -45,7 +45,7 @@ public final class LinkNetwork {
     /** Ticks of each sender's rate the FE buffer holds (5 s). */
     public static final int BUFFER_TICKS = 100;
 
-    /** Crystal and swatch colour per colour index, in dye order (white, orange, ... black), brightened to glow. */
+    /** Core, window and swatch colour per colour index, in dye order (white, orange, ... black), brightened to glow. */
     private static final int[] RGB = {
             0xF4F6FA, 0xFF9A2E, 0xE05BE0, 0x6CC8FF, 0xFFE04A, 0x86E83A, 0xFF9CC4, 0x8A929C,
             0xC6CCD2, 0x2ED8D0, 0xA45CFF, 0x4A6CFF, 0xB0784A, 0x4FAE3A, 0xFF4A3E, 0x4A4060};

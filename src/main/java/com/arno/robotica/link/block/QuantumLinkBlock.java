@@ -47,7 +47,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Quantum Link Mk1-3: a pedestal with a crystal floating above it (drawn by the block entity renderer). Right-click
+ * Quantum Link Mk1-3: a flat-topped block (a Tesla Relay can sit on it) whose top core and side windows show the network
+ * colour (drawn by the block entity renderer). Right-click
  * opens its screen (owner, team, operators); right-click with the next Mk upgrades it in place, keeping network,
  * settings and energy. Breaking it keeps its network and settings in the item.
  */
