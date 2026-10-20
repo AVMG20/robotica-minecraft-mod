@@ -271,7 +271,7 @@ public abstract class ProcessingMachineBlockEntity extends SyncedBlockEntity imp
         if (cap <= 0) return List.of(Component.translatable("gui.robotica.processing.card.unused").withStyle(ChatFormatting.RED));
         String key = "gui.robotica.processing.card." + name + "." + kind.name().toLowerCase(Locale.ROOT);
         Component line = switch (kind) {
-            case FORTUNE -> Component.translatable(key, Math.round(ProcessingConfig.fortuneBonus() * 100));
+            case FORTUNE -> Component.translatable(key, Math.round(ProcessingConfig.fortuneBonus() * 100), Math.round(Upgrades.BONUS_FORTUNE_ENERGY * 100));
             default -> Component.translatable(key);
         };
         return List.of(line.copy().withStyle(ChatFormatting.AQUA),

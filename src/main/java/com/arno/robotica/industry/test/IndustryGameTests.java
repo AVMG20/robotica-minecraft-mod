@@ -105,7 +105,7 @@ public class IndustryGameTests {
                 .stream().map(RecipeHolder::value).filter(r -> r.getResultItem(helper.getLevel().registryAccess()).is(IndustryRegistry.THERMOCOUPLE.get()))
                 .findFirst().orElseThrow();
         int mk1Ticks = mk1.ticksFor(recipe);
-        helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).getCount() == 1, "only the Alloy Smelter takes fortune");
+        helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.FORTUNE, 1), true).getCount() == 1, "no fortune card");
         helper.assertTrue(mk1.upgrades.insertItem(1, CoreItems.cards(UpgradeKind.VOID, 1), true).getCount() == 1, "only the Centrifuge takes a void card");
 
         BlockPos abs = helper.absolutePos(POS);
@@ -182,19 +182,26 @@ public class IndustryGameTests {
         });
     }
 
-    /** Fortune only works on recipes that allow it: alloying by default, centrifuging and assembling not (those machines take no fortune card). */
+    /**
+     * No industry machine takes Fortune cards; ones left in an Alloy Smelter from older versions pop out on top and a
+     * card stuck in a closed slot moves into the freed one.
+     */
     @GameTest(template = "empty")
-    public static void fortuneIsPerRecipe(GameTestHelper helper) {
-        helper.assertTrue(recipeMaking(helper, Machine.ALLOY_SMELTER, IndustryRegistry.FERROTHORIUM_INGOT.get()).fortune(), "alloying takes fortune");
-        helper.assertTrue(!recipeMaking(helper, Machine.CENTRIFUGE, Items.SLIME_BALL).fortune(), "centrifuging magma cream does not");
-        helper.assertTrue(!recipeMaking(helper, Machine.ASSEMBLER, IndustryRegistry.THERMOCOUPLE.get()).fortune(), "assembling does not");
-        ProcessingBlockEntity be = place(helper, Machine.ASSEMBLER, 4);
-        ProcessingRecipe recipe = recipeMaking(helper, Machine.ASSEMBLER, IndustryRegistry.THERMOCOUPLE.get());
-        int before = be.powerFor(recipe);
+    public static void industryMachinesTakeNoFortune(GameTestHelper helper) {
+        for (Machine machine : Machine.values()) {
+            helper.assertTrue(place(helper, machine, 4).upgrades.cap(UpgradeKind.FORTUNE) == 0, machine + " takes no fortune card");
+        }
+        ProcessingBlockEntity be = place(helper, Machine.ALLOY_SMELTER, 4);
         be.upgrades.setStackInSlot(0, CoreItems.cards(UpgradeKind.FORTUNE, 3));
-        helper.assertTrue(be.powerFor(recipe) == before, "fortune cards cost nothing where they do nothing");
-        helper.assertTrue(be.upgrades.cap(UpgradeKind.FORTUNE) == 0 && place(helper, Machine.CENTRIFUGE, 4).upgrades.cap(UpgradeKind.FORTUNE) == 0,
-                "the Assembler and Centrifuge take no fortune card");
+        be.upgrades.setStackInSlot(1, CoreItems.cards(UpgradeKind.SPEED, 2));
+        be.upgrades.setStackInSlot(2, CoreItems.cards(UpgradeKind.EFFICIENCY, 2));
+        be.serverTick(helper.getLevel(), helper.absolutePos(POS), helper.getBlockState(POS));
+        helper.assertTrue(be.upgrades.getStackInSlot(0).is(CoreItems.cards(UpgradeKind.EFFICIENCY, 1).getItem()) && be.upgrades.getStackInSlot(2).isEmpty(),
+                "the efficiency cards move into the freed slot");
+        helper.assertTrue(be.upgrades.level(UpgradeKind.EFFICIENCY) == 2 && be.upgrades.level(UpgradeKind.SPEED) == 2, "both cards count");
+        helper.assertTrue(!helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(helper.absolutePos(POS)).inflate(2), e -> e.getItem().is(CoreItems.cards(UpgradeKind.FORTUNE, 1).getItem())).isEmpty(),
+                "and pop out on top");
         helper.succeed();
     }
 

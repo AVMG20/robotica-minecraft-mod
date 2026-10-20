@@ -76,7 +76,7 @@
   "gui.robotica.processing.card.cap": "Up to %s count in this Mk%s",
   "gui.robotica.processing.card.grinder.speed": "In this Grinder: grinds faster (FE/t rises with it)",
   "gui.robotica.processing.card.grinder.efficiency": "In this Grinder: less FE per item",
-  "gui.robotica.processing.card.grinder.fortune": "In this Grinder: +%s%% main output per card from ores and raw ores (not gem ores or ingots)",
+  "gui.robotica.processing.card.grinder.fortune": "In this Grinder: +%s%% main output per card from ores and raw ores (not gem ores or ingots), +%s%% FE/t",
   "gui.robotica.processing.card.grinder.void": "In this Grinder: extra outputs and byproducts that don't fit are deleted",
   "gui.robotica.processing.card.electric_furnace.speed": "In this Electric Furnace: smelts faster (FE/t rises with it)",
   "gui.robotica.processing.card.electric_furnace.efficiency": "In this Electric Furnace: less FE per item",

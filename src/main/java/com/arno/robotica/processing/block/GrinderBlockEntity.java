@@ -5,6 +5,7 @@ import com.arno.robotica.core.energy.EnergyUtil;
 import com.arno.robotica.core.item.CellItem;
 import com.arno.robotica.core.util.RecipeAcceptCache;
 import com.arno.robotica.core.upgrade.UpgradeKind;
+import com.arno.robotica.core.upgrade.Upgrades;
 import com.arno.robotica.processing.ProcessingConfig;
 import com.arno.robotica.processing.ProcessingRegistry;
 import com.arno.robotica.processing.media.GrindingMedia;
@@ -233,7 +234,7 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         }
         needed = ticksFor(plan.time() > 0 ? plan.time() : ProcessingConfig.grinderTicks());
         if (progress < needed) {
-            if (!useEnergy(powerFor(ProcessingConfig.grinderPower()))) {
+            if (!useEnergy(grindPower(plan))) {
                 status = Status.NO_ENERGY;
                 return;
             }
@@ -261,6 +262,13 @@ public class GrinderBlockEntity extends ProcessingMachineBlockEntity {
         if (media != null) return media;
         media = GrindingMedia.of(items.getStackInSlot(MEDIA));
         return media != null && media.fits(tier) ? media : null;
+    }
+
+    /** FE/t grinding this plan; Fortune cards add {@link Upgrades#BONUS_FORTUNE_ENERGY} each where they add output. */
+    public int grindPower(GrindingLogic.Plan plan) {
+        int power = powerFor(ProcessingConfig.grinderPower());
+        if (power == 0 || !plan.boostable()) return power;
+        return (int) Math.min(Integer.MAX_VALUE, Math.round(power * Upgrades.bonusFortuneEnergyMultiplier(upgrades.level(UpgradeKind.FORTUNE))));
     }
 
     private double mainAmount(GrindingLogic.Plan plan, @Nullable GrindingMedia media) {

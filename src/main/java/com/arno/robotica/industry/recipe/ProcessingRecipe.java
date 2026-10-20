@@ -28,22 +28,14 @@ import java.util.List;
  * {"type": "robotica:alloying",
  *  "inputs": [{"ingredient": {"tag": "c:ingots/iron"}, "count": 1}, {"ingredient": [{"tag": "c:ingots/thorium"}, {"tag": "c:dusts/thorium"}]}],
  *  "results": [{"id": "robotica:ferrothorium_ingot", "count": 2}],
- *  "time": 200, "power": 0, "fortune": true}
+ *  "time": 200, "power": 0}
  * }</pre>
  * Inputs are shapeless: each ingredient needs {@code count} items in total, from any input slots. Results may
  * carry a {@code chance}. {@code time} is in ticks at base speed (default per machine), {@code power} the FE/t
  * (0 = the machine's config value). Both are base values: the machine's Mk and its cards scale them.
- * {@code fortune} says whether Fortune cards can add a main result (default: only for alloying, so loops like
- * centrifuging magma cream or extra casings from one assembler craft cannot multiply items). Only the Alloy Smelter
- * takes Fortune cards.
  */
-public record ProcessingRecipe(Machine machine, List<SizedIngredient> inputs, List<ChanceResult> results, int time, int power, boolean fortune)
+public record ProcessingRecipe(Machine machine, List<SizedIngredient> inputs, List<ChanceResult> results, int time, int power)
         implements Recipe<ProcessingInput> {
-
-    /** Fortune default of a machine's recipes when the JSON does not say. */
-    public static boolean defaultFortune(Machine machine) {
-        return machine == Machine.ALLOY_SMELTER;
-    }
 
     /** True if the slots hold enough of every ingredient and no slot holds anything else. */
     @Override
@@ -188,16 +180,14 @@ public record ProcessingRecipe(Machine machine, List<SizedIngredient> inputs, Li
                     inputCodec.fieldOf("inputs").forGetter(ProcessingRecipe::inputs),
                     resultCodec.fieldOf("results").forGetter(ProcessingRecipe::results),
                     Codec.intRange(1, 72_000).optionalFieldOf("time", machine.defaultTime).forGetter(ProcessingRecipe::time),
-                    Codec.intRange(0, 10_000_000).optionalFieldOf("power", 0).forGetter(ProcessingRecipe::power),
-                    Codec.BOOL.optionalFieldOf("fortune", defaultFortune(machine)).forGetter(ProcessingRecipe::fortune)
-            ).apply(i, (in, out, time, power, fortune) -> new ProcessingRecipe(machine, in, out, time, power, fortune)));
+                    Codec.intRange(0, 10_000_000).optionalFieldOf("power", 0).forGetter(ProcessingRecipe::power)
+            ).apply(i, (in, out, time, power) -> new ProcessingRecipe(machine, in, out, time, power)));
             this.streamCodec = StreamCodec.composite(
                     SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()), ProcessingRecipe::inputs,
                     ChanceResult.STREAM_CODEC.apply(ByteBufCodecs.list()), ProcessingRecipe::results,
                     ByteBufCodecs.VAR_INT, ProcessingRecipe::time,
                     ByteBufCodecs.VAR_INT, ProcessingRecipe::power,
-                    ByteBufCodecs.BOOL, ProcessingRecipe::fortune,
-                    (in, out, time, power, fortune) -> new ProcessingRecipe(machine, in, out, time, power, fortune));
+                    (in, out, time, power) -> new ProcessingRecipe(machine, in, out, time, power));
         }
 
         @Override

@@ -20,6 +20,7 @@ public final class CoreConfig {
     public static final ModConfigSpec.IntValue RANGE_CAP_PER_MK;
     public static final ModConfigSpec.IntValue FORTUNE_CAP_MAX;
     public static final ModConfigSpec.IntValue GROWTH_CAP_PER_MK;
+    public static final ModConfigSpec.IntValue FORTUNE_ENERGY_PER_CARD;
     /** Caps of the machines without a Mk, keyed "MACHINE/KIND". */
     private static final java.util.Map<String, ModConfigSpec.IntValue> FIXED_CAPS = new java.util.HashMap<>();
 
@@ -50,6 +51,8 @@ public final class CoreConfig {
                 .defineInRange("fortuneCapMax", 3, 0, 3);
         GROWTH_CAP_PER_MK = b.comment("Growth cards that count per Mk.")
                 .defineInRange("growthCapPerMk", 1, 0, 4);
+        FORTUNE_ENERGY_PER_CARD = b.comment("Percent more FE per Fortune card in the Excavator, Survey Rig and Replicator Harvest mode (50: Fortune III x2.5). A Silk Touch card costs as much as 2 Fortune cards.")
+                .defineInRange("fortuneEnergyPerCard", 50, 0, 1_000);
         b.pop();
         b.comment("Upgrade cards in machines without a Mk: most cards of a kind that count.").push("fixedMachines");
         for (com.arno.robotica.core.upgrade.UpgradeRules.Fixed machine : com.arno.robotica.core.upgrade.UpgradeRules.Fixed.values()) {
@@ -104,6 +107,10 @@ public final class CoreConfig {
 
     public static int fortuneCapMax() {
         return SPEC.isLoaded() ? FORTUNE_CAP_MAX.get() : 3;
+    }
+
+    public static int fortuneEnergyPerCard() {
+        return SPEC.isLoaded() ? FORTUNE_ENERGY_PER_CARD.get() : 50;
     }
 
     public static double energyUse() {

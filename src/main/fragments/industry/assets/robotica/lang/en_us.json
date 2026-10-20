@@ -64,7 +64,6 @@
   "robotica.configuration.alloySmelterPower": "Alloy Smelter power (FE/t)",
   "robotica.configuration.assemblerPower": "Assembler power (FE/t)",
   "robotica.configuration.centrifugePower": "Centrifuge power (FE/t)",
-  "robotica.configuration.fortuneBonus": "Fortune card bonus (% per card)",
   "robotica.configuration.machineBuffer": "Machine buffer (FE)",
   "robotica.configuration.machineInput": "Machine input (FE/t)",
   "robotica.configuration.machines": "Industry machines",

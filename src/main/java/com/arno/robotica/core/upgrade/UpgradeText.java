@@ -39,6 +39,8 @@ public final class UpgradeText {
         return switch (kind) {
             case RANGE -> new Object[]{value(EXCAVATOR_RANGE_STEP, 10), value(WIRELESS_RANGE_STEP, 4)};
             case EFFICIENCY -> new Object[]{value(GENERATOR_EFFICIENCY, 10)};
+            case FORTUNE -> new Object[]{CoreConfig.fortuneEnergyPerCard(), Math.round(Upgrades.BONUS_FORTUNE_ENERGY * 100)};
+            case SILK -> new Object[]{CoreConfig.fortuneEnergyPerCard() * Upgrades.SILK_AS_FORTUNE};
             case HEIGHT -> {
                 int cap = UpgradeRules.Fixed.ARCHITECT_TABLE.cap(UpgradeKind.HEIGHT);
                 yield new Object[]{cap, BASE_BUILDING_HEIGHT + cap};

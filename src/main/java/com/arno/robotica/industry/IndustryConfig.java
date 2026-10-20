@@ -17,7 +17,6 @@ public final class IndustryConfig {
     private static final ModConfigSpec.IntValue MACHINE_BUFFER;
     private static final ModConfigSpec.IntValue MACHINE_INPUT;
     private static final ModConfigSpec.DoubleValue[] TIER_SPEED = new ModConfigSpec.DoubleValue[4];
-    private static final ModConfigSpec.IntValue FORTUNE_BONUS;
     private static final ModConfigSpec.IntValue RTG_POWER;
     private static final ModConfigSpec.IntValue RTG_PELLET_TICKS;
     private static final ModConfigSpec.IntValue RTG_BUFFER;
@@ -41,8 +40,6 @@ public final class IndustryConfig {
             TIER_SPEED[i] = b.comment("Mk" + (i + 1) + " machines work this many times faster than Mk1 (and draw that much more FE/t, so FE per item stays the same).")
                     .defineInRange("tierSpeedMk" + (i + 1), speeds[i], 0.1, 100.0);
         }
-        FORTUNE_BONUS = b.comment("Percent chance per Fortune card that a craft gives one more of its main result (Mk2 and up; every card adds 25% FE).")
-                .defineInRange("fortuneBonus", 10, 0, 100);
         b.pop();
         b.push("rtg");
         RTG_POWER = b.comment("Radioisotope Generator: FE/t while a pellet decays (before the global generation multiplier).")
@@ -71,7 +68,6 @@ public final class IndustryConfig {
         ModConfigSpec.DoubleValue v = TIER_SPEED[Math.max(1, Math.min(4, tier)) - 1];
         return SPEC.isLoaded() ? v.get() : v.getDefault();
     }
-    public static int fortuneBonus() { return get(FORTUNE_BONUS); }
     public static int rtgPower() { return get(RTG_POWER); }
     public static int rtgPelletTicks() { return get(RTG_PELLET_TICKS); }
     public static int rtgBuffer() { return get(RTG_BUFFER); }
