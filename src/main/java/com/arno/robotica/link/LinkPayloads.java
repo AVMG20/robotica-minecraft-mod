@@ -55,7 +55,7 @@ public final class LinkPayloads {
         }
     }
 
-    /** Make a network (home: this Link's dimension) and join it. */
+    /** Make a network and join it. */
     public record Create(BlockPos pos, String name, int color, int visibility) implements CustomPacketPayload {
         public static final Type<Create> TYPE = new Type<>(Robotica.id("link_create"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Create> CODEC = StreamCodec.composite(
@@ -222,7 +222,7 @@ public final class LinkPayloads {
             return;
         }
         LinkNetwork net = data.create(player.getUUID(), player.getGameProfile().getName(), name.get(),
-                Math.floorMod(payload.color(), LinkNetwork.COLORS), Visibility.byId(payload.visibility()), player.level().dimension());
+                Math.floorMod(payload.color(), LinkNetwork.COLORS), Visibility.byId(payload.visibility()));
         be.joinNetwork(net);
         message(player, Component.translatable("message.robotica.link.created", net.name()));
         broadcastLists(player.server);

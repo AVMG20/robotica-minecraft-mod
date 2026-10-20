@@ -13,7 +13,7 @@ public final class MachineInfo {
 
     /**
      * Suffix of {@code gui.robotica.status.<status>}: idle, working, no_energy, output_full, finished, off, no_network,
-     * wrong_dimension, no_access.
+     * no_access.
      */
     @Nullable
     public String status;

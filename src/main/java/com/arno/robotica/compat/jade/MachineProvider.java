@@ -94,7 +94,7 @@ enum MachineProvider implements IBlockComponentProvider, IServerDataProvider<Blo
     private static ChatFormatting statusColor(String status) {
         return switch (status) {
             case "working" -> ChatFormatting.GREEN;
-            case "no_energy", "output_full", "no_network", "wrong_dimension", "no_access" -> ChatFormatting.RED;
+            case "no_energy", "output_full", "no_network", "no_access" -> ChatFormatting.RED;
             default -> ChatFormatting.GRAY;
         };
     }

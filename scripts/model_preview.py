@@ -373,7 +373,26 @@ def live_parts(ref):
                     tris += crystal_tris(tex, 8 + math.cos(a) * 5.44, y, 8 + math.sin(a) * 5.44, TESLA_SHARD[0], TESLA_SHARD[1], 0,
                                          TESLA_SHARD[1], 0.3 + i)
             return tris
+    if name.startswith('quantum_link_mk') and 'block/' in ref:
+        return quantum_parts()
     return []
+
+
+def quantum_parts():
+    """The Quantum Link renderer's top core and side windows (shown in the item glow colour)."""
+    def quad(a, b, c, d, uv, tex):
+        (u0, v0, u1, v1) = uv
+        return [((a, b, c), ((u0, v0), (u0, v1), (u1, v1)), tex, 1.0), ((a, c, d), ((u0, v0), (u1, v1), (u1, v0)), tex, 1.0)]
+    core, window = 'robotica:block/quantum_link_item_core', 'robotica:block/quantum_link_item_window'
+    y = 16.02
+    tris = quad((5, y, 5), (5, y, 11), (11, y, 11), (11, y, 5), (5, 5, 11, 11), core)
+    lo, hi, e = 1.98, 14.02, 0
+    for side in range(4):
+        pts = []
+        for (t, yy) in ((7, 10), (7, 6), (9, 6), (9, 10)):
+            pts.append({0: (16 - t, yy, lo), 1: (t, yy, hi), 2: (lo, yy, t), 3: (hi, yy, 16 - t)}[side])
+        tris += quad(*pts, (7, 6, 9, 10), window)
+    return tris
 
 
 def render_tris(img, zbuf, tris, ox, oy, scale, xform=None):

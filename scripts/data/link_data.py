@@ -1,6 +1,7 @@
 """Link data: Quantum Link block models, blockstates, item models, loot tables and recipes.
 Run: python3 scripts/data/link_data.py   (overwrites only files of link blocks and items)
-Textures come from scripts/textures/link.py. The floating crystal is drawn by the block entity renderer (LinkRenderer).
+Textures come from scripts/textures/link.py. The network colour (top core, side windows) is drawn by the block entity
+renderer (LinkRenderer).
 """
 import json
 import pathlib
@@ -38,39 +39,35 @@ def profile_faces(x0, x1, y0, y1, side='side', front='front', **extra):
     return {d: face(front if d == 'north' else side, uv, **extra) for d in SIDES}
 
 
-def link_model(tier, crystal=False):
-    """Pedestal: base slab, body with a light slit (a lens on the front), four corner pillars, cap and the emitter disc
-    the crystal floats over. Light parts are full-bright overlay faces."""
+def link_model(tier, item=False):
+    """Flat-topped block (a Tesla Relay sits on it): base slab, body with a window on each face, four corner pillars and
+    a full cap. Light parts are full-bright overlay faces. The item adds the core and windows the renderer draws in the
+    world."""
     p = f'robotica:block/quantum_link_{tier}'
     textures = {'side': f'{p}_side', 'front': f'{p}_front', 'side_glow': f'{p}_side_glow', 'front_glow': f'{p}_front_glow',
-                'top': f'{p}_top', 'emitter': f'{p}_emitter', 'trim': f'{p}_trim',
+                'top': f'{p}_top', 'top_glow': f'{p}_top_glow', 'trim': f'{p}_trim',
                 'bottom': 'robotica:block/quantum_link_bottom', 'particle': f'{p}_side'}
     full = [0, 0, 16, 16]
     elements = [
         # base y 0-3
         box(0, 0, 0, 16, 3, 16, dict(profile_faces(0, 16, 0, 3),
                                      up=face('bottom', full), down=face('bottom', full, cullface='down'))),
-        # body y 3-11
-        box(2, 3, 2, 14, 11, 14, profile_faces(2, 14, 3, 11)),
-        box(2, 3, 2, 14, 11, 14, profile_faces(2, 14, 3, 11, 'side_glow', 'front_glow', neoforge_data=GLOW), shade=False),
-        # cap y 11-13
-        box(1, 11, 1, 15, 13, 15, dict(profile_faces(1, 15, 11, 13), up=face('top', [1, 1, 15, 15]), down=face('bottom', [1, 1, 15, 15]))),
-        # emitter y 13-14
-        box(5, 13, 5, 11, 14, 11, profile_faces(5, 11, 13, 14)),
-        box(5, 13, 5, 11, 14, 11, dict(profile_faces(5, 11, 13, 14, 'side_glow', 'side_glow', neoforge_data=GLOW),
-                                       up=face('emitter', [5, 5, 11, 11], neoforge_data=GLOW)), shade=False),
+        # body y 3-13
+        box(2, 3, 2, 14, 13, 14, profile_faces(2, 14, 3, 13)),
+        box(2, 3, 2, 14, 13, 14, profile_faces(2, 14, 3, 13, 'side_glow', 'front_glow', neoforge_data=GLOW), shade=False),
+        # cap y 13-16, flat top
+        box(0, 13, 0, 16, 16, 16, dict({d: dict(f, cullface=d) for d, f in profile_faces(0, 16, 13, 16).items()},
+                                       up=face('top', full, cullface='up'), down=face('bottom', full))),
+        box(0, 13, 0, 16, 16, 16, {'up': face('top_glow', full, cullface='up', neoforge_data=GLOW)}, shade=False),
     ]
-    # corner pillars y 3-11
+    # corner pillars y 3-13
     for x, z in ((1, 1), (13, 1), (1, 13), (13, 13)):
-        elements.append(box(x, 3, z, x + 2, 11, z + 2, {d: face('trim', [x, 5, x + 2, 13]) for d in SIDES}))
-    if crystal:
-        # the item shows a small crystal over the emitter (in the world the renderer draws it in the network colour)
-        textures['crystal'] = 'robotica:block/quantum_crystal_item'
-        gem = {d: face('crystal', [4, 0, 12, 16], neoforge_data=GLOW) for d in SIDES}
-        gem['up'] = face('crystal', [4, 4, 12, 12], neoforge_data=GLOW)
-        gem['down'] = face('crystal', [4, 4, 12, 12], neoforge_data=GLOW)
-        elements.append(box(6.5, 14.5, 6.5, 9.5, 19.5, 9.5, gem, shade=False,
-                            rotation={'origin': [8, 16, 8], 'axis': 'y', 'angle': 45}))
+        elements.append(box(x, 3, z, x + 2, 13, z + 2, {d: face('trim', [x, 3, x + 2, 13]) for d in SIDES}))
+    if item:
+        textures['core'] = 'robotica:block/quantum_link_item_core'
+        textures['window'] = 'robotica:block/quantum_link_item_window'
+        elements.append(box(2, 3, 2, 14, 13, 14, profile_faces(2, 14, 3, 13, 'window', 'window', neoforge_data=GLOW), shade=False))
+        elements.append(box(0, 13, 0, 16, 16, 16, {'up': face('core', full, neoforge_data=GLOW)}, shade=False))
     return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures, 'elements': elements}
 
 
@@ -113,14 +110,14 @@ def main():
                 v['y'] = y
             variants[f'facing={facing}'] = v
         write(ASSETS / f'blockstates/{name}.json', {'variants': variants})
-        write(ASSETS / f'models/item/{name}.json', link_model(tier, crystal=True))
+        write(ASSETS / f'models/item/{name}.json', link_model(tier, item=True))
         loot(name)
 
     # Age 2: ender pearls tie the pair, a diamond focuses the beam. Upgrades keep the previous Mk in the recipe.
     shaped('quantum_link_mk1', ['EAE', 'SXS', 'GDG'], {
         'E': '#c:ender_pearls', 'A': 'advanced_circuit', 'S': 'servo_actuator', 'X': 'reinforced_casing',
         'G': '#c:plates/gold', 'D': '#c:gems/diamond'})
-    # Age 3: reaches other dimensions (Magma Core, as the Warp Pad Mk2).
+    # Age 3: Magma Core, as the Warp Pad Mk2.
     shaped('quantum_link_mk2', ['BMB', 'QLQ', 'PEP'], {
         'B': 'blazing_casing', 'M': 'magma_core', 'Q': 'quantum_circuit', 'L': 'quantum_link_mk1',
         'P': 'plasma_actuator', 'E': '#c:ender_pearls'}, source='L')
