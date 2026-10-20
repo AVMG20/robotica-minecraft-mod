@@ -21,7 +21,8 @@ import java.util.List;
 
 /**
  * Essence Vial. Right-click a hostile mob to take a sample (2 damage, 3 second cooldown per player). The first sample
- * binds the vial to the mob type (it stops stacking), eight samples complete it. Bosses can not be sampled.
+ * binds the vial to the mob type (it stops stacking), eight samples complete it. Bosses can not be sampled. Villagers
+ * can, without damage: their vials only fit the Iron Golem Farmer.
  */
 public class EssenceVialItem extends Item {
     public static final int COOLDOWN_TICKS = 60;
@@ -34,7 +35,7 @@ public class EssenceVialItem extends Item {
 
     @Override
     public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
-        if (!Essence.isHostile(target)) return InteractionResult.PASS;
+        if (!Essence.canTarget(target)) return InteractionResult.PASS;
         boolean client = player.level().isClientSide;
         // The cooldown list is per player and synced to that player, so this is per player on any server.
         if (player.getCooldowns().isOnCooldown(this)) return InteractionResult.CONSUME;
@@ -60,7 +61,7 @@ public class EssenceVialItem extends Item {
             single = stack;
         }
         player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
-        target.hurt(level.damageSources().playerAttack(player), SAMPLE_DAMAGE);
+        if (!Essence.isFarmOnly(type)) target.hurt(level.damageSources().playerAttack(player), SAMPLE_DAMAGE);
 
         level.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY(0.6), target.getZ(), 6, 0.25, 0.4, 0.25, 0.02);
         if (result == Essence.Result.COMPLETED) {
@@ -120,7 +121,10 @@ public class EssenceVialItem extends Item {
         tooltip.add(Component.translatable("tooltip.robotica.essence_vial_samples", samples, Essence.SAMPLES_REQUIRED)
                 .withStyle(samples >= Essence.SAMPLES_REQUIRED ? ChatFormatting.GREEN : ChatFormatting.AQUA));
         if (samples >= Essence.SAMPLES_REQUIRED) {
-            tooltip.add(Component.translatable("tooltip.robotica.essence_vial_complete").withStyle(ChatFormatting.GRAY));
+            EntityType<?> type = Essence.type(stack);
+            boolean farmOnly = type != null && Essence.isFarmOnly(type);
+            tooltip.add(Component.translatable(farmOnly ? "tooltip.robotica.essence_vial_farm" : "tooltip.robotica.essence_vial_complete")
+                    .withStyle(ChatFormatting.GRAY));
         }
     }
 }

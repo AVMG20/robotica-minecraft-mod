@@ -3,6 +3,14 @@
   "values": [
     "robotica:replicator_controller",
     "robotica:replicator_frame",
-    "robotica:replicator_glass"
+    "robotica:replicator_glass",
+    "robotica:farm_casing",
+    "robotica:farm_glass",
+    "robotica:farm_port",
+    "robotica:impact_ram",
+    "robotica:golem_matrix",
+    "robotica:wither_matrix",
+    "robotica:iron_golem_farmer",
+    "robotica:wither_farmer"
   ]
 }

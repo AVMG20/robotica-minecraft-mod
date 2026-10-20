@@ -35,7 +35,9 @@ public class PortBlock extends Block implements EntityBlock {
         /** Reactor Access Port: fuel in, waste out. */
         REACTOR_ACCESS,
         /** Bank Port: FE in or out, see {@link #OUTPUT}. */
-        BANK
+        BANK,
+        /** Farm Port: FE into a mob farm, its loot out. */
+        FARM
     }
 
     /** Bank Port mode: false takes FE in, true sends it out. */
@@ -91,6 +93,7 @@ public class PortBlock extends Block implements EntityBlock {
             case REACTOR_POWER -> "reactor_power_port";
             case REACTOR_ACCESS -> "reactor_access_port";
             case BANK -> "bank_port";
+            case FARM -> "farm_port";
         };
         tooltip.add(Component.translatable("tooltip.robotica." + id).withStyle(ChatFormatting.GRAY));
     }

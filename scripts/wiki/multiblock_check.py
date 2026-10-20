@@ -11,6 +11,7 @@ Mirrors the Java code (src/main/java/com/arno/robotica/...):
   energy/block/ColliderBlockEntity.java            scanStructure (loop walk)
   energy/EnergyConfig.java                          size defaults (bank 3..9, spire 8..24, collider 24..256)
   replicator/logic/ReplicatorStructure.java         validate (fixed 3x3x3)
+  replicator/farm/FarmStructure.java                SPEC + Visitor (fixed 5x5x5 mob farms)
 
 Grid convention (multiblocks.json): layers[y][z][x]; y=0 bottom, z=0 north, x=0 west.
 Pure stdlib. `check(mb)` returns a list of problems (empty = valid); `parts(mb)` counts blocks per id.
@@ -68,7 +69,10 @@ CAPACITORS = {"capacitor_copper", "capacitor_redstone", "capacitor_ender", "capa
 COILS = {"transfer_coil_basic", "transfer_coil_advanced", "transfer_coil_elite"}
 
 # PortBlock.Kind of each port block (energy/block/PortBlock.java, registered in EnergyRegistry).
-PORT_KIND = {"reactor_power_port": "REACTOR_POWER", "reactor_access_port": "REACTOR_ACCESS", "bank_port": "BANK"}
+PORT_KIND = {"reactor_power_port": "REACTOR_POWER", "reactor_access_port": "REACTOR_ACCESS", "bank_port": "BANK",
+             "farm_port": "FARM"}
+MATRICES = {"golem_matrix", "wither_matrix"}
+FARM_WALL = {"farm_casing", "farm_glass", "farm_port", "impact_ram"} | MATRICES
 
 # CuboidSpec of each energy structure: frame / wall / controller predicates and size limits (min, max).
 SPECS = {
@@ -86,6 +90,23 @@ SPECS = {
         "frame": {"reactor_casing"},
         "wall": {"reactor_casing", "reactor_glass", "reactor_power_port", "reactor_access_port"},
         "controller": "reactor_controller",
+        "width": (5, 5), "height": (5, 5),
+    },
+    # FarmStructure.SPEC: fixed 5x5x5; the controller predicate takes either farmer, the matrix decides the farm.
+    "golem_farm": {
+        "name": "Iron Golem Farm",
+        "frame": {"farm_casing"},
+        "wall": FARM_WALL,
+        "controller": "iron_golem_farmer",
+        "matrix": "golem_matrix",
+        "width": (5, 5), "height": (5, 5),
+    },
+    "wither_farm": {
+        "name": "Wither Farm",
+        "frame": {"farm_casing"},
+        "wall": FARM_WALL,
+        "controller": "wither_farmer",
+        "matrix": "wither_matrix",
         "width": (5, 5), "height": (5, 5),
     },
 }
@@ -281,6 +302,32 @@ def _check_cuboid(mb, kind):
         # CoreVisitor.finish
         if "REACTOR_POWER" not in port_kinds:
             out.append("no Reactor Power Port (reactor_no_power_port)")
+    elif kind in ("golem_farm", "wither_farm"):
+        # FarmStructure.Visitor.interior: the chamber is air.
+        for p in interior:
+            if not is_air(grid.get(p)):
+                return [f"{grid.get(p)} at {p}: the chamber must be empty (farm_inside)"]
+        # FarmStructure.Visitor.finish
+        cx, cy, cz = (x0 + x1) // 2, (y0 + y1) // 2, (z0 + z1) // 2
+        shell = [(x, y, z) for y in range(y0, y1 + 1) for z in range(z0, z1 + 1) for x in range(x0, x1 + 1) if faces(box, (x, y, z))]
+        rams = [p for p in shell if grid.get(p) == "impact_ram"]
+        for p in rams:
+            side = (p[0] in (x0, x1) and p[2] == cz) or (p[2] in (z0, z1) and p[0] == cx)
+            if p[1] != cy or not side:
+                return [f"Impact Ram at {p} is not in the middle of a side wall (farm_ram_spot)"]
+        spot = (cx, y1, cz)
+        for p in shell:
+            if grid.get(p) in MATRICES:
+                if p != spot:
+                    return [f"matrix at {p} is not in the middle of the roof (farm_matrix_spot)"]
+                if grid.get(p) != spec["matrix"]:
+                    return [f"{grid.get(p)} in the roof, this farm needs {spec['matrix']} (farm_matrix_wrong)"]
+        if grid.get(spot) != spec["matrix"]:
+            out.append(f"no {spec['matrix']} in the middle of the roof (farm_no_matrix)")
+        elif len(rams) != 3:
+            out.append(f"{len(rams)} Impact Rams, needs 3 (farm_rams)")
+        elif "FARM" not in port_kinds:
+            out.append("no Farm Port (farm_no_port)")
     return out
 
 
@@ -436,6 +483,14 @@ def _negatives(data):
         no_coil = copy.deepcopy(b3)
         no_coil["layers"] = [[row.replace("T", ".") for row in layer] for layer in b3["layers"]]
         cases.append(("capacitor_bank_small without a coil", no_coil))
+    gf = data.get("iron_golem_farm")
+    if gf:
+        cases.append(("iron_golem_farm with a block in the chamber", _set(gf, 2, 1, 2, "C")))
+        cases.append(("iron_golem_farm with a ram off the middle", _set(_set(gf, 0, 2, 2, "G"), 0, 3, 2, "R")))
+        cases.append(("iron_golem_farm with two rams", _set(gf, 0, 2, 2, "G")))
+        cases.append(("iron_golem_farm without a matrix", _set(gf, 2, 4, 2, "G")))
+        cases.append(("iron_golem_farm without a port", _set(gf, 0, 2, 1, "G")))
+        cases.append(("iron_golem_farm with the wither matrix", {**gf, "legend": {**gf["legend"], "M": "wither_matrix"}}))
     rep = data.get("mob_replicator")
     if rep:
         no_glass = copy.deepcopy(rep)

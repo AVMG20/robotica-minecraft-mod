@@ -182,14 +182,16 @@ public class PortBlockEntity extends BlockEntity {
         return null;
     }
 
-    /** FE capability: Power and Bank Ports only. */
+    /** FE capability: Power, Bank and Farm Ports. */
     @Nullable
     public IEnergyStorage energyView() {
         return kind() == PortBlock.Kind.REACTOR_ACCESS ? null : energyView;
     }
 
+    /** Item capability: Access and Farm Ports. */
     @Nullable
     public IItemHandler itemView() {
-        return kind() == PortBlock.Kind.REACTOR_ACCESS ? itemView : null;
+        PortBlock.Kind kind = kind();
+        return kind == PortBlock.Kind.REACTOR_ACCESS || kind == PortBlock.Kind.FARM ? itemView : null;
     }
 }

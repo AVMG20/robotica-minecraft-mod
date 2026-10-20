@@ -39,3 +39,23 @@ shaped('replicator_glass', ['GQG', 'QFQ', 'GQG'],
 # servo actuators, advanced circuit and the servo core
 shaped('replicator_controller', ['RAR', 'ZCZ', 'RDR'],
        {'R': 'reinforced_casing', 'A': 'advanced_circuit', 'Z': 'servo_actuator', 'C': 'servo_core', 'D': DIAMOND})
+
+# ---------- mob farms: Age 3 (Iron Golem Farmer) and Age 4 (Wither Farmer, 5 Nether Stars) ----------
+# A farm is 98 shell blocks around a 3x3x3 chamber: casing, glass and ports in the walls, 3 rams, a matrix in the roof.
+IRON_BLOCK, NETHER_STAR = '#c:storage_blocks/iron', '#c:nether_stars'
+# 8 casings per Reinforced Casing, like the Core Reactor's; the farmers and matrices carry the Age 3 / 4 parts
+shaped('farm_casing', ['POP', 'OXO', 'POP'], {'P': IRON_PLATE, 'O': OBSIDIAN, 'X': 'reinforced_casing'}, count=8)
+shaped('farm_glass', ['CGC', 'GQG', 'CGC'], {'C': 'farm_casing', 'G': GLASS, 'Q': QUARTZ}, count=4)
+shaped('farm_port', ['RHR', 'KCK', 'RAR'],
+       {'R': '#c:dusts/redstone', 'H': 'minecraft:hopper', 'K': 'copper_coil', 'C': 'farm_casing', 'A': 'advanced_circuit'})
+shaped('impact_ram', ['CPC', 'ISI', 'CCC'], {'C': 'farm_casing', 'P': 'minecraft:piston', 'I': IRON_BLOCK, 'S': 'servo_actuator'})
+# the golem's own build: four iron blocks and a pumpkin
+shaped('golem_matrix', ['IPI', 'QFQ', 'IPI'],
+       {'I': IRON_BLOCK, 'P': 'minecraft:carved_pumpkin', 'Q': 'quantum_circuit', 'F': 'farm_casing'})
+shaped('iron_golem_farmer', ['CQC', 'AXA', 'CVC'],
+       {'C': 'farm_casing', 'Q': 'quantum_circuit', 'A': 'plasma_actuator', 'X': 'reinforced_casing', 'V': 'essence_vial'})
+# the Wither's own build: four skulls; four stars here and one in the farmer
+shaped('wither_matrix', ['NKN', 'KXK', 'NKN'],
+       {'N': NETHER_STAR, 'K': 'minecraft:wither_skeleton_skull', 'X': 'null_casing'})
+shaped('wither_farmer', ['CNC', 'ASA', 'CVC'],
+       {'C': 'farm_casing', 'N': 'null_circuit', 'A': 'plasma_actuator', 'S': NETHER_STAR, 'V': 'essence_vial'})

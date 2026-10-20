@@ -37,14 +37,15 @@ SIDES = ('north', 'south', 'west', 'east')
 
 
 def glow_cube(faces, glow):
-    """Cube with face -> texture and a coplanar full-bright overlay (face -> texture)."""
+    """Cube with face -> texture and a coplanar full-bright overlay (face -> texture; none when empty)."""
     textures = {f'f_{d}': tex(t) for d, t in faces.items()}
     textures.update({f'g_{d}': tex(t) for d, t in glow.items()})
     textures['particle'] = tex(faces['south'])
-    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures, 'elements': [
-        {'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {d: {'texture': f'#f_{d}', 'cullface': d} for d in faces}},
-        {'from': [0, 0, 0], 'to': [16, 16, 16], 'shade': False,
-         'faces': {d: {'texture': f'#g_{d}', 'cullface': d, 'neoforge_data': GLOW} for d in glow}}]}
+    elements = [{'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {d: {'texture': f'#f_{d}', 'cullface': d} for d in faces}}]
+    if glow:
+        elements.append({'from': [0, 0, 0], 'to': [16, 16, 16], 'shade': False,
+                         'faces': {d: {'texture': f'#g_{d}', 'cullface': d, 'neoforge_data': GLOW} for d in glow}})
+    return {'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout', 'textures': textures, 'elements': elements}
 
 
 # Formed look: the controller sets frame=wall|x|y|z|corner on its frames (FramedPartBlock) and formed=true on its
@@ -103,3 +104,91 @@ write(ASSETS / 'models/item/essence_vial.json', {
 for name in ('essence_vial_partial', 'essence_vial_full'):
     write(ASSETS / f'models/item/{name}.json', {
         'parent': 'minecraft:item/generated', 'textures': {'layer0': f'robotica:item/{name}'}})
+
+# ---------- mob farms: shared 5x5x5 shell (casing, glass, ports, rams), a roof matrix and a controller per farm ----------
+# Casing takes the formed look like the replicator frame; the farmers face one of four sides.
+m = 'robotica:block/farm_casing'
+write(ASSETS / 'models/block/farm_casing.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex('farm_casing')}})
+write(ASSETS / 'models/block/farm_casing_wall.json', {'parent': 'minecraft:block/cube_all', 'textures': {'all': tex('farm_panel')}})
+write(ASSETS / 'models/block/farm_casing_beam.json', glow_cube(
+    {d: 'farm_frame' for d in SIDES} | {'up': 'farm_frame_corner', 'down': 'farm_frame_corner'},
+    {d: 'farm_frame_glow' for d in SIDES}))
+write(ASSETS / 'models/block/farm_casing_corner.json', glow_cube({d: 'farm_frame_corner' for d in DIRS},
+                                                                 {d: 'farm_frame_corner_glow' for d in DIRS}))
+write(ASSETS / 'blockstates/farm_casing.json', {'variants': {
+    'frame=none': {'model': m}, 'frame=wall': {'model': m + '_wall'}, 'frame=corner': {'model': m + '_corner'},
+    'frame=y': {'model': m + '_beam'}, 'frame=z': {'model': m + '_beam', 'x': 90},
+    'frame=x': {'model': m + '_beam', 'x': 90, 'y': 90}}})
+write(ASSETS / 'models/item/farm_casing.json', {'parent': m})
+loot('farm_casing')
+
+connected_glass.write_glass(write, ASSETS, 'farm_glass')
+loot('farm_glass')
+
+
+def farm_part(name, faces, glow):
+    write(ASSETS / 'models/block' / f'{name}.json', glow_cube(faces, glow))
+    write(ASSETS / 'blockstates' / f'{name}.json', {'variants': {'': {'model': f'robotica:block/{name}'}}})
+    write(ASSETS / 'models/item' / f'{name}.json', {'parent': f'robotica:block/{name}'})
+    loot(name)
+
+
+farm_part('farm_port', {d: 'farm_port' for d in DIRS}, {d: 'farm_port_glow' for d in DIRS})
+
+
+# Impact Ram: a full cube whose four sides open on a 10 px bore, the ram head 2 px down it (FarmRenderer punches the
+# same head out of the inner face). The bore is drawn for the north side and turned round for the others.
+TURN = {'north': 'east', 'east': 'south', 'south': 'west', 'west': 'north', 'up': 'up', 'down': 'down'}
+BORE = [([3, 3, 2], [13, 13, 2], 'north', [3, 3, 13, 13]), ([3, 3, 0], [3, 13, 2], 'east', [3, 14, 5, 16]),
+        ([13, 3, 0], [13, 13, 2], 'west', [3, 14, 5, 16]), ([3, 3, 0], [13, 3, 2], 'up', [3, 14, 5, 16]),
+        ([3, 13, 0], [13, 13, 2], 'down', [3, 14, 5, 16])]
+
+
+def turned(p, n):
+    x, y, z = p
+    for _ in range(n):
+        x, z = 16 - z, x
+    return [x, y, z]
+
+
+ram_elements = [{'from': [0, 0, 0], 'to': [16, 16, 16], 'faces': {
+    d: {'texture': '#side' if d in SIDES else '#top', 'cullface': d} for d in DIRS}}]
+for n, side in enumerate(('north', 'east', 'south', 'west')):
+    for frm, to, face, uv in BORE:
+        a, b = turned(frm, n), turned(to, n)
+        d = face
+        for _ in range(n):
+            d = TURN[d]
+        ram_elements.append({'from': [min(a[i], b[i]) for i in range(3)], 'to': [max(a[i], b[i]) for i in range(3)],
+                             'faces': {d: {'texture': '#head', 'uv': uv, 'cullface': side}}})
+write(ASSETS / 'models/block/impact_ram.json', {
+    'parent': 'minecraft:block/block', 'render_type': 'minecraft:cutout',
+    'textures': {'side': tex('impact_ram'), 'top': tex('impact_ram_top'), 'head': tex('impact_ram_head'),
+                 'particle': tex('impact_ram_top')},
+    'elements': ram_elements})
+write(ASSETS / 'blockstates/impact_ram.json', {'variants': {'': {'model': 'robotica:block/impact_ram'}}})
+write(ASSETS / 'models/item/impact_ram.json', {'parent': 'robotica:block/impact_ram'})
+loot('impact_ram')
+for matrix in ('golem_matrix', 'wither_matrix'):
+    farm_part(matrix, {d: matrix for d in DIRS}, {d: f'{matrix}_glow' for d in DIRS})
+
+FACING_Y = {'north': 0, 'east': 90, 'south': 180, 'west': 270}
+for name in ('iron_golem_farmer', 'wither_farmer'):
+    for state in ('off', 'formed', 'on'):
+        faces = {d: 'farm_casing' for d in DIRS} | {'north': f'{name}_{state}'}
+        glow = {} if state == 'off' else {'north': f'{name}_{state}_glow'}
+        model = glow_cube(faces, glow)
+        model['textures']['particle'] = tex('farm_casing')
+        write(ASSETS / f'models/block/{name}_{state}.json', model)
+    variants = {}
+    for facing, y in FACING_Y.items():
+        for formed in (False, True):
+            for lit in (False, True):
+                state = 'on' if formed and lit else 'formed' if formed else 'off'
+                entry = {'model': f'robotica:block/{name}_{state}'}
+                if y:
+                    entry['y'] = y
+                variants[f'facing={facing},formed={str(formed).lower()},lit={str(lit).lower()}'] = entry
+    write(ASSETS / f'blockstates/{name}.json', {'variants': variants})
+    write(ASSETS / f'models/item/{name}.json', {'parent': f'robotica:block/{name}_formed'})
+    loot(name)

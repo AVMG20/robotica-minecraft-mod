@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NKN",
+    "KXK",
+    "NKN"
+  ],
+  "key": {
+    "N": {
+      "tag": "c:nether_stars"
+    },
+    "K": {
+      "item": "minecraft:wither_skeleton_skull"
+    },
+    "X": {
+      "item": "robotica:null_casing"
+    }
+  },
+  "result": {
+    "id": "robotica:wither_matrix",
+    "count": 1
+  }
+}
