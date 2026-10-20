@@ -621,7 +621,7 @@
       "pages": [
         {
           "title": "Mob Replicator",
-          "text": "Harvest mode gives loot and stores the mob's experience; Spawn mode makes the real mob.\nBlazes, endermen and ghasts need a Magma Core in the controller, shulkers an Antigrav Core.\nPipes, cables and hoppers work on any block of the formed Replicator. With Auto-eject on, it fills containers touching it.",
+          "text": "Harvest mode gives loot and stores the mob's experience; Spawn mode makes the real mob.\nBlazes, endermen and ghasts need a Magma Core in the controller, shulkers an Antigrav Core.",
           "items": [
             "robotica:essence_vial",
             "robotica:replicator_controller",
@@ -632,7 +632,7 @@
         {
           "title": "Replicator layout",
           "layout": "mob_replicator",
-          "text": "Any frame block can be glass, edges and corners too."
+          "text": "Any frame block can be glass, edges and corners too.\nOnce formed, pipes and cables work on any block. Auto-eject fills containers touching it."
         },
         {
           "title": "Mob farms",
