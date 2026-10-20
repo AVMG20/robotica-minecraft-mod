@@ -354,7 +354,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         if (base == 0) return 0;
         double factor = Upgrades.energyMultiplier(speedLevel(), upgrades.level(UpgradeKind.EFFICIENCY)) * (hasBoost() ? BOOST_ENERGY_FACTOR : 1.0)
                 * (mode == Mode.HARVEST ? Upgrades.dropEnergyMultiplier(lootingLevel(), 0) : 1.0);
-        return (int) Math.max(1, Math.round(base * speedMultiplier() * factor));
+        return (int) Math.max(1, Math.min(Integer.MAX_VALUE, Math.round(base * speedMultiplier() * factor)));
     }
 
     // ---- client mirror ----
