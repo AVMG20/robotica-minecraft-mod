@@ -979,18 +979,21 @@ def tesla_side(tier):
 
 
 def tesla_crystal(tier):
-    """Facet of the energy crystal. TeslaCoilRenderer maps the texture down the whole crystal (tip at the top centre),
-    so every facet shows a bright core band that fades towards its edges and the base, a lit left edge and a few
-    sparkles."""
+    """Facet of the energy crystal. TeslaCoilRenderer maps it down the whole crystal, tip at the top left and the
+    left column along one ridge, so every ridge shows a lit line. Inside, a clean fall from a pale tip to a deep lower
+    point and a shadow along the right side."""
     rows = []
     for y in range(16):
         row = ''
         for x in range(16):
-            d = abs(x - 7.5)
-            v = min(3.9 if y else 3.2, 3.2 - y / 15 * 1.3 + (0.9 if d < 2 else 0.45 if d < 4 else 0) - (0.5 if x > 13 else 0)
-                    + (0.8 if x < 1 else 0))
-            if (x * 7 + y * 13) % 29 == 0 and 2 < x < 13:
-                v += 1
+            t = y / 15
+            v = 3.4 - 2.1 * t
+            if x == 0:
+                v = 4.6 - 1.4 * t
+            elif x == 1:
+                v += 0.45
+            elif x >= 14:
+                v -= 0.45 if x == 14 else 0.9
             row += 'abcde'[max(0, min(4, int(v)))]
         rows.append(row)
     return rows, tesla_palette(tier)
