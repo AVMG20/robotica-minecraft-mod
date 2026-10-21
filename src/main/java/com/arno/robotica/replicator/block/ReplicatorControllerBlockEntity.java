@@ -62,9 +62,12 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * Brain of the Mob Replicator. One vial slot, one boost slot, one catalyst slot, three upgrade slots, an 18 slot output and a 1M FE buffer.
@@ -208,6 +211,9 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
     /** The cube this controller dressed in its formed look, so the look comes off again (saved). */
     @Nullable
     private BoundingBox lookBox;
+    /** The cube whose blocks point here in {@link #PARTS}, or null. */
+    @Nullable
+    private BoundingBox partsBox;
     private boolean watching;
     /** The glow stays on this long after the last working tick, so a short stall does not flicker it. */
     private static final int LIT_GRACE = 20;
@@ -430,6 +436,11 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
             lookBox = null;
             setChanged();
         }
+        BoundingBox claim = now.formed() ? cube : null;
+        if (!java.util.Objects.equals(claim, partsBox)) {
+            releaseParts(level);
+            if (claim != null) claimParts(level, claim);
+        }
         if (first || turned || wasFormed != now.formed()) {
             // pipes and cables on the frame cache what they found there: they look again (also when a cube on
             // another side formed as this one broke)
@@ -489,23 +500,30 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         boolean dressed = state.hasProperty(FramedPartBlock.FRAME) ? state.getValue(FramedPartBlock.FRAME) != FramedPartBlock.Shape.NONE
                 : state.hasProperty(StructureGlassBlock.FORMED) && state.getValue(StructureGlassBlock.FORMED);
         if (!dressed) return null;
-        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dy = -2; dy <= 2; dy++) {
-                for (int dz = -2; dz <= 2; dz++) {
-                    // a face centre lies at most one block off the part on the two axes across its face
-                    if ((Math.abs(dx) == 2 ? 1 : 0) + (Math.abs(dy) == 2 ? 1 : 0) + (Math.abs(dz) == 2 ? 1 : 0) > 1) continue;
-                    p.setWithOffset(part, dx, dy, dz);
-                    if (!level.isLoaded(p)) continue;
-                    BlockState at = level.getBlockState(p);
-                    if (!at.is(ReplicatorRegistry.REPLICATOR_CONTROLLER.get()) || !at.getValue(ReplicatorControllerBlock.FORMED)) continue;
-                    if (level.getBlockEntity(p) instanceof ReplicatorControllerBlockEntity be && be.isFormed() && be.cube(p).isInside(part)) {
-                        return be;
-                    }
-                }
-            }
+        Map<BlockPos, ReplicatorControllerBlockEntity> parts = PARTS.get(level);
+        ReplicatorControllerBlockEntity be = parts == null ? null : parts.get(part);
+        return be != null && !be.isRemoved() && be.isFormed() ? be : null;
+    }
+
+    /** Per level: each block of a formed cube to its controller, so a part's lookup is one map read. Server thread. */
+    private static final Map<Level, Map<BlockPos, ReplicatorControllerBlockEntity>> PARTS = new WeakHashMap<>();
+
+    private void claimParts(Level level, BoundingBox box) {
+        Map<BlockPos, ReplicatorControllerBlockEntity> parts = PARTS.computeIfAbsent(level, l -> new HashMap<>());
+        BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())
+                .forEach(p -> parts.put(p.immutable(), this));
+        partsBox = box;
+    }
+
+    private void releaseParts(Level level) {
+        if (partsBox == null) return;
+        Map<BlockPos, ReplicatorControllerBlockEntity> parts = PARTS.get(level);
+        if (parts != null) {
+            BlockPos.betweenClosed(partsBox.minX(), partsBox.minY(), partsBox.minZ(), partsBox.maxX(), partsBox.maxY(), partsBox.maxZ())
+                    .forEach(p -> parts.remove(p, this));
+            if (parts.isEmpty()) PARTS.remove(level);
         }
-        return null;
+        partsBox = null;
     }
 
     private static void invalidateParts(Level level, BoundingBox box) {
@@ -552,6 +570,7 @@ public class ReplicatorControllerBlockEntity extends SyncedBlockEntity implement
         super.setRemoved();
         if (level != null && !level.isClientSide) {
             MultiblockWatcher.unwatch(level, worldPosition);
+            releaseParts(level);
             // broken or its chunk unloaded: frames in a chunk that stays loaded must not keep handing out this buffer
             if (status.formed()) invalidateParts(level, cube(worldPosition));
         }
