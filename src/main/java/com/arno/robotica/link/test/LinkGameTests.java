@@ -336,12 +336,12 @@ public class LinkGameTests {
     // ---- Dimensions ----
 
     /** A Mk1 in the Nether sends FE to a Mk1 in the Overworld on the same network. */
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void mk1WorksAcrossDimensions(GameTestHelper helper) {
         ServerLevel nether = helper.getLevel().getServer().getLevel(Level.NETHER);
         helper.assertTrue(nether != null, "the test server has a Nether");
         LinkNetwork net = network(helper, "Nether Line");
-        BlockPos far = new BlockPos(8, 100, 8);
+        BlockPos far = new BlockPos(200, 100, 200); // own chunk: the Chunk Anchor test claims Nether chunk 0,0; the timeout leaves room for worldgen
         ChunkPos chunk = new ChunkPos(far);
         nether.setChunkForced(chunk.x, chunk.z, true);
         nether.setBlockAndUpdate(far, LinkRegistry.LINK_MK1.get().defaultBlockState());
