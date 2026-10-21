@@ -243,7 +243,10 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             level.invalidateCapabilities(worldPosition);
             int k = isEmitter() || intake.getEnergyStored() <= 0 ? -1 : indexOf(supportPos());
             IEnergyStorage block = k < 0 ? null : level.getCapability(Capabilities.EnergyStorage.BLOCK, supportPos(), links.get(k).face());
-            if (block != null) intake.setEnergy(intake.getEnergyStored() - Math.max(0, block.receiveEnergy(intake.getEnergyStored(), false)));
+            if (block == null && k >= 0) block = level.getCapability(Capabilities.EnergyStorage.BLOCK, supportPos(), null);
+            if (block != null) block.receiveEnergy(intake.getEnergyStored(), false);
+            // the closed intake has no way out any more, so what the block refused is dropped
+            if (k >= 0) intake.setEnergy(0);
         }
     }
 
