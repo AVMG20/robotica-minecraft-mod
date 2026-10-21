@@ -48,7 +48,7 @@ import java.util.Map;
  */
 public class TeslaCoilBlock extends PowerBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
-    /** Tip of the coil, in blocks from the face it sits on: the middle of the floating crystal (about 5.6..14). */
+    /** Tip of the coil, in blocks from the face it sits on: the middle of the floating crystal (about 5.4..14.4). */
     public static final double TIP = 9.0 / 16.0;
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);

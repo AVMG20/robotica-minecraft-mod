@@ -42,9 +42,11 @@ import java.util.Random;
  * the share of the coil's rate that link takes, from its synced flow level), and while the coil sends a tiny spark now and
  * then crackles off the tip. A link whose target takes nothing has no motes.
  * <p>
- * Every Tesla block's energy crystal is drawn here too, floating over the lens of its platform: it hovers, turns slowly
- * and glows, brighter while it sends, with a faint beam from the lens. Around a Tesla Coil's crystal three small shards
- * circle on a faint ring, faster while it sends. {@link TeslaItemRenderer} draws the same crystal in the item.
+ * Every Tesla block's energy crystal is drawn here too, floating over the lens of its platform: a six sided gem with a
+ * lit line down each ridge that hovers, turns slowly and glows, brighter while it sends, with a faint beam from the
+ * lens and a soft glint near its tip that breathes slowly. Around a Tesla Coil's crystal three small shards circle on a
+ * faint tilted ring, each with a short trail, faster while it sends. {@link TeslaItemRenderer} draws the same crystal
+ * in the item.
  * <p>
  * Smooth: everything runs on a client tick clock plus the partial tick (the level's game time jumps on every server time
  * sync), the motes advance per frame by an eased speed so a flow change speeds them up or slows them down instead of
@@ -112,26 +114,38 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
      */
     record Crystal(double y, double radius, double bottom, double body, double top, double hover, int sides) {}
 
-    /** Keep in step with TeslaCoilBlock.TIP and TeslaEmitterBlock.EMITTER_TIP (the crystal middles) and the shapes. */
-    static final Crystal COIL_CRYSTAL = new Crystal(9 / 16.0, 2.4 / 16, 2.6 / 16, 1.6 / 16, 4.4 / 16, 0.4 / 16, 4);
-    static final Crystal EMITTER_CRYSTAL = new Crystal(6 / 16.0, 1.4 / 16, 1.6 / 16, 0.6 / 16, 3.6 / 16, 0.3 / 16, 4);
+    /**
+     * Keep in step with TeslaCoilBlock.TIP and TeslaEmitterBlock.EMITTER_TIP (the crystal middles), the shapes and
+     * TESLA_CRYSTALS in scripts/model_preview.py.
+     */
+    static final Crystal COIL_CRYSTAL = new Crystal(9 / 16.0, 2.2 / 16, 3.0 / 16, 1.2 / 16, 4.8 / 16, 0.4 / 16, 6);
+    static final Crystal EMITTER_CRYSTAL = new Crystal(6 / 16.0, 1.3 / 16, 1.8 / 16, 0.5 / 16, 3.8 / 16, 0.3 / 16, 6);
     /** Height of the lens the beam rises from (top of the platform's glowing well), in blocks. */
     private static final double LENS = 1.4 / 16;
     /** Hover period and turn speed (ticks, radians per tick). */
     static final double HOVER_TICKS = 90, SPIN = Math.PI * 2 / 300;
     /** Facet brightness: darkest facet, and the upper point, middle and lower point. Light comes from above. */
-    private static final double FACET_LO = 0.7, FACET_TOP = 1.0, FACET_BODY = 0.9, FACET_BOTTOM = 0.75;
+    private static final double FACET_LO = 0.62, FACET_TOP = 1.0, FACET_BODY = 0.9, FACET_BOTTOM = 0.72;
     private static final double LX = -0.35, LY = 0.8, LZ = -0.5, LN = Math.sqrt(LX * LX + LY * LY + LZ * LZ);
     /** Crystal glow: halo radius per block of crystal radius, halo and core alphas idle and while sending, beam width. */
-    private static final double HALO_R = 2.4, BEAM_W = 0.04;
-    private static final int HALO_IDLE = 32, HALO_BUSY = 52, CORE_IDLE = 45, CORE_BUSY = 75, BEAM_IDLE = 26, BEAM_BUSY = 60;
+    private static final double HALO_R = 2.6, BEAM_W = 0.04;
+    private static final int HALO_IDLE = 32, HALO_BUSY = 54, CORE_IDLE = 45, CORE_BUSY = 75, BEAM_IDLE = 26, BEAM_BUSY = 60;
+    /**
+     * Tip glint: a four pointed star a little below the upper point, arm length per block of crystal radius, its
+     * alpha idle and while sending, and how fast it breathes (radians per tick).
+     */
+    private static final double GLINT_DOWN = 0.3, GLINT_ARM = 1.5, GLINT_RATE = 0.035;
+    private static final int GLINT_IDLE = 55, GLINT_BUSY = 100;
     /** How fast the drawn glow follows sending or not, per tick. */
     private static final double BUSY_EASE = 0.08;
 
-    // Coil shards: count, orbit radius, size, bob, and orbit speed in radians per tick while idle and while sending.
-    // Glow, ring and shards only within GLOW_RANGE of the camera.
-    private static final int SHARDS = 3, RING_POINTS = 33;
-    private static final double ORBIT_R = 0.34, SHARD_H = 0.07, SHARD_W = 0.03, SHARD_BOB = 0.025;
+    // Coil shards: count, orbit radius and tilt (radians), size (radius, lower and upper point), trail length (radians),
+    // and orbit speed in radians per tick while idle and while sending. Glow, ring, trails and shards only within
+    // GLOW_RANGE of the camera.
+    private static final int SHARDS = 3, RING_POINTS = 33, TRAIL_POINTS = 10;
+    private static final double ORBIT_R = 0.34, ORBIT_TILT = 0.22, SHARD_W = 0.026, SHARD_BOTTOM = 0.045, SHARD_TOP = 0.08,
+            TRAIL = 1.1;
+    private static final double TILT_SIN = Math.sin(ORBIT_TILT), TILT_COS = Math.cos(ORBIT_TILT);
     static final double ORBIT_IDLE = 0.03;
     private static final double ORBIT_BUSY = 0.08, GLOW_RANGE = 32;
     /** Solid block-atlas sheet (a fixed buffer, so switching to it never ends the glow batch); faces go both ways round. */
@@ -154,14 +168,14 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
     private static final double[] COS = new double[DISC + 1], SIN = new double[DISC + 1];
     /** Crystal points in block space (0 top, 1 bottom, then the upper and lower ring), the shards' centres, and a
      * scratch vector for turning them. */
-    private static final int MAX_SIDES = 4;
+    private static final int MAX_SIDES = 6;
     private static final double[] PX = new double[2 + 2 * MAX_SIDES], PY = new double[2 + 2 * MAX_SIDES], PZ = new double[2 + 2 * MAX_SIDES];
     private static final double[] GX = new double[SHARDS], GY = new double[SHARDS], GZ = new double[SHARDS];
     private static final Vector3f SCRATCH = new Vector3f();
     private static final Random RNG = new Random();
     /** Client ticks while the game is not paused. */
     private static long clientTicks;
-    /** Result of {@link #pointAt}. */
+    /** Result of {@link #pointAt} and of {@link #orbitPoint} (that one before the facing turn). */
     private static double px, py, pz;
     /** Camera position in the coil's block space, and the camera's left and up axes. */
     private static double camX, camY, camZ;
@@ -276,7 +290,7 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
 
     /**
      * The block's floating crystal with its glow, and on a Tesla Coil the shards round it. Each block bobs and turns on
-     * its own phase. Glow, beam and shards only near the camera.
+     * its own phase. Glow, beam, glint and shards only near the camera.
      */
     private static void floating(TeslaCoilBlockEntity be, Direction facing, PoseStack pose, MultiBufferSource buffers, double time,
                                  double dt, int synced) {
@@ -287,8 +301,7 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         double y = c.y() - 0.5 + c.hover() * Math.sin(time * Math.PI * 2 / HOVER_TICKS + phase);
         PoseStack.Pose last = pose.last();
         Matrix4f m = last.pose();
-        crystal(buffers.getBuffer(CRYSTAL_TYPE), last, sprite(tier), rot, 0, y, 0, c.radius(), c.bottom(), c.body(), c.top(),
-                time * SPIN + phase, c.sides());
+        crystal(buffers.getBuffer(CRYSTAL_TYPE), last, sprite(tier), rot, 0, y, 0, c, time * SPIN + phase);
         if (camX * camX + camY * camY + camZ * camZ > GLOW_RANGE * GLOW_RANGE) return;
 
         be.fxBusy += ((synced > 0 ? 1 : 0) - be.fxBusy) * (1 - Math.exp(-dt * BUSY_EASE));
@@ -319,12 +332,45 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         }
         strip(glow, m, QX, QY, QZ, QA, n, (float) (BEAM_W * c.radius() / COIL_CRYSTAL.radius() + 0.01), color, inner,
                 (int) (BEAM_IDLE + (BEAM_BUSY - BEAM_IDLE) * busy));
+        local(rot, 0, 0, y + c.body() / 2 + c.top() * (1 - GLINT_DOWN), 0);
+        glint(glow, m, PX[0], PY[0], PZ[0], c.radius(), inner, time, phase, busy);
         if (!be.isEmitter()) shards(be, rot, tier, last, buffers, time, dt, synced);
     }
 
     /**
-     * Tesla Coil only: three small crystal shards circle the floating crystal, bobbing and spinning, each with a soft
-     * glow, over a faint orbit ring. They circle faster while the coil sends (eased, so they never jump).
+     * A small four pointed star at (x, y, z), pulled towards the camera so the crystal never hides it. It breathes
+     * slowly and smoothly, brighter while the block sends.
+     */
+    private static void glint(VertexConsumer vc, Matrix4f m, double x, double y, double z, double radius, int color, double time,
+                              double phase, float busy) {
+        double ex = camX - x, ey = camY - y, ez = camZ - z, el = Math.sqrt(ex * ex + ey * ey + ez * ez);
+        if (el < 1.0E-3) return;
+        double k = radius * 0.6 / el;
+        x += ex * k;
+        y += ey * k;
+        z += ez * k;
+        double s = 0.5 + 0.5 * Math.sin(time * GLINT_RATE + phase * 3);
+        int alpha = (int) ((GLINT_IDLE + (GLINT_BUSY - GLINT_IDLE) * busy) * (0.7 + 0.3 * s));
+        double arm = radius * GLINT_ARM * (0.88 + 0.12 * s);
+        float w = (float) (radius * 0.09);
+        for (int axis = 0; axis < 2; axis++) {
+            double ax = axis == 0 ? leftX : upX, ay = axis == 0 ? leftY : upY, az = axis == 0 ? leftZ : upZ;
+            double len = axis == 0 ? arm : arm * 0.65;
+            for (int i = 0; i < 5; i++) {
+                double t = (i - 2) / 2.0;
+                QX[i] = x + ax * len * t;
+                QY[i] = y + ay * len * t;
+                QZ[i] = z + az * len * t;
+                QA[i] = i == 2 ? 1 : i == 0 || i == 4 ? 0 : 0.22;
+            }
+            strip(vc, m, QX, QY, QZ, QA, 5, w, color, color, alpha);
+        }
+        disc(vc, m, x, y, z, (float) (radius * 0.55), WHITE, (int) (alpha * 0.9));
+    }
+
+    /**
+     * Tesla Coil only: three small crystal shards circle the floating crystal on a faint tilted orbit ring, spinning,
+     * each with a soft glow and a short trail. They circle faster while the coil sends (eased, so they never jump).
      */
     private static void shards(TeslaCoilBlockEntity be, Quaternionf rot, int tier, PoseStack.Pose last, MultiBufferSource buffers,
                                double time, double dt, int synced) {
@@ -336,32 +382,53 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         VertexConsumer glow = buffers.getBuffer(GLOW);
         int color = TIER_HALO[tier], inner = pale(color);
         float fast = (float) Math.min(1, (be.fxOrbitSpeed - ORBIT_IDLE) / (ORBIT_BUSY - ORBIT_IDLE));
-        for (int i = 0; i < SHARDS; i++) {
-            disc(glow, m, GX[i], GY[i], GZ[i], 0.13F, color, (int) (40 + 30 * fast));
-            disc(glow, m, GX[i], GY[i], GZ[i], 0.05F, inner, (int) (70 + 50 * fast));
-        }
         int n = RING_POINTS;
         for (int k = 0; k < n; k++) {
-            double e = Math.PI * 2 * k / (n - 1);
-            local(rot, 0, Math.cos(e) * ORBIT_R, COIL_CRYSTAL.y() - 0.5, Math.sin(e) * ORBIT_R);
+            orbitPoint(Math.PI * 2 * k / (n - 1));
+            local(rot, 0, px, py, pz);
             QX[k] = PX[0];
             QY[k] = PY[0];
             QZ[k] = PZ[0];
             QA[k] = 1;
         }
-        strip(glow, m, QX, QY, QZ, QA, n, 0.02F, color, color, (int) (16 + 22 * fast));
+        strip(glow, m, QX, QY, QZ, QA, n, 0.016F, color, color, (int) (12 + 18 * fast));
+        for (int i = 0; i < SHARDS; i++) {
+            // a short trail behind the shard, fading in from its far end
+            double a = be.fxOrbit + i * Math.PI * 2 / SHARDS;
+            for (int k = 0; k < TRAIL_POINTS; k++) {
+                double t = (double) k / (TRAIL_POINTS - 1);
+                orbitPoint(a - TRAIL * (1 - t));
+                local(rot, 0, px, py, pz);
+                QX[k] = PX[0];
+                QY[k] = PY[0];
+                QZ[k] = PZ[0];
+                QA[k] = t * t;
+            }
+            strip(glow, m, QX, QY, QZ, QA, TRAIL_POINTS, 0.022F, color, inner, (int) (40 + 45 * fast));
+            disc(glow, m, GX[i], GY[i], GZ[i], 0.12F, color, (int) (40 + 30 * fast));
+            disc(glow, m, GX[i], GY[i], GZ[i], 0.045F, inner, (int) (70 + 50 * fast));
+        }
     }
 
     /** The coil's three shards at orbit angle {@code orbit}; their centres go to GX/GY/GZ. */
     static void shardCrystals(VertexConsumer vc, PoseStack.Pose last, TextureAtlasSprite sprite, Quaternionf rot, double orbit, double time) {
         for (int i = 0; i < SHARDS; i++) {
-            double a = orbit + i * Math.PI * 2 / SHARDS;
-            double cx = Math.cos(a) * ORBIT_R, cy = COIL_CRYSTAL.y() - 0.5 + SHARD_BOB * Math.sin(time * 0.07 + i * 2.1), cz = Math.sin(a) * ORBIT_R;
-            crystal(vc, last, sprite, rot, cx, cy, cz, SHARD_W, SHARD_H, 0, SHARD_H, time * 0.06 + i * 1.3, 4);
-            GX[i] = (PX[0] + PX[1]) / 2;
-            GY[i] = (PY[0] + PY[1]) / 2;
-            GZ[i] = (PZ[0] + PZ[1]) / 2;
+            orbitPoint(orbit + i * Math.PI * 2 / SHARDS);
+            double cx = px, cy = py, cz = pz;
+            crystal(vc, last, sprite, rot, cx, cy, cz, SHARD_W, SHARD_BOTTOM, 0, SHARD_TOP, time * 0.06 + i * 1.3, 4);
+            local(rot, 0, cx, cy, cz);
+            GX[i] = PX[0];
+            GY[i] = PY[0];
+            GZ[i] = PZ[0];
         }
+    }
+
+    /** Point at angle {@code a} on the coil's tilted shard orbit (block centre space, before the facing turn), into px/py/pz. */
+    private static void orbitPoint(double a) {
+        double s = Math.sin(a) * ORBIT_R;
+        px = Math.cos(a) * ORBIT_R;
+        py = COIL_CRYSTAL.y() - 0.5 + s * TILT_SIN;
+        pz = s * TILT_COS;
     }
 
     /** The tier's crystal texture on the block atlas. */
@@ -374,11 +441,18 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         return FACING_ROT[facing.ordinal()];
     }
 
+    /** Crystal {@code c} round (cx, cy, cz), turned by {@code spin}; see the other overload. */
+    static void crystal(VertexConsumer vc, PoseStack.Pose last, TextureAtlasSprite sprite, Quaternionf rot, double cx, double cy,
+                        double cz, Crystal c, double spin) {
+        crystal(vc, last, sprite, rot, cx, cy, cz, c.radius(), c.bottom(), c.body(), c.top(), spin, c.sides());
+    }
+
     /**
      * An elongated bipyramid round (cx, cy, cz) (block centre space, before {@code rot}): a ring of {@code sides}
      * points at {@code radius}, a straight middle {@code body} high, points {@code bottom} below and {@code top} above,
-     * turned by {@code spin} round its axis. The texture runs down the whole crystal, tip at its top centre; facets
-     * facing the light from above are brighter. Full bright.
+     * turned by {@code spin} round its axis. The texture runs down each facet from the upper point to the lower one,
+     * its left column along the facet's first ridge (the lit line); facets facing the light from above are brighter.
+     * Full bright.
      */
     static void crystal(VertexConsumer vc, PoseStack.Pose last, TextureAtlasSprite sprite, Quaternionf rot, double cx, double cy,
                         double cz, double radius, double bottom, double body, double top, double spin, int sides) {
@@ -398,14 +472,14 @@ public class TeslaCoilRenderer implements BlockEntityRenderer<TeslaCoilBlockEnti
         for (int k = 0; k < sides; k++) {
             int u0 = 2 + k, u1 = 2 + (k + 1) % sides, l0 = u0 + sides, l1 = u1 + sides;
             float shade = facet(0, u0, u1, mx, my, mz) * (float) FACET_TOP;
-            tri(vc, last, sprite, 0, u0, u1, 0.5F, 0, 0, vTop, 1, vTop, shade);
+            tri(vc, last, sprite, 0, u0, u1, 0, 0, 0, vTop, 1, vTop, shade);
             if (body > 0) {
                 shade = facet(u0, l0, u1, mx, my, mz) * (float) FACET_BODY;
                 tri(vc, last, sprite, u0, l0, l1, 0, vTop, 0, vBottom, 1, vBottom, shade);
                 tri(vc, last, sprite, u0, l1, u1, 0, vTop, 1, vBottom, 1, vTop, shade);
             }
             shade = facet(1, l1, l0, mx, my, mz) * (float) FACET_BOTTOM;
-            tri(vc, last, sprite, 1, l1, l0, 0.5F, 1, 1, vBottom, 0, vBottom, shade);
+            tri(vc, last, sprite, 1, l1, l0, 0, 1, 1, vBottom, 0, vBottom, shade);
         }
     }
 

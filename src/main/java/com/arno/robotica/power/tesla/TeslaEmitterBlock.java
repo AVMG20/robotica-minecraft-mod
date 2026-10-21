@@ -23,7 +23,7 @@ import java.util.Map;
  * rate and range. A quarter of a relay (1 relay crafts into 4, 4 craft back).
  */
 public class TeslaEmitterBlock extends TeslaCoilBlock {
-    /** Arcs start in the middle of the floating crystal, which spans about 3.8..10. */
+    /** Arcs start in the middle of the floating crystal, which spans about 4..10. */
     public static final double EMITTER_TIP = 6.0 / 16.0;
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);

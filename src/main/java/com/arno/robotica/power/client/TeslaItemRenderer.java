@@ -91,7 +91,7 @@ final class TeslaItemRenderer extends BlockEntityWithoutLevelRenderer {
         VertexConsumer vc = buffers.getBuffer(TeslaCoilRenderer.CRYSTAL_TYPE);
         PoseStack.Pose last = pose.last();
         double y = c.y() - 0.5 + c.hover() * Math.sin(time * Math.PI * 2 / TeslaCoilRenderer.HOVER_TICKS);
-        TeslaCoilRenderer.crystal(vc, last, sprite, rot, 0, y, 0, c.radius(), c.bottom(), c.body(), c.top(), time * TeslaCoilRenderer.SPIN, c.sides());
+        TeslaCoilRenderer.crystal(vc, last, sprite, rot, 0, y, 0, c, time * TeslaCoilRenderer.SPIN);
         if (!(block instanceof TeslaEmitterBlock)) TeslaCoilRenderer.shardCrystals(vc, last, sprite, rot, time * TeslaCoilRenderer.ORBIT_IDLE, time);
     }
 }

@@ -592,6 +592,46 @@ public final class Showcase {
             }));
         }
 
+        // Dev only (not in shots.py): the floating Tesla crystals up close. A row of relays I-V, each fed by the emitter
+        // of its tier on a full Accumulator in the row in front and sending into an Accumulator behind it. Close-ups of
+        // the tier III relay and emitter (the frames are a few ticks apart, for a GIF), then both rows.
+        if (wants("tesla_crystals")) {
+            step(20, () -> server(sp -> {
+                ServerLevel level = sp.serverLevel();
+                sp.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                for (int i = 0; i < 5; i++) {
+                    BlockPos relay = new BlockPos(176 + i * 2, Y + 1, -80), sink = relay.north(2).below();
+                    BlockPos acc = new BlockPos(176 + i * 2, Y, -74), emitter = acc.above();
+                    level.setBlock(relay.below(), Blocks.POLISHED_ANDESITE.defaultBlockState(), 3);
+                    level.setBlock(sink, block("accumulator_2").defaultBlockState(), 3);
+                    level.setBlock(acc, block("accumulator_3").defaultBlockState(), 3);
+                    var cap = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK, acc, null);
+                    for (int k = 0; k < 64 && cap != null && cap.receiveEnergy(Integer.MAX_VALUE, false) > 0; k++) {}
+                    level.setBlock(relay, block("tesla_coil_" + (i + 1)).defaultBlockState().setValue(BlockStateProperties.FACING, Direction.UP), 3);
+                    level.setBlock(emitter, block("tesla_emitter_" + (i + 1)).defaultBlockState().setValue(BlockStateProperties.FACING, Direction.UP), 3);
+                    devLink(level, emitter, new com.arno.robotica.power.tesla.TeslaLink(relay, null, true));
+                    devLink(level, relay, new com.arno.robotica.power.tesla.TeslaLink(sink, Direction.UP, false));
+                }
+            }));
+            camera(180.5, Y + 0.15, -78.55, 180, 10);
+            step(60, () -> {});
+            for (int f = 0; f < 24; f++) grab(3, "tesla_crystals_relay_" + (char) ('a' + f));
+            camera(180.5, Y + 0.05, -72.7, 180, 19);
+            step(30, () -> {});
+            for (int f = 0; f < 24; f++) grab(3, "tesla_crystals_emitter_" + (char) ('a' + f));
+            camera(180.5, Y + 1.4, -69.8, 180, 17);
+            step(30, () -> {});
+            grab(10, "tesla_crystals_tiers");
+            step(10, () -> server(sp -> sp.server.getCommands().performPrefixedCommand(sp.server.createCommandSourceStack(), "time set 18000")));
+            camera(180.5, Y + 0.15, -78.55, 180, 10);
+            step(30, () -> {});
+            grab(10, "tesla_crystals_relay_night");
+            camera(180.5, Y + 1.4, -69.8, 180, 17);
+            step(20, () -> {});
+            grab(10, "tesla_crystals_tiers_night");
+            step(10, () -> server(sp -> sp.server.getCommands().performPrefixedCommand(sp.server.createCommandSourceStack(), "time set 6000")));
+        }
+
         // Scene 8: the Scrap Colossus on its altar (no AI, for the photo).
         if (wants("12_scrap_colossus")) step(20, () -> server(sp -> {
             MinecraftServer s = sp.server;

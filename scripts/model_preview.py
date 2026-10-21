@@ -336,26 +336,32 @@ def render_model(img, zbuf, ref, ox, oy, scale, night=False, xform=None, tint=No
 
 # Floating Tesla crystals that TeslaCoilRenderer draws over the platform models, at rest: (middle height, ring radius,
 # lower point, straight middle, upper point) in model pixels. Keep in step with COIL_CRYSTAL / EMITTER_CRYSTAL there.
-TESLA_CRYSTALS = {'coil': (9, 2.4, 2.6, 1.6, 4.4), 'emitter': (6, 1.4, 1.6, 0.6, 3.6)}
-TESLA_SHARD = (0.48, 1.12)        # shard radius and point height (SHARD_W, SHARD_H), orbit radius 5.44 at the coil middle
+TESLA_CRYSTALS = {'coil': (9, 2.2, 3.0, 1.2, 4.8), 'emitter': (6, 1.3, 1.8, 0.5, 3.8)}
+# shard radius, lower and upper point (SHARD_W, SHARD_BOTTOM, SHARD_TOP); orbit radius at the coil middle and tilt
+# (ORBIT_R, ORBIT_TILT)
+TESLA_SHARD = (0.416, 0.72, 1.28)
+TESLA_ORBIT, TESLA_TILT = 5.44, 0.22
 
 
-def crystal_tris(tex, cx, cy, cz, r, bottom, body, top, spin):
-    """Textured triangles of a 4 sided crystal like TeslaCoilRenderer.crystal: (points, uvs 0..16, texture, shade)."""
+def crystal_tris(tex, cx, cy, cz, r, bottom, body, top, spin, sides=4, ridge=False):
+    """Textured triangles of a crystal like TeslaCoilRenderer.crystal: (points, uvs 0..16, texture, shade). With ridge
+    the texture runs down each facet with its left column along a ridge (the Tesla crystals), else the tip is at its
+    top centre."""
     y0, y1, total = cy - body / 2, cy + body / 2, bottom + body + top
-    ring = [(math.cos(spin + k * math.pi / 2) * r, math.sin(spin + k * math.pi / 2) * r) for k in range(4)]
+    ring = [(math.cos(spin + k * math.pi * 2 / sides) * r, math.sin(spin + k * math.pi * 2 / sides) * r) for k in range(sides)]
     up = [(cx + dx, y1, cz + dz) for dx, dz in ring]
     lo = [(cx + dx, y0, cz + dz) for dx, dz in ring]
     apex, base = (cx, y1 + top, cz), (cx, y0 - bottom, cz)
     vt, vb = top / total * 16, (top + body) / total * 16
+    tip_u = 0 if ridge else 8
     out = []
-    for k in range(4):
-        j = (k + 1) % 4
-        out.append(((apex, up[k], up[j]), ((8, 0), (0, vt), (16, vt)), tex, 1.0))
+    for k in range(sides):
+        j = (k + 1) % sides
+        out.append(((apex, up[k], up[j]), ((tip_u, 0), (0, vt), (16, vt)), tex, 1.0))
         if body > 0:
             out.append(((up[k], lo[k], lo[j]), ((0, vt), (0, vb), (16, vb)), tex, 0.9))
             out.append(((up[k], lo[j], up[j]), ((0, vt), (16, vb), (16, vt)), tex, 0.9))
-        out.append(((base, lo[j], lo[k]), ((8, 16), (16, vb), (0, vb)), tex, 0.75))
+        out.append(((base, lo[j], lo[k]), ((tip_u, 16), (16, vb), (0, vb)), tex, 0.72 if ridge else 0.75))
     return out
 
 
@@ -366,12 +372,13 @@ def live_parts(ref):
         prefix = f'tesla_{kind}_'
         if name.startswith(prefix) and name[len(prefix):].isdigit():
             tex = f'robotica:block/tesla_crystal_{name[len(prefix):]}'
-            tris = crystal_tris(tex, 8, y, 8, r, bottom, body, top, math.pi / 4)
+            tris = crystal_tris(tex, 8, y, 8, r, bottom, body, top, math.pi / 6, 6, True)
             if kind == 'coil':
                 for i in range(3):
                     a = 0.6 + i * math.pi * 2 / 3
-                    tris += crystal_tris(tex, 8 + math.cos(a) * 5.44, y, 8 + math.sin(a) * 5.44, TESLA_SHARD[0], TESLA_SHARD[1], 0,
-                                         TESLA_SHARD[1], 0.3 + i)
+                    s = math.sin(a) * TESLA_ORBIT
+                    tris += crystal_tris(tex, 8 + math.cos(a) * TESLA_ORBIT, y + s * math.sin(TESLA_TILT), 8 + s * math.cos(TESLA_TILT),
+                                         TESLA_SHARD[0], TESLA_SHARD[1], 0, TESLA_SHARD[2], 0.3 + i, 4, True)
             return tris
     if name.startswith('quantum_link_mk') and 'block/' in ref:
         return quantum_parts()
