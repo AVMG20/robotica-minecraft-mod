@@ -23,35 +23,34 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 /**
- * The network colour of a Quantum Link: a faceted crystal with a white-hot heart floating in its chamber, turning slowly
- * inside a glow shell, two tilted rings orbiting it with sparks running along them, motes spiralling up from the floor
- * pad, and the socket in the flat top, all full bright (a dim grey without a network or while not connected). When
- * something moves the crystal flares, the rings brighten and a beam joins the floor and ceiling pads for a moment.
- * Further than {@link #DETAIL} blocks away the crystal holds still and only the crystal and socket are drawn. Nothing is
- * stored or allocated per frame.
+ * The network colour of a Quantum Link: a faceted crystal with glowing edges and a white-hot heart floating in its
+ * chamber, turning slowly inside a glow shell, two tilted rings orbiting it with sparks running along them, and the
+ * socket in the flat top, all full bright (a dim grey without a network or while not connected). Further than
+ * {@link #DETAIL} blocks away the crystal holds still and only the crystal and socket are drawn. Nothing is stored or
+ * allocated per frame.
  */
 public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity> {
     private static final ResourceLocation CORE = Robotica.id("block/quantum_core");
     private static final int FULL_BRIGHT = 0xF000F0;
-    private static final float PULSE_TICKS = 12.0F;
     private static final float P = 1.0F / 16.0F;
-    private static final float TAU = Mth.TWO_PI;
     /** The clock wraps here; every motion below repeats a whole number of times in it, so the wrap never shows. */
     private static final long LOOP = 72000L;
     /** Top socket x/z 5-11, a hair over the cap. */
     private static final float SOCKET_LO = 5 * P, SOCKET_HI = 11 * P, TOP = 1.002F;
-    /** Chamber floor and ceiling (pads), and the crystal's middle. */
-    private static final float FLOOR = 3 * P, CEILING = 13 * P, MIDDLE = 0.5F;
-    private static final float CORE_W = 0.14F, CORE_H = 0.22F, RING_R = 0.29F, RING_W = 0.014F;
-    /** Degrees per tick: the crystal (20 s a turn), its glow shell, the two rings and the sparks on them. */
-    private static final float SPIN = 0.9F, RING_A = 0.6F, RING_B = -0.45F, SPARK_A = 2.0F, SPARK_B = -2.5F;
-    /** Ticks for a mote to rise from the floor pad to the ceiling. */
-    private static final float RISE_TICKS = 80.0F;
-    private static final int RING_SEGMENTS = 24, MOTES = 4;
-    /** Blocks from the camera within which the Link animates and draws its rings, sparks and motes. */
+    /** The crystal's middle, half width and half height (its glow shell stays clear of the floor and ceiling pads). */
+    private static final float MIDDLE = 0.5F, CORE_W = 0.13F, CORE_H = 0.24F, GLOW = 1.25F;
+    private static final float RING_R = 0.29F, RING_W = 0.014F, EDGE_W = 0.004F;
+    /** Degrees per tick: the crystal (30 s a turn), the two rings and the sparks on them. */
+    private static final float SPIN = 0.6F, RING_A = 0.4F, RING_B = -0.3F, SPARK_A = 1.2F, SPARK_B = -1.5F;
+    private static final int RING_SEGMENTS = 24;
+    /** Blocks from the camera within which the Link animates and draws its rings and sparks. */
     private static final double DETAIL = 24.0;
+    /** Half the crystal's band height (unit crystal, points at -1 and 1). */
+    private static final float BAND = 0.4F;
     /** Crystal and heart faces: four corners (a triangle repeats its last), the normal and a facet shade. */
     private static final float[][] CRYSTAL = crystal(), HEART = octahedron();
+    /** The unit crystal's 30 edges, each two corners. */
+    private static final float[][] EDGES = edges();
     /** Cosine and sine around a ring, so a frame needs no trigonometry per segment. */
     private static final float[] RING_COS = new float[RING_SEGMENTS + 1], RING_SIN = new float[RING_SEGMENTS + 1];
 
@@ -63,8 +62,6 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
         }
     }
 
-    /** Half height the crystal's glow may reach above its middle and stay under the ceiling while it bobs. */
-    private static final float REACH = CEILING - MIDDLE - 0.03F;
     /** Reused for every turn (render thread only). */
     private final Quaternionf turn = new Quaternionf();
 
@@ -74,22 +71,17 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
     public void render(QuantumLinkBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
         Level level = be.getLevel();
         if (level == null) return;
-        float time = (level.getGameTime() % LOOP) + partialTick;
         int colorIndex = be.clientColor();
         BlockPos at = be.getBlockPos();
         Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         boolean near = eye.distanceToSqr(at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5) < DETAIL * DETAIL;
         boolean online = be.clientOnline() && colorIndex >= 0;
-        // far away: one still frame, no effects
-        boolean live = online && near;
+        // far away the clock stands still and the rings and sparks are left out
+        float time = near ? (level.getGameTime() % LOOP) + partialTick : 0.0F;
         int rgb = colorIndex >= 0 ? LinkNetwork.rgb(colorIndex) : 0x8A8F96;
-        float age = (level.getGameTime() - be.clientPulse()) + partialTick;
-        float pulse = age >= 0.0F && age < PULSE_TICKS ? 1.0F - age / PULSE_TICKS : 0.0F;
-        pulse *= pulse;
-        if (!live) pulse = 0.0F;
-        float shade = !online ? 0.45F : near ? 0.85F + 0.15F * Mth.sin(time * TAU / 60.0F) : 1.0F;
-        float bright = Math.min(1.0F, shade + pulse * 0.4F);
-        int r = flash((rgb >> 16) & 255, bright, pulse), g = flash((rgb >> 8) & 255, bright, pulse), b = flash(rgb & 255, bright, pulse);
+        float bright = online ? 1.0F : 0.45F;
+        int r = Math.round(((rgb >> 16) & 255) * bright), g = Math.round(((rgb >> 8) & 255) * bright), b = Math.round((rgb & 255) * bright);
+        int wr = whiten(r), wg = whiten(g), wb = whiten(b);
 
         TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getAtlas(TextureAtlas.LOCATION_BLOCKS).getSprite(CORE);
         VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucentEmissive(TextureAtlas.LOCATION_BLOCKS));
@@ -102,72 +94,54 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
         corner(vc, last, SOCKET_HI, TOP, SOCKET_HI, u1, v1, r, g, b, 255, 0, 1, 0);
         corner(vc, last, SOCKET_HI, TOP, SOCKET_LO, u1, v0, r, g, b, 255, 0, 1, 0);
 
-        // the crystal: bobs and turns slowly while connected, swells on a pulse; its heart turns the other way
-        float bob = live ? Mth.sin(time * TAU / 120.0F) * 0.025F : 0.0F;
-        float spin = !near ? 0.0F : time * (online ? SPIN : SPIN / 6.0F);
-        float scale = 1.0F + pulse * 0.25F;
+        // the crystal turns slowly (much slower while not connected) around its bright heart, inside a still glow shell
+        float spin = time * (online ? SPIN : SPIN / 6.0F) * Mth.DEG_TO_RAD;
         pose.pushPose();
-        pose.translate(0.5F, MIDDLE + bob, 0.5F);
+        pose.translate(0.5F, MIDDLE, 0.5F);
         pose.pushPose();
-        pose.mulPose(turn.rotationY(-spin * 2.0F * Mth.DEG_TO_RAD));
-        pose.scale(0.055F * scale, 0.075F * scale, 0.055F * scale);
-        draw(pose, vc, sprite, HEART, whiten(r), whiten(g), whiten(b), online ? 255 : 120);
+        pose.mulPose(turn.rotationY(-spin));
+        pose.scale(0.05F, 0.07F, 0.05F);
+        draw(pose, vc, sprite, HEART, wr, wg, wb, online ? 255 : 120);
         pose.popPose();
         pose.pushPose();
-        pose.mulPose(turn.rotationY(spin * Mth.DEG_TO_RAD));
-        pose.scale(CORE_W * scale, CORE_H * scale, CORE_W * scale);
-        draw(pose, vc, sprite, CRYSTAL, r, g, b, 170);
+        pose.mulPose(turn.rotationY(spin));
+        pose.scale(CORE_W, CORE_H, CORE_W);
+        draw(pose, vc, sprite, CRYSTAL, r, g, b, 165);
         pose.popPose();
-        float glow = 1.35F + pulse * 0.35F + (live ? Mth.sin(time * TAU / 40.0F) * 0.05F : 0.0F);
         pose.pushPose();
-        pose.mulPose(turn.rotationY((30.0F - spin * 0.5F) * Mth.DEG_TO_RAD));
-        pose.scale(CORE_W * glow, Math.min(CORE_H * glow, REACH), CORE_W * glow);
-        draw(pose, vc, sprite, CRYSTAL, r, g, b, online ? Math.round(40 + 90 * pulse) : 18);
+        pose.mulPose(turn.rotationY(spin + 30.0F * Mth.DEG_TO_RAD));
+        pose.scale(CORE_W * GLOW, CORE_H * GLOW, CORE_W * GLOW);
+        draw(pose, vc, sprite, CRYSTAL, r, g, b, online ? 40 : 18);
         pose.popPose();
         pose.popPose();
 
-        if (!live) return;
+        if (!online || !near) return;
         VertexConsumer fx = buffers.getBuffer(RenderType.lightning());
-        int sr = whiten(r), sg = whiten(g), sb = whiten(b);
-        // two rings orbiting the crystal against each other, their tilt rocking slowly, a pair of sparks running on each
-        int ringAlpha = Math.round(80 + 120 * pulse);
+        // glowing crystal edges, turning with it
+        Matrix4f m = pose.last().pose();
+        float cos = Mth.cos(spin), sin = Mth.sin(spin);
+        for (float[] e : EDGES) {
+            float ax = (e[0] * cos + e[2] * sin) * CORE_W, az = (e[2] * cos - e[0] * sin) * CORE_W;
+            float bx = (e[3] * cos + e[5] * sin) * CORE_W, bz = (e[5] * cos - e[3] * sin) * CORE_W;
+            ribbon(fx, m, 0.5F + ax, MIDDLE + e[1] * CORE_H, 0.5F + az, 0.5F + bx, MIDDLE + e[4] * CORE_H, 0.5F + bz, EDGE_W, wr, wg, wb, 150);
+        }
+        // two tilted rings orbiting the crystal against each other, a pair of sparks running on each
         for (int i = 0; i < 2; i++) {
             pose.pushPose();
-            pose.translate(0.5F, MIDDLE + bob, 0.5F);
+            pose.translate(0.5F, MIDDLE, 0.5F);
             pose.mulPose(turn.rotationY((i == 0 ? time * RING_A : time * RING_B + 90.0F) * Mth.DEG_TO_RAD));
-            float tilt = (i == 0 ? 62.0F : -62.0F) + 6.0F * Mth.sin(time * TAU / 360.0F + i * Mth.PI);
-            pose.mulPose(turn.rotationX(tilt * Mth.DEG_TO_RAD));
-            Matrix4f m = pose.last().pose();
-            float radius = RING_R * (1.0F + pulse * 0.06F);
-            ring(fx, m, radius, r, g, b, ringAlpha);
+            pose.mulPose(turn.rotationX((i == 0 ? 62.0F : -62.0F) * Mth.DEG_TO_RAD));
+            Matrix4f rm = pose.last().pose();
+            ring(fx, rm, RING_R, r, g, b, 90);
             for (int s = 0; s < 2; s++) {
                 float a = (time * (i == 0 ? SPARK_A : SPARK_B) + s * 180.0F) * Mth.DEG_TO_RAD;
-                mote(fx, m, Mth.cos(a) * radius, 0.0F, Mth.sin(a) * radius, 0.016F + 0.01F * pulse, sr, sg, sb, Math.round(170 + 80 * pulse));
+                mote(fx, rm, Mth.cos(a) * RING_R, 0.0F, Mth.sin(a) * RING_R, 0.016F, wr, wg, wb, 190);
             }
             pose.popPose();
         }
-        Matrix4f m = pose.last().pose();
-        // motes spiralling up from the floor pad, fading in and out
-        for (int k = 0; k < MOTES; k++) {
-            float phase = (time / RISE_TICKS + (float) k / MOTES) % 1.0F;
-            float a = (k * 360.0F / MOTES + phase * 240.0F) * Mth.DEG_TO_RAD;
-            float rad = 0.21F - 0.06F * phase;
-            float y = FLOOR + 0.03F + phase * (CEILING - FLOOR - 0.06F);
-            mote(fx, m, 0.5F + Mth.cos(a) * rad, y, 0.5F + Mth.sin(a) * rad, 0.011F, sr, sg, sb, Math.round(Mth.sin(phase * Mth.PI) * 150));
-        }
-        // a beam from pad to pad while something moves
-        if (pulse > 0.0F) {
-            float w = 0.012F + 0.03F * pulse;
-            ribbon(fx, m, 0.5F, FLOOR, 0.5F, 0.5F, CEILING, 0.5F, w, r, g, b, Math.round(120 * pulse));
-            ribbon(fx, m, 0.5F, FLOOR, 0.5F, 0.5F, CEILING, 0.5F, w * 0.35F, 255, 255, 255, Math.round(160 * pulse));
-        }
     }
 
-    private static int flash(int channel, float bright, float pulse) {
-        return Math.min(255, Math.round(channel * bright + (255 - channel) * pulse * 0.35F));
-    }
-
-    /** Halfway to white, for the heart and the sparks. */
+    /** Halfway to white, for the heart, the edges and the sparks. */
     private static int whiten(int channel) {
         return (channel + 255) >> 1;
     }
@@ -230,11 +204,11 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
     }
 
     /**
-     * A unit hexagonal crystal: a six sided band (y -0.3 to 0.3) between two points (y -1 and 1). Facets alternate light and
-     * dark around it, the top brightest and the bottom darkest.
+     * A unit hexagonal crystal: a six sided band (y -BAND to BAND) between two points (y -1 and 1). Facets alternate light
+     * and dark around it, the top brightest and the bottom darkest.
      */
     private static float[][] crystal() {
-        float band = 0.3F;
+        float band = BAND;
         float[][] faces = new float[18][];
         for (int i = 0; i < 6; i++) {
             float a0 = Mth.TWO_PI * i / 6, a1 = Mth.TWO_PI * (i + 1) / 6;
@@ -245,6 +219,20 @@ public class LinkRenderer implements BlockEntityRenderer<QuantumLinkBlockEntity>
             faces[12 + i] = face(even ? 0.68F : 0.56F, 0, -1, 0, x1, -band, z1, x0, -band, z0, x0, -band, z0);
         }
         return faces;
+    }
+
+    private static float[][] edges() {
+        float[][] edges = new float[30][];
+        for (int i = 0; i < 6; i++) {
+            float a0 = Mth.TWO_PI * i / 6, a1 = Mth.TWO_PI * (i + 1) / 6;
+            float x0 = Mth.cos(a0), z0 = Mth.sin(a0), x1 = Mth.cos(a1), z1 = Mth.sin(a1);
+            edges[i * 5] = new float[]{0, 1, 0, x0, BAND, z0};
+            edges[i * 5 + 1] = new float[]{x0, BAND, z0, x1, BAND, z1};
+            edges[i * 5 + 2] = new float[]{x0, BAND, z0, x0, -BAND, z0};
+            edges[i * 5 + 3] = new float[]{x0, -BAND, z0, x1, -BAND, z1};
+            edges[i * 5 + 4] = new float[]{x0, -BAND, z0, 0, -1, 0};
+        }
+        return edges;
     }
 
     /** A unit octahedron, one shade. */

@@ -80,10 +80,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     }
 
     public static final int FILTER_SLOTS = ItemPipeBlockEntity.FILTER_SLOTS;
-    /** Block event ids: something went into (send) or came out of (receive) the network. Param: 0 energy, 1 items. */
-    public static final int EVENT_SEND = 1, EVENT_RECEIVE = 2;
     private static final int ACCESS_CHECK_TICKS = 100;
-    private static final int PULSE_GAP = 10;
     private static final int HUM_PERIOD = 80;
     /** A receiver whose inventories took nothing in a hand-out sits out this long (or until a neighbour changes). */
     private static final int ITEM_BACKOFF_TICKS = 30;
@@ -142,7 +139,6 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     private int itemWindow;
     private int feRate;
     private int itemRate;
-    private long lastPulse = Long.MIN_VALUE / 2;
     private long activeUntil;
     private int syncedColor = -2;
     private boolean syncedOnline;
@@ -158,7 +154,6 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
     // ---- client ----
     private int clientColor = -1;
     private boolean clientOnline;
-    private long clientPulse = Long.MIN_VALUE / 2;
     private @Nullable AABB renderBox;
 
     public QuantumLinkBlockEntity(BlockPos pos, BlockState state) {
@@ -456,7 +451,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
             int n = (int) Math.min(Math.min(energy.getEnergyStored(), tier.rate), network.energySpace());
             if (n > 0 && energy.consume(n)) {
                 network.insertEnergy(n);
-                moved(true, false, n);
+                moved(false, n);
             }
         } else if (energyMode == TransferMode.RECEIVE) {
             if (sides.autoEject()) pushEnergy(level, pos);
@@ -563,7 +558,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
                 if (!left.isEmpty()) giveBack(level, source, slot, left);
             }
         }
-        if (moved > 0) moved(true, true, moved);
+        if (moved > 0) moved(true, moved);
     }
 
     private void giveBack(ServerLevel level, IItemHandler source, int slot, ItemStack stack) {
@@ -593,7 +588,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
 
     public void acceptEnergy(int amount) {
         int added = energy.generate(amount);
-        if (added > 0) moved(false, false, added);
+        if (added > 0) moved(false, added);
     }
 
     /**
@@ -629,7 +624,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         }
         if (moved > 0) {
             itemPassTook = true;
-            moved(false, true, moved);
+            moved(true, moved);
         }
         return moved;
     }
@@ -650,17 +645,11 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return ItemPipeBlockEntity.passes(filter, whitelist, stack);
     }
 
-    /** Book-keeping, the core pulse (a block event, at most every {@link #PULSE_GAP} ticks) and the hum. */
-    private void moved(boolean send, boolean isItems, int amount) {
+    /** Book-keeping for the rates and the hum. */
+    private void moved(boolean isItems, int amount) {
         if (isItems) itemWindow += amount;
         else feWindow += amount;
-        if (!(level instanceof ServerLevel server)) return;
-        long now = server.getServer().getTickCount();
-        activeUntil = now + 20;
-        if (now - lastPulse >= PULSE_GAP) {
-            lastPulse = now;
-            server.blockEvent(worldPosition, getBlockState().getBlock(), send ? EVENT_SEND : EVENT_RECEIVE, isItems ? 1 : 0);
-        }
+        if (level instanceof ServerLevel server) activeUntil = server.getServer().getTickCount() + 20;
     }
 
     // ---------------------------------------------------------------- item capability
@@ -696,7 +685,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
             if (accepted <= 0) return stack;
             if (!simulate) {
                 itemBudget -= accepted;
-                moved(true, true, accepted);
+                moved(true, accepted);
             }
             return accepted >= stack.getCount() ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - accepted);
         }
@@ -709,7 +698,7 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
             ItemStack out = net.extractItem(slot, Math.min(amount, itemBudget), simulate);
             if (!simulate && !out.isEmpty()) {
                 itemBudget -= out.getCount();
-                moved(false, true, out.getCount());
+                moved(true, out.getCount());
             }
             return out;
         }
@@ -752,25 +741,10 @@ public class QuantumLinkBlockEntity extends SyncedBlockEntity implements MenuPro
         return clientOnline;
     }
 
-    /** Game time of the last pulse on the client. */
-    public long clientPulse() {
-        return clientPulse;
-    }
-
     /** The block with a hair of room for the socket on top, for render culling. */
     public AABB renderBox() {
         if (renderBox == null) renderBox = new AABB(worldPosition).inflate(0.01);
         return renderBox;
-    }
-
-    /** Server: true so the event reaches watching clients. Client: the renderer flares the core. */
-    @Override
-    public boolean triggerEvent(int id, int param) {
-        if (id != EVENT_SEND && id != EVENT_RECEIVE) return super.triggerEvent(id, param);
-        if (level != null && level.isClientSide) {
-            clientPulse = level.getGameTime();
-        }
-        return true;
     }
 
     // ---------------------------------------------------------------- menu, info

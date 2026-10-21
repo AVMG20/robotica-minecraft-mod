@@ -199,14 +199,6 @@ public class QuantumLinkBlock extends Block implements EntityBlock {
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
-    /** Block events (the core pulse) go to the block entity. */
-    @Override
-    protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
-        super.triggerEvent(state, level, pos, id, param);
-        BlockEntity be = level.getBlockEntity(pos);
-        return be != null && be.triggerEvent(id, param);
-    }
-
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.robotica.age", tier.age(), Component.translatable("age.robotica." + tier.age()))
