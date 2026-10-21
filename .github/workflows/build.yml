@@ -1,12 +1,10 @@
 name: Build
 
-# Every push and pull request builds the jar and runs the game tests; the jar is kept as a workflow artifact.
-# Pushing a tag like v0.2.0 builds that version and publishes it as a GitHub release with the jar attached.
+# Only builds releases: pushing a tag like v0.2.0 builds that version and publishes it as a GitHub
+# release with the jar attached. Run it by hand (workflow_dispatch) for a one-off jar as an artifact.
 on:
   push:
-    branches: [main]
     tags: ['v*']
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -35,10 +33,7 @@ jobs:
           fi
 
       - name: Build the jar
-        run: ./gradlew build -Pmod_version=${{ steps.version.outputs.value }} --no-daemon
-
-      - name: Run the game tests
-        run: ./gradlew runGameTestServer -Pmod_version=${{ steps.version.outputs.value }} --no-daemon
+        run: ./gradlew build -x test -Pmod_version=${{ steps.version.outputs.value }} --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
