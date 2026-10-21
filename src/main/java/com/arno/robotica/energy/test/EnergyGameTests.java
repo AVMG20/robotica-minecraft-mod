@@ -1000,7 +1000,7 @@ public class EnergyGameTests {
         helper.assertTrue(redstone != null && Math.abs(redstone.power() - 0.03F) < 1e-6 && Math.abs(redstone.burn() - 0.06F) < 1e-6, "redstone block +3% / +6%");
         helper.assertTrue(cryo != null && cryo.power() < 0 && cryo.burn() < cryo.power(), "Cryo Coolant: less power, much slower burn");
         var servo = EnergyDataMaps.reactorCore(new ItemStack(CoreItems.SERVO_CORE.get()));
-        helper.assertTrue(servo != null && servo.power() == 2.0F && servo.life() == 12_096_000, "Servo Core: x2 for 7 days");
+        helper.assertTrue(servo != null && servo.power() == 3.0F && servo.life() == 12_096_000, "Servo Core: x3 for 7 days");
         helper.assertTrue(EnergyDataMaps.reactorFuel(new ItemStack(Items.DIRT)) == null && EnergyDataMaps.spireFuel(new ItemStack(Items.DIRT)) == null, "dirt is no fuel");
         helper.succeed();
     }

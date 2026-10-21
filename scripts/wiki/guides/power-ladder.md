@@ -13,7 +13,7 @@ summary: Every generator from the crank to the Ring Collider, where to store FE 
 | [[solar_panel_mk1]] to [[solar_panel_mk4]] | 1-4 | 40 to 800, by day |
 | [[rtg]] | 2 | 200 |
 | [Tesla Spire](#/guide/tesla-spire) | 2+ | about 500 to 27,000, plus lightning |
-| [Core Reactor](#/guide/core-reactor) | 2-4 | 1,200 to 180,000 |
+| [Core Reactor](#/guide/core-reactor) | 2-4 | 1,800 to 180,000 |
 | [Ring Collider](#/guide/ring-collider) | 4 | 24,000 to 640,000 |
 
 {{image shots/26_solar_panels.jpg|Solar Panels Mk1 to Mk4}}

@@ -56,7 +56,7 @@ MODULATORS = {
 }
 
 CORE_LIFE = 12_096_000  # 7 days of running at burn x1
-CORES = {'robotica:servo_core': 2.0, 'robotica:magma_core': 6.0, 'robotica:antigrav_core': 16.0}
+CORES = {'robotica:servo_core': 3.0, 'robotica:magma_core': 6.0, 'robotica:antigrav_core': 16.0}
 
 
 def main():

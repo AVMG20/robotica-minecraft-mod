@@ -160,7 +160,7 @@
    "items": [
     "servo_core"
    ],
-   "what": "Opens Age 2. Drops from the Scrap Colossus. Burns in a Core Reactor (x2 power).",
+   "what": "Opens Age 2. Drops from the Scrap Colossus. Burns in a Core Reactor (x3 power).",
    "see": [
     "item:colossus_altar",
     "guide:bosses",
