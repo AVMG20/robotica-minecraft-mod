@@ -632,7 +632,7 @@
         {
           "title": "Replicator layout",
           "layout": "mob_replicator",
-          "text": "Any frame block can be glass, edges and corners too."
+          "text": "Any frame block can be glass, edges and corners too.\nOnce formed, pipes and cables work on any block. Auto-eject fills containers touching it."
         },
         {
           "title": "Mob farms",

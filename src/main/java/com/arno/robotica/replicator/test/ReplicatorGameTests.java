@@ -231,6 +231,35 @@ public class ReplicatorGameTests {
         helper.succeed();
     }
 
+    /** Formed, every frame and glass works as the controller: FE in, the output out; Auto-eject fills a chest behind the cube. */
+    @GameTest(template = "energy_arena", timeoutTicks = 120)
+    public static void wholeCubeServesPipes(GameTestHelper helper) {
+        buildDocumented(helper);
+        ServerLevel level = helper.getLevel();
+        BlockPos corner = helper.absolutePos(new BlockPos(2, 2, 2));
+        BlockPos glass = helper.absolutePos(new BlockPos(1, 2, 1));
+        helper.assertTrue(level.getCapability(Capabilities.ItemHandler.BLOCK, corner, Direction.UP) == null, "a loose frame has no inventory");
+
+        ReplicatorControllerBlockEntity be = (ReplicatorControllerBlockEntity) helper.getBlockEntity(CONTROLLER);
+        be.validate(level, helper.absolutePos(CONTROLLER), helper.getBlockState(CONTROLLER));
+        helper.assertTrue(be.isFormed(), "forms");
+        IItemHandler items = level.getCapability(Capabilities.ItemHandler.BLOCK, corner, Direction.UP);
+        helper.assertTrue(items != null, "a frame corner of the formed cube exposes the output");
+        be.output.setStackInSlot(0, new ItemStack(Items.ROTTEN_FLESH, 5));
+        helper.assertTrue(items.extractItem(0, 2, false).getCount() == 2, "items come out through the frame");
+        helper.assertTrue(items.insertItem(1, new ItemStack(Items.DIRT), false).getCount() == 1, "nothing goes in through the frame");
+        var fe = level.getCapability(Capabilities.EnergyStorage.BLOCK, glass, Direction.UP);
+        helper.assertTrue(fe != null && fe.receiveEnergy(1000, false) > 0, "the glass takes FE");
+
+        BlockPos chestPos = new BlockPos(1, 1, 3);
+        helper.setBlock(chestPos, Blocks.CHEST);
+        be.sides.setAutoEject(true);
+        helper.succeedWhen(() -> {
+            IItemHandler chest = level.getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(chestPos), null);
+            helper.assertTrue(chest != null && chest.getStackInSlot(0).is(Items.ROTTEN_FLESH), "Auto-eject fills the chest behind the cube");
+        });
+    }
+
     /** The controller notices the structure on its own and shows it in the blockstate. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void controllerShowsFormedState(GameTestHelper helper) {
