@@ -47,17 +47,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Quantum Link Mk1-3: a flat-topped block (a Tesla Relay can sit on it) whose top core and side windows show the network
- * colour (drawn by the block entity renderer). Right-click
+ * Quantum Link Mk1-3: an open containment chamber with a flat top (a Tesla Relay can sit on it); the core floating in
+ * the chamber and the socket in the top show the network colour (drawn by the block entity renderer). Right-click
  * opens its screen (owner, team, operators); right-click with the next Mk upgrades it in place, keeping network,
  * settings and energy. Breaking it keeps its network and settings in the item.
  */
 public class QuantumLinkBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    /** Height of the top core above the block's base, in blocks (the top is flat, a Tesla Relay sits on it). */
-    public static final double TOP_Y = 1.0;
-    private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 3, 16), Block.box(1, 3, 1, 15, 13, 15),
-            Block.box(0, 13, 0, 16, 16, 16));
+    /** Base, cap and corner pillars span the whole block; the open chamber still takes clicks. */
+    private static final VoxelShape SHAPE = Shapes.block();
 
     private final LinkTier tier;
 
@@ -199,14 +197,6 @@ public class QuantumLinkBlock extends Block implements EntityBlock {
             be.onBroken();
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    /** Block events (the core pulse) go to the block entity. */
-    @Override
-    protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
-        super.triggerEvent(state, level, pos, id, param);
-        BlockEntity be = level.getBlockEntity(pos);
-        return be != null && be.triggerEvent(id, param);
     }
 
     @Override

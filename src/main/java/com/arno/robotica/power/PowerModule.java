@@ -70,6 +70,8 @@ public final class PowerModule {
                 PowerRegistry.SOLAR_PANEL_MK1.get(), PowerRegistry.SOLAR_PANEL_MK2.get(), PowerRegistry.SOLAR_PANEL_MK3.get(), PowerRegistry.SOLAR_PANEL_MK4.get());
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.ACCUMULATOR_BE.get(), (be, side) -> be.energyFor(side));
+        // Tesla Relays and Emitters take FE in on the face that touches the block they sit on (for blocks that only push)
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.TESLA_COIL_BE.get(), (be, side) -> be.intakeFor(side));
 
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PowerRegistry.CHARGER_BE.get(), (be, side) -> be.energy);
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PowerRegistry.CHARGER_BE.get(), (be, side) -> be.sides.access(side));

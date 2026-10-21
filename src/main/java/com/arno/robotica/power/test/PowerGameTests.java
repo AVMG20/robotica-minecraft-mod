@@ -632,6 +632,42 @@ public class PowerGameTests {
         });
     }
 
+    /** A relay on a Combustion Generator feeds its network from it. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaRelayOnGeneratorFeedsItsNetwork(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(0, 1, 0), PowerRegistry.COMBUSTION_GENERATOR.get());
+        CombustionGeneratorBlockEntity generator = (CombustionGeneratorBlockEntity) helper.getBlockEntity(new BlockPos(0, 1, 0));
+        generator.energy.setEnergy(20_000);
+        TeslaCoilBlockEntity relay = coil(helper, new BlockPos(0, 2, 0), PowerRegistry.TESLA_COIL_1.get());
+        AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(3, 1, 0), Direction.NORTH, 0);
+        link(helper, relay, sink.getBlockPos(), Direction.EAST, "relay -> sink");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(relay.isRoot(), "a relay on a generator is a source");
+            helper.assertTrue(sink.energy.getEnergyStored() > 2_000, "the sink fills from the generator, has " + sink.energy.getEnergyStored());
+        });
+    }
+
+    /**
+     * A block that only pushes FE (as many generators of other mods do) pushes it into the relay's bottom face, and the
+     * relay feeds its network from that; nothing is lost. The other faces take nothing.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void teslaRelayTakesPushedPower(GameTestHelper helper) {
+        TeslaCoilBlockEntity relay = relay(helper, new BlockPos(0, 2, 0));
+        AccumulatorBlockEntity sink = accumulator(helper, new BlockPos(3, 1, 0), Direction.NORTH, 0);
+        link(helper, relay, sink.getBlockPos(), Direction.EAST, "relay -> sink");
+        BlockPos abs = relay.getBlockPos();
+        helper.assertTrue(helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, abs, Direction.NORTH) == null, "no FE on the sides");
+        IEnergyStorage bottom = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, abs, Direction.DOWN);
+        helper.assertTrue(bottom != null && bottom.canReceive() && !bottom.canExtract(), "the bottom face takes FE in");
+        int[] pushed = new int[1];
+        helper.onEachTick(() -> pushed[0] += bottom.receiveEnergy(1_000, false));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(sink.energy.getEnergyStored() > 5_000, "the pushed FE reaches the sink, has " + sink.energy.getEnergyStored());
+            helper.assertTrue(sink.energy.getEnergyStored() <= pushed[0], "nothing is created");
+        });
+    }
+
     /** A relay linked to the Accumulator it sits on feeds it: it does not pull from one of its own machines. */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void teslaRelayFeedsLinkedSupport(GameTestHelper helper) {

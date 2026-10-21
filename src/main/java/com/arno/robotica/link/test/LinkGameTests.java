@@ -1,6 +1,8 @@
 package com.arno.robotica.link.test;
 
 import com.arno.robotica.Robotica;
+import com.arno.robotica.core.side.RelativeSide;
+import com.arno.robotica.core.side.SideMode;
 import com.arno.robotica.link.LinkPayloads;
 import com.arno.robotica.link.LinkRegistry;
 import com.arno.robotica.link.block.LinkPriority;
@@ -99,6 +101,29 @@ public class LinkGameTests {
             helper.assertTrue(net.senders().size() == 1 && net.energyCapacity() == 64_000L * LinkNetwork.BUFFER_TICKS,
                     "the sender sizes the buffer: 5 s of its rate");
             helper.assertTrue(total <= 64_000 && total >= 64_000 - 2L * upkeep * elapsed, "nothing but upkeep is lost, total " + total);
+            delete(helper, net);
+        });
+    }
+
+    /** A receiver gives FE out of every face, even with every face set to None in the Sides tab (that tab is for items). */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void receiverGivesFeOnAllSides(GameTestHelper helper) {
+        LinkNetwork net = network(helper, "All Sides");
+        QuantumLinkBlockEntity sender = link(helper, new BlockPos(0, 1, 0), LinkTier.MK1, net, TransferMode.SEND, TransferMode.OFF);
+        sender.energy.setEnergy(64_000);
+        QuantumLinkBlockEntity receiver = link(helper, new BlockPos(3, 2, 3), LinkTier.MK1, net, TransferMode.RECEIVE, TransferMode.OFF);
+        for (RelativeSide side : RelativeSide.values()) receiver.sides.set(side, SideMode.NONE);
+        List<AccumulatorBlockEntity> sinks = new java.util.ArrayList<>();
+        for (Direction dir : Direction.values()) {
+            BlockPos at = new BlockPos(3, 2, 3).relative(dir);
+            helper.setBlock(at, PowerRegistry.ACCUMULATOR_1.get().defaultBlockState()
+                    .setValue(com.arno.robotica.power.block.PowerBlock.FACING, dir.getAxis().isHorizontal() ? dir : Direction.NORTH));
+            sinks.add((AccumulatorBlockEntity) helper.getBlockEntity(at));
+        }
+        helper.succeedWhen(() -> {
+            for (int i = 0; i < sinks.size(); i++) {
+                helper.assertTrue(sinks.get(i).energy.getEnergyStored() > 0, "the " + Direction.values()[i] + " neighbour gets FE");
+            }
             delete(helper, net);
         });
     }

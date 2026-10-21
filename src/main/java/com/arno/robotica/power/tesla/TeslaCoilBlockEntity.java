@@ -1,9 +1,11 @@
 package com.arno.robotica.power.tesla;
 
 import com.arno.robotica.core.CoreSounds;
+import com.arno.robotica.core.energy.MachineEnergyStorage;
 import com.arno.robotica.power.PowerRegistry;
 import com.arno.robotica.power.block.PowerBlockEntity;
 import com.arno.robotica.power.menu.EnergyInfoMenu;
+import com.arno.robotica.power.util.SidedEnergy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -39,7 +41,8 @@ import java.util.UUID;
 /**
  * Links of one Tesla Relay or Tesla Emitter plus its per-tick bookkeeping. An emitter on a block that gives out FE runs
  * its network ({@link TeslaGrid}) every tick; so does a relay on such a block (one it does not link to: that one it
- * feeds). Other relays only hand out what the network gives them. The links and coarse
+ * feeds). Blocks that only push FE out (generators of other mods) push it into the face that touches them, a small
+ * buffer that counts as part of the block. Other relays only hand out what the network gives them. The links and coarse
  * flow levels (0-4, how hard the block and each link work) are synced to the client for the link glow; nothing else is.
  */
 public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvider, EnergyInfoMenu.Source {
@@ -55,6 +58,11 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     /** The block it sits on, cached (relays look it up every tick); reset with the block state. */
     @Nullable
     private BlockPos support;
+    /** Two ticks of the tier rate that the block it sits on can push into it (see {@link #intakeFor}). */
+    private final MachineEnergyStorage intake;
+    private final IEnergyStorage intakeView;
+    /** The intake plus the support block's own FE, as one storage for {@link TeslaGrid}. */
+    private final Feed feed = new Feed();
     private long windowSent;
     private int lastRate;
     /** Sits on a block that gives out FE (a relay: one it does not link to) and feeds its network from it. */
@@ -99,6 +107,9 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
 
     public TeslaCoilBlockEntity(BlockPos pos, BlockState state) {
         super(PowerRegistry.TESLA_COIL_BE.get(), pos, state);
+        int rate = (state.getBlock() instanceof TeslaCoilBlock coil ? coil.tier() : TeslaTier.I).rate();
+        intake = new MachineEnergyStorage((int) Math.min(Integer.MAX_VALUE, 2L * rate), rate, rate, this::setChanged);
+        intakeView = new SidedEnergy(intake, true, false);
     }
 
     public TeslaTier tier() {
@@ -227,6 +238,13 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         resetLinkFlow();
         TeslaGrid.invalidate(this);
         setChangedAndSync();
+        // linking the block it sits on closes the intake on that face; what is still in it goes into that block
+        if (level != null && !level.isClientSide) {
+            level.invalidateCapabilities(worldPosition);
+            int k = isEmitter() || intake.getEnergyStored() <= 0 ? -1 : indexOf(supportPos());
+            IEnergyStorage block = k < 0 ? null : level.getCapability(Capabilities.EnergyStorage.BLOCK, supportPos(), links.get(k).face());
+            if (block != null) intake.setEnergy(intake.getEnergyStored() - Math.max(0, block.receiveEnergy(intake.getEnergyStored(), false)));
+        }
     }
 
     List<BlockPos> backlinks() {
@@ -270,9 +288,31 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return cache.getCapability();
     }
 
-    /** The support block's FE storage if it gives energy out: first through the touching face, else its internal view. */
+    /**
+     * What this block feeds its network from: the FE the support block pushed into it plus the support block's own FE
+     * (when it gives energy out), or null when neither has any to give.
+     */
     @Nullable
     IEnergyStorage source() {
+        IEnergyStorage block = supportSource();
+        if (block == null && intake.getEnergyStored() <= 0) return null;
+        feed.block = block;
+        return feed;
+    }
+
+    /**
+     * FE capability on {@code side}: the face that touches the block it sits on takes FE in (for blocks that only push),
+     * unless this is a relay that feeds that block. Every other face has none.
+     */
+    @Nullable
+    public IEnergyStorage intakeFor(@Nullable Direction side) {
+        if (side == null || side != facing().getOpposite()) return null;
+        return isEmitter() || indexOf(supportPos()) < 0 ? intakeView : null;
+    }
+
+    /** The support block's FE storage if it gives energy out: first through the touching face, else its internal view. */
+    @Nullable
+    private IEnergyStorage supportSource() {
         if (!(level instanceof ServerLevel serverLevel)) return null;
         if (sourceSided == null || sourceAny == null) {
             BlockPos support = supportPos();
@@ -294,10 +334,53 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
         return isEmitter() || indexOf(supportPos()) >= 0 ? null : source();
     }
 
-    /** The support block's own FE view (no side), to hand back what could not be delivered. */
-    @Nullable
-    IEnergyStorage sourceBuffer() {
-        return source() == null || sourceAny == null ? null : sourceAny.getCapability();
+    /**
+     * Puts back {@code amount} FE that could not be delivered: into the support block's own FE view (no side), the rest
+     * into the intake (a view that only gives out, such as a receiving Link's, takes nothing back). Returns what went back.
+     */
+    int giveBack(int amount) {
+        IEnergyStorage any = supportSource() == null || sourceAny == null ? null : sourceAny.getCapability();
+        int back = any == null ? 0 : Math.max(0, any.receiveEnergy(amount, false));
+        if (back < amount) back += intake.receiveEnergy(amount - back, false);
+        return back;
+    }
+
+    /** Takes from the intake first, then from the support block. Server thread only; {@link #block} is set per use. */
+    private final class Feed implements IEnergyStorage {
+        @Nullable
+        IEnergyStorage block;
+
+        @Override
+        public int extractEnergy(int max, boolean simulate) {
+            int got = intake.extractEnergy(Math.max(0, max), simulate);
+            if (got < max && block != null) got += Math.max(0, block.extractEnergy(max - got, simulate));
+            return got;
+        }
+
+        @Override
+        public int receiveEnergy(int amount, boolean simulate) {
+            return 0;
+        }
+
+        @Override
+        public int getEnergyStored() {
+            return (int) Math.min(Integer.MAX_VALUE, (long) intake.getEnergyStored() + (block == null ? 0 : block.getEnergyStored()));
+        }
+
+        @Override
+        public int getMaxEnergyStored() {
+            return (int) Math.min(Integer.MAX_VALUE, (long) intake.getMaxEnergyStored() + (block == null ? 0 : block.getMaxEnergyStored()));
+        }
+
+        @Override
+        public boolean canExtract() {
+            return true;
+        }
+
+        @Override
+        public boolean canReceive() {
+            return false;
+        }
     }
 
     @Override
@@ -488,6 +571,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.put("links", saveLinks());
+        if (intake.getEnergyStored() > 0) tag.putInt("intake", intake.getEnergyStored());
         if (owner != null) {
             tag.putUUID("owner", owner);
             tag.putString("ownerName", ownerName);
@@ -521,6 +605,7 @@ public class TeslaCoilBlockEntity extends PowerBlockEntity implements MenuProvid
             owner = tag.getUUID("owner");
             ownerName = tag.getString("ownerName");
         }
+        if (tag.contains("intake")) intake.setEnergy(tag.getInt("intake"));
         if (tag.contains("flow")) flow = tag.getByte("flow");
         if (tag.contains("linkFlow", Tag.TAG_BYTE_ARRAY)) {
             byte[] levels = tag.getByteArray("linkFlow");
