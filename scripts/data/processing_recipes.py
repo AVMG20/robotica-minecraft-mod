@@ -90,9 +90,9 @@ for mk, (circuit, casing, grinder_extra, furnace_extra) in TIERS.items():
 for metal in ('iron', 'gold', 'copper'):
     cooking(f'{metal}_ingot_from_smelting_{metal}_dust', 'smelting', f'#c:dusts/{metal}', f'minecraft:{metal}_ingot', 0.1, 200)
     cooking(f'{metal}_ingot_from_blasting_{metal}_dust', 'blasting', f'#c:dusts/{metal}', f'minecraft:{metal}_ingot', 0.1, 100)
-# Netherite scrap does not grind back into dust, so no loop: 1.0 per dust keeps a debris at vanilla's 2.0.
-cooking('netherite_scrap_from_smelting_dust', 'smelting', '#c:dusts/netherite_scrap', 'minecraft:netherite_scrap', 1.0, 200)
-cooking('netherite_scrap_from_blasting_dust', 'blasting', '#c:dusts/netherite_scrap', 'minecraft:netherite_scrap', 1.0, 100)
+# 0.1 like the metal dusts: a crusher from another mod may turn scrap back into this dust.
+cooking('netherite_scrap_from_smelting_dust', 'smelting', '#c:dusts/netherite_scrap', 'minecraft:netherite_scrap', 0.1, 200)
+cooking('netherite_scrap_from_blasting_dust', 'blasting', '#c:dusts/netherite_scrap', 'minecraft:netherite_scrap', 0.1, 100)
 
 # ---------------------------------------------------------------- grinding media
 # Iron balls: one ingot and four nuggets make two, each lasts 16 ores at +25%: worth it from the first stack of ore.
