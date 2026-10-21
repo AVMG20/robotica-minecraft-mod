@@ -51,6 +51,8 @@
       "robotica:gold_ingot_from_blasting_gold_dust",
       "robotica:copper_ingot_from_smelting_copper_dust",
       "robotica:copper_ingot_from_blasting_copper_dust",
+      "robotica:netherite_scrap_from_smelting_dust",
+      "robotica:netherite_scrap_from_blasting_dust",
       "robotica:grinding/iron_ore_to_dust",
       "robotica:grinding/raw_iron_to_dust",
       "robotica:grinding/iron_ingot_to_dust",
@@ -68,7 +70,8 @@
       "robotica:grinding/wool_to_string",
       "robotica:grinding/redstone_ore",
       "robotica:grinding/lapis_ore",
-      "robotica:grinding/coal_ore"
+      "robotica:grinding/coal_ore",
+      "robotica:grinding/ancient_debris_to_dust"
     ],
     "experience": 10
   }

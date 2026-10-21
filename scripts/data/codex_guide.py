@@ -159,9 +159,11 @@ STEPS = [
      'Place a Grinder.',
      placed('grinder_mk1', 'grinder_mk2', 'grinder_mk3', 'grinder_mk4'),
      ['iron_grinding_balls'] + [f'{m}_ingot_from_{k}_{m}_dust' for m in ('iron', 'gold', 'copper') for k in ('smelting', 'blasting')]
+     + [f'netherite_scrap_from_{k}_dust' for k in ('smelting', 'blasting')]
      + [f'grinding/{r}' for m in ('iron', 'gold', 'copper') for r in (f'{m}_ore_to_dust', f'raw_{m}_to_dust', f'{m}_ingot_to_dust')]
      + [f'grinding/{r}' for r in ('cobblestone_to_gravel', 'gravel_to_sand', 'blaze_rod_to_powder', 'bone_to_bone_meal',
-                                  'glowstone_to_dust', 'wool_to_string', 'redstone_ore', 'lapis_ore', 'coal_ore')], 10),
+                                  'glowstone_to_dust', 'wool_to_string', 'redstone_ore', 'lapis_ore', 'coal_ore',
+                                  'ancient_debris_to_dust')], 10),
     ('metal_press', 'basic_circuit', 'metal_press', 'task', 1, 'Press Ahead',
      'Place a Metal Press.',
      placed('metal_press', 'metal_press_mk2', 'metal_press_mk3', 'metal_press_mk4'), [], 5),

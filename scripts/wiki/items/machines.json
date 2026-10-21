@@ -364,6 +364,15 @@
   },
   {
    "items": [
+    "netherite_scrap_dust"
+   ],
+   "what": "Ground from ancient debris. Smelt it into netherite scrap.",
+   "see": [
+    "guide:ore-processing"
+   ]
+  },
+  {
+   "items": [
     "stumpy",
     "stumpy_mk2",
     "stumpy_mk3",

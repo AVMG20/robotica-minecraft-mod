@@ -114,7 +114,9 @@ public class ProcessingGameTests {
         helper.assertTrue(ingot != null && ingot.main().getCount() == 1 && !ingot.boostable(), "iron ingot -> 1 dust, never boosted");
         GrindingLogic.Plan diamond = GrindingLogic.find(level, new ItemStack(Items.DIAMOND_ORE), 1).plan();
         helper.assertTrue(diamond != null && diamond.main().is(Items.DIAMOND), "gem ore without a dust -> gems");
-        helper.assertTrue(GrindingLogic.find(level, new ItemStack(Items.ANCIENT_DEBRIS), 4).plan() == null, "ancient debris does not grind");
+        GrindingLogic.Plan debris = GrindingLogic.find(level, new ItemStack(Items.ANCIENT_DEBRIS), 1).plan();
+        helper.assertTrue(debris != null && debris.main().is(ProcessingRegistry.NETHERITE_SCRAP_DUST.get())
+                && debris.main().getCount() == ProcessingConfig.oreDustCount() && debris.boostable(), "ancient debris -> 2 netherite scrap dust, boosted");
         helper.assertTrue(GrindingLogic.find(level, new ItemStack(Items.DIRT), 4).plan() == null, "dirt does not grind");
         helper.succeed();
     }

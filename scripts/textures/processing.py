@@ -336,6 +336,7 @@ DUST_COLORS = {
     'iron': ('#6E6862', '#A8A09A', '#D8D0C8', '#F4EEE8'),
     'gold': ('#8A5A08', '#D89A1A', '#F6C93C', '#FFF0A0'),
     'copper': ('#6A3214', '#B4602A', '#E08A4C', '#FFC89A'),
+    'netherite_scrap': ('#4A3632', '#6E544E', '#8E7068', '#C0A49A'),
 }
 
 
