@@ -77,6 +77,7 @@ public final class ProcessingRegistry {
     public static final DeferredItem<Item> IRON_DUST = ITEMS.registerSimpleItem("iron_dust");
     public static final DeferredItem<Item> GOLD_DUST = ITEMS.registerSimpleItem("gold_dust");
     public static final DeferredItem<Item> COPPER_DUST = ITEMS.registerSimpleItem("copper_dust");
+    public static final DeferredItem<Item> NETHERITE_SCRAP_DUST = ITEMS.registerSimpleItem("netherite_scrap_dust");
     public static final DeferredItem<Item> IRON_GRINDING_BALLS = ITEMS.registerSimpleItem("iron_grinding_balls");
     public static final DeferredItem<Item> FERROTHORIUM_GRINDING_BALLS = ITEMS.registerItem("ferrothorium_grinding_balls",
             p -> new Item(p.rarity(Rarity.UNCOMMON)));
@@ -120,6 +121,7 @@ public final class ProcessingRegistry {
         RoboticaTab.add(IRON_DUST);
         RoboticaTab.add(GOLD_DUST);
         RoboticaTab.add(COPPER_DUST);
+        RoboticaTab.add(NETHERITE_SCRAP_DUST);
         RoboticaTab.add(IRON_GRINDING_BALLS);
         RoboticaTab.add(FERROTHORIUM_GRINDING_BALLS);
         RoboticaTab.add(PYROSTEEL_GRINDING_BALLS);
