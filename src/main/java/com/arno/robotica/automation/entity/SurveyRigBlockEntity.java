@@ -43,7 +43,7 @@ import java.util.Set;
  */
 public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     public static final Set<UpgradeKind> KINDS = EnumSet.of(UpgradeKind.SPEED, UpgradeKind.EFFICIENCY, UpgradeKind.FORTUNE,
-            UpgradeKind.SILK, UpgradeKind.VOID);
+            UpgradeKind.SILK);
 
     /** What the rig is doing, for the GUI. */
     public enum RigState {
@@ -216,16 +216,12 @@ public class SurveyRigBlockEntity extends AreaWorkerBlockEntity {
     /** Rolls the ore's loot table as if mined with the card pickaxe (an ore item without a block comes out as is). */
     private void mine(ServerLevel sl, Item ore) {
         lastOre = BuiltInRegistries.ITEM.getId(ore);
-        boolean voiding = upgrades.level(UpgradeKind.VOID) > 0;
         List<ItemStack> drops = List.of(new ItemStack(ore));
         if (ore instanceof BlockItem blockItem) {
             List<ItemStack> rolled = Block.getDrops(blockItem.getBlock().defaultBlockState(), sl, worldPosition, null, null, tool(sl));
             if (!rolled.isEmpty()) drops = rolled;
         }
-        for (ItemStack drop : drops) {
-            if (voiding && drop.is(ExcavatorBlockEntity.VOIDABLE)) continue;
-            output(drop);
-        }
+        for (ItemStack drop : drops) output(drop);
         workSound(sl, worldPosition, CoreSounds.MATTER_ABSORB, 0.5F, 0.9F + sl.random.nextFloat() * 0.3F);
         sl.sendParticles(ParticleTypes.END_ROD, worldPosition.getX() + 0.5, worldPosition.getY() + 1.05, worldPosition.getZ() + 0.5,
                 2, 0.15, 0.05, 0.15, 0.01);

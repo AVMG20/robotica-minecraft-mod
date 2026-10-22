@@ -121,7 +121,7 @@ public class UpgradeRuleGameTests {
         checkMk(helper, "Excavator", mk -> excavators[mk - 1].defaultBlockState(), EnumSet.of(SPEED, RANGE, EFFICIENCY, FORTUNE, SILK, VOID));
         Block[] rigs = {AutomationContent.SURVEY_RIG.get(), AutomationContent.SURVEY_RIG_MK2.get(), AutomationContent.SURVEY_RIG_MK3.get(),
                 AutomationContent.SURVEY_RIG_MK4.get()};
-        checkMk(helper, "Survey Rig", mk -> rigs[mk - 1].defaultBlockState(), EnumSet.of(SPEED, EFFICIENCY, FORTUNE, SILK, VOID));
+        checkMk(helper, "Survey Rig", mk -> rigs[mk - 1].defaultBlockState(), EnumSet.of(SPEED, EFFICIENCY, FORTUNE, SILK));
         helper.succeed();
     }
 
@@ -210,12 +210,12 @@ public class UpgradeRuleGameTests {
     public static void backdropsShowTheCardsThatFit(GameTestHelper helper) {
         Upgrades up = cards(helper, AutomationContent.SURVEY_RIG_MK2.get().defaultBlockState());
         helper.assertTrue(up.fitting(0).equals(List.of(SPEED)) && up.fitting(1).equals(List.of(EFFICIENCY))
-                && up.fitting(2).equals(List.of(FORTUNE, SILK, VOID)), "empty: speed, efficiency, then the rest " + up.fitting(2));
+                && up.fitting(2).equals(List.of(FORTUNE, SILK)), "empty: speed, efficiency, then the rest " + up.fitting(2));
         helper.assertTrue(up.fitting(3).isEmpty(), "a closed slot shows nothing");
         up.setStackInSlot(1, CoreItems.cards(SPEED, 1));
         helper.assertTrue(up.fitting(1).isEmpty() && up.fitting(0).equals(List.of(EFFICIENCY)), "installed kinds move out of the backdrops");
         up.setStackInSlot(0, CoreItems.cards(FORTUNE, 1));
-        helper.assertTrue(up.fitting(2).equals(List.of(EFFICIENCY, VOID)), "fortune rules out silk " + up.fitting(2));
+        helper.assertTrue(up.fitting(2).equals(List.of(EFFICIENCY)), "fortune rules out silk " + up.fitting(2));
         up.setStackInSlot(0, ItemStack.EMPTY);
         up.setStackInSlot(1, ItemStack.EMPTY);
         helper.succeed();

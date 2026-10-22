@@ -331,8 +331,7 @@
         "speed": "More ores (x2 ... x20); FE/t climbs much faster: x3.5 / x9 / x42 / x420 at 1 / 2 / 4 / 8 cards.",
         "efficiency": "Takes 15% per card off the steep speed factor.",
         "fortune": "Fortune I-III on every ore roll; FE/t x1.5 / x2 / x2.5.",
-        "silk": "Ores come out as ore blocks; FE/t x2.",
-        "void": "Deletes junk drops."
+        "silk": "Ores come out as ore blocks; FE/t x2."
       },
       "source": "automation/entity/SurveyRigBlockEntity, AutomationConfig surveyRig*Mk1-4",
       "tiers": [
