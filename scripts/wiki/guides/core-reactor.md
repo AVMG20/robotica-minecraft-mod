@@ -22,7 +22,7 @@ summary: The fixed 5x5x5 reactor that burns fuel pellets and a boss core. Amplif
 
 | Core | Power |
 |---|---|
-| [[servo_core]] | x2 |
+| [[servo_core]] | x3 |
 | [[magma_core]] | x6 |
 | [[antigrav_core]] | x16 |
 
@@ -49,8 +49,8 @@ Amplifiers give fewer FE per pellet, stabilizers more. The most FE per pellet: 8
 
 | Build | Output | Core lasts |
 |---|---|---|
-| Servo Core, thorium, empty | 1,200 FE/t | 168 h |
-| Servo Core, thorium, 26 Flux Amplifiers | 3,700 FE/t | 7.8 h |
+| Servo Core, thorium, empty | 1,800 FE/t | 168 h |
+| Servo Core, thorium, 26 Flux Amplifiers | 5,500 FE/t | 7.8 h |
 | Magma Core, enriched, empty | 9,000 FE/t | 168 h |
 | Magma Core, enriched, 26 Pyro Amplifiers | 44,000 FE/t | 3 h |
 | Antigrav Core, enriched, 26 Resonant Amplifiers | 180,000 FE/t | 1.3 h |

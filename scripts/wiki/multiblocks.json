@@ -235,7 +235,7 @@
     "controller": "reactor_controller",
     "guide": "core-reactor",
     "check": "core_reactor",
-    "about": "Twelve Flux Amplifiers: power x1.96, burn x2.68. With a Servo Core and thorium pellets about 2,350 FE/t, and the core lasts about 23 hours.",
+    "about": "Twelve Flux Amplifiers: power x1.96, burn x2.68. With a Servo Core and thorium pellets about 3,500 FE/t, and the core lasts about 23 hours.",
     "notes": [
       "The middle block stays empty: the core floats there.",
       "Swap the amplifiers for Graphite Dampers for less power and more FE per pellet."
