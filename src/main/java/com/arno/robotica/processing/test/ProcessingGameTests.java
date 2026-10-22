@@ -207,9 +207,9 @@ public class ProcessingGameTests {
             helper.assertTrue(rest.getCount() == 8 - 2 * mk, "the rest is refused");
         }
         ElectricFurnaceBlockEntity furnace = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK2);
-        helper.assertTrue(furnace.upgrades.activeSlots() == 3, "furnace Mk2: 3 slots");
+        helper.assertTrue(furnace.upgrades.activeSlots() == 2, "furnace Mk2: 2 slots");
         ElectricFurnaceBlockEntity furnace4 = place(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4);
-        helper.assertTrue(furnace4.upgrades.activeSlots() == 3, "furnace Mk4: 3 slots, one per card kind");
+        helper.assertTrue(furnace4.upgrades.activeSlots() == 2, "furnace Mk4: 2 slots, one per card kind");
         helper.succeed();
     }
 

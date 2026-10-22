@@ -54,7 +54,7 @@ public class ProcessingMachineItem extends BlockItem implements HasDetails {
         int speed = UpgradeRules.mkCap(tier, UpgradeKind.SPEED), efficiency = UpgradeRules.mkCap(tier, UpgradeKind.EFFICIENCY);
         lines.add(grinder
                 ? HasDetails.line("tooltip.robotica.grinder_cards", speed, efficiency, UpgradeRules.mkCap(tier, UpgradeKind.FORTUNE))
-                : HasDetails.line("tooltip.robotica.electric_furnace_cards", speed, efficiency, UpgradeRules.mkCap(tier, UpgradeKind.RANGE)));
+                : HasDetails.line("tooltip.robotica.electric_furnace_cards", speed, efficiency));
         lines.add(HasDetails.line(grinder ? "tooltip.robotica.grinder_help" : "tooltip.robotica.electric_furnace_help"));
         lines.add(HasDetails.line("tooltip.robotica.processing_sides"));
         lines.add(HasDetails.line("tooltip.robotica.processing_upgrade"));

@@ -115,7 +115,7 @@ public class UpgradeRuleGameTests {
         checkMk(helper, "Wireless Charger", mk -> chargers[mk - 1].defaultBlockState(), EnumSet.of(SPEED, RANGE));
         checkMk(helper, "Grinder", mk -> ProcessingRegistry.GRINDERS.get(mk - 1).get().defaultBlockState(), EnumSet.of(SPEED, EFFICIENCY, FORTUNE, VOID));
         checkMk(helper, "Electric Furnace", mk -> ProcessingRegistry.FURNACES.get(mk - 1).get().defaultBlockState(),
-                EnumSet.of(SPEED, EFFICIENCY, RANGE));
+                EnumSet.of(SPEED, EFFICIENCY));
         Block[] excavators = {AutomationContent.EXCAVATOR.get(), AutomationContent.EXCAVATOR_MK2.get(), AutomationContent.EXCAVATOR_MK3.get(),
                 AutomationContent.EXCAVATOR_MK4.get()};
         checkMk(helper, "Excavator", mk -> excavators[mk - 1].defaultBlockState(), EnumSet.of(SPEED, RANGE, EFFICIENCY, FORTUNE, SILK, VOID));
@@ -224,14 +224,14 @@ public class UpgradeRuleGameTests {
     /** Cards saved in a slot that no longer opens move to a free open slot when the machine loads. */
     @GameTest(template = "empty")
     public static void cardsInClosedSlotsMoveOnLoad(GameTestHelper helper) {
-        Upgrades up = cards(helper, ProcessingRegistry.ELECTRIC_FURNACE_MK4.get().defaultBlockState());
+        Upgrades up = cards(helper, ProcessingRegistry.GRINDERS.get(3).get().defaultBlockState());
         ItemStackHandler saved = new ItemStackHandler(UpgradeRules.MAX_SLOTS);
         saved.setStackInSlot(0, CoreItems.cards(SPEED, 4));
-        saved.setStackInSlot(4, CoreItems.cards(RANGE, 2));
+        saved.setStackInSlot(4, CoreItems.cards(FORTUNE, 2));
         up.deserializeNBT(helper.getLevel().registryAccess(), saved.serializeNBT(helper.getLevel().registryAccess()));
-        helper.assertTrue(up.activeSlots() == 3, "Mk4 furnace: 3 slots");
-        helper.assertTrue(up.getStackInSlot(1).getCount() == 2 && up.getStackInSlot(4).isEmpty() && up.level(RANGE) == 2,
-                "the range cards moved into slot 2 and count");
+        helper.assertTrue(up.activeSlots() == 4, "Mk4 grinder: 4 slots");
+        helper.assertTrue(up.getStackInSlot(1).getCount() == 2 && up.getStackInSlot(4).isEmpty() && up.level(FORTUNE) == 2,
+                "the fortune cards moved into slot 2 and count");
         helper.succeed();
     }
 

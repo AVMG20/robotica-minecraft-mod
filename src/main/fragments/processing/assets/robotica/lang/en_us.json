@@ -21,7 +21,7 @@
   "tooltip.robotica.processing_energy": "Stored: %s",
   "tooltip.robotica.processing_power": "Uses %s FE/t at base speed",
   "tooltip.robotica.grinder_cards": "Cards: Speed (%1$s), Efficiency (%2$s), Fortune (%3$s), Void",
-  "tooltip.robotica.electric_furnace_cards": "Cards: Speed (%1$s), Efficiency (%2$s), Range (%3$s)",
+  "tooltip.robotica.electric_furnace_cards": "Cards: Speed (%1$s), Efficiency (%2$s)",
   "tooltip.robotica.grinder_help": "Grinding media in the second slot: more dust and byproducts",
   "tooltip.robotica.electric_furnace_help": "Each lane smelts its own stack",
   "tooltip.robotica.processing_sides": "Pipes: in from top and sides, out from any side",
@@ -80,6 +80,5 @@
   "gui.robotica.processing.card.grinder.fortune": "In this Grinder: +%s%% main output per card from ores and raw ores (not gem ores or ingots), +%s%% FE/t",
   "gui.robotica.processing.card.grinder.void": "In this Grinder: extra outputs and byproducts that don't fit are deleted",
   "gui.robotica.processing.card.electric_furnace.speed": "In this Electric Furnace: smelts faster (FE/t rises with it)",
-  "gui.robotica.processing.card.electric_furnace.efficiency": "In this Electric Furnace: less FE per item",
-  "gui.robotica.processing.card.electric_furnace.range": "In this Electric Furnace: each lane smelts one more item per cycle, for one more item's FE"
+  "gui.robotica.processing.card.electric_furnace.efficiency": "In this Electric Furnace: less FE per item"
 }
